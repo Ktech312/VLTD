@@ -1,0 +1,596 @@
+/* Path: src/app/globals.css */
+@import "tailwindcss";
+
+/* =========================================================
+   VLTD THEME SYSTEM
+   Mode: Light / Dark
+   Palette: Mirror / Purple Rain
+   Goal: Apple-clean pills + calm accents + readable contrast
+   Update: Neon portfolio-aligned accents (cyan + violet)
+========================================================= */
+
+:root {
+  --radius: 999px;
+
+  /* ✅ Reserve TopNav height so content never jumps */
+  --topnav-h: 72px;
+
+  /* ---------------------------------------------------------
+     NAV / SHELL VARS
+     - AppShellEffects sets --topnav-shift ("0%" or "-110%")
+  --------------------------------------------------------- */
+  --topnav-shift: 0%;
+
+  /* ---------------------------------------------------------
+     PALETTE (default = Mirror)
+     NOTE: Mirror + Purple now share the same "neon pair"
+     but swap which color is primary.
+  --------------------------------------------------------- */
+  --accent: #52d6f4; /* Neon Cyan (portfolio neon) */
+  --accent-2: #9615db; /* Neon Violet (portfolio neon) */
+
+  /* ---------------------------------------------------------
+     LIGHT MODE BASE
+  --------------------------------------------------------- */
+  --bg: #f6f6f6; /* White Smoke */
+  --surface: #ffffff; /* cards/topbar */
+  --surface-strong: #f0f0f0; /* drawers/strong surfaces */
+
+  --fg: #171717;
+  --muted: rgba(0, 0, 0, 0.62);
+  --muted2: rgba(0, 0, 0, 0.38);
+
+  /* Borders / dividers / shadows */
+  --border: rgba(0, 0, 0, 0.14);
+  --border-strong: rgba(0, 0, 0, 0.22);
+  --divider: rgba(0, 0, 0, 0.1);
+
+  --shadow-soft: 0 1px 0 rgba(0, 0, 0, 0.04);
+  --shadow-pill: 0 10px 24px rgba(0, 0, 0, 0.1);
+
+  /* ---------------------------------------------------------
+     PILLS (Apple-like)
+  --------------------------------------------------------- */
+  --pill: rgba(0, 0, 0, 0.04);
+  --pill-hover: rgba(0, 0, 0, 0.07);
+
+  --pill-fg: rgba(0, 0, 0, 0.82);
+  --pill-fg-muted: rgba(0, 0, 0, 0.62);
+
+  /* Active pill stays readable and neutral, glow comes from outline */
+  --pill-active-bg: color-mix(in srgb, var(--surface) 97%, var(--accent) 3%);
+  --pill-active-fg: var(--fg);
+  --pill-active-ring: color-mix(in srgb, var(--accent) 82%, transparent);
+  --pill-glow-soft: color-mix(in srgb, var(--accent) 28%, transparent);
+  --pill-glow-mid: color-mix(in srgb, var(--accent) 40%, transparent);
+  --pill-glow-strong: color-mix(in srgb, var(--accent) 56%, transparent);
+
+  /* Major frame glow */
+  --frame-glow-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  --frame-glow-mid: color-mix(in srgb, var(--accent) 24%, transparent);
+  --frame-glow-strong: color-mix(in srgb, var(--accent) 34%, transparent);
+  --frame-ring: color-mix(in srgb, var(--accent) 34%, var(--border) 66%);
+
+  /* Inputs */
+  --input: rgba(0, 0, 0, 0.035);
+  --input-hover: rgba(0, 0, 0, 0.06);
+
+  /* Links + focus */
+  --link: color-mix(in srgb, var(--accent) 92%, black 8%);
+  --link-hover: color-mix(in srgb, var(--accent) 92%, black 18%);
+  --accent-soft: color-mix(in srgb, var(--accent) 35%, transparent);
+
+  /* Tables / rows */
+  --table-row-hover: rgba(0, 0, 0, 0.03);
+
+  /* Subtle “glow” layer (keeps color calm) */
+  --bg-glow: radial-gradient(
+      1200px 600px at 50% -10%,
+      color-mix(in srgb, var(--accent) 10%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 450px at 85% 0%,
+      color-mix(in srgb, var(--accent-2) 8%, transparent),
+      transparent 55%
+    );
+
+  /* =========================================================
+     MOBILE / TOUCH WINS (global)
+  ========================================================= */
+
+  /* safe-area helpers (iPhone notch/home bar) */
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+}
+
+/* Slightly shorter header on small screens */
+@media (max-width: 640px) {
+  :root {
+    --topnav-h: 64px;
+  }
+}
+
+/* =========================================================
+   DARK MODE
+========================================================= */
+
+.dark {
+  --bg: #0a0a0a;
+  --surface: rgba(18, 18, 18, 0.82);
+  --surface-strong: rgba(24, 24, 24, 0.95);
+
+  --fg: #ededed;
+  --muted: rgba(255, 255, 255, 0.72);
+  --muted2: rgba(255, 255, 255, 0.44);
+
+  --border: rgba(255, 255, 255, 0.14);
+  --border-strong: rgba(255, 255, 255, 0.22);
+  --divider: rgba(255, 255, 255, 0.1);
+
+  --shadow-soft: 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-pill: 0 16px 34px rgba(0, 0, 0, 0.55);
+
+  --pill: rgba(255, 255, 255, 0.07);
+  --pill-hover: rgba(255, 255, 255, 0.12);
+
+  --pill-fg: rgba(255, 255, 255, 0.92);
+  --pill-fg-muted: rgba(255, 255, 255, 0.7);
+
+  /* Active pill stays readable and neutral, glow comes from outline */
+  --pill-active-bg: color-mix(in srgb, var(--surface) 94%, var(--accent) 6%);
+  --pill-active-fg: var(--fg);
+  --pill-active-ring: color-mix(in srgb, var(--accent) 86%, transparent);
+  --pill-glow-soft: color-mix(in srgb, var(--accent) 34%, transparent);
+  --pill-glow-mid: color-mix(in srgb, var(--accent) 48%, transparent);
+  --pill-glow-strong: color-mix(in srgb, var(--accent) 64%, transparent);
+
+  /* Major frame glow */
+  --frame-glow-soft: color-mix(in srgb, var(--accent) 22%, transparent);
+  --frame-glow-mid: color-mix(in srgb, var(--accent) 32%, transparent);
+  --frame-glow-strong: color-mix(in srgb, var(--accent) 44%, transparent);
+  --frame-ring: color-mix(in srgb, var(--accent) 42%, var(--border) 58%);
+
+  --input: rgba(255, 255, 255, 0.06);
+  --input-hover: rgba(255, 255, 255, 0.1);
+
+  --link: color-mix(in srgb, var(--accent) 92%, white 8%);
+  --link-hover: color-mix(in srgb, var(--accent) 92%, white 18%);
+  --accent-soft: color-mix(in srgb, var(--accent) 45%, transparent);
+
+  --table-row-hover: rgba(255, 255, 255, 0.05);
+
+  --bg-glow: radial-gradient(
+      1200px 600px at 50% -10%,
+      color-mix(in srgb, var(--accent) 14%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 450px at 85% 0%,
+      color-mix(in srgb, var(--accent-2) 10%, transparent),
+      transparent 55%
+    );
+}
+
+/* =========================================================
+   PALETTE: MIRROR (cyan forward)
+========================================================= */
+
+.theme-mirror {
+  --accent: #52d6f4; /* Neon Cyan */
+  --accent-2: #9615db; /* Neon Violet */
+}
+
+/* =========================================================
+   PALETTE: PURPLE RAIN (violet forward)
+========================================================= */
+
+.theme-purple {
+  --accent: #9615db; /* Neon Violet */
+  --accent-2: #52d6f4; /* Neon Cyan */
+}
+
+/* =========================================================
+   GLOBAL BASE
+========================================================= */
+
+html,
+body {
+  height: 100%;
+}
+
+/* Prevent iOS “focus zoom” by ensuring >=16px font-size on inputs */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+/* Better tap behavior on mobile */
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: Arial, Helvetica, sans-serif;
+
+  /* calm, palette-aware depth without distraction */
+  background-image: var(--bg-glow);
+  background-attachment: fixed;
+
+  /* iOS momentum scroll + less accidental sideways rubber-banding */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: contain;
+
+  /* fast taps; prevent 300ms delay on old browsers */
+  touch-action: manipulation;
+}
+
+/* Make form controls inherit theme colors */
+select,
+option,
+input,
+button,
+textarea {
+  color: inherit;
+  font-family: inherit;
+}
+
+/* Give controls a consistent base + mobile-friendly sizing */
+input,
+select,
+textarea {
+  font-size: 16px; /* iOS no-zoom */
+}
+
+/* Accessible focus ring that matches palette */
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, white 30%);
+  outline-offset: 2px;
+}
+
+/* Links look consistent across pages */
+a {
+  color: var(--link);
+  text-decoration-color: color-mix(in srgb, var(--link) 60%, transparent);
+}
+a:hover {
+  color: var(--link-hover);
+  text-decoration-color: color-mix(in srgb, var(--link-hover) 70%, transparent);
+}
+
+/* Nice selection */
+::selection {
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+/* Optional: consistent hr/dividers */
+hr {
+  border: 0;
+  border-top: 1px solid var(--divider);
+}
+
+/* =========================================================
+   PILL LOCKS
+   - Large pills may glow
+   - Small pills stay neutral
+   - Text stays theme fg (white/black only)
+========================================================= */
+
+.vltd-pill-main-glow {
+  color: var(--fg) !important;
+  border-color: var(--pill-active-ring) !important;
+  box-shadow:
+    0 0 0 1px var(--pill-active-ring),
+    0 0 0 3px var(--pill-glow-soft),
+    0 0 18px var(--pill-glow-mid),
+    0 0 36px var(--pill-glow-soft) !important;
+}
+
+.vltd-pill-main-glow:hover {
+  color: var(--fg) !important;
+  border-color: var(--pill-active-ring) !important;
+  box-shadow:
+    0 0 0 1px var(--pill-active-ring),
+    0 0 0 4px var(--pill-glow-mid),
+    0 0 24px var(--pill-glow-strong),
+    0 0 44px var(--pill-glow-mid) !important;
+}
+
+.vltd-pill-main-glow:disabled {
+  box-shadow: none !important;
+}
+
+.vltd-pill-neutral,
+.vltd-pill-micro {
+  color: var(--fg) !important;
+  border-color: var(--border) !important;
+  box-shadow: none !important;
+}
+
+.vltd-pill-micro {
+  background: var(--pill) !important;
+}
+
+/* =========================================================
+   FRAME GLOW LOCK
+   - Major frames glow
+   - Buttons/pills do not inherit this automatically
+========================================================= */
+
+.vltd-frame-glow {
+  border-color: var(--frame-ring) !important;
+  box-shadow:
+    0 0 0 1px var(--frame-ring),
+    0 0 24px var(--frame-glow-soft),
+    0 0 48px var(--frame-glow-soft) !important;
+}
+
+.vltd-frame-glow:hover {
+  border-color: var(--frame-ring) !important;
+  box-shadow:
+    0 0 0 1px var(--frame-ring),
+    0 0 28px var(--frame-glow-mid),
+    0 0 56px var(--frame-glow-soft) !important;
+}
+
+.vltd-panel-main {
+  border-color: var(--frame-ring) !important;
+  box-shadow:
+    0 0 0 1px var(--frame-ring),
+    0 0 28px var(--frame-glow-mid),
+    0 0 56px var(--frame-glow-soft) !important;
+}
+
+.vltd-panel-main:hover {
+  border-color: var(--frame-ring) !important;
+  box-shadow:
+    0 0 0 1px var(--frame-ring),
+    0 0 34px var(--frame-glow-strong),
+    0 0 64px var(--frame-glow-mid) !important;
+}
+
+.vltd-panel-soft {
+  border-color: color-mix(in srgb, var(--frame-ring) 72%, var(--border) 28%) !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--frame-ring) 72%, var(--border) 28%),
+    0 0 18px var(--frame-glow-soft),
+    0 0 36px color-mix(in srgb, var(--frame-glow-soft) 70%, transparent) !important;
+}
+
+.vltd-panel-soft:hover {
+  border-color: color-mix(in srgb, var(--frame-ring) 82%, var(--border) 18%) !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--frame-ring) 82%, var(--border) 18%),
+    0 0 22px var(--frame-glow-mid),
+    0 0 42px var(--frame-glow-soft) !important;
+}
+
+
+.vltd-page-tight {
+  padding-block: clamp(1rem, 2vw, 1.5rem);
+}
+
+.vltd-section-tight {
+  padding: clamp(1rem, 2vw, 1.25rem) !important;
+}
+
+.vltd-card-tight {
+  padding: clamp(0.75rem, 1.5vw, 1rem) !important;
+}
+
+/* =========================================================
+   ROUTE TRANSITIONS
+   Used by: src/components/RouteTransition.tsx
+========================================================= */
+
+.vltd-route-enter {
+  animation: vltdRouteIn 180ms ease both;
+  transform-origin: 50% 0%;
+}
+
+@keyframes vltdRouteIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+    filter: saturate(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: saturate(1);
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .vltd-route-enter {
+    animation: none;
+  }
+}
+
+/* =========================================================
+   MOBILE HELPERS (utility-ish)
+========================================================= */
+
+/* Hide scrollbars but keep scroll */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+/* Safe-area padding helpers */
+.safe-pb {
+  padding-bottom: calc(var(--safe-b) + 12px);
+}
+.safe-pt {
+  padding-top: calc(var(--safe-t) + 12px);
+}
+
+/* Prevent text selection where it feels bad on mobile */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Better “tap target” baseline */
+.tap-44 {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* =========================================================
+   VLTD STYLE SYSTEM
+   Used by /styles Apply Style Gallery
+   Root classes applied to <html>
+========================================================= */
+
+/* ---------------------------------------------------------
+   STYLE: MINIMAL
+   Clean UI-first design
+--------------------------------------------------------- */
+
+.style-minimal {
+  --shadow-pill: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.style-minimal .rounded-3xl {
+  backdrop-filter: none;
+}
+
+/* ---------------------------------------------------------
+   STYLE: ENGRAVED
+   Premium metallic feel (logo / large cards)
+--------------------------------------------------------- */
+
+.style-engraved {
+  --shadow-pill: 0 18px 40px rgba(0,0,0,0.35);
+}
+
+.style-engraved .rounded-3xl {
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 12px 30px rgba(0,0,0,0.35);
+}
+
+.style-engraved .vltd-frame-glow {
+  border-color: color-mix(in srgb, var(--accent) 42%, transparent) !important;
+}
+
+.style-engraved .vltd-panel-main,
+.style-engraved .vltd-panel-soft {
+  border-color: color-mix(in srgb, var(--accent) 42%, transparent) !important;
+}
+
+/* ---------------------------------------------------------
+   STYLE: ROYAL
+   Strong brand emphasis
+--------------------------------------------------------- */
+
+.style-royal {
+  --accent: color-mix(in srgb, var(--accent) 80%, gold 20%);
+}
+
+.style-royal .rounded-3xl {
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+/* ---------------------------------------------------------
+   STYLE: NEON MIRROR
+   Cyber / mirror glow
+--------------------------------------------------------- */
+
+.style-neon_mirror {
+  --shadow-pill: 0 0 18px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.style-neon_mirror .rounded-3xl {
+  box-shadow:
+    0 0 18px color-mix(in srgb, var(--accent) 35%, transparent),
+    inset 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.style-neon_mirror .vltd-frame-glow,
+.style-neon_mirror .vltd-panel-main {
+  box-shadow:
+    0 0 0 1px var(--frame-ring),
+    0 0 30px var(--frame-glow-mid),
+    0 0 60px var(--frame-glow-soft) !important;
+}
+
+.style-neon_mirror .vltd-panel-soft {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--frame-ring) 80%, var(--border) 20%),
+    0 0 24px var(--frame-glow-mid),
+    0 0 48px var(--frame-glow-soft) !important;
+}
+
+/* ---------------------------------------------------------
+   STYLE: NEON PURPLE
+--------------------------------------------------------- */
+
+.style-neon_purple {
+  --accent: #9615db;
+  --accent-2: #52d6f4;
+}
+
+.style-neon_purple .rounded-3xl {
+  box-shadow:
+    0 0 18px rgba(150,21,219,0.35),
+    inset 0 0 4px rgba(150,21,219,0.25);
+}
+
+.style-neon_purple .vltd-frame-glow,
+.style-neon_purple .vltd-panel-main {
+  box-shadow:
+    0 0 0 1px var(--frame-ring),
+    0 0 30px rgba(150,21,219,0.30),
+    0 0 58px rgba(150,21,219,0.18) !important;
+}
+
+.style-neon_purple .vltd-panel-soft {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--frame-ring) 80%, var(--border) 20%),
+    0 0 24px rgba(150,21,219,0.24),
+    0 0 46px rgba(150,21,219,0.14) !important;
+}
+
+/* ---------------------------------------------------------
+   STYLE: NOIR
+   Cinematic dark gallery mode
+--------------------------------------------------------- */
+
+.style-noir {
+  --bg: #050505;
+  --surface: #0c0c0c;
+  --surface-strong: #121212;
+}
+
+.style-noir .rounded-3xl {
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+/* ---------------------------------------------------------
+   STYLE: PAPER
+   Print / inventory mode
+--------------------------------------------------------- */
+
+.style-paper {
+  --bg: #f8f7f4;
+  --surface: #ffffff;
+  --surface-strong: #f3f2ee;
+
+  --border: rgba(0,0,0,0.18);
+}
+
+.style-paper body {
+  background-image: none;
+}
