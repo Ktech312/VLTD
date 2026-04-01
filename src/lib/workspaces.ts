@@ -124,3 +124,57 @@ export function placeholderMembers() {
     },
   ];
 }
+
+export type WorkspaceRole = "OWNER" | "ADMIN" | "INVENTORY_MANAGER" | "VIEWER";
+
+export type WorkspaceRoleDefaults = {
+  addItem: boolean;
+  editItem: boolean;
+  deleteItem: boolean;
+  viewPortfolioFinancials: boolean;
+  manageMembers: boolean;
+  billingAccess: boolean;
+};
+
+export function getRoleDefaults(role: WorkspaceRole): WorkspaceRoleDefaults {
+  switch (role) {
+    case "OWNER":
+      return {
+        addItem: true,
+        editItem: true,
+        deleteItem: true,
+        viewPortfolioFinancials: true,
+        manageMembers: true,
+        billingAccess: true,
+      };
+    case "ADMIN":
+      return {
+        addItem: true,
+        editItem: true,
+        deleteItem: true,
+        viewPortfolioFinancials: true,
+        manageMembers: true,
+        billingAccess: false,
+      };
+    case "INVENTORY_MANAGER":
+      return {
+        addItem: true,
+        editItem: true,
+        deleteItem: false,
+        viewPortfolioFinancials: false,
+        manageMembers: false,
+        billingAccess: false,
+      };
+    case "VIEWER":
+    default:
+      return {
+        addItem: false,
+        editItem: false,
+        deleteItem: false,
+        viewPortfolioFinancials: false,
+        manageMembers: false,
+        billingAccess: false,
+      };
+  }
+}
+

@@ -656,3 +656,17 @@ export function seedDemoIfEmpty() {
     saveItems(demo);
   }
 }
+
+export function loadItemsOrSeed(seed?: VaultItem[]) {
+  const existing = loadItems({ includeAllProfiles: true });
+  if (existing.length > 0) return existing;
+
+  const safeSeed = Array.isArray(seed) ? seed.filter(Boolean).map(syncPrimaryFields) : [];
+  if (safeSeed.length > 0) {
+    saveItems(safeSeed);
+    return loadItems({ includeAllProfiles: true });
+  }
+
+  return existing;
+}
+
