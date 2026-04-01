@@ -41,10 +41,7 @@ export function loadWorkspaces(): Workspace[] {
 export function getCurrentWorkspace(): Workspace {
   const workspaces = loadWorkspaces();
 
-  return (
-    workspaces.find((w) => w.id === currentWorkspaceId) ??
-    workspaces[0]
-  );
+  return workspaces.find((w) => w.id === currentWorkspaceId) ?? workspaces[0];
 }
 
 /*
@@ -64,9 +61,7 @@ export function switchWorkspace(id: string) {
 /*
  Listen for workspace changes
 */
-export function onWorkspaceChange(
-  fn: (workspace: Workspace) => void
-) {
+export function onWorkspaceChange(fn: (workspace: Workspace) => void) {
   listeners.add(fn);
 
   return () => {
@@ -94,6 +89,15 @@ export type WorkspaceSummary = {
   logoText: string;
 };
 
+export type WorkspaceRole = "OWNER" | "ADMIN" | "INVENTORY_MANAGER" | "VIEWER";
+
+export type WorkspaceMember = {
+  id: string;
+  name: string;
+  role: WorkspaceRole;
+  status: "ACTIVE" | "INVITED" | "DISABLED";
+};
+
 /*
  Convert a PROFILE into a workspace summary
  (TopNav depends on this shape)
@@ -114,7 +118,7 @@ export function toWorkspaceSummary(profile: any): WorkspaceSummary {
 /*
  Placeholder members until team system exists
 */
-export function placeholderMembers() {
+export function placeholderMembers(): WorkspaceMember[] {
   return [
     {
       id: "owner",
@@ -124,8 +128,6 @@ export function placeholderMembers() {
     },
   ];
 }
-
-export type WorkspaceRole = "OWNER" | "ADMIN" | "INVENTORY_MANAGER" | "VIEWER";
 
 export type WorkspaceRoleDefaults = {
   addItem: boolean;
@@ -177,4 +179,3 @@ export function getRoleDefaults(role: WorkspaceRole): WorkspaceRoleDefaults {
       };
   }
 }
-
