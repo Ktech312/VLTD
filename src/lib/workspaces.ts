@@ -96,6 +96,16 @@ export type WorkspaceMember = {
   name: string;
   role: WorkspaceRole;
   status: "ACTIVE" | "INVITED" | "DISABLED";
+  email?: string;
+};
+
+export type WorkspaceRoleDefaults = {
+  addItem: boolean;
+  editItem: boolean;
+  deleteItem: boolean;
+  viewPortfolioFinancials: boolean;
+  manageMembers: boolean;
+  billingAccess: boolean;
 };
 
 /*
@@ -117,26 +127,22 @@ export function toWorkspaceSummary(profile: any): WorkspaceSummary {
 
 /*
  Placeholder members until team system exists
+ Accepts workspace/email because account/team page already calls it that way.
 */
-export function placeholderMembers(): WorkspaceMember[] {
+export function placeholderMembers(
+  _workspace?: WorkspaceSummary | Workspace | null,
+  email?: string | null
+): WorkspaceMember[] {
   return [
     {
       id: "owner",
       name: "You",
       role: "OWNER",
       status: "ACTIVE",
+      email: email ?? undefined,
     },
   ];
 }
-
-export type WorkspaceRoleDefaults = {
-  addItem: boolean;
-  editItem: boolean;
-  deleteItem: boolean;
-  viewPortfolioFinancials: boolean;
-  manageMembers: boolean;
-  billingAccess: boolean;
-};
 
 export function getRoleDefaults(role: WorkspaceRole): WorkspaceRoleDefaults {
   switch (role) {
