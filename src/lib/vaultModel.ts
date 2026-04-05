@@ -5,6 +5,7 @@ import {
   isDirectBrowserImageUrl,
 } from "@/lib/vaultCloud";
 import { newId } from "@/lib/id";
+import { getDemoItems } from "@/lib/demoSeed";
 
 export type PriceConfidence = "low" | "medium" | "high";
 export type VaultImageRole = "primary" | "detail" | "proof";
@@ -103,7 +104,6 @@ function sanitizeMaybeImageUrl(value?: string | null) {
   if (isProbablyStoragePath(trimmed)) return undefined;
   return undefined;
 }
-
 
 function sanitizeVaultImageRole(value: unknown): VaultImageRole | undefined {
   if (value === "primary" || value === "detail" || value === "proof") return value;
@@ -531,7 +531,11 @@ export function reorderImages(item: VaultItem, fromIndex: number, toIndex: numbe
   const [moved] = next.splice(fromIndex, 1);
   next.splice(toIndex, 0, moved);
 
-  const normalized = next.map((image, index) => ({ ...image, order: index, role: inferImageRole(index, sanitizeVaultImageRole(image.role)) }));
+  const normalized = next.map((image, index) => ({
+    ...image,
+    order: index,
+    role: inferImageRole(index, sanitizeVaultImageRole(image.role)),
+  }));
 
   return syncPrimaryFields({
     ...item,
@@ -544,7 +548,14 @@ export function deleteImageAtIndex(item: VaultItem, index: number) {
   const images = getOrderedImages(item);
   if (index < 0 || index >= images.length) return item;
 
-  const next = images.filter((_, i) => i !== index).map((image, order) => ({ ...image, order, role: inferImageRole(order, sanitizeVaultImageRole(image.role)) }));
+  const next = images
+    .filter((_, i) => i !== index)
+    .map((image, order) => ({
+      ...image,
+      order,
+      role: inferImageRole(order, sanitizeVaultImageRole(image.role)),
+    }));
+
   return syncPrimaryFields({
     ...item,
     images: next,
@@ -567,8 +578,7 @@ function mergeById(localItems: VaultItem[], remoteItems: VaultItem[]) {
       continue;
     }
 
-    const remoteHasImages =
-      Array.isArray(remoteItem.images) && remoteItem.images.length > 0;
+    const remoteHasImages = Array.isArray(remoteItem.images) && remoteItem.images.length > 0;
 
     const merged = normalizeOne({
       ...existing,
@@ -576,8 +586,7 @@ function mergeById(localItems: VaultItem[], remoteItems: VaultItem[]) {
       images: remoteHasImages ? remoteItem.images : existing.images,
       primaryImageKey: remoteItem.primaryImageKey || existing.primaryImageKey,
       imageFrontUrl: remoteItem.imageFrontUrl || existing.imageFrontUrl,
-      imageFrontStoragePath:
-        remoteItem.imageFrontStoragePath || existing.imageFrontStoragePath,
+      imageFrontStoragePath: remoteItem.imageFrontStoragePath || existing.imageFrontStoragePath,
       createdAt: remoteItem.createdAt || existing.createdAt,
     });
 
@@ -646,8 +655,6 @@ export function saveItem(item: VaultItem) {
   saveRawItems(next);
 }
 
-import { getDemoItems } from "@/lib/demoSeed";
-
 export function seedDemoIfEmpty() {
   const existing = loadItems({ includeAllProfiles: true });
 
@@ -669,4 +676,3 @@ export function loadItemsOrSeed(seed?: VaultItem[]) {
 
   return existing;
 }
-

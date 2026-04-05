@@ -14,10 +14,6 @@ let currentWorkspaceId: string | null = null;
 
 const listeners = new Set<(workspace: Workspace) => void>();
 
-/*
- Load workspaces
- Placeholder until backend exists
-*/
 export function loadWorkspaces(): Workspace[] {
   if (cachedWorkspaces) return cachedWorkspaces;
 
@@ -35,50 +31,28 @@ export function loadWorkspaces(): Workspace[] {
   return cachedWorkspaces;
 }
 
-/*
- Get current workspace
-*/
 export function getCurrentWorkspace(): Workspace {
   const workspaces = loadWorkspaces();
-
   return workspaces.find((w) => w.id === currentWorkspaceId) ?? workspaces[0];
 }
 
-/*
- Switch workspace
-*/
 export function switchWorkspace(id: string) {
   const workspaces = loadWorkspaces();
-
   const ws = workspaces.find((w) => w.id === id);
   if (!ws) return;
 
   currentWorkspaceId = ws.id;
-
   listeners.forEach((fn) => fn(ws));
 }
 
-/*
- Listen for workspace changes
-*/
 export function onWorkspaceChange(fn: (workspace: Workspace) => void) {
   listeners.add(fn);
-
-  return () => {
-    listeners.delete(fn);
-  };
+  return () => listeners.delete(fn);
 }
 
-/*
- Utility
-*/
 export function getWorkspaceName(): string {
   return getCurrentWorkspace().name;
 }
-
-/* --------------------------------------------------
-   Account / TopNav helpers
--------------------------------------------------- */
 
 export type WorkspaceSummary = {
   id: string;
@@ -89,7 +63,11 @@ export type WorkspaceSummary = {
   logoText: string;
 };
 
-export type WorkspaceRole = "OWNER" | "ADMIN" | "INVENTORY_MANAGER" | "VIEWER";
+export type WorkspaceRole =
+  | "OWNER"
+  | "ADMIN"
+  | "INVENTORY_MANAGER"
+  | "VIEWER";
 
 export type WorkspaceMember = {
   id: string;
@@ -97,6 +75,7 @@ export type WorkspaceMember = {
   role: WorkspaceRole;
   status: "ACTIVE" | "INVITED" | "DISABLED";
   email?: string;
+  note?: string;
 };
 
 export type WorkspaceRoleDefaults = {
@@ -108,10 +87,6 @@ export type WorkspaceRoleDefaults = {
   billingAccess: boolean;
 };
 
-/*
- Convert a PROFILE into a workspace summary
- (TopNav depends on this shape)
-*/
 export function toWorkspaceSummary(profile: any): WorkspaceSummary {
   const type = profile?.profile_type === "business" ? "business" : "personal";
 
@@ -125,10 +100,6 @@ export function toWorkspaceSummary(profile: any): WorkspaceSummary {
   };
 }
 
-/*
- Placeholder members until team system exists
- Accepts workspace/email because account/team page already calls it that way.
-*/
 export function placeholderMembers(
   _workspace?: WorkspaceSummary | Workspace | null,
   email?: string | null
@@ -140,6 +111,7 @@ export function placeholderMembers(
       role: "OWNER",
       status: "ACTIVE",
       email: email ?? undefined,
+      note: "Primary owner account",
     },
   ];
 }

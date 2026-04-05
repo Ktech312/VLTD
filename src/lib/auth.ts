@@ -60,9 +60,13 @@ function getSupabase() {
   return getSupabaseBrowserClient();
 }
 
-function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
-  return new Promise((resolve, reject) => {
+function withTimeout<T extends { data?: any; error?: any }>(
+  promise: PromiseLike<T>,
+  label: string
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`${label} timed out.`)), AUTH_TIMEOUT_MS);
+
     promise.then(
       (value) => {
         clearTimeout(timer);
@@ -345,16 +349,19 @@ export async function listMyProfiles() {
     }
 
     try {
-      const query = supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: true });
+      const result = await withTimeout(
+        supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: true })
+          .then((res) => res),
+        "Profile list lookup"
+      );
 
-      const result = await withTimeout(query, "Profile list lookup");
       return {
         data: (result.data ?? []) as ProfileRow[],
-        error: (result as any).error ?? null,
+        error: result.error ?? null,
       };
     } catch (error) {
       return {
@@ -390,10 +397,17 @@ export async function createProfile(input: {
     primary_focus: input.primary_focus?.trim() || null,
   };
 
-  const { data, error } = await withTimeout(
-    supabase.from("profiles").insert(payload).select("*").single(),
+  const result = await withTimeout(
+    supabase
+      .from("profiles")
+      .insert(payload)
+      .select("*")
+      .single()
+      .then((res) => res),
     "Profile creation"
   );
+
+  const { data, error } = result;
 
   if (error) throw error;
 
@@ -425,10 +439,18 @@ export async function updateProfile(profileId: string, patch: Partial<ProfileRow
     payload.is_default = patch.is_default;
   }
 
-  const { data, error } = await withTimeout(
-    supabase.from("profiles").update(payload).eq("id", profileId).select("*").single(),
+  const result = await withTimeout(
+    supabase
+      .from("profiles")
+      .update(payload)
+      .eq("id", profileId)
+      .select("*")
+      .single()
+      .then((res) => res),
     "Profile update"
   );
+
+  const { data, error } = result;
 
   if (error) throw error;
 

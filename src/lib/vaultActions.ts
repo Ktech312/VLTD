@@ -1,20 +1,22 @@
-import { addItem, updateItem, deleteItem } from "./vaultModel";
+import { loadItems, saveItem, saveItems, type VaultItem } from "./vaultModel";
 import { emitVaultUpdate } from "./vaultEvents";
 
-export function addItemAndNotify(item: any) {
-  const res = addItem(item);
+export function addItemAndNotify(item: VaultItem) {
+  saveItem(item);
   emitVaultUpdate();
-  return res;
+  return item;
 }
 
-export function updateItemAndNotify(item: any) {
-  const res = updateItem(item);
+export function updateItemAndNotify(item: VaultItem) {
+  saveItem(item);
   emitVaultUpdate();
-  return res;
+  return item;
 }
 
 export function deleteItemAndNotify(id: string) {
-  const res = deleteItem(id);
+  const items = loadItems({ includeAllProfiles: true });
+  const next = items.filter((item) => String(item.id) !== String(id));
+  saveItems(next);
   emitVaultUpdate();
-  return res;
+  return id;
 }

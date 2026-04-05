@@ -19,7 +19,10 @@ function useTilt() {
     const scale = 1.02;
 
     function onMove(e: MouseEvent) {
-      const rect = el.getBoundingClientRect();
+      const node = ref.current;
+      if (!node) return;
+
+      const rect = node.getBoundingClientRect();
 
       const px = (e.clientX - rect.left) / rect.width;
       const py = (e.clientY - rect.top) / rect.height;
@@ -27,15 +30,18 @@ function useTilt() {
       const rx = (0.5 - py) * (maxTilt * 2);
       const ry = (px - 0.5) * (maxTilt * 2);
 
-      el.style.transform =
+      node.style.transform =
         `perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) scale(${scale})`;
 
-      el.style.boxShadow = "0 18px 44px rgba(0,0,0,0.25)";
+      node.style.boxShadow = "0 18px 44px rgba(0,0,0,0.25)";
     }
 
     function reset() {
-      el.style.transform = "perspective(900px) rotateX(0deg) rotateY(0deg) scale(1)";
-      el.style.boxShadow = "0 1px 0 rgba(0,0,0,0.04)";
+      const node = ref.current;
+      if (!node) return;
+
+      node.style.transform = "perspective(900px) rotateX(0deg) rotateY(0deg) scale(1)";
+      node.style.boxShadow = "0 1px 0 rgba(0,0,0,0.04)";
     }
 
     el.addEventListener("mousemove", onMove);

@@ -3,12 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 
 type Point = { x: number; y: number };
+type TouchPoint = { clientX: number; clientY: number };
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-function distance(a: Touch, b: Touch) {
+function distance(a: TouchPoint, b: TouchPoint) {
   return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
 }
 
@@ -71,7 +72,7 @@ export default function ImageViewer({
       document.body.style.overflow = previousBodyOverflow;
       document.documentElement.style.overflow = previousHtmlOverflow;
     };
-  }, [images.length]);
+  }, [images.length, onClose]);
 
   const canPan = scale > 1;
 

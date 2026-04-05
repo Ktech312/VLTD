@@ -157,22 +157,22 @@ export function getCollectionMetrics(items: VaultItem[]): CollectionMetrics {
   const maxSegmentValue = topValueSegments[0]?.value ?? 0;
 
   let topPerformer: VaultItem | undefined;
-let biggestUnderwater: VaultItem | undefined;
-let highestValue: VaultItem | undefined;
+  let biggestUnderwater: VaultItem | undefined;
+  let highestValue: VaultItem | undefined;
 
-for (const item of safeItems) {
-  if (!topPerformer || itemProfit(item) > itemProfit(topPerformer)) {
-    topPerformer = item;
-  }
+  for (const item of safeItems) {
+    if (!topPerformer || itemProfit(item) > itemProfit(topPerformer)) {
+      topPerformer = item;
+    }
 
-  if (!biggestUnderwater || itemProfit(item) < itemProfit(biggestUnderwater)) {
-    biggestUnderwater = item;
-  }
+    if (!biggestUnderwater || itemProfit(item) < itemProfit(biggestUnderwater)) {
+      biggestUnderwater = item;
+    }
 
-  if (!highestValue || itemCurrentValue(item) > itemCurrentValue(highestValue)) {
-    highestValue = item;
+    if (!highestValue || itemCurrentValue(item) > itemCurrentValue(highestValue)) {
+      highestValue = item;
+    }
   }
-}
 
   return {
     totalItems,
@@ -188,9 +188,9 @@ for (const item of safeItems) {
     recentItems,
     maxSegmentValue,
     intelligence: {
-  topPerformer,
-  biggestUnderwater,
-  highestValue,
+      topPerformer,
+      biggestUnderwater,
+      highestValue,
     },
   };
 }
@@ -239,7 +239,7 @@ export function getGalleryMetrics(gallery: Gallery, allItems: VaultItem[]): Gall
 
   const sections = safeArray(gallery.sections);
   const layoutType: ExhibitionLayoutType =
-    (gallery.layout?.type as ExhibitionLayoutType) ?? "GRID";
+    gallery.exhibitionLayout?.type ?? "GRID";
 
   const sectionCount = sections.length;
   const featuredWorkCount = sections.filter((section) => !!section?.featuredItemId).length;

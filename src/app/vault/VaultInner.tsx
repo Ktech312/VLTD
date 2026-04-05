@@ -136,7 +136,7 @@ async function fileToDataUrl(file: File): Promise<string> {
 
 async function normalizeImageForTier(file: File, tier: Tier): Promise<string> {
   const original = await fileToDataUrl(file);
-  if (tier === "PREMIUM") return original;
+  if (tier !== "FREE") return original;
 
   const maxW = 1200;
   const maxH = 1200;
@@ -659,7 +659,7 @@ export default function VaultInner() {
 
   const [items, setItems] = useState<ModelItem[]>([]);
   const [tier, setTier] = useState<Tier>("FREE");
-  const bulkAllowed = tier === "PREMIUM";
+  const bulkAllowed = tier !== "FREE";
 
   const [q, setQ] = useState("");
   const [graded, setGraded] = useState("");
@@ -732,7 +732,7 @@ export default function VaultInner() {
   }, []);
 
   useEffect(() => {
-    setBulkEnabled(tier === "PREMIUM");
+    setBulkEnabled(tier !== "FREE");
   }, [tier]);
 
   useEffect(() => {

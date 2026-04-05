@@ -542,7 +542,7 @@ export default function GalleryPage() {
                   SECTIONS
                 </div>
                 <div className="mt-2 text-xl font-semibold">
-                  {gallery.exhibitionLayout?.sections.length ?? 0}
+                  {gallery.exhibitionLayout?.sections?.length ?? 0}
                 </div>
               </div>
 

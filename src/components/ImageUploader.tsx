@@ -1,15 +1,17 @@
 "use client";
 
-export default function ImageUploader({ onAdd }) {
+type ImageUploaderProps = {
+  onAdd: (files: FileList | null) => void;
+};
+
+export default function ImageUploader({ onAdd }: ImageUploaderProps) {
   return (
     <input
       type="file"
-      multiple
       accept="image/*"
-      onChange={(e) => {
-        const files = Array.from(e.target.files || []);
-        onAdd(files);
-      }}
+      multiple
+      onChange={(e) => onAdd(e.target.files)}
+      className="block w-full text-sm"
     />
   );
 }

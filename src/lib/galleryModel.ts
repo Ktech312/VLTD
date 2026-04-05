@@ -167,7 +167,7 @@ function normalizeGalleryVisibility(value: unknown): GalleryVisibility {
 
 function normalizeGalleryLayout(value: unknown): GalleryLayout {
   if (!value || typeof value !== "object") return getDefaultGalleryLayout();
-  return value as GalleryLayout;
+  return value as unknown as GalleryLayout;
 }
 
 function normalizeExhibitionLayoutType(value: unknown): ExhibitionLayoutType {
@@ -405,12 +405,15 @@ function normalizeExhibitionLayoutFromGalleryRaw(
   const directType = normalizeExhibitionLayoutType((layout as any)?.type);
   const legacyType = normalizeExhibitionLayoutType(legacy?.type);
 
-  return {
-    ...(layout as ExhibitionLayout),
-    ...(legacy && typeof legacy === "object" ? legacy : {}),
-    type: legacy?.type ? legacyType : directType,
-    sections,
-  };
+  return Object.assign(
+    {} as ExhibitionLayout,
+    layout as unknown as object,
+    (legacy && typeof legacy === "object" ? legacy : {}) as object,
+    {
+      type: legacy?.type ? legacyType : directType,
+      sections,
+    }
+  );
 }
 
 function normalizeGallery(raw: any): Gallery | null {
@@ -614,20 +617,23 @@ function getViewerKey() {
 
 function rebuildExhibitionLayout(
   gallery: Gallery,
-  patch?: Partial<ExhibitionLayout>
+  patch?: { type?: ExhibitionLayoutType; sections?: GallerySection[] }
 ): ExhibitionLayout {
   const baseLayout = normalizeGalleryLayout(gallery.layout);
   const sections = normalizeSections(gallery.sections, gallery.itemIds);
 
   const currentType = normalizeExhibitionLayoutType(gallery.exhibitionLayout?.type);
 
-  return {
-    ...(baseLayout as ExhibitionLayout),
-    ...(gallery.exhibitionLayout ?? {}),
-    type: currentType,
-    sections,
-    ...(patch ?? {}),
-  };
+  return Object.assign(
+    {} as ExhibitionLayout,
+    baseLayout as unknown as object,
+    (gallery.exhibitionLayout ?? {}) as object,
+    {
+      type: currentType,
+      sections,
+    },
+    (patch ?? {}) as object
+  );
 }
 
 function withSyncedSections(gallery: Gallery, nextSections: GallerySection[]) {
@@ -721,11 +727,14 @@ export function createGallery(title: string): Gallery {
     visibility: "PUBLIC",
     state: "ACTIVE",
     layout,
-    exhibitionLayout: {
-      ...(layout as ExhibitionLayout),
-      type: normalizeExhibitionLayoutType((layout as any)?.type),
-      sections,
-    },
+    exhibitionLayout: Object.assign(
+      {} as ExhibitionLayout,
+      layout as unknown as object,
+      {
+        type: normalizeExhibitionLayoutType((layout as any)?.type),
+        sections,
+      }
+    ),
     coverImage: "",
     itemNotes: [],
     share: {
@@ -1379,10 +1388,13 @@ export function setExhibitionLayoutType(
 
     const nextGallery: Gallery = {
       ...gallery,
-      layout: {
-        ...gallery.layout,
-        type: nextLayoutType,
-      } as GalleryLayout,
+      layout: Object.assign(
+        {} as GalleryLayout,
+        (gallery.layout as unknown as object),
+        {
+          type: nextLayoutType,
+        }
+      ),
       exhibitionLayout: rebuildExhibitionLayout(gallery, {
         type: nextLayoutType,
         sections: getGallerySections(gallery),

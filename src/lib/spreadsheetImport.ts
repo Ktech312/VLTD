@@ -145,7 +145,7 @@ function parsePositiveInteger(value: unknown) {
 }
 
 function countRecognizedHeaders(row: unknown[]) {
-  return row.reduce((count, cell) => {
+  return row.reduce<number>((count, cell) => {
     const normalized = normalizeHeader(cell);
     if (!normalized) return count;
     return getDefaultMappingForHeader(String(cell)) !== "ignore" ? count + 1 : count;

@@ -268,7 +268,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     setMediaMessage("Background removal hook is running...");
 
     try {
-      const resultUrl = await removeBackgroundStub(images[index]);
+      const result = await removeBackgroundStub(images[index]);
+      const resultUrl = typeof result === "string" ? result : URL.createObjectURL(result);
       const nextImages = [...(item.images ?? [])];
       if (nextImages[index]) {
         nextImages[index] = {
@@ -315,6 +316,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     priceConfidence?: "low" | "medium" | "high";
     priceNotes?: string;
   }) {
+    if (!item) return;
+
     const pricingPatch = buildPricingPatch({
       estimatedValue: patch.estimatedValue,
       lastCompValue: patch.lastCompValue,
@@ -325,6 +328,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
     const nextItem: VaultItem = {
       ...item,
+      id: item.id,
+      title: item.title,
       estimatedValue: pricingPatch.estimatedValue,
       lastCompValue: pricingPatch.lastCompValue,
       priceSource: pricingPatch.priceSource,
