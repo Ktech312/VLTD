@@ -541,24 +541,45 @@ function serializeInviteTokenForSupabase(galleryId: string, invite: GalleryInvit
 }
 
 async function upsertGalleryToSupabase(gallery: Gallery) {
+  console.log("VLTD gallery sync -> upsert start", {
+    id: gallery.id,
+    title: gallery.title,
+    visibility: gallery.visibility,
+    share: gallery.share,
+  });
+
   const supabase = getSupabaseBrowserClient();
-  if (!supabase) return;
+
+  if (!supabase) {
+    console.error("VLTD gallery sync -> no Supabase client available");
+    return;
+  }
 
   try {
     const payload = serializeGalleryForSupabase(gallery);
+
+    console.log("VLTD gallery sync -> payload", payload);
+
     const { error } = await supabase.from("galleries").upsert(payload, {
       onConflict: "id",
     });
 
     if (error) {
-      console.error("Failed to upsert gallery:", error);
+      console.error("VLTD gallery sync -> gallery upsert failed", error);
       return;
     }
+
+    console.log("VLTD gallery sync -> gallery upsert success", {
+      id: gallery.id,
+      title: gallery.title,
+    });
 
     const inviteTokens = normalizeInviteTokens(gallery.share?.inviteTokens);
     const inviteRows = inviteTokens.map((invite) =>
       serializeInviteTokenForSupabase(gallery.id, invite)
     );
+
+    console.log("VLTD gallery sync -> invite rows", inviteRows);
 
     if (inviteRows.length > 0) {
       const { error: inviteError } = await supabase.from("gallery_invites").upsert(inviteRows, {
@@ -566,22 +587,37 @@ async function upsertGalleryToSupabase(gallery: Gallery) {
       });
 
       if (inviteError) {
-        console.error("Failed to upsert gallery invite tokens:", inviteError);
+        console.error("VLTD gallery sync -> invite upsert failed", inviteError);
+      } else {
+        console.log("VLTD gallery sync -> invite upsert success", {
+          galleryId: gallery.id,
+          inviteCount: inviteRows.length,
+        });
       }
     }
 
     let deleteQuery = supabase.from("gallery_invites").delete().eq("gallery_id", gallery.id);
+
     if (inviteRows.length > 0) {
       const keepTokens = inviteRows.map((row) => row.token);
-      deleteQuery = deleteQuery.not("token", "in", `(${keepTokens.map((t) => JSON.stringify(t)).join(",")})`);
+      deleteQuery = deleteQuery.not(
+        "token",
+        "in",
+        `(${keepTokens.map((t) => JSON.stringify(t)).join(",")})`
+      );
     }
 
     const { error: deleteError } = await deleteQuery;
+
     if (deleteError) {
-      console.error("Failed to prune gallery invite tokens:", deleteError);
+      console.error("VLTD gallery sync -> invite prune failed", deleteError);
+    } else {
+      console.log("VLTD gallery sync -> invite prune success", {
+        galleryId: gallery.id,
+      });
     }
   } catch (error) {
-    console.error("Unexpected gallery Supabase sync error:", error);
+    console.error("VLTD gallery sync -> unexpected error", error);
   }
 }
 
@@ -1066,9 +1102,28 @@ export function regenerateGalleryPublicToken(galleryId: string) {
   return token;
 }
 
-export function getGalleryByPublicToken(publicToken: string) {
+export async function getGalleryByPublicToken(publicToken: string) {
   const cleanToken = safeString(publicToken);
   if (!cleanToken) return null;
+
+  const supabase = getSupabaseBrowserClient();
+
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("galleries")
+        .select("*")
+        .contains("share", { publicToken: cleanToken })
+        .single();
+
+      if (!error && data) {
+        const normalizedGallery = normalizeSupabaseGallery(data);
+        if (normalizedGallery) return normalizedGallery;
+      }
+    } catch (error) {
+      console.error("Supabase public gallery lookup failed:", error);
+    }
+  }
 
   const galleries = loadRawGalleries();
   return galleries.find((gallery) => gallery.share?.publicToken === cleanToken) ?? null;

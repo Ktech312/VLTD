@@ -205,7 +205,6 @@ function SharedShelfGalleryStrip({
                         <div className="absolute inset-0 rounded-[20px] bg-[linear-gradient(135deg,rgba(255,255,255,0.14),transparent_42%)] opacity-70" />
                         <div className="relative overflow-hidden rounded-[14px] bg-black/25">
                           {image ? (
-                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={image}
                               alt={item.title}
@@ -262,18 +261,33 @@ export default function SharedGalleryPage() {
   const [gallery, setGallery] = useState<Gallery | null>(null);
   const [items, setItems] = useState<VaultItem[]>([]);
   const [isResolved, setIsResolved] = useState(false);
+  const [showGuestContent, setShowGuestContent] = useState(false);
 
   useEffect(() => {
     if (!token) return;
 
-    const found = getGalleryByPublicToken(token);
-    setGallery(found);
-    setItems(loadItems());
-    setIsResolved(true);
+    let isCancelled = false;
 
-    if (found) {
-      recordGalleryView(found.id);
+    async function resolvePublicGallery() {
+      const found = await getGalleryByPublicToken(token);
+
+      if (isCancelled) return;
+
+      setGallery(found);
+      setItems(loadItems());
+      setIsResolved(true);
+
+      if (found) {
+        recordGalleryView(found.id);
+        setShowGuestContent(getGalleryGuestViewMode(found) === "public");
+      }
     }
+
+    void resolvePublicGallery();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [token]);
 
   const itemMap = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
@@ -369,6 +383,41 @@ export default function SharedGalleryPage() {
 
   if (!gallery) {
     return null;
+  }
+
+  if (!showGuestContent) {
+    return (
+      <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+        <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
+          <div className="rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)]">
+            <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
+              PUBLIC GALLERY
+            </div>
+            <h1 className="mt-3 text-3xl font-semibold">{gallery.title}</h1>
+            <p className="mt-3 text-sm text-[color:var(--muted)]">
+              This gallery is public, but the owner prefers registered viewers by default.
+            </p>
+
+            <div className="mt-6 flex flex-col items-center gap-3">
+              <Link
+                href="/signup"
+                className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-6 py-3 text-base font-semibold text-[color:var(--fg)]"
+              >
+                Create Free Account
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => setShowGuestContent(true)}
+                className="text-sm text-[color:var(--muted)] underline underline-offset-4"
+              >
+                View As Guest
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -548,7 +597,6 @@ export default function SharedGalleryPage() {
                       <div className="grid gap-5 md:grid-cols-[220px_minmax(0,1fr)]">
                         <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-black/20">
                           {itemImage(section.featuredItem) ? (
-                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={itemImage(section.featuredItem)}
                               alt={section.featuredItem.title}
@@ -614,7 +662,6 @@ export default function SharedGalleryPage() {
 
                             <div className="mb-4 aspect-[4/5] overflow-hidden rounded-xl bg-black/25">
                               {itemImage(item) ? (
-                                // eslint-disable-next-line @next/next/no-img-element
                                 <img
                                   src={itemImage(item)}
                                   alt={item.title}
@@ -693,7 +740,6 @@ export default function SharedGalleryPage() {
 
                     <div className="mb-4 aspect-[4/5] overflow-hidden rounded-xl bg-black/25">
                       {itemImage(item) ? (
-                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={itemImage(item)}
                           alt={item.title}
