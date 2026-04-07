@@ -1,5 +1,6 @@
 "use client";
 
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { GalleryLayout, getDefaultGalleryLayout } from "./galleryLayout";
 import { type GalleryState, type GalleryVisibility } from "./galleryTier";
 
@@ -454,6 +455,48 @@ function normalizeGallery(raw: any): Gallery | null {
     createdAt,
     updatedAt,
   };
+}
+
+function normalizeSupabaseGallery(raw: any): Gallery | null {
+  if (!raw) return null;
+
+  const createdAt =
+    typeof raw.created_at === "number"
+      ? raw.created_at
+      : typeof raw.created_at === "string"
+        ? Date.parse(raw.created_at) || Date.now()
+        : Date.now();
+
+  const updatedAt =
+    typeof raw.updated_at === "number"
+      ? raw.updated_at
+      : typeof raw.updated_at === "string"
+        ? Date.parse(raw.updated_at) || createdAt
+        : createdAt;
+
+  return normalizeGallery({
+    id: raw.id,
+    profile_id: raw.profile_id,
+    title: raw.title,
+    description: raw.description,
+    itemIds: raw.item_ids ?? raw.itemIds ?? [],
+    visibility: raw.visibility,
+    state: raw.state,
+    layout: raw.layout,
+    exhibitionLayout: raw.exhibition_layout,
+    coverImage: raw.cover_image,
+    itemNotes: raw.item_notes,
+    share: raw.share,
+    analytics: raw.analytics,
+    templateId: raw.template_id,
+    sections: raw.sections,
+    themePack: raw.theme_pack,
+    displayMode: raw.display_mode,
+    guestViewMode: raw.guest_view_mode,
+    shelfBackground: raw.shelf_background,
+    createdAt,
+    updatedAt,
+  });
 }
 
 function ensureUniqueGalleryIds(galleries: Gallery[]) {
@@ -1024,9 +1067,77 @@ export function getActiveInviteTokens(gallery: Gallery) {
   });
 }
 
-export function getGalleryByInviteToken(token: string): GalleryInviteLookupResult | null {
+async function markSupabaseInviteTokenUsed(token: string) {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return;
+
+  try {
+    await supabase
+      .from("gallery_invites")
+      .update({ last_used_at: new Date().toISOString() })
+      .eq("token", token);
+  } catch (error) {
+    console.error("Failed to mark Supabase invite token used:", error);
+  }
+}
+
+export async function getGalleryByInviteToken(
+  token: string
+): Promise<GalleryInviteLookupResult | null> {
   const cleanToken = safeString(token);
   if (!cleanToken) return null;
+
+  const supabase = getSupabaseBrowserClient();
+
+  if (supabase) {
+    try {
+      const { data: inviteRow, error: inviteError } = await supabase
+        .from("gallery_invites")
+        .select("*")
+        .eq("token", cleanToken)
+        .single();
+
+      if (!inviteError && inviteRow) {
+        const disabled = !!inviteRow.disabled;
+        const expiresAt =
+          inviteRow.expires_at != null
+            ? new Date(inviteRow.expires_at).getTime()
+            : undefined;
+
+        if (!disabled && !(typeof expiresAt === "number" && expiresAt < Date.now())) {
+          const { data: galleryRow, error: galleryError } = await supabase
+            .from("galleries")
+            .select("*")
+            .eq("id", inviteRow.gallery_id)
+            .single();
+
+          if (!galleryError && galleryRow) {
+            const normalizedGallery = normalizeSupabaseGallery(galleryRow);
+
+            if (normalizedGallery) {
+              return {
+                gallery: normalizedGallery,
+                inviteToken: {
+                  token: inviteRow.token,
+                  label: typeof inviteRow.label === "string" ? inviteRow.label : undefined,
+                  createdAt: inviteRow.created_at
+                    ? new Date(inviteRow.created_at).getTime()
+                    : Date.now(),
+                  lastUsedAt: inviteRow.last_used_at
+                    ? new Date(inviteRow.last_used_at).getTime()
+                    : undefined,
+                  expiresAt,
+                  disabled,
+                },
+              };
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Supabase invite lookup failed:", error);
+    }
+  }
 
   const galleries = loadRawGalleries();
 
@@ -1048,11 +1159,12 @@ export function getGalleryByInviteToken(token: string): GalleryInviteLookupResul
   return null;
 }
 
-export function markGalleryInviteTokenUsedByToken(token: string) {
-  const lookup = getGalleryByInviteToken(token);
+export async function markGalleryInviteTokenUsedByToken(token: string) {
+  const lookup = await getGalleryByInviteToken(token);
   if (!lookup) return null;
 
   markGalleryInviteTokenUsed(lookup.gallery.id, lookup.inviteToken.token);
+  await markSupabaseInviteTokenUsed(lookup.inviteToken.token);
   return lookup.gallery.id;
 }
 

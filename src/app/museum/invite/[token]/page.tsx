@@ -217,15 +217,28 @@ export default function InviteGalleryPage() {
   useEffect(() => {
     if (!token) return;
 
-    const lookup = getGalleryByInviteToken(token);
-    setGallery(lookup?.gallery ?? null);
-    setItems(loadItems());
-    setIsResolved(true);
+    let isCancelled = false;
 
-    if (lookup?.gallery) {
-      markGalleryInviteTokenUsedByToken(token);
-      recordGalleryView(lookup.gallery.id);
+    async function resolveInvite() {
+      const lookup = await getGalleryByInviteToken(token);
+
+      if (isCancelled) return;
+
+      setGallery(lookup?.gallery ?? null);
+      setItems(loadItems());
+      setIsResolved(true);
+
+      if (lookup?.gallery) {
+        await markGalleryInviteTokenUsedByToken(token);
+        recordGalleryView(lookup.gallery.id);
+      }
     }
+
+    void resolveInvite();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [token]);
 
   const itemMap = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
