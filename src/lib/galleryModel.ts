@@ -144,6 +144,12 @@ function safeString(value: unknown) {
   return String(value ?? "").trim();
 }
 
+function isUuidLike(value: unknown) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    safeString(value)
+  );
+}
+
 function normalizeTitle(value: unknown) {
   return safeString(value);
 }
@@ -503,7 +509,7 @@ function normalizeSupabaseGallery(raw: any): Gallery | null {
 function serializeGalleryForSupabase(gallery: Gallery) {
   return {
     id: gallery.id,
-    profile_id: gallery.profile_id ?? null,
+    profile_id: isUuidLike(gallery.profile_id) ? safeString(gallery.profile_id) : null,
     title: gallery.title,
     description: gallery.description || "",
     item_ids: gallery.itemIds,
@@ -541,45 +547,24 @@ function serializeInviteTokenForSupabase(galleryId: string, invite: GalleryInvit
 }
 
 async function upsertGalleryToSupabase(gallery: Gallery) {
-  console.log("VLTD gallery sync -> upsert start", {
-    id: gallery.id,
-    title: gallery.title,
-    visibility: gallery.visibility,
-    share: gallery.share,
-  });
-
   const supabase = getSupabaseBrowserClient();
-
-  if (!supabase) {
-    console.error("VLTD gallery sync -> no Supabase client available");
-    return;
-  }
+  if (!supabase) return;
 
   try {
     const payload = serializeGalleryForSupabase(gallery);
-
-    console.log("VLTD gallery sync -> payload", payload);
-
     const { error } = await supabase.from("galleries").upsert(payload, {
       onConflict: "id",
     });
 
     if (error) {
-      console.error("VLTD gallery sync -> gallery upsert failed", error);
+      console.error("Failed to upsert gallery:", error);
       return;
     }
-
-    console.log("VLTD gallery sync -> gallery upsert success", {
-      id: gallery.id,
-      title: gallery.title,
-    });
 
     const inviteTokens = normalizeInviteTokens(gallery.share?.inviteTokens);
     const inviteRows = inviteTokens.map((invite) =>
       serializeInviteTokenForSupabase(gallery.id, invite)
     );
-
-    console.log("VLTD gallery sync -> invite rows", inviteRows);
 
     if (inviteRows.length > 0) {
       const { error: inviteError } = await supabase.from("gallery_invites").upsert(inviteRows, {
@@ -587,37 +572,22 @@ async function upsertGalleryToSupabase(gallery: Gallery) {
       });
 
       if (inviteError) {
-        console.error("VLTD gallery sync -> invite upsert failed", inviteError);
-      } else {
-        console.log("VLTD gallery sync -> invite upsert success", {
-          galleryId: gallery.id,
-          inviteCount: inviteRows.length,
-        });
+        console.error("Failed to upsert gallery invite tokens:", inviteError);
       }
     }
 
     let deleteQuery = supabase.from("gallery_invites").delete().eq("gallery_id", gallery.id);
-
     if (inviteRows.length > 0) {
       const keepTokens = inviteRows.map((row) => row.token);
-      deleteQuery = deleteQuery.not(
-        "token",
-        "in",
-        `(${keepTokens.map((t) => JSON.stringify(t)).join(",")})`
-      );
+      deleteQuery = deleteQuery.not("token", "in", `(${keepTokens.map((t) => JSON.stringify(t)).join(",")})`);
     }
 
     const { error: deleteError } = await deleteQuery;
-
     if (deleteError) {
-      console.error("VLTD gallery sync -> invite prune failed", deleteError);
-    } else {
-      console.log("VLTD gallery sync -> invite prune success", {
-        galleryId: gallery.id,
-      });
+      console.error("Failed to prune gallery invite tokens:", deleteError);
     }
   } catch (error) {
-    console.error("VLTD gallery sync -> unexpected error", error);
+    console.error("Unexpected gallery Supabase sync error:", error);
   }
 }
 

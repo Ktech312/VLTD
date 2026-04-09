@@ -267,9 +267,10 @@ export default function SharedGalleryPage() {
     if (!token) return;
 
     let isCancelled = false;
+    const resolvedToken = token;
 
     async function resolvePublicGallery() {
-      const found = await getGalleryByPublicToken(token);
+      const found = await getGalleryByPublicToken(resolvedToken);
 
       if (isCancelled) return;
 
