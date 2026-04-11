@@ -1,3 +1,5 @@
+// FIXED ProtectedRoute with public route whitelist
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -27,31 +29,36 @@ export default function ProtectedRoute({
     setLoading(true);
     setError("");
 
+    const isPublicRoute =
+      pathname?.startsWith("/museum/share") ||
+      pathname?.startsWith("/museum/guest");
+
+    if (isPublicRoute) {
+      setAllowed(true);
+      setLoading(false);
+      return;
+    }
+
     async function checkAccess() {
       try {
         const status = await getOnboardingStatus();
 
         if (!active || requestId !== requestIdRef.current) return;
 
-        // NOT LOGGED IN
         if (!status.isAuthenticated) {
           setAllowed(false);
           setLoading(false);
-
           router.replace(`/login?next=${encodeURIComponent(pathname || "/")}`);
           return;
         }
 
-        // NEEDS ONBOARDING
         if (status.needsOnboarding) {
           setAllowed(false);
           setLoading(false);
-
           router.replace("/onboarding");
           return;
         }
 
-        // GOOD TO GO
         setAllowed(true);
         setLoading(false);
       } catch (err) {
@@ -70,35 +77,26 @@ export default function ProtectedRoute({
     };
   }, [pathname, router]);
 
-  // LOADING STATE
   if (loading) {
     return (
-      <main className="min-h-screen bg-[color:var(--bg)] px-4 py-10 text-[color:var(--fg)]">
-        <div className="mx-auto max-w-5xl rounded-[24px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] text-center">
-          Checking access...
-        </div>
+      <main className="min-h-screen flex items-center justify-center text-white">
+        Checking access...
       </main>
     );
   }
 
-  // ERROR STATE
   if (error) {
     return (
-      <main className="min-h-screen bg-[color:var(--bg)] px-4 py-10 text-[color:var(--fg)]">
-        <div className="mx-auto max-w-5xl rounded-[24px] border border-red-500/40 bg-red-500/10 p-6 text-red-200 text-center">
-          {error}
-        </div>
+      <main className="min-h-screen flex items-center justify-center text-red-400">
+        {error}
       </main>
     );
   }
 
-  // BLOCKED STATE (prevents blank screen)
   if (!allowed) {
     return (
-      <main className="min-h-screen bg-[color:var(--bg)] px-4 py-10 text-[color:var(--fg)]">
-        <div className="mx-auto max-w-5xl rounded-[24px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] text-center">
-          Redirecting...
-        </div>
+      <main className="min-h-screen flex items-center justify-center text-white">
+        Redirecting...
       </main>
     );
   }

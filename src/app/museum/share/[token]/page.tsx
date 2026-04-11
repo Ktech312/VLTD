@@ -1,9 +1,8 @@
-// FIXED VERSION (loading state added)
+// PUBLIC SHARE PAGE (NO AUTH INTERFERENCE)
 
 "use client";
 
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
 import {
@@ -20,19 +19,27 @@ export default function SharedGalleryPage() {
   const [isResolved, setIsResolved] = useState(false);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token) {
+      setIsResolved(true);
+      return;
+    }
 
     let cancelled = false;
 
     async function run() {
-      const g = await getGalleryByPublicToken(token);
+      try {
+        const g = await getGalleryByPublicToken(token);
 
-      if (cancelled) return;
+        if (cancelled) return;
 
-      setGallery(g);
-      setIsResolved(true);
+        setGallery(g);
+        setIsResolved(true);
 
-      if (g) recordGalleryView(g.id);
+        if (g) recordGalleryView(g.id);
+      } catch (err) {
+        console.error("Public gallery load failed:", err);
+        if (!cancelled) setIsResolved(true);
+      }
     }
 
     run();
@@ -42,7 +49,6 @@ export default function SharedGalleryPage() {
     };
   }, [token]);
 
-  // ✅ FIX: LOADING STATE
   if (!isResolved) {
     return (
       <main className="min-h-screen flex items-center justify-center text-white">
@@ -51,7 +57,6 @@ export default function SharedGalleryPage() {
     );
   }
 
-  // ✅ FIX: NOT FOUND STATE
   if (!gallery) {
     return (
       <main className="min-h-screen flex items-center justify-center text-white">
@@ -60,10 +65,12 @@ export default function SharedGalleryPage() {
     );
   }
 
-  // ✅ VALID STATE
   return (
-    <main className="min-h-screen text-white">
-      <h1 className="text-3xl">{gallery.title}</h1>
+    <main className="min-h-screen text-white p-6">
+      <h1 className="text-3xl font-semibold">{gallery.title}</h1>
+      {gallery.description && (
+        <p className="mt-2 text-white/70">{gallery.description}</p>
+      )}
     </main>
   );
 }
