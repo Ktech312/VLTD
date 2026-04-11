@@ -492,11 +492,26 @@ function normalizeSupabaseGallery(raw: any): Gallery | null {
     layout: raw.layout,
     exhibitionLayout: raw.exhibition_layout,
     coverImage: raw.cover_image,
-    itemNotes: raw.item_notes,
-    share: raw.share,
-    analytics: raw.analytics,
+    itemNotes: raw.item_notes ?? [],
+    share: {
+      publicToken:
+        typeof raw.public_token === "string" && raw.public_token.trim()
+          ? raw.public_token.trim()
+          : undefined,
+      inviteTokens: [],
+    },
+    analytics: {
+      views:
+        typeof raw.analytics_views === "number" && Number.isFinite(raw.analytics_views)
+          ? raw.analytics_views
+          : 0,
+      uniqueViewKeys: [],
+      lastViewedAt: raw.analytics_last_viewed_at
+        ? Date.parse(raw.analytics_last_viewed_at) || undefined
+        : undefined,
+    },
     templateId: raw.template_id,
-    sections: raw.sections,
+    sections: raw.sections ?? [],
     themePack: raw.theme_pack,
     displayMode: raw.display_mode,
     guestViewMode: raw.guest_view_mode,
@@ -512,21 +527,16 @@ function serializeGalleryForSupabase(gallery: Gallery) {
     profile_id: isUuidLike(gallery.profile_id) ? safeString(gallery.profile_id) : null,
     title: gallery.title,
     description: gallery.description || "",
-    item_ids: gallery.itemIds,
     visibility: gallery.visibility,
     state: gallery.state,
-    layout: gallery.layout,
-    exhibition_layout: gallery.exhibitionLayout ?? null,
     cover_image: gallery.coverImage || "",
-    item_notes: gallery.itemNotes ?? [],
-    share: gallery.share ?? { publicToken: undefined, inviteTokens: [] },
-    analytics: gallery.analytics ?? { views: 0, uniqueViewKeys: [] },
-    template_id: gallery.templateId ?? "CUSTOM",
-    sections: gallery.sections ?? [],
-    theme_pack: gallery.themePack ?? "classic",
-    display_mode: gallery.displayMode ?? "grid",
-    guest_view_mode: gallery.guestViewMode ?? "public",
-    shelf_background: gallery.shelfBackground || "",
+    layout: gallery.layout ?? {},
+    exhibition_layout: gallery.exhibitionLayout ?? {},
+    public_token: gallery.share?.publicToken || null,
+    analytics_views: gallery.analytics?.views ?? 0,
+    analytics_last_viewed_at: gallery.analytics?.lastViewedAt
+      ? new Date(gallery.analytics.lastViewedAt).toISOString()
+      : null,
     created_at: new Date(gallery.createdAt).toISOString(),
     updated_at: new Date(gallery.updatedAt).toISOString(),
   };
@@ -1083,7 +1093,7 @@ export async function getGalleryByPublicToken(publicToken: string) {
       const { data, error } = await supabase
         .from("galleries")
         .select("*")
-        .contains("share", { publicToken: cleanToken })
+        .eq("public_token", cleanToken)
         .single();
 
       if (!error && data) {

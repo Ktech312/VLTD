@@ -2,9 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { getGalleryScore } from "@/lib/galleryScore";
-import { GALLERY_EVENT, loadGalleries, type Gallery } from "@/lib/galleryModel";
+import {
+  GALLERY_EVENT,
+  deleteGallery,
+  loadGalleries,
+  type Gallery,
+} from "@/lib/galleryModel";
 import { getGalleryLimits } from "@/lib/galleryTier";
 import { getTierSafe, onTierChange, type Tier } from "@/lib/subscription";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
@@ -58,9 +64,13 @@ function formatMoney(value: number) {
 }
 
 export default function MuseumPage() {
+  const router = useRouter();
+
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [items, setItems] = useState<VaultItem[]>([]);
   const [tier, setTier] = useState<Tier>(getTierSafe());
+  const [galleryPendingDelete, setGalleryPendingDelete] = useState<Gallery | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   function refresh() {
     setGalleries(loadGalleries());
@@ -147,6 +157,33 @@ export default function MuseumPage() {
       return b.totalValue - a.totalValue;
     });
   }, [scoredGalleries]);
+
+  function openGallery(galleryId: string) {
+    router.push(`/museum/${galleryId}`);
+  }
+
+  function handleAskDelete(gallery: Gallery) {
+    setGalleryPendingDelete(gallery);
+  }
+
+  function handleCancelDelete() {
+    if (isDeleting) return;
+    setGalleryPendingDelete(null);
+  }
+
+  async function handleConfirmDelete() {
+    if (!galleryPendingDelete || isDeleting) return;
+
+    setIsDeleting(true);
+
+    try {
+      deleteGallery(galleryPendingDelete.id);
+      refresh();
+      setGalleryPendingDelete(null);
+    } finally {
+      setIsDeleting(false);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
@@ -342,94 +379,160 @@ export default function MuseumPage() {
             </div>
           ) : (
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {orderedGalleries.map(({ gallery, score, totalValue, views }) => (
-                <Link
-                  key={gallery.id}
-                  href={`/museum/${gallery.id}`}
-                  className="vltd-panel-soft group relative overflow-hidden rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.018))] p-5 shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.28)]"
-                >
-                  {resolveGalleryImage(gallery.coverImage) ? (
-                    <>
-                      <div
-                        className="absolute inset-0 opacity-30"
-                        style={{
-                          backgroundImage: `url(${resolveGalleryImage(gallery.coverImage)})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-black/55" />
-                    </>
-                  ) : null}
+              {orderedGalleries.map(({ gallery, score, totalValue, views }) => {
+                const coverImage = resolveGalleryImage(gallery.coverImage);
 
-                  <div className="relative">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                        CURATED GALLERY
-                      </div>
+                return (
+                  <article
+                    key={gallery.id}
+                    className="vltd-panel-soft group relative overflow-hidden rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.018))] p-5 shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.28)]"
+                  >
+                    {coverImage ? (
+                      <>
+                        <div
+                          className="absolute inset-0 opacity-30"
+                          style={{
+                            backgroundImage: `url(${coverImage})`,
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black/55" />
+                      </>
+                    ) : null}
 
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-black/20 px-2.5 py-1 text-[10px] tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-white/10">
-                          {visibilityLabel(gallery.visibility)}
-                        </span>
-
-                        <span className="rounded-full bg-black/20 px-2.5 py-1 text-[10px] tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-white/10">
-                          {stateLabel(gallery.state)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <h2 className="mt-4 line-clamp-2 text-2xl font-semibold leading-tight">
-                      {gallery.title}
-                    </h2>
-
-                    <p className="mt-3 line-clamp-3 min-h-[60px] text-sm leading-6 text-[color:var(--muted)]">
-                      {gallery.description?.trim()
-                        ? gallery.description
-                        : "A museum-style presentation built from selected collection pieces."}
-                    </p>
-
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <span className="rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10">
-                        Score {score.score}/100
-                      </span>
-                      <span className="rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10">
-                        {scoreBandTone(score.band)}
-                      </span>
-                      <span className="rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10">
-                        {views} views
-                      </span>
-                    </div>
-
-                    <div className="mt-5 grid grid-cols-2 gap-3 rounded-[20px] bg-black/20 px-4 py-3 ring-1 ring-white/8">
-                      <div>
+                    <div className="relative">
+                      <div className="flex items-start justify-between gap-3">
                         <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                          ITEMS
+                          CURATED GALLERY
                         </div>
-                        <div className="mt-1 text-xl font-semibold">{gallery.itemIds.length}</div>
+
+                        <div className="flex items-start gap-2">
+                          <div className="flex flex-wrap items-center justify-end gap-2">
+                            <span className="rounded-full bg-black/20 px-2.5 py-1 text-[10px] tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-white/10">
+                              {visibilityLabel(gallery.visibility)}
+                            </span>
+
+                            <span className="rounded-full bg-black/20 px-2.5 py-1 text-[10px] tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-white/10">
+                              {stateLabel(gallery.state)}
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              handleAskDelete(gallery);
+                            }}
+                            className="inline-flex min-h-[32px] items-center justify-center rounded-full bg-[rgba(120,18,18,0.68)] px-3 py-1 text-[11px] font-semibold text-white ring-1 ring-red-400/30 transition hover:bg-[rgba(145,20,20,0.88)]"
+                            aria-label={`Delete gallery ${gallery.title}`}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
 
-                      <div>
-                        <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                          VALUE
-                        </div>
-                        <div className="mt-1 text-xl font-semibold">{formatMoney(totalValue)}</div>
-                      </div>
-                    </div>
+                      <button
+                        type="button"
+                        onClick={() => openGallery(gallery.id)}
+                        className="mt-4 block w-full text-left"
+                      >
+                        <h2 className="line-clamp-2 text-2xl font-semibold leading-tight">
+                          {gallery.title}
+                        </h2>
 
-                    <div className="mt-4 flex items-center justify-between text-sm text-[color:var(--muted)]">
-                      <div>
-                        {score.signals.sections} sections • {score.signals.featuredWorks} featured
-                      </div>
-                      <div className="transition group-hover:translate-x-0.5">Open →</div>
+                        <p className="mt-3 line-clamp-3 min-h-[60px] text-sm leading-6 text-[color:var(--muted)]">
+                          {gallery.description?.trim()
+                            ? gallery.description
+                            : "A museum-style presentation built from selected collection pieces."}
+                        </p>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <span className="rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10">
+                            Score {score.score}/100
+                          </span>
+                          <span className="rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10">
+                            {scoreBandTone(score.band)}
+                          </span>
+                          <span className="rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10">
+                            {views} views
+                          </span>
+                        </div>
+
+                        <div className="mt-5 grid grid-cols-2 gap-3 rounded-[20px] bg-black/20 px-4 py-3 ring-1 ring-white/8">
+                          <div>
+                            <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
+                              ITEMS
+                            </div>
+                            <div className="mt-1 text-xl font-semibold">{gallery.itemIds.length}</div>
+                          </div>
+
+                          <div>
+                            <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
+                              VALUE
+                            </div>
+                            <div className="mt-1 text-xl font-semibold">{formatMoney(totalValue)}</div>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 flex items-center justify-between text-sm text-[color:var(--muted)]">
+                          <div>
+                            {score.signals.sections} sections • {score.signals.featuredWorks} featured
+                          </div>
+                          <div className="transition group-hover:translate-x-0.5">Open →</div>
+                        </div>
+                      </button>
                     </div>
-                  </div>
-                </Link>
-              ))}
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>
       </div>
+
+      {galleryPendingDelete ? (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-[28px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
+            <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
+              DELETE GALLERY
+            </div>
+
+            <h2 className="mt-3 text-2xl font-semibold">
+              Delete Gallery "{galleryPendingDelete.title}"?
+            </h2>
+
+            <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
+              This will delete gallery "{galleryPendingDelete.title}". Are you sure you want to.
+            </p>
+
+            <p className="mt-4 text-sm text-[color:var(--muted)]">
+              Deleting this Gallery will not delete items in your Vault.
+            </p>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-[rgba(145,20,20,0.92)] px-5 py-2 text-sm font-semibold text-white ring-1 ring-red-400/30 transition hover:bg-[rgba(170,24,24,1)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isDeleting ? "Deleting..." : "Yes Delete FOREVER"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCancelDelete}
+                disabled={isDeleting}
+                className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancel, save My Gallery
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
