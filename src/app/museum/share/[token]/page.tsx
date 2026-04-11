@@ -1,120 +1,380 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 
-import { getGalleryByPublicToken } from "@/lib/galleryModel";
-import { getPrimaryImageUrl, VaultItem } from "@/lib/vaultModel";
+import {
+  getGalleryByPublicToken,
+  recordGalleryView,
+  type Gallery,
+} from "@/lib/galleryModel";
+import {
+  getPrimaryImageUrl,
+  type VaultItem,
+} from "@/lib/vaultModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
-export default function PublicGalleryPage() {
-  const params = useParams();
-  const token = params?.token as string;
+function itemSubtitle(i: VaultItem) {
+  return [i.subtitle, i.number, i.grade].filter(Boolean).join(" • ");
+}
 
-  const [loading, setLoading] = useState(true);
-  const [gallery, setGallery] = useState<any>(null);
+function formatMoney(value?: number) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function normalizeVaultItem(raw: any): VaultItem {
+  return {
+    id: String(raw?.id ?? "").trim(),
+    profile_id: typeof raw?.profile_id === "string" ? raw.profile_id : undefined,
+    universe: typeof raw?.universe === "string" ? raw.universe : undefined,
+    category: typeof raw?.category === "string" ? raw.category : undefined,
+    customCategoryLabel:
+      typeof raw?.custom_category_label === "string"
+        ? raw.custom_category_label
+        : typeof raw?.customCategoryLabel === "string"
+          ? raw.customCategoryLabel
+          : undefined,
+    categoryLabel:
+      typeof raw?.category_label === "string"
+        ? raw.category_label
+        : typeof raw?.categoryLabel === "string"
+          ? raw.categoryLabel
+          : undefined,
+    subcategoryLabel:
+      typeof raw?.subcategory_label === "string"
+        ? raw.subcategory_label
+        : typeof raw?.subcategoryLabel === "string"
+          ? raw.subcategoryLabel
+          : undefined,
+    title: String(raw?.title ?? "").trim() || "Untitled Item",
+    subtitle: typeof raw?.subtitle === "string" ? raw.subtitle : undefined,
+    number: typeof raw?.number === "string" ? raw.number : undefined,
+    grade: typeof raw?.grade === "string" ? raw.grade : undefined,
+    purchasePrice:
+      typeof raw?.purchase_price === "number"
+        ? raw.purchase_price
+        : typeof raw?.purchasePrice === "number"
+          ? raw.purchasePrice
+          : undefined,
+    purchaseTax:
+      typeof raw?.purchase_tax === "number"
+        ? raw.purchase_tax
+        : typeof raw?.purchaseTax === "number"
+          ? raw.purchaseTax
+          : undefined,
+    purchaseShipping:
+      typeof raw?.purchase_shipping === "number"
+        ? raw.purchase_shipping
+        : typeof raw?.purchaseShipping === "number"
+          ? raw.purchaseShipping
+          : undefined,
+    purchaseFees:
+      typeof raw?.purchase_fees === "number"
+        ? raw.purchase_fees
+        : typeof raw?.purchaseFees === "number"
+          ? raw.purchaseFees
+          : undefined,
+    currentValue:
+      typeof raw?.current_value === "number"
+        ? raw.current_value
+        : typeof raw?.currentValue === "number"
+          ? raw.currentValue
+          : undefined,
+    purchaseSource:
+      typeof raw?.purchase_source === "string"
+        ? raw.purchase_source
+        : typeof raw?.purchaseSource === "string"
+          ? raw.purchaseSource
+          : undefined,
+    purchaseLocation:
+      typeof raw?.purchase_location === "string"
+        ? raw.purchase_location
+        : typeof raw?.purchaseLocation === "string"
+          ? raw.purchaseLocation
+          : undefined,
+    orderNumber:
+      typeof raw?.order_number === "string"
+        ? raw.order_number
+        : typeof raw?.orderNumber === "string"
+          ? raw.orderNumber
+          : undefined,
+    imageFrontUrl:
+      typeof raw?.image_front_url === "string"
+        ? raw.image_front_url
+        : typeof raw?.imageFrontUrl === "string"
+          ? raw.imageFrontUrl
+          : undefined,
+    imageBackUrl:
+      typeof raw?.image_back_url === "string"
+        ? raw.image_back_url
+        : typeof raw?.imageBackUrl === "string"
+          ? raw.imageBackUrl
+          : undefined,
+    imageFrontStoragePath:
+      typeof raw?.image_front_storage_path === "string"
+        ? raw.image_front_storage_path
+        : typeof raw?.imageFrontStoragePath === "string"
+          ? raw.imageFrontStoragePath
+          : undefined,
+    primaryImageKey:
+      typeof raw?.primary_image_key === "string"
+        ? raw.primary_image_key
+        : typeof raw?.primaryImageKey === "string"
+          ? raw.primaryImageKey
+          : undefined,
+    notes: typeof raw?.notes === "string" ? raw.notes : undefined,
+    storageLocation:
+      typeof raw?.storage_location === "string"
+        ? raw.storage_location
+        : typeof raw?.storageLocation === "string"
+          ? raw.storageLocation
+          : undefined,
+    certNumber:
+      typeof raw?.cert_number === "string"
+        ? raw.cert_number
+        : typeof raw?.certNumber === "string"
+          ? raw.certNumber
+          : undefined,
+    serialNumber:
+      typeof raw?.serial_number === "string"
+        ? raw.serial_number
+        : typeof raw?.serialNumber === "string"
+          ? raw.serialNumber
+          : undefined,
+    createdAt:
+      typeof raw?.created_at === "string"
+        ? Date.parse(raw.created_at) || Date.now()
+        : typeof raw?.createdAt === "number"
+          ? raw.createdAt
+          : Date.now(),
+    isNew: false,
+  };
+}
+
+export default function SharedGalleryPage() {
+  const params = useParams();
+  const token = params?.token as string | undefined;
+
+  const [gallery, setGallery] = useState<Gallery | null>(null);
   const [items, setItems] = useState<VaultItem[]>([]);
+  const [isResolved, setIsResolved] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    let cancelled = false;
+    let isCancelled = false;
 
-    async function load() {
-      if (!token) return;
-
-      setLoading(true);
-
-      const g = await getGalleryByPublicToken(token);
-
-      if (!g) {
-        setGallery(null);
-        setLoading(false);
+    async function resolvePublicGallery() {
+      if (!token) {
+        setIsResolved(true);
         return;
       }
 
-      // 🔥 CRITICAL: fetch items from Supabase
-      const supabase = getSupabaseBrowserClient();
+      setError("");
+      setIsResolved(false);
 
-      let fetchedItems: VaultItem[] = [];
+      try {
+        const found = await getGalleryByPublicToken(token);
 
-      if (supabase && g.itemIds?.length) {
-        const { data, error } = await supabase
-          .from("vault_items")
-          .select("*")
-          .in("id", g.itemIds);
+        if (isCancelled) return;
 
-        if (!error && data) {
-          fetchedItems = data;
-        } else {
-          console.error("Failed to load gallery items:", error);
+        if (!found) {
+          setGallery(null);
+          setItems([]);
+          setIsResolved(true);
+          return;
         }
-      }
 
-      if (!cancelled) {
-        setGallery(g);
-        setItems(fetchedItems);
-        setLoading(false);
+        const supabase = getSupabaseBrowserClient();
+        let hydratedItems: VaultItem[] = [];
+
+        if (supabase) {
+          const { data: links, error: linkError } = await supabase
+            .from("gallery_items")
+            .select("artifact_id, position")
+            .eq("gallery_id", found.id)
+            .order("position", { ascending: true });
+
+          if (linkError) {
+            console.error("Failed loading gallery_items for shared gallery:", linkError);
+          } else {
+            const artifactIds = Array.isArray(links)
+              ? links
+                  .map((row: any) => String(row?.artifact_id ?? "").trim())
+                  .filter(Boolean)
+              : [];
+
+            if (artifactIds.length > 0) {
+              const { data: vaultRows, error: itemError } = await supabase
+                .from("vault_items")
+                .select("*")
+                .in("id", artifactIds);
+
+              if (itemError) {
+                console.error("Failed loading vault_items for shared gallery:", itemError);
+              } else {
+                const byId = new Map<string, VaultItem>();
+                for (const raw of vaultRows ?? []) {
+                  const normalized = normalizeVaultItem(raw);
+                  byId.set(normalized.id, normalized);
+                }
+
+                hydratedItems = artifactIds
+                  .map((artifactId) => byId.get(artifactId))
+                  .filter(Boolean) as VaultItem[];
+              }
+            }
+          }
+        }
+
+        if (isCancelled) return;
+
+        setGallery(found);
+        setItems(hydratedItems);
+        setIsResolved(true);
+
+        void recordGalleryView(found.id);
+      } catch (err) {
+        if (isCancelled) return;
+        console.error("Public gallery load failed:", err);
+        setError(err instanceof Error ? err.message : "Failed to load shared gallery.");
+        setGallery(null);
+        setItems([]);
+        setIsResolved(true);
       }
     }
 
-    load();
+    void resolvePublicGallery();
 
     return () => {
-      cancelled = true;
+      isCancelled = true;
     };
   }, [token]);
 
-  // ---------------- STATES ----------------
+  const title = useMemo(() => gallery?.title || "Shared Gallery", [gallery]);
 
-  if (loading) {
+  if (!isResolved) {
     return (
-      <div className="flex items-center justify-center h-screen text-white">
-        Loading gallery...
-      </div>
+      <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+        <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
+          <div className="rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)]">
+            Loading gallery...
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+        <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
+          <div className="rounded-[28px] border border-red-500/40 bg-red-500/10 p-8 text-center text-red-200">
+            {error}
+          </div>
+        </div>
+      </main>
     );
   }
 
   if (!gallery) {
     return (
-      <div className="flex items-center justify-center h-screen text-white">
-        Gallery not found
-      </div>
+      <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+        <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
+          <div className="rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)]">
+            <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
+              SHARED GALLERY
+            </div>
+            <h1 className="mt-3 text-2xl font-semibold">Link not available</h1>
+            <p className="mt-3 text-sm text-[color:var(--muted)]">
+              This shared gallery link is invalid or no longer available.
+            </p>
+            <div className="mt-6">
+              <Link
+                href="/museum"
+                className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)]"
+              >
+                Open Museum
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
     );
   }
 
-  // ---------------- UI ----------------
-
   return (
-    <div className="min-h-screen text-white p-10">
-      <h1 className="text-3xl mb-8">{gallery.title}</h1>
+    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+        <section className="rounded-[30px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-8">
+          <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
+            PUBLIC GALLERY
+          </div>
+          <h1 className="mt-3 text-3xl font-semibold sm:text-4xl">{title}</h1>
+          {gallery.description?.trim() ? (
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
+              {gallery.description}
+            </p>
+          ) : null}
+          <div className="mt-5 text-sm text-[color:var(--muted)]">
+            {items.length} item{items.length === 1 ? "" : "s"}
+          </div>
+        </section>
 
-      {items.length === 0 && (
-        <div className="opacity-60">
-          No items in this gallery.
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        {items.map((item) => {
-          const image = getPrimaryImageUrl(item);
-
-          return (
-            <div key={item.id} className="border p-3 rounded">
-              {image ? (
-                <img
-                  src={image}
-                  className="w-full h-40 object-cover mb-2"
-                />
-              ) : (
-                <div className="h-40 bg-gray-800 mb-2 flex items-center justify-center text-xs">
-                  No Image
-                </div>
-              )}
-
-              <div className="text-sm">{item.title}</div>
+        {items.length === 0 ? (
+          <section className="mt-8">
+            <div className="rounded-[24px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)]">
+              <div className="text-sm text-[color:var(--muted)]">
+                No items in this gallery.
+              </div>
             </div>
-          );
-        })}
+          </section>
+        ) : (
+          <section className="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+            {items.map((item) => {
+              const image = getPrimaryImageUrl(item);
+
+              return (
+                <article
+                  key={item.id}
+                  className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.20)]"
+                >
+                  <div className="overflow-hidden rounded-[16px] bg-black/20">
+                    {image ? (
+                      <img
+                        src={image}
+                        alt={item.title}
+                        className="h-[240px] w-full object-cover"
+                        draggable={false}
+                      />
+                    ) : (
+                      <div className="flex h-[240px] items-center justify-center text-sm text-[color:var(--muted)]">
+                        No image
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-4">
+                    <div className="text-lg font-semibold">{item.title}</div>
+                    <div className="mt-1 text-sm text-[color:var(--muted)]">
+                      {itemSubtitle(item) || "—"}
+                    </div>
+                    <div className="mt-3 inline-flex rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10">
+                      Value {formatMoney(item.currentValue)}
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </section>
+        )}
       </div>
-    </div>
+    </main>
   );
 }
