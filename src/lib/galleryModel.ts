@@ -557,9 +557,9 @@ function serializeInviteTokenForSupabase(galleryId: string, invite: GalleryInvit
 }
 
 function serializeGalleryItemsForSupabase(gallery: Gallery) {
-  const validItemIds = normalizeItemIds(gallery.itemIds).filter((itemId) => isUuidLike(itemId));
+  const itemIds = normalizeItemIds(gallery.itemIds);
 
-  return validItemIds.map((itemId, index) => ({
+  return itemIds.map((itemId, index) => ({
     gallery_id: gallery.id,
     artifact_id: itemId,
     position: index,
@@ -570,16 +570,7 @@ async function syncGalleryItemsToSupabase(gallery: Gallery) {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return;
 
-  const normalizedItemIds = normalizeItemIds(gallery.itemIds);
-  const skippedItemIds = normalizedItemIds.filter((itemId) => !isUuidLike(itemId));
   const rows = serializeGalleryItemsForSupabase(gallery);
-
-  if (skippedItemIds.length > 0) {
-    console.warn("Skipping non-UUID gallery item ids for gallery_items sync:", {
-      galleryId: gallery.id,
-      skippedItemIds,
-    });
-  }
 
   try {
     const { error: deleteError } = await supabase
