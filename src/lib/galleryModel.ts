@@ -556,6 +556,56 @@ function serializeInviteTokenForSupabase(galleryId: string, invite: GalleryInvit
   };
 }
 
+function serializeGalleryItemsForSupabase(gallery: Gallery) {
+  const validItemIds = normalizeItemIds(gallery.itemIds).filter((itemId) => isUuidLike(itemId));
+
+  return validItemIds.map((itemId, index) => ({
+    gallery_id: gallery.id,
+    artifact_id: itemId,
+    position: index,
+  }));
+}
+
+async function syncGalleryItemsToSupabase(gallery: Gallery) {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return;
+
+  const normalizedItemIds = normalizeItemIds(gallery.itemIds);
+  const skippedItemIds = normalizedItemIds.filter((itemId) => !isUuidLike(itemId));
+  const rows = serializeGalleryItemsForSupabase(gallery);
+
+  if (skippedItemIds.length > 0) {
+    console.warn("Skipping non-UUID gallery item ids for gallery_items sync:", {
+      galleryId: gallery.id,
+      skippedItemIds,
+    });
+  }
+
+  try {
+    const { error: deleteError } = await supabase
+      .from("gallery_items")
+      .delete()
+      .eq("gallery_id", gallery.id);
+
+    if (deleteError) {
+      console.error("Failed clearing gallery_items rows:", deleteError);
+      return;
+    }
+
+    if (rows.length === 0) {
+      return;
+    }
+
+    const { error: insertError } = await supabase.from("gallery_items").insert(rows);
+
+    if (insertError) {
+      console.error("Failed inserting gallery_items rows:", insertError);
+    }
+  } catch (error) {
+    console.error("Unexpected gallery_items sync error:", error);
+  }
+}
+
 async function upsertGalleryToSupabase(gallery: Gallery) {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return;
@@ -570,6 +620,8 @@ async function upsertGalleryToSupabase(gallery: Gallery) {
       console.error("Failed to upsert gallery:", error);
       return;
     }
+
+    await syncGalleryItemsToSupabase(gallery);
 
     const inviteTokens = normalizeInviteTokens(gallery.share?.inviteTokens);
     const inviteRows = inviteTokens.map((invite) =>
@@ -606,6 +658,7 @@ async function deleteGalleryFromSupabase(galleryId: string) {
   if (!supabase) return;
 
   try {
+    await supabase.from("gallery_items").delete().eq("gallery_id", galleryId);
     await supabase.from("gallery_invites").delete().eq("gallery_id", galleryId);
     await supabase.from("galleries").delete().eq("id", galleryId);
   } catch (error) {
