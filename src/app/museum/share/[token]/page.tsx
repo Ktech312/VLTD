@@ -204,17 +204,19 @@ export default function SharedGalleryPage() {
           if (linkError) {
             console.error("Failed loading gallery_items for shared gallery:", linkError);
           } else {
-            const artifactIds = Array.isArray(links)
+            const orderedArtifactIds = Array.isArray(links)
               ? links
                   .map((row: any) => String(row?.artifact_id ?? "").trim())
                   .filter(Boolean)
               : [];
 
-            if (artifactIds.length > 0) {
+            const uniqueArtifactIds = [...new Set(orderedArtifactIds)];
+
+            if (uniqueArtifactIds.length > 0) {
               const { data: vaultRows, error: itemError } = await supabase
                 .from("vault_items")
                 .select("*")
-                .in("id", artifactIds);
+                .in("id", uniqueArtifactIds);
 
               if (itemError) {
                 console.error("Failed loading vault_items for shared gallery:", itemError);
@@ -225,7 +227,7 @@ export default function SharedGalleryPage() {
                   byId.set(normalized.id, normalized);
                 }
 
-                hydratedItems = artifactIds
+                hydratedItems = uniqueArtifactIds
                   .map((artifactId) => byId.get(artifactId))
                   .filter(Boolean) as VaultItem[];
               }
