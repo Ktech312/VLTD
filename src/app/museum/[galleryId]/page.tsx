@@ -1,16 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 
 import {
   loadGalleries,
+  saveGalleries,
   type Gallery,
   GALLERY_EVENT,
   recordGalleryView,
-  setGalleryItemIds,
-  setGalleryItemNote,
   setGalleryCoverImage,
   ensureGalleryPublicToken,
   regenerateGalleryPublicToken,
@@ -52,7 +51,6 @@ function itemImage(i: VaultItem) {
 
 function formatDateTime(ts?: number) {
   if (!ts || !Number.isFinite(ts)) return "—";
-
   try {
     return new Date(ts).toLocaleString();
   } catch {
@@ -70,16 +68,36 @@ function fullItemCost(item: VaultItem) {
   return Number.isFinite(total) ? total : 0;
 }
 
+function cloneGallery<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function normalizeDraftForCompare(gallery: Gallery | null) {
+  if (!gallery) return "";
+  return JSON.stringify({
+    ...gallery,
+    analytics: gallery.analytics ?? { views: 0, uniqueViewKeys: [] },
+    itemNotes: gallery.itemNotes ?? [],
+    share: gallery.share ?? { publicToken: undefined, inviteTokens: [] },
+    exhibitionLayout: gallery.exhibitionLayout ?? null,
+  });
+}
+
 export default function GalleryPage() {
   const params = useParams();
   const id = params?.galleryId as string | undefined;
 
   const [gallery, setGallery] = useState<Gallery | null>(null);
+  const [draft, setDraft] = useState<Gallery | null>(null);
   const [items, setItems] = useState<VaultItem[]>([]);
   const [shareUrl, setShareUrl] = useState<string>("");
   const [copied, setCopied] = useState(false);
   const [inviteLabel, setInviteLabel] = useState("");
   const [inviteCopiedToken, setInviteCopiedToken] = useState<string>("");
+  const [status, setStatus] = useState("");
+  const [statusTone, setStatusTone] = useState<"neutral" | "good">("neutral");
+
+  const originalSnapshotRef = useRef("");
 
   function loadState() {
     if (!id) return;
@@ -88,6 +106,8 @@ export default function GalleryPage() {
     const g = galleries.find((x) => x.id === id) ?? null;
 
     setGallery(g);
+    setDraft(g ? cloneGallery(g) : null);
+    originalSnapshotRef.current = normalizeDraftForCompare(g);
     setItems(loadItems());
   }
 
@@ -107,49 +127,53 @@ export default function GalleryPage() {
   }, [id]);
 
   useEffect(() => {
-    if (!gallery) {
+    if (!draft) {
       setShareUrl("");
       return;
     }
 
-    setShareUrl(getGalleryShareUrl(gallery));
-  }, [gallery]);
+    setShareUrl(getGalleryShareUrl(draft));
+  }, [draft]);
 
   useEffect(() => {
     if (!copied) return;
-
     const timer = window.setTimeout(() => setCopied(false), 1800);
     return () => window.clearTimeout(timer);
   }, [copied]);
 
   useEffect(() => {
     if (!inviteCopiedToken) return;
-
     const timer = window.setTimeout(() => setInviteCopiedToken(""), 1800);
     return () => window.clearTimeout(timer);
   }, [inviteCopiedToken]);
 
+  useEffect(() => {
+    if (!status) return;
+    const timer = window.setTimeout(() => setStatus(""), 2200);
+    return () => window.clearTimeout(timer);
+  }, [status]);
+
   const galleryItems = useMemo(() => {
-    if (!gallery) return [];
-    return gallery.itemIds
+    if (!draft) return [];
+    return draft.itemIds
       .map((itemId) => items.find((item) => item.id === itemId))
       .filter(Boolean) as VaultItem[];
-  }, [gallery, items]);
+  }, [draft, items]);
 
   const activeInviteTokens = useMemo(() => {
-    if (!gallery) return [];
-    return getActiveInviteTokens(gallery);
-  }, [gallery]);
+    if (!draft) return [];
+    return getActiveInviteTokens(draft);
+  }, [draft]);
 
   const metrics = useMemo(() => {
-    if (!gallery) return null;
-    return getGalleryMetrics(gallery, items);
-  }, [gallery, items]);
+    if (!draft) return null;
+    return getGalleryMetrics(draft, items);
+  }, [draft, items]);
 
   const exhibitionSections = useMemo(() => {
-    if (!gallery) return [];
+    if (!draft) return [];
 
-    const sections = gallery.exhibitionLayout?.sections ?? [];
+    const sections = draft.exhibitionLayout?.sections ?? [];
     const itemMap = new Map(items.map((item) => [item.id, item]));
 
     return sections.map((section) => {
@@ -168,42 +192,97 @@ export default function GalleryPage() {
         featuredItem,
       };
     });
-  }, [gallery, items]);
+  }, [draft, items]);
 
   const unsectionedItems = useMemo(() => {
-    if (!gallery) return [];
+    if (!draft) return [];
 
     const sectionIds = new Set<string>();
-    for (const section of gallery.exhibitionLayout?.sections ?? []) {
+    for (const section of draft.exhibitionLayout?.sections ?? []) {
       for (const itemId of section.itemIds) {
         sectionIds.add(itemId);
       }
     }
 
     return galleryItems.filter((item) => !sectionIds.has(item.id));
-  }, [gallery, galleryItems]);
+  }, [draft, galleryItems]);
+
+  const isDirty = useMemo(() => {
+    return normalizeDraftForCompare(draft) !== originalSnapshotRef.current;
+  }, [draft]);
+
+  function patchDraft(updater: (current: Gallery) => Gallery) {
+    setDraft((current) => {
+      if (!current) return current;
+      const next = updater(cloneGallery(current));
+      return {
+        ...next,
+        updatedAt: Date.now(),
+      };
+    });
+  }
 
   function update(ids: string[]) {
-    if (!gallery) return;
-    setGalleryItemIds(gallery.id, ids);
+    patchDraft((current) => ({
+      ...current,
+      itemIds: [...ids],
+    }));
   }
 
   function updateCover(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file || !gallery) return;
+    if (!file || !draft) return;
 
     const reader = new FileReader();
 
     reader.onload = () => {
-      setGalleryCoverImage(gallery.id, String(reader.result ?? ""));
+      patchDraft((current) => ({
+        ...current,
+        coverImage: String(reader.result ?? ""),
+      }));
     };
 
     reader.readAsDataURL(file);
   }
 
   function updateNote(itemId: string, note: string) {
+    patchDraft((current) => {
+      const existing = Array.isArray(current.itemNotes) ? [...current.itemNotes] : [];
+      const next = existing.filter((entry) => entry.itemId !== itemId);
+
+      if (note.trim()) {
+        next.push({
+          itemId,
+          note,
+          updatedAt: Date.now(),
+        });
+      }
+
+      return {
+        ...current,
+        itemNotes: next,
+      };
+    });
+  }
+
+  function saveDraft() {
+    if (!draft) return;
+
+    const all = loadGalleries({ includeAllProfiles: true });
+    const next = all.map((entry) => (entry.id === draft.id ? cloneGallery(draft) : entry));
+    saveGalleries(next);
+
+    setGallery(cloneGallery(draft));
+    originalSnapshotRef.current = normalizeDraftForCompare(draft);
+    setStatusTone("good");
+    setStatus("Gallery saved.");
+  }
+
+  function cancelChanges() {
     if (!gallery) return;
-    setGalleryItemNote(gallery.id, itemId, note);
+    setDraft(cloneGallery(gallery));
+    setStatusTone("neutral");
+    setStatus("Changes reverted.");
   }
 
   async function copyShareLink() {
@@ -212,43 +291,74 @@ export default function GalleryPage() {
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
-    } catch {
-      // ignore
-    }
+    } catch {}
   }
 
   async function copyInviteLink(token: string) {
-    if (!gallery) return;
+    if (!draft) return;
 
-    const url = getGalleryInviteUrl(gallery, token);
+    const url = getGalleryInviteUrl(draft, token);
     if (!url) return;
 
     try {
       await navigator.clipboard.writeText(url);
       setInviteCopiedToken(token);
-    } catch {
-      // ignore
-    }
+    } catch {}
   }
 
   function handleCreateInviteToken() {
-    if (!gallery) return;
+    if (!draft) return;
 
-    createGalleryInviteToken(gallery.id, inviteLabel.trim() || undefined);
+    const token = createGalleryInviteToken(draft.id, inviteLabel.trim() || undefined);
     setInviteLabel("");
+    if (token) {
+      const refreshed = loadGalleries({ includeAllProfiles: true }).find((x) => x.id === draft.id) ?? null;
+      if (refreshed) {
+        setGallery(cloneGallery(refreshed));
+        setDraft(cloneGallery(refreshed));
+        originalSnapshotRef.current = normalizeDraftForCompare(refreshed);
+      }
+    }
   }
 
   function handleDisableInviteToken(token: string) {
-    if (!gallery) return;
-    disableGalleryInviteToken(gallery.id, token);
+    if (!draft) return;
+    disableGalleryInviteToken(draft.id, token);
+    const refreshed = loadGalleries({ includeAllProfiles: true }).find((x) => x.id === draft.id) ?? null;
+    if (refreshed) {
+      setGallery(cloneGallery(refreshed));
+      setDraft(cloneGallery(refreshed));
+      originalSnapshotRef.current = normalizeDraftForCompare(refreshed);
+    }
   }
 
   function handleRegeneratePublicLink() {
-    if (!gallery) return;
-    regenerateGalleryPublicToken(gallery.id);
+    if (!draft) return;
+    regenerateGalleryPublicToken(draft.id);
+    const refreshed = loadGalleries({ includeAllProfiles: true }).find((x) => x.id === draft.id) ?? null;
+    if (refreshed) {
+      setGallery(cloneGallery(refreshed));
+      setDraft(cloneGallery(refreshed));
+      originalSnapshotRef.current = normalizeDraftForCompare(refreshed);
+    }
   }
 
-  if (!gallery || !metrics) {
+  function persistCoverNow(file: File) {
+    if (!draft) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setGalleryCoverImage(draft.id, String(reader.result ?? ""));
+      const refreshed = loadGalleries({ includeAllProfiles: true }).find((x) => x.id === draft.id) ?? null;
+      if (refreshed) {
+        setGallery(cloneGallery(refreshed));
+        setDraft(cloneGallery(refreshed));
+        originalSnapshotRef.current = normalizeDraftForCompare(refreshed);
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  if (!draft || !metrics) {
     return (
       <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
         <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
@@ -277,7 +387,7 @@ export default function GalleryPage() {
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
-        <div className="mb-6 flex flex-wrap items-center gap-3">
+        <div className="mb-4 flex flex-wrap items-center gap-3">
           <Link
             href="/museum"
             className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
@@ -291,15 +401,50 @@ export default function GalleryPage() {
           >
             Collector Profile
           </Link>
+
+          <button
+            type="button"
+            onClick={saveDraft}
+            disabled={!isDirty}
+            className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] disabled:opacity-40"
+          >
+            Save Changes
+          </button>
+
+          <button
+            type="button"
+            onClick={cancelChanges}
+            disabled={!isDirty}
+            className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] disabled:opacity-40"
+          >
+            Cancel Changes
+          </button>
+
+          <span className="text-sm text-[color:var(--muted)]">
+            {isDirty ? "Unsaved changes" : "All changes saved"}
+          </span>
         </div>
 
+        {status ? (
+          <div
+            className={[
+              "mb-5 rounded-2xl px-4 py-3 text-sm ring-1",
+              statusTone === "good"
+                ? "bg-emerald-500/10 text-emerald-200 ring-emerald-500/30"
+                : "bg-[color:var(--surface)] text-[color:var(--muted)] ring-[color:var(--border)]",
+            ].join(" ")}
+          >
+            {status}
+          </div>
+        ) : null}
+
         <section className="relative overflow-hidden rounded-[34px] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.42)] sm:p-8 lg:p-10">
-          {gallery.coverImage ? (
+          {draft.coverImage ? (
             <>
               <div
                 className="absolute inset-0 opacity-35"
                 style={{
-                  backgroundImage: `url(${gallery.coverImage})`,
+                  backgroundImage: `url(${draft.coverImage})`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                 }}
@@ -318,18 +463,18 @@ export default function GalleryPage() {
                 </div>
 
                 <h1 className="mt-3 text-3xl font-semibold sm:text-4xl lg:text-5xl">
-                  {gallery.title}
+                  {draft.title}
                 </h1>
 
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--muted)] sm:text-base">
-                  {gallery.description?.trim()
-                    ? gallery.description
+                  {draft.description?.trim()
+                    ? draft.description
                     : "Curated collection presentation"}
                 </p>
 
                 <div className="mt-5 flex flex-wrap items-center gap-2">
                   <span className="rounded-full bg-black/20 px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-white/10">
-                    {visibilityLabel(gallery.visibility)}
+                    {visibilityLabel(draft.visibility)}
                   </span>
 
                   <span className="rounded-full bg-black/20 px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-white/10">
@@ -341,7 +486,7 @@ export default function GalleryPage() {
                   </span>
 
                   <span className="rounded-full bg-black/20 px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-white/10">
-                    {gallery.exhibitionLayout?.type ?? "GRID"} LAYOUT
+                    {draft.exhibitionLayout?.type ?? "GRID"} LAYOUT
                   </span>
                 </div>
               </div>
@@ -387,7 +532,7 @@ export default function GalleryPage() {
                     LAST VIEWED
                   </div>
                   <div className="mt-2 text-sm font-semibold">
-                    {formatDateTime(gallery.analytics?.lastViewedAt)}
+                    {formatDateTime(draft.analytics?.lastViewedAt)}
                   </div>
                   <div className="mt-1 text-sm text-[color:var(--muted)]">
                     Latest tracked access time
@@ -451,110 +596,74 @@ export default function GalleryPage() {
           </div>
         </section>
 
-        <section className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+        <section className="mt-12">
+          <div className="mb-4">
+            <div className="text-[11px] tracking-[0.24em] text-[color:var(--muted2)]">
+              BUILDER
+            </div>
+            <h2 className="mt-2 text-2xl font-semibold">Curate the Layout</h2>
+          </div>
+
+          <GalleryBuilder gallery={draft} onChange={update} />
+        </section>
+
+        <section className="mt-10 grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
           <div className="rounded-[30px] vltd-panel-main bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
             <div className="text-[11px] tracking-[0.24em] text-[color:var(--muted2)]">
-              GALLERY PERFORMANCE
+              EXHIBIT NOTES
             </div>
+            <h2 className="mt-2 text-2xl font-semibold">Visible Items</h2>
 
-            <h2 className="mt-3 text-2xl font-semibold">Exhibit Value Breakdown</h2>
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-2xl vltd-panel-soft bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
-                <div className="text-xs text-[color:var(--muted2)]">TOTAL COST</div>
-                <div className="mt-2 text-2xl font-semibold">{formatMoney(metrics.totalCost)}</div>
+            {galleryItems.length === 0 ? (
+              <div className="mt-4 rounded-2xl bg-[color:var(--input)] p-4 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+                Add items to this gallery in the builder, then save changes.
               </div>
+            ) : (
+              <div className="mt-5 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {galleryItems.map((item, index) => {
+                  const existingNote =
+                    draft.itemNotes?.find((n) => n.itemId === item.id)?.note ?? "";
 
-              <div className="rounded-2xl vltd-panel-soft bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
-                <div className="text-xs text-[color:var(--muted2)]">CURRENT VALUE</div>
-                <div className="mt-2 text-2xl font-semibold">{formatMoney(metrics.totalValue)}</div>
-              </div>
-
-              <div className="rounded-2xl vltd-panel-soft bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
-                <div className="text-xs text-[color:var(--muted2)]">NET CHANGE</div>
-                <div className="mt-2 text-2xl font-semibold">
-                  {metrics.delta >= 0 ? "+" : ""}
-                  {formatMoney(metrics.delta)}
-                </div>
-              </div>
-
-              <div className="rounded-2xl vltd-panel-soft bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
-                <div className="text-xs text-[color:var(--muted2)]">SHARING READY</div>
-                <div className="mt-2 text-2xl font-semibold">
-                  {metrics.shareReady ? "Yes" : "No"}
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 rounded-[24px] bg-[color:var(--input)] p-5 ring-1 ring-[color:var(--border)]">
-              <div className="text-sm font-semibold">Top Gallery Segments</div>
-
-              {metrics.topSegments.length === 0 ? (
-                <div className="mt-4 text-sm text-[color:var(--muted)]">
-                  No segment data available yet.
-                </div>
-              ) : (
-                <div className="mt-5 grid gap-4">
-                  {metrics.topSegments.map((entry) => {
-                    const width =
-                      metrics.maxSegmentValue > 0
-                        ? Math.max(8, (entry.value / metrics.maxSegmentValue) * 100)
-                        : 0;
-
-                    return (
-                      <div key={entry.label}>
-                        <div className="mb-2 flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="truncate text-sm font-medium">{entry.label}</div>
-                            <div className="text-xs text-[color:var(--muted)]">
-                              {entry.count} items
-                            </div>
-                          </div>
-                          <div className="shrink-0 text-sm font-semibold">
-                            {formatMoney(entry.value)}
-                          </div>
-                        </div>
-                        <div className="h-3 overflow-hidden rounded-full bg-black/15 ring-1 ring-[color:var(--border)]">
-                          <div
-                            className="h-full rounded-full bg-[color:var(--pill-active-bg)]"
-                            style={{ width: `${width}%` }}
-                          />
-                        </div>
+                  return (
+                    <article
+                      key={`${item.id}_${index}`}
+                      className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.20)]"
+                    >
+                      <div className="mb-2 text-xs tracking-[0.16em] text-[color:var(--muted2)]">
+                        EXHIBIT #{index + 1}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
 
-            <div className="mt-6 grid gap-4 sm:grid-cols-3">
-              <div className="rounded-2xl vltd-panel-soft bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
-                <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">
-                  LAYOUT TYPE
-                </div>
-                <div className="mt-2 text-xl font-semibold">
-                  {gallery.exhibitionLayout?.type ?? "GRID"}
-                </div>
-              </div>
+                      <div className="mb-4 aspect-[4/5] overflow-hidden rounded-xl bg-black/25">
+                        {itemImage(item) ? (
+                          <img
+                            src={itemImage(item)}
+                            alt={item.title}
+                            className="h-full w-full object-cover"
+                            draggable={false}
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-sm text-[color:var(--muted)]">
+                            No image
+                          </div>
+                        )}
+                      </div>
 
-              <div className="rounded-2xl vltd-panel-soft bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
-                <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">
-                  SECTIONS
-                </div>
-                <div className="mt-2 text-xl font-semibold">
-                  {gallery.exhibitionLayout?.sections?.length ?? 0}
-                </div>
-              </div>
+                      <div className="text-lg font-semibold">{item.title}</div>
+                      <div className="mt-1 text-sm text-[color:var(--muted)]">
+                        {itemSubtitle(item) || "—"}
+                      </div>
 
-              <div className="rounded-2xl vltd-panel-soft bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
-                <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">
-                  FEATURED WORKS
-                </div>
-                <div className="mt-2 text-xl font-semibold">
-                  {(gallery.exhibitionLayout?.sections ?? []).filter((section) => !!section.featuredItemId).length}
-                </div>
+                      <textarea
+                        defaultValue={existingNote}
+                        placeholder="Curator note..."
+                        onBlur={(e) => updateNote(item.id, e.target.value)}
+                        className="mt-4 min-h-[110px] w-full rounded-2xl bg-black/30 p-3 text-sm ring-1 ring-white/10 focus:outline-none"
+                      />
+                    </article>
+                  );
+                })}
               </div>
-            </div>
+            )}
           </div>
 
           <aside className="rounded-[30px] vltd-panel-main bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
@@ -614,7 +723,7 @@ export default function GalleryPage() {
               ) : (
                 <div className="mt-3 grid gap-3">
                   {activeInviteTokens.map((entry) => {
-                    const inviteUrl = getGalleryInviteUrl(gallery, entry.token);
+                    const inviteUrl = getGalleryInviteUrl(draft, entry.token);
 
                     return (
                       <div
@@ -660,295 +769,6 @@ export default function GalleryPage() {
               )}
             </div>
           </aside>
-        </section>
-
-        {exhibitionSections.length > 0 ? (
-          <section className="mt-10">
-            <div className="mb-4">
-              <div className="text-[11px] tracking-[0.24em] text-[color:var(--muted2)]">
-                EXHIBITION STRUCTURE
-              </div>
-              <h2 className="mt-2 text-2xl font-semibold">Curated Sections</h2>
-            </div>
-
-            <div className="grid gap-6">
-              {exhibitionSections.map((section, sectionIndex) => (
-                <section
-                  key={section.id}
-                  className="rounded-[30px] vltd-panel-main bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]"
-                >
-                  <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-                    <div className="max-w-3xl">
-                      <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                        SECTION #{sectionIndex + 1}
-                      </div>
-                      <h3 className="mt-2 text-2xl font-semibold">{section.title}</h3>
-                      {section.description?.trim() ? (
-                        <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
-                          {section.description}
-                        </p>
-                      ) : null}
-                    </div>
-
-                    <div className="grid gap-3 sm:grid-cols-2 xl:w-[360px]">
-                      <div className="rounded-2xl vltd-panel-soft bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
-                        <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">
-                          ITEMS
-                        </div>
-                        <div className="mt-2 text-xl font-semibold">{section.items.length}</div>
-                      </div>
-
-                      <div className="rounded-2xl vltd-panel-soft bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
-                        <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">
-                          FEATURED
-                        </div>
-                        <div className="mt-2 text-xl font-semibold">
-                          {section.featuredItem ? "Yes" : "No"}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {section.featuredItem ? (
-                    <div className="mt-6 rounded-[26px] vltd-panel-soft bg-[color:var(--input)] p-5 ring-1 ring-[color:var(--border)]">
-                      <div className="mb-3 text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                        FEATURED WORK
-                      </div>
-
-                      <div className="grid gap-5 md:grid-cols-[220px_minmax(0,1fr)]">
-                        <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-black/20">
-                          {itemImage(section.featuredItem) ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={itemImage(section.featuredItem)}
-                              alt={section.featuredItem.title}
-                              className="h-full w-full object-cover"
-                              draggable={false}
-                            />
-                          ) : (
-                            <div className="flex h-full items-center justify-center text-sm text-[color:var(--muted)]">
-                              No image
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="min-w-0">
-                          <div className="text-2xl font-semibold">{section.featuredItem.title}</div>
-                          <div className="mt-2 text-sm text-[color:var(--muted)]">
-                            {itemSubtitle(section.featuredItem) || "—"}
-                          </div>
-
-                          <div className="mt-4 flex flex-wrap gap-2">
-                            <span className="rounded-full bg-black/10 px-3 py-1 text-xs ring-1 ring-black/10">
-                              Value {formatMoney(Number(section.featuredItem.currentValue ?? 0))}
-                            </span>
-                            <span className="rounded-full bg-black/10 px-3 py-1 text-xs ring-1 ring-black/10">
-                              Cost {formatMoney(fullItemCost(section.featuredItem))}
-                            </span>
-                          </div>
-
-                          {gallery.itemNotes?.find((n) => n.itemId === section.featuredItem?.id)?.note ? (
-                            <div className="mt-5 rounded-2xl bg-black/10 p-4 ring-1 ring-black/10">
-                              <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">
-                                CURATOR NOTE
-                              </div>
-                              <div className="mt-2 text-sm leading-6 text-[color:var(--muted)]">
-                                {
-                                  gallery.itemNotes?.find(
-                                    (n) => n.itemId === section.featuredItem?.id
-                                  )?.note
-                                }
-                              </div>
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {section.items.length > 0 ? (
-                    <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                      {section.items.map((item, index) => {
-                        const existingNote =
-                          gallery.itemNotes?.find((n) => n.itemId === item.id)?.note ?? "";
-
-                        return (
-                          <article
-                            key={`${section.id}_${item.id}`}
-                            className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.20)]"
-                          >
-                            <div className="mb-2 text-xs tracking-[0.16em] text-[color:var(--muted2)]">
-                              SECTION EXHIBIT #{index + 1}
-                            </div>
-
-                            <div className="mb-4 aspect-[4/5] overflow-hidden rounded-xl bg-black/25">
-                              {itemImage(item) ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={itemImage(item)}
-                                  alt={item.title}
-                                  className="h-full w-full object-cover"
-                                  draggable={false}
-                                />
-                              ) : (
-                                <div className="flex h-full items-center justify-center text-sm text-[color:var(--muted)]">
-                                  No image
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="text-lg font-semibold">{item.title}</div>
-                            <div className="mt-1 text-sm text-[color:var(--muted)]">
-                              {itemSubtitle(item) || "—"}
-                            </div>
-
-                            <div className="mt-4 flex flex-wrap gap-2">
-                              <span className="rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10">
-                                Value {formatMoney(Number(item.currentValue ?? 0))}
-                              </span>
-                              <span className="rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10">
-                                Cost {formatMoney(fullItemCost(item))}
-                              </span>
-                            </div>
-
-                            <textarea
-                              defaultValue={existingNote}
-                              placeholder="Curator note..."
-                              onBlur={(e) => updateNote(item.id, e.target.value)}
-                              className="mt-4 min-h-[110px] w-full rounded-2xl bg-black/30 p-3 text-sm ring-1 ring-white/10 focus:outline-none"
-                            />
-                          </article>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="mt-6 rounded-[24px] bg-[color:var(--input)] p-5 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
-                      This section does not yet contain any assigned exhibits.
-                    </div>
-                  )}
-                </section>
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        {unsectionedItems.length > 0 ? (
-          <section className="mt-10">
-            <div className="mb-4">
-              <div className="text-[11px] tracking-[0.24em] text-[color:var(--muted2)]">
-                UNSECTIONED EXHIBITS
-              </div>
-              <h2 className="mt-2 text-2xl font-semibold">Main Gallery Flow</h2>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {unsectionedItems.map((item, index) => {
-                const existingNote =
-                  gallery.itemNotes?.find((n) => n.itemId === item.id)?.note ?? "";
-
-                return (
-                  <article
-                    key={item.id}
-                    className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.20)]"
-                  >
-                    <div className="mb-2 text-xs tracking-[0.16em] text-[color:var(--muted2)]">
-                      EXHIBIT #{index + 1}
-                    </div>
-
-                    <div className="mb-4 aspect-[4/5] overflow-hidden rounded-xl bg-black/25">
-                      {itemImage(item) ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={itemImage(item)}
-                          alt={item.title}
-                          className="h-full w-full object-cover"
-                          draggable={false}
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-sm text-[color:var(--muted)]">
-                          No image
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="text-lg font-semibold">{item.title}</div>
-
-                    <div className="mt-1 text-sm text-[color:var(--muted)]">
-                      {itemSubtitle(item) || "—"}
-                    </div>
-
-                    <textarea
-                      defaultValue={existingNote}
-                      placeholder="Curator note..."
-                      onBlur={(e) => updateNote(item.id, e.target.value)}
-                      className="mt-4 min-h-[110px] w-full rounded-2xl bg-black/30 p-3 text-sm ring-1 ring-white/10 focus:outline-none"
-                    />
-                  </article>
-                );
-              })}
-            </div>
-          </section>
-        ) : null}
-
-        {metrics.topItems.length > 0 ? (
-          <section className="mt-10">
-            <div className="mb-4">
-              <div className="text-[11px] tracking-[0.24em] text-[color:var(--muted2)]">
-                HIGHLIGHT EXHIBITS
-              </div>
-              <h2 className="mt-2 text-2xl font-semibold">Top Value Pieces</h2>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {metrics.topItems.map((item) => (
-                <article
-                  key={item.id}
-                  className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.20)]"
-                >
-                  <div className="mb-4 aspect-[4/5] overflow-hidden rounded-xl bg-black/25">
-                    {itemImage(item) ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={itemImage(item)}
-                        alt={item.title}
-                        className="h-full w-full object-cover"
-                        draggable={false}
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-sm text-[color:var(--muted)]">
-                        No image
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="text-lg font-semibold">{item.title}</div>
-                  <div className="mt-1 text-sm text-[color:var(--muted)]">
-                    {itemSubtitle(item) || "—"}
-                  </div>
-
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <span className="rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10">
-                      Value {formatMoney(Number(item.currentValue ?? 0))}
-                    </span>
-                    <span className="rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10">
-                      Cost {formatMoney(fullItemCost(item))}
-                    </span>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        <section className="mt-12">
-          <div className="mb-4">
-            <div className="text-[11px] tracking-[0.24em] text-[color:var(--muted2)]">
-              BUILDER
-            </div>
-            <h2 className="mt-2 text-2xl font-semibold">Curate the Layout</h2>
-          </div>
-
-          <GalleryBuilder gallery={gallery} onChange={update} />
         </section>
       </div>
     </main>

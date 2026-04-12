@@ -9,11 +9,11 @@ import {
   recordGalleryView,
   type Gallery,
 } from "@/lib/galleryModel";
-import {
-  getPrimaryImageUrl,
-  type VaultItem,
-} from "@/lib/vaultModel";
+import { getCurrentUser } from "@/lib/auth";
+import { type VaultItem, getPrimaryImageUrl } from "@/lib/vaultModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+
+type GateMode = "loading" | "guest_allowed" | "registered_only" | "entered";
 
 function itemSubtitle(i: VaultItem) {
   return [i.subtitle, i.number, i.grade].filter(Boolean).join(" • ");
@@ -158,6 +158,79 @@ function normalizeVaultItem(raw: any): VaultItem {
   };
 }
 
+function GateCard({
+  gallery,
+  gateMode,
+  isSignedIn,
+  onEnterGuest,
+}: {
+  gallery: Gallery;
+  gateMode: GateMode;
+  isSignedIn: boolean;
+  onEnterGuest: () => void;
+}) {
+  const requiresRegistered = gallery.guestViewMode === "guest";
+
+  return (
+    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+      <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
+        <div className="w-full rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+          <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
+            SHARED GALLERY
+          </div>
+          <h1 className="mt-3 text-3xl font-semibold">{gallery.title}</h1>
+          {gallery.description?.trim() ? (
+            <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
+              {gallery.description}
+            </p>
+          ) : null}
+
+          <div className="mt-6 rounded-2xl bg-[color:var(--pill)] px-4 py-4 text-sm ring-1 ring-[color:var(--border)]">
+            {requiresRegistered
+              ? "Owner only allows registered users to access this gallery."
+              : "Create a free account for full access, or continue as a guest."}
+          </div>
+
+          <div className="mt-6 flex flex-col items-center gap-3">
+            {!isSignedIn ? (
+              <Link
+                href={`/login?next=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "/")}`}
+                className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-6 py-3 text-sm font-semibold text-[color:var(--fg)]"
+              >
+                Create Free Account
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={onEnterGuest}
+                className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-6 py-3 text-sm font-semibold text-[color:var(--fg)]"
+              >
+                Continue to Gallery
+              </button>
+            )}
+
+            {!requiresRegistered ? (
+              <button
+                type="button"
+                onClick={onEnterGuest}
+                className="text-sm text-[color:var(--muted)] underline underline-offset-4"
+              >
+                View as Guest
+              </button>
+            ) : null}
+          </div>
+
+          {gateMode === "registered_only" && !isSignedIn ? (
+            <p className="mt-4 text-xs text-[color:var(--muted)]">
+              Guest access is disabled for this gallery.
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </main>
+  );
+}
+
 export default function SharedGalleryPage() {
   const params = useParams();
   const token = params?.token as string | undefined;
@@ -166,6 +239,8 @@ export default function SharedGalleryPage() {
   const [items, setItems] = useState<VaultItem[]>([]);
   const [isResolved, setIsResolved] = useState(false);
   const [error, setError] = useState("");
+  const [gateMode, setGateMode] = useState<GateMode>("loading");
+  const [isSignedIn, setIsSignedIn] = useState(false);
 
   useEffect(() => {
     let isCancelled = false;
@@ -180,6 +255,12 @@ export default function SharedGalleryPage() {
       setIsResolved(false);
 
       try {
+        const authResult = await getCurrentUser();
+        const signedIn = !!authResult?.data?.user;
+        if (!isCancelled) {
+          setIsSignedIn(signedIn);
+        }
+
         const found = await getGalleryByPublicToken(token);
 
         if (isCancelled) return;
@@ -191,6 +272,42 @@ export default function SharedGalleryPage() {
           return;
         }
 
+        setGallery(found);
+
+        const requiresRegistered = found.guestViewMode === "guest";
+        if (requiresRegistered && !signedIn) {
+          setGateMode("registered_only");
+          setIsResolved(true);
+          return;
+        }
+
+        setGateMode("guest_allowed");
+        setIsResolved(true);
+      } catch (err) {
+        if (isCancelled) return;
+        console.error("Public gallery load failed:", err);
+        setError(err instanceof Error ? err.message : "Failed to load shared gallery.");
+        setGallery(null);
+        setItems([]);
+        setIsResolved(true);
+      }
+    }
+
+    void resolvePublicGallery();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [token]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function hydrateItems() {
+      if (!gallery) return;
+      if (gateMode !== "entered") return;
+
+      try {
         const supabase = getSupabaseBrowserClient();
         let hydratedItems: VaultItem[] = [];
 
@@ -198,16 +315,14 @@ export default function SharedGalleryPage() {
           const { data: links, error: linkError } = await supabase
             .from("gallery_items")
             .select("artifact_id, position")
-            .eq("gallery_id", found.id)
+            .eq("gallery_id", gallery.id)
             .order("position", { ascending: true });
 
           if (linkError) {
             console.error("Failed loading gallery_items for shared gallery:", linkError);
           } else {
             const orderedArtifactIds = Array.isArray(links)
-              ? links
-                  .map((row: any) => String(row?.artifact_id ?? "").trim())
-                  .filter(Boolean)
+              ? links.map((row: any) => String(row?.artifact_id ?? "").trim()).filter(Boolean)
               : [];
 
             const uniqueArtifactIds = [...new Set(orderedArtifactIds)];
@@ -237,27 +352,20 @@ export default function SharedGalleryPage() {
 
         if (isCancelled) return;
 
-        setGallery(found);
         setItems(hydratedItems);
-        setIsResolved(true);
-
-        void recordGalleryView(found.id);
+        void recordGalleryView(gallery.id);
       } catch (err) {
         if (isCancelled) return;
-        console.error("Public gallery load failed:", err);
-        setError(err instanceof Error ? err.message : "Failed to load shared gallery.");
-        setGallery(null);
-        setItems([]);
-        setIsResolved(true);
+        console.error("Failed hydrating public gallery items:", err);
       }
     }
 
-    void resolvePublicGallery();
+    void hydrateItems();
 
     return () => {
       isCancelled = true;
     };
-  }, [token]);
+  }, [gallery, gateMode]);
 
   const title = useMemo(() => gallery?.title || "Shared Gallery", [gallery]);
 
@@ -308,6 +416,17 @@ export default function SharedGalleryPage() {
           </div>
         </div>
       </main>
+    );
+  }
+
+  if (gateMode === "guest_allowed" || gateMode === "registered_only") {
+    return (
+      <GateCard
+        gallery={gallery}
+        gateMode={gateMode}
+        isSignedIn={isSignedIn}
+        onEnterGuest={() => setGateMode("entered")}
+      />
     );
   }
 
