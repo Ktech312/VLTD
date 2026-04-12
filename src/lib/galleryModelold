@@ -573,58 +573,6 @@ async function syncGalleryItemsToSupabase(gallery: Gallery) {
   const rows = serializeGalleryItemsForSupabase(gallery);
 
   try {
-    const { data: existingRows, error: existingError } = await supabase
-      .from("gallery_items")
-      .select("gallery_id, artifact_id, position")
-      .eq("gallery_id", gallery.id)
-      .order("position", { ascending: true });
-
-    if (existingError) {
-      console.error("Failed loading existing gallery_items rows:", existingError);
-      return;
-    }
-
-    const normalizedExisting = Array.isArray(existingRows)
-      ? existingRows.map((row: any, index: number) => ({
-          gallery_id: gallery.id,
-          artifact_id: String(row?.artifact_id ?? "").trim(),
-          position:
-            typeof row?.position === "number" && Number.isFinite(row.position)
-              ? row.position
-              : index,
-        }))
-      : [];
-
-    const existingSignature = JSON.stringify(
-      normalizedExisting.map((row) => ({
-        artifact_id: row.artifact_id,
-        position: row.position,
-      }))
-    );
-    const nextSignature = JSON.stringify(
-      rows.map((row) => ({
-        artifact_id: row.artifact_id,
-        position: row.position,
-      }))
-    );
-
-    if (existingSignature === nextSignature) {
-      return;
-    }
-
-    if (rows.length === 0) {
-      const { error: deleteError } = await supabase
-        .from("gallery_items")
-        .delete()
-        .eq("gallery_id", gallery.id);
-
-      if (deleteError) {
-        console.error("Failed clearing gallery_items rows:", deleteError);
-      }
-
-      return;
-    }
-
     const { error: deleteError } = await supabase
       .from("gallery_items")
       .delete()
@@ -635,27 +583,14 @@ async function syncGalleryItemsToSupabase(gallery: Gallery) {
       return;
     }
 
-    const { error: insertError } = await supabase.from("gallery_items").insert(rows);
-
-    if (!insertError) {
+    if (rows.length === 0) {
       return;
     }
 
-    console.error("Failed inserting gallery_items rows:", insertError);
+    const { error: insertError } = await supabase.from("gallery_items").insert(rows);
 
-    if (normalizedExisting.length > 0) {
-      const { error: restoreError } = await supabase
-        .from("gallery_items")
-        .insert(normalizedExisting);
-
-      if (restoreError) {
-        console.error("Failed restoring previous gallery_items rows:", restoreError);
-      } else {
-        console.warn("Restored previous gallery_items rows after failed sync.", {
-          galleryId: gallery.id,
-          restoredCount: normalizedExisting.length,
-        });
-      }
+    if (insertError) {
+      console.error("Failed inserting gallery_items rows:", insertError);
     }
   } catch (error) {
     console.error("Unexpected gallery_items sync error:", error);
