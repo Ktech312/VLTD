@@ -173,6 +173,7 @@ export default function GalleryPage() {
   const [items, setItems] = useState<VaultItem[]>([]);
   const [shareUrl, setShareUrl] = useState<string>("");
   const [copied, setCopied] = useState(false);
+  const [accessInfoOpen, setAccessInfoOpen] = useState(false);
   const [inviteLabel, setInviteLabel] = useState("");
   const [inviteCopiedToken, setInviteCopiedToken] = useState<string>("");
   const [status, setStatus] = useState("");
@@ -588,7 +589,7 @@ export default function GalleryPage() {
               </div>
             </div>
 
-            <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+            <div className="mt-8 grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
               <div className="rounded-[28px] bg-black/20 p-5 ring-1 ring-white/10">
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -624,10 +625,31 @@ export default function GalleryPage() {
                   </button>
                 </div>
 
-                <div className="mt-6">
-                  <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                    USER ACCESS MODE
+                <div className="relative mt-6">
+                  <div className="flex items-center gap-2">
+                    <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
+                      USER ACCESS MODE
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAccessInfoOpen((current) => !current)}
+                      className="vltd-selectable inline-flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--pill)] text-[11px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                      aria-label="Access mode help"
+                      aria-expanded={accessInfoOpen}
+                    >
+                      i
+                    </button>
                   </div>
+
+                  {accessInfoOpen ? (
+                    <div className="absolute right-0 top-8 z-20 w-full max-w-[420px] rounded-2xl bg-[color:var(--surface)] p-4 text-sm leading-6 text-[color:var(--muted)] ring-1 ring-[color:var(--border)] shadow-[0_18px_48px_rgba(0,0,0,0.32)]">
+                      <div><strong>Public Gallery</strong> - Available to registered or unregistered users, searchable on Home page.</div>
+                      <div className="mt-2"><strong>Guest View</strong> - Anyone with access to the shared link can view your gallery.</div>
+                      <div className="mt-2"><strong>Registered Users</strong> - Any registered user with access to the shared link can view your gallery and analytics track signed-in views.</div>
+                      <div className="mt-2"><strong>Private Gallery</strong> - For your own testing before sharing with anyone.</div>
+                      <div className="mt-3 text-xs text-[color:var(--muted2)]">Current mode: {accessDescription(selectedAccessMode)}</div>
+                    </div>
+                  ) : null}
 
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
@@ -660,14 +682,8 @@ export default function GalleryPage() {
                     </button>
                   </div>
 
-                  <div className="mt-4 rounded-2xl bg-[color:var(--input)] p-4 text-sm leading-6 text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
-                    <div><strong>Public Gallery</strong> - Available to registered or unregistered users, searchable on Home page.</div>
-                    <div className="mt-2"><strong>Guest View</strong> - Anyone with access to the shared link can view your gallery.</div>
-                    <div className="mt-2"><strong>Registered Users</strong> - Any registered user with access to the shared link can view your gallery, allows analytics on views.</div>
-                    <div className="mt-2"><strong>Private Gallery</strong> - This only for yourself, good for gallery test beds before sharing with anyone.</div>
-                    <div className="mt-3 text-xs text-[color:var(--muted2)]">
-                      Current mode: {accessDescription(selectedAccessMode)}
-                    </div>
+                  <div className="mt-3 text-xs text-[color:var(--muted2)]">
+                    Current mode: {accessDescription(selectedAccessMode)}
                   </div>
                 </div>
               </div>
@@ -676,15 +692,22 @@ export default function GalleryPage() {
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   COVER IMAGE
                 </div>
-                <label className="mt-3 block text-sm text-[color:var(--muted)]">
-                  Upload cover artwork
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={updateCover}
-                  className="mt-3 block w-full text-sm"
-                />
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <input
+                    id="gallery-cover-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={updateCover}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="gallery-cover-upload"
+                    className="vltd-selectable inline-flex min-h-[40px] cursor-pointer items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                  >
+                    Upload Cover Artwork
+                  </label>
+                  <div className="text-sm text-[color:var(--muted)]">Choose file to refresh the hero panel artwork.</div>
+                </div>
               </div>
             </div>
           </div>
@@ -698,7 +721,7 @@ export default function GalleryPage() {
             <h2 className="mt-2 text-2xl font-semibold">Curate the Layout</h2>
           </div>
 
-          <GalleryBuilder gallery={draft} onChange={update} onGalleryChange={patchDraft} />
+          <GalleryBuilder gallery={draft} onChange={update} onGalleryChange={patchDraft} onQuickSave={saveDraft} />
         </section>
 
         <section className="mt-10 grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
