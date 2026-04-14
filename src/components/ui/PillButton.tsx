@@ -39,7 +39,7 @@ export function PillButton({
           "bg-[color:var(--pill)]",
           "text-[color:var(--fg)]",
           "ring-[color:var(--pill-active-ring)]",
-          "vltd-pill-main-glow",
+          "vltd-selected",
           "font-semibold",
           "hover:bg-[color:var(--pill-hover)]",
         ].join(" ")
@@ -48,7 +48,7 @@ export function PillButton({
           "bg-[color:var(--pill)]",
           "text-[color:var(--fg)]",
           "ring-[color:var(--pill-active-ring)]",
-          "vltd-pill-main-glow",
+          "vltd-selected",
           "font-semibold",
           "hover:bg-[color:var(--pill-hover)]",
         ].join(" ")

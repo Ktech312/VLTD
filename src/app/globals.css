@@ -238,21 +238,14 @@ textarea {
 }
 
 select {
-  color-scheme: dark;
+  background-color: var(--input);
+  color: var(--fg);
+  -webkit-text-fill-color: var(--fg);
 }
 
-.dark select,
-.dark option,
-.dark optgroup {
-  background-color: #111214;
-  color: #ededed;
-}
-
-:not(.dark) select,
-:not(.dark) option,
-:not(.dark) optgroup {
-  background-color: #ffffff;
-  color: #171717;
+option {
+  background-color: #151922;
+  color: #f5f7fb;
 }
 
 /* Give controls a consistent base + mobile-friendly sizing */
@@ -660,18 +653,12 @@ hr {
     transform 180ms ease;
 }
 
-.vltd-selectable:hover {
+.vltd-selectable:hover:not(:disabled):not([aria-disabled="true"]) {
   border-color: color-mix(in srgb, var(--pill-active-ring) 72%, var(--border) 28%) !important;
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--pill-active-ring) 72%, transparent),
-    0 0 0 2px color-mix(in srgb, var(--pill-glow-soft) 65%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--pill-active-ring) 60%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--pill-glow-soft) 70%, transparent),
     0 0 16px color-mix(in srgb, var(--pill-glow-mid) 72%, transparent) !important;
-}
-
-.vltd-selectable:disabled:hover,
-.vltd-selectable[aria-disabled="true"]:hover {
-  border-color: var(--border) !important;
-  box-shadow: none !important;
 }
 
 .vltd-selected,

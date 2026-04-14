@@ -425,13 +425,13 @@ function VaultEmptyState({
           </Link>
           <Link
             href="/vault/add"
-            className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+            className="vltd-selectable inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] transition"
           >
             Add Item
           </Link>
           <Link
             href="/vault/import"
-            className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+            className="vltd-selectable inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] transition"
           >
             Import
           </Link>
@@ -702,25 +702,25 @@ export default function VaultPage() {
               <div className="shrink-0 flex flex-wrap gap-2">
                 <Link
                   href="/vault/add"
-                  className="vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]"
+                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
                 >
                   Add
                 </Link>
                 <Link
                   href="/vault/quick"
-                  className="vltd-selectable vltd-selected inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-ring)] hover:bg-[color:var(--pill-hover)]"
+                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]"
                 >
                   Quick Add
                 </Link>
                 <Link
                   href="/vault/import"
-                  className="vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]"
+                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
                 >
                   Import
                 </Link>
                 <Link
                   href="/vault/sold"
-                  className="vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]"
+                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
                 >
                   Sold
                 </Link>
@@ -783,7 +783,7 @@ export default function VaultPage() {
             <select
               value={universeFilter}
               onChange={(e) => setUniverseFilter(e.target.value as UniverseFilter)}
-              className="min-h-[40px] rounded-xl bg-[color:var(--input)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              className="min-h-[40px] rounded-xl bg-[color:var(--input)] px-4 py-2 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
             >
               <option value="ALL">All Universes</option>
               {(Object.keys(UNIVERSE_LABEL) as UniverseKey[]).map((key) => (
@@ -795,7 +795,7 @@ export default function VaultPage() {
             <select
               value={readinessFilter}
               onChange={(e) => setReadinessFilter(e.target.value as ReadinessFilter)}
-              className="min-h-[40px] rounded-xl bg-[color:var(--input)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              className="min-h-[40px] rounded-xl bg-[color:var(--input)] px-4 py-2 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
             >
               <option value="all">All Readiness</option>
               <option value="high">High Readiness</option>
@@ -805,7 +805,7 @@ export default function VaultPage() {
             <select
               value={sortMode}
               onChange={(e) => setSortMode(e.target.value as SortMode)}
-              className="min-h-[40px] rounded-xl bg-[color:var(--input)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              className="min-h-[40px] rounded-xl bg-[color:var(--input)] px-4 py-2 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
             >
               <option value="newest">Newest</option>
               <option value="value_desc">Value ↓</option>
@@ -817,7 +817,7 @@ export default function VaultPage() {
             <PillButton
               variant={gradedOnly ? "active" : "default"}
               onClick={() => setGradedOnly((v) => !v)}
-              className="min-h-[40px] rounded-xl px-4 py-2 text-sm font-medium"
+              className="min-h-[40px] rounded-xl px-4 py-2 text-sm font-medium text-[color:var(--fg)]"
             >
               {gradedOnly ? "Graded: On" : "Graded Only"}
             </PillButton>

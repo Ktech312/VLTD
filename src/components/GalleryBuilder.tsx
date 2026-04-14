@@ -471,7 +471,7 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange }: P
           </div>
         </div>
 
-        <div className="mt-5 grid gap-4 xl:grid-cols-2">
+        <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
           <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
             <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">THEME PACK</div>
             <div className="mt-3 grid gap-2">
@@ -500,116 +500,138 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange }: P
           </div>
 
           <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
-            <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">
-              DISPLAY + GUEST MODE
-            </div>
+            <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">DISPLAY + PREVIEW</div>
 
             <div className="mt-3 grid gap-4">
-              <div>
-                <label className="mb-2 block text-sm font-medium">Display Mode</label>
-                <div className="flex flex-wrap gap-2">
-                  {(["grid", "shelf"] as const).map((mode) => (
-                    <button
-                      key={mode}
-                      type="button"
-                      onClick={() => onGalleryChange((current) => ({ ...current, displayMode: mode }))}
-                      className={[
-                        "vltd-selectable rounded-full px-4 py-2 text-xs font-semibold ring-1 transition",
-                        displayMode === mode
-                          ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
-                          : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
-                      ].join(" ")}
-                      aria-pressed={displayMode === mode}
-                    >
-                      {mode === "grid" ? "Grid Mode" : "Shelf Mode"}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium">Guest View Mode</label>
-                <div className="flex flex-wrap gap-2">
-                  {(["public", "guest"] as const).map((mode) => (
-                    <button
-                      key={mode}
-                      type="button"
-                      onClick={() => onGalleryChange((current) => ({ ...current, guestViewMode: mode }))}
-                      className={[
-                        "vltd-selectable rounded-full px-4 py-2 text-xs font-semibold ring-1 transition",
-                        guestViewMode === mode
-                          ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
-                          : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
-                      ].join(" ")}
-                      aria-pressed={guestViewMode === mode}
-                    >
-                      {mode === "public" ? "Public Default" : "Guest Default"}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-[color:var(--fg)]">
-                  Shelf background image
-                </label>
-                <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <input
-                    id={`shelf-upload-${gallery.id}`}
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0] ?? null;
-                      if (file) void handleShelfBackgroundUpload(file);
-                      e.currentTarget.value = "";
-                    }}
-                    className="hidden"
-                  />
-                  <label
-                    htmlFor={`shelf-upload-${gallery.id}`}
-                    className="vltd-selectable inline-flex min-h-[38px] cursor-pointer items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
-                  >
-                    Upload Background
-                  </label>
-                  <div className="text-sm text-[color:var(--muted)]">
-                    {shelfFileName || "No file chosen"}
+              <div className="rounded-[18px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
+                <div>
+                  <label className="mb-2 block text-sm font-medium">Display Mode</label>
+                  <div className="flex flex-wrap gap-2">
+                    {(["grid", "shelf"] as const).map((mode) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => onGalleryChange((current) => ({ ...current, displayMode: mode }))}
+                        className={[
+                          "vltd-selectable rounded-full px-4 py-2 text-xs font-semibold ring-1 transition",
+                          displayMode === mode
+                            ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
+                            : "bg-[color:var(--pill)] text-[color:var(--fg)] ring-[color:var(--border)]",
+                        ].join(" ")}
+                        aria-pressed={displayMode === mode}
+                      >
+                        {mode === "grid" ? "Grid Mode" : "Shelf Mode"}
+                      </button>
+                    ))}
                   </div>
+                </div>
+
+                <div className="mt-4">
+                  <label className="mb-2 block text-sm font-medium">Guest View Mode</label>
+                  <div className="flex flex-wrap gap-2">
+                    {(["public", "guest"] as const).map((mode) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => onGalleryChange((current) => ({ ...current, guestViewMode: mode }))}
+                        className={[
+                          "vltd-selectable rounded-full px-4 py-2 text-xs font-semibold ring-1 transition",
+                          guestViewMode === mode
+                            ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
+                            : "bg-[color:var(--pill)] text-[color:var(--fg)] ring-[color:var(--border)]",
+                        ].join(" ")}
+                        aria-pressed={guestViewMode === mode}
+                      >
+                        {mode === "public" ? "Public Default" : "Guest Default"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="overflow-hidden rounded-[18px] bg-[color:var(--input)] ring-1 ring-[color:var(--border)]">
+                <div className="relative min-h-[260px]">
                   {shelfBackground ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShelfFileName("");
-                        setBackgroundUploadError("");
-                        onGalleryChange((current) => ({ ...current, shelfBackground: "" }));
-                      }}
-                      className="vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
-                    >
-                      Remove Background
-                    </button>
-                  ) : null}
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={shelfBackground}
+                        alt="Shelf background preview"
+                        className="absolute inset-0 h-full w-full object-cover"
+                        draggable={false}
+                      />
+                      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,7,10,0.20),rgba(5,7,10,0.72))]" />
+                    </>
+                  ) : (
+                    <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))]" />
+                  )}
+
+                  <div className="relative z-10 flex h-full min-h-[260px] flex-col justify-between p-4">
+                    <div>
+                      <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">LIVE PREVIEW PANEL</div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <span className="rounded-full bg-black/25 px-3 py-1 text-xs font-semibold text-white ring-1 ring-white/10">
+                          Theme: {themePack}
+                        </span>
+                        <span className="rounded-full bg-black/25 px-3 py-1 text-xs font-semibold text-white ring-1 ring-white/10">
+                          Display: {displayMode}
+                        </span>
+                        <span className="rounded-full bg-black/25 px-3 py-1 text-xs font-semibold text-white ring-1 ring-white/10">
+                          Guest: {guestViewMode}
+                        </span>
+                        <span className="rounded-full bg-black/25 px-3 py-1 text-xs font-semibold text-white ring-1 ring-white/10">
+                          Layout: {layoutType}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-sm font-medium text-white">Shelf background image</div>
+                      <div className="mt-1 text-sm text-white/75">
+                        {shelfBackground ? (shelfFileName || "Background applied") : "No shelf background uploaded yet."}
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <input
+                          id={`shelf-upload-${gallery.id}`}
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] ?? null;
+                            if (file) void handleShelfBackgroundUpload(file);
+                            e.currentTarget.value = "";
+                          }}
+                          className="hidden"
+                        />
+                        <label
+                          htmlFor={`shelf-upload-${gallery.id}`}
+                          className="vltd-selectable inline-flex min-h-[38px] cursor-pointer items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]"
+                        >
+                          Upload Background
+                        </label>
+                        {shelfBackground ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShelfFileName("");
+                              setBackgroundUploadError("");
+                              onGalleryChange((current) => ({ ...current, shelfBackground: "" }));
+                            }}
+                            className="vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]"
+                          >
+                            Remove Background
+                          </button>
+                        ) : null}
+                      </div>
+
+                      {backgroundUploadError ? (
+                        <div className="mt-2 text-xs text-red-300">
+                          {backgroundUploadError}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
                 </div>
-
-                {backgroundUploadError ? (
-                  <div className="mt-2 text-xs text-red-300">
-                    {backgroundUploadError}
-                  </div>
-                ) : null}
-
-                {shelfBackground ? (
-                  <div className="mt-3 overflow-hidden rounded-2xl ring-1 ring-[color:var(--border)]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={shelfBackground}
-                      alt="Shelf background preview"
-                      className="h-28 w-full object-cover"
-                      draggable={false}
-                    />
-                  </div>
-                ) : (
-                  <div className="mt-3 rounded-2xl bg-[color:var(--input)] p-4 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
-                    No shelf background uploaded yet.
-                  </div>
-                )}
               </div>
 
               <div className="rounded-[18px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
@@ -622,7 +644,7 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange }: P
                   <button
                     type="button"
                     onClick={handleOpenGuestView}
-                    className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 text-xs font-semibold text-[color:var(--fg)]"
+                    className="vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 text-xs font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-ring)]"
                   >
                     Open Guest View
                   </button>
@@ -630,7 +652,7 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange }: P
                   <button
                     type="button"
                     onClick={handleCopyGuestLink}
-                    className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                    className="vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]"
                   >
                     {guestCopied ? "Copied Public Link" : "Copy Public Link"}
                   </button>
@@ -638,7 +660,7 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange }: P
                   <button
                     type="button"
                     onClick={handleCreateQuickInvite}
-                    className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                    className="vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]"
                   >
                     {inviteCopied ? "Copied Invite Link" : "Create + Copy Invite"}
                   </button>
