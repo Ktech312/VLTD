@@ -343,6 +343,16 @@ export default function GalleryPage() {
     setStatus("Gallery saved.");
   }
 
+  function saveDraftAndOpenGuestView() {
+    if (!draft) return;
+
+    const nextShareUrl = getGalleryShareUrl(draft);
+    saveDraft();
+
+    if (!nextShareUrl) return;
+    window.open(nextShareUrl, "_blank", "noopener,noreferrer");
+  }
+
   function cancelChanges() {
     if (!gallery) return;
     setDraft(cloneGallery(gallery));
@@ -589,7 +599,7 @@ export default function GalleryPage() {
               </div>
             </div>
 
-            <div className="mt-8 grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+            <div className="mt-8 grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px]">
               <div className="rounded-[28px] bg-black/20 p-5 ring-1 ring-white/10">
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -642,12 +652,23 @@ export default function GalleryPage() {
                   </div>
 
                   {accessInfoOpen ? (
-                    <div className="absolute right-0 top-8 z-20 w-full max-w-[420px] rounded-2xl bg-[color:var(--surface)] p-4 text-sm leading-6 text-[color:var(--muted)] ring-1 ring-[color:var(--border)] shadow-[0_18px_48px_rgba(0,0,0,0.32)]">
-                      <div><strong>Public Gallery</strong> - Available to registered or unregistered users, searchable on Home page.</div>
+                    <div className="absolute left-0 bottom-full z-20 mb-3 w-full max-w-[520px] rounded-2xl bg-[color:var(--surface)] p-4 text-sm leading-6 text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-[0_24px_60px_rgba(0,0,0,0.42)]">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">ACCESS MODE HELP</div>
+                        <button
+                          type="button"
+                          onClick={() => setAccessInfoOpen(false)}
+                          className="vltd-selectable inline-flex h-7 w-7 items-center justify-center rounded-full bg-[color:var(--pill)] text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                          aria-label="Close access mode help"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <div className="mt-3"><strong>Public Gallery</strong> - Available to registered or unregistered users, searchable on Home page.</div>
                       <div className="mt-2"><strong>Guest View</strong> - Anyone with access to the shared link can view your gallery.</div>
                       <div className="mt-2"><strong>Registered Users</strong> - Any registered user with access to the shared link can view your gallery and analytics track signed-in views.</div>
                       <div className="mt-2"><strong>Private Gallery</strong> - For your own testing before sharing with anyone.</div>
-                      <div className="mt-3 text-xs text-[color:var(--muted2)]">Current mode: {accessDescription(selectedAccessMode)}</div>
+                      <div className="mt-3 rounded-xl bg-black/20 px-3 py-2 text-xs text-[color:var(--muted)] ring-1 ring-white/10">Current mode: {accessDescription(selectedAccessMode)}</div>
                     </div>
                   ) : null}
 
@@ -682,9 +703,7 @@ export default function GalleryPage() {
                     </button>
                   </div>
 
-                  <div className="mt-3 text-xs text-[color:var(--muted2)]">
-                    Current mode: {accessDescription(selectedAccessMode)}
-                  </div>
+                  <div className="mt-3 text-xs text-[color:var(--muted2)]">Current mode: {accessDescription(selectedAccessMode)}</div>
                 </div>
               </div>
 
@@ -692,7 +711,7 @@ export default function GalleryPage() {
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   COVER IMAGE
                 </div>
-                <div className="mt-3 flex flex-wrap items-center gap-3">
+                <div className="mt-3 flex flex-col items-start gap-3">
                   <input
                     id="gallery-cover-upload"
                     type="file"
@@ -706,7 +725,7 @@ export default function GalleryPage() {
                   >
                     Upload Cover Artwork
                   </label>
-                  <div className="text-sm text-[color:var(--muted)]">Choose file to refresh the hero panel artwork.</div>
+                  <div className="text-sm text-[color:var(--muted)]">Refresh the hero panel artwork.</div>
                 </div>
               </div>
             </div>
@@ -721,7 +740,7 @@ export default function GalleryPage() {
             <h2 className="mt-2 text-2xl font-semibold">Curate the Layout</h2>
           </div>
 
-          <GalleryBuilder gallery={draft} onChange={update} onGalleryChange={patchDraft} onQuickSave={saveDraft} />
+          <GalleryBuilder gallery={draft} onChange={update} onGalleryChange={patchDraft} onQuickSave={saveDraft} onOpenGuestView={saveDraftAndOpenGuestView} />
         </section>
 
         <section className="mt-10 grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">

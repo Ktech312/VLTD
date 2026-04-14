@@ -7,9 +7,6 @@ import { type VaultItem, loadItems } from "@/lib/vaultModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import {
   type Gallery,
-  getGalleryShareUrl,
-  createGalleryInviteToken,
-  getGalleryInviteUrl,
   getGalleryLayoutType,
   getGallerySections,
   getGalleryThemePack,
@@ -24,6 +21,7 @@ type Props = {
   onChange: (ids: string[]) => void;
   onGalleryChange: (updater: (current: Gallery) => Gallery) => void;
   onQuickSave?: () => void;
+  onOpenGuestView?: () => void;
 };
 
 const GALLERY_BACKGROUND_BUCKET = "gallery-backgrounds";
@@ -226,31 +224,17 @@ function syncSectionsAndLayout(
   };
 }
 
-export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQuickSave }: Props) {
+export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQuickSave, onOpenGuestView }: Props) {
   const [items, setItems] = useState<VaultItem[]>([]);
   const [query, setQuery] = useState("");
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
-  const [guestCopied, setGuestCopied] = useState(false);
-  const [inviteCopied, setInviteCopied] = useState(false);
   const [shelfFileName, setShelfFileName] = useState("");
   const [backgroundUploadError, setBackgroundUploadError] = useState("");
 
   useEffect(() => {
     setItems(loadItems());
   }, []);
-
-  useEffect(() => {
-    if (!guestCopied) return;
-    const timer = window.setTimeout(() => setGuestCopied(false), 1800);
-    return () => window.clearTimeout(timer);
-  }, [guestCopied]);
-
-  useEffect(() => {
-    if (!inviteCopied) return;
-    const timer = window.setTimeout(() => setInviteCopied(false), 1800);
-    return () => window.clearTimeout(timer);
-  }, [inviteCopied]);
 
   const selectedSet = useMemo(() => new Set(gallery.itemIds), [gallery.itemIds]);
 
@@ -282,7 +266,6 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
   const displayMode = getGalleryDisplayMode(gallery);
   const guestViewMode = getGalleryGuestViewMode(gallery);
   const shelfBackground = getGalleryShelfBackground(gallery);
-  const publicShareUrl = getGalleryShareUrl(gallery);
   const previewTheme = useMemo(
     () => resolveGalleryVisualTheme({ themePack }),
     [themePack]
@@ -376,35 +359,6 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
       setBackgroundUploadError(
         error instanceof Error ? error.message : "Failed to upload background."
       );
-    }
-  }
-
-  async function handleCopyGuestLink() {
-    if (!publicShareUrl) return;
-
-    try {
-      await navigator.clipboard.writeText(publicShareUrl);
-      setGuestCopied(true);
-    } catch {
-      // ignore
-    }
-  }
-
-  function handleOpenGuestView() {
-    if (!publicShareUrl) return;
-    window.open(publicShareUrl, "_blank", "noopener,noreferrer");
-  }
-
-  async function handleCreateQuickInvite() {
-    const token = createGalleryInviteToken(gallery.id, "Guest Preview");
-    const url = getGalleryInviteUrl(gallery, token);
-    if (!url) return;
-
-    try {
-      await navigator.clipboard.writeText(url);
-      setInviteCopied(true);
-    } catch {
-      // ignore
     }
   }
 
@@ -705,7 +659,7 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
                 ) : null}
                 <button
                   type="button"
-                  onClick={handleOpenGuestView}
+                  onClick={() => onOpenGuestView?.()}
                   className="vltd-pill-main-glow inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 text-xs font-semibold text-[color:var(--fg)]"
                 >
                   Open Guest View
@@ -719,22 +673,8 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
                 </button>
               </div>
 
-              <div className="mt-3 flex flex-wrap gap-2 text-xs text-[color:var(--muted)]">
-                <button
-                  type="button"
-                  onClick={handleCopyGuestLink}
-                  className="vltd-selectable rounded-full bg-[color:var(--surface)] px-3 py-1.5 ring-1 ring-[color:var(--border)]"
-                >
-                  {guestCopied ? "Copied Public Link" : "Copy Public Link"}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCreateQuickInvite}
-                  className="vltd-selectable rounded-full bg-[color:var(--surface)] px-3 py-1.5 ring-1 ring-[color:var(--border)]"
-                >
-                  {inviteCopied ? "Copied Invite Link" : "Create + Copy Invite"}
-                </button>
-                <span className="inline-flex items-center rounded-full px-3 py-1.5">{shelfFileName || "No file chosen"}</span>
+              <div className="mt-3 text-xs text-[color:var(--muted)]">
+                {shelfFileName ? `Selected file: ${shelfFileName}` : shelfBackground ? "Background applied" : "No background selected"}
               </div>
 
               {backgroundUploadError ? (
