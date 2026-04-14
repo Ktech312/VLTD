@@ -14,6 +14,7 @@ import { type VaultItem, getPrimaryImageUrl } from "@/lib/vaultModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 type GateMode = "loading" | "guest_allowed" | "registered_only" | "entered";
+type ShareAccessMode = "private" | "public_gallery" | "guest_view" | "registered_users";
 
 function itemSubtitle(i: VaultItem) {
   return [i.subtitle, i.number, i.grade].filter(Boolean).join(" • ");
@@ -158,21 +159,64 @@ function normalizeVaultItem(raw: any): VaultItem {
   };
 }
 
+function getShareAccessMode(gallery: Gallery): ShareAccessMode {
+  if (gallery.guestViewMode === "guest") return "registered_users";
+  if (gallery.visibility === "LOCKED") return "private";
+  if (gallery.visibility === "INVITE") return "guest_view";
+  return "public_gallery";
+}
+
+function getBackgroundShellStyle(backgroundUrl?: string): React.CSSProperties | undefined {
+  if (!backgroundUrl?.trim()) return undefined;
+
+  return {
+    backgroundImage: `url(${backgroundUrl})`,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+    backgroundAttachment: "fixed",
+  };
+}
+
+function GalleryBackgroundShell({
+  backgroundUrl,
+  children,
+}: {
+  backgroundUrl?: string;
+  children: React.ReactNode;
+}) {
+  const hasBackground = !!backgroundUrl?.trim();
+
+  return (
+    <main
+      className="relative min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]"
+      style={getBackgroundShellStyle(backgroundUrl)}
+    >
+      {hasBackground ? (
+        <div className="absolute inset-0 bg-[rgba(7,10,18,0.58)] backdrop-blur-[1.5px]" aria-hidden="true" />
+      ) : null}
+      <div className="relative z-10 min-h-screen">{children}</div>
+    </main>
+  );
+}
+
 function GateCard({
   gallery,
+  accessMode,
   gateMode,
   isSignedIn,
   onEnterGuest,
 }: {
   gallery: Gallery;
+  accessMode: ShareAccessMode;
   gateMode: GateMode;
   isSignedIn: boolean;
   onEnterGuest: () => void;
 }) {
-  const requiresRegistered = gallery.guestViewMode === "guest";
+  const requiresRegistered = accessMode === "registered_users";
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+    <GalleryBackgroundShell backgroundUrl={gallery.shelfBackground}>
       <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
         <div className="w-full rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
@@ -195,7 +239,7 @@ function GateCard({
             {!isSignedIn ? (
               <Link
                 href={`/login?next=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "/")}`}
-                className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-6 py-3 text-sm font-semibold text-[color:var(--fg)]"
+                className="vltd-pill-main-glow inline-flex min-h-[48px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-6 py-3 text-sm font-semibold text-[color:var(--fg)]"
               >
                 Create Free Account
               </Link>
@@ -203,7 +247,7 @@ function GateCard({
               <button
                 type="button"
                 onClick={onEnterGuest}
-                className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-6 py-3 text-sm font-semibold text-[color:var(--fg)]"
+                className="vltd-pill-main-glow inline-flex min-h-[48px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-6 py-3 text-sm font-semibold text-[color:var(--fg)]"
               >
                 Continue to Gallery
               </button>
@@ -227,7 +271,7 @@ function GateCard({
           ) : null}
         </div>
       </div>
-    </main>
+    </GalleryBackgroundShell>
   );
 }
 
@@ -272,10 +316,19 @@ export default function SharedGalleryPage() {
           return;
         }
 
+        const accessMode = getShareAccessMode(found);
+
+        if (accessMode === "private") {
+          setGallery(found);
+          setGateMode("loading");
+          setItems([]);
+          setIsResolved(true);
+          return;
+        }
+
         setGallery(found);
 
-        const requiresRegistered = found.guestViewMode === "guest";
-        if (requiresRegistered && !signedIn) {
+        if (accessMode === "registered_users" && !signedIn) {
           setGateMode("registered_only");
           setIsResolved(true);
           return;
@@ -368,34 +421,35 @@ export default function SharedGalleryPage() {
   }, [gallery, gateMode]);
 
   const title = useMemo(() => gallery?.title || "Shared Gallery", [gallery]);
+  const accessMode = useMemo(() => (gallery ? getShareAccessMode(gallery) : "private"), [gallery]);
 
   if (!isResolved) {
     return (
-      <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+      <GalleryBackgroundShell backgroundUrl={gallery?.shelfBackground}>
         <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
           <div className="rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)]">
             Loading gallery...
           </div>
         </div>
-      </main>
+      </GalleryBackgroundShell>
     );
   }
 
   if (error) {
     return (
-      <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+      <GalleryBackgroundShell backgroundUrl={gallery?.shelfBackground}>
         <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
           <div className="rounded-[28px] border border-red-500/40 bg-red-500/10 p-8 text-center text-red-200">
             {error}
           </div>
         </div>
-      </main>
+      </GalleryBackgroundShell>
     );
   }
 
   if (!gallery) {
     return (
-      <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+      <GalleryBackgroundShell>
         <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
           <div className="rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
@@ -415,7 +469,25 @@ export default function SharedGalleryPage() {
             </div>
           </div>
         </div>
-      </main>
+      </GalleryBackgroundShell>
+    );
+  }
+
+  if (accessMode === "private") {
+    return (
+      <GalleryBackgroundShell backgroundUrl={gallery.shelfBackground}>
+        <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
+          <div className="w-full rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+            <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
+              SHARED GALLERY
+            </div>
+            <h1 className="mt-3 text-2xl font-semibold">Private Gallery</h1>
+            <p className="mt-3 text-sm text-[color:var(--muted)]">
+              This gallery is private and cannot be viewed from a shared link.
+            </p>
+          </div>
+        </div>
+      </GalleryBackgroundShell>
     );
   }
 
@@ -423,6 +495,7 @@ export default function SharedGalleryPage() {
     return (
       <GateCard
         gallery={gallery}
+        accessMode={accessMode}
         gateMode={gateMode}
         isSignedIn={isSignedIn}
         onEnterGuest={() => setGateMode("entered")}
@@ -431,7 +504,7 @@ export default function SharedGalleryPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+    <GalleryBackgroundShell backgroundUrl={gallery.shelfBackground}>
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
         <section className="rounded-[30px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-8">
           <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
@@ -496,6 +569,6 @@ export default function SharedGalleryPage() {
           </section>
         )}
       </div>
-    </main>
+    </GalleryBackgroundShell>
   );
 }
