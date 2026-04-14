@@ -188,11 +188,22 @@ function normalizeLayoutTypeLocal(value: unknown) {
   return "GRID";
 }
 
+function toPlainObject(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+
+  return value as Record<string, unknown>;
+}
+
 function syncSectionsAndLayout(
   current: Gallery,
   sections: NonNullable<Gallery["sections"]>,
   layoutType?: any
 ): Gallery {
+  const currentLayout = toPlainObject(current.layout);
+  const currentExhibitionLayout = toPlainObject(current.exhibitionLayout);
+
   const nextType = normalizeLayoutTypeLocal(
     layoutType ?? getGalleryLayoutType(current) ?? "GRID"
   );
@@ -201,12 +212,12 @@ function syncSectionsAndLayout(
     ...current,
     sections,
     layout: {
-      ...(current.layout ?? {}),
+      ...currentLayout,
       type: nextType,
     } as any,
     exhibitionLayout: {
-      ...(current.exhibitionLayout ?? {}),
-      ...(current.layout ?? {}),
+      ...currentExhibitionLayout,
+      ...currentLayout,
       type: nextType,
       sections,
     } as any,
