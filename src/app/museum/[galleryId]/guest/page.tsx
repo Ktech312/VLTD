@@ -15,6 +15,8 @@ import {
   getGalleryLayoutType,
 } from "@/lib/galleryModel";
 import { PillButton } from "@/components/ui/PillButton";
+import GalleryShelfScene from "@/components/gallery/GalleryShelfScene";
+import { resolveGalleryPresentation } from "@/components/gallery/galleryThemes";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
 import { getVaultImagePublicUrl } from "@/lib/vaultCloud";
 
@@ -44,65 +46,6 @@ function formatMoney(value?: number) {
     currency: "USD",
     maximumFractionDigits: 0,
   }).format(value);
-}
-
-function getThemeTone(themePack: string) {
-  switch (themePack) {
-    case "walnut":
-      return {
-        heroShell:
-          "bg-[linear-gradient(135deg,rgba(86,58,34,0.40),rgba(34,22,13,0.28))] border-[#7b5a3f]/40",
-        chip:
-          "bg-[rgba(58,36,22,0.45)] text-[color:var(--muted2)] ring-white/10",
-        shelf:
-          "linear-gradient(180deg, rgba(108,74,47,0.92), rgba(70,44,24,0.96))",
-        shelfEdge:
-          "linear-gradient(180deg, rgba(173,130,88,0.55), rgba(70,44,24,0))",
-      };
-    case "midnight":
-      return {
-        heroShell:
-          "bg-[linear-gradient(135deg,rgba(20,26,38,0.55),rgba(7,10,18,0.42))] border-cyan-300/10",
-        chip:
-          "bg-[rgba(18,24,36,0.65)] text-[color:var(--muted2)] ring-cyan-300/10",
-        shelf:
-          "linear-gradient(180deg, rgba(35,44,62,0.95), rgba(16,22,34,0.98))",
-        shelfEdge:
-          "linear-gradient(180deg, rgba(116,146,202,0.35), rgba(16,22,34,0))",
-      };
-    case "marble":
-      return {
-        heroShell:
-          "bg-[linear-gradient(135deg,rgba(255,255,255,0.10),rgba(210,214,223,0.07))] border-white/15",
-        chip:
-          "bg-[rgba(255,255,255,0.10)] text-[color:var(--muted2)] ring-white/10",
-        shelf:
-          "linear-gradient(180deg, rgba(205,210,219,0.90), rgba(157,164,178,0.96))",
-        shelfEdge:
-          "linear-gradient(180deg, rgba(255,255,255,0.50), rgba(157,164,178,0))",
-      };
-    default:
-      return {
-        heroShell:
-          "bg-[linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] border-white/8",
-        chip:
-          "bg-black/20 text-[color:var(--muted2)] ring-white/10",
-        shelf:
-          "linear-gradient(180deg, rgba(80,60,44,0.96), rgba(56,39,28,0.98))",
-        shelfEdge:
-          "linear-gradient(180deg, rgba(184,146,102,0.35), rgba(56,39,28,0))",
-      };
-  }
-}
-
-function shelfSurface(gallery: Gallery | null) {
-  const custom = gallery?.shelfBackground?.trim();
-  if (custom) return custom;
-  return getThemeTone(getGalleryThemePack(gallery)).shelf;
-}
-
-function shelfEdgeSurface(gallery: Gallery | null) {
-  return getThemeTone(getGalleryThemePack(gallery)).shelfEdge;
 }
 
 function SectionHeader({
@@ -165,107 +108,6 @@ function DetailPill({
     >
       {children}
     </span>
-  );
-}
-
-function GuestShelfGalleryStrip({
-  items,
-  gallery,
-}: {
-  items: VaultItem[];
-  gallery: Gallery | null;
-}) {
-  if (items.length === 0) return null;
-
-  return (
-    <section className="mt-10">
-      <SectionHeader
-        eyebrow="SHELF VIEW"
-        title="Guest Preview Shelf"
-        subtitle="A visual browse of the gallery for guests exploring the collection."
-      />
-
-      <div className="relative overflow-hidden rounded-[28px] ring-1 ring-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.30)]">
-        <div className="absolute inset-0 opacity-35">
-          <div
-            className="h-full w-full"
-            style={{
-              backgroundImage: gallery?.shelfBackground
-                ? `url(${gallery.shelfBackground})`
-                : undefined,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
-          />
-        </div>
-
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),rgba(255,255,255,0)_28%),radial-gradient(circle_at_80%_0%,rgba(255,220,150,0.10),rgba(255,220,150,0)_26%)]" />
-
-        <div className="relative p-5 sm:p-6">
-          <div className="flex gap-5 overflow-x-auto pb-4">
-            {items.map((item) => {
-              const image = itemImage(item);
-
-              return (
-                <div
-                  key={item.id}
-                  className="group relative block min-w-[190px] max-w-[190px] shrink-0"
-                >
-                  <div className="relative mx-auto h-[240px] w-full">
-                    <div className="absolute inset-x-[12%] bottom-[18px] h-[18px] rounded-full bg-black/40 blur-xl" />
-
-                    <div className="relative flex h-full items-end justify-center">
-                      <div className="relative rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] p-3 shadow-[0_20px_44px_rgba(0,0,0,0.38)] transition duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_28px_56px_rgba(0,0,0,0.42)]">
-                        <div className="absolute inset-0 rounded-[20px] bg-[linear-gradient(135deg,rgba(255,255,255,0.14),transparent_42%)] opacity-70" />
-                        <div className="relative overflow-hidden rounded-[14px] bg-black/25">
-                          {image ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={image}
-                              alt={item.title}
-                              className="h-[180px] w-[140px] object-cover transition duration-300 group-hover:scale-[1.03]"
-                              draggable={false}
-                            />
-                          ) : (
-                            <div className="flex h-[180px] w-[140px] items-center justify-center text-sm text-[color:var(--muted)]">
-                              No image
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 text-center">
-                    <div className="line-clamp-2 text-sm font-semibold">{item.title}</div>
-                    <div className="mt-1 text-xs text-[color:var(--muted)]">
-                      {itemSubtitle(item) || "—"}
-                    </div>
-                    <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
-                      <span className="rounded-full bg-black/15 px-2.5 py-1 text-[10px] ring-1 ring-black/10">
-                        {formatMoney(Number(item.currentValue ?? 0))}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="pointer-events-none mt-1">
-            <div
-              className="relative h-[20px] rounded-[16px]"
-              style={{ background: shelfSurface(gallery) }}
-            >
-              <div
-                className="absolute inset-x-0 top-0 h-[8px] rounded-t-[16px]"
-                style={{ background: shelfEdgeSurface(gallery) }}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -392,8 +234,12 @@ export default function GuestGalleryPage() {
   }, [galleryItems]);
 
   const themePack = getGalleryThemePack(gallery);
-  const themeTone = getThemeTone(themePack);
   const displayMode = getGalleryDisplayMode(gallery);
+  const presentation = resolveGalleryPresentation({
+    themePack,
+    displayMode,
+    shelfBackground: gallery?.shelfBackground,
+  });
   const guestViewMode = getGalleryGuestViewMode(gallery);
   const layoutType = getGalleryLayoutType(gallery);
 
@@ -453,7 +299,7 @@ export default function GuestGalleryPage() {
         <section
           className={[
             "relative overflow-hidden rounded-[34px] border p-6 shadow-[0_30px_90px_rgba(0,0,0,0.42)] sm:p-8 lg:p-10",
-            themeTone.heroShell,
+            presentation.heroShellClass,
           ].join(" ")}
         >
           {gallery.coverImage ? (
@@ -488,22 +334,22 @@ export default function GuestGalleryPage() {
             </p>
 
             <div className="mt-5 flex flex-wrap items-center gap-2">
-              <DetailPill className={themeTone.chip}>
+              <DetailPill className={presentation.heroChipClass}>
                 {galleryItems.length} items
               </DetailPill>
-              <DetailPill className={themeTone.chip}>
+              <DetailPill className={presentation.heroChipClass}>
                 {gallery.analytics?.views ?? 0} views
               </DetailPill>
-              <DetailPill className={themeTone.chip}>
+              <DetailPill className={presentation.heroChipClass}>
                 {layoutType} layout
               </DetailPill>
-              <DetailPill className={themeTone.chip}>
+              <DetailPill className={presentation.heroChipClass}>
                 Theme {themePack}
               </DetailPill>
-              <DetailPill className={themeTone.chip}>
+              <DetailPill className={presentation.heroChipClass}>
                 {displayMode} mode
               </DetailPill>
-              <DetailPill className={themeTone.chip}>
+              <DetailPill className={presentation.heroChipClass}>
                 Guest {guestViewMode}
               </DetailPill>
             </div>
@@ -529,7 +375,23 @@ export default function GuestGalleryPage() {
         </section>
 
         {displayMode === "shelf" ? (
-          <GuestShelfGalleryStrip items={galleryItems} gallery={gallery} />
+          <section className="mt-10">
+            <SectionHeader
+              eyebrow="SHELF VIEW"
+              title="Guest Preview Shelf"
+              subtitle="A staged exhibition browse with stronger theme separation for public viewing."
+            />
+
+            <GalleryShelfScene
+              items={galleryItems}
+              galleryHrefPrefix="/vault/item"
+              themePack={themePack}
+              title={gallery.title}
+              subtitle={gallery.description?.trim() || "Curated collection presentation"}
+              shelfBackground={gallery.shelfBackground}
+              guestMode
+            />
+          </section>
         ) : null}
 
         {exhibitionSections.length > 0 ? (

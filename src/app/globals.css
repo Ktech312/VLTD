@@ -644,6 +644,11 @@ hr {
 
 .vltd-selectable:hover {
   border-color: color-mix(in srgb, var(--pill-active-ring) 72%, var(--border) 28%) !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--pill-active-ring) 72%, var(--border) 28%),
+    0 0 0 3px color-mix(in srgb, var(--pill-glow-soft) 72%, transparent),
+    0 0 18px color-mix(in srgb, var(--pill-glow-mid) 62%, transparent),
+    0 0 34px color-mix(in srgb, var(--pill-glow-soft) 56%, transparent) !important;
 }
 
 .vltd-selected,

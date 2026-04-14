@@ -64,6 +64,18 @@ export type ResolvedGalleryVisualTheme = {
   backdropStyle: BackdropStyleDefinition;
 };
 
+export type GalleryPresentationMode = "grid" | "shelf";
+
+export type ResolvedGalleryPresentation = ResolvedGalleryVisualTheme & {
+  themePack: LegacyGalleryThemePack;
+  displayMode: GalleryPresentationMode;
+  shelfBackground: string;
+  heroShellClass: string;
+  heroChipClass: string;
+  galleryPanelClass: string;
+  gridCardClass: string;
+};
+
 export const GALLERY_THEMES: GalleryThemeDefinition[] = [
   {
     id: "museum-noir",

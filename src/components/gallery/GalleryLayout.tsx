@@ -137,15 +137,18 @@ export default function GalleryLayout({
           className="rounded-2xl bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(0,0,0,0.12)]"
         >
           {itemImage(i) ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={itemImage(i)}
-              alt={i.title}
-              className="mb-3 rounded-lg"
-              draggable={false}
-            />
+            <div className="mb-4 overflow-hidden rounded-[18px] bg-black/15">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={itemImage(i)}
+                alt={i.title}
+                className="aspect-[3/4] w-full object-cover"
+                draggable={false}
+                loading="lazy"
+              />
+            </div>
           ) : (
-            <div className="mb-3 flex aspect-[4/3] items-center justify-center rounded-lg bg-black/10 text-sm text-[color:var(--muted)]">
+            <div className="mb-4 flex aspect-[3/4] items-center justify-center rounded-[18px] bg-black/10 text-sm text-[color:var(--muted)]">
               No image
             </div>
           )}

@@ -23,6 +23,7 @@ export function PillButton({
 }) {
   const base = [
     "inline-flex items-center justify-center",
+    "vltd-selectable",
     "h-11 sm:h-10",
     "px-4",
     "rounded-full",
