@@ -194,7 +194,7 @@ function syncSectionsAndLayout(
   layoutType?: any
 ): Gallery {
   const nextType = normalizeLayoutTypeLocal(
-    layoutType ?? current.exhibitionLayout?.type ?? current.layout?.type ?? "GRID"
+    layoutType ?? getGalleryLayoutType(current) ?? "GRID"
   );
 
   return {
