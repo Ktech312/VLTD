@@ -10,7 +10,6 @@ import {
   type Gallery,
   GALLERY_EVENT,
   recordGalleryView,
-  setGalleryCoverImage,
   ensureGalleryPublicToken,
   regenerateGalleryPublicToken,
   getGalleryShareUrl,
@@ -24,6 +23,8 @@ import { loadItems, type VaultItem } from "@/lib/vaultModel";
 import { getVaultImagePublicUrl } from "@/lib/vaultCloud";
 import GalleryBuilder from "@/components/GalleryBuilder";
 import { formatMoney, getGalleryMetrics } from "@/lib/portfolioMetrics";
+
+type GalleryAccessPillMode = "private" | "public_gallery" | "guest_view" | "registered_users";
 
 function visibilityLabel(v: Gallery["visibility"]) {
   if (v === "LOCKED") return "Locked";
@@ -58,29 +59,109 @@ function formatDateTime(ts?: number) {
   }
 }
 
-function fullItemCost(item: VaultItem) {
-  const total =
-    Number(item.purchasePrice ?? 0) +
-    Number(item.purchaseTax ?? 0) +
-    Number(item.purchaseShipping ?? 0) +
-    Number(item.purchaseFees ?? 0);
-
-  return Number.isFinite(total) ? total : 0;
-}
-
 function cloneGallery<T>(value: T): T {
   return JSON.parse(JSON.stringify(value));
 }
 
+function mergeHeavyDraftFields(nextGallery: Gallery | null, fallback: Gallery | null) {
+  if (!nextGallery) return nextGallery;
+  if (!fallback) return nextGallery;
+
+  return {
+    ...nextGallery,
+    coverImage: nextGallery.coverImage || fallback.coverImage || "",
+    shelfBackground: nextGallery.shelfBackground || fallback.shelfBackground || "",
+  };
+}
+
 function normalizeDraftForCompare(gallery: Gallery | null) {
   if (!gallery) return "";
+
   return JSON.stringify({
-    ...gallery,
+    id: gallery.id,
+    title: gallery.title,
+    description: gallery.description,
+    visibility: gallery.visibility,
+    guestViewMode: gallery.guestViewMode,
+    itemIds: gallery.itemIds,
+    coverImage: gallery.coverImage || "",
+    shelfBackground: gallery.shelfBackground || "",
+    themePack: gallery.themePack,
+    displayMode: gallery.displayMode,
+    templateId: gallery.templateId,
+    sections: gallery.sections ?? [],
+    exhibitionLayout: gallery.exhibitionLayout ?? null,
     analytics: gallery.analytics ?? { views: 0, uniqueViewKeys: [] },
     itemNotes: gallery.itemNotes ?? [],
     share: gallery.share ?? { publicToken: undefined, inviteTokens: [] },
-    exhibitionLayout: gallery.exhibitionLayout ?? null,
   });
+}
+
+function getAccessMode(gallery: Gallery | null | undefined): GalleryAccessPillMode {
+  if (!gallery) return "private";
+  if (gallery.guestViewMode === "guest") return "registered_users";
+  if (gallery.visibility === "LOCKED") return "private";
+  if (gallery.visibility === "INVITE") return "guest_view";
+  return "public_gallery";
+}
+
+function applyAccessMode(current: Gallery, mode: GalleryAccessPillMode): Gallery {
+  if (mode === "private") {
+    return {
+      ...current,
+      visibility: "LOCKED",
+      guestViewMode: "public",
+    };
+  }
+
+  if (mode === "registered_users") {
+    return {
+      ...current,
+      visibility: "INVITE",
+      guestViewMode: "guest",
+    };
+  }
+
+  if (mode === "guest_view") {
+    return {
+      ...current,
+      visibility: "INVITE",
+      guestViewMode: "public",
+    };
+  }
+
+  return {
+    ...current,
+    visibility: "PUBLIC",
+    guestViewMode: "public",
+  };
+}
+
+function accessDescription(mode: GalleryAccessPillMode) {
+  switch (mode) {
+    case "public_gallery":
+      return "Public Gallery - Available to registered or unregistered users, searchable on Home page.";
+    case "guest_view":
+      return "Guest View - Anyone with access to the shared link can view your gallery.";
+    case "registered_users":
+      return "Registered Users - Any registered user with access to the shared link can view your gallery, allows analytics on views.";
+    case "private":
+    default:
+      return "Private Gallery - This only for yourself, good for gallery test beds before sharing with anyone.";
+  }
+}
+
+function accessPillClass(active: boolean) {
+  return [
+    "vltd-selectable inline-flex min-h-[44px] items-center justify-center rounded-full px-4 py-2 text-sm font-semibold ring-1 transition",
+    active
+      ? "vltd-pill-main-glow bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)]"
+      : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]",
+  ].join(" ");
+}
+
+function neutralPillClass() {
+  return "vltd-selectable inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]";
 }
 
 export default function GalleryPage() {
@@ -98,16 +179,22 @@ export default function GalleryPage() {
   const [statusTone, setStatusTone] = useState<"neutral" | "good">("neutral");
 
   const originalSnapshotRef = useRef("");
+  const latestGalleryRef = useRef<Gallery | null>(null);
+  const latestDraftRef = useRef<Gallery | null>(null);
 
   function loadState() {
     if (!id) return;
 
     const galleries = loadGalleries();
-    const g = galleries.find((x) => x.id === id) ?? null;
+    const rawGallery = galleries.find((x) => x.id === id) ?? null;
+    const mergedGallery = mergeHeavyDraftFields(
+      rawGallery,
+      latestDraftRef.current ?? latestGalleryRef.current
+    );
 
-    setGallery(g);
-    setDraft(g ? cloneGallery(g) : null);
-    originalSnapshotRef.current = normalizeDraftForCompare(g);
+    setGallery(mergedGallery);
+    setDraft(mergedGallery ? cloneGallery(mergedGallery) : null);
+    originalSnapshotRef.current = normalizeDraftForCompare(mergedGallery);
     setItems(loadItems());
   }
 
@@ -153,6 +240,14 @@ export default function GalleryPage() {
     return () => window.clearTimeout(timer);
   }, [status]);
 
+  useEffect(() => {
+    latestGalleryRef.current = gallery;
+  }, [gallery]);
+
+  useEffect(() => {
+    latestDraftRef.current = draft;
+  }, [draft]);
+
   const galleryItems = useMemo(() => {
     if (!draft) return [];
     return draft.itemIds
@@ -170,46 +265,11 @@ export default function GalleryPage() {
     return getGalleryMetrics(draft, items);
   }, [draft, items]);
 
-  const exhibitionSections = useMemo(() => {
-    if (!draft) return [];
-
-    const sections = draft.exhibitionLayout?.sections ?? [];
-    const itemMap = new Map(items.map((item) => [item.id, item]));
-
-    return sections.map((section) => {
-      const sectionItems = section.itemIds
-        .map((itemId) => itemMap.get(itemId))
-        .filter(Boolean) as VaultItem[];
-
-      const featuredItem =
-        section.featuredItemId && itemMap.has(section.featuredItemId)
-          ? (itemMap.get(section.featuredItemId) as VaultItem)
-          : null;
-
-      return {
-        ...section,
-        items: sectionItems,
-        featuredItem,
-      };
-    });
-  }, [draft, items]);
-
-  const unsectionedItems = useMemo(() => {
-    if (!draft) return [];
-
-    const sectionIds = new Set<string>();
-    for (const section of draft.exhibitionLayout?.sections ?? []) {
-      for (const itemId of section.itemIds) {
-        sectionIds.add(itemId);
-      }
-    }
-
-    return galleryItems.filter((item) => !sectionIds.has(item.id));
-  }, [draft, galleryItems]);
-
   const isDirty = useMemo(() => {
     return normalizeDraftForCompare(draft) !== originalSnapshotRef.current;
   }, [draft]);
+
+  const selectedAccessMode = useMemo(() => getAccessMode(draft), [draft]);
 
   function patchDraft(updater: (current: Gallery) => Gallery) {
     setDraft((current) => {
@@ -227,6 +287,10 @@ export default function GalleryPage() {
       ...current,
       itemIds: [...ids],
     }));
+  }
+
+  function updateAccessMode(mode: GalleryAccessPillMode) {
+    patchDraft((current) => applyAccessMode(current, mode));
   }
 
   function updateCover(e: React.ChangeEvent<HTMLInputElement>) {
@@ -343,21 +407,6 @@ export default function GalleryPage() {
     }
   }
 
-  function persistCoverNow(file: File) {
-    if (!draft) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      setGalleryCoverImage(draft.id, String(reader.result ?? ""));
-      const refreshed = loadGalleries({ includeAllProfiles: true }).find((x) => x.id === draft.id) ?? null;
-      if (refreshed) {
-        setGallery(cloneGallery(refreshed));
-        setDraft(cloneGallery(refreshed));
-        originalSnapshotRef.current = normalizeDraftForCompare(refreshed);
-      }
-    };
-    reader.readAsDataURL(file);
-  }
-
   if (!draft || !metrics) {
     return (
       <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
@@ -371,10 +420,7 @@ export default function GalleryPage() {
               This gallery could not be loaded from local storage.
             </p>
             <div className="mt-6">
-              <Link
-                href="/museum"
-                className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)]"
-              >
+              <Link href="/museum" className={neutralPillClass()}>
                 Back to Museum
               </Link>
             </div>
@@ -388,41 +434,13 @@ export default function GalleryPage() {
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
         <div className="mb-4 flex flex-wrap items-center gap-3">
-          <Link
-            href="/museum"
-            className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
-          >
+          <Link href="/museum" className={neutralPillClass()}>
             ← Back to Museum
           </Link>
 
-          <Link
-            href="/collector"
-            className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
-          >
+          <Link href="/collector" className={neutralPillClass()}>
             Collector Profile
           </Link>
-
-          <button
-            type="button"
-            onClick={saveDraft}
-            disabled={!isDirty}
-            className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] disabled:opacity-40"
-          >
-            Save Changes
-          </button>
-
-          <button
-            type="button"
-            onClick={cancelChanges}
-            disabled={!isDirty}
-            className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] disabled:opacity-40"
-          >
-            Cancel Changes
-          </button>
-
-          <span className="text-sm text-[color:var(--muted)]">
-            {isDirty ? "Unsaved changes" : "All changes saved"}
-          </span>
         </div>
 
         {status ? (
@@ -456,6 +474,35 @@ export default function GalleryPage() {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.10),rgba(255,255,255,0)_28%),radial-gradient(circle_at_80%_0%,rgba(255,225,170,0.10),rgba(255,225,170,0)_24%)]" />
 
           <div className="relative">
+            <div className="mb-6 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={saveDraft}
+                disabled={!isDirty}
+                className={[
+                  "inline-flex min-h-[42px] items-center justify-center rounded-full px-4 py-2 text-sm font-semibold ring-1 transition disabled:opacity-40",
+                  isDirty
+                    ? "vltd-pill-main-glow bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
+                    : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
+                ].join(" ")}
+              >
+                Save Changes
+              </button>
+
+              <button
+                type="button"
+                onClick={cancelChanges}
+                disabled={!isDirty}
+                className={neutralPillClass() + " disabled:opacity-40"}
+              >
+                Cancel Changes
+              </button>
+
+              <span className="text-sm text-[color:var(--muted)]">
+                {isDirty ? "Unsaved changes" : "All changes saved"}
+              </span>
+            </div>
+
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-3xl">
                 <div className="text-[11px] tracking-[0.28em] text-[color:var(--muted2)]">
@@ -556,7 +603,7 @@ export default function GalleryPage() {
                   <button
                     type="button"
                     onClick={handleRegeneratePublicLink}
-                    className="inline-flex min-h-[40px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                    className="vltd-selectable inline-flex min-h-[40px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
                   >
                     Regenerate
                   </button>
@@ -571,10 +618,57 @@ export default function GalleryPage() {
                   <button
                     type="button"
                     onClick={copyShareLink}
-                    className="inline-flex min-h-[48px] shrink-0 items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-5 py-3 text-sm font-semibold text-[color:var(--fg)] transition hover:opacity-95"
+                    className="vltd-pill-main-glow inline-flex min-h-[48px] shrink-0 items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-5 py-3 text-sm font-semibold text-[color:var(--fg)] transition hover:opacity-95"
                   >
                     {copied ? "Copied" : "Copy Link"}
                   </button>
+                </div>
+
+                <div className="mt-6">
+                  <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
+                    USER ACCESS MODE
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => updateAccessMode("private")}
+                      className={accessPillClass(selectedAccessMode === "private")}
+                    >
+                      Private
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateAccessMode("public_gallery")}
+                      className={accessPillClass(selectedAccessMode === "public_gallery")}
+                    >
+                      Public Gallery
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateAccessMode("guest_view")}
+                      className={accessPillClass(selectedAccessMode === "guest_view")}
+                    >
+                      Guest View
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateAccessMode("registered_users")}
+                      className={accessPillClass(selectedAccessMode === "registered_users")}
+                    >
+                      Registered Users
+                    </button>
+                  </div>
+
+                  <div className="mt-4 rounded-2xl bg-[color:var(--input)] p-4 text-sm leading-6 text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+                    <div><strong>Public Gallery</strong> - Available to registered or unregistered users, searchable on Home page.</div>
+                    <div className="mt-2"><strong>Guest View</strong> - Anyone with access to the shared link can view your gallery.</div>
+                    <div className="mt-2"><strong>Registered Users</strong> - Any registered user with access to the shared link can view your gallery, allows analytics on views.</div>
+                    <div className="mt-2"><strong>Private Gallery</strong> - This only for yourself, good for gallery test beds before sharing with anyone.</div>
+                    <div className="mt-3 text-xs text-[color:var(--muted2)]">
+                      Current mode: {accessDescription(selectedAccessMode)}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -604,7 +698,7 @@ export default function GalleryPage() {
             <h2 className="mt-2 text-2xl font-semibold">Curate the Layout</h2>
           </div>
 
-          <GalleryBuilder gallery={draft} onChange={update} />
+          <GalleryBuilder gallery={draft} onChange={update} onGalleryChange={patchDraft} />
         </section>
 
         <section className="mt-10 grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
@@ -707,7 +801,7 @@ export default function GalleryPage() {
               <button
                 type="button"
                 onClick={handleCreateInviteToken}
-                className="mt-3 inline-flex min-h-[46px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)]"
+                className="vltd-pill-main-glow mt-3 inline-flex min-h-[46px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)]"
               >
                 Create Invite Link
               </button>
@@ -758,7 +852,7 @@ export default function GalleryPage() {
                         <button
                           type="button"
                           onClick={() => copyInviteLink(entry.token)}
-                          className="mt-3 inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-xs font-semibold text-[color:var(--fg)]"
+                          className="vltd-pill-main-glow mt-3 inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-xs font-semibold text-[color:var(--fg)]"
                         >
                           {inviteCopiedToken === entry.token ? "Copied" : "Copy Invite Link"}
                         </button>

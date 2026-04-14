@@ -4,18 +4,9 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { type VaultItem, loadItems } from "@/lib/vaultModel";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import {
   type Gallery,
-  addGallerySection,
-  moveItemBetweenSections,
-  removeGallerySection,
-  setExhibitionLayoutType,
-  setSectionFeaturedItem,
-  updateGallerySection,
-  setGalleryThemePack,
-  setGalleryDisplayMode,
-  setGalleryGuestViewMode,
-  setGalleryShelfBackground,
   getGalleryShareUrl,
   createGalleryInviteToken,
   getGalleryInviteUrl,
@@ -30,7 +21,10 @@ import {
 type Props = {
   gallery: Gallery;
   onChange: (ids: string[]) => void;
+  onGalleryChange: (updater: (current: Gallery) => Gallery) => void;
 };
+
+const GALLERY_BACKGROUND_BUCKET = "gallery-backgrounds";
 
 type ThemePackOption = {
   value: "classic" | "walnut" | "midnight" | "marble";
@@ -141,22 +135,93 @@ function totalCost(item: VaultItem) {
   return Number.isFinite(value) ? value : 0;
 }
 
-async function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("Failed to read file"));
-    reader.onload = () => resolve(String(reader.result ?? ""));
-    reader.readAsDataURL(file);
-  });
+async function uploadGalleryBackgroundToStorage(
+  galleryId: string,
+  file: File
+): Promise<string> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) {
+    throw new Error("Supabase browser client is not available.");
+  }
+
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `${galleryId}/${Date.now()}_${safeName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(GALLERY_BACKGROUND_BUCKET)
+    .upload(path, file, {
+      cacheControl: "3600",
+      upsert: true,
+      contentType: file.type || "application/octet-stream",
+    });
+
+  if (uploadError) {
+    throw uploadError;
+  }
+
+  const { data } = supabase.storage.from(GALLERY_BACKGROUND_BUCKET).getPublicUrl(path);
+  const publicUrl = typeof data?.publicUrl === "string" ? data.publicUrl.trim() : "";
+
+  if (!publicUrl) {
+    throw new Error("Failed to resolve public URL for uploaded background.");
+  }
+
+  return publicUrl;
 }
 
-export default function GalleryBuilder({ gallery, onChange }: Props) {
+function makeLocalSectionId() {
+  return `sec_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function normalizeLayoutTypeLocal(value: unknown) {
+  if (
+    value === "CURATED" ||
+    value === "TIMELINE" ||
+    value === "MASTERPIECE" ||
+    value === "ARTIST_STUDY" ||
+    value === "TOP_10" ||
+    value === "INVESTMENT"
+  ) {
+    return value;
+  }
+
+  return "GRID";
+}
+
+function syncSectionsAndLayout(
+  current: Gallery,
+  sections: NonNullable<Gallery["sections"]>,
+  layoutType?: any
+): Gallery {
+  const nextType = normalizeLayoutTypeLocal(
+    layoutType ?? current.exhibitionLayout?.type ?? current.layout?.type ?? "GRID"
+  );
+
+  return {
+    ...current,
+    sections,
+    layout: {
+      ...(current.layout ?? {}),
+      type: nextType,
+    } as any,
+    exhibitionLayout: {
+      ...(current.exhibitionLayout ?? {}),
+      ...(current.layout ?? {}),
+      type: nextType,
+      sections,
+    } as any,
+  };
+}
+
+export default function GalleryBuilder({ gallery, onChange, onGalleryChange }: Props) {
   const [items, setItems] = useState<VaultItem[]>([]);
   const [query, setQuery] = useState("");
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
   const [guestCopied, setGuestCopied] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [shelfFileName, setShelfFileName] = useState("");
+  const [backgroundUploadError, setBackgroundUploadError] = useState("");
 
   useEffect(() => {
     setItems(loadItems());
@@ -205,6 +270,10 @@ export default function GalleryBuilder({ gallery, onChange }: Props) {
   const guestViewMode = getGalleryGuestViewMode(gallery);
   const shelfBackground = getGalleryShelfBackground(gallery);
   const publicShareUrl = getGalleryShareUrl(gallery);
+
+  useEffect(() => {
+    if (!shelfBackground) setShelfFileName("");
+  }, [shelfBackground]);
 
   function toggle(id: string) {
     if (selectedSet.has(id)) {
@@ -262,8 +331,20 @@ export default function GalleryBuilder({ gallery, onChange }: Props) {
   }
 
   async function handleShelfBackgroundUpload(file: File) {
-    const dataUrl = await fileToDataUrl(file);
-    setGalleryShelfBackground(gallery.id, dataUrl);
+    try {
+      setBackgroundUploadError("");
+      const publicUrl = await uploadGalleryBackgroundToStorage(gallery.id, file);
+      setShelfFileName(file.name);
+      onGalleryChange((current) => ({
+        ...current,
+        shelfBackground: publicUrl,
+      }));
+    } catch (error) {
+      console.error("Failed uploading gallery background:", error);
+      setBackgroundUploadError(
+        error instanceof Error ? error.message : "Failed to upload background."
+      );
+    }
   }
 
   async function handleCopyGuestLink() {
@@ -315,13 +396,14 @@ export default function GalleryBuilder({ gallery, onChange }: Props) {
                 <button
                   key={type}
                   type="button"
-                  onClick={() => setExhibitionLayoutType(gallery.id, type)}
+                  onClick={() => onGalleryChange((current) => syncSectionsAndLayout(current, getGallerySections(current), type))}
                   className={[
-                    "rounded-full px-4 py-2 text-xs font-semibold ring-1 transition",
+                    "vltd-selectable rounded-full px-4 py-2 text-xs font-semibold ring-1 transition",
                     active
-                      ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-transparent"
+                      ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
                       : "bg-[color:var(--surface)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
                   ].join(" ")}
+                  aria-pressed={active}
                 >
                   {type}
                 </button>
@@ -331,9 +413,21 @@ export default function GalleryBuilder({ gallery, onChange }: Props) {
             <button
               type="button"
               onClick={() =>
-                addGallerySection(gallery.id, `Section ${((sections.length ?? 0) + 1).toString()}`)
+                onGalleryChange((current) => {
+                  const nextSections = [
+                    ...getGallerySections(current),
+                    {
+                      id: makeLocalSectionId(),
+                      title: `Section ${((sections.length ?? 0) + 1).toString()}`,
+                      description: "",
+                      itemIds: [],
+                      featuredItemId: undefined,
+                    },
+                  ];
+                  return syncSectionsAndLayout(current, nextSections);
+                })
               }
-              className="rounded-full bg-[color:var(--surface)] px-4 py-2 text-xs font-semibold ring-1 ring-[color:var(--border)]"
+              className="vltd-selectable rounded-full bg-[color:var(--surface)] px-4 py-2 text-xs font-semibold ring-1 ring-[color:var(--border)]"
             >
               Add Section
             </button>
@@ -377,13 +471,14 @@ export default function GalleryBuilder({ gallery, onChange }: Props) {
                   <button
                     key={option.value}
                     type="button"
-                    onClick={() => setGalleryThemePack(gallery.id, option.value)}
+                    onClick={() => onGalleryChange((current) => ({ ...current, themePack: option.value }))}
                     className={[
-                      "rounded-2xl px-4 py-3 text-left ring-1 transition",
+                      "vltd-selectable rounded-2xl px-4 py-3 text-left ring-1 transition",
                       active
-                        ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-transparent"
+                        ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
                         : "bg-[color:var(--input)] text-[color:var(--fg)] ring-[color:var(--border)] hover:bg-[color:var(--surface-strong)]",
                     ].join(" ")}
+                    aria-pressed={active}
                   >
                     <div className="text-sm font-semibold">{option.label}</div>
                     <div className="mt-1 text-xs opacity-80">{option.description}</div>
@@ -406,13 +501,14 @@ export default function GalleryBuilder({ gallery, onChange }: Props) {
                     <button
                       key={mode}
                       type="button"
-                      onClick={() => setGalleryDisplayMode(gallery.id, mode)}
+                      onClick={() => onGalleryChange((current) => ({ ...current, displayMode: mode }))}
                       className={[
-                        "rounded-full px-4 py-2 text-xs font-semibold ring-1 transition",
+                        "vltd-selectable rounded-full px-4 py-2 text-xs font-semibold ring-1 transition",
                         displayMode === mode
-                          ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-transparent"
+                          ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
                           : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
                       ].join(" ")}
+                      aria-pressed={displayMode === mode}
                     >
                       {mode === "grid" ? "Grid Mode" : "Shelf Mode"}
                     </button>
@@ -427,13 +523,14 @@ export default function GalleryBuilder({ gallery, onChange }: Props) {
                     <button
                       key={mode}
                       type="button"
-                      onClick={() => setGalleryGuestViewMode(gallery.id, mode)}
+                      onClick={() => onGalleryChange((current) => ({ ...current, guestViewMode: mode }))}
                       className={[
-                        "rounded-full px-4 py-2 text-xs font-semibold ring-1 transition",
+                        "vltd-selectable rounded-full px-4 py-2 text-xs font-semibold ring-1 transition",
                         guestViewMode === mode
-                          ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-transparent"
+                          ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
                           : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
                       ].join(" ")}
+                      aria-pressed={guestViewMode === mode}
                     >
                       {mode === "public" ? "Public Default" : "Guest Default"}
                     </button>
@@ -447,6 +544,7 @@ export default function GalleryBuilder({ gallery, onChange }: Props) {
                 </label>
                 <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center">
                   <input
+                    id={`shelf-upload-${gallery.id}`}
                     type="file"
                     accept="image/*"
                     onChange={(e) => {
@@ -454,18 +552,37 @@ export default function GalleryBuilder({ gallery, onChange }: Props) {
                       if (file) void handleShelfBackgroundUpload(file);
                       e.currentTarget.value = "";
                     }}
-                    className="block w-full text-sm"
+                    className="hidden"
                   />
+                  <label
+                    htmlFor={`shelf-upload-${gallery.id}`}
+                    className="vltd-selectable inline-flex min-h-[38px] cursor-pointer items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                  >
+                    Upload Background
+                  </label>
+                  <div className="text-sm text-[color:var(--muted)]">
+                    {shelfFileName || "No file chosen"}
+                  </div>
                   {shelfBackground ? (
                     <button
                       type="button"
-                      onClick={() => setGalleryShelfBackground(gallery.id, "")}
-                      className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                      onClick={() => {
+                        setShelfFileName("");
+                        setBackgroundUploadError("");
+                        onGalleryChange((current) => ({ ...current, shelfBackground: "" }));
+                      }}
+                      className="vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
                     >
                       Remove Background
                     </button>
                   ) : null}
                 </div>
+
+                {backgroundUploadError ? (
+                  <div className="mt-2 text-xs text-red-300">
+                    {backgroundUploadError}
+                  </div>
+                ) : null}
 
                 {shelfBackground ? (
                   <div className="mt-3 overflow-hidden rounded-2xl ring-1 ring-[color:var(--border)]">
@@ -541,7 +658,14 @@ export default function GalleryBuilder({ gallery, onChange }: Props) {
                       <input
                         value={section.title}
                         onChange={(e) =>
-                          updateGallerySection(gallery.id, section.id, { title: e.target.value })
+                          onGalleryChange((current) => {
+                            const nextSections = getGallerySections(current).map((entry) =>
+                              entry.id === section.id
+                                ? { ...entry, title: e.target.value.trim() || "Untitled Section" }
+                                : entry
+                            );
+                            return syncSectionsAndLayout(current, nextSections);
+                          })
                         }
                         className="mt-2 min-h-[42px] w-full rounded-2xl bg-[color:var(--input)] px-4 py-3 text-sm font-semibold ring-1 ring-[color:var(--border)] focus:outline-none"
                       />
@@ -549,8 +673,11 @@ export default function GalleryBuilder({ gallery, onChange }: Props) {
                       <textarea
                         value={section.description ?? ""}
                         onChange={(e) =>
-                          updateGallerySection(gallery.id, section.id, {
-                            description: e.target.value,
+                          onGalleryChange((current) => {
+                            const nextSections = getGallerySections(current).map((entry) =>
+                              entry.id === section.id ? { ...entry, description: e.target.value } : entry
+                            );
+                            return syncSectionsAndLayout(current, nextSections);
                           })
                         }
                         rows={3}
@@ -562,7 +689,7 @@ export default function GalleryBuilder({ gallery, onChange }: Props) {
                     <div className="flex shrink-0 gap-2">
                       <button
                         type="button"
-                        onClick={() => removeGallerySection(gallery.id, section.id)}
+                        onClick={() => onGalleryChange((current) => syncSectionsAndLayout(current, getGallerySections(current).filter((entry) => entry.id !== section.id)))}
                         className="rounded-full bg-[color:var(--pill)] px-4 py-2 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
                       >
                         Remove Section
@@ -623,13 +750,21 @@ export default function GalleryBuilder({ gallery, onChange }: Props) {
                                 <div className="mt-3 flex flex-wrap gap-2">
                                   <button
                                     type="button"
-                                    onClick={() => setSectionFeaturedItem(gallery.id, section.id, item.id)}
+                                    onClick={() =>
+                                    onGalleryChange((current) => {
+                                      const nextSections = getGallerySections(current).map((entry) =>
+                                        entry.id === section.id ? { ...entry, featuredItemId: item.id } : entry
+                                      );
+                                      return syncSectionsAndLayout(current, nextSections);
+                                    })
+                                  }
                                     className={[
-                                      "rounded-full px-3 py-1 text-[11px] font-semibold ring-1",
+                                      "vltd-selectable rounded-full px-3 py-1 text-[11px] font-semibold ring-1",
                                       featured
-                                        ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-transparent"
+                                        ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
                                         : "bg-[color:var(--surface)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
                                     ].join(" ")}
+                                    aria-pressed={featured}
                                   >
                                     {featured ? "Featured" : "Set Featured"}
                                   </button>
@@ -638,12 +773,36 @@ export default function GalleryBuilder({ gallery, onChange }: Props) {
                                     <select
                                       value={section.id}
                                       onChange={(e) =>
-                                        moveItemBetweenSections(
-                                          gallery.id,
-                                          item.id,
-                                          section.id,
-                                          e.target.value
-                                        )
+                                        onGalleryChange((current) => {
+                                          const targetSectionId = e.target.value;
+                                          const nextSections = getGallerySections(current).map((entry) => {
+                                            if (entry.id === section.id) {
+                                              const nextItemIds = entry.itemIds.filter((id) => id !== item.id);
+                                              return {
+                                                ...entry,
+                                                itemIds: nextItemIds,
+                                                featuredItemId: nextItemIds.includes(entry.featuredItemId ?? "")
+                                                  ? entry.featuredItemId
+                                                  : nextItemIds[0],
+                                              };
+                                            }
+
+                                            if (entry.id === targetSectionId) {
+                                              const nextItemIds = entry.itemIds.includes(item.id)
+                                                ? entry.itemIds
+                                                : [...entry.itemIds, item.id];
+                                              return {
+                                                ...entry,
+                                                itemIds: nextItemIds,
+                                                featuredItemId: entry.featuredItemId || nextItemIds[0],
+                                              };
+                                            }
+
+                                            return entry;
+                                          });
+
+                                          return syncSectionsAndLayout(current, nextSections);
+                                        })
                                       }
                                       className="rounded-full bg-[color:var(--surface)] px-3 py-1 text-[11px] ring-1 ring-[color:var(--border)]"
                                     >
@@ -875,11 +1034,12 @@ export default function GalleryBuilder({ gallery, onChange }: Props) {
                     type="button"
                     onClick={() => toggle(item.id)}
                     className={[
-                      "group overflow-hidden rounded-[22px] border text-left transition duration-300",
+                      "vltd-selectable group overflow-hidden rounded-[22px] border text-left transition duration-300",
                       active
-                        ? "border-transparent bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] shadow-[0_16px_42px_rgba(0,0,0,0.2)]"
+                        ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] shadow-[0_16px_42px_rgba(0,0,0,0.2)]"
                         : "border-[color:var(--border)] bg-[color:var(--surface)] hover:-translate-y-0.5 hover:shadow-[0_16px_42px_rgba(0,0,0,0.12)]",
                     ].join(" ")}
+                    aria-pressed={active}
                   >
                     <div className="relative">
                       <div className="relative aspect-[16/10] w-full overflow-hidden bg-[linear-gradient(180deg,#11161f_0%,#0a0d12_100%)]">

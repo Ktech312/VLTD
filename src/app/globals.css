@@ -594,3 +594,79 @@ hr {
 .style-paper body {
   background-image: none;
 }
+
+/* Production selection glow utility */
+.vltd-selection-glow {
+  color: var(--fg) !important;
+  border-color: var(--pill-active-ring) !important;
+  box-shadow:
+    0 0 0 1px var(--pill-active-ring),
+    0 0 0 3px var(--pill-glow-soft),
+    0 0 18px var(--pill-glow-mid),
+    0 0 36px var(--pill-glow-soft) !important;
+}
+
+.vltd-selection-glow:hover {
+  color: var(--fg) !important;
+  border-color: var(--pill-active-ring) !important;
+  box-shadow:
+    0 0 0 1px var(--pill-active-ring),
+    0 0 0 4px var(--pill-glow-mid),
+    0 0 24px var(--pill-glow-strong),
+    0 0 44px var(--pill-glow-mid) !important;
+}
+
+.vltd-selectable[data-selected="true"],
+.vltd-selectable[aria-pressed="true"],
+.vltd-selectable[aria-selected="true"] {
+  color: var(--fg) !important;
+  border-color: var(--pill-active-ring) !important;
+  box-shadow:
+    0 0 0 1px var(--pill-active-ring),
+    0 0 0 3px var(--pill-glow-soft),
+    0 0 18px var(--pill-glow-mid),
+    0 0 36px var(--pill-glow-soft) !important;
+}
+
+
+/* =========================================================
+   UNIVERSAL SELECTABLE SYSTEM
+   Apply to all selectable pills/cards/options across pages
+========================================================= */
+
+.vltd-selectable {
+  transition:
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    transform 180ms ease;
+}
+
+.vltd-selectable:hover {
+  border-color: color-mix(in srgb, var(--pill-active-ring) 72%, var(--border) 28%) !important;
+}
+
+.vltd-selected,
+.vltd-selectable[data-selected="true"],
+.vltd-selectable[aria-pressed="true"],
+.vltd-selectable[aria-selected="true"] {
+  color: var(--fg) !important;
+  border-color: var(--pill-active-ring) !important;
+  box-shadow:
+    0 0 0 1px var(--pill-active-ring),
+    0 0 0 3px var(--pill-glow-soft),
+    0 0 18px var(--pill-glow-mid),
+    0 0 36px var(--pill-glow-soft) !important;
+}
+
+.vltd-selected:hover,
+.vltd-selectable[data-selected="true"]:hover,
+.vltd-selectable[aria-pressed="true"]:hover,
+.vltd-selectable[aria-selected="true"]:hover {
+  border-color: var(--pill-active-ring) !important;
+  box-shadow:
+    0 0 0 1px var(--pill-active-ring),
+    0 0 0 4px var(--pill-glow-mid),
+    0 0 24px var(--pill-glow-strong),
+    0 0 44px var(--pill-glow-mid) !important;
+}

@@ -112,6 +112,8 @@ const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 
 export const GALLERY_EVENT = "vltd:galleries";
 
+let supabaseHydrationStarted = false;
+
 function emitGalleryChange() {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new Event(GALLERY_EVENT));
@@ -164,6 +166,22 @@ function normalizeCoverImage(value: unknown) {
   return next || "";
 }
 
+function normalizeLargeLocalString(value: unknown) {
+  if (typeof value !== "string") return "";
+  const next = value.trim();
+  if (!next) return "";
+  if (next.startsWith("data:")) return "";
+  return next;
+}
+
+function slimGalleryForLocalCache(gallery: Gallery): Gallery {
+  return {
+    ...gallery,
+    coverImage: normalizeLargeLocalString(gallery.coverImage),
+    shelfBackground: normalizeLargeLocalString(gallery.shelfBackground),
+  };
+}
+
 function normalizeGalleryState(value: unknown): GalleryState {
   return value === "STORAGE" ? "STORAGE" : "ACTIVE";
 }
@@ -173,8 +191,18 @@ function normalizeGalleryVisibility(value: unknown): GalleryVisibility {
 }
 
 function normalizeGalleryLayout(value: unknown): GalleryLayout {
-  if (!value || typeof value !== "object") return getDefaultGalleryLayout();
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return getDefaultGalleryLayout();
+  }
   return value as unknown as GalleryLayout;
+}
+
+function asPlainObject(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+
+  return value as Record<string, unknown>;
 }
 
 function normalizeExhibitionLayoutType(value: unknown): ExhibitionLayoutType {
@@ -510,18 +538,39 @@ function normalizeSupabaseGallery(raw: any): Gallery | null {
         ? Date.parse(raw.analytics_last_viewed_at) || undefined
         : undefined,
     },
-    templateId: raw.template_id,
-    sections: raw.sections ?? [],
-    themePack: raw.theme_pack,
-    displayMode: raw.display_mode,
-    guestViewMode: raw.guest_view_mode,
-    shelfBackground: raw.shelf_background,
+    templateId:
+      raw.template_id ??
+      raw.layout?.templateId ??
+      raw.exhibition_layout?.templateId,
+    sections:
+      raw.sections ??
+      raw.exhibition_layout?.sections ??
+      [],
+    themePack:
+      raw.theme_pack ??
+      raw.layout?.themePack ??
+      raw.exhibition_layout?.themePack,
+    displayMode:
+      raw.display_mode ??
+      raw.layout?.displayMode ??
+      raw.exhibition_layout?.displayMode,
+    guestViewMode:
+      raw.guest_view_mode ??
+      raw.layout?.guestViewMode ??
+      raw.exhibition_layout?.guestViewMode,
+    shelfBackground:
+      raw.shelf_background ??
+      raw.layout?.shelfBackground ??
+      raw.exhibition_layout?.shelfBackground ??
+      "",
     createdAt,
     updatedAt,
   });
 }
 
 function serializeGalleryForSupabase(gallery: Gallery) {
+  const safeExhibitionLayout = asPlainObject(gallery.exhibitionLayout);
+
   return {
     id: gallery.id,
     profile_id: isUuidLike(gallery.profile_id) ? safeString(gallery.profile_id) : null,
@@ -530,8 +579,25 @@ function serializeGalleryForSupabase(gallery: Gallery) {
     visibility: gallery.visibility,
     state: gallery.state,
     cover_image: gallery.coverImage || "",
-    layout: gallery.layout ?? {},
-    exhibition_layout: gallery.exhibitionLayout ?? {},
+    layout: {
+      themePack: gallery.themePack ?? "classic",
+      displayMode: gallery.displayMode ?? "grid",
+      guestViewMode: gallery.guestViewMode ?? "public",
+      shelfBackground: gallery.shelfBackground ?? "",
+      templateId: gallery.templateId ?? "CUSTOM",
+    },
+    exhibition_layout: {
+      ...safeExhibitionLayout,
+      type:
+        gallery.exhibitionLayout?.type ??
+        normalizeExhibitionLayoutType((gallery.layout as any)?.type),
+      sections: gallery.sections ?? gallery.exhibitionLayout?.sections ?? [],
+      themePack: gallery.themePack ?? "classic",
+      displayMode: gallery.displayMode ?? "grid",
+      guestViewMode: gallery.guestViewMode ?? "public",
+      shelfBackground: gallery.shelfBackground ?? "",
+      templateId: gallery.templateId ?? "CUSTOM",
+    },
     public_token: gallery.share?.publicToken || null,
     analytics_views: gallery.analytics?.views ?? 0,
     analytics_last_viewed_at: gallery.analytics?.lastViewedAt
@@ -601,6 +667,7 @@ async function syncGalleryItemsToSupabase(gallery: Gallery) {
         position: row.position,
       }))
     );
+
     const nextSignature = JSON.stringify(
       rows.map((row) => ({
         artifact_id: row.artifact_id,
@@ -787,6 +854,65 @@ function migrateMissingProfileIds(galleries: Gallery[]) {
   };
 }
 
+function writeLocalCache(galleries: Gallery[], emit: boolean) {
+  if (typeof window === "undefined") return;
+
+  const slimmed = galleries.map((gallery) => slimGalleryForLocalCache(gallery));
+  window.localStorage.setItem(KEY, JSON.stringify(slimmed));
+
+  if (emit) emitGalleryChange();
+}
+
+async function hydrateLocalGalleriesFromSupabase() {
+  if (typeof window === "undefined") return;
+  if (supabaseHydrationStarted) return;
+  supabaseHydrationStarted = true;
+
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return;
+
+  try {
+    const { data, error } = await supabase
+      .from("galleries")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error || !Array.isArray(data)) {
+      if (error) console.error("Failed to hydrate galleries from Supabase:", error);
+      return;
+    }
+
+    const remote = data
+      .map((row) => normalizeSupabaseGallery(row))
+      .filter(Boolean) as Gallery[];
+
+    if (remote.length === 0) return;
+
+    const local = (() => {
+      try {
+        const raw = window.localStorage.getItem(KEY);
+        if (!raw) return [] as Gallery[];
+        return normalizeAll(JSON.parse(raw)).galleries;
+      } catch {
+        return [] as Gallery[];
+      }
+    })();
+
+    const merged = new Map<string, Gallery>();
+    for (const gallery of remote) merged.set(gallery.id, gallery);
+    for (const gallery of local) {
+      const existing = merged.get(gallery.id);
+      if (!existing || gallery.updatedAt >= existing.updatedAt) {
+        merged.set(gallery.id, gallery);
+      }
+    }
+
+    writeLocalCache(Array.from(merged.values()), true);
+  } catch (error) {
+    console.error("Unexpected Supabase gallery hydration error:", error);
+  }
+}
+
 function normalizeAll(rawList: unknown) {
   if (!Array.isArray(rawList)) {
     return {
@@ -809,18 +935,23 @@ function loadRawGalleries() {
   if (typeof window === "undefined") return [];
 
   const raw = window.localStorage.getItem(KEY);
-  if (!raw) return [];
+  if (!raw) {
+    void hydrateLocalGalleriesFromSupabase();
+    return [];
+  }
 
   try {
     const parsed = JSON.parse(raw);
     const { galleries, repaired } = normalizeAll(parsed);
 
     if (repaired || JSON.stringify(galleries) !== raw) {
-      window.localStorage.setItem(KEY, JSON.stringify(galleries));
+      writeLocalCache(galleries, false);
     }
 
+    void hydrateLocalGalleriesFromSupabase();
     return galleries;
   } catch {
+    void hydrateLocalGalleriesFromSupabase();
     return [];
   }
 }
@@ -840,10 +971,16 @@ function saveNormalized(galleries: Gallery[], emit: boolean) {
   if (typeof window === "undefined") return;
 
   const { galleries: normalized } = normalizeAll(galleries);
-  window.localStorage.setItem(KEY, JSON.stringify(normalized));
-  syncGalleriesToSupabase(normalized);
 
-  if (emit) emitGalleryChange();
+  try {
+    writeLocalCache(normalized, emit);
+  } catch (error) {
+    console.error("Failed writing gallery cache, retrying with slim cache:", error);
+    const slimmed = normalized.map((gallery) => slimGalleryForLocalCache(gallery));
+    writeLocalCache(slimmed, emit);
+  }
+
+  syncGalleriesToSupabase(normalized);
 }
 
 function syncGalleryShape(gallery: Gallery): Gallery {
