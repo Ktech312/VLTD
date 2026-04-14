@@ -23,13 +23,12 @@ export function PillButton({
 }) {
   const base = [
     "inline-flex items-center justify-center",
-    "vltd-selectable",
     "h-11 sm:h-10",
     "px-4",
     "rounded-full",
     "text-sm font-medium",
     "whitespace-nowrap",
-    "ring-1 transition select-none",
+    "ring-1 transition select-none vltd-selectable",
     "active:scale-[0.98]",
     "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20",
   ].join(" ");

@@ -702,25 +702,25 @@ export default function VaultPage() {
               <div className="shrink-0 flex flex-wrap gap-2">
                 <Link
                   href="/vault/add"
-                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                  className="vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]"
                 >
                   Add
                 </Link>
                 <Link
                   href="/vault/quick"
-                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]"
+                  className="vltd-selectable vltd-selected inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-ring)] hover:bg-[color:var(--pill-hover)]"
                 >
                   Quick Add
                 </Link>
                 <Link
                   href="/vault/import"
-                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                  className="vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]"
                 >
                   Import
                 </Link>
                 <Link
                   href="/vault/sold"
-                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                  className="vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]"
                 >
                   Sold
                 </Link>
