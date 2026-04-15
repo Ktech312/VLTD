@@ -15,8 +15,9 @@ import {
   getGalleryLayoutType,
   getGalleryThemeBackground,
   getGalleryThemePresentation,
+  getGalleryResolvedThemeBackground,
+  getGalleryThemeDebugInfo,
 } from "@/lib/galleryModel";
-import { getThemeBackgroundSimple } from "@/lib/galleryModel";
 import { PillButton } from "@/components/ui/PillButton";
 import GalleryShelfScene from "@/components/gallery/GalleryShelfScene";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
@@ -132,6 +133,39 @@ function DetailPill({
     >
       {children}
     </span>
+  );
+}
+
+function GuestDebugPanel({
+  themePack,
+  displayMode,
+  guestViewMode,
+  themeBackground,
+  customShelfBackground,
+  resolvedThemeBackground,
+  resolvedShelfBackground,
+}: {
+  themePack: string;
+  displayMode: string;
+  guestViewMode: string;
+  themeBackground: string;
+  customShelfBackground: string;
+  resolvedThemeBackground: string;
+  resolvedShelfBackground: string;
+}) {
+  return (
+    <div className="fixed right-4 top-4 z-50 max-w-[340px] rounded-2xl bg-black/80 px-4 py-3 text-xs text-white shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur">
+      <div className="text-[10px] tracking-[0.18em] text-white/60">GUEST DEBUG</div>
+      <div className="mt-2 space-y-1">
+        <div><span className="text-white/60">theme:</span> {themePack}</div>
+        <div><span className="text-white/60">display:</span> {displayMode}</div>
+        <div><span className="text-white/60">guest mode:</span> {guestViewMode}</div>
+        <div><span className="text-white/60">theme bg:</span> {themeBackground}</div>
+        <div><span className="text-white/60">custom shelf bg:</span> {customShelfBackground || "none"}</div>
+        <div><span className="text-white/60">page bg:</span> {resolvedThemeBackground}</div>
+        <div><span className="text-white/60">shelf bg:</span> {resolvedShelfBackground}</div>
+      </div>
+    </div>
   );
 }
 
@@ -293,14 +327,24 @@ export default function GuestGalleryPage() {
   const themeTone = getThemeTone(themePack);
   const themePresentation = getGalleryThemePresentation(themePack);
   const themeBackground = getGalleryThemeBackground(themePack);
+  const resolvedThemeBackground = getGalleryResolvedThemeBackground(gallery);
+  const debugInfo = getGalleryThemeDebugInfo(gallery);
   const displayMode = getGalleryDisplayMode(gallery);
   const guestViewMode = getGalleryGuestViewMode(gallery);
   const layoutType = getGalleryLayoutType(gallery);
 
   if (isResolved && !gallery) {
     return (
-      <main style={{backgroundImage:`url(${getThemeBackgroundSimple(themePack)})`,backgroundSize:"cover",backgroundPosition:"center"}} className="min-h-screen text-white">
-<div className="fixed top-4 right-4 z-50 bg-black/70 text-white px-3 py-1 rounded text-xs">THEME: {themePack}</div>
+      <main
+        style={{
+          backgroundImage: `url(${themeBackground})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+        className="relative min-h-screen text-white"
+      >
+        <GuestDebugPanel {...debugInfo} />
         <div className={["absolute inset-0", themePresentation.pageOverlayClass].join(" ")} />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_22%),radial-gradient(circle_at_50%_18%,rgba(255,233,196,0.10),transparent_28%)]" />
         <div className="relative">
@@ -336,13 +380,15 @@ export default function GuestGalleryPage() {
     <main
       className="relative min-h-screen text-[color:var(--fg)]"
       style={{
-        backgroundImage: `url(${themeBackground})`,
+        backgroundImage: `url(${resolvedThemeBackground})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
       }}
     >
-      <div className={["absolute inset-0", themePresentation.pageOverlayClass].join(" ")} />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_22%),radial-gradient(circle_at_50%_18%,rgba(255,233,196,0.10),transparent_28%)]" />
+      <GuestDebugPanel {...debugInfo} />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,10,18,0.16),rgba(7,10,18,0.38))]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.10),transparent_24%),radial-gradient(circle_at_50%_18%,rgba(255,233,196,0.12),transparent_26%)]" />
       <div className="relative">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
         <div className="mb-6 flex flex-wrap items-center gap-3">
@@ -443,8 +489,39 @@ export default function GuestGalleryPage() {
           </div>
         </section>
 
+        <section className="mt-8">
+          <div className={["rounded-[24px] px-4 py-3 text-sm font-semibold", themeTone.chip].join(" ")}>
+            ACTIVE DISPLAY MODE: {displayMode.toUpperCase()}
+          </div>
+        </section>
+
         {displayMode === "shelf" ? (
           <GuestShelfGalleryStrip items={galleryItems} gallery={gallery} />
+        ) : null}
+
+        {displayMode === "grid" ? (
+          <section className="mt-10">
+            <SectionHeader
+              eyebrow="GRID VIEW"
+              title="Gallery Grid"
+              subtitle="Standard guest browsing layout."
+            />
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+              {galleryItems.map((item, index) => {
+                const note =
+                  gallery.itemNotes?.find((entry) => entry.itemId === item.id)?.note ?? "";
+
+                return (
+                  <ViewerItemCard
+                    key={item.id}
+                    item={item}
+                    label={`GRID ITEM #${index + 1}`}
+                    note={note}
+                  />
+                );
+              })}
+            </div>
+          </section>
         ) : null}
 
         {exhibitionSections.length > 0 ? (

@@ -1125,6 +1125,42 @@ export function getGalleryShelfBackground(gallery: Gallery | null | undefined) {
   return typeof gallery?.shelfBackground === "string" ? gallery.shelfBackground : "";
 }
 
+export function getGalleryResolvedThemeBackground(
+  gallery: Gallery | null | undefined,
+  options?: { preferCustomShelfBackground?: boolean }
+) {
+  const preferCustomShelfBackground = options?.preferCustomShelfBackground ?? false;
+  const themePack = getGalleryThemePack(gallery);
+  const themeBackground = getGalleryThemeBackground(themePack);
+  const customShelfBackground = getGalleryShelfBackground(gallery).trim();
+
+  if (preferCustomShelfBackground && customShelfBackground) {
+    return customShelfBackground;
+  }
+
+  return themeBackground;
+}
+
+export function getGalleryThemeDebugInfo(gallery: Gallery | null | undefined) {
+  const themePack = getGalleryThemePack(gallery);
+  const displayMode = getGalleryDisplayMode(gallery);
+  const guestViewMode = getGalleryGuestViewMode(gallery);
+  const themeBackground = getGalleryThemeBackground(themePack);
+  const customShelfBackground = getGalleryShelfBackground(gallery).trim();
+
+  return {
+    themePack,
+    displayMode,
+    guestViewMode,
+    themeBackground,
+    customShelfBackground,
+    resolvedThemeBackground: getGalleryResolvedThemeBackground(gallery),
+    resolvedShelfBackground: getGalleryResolvedThemeBackground(gallery, {
+      preferCustomShelfBackground: true,
+    }),
+  };
+}
+
 export type GalleryThemePresentation = {
   backgroundImage: string;
   pageOverlayClass: string;
