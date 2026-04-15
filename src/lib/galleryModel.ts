@@ -2042,3 +2042,12 @@ export function assignGalleriesToProfile(profileId: string) {
     saveGalleries(next);
   }
 }
+
+export function getThemeBackgroundSimple(theme?: string){
+  switch((theme||"classic").toLowerCase()){
+    case "walnut": return "/themes/walnut-bg.webp";
+    case "midnight": return "/themes/midnight-bg.webp";
+    case "marble": return "/themes/marble-bg.webp";
+    default: return "/themes/classic-bg.webp";
+  }
+}

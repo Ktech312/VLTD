@@ -12,6 +12,7 @@ import {
   getGalleryThemePresentation,
   getGalleryThemePack,
 } from "@/lib/galleryModel";
+import { getThemeBackgroundSimple } from "@/lib/galleryModel";
 import { getCurrentUser } from "@/lib/auth";
 import { type VaultItem, getPrimaryImageUrl } from "@/lib/vaultModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -191,10 +192,8 @@ function GalleryBackgroundShell({
   const hasBackground = !!backgroundUrl?.trim();
 
   return (
-    <main
-      className="relative min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]"
-      style={getBackgroundShellStyle(backgroundUrl)}
-    >
+    <main style={{backgroundImage:`url(${getThemeBackgroundSimple(getGalleryThemePack(gallery))})`,backgroundSize:"cover",backgroundPosition:"center"}} className="min-h-screen text-white">
+<div className="fixed top-4 right-4 z-50 bg-black/70 text-white px-3 py-1 rounded text-xs">THEME: {getGalleryThemePack(gallery)}</div>
       {hasBackground ? (
         <div className="absolute inset-0 bg-[rgba(7,10,18,0.58)] backdrop-blur-[1.5px]" aria-hidden="true" />
       ) : null}

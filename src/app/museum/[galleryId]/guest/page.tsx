@@ -16,6 +16,7 @@ import {
   getGalleryThemeBackground,
   getGalleryThemePresentation,
 } from "@/lib/galleryModel";
+import { getThemeBackgroundSimple } from "@/lib/galleryModel";
 import { PillButton } from "@/components/ui/PillButton";
 import GalleryShelfScene from "@/components/gallery/GalleryShelfScene";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
@@ -298,14 +299,8 @@ export default function GuestGalleryPage() {
 
   if (isResolved && !gallery) {
     return (
-      <main
-        className="relative min-h-screen text-[color:var(--fg)]"
-        style={{
-          backgroundImage: `url(${themeBackground})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
+      <main style={{backgroundImage:`url(${getThemeBackgroundSimple(themePack)})`,backgroundSize:"cover",backgroundPosition:"center"}} className="min-h-screen text-white">
+<div className="fixed top-4 right-4 z-50 bg-black/70 text-white px-3 py-1 rounded text-xs">THEME: {themePack}</div>
         <div className={["absolute inset-0", themePresentation.pageOverlayClass].join(" ")} />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_22%),radial-gradient(circle_at_50%_18%,rgba(255,233,196,0.10),transparent_28%)]" />
         <div className="relative">
