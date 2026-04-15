@@ -145,8 +145,7 @@ export default function GalleryShelfScene({
   }
 
   return (
-    <section className="relative overflow-hidden rounded-[30px]">
-      <div className="absolute inset-0" style={{backgroundImage:`url(${backgroundImageUrl||getThemeBackgroundSimple(themePack||undefined)})`,backgroundSize:"cover",backgroundPosition:"center"}} />
+    <section className="relative overflow-hidden rounded-[30px] ring-1 ring-white/10 shadow-[0_30px_90px_rgba(0,0,0,0.38)]">
       <div
         className="absolute inset-0"
         style={{
@@ -156,7 +155,18 @@ export default function GalleryShelfScene({
         }}
       />
       <div className={["absolute inset-0", themePresentation.pageOverlayClass].join(" ")} />
-       : null}
+      <div className={["absolute inset-0", theme.roomClass].join(" ")} />
+      <div className={["absolute inset-0", backdrop.wallClass].join(" ")} />
+      <div className={["absolute inset-0", backdrop.vignetteClass].join(" ")} />
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-56"
+        style={{ background: theme.heroOverlay }}
+      />
+
+      <div className="relative px-5 py-6 sm:px-6 sm:py-7">
+        {(title || subtitle) && (
+          <div className="mb-6 max-w-3xl">
+            {title ? <div className="text-2xl font-semibold sm:text-3xl">{title}</div> : null}
             {subtitle ? (
               <div className="mt-2 text-sm leading-6 text-[color:var(--muted)]">{subtitle}</div>
             ) : null}
