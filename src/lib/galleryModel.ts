@@ -1125,9 +1125,20 @@ export function getGalleryShelfBackground(gallery: Gallery | null | undefined) {
   return typeof gallery?.shelfBackground === "string" ? gallery.shelfBackground : "";
 }
 
+export type GalleryThemePresentation = {
+  backgroundImage: string;
+  pageOverlayClass: string;
+  heroPanelClass: string;
+  chipClass: string;
+  sectionPanelClass: string;
+  cardClass: string;
+  accentClass: string;
+  shelfRail: string;
+  shelfEdge: string;
+};
 
-export function getGalleryThemeBackground(themePack?: GalleryThemePack | string | null) {
-  switch (String(themePack ?? "classic").toLowerCase()) {
+export function getGalleryThemeBackground(themePack?: GalleryThemePack | string) {
+  switch (normalizeThemePack(themePack)) {
     case "walnut":
       return "/themes/walnut-bg.webp";
     case "midnight":
@@ -1140,8 +1151,88 @@ export function getGalleryThemeBackground(themePack?: GalleryThemePack | string 
   }
 }
 
-export function getGalleryThemeBackgroundForGallery(gallery: Gallery | null | undefined) {
-  return getGalleryThemeBackground(getGalleryThemePack(gallery));
+export function getGalleryThemePresentation(
+  themePack?: GalleryThemePack | string
+): GalleryThemePresentation {
+  switch (normalizeThemePack(themePack)) {
+    case "walnut":
+      return {
+        backgroundImage: getGalleryThemeBackground("walnut"),
+        pageOverlayClass:
+          "bg-[linear-gradient(180deg,rgba(13,9,6,0.52),rgba(13,9,6,0.84))]",
+        heroPanelClass:
+          "border-[#8c6543]/45 bg-[linear-gradient(135deg,rgba(55,33,18,0.62),rgba(22,13,8,0.68))] text-stone-100 shadow-[0_28px_90px_rgba(0,0,0,0.46)]",
+        chipClass:
+          "bg-[rgba(72,45,28,0.58)] text-stone-100 ring-[#b98b62]/25",
+        sectionPanelClass:
+          "bg-[linear-gradient(180deg,rgba(30,18,11,0.80),rgba(18,11,7,0.84))] ring-[#8c6543]/28 text-stone-100",
+        cardClass:
+          "border-[#b98b62]/20 bg-[linear-gradient(180deg,rgba(255,244,231,0.08),rgba(255,244,231,0.03))] shadow-[0_22px_56px_rgba(0,0,0,0.38)]",
+        accentClass: "text-[#e6c9a7]",
+        shelfRail:
+          "linear-gradient(180deg, rgba(128,86,55,0.96), rgba(77,46,25,0.98))",
+        shelfEdge:
+          "linear-gradient(180deg, rgba(220,175,126,0.62), rgba(77,46,25,0))",
+      };
+    case "midnight":
+      return {
+        backgroundImage: getGalleryThemeBackground("midnight"),
+        pageOverlayClass:
+          "bg-[linear-gradient(180deg,rgba(3,7,14,0.45),rgba(2,5,10,0.82))]",
+        heroPanelClass:
+          "border-cyan-300/18 bg-[linear-gradient(135deg,rgba(10,18,28,0.62),rgba(4,9,16,0.72))] text-slate-100 shadow-[0_28px_90px_rgba(0,0,0,0.56)]",
+        chipClass:
+          "bg-[rgba(15,24,36,0.64)] text-slate-100 ring-cyan-300/18",
+        sectionPanelClass:
+          "bg-[linear-gradient(180deg,rgba(8,13,22,0.82),rgba(4,8,15,0.86))] ring-cyan-300/16 text-slate-100",
+        cardClass:
+          "border-cyan-200/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.015))] shadow-[0_24px_64px_rgba(0,0,0,0.50)]",
+        accentClass: "text-cyan-100",
+        shelfRail:
+          "linear-gradient(180deg, rgba(31,45,68,0.96), rgba(10,18,31,0.99))",
+        shelfEdge:
+          "linear-gradient(180deg, rgba(130,177,255,0.48), rgba(10,18,31,0))",
+      };
+    case "marble":
+      return {
+        backgroundImage: getGalleryThemeBackground("marble"),
+        pageOverlayClass:
+          "bg-[linear-gradient(180deg,rgba(40,44,51,0.26),rgba(30,33,39,0.60))]",
+        heroPanelClass:
+          "border-white/30 bg-[linear-gradient(135deg,rgba(255,255,255,0.34),rgba(216,220,228,0.18))] text-slate-950 shadow-[0_26px_72px_rgba(10,16,28,0.18)]",
+        chipClass:
+          "bg-[rgba(255,255,255,0.60)] text-slate-900 ring-slate-300/55",
+        sectionPanelClass:
+          "bg-[linear-gradient(180deg,rgba(255,255,255,0.42),rgba(229,233,240,0.26))] ring-slate-300/45 text-slate-900",
+        cardClass:
+          "border-slate-300/35 bg-[linear-gradient(180deg,rgba(255,255,255,0.65),rgba(239,242,247,0.34))] shadow-[0_22px_44px_rgba(57,67,84,0.14)]",
+        accentClass: "text-slate-900",
+        shelfRail:
+          "linear-gradient(180deg, rgba(214,219,226,0.97), rgba(164,172,184,0.99))",
+        shelfEdge:
+          "linear-gradient(180deg, rgba(255,255,255,0.82), rgba(164,172,184,0))",
+      };
+    case "classic":
+    default:
+      return {
+        backgroundImage: getGalleryThemeBackground("classic"),
+        pageOverlayClass:
+          "bg-[linear-gradient(180deg,rgba(12,11,8,0.40),rgba(12,11,8,0.74))]",
+        heroPanelClass:
+          "border-amber-200/12 bg-[linear-gradient(135deg,rgba(25,21,16,0.56),rgba(14,12,9,0.66))] text-stone-100 shadow-[0_28px_84px_rgba(0,0,0,0.44)]",
+        chipClass:
+          "bg-[rgba(31,26,20,0.58)] text-stone-100 ring-amber-100/12",
+        sectionPanelClass:
+          "bg-[linear-gradient(180deg,rgba(20,17,13,0.78),rgba(13,11,8,0.84))] ring-amber-100/12 text-stone-100",
+        cardClass:
+          "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))] shadow-[0_22px_56px_rgba(0,0,0,0.38)]",
+        accentClass: "text-amber-100",
+        shelfRail:
+          "linear-gradient(180deg, rgba(96,72,52,0.97), rgba(61,43,29,0.99))",
+        shelfEdge:
+          "linear-gradient(180deg, rgba(196,156,113,0.46), rgba(61,43,29,0))",
+      };
+  }
 }
 
 export function createGallery(title: string): Gallery {

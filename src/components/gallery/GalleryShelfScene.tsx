@@ -24,7 +24,6 @@ export default function GalleryShelfScene({
   themePack,
   title,
   subtitle,
-  shelfBackground,
   guestMode = false,
 }: {
   items: VaultItem[];
@@ -35,7 +34,6 @@ export default function GalleryShelfScene({
   themePack?: string | null;
   title?: string;
   subtitle?: string;
-  shelfBackground?: string | null;
   guestMode?: boolean;
 }) {
   const resolved = resolveGalleryVisualTheme({
@@ -95,7 +93,7 @@ export default function GalleryShelfScene({
                     "hover:-translate-y-1 hover:shadow-[0_18px_44px_rgba(0,0,0,0.26)]",
                   ].join(" ")}
                 >
-                  <div className="relative aspect-[3/4] overflow-hidden rounded-[18px] bg-black/25">
+                  <div className="relative aspect-[4/5] overflow-hidden rounded-[16px] bg-black/25">
                     {itemImage(item) ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -145,16 +143,6 @@ export default function GalleryShelfScene({
     <section className="relative overflow-hidden rounded-[30px] ring-1 ring-white/10">
       <div className={["absolute inset-0", theme.roomClass].join(" ")} />
       <div className={["absolute inset-0", backdrop.wallClass].join(" ")} />
-      {shelfBackground ? (
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            backgroundImage: `url(${shelfBackground})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        />
-      ) : null}
       <div className={["absolute inset-0", backdrop.vignetteClass].join(" ")} />
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-56"

@@ -8,8 +8,9 @@ import {
   getGalleryByPublicToken,
   recordGalleryView,
   type Gallery,
+  getGalleryThemeBackground,
+  getGalleryThemePresentation,
   getGalleryThemePack,
-  getGalleryThemeBackgroundForGallery,
 } from "@/lib/galleryModel";
 import { getCurrentUser } from "@/lib/auth";
 import { type VaultItem, getPrimaryImageUrl } from "@/lib/vaultModel";
@@ -180,26 +181,11 @@ function getBackgroundShellStyle(backgroundUrl?: string): React.CSSProperties | 
   };
 }
 
-function getThemeOverlayClass(themePack: string) {
-  switch (themePack) {
-    case "walnut":
-      return "bg-[linear-gradient(180deg,rgba(17,11,8,0.26),rgba(17,11,8,0.72))]";
-    case "midnight":
-      return "bg-[linear-gradient(180deg,rgba(4,8,14,0.20),rgba(4,8,14,0.78))]";
-    case "marble":
-      return "bg-[linear-gradient(180deg,rgba(14,18,26,0.18),rgba(14,18,26,0.66))]";
-    default:
-      return "bg-[linear-gradient(180deg,rgba(8,11,16,0.24),rgba(8,11,16,0.70))]";
-  }
-}
-
 function GalleryBackgroundShell({
   backgroundUrl,
-  themePack = "classic",
   children,
 }: {
   backgroundUrl?: string;
-  themePack?: string;
   children: React.ReactNode;
 }) {
   const hasBackground = !!backgroundUrl?.trim();
@@ -210,16 +196,40 @@ function GalleryBackgroundShell({
       style={getBackgroundShellStyle(backgroundUrl)}
     >
       {hasBackground ? (
-        <>
-          <div className={["absolute inset-0", getThemeOverlayClass(themePack)].join(" ")} aria-hidden="true" />
-          <div
-            className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,248,230,0.10),rgba(255,248,230,0)_26%),radial-gradient(circle_at_50%_16%,rgba(255,255,255,0.06),rgba(255,255,255,0)_34%)]"
-            aria-hidden="true"
-          />
-        </>
+        <div className="absolute inset-0 bg-[rgba(7,10,18,0.58)] backdrop-blur-[1.5px]" aria-hidden="true" />
       ) : null}
       <div className="relative z-10 min-h-screen">{children}</div>
-    </main>
+    </SharedBackgroundShell>
+  );
+}
+
+
+function SharedBackgroundShell({
+  gallery,
+  children,
+}: {
+  gallery: Gallery | null;
+  children: React.ReactNode;
+}) {
+  const themePack = getGalleryThemePack(gallery);
+  const themePresentation = getGalleryThemePresentation(themePack);
+  const backgroundImage =
+    (typeof gallery?.shelfBackground === "string" && gallery.shelfBackground.trim()) ||
+    getGalleryThemeBackground(themePack);
+
+  return (
+    <main
+      className="relative min-h-screen text-[color:var(--fg)]"
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      <div className={["absolute inset-0", themePresentation.pageOverlayClass].join(" ")} />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.07),transparent_20%),radial-gradient(circle_at_50%_0%,rgba(255,226,184,0.10),transparent_26%)]" />
+      <div className="relative">{children}</div>
+    </SharedBackgroundShell>
   );
 }
 
@@ -239,10 +249,7 @@ function GateCard({
   const requiresRegistered = accessMode === "registered_users";
 
   return (
-    <GalleryBackgroundShell
-      backgroundUrl={gallery.shelfBackground || getGalleryThemeBackgroundForGallery(gallery)}
-      themePack={getGalleryThemePack(gallery)}
-    >
+    <GalleryBackgroundShell backgroundUrl={gallery.shelfBackground}>
       <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
         <div className="w-full rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
@@ -501,10 +508,7 @@ export default function SharedGalleryPage() {
 
   if (accessMode === "private") {
     return (
-      <GalleryBackgroundShell
-      backgroundUrl={gallery.shelfBackground || getGalleryThemeBackgroundForGallery(gallery)}
-      themePack={getGalleryThemePack(gallery)}
-    >
+      <GalleryBackgroundShell backgroundUrl={gallery.shelfBackground}>
         <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
           <div className="w-full rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
@@ -533,10 +537,7 @@ export default function SharedGalleryPage() {
   }
 
   return (
-    <GalleryBackgroundShell
-      backgroundUrl={gallery.shelfBackground || getGalleryThemeBackgroundForGallery(gallery)}
-      themePack={getGalleryThemePack(gallery)}
-    >
+    <GalleryBackgroundShell backgroundUrl={gallery.shelfBackground}>
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
         <section className="rounded-[30px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-8">
           <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
@@ -555,7 +556,7 @@ export default function SharedGalleryPage() {
 
         {items.length === 0 ? (
           <section className="mt-8">
-            <div className="rounded-[24px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)]">
+            <div className={["rounded-[24px] p-6", themePresentation.sectionPanelClass].join(" ")}>
               <div className="text-sm text-[color:var(--muted)]">
                 No items in this gallery.
               </div>
@@ -569,7 +570,7 @@ export default function SharedGalleryPage() {
               return (
                 <article
                   key={item.id}
-                  className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.20)]"
+                  className={["rounded-[24px] p-4", themePresentation.cardClass].join(" ")}
                 >
                   <div className="overflow-hidden rounded-[16px] bg-black/20">
                     {image ? (
