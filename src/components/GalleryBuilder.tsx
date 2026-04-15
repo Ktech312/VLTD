@@ -552,8 +552,9 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
                 style={
                   shelfBackground
                     ? {
-                        backgroundImage: `linear-gradient(180deg,rgba(0,0,0,0.28),rgba(0,0,0,0.40)), url(${shelfBackground})`,
-                        backgroundSize: "cover",
+                        backgroundImage: `linear-gradient(180deg,rgba(0,0,0,0.25),rgba(0,0,0,0.35)), url(${shelfBackground})`,
+                        backgroundSize: "auto 100%",
+                        backgroundRepeat: "repeat-x",
                         backgroundPosition: "center",
                       }
                     : { backgroundImage: `linear-gradient(${previewTheme.galleryTheme.heroOverlay}, transparent)` }
@@ -572,47 +573,50 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
 
                 {displayMode === "shelf" ? (
                   <div className="mt-6">
-                    <div className="mx-auto max-w-3xl">
-                      <div className="grid grid-cols-3 gap-4 sm:gap-6">
-                        {[0, 1, 2].map((index) => (
+                    <div className="mx-auto max-w-5xl">
+                      <div className="grid grid-cols-5 gap-3">
+                        {[0, 1, 2, 3, 4].map((index) => (
                           <div
                             key={`preview-shelf-card-${index}`}
                             className={[
-                              "rounded-[20px] border p-3 shadow-[0_18px_40px_rgba(0,0,0,0.28)] backdrop-blur-sm",
+                              "rounded-xl border p-2 shadow-[0_10px_22px_rgba(0,0,0,0.18)] backdrop-blur-sm",
                               previewCardClass,
-                              index === 1 ? "translate-y-0 scale-[1.02]" : "translate-y-6 scale-[0.98]",
                             ].join(" ")}
                           >
-                            <div className="aspect-[4/5] rounded-[14px] bg-black/20 ring-1 ring-white/10" />
-                            <div className="mt-3 text-xs font-semibold">{index === 1 ? "Featured work" : `Shelf item ${index + 1}`}</div>
-                            <div className="mt-1 text-[11px] opacity-75">{index === 1 ? "Center spotlight presentation" : "Side support display"}</div>
+                            <div className="mb-1 text-[10px] text-center font-semibold">
+                              Item {index + 1}
+                            </div>
+                            <div className="aspect-[4/5] rounded-md bg-black/20 ring-1 ring-white/10" />
+                            <div className="mt-1 text-[9px] text-center opacity-70">
+                              Est. value
+                            </div>
                           </div>
                         ))}
                       </div>
 
                       <div className={[
-                        "mt-6 h-5 rounded-full ring-1 ring-black/20",
+                        "mt-4 h-3 rounded-full ring-1 ring-black/20",
                         previewTheme.shelfStyle.shelfClass,
                       ].join(" ")} />
                       <div className={[
-                        "mx-auto h-10 w-[92%] rounded-b-2xl opacity-80",
+                        "mx-auto h-7 w-[94%] rounded-b-xl opacity-80",
                         previewTheme.shelfStyle.lipClass,
                       ].join(" ")} />
                     </div>
                   </div>
                 ) : (
-                  <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     {[0, 1, 2, 3, 4, 5].map((index) => (
                       <div
                         key={`preview-grid-card-${index}`}
                         className={[
-                          "rounded-[20px] border p-3 shadow-[0_16px_34px_rgba(0,0,0,0.24)] backdrop-blur-sm",
+                          "rounded-[16px] border p-2.5 shadow-[0_12px_24px_rgba(0,0,0,0.18)] backdrop-blur-sm",
                           previewCardClass,
                         ].join(" ")}
                       >
-                        <div className="aspect-[4/5] rounded-[14px] bg-black/20 ring-1 ring-white/10" />
-                        <div className="mt-3 text-xs font-semibold">Gallery card {index + 1}</div>
-                        <div className="mt-1 text-[11px] opacity-75">Structured grid presentation</div>
+                        <div className="aspect-[4/5] rounded-[12px] bg-black/20 ring-1 ring-white/10" />
+                        <div className="mt-2 text-[11px] font-semibold">Gallery card {index + 1}</div>
+                        <div className="mt-1 text-[10px] opacity-75">Structured grid presentation</div>
                       </div>
                     ))}
                   </div>
