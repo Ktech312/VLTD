@@ -1125,6 +1125,25 @@ export function getGalleryShelfBackground(gallery: Gallery | null | undefined) {
   return typeof gallery?.shelfBackground === "string" ? gallery.shelfBackground : "";
 }
 
+
+export function getGalleryThemeBackground(themePack?: GalleryThemePack | string | null) {
+  switch (String(themePack ?? "classic").toLowerCase()) {
+    case "walnut":
+      return "/themes/walnut-bg.webp";
+    case "midnight":
+      return "/themes/midnight-bg.webp";
+    case "marble":
+      return "/themes/marble-bg.webp";
+    case "classic":
+    default:
+      return "/themes/classic-bg.webp";
+  }
+}
+
+export function getGalleryThemeBackgroundForGallery(gallery: Gallery | null | undefined) {
+  return getGalleryThemeBackground(getGalleryThemePack(gallery));
+}
+
 export function createGallery(title: string): Gallery {
   const now = Date.now();
   const layout = getDefaultGalleryLayout();

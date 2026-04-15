@@ -13,6 +13,7 @@ import {
   getGalleryGuestViewMode,
   getGalleryThemePack,
   getGalleryLayoutType,
+  getGalleryThemeBackgroundForGallery,
 } from "@/lib/galleryModel";
 import { PillButton } from "@/components/ui/PillButton";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
@@ -92,6 +93,20 @@ function getThemeTone(themePack: string) {
         shelfEdge:
           "linear-gradient(180deg, rgba(184,146,102,0.35), rgba(56,39,28,0))",
       };
+  }
+}
+
+
+function getThemeBackdropClass(themePack: string) {
+  switch (themePack) {
+    case "walnut":
+      return "bg-[linear-gradient(180deg,rgba(23,15,10,0.34),rgba(14,10,8,0.72))]";
+    case "midnight":
+      return "bg-[linear-gradient(180deg,rgba(4,8,14,0.20),rgba(4,8,14,0.76))]";
+    case "marble":
+      return "bg-[linear-gradient(180deg,rgba(18,22,30,0.22),rgba(18,22,30,0.64))]";
+    default:
+      return "bg-[linear-gradient(180deg,rgba(8,11,16,0.24),rgba(8,11,16,0.68))]";
   }
 }
 
@@ -393,6 +408,8 @@ export default function GuestGalleryPage() {
 
   const themePack = getGalleryThemePack(gallery);
   const themeTone = getThemeTone(themePack);
+  const themeBackgroundUrl = getGalleryThemeBackgroundForGallery(gallery);
+  const themeBackdropClass = getThemeBackdropClass(themePack);
   const displayMode = getGalleryDisplayMode(gallery);
   const guestViewMode = getGalleryGuestViewMode(gallery);
   const layoutType = getGalleryLayoutType(gallery);
@@ -428,8 +445,19 @@ export default function GuestGalleryPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
+    <main
+      className="relative min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]"
+      style={{
+        backgroundImage: `url(${themeBackgroundUrl})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
+      }}
+    >
+      <div className={["absolute inset-0", themeBackdropClass].join(" ")} />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,248,230,0.10),rgba(255,248,230,0)_28%),radial-gradient(circle_at_50%_18%,rgba(255,255,255,0.06),rgba(255,255,255,0)_34%)]" />
+      <div className="relative z-10 mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
         <div className="mb-6 flex flex-wrap items-center gap-3">
           <PillButton variant="active" className="text-sm font-semibold">
             Gallery as Guest
