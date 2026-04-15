@@ -571,50 +571,33 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
                 </div>
 
                 {displayMode === "shelf" ? (
-                  <div className="mt-5">
-                    <div className="mx-auto max-w-5xl">
-                      <div className="grid grid-cols-5 gap-3">
-                        {[0, 1, 2, 3, 4].map((index) => (
-                          <div key={`preview-shelf-card-${index}`} className="min-w-0">
-                            <div
-                              className={[
-                                "mb-2 rounded-xl border px-2 py-2 text-center shadow-[0_8px_18px_rgba(0,0,0,0.14)] backdrop-blur-sm",
-                                previewCardClass,
-                              ].join(" ")}
-                            >
-                              <div className="text-[10px] font-semibold leading-tight">Item {index + 1}</div>
-                              <div className="mt-1 text-[9px] opacity-70">Estimated market value</div>
-                            </div>
-
-                            <div
-                              className={[
-                                "w-full overflow-hidden rounded-[14px] border shadow-[0_8px_16px_rgba(0,0,0,0.16)] backdrop-blur-sm",
-                                previewCardClass,
-                              ].join(" ")}
-                            >
-                              <div className="aspect-[3/4] w-full rounded-[10px] bg-black/20 ring-1 ring-white/10" />
-                            </div>
+                  <div className="mt-6">
+                    <div className="mx-auto max-w-3xl">
+                      <div className="grid grid-cols-3 gap-4 sm:gap-6">
+                        {[0, 1, 2].map((index) => (
+                          <div
+                            key={`preview-shelf-card-${index}`}
+                            className={[
+                              "rounded-[20px] border p-3 shadow-[0_18px_40px_rgba(0,0,0,0.28)] backdrop-blur-sm",
+                              previewCardClass,
+                              index === 1 ? "translate-y-0 scale-[1.02]" : "translate-y-6 scale-[0.98]",
+                            ].join(" ")}
+                          >
+                            <div className="aspect-[4/5] rounded-[14px] bg-black/20 ring-1 ring-white/10" />
+                            <div className="mt-3 text-xs font-semibold">{index === 1 ? "Featured work" : `Shelf item ${index + 1}`}</div>
+                            <div className="mt-1 text-[11px] opacity-75">{index === 1 ? "Center spotlight presentation" : "Side support display"}</div>
                           </div>
                         ))}
                       </div>
 
-                      <div
-                        className={[
-                          "mt-3 h-4 rounded-t-[18px] ring-1 ring-black/20",
-                          previewTheme.shelfStyle.shelfClass,
-                        ].join(" ")}
-                      />
-                      <div
-                        className={[
-                          "h-6 rounded-b-[18px] opacity-90",
-                          previewTheme.shelfStyle.lipClass,
-                        ].join(" ")}
-                      />
-                      <div className="flex justify-between px-8 sm:px-14">
-                        <div className="h-10 w-2 rounded-b-full bg-black/35" />
-                        <div className="h-10 w-2 rounded-b-full bg-black/35" />
-                        <div className="h-10 w-2 rounded-b-full bg-black/35" />
-                      </div>
+                      <div className={[
+                        "mt-6 h-5 rounded-full ring-1 ring-black/20",
+                        previewTheme.shelfStyle.shelfClass,
+                      ].join(" ")} />
+                      <div className={[
+                        "mx-auto h-10 w-[92%] rounded-b-2xl opacity-80",
+                        previewTheme.shelfStyle.lipClass,
+                      ].join(" ")} />
                     </div>
                   </div>
                 ) : (
