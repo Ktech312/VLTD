@@ -161,8 +161,10 @@ export default function GalleryShelfScene({
         className="absolute inset-0"
         style={{
           backgroundImage: `url(${sceneBackground})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
+          backgroundSize: "contain",
+          backgroundPosition: "center top",
+          backgroundRepeat: "no-repeat",
+          backgroundColor: "rgba(8,10,14,0.82)",
         }}
       />
       <div className={["absolute inset-0", theme.overlay].join(" ")} />
@@ -181,7 +183,7 @@ export default function GalleryShelfScene({
           </div>
         )}
 
-        <div className={["rounded-[26px] p-4 backdrop-blur-[1px] ring-1", theme.panel].join(" ")}>
+        <div className={["rounded-[26px] p-5 backdrop-blur-[1px] ring-1", theme.panel].join(" ")}>
           <ShelfRow items={firstShelf} theme={theme} galleryHrefPrefix={galleryHrefPrefix} />
           {secondShelf.length > 0 ? (
             <div className="mt-8">
