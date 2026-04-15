@@ -37,27 +37,27 @@ function getShelfThemeClasses(themePack?: string | null) {
   switch ((themePack || "classic").toLowerCase()) {
     case "walnut":
       return {
-        overlay: "bg-[linear-gradient(180deg,rgba(18,10,6,0.10),rgba(13,8,6,0.28))]",
-        panel: "bg-[rgba(20,12,8,0.14)] ring-[#b98b62]/18 text-stone-100",
-        plaque: "bg-[rgba(58,34,20,0.86)] text-[#f2dfc8] ring-[#c79b71]/25",
+        panel: "bg-[rgba(20,12,8,0.18)] ring-[#b98b62]/20 text-stone-100",
+        plaque: "bg-[rgba(58,34,20,0.88)] text-[#f2dfc8] ring-[#c79b71]/25",
+        tile: "bg-[rgba(42,24,14,0.58)] ring-[#b98b62]/18",
         shelfTop: "bg-[linear-gradient(180deg,#c09369,#875a37)]",
         shelfFace: "bg-[linear-gradient(180deg,#72482b,#452818)]",
         support: "bg-[linear-gradient(180deg,#8a6141,#3d2315)]",
       };
     case "midnight":
       return {
-        overlay: "bg-[linear-gradient(180deg,rgba(4,8,14,0.10),rgba(2,5,10,0.34))]",
-        panel: "bg-[rgba(5,10,17,0.14)] ring-cyan-300/12 text-slate-100",
-        plaque: "bg-[rgba(9,20,33,0.86)] text-cyan-100 ring-cyan-300/16",
+        panel: "bg-[rgba(5,10,17,0.20)] ring-cyan-300/12 text-slate-100",
+        plaque: "bg-[rgba(9,20,33,0.88)] text-cyan-100 ring-cyan-300/16",
+        tile: "bg-[rgba(8,18,30,0.62)] ring-cyan-300/12",
         shelfTop: "bg-[linear-gradient(180deg,#48627f,#2c425d)]",
         shelfFace: "bg-[linear-gradient(180deg,#1b2739,#0d1625)]",
         support: "bg-[linear-gradient(180deg,#304963,#0d1625)]",
       };
     case "marble":
       return {
-        overlay: "bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(52,58,68,0.14))]",
-        panel: "bg-[rgba(255,255,255,0.10)] ring-slate-300/26 text-slate-900",
-        plaque: "bg-[rgba(255,255,255,0.88)] text-slate-900 ring-slate-300/45",
+        panel: "bg-[rgba(255,255,255,0.14)] ring-slate-300/28 text-slate-900",
+        plaque: "bg-[rgba(255,255,255,0.90)] text-slate-900 ring-slate-300/45",
+        tile: "bg-[rgba(255,255,255,0.54)] ring-slate-300/30",
         shelfTop: "bg-[linear-gradient(180deg,#fafbfc,#e0e5eb)]",
         shelfFace: "bg-[linear-gradient(180deg,#d6dce3,#aab4bf)]",
         support: "bg-[linear-gradient(180deg,#dfe5eb,#97a1ad)]",
@@ -65,9 +65,9 @@ function getShelfThemeClasses(themePack?: string | null) {
     case "classic":
     default:
       return {
-        overlay: "bg-[linear-gradient(180deg,rgba(15,12,8,0.10),rgba(11,9,7,0.26))]",
-        panel: "bg-[rgba(14,11,8,0.14)] ring-white/10 text-stone-100",
-        plaque: "bg-[rgba(26,20,14,0.84)] text-amber-100 ring-amber-100/14",
+        panel: "bg-[rgba(14,11,8,0.18)] ring-white/10 text-stone-100",
+        plaque: "bg-[rgba(26,20,14,0.86)] text-amber-100 ring-amber-100/14",
+        tile: "bg-[rgba(24,18,12,0.54)] ring-white/10",
         shelfTop: "bg-[linear-gradient(180deg,#9b7352,#755035)]",
         shelfFace: "bg-[linear-gradient(180deg,#5a3b25,#311d12)]",
         support: "bg-[linear-gradient(180deg,#6e4a32,#301d12)]",
@@ -103,7 +103,12 @@ function ShelfRow({
             </div>
 
             <Link href={`${galleryHrefPrefix}/${item.id}`} className="group block w-full">
-              <div className="relative w-full overflow-hidden rounded-[16px] bg-black/18 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
+              <div
+                className={[
+                  "relative w-full overflow-hidden rounded-[16px] ring-1 shadow-[0_10px_24px_rgba(0,0,0,0.18)]",
+                  theme.tile,
+                ].join(" ")}
+              >
                 <div className="aspect-[3/4] w-full">
                   {itemImage(item) ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -157,18 +162,7 @@ export default function GalleryShelfScene({
 
   return (
     <section className="relative overflow-hidden rounded-[30px] ring-1 ring-white/10 shadow-[0_30px_90px_rgba(0,0,0,0.34)]">
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundImage: `url(${sceneBackground})`,
-          backgroundSize: "contain",
-          backgroundPosition: "center top",
-          backgroundRepeat: "no-repeat",
-          backgroundColor: "rgba(8,10,14,0.82)",
-        }}
-      />
-      <div className={["absolute inset-0", theme.overlay].join(" ")} />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.12),transparent_42%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,10,14,0.86),rgba(8,10,14,0.94))]" />
 
       <div className="relative px-4 py-5 sm:px-5 sm:py-6">
         {(title || subtitle) && (
@@ -183,8 +177,23 @@ export default function GalleryShelfScene({
           </div>
         )}
 
-        <div className={["rounded-[26px] p-5 backdrop-blur-[1px] ring-1", theme.panel].join(" ")}>
-          <ShelfRow items={firstShelf} theme={theme} galleryHrefPrefix={galleryHrefPrefix} />
+        <div className={["rounded-[26px] p-4 backdrop-blur-[1px] ring-1", theme.panel].join(" ")}>
+          <div className="overflow-hidden rounded-[22px] ring-1 ring-white/10 bg-black/20">
+            {sceneBackground ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={sceneBackground}
+                alt=""
+                className="block w-full h-auto object-contain"
+                draggable={false}
+              />
+            ) : null}
+          </div>
+
+          <div className="-mt-3 sm:-mt-4">
+            <ShelfRow items={firstShelf} theme={theme} galleryHrefPrefix={galleryHrefPrefix} />
+          </div>
+
           {secondShelf.length > 0 ? (
             <div className="mt-8">
               <ShelfRow items={secondShelf} theme={theme} galleryHrefPrefix={galleryHrefPrefix} />
