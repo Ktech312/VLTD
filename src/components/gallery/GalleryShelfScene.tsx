@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { VaultItem } from "@/lib/vaultModel";
 
 import { resolveGalleryVisualTheme } from "@/components/gallery/galleryThemes";
+import { getGalleryThemeBackground, getGalleryThemePresentation } from "@/lib/galleryModel";
 
 function itemImage(item: VaultItem) {
   return item.imageFrontUrl || item.imageBackUrl || "";
@@ -25,6 +26,7 @@ export default function GalleryShelfScene({
   title,
   subtitle,
   guestMode = false,
+  backgroundImageUrl,
 }: {
   items: VaultItem[];
   galleryHrefPrefix?: string;
@@ -35,6 +37,7 @@ export default function GalleryShelfScene({
   title?: string;
   subtitle?: string;
   guestMode?: boolean;
+  backgroundImageUrl?: string | null;
 }) {
   const resolved = resolveGalleryVisualTheme({
     themeId,
@@ -49,6 +52,8 @@ export default function GalleryShelfScene({
 
   const topRow = items.slice(0, 4);
   const bottomRow = items.slice(4, 10);
+  const themePresentation = getGalleryThemePresentation(themePack ?? undefined);
+  const sceneBackground = backgroundImageUrl?.trim() || getGalleryThemeBackground(themePack ?? undefined);
 
   function renderShelfRow(rowItems: VaultItem[], rowLabel: string) {
     return (
@@ -140,7 +145,16 @@ export default function GalleryShelfScene({
   }
 
   return (
-    <section className="relative overflow-hidden rounded-[30px] ring-1 ring-white/10">
+    <section className="relative overflow-hidden rounded-[30px] ring-1 ring-white/10 shadow-[0_30px_90px_rgba(0,0,0,0.38)]">
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `url(${sceneBackground})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      />
+      <div className={["absolute inset-0", themePresentation.pageOverlayClass].join(" ")} />
       <div className={["absolute inset-0", theme.roomClass].join(" ")} />
       <div className={["absolute inset-0", backdrop.wallClass].join(" ")} />
       <div className={["absolute inset-0", backdrop.vignetteClass].join(" ")} />
