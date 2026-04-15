@@ -192,6 +192,31 @@ function GalleryBackgroundShell({
   const hasBackground = !!backgroundUrl?.trim();
 
   return (
+    <main
+      style={{
+        backgroundImage: backgroundUrl ? `url(${backgroundUrl})` : undefined,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+      className="min-h-screen text-white"
+    >
+      {hasBackground ? (
+        <div
+          className="absolute inset-0 bg-[rgba(7,10,18,0.58)] backdrop-blur-[1.5px]"
+          aria-hidden="true"
+        />
+      ) : null}
+      <div className="relative z-10 min-h-screen">{children}</div>
+    </main>
+  );
+}
+: {
+  backgroundUrl?: string;
+  children: React.ReactNode;
+}) {
+  const hasBackground = !!backgroundUrl?.trim();
+
+  return (
     <main style={{backgroundImage:`url(${getThemeBackgroundSimple(getGalleryThemePack(gallery))})`,backgroundSize:"cover",backgroundPosition:"center"}} className="min-h-screen text-white">
 <div className="fixed top-4 right-4 z-50 bg-black/70 text-white px-3 py-1 rounded text-xs">THEME: {getGalleryThemePack(gallery)}</div>
       {hasBackground ? (
