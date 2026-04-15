@@ -90,8 +90,13 @@ function ShelfRow({
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {items.map((item) => (
-          <div key={item.id} className="flex flex-col items-center">
-            <div className={["mb-2 w-full rounded-2xl px-3 py-2 text-center text-[11px] ring-1 backdrop-blur-sm", theme.plaque].join(" ")}>
+          <div key={item.id} className="min-w-0">
+            <div
+              className={[
+                "mb-2 rounded-2xl px-3 py-2 text-center text-[11px] ring-1 backdrop-blur-sm",
+                theme.plaque,
+              ].join(" ")}
+            >
               <div className="line-clamp-2 font-semibold">{item.title}</div>
               <div className="mt-1 line-clamp-1 opacity-80">{itemSubtitle(item) || "—"}</div>
               <div className="mt-1 font-medium">Estimated market value {formatMoney(item.currentValue)}</div>
@@ -99,16 +104,16 @@ function ShelfRow({
 
             <Link
               href={`${galleryHrefPrefix}/${item.id}`}
-              className="group flex w-full justify-center"
+              className="group block"
             >
-              <div className="flex w-full justify-center">
-                <div className="relative flex h-[180px] w-full max-w-[170px] items-end justify-center overflow-hidden rounded-t-[18px] rounded-b-[10px] bg-black/18 px-3 pt-3">
+              <div className="relative w-full overflow-hidden rounded-[18px] rounded-b-[10px] bg-black/18 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
+                <div className="aspect-[4/5] w-full">
                   {itemImage(item) ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={itemImage(item)}
                       alt={item.title}
-                      className="max-h-full w-auto max-w-full object-contain transition duration-300 group-hover:scale-[1.03]"
+                      className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
                       draggable={false}
                       loading="lazy"
                     />
