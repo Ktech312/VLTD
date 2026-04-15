@@ -541,31 +541,26 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
               </div>
             </div>
 
-            <div className="mt-4 overflow-hidden rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(24,30,40,0.96),rgba(8,10,14,1)_68%)] ring-1 ring-white/10 relative">
+            <div
+              className={[
+                "mt-4 overflow-hidden rounded-[24px] ring-1 relative",
+                previewPanelClass,
+              ].join(" ")}
+            >
+              <div
+                className="absolute inset-0"
+                style={
+                  shelfBackground
+                    ? {
+                        backgroundImage: `linear-gradient(180deg,rgba(0,0,0,0.28),rgba(0,0,0,0.40)), url(${shelfBackground})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }
+                    : { backgroundImage: `linear-gradient(${previewTheme.galleryTheme.heroOverlay}, transparent)` }
+                }
+              />
+
               <div className="relative min-h-[420px] p-4 sm:p-5">
-                <div
-                  className="overflow-hidden rounded-[22px] border border-white/10"
-                  style={
-                    shelfBackground
-                      ? {
-                          backgroundImage: `linear-gradient(180deg,rgba(12,16,22,0.18),rgba(12,16,22,0.34)), url(${shelfBackground})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center top",
-                        }
-                      : {
-                          backgroundImage: themePack === "classic"
-                            ? "linear-gradient(180deg,rgba(21,18,14,0.16),rgba(21,18,14,0.30)), url(/themes/classic-bg.webp)"
-                            : themePack === "walnut"
-                            ? "linear-gradient(180deg,rgba(18,10,6,0.14),rgba(18,10,6,0.28)), url(/themes/walnut-bg.webp)"
-                            : themePack === "midnight"
-                            ? "linear-gradient(180deg,rgba(6,10,18,0.14),rgba(6,10,18,0.32)), url(/themes/midnight-bg.webp)"
-                            : "linear-gradient(180deg,rgba(255,255,255,0.04),rgba(70,70,70,0.10)), url(/themes/marble-bg.webp)",
-                          backgroundSize: "cover",
-                          backgroundPosition: "center top",
-                        }
-                  }
-                >
-                <div className="relative min-h-[388px] p-4 sm:p-5">
                 <div className="flex flex-wrap items-center gap-2 text-[11px]">
                   <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10 backdrop-blur-sm">
                     {themePack === "classic" ? "Classic museum" : themePack === "walnut" ? "Warm collector room" : themePack === "midnight" ? "Cinematic dark" : "Bright premium gallery"}
@@ -577,20 +572,20 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
 
                 {displayMode === "shelf" ? (
                   <div className="mt-6">
-                    <div className="mx-auto max-w-4xl">
-                      <div className="grid grid-cols-5 gap-3 sm:gap-4">
-                        {[0, 1, 2, 3, 4].map((index) => (
+                    <div className="mx-auto max-w-3xl">
+                      <div className="grid grid-cols-3 gap-4 sm:gap-6">
+                        {[0, 1, 2].map((index) => (
                           <div
                             key={`preview-shelf-card-${index}`}
                             className={[
                               "rounded-[20px] border p-3 shadow-[0_18px_40px_rgba(0,0,0,0.28)] backdrop-blur-sm",
                               previewCardClass,
-                              index === 2 ? "translate-y-0 scale-[1.01]" : "translate-y-4 scale-[0.98]",
+                              index === 1 ? "translate-y-0 scale-[1.02]" : "translate-y-6 scale-[0.98]",
                             ].join(" ")}
                           >
-                            <div className="aspect-[4/5] rounded-[12px] bg-black/20 ring-1 ring-white/10" />
-                            <div className="mt-3 text-xs font-semibold">{`Item ${index + 1}`}</div>
-                            <div className="mt-1 text-[11px] opacity-75">"Museum plaque"</div>
+                            <div className="aspect-[4/5] rounded-[14px] bg-black/20 ring-1 ring-white/10" />
+                            <div className="mt-3 text-xs font-semibold">{index === 1 ? "Featured work" : `Shelf item ${index + 1}`}</div>
+                            <div className="mt-1 text-[11px] opacity-75">{index === 1 ? "Center spotlight presentation" : "Side support display"}</div>
                           </div>
                         ))}
                       </div>
@@ -606,7 +601,7 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
                     </div>
                   </div>
                 ) : (
-                  <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                  <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {[0, 1, 2, 3, 4, 5].map((index) => (
                       <div
                         key={`preview-grid-card-${index}`}
@@ -615,14 +610,13 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
                           previewCardClass,
                         ].join(" ")}
                       >
-                        <div className="aspect-[4/5] rounded-[12px] bg-black/20 ring-1 ring-white/10" />
+                        <div className="aspect-[4/5] rounded-[14px] bg-black/20 ring-1 ring-white/10" />
                         <div className="mt-3 text-xs font-semibold">Gallery card {index + 1}</div>
                         <div className="mt-1 text-[11px] opacity-75">Structured grid presentation</div>
                       </div>
                     ))}
                   </div>
                 )}
-                </div>
               </div>
             </div>
 
