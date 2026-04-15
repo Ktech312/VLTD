@@ -199,7 +199,7 @@ function GalleryBackgroundShell({
         <div className="absolute inset-0 bg-[rgba(7,10,18,0.58)] backdrop-blur-[1.5px]" aria-hidden="true" />
       ) : null}
       <div className="relative z-10 min-h-screen">{children}</div>
-    </SharedBackgroundShell>
+    </main>
   );
 }
 
