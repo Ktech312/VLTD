@@ -16,6 +16,7 @@ import {
   getGalleryThemeBackground,
   getGalleryThemePresentation,
 } from "@/lib/galleryModel";
+import { getThemeBackgroundSimple } from "@/lib/galleryModel";
 import { PillButton } from "@/components/ui/PillButton";
 import GalleryShelfScene from "@/components/gallery/GalleryShelfScene";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
@@ -50,55 +51,15 @@ function formatMoney(value?: number) {
 }
 
 function getThemeTone(themePack: string) {
-  const normalized = (themePack || "classic").toLowerCase();
+  const presentation = getGalleryThemePresentation(themePack);
 
-  switch (normalized) {
-    case "walnut":
-      return {
-        heroShell:
-          "border-[#9d744f]/45 bg-[linear-gradient(135deg,rgba(44,26,16,0.56),rgba(20,12,8,0.44))] text-stone-100 shadow-[0_34px_110px_rgba(0,0,0,0.50)]",
-        chip: "bg-[rgba(64,38,23,0.78)] text-[#f1dcc3] ring-[#c4966d]/35",
-        sectionPanelClass:
-          "border border-[#8d6544]/35 bg-[linear-gradient(180deg,rgba(30,18,11,0.54),rgba(18,11,7,0.38))] text-stone-100 shadow-[0_24px_72px_rgba(0,0,0,0.34)] backdrop-blur-[1px]",
-        cardClass:
-          "border border-[#b98b62]/20 bg-[linear-gradient(180deg,rgba(44,28,18,0.76),rgba(24,15,10,0.82))] text-stone-100 shadow-[0_20px_48px_rgba(0,0,0,0.32)]",
-        accentClass: "text-[#f1dcc3]",
-      };
-    case "midnight":
-      return {
-        heroShell:
-          "border-cyan-300/20 bg-[linear-gradient(135deg,rgba(8,15,26,0.54),rgba(4,8,15,0.40))] text-slate-100 shadow-[0_34px_110px_rgba(0,0,0,0.58)]",
-        chip: "bg-[rgba(9,19,33,0.80)] text-cyan-100 ring-cyan-300/22",
-        sectionPanelClass:
-          "border border-cyan-200/14 bg-[linear-gradient(180deg,rgba(8,13,22,0.56),rgba(4,8,15,0.40))] text-slate-100 shadow-[0_24px_72px_rgba(0,0,0,0.38)] backdrop-blur-[1px]",
-        cardClass:
-          "border border-cyan-200/12 bg-[linear-gradient(180deg,rgba(10,16,28,0.80),rgba(5,9,17,0.84))] text-slate-100 shadow-[0_22px_52px_rgba(0,0,0,0.38)]",
-        accentClass: "text-cyan-100",
-      };
-    case "marble":
-      return {
-        heroShell:
-          "border-white/35 bg-[linear-gradient(135deg,rgba(255,255,255,0.32),rgba(225,230,238,0.22))] text-slate-950 shadow-[0_28px_72px_rgba(35,41,52,0.18)]",
-        chip: "bg-[rgba(255,255,255,0.76)] text-slate-900 ring-slate-300/55",
-        sectionPanelClass:
-          "border border-slate-300/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.42),rgba(232,236,242,0.26))] text-slate-900 shadow-[0_22px_52px_rgba(57,67,84,0.14)] backdrop-blur-[1px]",
-        cardClass:
-          "border border-slate-300/40 bg-[linear-gradient(180deg,rgba(255,255,255,0.78),rgba(236,240,245,0.70))] text-slate-900 shadow-[0_20px_44px_rgba(57,67,84,0.16)]",
-        accentClass: "text-slate-950",
-      };
-    case "classic":
-    default:
-      return {
-        heroShell:
-          "border-amber-100/12 bg-[linear-gradient(135deg,rgba(22,18,14,0.50),rgba(13,11,8,0.36))] text-stone-100 shadow-[0_30px_84px_rgba(0,0,0,0.46)]",
-        chip: "bg-[rgba(30,24,18,0.78)] text-amber-100 ring-amber-100/14",
-        sectionPanelClass:
-          "border border-amber-100/12 bg-[linear-gradient(180deg,rgba(20,17,13,0.54),rgba(13,11,8,0.38))] text-stone-100 shadow-[0_22px_60px_rgba(0,0,0,0.34)] backdrop-blur-[1px]",
-        cardClass:
-          "border border-white/10 bg-[linear-gradient(180deg,rgba(28,21,15,0.78),rgba(16,12,9,0.82))] text-stone-100 shadow-[0_20px_48px_rgba(0,0,0,0.32)]",
-        accentClass: "text-amber-100",
-      };
-  }
+  return {
+    heroShell: presentation.heroPanelClass,
+    chip: presentation.chipClass,
+    sectionPanelClass: presentation.sectionPanelClass,
+    cardClass: presentation.cardClass,
+    accentClass: presentation.accentClass,
+  };
 }
 
 function shelfSurface(gallery: Gallery | null) {
@@ -210,18 +171,14 @@ function ViewerItemCard({
   item,
   label,
   note,
-  cardClass,
-  mutedClass = "text-white/70",
 }: {
   item: VaultItem;
   label: string;
   note?: string;
-  cardClass: string;
-  mutedClass?: string;
 }) {
   return (
-    <article className={["rounded-[26px] p-5", cardClass].join(" ")}>
-      <div className="mb-2 text-xs tracking-[0.16em] text-white/55">
+    <article className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.20)]">
+      <div className="mb-2 text-xs tracking-[0.16em] text-[color:var(--muted2)]">
         {label}
       </div>
 
@@ -235,7 +192,7 @@ function ViewerItemCard({
             draggable={false}
           />
         ) : (
-          <div className={["flex h-full items-center justify-center text-sm", mutedClass].join(" ")}>
+          <div className="flex h-full items-center justify-center text-sm text-[color:var(--muted)]">
             No image
           </div>
         )}
@@ -243,17 +200,17 @@ function ViewerItemCard({
 
       <div className="text-lg font-semibold">{item.title}</div>
 
-      <div className={["mt-1 text-sm", mutedClass].join(" ")}>
+      <div className="mt-1 text-sm text-[color:var(--muted)]">
         {itemSubtitle(item) || "—"}
       </div>
 
 
       {note?.trim() ? (
         <div className="mt-4 rounded-2xl bg-black/20 p-3 ring-1 ring-white/10">
-          <div className="text-[11px] tracking-[0.14em] text-white/55">
+          <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">
             CURATOR NOTE
           </div>
-          <div className={["mt-2 text-sm leading-6", mutedClass].join(" ")}>
+          <div className="mt-2 text-sm leading-6 text-[color:var(--muted)]">
             {note}
           </div>
         </div>
@@ -342,20 +299,10 @@ export default function GuestGalleryPage() {
 
   if (isResolved && !gallery) {
     return (
-      <main
-        className="relative min-h-screen text-white"
-        style={{
-          backgroundImage: `url(${themeBackground})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-        }}
-      >
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,10,18,0.18),rgba(7,10,18,0.46))]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.12),transparent_26%),radial-gradient(circle_at_50%_14%,rgba(255,225,170,0.12),transparent_24%)]" />
-        <div className="fixed right-4 top-4 z-50 rounded bg-black/70 px-3 py-1 text-xs text-white">
-          THEME: {themePack}
-        </div>
+      <main style={{backgroundImage:`url(${getThemeBackgroundSimple(themePack)})`,backgroundSize:"cover",backgroundPosition:"center"}} className="min-h-screen text-white">
+<div className="fixed top-4 right-4 z-50 bg-black/70 text-white px-3 py-1 rounded text-xs">THEME: {themePack}</div>
+        <div className={["absolute inset-0", themePresentation.pageOverlayClass].join(" ")} />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_22%),radial-gradient(circle_at_50%_18%,rgba(255,233,196,0.10),transparent_28%)]" />
         <div className="relative">
           <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
             <div className="rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)]">
@@ -392,14 +339,10 @@ export default function GuestGalleryPage() {
         backgroundImage: `url(${themeBackground})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
       }}
     >
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,10,18,0.14),rgba(7,10,18,0.40))]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.12),transparent_26%),radial-gradient(circle_at_50%_14%,rgba(255,225,170,0.12),transparent_24%)]" />
-      <div className="fixed right-4 top-4 z-50 rounded bg-black/70 px-3 py-1 text-xs text-white">
-        THEME: {themePack} • MODE: {displayMode}
-      </div>
+      <div className={["absolute inset-0", themePresentation.pageOverlayClass].join(" ")} />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_22%),radial-gradient(circle_at_50%_18%,rgba(255,233,196,0.10),transparent_28%)]" />
       <div className="relative">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
         <div className="mb-6 flex flex-wrap items-center gap-3">
@@ -481,21 +424,21 @@ export default function GuestGalleryPage() {
             </div>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              <div className={["rounded-2xl p-4", themeTone.sectionPanelClass].join(" ")}>
-                <div className="text-[11px] tracking-[0.14em] text-white/55">EXHIBITS</div>
-                <div className="mt-2 text-xl font-semibold">{galleryItems.length}</div>
-                <div className="mt-1 text-sm text-white/70">Visible pieces in this guest view</div>
-              </div>
-              <div className={["rounded-2xl p-4", themeTone.sectionPanelClass].join(" ")}>
-                <div className="text-[11px] tracking-[0.14em] text-white/55">SECTIONS</div>
-                <div className="mt-2 text-xl font-semibold">{sections.length}</div>
-                <div className="mt-1 text-sm text-white/70">Structured curatorial groupings</div>
-              </div>
-              <div className={["rounded-2xl p-4", themeTone.sectionPanelClass].join(" ")}>
-                <div className="text-[11px] tracking-[0.14em] text-white/55">DISPLAY MODE</div>
-                <div className="mt-2 text-xl font-semibold">{displayMode}</div>
-                <div className="mt-1 text-sm text-white/70">How the gallery is presented to guests</div>
-              </div>
+              <InfoCard
+                label="EXHIBIT VALUE"
+                value={galleryItems.length}
+                hint="Visible pieces in this guest view"
+              />
+              <InfoCard
+                label="SECTIONS"
+                value={sections.length}
+                hint="Structured curatorial groupings"
+              />
+              <InfoCard
+                label="DISPLAY MODE"
+                value={displayMode}
+                hint="How the gallery is presented to guests"
+              />
             </div>
           </div>
         </section>
@@ -538,7 +481,7 @@ export default function GuestGalleryPage() {
                   </div>
 
                   {section.featuredItem ? (
-                    <div className={["mt-6 rounded-[26px] p-5", themeTone.cardClass].join(" ")}>
+                    <div className="mt-6 rounded-[26px] bg-[color:var(--input)] p-5 ring-1 ring-[color:var(--border)]">
                       <div className="mb-3 text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                         FEATURED WORK
                       </div>
@@ -554,7 +497,7 @@ export default function GuestGalleryPage() {
                               draggable={false}
                             />
                           ) : (
-                            <div className={["flex h-full items-center justify-center text-sm", mutedClass].join(" ")}>
+                            <div className="flex h-full items-center justify-center text-sm text-[color:var(--muted)]">
                               No image
                             </div>
                           )}
@@ -575,10 +518,10 @@ export default function GuestGalleryPage() {
                           {gallery.itemNotes?.find((n) => n.itemId === section.featuredItem?.id)
                             ?.note ? (
                             <div className="mt-5 rounded-2xl bg-black/10 p-4 ring-1 ring-black/10">
-                              <div className="text-[11px] tracking-[0.14em] text-white/55">
+                              <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">
                                 CURATOR NOTE
                               </div>
-                              <div className={["mt-2 text-sm leading-6", mutedClass].join(" ")}>
+                              <div className="mt-2 text-sm leading-6 text-[color:var(--muted)]">
                                 {
                                   gallery.itemNotes?.find(
                                     (n) => n.itemId === section.featuredItem?.id
@@ -604,14 +547,12 @@ export default function GuestGalleryPage() {
                             item={item}
                             label={`SECTION EXHIBIT #${index + 1}`}
                             note={note}
-                            cardClass={themeTone.cardClass}
-                            mutedClass={themePack === "marble" ? "text-slate-700" : "text-white/70"}
                           />
                         );
                       })}
                     </div>
                   ) : (
-                    <div className={["mt-6 rounded-[24px] p-5 text-sm", themeTone.cardClass].join(" ")}>
+                    <div className="mt-6 rounded-[24px] bg-[color:var(--input)] p-5 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
                       This section does not currently contain any visible items.
                     </div>
                   )}
@@ -640,8 +581,6 @@ export default function GuestGalleryPage() {
                     item={item}
                     label={`EXHIBIT #${index + 1}`}
                     note={note}
-                    cardClass={themeTone.cardClass}
-                    mutedClass={themePack === "marble" ? "text-slate-700" : "text-white/70"}
                   />
                 );
               })}
@@ -651,7 +590,7 @@ export default function GuestGalleryPage() {
 
         {galleryItems.length === 0 ? (
           <section className="mt-10">
-            <div className={["rounded-[28px] p-8", themeTone.sectionPanelClass].join(" ")}>
+            <div className="rounded-[28px] bg-[color:var(--surface)] p-8 ring-1 ring-[color:var(--border)]">
               <div className="text-sm text-[color:var(--muted)]">
                 This gallery does not currently contain any visible items.
               </div>
