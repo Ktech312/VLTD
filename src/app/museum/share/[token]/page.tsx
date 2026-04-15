@@ -205,7 +205,38 @@ function GalleryBackgroundShell({
 
 function SharedBackgroundShell({
   gallery,
+  hasBackground,
   children,
+}: {
+  gallery: Gallery | null;
+  hasBackground: boolean;
+  children: React.ReactNode;
+}) {
+  const themePack = getGalleryThemePack(gallery);
+  const backgroundImage = getThemeBackgroundSimple(themePack);
+
+  return (
+    <main
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+      className="min-h-screen text-white"
+    >
+      <div className="fixed top-4 right-4 z-50 rounded bg-black/70 px-3 py-1 text-xs text-white">
+        THEME: {themePack}
+      </div>
+      {hasBackground ? (
+        <div
+          className="absolute inset-0 bg-[rgba(7,10,18,0.58)] backdrop-blur-[1.5px]"
+          aria-hidden="true"
+        />
+      ) : null}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.07),transparent_20%),radial-gradient(circle_at_50%_0%,rgba(255,226,184,0.10),transparent_26%)]" />
+      <div className="relative">{children}</div>
+    </main>
+  );
 }: {
   gallery: Gallery | null;
   children: React.ReactNode;
