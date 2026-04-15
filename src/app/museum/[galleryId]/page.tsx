@@ -346,11 +346,9 @@ export default function GalleryPage() {
   function saveDraftAndOpenGuestView() {
     if (!draft) return;
 
-    const nextShareUrl = getGalleryShareUrl(draft);
+    const guestUrl = `/museum/${draft.id}/guest`;
     saveDraft();
-
-    if (!nextShareUrl) return;
-    window.open(nextShareUrl, "_blank", "noopener,noreferrer");
+    window.open(guestUrl, "_blank", "noopener,noreferrer");
   }
 
   function cancelChanges() {
