@@ -102,12 +102,9 @@ function ShelfRow({
               <div className="mt-1 font-medium">Estimated market value {formatMoney(item.currentValue)}</div>
             </div>
 
-            <Link
-              href={`${galleryHrefPrefix}/${item.id}`}
-              className="group block"
-            >
-              <div className="relative w-full overflow-hidden rounded-[18px] rounded-b-[10px] bg-black/18 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
-                <div className="aspect-[4/5] w-full">
+            <Link href={`${galleryHrefPrefix}/${item.id}`} className="group block w-full">
+              <div className="relative w-full overflow-hidden rounded-[16px] bg-black/18 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
+                <div className="aspect-[3/4] w-full">
                   {itemImage(item) ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
