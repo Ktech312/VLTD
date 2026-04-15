@@ -229,7 +229,7 @@ function SharedBackgroundShell({
       <div className={["absolute inset-0", themePresentation.pageOverlayClass].join(" ")} />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.07),transparent_20%),radial-gradient(circle_at_50%_0%,rgba(255,226,184,0.10),transparent_26%)]" />
       <div className="relative">{children}</div>
-    </SharedBackgroundShell>
+    </main>
   );
 }
 

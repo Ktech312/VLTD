@@ -604,7 +604,6 @@ export default function GuestGalleryPage() {
         ) : null}
       </div>
     </div>
-    </div>
     </main>
   );
 }
