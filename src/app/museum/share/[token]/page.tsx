@@ -455,6 +455,10 @@ export default function SharedGalleryPage() {
 
   const title = useMemo(() => gallery?.title || "Shared Gallery", [gallery]);
   const accessMode = useMemo(() => (gallery ? getShareAccessMode(gallery) : "private"), [gallery]);
+  const themePresentation = useMemo(
+    () => getGalleryThemePresentation(getGalleryThemePack(gallery)),
+    [gallery]
+  );
 
   if (!isResolved) {
     return (
