@@ -155,7 +155,7 @@ export default function GalleryShelfScene({
 }: Props) {
   const theme = getShelfThemeClasses(themePack);
   const sceneBackground =
-    backgroundImageUrl?.trim() || getThemeBackgroundSimple(themePack || undefined);
+    `/themes/${(themePack || "classic").toLowerCase()}-shelf-wall.webp`;
 
   const firstShelf = items.slice(0, 5);
   const secondShelf = items.slice(5, 10);
