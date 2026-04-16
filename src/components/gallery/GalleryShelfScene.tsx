@@ -93,7 +93,7 @@ function ShelfRow({
           <div key={item.id} className="min-w-0">
             <div
               className={[
-                "mb-1.5 rounded-2xl px-2.5 py-1.5 text-center text-[10px] ring-1 backdrop-blur-sm",
+                "mb-2 rounded-2xl px-3 py-2 text-center text-[11px] ring-1 backdrop-blur-sm",
                 theme.plaque,
               ].join(" ")}
             >
@@ -109,13 +109,13 @@ function ShelfRow({
                   theme.tile,
                 ].join(" ")}
               >
-                <div className="aspect-[3/4] w-full p-1.5">
+                <div className="aspect-[3/4] w-full p-2">
                   {itemImage(item) ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={itemImage(item)}
                       alt={item.title}
-                      className="h-full w-full object-contain transition duration-300 group-hover:scale-[1.01]"
+                      className="h-full w-full object-contain transition duration-300 group-hover:scale-[1.02]"
                       draggable={false}
                       loading="lazy"
                     />
@@ -158,6 +158,7 @@ export default function GalleryShelfScene({
     backgroundImageUrl?.trim() || getThemeBackgroundSimple(themePack || undefined);
 
   const firstShelf = items.slice(0, 5);
+  const secondShelf = items.slice(5, 10);
 
   return (
     <section className="relative overflow-hidden rounded-[30px] ring-1 ring-white/10 shadow-[0_30px_90px_rgba(0,0,0,0.34)]">
@@ -176,22 +177,28 @@ export default function GalleryShelfScene({
           </div>
         )}
 
-        <div className={["rounded-[26px] p-3.5 backdrop-blur-[1px] ring-1", theme.panel].join(" ")}>
-          <div className="flex justify-center overflow-hidden rounded-[22px] ring-1 ring-white/10 bg-black/20 px-3 pt-3">
+        <div className={["rounded-[26px] p-4 backdrop-blur-[1px] ring-1", theme.panel].join(" ")}>
+          <div className="overflow-hidden rounded-[22px] ring-1 ring-white/10 bg-black/20">
             {sceneBackground ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={sceneBackground}
                 alt=""
-                className="block h-auto max-h-[520px] w-auto max-w-full object-contain"
+                className="block h-auto w-full object-contain"
                 draggable={false}
               />
             ) : null}
           </div>
 
-          <div className="-mt-12 sm:-mt-14 scale-[0.88] origin-top">
+          <div className="-mt-3 sm:-mt-4 scale-[0.94] origin-top">
             <ShelfRow items={firstShelf} theme={theme} galleryHrefPrefix={galleryHrefPrefix} />
           </div>
+
+          {secondShelf.length > 0 ? (
+            <div className="mt-4 scale-[0.94] origin-top">
+              <ShelfRow items={secondShelf} theme={theme} galleryHrefPrefix={galleryHrefPrefix} />
+            </div>
+          ) : null}
         </div>
       </div>
     </section>
