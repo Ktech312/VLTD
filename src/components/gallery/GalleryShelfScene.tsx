@@ -109,13 +109,13 @@ function ShelfRow({
                   theme.tile,
                 ].join(" ")}
               >
-                <div className="aspect-[3/4] w-full">
+                <div className="aspect-[3/4] w-full p-2">
                   {itemImage(item) ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={itemImage(item)}
                       alt={item.title}
-                      className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                      className="h-full w-full object-contain transition duration-300 group-hover:scale-[1.02]"
                       draggable={false}
                       loading="lazy"
                     />
@@ -184,7 +184,7 @@ export default function GalleryShelfScene({
               <img
                 src={sceneBackground}
                 alt=""
-                className="block w-full h-auto object-contain"
+                className="block h-auto w-full object-contain"
                 draggable={false}
               />
             ) : null}
