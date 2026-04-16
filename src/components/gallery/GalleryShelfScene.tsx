@@ -1,18 +1,195 @@
 "use client";
 
-export default function GalleryShelfScene({ backgroundImageUrl }: { backgroundImageUrl?: string }) {
+import Link from "next/link";
+
+import type { VaultItem } from "@/lib/vaultModel";
+import { getThemeBackgroundSimple } from "@/lib/galleryModel";
+
+function itemImage(item: VaultItem) {
+  return item.imageFrontUrl || item.imageBackUrl || "";
+}
+
+function itemSubtitle(item: VaultItem) {
+  return [item.subtitle, item.number, item.grade].filter(Boolean).join(" • ");
+}
+
+function formatMoney(value?: number) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+type Props = {
+  items: VaultItem[];
+  galleryHrefPrefix?: string;
+  themePack?: string | null;
+  title?: string;
+  subtitle?: string;
+  guestMode?: boolean;
+  backgroundImageUrl?: string | null;
+};
+
+function getShelfThemeClasses(themePack?: string | null) {
+  switch ((themePack || "classic").toLowerCase()) {
+    case "walnut":
+      return {
+        overlay: "bg-[linear-gradient(180deg,rgba(18,10,6,0.10),rgba(13,8,6,0.28))]",
+        panel: "bg-[rgba(20,12,8,0.14)] ring-[#b98b62]/18 text-stone-100",
+        plaque: "bg-[rgba(58,34,20,0.86)] text-[#f2dfc8] ring-[#c79b71]/25",
+        shelfTop: "bg-[linear-gradient(180deg,#c09369,#875a37)]",
+        shelfFace: "bg-[linear-gradient(180deg,#72482b,#452818)]",
+        support: "bg-[linear-gradient(180deg,#8a6141,#3d2315)]",
+      };
+    case "midnight":
+      return {
+        overlay: "bg-[linear-gradient(180deg,rgba(4,8,14,0.10),rgba(2,5,10,0.34))]",
+        panel: "bg-[rgba(5,10,17,0.14)] ring-cyan-300/12 text-slate-100",
+        plaque: "bg-[rgba(9,20,33,0.86)] text-cyan-100 ring-cyan-300/16",
+        shelfTop: "bg-[linear-gradient(180deg,#48627f,#2c425d)]",
+        shelfFace: "bg-[linear-gradient(180deg,#1b2739,#0d1625)]",
+        support: "bg-[linear-gradient(180deg,#304963,#0d1625)]",
+      };
+    case "marble":
+      return {
+        overlay: "bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(52,58,68,0.14))]",
+        panel: "bg-[rgba(255,255,255,0.10)] ring-slate-300/26 text-slate-900",
+        plaque: "bg-[rgba(255,255,255,0.88)] text-slate-900 ring-slate-300/45",
+        shelfTop: "bg-[linear-gradient(180deg,#fafbfc,#e0e5eb)]",
+        shelfFace: "bg-[linear-gradient(180deg,#d6dce3,#aab4bf)]",
+        support: "bg-[linear-gradient(180deg,#dfe5eb,#97a1ad)]",
+      };
+    case "classic":
+    default:
+      return {
+        overlay: "bg-[linear-gradient(180deg,rgba(15,12,8,0.10),rgba(11,9,7,0.26))]",
+        panel: "bg-[rgba(14,11,8,0.14)] ring-white/10 text-stone-100",
+        plaque: "bg-[rgba(26,20,14,0.84)] text-amber-100 ring-amber-100/14",
+        shelfTop: "bg-[linear-gradient(180deg,#9b7352,#755035)]",
+        shelfFace: "bg-[linear-gradient(180deg,#5a3b25,#311d12)]",
+        support: "bg-[linear-gradient(180deg,#6e4a32,#301d12)]",
+      };
+  }
+}
+
+function ShelfRow({
+  items,
+  theme,
+  galleryHrefPrefix,
+}: {
+  items: VaultItem[];
+  theme: ReturnType<typeof getShelfThemeClasses>;
+  galleryHrefPrefix: string;
+}) {
+  if (items.length === 0) return null;
+
   return (
-    <div className="w-full max-w-6xl mx-auto">
-      {/* FIX: force correct aspect ratio like source image */}
-      <div className="w-full overflow-hidden rounded-2xl">
-        {backgroundImageUrl && (
-          <img
-            src={backgroundImageUrl}
-            alt=""
-            className="w-full h-auto object-contain"
-          />
-        )}
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        {items.map((item) => (
+          <div key={item.id} className="min-w-0">
+            <div
+              className={[
+                "mb-2 rounded-2xl px-3 py-2 text-center text-[11px] ring-1 backdrop-blur-sm",
+                theme.plaque,
+              ].join(" ")}
+            >
+              <div className="line-clamp-2 font-semibold">{item.title}</div>
+              <div className="mt-1 line-clamp-1 opacity-80">{itemSubtitle(item) || "—"}</div>
+              <div className="mt-1 font-medium">Estimated market value {formatMoney(item.currentValue)}</div>
+            </div>
+
+            <Link href={`${galleryHrefPrefix}/${item.id}`} className="group block w-full">
+              <div className="relative w-full overflow-hidden rounded-[16px] bg-black/18 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
+                <div className="aspect-[3/4] w-full">
+                  {itemImage(item) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={itemImage(item)}
+                      alt={item.title}
+                      className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                      draggable={false}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-sm text-white/65">
+                      No image
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Link>
+          </div>
+        ))}
+      </div>
+
+      <div className="pointer-events-none">
+        <div className={["h-4 rounded-t-[18px]", theme.shelfTop].join(" ")} />
+        <div className={["h-6 rounded-b-[18px]", theme.shelfFace].join(" ")} />
+        <div className="flex justify-between px-8 sm:px-14">
+          <div className={["h-12 w-2 rounded-b-full", theme.support].join(" ")} />
+          <div className={["h-12 w-2 rounded-b-full", theme.support].join(" ")} />
+          <div className={["h-12 w-2 rounded-b-full", theme.support].join(" ")} />
+        </div>
       </div>
     </div>
+  );
+}
+
+export default function GalleryShelfScene({
+  items,
+  galleryHrefPrefix = "/vault/item",
+  themePack,
+  title,
+  subtitle,
+  guestMode = false,
+  backgroundImageUrl,
+}: Props) {
+  const theme = getShelfThemeClasses(themePack);
+  const sceneBackground =
+    backgroundImageUrl?.trim() || getThemeBackgroundSimple(themePack || undefined);
+
+  const firstShelf = items.slice(0, 5);
+  const secondShelf = items.slice(5, 10);
+
+  return (
+    <section className="relative overflow-hidden rounded-[30px] ring-1 ring-white/10 shadow-[0_30px_90px_rgba(0,0,0,0.34)]">
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `url(${sceneBackground})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      />
+      <div className={["absolute inset-0", theme.overlay].join(" ")} />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.12),transparent_42%)]" />
+
+      <div className="relative px-4 py-5 sm:px-5 sm:py-6">
+        {(title || subtitle) && (
+          <div className="mb-5 max-w-3xl text-white">
+            {title ? <div className="text-xl font-semibold sm:text-2xl">{title}</div> : null}
+            {subtitle ? (
+              <div className="mt-2 text-sm leading-6 text-white/75">{subtitle}</div>
+            ) : null}
+            <div className={["mt-3 inline-flex rounded-full px-3 py-1 text-[11px] ring-1", theme.plaque].join(" ")}>
+              {guestMode ? "Guest shelf presentation" : "Curated shelf presentation"}
+            </div>
+          </div>
+        )}
+
+        <div className={["rounded-[26px] p-4 backdrop-blur-[1px] ring-1", theme.panel].join(" ")}>
+          <ShelfRow items={firstShelf} theme={theme} galleryHrefPrefix={galleryHrefPrefix} />
+          {secondShelf.length > 0 ? (
+            <div className="mt-8">
+              <ShelfRow items={secondShelf} theme={theme} galleryHrefPrefix={galleryHrefPrefix} />
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </section>
   );
 }
