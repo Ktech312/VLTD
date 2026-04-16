@@ -143,7 +143,7 @@ function GuestShelfGalleryStrip({
         </div>
         <h2 className="mt-2 text-2xl font-semibold">Guest Preview Shelf</h2>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--muted)]">
-          Museum-style shelf presentation with smaller works and simple plaques.
+          Museum-style shelf presentation with fitted artwork, simple plaques, and no duplicate lower sections.
         </p>
       </div>
 
