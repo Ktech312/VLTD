@@ -180,7 +180,7 @@ export default function GalleryShelfScene({
         )}
 
         <div className={["rounded-[26px] p-4 backdrop-blur-[1px] ring-1", theme.panel].join(" ")}>
-          <div className="overflow-hidden rounded-[22px] ring-1 ring-white/10 bg-black/20">
+          <div className="overflow-hidden rounded-[22px] ring-1 ring-white/10 bg-black/20 max-h-[420px]">
             {sceneBackground ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
