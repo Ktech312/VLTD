@@ -145,6 +145,35 @@ function ShelfRail({
   );
 }
 
+function ShelfSection({
+  row,
+  theme,
+  galleryHrefPrefix,
+}: {
+  row: VaultItem[];
+  theme: ReturnType<typeof getShelfThemeClasses>;
+  galleryHrefPrefix: string;
+}) {
+  return (
+    <div className="flex min-h-0 flex-col justify-end">
+      <div className="grid grid-cols-4 gap-4">
+        {row.map((item) => (
+          <DisplayCard
+            key={item.id}
+            item={item}
+            theme={theme}
+            galleryHrefPrefix={galleryHrefPrefix}
+          />
+        ))}
+      </div>
+
+      <div className="mt-3">
+        <ShelfRail theme={theme} />
+      </div>
+    </div>
+  );
+}
+
 export default function GalleryShelfScene({
   items,
   galleryHrefPrefix = "/vault/item",
@@ -159,18 +188,11 @@ export default function GalleryShelfScene({
     backgroundImageUrl?.trim() || getThemeBackgroundSimple(themePack || undefined);
 
   const itemsPerRow = 4;
-  const maxShelves = 4;
-  const visibleItems = items.slice(0, itemsPerRow * maxShelves);
-  const rows = Array.from({ length: maxShelves }, (_, i) =>
+  const shelfCount = 4;
+  const visibleItems = items.slice(0, itemsPerRow * shelfCount);
+  const rows = Array.from({ length: shelfCount }, (_, i) =>
     visibleItems.slice(i * itemsPerRow, (i + 1) * itemsPerRow)
   );
-
-  const positions = [
-    { cards: "15%", shelf: "31%" },
-    { cards: "35%", shelf: "51%" },
-    { cards: "55%", shelf: "71%" },
-    { cards: "74%", shelf: "90%" },
-  ];
 
   return (
     <section className="relative overflow-hidden rounded-[30px] ring-1 ring-white/10 shadow-[0_30px_90px_rgba(0,0,0,0.34)]">
@@ -190,45 +212,32 @@ export default function GalleryShelfScene({
         )}
 
         <div className={["rounded-[26px] p-4 backdrop-blur-[1px] ring-1", theme.panel].join(" ")}>
-          <div className="relative mx-auto max-w-[1100px] overflow-hidden rounded-[22px] ring-1 ring-white/10 bg-black/20">
-            {/* wall/background remains untouched; only shelf layout changes */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={sceneBackground}
-              alt=""
-              className="block h-auto w-full object-contain"
-              draggable={false}
-            />
+          <div className="relative mx-auto max-w-[1100px] overflow-hidden rounded-[22px] ring-1 ring-white/10 bg-black/20 min-h-[1700px] sm:min-h-[1850px]">
+            {sceneBackground ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={sceneBackground}
+                alt=""
+                className="absolute left-0 top-0 block h-auto w-full object-contain"
+                draggable={false}
+              />
+            ) : null}
 
-            <div className="absolute inset-0">
-              {rows.map((row, rowIndex) =>
-                row.length > 0 ? (
-                  <div key={`row-${rowIndex}`}>
-                    <div
-                      className="absolute left-[6%] right-[6%]"
-                      style={{ top: positions[rowIndex].cards }}
-                    >
-                      <div className="grid grid-cols-4 gap-4">
-                        {row.map((item) => (
-                          <DisplayCard
-                            key={item.id}
-                            item={item}
-                            theme={theme}
-                            galleryHrefPrefix={galleryHrefPrefix}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    <div
-                      className="absolute left-[7%] right-[7%]"
-                      style={{ top: positions[rowIndex].shelf }}
-                    >
-                      <ShelfRail theme={theme} />
-                    </div>
-                  </div>
-                ) : null
-              )}
+            <div className="absolute inset-0 px-[6%] pt-[10%] pb-[4%]">
+              <div className="grid h-full grid-rows-4 gap-6">
+                {rows.map((row, index) =>
+                  row.length > 0 ? (
+                    <ShelfSection
+                      key={index}
+                      row={row}
+                      theme={theme}
+                      galleryHrefPrefix={galleryHrefPrefix}
+                    />
+                  ) : (
+                    <div key={index} />
+                  )
+                )}
+              </div>
             </div>
           </div>
         </div>
