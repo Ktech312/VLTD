@@ -38,107 +38,103 @@ function getShelfThemeClasses(themePack?: string | null) {
     case "walnut":
       return {
         panel: "bg-[rgba(20,12,8,0.14)] ring-[#b98b62]/18 text-stone-100",
-        plaque: "bg-[rgba(58,34,20,0.86)] text-[#f2dfc8] ring-[#c79b71]/25",
-        tile: "bg-[rgba(42,24,14,0.58)] ring-[#b98b62]/18",
-        shelfTop: "bg-[linear-gradient(180deg,#c09369,#875a37)]",
-        shelfFace: "bg-[linear-gradient(180deg,#72482b,#452818)]",
-        support: "bg-[linear-gradient(180deg,#8a6141,#3d2315)]",
+        plaque: "bg-[rgba(58,34,20,0.88)] text-[#f2dfc8] ring-[#c79b71]/25",
+        tile: "bg-[rgba(42,24,14,0.68)] ring-[#b98b62]/18",
+        shelfTop: "from-[#c09369] to-[#875a37]",
+        shelfFace: "from-[#72482b] to-[#452818]",
+        support: "from-[#8a6141] to-[#3d2315]",
       };
     case "midnight":
       return {
         panel: "bg-[rgba(5,10,17,0.14)] ring-cyan-300/12 text-slate-100",
-        plaque: "bg-[rgba(9,20,33,0.86)] text-cyan-100 ring-cyan-300/16",
-        tile: "bg-[rgba(8,18,30,0.62)] ring-cyan-300/12",
-        shelfTop: "bg-[linear-gradient(180deg,#48627f,#2c425d)]",
-        shelfFace: "bg-[linear-gradient(180deg,#1b2739,#0d1625)]",
-        support: "bg-[linear-gradient(180deg,#304963,#0d1625)]",
+        plaque: "bg-[rgba(9,20,33,0.88)] text-cyan-100 ring-cyan-300/16",
+        tile: "bg-[rgba(8,18,30,0.72)] ring-cyan-300/12",
+        shelfTop: "from-[#48627f] to-[#2c425d]",
+        shelfFace: "from-[#1b2739] to-[#0d1625]",
+        support: "from-[#304963] to-[#0d1625]",
       };
     case "marble":
       return {
         panel: "bg-[rgba(255,255,255,0.10)] ring-slate-300/26 text-slate-900",
-        plaque: "bg-[rgba(255,255,255,0.88)] text-slate-900 ring-slate-300/45",
-        tile: "bg-[rgba(255,255,255,0.54)] ring-slate-300/30",
-        shelfTop: "bg-[linear-gradient(180deg,#fafbfc,#e0e5eb)]",
-        shelfFace: "bg-[linear-gradient(180deg,#d6dce3,#aab4bf)]",
-        support: "bg-[linear-gradient(180deg,#dfe5eb,#97a1ad)]",
+        plaque: "bg-[rgba(255,255,255,0.90)] text-slate-900 ring-slate-300/45",
+        tile: "bg-[rgba(255,255,255,0.64)] ring-slate-300/30",
+        shelfTop: "from-[#fafbfc] to-[#e0e5eb]",
+        shelfFace: "from-[#d6dce3] to-[#aab4bf]",
+        support: "from-[#dfe5eb] to-[#97a1ad]",
       };
     case "classic":
     default:
       return {
         panel: "bg-[rgba(14,11,8,0.14)] ring-white/10 text-stone-100",
-        plaque: "bg-[rgba(26,20,14,0.84)] text-amber-100 ring-amber-100/14",
-        tile: "bg-[rgba(24,18,12,0.54)] ring-white/10",
-        shelfTop: "bg-[linear-gradient(180deg,#9b7352,#755035)]",
-        shelfFace: "bg-[linear-gradient(180deg,#5a3b25,#311d12)]",
-        support: "bg-[linear-gradient(180deg,#6e4a32,#301d12)]",
+        plaque: "bg-[rgba(26,20,14,0.88)] text-amber-100 ring-amber-100/14",
+        tile: "bg-[rgba(24,18,12,0.68)] ring-white/10",
+        shelfTop: "from-[#9b7352] to-[#755035]",
+        shelfFace: "from-[#5a3b25] to-[#311d12]",
+        support: "from-[#6e4a32] to-[#301d12]",
       };
   }
 }
 
-function ShelfRow({
-  items,
+function DisplayCard({
+  item,
   theme,
   galleryHrefPrefix,
 }: {
-  items: VaultItem[];
+  item: VaultItem;
   theme: ReturnType<typeof getShelfThemeClasses>;
   galleryHrefPrefix: string;
 }) {
-  if (items.length === 0) return null;
-
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-        {items.map((item) => (
-          <div key={item.id} className="min-w-0">
-            <div
-              className={[
-                "mb-2 rounded-2xl px-3 py-2 text-center text-[11px] ring-1 backdrop-blur-sm",
-                theme.plaque,
-              ].join(" ")}
-            >
-              <div className="line-clamp-2 font-semibold">{item.title}</div>
-              <div className="mt-1 line-clamp-1 opacity-80">{itemSubtitle(item) || "—"}</div>
-              <div className="mt-1 font-medium">Estimated market value {formatMoney(item.currentValue)}</div>
-            </div>
-
-            <Link href={`${galleryHrefPrefix}/${item.id}`} className="group block w-full">
-              <div
-                className={[
-                  "relative w-full overflow-hidden rounded-[16px] ring-1 shadow-[0_10px_24px_rgba(0,0,0,0.18)]",
-                  theme.tile,
-                ].join(" ")}
-              >
-                <div className="aspect-[3/4] w-full p-2">
-                  {itemImage(item) ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={itemImage(item)}
-                      alt={item.title}
-                      className="h-full w-full object-contain transition duration-300 group-hover:scale-[1.02]"
-                      draggable={false}
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-sm text-white/65">
-                      No image
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Link>
-          </div>
-        ))}
+    <div className="min-w-0">
+      <div
+        className={[
+          "mb-2 rounded-2xl px-3 py-2 text-center text-[11px] ring-1 backdrop-blur-sm",
+          theme.plaque,
+        ].join(" ")}
+      >
+        <div className="line-clamp-2 font-semibold">{item.title}</div>
+        <div className="mt-1 line-clamp-1 opacity-80">{itemSubtitle(item) || "—"}</div>
+        <div className="mt-1 font-medium">Estimated market value {formatMoney(item.currentValue)}</div>
       </div>
 
-      <div className="pointer-events-none">
-        <div className={["h-4 rounded-t-[18px]", theme.shelfTop].join(" ")} />
-        <div className={["h-6 rounded-b-[18px]", theme.shelfFace].join(" ")} />
-        <div className="flex justify-between px-8 sm:px-14">
-          <div className={["h-12 w-2 rounded-b-full", theme.support].join(" ")} />
-          <div className={["h-12 w-2 rounded-b-full", theme.support].join(" ")} />
-          <div className={["h-12 w-2 rounded-b-full", theme.support].join(" ")} />
+      <Link href={`${galleryHrefPrefix}/${item.id}`} className="group block w-full">
+        <div
+          className={[
+            "relative w-full overflow-hidden rounded-[16px] ring-1 shadow-[0_10px_24px_rgba(0,0,0,0.20)]",
+            theme.tile,
+          ].join(" ")}
+        >
+          <div className="aspect-[4/5] w-full p-2">
+            {itemImage(item) ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={itemImage(item)}
+                alt={item.title}
+                className="h-full w-full object-contain transition duration-300 group-hover:scale-[1.02]"
+                draggable={false}
+                loading="lazy"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-white/65">
+                No image
+              </div>
+            )}
+          </div>
         </div>
+      </Link>
+    </div>
+  );
+}
+
+function ShelfRail({ theme }: { theme: ReturnType<typeof getShelfThemeClasses> }) {
+  return (
+    <div className="pointer-events-none">
+      <div className={["h-4 rounded-t-[18px] bg-gradient-to-b", theme.shelfTop].join(" ")} />
+      <div className={["h-6 rounded-b-[18px] bg-gradient-to-b", theme.shelfFace].join(" ")} />
+      <div className="flex justify-between px-8 sm:px-14">
+        <div className={["h-12 w-2 rounded-b-full bg-gradient-to-b", theme.support].join(" ")} />
+        <div className={["h-12 w-2 rounded-b-full bg-gradient-to-b", theme.support].join(" ")} />
+        <div className={["h-12 w-2 rounded-b-full bg-gradient-to-b", theme.support].join(" ")} />
       </div>
     </div>
   );
@@ -158,7 +154,6 @@ export default function GalleryShelfScene({
     backgroundImageUrl?.trim() || getThemeBackgroundSimple(themePack || undefined);
 
   const firstShelf = items.slice(0, 5);
-  const secondShelf = items.slice(5, 10);
 
   return (
     <section className="relative overflow-hidden rounded-[30px] ring-1 ring-white/10 shadow-[0_30px_90px_rgba(0,0,0,0.34)]">
@@ -178,46 +173,38 @@ export default function GalleryShelfScene({
         )}
 
         <div className={["rounded-[26px] p-4 backdrop-blur-[1px] ring-1", theme.panel].join(" ")}>
-          <div className="relative w-full max-w-[1100px] mx-auto h-[460px] rounded-[22px] overflow-hidden ring-1 ring-white/10">
+          <div className="relative mx-auto max-w-[1100px] overflow-hidden rounded-[22px] ring-1 ring-white/10 bg-black/20">
+            <div className="relative h-[520px] sm:h-[560px]">
+              {sceneBackground ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={sceneBackground}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-contain object-top"
+                  draggable={false}
+                />
+              ) : null}
 
-  {sceneBackground && (
-    <img
-      src={sceneBackground}
-      alt=""
-      className="absolute inset-0 w-full h-full object-cover"
-      draggable={false}
-    />
-  )}
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.05),rgba(0,0,0,0.12))]" />
 
-  <div className="absolute inset-0 bg-black/20" />
+              <div className="absolute inset-x-4 bottom-20 sm:inset-x-6">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                  {firstShelf.map((item) => (
+                    <DisplayCard
+                      key={item.id}
+                      item={item}
+                      theme={theme}
+                      galleryHrefPrefix={galleryHrefPrefix}
+                    />
+                  ))}
+                </div>
+              </div>
 
-  <div className="relative h-full flex flex-col justify-end">
-    <div className="flex justify-center gap-4 mb-6">
-      {firstShelf.map((item) => (
-        <div key={item.id} className="w-[120px]">
-        </div>
-      ))}
-    </div>
-
-    <div className="w-full flex justify-center pb-2">
-      <img
-        src="/themes/shelf.png"
-        className="w-[80%]"
-        draggable={false}
-      />
-    </div>
-  </div>
-</div>
-
-          <div className="-mt-3 sm:-mt-4 scale-[0.94] origin-top">
-            <ShelfRow items={firstShelf} theme={theme} galleryHrefPrefix={galleryHrefPrefix} />
-          </div>
-
-          {secondShelf.length > 0 ? (
-            <div className="mt-4 scale-[0.94] origin-top">
-              <ShelfRow items={secondShelf} theme={theme} galleryHrefPrefix={galleryHrefPrefix} />
+              <div className="absolute inset-x-4 bottom-4 sm:inset-x-6">
+                <ShelfRail theme={theme} />
+              </div>
             </div>
-          ) : null}
+          </div>
         </div>
       </div>
     </section>
