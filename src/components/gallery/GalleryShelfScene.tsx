@@ -154,10 +154,8 @@ export default function GalleryShelfScene({
   backgroundImageUrl,
 }: Props) {
   const theme = getShelfThemeClasses(themePack);
-  const themeKey = (themePack || "classic").toLowerCase();
-  const wallOnlyBackground = `/themes/${themeKey}-shelf-wall.webp`;
   const sceneBackground =
-    wallOnlyBackground || backgroundImageUrl?.trim() || getThemeBackgroundSimple(themePack || undefined);
+    backgroundImageUrl?.trim() || getThemeBackgroundSimple(themePack || undefined);
 
   const firstShelf = items.slice(0, 5);
   const secondShelf = items.slice(5, 10);
@@ -180,17 +178,36 @@ export default function GalleryShelfScene({
         )}
 
         <div className={["rounded-[26px] p-4 backdrop-blur-[1px] ring-1", theme.panel].join(" ")}>
-          <div className="overflow-hidden rounded-[22px] ring-1 ring-white/10 bg-black/20 max-h-[420px]">
-            {sceneBackground ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={sceneBackground}
-                alt=""
-                className="block h-auto w-full object-contain"
-                draggable={false}
-              />
-            ) : null}
-          </div>
+          <div className="relative w-full max-w-[1100px] mx-auto h-[460px] rounded-[22px] overflow-hidden ring-1 ring-white/10">
+
+  {sceneBackground && (
+    <img
+      src={sceneBackground}
+      alt=""
+      className="absolute inset-0 w-full h-full object-cover"
+      draggable={false}
+    />
+  )}
+
+  <div className="absolute inset-0 bg-black/20" />
+
+  <div className="relative h-full flex flex-col justify-end">
+    <div className="flex justify-center gap-4 mb-6">
+      {firstShelf.map((item) => (
+        <div key={item.id} className="w-[120px]">
+        </div>
+      ))}
+    </div>
+
+    <div className="w-full flex justify-center pb-2">
+      <img
+        src="/themes/shelf.png"
+        className="w-[80%]"
+        draggable={false}
+      />
+    </div>
+  </div>
+</div>
 
           <div className="-mt-3 sm:-mt-4 scale-[0.94] origin-top">
             <ShelfRow items={firstShelf} theme={theme} galleryHrefPrefix={galleryHrefPrefix} />
