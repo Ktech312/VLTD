@@ -159,7 +159,7 @@ function normalizeVaultItem(raw: any): VaultItem {
         ? raw.created_at
         : typeof raw?.createdAt === "string"
           ? raw.createdAt
-          : new Date().toISOString(),,
+          : new Date().toISOString(),
     isNew: false,
   };
 }
