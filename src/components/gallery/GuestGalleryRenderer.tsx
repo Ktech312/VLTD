@@ -246,6 +246,8 @@ export default function GuestGalleryRenderer(props: RendererProps) {
                 items={model.galleryItems}
                 themePack={model.themePack}
                 backgroundImageUrl={backgroundImageUrl}
+                backgroundUrl={backgroundImageUrl}
+                shelvesEnabled={model.shelvesEnabled}
                 title={model.galleryTitle}
                 subtitle={model.galleryDescription}
                 guestMode
