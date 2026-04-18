@@ -543,19 +543,18 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
                 <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">Layout: {layoutType}</span>
               </div>
             </div>
-
-<div
-  className={[
-    "mt-4 overflow-hidden rounded-[24px] ring-1 relative",
-    previewPanelClass,
-  ].join(" ")}
->
-  <div className="h-[420px] overflow-hidden">
-    <div className="origin-top-left scale-[0.36] w-[278%] pointer-events-none">
-      <BuilderPreviewBridge gallery={gallery} items={selectedItems} />
-    </div>
-  </div>
-</div>
+            <div
+              className={[
+                "mt-4 overflow-hidden rounded-[24px] ring-1 relative",
+                previewPanelClass,
+              ].join(" ")}
+            >
+              <div className="h-[420px] overflow-hidden">
+                <div className="origin-top-left scale-[0.36] w-[278%] pointer-events-none">
+                  <BuilderPreviewBridge gallery={gallery} items={selectedItems} />
+                </div>
+              </div>
+            </div>
             </div>
 
             <div className="mt-4 rounded-[18px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
