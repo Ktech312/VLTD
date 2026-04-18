@@ -8,6 +8,8 @@ import type { VaultItem } from "@/lib/vaultModel";
 export const GALLERY_STAGE_MAX_WIDTH_CLASS = "max-w-[1120px]";
 export const GALLERY_STAGE_HEIGHT_CLASS = "h-[2400px] sm:h-[2520px]";
 
+const ROW_ANCHORS = ["24%", "46%", "68%", "90%"] as const;
+
 function itemImage(item: VaultItem) {
   return item.imageFrontUrl || item.imageBackUrl || "";
 }
@@ -48,7 +50,6 @@ function getShelfThemeClasses(themePack?: string | null) {
         shelfFace: "from-[#72482b] to-[#452818]",
         support: "from-[#8a6141] to-[#3d2315]",
         vignette: "bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.00)_0%,rgba(0,0,0,0.10)_62%,rgba(0,0,0,0.34)_100%)]",
-        guide: "bg-cyan-300/55",
       };
     case "midnight":
       return {
@@ -59,7 +60,6 @@ function getShelfThemeClasses(themePack?: string | null) {
         shelfFace: "from-[#1b2739] to-[#0d1625]",
         support: "from-[#304963] to-[#0d1625]",
         vignette: "bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.00)_0%,rgba(0,0,0,0.10)_62%,rgba(0,0,0,0.34)_100%)]",
-        guide: "bg-cyan-300/55",
       };
     case "marble":
       return {
@@ -70,7 +70,6 @@ function getShelfThemeClasses(themePack?: string | null) {
         shelfFace: "from-[#d6dce3] to-[#aab4bf]",
         support: "from-[#dfe5eb] to-[#97a1ad]",
         vignette: "bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.00)_0%,rgba(0,0,0,0.06)_64%,rgba(0,0,0,0.18)_100%)]",
-        guide: "bg-slate-300/55",
       };
     case "classic":
     default:
@@ -82,7 +81,6 @@ function getShelfThemeClasses(themePack?: string | null) {
         shelfFace: "from-[#5a3b25] to-[#311d12]",
         support: "from-[#6e4a32] to-[#301d12]",
         vignette: "bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.00)_0%,rgba(0,0,0,0.08)_62%,rgba(0,0,0,0.26)_100%)]",
-        guide: "bg-cyan-300/55",
       };
   }
 }
@@ -156,18 +154,22 @@ function ShelfRail({
   );
 }
 
-function ShelfSection({
+function AnchoredRow({
   row,
+  anchor,
   theme,
   galleryHrefPrefix,
 }: {
   row: VaultItem[];
+  anchor: string;
   theme: ReturnType<typeof getShelfThemeClasses>;
   galleryHrefPrefix: string;
 }) {
   return (
-    <div className="relative flex min-h-0 flex-col justify-end">
-      <div className="absolute left-0 right-0 bottom-[1.05rem] h-[2px] rounded-full bg-cyan-300/55" />
+    <div
+      className="absolute left-[4%] right-[4%]"
+      style={{ top: anchor, transform: "translateY(-100%)" }}
+    >
       <div className="grid grid-cols-4 items-end gap-[0.8rem]">
         {row.map((item) => (
           <DisplayCard
@@ -226,24 +228,19 @@ export default function GalleryShelfScene({
           <div className={["absolute inset-0", theme.vignette].join(" ")} />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,10,16,0.08),rgba(6,10,16,0.12))]" />
 
-          {shelvesEnabled ? (
-            <div className="absolute inset-0 px-[4%] pt-[14%] pb-[8%]">
-              <div className="grid h-full grid-rows-4 gap-[1.6rem]">
-                {rows.map((row, index) =>
-                  row.length > 0 ? (
-                    <ShelfSection
-                      key={index}
-                      row={row}
-                      theme={theme}
-                      galleryHrefPrefix={galleryHrefPrefix}
-                    />
-                  ) : (
-                    <div key={index} />
-                  )
-                )}
-              </div>
-            </div>
-          ) : null}
+          {shelvesEnabled
+            ? rows.map((row, index) =>
+                row.length > 0 ? (
+                  <AnchoredRow
+                    key={index}
+                    row={row}
+                    anchor={ROW_ANCHORS[index]}
+                    theme={theme}
+                    galleryHrefPrefix={galleryHrefPrefix}
+                  />
+                ) : null
+              )
+            : null}
         </div>
       </div>
     </section>
