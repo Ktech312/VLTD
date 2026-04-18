@@ -8,7 +8,7 @@ import type { VaultItem } from "@/lib/vaultModel";
 export const GALLERY_STAGE_MAX_WIDTH_CLASS = "max-w-[1120px]";
 export const GALLERY_STAGE_HEIGHT_CLASS = "h-[2400px] sm:h-[2520px]";
 
-const ROW_ANCHORS = ["40%", "60%", "83%", "98%"] as const;
+const ROW_ANCHORS = ["35%", "65%", "83%", "99%"] as const;
 
 function itemImage(item: VaultItem) {
   return item.imageFrontUrl || item.imageBackUrl || "";
