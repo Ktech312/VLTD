@@ -555,7 +555,6 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
                 </div>
               </div>
             </div>
-            </div>
 
             <div className="mt-4 rounded-[18px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
               <div className="text-sm font-semibold">Preview Actions</div>
