@@ -163,7 +163,7 @@ function ShelfSection({
 }) {
   return (
     <div className="flex min-h-0 flex-col justify-end">
-      <div className="grid grid-cols-4 items-end gap-[0.8rem] sm:gap-[0.8rem]">
+      <div className="grid grid-cols-4 items-end gap-[0.8rem]">
         {row.map((item) => (
           <DisplayCard
             key={item.id}
@@ -223,7 +223,7 @@ export default function GalleryShelfScene({
 
           {shelvesEnabled ? (
             <div className="absolute inset-0 px-[4%] pt-[14%] pb-[8%]">
-              <div className="grid h-full grid-rows-4 gap-[1.6rem] sm:gap-[1.6rem]">
+              <div className="grid h-full grid-rows-4 gap-[1.6rem]">
                 {rows.map((row, index) =>
                   row.length > 0 ? (
                     <ShelfSection
