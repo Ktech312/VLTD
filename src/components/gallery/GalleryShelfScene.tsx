@@ -48,6 +48,7 @@ function getShelfThemeClasses(themePack?: string | null) {
         shelfFace: "from-[#72482b] to-[#452818]",
         support: "from-[#8a6141] to-[#3d2315]",
         vignette: "bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.00)_0%,rgba(0,0,0,0.10)_62%,rgba(0,0,0,0.34)_100%)]",
+        guide: "bg-cyan-300/55",
       };
     case "midnight":
       return {
@@ -58,6 +59,7 @@ function getShelfThemeClasses(themePack?: string | null) {
         shelfFace: "from-[#1b2739] to-[#0d1625]",
         support: "from-[#304963] to-[#0d1625]",
         vignette: "bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.00)_0%,rgba(0,0,0,0.10)_62%,rgba(0,0,0,0.34)_100%)]",
+        guide: "bg-cyan-300/55",
       };
     case "marble":
       return {
@@ -68,6 +70,7 @@ function getShelfThemeClasses(themePack?: string | null) {
         shelfFace: "from-[#d6dce3] to-[#aab4bf]",
         support: "from-[#dfe5eb] to-[#97a1ad]",
         vignette: "bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.00)_0%,rgba(0,0,0,0.06)_64%,rgba(0,0,0,0.18)_100%)]",
+        guide: "bg-slate-300/55",
       };
     case "classic":
     default:
@@ -79,6 +82,7 @@ function getShelfThemeClasses(themePack?: string | null) {
         shelfFace: "from-[#5a3b25] to-[#311d12]",
         support: "from-[#6e4a32] to-[#301d12]",
         vignette: "bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.00)_0%,rgba(0,0,0,0.08)_62%,rgba(0,0,0,0.26)_100%)]",
+        guide: "bg-cyan-300/55",
       };
   }
 }
@@ -162,7 +166,8 @@ function ShelfSection({
   galleryHrefPrefix: string;
 }) {
   return (
-    <div className="flex min-h-0 flex-col justify-end">
+    <div className="relative flex min-h-0 flex-col justify-end">
+      <div className="absolute left-0 right-0 bottom-[1.05rem] h-[2px] rounded-full bg-cyan-300/55" />
       <div className="grid grid-cols-4 items-end gap-[0.8rem]">
         {row.map((item) => (
           <DisplayCard
