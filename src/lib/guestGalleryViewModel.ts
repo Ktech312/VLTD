@@ -1,5 +1,3 @@
-"use client";
-
 import {
   type Gallery,
   type GalleryDisplayMode,
@@ -65,21 +63,21 @@ export function resolveGuestGalleryBackground(
     };
   }
 
-  // Pass 1 keeps theme support available in the model, but routes are not wired yet.
-  // A later pass can decide whether blank or theme should be the active default.
   const themed = getGalleryThemeBackground(themePack);
 
-  return themed
-    ? {
-        type: "theme",
-        url: themed,
-        themeKey: themePack,
-      }
-    : {
-        type: "blank",
-        url: null,
-        themeKey: themePack,
-      };
+  if (themed) {
+    return {
+      type: "theme",
+      url: themed,
+      themeKey: themePack,
+    };
+  }
+
+  return {
+    type: "blank",
+    url: null,
+    themeKey: themePack,
+  };
 }
 
 export function resolveGuestGalleryViewModel(

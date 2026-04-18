@@ -1,15 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import GalleryShelfScene from "@/components/gallery/GalleryShelfScene";
 import { PillButton } from "@/components/ui/PillButton";
-import type {
-  Gallery,
-  GalleryDisplayMode,
-  GalleryGuestViewMode,
-  GalleryThemePack,
-} from "@/lib/galleryModel";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import type { GuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
 
@@ -31,7 +26,7 @@ function DetailPill({
   children,
   className = "",
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
 }) {
   return (
@@ -101,62 +96,11 @@ function ViewerItemCard({
   );
 }
 
-type LegacyProps = {
-  gallery: Gallery | null;
-  galleryItems: VaultItem[];
-  themePack: GalleryThemePack;
-  displayMode: GalleryDisplayMode;
-  guestViewMode: GalleryGuestViewMode;
-  layoutType: string;
-  backgroundImageUrl?: string | null;
-  totalValue: number;
-  backHref?: string | null;
-  homeHref?: string | null;
-  showNavigation?: boolean;
-  navigationLabel?: string;
-};
-
-type RendererProps =
-  | { model: GuestGalleryViewModel; }
-  | LegacyProps;
-
-function isModelProps(props: RendererProps): props is { model: GuestGalleryViewModel } {
-  return "model" in props;
-}
-
-export default function GuestGalleryRenderer(props: RendererProps) {
-  const model = isModelProps(props)
-    ? props.model
-    : {
-        gallery: props.gallery,
-        galleryId: props.gallery?.id ?? null,
-        galleryTitle: props.gallery?.title || "Untitled Gallery",
-        galleryDescription:
-          props.gallery?.description?.trim() || "Curated collection presentation",
-        galleryItems: props.galleryItems,
-        totalValue: props.totalValue,
-        themePack: props.themePack,
-        displayMode: props.displayMode,
-        guestViewMode: props.guestViewMode,
-        layoutType: props.layoutType,
-        shelvesEnabled: props.displayMode === "shelf",
-        background: {
-          type: props.backgroundImageUrl ? "upload" : "blank",
-          url: props.backgroundImageUrl ?? null,
-          themeKey: props.themePack,
-        },
-        navigation: {
-          show: props.showNavigation ?? false,
-          primaryLabel: props.navigationLabel,
-          backHref: props.backHref ?? null,
-          homeHref: props.homeHref ?? null,
-        },
-        access: {
-          modeLabel: props.navigationLabel || (props.guestViewMode === "public" ? "Guest Preview" : "Shared Gallery"),
-          isPublic: props.guestViewMode === "public",
-        },
-      };
-
+export default function GuestGalleryRenderer({
+  model,
+}: {
+  model: GuestGalleryViewModel;
+}) {
   const chipClass = getThemeChipClass(model.themePack);
   const backgroundImageUrl = model.background.url;
 
@@ -176,7 +120,7 @@ export default function GuestGalleryRenderer(props: RendererProps) {
                   href={model.navigation.backHref}
                   className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
                 >
-                  Back
+                  Back to Gallery
                 </Link>
               ) : null}
 
@@ -208,18 +152,10 @@ export default function GuestGalleryRenderer(props: RendererProps) {
                   </p>
 
                   <div className="mt-5 flex flex-wrap items-center gap-2">
-                    <DetailPill className={chipClass}>
-                      {model.galleryItems.length} items
-                    </DetailPill>
-                    <DetailPill className={chipClass}>
-                      {model.layoutType} layout
-                    </DetailPill>
-                    <DetailPill className={chipClass}>
-                      {model.displayMode} mode
-                    </DetailPill>
-                    <DetailPill className={chipClass}>
-                      Background {model.background.type}
-                    </DetailPill>
+                    <DetailPill className={chipClass}>{model.galleryItems.length} items</DetailPill>
+                    <DetailPill className={chipClass}>{model.layoutType} layout</DetailPill>
+                    <DetailPill className={chipClass}>{model.displayMode} mode</DetailPill>
+                    <DetailPill className={chipClass}>Background {model.background.type}</DetailPill>
                   </div>
                 </div>
 
@@ -238,7 +174,7 @@ export default function GuestGalleryRenderer(props: RendererProps) {
                 </div>
                 <h2 className="mt-2 text-2xl font-semibold">Guest Preview Shelf</h2>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--muted)]">
-                  Canonical shared renderer shelf stage.
+                  Shared guest/public shelf renderer.
                 </p>
               </div>
 
@@ -246,11 +182,10 @@ export default function GuestGalleryRenderer(props: RendererProps) {
                 items={model.galleryItems}
                 themePack={model.themePack}
                 backgroundImageUrl={backgroundImageUrl}
-                backgroundUrl={backgroundImageUrl}
-                shelvesEnabled={model.shelvesEnabled}
                 title={model.galleryTitle}
                 subtitle={model.galleryDescription}
                 guestMode
+                shelvesEnabled={model.shelvesEnabled}
               />
             </section>
           ) : (
@@ -261,7 +196,7 @@ export default function GuestGalleryRenderer(props: RendererProps) {
                 </div>
                 <h2 className="mt-2 text-2xl font-semibold">Gallery Grid</h2>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--muted)]">
-                  Canonical shared renderer grid stage.
+                  Shared guest/public grid renderer.
                 </p>
               </div>
 
