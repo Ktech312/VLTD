@@ -5,6 +5,9 @@ import type { CSSProperties } from "react";
 
 import type { VaultItem } from "@/lib/vaultModel";
 
+export const GALLERY_STAGE_MAX_WIDTH_CLASS = "max-w-[1120px]";
+export const GALLERY_STAGE_HEIGHT_CLASS = "h-[1280px] sm:h-[1380px]";
+
 function itemImage(item: VaultItem) {
   return item.imageFrontUrl || item.imageBackUrl || "";
 }
@@ -205,20 +208,21 @@ export default function GalleryShelfScene({
     : undefined;
 
   return (
-    <section className="mt-2">
+    <section className="mt-0">
       <div
         className={[
-          "relative mx-auto max-w-[1120px] overflow-hidden rounded-[30px] ring-1 shadow-[0_30px_90px_rgba(0,0,0,0.34)]",
+          "relative mx-auto overflow-hidden rounded-[30px] ring-1 shadow-[0_30px_90px_rgba(0,0,0,0.34)]",
+          GALLERY_STAGE_MAX_WIDTH_CLASS,
           theme.stageShell,
         ].join(" ")}
       >
-        <div className="relative h-[1280px] sm:h-[1380px]">
+        <div className={["relative", GALLERY_STAGE_HEIGHT_CLASS].join(" ")}>
           <div className="absolute inset-0" style={backgroundStyle} />
           <div className={["absolute inset-0", theme.vignette].join(" ")} />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,10,16,0.08),rgba(6,10,16,0.12))]" />
 
           {shelvesEnabled ? (
-            <div className="absolute inset-0 px-[4%] pt-[8%] pb-[4%]">
+            <div className="absolute inset-0 px-[4%] pt-[4%] pb-[4%]">
               <div className="grid h-full grid-rows-4 gap-6">
                 {rows.map((row, index) =>
                   row.length > 0 ? (

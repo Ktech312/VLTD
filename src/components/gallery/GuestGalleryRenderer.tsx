@@ -8,6 +8,8 @@ import { PillButton } from "@/components/ui/PillButton";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import type { GuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
 
+const GALLERY_STAGE_WIDTH_CLASS = "max-w-[1120px]";
+
 function itemSubtitle(item: VaultItem) {
   return [item.subtitle, item.number, item.grade].filter(Boolean).join(" • ");
 }
@@ -110,7 +112,7 @@ export default function GuestGalleryRenderer({
       <div className="relative">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
           {model.navigation.show ? (
-            <div className="mb-6 flex flex-wrap items-center gap-3">
+            <div className={["mb-6 mx-auto flex flex-wrap items-center gap-3", GALLERY_STAGE_WIDTH_CLASS].join(" ")}>
               <PillButton variant="active" className="text-sm font-semibold">
                 {model.navigation.primaryLabel || model.access.modeLabel}
               </PillButton>
@@ -135,7 +137,12 @@ export default function GuestGalleryRenderer({
             </div>
           ) : null}
 
-          <section className="relative overflow-hidden rounded-[30px] border border-white/12 bg-black/40 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.30)] backdrop-blur-sm sm:p-6">
+          <section
+            className={[
+              "relative mx-auto overflow-hidden rounded-[30px] border border-white/12 bg-black/40 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.30)] backdrop-blur-sm sm:p-6",
+              GALLERY_STAGE_WIDTH_CLASS,
+            ].join(" ")}
+          >
             <div className="relative">
               <div className="text-[11px] tracking-[0.28em] text-[color:var(--muted2)]">
                 {model.access.modeLabel.toUpperCase()}
@@ -167,39 +174,21 @@ export default function GuestGalleryRenderer({
           </section>
 
           {model.displayMode === "shelf" ? (
-            <section className="mt-8">
-              <div className="mb-4">
-                <div className="text-[11px] tracking-[0.24em] text-[color:var(--muted2)]">
-                  SHELF VIEW
-                </div>
-                <h2 className="mt-2 text-2xl font-semibold">Guest Preview Shelf</h2>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--muted)]">
-                  Shared guest/public shelf renderer.
-                </p>
-              </div>
-
+            <div className="mt-3">
               <GalleryShelfScene
                 items={model.galleryItems}
                 themePack={model.themePack}
                 backgroundImageUrl={backgroundImageUrl}
-                title={model.galleryTitle}
-                subtitle={model.galleryDescription}
-                guestMode
                 shelvesEnabled={model.shelvesEnabled}
               />
-            </section>
+            </div>
           ) : (
-            <section className="mt-8 rounded-[30px] border border-white/12 bg-black/18 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.28)] backdrop-blur-sm">
-              <div className="mb-4">
-                <div className="text-[11px] tracking-[0.24em] text-[color:var(--muted2)]">
-                  GRID VIEW
-                </div>
-                <h2 className="mt-2 text-2xl font-semibold">Gallery Grid</h2>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--muted)]">
-                  Shared guest/public grid renderer.
-                </p>
-              </div>
-
+            <section
+              className={[
+                "mt-3 mx-auto rounded-[30px] border border-white/12 bg-black/18 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.28)] backdrop-blur-sm",
+                GALLERY_STAGE_WIDTH_CLASS,
+              ].join(" ")}
+            >
               <div className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(20,24,30,0.96),rgba(10,12,16,0.94))] p-4">
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                   {model.galleryItems.map((item, index) => (
@@ -215,7 +204,7 @@ export default function GuestGalleryRenderer({
           )}
 
           {model.galleryItems.length === 0 ? (
-            <section className="mt-10">
+            <section className={["mt-6 mx-auto", GALLERY_STAGE_WIDTH_CLASS].join(" ")}>
               <div className="rounded-[28px] bg-[color:var(--surface)] p-8 ring-1 ring-[color:var(--border)]">
                 <div className="text-sm text-[color:var(--muted)]">
                   This gallery does not currently contain any visible items.
