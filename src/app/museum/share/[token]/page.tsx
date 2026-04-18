@@ -9,20 +9,19 @@ import {
   recordGalleryView,
   type Gallery,
   getGalleryThemeBackground,
-  getGalleryThemePresentation,
   getGalleryThemePack,
+  getGalleryDisplayMode,
+  getGalleryGuestViewMode,
+  getGalleryLayoutType,
+  getGalleryResolvedThemeBackground,
 } from "@/lib/galleryModel";
-import { getThemeBackgroundSimple } from "@/lib/galleryModel";
+import GuestGalleryRenderer from "@/components/gallery/GuestGalleryRenderer";
 import { getCurrentUser } from "@/lib/auth";
-import { type VaultItem, getPrimaryImageUrl } from "@/lib/vaultModel";
+import { type VaultItem } from "@/lib/vaultModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 type GateMode = "loading" | "guest_allowed" | "registered_only" | "entered";
 type ShareAccessMode = "private" | "public_gallery" | "guest_view" | "registered_users";
-
-function itemSubtitle(i: VaultItem) {
-  return [i.subtitle, i.number, i.grade].filter(Boolean).join(" • ");
-}
 
 function formatMoney(value?: number) {
   if (typeof value !== "number" || !Number.isFinite(value)) return "—";
@@ -141,24 +140,32 @@ function normalizeVaultItem(raw: any): VaultItem {
         : typeof raw?.storageLocation === "string"
           ? raw.storageLocation
           : undefined,
-    certNumber:
-      typeof raw?.cert_number === "string"
-        ? raw.cert_number
-        : typeof raw?.certNumber === "string"
-          ? raw.certNumber
-          : undefined,
-    serialNumber:
-      typeof raw?.serial_number === "string"
-        ? raw.serial_number
-        : typeof raw?.serialNumber === "string"
-          ? raw.serialNumber
-          : undefined,
+    images: Array.isArray(raw?.images)
+      ? raw.images.map((img: any) => ({
+          id: String(img?.id ?? ""),
+          url: typeof img?.url === "string" ? img.url : "",
+          storageKey:
+            typeof img?.storage_key === "string"
+              ? img.storage_key
+              : typeof img?.storageKey === "string"
+                ? img.storageKey
+                : undefined,
+          label: typeof img?.label === "string" ? img.label : undefined,
+          order: typeof img?.order === "number" ? img.order : undefined,
+        }))
+      : [],
     createdAt:
       typeof raw?.created_at === "string"
-        ? Date.parse(raw.created_at) || Date.now()
-        : typeof raw?.createdAt === "number"
+        ? raw.created_at
+        : typeof raw?.createdAt === "string"
           ? raw.createdAt
-          : Date.now(),
+          : new Date().toISOString(),
+    updatedAt:
+      typeof raw?.updated_at === "string"
+        ? raw.updated_at
+        : typeof raw?.updatedAt === "string"
+          ? raw.updatedAt
+          : new Date().toISOString(),
     isNew: false,
   };
 }
@@ -168,18 +175,6 @@ function getShareAccessMode(gallery: Gallery): ShareAccessMode {
   if (gallery.visibility === "LOCKED") return "private";
   if (gallery.visibility === "INVITE") return "guest_view";
   return "public_gallery";
-}
-
-function getBackgroundShellStyle(backgroundUrl?: string): React.CSSProperties | undefined {
-  if (!backgroundUrl?.trim()) return undefined;
-
-  return {
-    backgroundImage: `url(${backgroundUrl})`,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
-    backgroundAttachment: "fixed",
-  };
 }
 
 function GalleryBackgroundShell({
@@ -209,36 +204,6 @@ function GalleryBackgroundShell({
         />
       ) : null}
       <div className="relative z-10 min-h-screen">{children}</div>
-    </main>
-  );
-}
-
-
-function SharedBackgroundShell({
-  gallery,
-  children,
-}: {
-  gallery: Gallery | null;
-  children: React.ReactNode;
-}) {
-  const themePack = getGalleryThemePack(gallery);
-  const themePresentation = getGalleryThemePresentation(themePack);
-  const backgroundImage =
-    (typeof gallery?.shelfBackground === "string" && gallery.shelfBackground.trim()) ||
-    getGalleryThemeBackground(themePack);
-
-  return (
-    <main
-      className="relative min-h-screen text-[color:var(--fg)]"
-      style={{
-        backgroundImage: `url(${backgroundImage})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
-      <div className={["absolute inset-0", themePresentation.pageOverlayClass].join(" ")} />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.07),transparent_20%),radial-gradient(circle_at_50%_0%,rgba(255,226,184,0.10),transparent_26%)]" />
-      <div className="relative">{children}</div>
     </main>
   );
 }
@@ -463,12 +428,13 @@ export default function SharedGalleryPage() {
     };
   }, [gallery, gateMode]);
 
-  const title = useMemo(() => gallery?.title || "Shared Gallery", [gallery]);
   const accessMode = useMemo(() => (gallery ? getShareAccessMode(gallery) : "private"), [gallery]);
-  const themePresentation = useMemo(
-    () => getGalleryThemePresentation(getGalleryThemePack(gallery)),
-    [gallery]
-  );
+  const totalValue = useMemo(() => items.reduce((sum, item) => sum + Number(item.currentValue ?? 0), 0), [items]);
+  const themePack = getGalleryThemePack(gallery);
+  const displayMode = getGalleryDisplayMode(gallery);
+  const guestViewMode = getGalleryGuestViewMode(gallery);
+  const layoutType = getGalleryLayoutType(gallery);
+  const backgroundImageUrl = getGalleryResolvedThemeBackground(gallery) || getGalleryThemeBackground(themePack);
 
   if (!isResolved) {
     return (
@@ -551,71 +517,19 @@ export default function SharedGalleryPage() {
   }
 
   return (
-    <GalleryBackgroundShell backgroundUrl={gallery.shelfBackground}>
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
-        <section className="rounded-[30px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-8">
-          <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
-            PUBLIC GALLERY
-          </div>
-          <h1 className="mt-3 text-3xl font-semibold sm:text-4xl">{title}</h1>
-          {gallery.description?.trim() ? (
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
-              {gallery.description}
-            </p>
-          ) : null}
-          <div className="mt-5 text-sm text-[color:var(--muted)]">
-            {items.length} item{items.length === 1 ? "" : "s"}
-          </div>
-        </section>
-
-        {items.length === 0 ? (
-          <section className="mt-8">
-            <div className={["rounded-[24px] p-6", themePresentation.sectionPanelClass].join(" ")}>
-              <div className="text-sm text-[color:var(--muted)]">
-                No items in this gallery.
-              </div>
-            </div>
-          </section>
-        ) : (
-          <section className="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-            {items.map((item) => {
-              const image = getPrimaryImageUrl(item);
-
-              return (
-                <article
-                  key={item.id}
-                  className={["rounded-[24px] p-4", themePresentation.cardClass].join(" ")}
-                >
-                  <div className="overflow-hidden rounded-[16px] bg-black/20">
-                    {image ? (
-                      <img
-                        src={image}
-                        alt={item.title}
-                        className="h-[240px] w-full object-cover"
-                        draggable={false}
-                      />
-                    ) : (
-                      <div className="flex h-[240px] items-center justify-center text-sm text-[color:var(--muted)]">
-                        No image
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-4">
-                    <div className="text-lg font-semibold">{item.title}</div>
-                    <div className="mt-1 text-sm text-[color:var(--muted)]">
-                      {itemSubtitle(item) || "—"}
-                    </div>
-                    <div className="mt-3 inline-flex rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10">
-                      Value {formatMoney(item.currentValue)}
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </section>
-        )}
-      </div>
-    </GalleryBackgroundShell>
+    <GuestGalleryRenderer
+      gallery={gallery}
+      galleryItems={items}
+      themePack={themePack}
+      displayMode={displayMode}
+      guestViewMode={guestViewMode}
+      layoutType={layoutType}
+      backgroundImageUrl={backgroundImageUrl}
+      totalValue={totalValue}
+      backHref={null}
+      homeHref="/museum"
+      showNavigation={false}
+      navigationLabel="Shared Gallery"
+    />
   );
 }
