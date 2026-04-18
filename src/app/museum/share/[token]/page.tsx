@@ -430,6 +430,7 @@ export default function SharedGalleryPage() {
           modeLabel: "Shared Gallery",
           isPublic: accessMode !== "registered_users",
         },
+        itemsAreResolvedGalleryItems: true,
       }),
     [gallery, items, accessMode]
   );

@@ -16,6 +16,7 @@ import {
   getGalleryThemeBackground,
 } from "@/lib/galleryModel";
 import { resolveGalleryVisualTheme } from "@/components/gallery/galleryThemes";
+import BuilderPreviewBridge from "@/components/gallery/BuilderPreviewBridge";
 
 type Props = {
   gallery: Gallery;
@@ -543,90 +544,18 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
               </div>
             </div>
 
-            <div
-              className={[
-                "mt-4 overflow-hidden rounded-[24px] ring-1 relative",
-                previewPanelClass,
-              ].join(" ")}
-            >
-              <div
-                className="absolute inset-0"
-                style={{
-                  backgroundImage: previewBackground
-                    ? `linear-gradient(180deg,rgba(0,0,0,0.22),rgba(0,0,0,0.30)), url(${previewBackground})`
-                    : `linear-gradient(${previewTheme.galleryTheme.heroOverlay}, transparent)`,
-                  backgroundSize: previewBackground ? "auto 100%" : undefined,
-                  backgroundRepeat: previewBackground ? "repeat-x" : undefined,
-                  backgroundPosition: previewBackground ? "center top" : undefined,
-                }}
-              />
-
-              <div className="relative min-h-[320px] p-4 sm:p-5">
-                <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                  <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10 backdrop-blur-sm">
-                    {themePack === "classic" ? "Classic museum" : themePack === "walnut" ? "Warm collector room" : themePack === "midnight" ? "Cinematic dark" : "Bright premium gallery"}
-                  </span>
-                  {shelfBackground ? (
-                    <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10 backdrop-blur-sm">Background applied</span>
-                  ) : null}
-                </div>
-
-                {displayMode === "shelf" ? (
-                  <div className="mt-5">
-                    <div className="mx-auto max-w-5xl">
-                      <div className="grid grid-cols-5 gap-3">
-                        {[0, 1, 2, 3, 4].map((index) => (
-                          <div key={`preview-shelf-card-${index}`} className="flex flex-col items-center">
-                            <div
-                              className={[
-                                "mb-2 w-full rounded-xl border px-2 py-2 text-center shadow-[0_8px_18px_rgba(0,0,0,0.14)] backdrop-blur-sm",
-                                previewCardClass,
-                              ].join(" ")}
-                            >
-                              <div className="text-[10px] font-semibold leading-tight">Item {index + 1}</div>
-                              <div className="mt-1 text-[9px] opacity-70">Est. market value</div>
-                            </div>
-
-                            <div
-                              className={[
-                                "w-[78%] rounded-md border p-2 shadow-[0_8px_16px_rgba(0,0,0,0.16)] backdrop-blur-sm",
-                                previewCardClass,
-                              ].join(" ")}
-                            >
-                              <div className="aspect-[4/5] rounded-sm bg-black/20 ring-1 ring-white/10" />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className={[
-                        "mt-3 h-3 rounded-full ring-1 ring-black/20",
-                        previewTheme.shelfStyle.shelfClass,
-                      ].join(" ")} />
-                      <div className={[
-                        "mx-auto h-6 w-[94%] rounded-b-xl opacity-85",
-                        previewTheme.shelfStyle.lipClass,
-                      ].join(" ")} />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                    {[0, 1, 2, 3, 4, 5].map((index) => (
-                      <div
-                        key={`preview-grid-card-${index}`}
-                        className={[
-                          "rounded-[16px] border p-2.5 shadow-[0_12px_24px_rgba(0,0,0,0.18)] backdrop-blur-sm",
-                          previewCardClass,
-                        ].join(" ")}
-                      >
-                        <div className="aspect-[4/5] rounded-[10px] bg-black/20 ring-1 ring-white/10" />
-                        <div className="mt-2 text-[11px] font-semibold">Gallery card {index + 1}</div>
-                        <div className="mt-1 text-[10px] opacity-75">Structured grid presentation</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+<div
+  className={[
+    "mt-4 overflow-hidden rounded-[24px] ring-1 relative",
+    previewPanelClass,
+  ].join(" ")}
+>
+  <div className="h-[420px] overflow-hidden">
+    <div className="origin-top-left scale-[0.36] w-[278%] pointer-events-none">
+      <BuilderPreviewBridge gallery={gallery} items={selectedItems} />
+    </div>
+  </div>
+</div>
             </div>
 
             <div className="mt-4 rounded-[18px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">

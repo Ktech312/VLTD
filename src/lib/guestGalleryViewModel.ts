@@ -86,14 +86,17 @@ export function resolveGuestGalleryViewModel(
   options?: {
     navigation?: GuestGalleryNavigation;
     access?: GuestGalleryAccess;
+    itemsAreResolvedGalleryItems?: boolean;
   }
 ): GuestGalleryViewModel {
   const safeGallery = gallery ?? null;
-  const galleryItems = safeGallery
-    ? safeGallery.itemIds
-        .map((itemId) => items.find((item) => item.id === itemId))
-        .filter(Boolean) as VaultItem[]
-    : [];
+  const galleryItems = options?.itemsAreResolvedGalleryItems
+    ? items
+    : safeGallery
+      ? safeGallery.itemIds
+          .map((itemId) => items.find((item) => item.id === itemId))
+          .filter(Boolean) as VaultItem[]
+      : [];
 
   const totalValue = galleryItems.reduce(
     (sum, item) => sum + Number(item.currentValue ?? 0),
