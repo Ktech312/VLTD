@@ -6,7 +6,7 @@ import type { CSSProperties } from "react";
 import type { VaultItem } from "@/lib/vaultModel";
 
 export const GALLERY_STAGE_MAX_WIDTH_CLASS = "max-w-[1120px]";
-export const GALLERY_STAGE_HEIGHT_CLASS = "h-[1800px] sm:h-[1920px]";
+export const GALLERY_STAGE_HEIGHT_CLASS = "h-[2400px] sm:h-[2520px]";
 
 function itemImage(item: VaultItem) {
   return item.imageFrontUrl || item.imageBackUrl || "";
