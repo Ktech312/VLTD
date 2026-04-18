@@ -222,8 +222,8 @@ export default function GalleryShelfScene({
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,10,16,0.08),rgba(6,10,16,0.12))]" />
 
           {shelvesEnabled ? (
-            <div className="absolute inset-0 px-[4%] pt-[4%] pb-[4%]">
-              <div className="grid h-full grid-rows-4 gap-6">
+            <div className="absolute inset-0 px-[4%] pt-[14%] pb-[6%]">
+              <div className="grid h-full grid-rows-4 gap-8">
                 {rows.map((row, index) =>
                   row.length > 0 ? (
                     <ShelfSection
