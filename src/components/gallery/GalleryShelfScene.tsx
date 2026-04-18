@@ -6,7 +6,7 @@ import type { CSSProperties } from "react";
 import type { VaultItem } from "@/lib/vaultModel";
 
 export const GALLERY_STAGE_MAX_WIDTH_CLASS = "max-w-[1120px]";
-export const GALLERY_STAGE_HEIGHT_CLASS = "h-[1280px] sm:h-[1380px]";
+export const GALLERY_STAGE_HEIGHT_CLASS = "h-[1500px] sm:h-[1620px]";
 
 function itemImage(item: VaultItem) {
   return item.imageFrontUrl || item.imageBackUrl || "";
@@ -96,13 +96,13 @@ function DisplayCard({
     <div className="min-w-0">
       <div
         className={[
-          "mb-1 rounded-xl px-2 py-1 text-center text-[9px] ring-1 backdrop-blur-sm",
+          "mb-2 rounded-2xl px-2.5 py-1.5 text-center text-[10px] ring-1 backdrop-blur-sm",
           theme.plaque,
         ].join(" ")}
       >
         <div className="line-clamp-2 font-semibold leading-tight">{item.title}</div>
-        <div className="mt-0.5 line-clamp-1 opacity-80">{itemSubtitle(item) || "—"}</div>
-        <div className="mt-0.5 font-medium">Estimated market value {formatMoney(item.currentValue)}</div>
+        <div className="mt-1 line-clamp-1 opacity-80">{itemSubtitle(item) || "—"}</div>
+        <div className="mt-1 font-medium">Estimated market value {formatMoney(item.currentValue)}</div>
       </div>
 
       <Link href={`${galleryHrefPrefix}/${item.id}`} className="group block w-full">
@@ -112,7 +112,7 @@ function DisplayCard({
             theme.tile,
           ].join(" ")}
         >
-          <div className="aspect-[4/5] w-full p-1.5">
+          <div className="aspect-[4/5] w-full p-2">
             {itemImage(item) ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -163,7 +163,7 @@ function ShelfSection({
 }) {
   return (
     <div className="flex min-h-0 flex-col justify-end">
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-4 gap-4">
         {row.map((item) => (
           <DisplayCard
             key={item.id}
@@ -174,7 +174,7 @@ function ShelfSection({
         ))}
       </div>
 
-      <div className="mt-2">
+      <div className="mt-3">
         <ShelfRail theme={theme} />
       </div>
     </div>
@@ -222,8 +222,8 @@ export default function GalleryShelfScene({
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,10,16,0.08),rgba(6,10,16,0.12))]" />
 
           {shelvesEnabled ? (
-            <div className="absolute inset-0 px-[4%] pt-[14%] pb-[6%]">
-              <div className="grid h-full grid-rows-4 gap-5">
+            <div className="absolute inset-0 px-[4%] pt-[14%] pb-[8%]">
+              <div className="grid h-full grid-rows-4 gap-8">
                 {rows.map((row, index) =>
                   row.length > 0 ? (
                     <ShelfSection
