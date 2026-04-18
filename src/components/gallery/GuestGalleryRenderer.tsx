@@ -4,6 +4,12 @@ import Link from "next/link";
 
 import GalleryShelfScene from "@/components/gallery/GalleryShelfScene";
 import { PillButton } from "@/components/ui/PillButton";
+import type {
+  Gallery,
+  GalleryDisplayMode,
+  GalleryGuestViewMode,
+  GalleryThemePack,
+} from "@/lib/galleryModel";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import type { GuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
 
@@ -95,11 +101,62 @@ function ViewerItemCard({
   );
 }
 
-export default function GuestGalleryRenderer({
-  model,
-}: {
-  model: GuestGalleryViewModel;
-}) {
+type LegacyProps = {
+  gallery: Gallery | null;
+  galleryItems: VaultItem[];
+  themePack: GalleryThemePack;
+  displayMode: GalleryDisplayMode;
+  guestViewMode: GalleryGuestViewMode;
+  layoutType: string;
+  backgroundImageUrl?: string | null;
+  totalValue: number;
+  backHref?: string | null;
+  homeHref?: string | null;
+  showNavigation?: boolean;
+  navigationLabel?: string;
+};
+
+type RendererProps =
+  | { model: GuestGalleryViewModel; }
+  | LegacyProps;
+
+function isModelProps(props: RendererProps): props is { model: GuestGalleryViewModel } {
+  return "model" in props;
+}
+
+export default function GuestGalleryRenderer(props: RendererProps) {
+  const model = isModelProps(props)
+    ? props.model
+    : {
+        gallery: props.gallery,
+        galleryId: props.gallery?.id ?? null,
+        galleryTitle: props.gallery?.title || "Untitled Gallery",
+        galleryDescription:
+          props.gallery?.description?.trim() || "Curated collection presentation",
+        galleryItems: props.galleryItems,
+        totalValue: props.totalValue,
+        themePack: props.themePack,
+        displayMode: props.displayMode,
+        guestViewMode: props.guestViewMode,
+        layoutType: props.layoutType,
+        shelvesEnabled: props.displayMode === "shelf",
+        background: {
+          type: props.backgroundImageUrl ? "upload" : "blank",
+          url: props.backgroundImageUrl ?? null,
+          themeKey: props.themePack,
+        },
+        navigation: {
+          show: props.showNavigation ?? false,
+          primaryLabel: props.navigationLabel,
+          backHref: props.backHref ?? null,
+          homeHref: props.homeHref ?? null,
+        },
+        access: {
+          modeLabel: props.navigationLabel || (props.guestViewMode === "public" ? "Guest Preview" : "Shared Gallery"),
+          isPublic: props.guestViewMode === "public",
+        },
+      };
+
   const chipClass = getThemeChipClass(model.themePack);
   const backgroundImageUrl = model.background.url;
 
