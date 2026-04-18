@@ -168,7 +168,7 @@ function AnchoredRow({
   return (
     <div
       className="absolute left-[4%] right-[4%]"
-      style={{ top: anchor, transform: "translateY(-72%)" }}
+      style={{ top: anchor, transform: "translateY(-85%)" }}
     >
       <div className="grid grid-cols-4 items-end gap-[0.8rem]">
         {row.map((item) => (
