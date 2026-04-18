@@ -1,20 +1,18 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 
+import GuestGalleryRenderer from "@/components/gallery/GuestGalleryRenderer";
 import {
   getGalleryById,
   recordGalleryView,
   type Gallery,
-  getGalleryDisplayMode,
-  getGalleryGuestViewMode,
-  getGalleryThemePack,
-  getGalleryLayoutType,
-  getGalleryResolvedThemeBackground,
 } from "@/lib/galleryModel";
-import GuestGalleryRenderer from "@/components/gallery/GuestGalleryRenderer";
+import {
+  resolveGuestGalleryViewModel,
+  type GuestGalleryViewModel,
+} from "@/lib/guestGalleryViewModel";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
 
 export default function GuestGalleryPage() {
@@ -26,7 +24,10 @@ export default function GuestGalleryPage() {
   const [isResolved, setIsResolved] = useState(false);
 
   useEffect(() => {
-    if (!galleryId) return;
+    if (!galleryId) {
+      setIsResolved(true);
+      return;
+    }
 
     const found = getGalleryById(galleryId);
     setGallery(found);
@@ -38,24 +39,22 @@ export default function GuestGalleryPage() {
     }
   }, [galleryId]);
 
-  const itemMap = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
+  const model: GuestGalleryViewModel | null = useMemo(() => {
+    if (!isResolved || !gallery) return null;
 
-  const galleryItems = useMemo(() => {
-    if (!gallery) return [];
-    return gallery.itemIds
-      .map((itemId) => itemMap.get(itemId))
-      .filter(Boolean) as VaultItem[];
-  }, [gallery, itemMap]);
-
-  const totalValue = useMemo(() => {
-    return galleryItems.reduce((sum, item) => sum + Number(item.currentValue ?? 0), 0);
-  }, [galleryItems]);
-
-  const themePack = getGalleryThemePack(gallery);
-  const displayMode = getGalleryDisplayMode(gallery);
-  const guestViewMode = getGalleryGuestViewMode(gallery);
-  const layoutType = getGalleryLayoutType(gallery);
-  const backgroundImageUrl = getGalleryResolvedThemeBackground(gallery);
+    return resolveGuestGalleryViewModel(gallery, items, {
+      navigation: {
+        show: true,
+        primaryLabel: "Gallery as Guest",
+        backHref: `/museum/${gallery.id}`,
+        homeHref: "/museum",
+      },
+      access: {
+        modeLabel: "Guest Preview",
+        isPublic: true,
+      },
+    });
+  }, [gallery, isResolved, items]);
 
   if (isResolved && !gallery) {
     return (
@@ -67,36 +66,13 @@ export default function GuestGalleryPage() {
             <p className="mt-3 text-sm text-white/70">
               This gallery could not be loaded for guest preview.
             </p>
-            <div className="mt-6">
-              <Link
-                href="/museum"
-                className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-5 py-2 text-sm font-semibold text-slate-950 transition hover:opacity-95"
-              >
-                Open Museum
-              </Link>
-            </div>
           </div>
         </div>
       </main>
     );
   }
 
-  if (!gallery) return null;
+  if (!model) return null;
 
-  return (
-    <GuestGalleryRenderer
-      gallery={gallery}
-      galleryItems={galleryItems}
-      themePack={themePack}
-      displayMode={displayMode}
-      guestViewMode={guestViewMode}
-      layoutType={layoutType}
-      backgroundImageUrl={backgroundImageUrl}
-      totalValue={totalValue}
-      backHref={`/museum/${gallery.id}`}
-      homeHref="/museum"
-      showNavigation
-      navigationLabel="Gallery as Guest"
-    />
-  );
+  return <GuestGalleryRenderer model={model} />;
 }
