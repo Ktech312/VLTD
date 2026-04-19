@@ -60,6 +60,7 @@ export type GalleryThemePack =
   | "cold-blue";
 export type GalleryDisplayMode = "grid" | "shelf";
 export type GalleryGuestViewMode = "public" | "guest";
+export type GalleryShelfOverlayStyle = "none" | "glass" | "metal";
 
 export const GALLERY_THEME_PACK_OPTIONS: ReadonlyArray<{
   value: GalleryThemePack;
@@ -130,6 +131,7 @@ export type Gallery = {
   guestViewMode?: GalleryGuestViewMode;
   shelfBackground?: string;
   glassShelfOverlay?: boolean;
+  shelfOverlayStyle?: GalleryShelfOverlayStyle;
 
   createdAt: number;
   updatedAt: number;
@@ -294,6 +296,17 @@ function normalizeGuestViewMode(value: unknown): GalleryGuestViewMode {
 
 function normalizeGlassShelfOverlay(value: unknown) {
   return value === true;
+}
+
+function normalizeShelfOverlayStyle(
+  value: unknown,
+  fallbackGlassEnabled = false
+): GalleryShelfOverlayStyle {
+  if (value === "glass" || value === "metal" || value === "none") {
+    return value;
+  }
+
+  return fallbackGlassEnabled ? "glass" : "none";
 }
 
 function normalizeTimestamp(value: unknown, fallback: number) {
@@ -531,13 +544,17 @@ function normalizeGallery(raw: any): Gallery | null {
     sections,
     themePack: normalizeThemePack(raw.themePack),
     displayMode: normalizeDisplayMode(raw.displayMode),
-    guestViewMode: normalizeGuestViewMode(raw.guestViewMode),
-    shelfBackground: typeof raw.shelfBackground === "string" ? raw.shelfBackground : "",
-    glassShelfOverlay: normalizeGlassShelfOverlay(raw.glassShelfOverlay),
-    createdAt,
-    updatedAt,
-  };
-}
+      guestViewMode: normalizeGuestViewMode(raw.guestViewMode),
+      shelfBackground: typeof raw.shelfBackground === "string" ? raw.shelfBackground : "",
+      glassShelfOverlay: normalizeGlassShelfOverlay(raw.glassShelfOverlay),
+      shelfOverlayStyle: normalizeShelfOverlayStyle(
+        raw.shelfOverlayStyle,
+        normalizeGlassShelfOverlay(raw.glassShelfOverlay)
+      ),
+      createdAt,
+      updatedAt,
+    };
+  }
 
 
 function normalizeSupabaseGallery(raw: any): Gallery | null {
@@ -606,23 +623,37 @@ function normalizeSupabaseGallery(raw: any): Gallery | null {
       raw.guest_view_mode ??
       raw.layout?.guestViewMode ??
       raw.exhibition_layout?.guestViewMode,
-    shelfBackground:
-      raw.shelf_background ??
-      raw.layout?.shelfBackground ??
-      raw.exhibition_layout?.shelfBackground ??
-      "",
-    glassShelfOverlay:
-      raw.glass_shelf_overlay ??
-      raw.layout?.glassShelfOverlay ??
-      raw.exhibition_layout?.glassShelfOverlay ??
-      false,
-    createdAt,
-    updatedAt,
-  });
-}
+      shelfBackground:
+        raw.shelf_background ??
+        raw.layout?.shelfBackground ??
+        raw.exhibition_layout?.shelfBackground ??
+        "",
+      glassShelfOverlay:
+        raw.glass_shelf_overlay ??
+        raw.layout?.glassShelfOverlay ??
+        raw.exhibition_layout?.glassShelfOverlay ??
+        false,
+      shelfOverlayStyle: normalizeShelfOverlayStyle(
+        raw.layout?.shelfOverlayStyle ?? raw.exhibition_layout?.shelfOverlayStyle,
+        Boolean(
+          raw.glass_shelf_overlay ??
+          raw.layout?.glassShelfOverlay ??
+          raw.exhibition_layout?.glassShelfOverlay ??
+          false
+        )
+      ),
+      createdAt,
+      updatedAt,
+    });
+  }
 
 function serializeGalleryForSupabase(gallery: Gallery) {
   const safeExhibitionLayout = asPlainObject(gallery.exhibitionLayout);
+  const shelfOverlayStyle = normalizeShelfOverlayStyle(
+    gallery.shelfOverlayStyle,
+    gallery.glassShelfOverlay ?? false
+  );
+  const glassShelfOverlay = shelfOverlayStyle !== "none";
 
   return {
     id: gallery.id,
@@ -632,28 +663,30 @@ function serializeGalleryForSupabase(gallery: Gallery) {
     visibility: gallery.visibility,
     state: gallery.state,
     cover_image: gallery.coverImage || "",
-    layout: {
-      themePack: gallery.themePack ?? "classic",
-      displayMode: gallery.displayMode ?? "grid",
-      guestViewMode: gallery.guestViewMode ?? "public",
-      shelfBackground: gallery.shelfBackground ?? "",
-      glassShelfOverlay: gallery.glassShelfOverlay ?? false,
-      templateId: gallery.templateId ?? "CUSTOM",
-    },
-    exhibition_layout: {
+      layout: {
+        themePack: gallery.themePack ?? "classic",
+        displayMode: gallery.displayMode ?? "grid",
+        guestViewMode: gallery.guestViewMode ?? "public",
+        shelfBackground: gallery.shelfBackground ?? "",
+        glassShelfOverlay,
+        shelfOverlayStyle,
+        templateId: gallery.templateId ?? "CUSTOM",
+      },
+      exhibition_layout: {
       ...safeExhibitionLayout,
-      type:
-        gallery.exhibitionLayout?.type ??
-        normalizeExhibitionLayoutType((gallery.layout as any)?.type),
-      sections: gallery.sections ?? gallery.exhibitionLayout?.sections ?? [],
-      themePack: gallery.themePack ?? "classic",
-      displayMode: gallery.displayMode ?? "grid",
-      guestViewMode: gallery.guestViewMode ?? "public",
-      shelfBackground: gallery.shelfBackground ?? "",
-      glassShelfOverlay: gallery.glassShelfOverlay ?? false,
-      templateId: gallery.templateId ?? "CUSTOM",
-    },
-    glass_shelf_overlay: gallery.glassShelfOverlay ?? false,
+        type:
+          gallery.exhibitionLayout?.type ??
+          normalizeExhibitionLayoutType((gallery.layout as any)?.type),
+        sections: gallery.sections ?? gallery.exhibitionLayout?.sections ?? [],
+        themePack: gallery.themePack ?? "classic",
+        displayMode: gallery.displayMode ?? "grid",
+        guestViewMode: gallery.guestViewMode ?? "public",
+        shelfBackground: gallery.shelfBackground ?? "",
+        glassShelfOverlay,
+        shelfOverlayStyle,
+        templateId: gallery.templateId ?? "CUSTOM",
+      },
+    glass_shelf_overlay: glassShelfOverlay,
     public_token: gallery.share?.publicToken || null,
     analytics_views: gallery.analytics?.views ?? 0,
     analytics_last_viewed_at: gallery.analytics?.lastViewedAt
@@ -1181,8 +1214,17 @@ export function getGalleryShelfBackground(gallery: Gallery | null | undefined) {
   return typeof gallery?.shelfBackground === "string" ? gallery.shelfBackground : "";
 }
 
+export function getGalleryShelfOverlayStyle(
+  gallery: Gallery | null | undefined
+): GalleryShelfOverlayStyle {
+  return normalizeShelfOverlayStyle(
+    gallery?.shelfOverlayStyle,
+    gallery?.glassShelfOverlay === true
+  );
+}
+
 export function getGalleryGlassShelfOverlay(gallery: Gallery | null | undefined) {
-  return gallery?.glassShelfOverlay === true;
+  return getGalleryShelfOverlayStyle(gallery) !== "none";
 }
 
 export function getGalleryResolvedThemeBackground(

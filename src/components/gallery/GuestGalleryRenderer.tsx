@@ -103,17 +103,24 @@ function ViewerItemCard({
 
 export default function GuestGalleryRenderer({
   model,
+  embedded = false,
 }: {
   model: GuestGalleryViewModel;
+  embedded?: boolean;
 }) {
   const chipClass = getThemeChipClass(model.themePack);
   const backgroundImageUrl = model.background.url;
 
   return (
-    <main className="relative min-h-screen bg-[radial-gradient(circle_at_top,rgba(30,36,46,0.96),rgba(8,10,14,1)_62%)] text-[color:var(--fg)]">
+    <main
+      className={[
+        "relative bg-[radial-gradient(circle_at_top,rgba(30,36,46,0.96),rgba(8,10,14,1)_62%)] text-[color:var(--fg)]",
+        embedded ? "" : "min-h-screen",
+      ].join(" ")}
+    >
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(20,24,30,0.88),rgba(10,12,16,0.32)_24%,rgba(10,12,16,0.32)_76%,rgba(20,24,30,0.88))]" />
       <div className="relative">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
+        <div className={["mx-auto max-w-7xl px-4 sm:px-6", embedded ? "py-4" : "py-6 sm:py-10"].join(" ")}>
           {model.navigation.show ? (
             <div className={["mb-6 mx-auto flex flex-wrap items-center gap-3", GALLERY_STAGE_WIDTH_CLASS].join(" ")}>
               <PillButton variant="active" className="text-sm font-semibold">
@@ -188,7 +195,7 @@ export default function GuestGalleryRenderer({
                 themePack={model.themePack}
                 backgroundImageUrl={backgroundImageUrl}
                 shelvesEnabled={model.shelvesEnabled}
-                glassShelfOverlay={model.glassShelfOverlay}
+                shelfOverlayStyle={model.shelfOverlayStyle}
               />
             </div>
           ) : (

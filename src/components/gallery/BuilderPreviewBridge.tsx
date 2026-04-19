@@ -16,5 +16,5 @@ export default function BuilderPreviewBridge({ gallery, items }: Props) {
     access: { modeLabel: "Preview", isPublic: true },
   });
 
-  return <GuestGalleryRenderer model={model} />;
+  return <GuestGalleryRenderer model={model} embedded />;
 }

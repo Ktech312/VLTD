@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
+import type { GalleryShelfOverlayStyle } from "@/lib/galleryModel";
 import type { VaultItem } from "@/lib/vaultModel";
 
 export const GALLERY_STAGE_MAX_WIDTH_CLASS = "max-w-[1120px]";
@@ -37,7 +38,7 @@ type Props = {
   guestMode?: boolean;
   backgroundImageUrl?: string | null;
   shelvesEnabled?: boolean;
-  glassShelfOverlay?: boolean;
+  shelfOverlayStyle?: GalleryShelfOverlayStyle;
 };
 
 function getShelfThemeClasses(themePack?: string | null) {
@@ -152,29 +153,46 @@ function AnchoredRow({
   anchor,
   theme,
   galleryHrefPrefix,
-  glassShelfOverlay,
+  shelfOverlayStyle,
 }: {
   row: VaultItem[];
   anchor: string;
   theme: ReturnType<typeof getShelfThemeClasses>;
   galleryHrefPrefix: string;
-  glassShelfOverlay?: boolean;
+  shelfOverlayStyle?: GalleryShelfOverlayStyle;
 }) {
+  const showGlassShelf = shelfOverlayStyle === "glass";
+  const showMetalShelf = shelfOverlayStyle === "metal";
+
   return (
     <div
       className="absolute left-[4%] right-[4%]"
       style={{ top: anchor, transform: "translateY(-150%)" }}
     >
       <div className="relative pb-5">
-        {glassShelfOverlay ? (
+        {showGlassShelf ? (
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-x-[1.5%] bottom-1 z-0"
           >
-            <div className="relative h-5">
-              <div className="absolute inset-x-0 bottom-[7px] h-[2px] rounded-full bg-white/60 shadow-[0_0_18px_rgba(255,255,255,0.38)]" />
-              <div className="absolute inset-x-2 bottom-[4px] h-[9px] rounded-[999px] bg-[linear-gradient(180deg,rgba(255,255,255,0.36),rgba(255,255,255,0.12)_35%,rgba(125,175,220,0.14)_72%,rgba(70,110,150,0.24)_100%)] opacity-85 shadow-[0_10px_24px_rgba(0,0,0,0.22)]" />
-              <div className="absolute inset-x-6 bottom-0 h-[1px] rounded-full bg-white/22" />
+            <div className="relative h-6">
+              <div className="absolute inset-x-0 bottom-[10px] h-[2px] rounded-full bg-white/72 shadow-[0_0_22px_rgba(255,255,255,0.42)]" />
+              <div className="absolute inset-x-2 bottom-[5px] h-[12px] rounded-[999px] bg-[linear-gradient(180deg,rgba(255,255,255,0.40),rgba(255,255,255,0.18)_28%,rgba(155,210,255,0.20)_66%,rgba(78,122,165,0.30)_100%)] opacity-90 shadow-[0_12px_30px_rgba(0,0,0,0.24)]" />
+              <div className="absolute inset-x-5 bottom-[2px] h-[2px] rounded-full bg-white/30" />
+            </div>
+          </div>
+        ) : null}
+
+        {showMetalShelf ? (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-[1.5%] bottom-1 z-0"
+          >
+            <div className="relative h-6">
+              <div className="absolute inset-x-0 bottom-[10px] h-[2px] rounded-full bg-white/45 shadow-[0_0_14px_rgba(255,255,255,0.18)]" />
+              <div className="absolute inset-x-2 bottom-[4px] h-[13px] rounded-[999px] bg-[linear-gradient(180deg,#f6f7f9_0%,#cfd6dd_18%,#818b97_48%,#d6dde5_72%,#5b6571_100%)] opacity-95 shadow-[0_10px_24px_rgba(0,0,0,0.30)]" />
+              <div className="absolute inset-x-4 bottom-[7px] h-[2px] rounded-full bg-white/55" />
+              <div className="absolute inset-x-6 bottom-[1px] h-[2px] rounded-full bg-black/18" />
             </div>
           </div>
         ) : null}
@@ -200,7 +218,7 @@ export default function GalleryShelfScene({
   themePack,
   backgroundImageUrl,
   shelvesEnabled = true,
-  glassShelfOverlay = false,
+  shelfOverlayStyle = "none",
 }: Props) {
   const theme = getShelfThemeClasses(themePack);
   const sceneBackground = backgroundImageUrl?.trim() || "";
@@ -244,7 +262,7 @@ export default function GalleryShelfScene({
                     anchor={ROW_ANCHORS[index]}
                     theme={theme}
                     galleryHrefPrefix={galleryHrefPrefix}
-                    glassShelfOverlay={glassShelfOverlay}
+                    shelfOverlayStyle={shelfOverlayStyle}
                   />
                 ) : null
               )
