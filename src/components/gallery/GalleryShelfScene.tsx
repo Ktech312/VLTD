@@ -8,7 +8,7 @@ import type { VaultItem } from "@/lib/vaultModel";
 export const GALLERY_STAGE_MAX_WIDTH_CLASS = "max-w-[1120px]";
 export const GALLERY_STAGE_HEIGHT_CLASS = "h-[2700px] sm:h-[2820px]";
 
-const ROW_ANCHORS = ["29%", "47%", "65%", "81%"] as const;
+const ROW_ANCHORS = ["30%", "48%", "64%", "80%"] as const;
 
 function itemImage(item: VaultItem) {
   return item.imageFrontUrl || item.imageBackUrl || "";
@@ -186,7 +186,7 @@ export default function GalleryShelfScene({
   const backgroundStyle: CSSProperties | undefined = sceneBackground
     ? {
         backgroundImage: `url(${sceneBackground})`,
-        backgroundSize: "auto 118%",
+        backgroundSize: "auto 114%",
         backgroundPosition: "center top",
         backgroundRepeat: "no-repeat",
       }
