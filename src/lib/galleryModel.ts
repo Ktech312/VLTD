@@ -686,7 +686,6 @@ function serializeGalleryForSupabase(gallery: Gallery) {
         shelfOverlayStyle,
         templateId: gallery.templateId ?? "CUSTOM",
       },
-    glass_shelf_overlay: glassShelfOverlay,
     public_token: gallery.share?.publicToken || null,
     analytics_views: gallery.analytics?.views ?? 0,
     analytics_last_viewed_at: gallery.analytics?.lastViewedAt
