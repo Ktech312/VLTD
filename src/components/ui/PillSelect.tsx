@@ -1,7 +1,7 @@
 // Path: src/components/ui/PillSelect.tsx
 "use client";
 
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 type Align = "left" | "right";
 
@@ -11,17 +11,6 @@ export type PillSelectOption<T extends string> = {
   subtitle?: string;
   icon?: React.ReactNode;
 };
-
-let _measureCanvas: HTMLCanvasElement | null = null;
-
-function measureTextPx(text: string, font: string) {
-  if (typeof document === "undefined") return 0;
-  if (!_measureCanvas) _measureCanvas = document.createElement("canvas");
-  const ctx = _measureCanvas.getContext("2d");
-  if (!ctx) return 0;
-  ctx.font = font;
-  return ctx.measureText(text).width;
-}
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -48,6 +37,7 @@ export function PillSelect<T extends string>({
   align = "right",
   extraWidthPx = 10,
   minWidthPx = 112,
+  showSelectedSubtitle = false,
 }: {
   value: T;
   onChange: (next: T) => void;
@@ -56,6 +46,7 @@ export function PillSelect<T extends string>({
   align?: Align;
   extraWidthPx?: number;
   minWidthPx?: number;
+  showSelectedSubtitle?: boolean;
 }) {
   const id = useId();
   const btnRef = useRef<HTMLButtonElement | null>(null);
@@ -65,12 +56,35 @@ export function PillSelect<T extends string>({
 
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
-  const [btnW, setBtnW] = useState<number>(minWidthPx);
 
-  const current = useMemo(
-    () => options.find((o) => o.value === value) ?? options[0],
+  const selectedIdx = useMemo(
+    () => options.findIndex((o) => o.value === value),
     [options, value]
   );
+
+  const current = useMemo(
+    () => (selectedIdx >= 0 ? options[selectedIdx] : options[0]),
+    [options, selectedIdx]
+  );
+
+  const btnW = useMemo(() => {
+    const longestLabelLength = options.reduce(
+      (maxLength, option) => Math.max(maxLength, option.label.length),
+      0
+    );
+    const longestSubtitleLength = showSelectedSubtitle
+      ? options.reduce(
+          (maxLength, option) => Math.max(maxLength, option.subtitle?.length ?? 0),
+          0
+        )
+      : 0;
+    const estimatedTextWidth =
+      Math.max(longestLabelLength * 8.2, longestSubtitleLength * 6.1) +
+      78 +
+      extraWidthPx;
+
+    return Math.max(minWidthPx, Math.ceil(estimatedTextWidth));
+  }, [options, showSelectedSubtitle, extraWidthPx, minWidthPx]);
 
   const safeBottomStyle = useMemo(
     () =>
@@ -79,29 +93,6 @@ export function PillSelect<T extends string>({
       }) as React.CSSProperties,
     []
   );
-
-  useEffect(() => {
-    const idx = options.findIndex((o) => o.value === value);
-    setActiveIdx(idx >= 0 ? idx : 0);
-  }, [options, value]);
-
-  useLayoutEffect(() => {
-    if (typeof window === "undefined") return;
-    if (isMobile) return;
-
-    const el = btnRef.current;
-    const font = el ? window.getComputedStyle(el).font : "500 14px system-ui";
-
-    const longest = options.reduce(
-      (m, o) => (o.label.length > m.length ? o.label : m),
-      options[0]?.label ?? ""
-    );
-    const textW = measureTextPx(longest, font);
-    const paddingAndCaret = 16 + 28 + 16 + 18;
-    const target = Math.ceil(textW + paddingAndCaret + extraWidthPx);
-
-    setBtnW(Math.max(minWidthPx, target));
-  }, [options, extraWidthPx, minWidthPx, isMobile]);
 
   useEffect(() => {
     if (!open) return;
@@ -189,17 +180,28 @@ export function PillSelect<T extends string>({
           aria-haspopup="dialog"
           aria-expanded={open}
           aria-controls={`pillselect-${id}`}
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            setActiveIdx(selectedIdx >= 0 ? selectedIdx : 0);
+            setOpen(true);
+          }}
           className={[
-            "relative inline-flex min-h-[44px] items-center justify-between rounded-full",
-            "px-4 pr-10 text-[15px] font-medium select-none",
+            "relative inline-flex justify-between rounded-full",
+            showSelectedSubtitle ? "min-h-[58px] items-start py-2.5" : "min-h-[44px] items-center",
+            "px-4 pr-10 text-[15px] font-medium select-none text-left",
             "bg-[color:var(--pill)] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm",
             "hover:bg-[color:var(--pill-hover)] transition-all active:scale-[0.98]",
           ].join(" ")}
         >
-          <span className="flex min-w-0 items-center gap-2 text-[color:var(--fg)]">
-            {current?.icon ? <span className="shrink-0 text-[color:var(--fg)]">{current.icon}</span> : null}
-            <span className="truncate">{current?.label ?? "Select"}</span>
+          <span className="flex min-w-0 items-start gap-2 text-[color:var(--fg)]">
+            {current?.icon ? <span className="mt-0.5 shrink-0 text-[color:var(--fg)]">{current.icon}</span> : null}
+            <span className="min-w-0">
+              <span className="block truncate">{current?.label ?? "Select"}</span>
+              {showSelectedSubtitle && current?.subtitle ? (
+                <span className="mt-0.5 block truncate text-[11px] font-normal leading-4 text-[color:var(--muted)]">
+                  {current.subtitle}
+                </span>
+              ) : null}
+            </span>
           </span>
 
           <span className="pointer-events-none absolute right-3 grid h-6 w-6 place-items-center opacity-70 text-[color:var(--fg)]">
@@ -243,18 +245,34 @@ export function PillSelect<T extends string>({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={`pillselect-${id}`}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() =>
+          setOpen((v) => {
+            const nextOpen = !v;
+            if (nextOpen) {
+              setActiveIdx(selectedIdx >= 0 ? selectedIdx : 0);
+            }
+            return nextOpen;
+          })
+        }
         style={{ width: btnW }}
         className={[
-          "relative inline-flex min-h-[44px] items-center justify-between rounded-full",
-          "px-4 pr-10 text-sm font-medium select-none",
+          "relative inline-flex justify-between rounded-full",
+          showSelectedSubtitle ? "min-h-[58px] items-start py-2.5" : "min-h-[44px] items-center",
+          "px-4 pr-10 text-sm font-medium select-none text-left",
           "bg-[color:var(--pill)] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm",
           "hover:bg-[color:var(--pill-hover)] transition-all active:scale-[0.98]",
         ].join(" ")}
       >
-        <span className="flex min-w-0 items-center gap-2 text-[color:var(--fg)]">
-          {current?.icon ? <span className="shrink-0 text-[color:var(--fg)]">{current.icon}</span> : null}
-          <span className="truncate">{current?.label ?? "Select"}</span>
+        <span className="flex min-w-0 items-start gap-2 text-[color:var(--fg)]">
+          {current?.icon ? <span className="mt-0.5 shrink-0 text-[color:var(--fg)]">{current.icon}</span> : null}
+          <span className="min-w-0">
+            <span className="block truncate">{current?.label ?? "Select"}</span>
+            {showSelectedSubtitle && current?.subtitle ? (
+              <span className="mt-0.5 block truncate text-[11px] font-normal leading-4 text-[color:var(--muted)]">
+                {current.subtitle}
+              </span>
+            ) : null}
+          </span>
         </span>
 
         <span className="pointer-events-none absolute right-3 grid h-6 w-6 place-items-center opacity-70 text-[color:var(--fg)]">

@@ -37,6 +37,7 @@ type Props = {
   guestMode?: boolean;
   backgroundImageUrl?: string | null;
   shelvesEnabled?: boolean;
+  glassShelfOverlay?: boolean;
 };
 
 function getShelfThemeClasses(themePack?: string | null) {
@@ -151,18 +152,34 @@ function AnchoredRow({
   anchor,
   theme,
   galleryHrefPrefix,
+  glassShelfOverlay,
 }: {
   row: VaultItem[];
   anchor: string;
   theme: ReturnType<typeof getShelfThemeClasses>;
   galleryHrefPrefix: string;
+  glassShelfOverlay?: boolean;
 }) {
   return (
     <div
       className="absolute left-[4%] right-[4%]"
       style={{ top: anchor, transform: "translateY(-150%)" }}
     >
-      <div className="grid grid-cols-4 items-end gap-[0.8rem]">
+      <div className="relative pb-5">
+        {glassShelfOverlay ? (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-[1.5%] bottom-1 z-0"
+          >
+            <div className="relative h-5">
+              <div className="absolute inset-x-0 bottom-[7px] h-[2px] rounded-full bg-white/60 shadow-[0_0_18px_rgba(255,255,255,0.38)]" />
+              <div className="absolute inset-x-2 bottom-[4px] h-[9px] rounded-[999px] bg-[linear-gradient(180deg,rgba(255,255,255,0.36),rgba(255,255,255,0.12)_35%,rgba(125,175,220,0.14)_72%,rgba(70,110,150,0.24)_100%)] opacity-85 shadow-[0_10px_24px_rgba(0,0,0,0.22)]" />
+              <div className="absolute inset-x-6 bottom-0 h-[1px] rounded-full bg-white/22" />
+            </div>
+          </div>
+        ) : null}
+
+        <div className="relative z-10 grid grid-cols-4 items-end gap-[0.8rem]">
         {row.map((item) => (
           <DisplayCard
             key={item.id}
@@ -171,6 +188,7 @@ function AnchoredRow({
             galleryHrefPrefix={galleryHrefPrefix}
           />
         ))}
+        </div>
       </div>
     </div>
   );
@@ -182,6 +200,7 @@ export default function GalleryShelfScene({
   themePack,
   backgroundImageUrl,
   shelvesEnabled = true,
+  glassShelfOverlay = false,
 }: Props) {
   const theme = getShelfThemeClasses(themePack);
   const sceneBackground = backgroundImageUrl?.trim() || "";
@@ -225,6 +244,7 @@ export default function GalleryShelfScene({
                     anchor={ROW_ANCHORS[index]}
                     theme={theme}
                     galleryHrefPrefix={galleryHrefPrefix}
+                    glassShelfOverlay={glassShelfOverlay}
                   />
                 ) : null
               )

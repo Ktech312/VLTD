@@ -188,6 +188,7 @@ export default function GuestGalleryRenderer({
                 themePack={model.themePack}
                 backgroundImageUrl={backgroundImageUrl}
                 shelvesEnabled={model.shelvesEnabled}
+                glassShelfOverlay={model.glassShelfOverlay}
               />
             </div>
           ) : (

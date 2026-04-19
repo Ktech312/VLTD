@@ -129,6 +129,7 @@ export type Gallery = {
   displayMode?: GalleryDisplayMode;
   guestViewMode?: GalleryGuestViewMode;
   shelfBackground?: string;
+  glassShelfOverlay?: boolean;
 
   createdAt: number;
   updatedAt: number;
@@ -289,6 +290,10 @@ function normalizeDisplayMode(value: unknown): GalleryDisplayMode {
 
 function normalizeGuestViewMode(value: unknown): GalleryGuestViewMode {
   return value === "guest" ? "guest" : "public";
+}
+
+function normalizeGlassShelfOverlay(value: unknown) {
+  return value === true;
 }
 
 function normalizeTimestamp(value: unknown, fallback: number) {
@@ -528,6 +533,7 @@ function normalizeGallery(raw: any): Gallery | null {
     displayMode: normalizeDisplayMode(raw.displayMode),
     guestViewMode: normalizeGuestViewMode(raw.guestViewMode),
     shelfBackground: typeof raw.shelfBackground === "string" ? raw.shelfBackground : "",
+    glassShelfOverlay: normalizeGlassShelfOverlay(raw.glassShelfOverlay),
     createdAt,
     updatedAt,
   };
@@ -605,6 +611,11 @@ function normalizeSupabaseGallery(raw: any): Gallery | null {
       raw.layout?.shelfBackground ??
       raw.exhibition_layout?.shelfBackground ??
       "",
+    glassShelfOverlay:
+      raw.glass_shelf_overlay ??
+      raw.layout?.glassShelfOverlay ??
+      raw.exhibition_layout?.glassShelfOverlay ??
+      false,
     createdAt,
     updatedAt,
   });
@@ -626,6 +637,7 @@ function serializeGalleryForSupabase(gallery: Gallery) {
       displayMode: gallery.displayMode ?? "grid",
       guestViewMode: gallery.guestViewMode ?? "public",
       shelfBackground: gallery.shelfBackground ?? "",
+      glassShelfOverlay: gallery.glassShelfOverlay ?? false,
       templateId: gallery.templateId ?? "CUSTOM",
     },
     exhibition_layout: {
@@ -638,8 +650,10 @@ function serializeGalleryForSupabase(gallery: Gallery) {
       displayMode: gallery.displayMode ?? "grid",
       guestViewMode: gallery.guestViewMode ?? "public",
       shelfBackground: gallery.shelfBackground ?? "",
+      glassShelfOverlay: gallery.glassShelfOverlay ?? false,
       templateId: gallery.templateId ?? "CUSTOM",
     },
+    glass_shelf_overlay: gallery.glassShelfOverlay ?? false,
     public_token: gallery.share?.publicToken || null,
     analytics_views: gallery.analytics?.views ?? 0,
     analytics_last_viewed_at: gallery.analytics?.lastViewedAt
@@ -1165,6 +1179,10 @@ export function getGalleryGuestViewMode(
 
 export function getGalleryShelfBackground(gallery: Gallery | null | undefined) {
   return typeof gallery?.shelfBackground === "string" ? gallery.shelfBackground : "";
+}
+
+export function getGalleryGlassShelfOverlay(gallery: Gallery | null | undefined) {
+  return gallery?.glassShelfOverlay === true;
 }
 
 export function getGalleryResolvedThemeBackground(

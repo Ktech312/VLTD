@@ -4,6 +4,7 @@ import {
   type GalleryGuestViewMode,
   type GalleryThemePack,
   getGalleryDisplayMode,
+  getGalleryGlassShelfOverlay,
   getGalleryGuestViewMode,
   getGalleryLayoutType,
   getGalleryShelfBackground,
@@ -44,6 +45,7 @@ export type GuestGalleryViewModel = {
   guestViewMode: GalleryGuestViewMode;
   layoutType: string;
   shelvesEnabled: boolean;
+  glassShelfOverlay: boolean;
   background: GuestGalleryBackground;
   navigation: GuestGalleryNavigation;
   access: GuestGalleryAccess;
@@ -107,6 +109,7 @@ export function resolveGuestGalleryViewModel(
   const displayMode = getGalleryDisplayMode(safeGallery);
   const guestViewMode = getGalleryGuestViewMode(safeGallery);
   const layoutType = getGalleryLayoutType(safeGallery);
+  const glassShelfOverlay = getGalleryGlassShelfOverlay(safeGallery);
 
   return {
     gallery: safeGallery,
@@ -121,6 +124,7 @@ export function resolveGuestGalleryViewModel(
     guestViewMode,
     layoutType,
     shelvesEnabled: displayMode === "shelf",
+    glassShelfOverlay,
     background: resolveGuestGalleryBackground(safeGallery),
     navigation: options?.navigation ?? {
       show: false,

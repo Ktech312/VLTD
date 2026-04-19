@@ -8,12 +8,12 @@ import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import {
   type Gallery,
   type GalleryThemePack,
-  GALLERY_THEME_PACK_OPTIONS,
   getGalleryLayoutType,
   getGallerySections,
   getGalleryThemePack,
   getGalleryDisplayMode,
   getGalleryGuestViewMode,
+  getGalleryGlassShelfOverlay,
   getGalleryShelfBackground,
   getGalleryThemeLabel,
 } from "@/lib/galleryModel";
@@ -271,6 +271,7 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
   const themePack = getGalleryThemePack(gallery);
   const displayMode = getGalleryDisplayMode(gallery);
   const guestViewMode = getGalleryGuestViewMode(gallery);
+  const glassShelfOverlay = getGalleryGlassShelfOverlay(gallery);
   const shelfBackground = getGalleryShelfBackground(gallery);
   const selectedGalleryView = displayMode === "grid" ? "grid" : themePack;
 
@@ -457,55 +458,48 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
 
         <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)]">
           <div className="grid gap-4">
-            <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
-              <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">GALLERY VIEW</div>
-              <div className="mt-3">
-                <PillSelect<GalleryViewOption>
-                  value={selectedGalleryView}
-                  onChange={setGalleryView}
-                  options={GALLERY_VIEW_OPTIONS}
-                  ariaLabel="Gallery view"
-                  align="left"
-                  minWidthPx={180}
-                />
-              </div>
-              <div className="mt-3 rounded-[18px] bg-[color:var(--input)] p-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
-                {selectedGalleryView === "grid"
-                  ? "Grid View shows the collection in a flat card grid."
-                  : GALLERY_THEME_PACK_OPTIONS.find((option) => option.value === themePack)
-                      ?.description ?? "Shelf mode uses the selected room background."}
-              </div>
-            </div>
-
-            <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
-              <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">GUEST OPTIONS</div>
-              <div className="mt-3 grid gap-4">
-                <div>
-                  <label className="mb-2 block text-sm font-medium">Guest View Mode</label>
-                  <div className="flex flex-wrap gap-2">
-                    {(["public", "guest"] as const).map((mode) => (
-                      <button
-                        key={mode}
-                        type="button"
-                        onClick={() => onGalleryChange((current) => ({ ...current, guestViewMode: mode }))}
-                        className={[
-                          "vltd-selectable rounded-full px-4 py-2 text-xs font-semibold ring-1 transition",
-                          guestViewMode === mode
-                            ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
-                            : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
-                        ].join(" ")}
-                        aria-pressed={guestViewMode === mode}
-                      >
-                        {mode === "public" ? "Public Default" : "Guest Default"}
-                      </button>
-                    ))}
+              <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+                <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">GALLERY VIEW</div>
+                <div className="mt-3 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                  <div className="min-w-0 flex-1">
+                    <PillSelect<GalleryViewOption>
+                      value={selectedGalleryView}
+                      onChange={setGalleryView}
+                      options={GALLERY_VIEW_OPTIONS}
+                      ariaLabel="Gallery view"
+                      align="left"
+                      minWidthPx={340}
+                      extraWidthPx={34}
+                      showSelectedSubtitle
+                    />
                   </div>
+
+                  <label className="inline-flex min-h-[42px] items-center gap-3 rounded-full bg-[color:var(--pill)] px-4 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]">
+                    <input
+                      type="checkbox"
+                      checked={glassShelfOverlay}
+                      onChange={(event) =>
+                        onGalleryChange((current) => ({
+                          ...current,
+                          glassShelfOverlay: event.target.checked,
+                        }))
+                      }
+                      className="h-4 w-4 rounded border border-[color:var(--border)] bg-[color:var(--surface)] text-cyan-400"
+                    />
+                    <span>Glass shelf overlay</span>
+                  </label>
+                </div>
+                <div className="mt-3 rounded-[18px] bg-[color:var(--input)] p-3 text-xs text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+                  {selectedGalleryView === "grid"
+                    ? "Grid View keeps the flat card layout with no shelf scene."
+                    : glassShelfOverlay
+                      ? "Glass shelf overlay is on and will stay lined up with the item rows."
+                      : "Turn on Glass shelf overlay if you want the shelf line to follow the item rows instead of relying only on the background image."}
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+            <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">LIVE PREVIEW PANEL</div>
@@ -513,93 +507,96 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
                   Theme, view mode, background, and guest feel in one place.
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2 text-[11px]">
-                <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">
-                  Theme: {displayMode === "grid" ? "Grid View" : getGalleryThemeLabel(themePack)}
-                </span>
-                <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">Display: {displayMode}</span>
-                <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">Guest: {guestViewMode}</span>
-                <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">Layout: {layoutType}</span>
-              </div>
-            </div>
-            <div
-              className={[
-                "mt-4 overflow-hidden rounded-[24px] ring-1 relative",
-                previewPanelClass,
-              ].join(" ")}
-            >
-              <div className="h-[420px] overflow-hidden">
-                <div className="origin-top-left scale-[0.36] w-[278%] pointer-events-none">
-                  <BuilderPreviewBridge gallery={gallery} items={selectedItems} />
+                <div className="flex flex-wrap gap-2 text-[11px]">
+                  <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">
+                    Theme: {displayMode === "grid" ? "Grid View" : getGalleryThemeLabel(themePack)}
+                  </span>
+                  <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">Display: {displayMode}</span>
+                  <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">Guest: {guestViewMode}</span>
+                  <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">Layout: {layoutType}</span>
                 </div>
               </div>
-            </div>
+              <div className="mt-4 rounded-[18px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                  <div>
+                    <div className="text-sm font-semibold">Preview Actions</div>
+                    <div className="mt-1 text-sm text-[color:var(--muted)]">
+                      Test the current background and open the guest view without leaving the builder section.
+                    </div>
+                  </div>
 
-            <div className="mt-4 rounded-[18px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
-              <div className="text-sm font-semibold">Preview Actions</div>
-              <div className="mt-1 text-sm text-[color:var(--muted)]">
-                Test the current background and open the guest view without leaving the builder section.
-              </div>
+                  <div className="flex flex-wrap gap-2">
+                    <input
+                      id={`shelf-upload-${gallery.id}`}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] ?? null;
+                        if (file) void handleShelfBackgroundUpload(file);
+                        e.currentTarget.value = "";
+                      }}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor={`shelf-upload-${gallery.id}`}
+                      className="vltd-selectable inline-flex min-h-[38px] cursor-pointer items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                    >
+                      Upload Background
+                    </label>
+                    {shelfBackground ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShelfFileName("");
+                          setBackgroundUploadError("");
+                          onGalleryChange((current) => ({ ...current, shelfBackground: "" }));
+                        }}
+                        className="vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                      >
+                        Remove Background
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => onOpenGuestView?.()}
+                      className="vltd-pill-main-glow inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 text-xs font-semibold text-[color:var(--fg)]"
+                    >
+                      Open Guest View
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onQuickSave?.()}
+                      className="vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
 
-              <div className="mt-3 flex flex-wrap gap-2">
-                <input
-                  id={`shelf-upload-${gallery.id}`}
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0] ?? null;
-                    if (file) void handleShelfBackgroundUpload(file);
-                    e.currentTarget.value = "";
-                  }}
-                  className="hidden"
-                />
-                <label
-                  htmlFor={`shelf-upload-${gallery.id}`}
-                  className="vltd-selectable inline-flex min-h-[38px] cursor-pointer items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
-                >
-                  Upload Background
-                </label>
-                {shelfBackground ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShelfFileName("");
-                      setBackgroundUploadError("");
-                      onGalleryChange((current) => ({ ...current, shelfBackground: "" }));
-                    }}
-                    className="vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
-                  >
-                    Remove Background
-                  </button>
+                <div className="mt-3 text-xs text-[color:var(--muted)]">
+                  {shelfFileName ? `Selected file: ${shelfFileName}` : shelfBackground ? "Background applied" : "No background selected"}
+                </div>
+
+                {backgroundUploadError ? (
+                  <div className="mt-2 text-xs text-red-300">
+                    {backgroundUploadError}
+                  </div>
                 ) : null}
-                <button
-                  type="button"
-                  onClick={() => onOpenGuestView?.()}
-                  className="vltd-pill-main-glow inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 text-xs font-semibold text-[color:var(--fg)]"
-                >
-                  Open Guest View
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onQuickSave?.()}
-                  className="vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
-                >
-                  Save
-                </button>
               </div>
-
-              <div className="mt-3 text-xs text-[color:var(--muted)]">
-                {shelfFileName ? `Selected file: ${shelfFileName}` : shelfBackground ? "Background applied" : "No background selected"}
-              </div>
-
-              {backgroundUploadError ? (
-                <div className="mt-2 text-xs text-red-300">
-                  {backgroundUploadError}
+              <div
+                className={[
+                  "mt-4 overflow-hidden rounded-[24px] ring-1 relative",
+                  previewPanelClass,
+                ].join(" ")}
+              >
+                <div className="h-[520px] overflow-auto overscroll-contain">
+                  <div className="origin-top-left scale-[0.36] w-[278%] pointer-events-none">
+                    <BuilderPreviewBridge gallery={gallery} items={selectedItems} />
+                  </div>
                 </div>
-              ) : null}
+              </div>
             </div>
           </div>
-        </div>
 
         {sections.length ? (
           <div className="mt-5 grid gap-4">
