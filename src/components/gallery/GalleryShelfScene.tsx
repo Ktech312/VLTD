@@ -6,12 +6,9 @@ import type { CSSProperties } from "react";
 import type { VaultItem } from "@/lib/vaultModel";
 
 export const GALLERY_STAGE_MAX_WIDTH_CLASS = "max-w-[1120px]";
-export const GALLERY_STAGE_HEIGHT_CLASS = "h-[2700px]";
+export const GALLERY_STAGE_HEIGHT_CLASS = "h-[2700px] sm:h-[2820px]";
 
-const GALLERY_STAGE_HEIGHT_PX = 2700;
-const SHELF_RAIL_HEIGHT_PX = 64;
-const ROW_CARD_LIFT_PX = 352;
-const ROW_SHELF_TOPS_PX = [1242, 1728, 2214, 2636] as const;
+const ROW_ANCHORS = ["46%", "64%", "82%", "98%"] as const;
 
 function itemImage(item: VaultItem) {
   return item.imageFrontUrl || item.imageBackUrl || "";
@@ -139,55 +136,31 @@ function DisplayCard({
   );
 }
 
-function ShelfRail({
-  theme,
-}: {
-  theme: ReturnType<typeof getShelfThemeClasses>;
-}) {
-  return (
-    <div className="pointer-events-none">
-      <div className={["h-3 rounded-t-[18px] bg-gradient-to-b", theme.shelfTop].join(" ")} />
-      <div className={["h-4 rounded-b-[18px] bg-gradient-to-b", theme.shelfFace].join(" ")} />
-      <div className="flex justify-between px-8 sm:px-14">
-        <div className={["h-9 w-1.5 rounded-b-full bg-gradient-to-b", theme.support].join(" ")} />
-        <div className={["h-9 w-1.5 rounded-b-full bg-gradient-to-b", theme.support].join(" ")} />
-        <div className={["h-9 w-1.5 rounded-b-full bg-gradient-to-b", theme.support].join(" ")} />
-      </div>
-    </div>
-  );
-}
-
 function AnchoredRow({
   row,
-  anchorTop,
+  anchor,
   theme,
   galleryHrefPrefix,
 }: {
   row: VaultItem[];
-  anchorTop: number;
+  anchor: string;
   theme: ReturnType<typeof getShelfThemeClasses>;
   galleryHrefPrefix: string;
 }) {
   return (
-    <div className="absolute left-[4%] right-[4%]" style={{ top: `${anchorTop}px` }}>
-      <div className="relative">
-        <div
-          className="grid grid-cols-4 items-end gap-[0.8rem]"
-          style={{ marginTop: `-${ROW_CARD_LIFT_PX}px`, paddingBottom: `${SHELF_RAIL_HEIGHT_PX}px` }}
-        >
-          {row.map((item) => (
-            <DisplayCard
-              key={item.id}
-              item={item}
-              theme={theme}
-              galleryHrefPrefix={galleryHrefPrefix}
-            />
-          ))}
-        </div>
-
-        <div className="absolute inset-x-0 bottom-0">
-          <ShelfRail theme={theme} />
-        </div>
+    <div
+      className="absolute left-[4%] right-[4%]"
+      style={{ top: anchor, transform: "translateY(-150%)" }}
+    >
+      <div className="grid grid-cols-4 items-end gap-[0.8rem]">
+        {row.map((item) => (
+          <DisplayCard
+            key={item.id}
+            item={item}
+            theme={theme}
+            galleryHrefPrefix={galleryHrefPrefix}
+          />
+        ))}
       </div>
     </div>
   );
@@ -214,7 +187,7 @@ export default function GalleryShelfScene({
     ? {
         backgroundImage: `url(${sceneBackground})`,
         backgroundSize: "cover",
-        backgroundPosition: "center top",
+        backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
       }
     : undefined;
@@ -228,10 +201,7 @@ export default function GalleryShelfScene({
           theme.stageShell,
         ].join(" ")}
       >
-        <div
-          className={["relative", GALLERY_STAGE_HEIGHT_CLASS].join(" ")}
-          style={{ minHeight: `${GALLERY_STAGE_HEIGHT_PX}px` }}
-        >
+        <div className={["relative", GALLERY_STAGE_HEIGHT_CLASS].join(" ")}>
           <div className="absolute inset-0" style={backgroundStyle} />
           <div className={["absolute inset-0", theme.vignette].join(" ")} />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,10,16,0.08),rgba(6,10,16,0.12))]" />
@@ -242,7 +212,7 @@ export default function GalleryShelfScene({
                   <AnchoredRow
                     key={index}
                     row={row}
-                    anchorTop={ROW_SHELF_TOPS_PX[index]}
+                    anchor={ROW_ANCHORS[index]}
                     theme={theme}
                     galleryHrefPrefix={galleryHrefPrefix}
                   />

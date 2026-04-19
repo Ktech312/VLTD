@@ -8,7 +8,6 @@ import {
   getGalleryLayoutType,
   getGalleryShelfBackground,
   getGalleryThemeBackground,
-  getGalleryThemeShelfBackground,
   getGalleryThemePack,
 } from "@/lib/galleryModel";
 import type { VaultItem } from "@/lib/vaultModel";
@@ -54,7 +53,6 @@ export function resolveGuestGalleryBackground(
   gallery: Gallery | null | undefined
 ): GuestGalleryBackground {
   const themePack = getGalleryThemePack(gallery);
-  const displayMode = getGalleryDisplayMode(gallery);
   const uploaded = getGalleryShelfBackground(gallery).trim();
 
   if (uploaded) {
@@ -65,10 +63,7 @@ export function resolveGuestGalleryBackground(
     };
   }
 
-  const themed =
-    displayMode === "shelf"
-      ? getGalleryThemeShelfBackground(themePack)
-      : getGalleryThemeBackground(themePack);
+  const themed = getGalleryThemeBackground(themePack);
 
   if (themed) {
     return {
