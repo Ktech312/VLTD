@@ -1178,7 +1178,7 @@ export function getGalleryThemeBackground(themePack?: GalleryThemePack | string)
     case "walnut":
       return "/themes/walnut-bg.webp";
     case "midnight":
-      return "/themes/midnight-bg.webp";
+      return "/themes/midnight-bg-v2.webp";
     case "marble":
       return "/themes/marble-bg.webp";
     case "classic":
