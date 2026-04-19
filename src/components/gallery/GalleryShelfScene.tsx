@@ -6,9 +6,12 @@ import type { CSSProperties } from "react";
 import type { VaultItem } from "@/lib/vaultModel";
 
 export const GALLERY_STAGE_MAX_WIDTH_CLASS = "max-w-[1120px]";
-export const GALLERY_STAGE_HEIGHT_CLASS = "h-[2700px] sm:h-[2820px]";
+export const GALLERY_STAGE_HEIGHT_CLASS = "h-[2700px]";
 
-const ROW_ANCHORS = ["46%", "64%", "82%", "98%"] as const;
+const GALLERY_STAGE_HEIGHT_PX = 2700;
+const SHELF_RAIL_HEIGHT_PX = 64;
+const ROW_CARD_LIFT_PX = 352;
+const ROW_SHELF_TOPS_PX = [1242, 1728, 2214, 2636] as const;
 
 function itemImage(item: VaultItem) {
   return item.imageFrontUrl || item.imageBackUrl || "";
@@ -156,33 +159,35 @@ function ShelfRail({
 
 function AnchoredRow({
   row,
-  anchor,
+  anchorTop,
   theme,
   galleryHrefPrefix,
 }: {
   row: VaultItem[];
-  anchor: string;
+  anchorTop: number;
   theme: ReturnType<typeof getShelfThemeClasses>;
   galleryHrefPrefix: string;
 }) {
   return (
-    <div
-      className="absolute left-[4%] right-[4%]"
-      style={{ top: anchor, transform: "translateY(-150%)" }}
-    >
-      <div className="grid grid-cols-4 items-end gap-[0.8rem]">
-        {row.map((item) => (
-          <DisplayCard
-            key={item.id}
-            item={item}
-            theme={theme}
-            galleryHrefPrefix={galleryHrefPrefix}
-          />
-        ))}
-      </div>
+    <div className="absolute left-[4%] right-[4%]" style={{ top: `${anchorTop}px` }}>
+      <div className="relative">
+        <div
+          className="grid grid-cols-4 items-end gap-[0.8rem]"
+          style={{ marginTop: `-${ROW_CARD_LIFT_PX}px`, paddingBottom: `${SHELF_RAIL_HEIGHT_PX}px` }}
+        >
+          {row.map((item) => (
+            <DisplayCard
+              key={item.id}
+              item={item}
+              theme={theme}
+              galleryHrefPrefix={galleryHrefPrefix}
+            />
+          ))}
+        </div>
 
-      <div className="mt-2.5">
-        <ShelfRail theme={theme} />
+        <div className="absolute inset-x-0 bottom-0">
+          <ShelfRail theme={theme} />
+        </div>
       </div>
     </div>
   );
@@ -209,7 +214,7 @@ export default function GalleryShelfScene({
     ? {
         backgroundImage: `url(${sceneBackground})`,
         backgroundSize: "cover",
-        backgroundPosition: "center",
+        backgroundPosition: "center top",
         backgroundRepeat: "no-repeat",
       }
     : undefined;
@@ -223,7 +228,10 @@ export default function GalleryShelfScene({
           theme.stageShell,
         ].join(" ")}
       >
-        <div className={["relative", GALLERY_STAGE_HEIGHT_CLASS].join(" ")}>
+        <div
+          className={["relative", GALLERY_STAGE_HEIGHT_CLASS].join(" ")}
+          style={{ minHeight: `${GALLERY_STAGE_HEIGHT_PX}px` }}
+        >
           <div className="absolute inset-0" style={backgroundStyle} />
           <div className={["absolute inset-0", theme.vignette].join(" ")} />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,10,16,0.08),rgba(6,10,16,0.12))]" />
@@ -234,7 +242,7 @@ export default function GalleryShelfScene({
                   <AnchoredRow
                     key={index}
                     row={row}
-                    anchor={ROW_ANCHORS[index]}
+                    anchorTop={ROW_SHELF_TOPS_PX[index]}
                     theme={theme}
                     galleryHrefPrefix={galleryHrefPrefix}
                   />

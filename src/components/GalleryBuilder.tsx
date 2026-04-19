@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { type VaultItem, loadItems } from "@/lib/vaultModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -13,9 +13,7 @@ import {
   getGalleryDisplayMode,
   getGalleryGuestViewMode,
   getGalleryShelfBackground,
-  getGalleryThemeBackground,
 } from "@/lib/galleryModel";
-import { resolveGalleryVisualTheme } from "@/components/gallery/galleryThemes";
 import BuilderPreviewBridge from "@/components/gallery/BuilderPreviewBridge";
 
 type Props = {
@@ -70,10 +68,10 @@ function searchText(i: VaultItem) {
     i.universe,
     i.storageLocation,
     i.certNumber,
-    (i as any).serialNumber,
-    (i as any).purchaseSource,
-    (i as any).purchaseLocation,
-    (i as any).orderNumber,
+    i.serialNumber,
+    i.purchaseSource,
+    i.purchaseLocation,
+    i.orderNumber,
   ]
     .filter(Boolean)
     .join(" ")
@@ -130,9 +128,9 @@ function formatMoney(value?: number) {
 function totalCost(item: VaultItem) {
   const value =
     Number(item.purchasePrice ?? 0) +
-    Number((item as any).purchaseTax ?? 0) +
-    Number((item as any).purchaseShipping ?? 0) +
-    Number((item as any).purchaseFees ?? 0);
+    Number(item.purchaseTax ?? 0) +
+    Number(item.purchaseShipping ?? 0) +
+    Number(item.purchaseFees ?? 0);
 
   return Number.isFinite(value) ? value : 0;
 }
@@ -201,7 +199,7 @@ function toPlainObject(value: unknown): Record<string, unknown> {
 function syncSectionsAndLayout(
   current: Gallery,
   sections: NonNullable<Gallery["sections"]>,
-  layoutType?: any
+  layoutType?: unknown
 ): Gallery {
   const currentLayout = toPlainObject(current.layout);
   const currentExhibitionLayout = toPlainObject(current.exhibitionLayout);
@@ -216,27 +214,23 @@ function syncSectionsAndLayout(
     layout: {
       ...currentLayout,
       type: nextType,
-    } as any,
+    } as unknown as Gallery["layout"],
     exhibitionLayout: {
       ...currentExhibitionLayout,
       ...currentLayout,
       type: nextType,
       sections,
-    } as any,
+    } as NonNullable<Gallery["exhibitionLayout"]>,
   };
 }
 
 export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQuickSave, onOpenGuestView }: Props) {
-  const [items, setItems] = useState<VaultItem[]>([]);
+  const [items] = useState<VaultItem[]>(() => loadItems());
   const [query, setQuery] = useState("");
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
   const [shelfFileName, setShelfFileName] = useState("");
   const [backgroundUploadError, setBackgroundUploadError] = useState("");
-
-  useEffect(() => {
-    setItems(loadItems());
-  }, []);
 
   const selectedSet = useMemo(() => new Set(gallery.itemIds), [gallery.itemIds]);
 
@@ -268,11 +262,6 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
   const displayMode = getGalleryDisplayMode(gallery);
   const guestViewMode = getGalleryGuestViewMode(gallery);
   const shelfBackground = getGalleryShelfBackground(gallery);
-  const previewBackground = shelfBackground || getGalleryThemeBackground(themePack);
-  const previewTheme = useMemo(
-    () => resolveGalleryVisualTheme({ themePack }),
-    [themePack]
-  );
 
   const previewPanelClass = useMemo(() => {
     if (themePack === "walnut") return "bg-[linear-gradient(180deg,rgba(62,34,22,0.92),rgba(26,13,9,0.96))] ring-amber-200/10";
@@ -280,18 +269,6 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
     if (themePack === "marble") return "bg-[linear-gradient(180deg,rgba(245,240,230,0.95),rgba(221,212,195,0.96))] ring-black/10 text-stone-900";
     return "bg-[linear-gradient(180deg,rgba(17,22,29,0.95),rgba(8,11,15,0.98))] ring-white/10";
   }, [themePack]);
-
-  const previewCardClass = useMemo(() => {
-    if (themePack === "walnut") return "border-amber-200/15 bg-[linear-gradient(180deg,rgba(255,220,180,0.08),rgba(70,35,20,0.28))]";
-    if (themePack === "midnight") return "border-cyan-200/15 bg-[linear-gradient(180deg,rgba(150,210,255,0.08),rgba(10,18,32,0.30))]";
-    if (themePack === "marble") return "border-black/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(240,235,226,0.72))] text-stone-900";
-    return "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))]";
-  }, [themePack]);
-
-
-  useEffect(() => {
-    if (!shelfBackground) setShelfFileName("");
-  }, [shelfBackground]);
 
   function toggle(id: string) {
     if (selectedSet.has(id)) {

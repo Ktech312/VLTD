@@ -1131,7 +1131,9 @@ export function getGalleryResolvedThemeBackground(
 ) {
   const preferCustomShelfBackground = options?.preferCustomShelfBackground ?? false;
   const themePack = getGalleryThemePack(gallery);
-  const themeBackground = getGalleryThemeBackground(themePack);
+  const themeBackground = preferCustomShelfBackground
+    ? getGalleryThemeShelfBackground(themePack)
+    : getGalleryThemeBackground(themePack);
   const customShelfBackground = getGalleryShelfBackground(gallery).trim();
 
   if (preferCustomShelfBackground && customShelfBackground) {
@@ -1184,6 +1186,20 @@ export function getGalleryThemeBackground(themePack?: GalleryThemePack | string)
     case "classic":
     default:
       return "/themes/classic-bg.webp";
+  }
+}
+
+export function getGalleryThemeShelfBackground(themePack?: GalleryThemePack | string) {
+  switch (normalizeThemePack(themePack)) {
+    case "walnut":
+      return "/themes/walnut-shelf-wall.webp";
+    case "midnight":
+      return "/themes/midnight-shelf-wall.webp";
+    case "marble":
+      return "/themes/marble-shelf-wall.webp";
+    case "classic":
+    default:
+      return "/themes/classic-shelf-wall.webp";
   }
 }
 
