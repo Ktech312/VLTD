@@ -52,9 +52,46 @@ export type ExhibitionLayout = GalleryLayout & {
   sections?: GallerySection[];
 };
 
-export type GalleryThemePack = "classic" | "walnut" | "midnight" | "marble";
+export type GalleryThemePack =
+  | "classic"
+  | "walnut"
+  | "midnight"
+  | "marble"
+  | "cold-blue";
 export type GalleryDisplayMode = "grid" | "shelf";
 export type GalleryGuestViewMode = "public" | "guest";
+
+export const GALLERY_THEME_PACK_OPTIONS: ReadonlyArray<{
+  value: GalleryThemePack;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: "classic",
+    label: "Classic",
+    description: "Balanced, refined, and timeless gallery presentation.",
+  },
+  {
+    value: "walnut",
+    label: "Walnut",
+    description: "Warm collector room with richer wood tones.",
+  },
+  {
+    value: "cold-blue",
+    label: "Midnight",
+    description: "Dark cinematic room with charcoal museum lighting.",
+  },
+  {
+    value: "marble",
+    label: "Marble",
+    description: "Bright luxury gallery with marble finish.",
+  },
+  {
+    value: "midnight",
+    label: "Cold Blue",
+    description: "Cool modern shelf room with blue light and steel accents.",
+  },
+] as const;
 
 export type GalleryTemplateId =
   | "CUSTOM"
@@ -235,7 +272,12 @@ function normalizeTemplateId(value: unknown): GalleryTemplateId {
 }
 
 function normalizeThemePack(value: unknown): GalleryThemePack {
-  if (value === "walnut" || value === "midnight" || value === "marble") {
+  if (
+    value === "walnut" ||
+    value === "midnight" ||
+    value === "marble" ||
+    value === "cold-blue"
+  ) {
     return value;
   }
   return "classic";
@@ -1176,15 +1218,25 @@ export type GalleryThemePresentation = {
 export function getGalleryThemeBackground(themePack?: GalleryThemePack | string) {
   switch (normalizeThemePack(themePack)) {
     case "walnut":
-      return "/themes/walnut-bg.webp";
+      return "/themes/walnut-bg.png";
     case "midnight":
-      return "/themes/midnight-bg-v2.webp";
+      return "/themes/cold-blue-bg.png";
     case "marble":
-      return "/themes/marble-bg.webp";
+      return "/themes/marble-bg.png";
+    case "cold-blue":
+      return "/themes/midnight-bg.png";
     case "classic":
     default:
-      return "/themes/classic-bg.webp";
+      return "/themes/classic-bg.png";
   }
+}
+
+export function getGalleryThemeLabel(themePack?: GalleryThemePack | string) {
+  const normalized = normalizeThemePack(themePack);
+
+  return (
+    GALLERY_THEME_PACK_OPTIONS.find((option) => option.value === normalized)?.label ?? "Classic"
+  );
 }
 
 export function getGalleryThemePresentation(
@@ -1228,6 +1280,25 @@ export function getGalleryThemePresentation(
           "linear-gradient(180deg, rgba(31,45,68,0.96), rgba(10,18,31,0.99))",
         shelfEdge:
           "linear-gradient(180deg, rgba(130,177,255,0.48), rgba(10,18,31,0))",
+      };
+    case "cold-blue":
+      return {
+        backgroundImage: getGalleryThemeBackground("cold-blue"),
+        pageOverlayClass:
+          "bg-[linear-gradient(180deg,rgba(8,8,10,0.32),rgba(6,6,10,0.78))]",
+        heroPanelClass:
+          "border-white/10 bg-[linear-gradient(135deg,rgba(25,25,30,0.62),rgba(10,10,14,0.76))] text-stone-100 shadow-[0_28px_90px_rgba(0,0,0,0.56)]",
+        chipClass:
+          "bg-[rgba(22,22,28,0.68)] text-stone-100 ring-white/12",
+        sectionPanelClass:
+          "bg-[linear-gradient(180deg,rgba(20,20,25,0.82),rgba(8,8,12,0.88))] ring-white/10 text-stone-100",
+        cardClass:
+          "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.015))] shadow-[0_24px_64px_rgba(0,0,0,0.50)]",
+        accentClass: "text-stone-100",
+        shelfRail:
+          "linear-gradient(180deg, rgba(70,70,80,0.96), rgba(22,22,28,0.99))",
+        shelfEdge:
+          "linear-gradient(180deg, rgba(255,255,255,0.18), rgba(22,22,28,0))",
       };
     case "marble":
       return {
@@ -2081,9 +2152,10 @@ export function assignGalleriesToProfile(profileId: string) {
 
 export function getThemeBackgroundSimple(theme?: string){
   switch((theme||"classic").toLowerCase()){
-    case "walnut": return "/themes/walnut-bg.webp";
-    case "midnight": return "/themes/midnight-bg.webp";
-    case "marble": return "/themes/marble-bg.webp";
-    default: return "/themes/classic-bg.webp";
+    case "walnut": return "/themes/walnut-bg.png";
+    case "midnight": return "/themes/cold-blue-bg.png";
+    case "marble": return "/themes/marble-bg.png";
+    case "cold-blue": return "/themes/midnight-bg.png";
+    default: return "/themes/classic-bg.png";
   }
 }

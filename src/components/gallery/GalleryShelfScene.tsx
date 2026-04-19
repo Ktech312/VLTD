@@ -61,6 +61,16 @@ function getShelfThemeClasses(themePack?: string | null) {
         support: "from-[#304963] to-[#0d1625]",
         vignette: "bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.00)_0%,rgba(0,0,0,0.10)_62%,rgba(0,0,0,0.34)_100%)]",
       };
+    case "cold-blue":
+      return {
+        stageShell: "ring-white/10 bg-[rgba(10,10,14,0.10)]",
+        plaque: "bg-[rgba(20,20,24,0.84)] text-stone-100 ring-white/12",
+        tile: "bg-[rgba(18,18,24,0.46)] ring-white/10",
+        shelfTop: "from-[#5f5f69] to-[#3f4048]",
+        shelfFace: "from-[#262832] to-[#13141a]",
+        support: "from-[#4a4d58] to-[#13141a]",
+        vignette: "bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.00)_0%,rgba(0,0,0,0.14)_62%,rgba(0,0,0,0.38)_100%)]",
+      };
     case "marble":
       return {
         stageShell: "ring-slate-300/20 bg-[rgba(255,255,255,0.06)]",

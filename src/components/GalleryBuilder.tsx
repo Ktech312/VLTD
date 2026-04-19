@@ -7,14 +7,18 @@ import { type VaultItem, loadItems } from "@/lib/vaultModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import {
   type Gallery,
+  type GalleryThemePack,
+  GALLERY_THEME_PACK_OPTIONS,
   getGalleryLayoutType,
   getGallerySections,
   getGalleryThemePack,
   getGalleryDisplayMode,
   getGalleryGuestViewMode,
   getGalleryShelfBackground,
+  getGalleryThemeLabel,
 } from "@/lib/galleryModel";
 import BuilderPreviewBridge from "@/components/gallery/BuilderPreviewBridge";
+import { PillSelect, type PillSelectOption } from "@/components/ui/PillSelect";
 
 type Props = {
   gallery: Gallery;
@@ -26,34 +30,40 @@ type Props = {
 
 const GALLERY_BACKGROUND_BUCKET = "gallery-backgrounds";
 
-type ThemePackOption = {
-  value: "classic" | "walnut" | "midnight" | "marble";
-  label: string;
-  description: string;
-};
+type GalleryViewOption = GalleryThemePack | "grid";
 
-const THEME_PACKS: ThemePackOption[] = [
+const GALLERY_VIEW_OPTIONS: PillSelectOption<GalleryViewOption>[] = [
   {
     value: "classic",
     label: "Classic",
-    description: "Balanced collector presentation with the default museum look.",
+    subtitle: "Shelf room with the classic collector look.",
   },
   {
     value: "walnut",
     label: "Walnut",
-    description: "Warm wood-toned presentation with a heritage feel.",
+    subtitle: "Warm wood-toned shelf presentation.",
   },
   {
-    value: "midnight",
+    value: "cold-blue",
     label: "Midnight",
-    description: "Dark exhibition mood with deeper contrast.",
+    subtitle: "Dark charcoal gallery room.",
   },
   {
     value: "marble",
     label: "Marble",
-    description: "Brighter premium gallery styling with a modern finish.",
+    subtitle: "Bright luxury marble gallery room.",
   },
-];
+  {
+    value: "midnight",
+    label: "Cold Blue",
+    subtitle: "Cool blue modern shelf room.",
+  },
+  {
+    value: "grid",
+    label: "Grid View",
+    subtitle: "Flat gallery grid without shelves.",
+  },
+] as const;
 
 function searchText(i: VaultItem) {
   return [
@@ -262,13 +272,32 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
   const displayMode = getGalleryDisplayMode(gallery);
   const guestViewMode = getGalleryGuestViewMode(gallery);
   const shelfBackground = getGalleryShelfBackground(gallery);
+  const selectedGalleryView = displayMode === "grid" ? "grid" : themePack;
 
   const previewPanelClass = useMemo(() => {
     if (themePack === "walnut") return "bg-[linear-gradient(180deg,rgba(62,34,22,0.92),rgba(26,13,9,0.96))] ring-amber-200/10";
     if (themePack === "midnight") return "bg-[linear-gradient(180deg,rgba(14,24,40,0.94),rgba(5,9,18,0.98))] ring-cyan-200/10";
+    if (themePack === "cold-blue") return "bg-[linear-gradient(180deg,rgba(26,26,30,0.94),rgba(10,10,12,0.98))] ring-white/10";
     if (themePack === "marble") return "bg-[linear-gradient(180deg,rgba(245,240,230,0.95),rgba(221,212,195,0.96))] ring-black/10 text-stone-900";
     return "bg-[linear-gradient(180deg,rgba(17,22,29,0.95),rgba(8,11,15,0.98))] ring-white/10";
   }, [themePack]);
+
+  function setGalleryView(nextView: GalleryViewOption) {
+    onGalleryChange((current) => {
+      if (nextView === "grid") {
+        return {
+          ...current,
+          displayMode: "grid",
+        };
+      }
+
+      return {
+        ...current,
+        themePack: nextView,
+        displayMode: "shelf",
+      };
+    });
+  }
 
   function toggle(id: string) {
     if (selectedSet.has(id)) {
@@ -429,57 +458,28 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
         <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)]">
           <div className="grid gap-4">
             <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
-              <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">GALLERY THEMES</div>
-              <div className="mt-3 grid gap-2">
-                {THEME_PACKS.map((option) => {
-                  const active = themePack === option.value;
-
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => onGalleryChange((current) => ({ ...current, themePack: option.value }))}
-                      className={[
-                        "vltd-selectable rounded-2xl px-4 py-3 text-left ring-1 transition",
-                        active
-                          ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
-                          : "bg-[color:var(--input)] text-[color:var(--fg)] ring-[color:var(--border)] hover:bg-[color:var(--surface-strong)]",
-                      ].join(" ")}
-                      aria-pressed={active}
-                    >
-                      <div className="text-sm font-semibold">{option.label}</div>
-                      <div className="mt-1 text-xs opacity-80">{option.description}</div>
-                    </button>
-                  );
-                })}
+              <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">GALLERY VIEW</div>
+              <div className="mt-3">
+                <PillSelect<GalleryViewOption>
+                  value={selectedGalleryView}
+                  onChange={setGalleryView}
+                  options={GALLERY_VIEW_OPTIONS}
+                  ariaLabel="Gallery view"
+                  align="left"
+                  minWidthPx={180}
+                />
+              </div>
+              <div className="mt-3 rounded-[18px] bg-[color:var(--input)] p-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+                {selectedGalleryView === "grid"
+                  ? "Grid View shows the collection in a flat card grid."
+                  : GALLERY_THEME_PACK_OPTIONS.find((option) => option.value === themePack)
+                      ?.description ?? "Shelf mode uses the selected room background."}
               </div>
             </div>
 
             <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
-              <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">DISPLAY OPTIONS</div>
+              <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">GUEST OPTIONS</div>
               <div className="mt-3 grid gap-4">
-                <div>
-                  <label className="mb-2 block text-sm font-medium">Display Mode</label>
-                  <div className="flex flex-wrap gap-2">
-                    {(["grid", "shelf"] as const).map((mode) => (
-                      <button
-                        key={mode}
-                        type="button"
-                        onClick={() => onGalleryChange((current) => ({ ...current, displayMode: mode }))}
-                        className={[
-                          "vltd-selectable rounded-full px-4 py-2 text-xs font-semibold ring-1 transition",
-                          displayMode === mode
-                            ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
-                            : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
-                        ].join(" ")}
-                        aria-pressed={displayMode === mode}
-                      >
-                        {mode === "grid" ? "Grid Mode" : "Shelf Mode"}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 <div>
                   <label className="mb-2 block text-sm font-medium">Guest View Mode</label>
                   <div className="flex flex-wrap gap-2">
@@ -510,11 +510,13 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
               <div>
                 <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">LIVE PREVIEW PANEL</div>
                 <div className="mt-1 text-sm text-[color:var(--muted)]">
-                  Theme, display mode, background, and guest feel in one place.
+                  Theme, view mode, background, and guest feel in one place.
                 </div>
               </div>
               <div className="flex flex-wrap gap-2 text-[11px]">
-                <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">Theme: {themePack}</span>
+                <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">
+                  Theme: {displayMode === "grid" ? "Grid View" : getGalleryThemeLabel(themePack)}
+                </span>
                 <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">Display: {displayMode}</span>
                 <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">Guest: {guestViewMode}</span>
                 <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">Layout: {layoutType}</span>

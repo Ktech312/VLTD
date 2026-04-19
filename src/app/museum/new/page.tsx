@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 
 import {
   createGallery,
+  GALLERY_THEME_PACK_OPTIONS,
   loadGalleries,
   saveGalleries,
   type Gallery,
+  type GalleryThemePack,
 } from "@/lib/galleryModel";
 import { getGalleryLimits } from "@/lib/galleryTier";
 import { getTierSafe } from "@/lib/subscription";
@@ -30,9 +32,7 @@ export default function NewMuseumGalleryPage() {
   const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState<Gallery["visibility"]>("PUBLIC");
   const [state, setState] = useState<Gallery["state"]>("ACTIVE");
-  const [themePack, setThemePack] = useState<
-    "classic" | "walnut" | "midnight" | "marble"
-  >("classic");
+  const [themePack, setThemePack] = useState<GalleryThemePack>("classic");
   const [displayMode, setDisplayMode] = useState<"grid" | "shelf">("grid");
   const [guestViewMode, setGuestViewMode] = useState<"public" | "guest">("public");
   const [submitting, setSubmitting] = useState(false);
@@ -221,17 +221,14 @@ export default function NewMuseumGalleryPage() {
                 <label className="mb-2 block text-sm font-medium">Theme Pack</label>
                 <select
                   value={themePack}
-                  onChange={(e) =>
-                    setThemePack(
-                      e.target.value as "classic" | "walnut" | "midnight" | "marble"
-                    )
-                  }
+                  onChange={(e) => setThemePack(e.target.value as GalleryThemePack)}
                   className="min-h-[46px] w-full rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)] focus:outline-none"
                 >
-                  <option value="classic">Classic</option>
-                  <option value="walnut">Walnut</option>
-                  <option value="midnight">Midnight</option>
-                  <option value="marble">Marble</option>
+                  {GALLERY_THEME_PACK_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 

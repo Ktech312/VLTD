@@ -29,7 +29,8 @@ export type LegacyGalleryThemePack =
   | "classic"
   | "walnut"
   | "midnight"
-  | "marble";
+  | "marble"
+  | "cold-blue";
 
 export type GalleryThemeDefinition = {
   id: GalleryThemeId;
@@ -254,6 +255,8 @@ export function mapLegacyThemePackToGalleryThemeId(
       return "velvet-gold";
     case "midnight":
       return "vault-steel";
+    case "cold-blue":
+      return "museum-noir";
     case "marble":
       return "ivory-minimal";
     case "classic":
@@ -270,6 +273,8 @@ export function mapLegacyThemePackToShelfStyleId(
       return "walnut";
     case "midnight":
       return "steel";
+    case "cold-blue":
+      return "ebony";
     case "marble":
       return "glass";
     case "classic":
@@ -286,6 +291,8 @@ export function mapLegacyThemePackToBackdropStyleId(
       return "burgundy";
     case "midnight":
       return "midnight-blue";
+    case "cold-blue":
+      return "charcoal";
     case "marble":
       return "gallery-cream";
     case "classic":

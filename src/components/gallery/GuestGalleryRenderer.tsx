@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 
 import GalleryShelfScene from "@/components/gallery/GalleryShelfScene";
 import { PillButton } from "@/components/ui/PillButton";
+import { getGalleryThemeLabel } from "@/lib/galleryModel";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import type { GuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
 
@@ -49,6 +50,8 @@ function getThemeChipClass(themePack: string) {
       return "bg-[rgba(64,38,23,0.78)] text-[#f1dcc3] ring-[#c4966d]/35";
     case "midnight":
       return "bg-[rgba(9,19,33,0.80)] text-cyan-100 ring-cyan-300/22";
+    case "cold-blue":
+      return "bg-[rgba(22,22,28,0.82)] text-stone-100 ring-white/12";
     case "marble":
       return "bg-[rgba(255,255,255,0.82)] text-slate-900 ring-slate-300/55";
     default:
@@ -160,6 +163,11 @@ export default function GuestGalleryRenderer({
 
                   <div className="mt-5 flex flex-wrap items-center gap-2">
                     <DetailPill className={chipClass}>{model.galleryItems.length} items</DetailPill>
+                    <DetailPill className={chipClass}>
+                      {model.displayMode === "grid"
+                        ? "Grid view"
+                        : getGalleryThemeLabel(model.themePack)}
+                    </DetailPill>
                     <DetailPill className={chipClass}>{model.layoutType} layout</DetailPill>
                     <DetailPill className={chipClass}>{model.displayMode} mode</DetailPill>
                     <DetailPill className={chipClass}>Background {model.background.type}</DetailPill>

@@ -1,6 +1,6 @@
 "use client";
 
-import { type Gallery } from "@/lib/galleryModel";
+import { getGalleryThemeLabel, type Gallery } from "@/lib/galleryModel";
 import { resolveGalleryVisualTheme } from "@/components/gallery/galleryThemes";
 
 export default function GalleryHero({
@@ -48,7 +48,7 @@ export default function GalleryHero({
             </div>
 
             <div className="rounded-full bg-black/20 px-3 py-1 text-[10px] tracking-[0.14em] ring-1 ring-white/10">
-              THEME {String(gallery.themePack ?? "classic").toUpperCase()}
+              THEME {getGalleryThemeLabel(gallery.themePack).toUpperCase()}
             </div>
 
             {guestMode ? (
