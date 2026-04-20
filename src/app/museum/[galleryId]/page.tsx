@@ -333,12 +333,30 @@ export default function GalleryPage() {
   function saveDraft() {
     if (!draft) return;
 
+    const preservedPublicToken =
+      draft.share?.publicToken ||
+      gallery?.share?.publicToken ||
+      ensureGalleryPublicToken(draft.id) ||
+      undefined;
+
+    const nextDraft = cloneGallery({
+      ...draft,
+      share: {
+        publicToken: preservedPublicToken,
+        inviteTokens:
+          draft.share?.inviteTokens ??
+          gallery?.share?.inviteTokens ??
+          [],
+      },
+    });
+
     const all = loadGalleries({ includeAllProfiles: true });
-    const next = all.map((entry) => (entry.id === draft.id ? cloneGallery(draft) : entry));
+    const next = all.map((entry) => (entry.id === draft.id ? nextDraft : entry));
     saveGalleries(next);
 
-    setGallery(cloneGallery(draft));
-    originalSnapshotRef.current = normalizeDraftForCompare(draft);
+    setGallery(cloneGallery(nextDraft));
+    setDraft(cloneGallery(nextDraft));
+    originalSnapshotRef.current = normalizeDraftForCompare(nextDraft);
     setStatusTone("good");
     setStatus("Gallery saved.");
   }
