@@ -17,6 +17,7 @@ import {
   disableGalleryInviteToken,
   getGalleryInviteUrl,
   getActiveInviteTokens,
+  syncGalleryToSupabaseNow,
 } from "@/lib/galleryModel";
 
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
@@ -179,7 +180,7 @@ export default function GalleryPage() {
   const [status, setStatus] = useState("");
   const [statusTone, setStatusTone] = useState<"neutral" | "good">("neutral");
 
-  const originalSnapshotRef = useRef("");
+  const [originalSnapshot, setOriginalSnapshot] = useState("");
   const latestGalleryRef = useRef<Gallery | null>(null);
   const latestDraftRef = useRef<Gallery | null>(null);
 
@@ -330,7 +331,7 @@ export default function GalleryPage() {
     });
   }
 
-  function saveDraft() {
+  async function saveDraft() {
     if (!draft) return;
 
     const preservedPublicToken =
@@ -357,8 +358,15 @@ export default function GalleryPage() {
     setGallery(cloneGallery(nextDraft));
     setDraft(cloneGallery(nextDraft));
     originalSnapshotRef.current = normalizeDraftForCompare(nextDraft);
-    setStatusTone("good");
-    setStatus("Gallery saved.");
+    try {
+      await syncGalleryToSupabaseNow(nextDraft);
+      setStatusTone("good");
+      setStatus("Gallery saved.");
+    } catch (error) {
+      console.error("Direct gallery sync failed:", error);
+      setStatusTone("neutral");
+      setStatus("Gallery saved locally. Cloud sync is retrying.");
+    }
   }
 
   function saveDraftAndOpenGuestView() {

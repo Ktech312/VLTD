@@ -864,6 +864,11 @@ async function upsertGalleryToSupabase(gallery: Gallery) {
   }
 }
 
+export async function syncGalleryToSupabaseNow(gallery: Gallery) {
+  const normalized = syncGalleryShape(gallery);
+  await upsertGalleryToSupabase(normalized);
+}
+
 async function deleteGalleryFromSupabase(galleryId: string) {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return;

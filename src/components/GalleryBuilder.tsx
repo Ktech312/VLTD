@@ -585,13 +585,16 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
                   "mt-4 overflow-hidden rounded-[24px] ring-1 relative",
                   previewPanelClass,
                 ].join(" ")}
-              >
-                <div className="h-[520px] overflow-y-auto overflow-x-hidden overscroll-contain">
-                  <div className="origin-top-left scale-[0.36] w-[278%] pointer-events-none">
-                    <BuilderPreviewBridge gallery={gallery} items={selectedItems} />
+                >
+                  <div className="h-[520px] overflow-y-auto overflow-x-hidden overscroll-contain">
+                    <div
+                      className="origin-top-left scale-[0.36] w-[278%] pointer-events-none"
+                      style={{ height: "1120px" }}
+                    >
+                      <BuilderPreviewBridge gallery={gallery} items={selectedItems} />
+                    </div>
                   </div>
                 </div>
-              </div>
             </div>
           </div>
 
