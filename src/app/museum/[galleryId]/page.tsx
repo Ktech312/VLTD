@@ -8,6 +8,7 @@ import {
   loadGalleries,
   saveGalleries,
   type Gallery,
+  type GalleryPublicItemSnapshot,
   GALLERY_EVENT,
   recordGalleryView,
   ensureGalleryPublicToken,
@@ -20,8 +21,9 @@ import {
   syncGalleryToSupabaseNow,
 } from "@/lib/galleryModel";
 
-import { loadItems, type VaultItem } from "@/lib/vaultModel";
+import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { getVaultImagePublicUrl } from "@/lib/vaultCloud";
+import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import GalleryBuilder from "@/components/GalleryBuilder";
 import { formatMoney, getGalleryMetrics } from "@/lib/portfolioMetrics";
 
@@ -62,6 +64,45 @@ function formatDateTime(ts?: number) {
 
 function cloneGallery<T>(value: T): T {
   return JSON.parse(JSON.stringify(value));
+}
+
+function toGalleryPublicItemSnapshot(item: VaultItem): GalleryPublicItemSnapshot {
+  return {
+    id: item.id,
+    title: item.title || "Untitled Item",
+    subtitle: item.subtitle,
+    number: item.number,
+    grade: item.grade,
+    currentValue:
+      typeof item.currentValue === "number" && Number.isFinite(item.currentValue)
+        ? item.currentValue
+        : undefined,
+    imageFrontUrl: item.imageFrontUrl,
+    imageBackUrl: item.imageBackUrl,
+    imageFrontStoragePath: item.imageFrontStoragePath,
+    primaryImageKey: item.primaryImageKey,
+    createdAt: item.createdAt,
+  };
+}
+
+function vaultItemFromGallerySnapshot(snapshot: GalleryPublicItemSnapshot): VaultItem {
+  return {
+    id: snapshot.id,
+    title: snapshot.title || "Untitled Item",
+    subtitle: snapshot.subtitle,
+    number: snapshot.number,
+    grade: snapshot.grade,
+    currentValue: snapshot.currentValue,
+    imageFrontUrl: snapshot.imageFrontUrl,
+    imageBackUrl: snapshot.imageBackUrl,
+    imageFrontStoragePath: snapshot.imageFrontStoragePath,
+    primaryImageKey: snapshot.primaryImageKey,
+    createdAt:
+      typeof snapshot.createdAt === "number" && Number.isFinite(snapshot.createdAt)
+        ? snapshot.createdAt
+        : Date.now(),
+    isNew: false,
+  };
 }
 
 function mergeHeavyDraftFields(nextGallery: Gallery | null, fallback: Gallery | null) {
@@ -216,6 +257,30 @@ export default function GalleryPage() {
   }, [id]);
 
   useEffect(() => {
+    if (!id) return;
+
+    let cancelled = false;
+
+    async function hydrateVaultItems() {
+      await syncVaultItemsFromSupabase();
+      if (cancelled) return;
+      setItems(loadItems());
+    }
+
+    void hydrateVaultItems();
+
+    function onVaultUpdate() {
+      setItems(loadItems());
+    }
+
+    window.addEventListener("vltd:vault-updated", onVaultUpdate);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("vltd:vault-updated", onVaultUpdate);
+    };
+  }, [id]);
+
+  useEffect(() => {
     if (!draft) {
       setShareUrl("");
       return;
@@ -252,8 +317,18 @@ export default function GalleryPage() {
 
   const galleryItems = useMemo(() => {
     if (!draft) return [];
+    const byId = new Map(items.map((item) => [item.id, item]));
+    const snapshotById = new Map(
+      (draft.publicItemSnapshots ?? []).map((snapshot) => [snapshot.id, snapshot])
+    );
+
     return draft.itemIds
-      .map((itemId) => items.find((item) => item.id === itemId))
+      .map((itemId) => {
+        const localItem = byId.get(itemId);
+        if (localItem) return localItem;
+        const snapshot = snapshotById.get(itemId);
+        return snapshot ? vaultItemFromGallerySnapshot(snapshot) : undefined;
+      })
       .filter(Boolean) as VaultItem[];
   }, [draft, items]);
 
@@ -340,8 +415,28 @@ export default function GalleryPage() {
       ensureGalleryPublicToken(draft.id) ||
       undefined;
 
+    const snapshotFallbackById = new Map<string, GalleryPublicItemSnapshot>();
+    for (const snapshot of draft.publicItemSnapshots ?? []) {
+      snapshotFallbackById.set(snapshot.id, snapshot);
+    }
+    for (const snapshot of gallery?.publicItemSnapshots ?? []) {
+      if (!snapshotFallbackById.has(snapshot.id)) {
+        snapshotFallbackById.set(snapshot.id, snapshot);
+      }
+    }
+
+    const selectedItemById = new Map(items.map((item) => [item.id, item]));
+    const publicItemSnapshots = draft.itemIds
+      .map((itemId) => {
+        const localItem = selectedItemById.get(itemId);
+        if (localItem) return toGalleryPublicItemSnapshot(localItem);
+        return snapshotFallbackById.get(itemId);
+      })
+      .filter(Boolean) as GalleryPublicItemSnapshot[];
+
     const nextDraft = cloneGallery({
       ...draft,
+      publicItemSnapshots,
       share: {
         publicToken: preservedPublicToken,
         inviteTokens:
@@ -359,6 +454,12 @@ export default function GalleryPage() {
     setDraft(cloneGallery(nextDraft));
     setOriginalSnapshot(normalizeDraftForCompare(nextDraft));
     try {
+      for (const itemId of nextDraft.itemIds) {
+        enqueueVaultItemSync(itemId);
+      }
+      await processVaultSyncQueue();
+      await syncVaultItemsFromSupabase();
+      setItems(loadItems());
       await syncGalleryToSupabaseNow(nextDraft);
       setStatusTone("good");
       setStatus("Gallery saved.");

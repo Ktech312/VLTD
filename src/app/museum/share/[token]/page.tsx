@@ -10,6 +10,7 @@ import {
   getGalleryByPublicToken,
   recordGalleryView,
   type Gallery,
+  type GalleryPublicItemSnapshot,
 } from "@/lib/galleryModel";
 import { getCurrentUser } from "@/lib/auth";
 import { resolveGuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
@@ -146,6 +147,31 @@ function normalizeVaultItem(raw: any): VaultItem {
           ? raw.serialNumber
           : undefined,
     createdAt,
+    isNew: false,
+  };
+}
+
+function vaultItemFromGallerySnapshot(snapshot: GalleryPublicItemSnapshot): VaultItem {
+  return {
+    id: String(snapshot.id ?? "").trim(),
+    title: String(snapshot.title ?? "").trim() || "Untitled Item",
+    subtitle: typeof snapshot.subtitle === "string" ? snapshot.subtitle : undefined,
+    number: typeof snapshot.number === "string" ? snapshot.number : undefined,
+    grade: typeof snapshot.grade === "string" ? snapshot.grade : undefined,
+    currentValue:
+      typeof snapshot.currentValue === "number" && Number.isFinite(snapshot.currentValue)
+        ? snapshot.currentValue
+        : undefined,
+    imageFrontUrl: typeof snapshot.imageFrontUrl === "string" ? snapshot.imageFrontUrl : undefined,
+    imageBackUrl: typeof snapshot.imageBackUrl === "string" ? snapshot.imageBackUrl : undefined,
+    imageFrontStoragePath:
+      typeof snapshot.imageFrontStoragePath === "string" ? snapshot.imageFrontStoragePath : undefined,
+    primaryImageKey:
+      typeof snapshot.primaryImageKey === "string" ? snapshot.primaryImageKey : undefined,
+    createdAt:
+      typeof snapshot.createdAt === "number" && Number.isFinite(snapshot.createdAt)
+        ? snapshot.createdAt
+        : Date.now(),
     isNew: false,
   };
 }
@@ -392,8 +418,17 @@ export default function SharedGalleryPage() {
                   byId.set(normalized.id, normalized);
                 }
 
+                const snapshotById = new Map(
+                  (gallery.publicItemSnapshots ?? []).map((snapshot) => [snapshot.id, snapshot])
+                );
+
                 hydratedItems = orderedArtifactIds
-                  .map((artifactId) => byId.get(artifactId))
+                  .map((artifactId) => {
+                    const hydrated = byId.get(artifactId);
+                    if (hydrated) return hydrated;
+                    const snapshot = snapshotById.get(artifactId);
+                    return snapshot ? vaultItemFromGallerySnapshot(snapshot) : undefined;
+                  })
                   .filter(Boolean) as VaultItem[];
               }
             }
@@ -401,6 +436,10 @@ export default function SharedGalleryPage() {
         }
 
         if (isCancelled) return;
+
+        if (hydratedItems.length === 0 && Array.isArray(gallery.publicItemSnapshots)) {
+          hydratedItems = gallery.publicItemSnapshots.map(vaultItemFromGallerySnapshot);
+        }
 
         setItems(hydratedItems);
         void recordGalleryView(gallery.id);

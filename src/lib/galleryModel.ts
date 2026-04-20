@@ -38,6 +38,20 @@ export type GallerySection = {
   featuredItemId?: string;
 };
 
+export type GalleryPublicItemSnapshot = {
+  id: string;
+  title: string;
+  subtitle?: string;
+  number?: string;
+  grade?: string;
+  currentValue?: number;
+  imageFrontUrl?: string;
+  imageBackUrl?: string;
+  imageFrontStoragePath?: string;
+  primaryImageKey?: string;
+  createdAt?: number;
+};
+
 export type ExhibitionLayoutType =
   | "GRID"
   | "CURATED"
@@ -118,6 +132,7 @@ export type Gallery = {
   exhibitionLayout?: ExhibitionLayout;
 
   coverImage?: string;
+  publicItemSnapshots?: GalleryPublicItemSnapshot[];
 
   itemNotes?: GalleryItemNote[];
   share?: GalleryShareSettings;
@@ -361,6 +376,46 @@ function normalizeItemNotes(value: unknown): GalleryItemNote[] {
   return out;
 }
 
+function normalizePublicItemSnapshots(value: unknown): GalleryPublicItemSnapshot[] {
+  if (!Array.isArray(value)) return [];
+
+  const out: GalleryPublicItemSnapshot[] = [];
+  const seen = new Set<string>();
+
+  for (const raw of value) {
+    const id = safeString((raw as any)?.id);
+    if (!id || seen.has(id)) continue;
+
+    seen.add(id);
+    out.push({
+      id,
+      title: safeString((raw as any)?.title) || "Untitled Item",
+      subtitle: safeString((raw as any)?.subtitle) || undefined,
+      number: safeString((raw as any)?.number) || undefined,
+      grade: safeString((raw as any)?.grade) || undefined,
+      currentValue:
+        typeof (raw as any)?.currentValue === "number" && Number.isFinite((raw as any).currentValue)
+          ? (raw as any).currentValue
+          : typeof (raw as any)?.current_value === "number" && Number.isFinite((raw as any).current_value)
+            ? (raw as any).current_value
+            : undefined,
+      imageFrontUrl: safeString((raw as any)?.imageFrontUrl ?? (raw as any)?.image_front_url) || undefined,
+      imageBackUrl: safeString((raw as any)?.imageBackUrl ?? (raw as any)?.image_back_url) || undefined,
+      imageFrontStoragePath:
+        safeString((raw as any)?.imageFrontStoragePath ?? (raw as any)?.image_front_storage_path) || undefined,
+      primaryImageKey: safeString((raw as any)?.primaryImageKey ?? (raw as any)?.primary_image_key) || undefined,
+      createdAt:
+        typeof (raw as any)?.createdAt === "number" && Number.isFinite((raw as any).createdAt)
+          ? (raw as any).createdAt
+          : typeof (raw as any)?.created_at === "number" && Number.isFinite((raw as any).created_at)
+            ? (raw as any).created_at
+            : undefined,
+    });
+  }
+
+  return out;
+}
+
 function normalizeInviteTokens(value: unknown): GalleryInviteToken[] {
   if (!Array.isArray(value)) return [];
 
@@ -537,6 +592,7 @@ function normalizeGallery(raw: any): Gallery | null {
     layout,
     exhibitionLayout,
     coverImage: normalizeCoverImage(raw.coverImage),
+    publicItemSnapshots: normalizePublicItemSnapshots(raw.publicItemSnapshots),
     itemNotes: normalizeItemNotes(raw.itemNotes),
     share: normalizeShare(raw.share),
     analytics: normalizeAnalytics(raw.analytics),
@@ -585,6 +641,11 @@ function normalizeSupabaseGallery(raw: any): Gallery | null {
     layout: raw.layout,
     exhibitionLayout: raw.exhibition_layout,
     coverImage: raw.cover_image,
+    publicItemSnapshots:
+      raw.public_item_snapshots ??
+      raw.layout?.publicItemSnapshots ??
+      raw.exhibition_layout?.publicItemSnapshots ??
+      [],
     itemNotes: raw.item_notes ?? [],
     share: {
       publicToken:
@@ -672,6 +733,7 @@ function serializeGalleryForSupabase(gallery: Gallery) {
         glassShelfOverlay,
         shelfOverlayStyle,
         templateId: gallery.templateId ?? "CUSTOM",
+        publicItemSnapshots: normalizePublicItemSnapshots(gallery.publicItemSnapshots),
       },
       exhibition_layout: {
       ...safeExhibitionLayout,
@@ -686,6 +748,7 @@ function serializeGalleryForSupabase(gallery: Gallery) {
         glassShelfOverlay,
         shelfOverlayStyle,
         templateId: gallery.templateId ?? "CUSTOM",
+        publicItemSnapshots: normalizePublicItemSnapshots(gallery.publicItemSnapshots),
       },
     public_token: gallery.share?.publicToken || null,
     analytics_views: gallery.analytics?.views ?? 0,
