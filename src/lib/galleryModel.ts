@@ -642,9 +642,9 @@ function normalizeSupabaseGallery(raw: any): Gallery | null {
     exhibitionLayout: raw.exhibition_layout,
     coverImage: raw.cover_image,
     publicItemSnapshots:
-      raw.public_item_snapshots ??
       raw.layout?.publicItemSnapshots ??
       raw.exhibition_layout?.publicItemSnapshots ??
+      raw.public_item_snapshots ??
       [],
     itemNotes: raw.item_notes ?? [],
     share: {
@@ -665,41 +665,41 @@ function normalizeSupabaseGallery(raw: any): Gallery | null {
         : undefined,
     },
     templateId:
-      raw.template_id ??
       raw.layout?.templateId ??
-      raw.exhibition_layout?.templateId,
+      raw.exhibition_layout?.templateId ??
+      raw.template_id,
     sections:
       raw.sections ??
       raw.exhibition_layout?.sections ??
       [],
     themePack:
-      raw.theme_pack ??
       raw.layout?.themePack ??
-      raw.exhibition_layout?.themePack,
+      raw.exhibition_layout?.themePack ??
+      raw.theme_pack,
     displayMode:
-      raw.display_mode ??
       raw.layout?.displayMode ??
-      raw.exhibition_layout?.displayMode,
+      raw.exhibition_layout?.displayMode ??
+      raw.display_mode,
     guestViewMode:
-      raw.guest_view_mode ??
       raw.layout?.guestViewMode ??
-      raw.exhibition_layout?.guestViewMode,
+      raw.exhibition_layout?.guestViewMode ??
+      raw.guest_view_mode,
       shelfBackground:
-        raw.shelf_background ??
         raw.layout?.shelfBackground ??
         raw.exhibition_layout?.shelfBackground ??
+        raw.shelf_background ??
         "",
       glassShelfOverlay:
-        raw.glass_shelf_overlay ??
         raw.layout?.glassShelfOverlay ??
         raw.exhibition_layout?.glassShelfOverlay ??
+        raw.glass_shelf_overlay ??
         false,
       shelfOverlayStyle: normalizeShelfOverlayStyle(
         raw.layout?.shelfOverlayStyle ?? raw.exhibition_layout?.shelfOverlayStyle,
         Boolean(
-          raw.glass_shelf_overlay ??
           raw.layout?.glassShelfOverlay ??
           raw.exhibition_layout?.glassShelfOverlay ??
+          raw.glass_shelf_overlay ??
           false
         )
       ),
