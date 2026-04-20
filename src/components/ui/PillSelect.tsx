@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 type Align = "left" | "right";
 
@@ -376,8 +377,10 @@ function MobileSheet<T extends string>({
   safeBottomStyle: React.CSSProperties;
 }) {
   const lastActiveRef = useRef<HTMLElement | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     lastActiveRef.current =
       (typeof document !== "undefined" ? (document.activeElement as HTMLElement) : null) ?? null;
 
@@ -388,6 +391,7 @@ function MobileSheet<T extends string>({
     document.body.style.overscrollBehaviorY = "contain";
 
     return () => {
+      setMounted(false);
       document.body.style.overflow = prevOverflow;
       document.body.style.overscrollBehaviorY = prevOverscroll;
     };
@@ -405,12 +409,16 @@ function MobileSheet<T extends string>({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  return (
+  if (!mounted || typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(
     <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label={title}>
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div
         id={id}
-        className="absolute bottom-0 left-0 right-0 rounded-t-3xl bg-[color:var(--surface-strong)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-pill)]"
+        className="absolute bottom-0 left-0 right-0 max-h-[min(78vh,680px)] overflow-y-auto rounded-t-3xl bg-[color:var(--surface-strong)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-pill)]"
         style={safeBottomStyle}
       >
         <div className="mx-auto max-w-6xl px-5 py-4">
@@ -467,6 +475,7 @@ function MobileSheet<T extends string>({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

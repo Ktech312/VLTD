@@ -367,9 +367,13 @@ export default function SharedGalleryPage() {
           if (linkError) {
             console.error("Failed loading gallery_items for shared gallery:", linkError);
           } else {
-            const orderedArtifactIds = Array.isArray(links)
+            const orderedArtifactIdsFromLinks = Array.isArray(links)
               ? links.map((row: any) => String(row?.artifact_id ?? "").trim()).filter(Boolean)
               : [];
+            const orderedArtifactIds =
+              orderedArtifactIdsFromLinks.length > 0
+                ? orderedArtifactIdsFromLinks
+                : gallery.itemIds.filter(Boolean);
 
             const uniqueArtifactIds = [...new Set(orderedArtifactIds)];
 
@@ -388,7 +392,7 @@ export default function SharedGalleryPage() {
                   byId.set(normalized.id, normalized);
                 }
 
-                hydratedItems = uniqueArtifactIds
+                hydratedItems = orderedArtifactIds
                   .map((artifactId) => byId.get(artifactId))
                   .filter(Boolean) as VaultItem[];
               }

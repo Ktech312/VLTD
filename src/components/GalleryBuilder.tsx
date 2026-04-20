@@ -252,12 +252,15 @@ function syncSectionsAndLayout(
 }
 
 export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQuickSave }: Props) {
+  const previewScale = 0.36;
+  const previewWidthPercent = 100 / previewScale;
   const [items] = useState<VaultItem[]>(() => loadItems());
   const [query, setQuery] = useState("");
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
   const [shelfFileName, setShelfFileName] = useState("");
   const [backgroundUploadError, setBackgroundUploadError] = useState("");
+  const [previewNaturalHeight, setPreviewNaturalHeight] = useState(1120);
 
   const selectedSet = useMemo(() => new Set(gallery.itemIds), [gallery.itemIds]);
 
@@ -299,6 +302,11 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
     if (themePack === "marble") return "bg-[linear-gradient(180deg,rgba(245,240,230,0.95),rgba(221,212,195,0.96))] ring-black/10 text-stone-900";
     return "bg-[linear-gradient(180deg,rgba(17,22,29,0.95),rgba(8,11,15,0.98))] ring-white/10";
   }, [themePack]);
+
+  const previewViewportHeight = useMemo(() => {
+    const scaledHeight = Math.ceil(previewNaturalHeight * previewScale);
+    return Math.max(320, Math.min(520, scaledHeight));
+  }, [previewNaturalHeight, previewScale]);
 
   function setGalleryView(nextView: GalleryViewOption) {
     onGalleryChange((current) => {
@@ -586,15 +594,27 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
                   previewPanelClass,
                 ].join(" ")}
                 >
-                  <div className="h-[520px] overflow-y-auto overflow-x-hidden overscroll-contain">
                     <div
-                      className="origin-top-left scale-[0.36] w-[278%] pointer-events-none"
-                      style={{ height: "1120px" }}
+                      className="overflow-y-auto overflow-x-hidden overscroll-contain"
+                      style={{ height: `${previewViewportHeight}px` }}
                     >
-                      <BuilderPreviewBridge gallery={gallery} items={selectedItems} />
+                      <div
+                        className="origin-top-left pointer-events-none"
+                        style={{
+                          transform: `scale(${previewScale})`,
+                          transformOrigin: "top left",
+                          width: `${previewWidthPercent}%`,
+                          height: `${previewNaturalHeight}px`,
+                        }}
+                      >
+                        <BuilderPreviewBridge
+                          gallery={gallery}
+                          items={selectedItems}
+                          onHeightChange={setPreviewNaturalHeight}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
             </div>
           </div>
 
