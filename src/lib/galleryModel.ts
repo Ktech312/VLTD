@@ -660,6 +660,7 @@ function serializeGalleryForSupabase(gallery: Gallery) {
     profile_id: isUuidLike(gallery.profile_id) ? safeString(gallery.profile_id) : null,
     title: gallery.title,
     description: gallery.description || "",
+    item_ids: normalizeItemIds(gallery.itemIds),
     visibility: gallery.visibility,
     state: gallery.state,
     cover_image: gallery.coverImage || "",
