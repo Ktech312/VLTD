@@ -1204,7 +1204,11 @@ function filterGalleriesForProfile(galleries: Gallery[], options?: LoadGalleryOp
   return galleries.filter((gallery) => gallery.profile_id === activeProfileId);
 }
 
-function saveNormalized(galleries: Gallery[], emit: boolean) {
+function saveNormalized(
+  galleries: Gallery[],
+  emit: boolean,
+  options?: { syncToCloud?: boolean }
+) {
   if (typeof window === "undefined") return;
 
   const previous = readStoredGallerySnapshot();
@@ -1218,7 +1222,9 @@ function saveNormalized(galleries: Gallery[], emit: boolean) {
     writeLocalCache(slimmed, emit);
   }
 
-  syncGalleriesToSupabase(normalized, previous);
+  if (options?.syncToCloud !== false) {
+    syncGalleriesToSupabase(normalized, previous);
+  }
 }
 
 function syncGalleryShape(gallery: Gallery): Gallery {
@@ -1308,6 +1314,11 @@ export function loadAllGalleries() {
 export function saveGalleries(galleries: Gallery[]) {
   if (typeof window === "undefined") return;
   saveNormalized(galleries, true);
+}
+
+export function saveGalleriesLocally(galleries: Gallery[]) {
+  if (typeof window === "undefined") return;
+  saveNormalized(galleries, true, { syncToCloud: false });
 }
 
 export function saveGalleriesForActiveProfile(galleries: Gallery[]) {

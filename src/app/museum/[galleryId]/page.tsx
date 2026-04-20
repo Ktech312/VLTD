@@ -1,12 +1,12 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 
 import {
   loadGalleries,
-  saveGalleries,
+  saveGalleriesLocally,
   type Gallery,
   type GalleryPublicItemSnapshot,
   GALLERY_EVENT,
@@ -36,7 +36,7 @@ function visibilityLabel(v: Gallery["visibility"]) {
 }
 
 function itemSubtitle(i: VaultItem) {
-  return [i.subtitle, i.number, i.grade].filter(Boolean).join(" • ");
+  return [i.subtitle, i.number, i.grade].filter(Boolean).join(" - ");
 }
 
 function itemImage(i: VaultItem) {
@@ -54,11 +54,11 @@ function itemImage(i: VaultItem) {
 }
 
 function formatDateTime(ts?: number) {
-  if (!ts || !Number.isFinite(ts)) return "—";
+  if (!ts || !Number.isFinite(ts)) return "-";
   try {
     return new Date(ts).toLocaleString();
   } catch {
-    return "—";
+    return "-";
   }
 }
 
@@ -213,7 +213,6 @@ export default function GalleryPage() {
   const [gallery, setGallery] = useState<Gallery | null>(null);
   const [draft, setDraft] = useState<Gallery | null>(null);
   const [items, setItems] = useState<VaultItem[]>([]);
-  const [shareUrl, setShareUrl] = useState<string>("");
   const [copied, setCopied] = useState(false);
   const [accessInfoOpen, setAccessInfoOpen] = useState(false);
   const [inviteLabel, setInviteLabel] = useState("");
@@ -225,7 +224,7 @@ export default function GalleryPage() {
   const latestGalleryRef = useRef<Gallery | null>(null);
   const latestDraftRef = useRef<Gallery | null>(null);
 
-  function loadState() {
+  const loadState = useCallback(() => {
     if (!id) return;
 
     const galleries = loadGalleries();
@@ -239,7 +238,7 @@ export default function GalleryPage() {
     setDraft(mergedGallery ? cloneGallery(mergedGallery) : null);
     setOriginalSnapshot(normalizeDraftForCompare(mergedGallery));
     setItems(loadItems());
-  }
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -254,7 +253,7 @@ export default function GalleryPage() {
 
     window.addEventListener(GALLERY_EVENT, onGalleryChange);
     return () => window.removeEventListener(GALLERY_EVENT, onGalleryChange);
-  }, [id]);
+  }, [id, loadState]);
 
   useEffect(() => {
     if (!id) return;
@@ -280,14 +279,7 @@ export default function GalleryPage() {
     };
   }, [id]);
 
-  useEffect(() => {
-    if (!draft) {
-      setShareUrl("");
-      return;
-    }
-
-    setShareUrl(getGalleryShareUrl(draft));
-  }, [draft]);
+  const shareUrl = useMemo(() => (draft ? getGalleryShareUrl(draft) : ""), [draft]);
 
   useEffect(() => {
     if (!copied) return;
@@ -448,7 +440,7 @@ export default function GalleryPage() {
 
     const all = loadGalleries({ includeAllProfiles: true });
     const next = all.map((entry) => (entry.id === draft.id ? nextDraft : entry));
-    saveGalleries(next);
+    saveGalleriesLocally(next);
 
     setGallery(cloneGallery(nextDraft));
     setDraft(cloneGallery(nextDraft));
@@ -468,14 +460,6 @@ export default function GalleryPage() {
       setStatusTone("neutral");
       setStatus("Gallery saved locally. Cloud sync is retrying.");
     }
-  }
-
-  function saveDraftAndOpenGuestView() {
-    if (!draft) return;
-
-    const guestUrl = `/museum/${draft.id}/guest`;
-    saveDraft();
-    window.open(guestUrl, "_blank", "noopener,noreferrer");
   }
 
   function cancelChanges() {
@@ -571,7 +555,7 @@ export default function GalleryPage() {
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <Link href="/museum" className={neutralPillClass()}>
-            ← Back to Museum
+            Back to Museum
           </Link>
 
           <Link href="/collector" className={neutralPillClass()}>
@@ -786,7 +770,7 @@ export default function GalleryPage() {
                           className="vltd-selectable inline-flex h-7 w-7 items-center justify-center rounded-full bg-[color:var(--pill)] text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
                           aria-label="Close access mode help"
                         >
-                          ×
+                          Ã—
                         </button>
                       </div>
                       <div className="mt-3"><strong>Public Gallery</strong> - Available to registered or unregistered users, searchable on Home page.</div>
@@ -865,7 +849,13 @@ export default function GalleryPage() {
             <h2 className="mt-2 text-2xl font-semibold">Curate the Layout</h2>
           </div>
 
-          <GalleryBuilder gallery={draft} onChange={update} onGalleryChange={patchDraft} onQuickSave={saveDraft} onOpenGuestView={saveDraftAndOpenGuestView} />
+          <GalleryBuilder
+            gallery={draft}
+            items={items}
+            onChange={update}
+            onGalleryChange={patchDraft}
+            onQuickSave={saveDraft}
+          />
         </section>
 
         <section className="mt-10 grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
@@ -911,7 +901,7 @@ export default function GalleryPage() {
 
                       <div className="text-lg font-semibold">{item.title}</div>
                       <div className="mt-1 text-sm text-[color:var(--muted)]">
-                        {itemSubtitle(item) || "—"}
+                        {itemSubtitle(item) || "-"}
                       </div>
 
                       <textarea
@@ -1035,3 +1025,5 @@ export default function GalleryPage() {
     </main>
   );
 }
+
+

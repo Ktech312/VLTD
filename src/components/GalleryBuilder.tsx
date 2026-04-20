@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import { type VaultItem, loadItems } from "@/lib/vaultModel";
+import { type VaultItem } from "@/lib/vaultModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import {
   type Gallery,
@@ -23,10 +23,10 @@ import { PillSelect, type PillSelectOption } from "@/components/ui/PillSelect";
 
 type Props = {
   gallery: Gallery;
+  items: VaultItem[];
   onChange: (ids: string[]) => void;
   onGalleryChange: (updater: (current: Gallery) => Gallery) => void;
   onQuickSave?: () => void;
-  onOpenGuestView?: () => void;
 };
 
 const GALLERY_BACKGROUND_BUCKET = "gallery-backgrounds";
@@ -106,7 +106,20 @@ function searchText(i: VaultItem) {
 }
 
 function itemMeta(i: VaultItem) {
-  return [i.subtitle, i.number, i.grade].filter(Boolean).join(" • ");
+  return [i.subtitle, i.number, i.grade].filter(Boolean).join(" - ");
+}
+
+function DragHandle() {
+  return (
+    <span
+      aria-hidden="true"
+      className="grid grid-cols-2 gap-[3px] text-[color:var(--muted2)]"
+    >
+      {Array.from({ length: 6 }).map((_, index) => (
+        <span key={index} className="h-1 w-1 rounded-full bg-current/80" />
+      ))}
+    </span>
+  );
 }
 
 function itemImage(i: VaultItem) {
@@ -251,10 +264,15 @@ function syncSectionsAndLayout(
   };
 }
 
-export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQuickSave }: Props) {
+export default function GalleryBuilder({
+  gallery,
+  items,
+  onChange,
+  onGalleryChange,
+  onQuickSave,
+}: Props) {
   const previewScale = 0.36;
   const previewWidthPercent = 100 / previewScale;
-  const [items] = useState<VaultItem[]>(() => loadItems());
   const [query, setQuery] = useState("");
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
@@ -713,7 +731,7 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
                               <div className="min-w-0 flex-1">
                                 <div className="line-clamp-2 text-sm font-semibold">{item.title}</div>
                                 <div className="mt-1 line-clamp-1 text-xs text-[color:var(--muted)]">
-                                  {itemMeta(item) || "—"}
+                                  {itemMeta(item) || "-"}
                                 </div>
 
                                 <div className="mt-2 flex flex-wrap gap-2">
@@ -847,12 +865,12 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
 
               <div className="rounded-[18px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
                 <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">CURATED VALUE</div>
-                <div className="mt-2 text-xl font-semibold">{formatMoney(selectedValue) ?? "—"}</div>
+                <div className="mt-2 text-xl font-semibold">{formatMoney(selectedValue) ?? "-"}</div>
               </div>
 
               <div className="rounded-[18px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
                 <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">CURATED COST</div>
-                <div className="mt-2 text-xl font-semibold">{formatMoney(selectedCost) ?? "—"}</div>
+                <div className="mt-2 text-xl font-semibold">{formatMoney(selectedCost) ?? "-"}</div>
               </div>
             </div>
           </div>
@@ -890,8 +908,8 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
                     ].join(" ")}
                   >
                     <div className="flex gap-4">
-                      <div className="flex w-4 shrink-0 cursor-grab items-center justify-center text-[color:var(--muted2)] active:cursor-grabbing">
-                        ⋮⋮
+                      <div className="flex w-4 shrink-0 cursor-grab items-center justify-center active:cursor-grabbing">
+                        <DragHandle />
                       </div>
 
                       <div className="h-20 w-16 shrink-0 overflow-hidden rounded-xl bg-black ring-1 ring-white/10">
@@ -926,7 +944,7 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
                         <div className="mt-1 line-clamp-2 text-base font-semibold">{item.title}</div>
 
                         <div className="mt-1 line-clamp-1 text-sm text-[color:var(--muted)]">
-                          {itemMeta(item) || "—"}
+                          {itemMeta(item) || "-"}
                         </div>
 
                         <div className="mt-3 flex flex-wrap gap-2">
@@ -1050,7 +1068,7 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
 
                     <div className="p-4">
                       <div className="line-clamp-2 text-lg font-semibold leading-tight">{item.title}</div>
-                      <div className="mt-2 line-clamp-1 text-sm opacity-75">{itemMeta(item) || "—"}</div>
+                      <div className="mt-2 line-clamp-1 text-sm opacity-75">{itemMeta(item) || "-"}</div>
 
                       <div className="mt-4 flex flex-wrap items-center gap-2">
                         {typeof item.currentValue === "number" ? (
@@ -1074,3 +1092,4 @@ export default function GalleryBuilder({ gallery, onChange, onGalleryChange, onQ
     </div>
   );
 }
+

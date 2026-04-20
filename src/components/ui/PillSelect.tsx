@@ -13,6 +13,33 @@ export type PillSelectOption<T extends string> = {
   icon?: React.ReactNode;
 };
 
+function CheckIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className={className}>
+      <path
+        d="m5.5 10.25 3 3 6-6"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function CloseIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className={className}>
+      <path
+        d="M6 6l8 8M14 6l-8 8"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -344,7 +371,7 @@ export function PillSelect<T extends string>({
 
                       {isSelected ? (
                         <span className="shrink-0 text-[color:var(--fg)]" aria-hidden="true">
-                          ✓
+                          <CheckIcon className="h-4 w-4" />
                         </span>
                       ) : null}
                     </div>
@@ -377,12 +404,12 @@ function MobileSheet<T extends string>({
   safeBottomStyle: React.CSSProperties;
 }) {
   const lastActiveRef = useRef<HTMLElement | null>(null);
-  const [mounted, setMounted] = useState(false);
+  const canUseDom = typeof document !== "undefined";
 
   useEffect(() => {
-    setMounted(true);
-    lastActiveRef.current =
-      (typeof document !== "undefined" ? (document.activeElement as HTMLElement) : null) ?? null;
+    if (!canUseDom) return;
+
+    lastActiveRef.current = document.activeElement as HTMLElement | null;
 
     const prevOverflow = document.body.style.overflow;
     const prevOverscroll = document.body.style.overscrollBehaviorY;
@@ -391,11 +418,10 @@ function MobileSheet<T extends string>({
     document.body.style.overscrollBehaviorY = "contain";
 
     return () => {
-      setMounted(false);
       document.body.style.overflow = prevOverflow;
       document.body.style.overscrollBehaviorY = prevOverscroll;
     };
-  }, []);
+  }, [canUseDom]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -409,7 +435,7 @@ function MobileSheet<T extends string>({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  if (!mounted || typeof document === "undefined") {
+  if (!canUseDom) {
     return null;
   }
 
@@ -437,7 +463,7 @@ function MobileSheet<T extends string>({
               aria-label="Close"
               title="Close"
             >
-              ✕
+              <CloseIcon className="h-4 w-4" />
             </button>
           </div>
 
@@ -467,7 +493,11 @@ function MobileSheet<T extends string>({
                         ) : null}
                       </div>
                     </div>
-                    {isSelected ? <span className="text-lg text-[color:var(--fg)]">✓</span> : null}
+                    {isSelected ? (
+                      <span className="text-[color:var(--fg)]" aria-hidden="true">
+                        <CheckIcon className="h-5 w-5" />
+                      </span>
+                    ) : null}
                   </div>
                 </button>
               );
@@ -479,3 +509,4 @@ function MobileSheet<T extends string>({
     document.body
   );
 }
+
