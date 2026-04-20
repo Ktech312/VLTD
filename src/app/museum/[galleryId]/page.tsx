@@ -196,7 +196,7 @@ export default function GalleryPage() {
 
     setGallery(mergedGallery);
     setDraft(mergedGallery ? cloneGallery(mergedGallery) : null);
-    originalSnapshotRef.current = normalizeDraftForCompare(mergedGallery);
+    setOriginalSnapshot(normalizeDraftForCompare(mergedGallery));
     setItems(loadItems());
   }
 
@@ -268,8 +268,8 @@ export default function GalleryPage() {
   }, [draft, items]);
 
   const isDirty = useMemo(() => {
-    return normalizeDraftForCompare(draft) !== originalSnapshotRef.current;
-  }, [draft]);
+    return normalizeDraftForCompare(draft) !== originalSnapshot;
+  }, [draft, originalSnapshot]);
 
   const selectedAccessMode = useMemo(() => getAccessMode(draft), [draft]);
 
@@ -357,7 +357,7 @@ export default function GalleryPage() {
 
     setGallery(cloneGallery(nextDraft));
     setDraft(cloneGallery(nextDraft));
-    originalSnapshotRef.current = normalizeDraftForCompare(nextDraft);
+    setOriginalSnapshot(normalizeDraftForCompare(nextDraft));
     try {
       await syncGalleryToSupabaseNow(nextDraft);
       setStatusTone("good");
@@ -415,7 +415,7 @@ export default function GalleryPage() {
       if (refreshed) {
         setGallery(cloneGallery(refreshed));
         setDraft(cloneGallery(refreshed));
-        originalSnapshotRef.current = normalizeDraftForCompare(refreshed);
+          setOriginalSnapshot(normalizeDraftForCompare(refreshed));
       }
     }
   }
@@ -427,7 +427,7 @@ export default function GalleryPage() {
     if (refreshed) {
       setGallery(cloneGallery(refreshed));
       setDraft(cloneGallery(refreshed));
-      originalSnapshotRef.current = normalizeDraftForCompare(refreshed);
+        setOriginalSnapshot(normalizeDraftForCompare(refreshed));
     }
   }
 
@@ -438,7 +438,7 @@ export default function GalleryPage() {
     if (refreshed) {
       setGallery(cloneGallery(refreshed));
       setDraft(cloneGallery(refreshed));
-      originalSnapshotRef.current = normalizeDraftForCompare(refreshed);
+        setOriginalSnapshot(normalizeDraftForCompare(refreshed));
     }
   }
 
