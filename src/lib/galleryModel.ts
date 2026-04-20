@@ -416,6 +416,24 @@ function normalizePublicItemSnapshots(value: unknown): GalleryPublicItemSnapshot
   return out;
 }
 
+function normalizeSupabaseItemIds(raw: any) {
+  const direct = normalizeItemIds(
+    raw?.item_ids ??
+      raw?.itemIds ??
+      raw?.layout?.itemIds ??
+      raw?.exhibition_layout?.itemIds ??
+      []
+  );
+
+  if (direct.length > 0) {
+    return direct;
+  }
+
+  const sectionSource = raw?.sections ?? raw?.exhibition_layout?.sections ?? [];
+  const sectionItemIds = normalizeSections(sectionSource, []).flatMap((section) => section.itemIds);
+  return normalizeItemIds(sectionItemIds);
+}
+
 function normalizeInviteTokens(value: unknown): GalleryInviteToken[] {
   if (!Array.isArray(value)) return [];
 
@@ -635,7 +653,7 @@ function normalizeSupabaseGallery(raw: any): Gallery | null {
     profile_id: raw.profile_id,
     title: raw.title,
     description: raw.description,
-    itemIds: raw.item_ids ?? raw.itemIds ?? [],
+    itemIds: normalizeSupabaseItemIds(raw),
     visibility: raw.visibility,
     state: raw.state,
     layout: raw.layout,
@@ -710,53 +728,53 @@ function normalizeSupabaseGallery(raw: any): Gallery | null {
 
 function serializeGalleryForSupabase(gallery: Gallery) {
   const safeExhibitionLayout = asPlainObject(gallery.exhibitionLayout);
+  const itemIds = normalizeItemIds(gallery.itemIds);
+  const publicItemSnapshots = normalizePublicItemSnapshots(gallery.publicItemSnapshots);
   const shelfOverlayStyle = normalizeShelfOverlayStyle(
     gallery.shelfOverlayStyle,
     gallery.glassShelfOverlay ?? false
   );
   const glassShelfOverlay = shelfOverlayStyle !== "none";
+  const sections = normalizeSections(
+    gallery.sections ?? gallery.exhibitionLayout?.sections ?? [],
+    itemIds
+  );
 
   return {
     id: gallery.id,
     profile_id: isUuidLike(gallery.profile_id) ? safeString(gallery.profile_id) : null,
     title: gallery.title,
     description: gallery.description || "",
-    item_ids: normalizeItemIds(gallery.itemIds),
-    public_item_snapshots: normalizePublicItemSnapshots(gallery.publicItemSnapshots),
     visibility: gallery.visibility,
     state: gallery.state,
     cover_image: gallery.coverImage || "",
-    theme_pack: gallery.themePack ?? "classic",
-    display_mode: gallery.displayMode ?? "grid",
-    guest_view_mode: gallery.guestViewMode ?? "public",
-    shelf_background: gallery.shelfBackground ?? "",
-    glass_shelf_overlay: glassShelfOverlay,
-    template_id: gallery.templateId ?? "CUSTOM",
-      layout: {
-        themePack: gallery.themePack ?? "classic",
-        displayMode: gallery.displayMode ?? "grid",
-        guestViewMode: gallery.guestViewMode ?? "public",
-        shelfBackground: gallery.shelfBackground ?? "",
-        glassShelfOverlay,
-        shelfOverlayStyle,
-        templateId: gallery.templateId ?? "CUSTOM",
-        publicItemSnapshots: normalizePublicItemSnapshots(gallery.publicItemSnapshots),
-      },
-      exhibition_layout: {
+    layout: {
+      themePack: gallery.themePack ?? "classic",
+      displayMode: gallery.displayMode ?? "grid",
+      guestViewMode: gallery.guestViewMode ?? "public",
+      shelfBackground: gallery.shelfBackground ?? "",
+      glassShelfOverlay,
+      shelfOverlayStyle,
+      templateId: gallery.templateId ?? "CUSTOM",
+      itemIds,
+      publicItemSnapshots,
+    },
+    exhibition_layout: {
       ...safeExhibitionLayout,
-        type:
-          gallery.exhibitionLayout?.type ??
-          normalizeExhibitionLayoutType((gallery.layout as any)?.type),
-        sections: gallery.sections ?? gallery.exhibitionLayout?.sections ?? [],
-        themePack: gallery.themePack ?? "classic",
-        displayMode: gallery.displayMode ?? "grid",
-        guestViewMode: gallery.guestViewMode ?? "public",
-        shelfBackground: gallery.shelfBackground ?? "",
-        glassShelfOverlay,
-        shelfOverlayStyle,
-        templateId: gallery.templateId ?? "CUSTOM",
-        publicItemSnapshots: normalizePublicItemSnapshots(gallery.publicItemSnapshots),
-      },
+      type:
+        gallery.exhibitionLayout?.type ??
+        normalizeExhibitionLayoutType((gallery.layout as any)?.type),
+      sections,
+      themePack: gallery.themePack ?? "classic",
+      displayMode: gallery.displayMode ?? "grid",
+      guestViewMode: gallery.guestViewMode ?? "public",
+      shelfBackground: gallery.shelfBackground ?? "",
+      glassShelfOverlay,
+      shelfOverlayStyle,
+      templateId: gallery.templateId ?? "CUSTOM",
+      itemIds,
+      publicItemSnapshots,
+    },
     public_token: gallery.share?.publicToken || null,
     analytics_views: gallery.analytics?.views ?? 0,
     analytics_last_viewed_at: gallery.analytics?.lastViewedAt
@@ -791,7 +809,10 @@ function serializeGalleryItemsForSupabase(gallery: Gallery) {
   }));
 }
 
-async function syncGalleryItemsToSupabase(gallery: Gallery) {
+async function syncGalleryItemsToSupabase(
+  gallery: Gallery,
+  options?: { throwOnError?: boolean }
+) {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return;
 
@@ -806,6 +827,7 @@ async function syncGalleryItemsToSupabase(gallery: Gallery) {
 
     if (existingError) {
       console.error("Failed loading existing gallery_items rows:", existingError);
+      if (options?.throwOnError) throw existingError;
       return;
     }
 
@@ -846,6 +868,7 @@ async function syncGalleryItemsToSupabase(gallery: Gallery) {
 
       if (deleteError) {
         console.error("Failed clearing gallery_items rows:", deleteError);
+        if (options?.throwOnError) throw deleteError;
       }
 
       return;
@@ -858,6 +881,7 @@ async function syncGalleryItemsToSupabase(gallery: Gallery) {
 
     if (deleteError) {
       console.error("Failed clearing gallery_items rows:", deleteError);
+      if (options?.throwOnError) throw deleteError;
       return;
     }
 
@@ -868,6 +892,7 @@ async function syncGalleryItemsToSupabase(gallery: Gallery) {
     }
 
     console.error("Failed inserting gallery_items rows:", insertError);
+    if (options?.throwOnError) throw insertError;
 
     if (normalizedExisting.length > 0) {
       const { error: restoreError } = await supabase
@@ -885,10 +910,30 @@ async function syncGalleryItemsToSupabase(gallery: Gallery) {
     }
   } catch (error) {
     console.error("Unexpected gallery_items sync error:", error);
+    if (options?.throwOnError) throw error;
   }
 }
 
-async function upsertGalleryToSupabase(gallery: Gallery) {
+function getGallerySyncSignature(gallery: Gallery) {
+  return JSON.stringify({
+    gallery: serializeGalleryForSupabase(gallery),
+    items: serializeGalleryItemsForSupabase(gallery).map((row) => ({
+      artifact_id: row.artifact_id,
+      position: row.position,
+    })),
+    invites: normalizeInviteTokens(gallery.share?.inviteTokens).map((invite) => ({
+      token: invite.token,
+      label: invite.label ?? null,
+      disabled: !!invite.disabled,
+      expires_at: typeof invite.expiresAt === "number" ? invite.expiresAt : null,
+    })),
+  });
+}
+
+async function upsertGalleryToSupabase(
+  gallery: Gallery,
+  options?: { throwOnError?: boolean }
+) {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return;
 
@@ -900,10 +945,11 @@ async function upsertGalleryToSupabase(gallery: Gallery) {
 
     if (error) {
       console.error("Failed to upsert gallery:", error);
+      if (options?.throwOnError) throw error;
       return;
     }
 
-    await syncGalleryItemsToSupabase(gallery);
+    await syncGalleryItemsToSupabase(gallery, options);
 
     const inviteTokens = normalizeInviteTokens(gallery.share?.inviteTokens);
     const inviteRows = inviteTokens.map((invite) =>
@@ -917,6 +963,7 @@ async function upsertGalleryToSupabase(gallery: Gallery) {
 
       if (inviteError) {
         console.error("Failed to upsert gallery invite tokens:", inviteError);
+        if (options?.throwOnError) throw inviteError;
       }
     }
 
@@ -929,15 +976,17 @@ async function upsertGalleryToSupabase(gallery: Gallery) {
     const { error: deleteError } = await deleteQuery;
     if (deleteError) {
       console.error("Failed to prune gallery invite tokens:", deleteError);
+      if (options?.throwOnError) throw deleteError;
     }
   } catch (error) {
     console.error("Unexpected gallery Supabase sync error:", error);
+    if (options?.throwOnError) throw error;
   }
 }
 
 export async function syncGalleryToSupabaseNow(gallery: Gallery) {
   const normalized = syncGalleryShape(gallery);
-  await upsertGalleryToSupabase(normalized);
+  await upsertGalleryToSupabase(normalized, { throwOnError: true });
 }
 
 async function deleteGalleryFromSupabase(galleryId: string) {
@@ -953,10 +1002,22 @@ async function deleteGalleryFromSupabase(galleryId: string) {
   }
 }
 
-function syncGalleriesToSupabase(galleries: Gallery[]) {
+function syncGalleriesToSupabase(galleries: Gallery[], previousGalleries?: Gallery[]) {
   if (typeof window === "undefined") return;
   const normalized = galleries.map(syncGalleryShape);
+  const previous = previousGalleries ?? [];
+  const previousById = new Map(
+    previous.map((gallery) => {
+      const normalizedGallery = syncGalleryShape(gallery);
+      return [normalizedGallery.id, getGallerySyncSignature(normalizedGallery)] as const;
+    })
+  );
+
   for (const gallery of normalized) {
+    if (previousById.get(gallery.id) === getGallerySyncSignature(gallery)) {
+      continue;
+    }
+
     void upsertGalleryToSupabase(gallery);
   }
 }
@@ -1025,6 +1086,18 @@ function writeLocalCache(galleries: Gallery[], emit: boolean) {
   window.localStorage.setItem(KEY, JSON.stringify(slimmed));
 
   if (emit) emitGalleryChange();
+}
+
+function readStoredGallerySnapshot() {
+  if (typeof window === "undefined") return [] as Gallery[];
+
+  try {
+    const raw = window.localStorage.getItem(KEY);
+    if (!raw) return [] as Gallery[];
+    return normalizeAll(JSON.parse(raw)).galleries;
+  } catch {
+    return [] as Gallery[];
+  }
 }
 
 async function hydrateLocalGalleriesFromSupabase() {
@@ -1134,6 +1207,7 @@ function filterGalleriesForProfile(galleries: Gallery[], options?: LoadGalleryOp
 function saveNormalized(galleries: Gallery[], emit: boolean) {
   if (typeof window === "undefined") return;
 
+  const previous = readStoredGallerySnapshot();
   const { galleries: normalized } = normalizeAll(galleries);
 
   try {
@@ -1144,7 +1218,7 @@ function saveNormalized(galleries: Gallery[], emit: boolean) {
     writeLocalCache(slimmed, emit);
   }
 
-  syncGalleriesToSupabase(normalized);
+  syncGalleriesToSupabase(normalized, previous);
 }
 
 function syncGalleryShape(gallery: Gallery): Gallery {
