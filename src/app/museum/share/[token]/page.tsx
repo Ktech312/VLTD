@@ -353,7 +353,7 @@ export default function SharedGalleryPage() {
           return;
         }
 
-        setGateMode("guest_allowed");
+        setGateMode("entered");
         setIsResolved(true);
       } catch (err) {
         if (isCancelled) return;

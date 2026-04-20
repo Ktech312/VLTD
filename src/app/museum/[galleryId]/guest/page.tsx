@@ -9,9 +9,35 @@ import {
   getGalleryById,
   recordGalleryView,
   type Gallery,
+  type GalleryPublicItemSnapshot,
 } from "@/lib/galleryModel";
 import { resolveGuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
-import { loadItems, type VaultItem } from "@/lib/vaultModel";
+import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
+
+function vaultItemFromGallerySnapshot(snapshot: GalleryPublicItemSnapshot): VaultItem {
+  return {
+    id: String(snapshot.id ?? "").trim(),
+    title: String(snapshot.title ?? "").trim() || "Untitled Item",
+    subtitle: typeof snapshot.subtitle === "string" ? snapshot.subtitle : undefined,
+    number: typeof snapshot.number === "string" ? snapshot.number : undefined,
+    grade: typeof snapshot.grade === "string" ? snapshot.grade : undefined,
+    currentValue:
+      typeof snapshot.currentValue === "number" && Number.isFinite(snapshot.currentValue)
+        ? snapshot.currentValue
+        : undefined,
+    imageFrontUrl: typeof snapshot.imageFrontUrl === "string" ? snapshot.imageFrontUrl : undefined,
+    imageBackUrl: typeof snapshot.imageBackUrl === "string" ? snapshot.imageBackUrl : undefined,
+    imageFrontStoragePath:
+      typeof snapshot.imageFrontStoragePath === "string" ? snapshot.imageFrontStoragePath : undefined,
+    primaryImageKey:
+      typeof snapshot.primaryImageKey === "string" ? snapshot.primaryImageKey : undefined,
+    createdAt:
+      typeof snapshot.createdAt === "number" && Number.isFinite(snapshot.createdAt)
+        ? snapshot.createdAt
+        : Date.now(),
+    isNew: false,
+  };
+}
 
 export default function GuestGalleryPage() {
   const params = useParams<{ galleryId: string }>();
@@ -24,19 +50,65 @@ export default function GuestGalleryPage() {
   useEffect(() => {
     if (!galleryId) return;
 
-    const found = getGalleryById(galleryId);
-    setGallery(found);
-    setItems(loadItems());
-    setIsResolved(true);
+    let cancelled = false;
 
-    if (found) {
-      recordGalleryView(found.id);
+    async function resolveGuestPage() {
+      const found = getGalleryById(galleryId);
+      if (cancelled) return;
+
+      setGallery(found);
+
+      await syncVaultItemsFromSupabase();
+      if (cancelled) return;
+
+      setItems(loadItems());
+      setIsResolved(true);
+
+      if (found) {
+        recordGalleryView(found.id);
+      }
     }
+
+    void resolveGuestPage();
+
+    function onVaultUpdate() {
+      setItems(loadItems());
+    }
+
+    window.addEventListener("vltd:vault-updated", onVaultUpdate);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("vltd:vault-updated", onVaultUpdate);
+    };
   }, [galleryId]);
+
+  const resolvedItems = useMemo(() => {
+    if (!gallery) return items;
+
+    const byId = new Map(items.map((item) => [item.id, item]));
+    const snapshotById = new Map(
+      (gallery.publicItemSnapshots ?? []).map((snapshot) => [snapshot.id, snapshot])
+    );
+
+    const ordered = gallery.itemIds
+      .map((itemId) => {
+        const hydrated = byId.get(itemId);
+        if (hydrated) return hydrated;
+        const snapshot = snapshotById.get(itemId);
+        return snapshot ? vaultItemFromGallerySnapshot(snapshot) : undefined;
+      })
+      .filter(Boolean) as VaultItem[];
+
+    return ordered.length > 0
+      ? ordered
+      : Array.isArray(gallery.publicItemSnapshots)
+        ? gallery.publicItemSnapshots.map(vaultItemFromGallerySnapshot)
+        : [];
+  }, [gallery, items]);
 
   const model = useMemo(
     () =>
-      resolveGuestGalleryViewModel(gallery, items, {
+      resolveGuestGalleryViewModel(gallery, resolvedItems, {
         navigation: {
           show: !!gallery,
           primaryLabel: "Gallery as Guest",
@@ -48,7 +120,7 @@ export default function GuestGalleryPage() {
           isPublic: true,
         },
       }),
-    [gallery, items]
+    [gallery, resolvedItems]
   );
 
   if (isResolved && !gallery) {
