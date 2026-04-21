@@ -541,20 +541,33 @@ export default function GalleryPage() {
     setGallery(cloneGallery(nextDraft));
     setDraft(cloneGallery(nextDraft));
     setOriginalSnapshot(normalizeDraftForCompare(nextDraft));
+
     try {
+      let vaultSyncError: unknown = null;
+
+      try {
       for (const itemId of nextDraft.itemIds) {
         enqueueVaultItemSync(itemId);
       }
       await processVaultSyncQueue();
       await syncVaultItemsFromSupabase();
       setItems(loadItems());
+      } catch (error) {
+        vaultSyncError = error;
+        console.error("Vault sync failed during gallery save:", error);
+      }
+
       await syncGalleryToSupabaseNow(nextDraft);
-      setStatusTone("good");
-      setStatus("Gallery saved.");
+      setStatusTone(vaultSyncError ? "neutral" : "good");
+      setStatus(
+        vaultSyncError
+          ? "Gallery saved. Some vault sync tasks still need retrying."
+          : "Gallery saved."
+      );
     } catch (error) {
       console.error("Direct gallery sync failed:", error);
       setStatusTone("neutral");
-      setStatus("Gallery saved locally. Cloud sync is retrying.");
+      setStatus("Gallery saved locally. Cloud gallery sync failed.");
     }
   }
 

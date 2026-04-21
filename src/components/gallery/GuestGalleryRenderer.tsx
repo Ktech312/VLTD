@@ -110,6 +110,7 @@ export default function GuestGalleryRenderer({
 }) {
   const chipClass = getThemeChipClass(model.themePack);
   const backgroundImageUrl = model.background.url;
+  const coverImageUrl = typeof model.gallery?.coverImage === "string" ? model.gallery.coverImage.trim() : "";
 
   return (
     <main
@@ -153,6 +154,19 @@ export default function GuestGalleryRenderer({
               GALLERY_STAGE_WIDTH_CLASS,
             ].join(" ")}
           >
+            {coverImageUrl ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={coverImageUrl}
+                  alt={model.galleryTitle}
+                  className="absolute inset-0 h-full w-full object-cover opacity-28"
+                  draggable={false}
+                />
+                <div className="absolute inset-0 bg-black/35" />
+              </>
+            ) : null}
+
             <div className="relative">
               <div className="text-[11px] tracking-[0.28em] text-[color:var(--muted2)]">
                 {model.access.modeLabel.toUpperCase()}

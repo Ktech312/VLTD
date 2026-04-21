@@ -1067,8 +1067,8 @@ export default function GalleryBuilder({
                         {active ? (
                           <>
                             <div className="pointer-events-none absolute inset-0 grid place-items-center">
-                              <span className="text-[96px] font-light leading-none text-white/35 drop-shadow-[0_0_14px_rgba(255,255,255,0.32)]">
-                                -
+                              <span className="relative inline-flex h-14 w-28 items-center justify-center rounded-[14px] border-2 border-[#ff8a1f] bg-[rgba(255,88,0,0.08)] shadow-[0_0_16px_rgba(255,120,0,0.72),inset_0_0_18px_rgba(255,136,31,0.22)]">
+                                <span className="h-[4px] w-14 rounded-full bg-[#ffd0a2] shadow-[0_0_10px_rgba(255,222,173,0.85)]" />
                               </span>
                             </div>
                             <div className="pointer-events-none absolute right-3 top-3 rounded-full px-2.5 py-1 text-[10px] tracking-[0.14em] ring-1 backdrop-blur-sm">
@@ -1076,7 +1076,7 @@ export default function GalleryBuilder({
                             </div>
                           </>
                         ) : (
-                          <div className="pointer-events-none absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-black/28 text-3xl font-light leading-none text-white/55 ring-1 ring-white/15 backdrop-blur-sm">
+                          <div className="pointer-events-none absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full border border-cyan-200/35 bg-[rgba(10,22,38,0.55)] text-3xl font-light leading-none text-cyan-100 shadow-[0_0_14px_rgba(34,211,238,0.45)] ring-1 ring-cyan-300/20 backdrop-blur-sm">
                             +
                           </div>
                         )}

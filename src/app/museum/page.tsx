@@ -88,12 +88,26 @@ export default function MuseumPage() {
       refresh();
     }
 
+    function onWindowFocus() {
+      refresh();
+    }
+
+    function onVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        refresh();
+      }
+    }
+
     window.addEventListener(GALLERY_EVENT, onGalleryChange);
     window.addEventListener(ACTIVE_PROFILE_EVENT, onActiveProfileChange);
+    window.addEventListener("focus", onWindowFocus);
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
       window.removeEventListener(GALLERY_EVENT, onGalleryChange);
       window.removeEventListener(ACTIVE_PROFILE_EVENT, onActiveProfileChange);
+      window.removeEventListener("focus", onWindowFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, []);
 
@@ -500,11 +514,11 @@ export default function MuseumPage() {
             </div>
 
             <h2 className="mt-3 text-2xl font-semibold">
-              Delete Gallery "{galleryPendingDelete.title}"?
+              Delete Gallery: {galleryPendingDelete.title}?
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
-              This will delete gallery "{galleryPendingDelete.title}". Are you sure you want to.
+              This will delete gallery {galleryPendingDelete.title}. Are you sure you want to continue?
             </p>
 
             <p className="mt-4 text-sm text-[color:var(--muted)]">

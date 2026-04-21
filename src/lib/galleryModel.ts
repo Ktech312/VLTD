@@ -168,6 +168,8 @@ const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 export const GALLERY_EVENT = "vltd:galleries";
 
 let supabaseHydrationStarted = false;
+let supabaseHydrationInFlight: Promise<void> | null = null;
+let lastSupabaseHydrationAt = 0;
 
 function emitGalleryChange() {
   if (typeof window === "undefined") return;
@@ -1100,15 +1102,21 @@ function readStoredGallerySnapshot() {
   }
 }
 
-async function hydrateLocalGalleriesFromSupabase() {
+async function hydrateLocalGalleriesFromSupabase(force = false) {
   if (typeof window === "undefined") return;
-  if (supabaseHydrationStarted) return;
+  if (supabaseHydrationInFlight) return supabaseHydrationInFlight;
+
+  const now = Date.now();
+  if (!force && supabaseHydrationStarted && now - lastSupabaseHydrationAt < 15_000) {
+    return;
+  }
   supabaseHydrationStarted = true;
 
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return;
 
-  try {
+  supabaseHydrationInFlight = (async () => {
+    try {
     const { data, error } = await supabase
       .from("galleries")
       .select("*")
@@ -1144,10 +1152,16 @@ async function hydrateLocalGalleriesFromSupabase() {
       }
     }
 
-    writeLocalCache(Array.from(merged.values()), true);
-  } catch (error) {
-    console.error("Unexpected Supabase gallery hydration error:", error);
-  }
+      writeLocalCache(Array.from(merged.values()), true);
+      lastSupabaseHydrationAt = Date.now();
+    } catch (error) {
+      console.error("Unexpected Supabase gallery hydration error:", error);
+    } finally {
+      supabaseHydrationInFlight = null;
+    }
+  })();
+
+  return supabaseHydrationInFlight;
 }
 
 function normalizeAll(rawList: unknown) {
