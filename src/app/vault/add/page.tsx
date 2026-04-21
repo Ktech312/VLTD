@@ -7,6 +7,7 @@ import BulkLockBar from "@/components/BulkLockBar";
 import CostToSellPanel from "@/components/CostToSellPanel";
 import ImageRoleSelector, { type ImageRole } from "@/components/ImageRoleSelector";
 import PricingMvpCard from "@/components/PricingMvpCard";
+import ScanCropEditor from "@/components/ScanCropEditor";
 import ScanPanel from "@/components/ScanPanel";
 import ScanResultPreview from "@/components/ScanResultPreview";
 import { PillButton } from "@/components/ui/PillButton";
@@ -28,6 +29,7 @@ import { lookupBookByIsbn, detectBookIsbnFromFile, extractIsbnFromText } from "@
 import { buildDuplicateWarning } from "@/lib/duplicateDetector";
 import { buildPricingPatch, type PricingMvpFields } from "@/lib/pricingMvp";
 import { parseComicScanResult, scanComicRegionsFromFile } from "@/lib/scanners/comicParser";
+import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 import { scanBarcodeFromFile } from "@/lib/scanners/barcodeScanner";
 import {
   attachScanImage,
@@ -64,6 +66,7 @@ import {
   revokeImageObjectUrl,
   saveImageBlobToIndexedDb,
 } from "@/lib/vaultImageStore";
+import { analyzeImageWithVision } from "@/lib/ai/openaiVision";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 
@@ -71,6 +74,7 @@ type FormValues = BulkAddValues;
 
 const EMPTY_VALUES: FormValues = { ...EMPTY_BULK_ADD_VALUES };
 const EMPTY_PRICING_VALUES: PricingMvpFields = {};
+const DEFAULT_SCAN_CROP: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
 
 function getActiveProfileId() {
   if (typeof window === "undefined") return "";
@@ -104,6 +108,7 @@ function reviewTitleFromSource(source?: ScanSessionReview["source"]) {
   if (source === "book_lookup") return "BOOK LOOKUP REVIEW";
   if (source === "comic_lookup") return "COMIC LOOKUP REVIEW";
   if (source === "barcode_lookup") return "BARCODE REVIEW";
+  if (source === "vision") return "AI IDENTIFY REVIEW";
   return "SCAN REVIEW";
 }
 
@@ -162,6 +167,9 @@ export default function AddPage() {
 
   const [scanSession, setScanSession] = useState<ScanSessionState>(createScanSession());
   const [scanFile, setScanFile] = useState<File | null>(null);
+  const [isCropEditorOpen, setIsCropEditorOpen] = useState(false);
+  const [scanCrop, setScanCrop] = useState<ScanCropRect>(DEFAULT_SCAN_CROP);
+  const [isApplyingCrop, setIsApplyingCrop] = useState(false);
 
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreviewUrl, setMediaPreviewUrl] = useState<string>("");
@@ -178,6 +186,7 @@ export default function AddPage() {
   const [isBookLookupRunning, setIsBookLookupRunning] = useState(false);
   const [isComicLookupRunning, setIsComicLookupRunning] = useState(false);
   const [isUpcLookupRunning, setIsUpcLookupRunning] = useState(false);
+  const [isVisionLookupRunning, setIsVisionLookupRunning] = useState(false);
   const [scanType, setScanType] = useState<ScanItemType>("auto");
   const [existingItems, setExistingItems] = useState<VaultItem[]>([]);
   const [duplicateWarning, setDuplicateWarning] = useState("");
@@ -287,6 +296,8 @@ export default function AddPage() {
     setScanFile(null);
     setScanSession(clearScanSession());
     setSaveScanAsPhoto(false);
+    setIsCropEditorOpen(false);
+    setScanCrop(DEFAULT_SCAN_CROP);
     if (cameraInputRef.current) cameraInputRef.current.value = "";
     if (uploadInputRef.current) uploadInputRef.current.value = "";
   }
@@ -302,6 +313,29 @@ export default function AddPage() {
   function clearAllImages() {
     clearScanImage();
     clearMediaImage();
+  }
+
+  function replaceScanImage(file: File) {
+    const oldPreview = scanSession.image?.previewUrl ?? "";
+    if (oldPreview.startsWith("blob:")) revokeImageObjectUrl(oldPreview);
+
+    const previewUrl = URL.createObjectURL(file);
+    setScanFile(file);
+    setIsCropEditorOpen(false);
+    setScanCrop(DEFAULT_SCAN_CROP);
+
+    setScanSession((prev) =>
+      attachScanImage(
+        prev,
+        {
+          fileName: file.name || "scan-image",
+          previewUrl,
+          mimeType: file.type,
+          lastModified: file.lastModified,
+        },
+        scanType === "auto" ? "generic" : scanType
+      )
+    );
   }
 
   function clearPricing() {
@@ -535,6 +569,179 @@ export default function AddPage() {
     }
   }
 
+  async function runOcrAutofillForFile(file: File, forcedType: ScanItemType = scanType) {
+    setIsScanning(true);
+    setScanSession((prev) => markScanSessionScanning(prev));
+    setStatus(
+      forcedType === "auto"
+        ? "Reading text from the image..."
+        : `Reading text as ${forcedType.replaceAll("_", " ")}...`
+    );
+
+    try {
+      const result = await runImageScanAutofill(file, forcedType);
+      setScanSession((prev) =>
+        setScanSessionReview(prev, {
+          source: "ocr",
+          confidence: result.quality.confidence,
+          score: result.quality.score,
+          safeToAutofill: result.quality.safeToAutofill,
+          warnings: result.quality.warnings,
+          rawText: result.rawText,
+          fields: result.fields,
+        })
+      );
+
+      setStatus(
+        result.quality.safeToAutofill
+          ? "Text scan found something useful. Review and apply."
+          : "Text scan was weak. Trying image identify may work better."
+      );
+
+      return result.quality.safeToAutofill;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Text scan failed.";
+      setScanSession((prev) => markScanSessionFailed(prev, message));
+      setStatus(message);
+      return false;
+    } finally {
+      setIsScanning(false);
+    }
+  }
+
+  async function runVisionLookupForFile(file: File, forcedType: ScanItemType = scanType) {
+    setIsVisionLookupRunning(true);
+    setScanSession((prev) => markScanSessionScanning(prev));
+    setStatus("Trying image identify...");
+
+    try {
+      const hintsByType: Record<ScanItemType, string> = {
+        auto:
+          "Identify what kind of collectible or product this is. If it is a trading card, comic, book, or graded slab, extract the visible title, number, grade, cert, and category.",
+        comic:
+          "This is likely a comic book or comic cover. Focus on title, issue number, subtitle, and comic-related category info.",
+        card:
+          "This is likely a trading card. Focus on player/character title, set/subtitle, card number, and category info.",
+        graded_card:
+          "This is likely a graded trading card in a slab. Focus on title, card number, grade, cert number, and category info.",
+        book:
+          "This is likely a book, manga, or media cover. Focus on title, subtitle, ISBN/barcode text, and book category info.",
+      };
+
+      const vision = await analyzeImageWithVision(file, {
+        hints: hintsByType[forcedType],
+      });
+
+      const safeToAutofill =
+        vision.confidence >= 0.45 && Boolean(String(vision.detectedTitle ?? "").trim());
+
+      setScanSession((prev) =>
+        setScanSessionReview(prev, {
+          source: "vision",
+          confidence:
+            vision.confidence >= 0.72 ? "high" : vision.confidence >= 0.45 ? "medium" : "low",
+          score: Math.max(0, Math.min(100, Math.round(vision.confidence * 100))),
+          safeToAutofill,
+          warnings: safeToAutofill
+            ? []
+            : ["Image identify was not confident enough to safely autofill everything."],
+          rawText: vision.notes || `AI detected: ${vision.detectedTitle} (${vision.detectedCategory})`,
+          fields: {
+            title: vision.detectedTitle,
+            subtitle: vision.subtitle,
+            number: vision.number,
+            grade: vision.grade,
+            certNumber: vision.certNumber,
+            universe: vision.universe,
+            categoryLabel: vision.categoryLabel || vision.detectedCategory,
+            subcategoryLabel: vision.subcategoryLabel,
+            notes: vision.notes,
+          },
+        })
+      );
+
+      setStatus(
+        safeToAutofill
+          ? "Image identify found a likely match. Review and apply."
+          : "Image identify was not confident. Review before applying anything."
+      );
+
+      return safeToAutofill;
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Image identify failed.";
+      setScanSession((prev) => markScanSessionFailed(prev, message));
+      setStatus(message);
+      return false;
+    } finally {
+      setIsVisionLookupRunning(false);
+    }
+  }
+
+  async function handleIdentifyCurrentScan(file: File, barcode?: { digits?: string; rawValue?: string }) {
+    const currentBarcode =
+      barcode ??
+      (scanSession.barcodeDigits
+        ? { digits: scanSession.barcodeDigits, rawValue: scanSession.barcodeRaw }
+        : undefined);
+
+    if (scanType === "book") {
+      const bookMatched = await runBookLookupForFile(file);
+      if (bookMatched) return;
+      const ocrMatched = await runOcrAutofillForFile(file, "book");
+      if (ocrMatched) return;
+      await runVisionLookupForFile(file, "book");
+      return;
+    }
+
+    if (scanType === "comic") {
+      const comicMatched = await runComicLookupForFile(
+        file,
+        currentBarcode?.digits,
+        currentBarcode?.rawValue
+      );
+      if (comicMatched) return;
+      const ocrMatched = await runOcrAutofillForFile(file, "comic");
+      if (ocrMatched) return;
+      await runVisionLookupForFile(file, "comic");
+      return;
+    }
+
+    if (scanType === "card" || scanType === "graded_card") {
+      const ocrMatched = await runOcrAutofillForFile(file, scanType);
+      if (ocrMatched) return;
+      await runVisionLookupForFile(file, scanType);
+      return;
+    }
+
+    if (currentBarcode?.digits) {
+      const bookLike = looksLikeBookBarcode(currentBarcode.digits);
+
+      if (bookLike) {
+        const bookMatched = await runBookLookupForFile(file);
+        if (bookMatched) return;
+      }
+
+      const productMatched = await runUpcLookupForCode(
+        currentBarcode.digits,
+        currentBarcode.rawValue
+      );
+      if (productMatched) return;
+
+      const comicMatched = await runComicLookupForFile(
+        file,
+        currentBarcode.digits,
+        currentBarcode.rawValue
+      );
+      if (comicMatched) return;
+    }
+
+    const ocrMatched = await runOcrAutofillForFile(file, "auto");
+    if (ocrMatched) return;
+
+    await runVisionLookupForFile(file, "auto");
+  }
+
   async function handleScanImageSelection(fileList: FileList | null) {
     const file = fileList?.[0];
     if (!file) return;
@@ -544,27 +751,9 @@ export default function AddPage() {
       return;
     }
 
-    const oldPreview = scanSession.image?.previewUrl ?? "";
-    if (oldPreview.startsWith("blob:")) revokeImageObjectUrl(oldPreview);
+    replaceScanImage(file);
 
-    const previewUrl = URL.createObjectURL(file);
-
-    setScanFile(file);
-
-    setScanSession((prev) =>
-      attachScanImage(
-        prev,
-        {
-          fileName: file.name || "scan-image",
-          previewUrl,
-          mimeType: file.type,
-          lastModified: file.lastModified,
-        },
-        scanType === "auto" ? "generic" : scanType
-      )
-    );
-
-    setStatus("Scanning barcode...");
+    setStatus("Photo added. Checking for barcode...");
 
     try {
       const barcode = await scanBarcodeFromFile(file);
@@ -574,61 +763,17 @@ export default function AddPage() {
           setScanSessionBarcode(prev, barcode.rawValue, barcode.digits)
         );
 
-        setStatus(`Barcode detected: ${barcode.digits}`);
-
-        if (scanType === "book") {
-          await runBookLookupForFile(file);
+          setStatus(`Barcode found. Identifying item from ${barcode.digits}...`);
+          await handleIdentifyCurrentScan(file, barcode);
           return;
         }
 
-        if (scanType === "comic") {
-          await runComicLookupForFile(file, barcode.digits, barcode.rawValue);
-          return;
-        }
-
-          if (scanType === "auto") {
-            const bookLike = looksLikeBookBarcode(barcode.digits);
-
-            if (bookLike) {
-              const bookMatched = await runBookLookupForFile(file);
-            if (bookMatched) return;
-
-            const comicMatched = await runComicLookupForFile(file, barcode.digits, barcode.rawValue);
-            if (comicMatched) return;
-          } else {
-            const comicMatched = await runComicLookupForFile(file, barcode.digits, barcode.rawValue);
-            if (comicMatched) return;
-
-              const bookMatched = await runBookLookupForFile(file);
-              if (bookMatched) return;
-            }
-
-            const productMatched = await runUpcLookupForCode(barcode.digits, barcode.rawValue);
-            if (productMatched) return;
-          }
-
-        setScanSession((prev) =>
-          setScanSessionReview(prev, {
-            source: "barcode_lookup",
-            confidence: "high",
-            score: 80,
-            safeToAutofill: true,
-            warnings: [],
-            rawText: `Barcode detected: ${barcode.digits}`,
-            fields: {
-              serialNumber: barcode.digits,
-            },
-          })
-        );
-
-        setStatus(`Barcode detected: ${barcode.digits}`);
-        return;
-      }
-
-      setStatus("No barcode found. Ready for OCR scan.");
+      setStatus("No barcode found. Trying text and image identify...");
+      await handleIdentifyCurrentScan(file);
     } catch (err) {
       console.error("Barcode scan failed:", err);
-      setStatus("Barcode scan failed. You can still run OCR.");
+      setStatus("Barcode scan failed. Trying text and image identify...");
+      await handleIdentifyCurrentScan(file);
     }
   }
 
@@ -655,6 +800,27 @@ export default function AddPage() {
     await runUpcLookupForCode(barcode.digits, barcode.rawValue);
   }
 
+  async function handleApplyScanCrop() {
+    if (!scanFile) {
+      setStatus("Take a photo first before cropping.");
+      return;
+    }
+
+    setIsApplyingCrop(true);
+
+    try {
+      const cropped = await cropImageFile(scanFile, scanCrop);
+      replaceScanImage(cropped);
+      setStatus("Crop applied. Re-identifying the tighter image...");
+      const barcode = await scanBarcodeFromFile(cropped);
+      await handleIdentifyCurrentScan(cropped, barcode ?? undefined);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Failed to crop scan image.");
+    } finally {
+      setIsApplyingCrop(false);
+    }
+  }
+
   async function handleMediaImageSelection(fileList: FileList | null) {
     const file = fileList?.[0];
     if (!file) return;
@@ -677,36 +843,9 @@ export default function AddPage() {
       return;
     }
 
-    setIsScanning(true);
-    setScanSession((prev) => markScanSessionScanning(prev));
-    setStatus("Scanning image for text...");
-
-    try {
-      const result = await runImageScanAutofill(scanFile, scanType);
-      setScanSession((prev) =>
-        setScanSessionReview(prev, {
-          source: "ocr",
-          confidence: result.quality.confidence,
-          score: result.quality.score,
-          safeToAutofill: result.quality.safeToAutofill,
-          warnings: result.quality.warnings,
-          rawText: result.rawText,
-          fields: result.fields,
-        })
-      );
-
-      setStatus(
-        result.quality.safeToAutofill
-          ? "Scan complete. Review and apply the extracted fields."
-          : "Low-confidence scan. Review raw OCR and try a better image."
-      );
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Scan failed.";
-      setScanSession((prev) => markScanSessionFailed(prev, message));
-      setStatus(message);
-    } finally {
-      setIsScanning(false);
-    }
+    setStatus("Trying full auto-identify again...");
+    const barcode = await scanBarcodeFromFile(scanFile);
+    await handleIdentifyCurrentScan(scanFile, barcode ?? undefined);
   }
 
   async function handleBookIsbnLookup() {
@@ -715,7 +854,7 @@ export default function AddPage() {
       return;
     }
 
-    setStatus("Trying barcode / ISBN lookup...");
+    setStatus("Trying book / ISBN lookup...");
     await runBookLookupForFile(scanFile);
   }
 
@@ -1159,21 +1298,35 @@ export default function AddPage() {
             <ScanPanel
               session={scanSession}
               scanType={scanType}
-              isScanning={isScanning}
-              isBookLookupRunning={isBookLookupRunning}
-              isComicLookupRunning={isComicLookupRunning}
-              isUpcLookupRunning={isUpcLookupRunning}
+                isScanning={isScanning}
+                isBookLookupRunning={isBookLookupRunning}
+                isComicLookupRunning={isComicLookupRunning}
+                isUpcLookupRunning={isUpcLookupRunning}
+                isVisionLookupRunning={isVisionLookupRunning}
               saveScanAsPhoto={saveScanAsPhoto}
               onScanTypeChange={setScanType}
               onUseCamera={() => cameraInputRef.current?.click()}
               onUploadImage={() => uploadInputRef.current?.click()}
               onScanAutofill={() => void handleScanAutofill()}
+              onCropImage={() => setIsCropEditorOpen(true)}
               onBookLookup={() => void handleBookIsbnLookup()}
               onComicLookup={() => void handleComicLookup()}
               onUpcLookup={() => void handleUpcLookup()}
               onClearImage={clearScanImage}
               onToggleSaveScanAsPhoto={setSaveScanAsPhoto}
             />
+
+            {isCropEditorOpen && scanSession.image?.previewUrl ? (
+              <ScanCropEditor
+                imageUrl={scanSession.image.previewUrl}
+                crop={scanCrop}
+                onChange={setScanCrop}
+                onApply={() => void handleApplyScanCrop()}
+                onReset={() => setScanCrop(DEFAULT_SCAN_CROP)}
+                onCancel={() => setIsCropEditorOpen(false)}
+                isApplying={isApplyingCrop}
+              />
+            ) : null}
 
             <section className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ITEM PHOTO</div>

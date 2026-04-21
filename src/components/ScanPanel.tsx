@@ -28,11 +28,13 @@ export default function ScanPanel({
   isBookLookupRunning,
   isComicLookupRunning,
   isUpcLookupRunning = false,
+  isVisionLookupRunning = false,
   saveScanAsPhoto,
   onScanTypeChange,
   onUseCamera,
   onUploadImage,
   onScanAutofill,
+  onCropImage = () => {},
   onBookLookup,
   onComicLookup,
   onUpcLookup = () => {},
@@ -45,11 +47,13 @@ export default function ScanPanel({
   isBookLookupRunning: boolean;
   isComicLookupRunning: boolean;
   isUpcLookupRunning?: boolean;
+  isVisionLookupRunning?: boolean;
   saveScanAsPhoto: boolean;
   onScanTypeChange: (value: ScanItemType) => void;
   onUseCamera: () => void;
   onUploadImage: () => void;
   onScanAutofill: () => void;
+  onCropImage?: () => void;
   onBookLookup: () => void;
   onComicLookup: () => void;
   onUpcLookup?: () => void;
@@ -59,13 +63,15 @@ export default function ScanPanel({
   const previewUrl = session.image?.previewUrl ?? "";
   const hasImage = Boolean(previewUrl);
   const review = session.review;
+  const isIdentifying =
+    isScanning || isBookLookupRunning || isComicLookupRunning || isUpcLookupRunning || isVisionLookupRunning;
 
   return (
     <section className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
       {/* HEADER */}
       <div className="flex items-center justify-between">
         <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
-          SCAN (TEMPORARY)
+          ITEM IDENTIFY (TEMPORARY)
         </div>
         <div className="text-[10px] text-red-300">
           NOT SAVED BY DEFAULT
@@ -74,7 +80,11 @@ export default function ScanPanel({
 
       {/* PREVIEW */}
       <div className="mt-2 overflow-hidden rounded-[14px] bg-black/20 p-2 ring-1 ring-red-500/20">
-        <div className="flex h-[180px] items-center justify-center overflow-hidden rounded-[10px] bg-black/20">
+        <button
+          type="button"
+          onClick={onUseCamera}
+          className="flex h-[180px] w-full items-center justify-center overflow-hidden rounded-[10px] bg-black/20 text-left transition hover:bg-black/25 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)]"
+        >
           {previewUrl ? (
             <img
               src={previewUrl}
@@ -83,9 +93,12 @@ export default function ScanPanel({
             />
           ) : (
             <div className="px-4 text-center text-xs text-[color:var(--muted)]">
-              No scan image (used for OCR / barcode only)
+              Tap this square to take a photo
             </div>
           )}
+        </button>
+        <div className="mt-2 text-center text-[11px] text-[color:var(--muted2)]">
+          Tap the preview square to open your camera.
         </div>
       </div>
 
@@ -93,8 +106,11 @@ export default function ScanPanel({
       <div className="mt-3 grid gap-2">
         <div className="grid gap-1.5">
           <label className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">
-            SCAN TYPE
+            ITEM TYPE
           </label>
+          <div className="text-xs text-[color:var(--muted)]">
+            Leave this on Auto unless you already know this is a book, comic, or card.
+          </div>
           <select
             className={selectClass()}
             value={scanType}
@@ -111,19 +127,27 @@ export default function ScanPanel({
         </div>
 
         <button onClick={onUseCamera} className={actionButtonClass()}>
-          Use Camera
+          Take Photo
         </button>
 
         <button onClick={onUploadImage} className={actionButtonClass()}>
-          Upload Scan Image
+          Choose Existing Photo
         </button>
 
         <button
           onClick={onScanAutofill}
-          disabled={!hasImage || isScanning}
+          disabled={!hasImage || isIdentifying}
           className={actionButtonClass(true)}
         >
-          {isScanning ? "Scanning..." : "Run OCR Autofill"}
+          {isIdentifying ? "Identifying..." : "Identify Item"}
+        </button>
+
+        <button
+          onClick={onCropImage}
+          disabled={!hasImage || isIdentifying}
+          className={actionButtonClass()}
+        >
+          Crop Scan
         </button>
 
         <button
@@ -131,7 +155,7 @@ export default function ScanPanel({
           disabled={!hasImage || isBookLookupRunning}
           className={actionButtonClass()}
         >
-          {isBookLookupRunning ? "Looking up..." : "ISBN Lookup"}
+          {isBookLookupRunning ? "Looking up..." : "Book / ISBN"}
         </button>
 
         <button
@@ -147,7 +171,7 @@ export default function ScanPanel({
           disabled={(!hasImage && !session.barcodeDigits) || isUpcLookupRunning}
           className={actionButtonClass()}
         >
-          {isUpcLookupRunning ? "Looking up..." : "UPC Lookup"}
+          {isUpcLookupRunning ? "Looking up..." : "Product Barcode"}
         </button>
 
         <button
@@ -221,7 +245,7 @@ export default function ScanPanel({
 
       {/* FOOTNOTE */}
       <div className="mt-4 rounded-xl bg-black/10 p-3 text-xs text-[color:var(--muted)] ring-1 ring-white/8">
-        This image is for scanning only (OCR / barcode). It is NOT part of your collection unless explicitly saved.
+        When you add a photo, the app now tries this automatically: barcode, book/product match, text scan, then image identify.
       </div>
     </section>
   );
