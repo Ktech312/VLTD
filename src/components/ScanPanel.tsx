@@ -27,6 +27,7 @@ export default function ScanPanel({
   isScanning,
   isBookLookupRunning,
   isComicLookupRunning,
+  isUpcLookupRunning = false,
   saveScanAsPhoto,
   onScanTypeChange,
   onUseCamera,
@@ -34,6 +35,7 @@ export default function ScanPanel({
   onScanAutofill,
   onBookLookup,
   onComicLookup,
+  onUpcLookup = () => {},
   onClearImage,
   onToggleSaveScanAsPhoto,
 }: {
@@ -42,6 +44,7 @@ export default function ScanPanel({
   isScanning: boolean;
   isBookLookupRunning: boolean;
   isComicLookupRunning: boolean;
+  isUpcLookupRunning?: boolean;
   saveScanAsPhoto: boolean;
   onScanTypeChange: (value: ScanItemType) => void;
   onUseCamera: () => void;
@@ -49,6 +52,7 @@ export default function ScanPanel({
   onScanAutofill: () => void;
   onBookLookup: () => void;
   onComicLookup: () => void;
+  onUpcLookup?: () => void;
   onClearImage: () => void;
   onToggleSaveScanAsPhoto: (checked: boolean) => void;
 }) {
@@ -136,6 +140,14 @@ export default function ScanPanel({
           className={actionButtonClass()}
         >
           {isComicLookupRunning ? "Scanning..." : "Comic Scan"}
+        </button>
+
+        <button
+          onClick={onUpcLookup}
+          disabled={(!hasImage && !session.barcodeDigits) || isUpcLookupRunning}
+          className={actionButtonClass()}
+        >
+          {isUpcLookupRunning ? "Looking up..." : "UPC Lookup"}
         </button>
 
         <button

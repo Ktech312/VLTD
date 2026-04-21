@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import BiggestMoversPanel from "@/components/BiggestMoversPanel";
 import { getOnboardingStatus } from "@/lib/auth";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 
@@ -81,6 +82,9 @@ export default function HomeClient() {
         <section className="mt-6 grid gap-4 lg:grid-cols-2">
           <div className="rounded-[24px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)]"><div className="text-[11px] uppercase tracking-[0.24em] text-[color:var(--muted2)]">Quick Actions</div><div className="mt-4 grid gap-3 sm:grid-cols-2"><Link href="/vault/quick" className="rounded-2xl bg-[color:var(--pill-active-bg)] px-4 py-4 text-sm font-semibold text-[color:var(--fg)]">Quick Add</Link><Link href="/vault/import" className="rounded-2xl bg-[color:var(--pill)] px-4 py-4 text-sm font-medium ring-1 ring-[color:var(--border)]">Import</Link><Link href="/vault" className="rounded-2xl bg-[color:var(--pill)] px-4 py-4 text-sm font-medium ring-1 ring-[color:var(--border)]">Open Vault</Link><Link href="/account" className="rounded-2xl bg-[color:var(--pill)] px-4 py-4 text-sm font-medium ring-1 ring-[color:var(--border)]">Account Settings</Link></div></div>
           <div className="rounded-[24px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)]"><div className="text-[11px] uppercase tracking-[0.24em] text-[color:var(--muted2)]">Collector Setup</div><div className="mt-4 text-sm text-[color:var(--muted)]">Primary focus: <span className="text-[color:var(--fg)]">{primaryFocus || "Not set yet"}</span></div></div>
+        </section>
+        <section className="mt-6">
+          <BiggestMoversPanel items={items} />
         </section>
       </div>
     </main>

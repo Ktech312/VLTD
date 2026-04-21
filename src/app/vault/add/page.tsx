@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import BulkLockBar from "@/components/BulkLockBar";
+import CostToSellPanel from "@/components/CostToSellPanel";
 import ImageRoleSelector, { type ImageRole } from "@/components/ImageRoleSelector";
 import PricingMvpCard from "@/components/PricingMvpCard";
 import ScanPanel from "@/components/ScanPanel";
@@ -24,6 +25,7 @@ import {
   type BulkAddValues,
 } from "@/lib/bulkAddState";
 import { lookupBookByIsbn, detectBookIsbnFromFile, extractIsbnFromText } from "@/lib/bookIsbn";
+import { buildDuplicateWarning } from "@/lib/duplicateDetector";
 import { buildPricingPatch, type PricingMvpFields } from "@/lib/pricingMvp";
 import { parseComicScanResult, scanComicRegionsFromFile } from "@/lib/scanners/comicParser";
 import { scanBarcodeFromFile } from "@/lib/scanners/barcodeScanner";
@@ -41,8 +43,15 @@ import {
   type ScanSessionState,
 } from "@/lib/scanners/scanSession";
 import { newId } from "@/lib/id";
+import { lookupUpcItem } from "@/lib/upcLookup";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
-import { appendItems, type VaultImage, type VaultItem } from "@/lib/vaultModel";
+import {
+  appendItems,
+  loadItems,
+  syncVaultItemsFromSupabase,
+  type VaultImage,
+  type VaultItem,
+} from "@/lib/vaultModel";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { hasSupabaseEnv, uploadVaultImageToSupabase } from "@/lib/vaultCloud";
 import {
@@ -168,12 +177,41 @@ export default function AddPage() {
   const [isScanning, setIsScanning] = useState(false);
   const [isBookLookupRunning, setIsBookLookupRunning] = useState(false);
   const [isComicLookupRunning, setIsComicLookupRunning] = useState(false);
+  const [isUpcLookupRunning, setIsUpcLookupRunning] = useState(false);
   const [scanType, setScanType] = useState<ScanItemType>("auto");
+  const [existingItems, setExistingItems] = useState<VaultItem[]>([]);
+  const [duplicateWarning, setDuplicateWarning] = useState("");
 
   useEffect(() => {
     const state = readBulkAddState();
     setLocks(state.locks);
     setValues(applyBulkLockedValues(undefined, state.rememberedValues, state.locks));
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function hydrateExistingItems() {
+      if (isActive) {
+        setExistingItems(loadItems());
+      }
+
+      try {
+        await syncVaultItemsFromSupabase();
+      } catch {
+        // local cache is still useful for duplicate checks
+      }
+
+      if (isActive) {
+        setExistingItems(loadItems());
+      }
+    }
+
+    void hydrateExistingItems();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -196,7 +234,28 @@ export default function AddPage() {
     };
   }, [mediaPreviewUrl]);
 
+  useEffect(() => {
+    setDuplicateWarning(
+      buildDuplicateWarning(
+        {
+          title: values.title,
+          number: values.number,
+          certNumber: values.certNumber,
+        },
+        existingItems
+      )
+    );
+  }, [existingItems, values.certNumber, values.number, values.title]);
+
   const canSave = useMemo(() => values.title.trim().length > 0 && !isSaving, [values.title, isSaving]);
+  const sellPrice = useMemo(
+    () =>
+      parseMoney(values.currentValue) ??
+      pricingValues.estimatedValue ??
+      pricingValues.lastCompValue ??
+      0,
+    [pricingValues.estimatedValue, pricingValues.lastCompValue, values.currentValue]
+  );
 
   function setField<K extends keyof FormValues>(key: K, value: FormValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -409,6 +468,73 @@ export default function AddPage() {
     }
   }
 
+  async function runUpcLookupForCode(barcodeDigits?: string, barcodeRawValue?: string) {
+    const digits = String(barcodeDigits ?? "").replace(/\D/g, "").trim();
+    if (!digits) return false;
+
+    setIsUpcLookupRunning(true);
+    setScanSession((prev) => markScanSessionScanning(prev));
+
+    try {
+      const result = await lookupUpcItem(digits);
+
+      if (!result) {
+        setStatus("Barcode found, but no product details were returned.");
+        return false;
+      }
+
+      setScanSession((prev) => {
+        let next = prev;
+
+        if (barcodeRawValue || digits) {
+          next = setScanSessionBarcode(next, barcodeRawValue || digits, digits);
+        }
+
+        return setScanSessionReview(next, {
+          source: "barcode_lookup",
+          confidence: result.source === "openlibrary" ? "high" : "medium",
+          score: result.source === "openlibrary" ? 92 : 74,
+          safeToAutofill: true,
+          warnings:
+            result.source === "upcitemdb"
+              ? ["Catalog product lookup matched. Review the title and category before applying."]
+              : [],
+          rawText: [
+            `Barcode detected: ${digits}`,
+            `Lookup source: ${result.source}`,
+            result.notes || "",
+          ]
+            .filter(Boolean)
+            .join("\n"),
+          fields: {
+            title: result.title,
+            subtitle: result.subtitle || "",
+            serialNumber: result.code,
+            universe: result.universe || "",
+            category: result.source === "openlibrary" ? "BOOKS" : "PRODUCTS",
+            categoryLabel: result.categoryLabel || "",
+            subcategoryLabel: result.subcategoryLabel || "",
+            notes: result.notes || "",
+          },
+        });
+      });
+
+      setStatus(
+        result.source === "openlibrary"
+          ? "Book lookup found. Review and apply."
+          : "Product lookup found. Review and apply."
+      );
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "UPC lookup failed.";
+      setScanSession((prev) => markScanSessionFailed(prev, message));
+      setStatus(message);
+      return false;
+    } finally {
+      setIsUpcLookupRunning(false);
+    }
+  }
+
   async function handleScanImageSelection(fileList: FileList | null) {
     const file = fileList?.[0];
     if (!file) return;
@@ -460,11 +586,11 @@ export default function AddPage() {
           return;
         }
 
-        if (scanType === "auto") {
-          const bookLike = looksLikeBookBarcode(barcode.digits);
+          if (scanType === "auto") {
+            const bookLike = looksLikeBookBarcode(barcode.digits);
 
-          if (bookLike) {
-            const bookMatched = await runBookLookupForFile(file);
+            if (bookLike) {
+              const bookMatched = await runBookLookupForFile(file);
             if (bookMatched) return;
 
             const comicMatched = await runComicLookupForFile(file, barcode.digits, barcode.rawValue);
@@ -473,10 +599,13 @@ export default function AddPage() {
             const comicMatched = await runComicLookupForFile(file, barcode.digits, barcode.rawValue);
             if (comicMatched) return;
 
-            const bookMatched = await runBookLookupForFile(file);
-            if (bookMatched) return;
+              const bookMatched = await runBookLookupForFile(file);
+              if (bookMatched) return;
+            }
+
+            const productMatched = await runUpcLookupForCode(barcode.digits, barcode.rawValue);
+            if (productMatched) return;
           }
-        }
 
         setScanSession((prev) =>
           setScanSessionReview(prev, {
@@ -501,6 +630,29 @@ export default function AddPage() {
       console.error("Barcode scan failed:", err);
       setStatus("Barcode scan failed. You can still run OCR.");
     }
+  }
+
+  async function handleUpcLookup() {
+    const manualDigits = String(values.serialNumber ?? "").replace(/\D/g, "").trim();
+    if (manualDigits) {
+      setStatus("Trying product lookup...");
+      await runUpcLookupForCode(manualDigits, manualDigits);
+      return;
+    }
+
+    if (!scanFile) {
+      setStatus("Attach a scan image or enter a serial/barcode first.");
+      return;
+    }
+
+    setStatus("Trying product lookup...");
+    const barcode = await scanBarcodeFromFile(scanFile);
+    if (!barcode?.digits) {
+      setStatus("No barcode found for product lookup.");
+      return;
+    }
+
+    await runUpcLookupForCode(barcode.digits, barcode.rawValue);
   }
 
   async function handleMediaImageSelection(fileList: FileList | null) {
@@ -752,6 +904,7 @@ export default function AddPage() {
       enqueueVaultItemSync(item.id);
       emitVaultUpdate();
       await processVaultSyncQueue();
+      setExistingItems((prev) => [item, ...prev]);
 
       setStatus(saveAndNext ? "Saved. Ready for next item." : "Saved.");
       clearAllImages();
@@ -839,12 +992,19 @@ export default function AddPage() {
 
             <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
               <Field label="Title / Series" locked={locks.title} onToggleLock={() => handleToggleLock("title")}>
-                <input
-                  className={inputClass()}
-                  value={values.title}
-                  onChange={(e) => setField("title", e.target.value)}
-                  placeholder="Amazing Spider-Man"
-                />
+                <div className="grid gap-2">
+                  <input
+                    className={inputClass()}
+                    value={values.title}
+                    onChange={(e) => setField("title", e.target.value)}
+                    placeholder="Amazing Spider-Man"
+                  />
+                  {duplicateWarning ? (
+                    <div className="rounded-xl bg-amber-500/10 px-3 py-2 text-xs text-amber-200 ring-1 ring-amber-400/20">
+                      {duplicateWarning}
+                    </div>
+                  ) : null}
+                </div>
               </Field>
 
               <Field label="Subtitle / Set" locked={locks.subtitle} onToggleLock={() => handleToggleLock("subtitle")}>
@@ -1002,6 +1162,7 @@ export default function AddPage() {
               isScanning={isScanning}
               isBookLookupRunning={isBookLookupRunning}
               isComicLookupRunning={isComicLookupRunning}
+              isUpcLookupRunning={isUpcLookupRunning}
               saveScanAsPhoto={saveScanAsPhoto}
               onScanTypeChange={setScanType}
               onUseCamera={() => cameraInputRef.current?.click()}
@@ -1009,6 +1170,7 @@ export default function AddPage() {
               onScanAutofill={() => void handleScanAutofill()}
               onBookLookup={() => void handleBookIsbnLookup()}
               onComicLookup={() => void handleComicLookup()}
+              onUpcLookup={() => void handleUpcLookup()}
               onClearImage={clearScanImage}
               onToggleSaveScanAsPhoto={setSaveScanAsPhoto}
             />
@@ -1071,6 +1233,8 @@ export default function AddPage() {
                 setStatus("Pricing updated for this draft item.");
               }}
             />
+
+            <CostToSellPanel price={sellPrice} />
 
             <input
               ref={cameraInputRef}

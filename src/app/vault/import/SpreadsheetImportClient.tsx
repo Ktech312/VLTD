@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { PillButton } from "@/components/ui/PillButton";
+import { parseEbayImportRow } from "@/lib/importParsers/ebayImport";
+import { parseWhatnotImportRow } from "@/lib/importParsers/whatnotImport";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
 import {
   appendImportedItems,
@@ -12,6 +14,7 @@ import {
   buildItemsFromSource,
   detectDuplicateGroups,
   downloadBlankSpreadsheetTemplate,
+  type IgnoredImportRow,
   MAPPING_OPTIONS,
   parsePastedSource,
   parseSpreadsheetSource,
@@ -25,6 +28,26 @@ import {
 const PREVIEW_LIMIT = 150;
 const IGNORE_LIMIT = 50;
 const DUP_LIMIT = 20;
+
+type ImportPreset = "generic" | "ebay" | "whatnot";
+
+const IMPORT_PRESET_OPTIONS: Array<{ value: ImportPreset; label: string; helper: string }> = [
+  {
+    value: "generic",
+    label: "Generic / VLTD",
+    helper: "Use the flexible column mapping flow.",
+  },
+  {
+    value: "ebay",
+    label: "eBay Purchases",
+    helper: "Use the dedicated eBay purchase history parser.",
+  },
+  {
+    value: "whatnot",
+    label: "Whatnot Orders",
+    helper: "Use the dedicated Whatnot seller/order parser.",
+  },
+];
 
 function SurfaceCard({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
@@ -51,6 +74,45 @@ function toMoney(value: number) {
   }).format(value);
 }
 
+function parseSourceWithPreset(source: ParsedImportSource, preset: ImportPreset) {
+  if (preset === "generic") {
+    throw new Error("Generic preset should use buildItemsFromSource.");
+  }
+
+  const parser = preset === "ebay" ? parseEbayImportRow : parseWhatnotImportRow;
+  const items: ParsedImportItem[] = [];
+  const ignoredRows: IgnoredImportRow[] = [];
+
+  source.sheets.forEach((sheet) => {
+    sheet.rows.forEach((row, index) => {
+      const parsed = parser(row);
+
+      if (!parsed) {
+        ignoredRows.push({
+          source: sheet.sheetName,
+          rowNumber: index + 1,
+          reason: `Row did not match the ${preset} import format.`,
+          raw: row,
+        });
+        return;
+      }
+
+      items.push({
+        ...parsed,
+        sourceSheet: sheet.sheetName,
+        missingCost:
+          parsed.purchasePrice == null || !Number.isFinite(Number(parsed.purchasePrice)),
+      });
+    });
+  });
+
+  return {
+    items,
+    ignoredRows,
+    sourceLabel: `${source.sourceLabel} (${preset === "ebay" ? "eBay preset" : "Whatnot preset"})`,
+  };
+}
+
 export default function SpreadsheetImportClient() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -61,12 +123,13 @@ export default function SpreadsheetImportClient() {
   const [source, setSource] = useState<ParsedImportSource | null>(null);
   const [mapping, setMapping] = useState<MappingProfile>({});
   const [parsedItems, setParsedItems] = useState<ParsedImportItem[]>([]);
-  const [ignoredRows, setIgnoredRows] = useState<any[]>([]);
+  const [ignoredRows, setIgnoredRows] = useState<IgnoredImportRow[]>([]);
   const [sourceLabel, setSourceLabel] = useState("No source loaded");
   const [recentVault, setRecentVault] = useState<ParsedImportItem[]>([]);
   const [hasMounted, setHasMounted] = useState(false);
   const [importMode, setImportMode] = useState<"all" | "skip-duplicates">("all");
   const [hasConfirmed, setHasConfirmed] = useState(false);
+  const [importPreset, setImportPreset] = useState<ImportPreset>("generic");
 
   const previewItems = useMemo(() => parsedItems.slice(0, PREVIEW_LIMIT), [parsedItems]);
   const duplicateGroups = useMemo(() => detectDuplicateGroups(parsedItems), [parsedItems]);
@@ -84,7 +147,31 @@ export default function SpreadsheetImportClient() {
     refreshRecentVault();
   }, []);
 
-  function applySource(nextSource: ParsedImportSource) {
+  function handlePresetChange(nextPreset: ImportPreset) {
+    setImportPreset(nextPreset);
+    if (source) {
+      applySource(source, nextPreset);
+    }
+  }
+
+  function applySource(nextSource: ParsedImportSource, preset: ImportPreset = importPreset) {
+    if (preset !== "generic") {
+      const nextResult = parseSourceWithPreset(nextSource, preset);
+
+      setSource(nextSource);
+      setMapping({});
+      setParsedItems(nextResult.items);
+      setIgnoredRows(nextResult.ignoredRows);
+      setSourceLabel(nextResult.sourceLabel);
+      setHasConfirmed(false);
+      setStatus(
+        nextResult.items.length > 0
+          ? `Parsed ${nextResult.items.length} items from ${nextResult.sourceLabel}.`
+          : `No importable rows found in ${nextResult.sourceLabel}.`
+      );
+      return;
+    }
+
     const nextMapping = buildDefaultMappingProfile(nextSource);
     const nextResult = buildItemsFromSource(nextSource, nextMapping);
 
@@ -246,6 +333,30 @@ export default function SpreadsheetImportClient() {
           <SurfaceCard className="p-4 sm:p-5">
             <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Upload or Paste</div>
 
+            <div className="mt-4">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Import Preset</div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {IMPORT_PRESET_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => handlePresetChange(option.value)}
+                    className={[
+                      "rounded-full px-4 py-2 text-sm ring-1 transition",
+                      importPreset === option.value
+                        ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[color:var(--pill-active-bg)]"
+                        : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
+                    ].join(" ")}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3 rounded-[20px] bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]">
+                {IMPORT_PRESET_OPTIONS.find((option) => option.value === importPreset)?.helper}
+              </div>
+            </div>
+
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <PillButton variant="primary" onClick={() => fileInputRef.current?.click()} disabled={isParsing || isImporting}>
                 {isParsing ? "Parsing..." : "Upload Spreadsheet"}
@@ -383,7 +494,7 @@ export default function SpreadsheetImportClient() {
           </div>
         </div>
 
-        {source && source.sheets.length > 0 ? (
+        {source && source.sheets.length > 0 && importPreset === "generic" ? (
           <SurfaceCard className="mt-4 p-4 sm:p-5">
             <div>
               <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Mapping Preview</div>
