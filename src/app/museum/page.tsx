@@ -9,6 +9,7 @@ import {
   GALLERY_EVENT,
   deleteGallery,
   loadGalleries,
+  refreshGalleriesFromSupabase,
   type Gallery,
 } from "@/lib/galleryModel";
 import { getGalleryLimits } from "@/lib/galleryTier";
@@ -79,6 +80,7 @@ export default function MuseumPage() {
 
   useEffect(() => {
     refresh();
+    void refreshGalleriesFromSupabase(true);
 
     function onGalleryChange() {
       refresh();
@@ -90,13 +92,21 @@ export default function MuseumPage() {
 
     function onWindowFocus() {
       refresh();
+      void refreshGalleriesFromSupabase(true);
     }
 
     function onVisibilityChange() {
       if (document.visibilityState === "visible") {
         refresh();
+        void refreshGalleriesFromSupabase(true);
       }
     }
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void refreshGalleriesFromSupabase(true);
+      }
+    }, 15000);
 
     window.addEventListener(GALLERY_EVENT, onGalleryChange);
     window.addEventListener(ACTIVE_PROFILE_EVENT, onActiveProfileChange);
@@ -108,6 +118,7 @@ export default function MuseumPage() {
       window.removeEventListener(ACTIVE_PROFILE_EVENT, onActiveProfileChange);
       window.removeEventListener("focus", onWindowFocus);
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.clearInterval(intervalId);
     };
   }, []);
 

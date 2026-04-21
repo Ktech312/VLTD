@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 
 import {
   loadGalleries,
+  refreshGalleriesFromSupabase,
   saveGalleriesLocally,
   type Gallery,
   type GalleryPublicItemSnapshot,
@@ -320,6 +321,7 @@ export default function GalleryPage() {
 
     ensureGalleryPublicToken(id);
     loadState();
+    void refreshGalleriesFromSupabase(true);
     recordGalleryView(id);
 
     function onGalleryChange() {
@@ -329,6 +331,35 @@ export default function GalleryPage() {
     window.addEventListener(GALLERY_EVENT, onGalleryChange);
     return () => window.removeEventListener(GALLERY_EVENT, onGalleryChange);
   }, [id, loadState]);
+
+  useEffect(() => {
+    if (!id) return;
+
+    function onWindowFocus() {
+      void refreshGalleriesFromSupabase(true);
+    }
+
+    function onVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        void refreshGalleriesFromSupabase(true);
+      }
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void refreshGalleriesFromSupabase(true);
+      }
+    }, 15000);
+
+    window.addEventListener("focus", onWindowFocus);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", onWindowFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.clearInterval(intervalId);
+    };
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;

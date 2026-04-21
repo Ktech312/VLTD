@@ -1164,6 +1164,10 @@ async function hydrateLocalGalleriesFromSupabase(force = false) {
   return supabaseHydrationInFlight;
 }
 
+export async function refreshGalleriesFromSupabase(force = true) {
+  await hydrateLocalGalleriesFromSupabase(force);
+}
+
 function normalizeAll(rawList: unknown) {
   if (!Array.isArray(rawList)) {
     return {
