@@ -1026,21 +1026,25 @@ export default function GalleryBuilder({
             <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
               {filtered.map((item) => {
                 const active = selectedSet.has(item.id);
+                const toggleLabel = active ? `Remove ${item.title} from gallery` : `Add ${item.title} to gallery`;
 
                 return (
-                  <button
+                  <article
                     key={item.id}
-                    type="button"
-                    onClick={() => toggle(item.id)}
                     className={[
                       "vltd-selectable group overflow-hidden rounded-[22px] border text-left transition duration-300",
                       active
                         ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] shadow-[0_16px_42px_rgba(0,0,0,0.2)]"
                         : "border-[color:var(--border)] bg-[color:var(--surface)] hover:-translate-y-0.5 hover:shadow-[0_16px_42px_rgba(0,0,0,0.12)]",
                     ].join(" ")}
-                    aria-pressed={active}
                   >
-                    <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => toggle(item.id)}
+                      aria-label={toggleLabel}
+                      aria-pressed={active}
+                      className="block w-full text-left"
+                    >
                       <div className="relative aspect-[16/10] w-full overflow-hidden bg-[linear-gradient(180deg,#11161f_0%,#0a0d12_100%)]">
                         {itemImage(item) ? (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -1060,13 +1064,29 @@ export default function GalleryBuilder({
                         )}
 
                         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.16)_0%,rgba(255,255,255,0.04)_22%,rgba(255,255,255,0)_52%)] mix-blend-screen" />
-                        <div className="pointer-events-none absolute right-3 top-3 rounded-full px-2.5 py-1 text-[10px] tracking-[0.14em] ring-1 backdrop-blur-sm">
-                          {active ? "SELECTED" : "ADD"}
-                        </div>
+                        {active ? (
+                          <>
+                            <div className="pointer-events-none absolute inset-0 grid place-items-center">
+                              <span className="text-[72px] font-light leading-none text-white/18">
+                                -
+                              </span>
+                            </div>
+                            <div className="pointer-events-none absolute right-3 top-3 rounded-full px-2.5 py-1 text-[10px] tracking-[0.14em] ring-1 backdrop-blur-sm">
+                              SELECTED
+                            </div>
+                          </>
+                        ) : (
+                          <div className="pointer-events-none absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-black/28 text-3xl font-light leading-none text-white/55 ring-1 ring-white/15 backdrop-blur-sm">
+                            +
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    </button>
 
-                    <div className="p-4">
+                    <Link
+                      href={`/vault/item/${item.id}`}
+                      className="block border-t border-white/8 p-4 transition hover:bg-black/10"
+                    >
                       <div className="line-clamp-2 text-lg font-semibold leading-tight">{item.title}</div>
                       <div className="mt-2 line-clamp-1 text-sm opacity-75">{itemMeta(item) || "-"}</div>
 
@@ -1081,8 +1101,12 @@ export default function GalleryBuilder({
                           Cost {formatMoney(totalCost(item))}
                         </span>
                       </div>
-                    </div>
-                  </button>
+
+                      <div className="mt-4 text-xs font-medium uppercase tracking-[0.14em] text-[color:var(--muted2)]">
+                        Open item details
+                      </div>
+                    </Link>
+                  </article>
                 );
               })}
             </div>

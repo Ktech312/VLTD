@@ -24,10 +24,14 @@ import {
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { getVaultImagePublicUrl } from "@/lib/vaultCloud";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import GalleryBuilder from "@/components/GalleryBuilder";
 import { formatMoney, getGalleryMetrics } from "@/lib/portfolioMetrics";
 
 type GalleryAccessPillMode = "private" | "public_gallery" | "guest_view" | "registered_users";
+
+const GALLERY_ASSET_BUCKET = "gallery-backgrounds";
+const GALLERY_DRAFT_CACHE_PREFIX = "vltd_gallery_editor_draft_v1";
 
 function visibilityLabel(v: Gallery["visibility"]) {
   if (v === "LOCKED") return "Locked";
@@ -64,6 +68,70 @@ function formatDateTime(ts?: number) {
 
 function cloneGallery<T>(value: T): T {
   return JSON.parse(JSON.stringify(value));
+}
+
+function getGalleryDraftCacheKey(galleryId: string) {
+  return `${GALLERY_DRAFT_CACHE_PREFIX}:${galleryId}`;
+}
+
+function loadCachedGalleryDraft(galleryId: string): Gallery | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.sessionStorage.getItem(getGalleryDraftCacheKey(galleryId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Gallery | null;
+    if (!parsed || parsed.id !== galleryId) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function persistCachedGalleryDraft(galleryId: string, draft: Gallery | null) {
+  if (typeof window === "undefined") return;
+
+  if (!draft) {
+    window.sessionStorage.removeItem(getGalleryDraftCacheKey(galleryId));
+    return;
+  }
+
+  window.sessionStorage.setItem(getGalleryDraftCacheKey(galleryId), JSON.stringify(draft));
+}
+
+async function uploadGalleryAssetToStorage(
+  galleryId: string,
+  file: File,
+  kind: "cover" | "background"
+): Promise<string> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) {
+    throw new Error("Supabase browser client is not available.");
+  }
+
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `${galleryId}/${kind}/${Date.now()}_${safeName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(GALLERY_ASSET_BUCKET)
+    .upload(path, file, {
+      cacheControl: "3600",
+      upsert: true,
+      contentType: file.type || "application/octet-stream",
+    });
+
+  if (uploadError) {
+    throw uploadError;
+  }
+
+  const { data } = supabase.storage.from(GALLERY_ASSET_BUCKET).getPublicUrl(path);
+  const publicUrl = typeof data?.publicUrl === "string" ? data.publicUrl.trim() : "";
+
+  if (!publicUrl) {
+    throw new Error("Failed to resolve public URL for uploaded gallery asset.");
+  }
+
+  return publicUrl;
 }
 
 function toGalleryPublicItemSnapshot(item: VaultItem): GalleryPublicItemSnapshot {
@@ -219,6 +287,7 @@ export default function GalleryPage() {
   const [inviteCopiedToken, setInviteCopiedToken] = useState<string>("");
   const [status, setStatus] = useState("");
   const [statusTone, setStatusTone] = useState<"neutral" | "good">("neutral");
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
 
   const [originalSnapshot, setOriginalSnapshot] = useState("");
   const latestGalleryRef = useRef<Gallery | null>(null);
@@ -229,13 +298,19 @@ export default function GalleryPage() {
 
     const galleries = loadGalleries();
     const rawGallery = galleries.find((x) => x.id === id) ?? null;
+    const cachedDraft = loadCachedGalleryDraft(id);
     const mergedGallery = mergeHeavyDraftFields(
       rawGallery,
-      latestDraftRef.current ?? latestGalleryRef.current
+      latestDraftRef.current ?? latestGalleryRef.current ?? cachedDraft
     );
+    const nextDraft =
+      cachedDraft &&
+      cachedDraft.updatedAt >= (mergedGallery?.updatedAt ?? 0)
+        ? mergeHeavyDraftFields(cachedDraft, mergedGallery)
+        : mergedGallery;
 
     setGallery(mergedGallery);
-    setDraft(mergedGallery ? cloneGallery(mergedGallery) : null);
+    setDraft(nextDraft ? cloneGallery(nextDraft) : null);
     setOriginalSnapshot(normalizeDraftForCompare(mergedGallery));
     setItems(loadItems());
   }, [id]);
@@ -307,6 +382,17 @@ export default function GalleryPage() {
     latestDraftRef.current = draft;
   }, [draft]);
 
+  useEffect(() => {
+    if (!id) return;
+
+    if (!draft || normalizeDraftForCompare(draft) === originalSnapshot) {
+      persistCachedGalleryDraft(id, null);
+      return;
+    }
+
+    persistCachedGalleryDraft(id, draft);
+  }, [draft, id, originalSnapshot]);
+
   const galleryItems = useMemo(() => {
     if (!draft) return [];
     const byId = new Map(items.map((item) => [item.id, item]));
@@ -362,20 +448,29 @@ export default function GalleryPage() {
     patchDraft((current) => applyAccessMode(current, mode));
   }
 
-  function updateCover(e: React.ChangeEvent<HTMLInputElement>) {
+  async function updateCover(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file || !draft) return;
 
-    const reader = new FileReader();
-
-    reader.onload = () => {
+    try {
+      setIsUploadingCover(true);
+      const publicUrl = await uploadGalleryAssetToStorage(draft.id, file, "cover");
       patchDraft((current) => ({
         ...current,
-        coverImage: String(reader.result ?? ""),
+        coverImage: publicUrl,
       }));
-    };
-
-    reader.readAsDataURL(file);
+      setStatusTone("neutral");
+      setStatus("Cover artwork uploaded. Click Save to publish it.");
+    } catch (error) {
+      console.error("Failed uploading cover artwork:", error);
+      setStatusTone("neutral");
+      setStatus(
+        error instanceof Error ? error.message : "Cover upload failed."
+      );
+    } finally {
+      setIsUploadingCover(false);
+    }
   }
 
   function updateNote(itemId: string, note: string) {
@@ -441,6 +536,7 @@ export default function GalleryPage() {
     const all = loadGalleries({ includeAllProfiles: true });
     const next = all.map((entry) => (entry.id === draft.id ? nextDraft : entry));
     saveGalleriesLocally(next);
+    persistCachedGalleryDraft(nextDraft.id, null);
 
     setGallery(cloneGallery(nextDraft));
     setDraft(cloneGallery(nextDraft));
@@ -464,6 +560,7 @@ export default function GalleryPage() {
 
   function cancelChanges() {
     if (!gallery) return;
+    persistCachedGalleryDraft(gallery.id, null);
     setDraft(cloneGallery(gallery));
     setStatusTone("neutral");
     setStatus("Changes reverted.");
@@ -770,7 +867,7 @@ export default function GalleryPage() {
                           className="vltd-selectable inline-flex h-7 w-7 items-center justify-center rounded-full bg-[color:var(--pill)] text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
                           aria-label="Close access mode help"
                         >
-                          Ã—
+                          X
                         </button>
                       </div>
                       <div className="mt-3"><strong>Public Gallery</strong> - Available to registered or unregistered users, searchable on Home page.</div>
@@ -830,11 +927,16 @@ export default function GalleryPage() {
                   />
                   <label
                     htmlFor="gallery-cover-upload"
-                    className="vltd-selectable inline-flex min-h-[40px] cursor-pointer items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                    className={[
+                      "vltd-selectable inline-flex min-h-[40px] cursor-pointer items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]",
+                      isUploadingCover ? "cursor-wait opacity-70" : "",
+                    ].join(" ")}
                   >
-                    Upload Cover Artwork
+                    {isUploadingCover ? "Uploading..." : "Upload Cover Artwork"}
                   </label>
-                  <div className="text-sm text-[color:var(--muted)]">Refresh the hero panel artwork.</div>
+                  <div className="text-sm text-[color:var(--muted)]">
+                    Refresh the hero panel artwork.
+                  </div>
                 </div>
               </div>
             </div>
