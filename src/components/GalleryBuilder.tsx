@@ -1067,7 +1067,7 @@ export default function GalleryBuilder({
                         {active ? (
                           <>
                             <div className="pointer-events-none absolute inset-0 grid place-items-center">
-                              <span className="text-[72px] font-light leading-none text-white/18">
+                              <span className="text-[96px] font-light leading-none text-white/35 drop-shadow-[0_0_14px_rgba(255,255,255,0.32)]">
                                 -
                               </span>
                             </div>
