@@ -752,29 +752,8 @@ export default function AddPage() {
     }
 
     replaceScanImage(file);
-
-    setStatus("Photo added. Checking for barcode...");
-
-    try {
-      const barcode = await scanBarcodeFromFile(file);
-
-      if (barcode?.digits) {
-        setScanSession((prev) =>
-          setScanSessionBarcode(prev, barcode.rawValue, barcode.digits)
-        );
-
-          setStatus(`Barcode found. Identifying item from ${barcode.digits}...`);
-          await handleIdentifyCurrentScan(file, barcode);
-          return;
-        }
-
-      setStatus("No barcode found. Trying text and image identify...");
-      await handleIdentifyCurrentScan(file);
-    } catch (err) {
-      console.error("Barcode scan failed:", err);
-      setStatus("Barcode scan failed. Trying text and image identify...");
-      await handleIdentifyCurrentScan(file);
-    }
+    setIsCropEditorOpen(true);
+    setStatus("Photo added. Adjust the crop, then apply it or tap Identify Item to use the full image.");
   }
 
   async function handleUpcLookup() {

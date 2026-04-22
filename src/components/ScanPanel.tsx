@@ -82,7 +82,7 @@ export default function ScanPanel({
       <div className="mt-2 overflow-hidden rounded-[14px] bg-black/20 p-2 ring-1 ring-red-500/20">
         <button
           type="button"
-          onClick={onUseCamera}
+          onClick={previewUrl ? onCropImage : onUseCamera}
           className="flex h-[180px] w-full items-center justify-center overflow-hidden rounded-[10px] bg-black/20 text-left transition hover:bg-black/25 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)]"
         >
           {previewUrl ? (
@@ -98,7 +98,9 @@ export default function ScanPanel({
           )}
         </button>
         <div className="mt-2 text-center text-[11px] text-[color:var(--muted2)]">
-          Tap the preview square to open your camera.
+          {previewUrl
+            ? "Tap the preview square to reopen crop."
+            : "Tap the preview square to open your camera."}
         </div>
       </div>
 

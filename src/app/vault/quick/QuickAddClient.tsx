@@ -3,12 +3,15 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import ScanCropEditor from "@/components/ScanCropEditor";
 import { PillButton } from "@/components/ui/PillButton";
+import { analyzeImageWithVision } from "@/lib/ai/openaiVision";
 import { newId } from "@/lib/id";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
 import { appendItems, type VaultImage, type VaultItem } from "@/lib/vaultModel";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { hasSupabaseEnv, uploadVaultImageToSupabase } from "@/lib/vaultCloud";
+import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 import {
   generateVaultImageKey,
   getImageObjectUrlFromIndexedDb,
@@ -19,6 +22,7 @@ import {
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 const RECENT_LIMIT = 6;
+const DEFAULT_SCAN_CROP: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
 
 type SavedItemPreview = {
   id: string;
@@ -226,6 +230,10 @@ export default function QuickAddClient() {
   const [frontImage, setFrontImage] = useState<string | undefined>(undefined);
   const [draftPreviewUrl, setDraftPreviewUrl] = useState<string | undefined>(undefined);
   const [rotation, setRotation] = useState(0);
+  const [isCropEditorOpen, setIsCropEditorOpen] = useState(false);
+  const [scanCrop, setScanCrop] = useState<ScanCropRect>(DEFAULT_SCAN_CROP);
+  const [isApplyingCrop, setIsApplyingCrop] = useState(false);
+  const [isAiAssisting, setIsAiAssisting] = useState(false);
 
   const [title, setTitle] = useState("");
   const [purchasePrice, setPurchasePrice] = useState("");
@@ -268,6 +276,19 @@ export default function QuickAddClient() {
     };
   }, [draftPreviewUrl]);
 
+  function replaceWorkingImage(file: File) {
+    if (draftPreviewUrl && draftPreviewUrl.startsWith("blob:")) {
+      revokeImageObjectUrl(draftPreviewUrl);
+    }
+    if (frontImage && frontImage.startsWith("blob:")) {
+      revokeImageObjectUrl(frontImage);
+    }
+
+    setSelectedFile(file);
+    setDraftPreviewUrl(URL.createObjectURL(file));
+    setFrontImage(undefined);
+  }
+
   async function handleImageSelection(fileList: FileList | null) {
     const file = fileList?.[0];
     if (!file) return;
@@ -277,15 +298,11 @@ export default function QuickAddClient() {
       return;
     }
 
-    if (draftPreviewUrl && draftPreviewUrl.startsWith("blob:")) {
-      revokeImageObjectUrl(draftPreviewUrl);
-    }
-
-    setSelectedFile(file);
+    replaceWorkingImage(file);
     setRotation(0);
-    setDraftPreviewUrl(URL.createObjectURL(file));
-    setFrontImage(undefined);
-    setStatus("Photo ready. Rotate it, use it, or retake.");
+    setScanCrop(DEFAULT_SCAN_CROP);
+    setIsCropEditorOpen(true);
+    setStatus("Photo ready. Crop it, rotate if needed, then save the image.");
 
     if (cameraInputRef.current) cameraInputRef.current.value = "";
     if (uploadInputRef.current) uploadInputRef.current.value = "";
@@ -316,6 +333,7 @@ export default function QuickAddClient() {
       });
 
       setSelectedFile(finalFile);
+      setIsCropEditorOpen(false);
       setStatus("Photo locked in. Ready to save.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Failed to prepare photo.");
@@ -336,6 +354,8 @@ export default function QuickAddClient() {
     setFrontImage(undefined);
     setDraftPreviewUrl(undefined);
     setRotation(0);
+    setIsCropEditorOpen(false);
+    setScanCrop(DEFAULT_SCAN_CROP);
     setStatus("Take another photo.");
 
     if (cameraInputRef.current) {
@@ -355,10 +375,82 @@ export default function QuickAddClient() {
     setFrontImage(undefined);
     setDraftPreviewUrl(undefined);
     setRotation(0);
+    setIsCropEditorOpen(false);
+    setScanCrop(DEFAULT_SCAN_CROP);
     setTitle("");
     setPurchasePrice("");
     setNotes("");
     setQuantity("1");
+  }
+
+  async function handleApplyCrop() {
+    if (!selectedFile) {
+      setStatus("Take a photo first before cropping.");
+      return;
+    }
+
+    setIsApplyingCrop(true);
+
+    try {
+      const cropped = await cropImageFile(selectedFile, scanCrop);
+      replaceWorkingImage(cropped);
+      setScanCrop(DEFAULT_SCAN_CROP);
+      setIsCropEditorOpen(false);
+      setRotation(0);
+      setStatus("Crop applied. Rotate if needed, then save the image.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Failed to crop photo.");
+    } finally {
+      setIsApplyingCrop(false);
+    }
+  }
+
+  async function handleAiAssist() {
+    if (!selectedFile) {
+      setStatus("Add a photo first so AI can read it.");
+      return;
+    }
+
+    setIsAiAssisting(true);
+
+    try {
+      const vision = await analyzeImageWithVision(selectedFile, {
+        hints:
+          "Identify the collectible or product in this quick add photo. Return the clearest likely title and any visible number, grade, cert, category, or short notes.",
+      });
+
+      if (vision.detectedTitle?.trim()) {
+        setTitle(vision.detectedTitle.trim());
+      }
+
+      const detailLines = [
+        vision.subtitle ? `Subtitle: ${vision.subtitle}` : "",
+        vision.number ? `Number: ${vision.number}` : "",
+        vision.grade ? `Grade: ${vision.grade}` : "",
+        vision.certNumber ? `Cert: ${vision.certNumber}` : "",
+        vision.categoryLabel || vision.detectedCategory
+          ? `Category: ${vision.categoryLabel || vision.detectedCategory}`
+          : "",
+        vision.notes || "",
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      if (detailLines) {
+        setNotes((prev) => {
+          const current = prev.trim();
+          if (!current) return detailLines;
+          if (current.includes(detailLines)) return current;
+          return `${current}\n\n${detailLines}`;
+        });
+      }
+
+      setStatus("AI filled in basic details. Review them before saving.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "AI assist failed.");
+    } finally {
+      setIsAiAssisting(false);
+    }
   }
 
   async function saveQuickAdd() {
@@ -529,13 +621,21 @@ export default function QuickAddClient() {
                 </span>
               </div>
 
-              <div className="overflow-hidden rounded-[14px] bg-[color:var(--input)] aspect-[4/3]">
+              <button
+                type="button"
+                onClick={() => setIsCropEditorOpen(true)}
+                className="block w-full overflow-hidden rounded-[14px] bg-[color:var(--input)] aspect-[4/3] focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)]"
+              >
                 <img
                   src={activePreview}
                   alt="Item preview"
                   className="h-full w-full object-contain bg-black/10"
                   style={{ transform: `rotate(${rotation}deg)` }}
                 />
+              </button>
+
+              <div className="mt-2 text-center text-[11px] text-[color:var(--muted2)]">
+                Tap the photo to reopen crop.
               </div>
 
               <div className="mt-3 flex flex-wrap gap-2">
@@ -556,6 +656,13 @@ export default function QuickAddClient() {
                   </PillButton>
                 ) : null}
 
+                <PillButton
+                  onClick={() => void handleAiAssist()}
+                  disabled={isAiAssisting || isSaving || !selectedFile}
+                >
+                  {isAiAssisting ? "Reading..." : "AI Assist"}
+                </PillButton>
+
                 <PillButton onClick={retakeImage} disabled={isPreparingImage || isSaving}>
                   Retake
                 </PillButton>
@@ -566,6 +673,20 @@ export default function QuickAddClient() {
                   Review the shot, rotate if needed, then tap Use Photo.
                 </div>
               ) : null}
+            </div>
+          ) : null}
+
+          {isCropEditorOpen && draftPreviewUrl ? (
+            <div className="mt-4">
+              <ScanCropEditor
+                imageUrl={draftPreviewUrl}
+                crop={scanCrop}
+                onChange={setScanCrop}
+                onApply={() => void handleApplyCrop()}
+                onReset={() => setScanCrop(DEFAULT_SCAN_CROP)}
+                onCancel={() => setIsCropEditorOpen(false)}
+                isApplying={isApplyingCrop}
+              />
             </div>
           ) : null}
 
