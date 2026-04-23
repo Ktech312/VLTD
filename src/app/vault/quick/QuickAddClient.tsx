@@ -24,6 +24,10 @@ const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 const RECENT_LIMIT = 6;
 const DEFAULT_SCAN_CROP: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
 
+function isDefaultCrop(crop: ScanCropRect) {
+  return crop.left === 0 && crop.top === 0 && crop.right === 0 && crop.bottom === 0;
+}
+
 type SavedItemPreview = {
   id: string;
   title: string;
@@ -302,7 +306,7 @@ export default function QuickAddClient() {
     setRotation(0);
     setScanCrop(DEFAULT_SCAN_CROP);
     setIsCropEditorOpen(true);
-    setStatus("Photo ready. Crop it, rotate if needed, then save the image.");
+    setStatus("Photo ready. Adjust it, then save the image.");
 
     if (cameraInputRef.current) cameraInputRef.current.value = "";
     if (uploadInputRef.current) uploadInputRef.current.value = "";
@@ -314,7 +318,11 @@ export default function QuickAddClient() {
     setIsPreparingImage(true);
 
     try {
-      const editedBlob = await renderRotatedImageBlob(selectedFile, rotation, {
+      const fileToPrepare = isDefaultCrop(scanCrop)
+        ? selectedFile
+        : await cropImageFile(selectedFile, scanCrop);
+
+      const editedBlob = await renderRotatedImageBlob(fileToPrepare, rotation, {
         quality: 0.86,
         maxLongEdge: 1600,
       });
@@ -324,8 +332,12 @@ export default function QuickAddClient() {
       if (frontImage && frontImage.startsWith("blob:")) {
         revokeImageObjectUrl(frontImage);
       }
+      if (draftPreviewUrl && draftPreviewUrl.startsWith("blob:")) {
+        revokeImageObjectUrl(draftPreviewUrl);
+      }
 
       setFrontImage(previewUrl);
+      setDraftPreviewUrl(previewUrl);
 
       const finalFile = new File([editedBlob], selectedFile.name || "capture.jpg", {
         type: "image/jpeg",
@@ -334,9 +346,11 @@ export default function QuickAddClient() {
 
       setSelectedFile(finalFile);
       setIsCropEditorOpen(false);
-      setStatus("Photo locked in. Ready to save.");
+      setScanCrop(DEFAULT_SCAN_CROP);
+      setRotation(0);
+      setStatus("Photo saved. Ready for details.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Failed to prepare photo.");
+      setStatus(error instanceof Error ? error.message : "Failed to save photo.");
     } finally {
       setIsPreparingImage(false);
     }
@@ -384,22 +398,9 @@ export default function QuickAddClient() {
   }
 
   async function handleApplyCrop() {
-    if (!selectedFile) {
-      setStatus("Take a photo first before cropping.");
-      return;
-    }
-
     setIsApplyingCrop(true);
-
     try {
-      const cropped = await cropImageFile(selectedFile, scanCrop);
-      replaceWorkingImage(cropped);
-      setScanCrop(DEFAULT_SCAN_CROP);
-      setIsCropEditorOpen(false);
-      setRotation(0);
-      setStatus("Crop applied. Rotate if needed, then save the image.");
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Failed to crop photo.");
+      await confirmPreparedImage();
     } finally {
       setIsApplyingCrop(false);
     }
@@ -610,14 +611,30 @@ export default function QuickAddClient() {
             onChange={(event) => void handleImageSelection(event.target.files)}
           />
 
-          {activePreview ? (
+          {isCropEditorOpen && draftPreviewUrl ? (
+            <div className="mt-4">
+              <ScanCropEditor
+                imageUrl={draftPreviewUrl}
+                crop={scanCrop}
+                onChange={setScanCrop}
+                title="ADJUST PHOTO BEFORE SAVE"
+                description="Keep the item centered, then save the image."
+                applyLabel="Save"
+                onRotate={() => setRotation((prev) => (prev + 90) % 360)}
+                onApply={() => void handleApplyCrop()}
+                onReset={() => {
+                  setScanCrop(DEFAULT_SCAN_CROP);
+                  setRotation(0);
+                }}
+                onCancel={() => setIsCropEditorOpen(false)}
+                isApplying={isApplyingCrop || isPreparingImage}
+              />
+            </div>
+          ) : activePreview ? (
             <div className="mt-4 overflow-hidden rounded-[20px] bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)]">
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-black/10 px-3 py-1 text-xs ring-1 ring-black/10">
                   {frontImage ? "Locked In" : "Draft"}
-                </span>
-                <span className="rounded-full bg-black/10 px-3 py-1 text-xs ring-1 ring-black/10">
-                  Rotate: {rotation}°
                 </span>
               </div>
 
@@ -630,31 +647,17 @@ export default function QuickAddClient() {
                   src={activePreview}
                   alt="Item preview"
                   className="h-full w-full object-contain bg-black/10"
-                  style={{ transform: `rotate(${rotation}deg)` }}
                 />
               </button>
 
               <div className="mt-2 text-center text-[11px] text-[color:var(--muted2)]">
-                Tap the photo to reopen crop.
+                Tap the photo to edit it again.
               </div>
 
               <div className="mt-3 flex flex-wrap gap-2">
-                <PillButton
-                  onClick={() => setRotation((prev) => (prev + 90) % 360)}
-                  disabled={isPreparingImage || isSaving}
-                >
-                  Rotate 90°
+                <PillButton onClick={() => setIsCropEditorOpen(true)} disabled={isSaving}>
+                  Edit Photo
                 </PillButton>
-
-                {!frontImage ? (
-                  <PillButton
-                    variant="primary"
-                    onClick={() => void confirmPreparedImage()}
-                    disabled={isPreparingImage || isSaving}
-                  >
-                    {isPreparingImage ? "Preparing..." : "Use Photo"}
-                  </PillButton>
-                ) : null}
 
                 <PillButton
                   onClick={() => void handleAiAssist()}
@@ -667,28 +670,9 @@ export default function QuickAddClient() {
                   Retake
                 </PillButton>
               </div>
-
-              {!frontImage ? (
-                <div className="mt-2 text-xs text-[color:var(--muted)]">
-                  Review the shot, rotate if needed, then tap Use Photo.
-                </div>
-              ) : null}
             </div>
           ) : null}
 
-          {isCropEditorOpen && draftPreviewUrl ? (
-            <div className="mt-4">
-              <ScanCropEditor
-                imageUrl={draftPreviewUrl}
-                crop={scanCrop}
-                onChange={setScanCrop}
-                onApply={() => void handleApplyCrop()}
-                onReset={() => setScanCrop(DEFAULT_SCAN_CROP)}
-                onCancel={() => setIsCropEditorOpen(false)}
-                isApplying={isApplyingCrop}
-              />
-            </div>
-          ) : null}
 
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <input

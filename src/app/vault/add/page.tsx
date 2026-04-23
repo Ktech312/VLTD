@@ -76,6 +76,10 @@ const EMPTY_VALUES: FormValues = { ...EMPTY_BULK_ADD_VALUES };
 const EMPTY_PRICING_VALUES: PricingMvpFields = {};
 const DEFAULT_SCAN_CROP: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
 
+function isDefaultCrop(crop: ScanCropRect) {
+  return crop.left === 0 && crop.top === 0 && crop.right === 0 && crop.bottom === 0;
+}
+
 function getActiveProfileId() {
   if (typeof window === "undefined") return "";
   try {
@@ -751,10 +755,10 @@ export default function AddPage() {
       return;
     }
 
-    replaceScanImage(file);
-    setIsCropEditorOpen(true);
-    setStatus("Photo added. Adjust the crop, then apply it or tap Identify Item to use the full image.");
-  }
+      replaceScanImage(file);
+      setIsCropEditorOpen(true);
+      setStatus("Photo added. Tighten the crop if needed, then scan this photo.");
+    }
 
   async function handleUpcLookup() {
     const manualDigits = String(values.serialNumber ?? "").replace(/\D/g, "").trim();
@@ -788,11 +792,18 @@ export default function AddPage() {
     setIsApplyingCrop(true);
 
     try {
-      const cropped = await cropImageFile(scanFile, scanCrop);
-      replaceScanImage(cropped);
-      setStatus("Crop applied. Re-identifying the tighter image...");
-      const barcode = await scanBarcodeFromFile(cropped);
-      await handleIdentifyCurrentScan(cropped, barcode ?? undefined);
+      const fileToScan = isDefaultCrop(scanCrop)
+        ? scanFile
+        : await cropImageFile(scanFile, scanCrop);
+
+      if (!isDefaultCrop(scanCrop)) {
+        replaceScanImage(fileToScan);
+      }
+
+      setIsCropEditorOpen(false);
+      setStatus("Reading the photo now...");
+      const barcode = await scanBarcodeFromFile(fileToScan);
+      await handleIdentifyCurrentScan(fileToScan, barcode ?? undefined);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Failed to crop scan image.");
     } finally {
@@ -1274,38 +1285,41 @@ export default function AddPage() {
           </section>
 
           <div className="grid gap-3">
-            <ScanPanel
-              session={scanSession}
-              scanType={scanType}
-                isScanning={isScanning}
-                isBookLookupRunning={isBookLookupRunning}
-                isComicLookupRunning={isComicLookupRunning}
-                isUpcLookupRunning={isUpcLookupRunning}
-                isVisionLookupRunning={isVisionLookupRunning}
-              saveScanAsPhoto={saveScanAsPhoto}
-              onScanTypeChange={setScanType}
-              onUseCamera={() => cameraInputRef.current?.click()}
-              onUploadImage={() => uploadInputRef.current?.click()}
-              onScanAutofill={() => void handleScanAutofill()}
-              onCropImage={() => setIsCropEditorOpen(true)}
-              onBookLookup={() => void handleBookIsbnLookup()}
-              onComicLookup={() => void handleComicLookup()}
-              onUpcLookup={() => void handleUpcLookup()}
-              onClearImage={clearScanImage}
-              onToggleSaveScanAsPhoto={setSaveScanAsPhoto}
-            />
-
             {isCropEditorOpen && scanSession.image?.previewUrl ? (
               <ScanCropEditor
                 imageUrl={scanSession.image.previewUrl}
                 crop={scanCrop}
                 onChange={setScanCrop}
+                title="ADJUST PHOTO BEFORE SCAN"
+                description="Keep the item centered, then scan this photo."
+                applyLabel="Scan This Photo"
                 onApply={() => void handleApplyScanCrop()}
                 onReset={() => setScanCrop(DEFAULT_SCAN_CROP)}
                 onCancel={() => setIsCropEditorOpen(false)}
                 isApplying={isApplyingCrop}
               />
-            ) : null}
+            ) : (
+              <ScanPanel
+                session={scanSession}
+                scanType={scanType}
+                isScanning={isScanning}
+                isBookLookupRunning={isBookLookupRunning}
+                isComicLookupRunning={isComicLookupRunning}
+                isUpcLookupRunning={isUpcLookupRunning}
+                isVisionLookupRunning={isVisionLookupRunning}
+                saveScanAsPhoto={saveScanAsPhoto}
+                onScanTypeChange={setScanType}
+                onUseCamera={() => cameraInputRef.current?.click()}
+                onUploadImage={() => uploadInputRef.current?.click()}
+                onScanAutofill={() => void handleScanAutofill()}
+                onCropImage={() => setIsCropEditorOpen(true)}
+                onBookLookup={() => void handleBookIsbnLookup()}
+                onComicLookup={() => void handleComicLookup()}
+                onUpcLookup={() => void handleUpcLookup()}
+                onClearImage={clearScanImage}
+                onToggleSaveScanAsPhoto={setSaveScanAsPhoto}
+              />
+            )}
 
             <section className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ITEM PHOTO</div>

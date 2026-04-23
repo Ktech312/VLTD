@@ -67,11 +67,14 @@ function sanitizeVisionResult(raw: Partial<VisionRouteResult>): VisionRouteResul
 
 export async function POST(req: NextRequest) {
   try {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: "Missing ANTHROPIC_API_KEY." },
-        { status: 500 }
+        {
+          error:
+            "AI Assist is not set up yet. Add ANTHROPIC_API_KEY to your server environment.",
+        },
+        { status: 503 }
       );
     }
 

@@ -34,8 +34,15 @@ export async function analyzeImageWithVision(
   };
 
   if (!response.ok) {
+    const message =
+      payload.error || payload.details || "Vision analysis failed.";
+
+    if (/ANTHROPIC_API_KEY|AI Assist is not set up/i.test(message)) {
+      throw new Error("AI Assist is not set up yet. Add the Anthropic API key first.");
+    }
+
     throw new Error(
-      payload.error || payload.details || "Vision analysis failed."
+      message
     );
   }
 
