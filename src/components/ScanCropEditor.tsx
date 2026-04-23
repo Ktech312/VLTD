@@ -33,7 +33,7 @@ function normalizeCrop(next: ScanCropRect): ScanCropRect {
 }
 
 function buttonClass() {
-  return "rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]";
+  return "rounded-xl bg-[color:var(--pill)] px-2.5 py-2 text-sm ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]";
 }
 
 function primaryButtonClass() {
@@ -156,27 +156,31 @@ export default function ScanCropEditor({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+      <div className="mb-2 mt-4 text-[11px] text-[color:var(--muted2)]">
+        Use <strong>-</strong> for less trim and <strong>+</strong> for more trim.
+      </div>
+
+      <div className="mt-2 grid gap-2 sm:grid-cols-3">
         <ControlRow
           label="SIDES"
           onDecrease={() => adjustSides("wider")}
           onIncrease={() => adjustSides("tighter")}
-          decreaseLabel="Wider"
-          increaseLabel="Tighter"
+          decreaseLabel="-"
+          increaseLabel="+"
         />
         <ControlRow
           label="TOP"
           onDecrease={() => adjustTop("less")}
           onIncrease={() => adjustTop("more")}
-          decreaseLabel="Less Top"
-          increaseLabel="More Top"
+          decreaseLabel="-"
+          increaseLabel="+"
         />
         <ControlRow
           label="BOTTOM"
           onDecrease={() => adjustBottom("less")}
           onIncrease={() => adjustBottom("more")}
-          decreaseLabel="Less Bottom"
-          increaseLabel="More Bottom"
+          decreaseLabel="-"
+          increaseLabel="+"
         />
       </div>
 

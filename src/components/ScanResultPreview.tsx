@@ -20,9 +20,7 @@ function ReviewRow({
 
   return (
     <div className="grid gap-1 rounded-lg bg-black/10 p-2 ring-1 ring-white/8">
-      <div className="text-[10px] tracking-[0.12em] text-[color:var(--muted2)]">
-        {label}
-      </div>
+      <div className="text-[10px] tracking-[0.12em] text-[color:var(--muted2)]">{label}</div>
       <div className="text-sm text-[color:var(--fg)]">{value}</div>
     </div>
   );
@@ -45,15 +43,13 @@ export default function ScanResultPreview({
 
   const isLow = review.confidence === "low";
   const isUnsafe = !review.safeToAutofill;
+  const hasAnyFields = Object.values(review.fields).some((value) => String(value ?? "").trim().length > 0);
 
   return (
     <div className="mb-3 rounded-[14px] bg-black/10 p-3 ring-1 ring-white/8">
-      {/* HEADER */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-            {title}
-          </div>
+          <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">{title}</div>
 
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <span
@@ -62,67 +58,50 @@ export default function ScanResultPreview({
                 confidenceTone(review.confidence),
               ].join(" ")}
             >
-              {review.confidence.toUpperCase()} • {review.score}/100
+              {review.confidence.toUpperCase()} / {review.score}/100
             </span>
 
-            {isUnsafe && (
-              <span className="rounded-full bg-red-500/15 px-2 py-1 text-[10px] text-red-200 ring-1 ring-red-400/20">
-                NOT SAFE
+            {isUnsafe ? (
+              <span className="rounded-full bg-amber-500/15 px-2 py-1 text-[10px] text-amber-200 ring-1 ring-amber-400/20">
+                PARTIAL ONLY
               </span>
-            )}
+            ) : null}
           </div>
         </div>
 
-        {/* ACTIONS */}
         <div className="flex flex-wrap gap-2">
-          <PillButton
-            onClick={onApplyEmptyOnly}
-            disabled={isUnsafe}
-          >
-            Apply Empty Only
+          <PillButton onClick={onApplyEmptyOnly} disabled={!hasAnyFields}>
+            Use Partial Info
           </PillButton>
 
-          <PillButton
-            variant="primary"
-            onClick={onApplyAll}
-            disabled={isUnsafe || isLow}
-          >
+          <PillButton variant="primary" onClick={onApplyAll} disabled={isUnsafe || isLow}>
             Apply All
           </PillButton>
 
-          <PillButton onClick={onCancel}>
-            Cancel
-          </PillButton>
+          <PillButton onClick={onCancel}>Cancel</PillButton>
         </div>
       </div>
 
-      {/* HARD WARNING */}
-      {isUnsafe && (
-        <div className="mt-3 rounded-lg bg-red-500/10 p-3 text-sm text-red-200 ring-1 ring-red-400/20">
-          <div className="text-[11px] tracking-[0.14em] text-red-200/80">
-            BLOCKED
-          </div>
+      {isUnsafe ? (
+        <div className="mt-3 rounded-lg bg-amber-500/10 p-3 text-sm text-amber-200 ring-1 ring-amber-400/20">
+          <div className="text-[11px] tracking-[0.14em] text-amber-200/80">PARTIAL MATCH</div>
           <div className="mt-1">
-            This scan is not safe to autofill. Data is likely incorrect.
+            Some fields may still be useful, but the full scan is too weak to trust all at once.
           </div>
         </div>
-      )}
+      ) : null}
 
-      {/* WARNINGS */}
-      {review.warnings.length > 0 && (
+      {review.warnings.length > 0 ? (
         <div className="mt-3 rounded-lg bg-amber-500/10 p-3 text-sm text-amber-200 ring-1 ring-amber-400/20">
-          <div className="text-[11px] tracking-[0.14em] text-amber-200/80">
-            WARNINGS
-          </div>
+          <div className="text-[11px] tracking-[0.14em] text-amber-200/80">WARNINGS</div>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             {review.warnings.map((warning) => (
               <li key={warning}>{warning}</li>
             ))}
           </ul>
         </div>
-      )}
+      ) : null}
 
-      {/* EXTRACTED FIELDS */}
       <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
         <ReviewRow label="Title" value={review.fields.title} />
         <ReviewRow label="Subtitle" value={review.fields.subtitle} />
@@ -136,20 +115,18 @@ export default function ScanResultPreview({
         <ReviewRow label="Subcategory" value={review.fields.subcategoryLabel} />
       </div>
 
-      {/* RAW TEXT */}
-      <div className="mt-3">
-        <div className="mb-1 text-[11px] tracking-[0.12em] text-[color:var(--muted2)]">
-          RAW OCR SOURCE
-        </div>
+      <details className="mt-3 rounded-lg bg-black/10 p-3 ring-1 ring-white/8">
+        <summary className="cursor-pointer text-[11px] tracking-[0.12em] text-[color:var(--muted2)]">
+          Show scan text
+        </summary>
 
-        <div className="max-h-[180px] overflow-auto rounded-lg bg-[color:var(--pill)] p-3 text-xs leading-5 ring-1 ring-[color:var(--border)]">
+        <div className="mt-3 max-h-[180px] overflow-auto rounded-lg bg-[color:var(--pill)] p-3 text-xs leading-5 ring-1 ring-[color:var(--border)]">
           {review.rawText || "No scan text returned."}
         </div>
-      </div>
+      </details>
 
-      {/* FOOTNOTE */}
       <div className="mt-3 rounded-lg bg-black/10 p-3 text-xs text-[color:var(--muted)] ring-1 ring-white/8">
-        Autofill only works well with clean scans. If results look wrong, do not apply.
+        Use Partial Info when the title or category looks right, and only use Apply All on clean scans.
       </div>
     </div>
   );

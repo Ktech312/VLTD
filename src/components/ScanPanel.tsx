@@ -85,9 +85,6 @@ export default function ScanPanel({
             Take one photo. The app will try barcode, product or book match, text, then AI.
           </div>
         </div>
-        <div className="rounded-full bg-red-500/10 px-2.5 py-1 text-[10px] text-red-200 ring-1 ring-red-500/20">
-          TEMP ONLY
-        </div>
       </div>
 
       <div className="mt-3 overflow-hidden rounded-[14px] bg-black/20 p-2 ring-1 ring-[color:var(--border)]">
@@ -226,7 +223,7 @@ export default function ScanPanel({
                   confidenceTone(review.confidence),
                 ].join(" ")}
               >
-                {review.confidence.toUpperCase()} • {review.score}/100
+                {review.confidence.toUpperCase()} / {review.score}/100
               </span>
             ) : null}
           </div>
