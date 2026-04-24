@@ -17,14 +17,25 @@ type VisionRouteResult = {
   notes?: string;
 };
 
-function extractTextFromAnthropicContent(content: unknown) {
-  if (!Array.isArray(content)) return "";
+function extractTextFromGeminiPayload(payload: unknown) {
+  if (!payload || typeof payload !== "object") return "";
 
-  return content
-    .map((entry) => {
-      if (!entry || typeof entry !== "object") return "";
-      const block = entry as { type?: string; text?: string };
-      return block.type === "text" ? String(block.text ?? "") : "";
+  const candidates = (payload as { candidates?: unknown[] }).candidates;
+  if (!Array.isArray(candidates)) return "";
+
+  return candidates
+    .flatMap((candidate) => {
+      if (!candidate || typeof candidate !== "object") return [];
+      const content = (candidate as { content?: { parts?: unknown[] } }).content;
+      const parts = content?.parts;
+      if (!Array.isArray(parts)) return [];
+
+      return parts.map((part) => {
+        if (!part || typeof part !== "object") return "";
+        return typeof (part as { text?: string }).text === "string"
+          ? String((part as { text?: string }).text ?? "")
+          : "";
+      });
     })
     .join("\n")
     .trim();
@@ -37,7 +48,7 @@ function extractJsonObject(raw: string) {
   const firstBrace = source.indexOf("{");
   const lastBrace = source.lastIndexOf("}");
   if (firstBrace < 0 || lastBrace <= firstBrace) {
-    throw new Error("Claude Vision did not return JSON.");
+    throw new Error("Gemini did not return JSON.");
   }
 
   return JSON.parse(source.slice(firstBrace, lastBrace + 1)) as Partial<VisionRouteResult>;
@@ -69,7 +80,7 @@ function sanitizeVisionResult(raw: Partial<VisionRouteResult>): VisionRouteResul
 
 export async function POST(req: NextRequest) {
   try {
-    const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
         {
@@ -89,10 +100,10 @@ export async function POST(req: NextRequest) {
 
     const arrayBuffer = await image.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString("base64");
-    const model = process.env.ANTHROPIC_MODEL || "claude-3-5-sonnet-latest";
+    const model = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
 
     const prompt = [
-      "Analyze this collectible/item photo and return JSON only.",
+      "Analyze this collectible or product photo and return JSON only.",
       "Use this exact schema:",
       JSON.stringify(
         {
@@ -114,53 +125,56 @@ export async function POST(req: NextRequest) {
       ),
       "Confidence must be between 0 and 1.",
       "If you are unsure, leave optional fields empty and lower the confidence.",
+      "Prefer concise category labels like Comics, Trading Cards, Books, Games, Music, Jewelry / Apparel, Misc, or Products.",
       hints ? `Extra hints from app: ${hints}` : "",
     ]
       .filter(Boolean)
       .join("\n\n");
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: 700,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "image",
-                source: {
-                  type: "base64",
-                  media_type: image.type || "image/jpeg",
-                  data: base64,
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: prompt,
                 },
-              },
-              {
-                type: "text",
-                text: prompt,
-              },
-            ],
+                {
+                  inline_data: {
+                    mime_type: image.type || "image/jpeg",
+                    data: base64,
+                  },
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 700,
+            responseMimeType: "application/json",
           },
-        ],
-      }),
-    });
+        }),
+      }
+    );
 
     if (!response.ok) {
       const details = await response.text();
       return NextResponse.json(
-        { error: "Claude Vision request failed.", details },
+        { error: "Gemini Vision request failed.", details },
         { status: 502 }
       );
     }
 
-    const payload = (await response.json()) as { content?: unknown };
-    const rawText = extractTextFromAnthropicContent(payload.content);
+    const payload = (await response.json()) as unknown;
+    const rawText = extractTextFromGeminiPayload(payload);
     const parsed = sanitizeVisionResult(extractJsonObject(rawText));
 
     return NextResponse.json(parsed);

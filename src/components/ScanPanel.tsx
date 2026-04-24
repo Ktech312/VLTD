@@ -145,7 +145,11 @@ export default function ScanPanel({
                 : "Take or choose a photo first. The square above is also tappable."}
             </div>
             <div className="mt-2 text-[11px] text-[color:var(--muted2)]">
-              Barcode and OCR still work without AI. Vision fallback needs `ANTHROPIC_API_KEY` on the server.
+              Barcode and OCR still work without AI. Gemini vision fallback needs
+              {" "}
+              `GEMINI_API_KEY`
+              {" "}
+              (or `GOOGLE_API_KEY`) on the server.
             </div>
 
             <div className="mt-3 grid gap-2">

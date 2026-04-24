@@ -454,7 +454,8 @@ export default function QuickAddClient() {
       setStatus("AI filled in basic details. Review them before saving.");
     } catch (error) {
       setStatus(
-        error instanceof Error && /ANTHROPIC_API_KEY|AI Assist is unavailable/i.test(error.message)
+        error instanceof Error &&
+        /GEMINI_API_KEY|GOOGLE_API_KEY|AI Assist is unavailable/i.test(error.message)
           ? AI_ASSIST_SETUP_MESSAGE
           : error instanceof Error
             ? error.message
@@ -684,7 +685,8 @@ export default function QuickAddClient() {
               </div>
 
               <div className="mt-3 rounded-[14px] bg-black/10 px-3 py-2 text-[11px] text-[color:var(--muted2)] ring-1 ring-white/8">
-                AI Assist needs `ANTHROPIC_API_KEY` on the server. If it is not set in Vercel yet, crop and manual save still work.
+                AI Assist needs `GEMINI_API_KEY` or `GOOGLE_API_KEY` on the server.
+                If it is not set in Vercel yet, crop and manual save still work.
               </div>
             </div>
           ) : null}
