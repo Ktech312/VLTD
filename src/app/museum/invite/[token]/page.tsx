@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import BulkLockBar from "@/components/BulkLockBar";
+import CameraCapturePanel from "@/components/CameraCapturePanel";
 import ImageRoleSelector, { type ImageRole } from "@/components/ImageRoleSelector";
 import ScanPanel from "@/components/ScanPanel";
 import ScanResultPreview from "@/components/ScanResultPreview";
@@ -135,6 +136,7 @@ export default function AddPage() {
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const mediaInputRef = useRef<HTMLInputElement | null>(null);
+  const mediaCameraInputRef = useRef<HTMLInputElement | null>(null);
   const numberInputRef = useRef<HTMLInputElement | null>(null);
 
   const [values, setValues] = useState<FormValues>(EMPTY_VALUES);
@@ -146,6 +148,8 @@ export default function AddPage() {
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreviewUrl, setMediaPreviewUrl] = useState<string>("");
   const [mediaImageRole, setMediaImageRole] = useState<ImageRole>("primary");
+  const [cameraTarget, setCameraTarget] = useState<"scan" | "item">("scan");
+  const [isCameraPanelOpen, setIsCameraPanelOpen] = useState(false);
 
   const [saveScanAsPhoto, setSaveScanAsPhoto] = useState(false);
 
@@ -225,11 +229,35 @@ export default function AddPage() {
     setMediaPreviewUrl("");
     setMediaImageRole("primary");
     if (mediaInputRef.current) mediaInputRef.current.value = "";
+    if (mediaCameraInputRef.current) mediaCameraInputRef.current.value = "";
   }
 
   function clearAllImages() {
     clearScanImage();
     clearMediaImage();
+  }
+
+  function openCameraFor(target: "scan" | "item") {
+    setCameraTarget(target);
+    setIsCameraPanelOpen(true);
+  }
+
+  function handleCapturedPhoto(file: File) {
+    setIsCameraPanelOpen(false);
+
+    if (cameraTarget === "item") {
+      if (mediaPreviewUrl.startsWith("blob:")) revokeImageObjectUrl(mediaPreviewUrl);
+      setMediaFile(file);
+      setMediaPreviewUrl(URL.createObjectURL(file));
+      setStatus("Item photo captured. It will save with this invited item.");
+      return;
+    }
+
+    void handleScanImageSelection({
+      0: file,
+      length: 1,
+      item: (index: number) => (index === 0 ? file : null),
+    } as unknown as FileList);
   }
 
   async function handleScanImageSelection(fileList: FileList | null) {
@@ -1083,7 +1111,7 @@ export default function AddPage() {
               isComicLookupRunning={isComicLookupRunning}
               saveScanAsPhoto={saveScanAsPhoto}
               onScanTypeChange={setScanType}
-              onUseCamera={() => cameraInputRef.current?.click()}
+              onUseCamera={() => openCameraFor("scan")}
               onUploadImage={() => uploadInputRef.current?.click()}
               onScanAutofill={() => void handleScanAutofill()}
               onBookLookup={() => void handleBookIsbnLookup()}
@@ -1093,14 +1121,17 @@ export default function AddPage() {
             />
 
             <section className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ITEM PHOTO</div>
+              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">SAVED ITEM PHOTO</div>
+              <div className="mt-1 text-xs text-[color:var(--muted)]">
+                This is the real item photo that saves with the invited item.
+              </div>
               <div className="mt-2 overflow-hidden rounded-[14px] bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)]">
                 <div className="flex h-[180px] items-center justify-center overflow-hidden rounded-[10px] bg-black/10">
                   {mediaPreviewUrl ? (
                     <img src={mediaPreviewUrl} alt="Item media preview" className="h-full w-full object-contain" />
                   ) : (
                     <div className="px-4 text-center text-xs text-[color:var(--muted)]">
-                      No saved item photo selected
+                      No saved item photo selected yet
                     </div>
                   )}
                 </div>
@@ -1118,10 +1149,17 @@ export default function AddPage() {
               <div className="mt-3 grid gap-2">
                 <button
                   type="button"
+                  onClick={() => openCameraFor("item")}
+                  className="rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm ring-1 ring-[color:var(--border)]"
+                >
+                  Open Camera
+                </button>
+                <button
+                  type="button"
                   onClick={() => mediaInputRef.current?.click()}
                   className="rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm ring-1 ring-[color:var(--border)]"
                 >
-                  Upload Item Photo
+                  Choose Photo
                 </button>
                 <button
                   type="button"
@@ -1137,6 +1175,14 @@ export default function AddPage() {
                 ref={mediaInputRef}
                 type="file"
                 accept="image/*"
+                className="hidden"
+                onChange={(e) => void handleMediaImageSelection(e.target.files)}
+              />
+              <input
+                ref={mediaCameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
                 className="hidden"
                 onChange={(e) => void handleMediaImageSelection(e.target.files)}
               />
@@ -1157,6 +1203,27 @@ export default function AddPage() {
               className="hidden"
               onChange={(e) => void handleScanImageSelection(e.target.files)}
             />
+
+            {isCameraPanelOpen ? (
+              <CameraCapturePanel
+                title={cameraTarget === "scan" ? "Capture Scan Photo" : "Capture Item Photo"}
+                description={
+                  cameraTarget === "scan"
+                    ? "Take one temporary photo for barcode and OCR autofill."
+                    : "Capture the saved item photo for this invited item."
+                }
+                onCapture={handleCapturedPhoto}
+                onClose={() => setIsCameraPanelOpen(false)}
+                onUseFileInstead={() => {
+                  setIsCameraPanelOpen(false);
+                  if (cameraTarget === "scan") {
+                    uploadInputRef.current?.click();
+                    return;
+                  }
+                  mediaInputRef.current?.click();
+                }}
+              />
+            ) : null}
           </div>
         </div>
       </div>
