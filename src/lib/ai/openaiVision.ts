@@ -13,6 +13,9 @@ export type VisionAnalysisResult = {
   notes?: string;
 };
 
+export const AI_ASSIST_SETUP_MESSAGE =
+  "AI Assist is unavailable until ANTHROPIC_API_KEY is set in Vercel.";
+
 export async function analyzeImageWithVision(
   file: File,
   options?: { hints?: string }
@@ -38,7 +41,7 @@ export async function analyzeImageWithVision(
       payload.error || payload.details || "Vision analysis failed.";
 
     if (/ANTHROPIC_API_KEY|AI Assist is not set up/i.test(message)) {
-      throw new Error("AI Assist is not set up yet. Add the Anthropic API key first.");
+      throw new Error(AI_ASSIST_SETUP_MESSAGE);
     }
 
     throw new Error(

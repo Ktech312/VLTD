@@ -1,71 +1,47 @@
 "use client";
 
+import { useMemo, useState } from "react";
+
+import Cropper, { type Area, type Point } from "react-easy-crop";
+
 import type { ScanCropRect } from "@/lib/scanners/cropImageFile";
 
-const EDGE_MIN = 0;
-const EDGE_MAX = 0.45;
-const COMBINED_MAX = 0.9;
-const TRIM_STEP = 0.04;
-
-function clamp(value: number) {
-  return Math.min(EDGE_MAX, Math.max(EDGE_MIN, value));
-}
-
-function normalizeCrop(next: ScanCropRect): ScanCropRect {
-  let left = clamp(next.left);
-  let right = clamp(next.right);
-  let top = clamp(next.top);
-  let bottom = clamp(next.bottom);
-
-  if (left + right > COMBINED_MAX) {
-    const overflow = left + right - COMBINED_MAX;
-    if (left >= right) left = clamp(left - overflow);
-    else right = clamp(right - overflow);
-  }
-
-  if (top + bottom > COMBINED_MAX) {
-    const overflow = top + bottom - COMBINED_MAX;
-    if (top >= bottom) top = clamp(top - overflow);
-    else bottom = clamp(bottom - overflow);
-  }
-
-  return { left, right, top, bottom };
-}
-
 function buttonClass() {
-  return "rounded-xl bg-[color:var(--pill)] px-2.5 py-2 text-sm ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]";
+  return "rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]";
 }
 
 function primaryButtonClass() {
   return "rounded-xl bg-[color:var(--pill-active-bg)] px-3 py-2.5 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)] disabled:opacity-40";
 }
 
-function ControlRow({
-  label,
-  onDecrease,
-  onIncrease,
-  decreaseLabel,
-  increaseLabel,
-}: {
-  label: string;
-  onDecrease: () => void;
-  onIncrease: () => void;
-  decreaseLabel: string;
-  increaseLabel: string;
-}) {
-  return (
-    <div className="grid gap-2 rounded-xl bg-black/10 p-3 ring-1 ring-white/8">
-      <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">{label}</div>
-      <div className="grid grid-cols-2 gap-2">
-        <button type="button" onClick={onDecrease} className={buttonClass()}>
-          {decreaseLabel}
-        </button>
-        <button type="button" onClick={onIncrease} className={buttonClass()}>
-          {increaseLabel}
-        </button>
-      </div>
-    </div>
-  );
+function isDefaultCrop(crop: ScanCropRect) {
+  return crop.left === 0 && crop.top === 0 && crop.right === 0 && crop.bottom === 0;
+}
+
+function toPercentArea(crop: ScanCropRect): Area {
+  const width = Math.max(1, (1 - crop.left - crop.right) * 100);
+  const height = Math.max(1, (1 - crop.top - crop.bottom) * 100);
+
+  return {
+    x: crop.left * 100,
+    y: crop.top * 100,
+    width,
+    height,
+  };
+}
+
+function fromPercentArea(area: Area): ScanCropRect {
+  const left = Math.max(0, Math.min(0.9, area.x / 100));
+  const top = Math.max(0, Math.min(0.9, area.y / 100));
+  const right = Math.max(0, Math.min(0.9, 1 - (area.x + area.width) / 100));
+  const bottom = Math.max(0, Math.min(0.9, 1 - (area.y + area.height) / 100));
+
+  return {
+    left,
+    top,
+    right,
+    bottom,
+  };
 }
 
 export default function ScanCropEditor({
@@ -76,9 +52,10 @@ export default function ScanCropEditor({
   onReset,
   onCancel,
   onRotate,
+  rotation = 0,
   isApplying = false,
   title = "CROP BEFORE CONTINUING",
-  description = "Tighten the photo around the item, then save it.",
+  description = "Drag and pinch to frame the item, then save it.",
   applyLabel = "Save Crop",
 }: {
   imageUrl: string;
@@ -88,47 +65,33 @@ export default function ScanCropEditor({
   onReset: () => void;
   onCancel: () => void;
   onRotate?: () => void;
+  rotation?: number;
   isApplying?: boolean;
   title?: string;
   description?: string;
   applyLabel?: string;
 }) {
-  const insetStyle = {
-    left: `${crop.left * 100}%`,
-    top: `${crop.top * 100}%`,
-    right: `${crop.right * 100}%`,
-    bottom: `${crop.bottom * 100}%`,
-  };
+  const initialArea = useMemo(
+    () => (isDefaultCrop(crop) ? undefined : toPercentArea(crop)),
+    [crop]
+  );
 
-  function update(next: Partial<ScanCropRect>) {
-    onChange(
-      normalizeCrop({
-        ...crop,
-        ...next,
-      })
-    );
+  const defaultPosition = useMemo<Point>(() => ({ x: 0, y: 0 }), []);
+  const [cropPosition, setCropPosition] = useState<Point>(defaultPosition);
+  const [zoom, setZoom] = useState(1);
+
+  function handleCropComplete(area: Area) {
+    onChange(fromPercentArea(area));
   }
 
-  function adjustSides(direction: "wider" | "tighter") {
-    const delta = direction === "tighter" ? TRIM_STEP : -TRIM_STEP;
-    update({
-      left: crop.left + delta,
-      right: crop.right + delta,
-    });
-  }
-
-  function adjustTop(direction: "less" | "more") {
-    const delta = direction === "more" ? TRIM_STEP : -TRIM_STEP;
-    update({ top: crop.top + delta });
-  }
-
-  function adjustBottom(direction: "less" | "more") {
-    const delta = direction === "more" ? TRIM_STEP : -TRIM_STEP;
-    update({ bottom: crop.bottom + delta });
+  function handleReset() {
+    setCropPosition(defaultPosition);
+    setZoom(1);
+    onReset();
   }
 
   return (
-    <section className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+    <section className="rounded-[20px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">{title}</div>
@@ -137,58 +100,80 @@ export default function ScanCropEditor({
 
         {onRotate ? (
           <button type="button" onClick={onRotate} className={buttonClass()}>
-            ↻
+            Rotate 90
           </button>
         ) : null}
       </div>
 
-      <div className="mt-3 overflow-hidden rounded-[14px] bg-black/20 p-2 ring-1 ring-[color:var(--border)]">
-        <div className="relative overflow-hidden rounded-[10px] bg-black/20">
-          <img src={imageUrl} alt="Scan crop preview" className="h-auto w-full object-contain" />
-
-          <div className="pointer-events-none absolute inset-0">
-            <div className="absolute inset-0 bg-black/45" />
-            <div
-              className="absolute rounded-[18px] border-2 border-cyan-300 shadow-[0_0_0_9999px_rgba(0,0,0,0.42)]"
-              style={insetStyle}
-            />
-          </div>
+      <div className="mt-3 overflow-hidden rounded-[16px] bg-black/20 p-2 ring-1 ring-[color:var(--border)]">
+        <div className="relative h-[52svh] min-h-[320px] max-h-[520px] overflow-hidden rounded-[12px] bg-black/40 [touch-action:none] sm:h-[440px]">
+          <Cropper
+            key={imageUrl}
+            image={imageUrl}
+            crop={cropPosition}
+            zoom={zoom}
+            rotation={rotation}
+            aspect={4 / 3}
+            objectFit="contain"
+            minZoom={1}
+            maxZoom={3}
+            zoomSpeed={0.05}
+            showGrid
+            onCropChange={setCropPosition}
+            onZoomChange={setZoom}
+            onCropComplete={handleCropComplete}
+            initialCroppedAreaPercentages={initialArea}
+          />
         </div>
       </div>
 
-      <div className="mb-2 mt-4 text-[11px] text-[color:var(--muted2)]">
-        Use <strong>-</strong> for less trim and <strong>+</strong> for more trim.
+      <div className="mt-3 rounded-[16px] bg-black/10 p-3 ring-1 ring-white/8">
+        <div className="flex items-center justify-between gap-3 text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">
+          <span>ZOOM</span>
+          <span>{zoom.toFixed(2)}x</span>
+        </div>
+
+        <div className="mt-3 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setZoom((current) => Math.max(1, Number((current - 0.2).toFixed(2))))}
+            className={buttonClass()}
+            aria-label="Zoom out"
+          >
+            -
+          </button>
+
+          <input
+            type="range"
+            min={1}
+            max={3}
+            step={0.05}
+            value={zoom}
+            onChange={(event) => setZoom(Number(event.target.value))}
+            className="h-10 w-full accent-[color:var(--pill-active-bg)]"
+            aria-label="Zoom"
+          />
+
+          <button
+            type="button"
+            onClick={() => setZoom((current) => Math.min(3, Number((current + 0.2).toFixed(2))))}
+            className={buttonClass()}
+            aria-label="Zoom in"
+          >
+            +
+          </button>
+        </div>
+
+        <div className="mt-3 text-xs text-[color:var(--muted)]">
+          Drag to move the photo. Pinch on phone or use the slider for finer control.
+        </div>
       </div>
 
-      <div className="mt-2 grid gap-2 sm:grid-cols-3">
-        <ControlRow
-          label="SIDES"
-          onDecrease={() => adjustSides("wider")}
-          onIncrease={() => adjustSides("tighter")}
-          decreaseLabel="-"
-          increaseLabel="+"
-        />
-        <ControlRow
-          label="TOP"
-          onDecrease={() => adjustTop("less")}
-          onIncrease={() => adjustTop("more")}
-          decreaseLabel="-"
-          increaseLabel="+"
-        />
-        <ControlRow
-          label="BOTTOM"
-          onDecrease={() => adjustBottom("less")}
-          onIncrease={() => adjustBottom("more")}
-          decreaseLabel="-"
-          increaseLabel="+"
-        />
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4 grid gap-2 sm:flex sm:flex-wrap">
         <button type="button" onClick={onApply} disabled={isApplying} className={primaryButtonClass()}>
           {isApplying ? "Saving..." : applyLabel}
         </button>
-        <button type="button" onClick={onReset} className={buttonClass()}>
+        <button type="button" onClick={handleReset} className={buttonClass()}>
           Reset
         </button>
         <button type="button" onClick={onCancel} className={buttonClass()}>

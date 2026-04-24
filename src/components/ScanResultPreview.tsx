@@ -19,9 +19,9 @@ function ReviewRow({
   if (!value) return null;
 
   return (
-    <div className="grid gap-1 rounded-lg bg-black/10 p-2 ring-1 ring-white/8">
+    <div className="grid gap-1 rounded-xl bg-black/10 p-3 ring-1 ring-white/8">
       <div className="text-[10px] tracking-[0.12em] text-[color:var(--muted2)]">{label}</div>
-      <div className="text-sm text-[color:var(--fg)]">{value}</div>
+      <div className="break-words text-sm text-[color:var(--fg)]">{value}</div>
     </div>
   );
 }
@@ -46,53 +46,52 @@ export default function ScanResultPreview({
   const hasAnyFields = Object.values(review.fields).some((value) => String(value ?? "").trim().length > 0);
 
   return (
-    <div className="mb-3 rounded-[14px] bg-black/10 p-3 ring-1 ring-white/8">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">{title}</div>
+    <div className="mb-3 rounded-[18px] bg-black/10 p-3 ring-1 ring-white/8 sm:p-4">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">{title}</div>
 
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            <span
-              className={[
-                "rounded-full px-2.5 py-1 text-[11px] font-medium ring-1",
-                confidenceTone(review.confidence),
-              ].join(" ")}
-            >
-              {review.confidence.toUpperCase()} / {review.score}/100
-            </span>
-
-            {isUnsafe ? (
-              <span className="rounded-full bg-amber-500/15 px-2 py-1 text-[10px] text-amber-200 ring-1 ring-amber-400/20">
-                PARTIAL ONLY
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span
+                className={[
+                  "rounded-full px-2.5 py-1 text-[11px] font-medium ring-1",
+                  confidenceTone(review.confidence),
+                ].join(" ")}
+              >
+                {review.confidence.toUpperCase()} / {review.score}/100
               </span>
-            ) : null}
+
+              {isUnsafe ? (
+                <span className="rounded-full bg-amber-500/15 px-2 py-1 text-[10px] text-amber-200 ring-1 ring-amber-400/20">
+                  PARTIAL ONLY
+                </span>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="grid gap-2 sm:min-w-[220px]">
+            <PillButton onClick={onApplyEmptyOnly} disabled={!hasAnyFields}>
+              Use Partial Info
+            </PillButton>
+
+            <PillButton variant="primary" onClick={onApplyAll} disabled={isUnsafe || isLow}>
+              Apply All
+            </PillButton>
+
+            <PillButton onClick={onCancel}>Cancel</PillButton>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <PillButton onClick={onApplyEmptyOnly} disabled={!hasAnyFields}>
-            Use Partial Info
-          </PillButton>
-
-          <PillButton variant="primary" onClick={onApplyAll} disabled={isUnsafe || isLow}>
-            Apply All
-          </PillButton>
-
-          <PillButton onClick={onCancel}>Cancel</PillButton>
+        <div className="rounded-[16px] bg-[color:var(--pill)] p-3 text-sm ring-1 ring-[color:var(--border)]">
+          {isUnsafe || isLow
+            ? "This scan has useful clues, but it is not strong enough to trust every field at once."
+            : "This looks strong enough to apply if the title, number, and category match what you see."}
         </div>
       </div>
 
-      {isUnsafe ? (
-        <div className="mt-3 rounded-lg bg-amber-500/10 p-3 text-sm text-amber-200 ring-1 ring-amber-400/20">
-          <div className="text-[11px] tracking-[0.14em] text-amber-200/80">PARTIAL MATCH</div>
-          <div className="mt-1">
-            Some fields may still be useful, but the full scan is too weak to trust all at once.
-          </div>
-        </div>
-      ) : null}
-
       {review.warnings.length > 0 ? (
-        <div className="mt-3 rounded-lg bg-amber-500/10 p-3 text-sm text-amber-200 ring-1 ring-amber-400/20">
+        <div className="mt-3 rounded-[16px] bg-amber-500/10 p-3 text-sm text-amber-200 ring-1 ring-amber-400/20">
           <div className="text-[11px] tracking-[0.14em] text-amber-200/80">WARNINGS</div>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             {review.warnings.map((warning) => (
@@ -115,19 +114,15 @@ export default function ScanResultPreview({
         <ReviewRow label="Subcategory" value={review.fields.subcategoryLabel} />
       </div>
 
-      <details className="mt-3 rounded-lg bg-black/10 p-3 ring-1 ring-white/8">
+      <details className="mt-3 rounded-[16px] bg-black/10 p-3 ring-1 ring-white/8">
         <summary className="cursor-pointer text-[11px] tracking-[0.12em] text-[color:var(--muted2)]">
           Show scan text
         </summary>
 
-        <div className="mt-3 max-h-[180px] overflow-auto rounded-lg bg-[color:var(--pill)] p-3 text-xs leading-5 ring-1 ring-[color:var(--border)]">
+        <div className="mt-3 max-h-[220px] overflow-auto rounded-xl bg-[color:var(--pill)] p-3 text-xs leading-5 ring-1 ring-[color:var(--border)]">
           {review.rawText || "No scan text returned."}
         </div>
       </details>
-
-      <div className="mt-3 rounded-lg bg-black/10 p-3 text-xs text-[color:var(--muted)] ring-1 ring-white/8">
-        Use Partial Info when the title or category looks right, and only use Apply All on clean scans.
-      </div>
     </div>
   );
 }

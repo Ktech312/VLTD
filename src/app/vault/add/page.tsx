@@ -165,6 +165,9 @@ export default function AddPage() {
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const mediaInputRef = useRef<HTMLInputElement | null>(null);
   const numberInputRef = useRef<HTMLInputElement | null>(null);
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
+  const scanStageRef = useRef<HTMLDivElement | null>(null);
+  const reviewRef = useRef<HTMLDivElement | null>(null);
 
   const [values, setValues] = useState<FormValues>(EMPTY_VALUES);
   const [locks, setLocks] = useState<BulkAddLocks>({ ...DEFAULT_BULK_ADD_LOCKS });
@@ -194,6 +197,7 @@ export default function AddPage() {
   const [scanType, setScanType] = useState<ScanItemType>("auto");
   const [existingItems, setExistingItems] = useState<VaultItem[]>([]);
   const [duplicateWarning, setDuplicateWarning] = useState("");
+  const [showOptionalPanels, setShowOptionalPanels] = useState(false);
 
   useEffect(() => {
     const state = readBulkAddState();
@@ -259,6 +263,20 @@ export default function AddPage() {
       )
     );
   }, [existingItems, values.certNumber, values.number, values.title]);
+
+  useEffect(() => {
+    if (!isCropEditorOpen) return;
+    window.setTimeout(() => {
+      scanStageRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  }, [isCropEditorOpen]);
+
+  useEffect(() => {
+    if (!scanSession.review) return;
+    window.setTimeout(() => {
+      reviewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  }, [scanSession.review]);
 
   const canSave = useMemo(() => values.title.trim().length > 0 && !isSaving, [values.title, isSaving]);
   const sellPrice = useMemo(
@@ -755,10 +773,10 @@ export default function AddPage() {
       return;
     }
 
-      replaceScanImage(file);
-      setIsCropEditorOpen(true);
-      setStatus("Photo added. Tighten the crop if needed, then scan this photo.");
-    }
+    replaceScanImage(file);
+    setIsCropEditorOpen(true);
+    setStatus("Photo added. Tighten the crop if needed, then scan this photo.");
+  }
 
   async function handleUpcLookup() {
     const manualDigits = String(values.serialNumber ?? "").replace(/\D/g, "").trim();
@@ -861,7 +879,8 @@ export default function AddPage() {
 
   function applyScanReview(mode: "all" | "emptyOnly") {
     const review = scanSession.review;
-    if (!review || !review.safeToAutofill) return;
+    if (!review) return;
+    if (mode === "all" && (!review.safeToAutofill || review.confidence === "low")) return;
 
     setValues((prev) => {
       const next = { ...prev };
@@ -890,6 +909,10 @@ export default function AddPage() {
 
     setScanSession((prev) => markScanSessionApplied(prev));
     setStatus(mode === "all" ? "Scan fields applied." : "Scan fields applied to empty fields only.");
+    window.setTimeout(() => {
+      titleInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      titleInputRef.current?.focus();
+    }, 60);
   }
 
   function resetUnlockedFields() {
@@ -1065,7 +1088,7 @@ export default function AddPage() {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
               <Link
                 href="/vault"
                 className="inline-flex h-10 items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]"
@@ -1102,112 +1125,133 @@ export default function AddPage() {
 
         <div className="mb-3 grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_360px]">
           <div className="grid gap-3">
-            {isCropEditorOpen && scanSession.image?.previewUrl ? (
-              <ScanCropEditor
-                imageUrl={scanSession.image.previewUrl}
-                crop={scanCrop}
-                onChange={setScanCrop}
-                title="ADJUST PHOTO BEFORE SCAN"
-                description="Keep the item centered, then scan this photo."
-                applyLabel="Scan This Photo"
-                onApply={() => void handleApplyScanCrop()}
-                onReset={() => setScanCrop(DEFAULT_SCAN_CROP)}
-                onCancel={() => setIsCropEditorOpen(false)}
-                isApplying={isApplyingCrop}
-              />
-            ) : (
-              <ScanPanel
-                session={scanSession}
-                scanType={scanType}
-                isScanning={isScanning}
-                isBookLookupRunning={isBookLookupRunning}
-                isComicLookupRunning={isComicLookupRunning}
-                isUpcLookupRunning={isUpcLookupRunning}
-                isVisionLookupRunning={isVisionLookupRunning}
-                saveScanAsPhoto={saveScanAsPhoto}
-                onScanTypeChange={setScanType}
-                onUseCamera={() => cameraInputRef.current?.click()}
-                onUploadImage={() => uploadInputRef.current?.click()}
-                onScanAutofill={() => void handleScanAutofill()}
-                onCropImage={() => setIsCropEditorOpen(true)}
-                onBookLookup={() => void handleBookIsbnLookup()}
-                onComicLookup={() => void handleComicLookup()}
-                onUpcLookup={() => void handleUpcLookup()}
-                onClearImage={clearScanImage}
-                onToggleSaveScanAsPhoto={setSaveScanAsPhoto}
-              />
-            )}
+            <div ref={scanStageRef}>
+              {isCropEditorOpen && scanSession.image?.previewUrl ? (
+                <ScanCropEditor
+                  imageUrl={scanSession.image.previewUrl}
+                  crop={scanCrop}
+                  onChange={setScanCrop}
+                  title="ADJUST PHOTO BEFORE SCAN"
+                  description="Keep the item centered, then scan this photo."
+                  applyLabel="Scan This Photo"
+                  onApply={() => void handleApplyScanCrop()}
+                  onReset={() => setScanCrop(DEFAULT_SCAN_CROP)}
+                  onCancel={() => setIsCropEditorOpen(false)}
+                  isApplying={isApplyingCrop}
+                />
+              ) : (
+                <ScanPanel
+                  session={scanSession}
+                  scanType={scanType}
+                  isScanning={isScanning}
+                  isBookLookupRunning={isBookLookupRunning}
+                  isComicLookupRunning={isComicLookupRunning}
+                  isUpcLookupRunning={isUpcLookupRunning}
+                  isVisionLookupRunning={isVisionLookupRunning}
+                  saveScanAsPhoto={saveScanAsPhoto}
+                  onScanTypeChange={setScanType}
+                  onUseCamera={() => cameraInputRef.current?.click()}
+                  onUploadImage={() => uploadInputRef.current?.click()}
+                  onScanAutofill={() => void handleScanAutofill()}
+                  onCropImage={() => setIsCropEditorOpen(true)}
+                  onBookLookup={() => void handleBookIsbnLookup()}
+                  onComicLookup={() => void handleComicLookup()}
+                  onUpcLookup={() => void handleUpcLookup()}
+                  onClearImage={clearScanImage}
+                  onToggleSaveScanAsPhoto={setSaveScanAsPhoto}
+                />
+              )}
+            </div>
 
-            <ScanResultPreview
-              review={scanSession.review}
-              title={reviewTitleFromSource(scanSession.review?.source)}
-              onApplyEmptyOnly={() => applyScanReview("emptyOnly")}
-              onApplyAll={() => applyScanReview("all")}
-              onCancel={() => setScanSession((prev) => clearScanSessionReview(prev))}
-            />
+            <div ref={reviewRef}>
+              <ScanResultPreview
+                review={scanSession.review}
+                title={reviewTitleFromSource(scanSession.review?.source)}
+                onApplyEmptyOnly={() => applyScanReview("emptyOnly")}
+                onApplyAll={() => applyScanReview("all")}
+                onCancel={() => setScanSession((prev) => clearScanSessionReview(prev))}
+              />
+            </div>
           </div>
 
           <div className="grid gap-3">
-            <section className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ITEM PHOTO</div>
-              <div className="mt-2 overflow-hidden rounded-[14px] bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)]">
-                <div className="flex h-[180px] items-center justify-center overflow-hidden rounded-[10px] bg-black/10">
-                  {mediaPreviewUrl ? (
-                    <img src={mediaPreviewUrl} alt="Item media preview" className="h-full w-full object-contain" />
-                  ) : (
-                    <div className="px-4 text-center text-xs text-[color:var(--muted)]">
-                      No saved item photo selected
-                    </div>
-                  )}
+            <button
+              type="button"
+              onClick={() => setShowOptionalPanels((prev) => !prev)}
+              className="flex w-full items-center justify-between gap-3 rounded-[16px] bg-[color:var(--surface)] px-4 py-3 text-left ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] xl:hidden"
+            >
+              <div>
+                <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
+                  OPTIONAL TOOLS
+                </div>
+                <div className="mt-1 text-sm text-[color:var(--muted)]">
+                  Add a real item photo or pricing after the scan fields look right.
                 </div>
               </div>
-
-              <div className="mt-3">
-                <ImageRoleSelector
-                  value={mediaImageRole}
-                  onChange={setMediaImageRole}
-                  compact
-                  label="SAVED PHOTO ROLE"
-                />
+              <div className="text-sm font-medium text-[color:var(--fg)]">
+                {showOptionalPanels ? "Hide" : "Show"}
               </div>
+            </button>
 
-              <div className="mt-3 grid gap-2">
-                <button
-                  type="button"
-                  onClick={() => mediaInputRef.current?.click()}
-                  className="rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm ring-1 ring-[color:var(--border)]"
-                >
-                  Upload Item Photo
-                </button>
-                <button
-                  type="button"
-                  onClick={clearMediaImage}
-                  disabled={!mediaFile && !mediaPreviewUrl}
-                  className="rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm ring-1 ring-[color:var(--border)] disabled:opacity-40"
-                >
-                  Clear Item Photo
-                </button>
-              </div>
+            <div
+              className={[
+                showOptionalPanels ? "grid" : "hidden",
+                "gap-3 xl:grid",
+              ].join(" ")}
+            >
+              <section className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+                <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ITEM PHOTO</div>
+                <div className="mt-2 overflow-hidden rounded-[14px] bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)]">
+                  <div className="flex h-[180px] items-center justify-center overflow-hidden rounded-[10px] bg-black/10">
+                    {mediaPreviewUrl ? (
+                      <img src={mediaPreviewUrl} alt="Item media preview" className="h-full w-full object-contain" />
+                    ) : (
+                      <div className="px-4 text-center text-xs text-[color:var(--muted)]">
+                        No saved item photo selected
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-              <input
-                ref={mediaInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => void handleMediaImageSelection(e.target.files)}
+                <div className="mt-3">
+                  <ImageRoleSelector
+                    value={mediaImageRole}
+                    onChange={setMediaImageRole}
+                    compact
+                    label="SAVED PHOTO ROLE"
+                  />
+                </div>
+
+                <div className="mt-3 grid gap-2">
+                  <button
+                    type="button"
+                    onClick={() => mediaInputRef.current?.click()}
+                    className="rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm ring-1 ring-[color:var(--border)]"
+                  >
+                    Upload Item Photo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearMediaImage}
+                    disabled={!mediaFile && !mediaPreviewUrl}
+                    className="rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm ring-1 ring-[color:var(--border)] disabled:opacity-40"
+                  >
+                    Clear Item Photo
+                  </button>
+                </div>
+              </section>
+
+              <PricingMvpCard
+                title="PRICING MVP"
+                value={pricingValues}
+                onSave={async (patch) => {
+                  setPricingValues((prev) => ({ ...prev, ...patch }));
+                  setStatus("Pricing updated for this draft item.");
+                }}
               />
-            </section>
 
-            <PricingMvpCard
-              title="PRICING MVP"
-              value={pricingValues}
-              onSave={async (patch) => {
-                setPricingValues((prev) => ({ ...prev, ...patch }));
-                setStatus("Pricing updated for this draft item.");
-              }}
-            />
-
-            <CostToSellPanel price={sellPrice} />
+              <CostToSellPanel price={sellPrice} />
+            </div>
           </div>
         </div>
 
@@ -1225,6 +1269,7 @@ export default function AddPage() {
               <Field label="Title / Series" locked={locks.title} onToggleLock={() => handleToggleLock("title")}>
                 <div className="grid gap-2">
                   <input
+                    ref={titleInputRef}
                     className={inputClass()}
                     value={values.title}
                     onChange={(e) => setField("title", e.target.value)}
@@ -1271,6 +1316,7 @@ export default function AddPage() {
                   className={inputClass()}
                   value={values.purchasePrice}
                   onChange={(e) => setField("purchasePrice", e.target.value)}
+                  inputMode="decimal"
                   placeholder="25"
                 />
               </Field>
@@ -1280,6 +1326,7 @@ export default function AddPage() {
                   className={inputClass()}
                   value={values.currentValue}
                   onChange={(e) => setField("currentValue", e.target.value)}
+                  inputMode="decimal"
                   placeholder="25"
                 />
               </Field>
@@ -1386,6 +1433,13 @@ export default function AddPage() {
           </div>
         </section>
 
+        <input
+          ref={mediaInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => void handleMediaImageSelection(e.target.files)}
+        />
         <input
           ref={cameraInputRef}
           type="file"

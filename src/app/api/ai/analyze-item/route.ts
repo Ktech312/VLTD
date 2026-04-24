@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { AI_ASSIST_SETUP_MESSAGE } from "@/lib/ai/openaiVision";
+
 type VisionRouteResult = {
   detectedTitle: string;
   detectedCategory: string;
@@ -71,8 +73,7 @@ export async function POST(req: NextRequest) {
     if (!apiKey) {
       return NextResponse.json(
         {
-          error:
-            "AI Assist is not set up yet. Add ANTHROPIC_API_KEY to your server environment.",
+          error: AI_ASSIST_SETUP_MESSAGE,
         },
         { status: 503 }
       );

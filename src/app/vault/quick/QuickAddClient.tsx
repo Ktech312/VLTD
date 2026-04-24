@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import ScanCropEditor from "@/components/ScanCropEditor";
 import { PillButton } from "@/components/ui/PillButton";
-import { analyzeImageWithVision } from "@/lib/ai/openaiVision";
+import { AI_ASSIST_SETUP_MESSAGE, analyzeImageWithVision } from "@/lib/ai/openaiVision";
 import { newId } from "@/lib/id";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
 import { appendItems, type VaultImage, type VaultItem } from "@/lib/vaultModel";
@@ -229,6 +229,7 @@ function RecentItemCard({ item }: { item: SavedItemPreview }) {
 export default function QuickAddClient() {
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [frontImage, setFrontImage] = useState<string | undefined>(undefined);
@@ -349,6 +350,10 @@ export default function QuickAddClient() {
       setScanCrop(DEFAULT_SCAN_CROP);
       setRotation(0);
       setStatus("Photo saved. Ready for details.");
+      window.setTimeout(() => {
+        titleInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        titleInputRef.current?.focus();
+      }, 60);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Failed to save photo.");
     } finally {
@@ -448,7 +453,13 @@ export default function QuickAddClient() {
 
       setStatus("AI filled in basic details. Review them before saving.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "AI assist failed.");
+      setStatus(
+        error instanceof Error && /ANTHROPIC_API_KEY|AI Assist is unavailable/i.test(error.message)
+          ? AI_ASSIST_SETUP_MESSAGE
+          : error instanceof Error
+            ? error.message
+            : "AI assist failed."
+      );
     } finally {
       setIsAiAssisting(false);
     }
@@ -616,6 +627,7 @@ export default function QuickAddClient() {
               <ScanCropEditor
                 imageUrl={draftPreviewUrl}
                 crop={scanCrop}
+                rotation={rotation}
                 onChange={setScanCrop}
                 title="ADJUST PHOTO BEFORE SAVE"
                 description="Keep the item centered, then save the image."
@@ -654,7 +666,7 @@ export default function QuickAddClient() {
                 Tap the photo to edit it again.
               </div>
 
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-3 grid gap-2 sm:flex sm:flex-wrap">
                 <PillButton onClick={() => setIsCropEditorOpen(true)} disabled={isSaving}>
                   Edit Photo
                 </PillButton>
@@ -670,12 +682,17 @@ export default function QuickAddClient() {
                   Retake
                 </PillButton>
               </div>
+
+              <div className="mt-3 rounded-[14px] bg-black/10 px-3 py-2 text-[11px] text-[color:var(--muted2)] ring-1 ring-white/8">
+                AI Assist needs `ANTHROPIC_API_KEY` on the server. If it is not set in Vercel yet, crop and manual save still work.
+              </div>
             </div>
           ) : null}
 
 
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <input
+              ref={titleInputRef}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Title *"
@@ -685,12 +702,14 @@ export default function QuickAddClient() {
               value={purchasePrice}
               onChange={(e) => setPurchasePrice(e.target.value)}
               placeholder="Purchase Price"
+              inputMode="decimal"
               className="h-12 rounded-2xl bg-[color:var(--pill)] px-4 ring-1 ring-[color:var(--border)]"
             />
             <input
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               placeholder="Quantity"
+              inputMode="numeric"
               className="h-12 rounded-2xl bg-[color:var(--pill)] px-4 ring-1 ring-[color:var(--border)]"
             />
             <textarea
@@ -707,7 +726,7 @@ export default function QuickAddClient() {
             </div>
           ) : null}
 
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-4 grid gap-2 sm:flex sm:flex-wrap">
             <PillButton
               variant="primary"
               onClick={() => void saveQuickAdd()}
