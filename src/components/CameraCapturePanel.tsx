@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+type CameraPermissionState = "granted" | "prompt" | "denied" | "unknown";
+
 export default function CameraCapturePanel({
   title,
   description,
@@ -20,11 +22,65 @@ export default function CameraCapturePanel({
   const [cameraError, setCameraError] = useState("");
   const [isStarting, setIsStarting] = useState(true);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [permissionState, setPermissionState] = useState<CameraPermissionState>("unknown");
+  const [isSecureContextValue, setIsSecureContextValue] = useState(true);
+  const [hostLabel, setHostLabel] = useState("");
 
   useEffect(() => {
     let isActive = true;
+    let permissionStatus: PermissionStatus | null = null;
+
+    async function readPermissionState() {
+      if (typeof window !== "undefined") {
+        setIsSecureContextValue(window.isSecureContext);
+        setHostLabel(window.location.host || window.location.hostname || "this site");
+      }
+
+      if (!navigator.permissions?.query) {
+        setPermissionState("unknown");
+        return;
+      }
+
+      try {
+        permissionStatus = await navigator.permissions.query({
+          name: "camera" as PermissionName,
+        });
+
+        if (!isActive) return;
+
+        const applyState = () => {
+          const next = permissionStatus?.state;
+          if (next === "granted" || next === "prompt" || next === "denied") {
+            setPermissionState(next);
+            return;
+          }
+          setPermissionState("unknown");
+        };
+
+        applyState();
+        permissionStatus.onchange = applyState;
+      } catch {
+        if (isActive) {
+          setPermissionState("unknown");
+        }
+      }
+    }
+
+    function stopStream() {
+      const stream = streamRef.current;
+      streamRef.current = null;
+      stream?.getTracks().forEach((track) => track.stop());
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+    }
 
     async function startCamera() {
+      stopStream();
+      setCameraError("");
+      setIsStarting(true);
+
       if (!navigator.mediaDevices?.getUserMedia) {
         setCameraError("Live camera is not available in this browser. Use the file picker instead.");
         setIsStarting(false);
@@ -60,11 +116,21 @@ export default function CameraCapturePanel({
           await videoRef.current.play().catch(() => undefined);
         }
       } catch (error) {
-        setCameraError(
-          error instanceof Error
-            ? error.message
-            : "Camera access failed. Use the file picker instead."
-        );
+        const message = error instanceof Error ? error.message : "Camera access failed.";
+
+        if (!isSecureContextValue) {
+          setCameraError("Camera access requires HTTPS or localhost for this site.");
+        } else if (permissionState === "denied") {
+          setCameraError("Camera access is blocked for this site.");
+        } else if (/NotAllowedError|Permission/i.test(message)) {
+          setCameraError("Camera permission was denied for this site.");
+        } else if (/NotReadableError|TrackStartError|Could not start video source/i.test(message)) {
+          setCameraError("The camera is busy in another app or browser tab.");
+        } else if (/NotFoundError|DevicesNotFoundError/i.test(message)) {
+          setCameraError("No camera was found on this device.");
+        } else {
+          setCameraError(message || "Camera access failed. Use the file picker instead.");
+        }
       } finally {
         if (isActive) {
           setIsStarting(false);
@@ -72,15 +138,34 @@ export default function CameraCapturePanel({
       }
     }
 
+    void readPermissionState();
     void startCamera();
 
     return () => {
       isActive = false;
-      const stream = streamRef.current;
-      streamRef.current = null;
-      stream?.getTracks().forEach((track) => track.stop());
+      if (permissionStatus) {
+        permissionStatus.onchange = null;
+      }
+      stopStream();
     };
-  }, []);
+  }, [isSecureContextValue, permissionState, retryCount]);
+
+  const helpItems = [
+    `Camera permission is per site. Even if camera works in other apps, you still need to allow it for ${hostLabel || "this site"}.`,
+    "Click the lock or camera icon in the address bar, open site settings, and set Camera to Allow for this site.",
+    "Reload the page after changing the permission.",
+    "If another app, browser tab, Zoom, Teams, or OBS is using the camera, close it and try again.",
+    "If this page is not on HTTPS or localhost, the browser may refuse camera access entirely.",
+  ];
+
+  const permissionLabel =
+    permissionState === "granted"
+      ? "Allowed"
+      : permissionState === "prompt"
+        ? "Ask"
+        : permissionState === "denied"
+          ? "Blocked"
+          : "Unknown";
 
   async function handleCapture() {
     const video = videoRef.current;
@@ -148,7 +233,7 @@ export default function CameraCapturePanel({
         <div className="mt-4 flex-1 overflow-hidden rounded-[20px] bg-black/30 p-2 ring-1 ring-[color:var(--border)]">
           <div className="flex h-full min-h-[280px] items-center justify-center overflow-hidden rounded-[16px] bg-black/30">
             {cameraError ? (
-              <div className="max-w-md px-5 text-center text-sm text-red-200">{cameraError}</div>
+              <div className="max-w-lg px-5 text-center text-sm text-red-200">{cameraError}</div>
             ) : (
               <video
                 ref={videoRef}
@@ -159,6 +244,33 @@ export default function CameraCapturePanel({
               />
             )}
           </div>
+        </div>
+
+        <div className="mt-4 rounded-[18px] bg-black/10 p-3 ring-1 ring-white/8">
+          <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">CAMERA HELP</div>
+          <div className="mt-2 grid gap-2 text-xs text-[color:var(--muted)] sm:grid-cols-3">
+            <div className="rounded-xl bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]">
+              Permission: <span className="font-medium text-[color:var(--fg)]">{permissionLabel}</span>
+            </div>
+            <div className="rounded-xl bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]">
+              Secure context: <span className="font-medium text-[color:var(--fg)]">{isSecureContextValue ? "Yes" : "No"}</span>
+            </div>
+            <div className="rounded-xl bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]">
+              Site: <span className="font-medium text-[color:var(--fg)]">{hostLabel || "Unknown"}</span>
+            </div>
+          </div>
+
+          <div className="mt-3 text-xs text-[color:var(--muted)]">
+            {permissionState === "denied"
+              ? "This usually means the browser blocked camera access for this site specifically."
+              : "If camera works in other browser apps but not here, the most common cause is site-specific permission settings."}
+          </div>
+
+          <ul className="mt-3 list-disc space-y-1 pl-5 text-xs text-[color:var(--muted)]">
+            {helpItems.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
         </div>
 
         <div className="mt-4 grid gap-2 sm:grid-cols-3">
@@ -172,11 +284,21 @@ export default function CameraCapturePanel({
           </button>
           <button
             type="button"
+            onClick={() => setRetryCount((count) => count + 1)}
+            className="min-h-12 rounded-2xl bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]"
+          >
+            Retry Camera
+          </button>
+          <button
+            type="button"
             onClick={onUseFileInstead}
             className="min-h-12 rounded-2xl bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]"
           >
             Choose File Instead
           </button>
+        </div>
+
+        <div className="mt-2 grid gap-2 sm:grid-cols-1">
           <button
             type="button"
             onClick={onClose}
