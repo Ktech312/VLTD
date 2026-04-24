@@ -10,7 +10,7 @@ function LoginInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const nextUrl = useMemo(() => searchParams.get("next") || "/", [searchParams]);
+  const nextUrl = useMemo(() => searchParams.get("next") || "/dashboard", [searchParams]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

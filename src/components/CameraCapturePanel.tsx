@@ -26,10 +26,34 @@ export default function CameraCapturePanel({
   const [permissionState, setPermissionState] = useState<CameraPermissionState>("unknown");
   const [isSecureContextValue, setIsSecureContextValue] = useState(true);
   const [hostLabel, setHostLabel] = useState("");
+  const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState("");
 
   useEffect(() => {
     let isActive = true;
     let permissionStatus: PermissionStatus | null = null;
+
+    async function refreshVideoDevices() {
+      if (!navigator.mediaDevices?.enumerateDevices) return;
+
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        if (!isActive) return;
+
+        const cameras = devices.filter((device) => device.kind === "videoinput");
+        setVideoDevices(cameras);
+
+        if (selectedDeviceId && cameras.some((camera) => camera.deviceId === selectedDeviceId)) {
+          return;
+        }
+
+        setSelectedDeviceId(cameras[0]?.deviceId ?? "");
+      } catch {
+        if (isActive) {
+          setVideoDevices([]);
+        }
+      }
+    }
 
     async function readPermissionState() {
       if (typeof window !== "undefined") {
@@ -89,12 +113,17 @@ export default function CameraCapturePanel({
 
       try {
         let stream: MediaStream;
+        const requestedDevice = selectedDeviceId
+          ? {
+              deviceId: { exact: selectedDeviceId },
+            }
+          : {
+              facingMode: { ideal: "environment" },
+            };
 
         try {
           stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              facingMode: { ideal: "environment" },
-            },
+            video: requestedDevice,
             audio: false,
           });
         } catch {
@@ -110,6 +139,7 @@ export default function CameraCapturePanel({
         }
 
         streamRef.current = stream;
+        void refreshVideoDevices();
 
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -117,10 +147,13 @@ export default function CameraCapturePanel({
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : "Camera access failed.";
+        const currentSecureContext =
+          typeof window === "undefined" ? true : window.isSecureContext;
+        const currentPermissionState = permissionStatus?.state;
 
-        if (!isSecureContextValue) {
+        if (!currentSecureContext) {
           setCameraError("Camera access requires HTTPS or localhost for this site.");
-        } else if (permissionState === "denied") {
+        } else if (currentPermissionState === "denied") {
           setCameraError("Camera access is blocked for this site.");
         } else if (/NotAllowedError|Permission/i.test(message)) {
           setCameraError("Camera permission was denied for this site.");
@@ -148,7 +181,7 @@ export default function CameraCapturePanel({
       }
       stopStream();
     };
-  }, [isSecureContextValue, permissionState, retryCount]);
+  }, [retryCount, selectedDeviceId]);
 
   const helpItems = [
     `Camera permission is per site. Even if camera works in other apps, you still need to allow it for ${hostLabel || "this site"}.`,
@@ -265,6 +298,25 @@ export default function CameraCapturePanel({
               ? "This usually means the browser blocked camera access for this site specifically."
               : "If camera works in other browser apps but not here, the most common cause is site-specific permission settings."}
           </div>
+
+          {videoDevices.length > 1 ? (
+            <label className="mt-3 grid gap-1.5 text-xs text-[color:var(--muted)]">
+              <span className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--muted2)]">
+                Select Camera
+              </span>
+              <select
+                value={selectedDeviceId}
+                onChange={(event) => setSelectedDeviceId(event.target.value)}
+                className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+              >
+                {videoDevices.map((device, index) => (
+                  <option key={device.deviceId || index} value={device.deviceId}>
+                    {device.label || `Camera ${index + 1}`}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
 
           <ul className="mt-3 list-disc space-y-1 pl-5 text-xs text-[color:var(--muted)]">
             {helpItems.map((item) => (

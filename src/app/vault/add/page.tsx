@@ -441,21 +441,8 @@ export default function AddPage() {
   }
 
   function openCameraFor(target: "scan" | "item") {
-    if (
-      typeof navigator !== "undefined" &&
-      typeof navigator.mediaDevices?.getUserMedia === "function"
-    ) {
-      setCameraTarget(target);
-      setIsCameraPanelOpen(true);
-      return;
-    }
-
-    if (target === "scan") {
-      cameraInputRef.current?.click();
-      return;
-    }
-
-    mediaCameraInputRef.current?.click();
+    setCameraTarget(target);
+    setIsCameraPanelOpen(true);
   }
 
   function handleCapturedPhoto(file: File) {

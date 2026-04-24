@@ -380,35 +380,66 @@ function TopNavInner() {
                   </div>
 
                   <div className="px-2 py-2">
-                    <Link
-                      href="/collector"
-                      onClick={() => setUserOpen(false)}
-                      className="block rounded-xl px-3 py-2.5 text-sm text-[color:var(--fg)] transition hover:bg-[color:var(--pill)]"
-                    >
-                      Collector Profile
-                    </Link>
-                    <Link
-                      href="/account"
-                      onClick={() => setUserOpen(false)}
-                      className="block rounded-xl px-3 py-2.5 text-sm text-[color:var(--fg)] transition hover:bg-[color:var(--pill)]"
-                    >
-                      Account Settings
-                    </Link>
-                    {profiles.length > 1 ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setUserOpen(false);
-                          setCommandOpen(true);
-                        }}
-                        className="block w-full rounded-xl px-3 py-2.5 text-left text-sm text-[color:var(--fg)] transition hover:bg-[color:var(--pill)]"
+                    {signedIn ? (
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setUserOpen(false)}
+                        className="block rounded-xl px-3 py-2.5 text-sm text-[color:var(--fg)] transition hover:bg-[color:var(--pill)]"
                       >
-                        Switch Account
-                      </button>
+                        Dashboard
+                      </Link>
                     ) : null}
+                    {signedIn ? (
+                      <>
+                        <Link
+                          href="/collector"
+                          onClick={() => setUserOpen(false)}
+                          className="block rounded-xl px-3 py-2.5 text-sm text-[color:var(--fg)] transition hover:bg-[color:var(--pill)]"
+                        >
+                          Collector Profile
+                        </Link>
+                        <Link
+                          href="/account"
+                          onClick={() => setUserOpen(false)}
+                          className="block rounded-xl px-3 py-2.5 text-sm text-[color:var(--fg)] transition hover:bg-[color:var(--pill)]"
+                        >
+                          Account Settings
+                        </Link>
+                        {profiles.length > 1 ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setUserOpen(false);
+                              setCommandOpen(true);
+                            }}
+                            className="block w-full rounded-xl px-3 py-2.5 text-left text-sm text-[color:var(--fg)] transition hover:bg-[color:var(--pill)]"
+                          >
+                            Switch Account
+                          </button>
+                        ) : null}
+                      </>
+                    ) : (
+                      <>
+                        <Link
+                          href="/login"
+                          onClick={() => setUserOpen(false)}
+                          className="block rounded-xl px-3 py-2.5 text-sm text-[color:var(--fg)] transition hover:bg-[color:var(--pill)]"
+                        >
+                          Log In
+                        </Link>
+                        <Link
+                          href="/signup"
+                          onClick={() => setUserOpen(false)}
+                          className="block rounded-xl px-3 py-2.5 text-sm text-[color:var(--fg)] transition hover:bg-[color:var(--pill)]"
+                        >
+                          Create Account
+                        </Link>
+                      </>
+                    )}
                   </div>
 
-                  <div className="border-t border-[color:var(--border)] px-2 py-2">
+                  {signedIn ? (
+                    <div className="border-t border-[color:var(--border)] px-2 py-2">
                     <button
                       type="button"
                       onClick={handleSignOut}
@@ -416,7 +447,8 @@ function TopNavInner() {
                     >
                       Sign Out
                     </button>
-                  </div>
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
             </div>

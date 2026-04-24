@@ -1,10 +1,5 @@
-import ProtectedRoute from "@/components/ProtectedRoute";
-import HomeClient from "./HomeClient";
+import PublicHomeClient from "./PublicHomeClient";
 
 export default function Page() {
-  return (
-    <ProtectedRoute>
-      <HomeClient />
-    </ProtectedRoute>
-  );
+  return <PublicHomeClient />;
 }

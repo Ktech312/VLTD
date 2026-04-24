@@ -11,8 +11,8 @@ function selectClass() {
 
 function actionButtonClass(primary = false) {
   return primary
-    ? "min-h-12 rounded-2xl bg-[color:var(--pill-active-bg)] px-4 py-3 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)] disabled:opacity-40"
-    : "min-h-12 rounded-2xl bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-40";
+    ? "min-h-10 rounded-xl bg-[color:var(--pill-active-bg)] px-3 py-2 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)] disabled:opacity-40"
+    : "min-h-10 rounded-xl bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-40";
 }
 
 function chipClass(active = false) {
@@ -83,13 +83,13 @@ export default function ScanPanel({
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
-    <section className="rounded-[20px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-4">
-      <div className="flex flex-col gap-3">
+    <section className="rounded-[16px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-3">
+      <div className="flex flex-col gap-2.5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">SCAN FOR AUTOFILL</div>
-            <div className="mt-1 text-sm text-[color:var(--muted)]">
-              Use one temporary scan photo for barcode, OCR, and AI autofill. It does not replace the saved item photos.
+            <div className="mt-1 text-xs text-[color:var(--muted)]">
+              Temporary photo for barcode, OCR, and AI autofill.
             </div>
           </div>
 
@@ -99,11 +99,11 @@ export default function ScanPanel({
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-[18px] bg-black/20 p-2 ring-1 ring-[color:var(--border)]">
+        <div className="overflow-hidden rounded-[14px] bg-black/20 p-2 ring-1 ring-[color:var(--border)]">
           <button
             type="button"
             onClick={previewUrl ? onCropImage : undefined}
-            className="flex h-[220px] w-full items-center justify-center overflow-hidden rounded-[14px] bg-black/20 text-left transition hover:bg-black/25 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)] sm:h-[280px]"
+            className="flex h-[96px] w-full items-center justify-center overflow-hidden rounded-[10px] bg-black/20 text-left transition hover:bg-black/25 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)] sm:h-[120px]"
           >
             {previewUrl ? (
               <img
@@ -118,7 +118,7 @@ export default function ScanPanel({
             )}
           </button>
 
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
             <button type="button" onClick={onUseCamera} className={actionButtonClass(true)}>
               {hasImage ? "Retake Scan Photo" : "Open Camera"}
             </button>
@@ -137,14 +137,14 @@ export default function ScanPanel({
             ) : null}
           </div>
 
-          <div className="mt-3 rounded-[16px] bg-black/10 p-3 ring-1 ring-white/8">
+          <div className="mt-2 rounded-[12px] bg-black/10 p-2.5 ring-1 ring-white/8">
             <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">AUTOFILL</div>
             <div className="mt-1 text-xs text-[color:var(--muted)]">
               {hasImage
-                ? "Run Auto Identify for the full barcode + OCR + AI pass, or open specific tools if you already know the item type."
-                : "Open the camera or choose a scan photo first. On desktop, live camera access depends on browser permission."}
+                ? "Run the barcode + OCR + AI pass, or choose a specific scan tool."
+                : "Open camera or choose a scan photo first."}
             </div>
-            <div className="mt-2 text-[11px] text-[color:var(--muted2)]">
+            <div className="mt-1.5 text-[11px] text-[color:var(--muted2)]">
               Barcode and OCR still work without AI. Gemini vision fallback needs
               {" "}
               `GEMINI_API_KEY`
@@ -152,14 +152,14 @@ export default function ScanPanel({
               (or `GOOGLE_API_KEY`) on the server.
             </div>
 
-            <div className="mt-3 grid gap-2">
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
               <button
                 type="button"
                 onClick={onScanAutofill}
                 disabled={!hasImage || isIdentifying}
                 className={actionButtonClass(true)}
               >
-                {isIdentifying ? "Reading The Item..." : "Run Auto Identify"}
+                {isIdentifying ? "Reading..." : "Run Auto Identify"}
               </button>
 
               <button
