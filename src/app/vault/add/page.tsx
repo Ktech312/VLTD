@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import BulkLockBar from "@/components/BulkLockBar";
+import CameraCapturePanel from "@/components/CameraCapturePanel";
 import CostToSellPanel from "@/components/CostToSellPanel";
 import ImageRoleSelector, { type ImageRole } from "@/components/ImageRoleSelector";
 import PricingMvpCard from "@/components/PricingMvpCard";
@@ -75,6 +76,13 @@ type FormValues = BulkAddValues;
 const EMPTY_VALUES: FormValues = { ...EMPTY_BULK_ADD_VALUES };
 const EMPTY_PRICING_VALUES: PricingMvpFields = {};
 const DEFAULT_SCAN_CROP: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
+
+type DraftMediaImage = {
+  id: string;
+  file: File;
+  previewUrl: string;
+  role: ImageRole;
+};
 
 function isDefaultCrop(crop: ScanCropRect) {
   return crop.left === 0 && crop.top === 0 && crop.right === 0 && crop.bottom === 0;
@@ -164,10 +172,12 @@ export default function AddPage() {
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const mediaInputRef = useRef<HTMLInputElement | null>(null);
+  const mediaCameraInputRef = useRef<HTMLInputElement | null>(null);
   const numberInputRef = useRef<HTMLInputElement | null>(null);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
   const scanStageRef = useRef<HTMLDivElement | null>(null);
   const reviewRef = useRef<HTMLDivElement | null>(null);
+  const mediaImagesRef = useRef<DraftMediaImage[]>([]);
 
   const [values, setValues] = useState<FormValues>(EMPTY_VALUES);
   const [locks, setLocks] = useState<BulkAddLocks>({ ...DEFAULT_BULK_ADD_LOCKS });
@@ -178,9 +188,10 @@ export default function AddPage() {
   const [scanCrop, setScanCrop] = useState<ScanCropRect>(DEFAULT_SCAN_CROP);
   const [isApplyingCrop, setIsApplyingCrop] = useState(false);
 
-  const [mediaFile, setMediaFile] = useState<File | null>(null);
-  const [mediaPreviewUrl, setMediaPreviewUrl] = useState<string>("");
-  const [mediaImageRole, setMediaImageRole] = useState<ImageRole>("primary");
+  const [draftMediaImages, setDraftMediaImages] = useState<DraftMediaImage[]>([]);
+  const [activeMediaImageId, setActiveMediaImageId] = useState("");
+  const [cameraTarget, setCameraTarget] = useState<"scan" | "item">("scan");
+  const [isCameraPanelOpen, setIsCameraPanelOpen] = useState(false);
 
   const [pricingValues, setPricingValues] = useState<PricingMvpFields>(EMPTY_PRICING_VALUES);
 
@@ -246,10 +257,18 @@ export default function AddPage() {
   }, [scanSession.image]);
 
   useEffect(() => {
+    mediaImagesRef.current = draftMediaImages;
+  }, [draftMediaImages]);
+
+  useEffect(() => {
     return () => {
-      if (mediaPreviewUrl.startsWith("blob:")) revokeImageObjectUrl(mediaPreviewUrl);
+      mediaImagesRef.current.forEach((image) => {
+        if (image.previewUrl.startsWith("blob:")) {
+          revokeImageObjectUrl(image.previewUrl);
+        }
+      });
     };
-  }, [mediaPreviewUrl]);
+  }, []);
 
   useEffect(() => {
     setDuplicateWarning(
@@ -287,6 +306,8 @@ export default function AddPage() {
       0,
     [pricingValues.estimatedValue, pricingValues.lastCompValue, values.currentValue]
   );
+  const activeMediaImage =
+    draftMediaImages.find((image) => image.id === activeMediaImageId) ?? draftMediaImages[0] ?? null;
 
   function setField<K extends keyof FormValues>(key: K, value: FormValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -324,17 +345,130 @@ export default function AddPage() {
     if (uploadInputRef.current) uploadInputRef.current.value = "";
   }
 
-  function clearMediaImage() {
-    if (mediaPreviewUrl.startsWith("blob:")) revokeImageObjectUrl(mediaPreviewUrl);
-    setMediaFile(null);
-    setMediaPreviewUrl("");
-    setMediaImageRole("primary");
+  function normalizeDraftMediaImages(images: DraftMediaImage[]): DraftMediaImage[] {
+    if (images.length === 0) return [];
+
+    const primaryId = images.find((image) => image.role === "primary")?.id ?? images[0].id;
+
+    return images.map((image) => ({
+      ...image,
+      role:
+        image.id === primaryId
+          ? "primary"
+          : image.role === "primary"
+            ? "detail"
+            : image.role,
+    }));
+  }
+
+  function addDraftMediaFiles(files: File[]) {
+    const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+    if (!imageFiles.length) {
+      setStatus("That item photo is not an image.");
+      return;
+    }
+
+    const newEntries: DraftMediaImage[] = imageFiles.map((file, index) => ({
+      id: newId(),
+      file,
+      previewUrl: URL.createObjectURL(file),
+      role: draftMediaImages.length === 0 && index === 0 ? "primary" : "detail",
+    }));
+
+    setDraftMediaImages((prev) => normalizeDraftMediaImages([...prev, ...newEntries]));
+    setActiveMediaImageId(newEntries[newEntries.length - 1]?.id ?? "");
+    setStatus(
+      imageFiles.length === 1
+        ? "Item photo added. It will save with this item."
+        : `${imageFiles.length} item photos added. They will save with this item.`
+    );
+
     if (mediaInputRef.current) mediaInputRef.current.value = "";
+    if (mediaCameraInputRef.current) mediaCameraInputRef.current.value = "";
+  }
+
+  function clearMediaImage() {
+    draftMediaImages.forEach((image) => {
+      if (image.previewUrl.startsWith("blob:")) revokeImageObjectUrl(image.previewUrl);
+    });
+    setDraftMediaImages([]);
+    setActiveMediaImageId("");
+    if (mediaInputRef.current) mediaInputRef.current.value = "";
+    if (mediaCameraInputRef.current) mediaCameraInputRef.current.value = "";
+  }
+
+  function removeDraftMediaImage(imageId: string) {
+    const target = draftMediaImages.find((image) => image.id === imageId);
+    if (target?.previewUrl.startsWith("blob:")) {
+      revokeImageObjectUrl(target.previewUrl);
+    }
+
+    const nextImages = normalizeDraftMediaImages(
+      draftMediaImages.filter((image) => image.id !== imageId)
+    );
+
+    setDraftMediaImages(nextImages);
+    setActiveMediaImageId((prev) => {
+      if (prev && prev !== imageId) return prev;
+      return nextImages[0]?.id ?? "";
+    });
+    setStatus(nextImages.length ? "Item photo removed." : "All item photos cleared.");
+  }
+
+  function updateActiveMediaRole(role: ImageRole) {
+    if (!activeMediaImage) return;
+
+    setDraftMediaImages((prev) =>
+      normalizeDraftMediaImages(
+        prev.map((image) => {
+          if (image.id === activeMediaImage.id) {
+            return { ...image, role };
+          }
+
+          if (role === "primary" && image.role === "primary") {
+            return { ...image, role: "detail" };
+          }
+
+          return image;
+        })
+      )
+    );
   }
 
   function clearAllImages() {
     clearScanImage();
     clearMediaImage();
+  }
+
+  function openCameraFor(target: "scan" | "item") {
+    if (
+      typeof navigator !== "undefined" &&
+      typeof navigator.mediaDevices?.getUserMedia === "function"
+    ) {
+      setCameraTarget(target);
+      setIsCameraPanelOpen(true);
+      return;
+    }
+
+    if (target === "scan") {
+      cameraInputRef.current?.click();
+      return;
+    }
+
+    mediaCameraInputRef.current?.click();
+  }
+
+  function handleCapturedPhoto(file: File) {
+    setIsCameraPanelOpen(false);
+
+    if (cameraTarget === "item") {
+      addDraftMediaFiles([file]);
+      return;
+    }
+
+    replaceScanImage(file);
+    setIsCropEditorOpen(true);
+    setStatus("Camera photo added. Tighten the crop if needed, then run autofill.");
   }
 
   function replaceScanImage(file: File) {
@@ -830,19 +964,9 @@ export default function AddPage() {
   }
 
   async function handleMediaImageSelection(fileList: FileList | null) {
-    const file = fileList?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      setStatus("That media file is not an image.");
-      return;
-    }
-
-    if (mediaPreviewUrl.startsWith("blob:")) revokeImageObjectUrl(mediaPreviewUrl);
-
-    setMediaFile(file);
-    setMediaPreviewUrl(URL.createObjectURL(file));
-    setStatus("Item media photo attached.");
+    const files = Array.from(fileList ?? []);
+    if (!files.length) return;
+    addDraftMediaFiles(files);
   }
 
   async function handleScanAutofill() {
@@ -940,7 +1064,7 @@ export default function AddPage() {
     }
 
     setIsSaving(true);
-    setIsPreparingImage(Boolean(mediaFile || (scanFile && saveScanAsPhoto)));
+    setIsPreparingImage(Boolean(draftMediaImages.length || (scanFile && saveScanAsPhoto)));
 
     try {
       const now = Date.now();
@@ -952,57 +1076,68 @@ export default function AddPage() {
       let imageFrontUrl: string | undefined;
       let imageFrontStoragePath: string | undefined;
 
-      const fileToPersist = mediaFile || (saveScanAsPhoto ? scanFile : null);
-      const previewToPersist =
-        mediaPreviewUrl || (saveScanAsPhoto ? scanSession.image?.previewUrl ?? "" : "");
+      const mediaToPersist = [
+        ...draftMediaImages.map((image) => ({
+          file: image.file,
+          previewUrl: image.previewUrl,
+          role: image.role,
+        })),
+        ...(saveScanAsPhoto && scanFile
+          ? [
+              {
+                file: scanFile,
+                previewUrl: scanSession.image?.previewUrl ?? "",
+                role: "proof" as ImageRole,
+              },
+            ]
+          : []),
+      ];
 
-      const persistedRole: ImageRole = mediaFile
-        ? mediaImageRole
-        : saveScanAsPhoto
-          ? "proof"
-          : "primary";
+      if (mediaToPersist.length) {
+        images = [];
 
-      if (fileToPersist) {
-        const durableBlob = await prepareImageBlob(fileToPersist);
+        for (let index = 0; index < mediaToPersist.length; index += 1) {
+          const entry = mediaToPersist[index];
+          const durableBlob = await prepareImageBlob(entry.file);
 
-        if (navigator.onLine && hasSupabaseEnv()) {
-          const uploaded = await uploadVaultImageToSupabase({
-            itemId: id,
-            file: durableBlob,
-            fileName: fileToPersist.name || "image.jpg",
-          });
+          if (navigator.onLine && hasSupabaseEnv()) {
+            const uploaded = await uploadVaultImageToSupabase({
+              itemId: id,
+              file: durableBlob,
+              fileName: entry.file.name || `image-${index + 1}.jpg`,
+            });
 
-          primaryImageKey = uploaded.path;
-          imageFrontUrl = uploaded.publicUrl;
-          imageFrontStoragePath = uploaded.path;
-
-          images = [
-            {
-              id: `${id}_img_0`,
+            images.push({
+              id: `${id}_img_${index}`,
               storageKey: uploaded.path,
               url: uploaded.publicUrl,
-              order: 0,
+              order: index,
               localOnly: false,
-              role: persistedRole,
-            },
-          ];
-        } else {
-          primaryImageKey = generateVaultImageKey(id, 0);
-          await saveImageBlobToIndexedDb(durableBlob, primaryImageKey);
+              role: entry.role,
+            });
+          } else {
+            const storageKey = generateVaultImageKey(id, index);
+            await saveImageBlobToIndexedDb(durableBlob, storageKey);
 
-          images = [
-            {
-              id: `${id}_img_0`,
-              storageKey: primaryImageKey,
-              order: 0,
+            images.push({
+              id: `${id}_img_${index}`,
+              storageKey,
+              url: entry.previewUrl || undefined,
+              order: index,
               localOnly: true,
-              role: persistedRole,
-            },
-          ];
-
-          imageFrontUrl = previewToPersist || undefined;
-          imageFrontStoragePath = primaryImageKey;
+              role: entry.role,
+            });
+          }
         }
+
+        const primaryImage =
+          images.find((image) => image.role === "primary") ??
+          images.find((image) => image.role === "detail") ??
+          images[0];
+
+        primaryImageKey = primaryImage?.storageKey;
+        imageFrontUrl = primaryImage?.url;
+        imageFrontStoragePath = primaryImage?.storageKey;
       }
 
       const purchasePrice = parseMoney(values.purchasePrice);
@@ -1084,7 +1219,7 @@ export default function AddPage() {
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">VAULT ADD</div>
               <h1 className="mt-1 text-2xl font-semibold">Fast Entry</h1>
               <div className="mt-1 text-sm text-[color:var(--muted)]">
-                Temporary scan image for autofill. Real item photo stays separate.
+                Left side is a temporary scan for autofill. Right side holds the real item photos that save with this item.
               </div>
             </div>
 
@@ -1150,7 +1285,7 @@ export default function AddPage() {
                   isVisionLookupRunning={isVisionLookupRunning}
                   saveScanAsPhoto={saveScanAsPhoto}
                   onScanTypeChange={setScanType}
-                  onUseCamera={() => cameraInputRef.current?.click()}
+                  onUseCamera={() => openCameraFor("scan")}
                   onUploadImage={() => uploadInputRef.current?.click()}
                   onScanAutofill={() => void handleScanAutofill()}
                   onCropImage={() => setIsCropEditorOpen(true)}
@@ -1200,43 +1335,91 @@ export default function AddPage() {
               ].join(" ")}
             >
               <section className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-                <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ITEM PHOTO</div>
+                <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">SAVED ITEM PHOTOS</div>
+                <div className="mt-1 text-xs text-[color:var(--muted)]">
+                  Add as many real item photos as you want. They save with the item when you hit Save.
+                </div>
                 <div className="mt-2 overflow-hidden rounded-[14px] bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)]">
                   <div className="flex h-[180px] items-center justify-center overflow-hidden rounded-[10px] bg-black/10">
-                    {mediaPreviewUrl ? (
-                      <img src={mediaPreviewUrl} alt="Item media preview" className="h-full w-full object-contain" />
+                    {activeMediaImage ? (
+                      <img src={activeMediaImage.previewUrl} alt="Item media preview" className="h-full w-full object-contain" />
                     ) : (
                       <div className="px-4 text-center text-xs text-[color:var(--muted)]">
-                        No saved item photo selected
+                        No saved item photo selected yet
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className="mt-3">
-                  <ImageRoleSelector
-                    value={mediaImageRole}
-                    onChange={setMediaImageRole}
-                    compact
-                    label="SAVED PHOTO ROLE"
-                  />
-                </div>
+                {draftMediaImages.length ? (
+                  <div className="mt-3 grid gap-2">
+                    <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">PHOTO QUEUE</div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {draftMediaImages.map((image) => (
+                        <button
+                          key={image.id}
+                          type="button"
+                          onClick={() => setActiveMediaImageId(image.id)}
+                          className={[
+                            "overflow-hidden rounded-[14px] bg-[color:var(--pill)] p-1.5 text-left ring-1 transition",
+                            activeMediaImage?.id === image.id
+                              ? "ring-[color:var(--pill-active-bg)]"
+                              : "ring-[color:var(--border)]",
+                          ].join(" ")}
+                        >
+                          <div className="aspect-square overflow-hidden rounded-[10px] bg-black/10">
+                            <img src={image.previewUrl} alt="Draft item" className="h-full w-full object-cover" />
+                          </div>
+                          <div className="mt-1 px-1 text-[10px] uppercase tracking-[0.12em] text-[color:var(--muted2)]">
+                            {image.role}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {activeMediaImage ? (
+                  <div className="mt-3">
+                    <ImageRoleSelector
+                      value={activeMediaImage.role}
+                      onChange={updateActiveMediaRole}
+                      compact
+                      label="SELECTED PHOTO ROLE"
+                    />
+                  </div>
+                ) : null}
 
                 <div className="mt-3 grid gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openCameraFor("item")}
+                    className="rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm ring-1 ring-[color:var(--border)]"
+                  >
+                    Open Camera
+                  </button>
                   <button
                     type="button"
                     onClick={() => mediaInputRef.current?.click()}
                     className="rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm ring-1 ring-[color:var(--border)]"
                   >
-                    Upload Item Photo
+                    Choose Photo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => activeMediaImage && removeDraftMediaImage(activeMediaImage.id)}
+                    disabled={!activeMediaImage}
+                    className="rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm ring-1 ring-[color:var(--border)] disabled:opacity-40"
+                  >
+                    Remove Selected Photo
                   </button>
                   <button
                     type="button"
                     onClick={clearMediaImage}
-                    disabled={!mediaFile && !mediaPreviewUrl}
+                    disabled={!draftMediaImages.length}
                     className="rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm ring-1 ring-[color:var(--border)] disabled:opacity-40"
                   >
-                    Clear Item Photo
+                    Clear All Photos
                   </button>
                 </div>
               </section>
@@ -1437,6 +1620,15 @@ export default function AddPage() {
           ref={mediaInputRef}
           type="file"
           accept="image/*"
+          multiple
+          className="hidden"
+          onChange={(e) => void handleMediaImageSelection(e.target.files)}
+        />
+        <input
+          ref={mediaCameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
           className="hidden"
           onChange={(e) => void handleMediaImageSelection(e.target.files)}
         />
@@ -1455,6 +1647,27 @@ export default function AddPage() {
           className="hidden"
           onChange={(e) => void handleScanImageSelection(e.target.files)}
         />
+
+        {isCameraPanelOpen ? (
+          <CameraCapturePanel
+            title={cameraTarget === "scan" ? "Capture Scan Photo" : "Capture Item Photo"}
+            description={
+              cameraTarget === "scan"
+                ? "Take one temporary photo for barcode, OCR, and AI autofill."
+                : "Capture a real item photo and add it to this item's saved photo list."
+            }
+            onCapture={handleCapturedPhoto}
+            onClose={() => setIsCameraPanelOpen(false)}
+            onUseFileInstead={() => {
+              setIsCameraPanelOpen(false);
+              if (cameraTarget === "scan") {
+                uploadInputRef.current?.click();
+                return;
+              }
+              mediaInputRef.current?.click();
+            }}
+          />
+        ) : null}
       </div>
     </main>
   );

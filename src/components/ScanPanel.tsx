@@ -87,9 +87,9 @@ export default function ScanPanel({
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">SMART SCAN</div>
+            <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">SCAN FOR AUTOFILL</div>
             <div className="mt-1 text-sm text-[color:var(--muted)]">
-              One phone photo, then barcode, OCR, and AI take their best shot.
+              Use one temporary scan photo for barcode, OCR, and AI autofill. It does not replace the saved item photos.
             </div>
           </div>
 
@@ -102,7 +102,7 @@ export default function ScanPanel({
         <div className="overflow-hidden rounded-[18px] bg-black/20 p-2 ring-1 ring-[color:var(--border)]">
           <button
             type="button"
-            onClick={previewUrl ? onCropImage : onUseCamera}
+            onClick={previewUrl ? onCropImage : undefined}
             className="flex h-[220px] w-full items-center justify-center overflow-hidden rounded-[14px] bg-black/20 text-left transition hover:bg-black/25 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)] sm:h-[280px]"
           >
             {previewUrl ? (
@@ -113,36 +113,36 @@ export default function ScanPanel({
               />
             ) : (
               <div className="max-w-[18rem] px-4 text-center text-sm text-[color:var(--muted)]">
-                Tap here to open the camera and start the scan flow.
+                Add a temporary scan photo, then run autofill below.
               </div>
             )}
           </button>
 
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             <button type="button" onClick={onUseCamera} className={actionButtonClass(true)}>
-              {hasImage ? "Retake With Camera" : "Use Camera"}
+              {hasImage ? "Retake Scan Photo" : "Open Camera"}
             </button>
             <button type="button" onClick={onUploadImage} className={actionButtonClass()}>
-              {hasImage ? "Swap Photo" : "Choose Photo"}
+              {hasImage ? "Swap Scan Photo" : "Choose Scan Photo"}
             </button>
             {hasImage ? (
               <>
                 <button type="button" onClick={onCropImage} className={actionButtonClass()}>
-                  Adjust Crop
+                  Adjust Scan Crop
                 </button>
                 <button type="button" onClick={onClearImage} className={actionButtonClass()}>
-                  Clear Photo
+                  Clear Scan Photo
                 </button>
               </>
             ) : null}
           </div>
 
           <div className="mt-3 rounded-[16px] bg-black/10 p-3 ring-1 ring-white/8">
-            <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">IDENTIFY</div>
+            <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">AUTOFILL</div>
             <div className="mt-1 text-xs text-[color:var(--muted)]">
               {hasImage
-                ? "Run the full scan or open more tools if you already know what you are scanning."
-                : "Take or choose a photo first. The square above is also tappable."}
+                ? "Run Auto Identify for the full barcode + OCR + AI pass, or open specific tools if you already know the item type."
+                : "Open the camera or choose a scan photo first. On desktop, live camera access depends on browser permission."}
             </div>
             <div className="mt-2 text-[11px] text-[color:var(--muted2)]">
               Barcode and OCR still work without AI. Gemini vision fallback needs
@@ -159,7 +159,7 @@ export default function ScanPanel({
                 disabled={!hasImage || isIdentifying}
                 className={actionButtonClass(true)}
               >
-                {isIdentifying ? "Reading The Item..." : "Smart Identify"}
+                {isIdentifying ? "Reading The Item..." : "Run Auto Identify"}
               </button>
 
               <button
@@ -167,7 +167,7 @@ export default function ScanPanel({
                 onClick={() => setShowAdvanced((prev) => !prev)}
                 className={actionButtonClass()}
               >
-                {showAdvanced ? "Hide Scan Tools" : "More Scan Tools"}
+                {showAdvanced ? "Hide Scan Tools" : "Specific Scan Tools"}
               </button>
             </div>
           </div>
