@@ -27,6 +27,22 @@ import {
 } from "@/lib/vaultModel";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 
+const SALES_KEY = "vltd_sales_history";
+
+type SaleRecord = VaultItem & {
+  soldPrice?: number;
+  soldAt?: number;
+};
+
+function getSales(): SaleRecord[] {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(SALES_KEY) || "[]");
+    return Array.isArray(parsed) ? (parsed as SaleRecord[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 function clamp(value: unknown) {
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
@@ -117,14 +133,27 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   const [uploading, setUploading] = useState(false);
   const [mediaMessage, setMediaMessage] = useState("");
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [sale, setSale] = useState<SaleRecord | null>(null);
+  const [isSoldView, setIsSoldView] = useState(false);
 
   useEffect(() => {
     const next = loadItems({ includeAllProfiles: true });
     setItems(next);
     markItemViewed(id);
+
+    const params = new URLSearchParams(window.location.search);
+    const sold = params.get("sold") === "1";
+    setIsSoldView(sold);
+    setSale(null);
+
+    if (sold) {
+      const sales = getSales();
+      const match = sales.find((s) => String(s.id) === String(id));
+      if (match) setSale(match);
+    }
   }, [id]);
 
-  const item = useMemo(() => items.find((entry) => String(entry.id) === String(id)) ?? null, [items, id]);
+  const item = useMemo(() => items.find((entry) => String(entry.id) === String(id)) ?? sale ?? null, [items, id, sale]);
   const images = useMemo(() => (item ? getOrderedImageUrls(item) : []), [item]);
 
   useEffect(() => {
@@ -348,6 +377,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
   const universe = normUniverse(item.universe);
   const addedAt = createdAtMs(item);
+  const saleProfit =
+    sale ? Number(sale.soldPrice ?? 0) - totalCost(item) : 0;
 
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
@@ -367,6 +398,31 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 ← Vault
               </Link>
             </div>
+
+            {isSoldView && sale && (
+              <div className="mb-5 mt-4">
+                <Section title="SALE DETAILS">
+                  <DetailGrid
+                    rows={[
+                      { label: "Sold Price", value: fmtMoney(clamp(sale.soldPrice)) },
+                      {
+                        label: "Profit / Loss",
+                        value: (
+                          <span className={saleProfit >= 0 ? "text-green-400" : "text-red-400"}>
+                            {saleProfit >= 0 ? "+" : ""}
+                            {fmtMoney(saleProfit)}
+                          </span>
+                        ),
+                      },
+                      {
+                        label: "Sold Date",
+                        value: sale.soldAt ? fmtDate(sale.soldAt) : "—",
+                      },
+                    ]}
+                  />
+                </Section>
+              </div>
+            )}
 
             <div className="mt-4">
               <Section title="MEDIA">

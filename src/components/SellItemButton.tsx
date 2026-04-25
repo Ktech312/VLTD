@@ -1,56 +1,71 @@
 "use client";
 
 import { useState } from "react";
-import type { VaultItem } from "@/lib/vaultModel";
+
+import { loadItems, saveItems, type VaultItem } from "@/lib/vaultModel";
 
 const SALES_KEY = "vltd_sales_history";
 
-function getSales(): any[] {
+type SaleRecord = VaultItem & {
+  soldPrice: number;
+  soldAt: number;
+};
+
+function readSales(): SaleRecord[] {
   try {
-    return JSON.parse(localStorage.getItem(SALES_KEY) || "[]");
+    const parsed: unknown = JSON.parse(localStorage.getItem(SALES_KEY) || "[]");
+    return Array.isArray(parsed) ? (parsed as SaleRecord[]) : [];
   } catch {
     return [];
   }
 }
 
-function setSales(data: any[]): void {
+function writeSales(data: SaleRecord[]) {
   localStorage.setItem(SALES_KEY, JSON.stringify(data));
+}
+
+function parseMoney(input: string) {
+  const value = Number(input.replace(/[^0-9.-]/g, "").trim());
+  return Number.isFinite(value) ? value : undefined;
 }
 
 export default function SellItemButton({ item }: { item: VaultItem }) {
   const [loading, setLoading] = useState(false);
 
   function handleSell() {
-    const priceInput = prompt("Enter sale price:");
+    const priceInput = window.prompt("Enter sale price:");
     if (!priceInput) return;
 
-    const salePrice = Number(priceInput);
-    if (!Number.isFinite(salePrice)) {
-      alert("Invalid price");
+    const salePrice = parseMoney(priceInput);
+    if (salePrice === undefined) {
+      window.alert("Invalid price.");
       return;
     }
 
     setLoading(true);
 
     try {
-      const sales = getSales();
-
-      sales.push({
+      const sales = readSales();
+      const nextSale: SaleRecord = {
         ...item,
         soldPrice: salePrice,
         soldAt: Date.now(),
-      });
+      };
 
-      setSales(sales);
+      writeSales([
+        nextSale,
+        ...sales.filter((sale) => String(sale.id) !== String(item.id)),
+      ]);
 
-      const items = JSON.parse(localStorage.getItem("vltd_vault_items_v1") || "[]");
-      const updated = items.filter((i: any) => i.id !== item.id);
-      localStorage.setItem("vltd_vault_items_v1", JSON.stringify(updated));
+      const nextVaultItems = loadItems({ includeAllProfiles: true }).filter(
+        (entry) => String(entry.id) !== String(item.id)
+      );
+      saveItems(nextVaultItems);
 
       window.dispatchEvent(new Event("vltd:vault-updated"));
-    } catch (e) {
-      console.error(e);
-      alert("Failed to sell item");
+    } catch (error) {
+      console.error(error);
+      window.alert("Failed to mark item sold.");
     } finally {
       setLoading(false);
     }
@@ -58,9 +73,10 @@ export default function SellItemButton({ item }: { item: VaultItem }) {
 
   return (
     <button
+      type="button"
       onClick={handleSell}
       disabled={loading}
-      className="w-full rounded-xl bg-red-500/20 px-3 py-2 text-sm font-semibold text-red-300 ring-1 ring-red-400/30 hover:bg-red-500/30"
+      className="w-full rounded-xl bg-red-500/20 px-3 py-2 text-sm font-semibold text-red-200 ring-1 ring-red-400/30 transition hover:bg-red-500/30 disabled:opacity-50"
     >
       {loading ? "Selling..." : "Sell Item"}
     </button>
