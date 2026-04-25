@@ -15,7 +15,6 @@ function isDefaultCrop(crop: ScanCropRect) {
 
 export default function CameraCapturePanel({
   title,
-  description,
   onCapture,
   onClose,
   onUseFileInstead,
@@ -33,7 +32,6 @@ export default function CameraCapturePanel({
   const [isCapturing, setIsCapturing] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [permissionState, setPermissionState] = useState<CameraPermissionState>("unknown");
-  const [isSecureContextValue, setIsSecureContextValue] = useState(true);
   const [hostLabel, setHostLabel] = useState("");
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState("");
@@ -79,7 +77,6 @@ export default function CameraCapturePanel({
 
     async function readPermissionState() {
       if (typeof window !== "undefined") {
-        setIsSecureContextValue(window.isSecureContext);
         setHostLabel(window.location.host || window.location.hostname || "this site");
       }
 
@@ -209,14 +206,6 @@ export default function CameraCapturePanel({
     };
   }, [capturedPreviewUrl]);
 
-  const helpItems = [
-    `Camera permission is per site. Even if camera works in other apps, you still need to allow it for ${hostLabel || "this site"}.`,
-    "Click the lock or camera icon in the address bar, open site settings, and set Camera to Allow for this site.",
-    "Reload the page after changing the permission.",
-    "If another app, browser tab, Zoom, Teams, or OBS is using the camera, close it and try again.",
-    "If this page is not on HTTPS or localhost, the browser may refuse camera access entirely.",
-  ];
-
   const permissionLabel =
     permissionState === "granted"
       ? "Allowed"
@@ -308,21 +297,14 @@ export default function CameraCapturePanel({
   }
 
   return (
-    <div className="fixed inset-0 z-[80] bg-black/75 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="mx-auto flex h-full max-w-4xl flex-col rounded-[24px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-5">
+    <div className="fixed inset-0 z-[80] bg-black/75 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="mx-auto flex max-h-[calc(100dvh-1rem)] max-w-3xl flex-col overflow-hidden rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:max-h-[calc(100dvh-2rem)] sm:p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               {capturedFile ? "ADJUST PHOTO" : "LIVE CAMERA"}
             </div>
-            <h2 className="mt-1 text-xl font-semibold text-[color:var(--fg)]">
-              {capturedFile ? "Crop and Use Photo" : title}
-            </h2>
-            <div className="mt-1 text-sm text-[color:var(--muted)]">
-              {capturedFile
-                ? "Adjust the crop inside this popup, then use the finished photo."
-                : description}
-            </div>
+            <h2 className="mt-1 text-lg font-semibold text-[color:var(--fg)]">{capturedFile ? "Adjust Photo" : title}</h2>
           </div>
 
           <button
@@ -335,7 +317,7 @@ export default function CameraCapturePanel({
         </div>
 
         {capturedFile && capturedPreviewUrl ? (
-          <div className="mt-4 min-h-0 flex-1 overflow-auto pr-1">
+          <div className="mt-3 min-h-0 overflow-hidden">
             <ScanCropEditor
               imageUrl={capturedPreviewUrl}
               crop={captureCrop}
@@ -347,14 +329,20 @@ export default function CameraCapturePanel({
               onReset={() => setCaptureCrop(DEFAULT_CROP)}
               onCancel={handleRetakePhoto}
               isApplying={isApplyingCrop}
+              compact
             />
           </div>
         ) : (
           <>
-            <div className="mt-4 flex-1 overflow-hidden rounded-[20px] bg-black/30 p-2 ring-1 ring-[color:var(--border)]">
-              <div className="flex h-full min-h-[280px] items-center justify-center overflow-hidden rounded-[16px] bg-black/30">
+            <div className="mt-3 overflow-hidden rounded-[18px] bg-black/30 p-2 ring-1 ring-[color:var(--border)]">
+              <div className="flex h-[58dvh] min-h-[260px] max-h-[560px] items-center justify-center overflow-hidden rounded-[14px] bg-black/30">
                 {cameraError ? (
-                  <div className="max-w-lg px-5 text-center text-sm text-red-200">{cameraError}</div>
+                  <div className="max-w-lg px-5 text-center text-sm text-red-200">
+                    <div>{cameraError}</div>
+                    <div className="mt-3 text-xs text-[color:var(--muted)]">
+                      Permission: {permissionLabel}. Site: {hostLabel || "Unknown"}.
+                    </div>
+                  </div>
                 ) : (
                   <video
                     ref={videoRef}
@@ -367,53 +355,22 @@ export default function CameraCapturePanel({
               </div>
             </div>
 
-            <div className="mt-4 rounded-[18px] bg-black/10 p-3 ring-1 ring-white/8">
-              <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">CAMERA HELP</div>
-              <div className="mt-2 grid gap-2 text-xs text-[color:var(--muted)] sm:grid-cols-3">
-                <div className="rounded-xl bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]">
-                  Permission: <span className="font-medium text-[color:var(--fg)]">{permissionLabel}</span>
-                </div>
-                <div className="rounded-xl bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]">
-                  Secure context: <span className="font-medium text-[color:var(--fg)]">{isSecureContextValue ? "Yes" : "No"}</span>
-                </div>
-                <div className="rounded-xl bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]">
-                  Site: <span className="font-medium text-[color:var(--fg)]">{hostLabel || "Unknown"}</span>
-                </div>
-              </div>
-
-              <div className="mt-3 text-xs text-[color:var(--muted)]">
-                {permissionState === "denied"
-                  ? "This usually means the browser blocked camera access for this site specifically."
-                  : "If camera works in other browser apps but not here, the most common cause is site-specific permission settings."}
-              </div>
-
-              {videoDevices.length > 1 ? (
-                <label className="mt-3 grid gap-1.5 text-xs text-[color:var(--muted)]">
-                  <span className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--muted2)]">
-                    Select Camera
-                  </span>
-                  <select
-                    value={selectedDeviceId}
-                    onChange={(event) => setSelectedDeviceId(event.target.value)}
-                    className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
-                  >
-                    {videoDevices.map((device, index) => (
-                      <option key={device.deviceId || index} value={device.deviceId}>
-                        {device.label || `Camera ${index + 1}`}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : null}
-
-              <ul className="mt-3 list-disc space-y-1 pl-5 text-xs text-[color:var(--muted)]">
-                {helpItems.map((item) => (
-                  <li key={item}>{item}</li>
+            {videoDevices.length > 1 ? (
+              <select
+                value={selectedDeviceId}
+                onChange={(event) => setSelectedDeviceId(event.target.value)}
+                className="mt-2 h-9 rounded-xl bg-[color:var(--pill)] px-3 text-xs text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+                aria-label="Select camera"
+              >
+                {videoDevices.map((device, index) => (
+                  <option key={device.deviceId || index} value={device.deviceId}>
+                    {device.label || `Camera ${index + 1}`}
+                  </option>
                 ))}
-              </ul>
-            </div>
+              </select>
+            ) : null}
 
-            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
               <button
                 type="button"
                 onClick={() => void handleCapture()}

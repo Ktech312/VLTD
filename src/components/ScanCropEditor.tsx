@@ -113,6 +113,7 @@ export default function ScanCropEditor({
   title = "CROP BEFORE CONTINUING",
   description = "Drag the crop box or pull its corners. Pinch the crop box on phone/tablet to resize it.",
   applyLabel = "Save Crop",
+  compact = false,
 }: {
   imageUrl: string;
   crop: ScanCropRect;
@@ -126,6 +127,7 @@ export default function ScanCropEditor({
   title?: string;
   description?: string;
   applyLabel?: string;
+  compact?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
@@ -158,22 +160,14 @@ export default function ScanCropEditor({
       const image = imageRef.current;
       if (!container || !image) return;
 
-      const containerWidth = container.clientWidth;
-      const containerHeight = container.clientHeight;
-      const naturalWidth = image.naturalWidth || 1;
-      const naturalHeight = image.naturalHeight || 1;
-      const rotated = normalizedRotation === 90 || normalizedRotation === 270;
-      const sourceWidth = rotated ? naturalHeight : naturalWidth;
-      const sourceHeight = rotated ? naturalWidth : naturalHeight;
-      const scale = Math.min(containerWidth / sourceWidth, containerHeight / sourceHeight);
-      const width = sourceWidth * scale;
-      const height = sourceHeight * scale;
+      const containerRect = container.getBoundingClientRect();
+      const imageRect = image.getBoundingClientRect();
 
       setImageBox({
-        x: (containerWidth - width) / 2,
-        y: (containerHeight - height) / 2,
-        width,
-        height,
+        x: imageRect.left - containerRect.left,
+        y: imageRect.top - containerRect.top,
+        width: imageRect.width,
+        height: imageRect.height,
       });
     }
 
@@ -293,24 +287,26 @@ export default function ScanCropEditor({
   };
 
   return (
-    <section className="rounded-[20px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">{title}</div>
-          <div className="mt-1 text-xs text-[color:var(--muted)]">{description}</div>
+    <section className={compact ? "rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]" : "rounded-[20px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-4"}>
+      {!compact ? (
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">{title}</div>
+            <div className="mt-1 text-xs text-[color:var(--muted)]">{description}</div>
+          </div>
+
+          {onRotate ? (
+            <button type="button" onClick={onRotate} className={buttonClass()}>
+              Rotate 90
+            </button>
+          ) : null}
         </div>
+      ) : null}
 
-        {onRotate ? (
-          <button type="button" onClick={onRotate} className={buttonClass()}>
-            Rotate 90
-          </button>
-        ) : null}
-      </div>
-
-      <div className="mt-3 overflow-hidden rounded-[16px] bg-black/20 p-2 ring-1 ring-[color:var(--border)]">
+      <div className={compact ? "overflow-hidden rounded-[16px] bg-black/20 p-1.5 ring-1 ring-[color:var(--border)]" : "mt-3 overflow-hidden rounded-[16px] bg-black/20 p-2 ring-1 ring-[color:var(--border)]"}>
         <div
           ref={containerRef}
-          className="relative h-[52svh] min-h-[320px] max-h-[520px] overflow-hidden rounded-[12px] bg-black/40 [touch-action:none] sm:h-[440px]"
+          className={compact ? "relative h-[56dvh] min-h-[260px] max-h-[440px] overflow-hidden rounded-[12px] bg-black/40 [touch-action:none]" : "relative h-[52svh] min-h-[320px] max-h-[520px] overflow-hidden rounded-[12px] bg-black/40 [touch-action:none] sm:h-[440px]"}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerEnd}
@@ -402,11 +398,13 @@ export default function ScanCropEditor({
         </div>
       </div>
 
-      <div className="mt-3 rounded-[16px] bg-black/10 p-3 text-xs leading-5 text-[color:var(--muted)] ring-1 ring-white/8">
+      {!compact ? (
+        <div className="mt-3 rounded-[16px] bg-black/10 p-3 text-xs leading-5 text-[color:var(--muted)] ring-1 ring-white/8">
         Move the crop box, drag any edge or corner to resize it, or pinch the crop box on a phone/tablet.
-      </div>
+        </div>
+      ) : null}
 
-      <div className="mt-4 grid gap-2 sm:flex sm:flex-wrap">
+      <div className={compact ? "mt-2 flex flex-wrap gap-2" : "mt-4 grid gap-2 sm:flex sm:flex-wrap"}>
         <button type="button" onClick={onApply} disabled={isApplying} className={primaryButtonClass()}>
           {isApplying ? "Saving..." : applyLabel}
         </button>
