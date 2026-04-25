@@ -7,9 +7,9 @@ import type { GalleryShelfOverlayStyle } from "@/lib/galleryModel";
 import type { VaultItem } from "@/lib/vaultModel";
 
 export const GALLERY_STAGE_MAX_WIDTH_CLASS = "max-w-[1120px]";
-export const GALLERY_STAGE_HEIGHT_CLASS = "h-[2700px] sm:h-[2820px]";
+export const GALLERY_STAGE_HEIGHT_CLASS = "h-[1500px] sm:h-[2200px] lg:h-[2700px]";
 
-const ROW_ANCHORS = ["35%", "51%", "66%", "81.5%"] as const;
+const ROW_ANCHORS = ["28%", "48%", "68%", "88%"] as const;
 
 function itemImage(item: VaultItem) {
   return item.imageFrontUrl || item.imageBackUrl || "";
@@ -110,7 +110,7 @@ function DisplayCard({
     <div className="min-w-0 self-end">
       <div
         className={[
-          "mb-2 rounded-2xl px-2.5 py-1.5 text-center text-[10px] ring-1 backdrop-blur-sm",
+          "mb-1.5 rounded-xl px-2 py-1.5 text-center text-[11px] ring-1 backdrop-blur-sm sm:mb-2 sm:rounded-2xl sm:px-2.5 sm:text-[10px]",
           theme.plaque,
         ].join(" ")}
       >
@@ -122,11 +122,11 @@ function DisplayCard({
       <Link href={`${galleryHrefPrefix}/${item.id}`} className="group block w-full">
         <div
           className={[
-            "relative w-full overflow-hidden rounded-[14px] ring-1 shadow-[0_8px_18px_rgba(0,0,0,0.18)]",
+            "relative w-full overflow-hidden rounded-[12px] ring-1 shadow-[0_8px_18px_rgba(0,0,0,0.18)] sm:rounded-[14px]",
             theme.tile,
           ].join(" ")}
         >
-          <div className="aspect-[4/5] w-full p-2">
+          <div className="aspect-[4/5] w-full p-1.5 sm:p-2">
             {itemImage(item) ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -197,7 +197,7 @@ function AnchoredRow({
           </div>
         ) : null}
 
-        <div className="relative z-10 grid grid-cols-4 items-end gap-[0.8rem]">
+        <div className="relative z-10 grid grid-cols-2 items-end gap-2 sm:grid-cols-4 sm:gap-[0.8rem]">
         {row.map((item) => (
           <DisplayCard
             key={item.id}

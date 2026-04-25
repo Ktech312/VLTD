@@ -11,8 +11,8 @@ function selectClass() {
 
 function actionButtonClass(primary = false) {
   return primary
-    ? "min-h-8 rounded-lg bg-[color:var(--pill-active-bg)] px-2.5 py-1.5 text-xs font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)] disabled:opacity-40"
-    : "min-h-8 rounded-lg bg-[color:var(--pill)] px-2.5 py-1.5 text-xs ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-40";
+    ? "min-h-8 rounded-full bg-[color:var(--pill-active-bg)] px-3 py-1.5 text-xs font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)] disabled:opacity-40"
+    : "min-h-8 rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-40";
 }
 
 function chipClass(active = false) {
@@ -97,7 +97,7 @@ export default function ScanPanel({
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
-    <section className="rounded-[16px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-3">
+    <section className="rounded-[24px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">CAPTURE AND IDENTIFY</div>
@@ -112,8 +112,8 @@ export default function ScanPanel({
         </div>
       </div>
 
-      <div className="mt-2 grid gap-2 lg:grid-cols-[170px_minmax(0,1fr)_190px]">
-        <div className="min-h-[118px] rounded-[14px] bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)] sm:min-h-[142px] lg:min-h-0">
+      <div className="mt-3 grid gap-3 lg:grid-cols-[112px_minmax(0,1fr)_180px]">
+        <div className="min-h-[118px] rounded-[18px] bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)] sm:min-h-[142px] lg:min-h-0">
           <div className="mb-2 flex items-center justify-between gap-2">
             <div className="text-[10px] tracking-[0.16em] text-[color:var(--muted2)]">PICTURES TAKEN</div>
             <div className="rounded-full bg-black/15 px-2 py-0.5 text-[10px] text-[color:var(--muted)]">
@@ -129,7 +129,7 @@ export default function ScanPanel({
                   type="button"
                   onClick={() => onSelectCapturedPhoto?.(photo.id)}
                   className={[
-                    "overflow-hidden rounded-lg bg-black/20 p-1 ring-1 transition",
+                    "overflow-hidden rounded-xl bg-black/20 p-1 ring-1 transition",
                     activeCapturedPhotoId === photo.id
                       ? "ring-[color:var(--pill-active-bg)]"
                       : "ring-white/10",
@@ -146,7 +146,7 @@ export default function ScanPanel({
             <button
               type="button"
               onClick={onUseCamera}
-              className="flex h-[84px] w-full items-center justify-center rounded-[10px] border border-dashed border-white/20 text-xs text-[color:var(--muted)]"
+              className="flex h-[84px] w-full items-center justify-center rounded-[14px] border border-dashed border-white/20 text-xs text-[color:var(--muted)]"
             >
               No pictures yet
             </button>
@@ -156,7 +156,7 @@ export default function ScanPanel({
         <button
           type="button"
           onClick={previewUrl ? onCropImage : onUseCamera}
-          className="flex min-h-[118px] items-center justify-center overflow-hidden rounded-[14px] bg-black/20 p-2 text-center ring-1 ring-[color:var(--border)] transition hover:bg-black/25 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)] sm:min-h-[142px] lg:min-h-0"
+          className="flex min-h-[118px] items-center justify-center overflow-hidden rounded-[24px] bg-black/20 p-2 text-center ring-1 ring-[color:var(--border)] transition hover:bg-black/25 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)] sm:min-h-[142px] lg:min-h-0"
         >
           {previewUrl ? (
             <img
@@ -171,7 +171,7 @@ export default function ScanPanel({
           )}
         </button>
 
-        <div className="grid gap-2 rounded-[14px] bg-black/10 p-2 ring-1 ring-white/8">
+        <div className="grid content-start gap-2 rounded-[18px] bg-black/10 p-2 ring-1 ring-white/8">
           <div className="grid grid-cols-2 gap-2">
             <button type="button" onClick={onUseCamera} className={actionButtonClass(true)}>
               Camera

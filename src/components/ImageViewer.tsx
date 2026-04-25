@@ -17,10 +17,14 @@ export default function ImageViewer({
   images,
   index,
   onClose,
+  onEdit,
+  onDelete,
 }: {
   images: string[];
   index: number;
   onClose: () => void;
+  onEdit?: (index: number) => void;
+  onDelete?: (index: number) => void;
 }) {
   const [current, setCurrent] = useState(index || 0);
   const [scale, setScale] = useState(1);
@@ -93,6 +97,27 @@ export default function ImageViewer({
       >
         Close
       </button>
+
+      <div className="absolute left-4 top-4 z-[100] flex flex-wrap gap-2">
+        {onEdit ? (
+          <button
+            type="button"
+            onClick={() => onEdit(current)}
+            className="rounded-full bg-white/10 px-3 py-2 text-sm text-white ring-1 ring-white/15 backdrop-blur"
+          >
+            Edit Photo
+          </button>
+        ) : null}
+        {onDelete ? (
+          <button
+            type="button"
+            onClick={() => onDelete(current)}
+            className="rounded-full bg-red-600/75 px-3 py-2 text-sm text-white ring-1 ring-red-400/35 backdrop-blur"
+          >
+            Delete
+          </button>
+        ) : null}
+      </div>
 
       {images.length > 1 ? (
         <>
@@ -224,7 +249,7 @@ export default function ImageViewer({
                 maxHeight: "72vh",
                 transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
                 transformOrigin: "top center",
-                transition: draggingRef.current ? "none" : "transform 140ms ease-out",
+                transition: "transform 140ms ease-out",
                 cursor: canPan ? "grab" : "zoom-in",
                 touchAction: "none",
               }}

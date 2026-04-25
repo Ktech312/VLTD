@@ -8,6 +8,7 @@ import PricingMvpCard from "@/components/PricingMvpCard";
 import { removeBackgroundStub } from "@/lib/imageAI";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { buildPricingPatch } from "@/lib/pricingMvp";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import {
   deleteVaultImageFromSupabase,
   hasSupabaseEnv,
@@ -23,6 +24,7 @@ import {
   markItemViewed,
   reorderImages,
   saveItem,
+  type VaultImage,
   type VaultItem,
 } from "@/lib/vaultModel";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
@@ -41,6 +43,18 @@ function getSales(): SaleRecord[] {
   } catch {
     return [];
   }
+}
+
+function writeSales(records: SaleRecord[]) {
+  try {
+    localStorage.setItem(SALES_KEY, JSON.stringify(records));
+  } catch {
+    // Local sale history is only a compatibility cache.
+  }
+}
+
+function removeSaleRecord(itemId: string) {
+  writeSales(getSales().filter((sale) => String(sale.id) !== String(itemId)));
 }
 
 function clamp(value: unknown) {
@@ -292,6 +306,93 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     }
   }
 
+  async function handleReplaceImage(index: number, file: File) {
+    if (!item) return;
+
+    const orderedImages = getOrderedImages(item);
+    const target = orderedImages[index];
+    if (!target) return;
+
+    setUploading(true);
+    setMediaMessage("Saving edited photo...");
+
+    try {
+      let replacement: VaultImage;
+
+      try {
+        if (hasSupabaseEnv()) {
+          const uploaded = await uploadVaultImageToSupabase({
+            itemId: item.id,
+            file,
+            fileName: file.name || "edited-photo.jpg",
+          });
+          replacement = {
+            ...target,
+            id: uploaded.path,
+            storageKey: uploaded.path,
+            url: uploaded.publicUrl,
+            localOnly: false,
+          };
+        } else {
+          const localUrl = URL.createObjectURL(file);
+          replacement = {
+            ...target,
+            id: localUrl,
+            storageKey: localUrl,
+            url: localUrl,
+            localOnly: true,
+          };
+        }
+      } catch (uploadError) {
+        const localUrl = URL.createObjectURL(file);
+        replacement = {
+          ...target,
+          id: localUrl,
+          storageKey: localUrl,
+          url: localUrl,
+          localOnly: true,
+        };
+        setMediaMessage(
+          uploadError instanceof Error
+            ? `${uploadError.message} Edited photo saved locally on this device.`
+            : "Cloud upload failed. Edited photo saved locally on this device."
+        );
+      }
+
+      const nextImages = orderedImages.map((image, imageIndex) =>
+        imageIndex === index ? { ...replacement, order: imageIndex } : { ...image, order: imageIndex }
+      );
+      const replacingPrimary =
+        target.storageKey === item.primaryImageKey || target.url === item.imageFrontUrl || index === 0;
+      const nextItem: VaultItem = {
+        ...item,
+        images: nextImages,
+        primaryImageKey: replacingPrimary ? replacement.storageKey : item.primaryImageKey,
+        imageFrontUrl: replacingPrimary ? replacement.url : item.imageFrontUrl,
+        imageFrontStoragePath:
+          replacingPrimary && !replacement.localOnly
+            ? replacement.storageKey
+            : replacingPrimary
+              ? undefined
+              : item.imageFrontStoragePath,
+      };
+
+      await persist(nextItem);
+
+      if (hasSupabaseEnv() && target.storageKey && !target.localOnly && target.storageKey !== replacement.storageKey) {
+        try {
+          await deleteVaultImageFromSupabase(target.storageKey);
+        } catch {
+          // The edited image is saved; old-file cleanup can fail safely.
+        }
+      }
+
+      setMediaMessage("Edited photo saved.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   async function handleRemoveBackground(index: number) {
     if (!item || !images[index]) return;
     setMediaMessage("Background removal hook is running...");
@@ -375,6 +476,48 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     setMediaMessage("Pricing updated.");
   }
 
+  async function handleReturnToVault() {
+    if (!item) return;
+    const confirmed = window.confirm("Return this item to the Vault and remove its sold status?");
+    if (!confirmed) return;
+
+    const nextItem: VaultItem = {
+      ...item,
+      status: "COLLECTION",
+      soldPrice: undefined,
+      soldAt: undefined,
+    };
+
+    saveItem(nextItem);
+    removeSaleRecord(item.id);
+    setItems((prev) => prev.map((entry) => (entry.id === nextItem.id ? nextItem : entry)));
+    setSale(null);
+    setIsSoldView(false);
+    window.history.replaceState(null, "", `/vault/item/${encodeURIComponent(item.id)}`);
+
+    if (hasSupabaseEnv()) {
+      const supabase = getSupabaseBrowserClient();
+      if (supabase) {
+        const { error } = await supabase
+          .from("vault_items")
+          .update({
+            status: "COLLECTION",
+            sold_price: null,
+            sold_at: null,
+          })
+          .eq("id", item.id);
+
+        if (error) {
+          setMediaMessage(`${error.message} Item restored locally only.`);
+          return;
+        }
+      }
+    }
+
+    setMediaMessage("Returned to Vault.");
+    window.dispatchEvent(new Event("vltd:vault-updated"));
+  }
+
   const universe = normUniverse(item.universe);
   const addedAt = createdAtMs(item);
   const displayedSale: SaleRecord | null =
@@ -407,6 +550,18 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 ← Vault
               </Link>
             </div>
+
+            {displayedSale ? (
+              <div className="mt-2">
+                <button
+                  type="button"
+                  onClick={() => void handleReturnToVault()}
+                  className="inline-flex h-10 items-center rounded-full bg-cyan-500/15 px-4 text-sm font-medium text-cyan-100 ring-1 ring-cyan-400/25"
+                >
+                  Return to Vault
+                </button>
+              </div>
+            ) : null}
 
             {isSoldView && displayedSale && (
               <div className="mb-5 mt-4">
@@ -442,6 +597,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                   onAddImages={handleAddImages}
                   onMoveImage={handleMoveImage}
                   onDeleteImage={handleDeleteImage}
+                  onReplaceImage={handleReplaceImage}
                   onRemoveBackground={handleRemoveBackground}
                 />
 

@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import ImageViewer from "@/components/ImageViewer";
+import ScanCropEditor from "@/components/ScanCropEditor";
+import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 
 type ImageRole = "primary" | "detail" | "proof";
 
@@ -17,6 +19,8 @@ type ImageEntry = {
   id?: string;
   role: ImageRole;
 };
+
+const FULL_CROP: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
 
 async function renderRotatedImageBlob(
   file: File,
@@ -115,6 +119,7 @@ export default function ItemMedia({
   onAddImages,
   onMoveImage,
   onDeleteImage,
+  onReplaceImage,
   onRemoveBackground,
   onRevertBackground,
   onSetImageRole,
@@ -127,6 +132,7 @@ export default function ItemMedia({
   onAddImages: (files: File[]) => void;
   onMoveImage: (fromIndex: number, toIndex: number) => void;
   onDeleteImage: (index: number) => void;
+  onReplaceImage?: (index: number, file: File) => Promise<void> | void;
   onRemoveBackground?: (index: number) => void;
   onRevertBackground?: (index: number) => void;
   onSetImageRole?: (imageId: string, role: ImageRole) => void;
@@ -140,6 +146,9 @@ export default function ItemMedia({
   const [draftPreviewUrl, setDraftPreviewUrl] = useState<string>("");
   const [rotation, setRotation] = useState(0);
   const [isPreparing, setIsPreparing] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
+  const [editTarget, setEditTarget] = useState<{ index: number; url: string; crop: ScanCropRect } | null>(null);
+  const [isEditingImage, setIsEditingImage] = useState(false);
 
   const imageMeta = useMemo(() => {
     return Array.isArray(item?.images) ? item!.images! : [];
@@ -174,6 +183,7 @@ export default function ItemMedia({
 
   const activeVisibleEntry = activeVisibleIndex >= 0 ? visibleEntries[activeVisibleIndex] : null;
   const activeImage = activeVisibleEntry?.url ?? "";
+  const viewerEntries = allEntries;
 
   useEffect(() => {
     return () => {
@@ -224,6 +234,48 @@ export default function ItemMedia({
     } catch (error) {
       console.error(error);
       setIsPreparing(false);
+    }
+  }
+
+  async function imageUrlToFile(url: string, index: number) {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Could not load this image for editing.");
+    const blob = await response.blob();
+    return new File([blob], `item-photo-${index + 1}.jpg`, {
+      type: blob.type || "image/jpeg",
+      lastModified: Date.now(),
+    });
+  }
+
+  function openViewerForEntry(entry: ImageEntry) {
+    const nextViewerIndex = viewerEntries.findIndex((candidate) => candidate.originalIndex === entry.originalIndex);
+    setViewerIndex(Math.max(0, nextViewerIndex));
+    setViewerOpen(true);
+  }
+
+  function openEditorForEntry(entry: ImageEntry) {
+    if (!onReplaceImage) return;
+    setViewerOpen(false);
+    setEditTarget({
+      index: entry.originalIndex,
+      url: entry.url,
+      crop: FULL_CROP,
+    });
+  }
+
+  async function applyImageEdit() {
+    if (!editTarget || !onReplaceImage) return;
+    setIsEditingImage(true);
+    try {
+      const file = await imageUrlToFile(editTarget.url, editTarget.index);
+      const cropped = await cropImageFile(file, editTarget.crop);
+      await onReplaceImage(editTarget.index, cropped);
+      setEditTarget(null);
+    } catch (error) {
+      console.error(error);
+      window.alert(error instanceof Error ? error.message : "Could not edit this image.");
+    } finally {
+      setIsEditingImage(false);
     }
   }
 
@@ -283,7 +335,10 @@ export default function ItemMedia({
             <div key={`${entry.url}-${entry.originalIndex}`} className="shrink-0">
               <button
                 type="button"
-                onClick={() => onSelect(entry.originalIndex)}
+                onClick={() => {
+                  onSelect(entry.originalIndex);
+                  openViewerForEntry(entry);
+                }}
                 className={[
                   "relative block h-[96px] w-[96px] overflow-hidden rounded-2xl bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] ring-1 transition",
                   entry.originalIndex === (activeVisibleEntry?.originalIndex ?? -1)
@@ -357,10 +412,16 @@ export default function ItemMedia({
 
         <div className="order-1 lg:order-2">
           <div className="group relative aspect-[4/3] overflow-hidden rounded-[28px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),rgba(255,255,255,0.015)_45%,rgba(0,0,0,0.18)_100%)] ring-1 ring-[color:var(--border)]">
-            {activeImage ? (
+            {activeImage && activeVisibleEntry ? (
               <button
                 type="button"
-                onClick={() => setViewerOpen(true)}
+                onClick={() => {
+                  const nextViewerIndex = viewerEntries.findIndex(
+                    (entry) => entry.originalIndex === activeVisibleEntry.originalIndex
+                  );
+                  setViewerIndex(Math.max(0, nextViewerIndex));
+                  setViewerOpen(true);
+                }}
                 className="block h-full w-full"
               >
                 <img
@@ -397,6 +458,15 @@ export default function ItemMedia({
             ) : null}
 
             <div className="absolute bottom-3 right-3 flex flex-wrap gap-2">
+              {onReplaceImage && activeVisibleEntry ? (
+                <button
+                  type="button"
+                  onClick={() => openEditorForEntry(activeVisibleEntry)}
+                  className="rounded-full bg-black/45 px-3 py-2 text-xs text-white ring-1 ring-white/15 backdrop-blur"
+                >
+                  Edit Photo
+                </button>
+              ) : null}
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
@@ -449,7 +519,10 @@ export default function ItemMedia({
                   >
                     <button
                       type="button"
-                      onClick={() => onSelect(entry.originalIndex)}
+                      onClick={() => {
+                        onSelect(entry.originalIndex);
+                        openViewerForEntry(entry);
+                      }}
                       className="block h-[140px] w-full overflow-hidden rounded-xl"
                     >
                       <img
@@ -521,12 +594,48 @@ export default function ItemMedia({
         }}
       />
 
-      {viewerOpen && visibleEntries.length > 0 ? (
+      {viewerOpen && viewerEntries.length > 0 ? (
         <ImageViewer
-          images={visibleEntries.map((entry) => entry.url)}
-          index={Math.max(0, activeVisibleIndex)}
+          images={viewerEntries.map((entry) => entry.url)}
+          index={Math.max(0, viewerIndex)}
           onClose={() => setViewerOpen(false)}
+          onEdit={
+            onReplaceImage
+              ? (index) => {
+                  const entry = viewerEntries[index];
+                  if (entry) openEditorForEntry(entry);
+                }
+              : undefined
+          }
+          onDelete={(index) => {
+            const entry = viewerEntries[index];
+            if (!entry) return;
+            setViewerOpen(false);
+            onDeleteImage(entry.originalIndex);
+          }}
         />
+      ) : null}
+
+      {editTarget ? (
+        <div className="fixed inset-0 z-[95] bg-black/90 backdrop-blur-sm">
+          <div className="absolute inset-0 flex items-center justify-center overflow-auto px-3 py-4 sm:px-4">
+            <div className="w-full max-w-4xl">
+              <ScanCropEditor
+                imageUrl={editTarget.url}
+                crop={editTarget.crop}
+                onChange={(crop) => setEditTarget((prev) => (prev ? { ...prev, crop } : prev))}
+                onApply={() => void applyImageEdit()}
+                onReset={() => setEditTarget((prev) => (prev ? { ...prev, crop: FULL_CROP } : prev))}
+                onCancel={() => setEditTarget(null)}
+                isApplying={isEditingImage}
+                title="EDIT PHOTO"
+                description="Crop and zoom this saved item photo. The edited version replaces the current photo."
+                applyLabel="Save Photo"
+                compact
+              />
+            </div>
+          </div>
+        </div>
       ) : null}
 
       {draftFile ? (
