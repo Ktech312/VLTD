@@ -639,27 +639,7 @@ export default function QuickAddClient() {
             onChange={(event) => void handleImageSelection(event.target.files)}
           />
 
-          {isCropEditorOpen && draftPreviewUrl ? (
-            <div className="mt-4">
-              <ScanCropEditor
-                imageUrl={draftPreviewUrl}
-                crop={scanCrop}
-                rotation={rotation}
-                onChange={setScanCrop}
-                title="ADJUST PHOTO BEFORE SAVE"
-                description="Keep the item centered, then save the image."
-                applyLabel="Save"
-                onRotate={() => setRotation((prev) => (prev + 90) % 360)}
-                onApply={() => void handleApplyCrop()}
-                onReset={() => {
-                  setScanCrop(DEFAULT_SCAN_CROP);
-                  setRotation(0);
-                }}
-                onCancel={() => setIsCropEditorOpen(false)}
-                isApplying={isApplyingCrop || isPreparingImage}
-              />
-            </div>
-          ) : activePreview ? (
+          {activePreview ? (
             <div className="mt-4 overflow-hidden rounded-[20px] bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)]">
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-black/10 px-3 py-1 text-xs ring-1 ring-black/10">
@@ -703,6 +683,46 @@ export default function QuickAddClient() {
               <div className="mt-3 rounded-[14px] bg-black/10 px-3 py-2 text-[11px] text-[color:var(--muted2)] ring-1 ring-white/8">
                 AI Assist needs `GEMINI_API_KEY` or `GOOGLE_API_KEY` on the server.
                 If it is not set in Vercel yet, crop and manual save still work.
+              </div>
+            </div>
+          ) : null}
+
+          {isCropEditorOpen && draftPreviewUrl ? (
+            <div className="fixed inset-0 z-[80] bg-black/75 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true" aria-label="Edit item photo">
+              <div className="mx-auto flex max-h-[calc(100dvh-1rem)] max-w-3xl flex-col overflow-hidden rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:max-h-[calc(100dvh-2rem)] sm:p-4">
+                <div className="mb-2 flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">EDIT PHOTO</div>
+                    <h2 className="mt-1 text-lg font-semibold text-[color:var(--fg)]">Adjust Item Picture</h2>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsCropEditorOpen(false)}
+                    className="rounded-full bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
+                  >
+                    Close
+                  </button>
+                </div>
+                <div className="min-h-0 overflow-auto">
+                  <ScanCropEditor
+                    imageUrl={draftPreviewUrl}
+                    crop={scanCrop}
+                    rotation={rotation}
+                    onChange={setScanCrop}
+                    title="ADJUST PHOTO BEFORE SAVE"
+                    description="Drag the photo to frame it. Pinch or use Zoom to move closer."
+                    applyLabel="Save"
+                    onRotate={() => setRotation((prev) => (prev + 90) % 360)}
+                    onApply={() => void handleApplyCrop()}
+                    onReset={() => {
+                      setScanCrop(DEFAULT_SCAN_CROP);
+                      setRotation(0);
+                    }}
+                    onCancel={() => setIsCropEditorOpen(false)}
+                    isApplying={isApplyingCrop || isPreparingImage}
+                    compact
+                  />
+                </div>
               </div>
             </div>
           ) : null}

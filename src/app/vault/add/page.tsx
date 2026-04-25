@@ -184,11 +184,14 @@ export default function AddPage() {
   const [scanSession, setScanSession] = useState<ScanSessionState>(createScanSession());
   const [scanFile, setScanFile] = useState<File | null>(null);
   const [isCropEditorOpen, setIsCropEditorOpen] = useState(false);
+  const [cropEditorTarget, setCropEditorTarget] = useState<"scan" | "media">("scan");
+  const [cropMediaImageId, setCropMediaImageId] = useState("");
   const [scanCrop, setScanCrop] = useState<ScanCropRect>(DEFAULT_SCAN_CROP);
   const [isApplyingCrop, setIsApplyingCrop] = useState(false);
 
   const [draftMediaImages, setDraftMediaImages] = useState<DraftMediaImage[]>([]);
   const [activeMediaImageId, setActiveMediaImageId] = useState("");
+  const [selectedMediaImageId, setSelectedMediaImageId] = useState("");
   const [cameraTarget, setCameraTarget] = useState<"scan" | "item">("scan");
   const [isCameraPanelOpen, setIsCameraPanelOpen] = useState(false);
 
@@ -282,13 +285,6 @@ export default function AddPage() {
   }, [existingItems, values.certNumber, values.number, values.title]);
 
   useEffect(() => {
-    if (!isCropEditorOpen) return;
-    window.setTimeout(() => {
-      scanStageRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 50);
-  }, [isCropEditorOpen]);
-
-  useEffect(() => {
     if (!scanSession.review) return;
     window.setTimeout(() => {
       reviewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -343,6 +339,8 @@ export default function AddPage() {
     setScanSession(clearScanSession());
     setSaveScanAsPhoto(false);
     setIsCropEditorOpen(false);
+    setCropEditorTarget("scan");
+    setCropMediaImageId("");
     setScanCrop(DEFAULT_SCAN_CROP);
     if (cameraInputRef.current) cameraInputRef.current.value = "";
     if (uploadInputRef.current) uploadInputRef.current.value = "";
@@ -398,6 +396,7 @@ export default function AddPage() {
     });
     setDraftMediaImages([]);
     setActiveMediaImageId("");
+    setSelectedMediaImageId("");
     if (mediaInputRef.current) mediaInputRef.current.value = "";
     if (mediaCameraInputRef.current) mediaCameraInputRef.current.value = "";
   }
@@ -405,6 +404,32 @@ export default function AddPage() {
   function clearAllImages() {
     clearScanImage();
     clearMediaImage();
+  }
+
+  function removeDraftMediaImage(imageId: string) {
+    const imageToRemove = draftMediaImages.find((image) => image.id === imageId);
+    if (!imageToRemove) return;
+
+    if (imageToRemove.previewUrl.startsWith("blob:")) {
+      revokeImageObjectUrl(imageToRemove.previewUrl);
+    }
+
+    const nextImages = normalizeDraftMediaImages(draftMediaImages.filter((image) => image.id !== imageId));
+    setDraftMediaImages(nextImages);
+    setSelectedMediaImageId("");
+
+    if (activeMediaImageId === imageId) {
+      clearScanImage();
+      const nextActive = nextImages[0];
+      if (nextActive) {
+        setActiveMediaImageId(nextActive.id);
+        replaceScanImage(nextActive.file);
+      } else {
+        setActiveMediaImageId("");
+      }
+    }
+
+    setStatus("Photo removed.");
   }
 
   function openCameraFor(target: "scan" | "item") {
@@ -448,14 +473,30 @@ export default function AddPage() {
     );
   }
 
-  function useDraftMediaImageForIdentify(imageId: string) {
+  function selectDraftMediaImageForIdentify(imageId: string) {
     const image = draftMediaImages.find((entry) => entry.id === imageId);
     if (!image) return;
 
     setActiveMediaImageId(image.id);
     replaceScanImage(image.file);
-    setIsCropEditorOpen(true);
+    setSelectedMediaImageId("");
     setStatus("Selected picture ready. Crop if needed, then run Auto Identify.");
+  }
+
+  function openScanCropEditor() {
+    if (!scanSession.image?.previewUrl) return;
+    setCropEditorTarget("scan");
+    setCropMediaImageId("");
+    setIsCropEditorOpen(true);
+  }
+
+  function openMediaCropEditor(imageId: string) {
+    if (!draftMediaImages.some((image) => image.id === imageId)) return;
+    setCropEditorTarget("media");
+    setCropMediaImageId(imageId);
+    setScanCrop(DEFAULT_SCAN_CROP);
+    setSelectedMediaImageId("");
+    setIsCropEditorOpen(true);
   }
 
   function clearPricing() {
@@ -873,6 +914,8 @@ export default function AddPage() {
 
     addDraftMediaFiles([file]);
     replaceScanImage(file);
+    setCropEditorTarget("scan");
+    setCropMediaImageId("");
     setIsCropEditorOpen(true);
     setStatus("Picture added. Crop if needed, then run Auto Identify or save the item.");
   }
@@ -926,6 +969,62 @@ export default function AddPage() {
     } finally {
       setIsApplyingCrop(false);
     }
+  }
+
+  async function handleApplyMediaCrop() {
+    const image = draftMediaImages.find((entry) => entry.id === cropMediaImageId);
+    if (!image) {
+      setStatus("That photo is no longer available.");
+      setIsCropEditorOpen(false);
+      return;
+    }
+
+    setIsApplyingCrop(true);
+
+    try {
+      const croppedFile = isDefaultCrop(scanCrop) ? image.file : await cropImageFile(image.file, scanCrop);
+      const nextPreviewUrl = URL.createObjectURL(croppedFile);
+
+      if (image.previewUrl.startsWith("blob:")) {
+        revokeImageObjectUrl(image.previewUrl);
+      }
+
+      setDraftMediaImages((prev) =>
+        normalizeDraftMediaImages(
+          prev.map((entry) =>
+            entry.id === image.id
+              ? {
+                  ...entry,
+                  file: croppedFile,
+                  previewUrl: nextPreviewUrl,
+                }
+              : entry
+          )
+        )
+      );
+
+      if (activeMediaImageId === image.id) {
+        replaceScanImage(croppedFile);
+      } else {
+        setIsCropEditorOpen(false);
+        setScanCrop(DEFAULT_SCAN_CROP);
+      }
+
+      setStatus("Photo updated.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Failed to edit photo.");
+    } finally {
+      setIsApplyingCrop(false);
+    }
+  }
+
+  async function handleApplyCropEditor() {
+    if (cropEditorTarget === "media") {
+      await handleApplyMediaCrop();
+      return;
+    }
+
+    await handleApplyScanCrop();
   }
 
   async function handleMediaImageSelection(fileList: FileList | null) {
@@ -1175,6 +1274,11 @@ export default function AddPage() {
     }
   }
 
+  const cropMediaImage = draftMediaImages.find((image) => image.id === cropMediaImageId);
+  const selectedMediaImage = draftMediaImages.find((image) => image.id === selectedMediaImageId);
+  const cropEditorImageUrl =
+    cropEditorTarget === "media" ? cropMediaImage?.previewUrl : scanSession.image?.previewUrl;
+
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1500px] px-3 py-3 sm:px-4 sm:py-4">
@@ -1226,50 +1330,35 @@ export default function AddPage() {
         <div className="mb-3 grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_360px]">
           <div className="grid gap-3">
             <div ref={scanStageRef}>
-              {isCropEditorOpen && scanSession.image?.previewUrl ? (
-                <ScanCropEditor
-                  imageUrl={scanSession.image.previewUrl}
-                  crop={scanCrop}
-                  onChange={setScanCrop}
-                  title="ADJUST PHOTO"
-                  description="Keep the item centered, then identify from this picture."
-                  applyLabel="Use This Picture"
-                  onApply={() => void handleApplyScanCrop()}
-                  onReset={() => setScanCrop(DEFAULT_SCAN_CROP)}
-                  onCancel={() => setIsCropEditorOpen(false)}
-                  isApplying={isApplyingCrop}
-                />
-              ) : (
-                <ScanPanel
-                  session={scanSession}
-                  scanType={scanType}
-                  isScanning={isScanning}
-                  isBookLookupRunning={isBookLookupRunning}
-                  isComicLookupRunning={isComicLookupRunning}
-                  isUpcLookupRunning={isUpcLookupRunning}
-                  isVisionLookupRunning={isVisionLookupRunning}
-                  saveScanAsPhoto={saveScanAsPhoto}
-                  onScanTypeChange={setScanType}
-                  onUseCamera={() => openCameraFor("scan")}
-                  onUploadImage={() => uploadInputRef.current?.click()}
-                  onScanAutofill={() => void handleScanAutofill()}
-                  onCropImage={() => setIsCropEditorOpen(true)}
-                  onBookLookup={() => void handleBookIsbnLookup()}
-                  onComicLookup={() => void handleComicLookup()}
-                  onUpcLookup={() => void handleUpcLookup()}
-                  onClearImage={clearScanImage}
-                  onToggleSaveScanAsPhoto={setSaveScanAsPhoto}
-                  onSaveItem={() => void saveForm(false)}
-                  canSaveItem={canSave}
-                  capturedPhotos={draftMediaImages.map((image) => ({
-                    id: image.id,
-                    previewUrl: image.previewUrl,
-                    role: image.role,
-                  }))}
-                  activeCapturedPhotoId={activeMediaImageId}
-                  onSelectCapturedPhoto={useDraftMediaImageForIdentify}
-                />
-              )}
+              <ScanPanel
+                session={scanSession}
+                scanType={scanType}
+                isScanning={isScanning}
+                isBookLookupRunning={isBookLookupRunning}
+                isComicLookupRunning={isComicLookupRunning}
+                isUpcLookupRunning={isUpcLookupRunning}
+                isVisionLookupRunning={isVisionLookupRunning}
+                saveScanAsPhoto={saveScanAsPhoto}
+                onScanTypeChange={setScanType}
+                onUseCamera={() => openCameraFor("scan")}
+                onUploadImage={() => uploadInputRef.current?.click()}
+                onScanAutofill={() => void handleScanAutofill()}
+                onCropImage={openScanCropEditor}
+                onBookLookup={() => void handleBookIsbnLookup()}
+                onComicLookup={() => void handleComicLookup()}
+                onUpcLookup={() => void handleUpcLookup()}
+                onClearImage={clearScanImage}
+                onToggleSaveScanAsPhoto={setSaveScanAsPhoto}
+                onSaveItem={() => void saveForm(false)}
+                canSaveItem={canSave}
+                capturedPhotos={draftMediaImages.map((image) => ({
+                  id: image.id,
+                  previewUrl: image.previewUrl,
+                  role: image.role,
+                }))}
+                activeCapturedPhotoId={activeMediaImageId}
+                onSelectCapturedPhoto={setSelectedMediaImageId}
+              />
             </div>
 
           </div>
@@ -1503,6 +1592,102 @@ export default function AddPage() {
           className="hidden"
           onChange={(e) => void handleScanImageSelection(e.target.files)}
         />
+
+        {selectedMediaImage ? (
+          <div className="fixed inset-0 z-[80] bg-black/75 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true" aria-label="Photo options">
+            <div className="mx-auto flex max-h-[calc(100dvh-1rem)] max-w-xl flex-col overflow-hidden rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:max-h-[calc(100dvh-2rem)] sm:p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ITEM PHOTO</div>
+                  <h2 className="mt-1 text-lg font-semibold text-[color:var(--fg)]">Photo Options</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedMediaImageId("")}
+                  className="rounded-full bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="mt-3 min-h-0 overflow-hidden rounded-[16px] bg-black/30 p-2 ring-1 ring-[color:var(--border)]">
+                <img
+                  src={selectedMediaImage.previewUrl}
+                  alt={`${selectedMediaImage.role} item photo`}
+                  className="max-h-[52dvh] w-full rounded-[12px] object-contain"
+                />
+              </div>
+
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => selectDraftMediaImageForIdentify(selectedMediaImage.id)}
+                  className="min-h-11 rounded-2xl bg-[color:var(--pill-active-bg)] px-4 py-2 text-sm font-medium ring-1 ring-[color:var(--pill-active-bg)]"
+                >
+                  Use for Identify
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openMediaCropEditor(selectedMediaImage.id)}
+                  className="min-h-11 rounded-2xl bg-[color:var(--pill)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)]"
+                >
+                  Edit / Crop
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeDraftMediaImage(selectedMediaImage.id)}
+                  className="min-h-11 rounded-2xl bg-red-500/15 px-4 py-2 text-sm text-red-100 ring-1 ring-red-400/25"
+                >
+                  Delete Photo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedMediaImageId("")}
+                  className="min-h-11 rounded-2xl bg-[color:var(--pill)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)]"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {isCropEditorOpen && cropEditorImageUrl ? (
+          <div className="fixed inset-0 z-[90] bg-black/75 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true" aria-label="Edit photo crop">
+            <div className="mx-auto flex max-h-[calc(100dvh-1rem)] max-w-3xl flex-col overflow-hidden rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:max-h-[calc(100dvh-2rem)] sm:p-4">
+              <div className="mb-2 flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">EDIT PHOTO</div>
+                  <h2 className="mt-1 text-lg font-semibold text-[color:var(--fg)]">
+                    {cropEditorTarget === "media" ? "Adjust Item Photo" : "Adjust Identify Picture"}
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsCropEditorOpen(false)}
+                  className="rounded-full bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="min-h-0 overflow-auto">
+                <ScanCropEditor
+                  imageUrl={cropEditorImageUrl}
+                  crop={scanCrop}
+                  onChange={setScanCrop}
+                  title="ADJUST PHOTO"
+                  description="Drag the photo to frame it. Pinch or use Zoom to move closer."
+                  applyLabel={cropEditorTarget === "media" ? "Save Photo" : "Use This Picture"}
+                  onApply={() => void handleApplyCropEditor()}
+                  onReset={() => setScanCrop(DEFAULT_SCAN_CROP)}
+                  onCancel={() => setIsCropEditorOpen(false)}
+                  isApplying={isApplyingCrop}
+                  compact
+                />
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {isCameraPanelOpen ? (
           <CameraCapturePanel
