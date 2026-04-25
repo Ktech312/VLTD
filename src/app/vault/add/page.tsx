@@ -365,7 +365,7 @@ export default function AddPage() {
     const imageFiles = files.filter((file) => file.type.startsWith("image/"));
     if (!imageFiles.length) {
       setStatus("That item photo is not an image.");
-      return;
+      return [];
     }
 
     const newEntries: DraftMediaImage[] = imageFiles.map((file, index) => ({
@@ -385,6 +385,8 @@ export default function AddPage() {
 
     if (mediaInputRef.current) mediaInputRef.current.value = "";
     if (mediaCameraInputRef.current) mediaCameraInputRef.current.value = "";
+
+    return newEntries;
   }
 
   function clearMediaImage() {
@@ -453,9 +455,10 @@ export default function AddPage() {
       return;
     }
 
+    addDraftMediaFiles([file]);
     replaceScanImage(file);
     setIsCropEditorOpen(true);
-    setStatus("Camera photo added. Tighten the crop if needed, then run autofill.");
+    setStatus("Picture captured. Crop if needed, then run Auto Identify or save the item.");
   }
 
   function replaceScanImage(file: File) {
@@ -479,6 +482,16 @@ export default function AddPage() {
         scanType === "auto" ? "generic" : scanType
       )
     );
+  }
+
+  function useDraftMediaImageForIdentify(imageId: string) {
+    const image = draftMediaImages.find((entry) => entry.id === imageId);
+    if (!image) return;
+
+    setActiveMediaImageId(image.id);
+    replaceScanImage(image.file);
+    setIsCropEditorOpen(true);
+    setStatus("Selected picture ready. Crop if needed, then run Auto Identify.");
   }
 
   function clearPricing() {
@@ -894,9 +907,10 @@ export default function AddPage() {
       return;
     }
 
+    addDraftMediaFiles([file]);
     replaceScanImage(file);
     setIsCropEditorOpen(true);
-    setStatus("Photo added. Tighten the crop if needed, then scan this photo.");
+    setStatus("Picture added. Crop if needed, then run Auto Identify or save the item.");
   }
 
   async function handleUpcLookup() {
@@ -958,7 +972,7 @@ export default function AddPage() {
 
   async function handleScanAutofill() {
     if (!scanFile) {
-      setStatus("Attach a temporary scan image first.");
+      setStatus("Take or choose an item picture first.");
       return;
     }
 
@@ -969,7 +983,7 @@ export default function AddPage() {
 
   async function handleBookIsbnLookup() {
     if (!scanFile) {
-      setStatus("Attach a temporary scan image first.");
+      setStatus("Take or choose an item picture first.");
       return;
     }
 
@@ -979,7 +993,7 @@ export default function AddPage() {
 
   async function handleComicLookup() {
     if (!scanFile) {
-      setStatus("Attach a temporary scan image first.");
+      setStatus("Take or choose an item picture first.");
       return;
     }
 
@@ -1206,7 +1220,7 @@ export default function AddPage() {
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">VAULT ADD</div>
               <h1 className="mt-1 text-2xl font-semibold">Fast Entry</h1>
               <div className="mt-1 text-sm text-[color:var(--muted)]">
-                Left side is a temporary scan for autofill. Right side holds the real item photos that save with this item.
+                Capture item pictures, identify from the best one, then save the item.
               </div>
             </div>
 
@@ -1253,9 +1267,9 @@ export default function AddPage() {
                   imageUrl={scanSession.image.previewUrl}
                   crop={scanCrop}
                   onChange={setScanCrop}
-                  title="ADJUST PHOTO BEFORE SCAN"
-                  description="Keep the item centered, then scan this photo."
-                  applyLabel="Scan This Photo"
+                  title="ADJUST PHOTO"
+                  description="Keep the item centered, then identify from this picture."
+                  applyLabel="Use This Picture"
                   onApply={() => void handleApplyScanCrop()}
                   onReset={() => setScanCrop(DEFAULT_SCAN_CROP)}
                   onCancel={() => setIsCropEditorOpen(false)}
@@ -1283,6 +1297,13 @@ export default function AddPage() {
                   onToggleSaveScanAsPhoto={setSaveScanAsPhoto}
                   onSaveItem={() => void saveForm(false)}
                   canSaveItem={canSave}
+                  capturedPhotos={draftMediaImages.map((image) => ({
+                    id: image.id,
+                    previewUrl: image.previewUrl,
+                    role: image.role,
+                  }))}
+                  activeCapturedPhotoId={activeMediaImageId}
+                  onSelectCapturedPhoto={useDraftMediaImageForIdentify}
                 />
               )}
             </div>
@@ -1300,9 +1321,9 @@ export default function AddPage() {
 
           <div className="grid gap-3 content-start">
               <section className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-                <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">SAVED ITEM PHOTOS</div>
+                <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ITEM PHOTO DETAILS</div>
                 <div className="mt-1 text-xs text-[color:var(--muted)]">
-                  Add extra photos here. They save with the item, not the temporary scan.
+                  Pick roles, remove mistakes, or add extra angles before saving.
                 </div>
                 <div className="mt-2 overflow-hidden rounded-[14px] bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)]">
                   <div className="flex h-[118px] items-center justify-center overflow-hidden rounded-[10px] bg-black/10 sm:h-[150px]">
@@ -1359,14 +1380,14 @@ export default function AddPage() {
                   <button
                     type="button"
                     onClick={() => openCameraFor("item")}
-                    className="rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm ring-1 ring-[color:var(--border)]"
+                    className="rounded-lg bg-[color:var(--pill)] px-2.5 py-1.5 text-xs ring-1 ring-[color:var(--border)]"
                   >
                     Open Camera
                   </button>
                   <button
                     type="button"
                     onClick={() => mediaInputRef.current?.click()}
-                    className="rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm ring-1 ring-[color:var(--border)]"
+                    className="rounded-lg bg-[color:var(--pill)] px-2.5 py-1.5 text-xs ring-1 ring-[color:var(--border)]"
                   >
                     Choose Photo
                   </button>
@@ -1374,7 +1395,7 @@ export default function AddPage() {
                     type="button"
                     onClick={() => activeMediaImage && removeDraftMediaImage(activeMediaImage.id)}
                     disabled={!activeMediaImage}
-                    className="rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm ring-1 ring-[color:var(--border)] disabled:opacity-40"
+                    className="rounded-lg bg-[color:var(--pill)] px-2.5 py-1.5 text-xs ring-1 ring-[color:var(--border)] disabled:opacity-40"
                   >
                     Remove Selected Photo
                   </button>
@@ -1382,7 +1403,7 @@ export default function AddPage() {
                     type="button"
                     onClick={clearMediaImage}
                     disabled={!draftMediaImages.length}
-                    className="rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm ring-1 ring-[color:var(--border)] disabled:opacity-40"
+                    className="rounded-lg bg-[color:var(--pill)] px-2.5 py-1.5 text-xs ring-1 ring-[color:var(--border)] disabled:opacity-40"
                   >
                     Clear All Photos
                   </button>
@@ -1636,10 +1657,10 @@ export default function AddPage() {
 
         {isCameraPanelOpen ? (
           <CameraCapturePanel
-            title={cameraTarget === "scan" ? "Capture Scan Photo" : "Capture Item Photo"}
+            title={cameraTarget === "scan" ? "Capture Item Picture" : "Capture Item Photo"}
             description={
               cameraTarget === "scan"
-                ? "Take one temporary photo for barcode, OCR, and AI autofill."
+                ? "Take an item picture. It will be added to this item and used for identify/autofill."
                 : "Capture a real item photo and add it to this item's saved photo list."
             }
             onCapture={handleCapturedPhoto}

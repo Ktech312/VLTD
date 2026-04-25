@@ -6,19 +6,19 @@ import { type ScanItemType } from "@/lib/scanAutofill";
 import type { ScanSessionState } from "@/lib/scanners/scanSession";
 
 function selectClass() {
-  return "h-11 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none";
+  return "h-9 rounded-lg bg-[color:var(--pill)] px-2 text-xs ring-1 ring-[color:var(--border)] focus:outline-none";
 }
 
 function actionButtonClass(primary = false) {
   return primary
-    ? "min-h-9 rounded-xl bg-[color:var(--pill-active-bg)] px-3 py-2 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)] disabled:opacity-40"
-    : "min-h-9 rounded-xl bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-40";
+    ? "min-h-8 rounded-lg bg-[color:var(--pill-active-bg)] px-2.5 py-1.5 text-xs font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)] disabled:opacity-40"
+    : "min-h-8 rounded-lg bg-[color:var(--pill)] px-2.5 py-1.5 text-xs ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-40";
 }
 
 function chipClass(active = false) {
   return active
-    ? "rounded-full bg-[color:var(--pill-active-bg)] px-3 py-1 text-[11px] font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]"
-    : "rounded-full bg-black/10 px-3 py-1 text-[11px] text-[color:var(--muted)] ring-1 ring-white/8";
+    ? "rounded-full bg-[color:var(--pill-active-bg)] px-2.5 py-0.5 text-[10px] font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]"
+    : "rounded-full bg-black/10 px-2.5 py-0.5 text-[10px] text-[color:var(--muted)] ring-1 ring-white/8";
 }
 
 function confidenceTone(confidence: "low" | "medium" | "high") {
@@ -57,6 +57,9 @@ export default function ScanPanel({
   onToggleSaveScanAsPhoto,
   onSaveItem,
   canSaveItem = false,
+  capturedPhotos = [],
+  activeCapturedPhotoId = "",
+  onSelectCapturedPhoto,
 }: {
   session: ScanSessionState;
   scanType: ScanItemType;
@@ -78,6 +81,13 @@ export default function ScanPanel({
   onToggleSaveScanAsPhoto: (checked: boolean) => void;
   onSaveItem?: () => void;
   canSaveItem?: boolean;
+  capturedPhotos?: Array<{
+    id: string;
+    previewUrl: string;
+    role: string;
+  }>;
+  activeCapturedPhotoId?: string;
+  onSelectCapturedPhoto?: (id: string) => void;
 }) {
   const previewUrl = session.image?.previewUrl ?? "";
   const hasImage = Boolean(previewUrl);
@@ -90,9 +100,9 @@ export default function ScanPanel({
     <section className="rounded-[16px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">SCAN FOR AUTOFILL</div>
+          <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">CAPTURE AND IDENTIFY</div>
           <div className="mt-1 text-xs text-[color:var(--muted)]">
-            Temporary scan photo. Real saved photos stay in the item photo panel.
+            Take item pictures here. Use one picture to identify/autofill, then save the item.
           </div>
         </div>
 
@@ -102,24 +112,46 @@ export default function ScanPanel({
         </div>
       </div>
 
-      <div className="mt-2 grid gap-2 lg:grid-cols-[140px_minmax(0,1fr)_240px]">
-        <button
-          type="button"
-          onClick={previewUrl ? onCropImage : onUseCamera}
-          className="flex min-h-[118px] items-center justify-center overflow-hidden rounded-[14px] bg-[color:var(--pill)] p-2 text-center ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)] sm:min-h-[142px] lg:min-h-0"
-        >
-          {previewUrl ? (
-            <img
-              src={previewUrl}
-              alt="Temporary scan thumbnail"
-              className="h-full max-h-[130px] w-full rounded-[10px] object-contain"
-            />
+      <div className="mt-2 grid gap-2 lg:grid-cols-[170px_minmax(0,1fr)_190px]">
+        <div className="min-h-[118px] rounded-[14px] bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)] sm:min-h-[142px] lg:min-h-0">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="text-[10px] tracking-[0.16em] text-[color:var(--muted2)]">PICTURES TAKEN</div>
+            <div className="rounded-full bg-black/15 px-2 py-0.5 text-[10px] text-[color:var(--muted)]">
+              {capturedPhotos.length}
+            </div>
+          </div>
+
+          {capturedPhotos.length ? (
+            <div className="grid max-h-[126px] grid-cols-3 gap-1.5 overflow-auto pr-1">
+              {capturedPhotos.map((photo) => (
+                <button
+                  key={photo.id}
+                  type="button"
+                  onClick={() => onSelectCapturedPhoto?.(photo.id)}
+                  className={[
+                    "overflow-hidden rounded-lg bg-black/20 p-1 ring-1 transition",
+                    activeCapturedPhotoId === photo.id
+                      ? "ring-[color:var(--pill-active-bg)]"
+                      : "ring-white/10",
+                  ].join(" ")}
+                  title={`Use ${photo.role} photo for identify`}
+                >
+                  <span className="block aspect-square overflow-hidden rounded-md">
+                    <img src={photo.previewUrl} alt={`${photo.role} item photo`} className="h-full w-full object-cover" />
+                  </span>
+                </button>
+              ))}
+            </div>
           ) : (
-            <span className="rounded-full border border-white/60 px-4 py-2 text-xs text-[color:var(--fg)]">
-              Add Scan Photo
-            </span>
+            <button
+              type="button"
+              onClick={onUseCamera}
+              className="flex h-[84px] w-full items-center justify-center rounded-[10px] border border-dashed border-white/20 text-xs text-[color:var(--muted)]"
+            >
+              No pictures yet
+            </button>
           )}
-        </button>
+        </div>
 
         <button
           type="button"
@@ -129,12 +161,12 @@ export default function ScanPanel({
           {previewUrl ? (
             <img
               src={previewUrl}
-              alt="Temporary scan preview"
+              alt="Selected item photo for identify"
               className="h-full max-h-[160px] w-full object-contain opacity-95"
             />
           ) : (
             <span className="rounded-full border border-white/60 px-4 py-2 text-xs text-[color:var(--fg)]">
-              New Scan Photo
+              Take New Picture
             </span>
           )}
         </button>
@@ -184,14 +216,14 @@ export default function ScanPanel({
               disabled={!canSaveItem}
               className={actionButtonClass()}
             >
-              Save Item
+              Save
             </button>
           ) : null}
         </div>
       </div>
 
       <div className="mt-2 rounded-[12px] bg-black/10 px-3 py-2 text-[11px] leading-5 text-[color:var(--muted2)] ring-1 ring-white/8">
-        Auto Identify tries barcode, OCR, and AI in one pass. Barcode/OCR can work without AI; Gemini needs
+        Auto Identify reads the selected picture for barcode, text, and AI clues. Barcode/OCR can work without AI; Gemini needs
         {" "}
         `GEMINI_API_KEY`
         {" "}
@@ -257,9 +289,9 @@ export default function ScanPanel({
               className="mt-1"
             />
             <span>
-              Save this scan as a <strong>proof photo</strong>
+              Also mark the selected picture as a <strong>proof photo</strong>
               <div className="mt-1 text-xs text-[color:var(--muted)]">
-                Off by default so the temporary scan does not replace the real item photo.
+                Optional. Normal captured pictures already save with the item.
               </div>
             </span>
           </label>
