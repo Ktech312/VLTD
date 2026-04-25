@@ -18,6 +18,11 @@ type ImageBox = {
   height: number;
 };
 
+type NaturalSize = {
+  width: number;
+  height: number;
+};
+
 type DragMode = "move" | "n" | "e" | "s" | "w" | "ne" | "nw" | "se" | "sw";
 
 const MIN_CROP_SIZE = 0.12;
@@ -146,9 +151,19 @@ export default function ScanCropEditor({
 
   const [box, setBox] = useState<CropBox>(() => cropToBox(crop));
   const [imageBox, setImageBox] = useState<ImageBox>({ x: 0, y: 0, width: 1, height: 1 });
-  const [imageLoadTick, setImageLoadTick] = useState(0);
+  const [naturalSize, setNaturalSize] = useState<NaturalSize>({ width: 4, height: 3 });
 
   const normalizedRotation = useMemo(() => ((rotation % 360) + 360) % 360, [rotation]);
+  const rotatedAspect = useMemo(() => {
+    const rotated = normalizedRotation === 90 || normalizedRotation === 270;
+    const width = rotated ? naturalSize.height : naturalSize.width;
+    const height = rotated ? naturalSize.width : naturalSize.height;
+    return {
+      width,
+      height,
+      ratio: width / Math.max(1, height),
+    };
+  }, [naturalSize.height, naturalSize.width, normalizedRotation]);
 
   useEffect(() => {
     setBox(cropToBox(crop));
@@ -157,26 +172,9 @@ export default function ScanCropEditor({
   useEffect(() => {
     function updateImageBox() {
       const container = containerRef.current;
-      const image = imageRef.current;
-      if (!container || !image) return;
+      if (!container) return;
 
-      const containerWidth = container.clientWidth;
-      const containerHeight = container.clientHeight;
-      const naturalWidth = image.naturalWidth || 1;
-      const naturalHeight = image.naturalHeight || 1;
-      const rotated = normalizedRotation === 90 || normalizedRotation === 270;
-      const sourceWidth = rotated ? naturalHeight : naturalWidth;
-      const sourceHeight = rotated ? naturalWidth : naturalHeight;
-      const scale = Math.min(containerWidth / sourceWidth, containerHeight / sourceHeight);
-      const width = sourceWidth * scale;
-      const height = sourceHeight * scale;
-
-      setImageBox({
-        x: (containerWidth - width) / 2,
-        y: (containerHeight - height) / 2,
-        width,
-        height,
-      });
+      setImageBox({ x: 0, y: 0, width: container.clientWidth, height: container.clientHeight });
     }
 
     updateImageBox();
@@ -184,7 +182,7 @@ export default function ScanCropEditor({
     if (containerRef.current) observer.observe(containerRef.current);
 
     return () => observer.disconnect();
-  }, [imageLoadTick, imageUrl, normalizedRotation]);
+  }, [imageUrl, rotatedAspect.height, rotatedAspect.width]);
 
   function commitBox(next: CropBox) {
     const normalized = normalizeBox(next);
@@ -293,6 +291,10 @@ export default function ScanCropEditor({
     width: box.width * imageBox.width,
     height: box.height * imageBox.height,
   };
+  const cropSurfaceStyle = {
+    aspectRatio: `${rotatedAspect.width} / ${rotatedAspect.height}`,
+    maxWidth: compact ? `min(100%, ${Math.max(42, Math.min(82, rotatedAspect.ratio * 50))}dvh)` : undefined,
+  };
 
   return (
     <section className={compact ? "rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]" : "rounded-[20px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-4"}>
@@ -314,7 +316,8 @@ export default function ScanCropEditor({
       <div className={compact ? "overflow-hidden rounded-[16px] bg-black/20 p-1.5 ring-1 ring-[color:var(--border)]" : "mt-3 overflow-hidden rounded-[16px] bg-black/20 p-2 ring-1 ring-[color:var(--border)]"}>
         <div
           ref={containerRef}
-          className={compact ? "relative h-[50dvh] min-h-[250px] max-h-[390px] overflow-hidden rounded-[12px] bg-black/40 [touch-action:none]" : "relative h-[52svh] min-h-[320px] max-h-[520px] overflow-hidden rounded-[12px] bg-black/40 [touch-action:none] sm:h-[440px]"}
+          className={compact ? "relative mx-auto w-full max-h-[50dvh] min-h-[220px] overflow-hidden rounded-[12px] bg-black/40 [touch-action:none]" : "relative mx-auto w-full max-h-[520px] min-h-[320px] overflow-hidden rounded-[12px] bg-black/40 [touch-action:none]"}
+          style={cropSurfaceStyle}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerEnd}
@@ -324,13 +327,15 @@ export default function ScanCropEditor({
             ref={imageRef}
             src={imageUrl}
             alt="Photo being cropped"
-            onLoad={() => setImageLoadTick((tick) => tick + 1)}
-            className="absolute object-contain select-none"
+            onLoad={(event) => {
+              const image = event.currentTarget;
+              setNaturalSize({
+                width: image.naturalWidth || 4,
+                height: image.naturalHeight || 3,
+              });
+            }}
+            className="absolute inset-0 h-full w-full object-fill select-none"
             style={{
-              left: imageBox.x,
-              top: imageBox.y,
-              width: imageBox.width,
-              height: imageBox.height,
               transform: `rotate(${normalizedRotation}deg)`,
             }}
             draggable={false}
