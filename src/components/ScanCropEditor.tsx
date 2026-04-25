@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import Cropper, { type Area, type Point, type Size } from "react-easy-crop";
 import "react-easy-crop/react-easy-crop.css";
 
@@ -8,6 +8,7 @@ import type { ScanCropRect } from "@/lib/scanners/cropImageFile";
 
 const MAX_ZOOM = 8;
 const MIN_CROP_FRAME = 0.35;
+const CROP_ASPECT = 4 / 3;
 const DEFAULT_CROP_POINT: Point = { x: 0, y: 0 };
 
 function buttonClass() {
@@ -45,6 +46,23 @@ function areaToCropRect(area: Area): ScanCropRect {
   };
 }
 
+function cropFrameSizeForViewport(viewport: Size, scale: number): Size {
+  const maxWidth = viewport.width * 0.9;
+  const maxHeight = viewport.height * 0.9;
+  let width = maxWidth;
+  let height = width / CROP_ASPECT;
+
+  if (height > maxHeight) {
+    height = maxHeight;
+    width = height * CROP_ASPECT;
+  }
+
+  return {
+    width: Math.max(80, width * scale),
+    height: Math.max(60, height * scale),
+  };
+}
+
 export default function ScanCropEditor({
   imageUrl,
   crop: selectedCrop,
@@ -74,18 +92,33 @@ export default function ScanCropEditor({
   applyLabel?: string;
   compact?: boolean;
 }) {
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const [cropPoint, setCropPoint] = useState<Point>(DEFAULT_CROP_POINT);
   const [zoom, setZoom] = useState(1);
   const [cropFrameScale, setCropFrameScale] = useState(1);
-  const [baseCropSize, setBaseCropSize] = useState<Size | null>(null);
+  const [cropperSize, setCropperSize] = useState<Size | null>(null);
   const initialCroppedAreaPercentages = cropRectToPercentages(selectedCrop);
   const normalizedRotation = ((rotation % 360) + 360) % 360;
-  const cropSize = baseCropSize
-    ? {
-        width: Math.max(80, baseCropSize.width * cropFrameScale),
-        height: Math.max(60, baseCropSize.height * cropFrameScale),
-      }
-    : undefined;
+  const cropSize = cropperSize ? cropFrameSizeForViewport(cropperSize, cropFrameScale) : undefined;
+
+  const setCropperElement = useCallback((node: HTMLDivElement | null) => {
+    resizeObserverRef.current?.disconnect();
+    resizeObserverRef.current = null;
+
+    if (!node) return;
+
+    const updateSize = () => {
+      setCropperSize({
+        width: node.clientWidth,
+        height: node.clientHeight,
+      });
+    };
+
+    updateSize();
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(node);
+    resizeObserverRef.current = observer;
+  }, []);
 
   function handleReset() {
     setCropPoint(DEFAULT_CROP_POINT);
@@ -112,13 +145,13 @@ export default function ScanCropEditor({
       ) : null}
 
       <div className={compact ? "mt-2 overflow-hidden rounded-[16px] bg-black/20 p-1.5 ring-1 ring-[color:var(--border)]" : "mt-3 overflow-hidden rounded-[16px] bg-black/20 p-2 ring-1 ring-[color:var(--border)]"}>
-        <div className={compact ? "relative h-[52dvh] min-h-[250px] overflow-hidden rounded-[12px] bg-black/50" : "relative h-[54dvh] min-h-[320px] max-h-[560px] overflow-hidden rounded-[12px] bg-black/50"}>
+        <div ref={setCropperElement} className={compact ? "relative h-[52dvh] min-h-[250px] overflow-hidden rounded-[12px] bg-black/50" : "relative h-[54dvh] min-h-[320px] max-h-[560px] overflow-hidden rounded-[12px] bg-black/50"}>
           <Cropper
             image={imageUrl}
             crop={cropPoint}
             zoom={zoom}
             rotation={normalizedRotation}
-            aspect={4 / 3}
+            aspect={CROP_ASPECT}
             minZoom={1}
             maxZoom={MAX_ZOOM}
             objectFit="contain"
@@ -128,10 +161,7 @@ export default function ScanCropEditor({
             initialCroppedAreaPercentages={initialCroppedAreaPercentages}
             onCropChange={setCropPoint}
             onZoomChange={setZoom}
-            onCropSizeChange={(nextCropSize) => {
-              setBaseCropSize((current) => current ?? nextCropSize);
-            }}
-            onCropComplete={(_, croppedAreaPercentages) => {
+            onCropComplete={(croppedAreaPercentages) => {
               onChange(areaToCropRect(croppedAreaPercentages));
             }}
           />
