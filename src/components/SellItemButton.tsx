@@ -1,30 +1,64 @@
 "use client";
 
-import { sellItem } from "@/lib/sellItem";
-import { emitVaultUpdate } from "@/lib/vaultEvents";
+import { useState } from "react";
+import type { VaultItem } from "@/lib/vaultModel";
 
-export default function SellItemButton({ item }: { item: any }) {
+const SALES_KEY = "vltd_sales_history";
+
+function getSales() {
+  try {
+    return JSON.parse(localStorage.getItem(SALES_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function setSales(data) {
+  localStorage.setItem(SALES_KEY, JSON.stringify(data));
+}
+
+export default function SellItemButton({ item }) {
+  const [loading, setLoading] = useState(false);
+
   function handleSell() {
-    const input = prompt("Enter sale price:");
-    if (!input) return;
+    const priceInput = prompt("Enter sale price:");
+    if (!priceInput) return;
 
-    const salePrice = Number(input);
-
+    const salePrice = Number(priceInput);
     if (!Number.isFinite(salePrice)) {
       alert("Invalid price");
       return;
     }
 
-    // ✅ remove from vault + record sale
-    sellItem(item.id, salePrice);
+    setLoading(true);
 
-    // ✅ refresh entire app (vault + portfolio)
-    emitVaultUpdate();
+    try {
+      const sales = getSales();
+
+      sales.push({
+        ...item,
+        soldPrice: salePrice,
+        soldAt: Date.now(),
+      });
+
+      setSales(sales);
+
+      const items = JSON.parse(localStorage.getItem("vltd_vault_items_v1") || "[]");
+      const updated = items.filter((i) => i.id !== item.id);
+      localStorage.setItem("vltd_vault_items_v1", JSON.stringify(updated));
+
+      window.dispatchEvent(new Event("vltd:vault-updated"));
+    } catch (e) {
+      console.error(e);
+      alert("Failed to sell item");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <button className="rounded-full px-4 py-2 text-sm ring-1 ring-white/20 hover:bg-white/10" onClick={handleSell}>
-      Sell
+    <button onClick={handleSell} disabled={loading}>
+      {loading ? "Selling..." : "Sell Item"}
     </button>
   );
 }
