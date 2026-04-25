@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent, type WheelEvent } from "react";
 
 import type { ScanCropRect } from "@/lib/scanners/cropImageFile";
 
@@ -26,6 +26,7 @@ type NaturalSize = {
 type DragMode = "move" | "n" | "e" | "s" | "w" | "ne" | "nw" | "se" | "sw";
 
 const MIN_CROP_SIZE = 0.12;
+const MAX_CROP_ZOOM = 8;
 const FULL_CROP: CropBox = { x: 0, y: 0, width: 1, height: 1 };
 
 function buttonClass() {
@@ -99,6 +100,28 @@ function resizeBox(start: CropBox, mode: DragMode, dx: number, dy: number): Crop
   }
 
   return normalizeBox(next);
+}
+
+function zoomBox(start: CropBox, zoom: number): CropBox {
+  const nextZoom = clamp(zoom, 1, MAX_CROP_ZOOM);
+  const centerX = start.x + start.width / 2;
+  const centerY = start.y + start.height / 2;
+  const aspect = start.width / Math.max(MIN_CROP_SIZE, start.height);
+  let width = 1 / nextZoom;
+  let height = 1 / nextZoom;
+
+  if (aspect > 1) {
+    height = width / aspect;
+  } else if (aspect < 1) {
+    width = height * aspect;
+  }
+
+  return normalizeBox({
+    x: centerX - width / 2,
+    y: centerY - height / 2,
+    width,
+    height,
+  });
 }
 
 function pointerDistance(a: { x: number; y: number }, b: { x: number; y: number }) {
@@ -188,6 +211,10 @@ export default function ScanCropEditor({
     const normalized = normalizeBox(next);
     setBox(normalized);
     onChange(boxToCrop(normalized));
+  }
+
+  function applyCropZoom(nextZoom: number) {
+    commitBox(zoomBox(box, nextZoom));
   }
 
   function handleReset() {
@@ -285,12 +312,19 @@ export default function ScanCropEditor({
     if (pointersRef.current.size < 2) pinchRef.current = null;
   }
 
+  function handleWheel(event: WheelEvent<HTMLDivElement>) {
+    event.preventDefault();
+    const nextZoom = cropZoom + (event.deltaY < 0 ? 0.25 : -0.25);
+    applyCropZoom(nextZoom);
+  }
+
   const cropStyle = {
     left: imageBox.x + box.x * imageBox.width,
     top: imageBox.y + box.y * imageBox.height,
     width: box.width * imageBox.width,
     height: box.height * imageBox.height,
   };
+  const cropZoom = clamp(1 / Math.max(MIN_CROP_SIZE, Math.max(box.width, box.height)), 1, MAX_CROP_ZOOM);
   const cropSurfaceStyle = {
     aspectRatio: `${rotatedAspect.width} / ${rotatedAspect.height}`,
     maxWidth: compact ? `min(100%, ${Math.max(42, Math.min(82, rotatedAspect.ratio * 50))}dvh)` : undefined,
@@ -322,6 +356,7 @@ export default function ScanCropEditor({
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerEnd}
           onPointerCancel={handlePointerEnd}
+          onWheel={handleWheel}
         >
           <img
             ref={imageRef}
@@ -417,9 +452,24 @@ export default function ScanCropEditor({
         </div>
       </div>
 
+      <div className={compact ? "mt-2 grid grid-cols-[auto_1fr_auto] items-center gap-2 px-1 text-[11px] text-[color:var(--muted)]" : "mt-3 grid grid-cols-[auto_1fr_auto] items-center gap-3 text-xs text-[color:var(--muted)]"}>
+        <span>Zoom</span>
+        <input
+          type="range"
+          min="1"
+          max={MAX_CROP_ZOOM}
+          step="0.05"
+          value={cropZoom}
+          onChange={(event) => applyCropZoom(Number(event.target.value))}
+          className="h-2 w-full accent-[color:var(--pill-active-bg)]"
+          aria-label="Crop zoom"
+        />
+        <span>{cropZoom.toFixed(1)}x</span>
+      </div>
+
       {!compact ? (
         <div className="mt-3 rounded-[16px] bg-black/10 p-3 text-xs leading-5 text-[color:var(--muted)] ring-1 ring-white/8">
-        Move the crop box, drag any edge or corner to resize it, or pinch the crop box on a phone/tablet.
+          Move the crop box, drag any edge or corner to resize it, or pinch the crop box on a phone/tablet.
         </div>
       ) : null}
 

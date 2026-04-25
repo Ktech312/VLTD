@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import CameraCapturePanel from "@/components/CameraCapturePanel";
 import ScanCropEditor from "@/components/ScanCropEditor";
 import { PillButton } from "@/components/ui/PillButton";
 import { AI_ASSIST_SETUP_MESSAGE, analyzeImageWithVision } from "@/lib/ai/openaiVision";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { newId } from "@/lib/id";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
 import { appendItems, type VaultImage, type VaultItem } from "@/lib/vaultModel";
@@ -236,6 +238,7 @@ export default function QuickAddClient() {
   const [draftPreviewUrl, setDraftPreviewUrl] = useState<string | undefined>(undefined);
   const [rotation, setRotation] = useState(0);
   const [isCropEditorOpen, setIsCropEditorOpen] = useState(false);
+  const [isCameraPanelOpen, setIsCameraPanelOpen] = useState(false);
   const [scanCrop, setScanCrop] = useState<ScanCropRect>(DEFAULT_SCAN_CROP);
   const [isApplyingCrop, setIsApplyingCrop] = useState(false);
   const [isAiAssisting, setIsAiAssisting] = useState(false);
@@ -252,6 +255,15 @@ export default function QuickAddClient() {
   const quantityValue = useMemo(() => parseQuantity(quantity), [quantity]);
   const parsedPrice = useMemo(() => parseMoney(purchasePrice), [purchasePrice]);
   const canSave = title.trim().length > 0 && !isSaving;
+  const activePreview = frontImage || draftPreviewUrl;
+  const hasQuickAddDraft =
+    Boolean(selectedFile || activePreview || isCropEditorOpen) ||
+    title.trim().length > 0 ||
+    purchasePrice.trim().length > 0 ||
+    notes.trim().length > 0 ||
+    quantity.trim() !== "1";
+
+  useUnsavedChangesGuard(hasQuickAddDraft && !isSaving);
 
   useEffect(() => {
     setRecentItems(buildRecent());
@@ -292,6 +304,14 @@ export default function QuickAddClient() {
     setSelectedFile(file);
     setDraftPreviewUrl(URL.createObjectURL(file));
     setFrontImage(undefined);
+  }
+
+  function handleCameraCapture(file: File) {
+    replaceWorkingImage(file);
+    setRotation(0);
+    setScanCrop(DEFAULT_SCAN_CROP);
+    setIsCropEditorOpen(false);
+    setStatus("Photo ready. Add details, use AI Assist, or tap the photo to edit.");
   }
 
   async function handleImageSelection(fileList: FileList | null) {
@@ -377,10 +397,8 @@ export default function QuickAddClient() {
     setScanCrop(DEFAULT_SCAN_CROP);
     setStatus("Take another photo.");
 
-    if (cameraInputRef.current) {
-      cameraInputRef.current.value = "";
-      cameraInputRef.current.click();
-    }
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+    setIsCameraPanelOpen(true);
   }
 
   function resetForm() {
@@ -569,8 +587,6 @@ export default function QuickAddClient() {
     }
   }
 
-  const activePreview = frontImage || draftPreviewUrl;
-
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col px-3 py-4 sm:px-5 sm:py-6">
@@ -593,7 +609,7 @@ export default function QuickAddClient() {
           <div className="grid gap-3 sm:grid-cols-2">
             <button
               type="button"
-              onClick={() => cameraInputRef.current?.click()}
+              onClick={() => setIsCameraPanelOpen(true)}
               className="rounded-[22px] bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]"
             >
               Use Camera
@@ -689,6 +705,22 @@ export default function QuickAddClient() {
                 If it is not set in Vercel yet, crop and manual save still work.
               </div>
             </div>
+          ) : null}
+
+          {isCameraPanelOpen ? (
+            <CameraCapturePanel
+              title="Capture Item Picture"
+              description="Take an item picture."
+              onCapture={(file) => {
+                setIsCameraPanelOpen(false);
+                handleCameraCapture(file);
+              }}
+              onClose={() => setIsCameraPanelOpen(false)}
+              onUseFileInstead={() => {
+                setIsCameraPanelOpen(false);
+                uploadInputRef.current?.click();
+              }}
+            />
           ) : null}
 
 

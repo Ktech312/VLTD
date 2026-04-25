@@ -59,6 +59,7 @@ import {
   runImageScanAutofill,
   type ScanItemType,
 } from "@/lib/scanAutofill";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import {
   generateVaultImageKey,
   prepareImageBlob,
@@ -295,6 +296,21 @@ export default function AddPage() {
   }, [scanSession.review]);
 
   const canSave = useMemo(() => values.title.trim().length > 0 && !isSaving, [values.title, isSaving]);
+  const hasDraftProgress = useMemo(() => {
+    const hasFormValues = Object.values(values).some((value) => String(value ?? "").trim().length > 0);
+    const hasPricingValues = Object.values(pricingValues).some((value) =>
+      String(value ?? "").trim().length > 0
+    );
+
+    return (
+      hasFormValues ||
+      hasPricingValues ||
+      Boolean(scanFile || scanSession.image || scanSession.review || isCropEditorOpen) ||
+      draftMediaImages.length > 0
+    );
+  }, [draftMediaImages.length, isCropEditorOpen, pricingValues, scanFile, scanSession.image, scanSession.review, values]);
+
+  useUnsavedChangesGuard(hasDraftProgress && !isSaving);
 
   function setField<K extends keyof FormValues>(key: K, value: FormValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
