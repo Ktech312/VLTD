@@ -5,9 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import BulkLockBar from "@/components/BulkLockBar";
 import CameraCapturePanel from "@/components/CameraCapturePanel";
-import CostToSellPanel from "@/components/CostToSellPanel";
-import ImageRoleSelector, { type ImageRole } from "@/components/ImageRoleSelector";
-import PricingMvpCard from "@/components/PricingMvpCard";
+import { type ImageRole } from "@/components/ImageRoleSelector";
 import ScanCropEditor from "@/components/ScanCropEditor";
 import ScanPanel from "@/components/ScanPanel";
 import ScanResultPreview from "@/components/ScanResultPreview";
@@ -208,7 +206,6 @@ export default function AddPage() {
   const [scanType, setScanType] = useState<ScanItemType>("auto");
   const [existingItems, setExistingItems] = useState<VaultItem[]>([]);
   const [duplicateWarning, setDuplicateWarning] = useState("");
-  const [showOptionalPanels, setShowOptionalPanels] = useState(false);
 
   useEffect(() => {
     const state = readBulkAddState();
@@ -298,16 +295,6 @@ export default function AddPage() {
   }, [scanSession.review]);
 
   const canSave = useMemo(() => values.title.trim().length > 0 && !isSaving, [values.title, isSaving]);
-  const sellPrice = useMemo(
-    () =>
-      parseMoney(values.currentValue) ??
-      pricingValues.estimatedValue ??
-      pricingValues.lastCompValue ??
-      0,
-    [pricingValues.estimatedValue, pricingValues.lastCompValue, values.currentValue]
-  );
-  const activeMediaImage =
-    draftMediaImages.find((image) => image.id === activeMediaImageId) ?? draftMediaImages[0] ?? null;
 
   function setField<K extends keyof FormValues>(key: K, value: FormValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -397,44 +384,6 @@ export default function AddPage() {
     setActiveMediaImageId("");
     if (mediaInputRef.current) mediaInputRef.current.value = "";
     if (mediaCameraInputRef.current) mediaCameraInputRef.current.value = "";
-  }
-
-  function removeDraftMediaImage(imageId: string) {
-    const target = draftMediaImages.find((image) => image.id === imageId);
-    if (target?.previewUrl.startsWith("blob:")) {
-      revokeImageObjectUrl(target.previewUrl);
-    }
-
-    const nextImages = normalizeDraftMediaImages(
-      draftMediaImages.filter((image) => image.id !== imageId)
-    );
-
-    setDraftMediaImages(nextImages);
-    setActiveMediaImageId((prev) => {
-      if (prev && prev !== imageId) return prev;
-      return nextImages[0]?.id ?? "";
-    });
-    setStatus(nextImages.length ? "Item photo removed." : "All item photos cleared.");
-  }
-
-  function updateActiveMediaRole(role: ImageRole) {
-    if (!activeMediaImage) return;
-
-    setDraftMediaImages((prev) =>
-      normalizeDraftMediaImages(
-        prev.map((image) => {
-          if (image.id === activeMediaImage.id) {
-            return { ...image, role };
-          }
-
-          if (role === "primary" && image.role === "primary") {
-            return { ...image, role: "detail" };
-          }
-
-          return image;
-        })
-      )
-    );
   }
 
   function clearAllImages() {
@@ -1308,7 +1257,10 @@ export default function AddPage() {
               )}
             </div>
 
-            <div ref={reviewRef}>
+          </div>
+
+          <div ref={reviewRef} className="grid gap-3 content-start">
+            {scanSession.review ? (
               <ScanResultPreview
                 review={scanSession.review}
                 title={reviewTitleFromSource(scanSession.review?.source)}
@@ -1316,81 +1268,14 @@ export default function AddPage() {
                 onApplyAll={() => applyScanReview("all")}
                 onCancel={() => setScanSession((prev) => clearScanSessionReview(prev))}
               />
-            </div>
-          </div>
-
-          <div className="grid gap-3 content-start">
-            {draftMediaImages.length ? (
+            ) : (
               <section className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">PHOTO DETAILS</div>
-                    <div className="mt-1 text-xs text-[color:var(--muted)]">
-                      {draftMediaImages.length} picture{draftMediaImages.length === 1 ? "" : "s"} captured. Pick the role for the selected one.
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={clearMediaImage}
-                    className="rounded-lg bg-[color:var(--pill)] px-2.5 py-1.5 text-xs ring-1 ring-[color:var(--border)]"
-                  >
-                    Clear
-                  </button>
+                <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">SCAN REVIEW</div>
+                <div className="mt-2 text-sm text-[color:var(--muted)]">
+                  Run Auto Identify and the review will appear here.
                 </div>
-
-                {activeMediaImage ? (
-                  <div className="mt-3 grid gap-2">
-                    <ImageRoleSelector
-                      value={activeMediaImage.role}
-                      onChange={updateActiveMediaRole}
-                      compact
-                      label="SELECTED PHOTO ROLE"
-                    />
-
-                    <button
-                      type="button"
-                      onClick={() => removeDraftMediaImage(activeMediaImage.id)}
-                      className="rounded-lg bg-[color:var(--pill)] px-2.5 py-1.5 text-xs ring-1 ring-[color:var(--border)]"
-                    >
-                      Remove Selected
-                    </button>
-                  </div>
-                ) : null}
               </section>
-            ) : null}
-
-            <button
-              type="button"
-              onClick={() => setShowOptionalPanels((prev) => !prev)}
-              className="flex w-full items-center justify-between gap-3 rounded-[16px] bg-[color:var(--surface)] px-4 py-3 text-left ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]"
-            >
-              <div>
-                <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                  PRICING AND COST
-                </div>
-                <div className="mt-1 text-sm text-[color:var(--muted)]">
-                  Optional. Open when you are ready to price this item.
-                </div>
-              </div>
-              <div className="text-sm font-medium text-[color:var(--fg)]">
-                {showOptionalPanels ? "Hide" : "Show"}
-              </div>
-            </button>
-
-            {showOptionalPanels ? (
-              <div className="grid gap-3">
-                <PricingMvpCard
-                  title="PRICING MVP"
-                  value={pricingValues}
-                  onSave={async (patch) => {
-                    setPricingValues((prev) => ({ ...prev, ...patch }));
-                    setStatus("Pricing updated for this draft item.");
-                  }}
-                />
-
-                <CostToSellPanel price={sellPrice} />
-              </div>
-            ) : null}
+            )}
           </div>
         </div>
 
