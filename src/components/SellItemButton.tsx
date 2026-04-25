@@ -5,7 +5,7 @@ import type { VaultItem } from "@/lib/vaultModel";
 
 const SALES_KEY = "vltd_sales_history";
 
-function getSales() {
+function getSales(): any[] {
   try {
     return JSON.parse(localStorage.getItem(SALES_KEY) || "[]");
   } catch {
@@ -13,11 +13,11 @@ function getSales() {
   }
 }
 
-function setSales(data) {
+function setSales(data: any[]): void {
   localStorage.setItem(SALES_KEY, JSON.stringify(data));
 }
 
-export default function SellItemButton({ item }) {
+export default function SellItemButton({ item }: { item: VaultItem }) {
   const [loading, setLoading] = useState(false);
 
   function handleSell() {
@@ -44,7 +44,7 @@ export default function SellItemButton({ item }) {
       setSales(sales);
 
       const items = JSON.parse(localStorage.getItem("vltd_vault_items_v1") || "[]");
-      const updated = items.filter((i) => i.id !== item.id);
+      const updated = items.filter((i: any) => i.id !== item.id);
       localStorage.setItem("vltd_vault_items_v1", JSON.stringify(updated));
 
       window.dispatchEvent(new Event("vltd:vault-updated"));
@@ -57,7 +57,11 @@ export default function SellItemButton({ item }) {
   }
 
   return (
-    <button onClick={handleSell} disabled={loading}>
+    <button
+      onClick={handleSell}
+      disabled={loading}
+      className="w-full rounded-xl bg-red-500/20 px-3 py-2 text-sm font-semibold text-red-300 ring-1 ring-red-400/30 hover:bg-red-500/30"
+    >
       {loading ? "Selling..." : "Sell Item"}
     </button>
   );
