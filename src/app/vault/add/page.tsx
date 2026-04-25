@@ -406,8 +406,7 @@ export default function AddPage() {
 
     addDraftMediaFiles([file]);
     replaceScanImage(file);
-    setIsCropEditorOpen(true);
-    setStatus("Picture captured. Crop if needed, then run Auto Identify or save the item.");
+    setStatus("Picture added. Run Auto Identify or save the item.");
   }
 
   function replaceScanImage(file: File) {

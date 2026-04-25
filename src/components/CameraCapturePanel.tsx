@@ -2,7 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import ScanCropEditor from "@/components/ScanCropEditor";
+import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
+
 type CameraPermissionState = "granted" | "prompt" | "denied" | "unknown";
+
+const DEFAULT_CROP: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
+
+function isDefaultCrop(crop: ScanCropRect) {
+  return crop.left === 0 && crop.top === 0 && crop.right === 0 && crop.bottom === 0;
+}
 
 export default function CameraCapturePanel({
   title,
@@ -28,6 +37,19 @@ export default function CameraCapturePanel({
   const [hostLabel, setHostLabel] = useState("");
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState("");
+  const [capturedFile, setCapturedFile] = useState<File | null>(null);
+  const [capturedPreviewUrl, setCapturedPreviewUrl] = useState("");
+  const [captureCrop, setCaptureCrop] = useState<ScanCropRect>(DEFAULT_CROP);
+  const [isApplyingCrop, setIsApplyingCrop] = useState(false);
+
+  function stopCameraStream() {
+    const stream = streamRef.current;
+    streamRef.current = null;
+    stream?.getTracks().forEach((track) => track.stop());
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  }
 
   useEffect(() => {
     let isActive = true;
@@ -91,17 +113,13 @@ export default function CameraCapturePanel({
       }
     }
 
-    function stopStream() {
-      const stream = streamRef.current;
-      streamRef.current = null;
-      stream?.getTracks().forEach((track) => track.stop());
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
-      }
-    }
-
     async function startCamera() {
-      stopStream();
+      if (capturedFile) {
+        setIsStarting(false);
+        return;
+      }
+
+      stopCameraStream();
       setCameraError("");
       setIsStarting(true);
 
@@ -179,9 +197,17 @@ export default function CameraCapturePanel({
       if (permissionStatus) {
         permissionStatus.onchange = null;
       }
-      stopStream();
+      stopCameraStream();
     };
-  }, [retryCount, selectedDeviceId]);
+  }, [capturedFile, retryCount, selectedDeviceId]);
+
+  useEffect(() => {
+    return () => {
+      if (capturedPreviewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(capturedPreviewUrl);
+      }
+    };
+  }, [capturedPreviewUrl]);
 
   const helpItems = [
     `Camera permission is per site. Even if camera works in other apps, you still need to allow it for ${hostLabel || "this site"}.`,
@@ -231,12 +257,19 @@ export default function CameraCapturePanel({
         throw new Error("Failed to capture photo.");
       }
 
-      onCapture(
-        new File([blob], `camera-capture-${Date.now()}.jpg`, {
-          type: "image/jpeg",
-          lastModified: Date.now(),
-        })
-      );
+      const file = new File([blob], `camera-capture-${Date.now()}.jpg`, {
+        type: "image/jpeg",
+        lastModified: Date.now(),
+      });
+
+      if (capturedPreviewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(capturedPreviewUrl);
+      }
+
+      setCapturedFile(file);
+      setCapturedPreviewUrl(URL.createObjectURL(file));
+      setCaptureCrop(DEFAULT_CROP);
+      stopCameraStream();
     } catch (error) {
       setCameraError(error instanceof Error ? error.message : "Failed to capture photo.");
     } finally {
@@ -244,14 +277,52 @@ export default function CameraCapturePanel({
     }
   }
 
+  async function handleUseCapturedPhoto() {
+    if (!capturedFile) return;
+
+    setIsApplyingCrop(true);
+
+    try {
+      const finalFile = isDefaultCrop(captureCrop)
+        ? capturedFile
+        : await cropImageFile(capturedFile, captureCrop);
+
+      onCapture(finalFile);
+    } catch (error) {
+      setCameraError(error instanceof Error ? error.message : "Failed to crop photo.");
+    } finally {
+      setIsApplyingCrop(false);
+    }
+  }
+
+  function handleRetakePhoto() {
+    if (capturedPreviewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(capturedPreviewUrl);
+    }
+
+    setCapturedFile(null);
+    setCapturedPreviewUrl("");
+    setCaptureCrop(DEFAULT_CROP);
+    setCameraError("");
+    setRetryCount((count) => count + 1);
+  }
+
   return (
     <div className="fixed inset-0 z-[80] bg-black/75 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="mx-auto flex h-full max-w-3xl flex-col rounded-[24px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-5">
+      <div className="mx-auto flex h-full max-w-4xl flex-col rounded-[24px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">LIVE CAMERA</div>
-            <h2 className="mt-1 text-xl font-semibold text-[color:var(--fg)]">{title}</h2>
-            <div className="mt-1 text-sm text-[color:var(--muted)]">{description}</div>
+            <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
+              {capturedFile ? "ADJUST PHOTO" : "LIVE CAMERA"}
+            </div>
+            <h2 className="mt-1 text-xl font-semibold text-[color:var(--fg)]">
+              {capturedFile ? "Crop and Use Photo" : title}
+            </h2>
+            <div className="mt-1 text-sm text-[color:var(--muted)]">
+              {capturedFile
+                ? "Adjust the crop inside this popup, then use the finished photo."
+                : description}
+            </div>
           </div>
 
           <button
@@ -263,102 +334,121 @@ export default function CameraCapturePanel({
           </button>
         </div>
 
-        <div className="mt-4 flex-1 overflow-hidden rounded-[20px] bg-black/30 p-2 ring-1 ring-[color:var(--border)]">
-          <div className="flex h-full min-h-[280px] items-center justify-center overflow-hidden rounded-[16px] bg-black/30">
-            {cameraError ? (
-              <div className="max-w-lg px-5 text-center text-sm text-red-200">{cameraError}</div>
-            ) : (
-              <video
-                ref={videoRef}
-                autoPlay
-                muted
-                playsInline
-                className="h-full w-full object-contain"
-              />
-            )}
+        {capturedFile && capturedPreviewUrl ? (
+          <div className="mt-4 min-h-0 flex-1 overflow-auto pr-1">
+            <ScanCropEditor
+              imageUrl={capturedPreviewUrl}
+              crop={captureCrop}
+              onChange={setCaptureCrop}
+              title="ADJUST PHOTO"
+              description="Move or resize the crop box here before this photo is added to the item."
+              applyLabel="Use Photo"
+              onApply={() => void handleUseCapturedPhoto()}
+              onReset={() => setCaptureCrop(DEFAULT_CROP)}
+              onCancel={handleRetakePhoto}
+              isApplying={isApplyingCrop}
+            />
           </div>
-        </div>
-
-        <div className="mt-4 rounded-[18px] bg-black/10 p-3 ring-1 ring-white/8">
-          <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">CAMERA HELP</div>
-          <div className="mt-2 grid gap-2 text-xs text-[color:var(--muted)] sm:grid-cols-3">
-            <div className="rounded-xl bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]">
-              Permission: <span className="font-medium text-[color:var(--fg)]">{permissionLabel}</span>
+        ) : (
+          <>
+            <div className="mt-4 flex-1 overflow-hidden rounded-[20px] bg-black/30 p-2 ring-1 ring-[color:var(--border)]">
+              <div className="flex h-full min-h-[280px] items-center justify-center overflow-hidden rounded-[16px] bg-black/30">
+                {cameraError ? (
+                  <div className="max-w-lg px-5 text-center text-sm text-red-200">{cameraError}</div>
+                ) : (
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    muted
+                    playsInline
+                    className="h-full w-full object-contain"
+                  />
+                )}
+              </div>
             </div>
-            <div className="rounded-xl bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]">
-              Secure context: <span className="font-medium text-[color:var(--fg)]">{isSecureContextValue ? "Yes" : "No"}</span>
-            </div>
-            <div className="rounded-xl bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]">
-              Site: <span className="font-medium text-[color:var(--fg)]">{hostLabel || "Unknown"}</span>
-            </div>
-          </div>
 
-          <div className="mt-3 text-xs text-[color:var(--muted)]">
-            {permissionState === "denied"
-              ? "This usually means the browser blocked camera access for this site specifically."
-              : "If camera works in other browser apps but not here, the most common cause is site-specific permission settings."}
-          </div>
+            <div className="mt-4 rounded-[18px] bg-black/10 p-3 ring-1 ring-white/8">
+              <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">CAMERA HELP</div>
+              <div className="mt-2 grid gap-2 text-xs text-[color:var(--muted)] sm:grid-cols-3">
+                <div className="rounded-xl bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]">
+                  Permission: <span className="font-medium text-[color:var(--fg)]">{permissionLabel}</span>
+                </div>
+                <div className="rounded-xl bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]">
+                  Secure context: <span className="font-medium text-[color:var(--fg)]">{isSecureContextValue ? "Yes" : "No"}</span>
+                </div>
+                <div className="rounded-xl bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]">
+                  Site: <span className="font-medium text-[color:var(--fg)]">{hostLabel || "Unknown"}</span>
+                </div>
+              </div>
 
-          {videoDevices.length > 1 ? (
-            <label className="mt-3 grid gap-1.5 text-xs text-[color:var(--muted)]">
-              <span className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--muted2)]">
-                Select Camera
-              </span>
-              <select
-                value={selectedDeviceId}
-                onChange={(event) => setSelectedDeviceId(event.target.value)}
-                className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
-              >
-                {videoDevices.map((device, index) => (
-                  <option key={device.deviceId || index} value={device.deviceId}>
-                    {device.label || `Camera ${index + 1}`}
-                  </option>
+              <div className="mt-3 text-xs text-[color:var(--muted)]">
+                {permissionState === "denied"
+                  ? "This usually means the browser blocked camera access for this site specifically."
+                  : "If camera works in other browser apps but not here, the most common cause is site-specific permission settings."}
+              </div>
+
+              {videoDevices.length > 1 ? (
+                <label className="mt-3 grid gap-1.5 text-xs text-[color:var(--muted)]">
+                  <span className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--muted2)]">
+                    Select Camera
+                  </span>
+                  <select
+                    value={selectedDeviceId}
+                    onChange={(event) => setSelectedDeviceId(event.target.value)}
+                    className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+                  >
+                    {videoDevices.map((device, index) => (
+                      <option key={device.deviceId || index} value={device.deviceId}>
+                        {device.label || `Camera ${index + 1}`}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              <ul className="mt-3 list-disc space-y-1 pl-5 text-xs text-[color:var(--muted)]">
+                {helpItems.map((item) => (
+                  <li key={item}>{item}</li>
                 ))}
-              </select>
-            </label>
-          ) : null}
+              </ul>
+            </div>
 
-          <ul className="mt-3 list-disc space-y-1 pl-5 text-xs text-[color:var(--muted)]">
-            {helpItems.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </div>
+            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+              <button
+                type="button"
+                onClick={() => void handleCapture()}
+                disabled={Boolean(cameraError) || isStarting || isCapturing}
+                className="min-h-12 rounded-2xl bg-[color:var(--pill-active-bg)] px-4 py-3 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)] disabled:opacity-40"
+              >
+                {isStarting ? "Starting Camera..." : isCapturing ? "Capturing..." : "Capture Photo"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setRetryCount((count) => count + 1)}
+                className="min-h-12 rounded-2xl bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]"
+              >
+                Retry Camera
+              </button>
+              <button
+                type="button"
+                onClick={onUseFileInstead}
+                className="min-h-12 rounded-2xl bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]"
+              >
+                Choose File Instead
+              </button>
+            </div>
 
-        <div className="mt-4 grid gap-2 sm:grid-cols-3">
-          <button
-            type="button"
-            onClick={() => void handleCapture()}
-            disabled={Boolean(cameraError) || isStarting || isCapturing}
-            className="min-h-12 rounded-2xl bg-[color:var(--pill-active-bg)] px-4 py-3 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)] disabled:opacity-40"
-          >
-            {isStarting ? "Starting Camera..." : isCapturing ? "Capturing..." : "Capture Photo"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setRetryCount((count) => count + 1)}
-            className="min-h-12 rounded-2xl bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]"
-          >
-            Retry Camera
-          </button>
-          <button
-            type="button"
-            onClick={onUseFileInstead}
-            className="min-h-12 rounded-2xl bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]"
-          >
-            Choose File Instead
-          </button>
-        </div>
-
-        <div className="mt-2 grid gap-2 sm:grid-cols-1">
-          <button
-            type="button"
-            onClick={onClose}
-            className="min-h-12 rounded-2xl bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]"
-          >
-            Cancel
-          </button>
-        </div>
+            <div className="mt-2 grid gap-2 sm:grid-cols-1">
+              <button
+                type="button"
+                onClick={onClose}
+                className="min-h-12 rounded-2xl bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]"
+              >
+                Cancel
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
