@@ -12,7 +12,11 @@ import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
-import { getPendingVaultSyncCount, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
+import {
+  enqueueVaultItemSync,
+  getPendingVaultSyncCount,
+  processVaultSyncQueue,
+} from "@/lib/vaultSyncQueue";
 import { useResolvedVaultImage } from "@/lib/useResolvedVaultImages";
 import {
   loadItems,
@@ -164,6 +168,44 @@ function formatSoldAt(ms?: number) {
     hour: "numeric",
     minute: "2-digit",
   })}`;
+}
+
+function promoteLegacySalesToItems() {
+  if (typeof window === "undefined") return false;
+
+  const sales = readSales();
+  if (sales.length === 0) return false;
+
+  const saleMap = new Map(sales.map((sale) => [String(sale.id), sale]));
+  let changed = false;
+
+  for (const item of loadItems({ includeAllProfiles: true })) {
+    const sale = saleMap.get(String(item.id));
+    if (!sale) continue;
+
+    const soldPrice = Number(sale.soldPrice ?? item.soldPrice ?? 0);
+    const soldAt = Number(sale.soldAt ?? item.soldAt ?? Date.now());
+    const nextItem: VaultItem = {
+      ...item,
+      status: "SOLD",
+      soldPrice: Number.isFinite(soldPrice) ? soldPrice : 0,
+      soldAt: Number.isFinite(soldAt) ? soldAt : Date.now(),
+    };
+
+    if (
+      item.status === nextItem.status &&
+      Number(item.soldPrice ?? 0) === Number(nextItem.soldPrice ?? 0) &&
+      Number(item.soldAt ?? 0) === Number(nextItem.soldAt ?? 0)
+    ) {
+      continue;
+    }
+
+    saveItem(nextItem);
+    enqueueVaultItemSync(nextItem.id);
+    changed = true;
+  }
+
+  return changed;
 }
 
 function CardMetric({
@@ -544,6 +586,9 @@ export default function VaultPage() {
 
   async function hydrateAll() {
     refresh();
+    if (promoteLegacySalesToItems()) {
+      refresh();
+    }
     await processVaultSyncQueue();
     await syncVaultItemsFromSupabase();
     refresh();
