@@ -1281,6 +1281,8 @@ export default function AddPage() {
                   onUpcLookup={() => void handleUpcLookup()}
                   onClearImage={clearScanImage}
                   onToggleSaveScanAsPhoto={setSaveScanAsPhoto}
+                  onSaveItem={() => void saveForm(false)}
+                  canSaveItem={canSave}
                 />
               )}
             </div>
@@ -1296,38 +1298,14 @@ export default function AddPage() {
             </div>
           </div>
 
-          <div className="grid gap-3">
-            <button
-              type="button"
-              onClick={() => setShowOptionalPanels((prev) => !prev)}
-              className="flex w-full items-center justify-between gap-3 rounded-[16px] bg-[color:var(--surface)] px-4 py-3 text-left ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] xl:hidden"
-            >
-              <div>
-                <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                  OPTIONAL TOOLS
-                </div>
-                <div className="mt-1 text-sm text-[color:var(--muted)]">
-                  Add a real item photo or pricing after the scan fields look right.
-                </div>
-              </div>
-              <div className="text-sm font-medium text-[color:var(--fg)]">
-                {showOptionalPanels ? "Hide" : "Show"}
-              </div>
-            </button>
-
-            <div
-              className={[
-                showOptionalPanels ? "grid" : "hidden",
-                "gap-3 xl:grid",
-              ].join(" ")}
-            >
+          <div className="grid gap-3 content-start">
               <section className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
                 <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">SAVED ITEM PHOTOS</div>
                 <div className="mt-1 text-xs text-[color:var(--muted)]">
-                  Add as many real item photos as you want. They save with the item when you hit Save.
+                  Add extra photos here. They save with the item, not the temporary scan.
                 </div>
                 <div className="mt-2 overflow-hidden rounded-[14px] bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)]">
-                  <div className="flex h-[180px] items-center justify-center overflow-hidden rounded-[10px] bg-black/10">
+                  <div className="flex h-[118px] items-center justify-center overflow-hidden rounded-[10px] bg-black/10 sm:h-[150px]">
                     {activeMediaImage ? (
                       <img src={activeMediaImage.previewUrl} alt="Item media preview" className="h-full w-full object-contain" />
                     ) : (
@@ -1377,7 +1355,7 @@ export default function AddPage() {
                   </div>
                 ) : null}
 
-                <div className="mt-3 grid gap-2">
+                <div className="mt-3 grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => openCameraFor("item")}
@@ -1411,17 +1389,38 @@ export default function AddPage() {
                 </div>
               </section>
 
-              <PricingMvpCard
-                title="PRICING MVP"
-                value={pricingValues}
-                onSave={async (patch) => {
-                  setPricingValues((prev) => ({ ...prev, ...patch }));
-                  setStatus("Pricing updated for this draft item.");
-                }}
-              />
+            <button
+              type="button"
+              onClick={() => setShowOptionalPanels((prev) => !prev)}
+              className="flex w-full items-center justify-between gap-3 rounded-[16px] bg-[color:var(--surface)] px-4 py-3 text-left ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]"
+            >
+              <div>
+                <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
+                  PRICING AND COST
+                </div>
+                <div className="mt-1 text-sm text-[color:var(--muted)]">
+                  Optional. Open when you are ready to price this item.
+                </div>
+              </div>
+              <div className="text-sm font-medium text-[color:var(--fg)]">
+                {showOptionalPanels ? "Hide" : "Show"}
+              </div>
+            </button>
 
-              <CostToSellPanel price={sellPrice} />
-            </div>
+            {showOptionalPanels ? (
+              <div className="grid gap-3">
+                <PricingMvpCard
+                  title="PRICING MVP"
+                  value={pricingValues}
+                  onSave={async (patch) => {
+                    setPricingValues((prev) => ({ ...prev, ...patch }));
+                    setStatus("Pricing updated for this draft item.");
+                  }}
+                />
+
+                <CostToSellPanel price={sellPrice} />
+              </div>
+            ) : null}
           </div>
         </div>
 

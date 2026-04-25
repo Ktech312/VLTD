@@ -55,7 +55,7 @@ export default function ScanCropEditor({
   rotation = 0,
   isApplying = false,
   title = "CROP BEFORE CONTINUING",
-  description = "Drag and pinch to frame the item, then save it.",
+  description = "Drag with one finger. Pinch with two fingers to zoom, then save it.",
   applyLabel = "Save Crop",
 }: {
   imageUrl: string;
@@ -119,6 +119,7 @@ export default function ScanCropEditor({
             maxZoom={3}
             zoomSpeed={0.05}
             showGrid
+            restrictPosition={false}
             onCropChange={setCropPosition}
             onZoomChange={setZoom}
             onCropComplete={handleCropComplete}
@@ -133,16 +134,7 @@ export default function ScanCropEditor({
           <span>{zoom.toFixed(2)}x</span>
         </div>
 
-        <div className="mt-3 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setZoom((current) => Math.max(1, Number((current - 0.2).toFixed(2))))}
-            className={buttonClass()}
-            aria-label="Zoom out"
-          >
-            -
-          </button>
-
+        <div className="mt-3">
           <input
             type="range"
             min={1}
@@ -153,19 +145,10 @@ export default function ScanCropEditor({
             className="h-10 w-full accent-[color:var(--pill-active-bg)]"
             aria-label="Zoom"
           />
-
-          <button
-            type="button"
-            onClick={() => setZoom((current) => Math.min(3, Number((current + 0.2).toFixed(2))))}
-            className={buttonClass()}
-            aria-label="Zoom in"
-          >
-            +
-          </button>
         </div>
 
         <div className="mt-3 text-xs text-[color:var(--muted)]">
-          Drag to move the photo. Pinch on phone or use the slider for finer control.
+          Phone/tablet: pinch directly on the photo. Desktop: drag the photo or use the slider.
         </div>
       </div>
 

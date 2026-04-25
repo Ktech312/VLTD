@@ -11,8 +11,8 @@ function selectClass() {
 
 function actionButtonClass(primary = false) {
   return primary
-    ? "min-h-10 rounded-xl bg-[color:var(--pill-active-bg)] px-3 py-2 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)] disabled:opacity-40"
-    : "min-h-10 rounded-xl bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-40";
+    ? "min-h-9 rounded-xl bg-[color:var(--pill-active-bg)] px-3 py-2 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)] disabled:opacity-40"
+    : "min-h-9 rounded-xl bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-40";
 }
 
 function chipClass(active = false) {
@@ -55,6 +55,8 @@ export default function ScanPanel({
   onUpcLookup = () => {},
   onClearImage,
   onToggleSaveScanAsPhoto,
+  onSaveItem,
+  canSaveItem = false,
 }: {
   session: ScanSessionState;
   scanType: ScanItemType;
@@ -74,6 +76,8 @@ export default function ScanPanel({
   onUpcLookup?: () => void;
   onClearImage: () => void;
   onToggleSaveScanAsPhoto: (checked: boolean) => void;
+  onSaveItem?: () => void;
+  canSaveItem?: boolean;
 }) {
   const previewUrl = session.image?.previewUrl ?? "";
   const hasImage = Boolean(previewUrl);
@@ -84,102 +88,122 @@ export default function ScanPanel({
 
   return (
     <section className="rounded-[16px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-3">
-      <div className="flex flex-col gap-2.5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">SCAN FOR AUTOFILL</div>
-            <div className="mt-1 text-xs text-[color:var(--muted)]">
-              Temporary photo for barcode, OCR, and AI autofill.
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <span className={chipClass(hasImage)}>1. Photo</span>
-            <span className={chipClass(Boolean(review) || isIdentifying)}>2. Review</span>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">SCAN FOR AUTOFILL</div>
+          <div className="mt-1 text-xs text-[color:var(--muted)]">
+            Temporary scan photo. Real saved photos stay in the item photo panel.
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-[14px] bg-black/20 p-2 ring-1 ring-[color:var(--border)]">
-          <button
-            type="button"
-            onClick={previewUrl ? onCropImage : undefined}
-            className="flex h-[96px] w-full items-center justify-center overflow-hidden rounded-[10px] bg-black/20 text-left transition hover:bg-black/25 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)] sm:h-[120px]"
-          >
-            {previewUrl ? (
-              <img
-                src={previewUrl}
-                alt="Temporary scan preview"
-                className="h-full w-full object-contain opacity-95"
-              />
-            ) : (
-              <div className="max-w-[18rem] px-4 text-center text-sm text-[color:var(--muted)]">
-                Add a temporary scan photo, then run autofill below.
-              </div>
-            )}
-          </button>
-
-          <div className="mt-2 grid gap-2 sm:grid-cols-2">
-            <button type="button" onClick={onUseCamera} className={actionButtonClass(true)}>
-              {hasImage ? "Retake Scan Photo" : "Open Camera"}
-            </button>
-            <button type="button" onClick={onUploadImage} className={actionButtonClass()}>
-              {hasImage ? "Swap Scan Photo" : "Choose Scan Photo"}
-            </button>
-            {hasImage ? (
-              <>
-                <button type="button" onClick={onCropImage} className={actionButtonClass()}>
-                  Adjust Scan Crop
-                </button>
-                <button type="button" onClick={onClearImage} className={actionButtonClass()}>
-                  Clear Scan Photo
-                </button>
-              </>
-            ) : null}
-          </div>
-
-          <div className="mt-2 rounded-[12px] bg-black/10 p-2.5 ring-1 ring-white/8">
-            <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">AUTOFILL</div>
-            <div className="mt-1 text-xs text-[color:var(--muted)]">
-              {hasImage
-                ? "Run the barcode + OCR + AI pass, or choose a specific scan tool."
-                : "Open camera or choose a scan photo first."}
-            </div>
-            <div className="mt-1.5 text-[11px] text-[color:var(--muted2)]">
-              Barcode and OCR still work without AI. Gemini vision fallback needs
-              {" "}
-              `GEMINI_API_KEY`
-              {" "}
-              (or `GOOGLE_API_KEY`) on the server.
-            </div>
-
-            <div className="mt-2 grid gap-2 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={onScanAutofill}
-                disabled={!hasImage || isIdentifying}
-                className={actionButtonClass(true)}
-              >
-                {isIdentifying ? "Reading..." : "Run Auto Identify"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowAdvanced((prev) => !prev)}
-                className={actionButtonClass()}
-              >
-                {showAdvanced ? "Hide Scan Tools" : "Specific Scan Tools"}
-              </button>
-            </div>
-          </div>
+        <div className="flex flex-wrap gap-2">
+          <span className={chipClass(hasImage)}>1. Photo</span>
+          <span className={chipClass(Boolean(review) || isIdentifying)}>2. Review</span>
         </div>
       </div>
 
+      <div className="mt-2 grid gap-2 lg:grid-cols-[140px_minmax(0,1fr)_240px]">
+        <button
+          type="button"
+          onClick={previewUrl ? onCropImage : onUseCamera}
+          className="flex min-h-[118px] items-center justify-center overflow-hidden rounded-[14px] bg-[color:var(--pill)] p-2 text-center ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)] sm:min-h-[142px] lg:min-h-0"
+        >
+          {previewUrl ? (
+            <img
+              src={previewUrl}
+              alt="Temporary scan thumbnail"
+              className="h-full max-h-[130px] w-full rounded-[10px] object-contain"
+            />
+          ) : (
+            <span className="rounded-full border border-white/60 px-4 py-2 text-xs text-[color:var(--fg)]">
+              Add Scan Photo
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={previewUrl ? onCropImage : onUseCamera}
+          className="flex min-h-[118px] items-center justify-center overflow-hidden rounded-[14px] bg-black/20 p-2 text-center ring-1 ring-[color:var(--border)] transition hover:bg-black/25 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)] sm:min-h-[142px] lg:min-h-0"
+        >
+          {previewUrl ? (
+            <img
+              src={previewUrl}
+              alt="Temporary scan preview"
+              className="h-full max-h-[160px] w-full object-contain opacity-95"
+            />
+          ) : (
+            <span className="rounded-full border border-white/60 px-4 py-2 text-xs text-[color:var(--fg)]">
+              New Scan Photo
+            </span>
+          )}
+        </button>
+
+        <div className="grid gap-2 rounded-[14px] bg-black/10 p-2 ring-1 ring-white/8">
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" onClick={onUseCamera} className={actionButtonClass(true)}>
+              Camera
+            </button>
+            <button type="button" onClick={onUploadImage} className={actionButtonClass()}>
+              File
+            </button>
+          </div>
+
+          {hasImage ? (
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" onClick={onCropImage} className={actionButtonClass()}>
+                Crop
+              </button>
+              <button type="button" onClick={onClearImage} className={actionButtonClass()}>
+                Clear
+              </button>
+            </div>
+          ) : null}
+
+          <button
+            type="button"
+            onClick={onScanAutofill}
+            disabled={!hasImage || isIdentifying}
+            className={actionButtonClass(true)}
+          >
+            {isIdentifying ? "Reading..." : "Auto Identify"}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowAdvanced((prev) => !prev)}
+            className={actionButtonClass()}
+          >
+            {showAdvanced ? "Hide Options" : "More Identify Options"}
+          </button>
+
+          {onSaveItem ? (
+            <button
+              type="button"
+              onClick={onSaveItem}
+              disabled={!canSaveItem}
+              className={actionButtonClass()}
+            >
+              Save Item
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="mt-2 rounded-[12px] bg-black/10 px-3 py-2 text-[11px] leading-5 text-[color:var(--muted2)] ring-1 ring-white/8">
+        Auto Identify tries barcode, OCR, and AI in one pass. Barcode/OCR can work without AI; Gemini needs
+        {" "}
+        `GEMINI_API_KEY`
+        {" "}
+        or `GOOGLE_API_KEY` on the server.
+      </div>
+
       {showAdvanced ? (
-        <div className="mt-3 grid gap-3 rounded-[16px] bg-black/10 p-3 ring-1 ring-white/8">
+        <div className="mt-2 grid gap-3 rounded-[16px] bg-black/10 p-3 ring-1 ring-white/8 md:grid-cols-[220px_minmax(0,1fr)]">
           <div className="grid gap-1.5">
-            <label className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">SCAN MODE</label>
+            <label className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">IDENTIFY MODE</label>
             <div className="text-xs text-[color:var(--muted)]">
-              Leave this on Auto unless you already know the item type.
+              Optional. Leave this on Auto unless you already know the item type.
             </div>
             <select
               className={selectClass()}
@@ -196,7 +220,7 @@ export default function ScanPanel({
             </select>
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-3">
             <button
               type="button"
               onClick={onBookLookup}
@@ -225,7 +249,7 @@ export default function ScanPanel({
             </button>
           </div>
 
-          <label className="flex items-start gap-3 rounded-2xl bg-red-500/10 p-3 text-sm ring-1 ring-red-500/20">
+          <label className="flex items-start gap-3 rounded-2xl bg-red-500/10 p-3 text-sm ring-1 ring-red-500/20 md:col-span-2">
             <input
               type="checkbox"
               checked={saveScanAsPhoto}
@@ -233,7 +257,7 @@ export default function ScanPanel({
               className="mt-1"
             />
             <span>
-              Save this scan as a <strong>proof image</strong>
+              Save this scan as a <strong>proof photo</strong>
               <div className="mt-1 text-xs text-[color:var(--muted)]">
                 Off by default so the temporary scan does not replace the real item photo.
               </div>
@@ -243,7 +267,7 @@ export default function ScanPanel({
       ) : null}
 
       {(session.status !== "idle" || review || session.errorMessage) && (
-        <div className="mt-3 rounded-[16px] bg-black/10 p-3 ring-1 ring-white/8">
+        <div className="mt-2 rounded-[16px] bg-black/10 p-3 ring-1 ring-white/8">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">STATUS</span>
             <span className="text-sm text-[color:var(--fg)]">{prettyStatus(session.status)}</span>
