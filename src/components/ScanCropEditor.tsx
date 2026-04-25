@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import Cropper, { type Area, type Point } from "react-easy-crop";
+import Cropper, { type Area, type Point, type Size } from "react-easy-crop";
 import "react-easy-crop/react-easy-crop.css";
 
 import type { ScanCropRect } from "@/lib/scanners/cropImageFile";
 
 const MAX_ZOOM = 8;
+const MIN_CROP_FRAME = 0.35;
 const DEFAULT_CROP_POINT: Point = { x: 0, y: 0 };
 
 function buttonClass() {
@@ -75,12 +76,21 @@ export default function ScanCropEditor({
 }) {
   const [cropPoint, setCropPoint] = useState<Point>(DEFAULT_CROP_POINT);
   const [zoom, setZoom] = useState(1);
+  const [cropFrameScale, setCropFrameScale] = useState(1);
+  const [baseCropSize, setBaseCropSize] = useState<Size | null>(null);
   const initialCroppedAreaPercentages = cropRectToPercentages(selectedCrop);
   const normalizedRotation = ((rotation % 360) + 360) % 360;
+  const cropSize = baseCropSize
+    ? {
+        width: Math.max(80, baseCropSize.width * cropFrameScale),
+        height: Math.max(60, baseCropSize.height * cropFrameScale),
+      }
+    : undefined;
 
   function handleReset() {
     setCropPoint(DEFAULT_CROP_POINT);
     setZoom(1);
+    setCropFrameScale(1);
     onReset();
   }
 
@@ -114,9 +124,13 @@ export default function ScanCropEditor({
             objectFit="contain"
             showGrid
             restrictPosition
+            cropSize={cropSize}
             initialCroppedAreaPercentages={initialCroppedAreaPercentages}
             onCropChange={setCropPoint}
             onZoomChange={setZoom}
+            onCropSizeChange={(nextCropSize) => {
+              setBaseCropSize((current) => current ?? nextCropSize);
+            }}
             onCropComplete={(_, croppedAreaPercentages) => {
               onChange(areaToCropRect(croppedAreaPercentages));
             }}
@@ -139,9 +153,24 @@ export default function ScanCropEditor({
         <span>{zoom.toFixed(1)}x</span>
       </div>
 
+      <div className={compact ? "mt-2 grid grid-cols-[auto_1fr_auto] items-center gap-2 px-1 text-[11px] text-[color:var(--muted)]" : "mt-3 grid grid-cols-[auto_1fr_auto] items-center gap-3 text-xs text-[color:var(--muted)]"}>
+        <span>Crop</span>
+        <input
+          type="range"
+          min={MIN_CROP_FRAME}
+          max="1"
+          step="0.01"
+          value={cropFrameScale}
+          onChange={(event) => setCropFrameScale(Number(event.target.value))}
+          className="h-2 w-full accent-[color:var(--pill-active-bg)]"
+          aria-label="Crop area size"
+        />
+        <span>{Math.round(cropFrameScale * 100)}%</span>
+      </div>
+
       {!compact ? (
         <div className="mt-3 rounded-[16px] bg-black/10 p-3 text-xs leading-5 text-[color:var(--muted)] ring-1 ring-white/8">
-          Drag the photo inside the crop frame. Pinch on phone/tablet or use Zoom to move closer.
+          Drag the photo inside the crop frame. Use Crop to change the selection size.
         </div>
       ) : null}
 
