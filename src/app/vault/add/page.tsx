@@ -1320,95 +1320,44 @@ export default function AddPage() {
           </div>
 
           <div className="grid gap-3 content-start">
+            {draftMediaImages.length ? (
               <section className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-                <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ITEM PHOTO DETAILS</div>
-                <div className="mt-1 text-xs text-[color:var(--muted)]">
-                  Pick roles, remove mistakes, or add extra angles before saving.
-                </div>
-                <div className="mt-2 overflow-hidden rounded-[14px] bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)]">
-                  <div className="flex h-[118px] items-center justify-center overflow-hidden rounded-[10px] bg-black/10 sm:h-[150px]">
-                    {activeMediaImage ? (
-                      <img src={activeMediaImage.previewUrl} alt="Item media preview" className="h-full w-full object-contain" />
-                    ) : (
-                      <div className="px-4 text-center text-xs text-[color:var(--muted)]">
-                        No saved item photo selected yet
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {draftMediaImages.length ? (
-                  <div className="mt-3 grid gap-2">
-                    <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">PHOTO QUEUE</div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {draftMediaImages.map((image) => (
-                        <button
-                          key={image.id}
-                          type="button"
-                          onClick={() => setActiveMediaImageId(image.id)}
-                          className={[
-                            "overflow-hidden rounded-[14px] bg-[color:var(--pill)] p-1.5 text-left ring-1 transition",
-                            activeMediaImage?.id === image.id
-                              ? "ring-[color:var(--pill-active-bg)]"
-                              : "ring-[color:var(--border)]",
-                          ].join(" ")}
-                        >
-                          <div className="aspect-square overflow-hidden rounded-[10px] bg-black/10">
-                            <img src={image.previewUrl} alt="Draft item" className="h-full w-full object-cover" />
-                          </div>
-                          <div className="mt-1 px-1 text-[10px] uppercase tracking-[0.12em] text-[color:var(--muted2)]">
-                            {image.role}
-                          </div>
-                        </button>
-                      ))}
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">PHOTO DETAILS</div>
+                    <div className="mt-1 text-xs text-[color:var(--muted)]">
+                      {draftMediaImages.length} picture{draftMediaImages.length === 1 ? "" : "s"} captured. Pick the role for the selected one.
                     </div>
                   </div>
-                ) : null}
+                  <button
+                    type="button"
+                    onClick={clearMediaImage}
+                    className="rounded-lg bg-[color:var(--pill)] px-2.5 py-1.5 text-xs ring-1 ring-[color:var(--border)]"
+                  >
+                    Clear
+                  </button>
+                </div>
 
                 {activeMediaImage ? (
-                  <div className="mt-3">
+                  <div className="mt-3 grid gap-2">
                     <ImageRoleSelector
                       value={activeMediaImage.role}
                       onChange={updateActiveMediaRole}
                       compact
                       label="SELECTED PHOTO ROLE"
                     />
+
+                    <button
+                      type="button"
+                      onClick={() => removeDraftMediaImage(activeMediaImage.id)}
+                      className="rounded-lg bg-[color:var(--pill)] px-2.5 py-1.5 text-xs ring-1 ring-[color:var(--border)]"
+                    >
+                      Remove Selected
+                    </button>
                   </div>
                 ) : null}
-
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => openCameraFor("item")}
-                    className="rounded-lg bg-[color:var(--pill)] px-2.5 py-1.5 text-xs ring-1 ring-[color:var(--border)]"
-                  >
-                    Open Camera
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => mediaInputRef.current?.click()}
-                    className="rounded-lg bg-[color:var(--pill)] px-2.5 py-1.5 text-xs ring-1 ring-[color:var(--border)]"
-                  >
-                    Choose Photo
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => activeMediaImage && removeDraftMediaImage(activeMediaImage.id)}
-                    disabled={!activeMediaImage}
-                    className="rounded-lg bg-[color:var(--pill)] px-2.5 py-1.5 text-xs ring-1 ring-[color:var(--border)] disabled:opacity-40"
-                  >
-                    Remove Selected Photo
-                  </button>
-                  <button
-                    type="button"
-                    onClick={clearMediaImage}
-                    disabled={!draftMediaImages.length}
-                    className="rounded-lg bg-[color:var(--pill)] px-2.5 py-1.5 text-xs ring-1 ring-[color:var(--border)] disabled:opacity-40"
-                  >
-                    Clear All Photos
-                  </button>
-                </div>
               </section>
+            ) : null}
 
             <button
               type="button"
