@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 
-import { loadItems, saveItems, type VaultItem } from "@/lib/vaultModel";
+import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
+import { saveItem, type VaultItem } from "@/lib/vaultModel";
 
 const SALES_KEY = "vltd_sales_history";
 
@@ -32,7 +33,7 @@ function parseMoney(input: string) {
 export default function SellItemButton({ item }: { item: VaultItem }) {
   const [loading, setLoading] = useState(false);
 
-  function handleSell() {
+  async function handleSell() {
     const priceInput = window.prompt("Enter sale price:");
     if (!priceInput) return;
 
@@ -46,10 +47,18 @@ export default function SellItemButton({ item }: { item: VaultItem }) {
 
     try {
       const sales = readSales();
-      const nextSale: SaleRecord = {
+      const soldAt = Date.now();
+      const soldItem: VaultItem = {
         ...item,
+        status: "SOLD",
         soldPrice: salePrice,
-        soldAt: Date.now(),
+        soldAt,
+      };
+
+      const nextSale: SaleRecord = {
+        ...soldItem,
+        soldPrice: salePrice,
+        soldAt,
       };
 
       writeSales([
@@ -57,10 +66,9 @@ export default function SellItemButton({ item }: { item: VaultItem }) {
         ...sales.filter((sale) => String(sale.id) !== String(item.id)),
       ]);
 
-      const nextVaultItems = loadItems({ includeAllProfiles: true }).filter(
-        (entry) => String(entry.id) !== String(item.id)
-      );
-      saveItems(nextVaultItems);
+      saveItem(soldItem);
+      enqueueVaultItemSync(soldItem.id);
+      await processVaultSyncQueue();
 
       window.dispatchEvent(new Event("vltd:vault-updated"));
     } catch (error) {
@@ -74,11 +82,11 @@ export default function SellItemButton({ item }: { item: VaultItem }) {
   return (
     <button
       type="button"
-      onClick={handleSell}
+      onClick={() => void handleSell()}
       disabled={loading}
-      className="w-full rounded-xl bg-red-500/20 px-3 py-2 text-sm font-semibold text-red-200 ring-1 ring-red-400/30 transition hover:bg-red-500/30 disabled:opacity-50"
+      className="inline-flex min-h-7 items-center justify-center rounded-full bg-red-500/15 px-3 py-1 text-xs font-semibold text-red-200 ring-1 ring-red-400/25 transition hover:bg-red-500/25 disabled:opacity-50"
     >
-      {loading ? "Selling..." : "Sell Item"}
+      {loading ? "Selling..." : "Sell"}
     </button>
   );
 }

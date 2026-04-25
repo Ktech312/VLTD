@@ -377,8 +377,17 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
   const universe = normUniverse(item.universe);
   const addedAt = createdAtMs(item);
+  const displayedSale: SaleRecord | null =
+    sale ??
+    (item.status === "SOLD" || item.soldAt || item.soldPrice !== undefined
+      ? {
+          ...item,
+          soldPrice: item.soldPrice,
+          soldAt: item.soldAt,
+        }
+      : null);
   const saleProfit =
-    sale ? Number(sale.soldPrice ?? 0) - totalCost(item) : 0;
+    displayedSale ? Number(displayedSale.soldPrice ?? 0) - totalCost(item) : 0;
 
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
@@ -399,12 +408,12 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               </Link>
             </div>
 
-            {isSoldView && sale && (
+            {isSoldView && displayedSale && (
               <div className="mb-5 mt-4">
                 <Section title="SALE DETAILS">
                   <DetailGrid
                     rows={[
-                      { label: "Sold Price", value: fmtMoney(clamp(sale.soldPrice)) },
+                      { label: "Sold Price", value: fmtMoney(clamp(displayedSale.soldPrice)) },
                       {
                         label: "Profit / Loss",
                         value: (
@@ -416,7 +425,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                       },
                       {
                         label: "Sold Date",
-                        value: sale.soldAt ? fmtDate(sale.soldAt) : "—",
+                        value: displayedSale.soldAt ? fmtDate(displayedSale.soldAt) : "—",
                       },
                     ]}
                   />

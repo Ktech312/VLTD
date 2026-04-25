@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
+import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
+
 const SALES_KEY = "vltd_sales_history";
 
 type SoldItem = {
@@ -40,15 +42,48 @@ function readSales(): SoldItem[] {
   }
 }
 
+function soldItemFromVaultItem(item: VaultItem): SoldItem | null {
+  if (item.status !== "SOLD" && !item.soldAt && item.soldPrice === undefined) return null;
+
+  return {
+    id: item.id,
+    title: item.title,
+    imageFrontUrl: item.imageFrontUrl,
+    purchasePrice: item.purchasePrice,
+    purchaseTax: item.purchaseTax,
+    purchaseShipping: item.purchaseShipping,
+    purchaseFees: item.purchaseFees,
+    soldPrice: Number(item.soldPrice ?? 0),
+    soldAt: Number(item.soldAt ?? Date.now()),
+  };
+}
+
+function buildSoldItems() {
+  const byId = new Map<string, SoldItem>();
+
+  for (const item of loadItems({ includeAllProfiles: true })) {
+    const sold = soldItemFromVaultItem(item);
+    if (sold) byId.set(String(sold.id), sold);
+  }
+
+  for (const sale of readSales()) {
+    if (!byId.has(String(sale.id))) byId.set(String(sale.id), sale);
+  }
+
+  return Array.from(byId.values()).sort((a, b) => Number(b.soldAt) - Number(a.soldAt));
+}
+
 export default function SoldPage() {
-  const [items, setItems] = useState<SoldItem[]>(() => readSales());
+  const [items, setItems] = useState<SoldItem[]>(() => buildSoldItems());
 
   function load() {
-    setItems(readSales());
+    setItems(buildSoldItems());
   }
 
   useEffect(() => {
-    const timer = window.setTimeout(load, 0);
+    const timer = window.setTimeout(() => {
+      void syncVaultItemsFromSupabase().finally(load);
+    }, 0);
     window.addEventListener("vltd:vault-updated", load);
     return () => {
       window.clearTimeout(timer);

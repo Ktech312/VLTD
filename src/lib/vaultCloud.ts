@@ -5,6 +5,14 @@ import type { VaultImage, VaultItem } from "@/lib/vaultModel";
 export const VAULT_IMAGES_BUCKET = "vault-images";
 export const VAULT_ITEMS_TABLE = "vault_items";
 
+// Supabase rows are untyped at runtime; row mappers normalize them into VaultItem.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type UnknownRecord = Record<string, any>;
+
+function asRecord(value: unknown): UnknownRecord {
+  return value && typeof value === "object" ? (value as UnknownRecord) : {};
+}
+
 export function hasSupabaseEnv() {
   return Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -47,24 +55,28 @@ function getRequiredActiveProfileId(item?: VaultItem) {
   return activeProfileId || itemProfileId;
 }
 
-function rowToVaultImage(image: any, index: number): VaultImage | null {
-  const storageKey = String(image?.storageKey ?? "").trim();
-  const url = String(image?.url ?? "").trim();
+function rowToVaultImage(entry: unknown, index: number): VaultImage | null {
+  const image = asRecord(entry);
+  const storageKey = String(image.storageKey ?? "").trim();
+  const url = String(image.url ?? "").trim();
 
   if (!storageKey && !url) return null;
 
   return {
-    id: String(image?.id ?? storageKey ?? url).trim() || `image_${index}`,
+    id: String(image.id ?? storageKey ?? url).trim() || `image_${index}`,
     storageKey: storageKey || url,
     url: url || undefined,
-    order: Number.isFinite(Number(image?.order)) ? Number(image.order) : index,
+    order: Number.isFinite(Number(image.order)) ? Number(image.order) : index,
     localOnly: isLocalOnlyImageUrl(url),
   };
 }
 
-function rowToItem(row: any): VaultItem {
+function rowToItem(input: unknown): VaultItem {
+  const row = asRecord(input);
   const images = Array.isArray(row?.images_json)
-    ? row.images_json.map(rowToVaultImage).filter(Boolean)
+    ? row.images_json
+        .map(rowToVaultImage)
+        .filter((image): image is VaultImage => Boolean(image))
     : [];
 
   return {
@@ -102,6 +114,9 @@ function rowToItem(row: any): VaultItem {
     valueSource: row.value_source ?? undefined,
     valueUpdatedAt: row.value_updated_at ?? undefined,
     valueConfidence: row.value_confidence ?? undefined,
+    status: row.status ?? undefined,
+    soldPrice: row.sold_price ?? undefined,
+    soldAt: row.sold_at ?? undefined,
     createdAt: row.created_at ?? Date.now(),
     isNew: typeof row.is_new === "boolean" ? row.is_new : true,
   };
@@ -266,6 +281,9 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
     value_source: item.valueSource ?? null,
     value_updated_at: item.valueUpdatedAt ?? null,
     value_confidence: item.valueConfidence ?? null,
+    status: item.status ?? "COLLECTION",
+    sold_price: item.soldPrice ?? null,
+    sold_at: item.soldAt ?? null,
     universe: item.universe ?? null,
     category: item.category ?? null,
     custom_category_label: item.customCategoryLabel ?? null,
@@ -282,8 +300,9 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
     });
 
     if (error) throw error;
-  } catch (error: any) {
-    const message = String(error?.message ?? "");
+  } catch (error: unknown) {
+    const errorRecord = asRecord(error);
+    const message = String(errorRecord.message ?? "");
 
     console.error("vault_items upsert blocked", {
       message,
@@ -297,11 +316,29 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
       message.toLowerCase().includes("images_json") ||
       message.toLowerCase().includes("primary_image_key");
 
-    if (!missingGalleryColumns) {
+    const missingSoldColumns =
+      message.toLowerCase().includes("status") ||
+      message.toLowerCase().includes("sold_price") ||
+      message.toLowerCase().includes("sold_at");
+
+    if (!missingGalleryColumns && !missingSoldColumns) {
       throw new Error(message || "Failed to save item.");
     }
 
-    const { error: fallbackError } = await supabase.from(VAULT_ITEMS_TABLE).upsert(baseRow);
+    const fallbackRow = { ...baseRow } as Record<string, unknown>;
+
+    if (missingGalleryColumns) {
+      delete fallbackRow.images_json;
+      delete fallbackRow.primary_image_key;
+    }
+
+    if (missingSoldColumns) {
+      delete fallbackRow.status;
+      delete fallbackRow.sold_price;
+      delete fallbackRow.sold_at;
+    }
+
+    const { error: fallbackError } = await supabase.from(VAULT_ITEMS_TABLE).upsert(fallbackRow);
     if (fallbackError) {
       throw new Error(String(fallbackError.message || "Failed to save item."));
     }

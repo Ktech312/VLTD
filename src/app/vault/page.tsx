@@ -24,11 +24,28 @@ import {
 import { hasSupabaseEnv, VAULT_ITEMS_TABLE } from "@/lib/vaultCloud";
 
 const ACTIVE_PROFILE_EVENT = "vltd:active-profile";
+const SALES_KEY = "vltd_sales_history";
 
 type SortMode = "newest" | "value_desc" | "value_asc" | "gain_desc" | "gain_asc" | "title";
 type ReadinessFilter = "all" | "high" | "medium" | "low";
 type UniverseFilter = "ALL" | UniverseKey;
 type InlineField = "" | "value" | "cost";
+
+type SaleInfo = {
+  id: string;
+  soldPrice?: number;
+  soldAt?: number;
+};
+
+function readSales(): SaleInfo[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const parsed: unknown = JSON.parse(window.localStorage.getItem(SALES_KEY) || "[]");
+    return Array.isArray(parsed) ? (parsed as SaleInfo[]) : [];
+  } catch {
+    return [];
+  }
+}
 
 function formatMoney(value?: number) {
   const num = Number(value ?? 0);
@@ -127,6 +144,28 @@ function priceSourceLabel(item: VaultItem) {
   return "No pricing source";
 }
 
+function saleInfoForItem(item: VaultItem, saleMap: Record<string, SaleInfo | undefined>): SaleInfo | null {
+  if (item.status === "SOLD" || item.soldAt || item.soldPrice !== undefined) {
+    return {
+      id: item.id,
+      soldPrice: item.soldPrice,
+      soldAt: item.soldAt,
+    };
+  }
+
+  return saleMap[item.id] ?? null;
+}
+
+function formatSoldAt(ms?: number) {
+  if (!ms) return "Sold";
+  return `Sold ${new Date(ms).toLocaleString(undefined, {
+    month: "short",
+    day: "2-digit",
+    hour: "numeric",
+    minute: "2-digit",
+  })}`;
+}
+
 function CardMetric({
   label,
   editing,
@@ -179,15 +218,18 @@ function CardMetric({
 function VaultCard({
   item,
   readiness,
+  sale,
   onSaveItem,
   onDeleteItem,
 }: {
   item: VaultItem;
   readiness: string;
+  sale: SaleInfo | null;
   onSaveItem: (item: VaultItem) => Promise<void>;
   onDeleteItem: (item: VaultItem) => Promise<void>;
 }) {
   const image = useResolvedVaultImage(item);
+  const isSold = Boolean(sale);
 
   const [editingField, setEditingField] = useState<InlineField>("");
   const [valueDraft, setValueDraft] = useState(String(Number(item.currentValue ?? 0)));
@@ -240,7 +282,11 @@ function VaultCard({
 
   return (
     <div className="group relative overflow-hidden rounded-[14px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.024),rgba(255,255,255,0.01))] p-2 shadow-[0_8px_22px_rgba(0,0,0,0.14)]">
-      {item.isNew ? (
+      {isSold ? (
+        <div className="absolute right-2 top-2 z-20 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-black">
+          SOLD
+        </div>
+      ) : item.isNew ? (
         <div className="absolute right-2 top-2 z-20 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white">
           NEW
         </div>
@@ -263,7 +309,7 @@ function VaultCard({
         </button>
       </div>
 
-      <Link href={`/vault/item/${item.id}`} className="block">
+      <Link href={isSold ? `/vault/item/${item.id}?sold=1` : `/vault/item/${item.id}`} className="block">
         <div className="mb-2 overflow-hidden rounded-[10px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.04),rgba(255,255,255,0.012)_45%,rgba(0,0,0,0.16)_100%)]">
           <div className="flex h-[96px] items-center justify-center bg-black/10 p-2 sm:h-[102px] lg:h-[110px] xl:h-[118px]">
             {image ? (
@@ -359,6 +405,11 @@ function VaultCard({
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-1">
+        {isSold ? (
+          <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-200 ring-1 ring-amber-400/25">
+            {formatSoldAt(sale?.soldAt)}
+          </span>
+        ) : null}
         <span className={["rounded-full px-2 py-0.5 text-[10px] ring-1", readinessTone(readiness)].join(" ")}>
           {readiness}
         </span>
@@ -367,8 +418,14 @@ function VaultCard({
         </span>
       </div>
 
-      <div className="mt-1.5">
-        <SellItemButton item={item} />
+      <div className="mt-1.5 flex items-center justify-between gap-2">
+        {isSold ? (
+          <div className="text-[11px] font-semibold text-amber-200">
+            Sold {formatMoney(sale?.soldPrice)}
+          </div>
+        ) : (
+          <SellItemButton item={item} />
+        )}
       </div>
     </div>
   );
@@ -472,6 +529,8 @@ export default function VaultPage() {
   const [readinessFilter, setReadinessFilter] = useState<ReadinessFilter>("all");
   const [gradedOnly, setGradedOnly] = useState(false);
   const [sortMode, setSortMode] = useState<SortMode>("newest");
+  const [showSoldItems, setShowSoldItems] = useState(false);
+  const [sales, setSales] = useState<SaleInfo[]>([]);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [syncStatus, setSyncStatus] = useState("");
   const [isMigrating, setIsMigrating] = useState(false);
@@ -479,6 +538,7 @@ export default function VaultPage() {
 
   function refresh() {
     setItems(loadItems());
+    setSales(readSales());
     setPendingSyncCount(getPendingVaultSyncCount());
   }
 
@@ -545,7 +605,10 @@ export default function VaultPage() {
 
   const filteredItems = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const saleMap = Object.fromEntries(sales.map((sale) => [String(sale.id), sale]));
     const next = items.filter((item) => {
+      const isSold = Boolean(saleInfoForItem(item, saleMap));
+      if (!showSoldItems && isSold) return false;
       if (universeFilter !== "ALL" && item.universe !== universeFilter) return false;
       if (gradedOnly && !item.grade) return false;
       const intelligence = intelligenceMap[item.id];
@@ -589,7 +652,16 @@ export default function VaultPage() {
     });
 
     return next;
-  }, [items, query, universeFilter, gradedOnly, sortMode, readinessFilter, intelligenceMap]);
+  }, [items, query, universeFilter, gradedOnly, sortMode, readinessFilter, intelligenceMap, sales, showSoldItems]);
+
+  const saleMap = useMemo(
+    () => Object.fromEntries(sales.map((sale) => [String(sale.id), sale])),
+    [sales]
+  );
+  const soldCount = useMemo(
+    () => items.filter((item) => saleInfoForItem(item, saleMap)).length,
+    [items, saleMap]
+  );
 
   const stats = useMemo(() => {
     const totalItems = filteredItems.length;
@@ -630,6 +702,7 @@ export default function VaultPage() {
     universeFilter !== "ALL" ||
     readinessFilter !== "all" ||
     gradedOnly ||
+    showSoldItems ||
     sortMode !== "newest";
 
   async function runMigration() {
@@ -822,6 +895,15 @@ export default function VaultPage() {
               {gradedOnly ? "Graded: On" : "Graded Only"}
             </PillButton>
           </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <PillButton
+              variant={showSoldItems ? "active" : "default"}
+              onClick={() => setShowSoldItems((value) => !value)}
+              className="min-h-[36px] rounded-full px-4 py-2 text-sm font-medium text-[color:var(--fg)]"
+            >
+              {showSoldItems ? `Hide Sold Items (${soldCount})` : `Show Sold Items (${soldCount})`}
+            </PillButton>
+          </div>
         </section>
 
         {featuredItem ? (
@@ -847,6 +929,7 @@ export default function VaultPage() {
                     key={item.id}
                     item={item}
                     readiness={readiness}
+                    sale={saleInfoForItem(item, saleMap)}
                     onSaveItem={handleSaveItem}
                     onDeleteItem={handleDeleteItem}
                   />

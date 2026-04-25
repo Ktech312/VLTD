@@ -57,6 +57,9 @@ export type VaultItem = {
   priceConfidence?: PriceConfidence;
   priceUpdatedAt?: number;
   priceNotes?: string;
+  status?: "COLLECTION" | "SOLD" | "WISHLIST";
+  soldPrice?: number;
+  soldAt?: number;
   createdAt?: number;
   isNew?: boolean;
 };
@@ -65,6 +68,10 @@ type LoadItemsOptions = {
   profileId?: string;
   includeAllProfiles?: boolean;
 };
+
+// Local storage imports are intentionally loose because old app versions stored varied shapes.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type UnknownRecord = Record<string, any>;
 
 const LS_KEY = "vltd_vault_items_v1";
 const LEGACY_LS_KEY = "vltd_items";
@@ -78,6 +85,10 @@ function clampNum(value: unknown, fallback = 0) {
 function normalizeProfileId(value: unknown) {
   const next = String(value ?? "").trim();
   return next || undefined;
+}
+
+function asRecord(value: unknown): UnknownRecord {
+  return value && typeof value === "object" ? (value as UnknownRecord) : {};
 }
 
 function getActiveProfileId() {
@@ -120,6 +131,11 @@ function sanitizePriceConfidence(value: unknown): PriceConfidence | undefined {
   return undefined;
 }
 
+function sanitizeVaultStatus(value: unknown): VaultItem["status"] {
+  if (value === "COLLECTION" || value === "SOLD" || value === "WISHLIST") return value;
+  return undefined;
+}
+
 function ensureUniqueIds(items: VaultItem[]) {
   const seen = new Set<string>();
   let repaired = false;
@@ -152,13 +168,14 @@ function migrateMissingProfileIds(items: VaultItem[]) {
   return { items: next, repaired };
 }
 
-function normalizeImages(raw: any): VaultImage[] {
+function normalizeImages(raw: unknown): VaultImage[] {
   if (!Array.isArray(raw)) return [];
 
   return raw
-    .map((image, index) => {
-      const storageKey = String(image?.storageKey ?? "").trim();
-      const rawUrl = String(image?.url ?? "").trim();
+    .map((entry, index) => {
+      const image = asRecord(entry);
+      const storageKey = String(image.storageKey ?? "").trim();
+      const rawUrl = String(image.url ?? "").trim();
       const safeUrl = sanitizeMaybeImageUrl(rawUrl);
 
       if (!storageKey && !safeUrl) return null;
@@ -166,21 +183,22 @@ function normalizeImages(raw: any): VaultImage[] {
       const resolvedStorageKey = storageKey || safeUrl || "";
 
       return {
-        id: String(image?.id ?? resolvedStorageKey).trim() || `image_${index}`,
+        id: String(image.id ?? resolvedStorageKey).trim() || `image_${index}`,
         storageKey: resolvedStorageKey,
         url: safeUrl || undefined,
-        order: Number.isFinite(Number(image?.order)) ? Number(image.order) : index,
+        order: Number.isFinite(Number(image.order)) ? Number(image.order) : index,
         localOnly:
-          Boolean(image?.localOnly) ||
+          Boolean(image.localOnly) ||
           isEphemeralImageUrl(safeUrl) ||
           isEphemeralImageUrl(resolvedStorageKey),
-        role: inferImageRole(index, sanitizeVaultImageRole(image?.role)),
+        role: inferImageRole(index, sanitizeVaultImageRole(image.role)),
       } as VaultImage;
     })
     .filter(Boolean) as VaultImage[];
 }
 
-function buildLegacyImages(raw: any): VaultImage[] {
+function buildLegacyImages(input: unknown): VaultImage[] {
+  const raw = asRecord(input);
   const images: VaultImage[] = [];
 
   if (typeof raw.imageFrontStoragePath === "string" && raw.imageFrontStoragePath.trim()) {
@@ -250,7 +268,8 @@ function dedupeAndRepairImages(images: VaultImage[]) {
   }));
 }
 
-function normalizeOne(raw: any): VaultItem | null {
+function normalizeOne(input: unknown): VaultItem | null {
+  const raw = asRecord(input);
   if (!raw || typeof raw !== "object") return null;
 
   const title = String(raw.title ?? "").trim();
@@ -332,6 +351,15 @@ function normalizeOne(raw: any): VaultItem | null {
     priceNotes:
       typeof raw.priceNotes === "string" && raw.priceNotes.trim()
         ? raw.priceNotes.trim()
+        : undefined,
+    status: sanitizeVaultStatus(raw.status),
+    soldPrice:
+      typeof raw.soldPrice === "number" && Number.isFinite(raw.soldPrice)
+        ? raw.soldPrice
+        : undefined,
+    soldAt:
+      typeof raw.soldAt === "number" && Number.isFinite(raw.soldAt)
+        ? raw.soldAt
         : undefined,
     createdAt:
       typeof raw.createdAt === "number" && Number.isFinite(raw.createdAt)

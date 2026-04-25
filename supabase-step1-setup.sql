@@ -30,9 +30,21 @@ create table if not exists public.vault_items (
   value_source text null,
   value_updated_at bigint null,
   value_confidence numeric null,
+  status text null default 'COLLECTION',
+  sold_price numeric null,
+  sold_at bigint null,
   created_at bigint not null,
   is_new boolean not null default true
 );
+
+alter table public.vault_items
+  add column if not exists status text null default 'COLLECTION';
+
+alter table public.vault_items
+  add column if not exists sold_price numeric null;
+
+alter table public.vault_items
+  add column if not exists sold_at bigint null;
 
 alter table public.vault_items enable row level security;
 
