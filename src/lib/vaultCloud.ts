@@ -281,9 +281,6 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
     value_source: item.valueSource ?? null,
     value_updated_at: item.valueUpdatedAt ?? null,
     value_confidence: item.valueConfidence ?? null,
-    status: item.status ?? "COLLECTION",
-    sold_price: item.soldPrice ?? null,
-    sold_at: item.soldAt ?? null,
     universe: item.universe ?? null,
     category: item.category ?? null,
     custom_category_label: item.customCategoryLabel ?? null,
@@ -291,7 +288,13 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
     subcategory_label: item.subcategoryLabel ?? null,
     created_at: item.createdAt ?? Date.now(),
     is_new: item.isNew ?? true,
-  };
+  } as Record<string, unknown>;
+
+  // Do not let an older unsold local copy erase a sale made on another device.
+  // Sold fields are only sent when this item explicitly has sold state.
+  if (item.status) baseRow.status = item.status;
+  if (item.soldPrice !== undefined) baseRow.sold_price = item.soldPrice;
+  if (item.soldAt !== undefined) baseRow.sold_at = item.soldAt;
 
   try {
     const { error } = await supabase.from(VAULT_ITEMS_TABLE).upsert({

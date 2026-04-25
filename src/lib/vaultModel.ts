@@ -607,10 +607,22 @@ function mergeById(localItems: VaultItem[], remoteItems: VaultItem[]) {
     }
 
     const remoteHasImages = Array.isArray(remoteItem.images) && remoteItem.images.length > 0;
+    const existingSold = existing.status === "SOLD" || existing.soldAt || existing.soldPrice !== undefined;
+    const remoteSold =
+      remoteItem.status === "SOLD" || remoteItem.soldAt || remoteItem.soldPrice !== undefined;
+    const latestSale =
+      existingSold || remoteSold
+        ? Number(remoteItem.soldAt ?? 0) >= Number(existing.soldAt ?? 0)
+          ? remoteItem
+          : existing
+        : null;
 
     const merged = normalizeOne({
       ...existing,
       ...remoteItem,
+      status: latestSale ? "SOLD" : remoteItem.status ?? existing.status,
+      soldPrice: latestSale?.soldPrice ?? existing.soldPrice ?? remoteItem.soldPrice,
+      soldAt: latestSale?.soldAt ?? existing.soldAt ?? remoteItem.soldAt,
       images: remoteHasImages ? remoteItem.images : existing.images,
       primaryImageKey: remoteItem.primaryImageKey || existing.primaryImageKey,
       imageFrontUrl: remoteItem.imageFrontUrl || existing.imageFrontUrl,
