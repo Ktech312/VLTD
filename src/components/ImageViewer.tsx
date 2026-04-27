@@ -36,6 +36,7 @@ export default function ImageViewer({
   const pinchScaleStartRef = useRef(1);
 
   const currentImage = images[current] ?? "";
+  const canPan = scale > 1.01;
 
   function resetTransform() {
     setScale(1);
@@ -53,8 +54,16 @@ export default function ImageViewer({
   }
 
   function zoomBy(delta: number) {
-    setScale((prevScale) => clamp(Number((prevScale + delta).toFixed(2)), 1, 5));
+    setScale((prevScale) => {
+      const nextScale = clamp(Number((prevScale + delta).toFixed(2)), 1, 5);
+      if (nextScale <= 1.01) setOffset({ x: 0, y: 0 });
+      return nextScale;
+    });
   }
+
+  useEffect(() => {
+    resetTransform();
+  }, [currentImage]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -65,9 +74,11 @@ export default function ImageViewer({
 
     const previousBodyOverflow = document.body.style.overflow;
     const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousBodyTouchAction = document.body.style.touchAction;
 
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
 
     document.addEventListener("keydown", onKeyDown);
 
@@ -75,10 +86,9 @@ export default function ImageViewer({
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousBodyOverflow;
       document.documentElement.style.overflow = previousHtmlOverflow;
+      document.body.style.touchAction = previousBodyTouchAction;
     };
   }, [images.length, onClose]);
-
-  const canPan = scale > 1.01;
 
   return (
     <div
@@ -86,20 +96,23 @@ export default function ImageViewer({
       role="dialog"
       aria-modal="true"
       aria-label="Image viewer"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      onTouchEnd={(event) => {
+        if (event.target === event.currentTarget) onClose();
       }}
     >
       <button
         type="button"
         onClick={onClose}
         aria-label="Close image viewer"
-        className="fixed right-3 top-3 z-[110] inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/12 text-2xl leading-none text-white ring-1 ring-white/20 backdrop-blur transition hover:bg-white/18 sm:right-4 sm:top-4"
+        className="fixed right-3 top-3 z-[110] inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/14 text-2xl leading-none text-white ring-1 ring-white/25 backdrop-blur transition hover:bg-white/20 sm:right-4 sm:top-4"
       >
         ×
       </button>
 
-      <div className="fixed left-3 top-3 z-[100] flex flex-wrap gap-2 sm:left-4 sm:top-4">
+      <div className="fixed left-3 top-3 z-[100] flex max-w-[calc(100dvw-72px)] flex-wrap gap-2 sm:left-4 sm:top-4">
         {onEdit ? (
           <button
             type="button"
@@ -126,6 +139,7 @@ export default function ImageViewer({
             type="button"
             onClick={prev}
             className="fixed left-3 top-1/2 z-[100] -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-3xl leading-none text-white ring-1 ring-white/15 backdrop-blur"
+            aria-label="Previous image"
           >
             ‹
           </button>
@@ -133,6 +147,7 @@ export default function ImageViewer({
             type="button"
             onClick={next}
             className="fixed right-3 top-1/2 z-[100] -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-3xl leading-none text-white ring-1 ring-white/15 backdrop-blur"
+            aria-label="Next image"
           >
             ›
           </button>
@@ -148,9 +163,13 @@ export default function ImageViewer({
         >
           −
         </button>
-        <div className="rounded-full bg-white/10 px-3 py-2 text-sm text-white ring-1 ring-white/15 backdrop-blur">
-          {Math.round(scale * 100)}%
-        </div>
+        <button
+          type="button"
+          onClick={resetTransform}
+          className="rounded-full bg-white/10 px-3 py-2 text-sm text-white ring-1 ring-white/15 backdrop-blur"
+        >
+          Fit {Math.round(scale * 100)}%
+        </button>
         <button
           type="button"
           onClick={() => zoomBy(0.25)}
@@ -162,19 +181,19 @@ export default function ImageViewer({
       </div>
 
       <div
-        className="relative flex h-dvh w-dvw items-center justify-center overflow-hidden px-4 py-20 sm:px-12"
-        onMouseDown={(e) => {
-          if (e.target === e.currentTarget) onClose();
+        className="fixed inset-0 z-[95] flex items-center justify-center overflow-hidden px-3 pb-20 pt-16 sm:px-12 sm:pb-20 sm:pt-20"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) onClose();
         }}
-        onWheel={(e) => {
-          e.preventDefault();
-          zoomBy(e.deltaY < 0 ? 0.2 : -0.2);
+        onWheel={(event) => {
+          event.preventDefault();
+          zoomBy(event.deltaY < 0 ? 0.2 : -0.2);
         }}
-        onMouseMove={(e) => {
+        onMouseMove={(event) => {
           if (!draggingRef.current || !canPan) return;
-          const dx = e.clientX - lastPointRef.current.x;
-          const dy = e.clientY - lastPointRef.current.y;
-          lastPointRef.current = { x: e.clientX, y: e.clientY };
+          const dx = event.clientX - lastPointRef.current.x;
+          const dy = event.clientY - lastPointRef.current.y;
+          lastPointRef.current = { x: event.clientX, y: event.clientY };
           setOffset((prevOffset) => ({
             x: prevOffset.x + dx,
             y: prevOffset.y + dy,
@@ -186,41 +205,42 @@ export default function ImageViewer({
         onMouseLeave={() => {
           draggingRef.current = false;
         }}
-        onTouchStart={(e) => {
-          if (e.touches.length === 2) {
-            pinchStartRef.current = distance(e.touches[0], e.touches[1]);
+        onTouchStart={(event) => {
+          if (event.touches.length === 2) {
+            pinchStartRef.current = distance(event.touches[0], event.touches[1]);
             pinchScaleStartRef.current = scale;
             return;
           }
 
-          if (e.touches.length === 1 && canPan) {
+          if (event.touches.length === 1 && canPan) {
             draggingRef.current = true;
             lastPointRef.current = {
-              x: e.touches[0].clientX,
-              y: e.touches[0].clientY,
+              x: event.touches[0].clientX,
+              y: event.touches[0].clientY,
             };
           }
         }}
-        onTouchMove={(e) => {
-          if (e.touches.length === 2 && pinchStartRef.current) {
-            e.preventDefault();
-            const currentDistance = distance(e.touches[0], e.touches[1]);
+        onTouchMove={(event) => {
+          if (event.touches.length === 2 && pinchStartRef.current) {
+            event.preventDefault();
+            const currentDistance = distance(event.touches[0], event.touches[1]);
             const nextScale = clamp(
               pinchScaleStartRef.current * (currentDistance / pinchStartRef.current),
               1,
               5
             );
+            if (nextScale <= 1.01) setOffset({ x: 0, y: 0 });
             setScale(nextScale);
             return;
           }
 
-          if (e.touches.length === 1 && draggingRef.current && canPan) {
-            e.preventDefault();
-            const dx = e.touches[0].clientX - lastPointRef.current.x;
-            const dy = e.touches[0].clientY - lastPointRef.current.y;
+          if (event.touches.length === 1 && draggingRef.current && canPan) {
+            event.preventDefault();
+            const dx = event.touches[0].clientX - lastPointRef.current.x;
+            const dy = event.touches[0].clientY - lastPointRef.current.y;
             lastPointRef.current = {
-              x: e.touches[0].clientX,
-              y: e.touches[0].clientY,
+              x: event.touches[0].clientX,
+              y: event.touches[0].clientY,
             };
             setOffset((prevOffset) => ({
               x: prevOffset.x + dx,
@@ -239,18 +259,15 @@ export default function ImageViewer({
             alt=""
             draggable={false}
             onDoubleClick={() => {
-              if (scale > 1) {
-                resetTransform();
-              } else {
-                setScale(2);
-              }
+              if (scale > 1) resetTransform();
+              else setScale(2);
             }}
-            onMouseDown={(e) => {
+            onMouseDown={(event) => {
               if (!canPan) return;
               draggingRef.current = true;
-              lastPointRef.current = { x: e.clientX, y: e.clientY };
+              lastPointRef.current = { x: event.clientX, y: event.clientY };
             }}
-            className="max-h-[calc(100dvh-7rem)] max-w-[94dvw] select-none object-contain"
+            className="block max-h-[calc(100dvh-9rem)] max-w-[calc(100dvw-1.5rem)] select-none object-contain sm:max-h-[calc(100dvh-10rem)] sm:max-w-[calc(100dvw-6rem)]"
             style={{
               transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
               transformOrigin: "center center",
