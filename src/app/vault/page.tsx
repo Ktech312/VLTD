@@ -322,22 +322,36 @@ function VaultCard({
     }
   }
 
-  return (
-    <div className="group relative overflow-hidden rounded-[14px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.024),rgba(255,255,255,0.01))] p-2 shadow-[0_8px_22px_rgba(0,0,0,0.14)]">
-      {isSold ? (
-        <div className="absolute right-2 top-2 z-20 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-black">
-          SOLD
-        </div>
-      ) : item.isNew ? (
-        <div className="absolute right-2 top-2 z-20 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white">
-          NEW
-        </div>
-      ) : null}
+  const pricingMvpValue = effectiveMarketValue(item);
+  const pricingConfidenceText = item.priceConfidence ? confidenceLabel(item.priceConfidence) : "";
+  const pricingConfidenceTone = item.priceConfidence ? confidenceTone(item.priceConfidence) : "";
+  const pricingSource = priceSourceLabel(item);
+  const pricingUpdatedAt = formatPriceUpdatedAt(item.priceUpdatedAt);
+  const lastCompValue =
+    typeof item.lastCompValue === "number" && Number.isFinite(item.lastCompValue)
+      ? item.lastCompValue
+      : null;
+  void pricingMvpValue;
+  void pricingConfidenceText;
+  void pricingConfidenceTone;
+  void pricingSource;
+  void pricingUpdatedAt;
+  void lastCompValue;
+  void saveCostInline;
 
-      <div className="absolute right-2 top-2 z-10 hidden items-center gap-1 group-hover:flex">
+  const statusLabel = isSold ? "SOLD" : item.isNew ? "NEW" : readiness;
+  const statusClass = isSold
+    ? "bg-amber-500/18 text-amber-100 ring-amber-400/30"
+    : item.isNew
+      ? "bg-red-600/18 text-red-100 ring-red-400/30"
+      : readinessTone(readiness);
+
+  return (
+    <div className="group relative overflow-hidden rounded-[14px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.024),rgba(255,255,255,0.01))] p-2 shadow-[0_8px_18px_rgba(0,0,0,0.12)]">
+      <div className="absolute right-2 top-2 z-20 hidden items-center gap-1 group-hover:flex">
         <Link
           href={`/vault/item/${item.id}`}
-          className="inline-flex h-7 items-center justify-center rounded-full bg-black/60 px-2.5 text-[11px] text-white ring-1 ring-white/10 backdrop-blur"
+          className="inline-flex h-7 items-center justify-center rounded-full bg-black/70 px-2.5 text-[11px] text-white ring-1 ring-white/10 backdrop-blur"
         >
           Edit
         </Link>
@@ -351,9 +365,12 @@ function VaultCard({
         </button>
       </div>
 
-      <Link href={isSold ? `/vault/item/${item.id}?sold=1` : `/vault/item/${item.id}`} className="block">
-        <div className="mb-2 overflow-hidden rounded-[10px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.04),rgba(255,255,255,0.012)_45%,rgba(0,0,0,0.16)_100%)]">
-          <div className="flex h-[96px] items-center justify-center bg-black/10 p-2 sm:h-[102px] lg:h-[110px] xl:h-[118px]">
+      <Link
+        href={isSold ? `/vault/item/${item.id}?sold=1` : `/vault/item/${item.id}`}
+        className="grid grid-cols-[64px_minmax(0,1fr)] gap-2 pr-12"
+      >
+        <div className="overflow-hidden rounded-[10px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.04),rgba(255,255,255,0.012)_48%,rgba(0,0,0,0.16)_100%)]">
+          <div className="flex h-16 items-center justify-center bg-black/10 p-1.5">
             {image ? (
               <img
                 src={image}
@@ -362,111 +379,70 @@ function VaultCard({
                 draggable={false}
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-[11px] text-[color:var(--muted)]">
+              <div className="flex h-full w-full items-center justify-center text-[10px] text-[color:var(--muted)]">
                 No image
               </div>
             )}
           </div>
         </div>
 
-        <div className="line-clamp-2 pr-10 text-[13px] font-semibold leading-tight">
-          {item.title}
-        </div>
-
-        <div className="mt-1 line-clamp-2 min-h-[28px] text-[11px] text-[color:var(--muted)]">
-          {itemMeta(item)}
+        <div className="min-w-0">
+          <div className="line-clamp-2 text-[13px] font-semibold leading-tight">
+            {item.title}
+          </div>
+          <div className="mt-1 line-clamp-1 text-[11px] text-[color:var(--muted)]">
+            {itemMeta(item)}
+          </div>
+          <div className="mt-1 line-clamp-1 text-[10px] text-[color:var(--muted2)]">
+            {UNIVERSE_LABEL[normalizeUniverse(item.universe)]}
+          </div>
         </div>
       </Link>
 
-      <div className="mt-2 grid grid-cols-3 gap-1 text-[10px]">
-        <CardMetric
-          label="Value"
-          editing={editingField === "value"}
-          value={formatMoney(Number(item.currentValue ?? 0))}
-          onStartEdit={() => setEditingField("value")}
-          inputValue={valueDraft}
-          onInputChange={setValueDraft}
-          onSave={() => void saveValueInline()}
-          onCancel={() => {
-            setValueDraft(String(Number(item.currentValue ?? 0)));
-            setEditingField("");
-          }}
-        />
-        <CardMetric
-          label="Cost"
-          editing={editingField === "cost"}
-          value={formatMoney(totalCost(item))}
-          onStartEdit={() => setEditingField("cost")}
-          inputValue={costDraft}
-          onInputChange={setCostDraft}
-          onSave={() => void saveCostInline()}
-          onCancel={() => {
-            setCostDraft(String(totalCost(item)));
-            setEditingField("");
-          }}
-        />
-        <div className="rounded-lg bg-black/15 px-2 py-1.5 ring-1 ring-black/10">
-          <div className="text-[10px] text-[color:var(--muted2)]">Gain</div>
-          <div className="mt-0.5 text-[11px] font-medium">
+      <span className={["absolute right-2 top-2 z-10 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1", statusClass].join(" ")}>
+        {statusLabel}
+      </span>
+
+      <div className="mt-2 flex items-center justify-between gap-2 border-t border-white/6 pt-2">
+        <div className="flex min-w-0 items-center gap-2">
+          {editingField === "value" ? (
+            <input
+              autoFocus
+              value={valueDraft}
+              onChange={(e) => setValueDraft(e.target.value)}
+              onBlur={() => void saveValueInline()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void saveValueInline();
+                if (e.key === "Escape") {
+                  setValueDraft(String(Number(item.currentValue ?? 0)));
+                  setEditingField("");
+                }
+              }}
+              className="h-7 w-24 rounded-md bg-[color:var(--pill)] px-2 text-[11px] ring-1 ring-[color:var(--border)] focus:outline-none"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setEditingField("value")}
+              className="text-left text-[13px] font-bold text-[color:var(--fg)] hover:text-cyan-300"
+            >
+              {formatMoney(Number(item.currentValue ?? 0))}
+            </button>
+          )}
+          <span className={itemGain(item) >= 0 ? "text-[12px] font-semibold text-emerald-300" : "text-[12px] font-semibold text-red-300"}>
             {itemGain(item) >= 0 ? "+" : ""}
             {formatMoney(itemGain(item))}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-2 rounded-lg bg-black/15 px-2 py-1.5 ring-1 ring-black/10">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <div className="text-[10px] text-[color:var(--muted2)]">Pricing MVP</div>
-            <div className="mt-0.5 text-[11px] font-medium text-[color:var(--fg)]">
-              {formatMoney(effectiveMarketValue(item))}
-            </div>
-          </div>
-          {item.priceConfidence ? (
-            <span
-              className={[
-                "rounded-full px-2 py-0.5 text-[10px] ring-1",
-                confidenceTone(item.priceConfidence),
-              ].join(" ")}
-            >
-              {confidenceLabel(item.priceConfidence)}
-            </span>
-          ) : null}
-        </div>
-
-        <div className="mt-1 flex items-center justify-between gap-2 text-[10px] text-[color:var(--muted)]">
-          <span className="truncate">{priceSourceLabel(item)}</span>
-          <span>{formatPriceUpdatedAt(item.priceUpdatedAt)}</span>
-        </div>
-
-        {typeof item.lastCompValue === "number" && Number.isFinite(item.lastCompValue) ? (
-          <div className="mt-1 text-[10px] text-[color:var(--muted)]">
-            Last comp {formatMoney(item.lastCompValue)}
-          </div>
-        ) : null}
-      </div>
-
-      <div className="mt-2 flex flex-wrap items-center gap-1">
-        {isSold ? (
-          <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-200 ring-1 ring-amber-400/25">
-            {formatSoldAt(sale?.soldAt)}
           </span>
-        ) : null}
-        <span className={["rounded-full px-2 py-0.5 text-[10px] ring-1", readinessTone(readiness)].join(" ")}>
-          {readiness}
-        </span>
-        <span className="text-[10px] text-[color:var(--muted)]">
-          {UNIVERSE_LABEL[normalizeUniverse(item.universe)]}
-        </span>
-      </div>
+        </div>
 
-      <div className="mt-1.5 flex items-center justify-between gap-2">
         {isSold ? (
-          <div className="text-[11px] font-semibold text-amber-200">
+          <div className="shrink-0 text-[11px] font-semibold text-amber-200">
             Sold {formatMoney(sale?.soldPrice)}
           </div>
         ) : (
-          <SellItemButton item={item} />
+          <div className="shrink-0 scale-90 origin-right">
+            <SellItemButton item={item} />
+          </div>
         )}
       </div>
     </div>
@@ -846,7 +822,7 @@ export default function VaultPage() {
               </div>
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
               <div className="rounded-[14px] bg-black/16 p-2.5 ring-1 ring-white/8">
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">FILTERED ITEMS</div>
                 <div className="mt-1 text-lg font-semibold">{stats.totalItems}</div>
@@ -964,7 +940,7 @@ export default function VaultPage() {
           <VaultEmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearFilters} />
         ) : (
           <section className="mt-3">
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
               {filteredItems.map((item) => {
                 const intelligence = intelligenceMap[item.id];
                 const readiness = intelligence?.readiness ?? "Low";
