@@ -492,7 +492,7 @@ function VaultCard({
       : readinessTone(readiness);
 
   return (
-    <div className="group relative min-h-[92px] overflow-hidden rounded-[14px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.024),rgba(255,255,255,0.01))] p-1.5 shadow-[0_8px_18px_rgba(0,0,0,0.12)]">
+    <div className="group relative h-[102px] overflow-hidden rounded-[14px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.024),rgba(255,255,255,0.01))] p-1.5 shadow-[0_8px_18px_rgba(0,0,0,0.12)]">
       <div className="absolute right-1.5 top-1.5 z-20 hidden items-center gap-1 group-hover:flex">
         <Link
           href={`/vault/item/${item.id}`}
@@ -510,12 +510,12 @@ function VaultCard({
         </button>
       </div>
 
-      <div className="grid min-h-[84px] grid-cols-[78px_minmax(0,1fr)_70px] gap-2">
+      <div className="grid h-full grid-cols-[78px_minmax(0,1fr)_70px] gap-2">
         <Link
           href={isSold ? `/vault/item/${item.id}?sold=1` : `/vault/item/${item.id}`}
           className="block overflow-hidden rounded-[11px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),rgba(255,255,255,0.012)_48%,rgba(0,0,0,0.18)_100%)]"
         >
-          <div className="flex h-full min-h-[84px] items-center justify-center bg-black/10 p-1">
+          <div className="flex h-full items-center justify-center bg-black/10 p-1">
             {image ? (
               <img
                 src={image}
@@ -973,6 +973,7 @@ export default function VaultPage() {
 
   async function handleSaveItem(nextItem: VaultItem) {
     saveItem(nextItem);
+    enqueueVaultItemSync(nextItem.id);
     setItems((prev) => prev.map((entry) => (entry.id === nextItem.id ? nextItem : entry)));
 
     if (hasSupabaseEnv()) {
