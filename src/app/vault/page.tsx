@@ -347,8 +347,8 @@ function VaultCard({
       : readinessTone(readiness);
 
   return (
-    <div className="group relative min-h-[92px] overflow-hidden rounded-[14px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.024),rgba(255,255,255,0.01))] p-1.5 shadow-[0_8px_18px_rgba(0,0,0,0.12)]">
-      <div className="absolute right-1.5 top-1.5 z-20 hidden items-center gap-1 group-hover:flex">
+    <div className="group relative h-[92px] overflow-hidden rounded-[14px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.024),rgba(255,255,255,0.01))] p-1.5 shadow-[0_8px_18px_rgba(0,0,0,0.12)]">
+      <div className="absolute right-1.5 top-1.5 z-30 hidden items-center gap-1 group-hover:flex">
         <Link
           href={`/vault/item/${item.id}`}
           className="inline-flex h-6 items-center justify-center rounded-full bg-black/70 px-2 text-[10px] text-white ring-1 ring-white/10 backdrop-blur"
@@ -365,16 +365,12 @@ function VaultCard({
         </button>
       </div>
 
-      <span className={["absolute right-1.5 top-1.5 z-10 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1", statusClass].join(" ")}>
-        {statusLabel}
-      </span>
-
-      <div className="grid min-h-[80px] grid-cols-[78px_minmax(0,1fr)] gap-2">
+      <div className="grid h-full grid-cols-[76px_minmax(0,1fr)_64px] gap-2">
         <Link
           href={isSold ? `/vault/item/${item.id}?sold=1` : `/vault/item/${item.id}`}
-          className="block overflow-hidden rounded-[11px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),rgba(255,255,255,0.012)_48%,rgba(0,0,0,0.18)_100%)]"
+          className="block h-full w-[76px] overflow-hidden rounded-[11px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),rgba(255,255,255,0.012)_48%,rgba(0,0,0,0.18)_100%)]"
         >
-          <div className="flex h-full min-h-[80px] items-center justify-center bg-black/10 p-1">
+          <div className="flex h-full w-full items-center justify-center bg-black/10">
             {image ? (
               <img
                 src={image}
@@ -390,7 +386,7 @@ function VaultCard({
           </div>
         </Link>
 
-        <div className="flex min-w-0 flex-col justify-between py-0.5 pr-10">
+        <div className="flex min-w-0 flex-col justify-between py-0.5">
           <Link
             href={isSold ? `/vault/item/${item.id}?sold=1` : `/vault/item/${item.id}`}
             className="min-w-0"
@@ -406,48 +402,52 @@ function VaultCard({
             </div>
           </Link>
 
-          <div className="mt-1.5 flex items-end justify-between gap-2">
-            <div className="flex min-w-0 items-baseline gap-2">
-              {editingField === "value" ? (
-                <input
-                  autoFocus
-                  value={valueDraft}
-                  onChange={(e) => setValueDraft(e.target.value)}
-                  onBlur={() => void saveValueInline()}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") void saveValueInline();
-                    if (e.key === "Escape") {
-                      setValueDraft(String(Number(item.currentValue ?? 0)));
-                      setEditingField("");
-                    }
-                  }}
-                  className="h-6 w-20 rounded-md bg-[color:var(--pill)] px-2 text-[11px] ring-1 ring-[color:var(--border)] focus:outline-none"
-                />
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setEditingField("value")}
-                  className="text-left text-[15px] font-extrabold leading-none text-[color:var(--fg)] hover:text-cyan-300"
-                >
-                  {formatMoney(Number(item.currentValue ?? 0))}
-                </button>
-              )}
-              <span className={itemGain(item) >= 0 ? "text-[12px] font-bold leading-none text-emerald-300" : "text-[12px] font-bold leading-none text-red-300"}>
-                {itemGain(item) >= 0 ? "+" : ""}
-                {formatMoney(itemGain(item))}
-              </span>
-            </div>
-
-            {isSold ? (
-              <div className="shrink-0 text-[10px] font-semibold text-amber-200">
-                Sold {formatMoney(sale?.soldPrice)}
-              </div>
+          <div className="flex min-w-0 items-baseline gap-2">
+            {editingField === "value" ? (
+              <input
+                autoFocus
+                value={valueDraft}
+                onChange={(e) => setValueDraft(e.target.value)}
+                onBlur={() => void saveValueInline()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void saveValueInline();
+                  if (e.key === "Escape") {
+                    setValueDraft(String(Number(item.currentValue ?? 0)));
+                    setEditingField("");
+                  }
+                }}
+                className="h-6 w-20 rounded-md bg-[color:var(--pill)] px-2 text-[11px] ring-1 ring-[color:var(--border)] focus:outline-none"
+              />
             ) : (
-              <div className="shrink-0 scale-90 origin-right">
-                <SellItemButton item={item} />
-              </div>
+              <button
+                type="button"
+                onClick={() => setEditingField("value")}
+                className="text-left text-[15px] font-extrabold leading-none text-[color:var(--fg)] hover:text-cyan-300"
+              >
+                {formatMoney(Number(item.currentValue ?? 0))}
+              </button>
             )}
+            <span className={itemGain(item) >= 0 ? "text-[12px] font-bold leading-none text-emerald-300" : "text-[12px] font-bold leading-none text-red-300"}>
+              {itemGain(item) >= 0 ? "+" : ""}
+              {formatMoney(itemGain(item))}
+            </span>
           </div>
+        </div>
+
+        <div className="flex min-w-0 flex-col items-end justify-between py-0.5">
+          <span className={["max-w-full whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-semibold leading-none ring-1", statusClass].join(" ")}>
+            {statusLabel}
+          </span>
+
+          {isSold ? (
+            <div className="max-w-full truncate text-right text-[10px] font-semibold leading-tight text-amber-200">
+              Sold {formatMoney(sale?.soldPrice)}
+            </div>
+          ) : (
+            <div className="shrink-0 origin-right scale-90">
+              <SellItemButton item={item} />
+            </div>
+          )}
         </div>
       </div>
     </div>
