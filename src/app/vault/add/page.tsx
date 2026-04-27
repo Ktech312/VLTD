@@ -67,6 +67,15 @@ import {
   saveImageBlobToIndexedDb,
 } from "@/lib/vaultImageStore";
 import { analyzeImageWithVision } from "@/lib/ai/openaiVision";
+import {
+  getCategories,
+  getDefaultCategory,
+  getSubcategories,
+  getUniverses,
+  isUniverseKey,
+  UNIVERSE_LABEL,
+  type UniverseKey,
+} from "@/lib/taxonomy";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 
@@ -113,6 +122,48 @@ function selectClass() {
 
 function textareaClass() {
   return "min-h-[78px] rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm ring-1 ring-[color:var(--border)] focus:outline-none";
+}
+
+function categoryCode(label: string) {
+  return label
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "") || "COLLECTORS_CHOICE";
+}
+
+function safeUniverse(value: unknown): UniverseKey {
+  const key = String(value ?? "").trim().toUpperCase();
+  return isUniverseKey(key) ? key : "MISC";
+}
+
+function safeCategoryForUniverse(universe: UniverseKey, value: unknown) {
+  const requested = String(value ?? "").trim();
+  return requested || getDefaultCategory(universe);
+}
+
+function normalizeHierarchy(values: FormValues): FormValues {
+  const universe = safeUniverse(values.universe);
+  const categoryLabel = safeCategoryForUniverse(
+    universe,
+    values.categoryLabel || values.category
+  );
+  const allowedSubcategories = getSubcategories(universe, categoryLabel);
+  const requestedSubcategory = String(values.subcategoryLabel ?? "").trim();
+  const subcategoryLabel =
+    requestedSubcategory && allowedSubcategories.includes(requestedSubcategory)
+      ? requestedSubcategory
+      : requestedSubcategory && allowedSubcategories.length === 0
+        ? requestedSubcategory
+        : "";
+
+  return {
+    ...values,
+    universe,
+    category: categoryCode(categoryLabel),
+    categoryLabel,
+    subcategoryLabel,
+  };
 }
 
 function reviewTitleFromSource(source?: ScanSessionReview["source"]) {
@@ -308,8 +359,40 @@ export default function AddPage() {
 
   useUnsavedChangesGuard(hasDraftProgress && !isSaving);
 
+  const selectedUniverse = safeUniverse(values.universe);
+  const selectedCategory = safeCategoryForUniverse(
+    selectedUniverse,
+    values.categoryLabel || values.category
+  );
+  const baseCategoryOptions = getCategories(selectedUniverse);
+  const categoryOptions =
+    selectedCategory && !baseCategoryOptions.includes(selectedCategory)
+      ? [selectedCategory, ...baseCategoryOptions]
+      : baseCategoryOptions;
+  const subcategoryOptions = getSubcategories(selectedUniverse, selectedCategory);
+
   function setField<K extends keyof FormValues>(key: K, value: FormValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function setUniverse(nextUniverse: UniverseKey) {
+    const nextCategory = getDefaultCategory(nextUniverse);
+    setValues((prev) => ({
+      ...prev,
+      universe: nextUniverse,
+      category: categoryCode(nextCategory),
+      categoryLabel: nextCategory,
+      subcategoryLabel: "",
+    }));
+  }
+
+  function setCategoryLabel(nextCategory: string) {
+    setValues((prev) => ({
+      ...prev,
+      category: categoryCode(nextCategory),
+      categoryLabel: nextCategory,
+      subcategoryLabel: "",
+    }));
   }
 
   function handleToggleLock(key: BulkAddFieldKey) {
@@ -1092,7 +1175,7 @@ export default function AddPage() {
       apply("serialNumber", fields.serialNumber);
       apply("notes", fields.notes);
 
-      return next;
+      return normalizeHierarchy(next);
     });
 
     setScanSession((prev) => markScanSessionApplied(prev));
@@ -1104,7 +1187,7 @@ export default function AddPage() {
   }
 
   function resetUnlockedFields() {
-    const nextValues = resetUnlockedBulkValues(values, locks);
+    const nextValues = resetUnlockedBulkValues(normalizeHierarchy(values), locks);
     setValues(nextValues);
     clearAllImages();
     clearPricing();
@@ -1121,7 +1204,8 @@ export default function AddPage() {
   }
 
   async function saveForm(saveAndNext: boolean) {
-    const trimmedTitle = values.title.trim();
+    const normalizedValues = normalizeHierarchy(values);
+    const trimmedTitle = normalizedValues.title.trim();
     if (!trimmedTitle) {
       setStatus("Title / Series is required.");
       return;
@@ -1204,7 +1288,7 @@ export default function AddPage() {
         imageFrontStoragePath = primaryImage?.storageKey;
       }
 
-      const purchasePrice = parseMoney(values.purchasePrice);
+      const purchasePrice = parseMoney(normalizedValues.purchasePrice);
       const pricingPatch = buildPricingPatch({
         estimatedValue: pricingValues.estimatedValue,
         lastCompValue: pricingValues.lastCompValue,
@@ -1213,7 +1297,7 @@ export default function AddPage() {
         priceNotes: pricingValues.priceNotes,
       });
       const currentValue =
-        parseMoney(values.currentValue) ??
+        parseMoney(normalizedValues.currentValue) ??
         pricingPatch.estimatedValue ??
         pricingPatch.lastCompValue ??
         purchasePrice;
@@ -1222,21 +1306,21 @@ export default function AddPage() {
         id,
         profile_id: activeProfileId || undefined,
         title: trimmedTitle,
-        subtitle: values.subtitle.trim() || undefined,
-        number: values.number.trim() || undefined,
-        grade: values.grade.trim() || undefined,
+        subtitle: normalizedValues.subtitle.trim() || undefined,
+        number: normalizedValues.number.trim() || undefined,
+        grade: normalizedValues.grade.trim() || undefined,
         purchasePrice,
         currentValue,
-        universe: values.universe.trim() || undefined,
-        category: values.category.trim() || undefined,
-        categoryLabel: values.categoryLabel.trim() || undefined,
-        subcategoryLabel: values.subcategoryLabel.trim() || undefined,
-        storageLocation: values.storageLocation.trim() || undefined,
-        purchaseSource: values.purchaseSource.trim() || undefined,
-        purchaseLocation: values.purchaseLocation.trim() || undefined,
-        certNumber: values.certNumber.trim() || undefined,
-        serialNumber: values.serialNumber.trim() || undefined,
-        notes: values.notes.trim() || undefined,
+        universe: normalizedValues.universe.trim() || "MISC",
+        category: normalizedValues.category.trim() || undefined,
+        categoryLabel: normalizedValues.categoryLabel.trim() || undefined,
+        subcategoryLabel: normalizedValues.subcategoryLabel.trim() || undefined,
+        storageLocation: normalizedValues.storageLocation.trim() || undefined,
+        purchaseSource: normalizedValues.purchaseSource.trim() || undefined,
+        purchaseLocation: normalizedValues.purchaseLocation.trim() || undefined,
+        certNumber: normalizedValues.certNumber.trim() || undefined,
+        serialNumber: normalizedValues.serialNumber.trim() || undefined,
+        notes: normalizedValues.notes.trim() || undefined,
         primaryImageKey,
         images,
         imageFrontUrl,
@@ -1262,7 +1346,7 @@ export default function AddPage() {
       clearPricing();
 
       if (saveAndNext) {
-        const nextValues = resetUnlockedBulkValues(values, locks);
+        const nextValues = resetUnlockedBulkValues(normalizedValues, locks);
         setValues(nextValues);
         window.setTimeout(() => numberInputRef.current?.focus(), 0);
       }
@@ -1394,23 +1478,6 @@ export default function AddPage() {
 
         <section className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
-              <Field label="Title / Series" locked={locks.title} onToggleLock={() => handleToggleLock("title")}>
-                <div className="grid gap-2">
-                  <input
-                    ref={titleInputRef}
-                    className={inputClass()}
-                    value={values.title}
-                    onChange={(e) => setField("title", e.target.value)}
-                    placeholder="Amazing Spider-Man"
-                  />
-                  {duplicateWarning ? (
-                    <div className="rounded-xl bg-amber-500/10 px-3 py-2 text-xs text-amber-200 ring-1 ring-amber-400/20">
-                      {duplicateWarning}
-                    </div>
-                  ) : null}
-                </div>
-              </Field>
-
               <Field label="Subtitle / Set" locked={locks.subtitle} onToggleLock={() => handleToggleLock("subtitle")}>
                 <input
                   className={inputClass()}
@@ -1459,49 +1526,81 @@ export default function AddPage() {
                 />
               </Field>
 
-              <Field label="Universe" locked={locks.universe} onToggleLock={() => handleToggleLock("universe")}>
-                <select
-                  className={selectClass()}
-                  value={values.universe}
-                  onChange={(e) => setField("universe", e.target.value)}
-                >
-                  <option value="">Select universe</option>
-                  <option value="POP_CULTURE">Pop Culture</option>
-                  <option value="SPORTS">Sports</option>
-                  <option value="TCG">TCG</option>
-                  <option value="MUSIC">Music</option>
-                  <option value="JEWELRY_APPAREL">Jewelry / Apparel</option>
-                  <option value="GAMES">Games</option>
-                  <option value="MISC">Misc</option>
-                </select>
-              </Field>
+              <div className="rounded-[18px] bg-black/10 p-3 ring-1 ring-white/8 lg:col-span-2 xl:col-span-3">
+                <div className="text-[11px] font-semibold tracking-[0.18em] text-[color:var(--muted2)]">
+                  BASIC ITEM RECORD
+                </div>
+                <div className="mt-3 grid gap-3 md:grid-cols-4">
+                  <Field label="Universe" locked={locks.universe} onToggleLock={() => handleToggleLock("universe")}>
+                    <select
+                      className={selectClass()}
+                      value={selectedUniverse}
+                      onChange={(e) => setUniverse(safeUniverse(e.target.value))}
+                    >
+                      {getUniverses().map((key) => (
+                        <option key={key} value={key}>
+                          {UNIVERSE_LABEL[key]}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
 
-              <Field label="Category" locked={locks.category} onToggleLock={() => handleToggleLock("category")}>
-                <input
-                  className={inputClass()}
-                  value={values.category}
-                  onChange={(e) => setField("category", e.target.value)}
-                  placeholder="COMICS"
-                />
-              </Field>
+                  <Field label="Category" locked={locks.categoryLabel} onToggleLock={() => handleToggleLock("categoryLabel")}>
+                    <select
+                      className={selectClass()}
+                      value={selectedCategory}
+                      onChange={(e) => setCategoryLabel(e.target.value)}
+                    >
+                      {categoryOptions.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
 
-              <Field label="Category Label" locked={locks.categoryLabel} onToggleLock={() => handleToggleLock("categoryLabel")}>
-                <input
-                  className={inputClass()}
-                  value={values.categoryLabel}
-                  onChange={(e) => setField("categoryLabel", e.target.value)}
-                  placeholder="Comics"
-                />
-              </Field>
+                  <Field label="Subcategory" locked={locks.subcategoryLabel} onToggleLock={() => handleToggleLock("subcategoryLabel")}>
+                    {subcategoryOptions.length ? (
+                      <select
+                        className={selectClass()}
+                        value={values.subcategoryLabel}
+                        onChange={(e) => setField("subcategoryLabel", e.target.value)}
+                      >
+                        <option value="">Optional</option>
+                        {subcategoryOptions.map((subcategory) => (
+                          <option key={subcategory} value={subcategory}>
+                            {subcategory}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        className={inputClass()}
+                        value={values.subcategoryLabel}
+                        onChange={(e) => setField("subcategoryLabel", e.target.value)}
+                        placeholder="Optional"
+                      />
+                    )}
+                  </Field>
 
-              <Field label="Subcategory" locked={locks.subcategoryLabel} onToggleLock={() => handleToggleLock("subcategoryLabel")}>
-                <input
-                  className={inputClass()}
-                  value={values.subcategoryLabel}
-                  onChange={(e) => setField("subcategoryLabel", e.target.value)}
-                  placeholder="Silver Age"
-                />
-              </Field>
+                  <Field label="Title" locked={locks.title} onToggleLock={() => handleToggleLock("title")}>
+                    <div className="grid gap-2">
+                      <input
+                        ref={titleInputRef}
+                        className={inputClass()}
+                        value={values.title}
+                        onChange={(e) => setField("title", e.target.value)}
+                        placeholder="Batman"
+                      />
+                      {duplicateWarning ? (
+                        <div className="rounded-xl bg-amber-500/10 px-3 py-2 text-xs text-amber-200 ring-1 ring-amber-400/20">
+                          {duplicateWarning}
+                        </div>
+                      ) : null}
+                    </div>
+                  </Field>
+                </div>
+              </div>
 
               <Field label="Storage Location" locked={locks.storageLocation} onToggleLock={() => handleToggleLock("storageLocation")}>
                 <input

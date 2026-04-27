@@ -27,7 +27,15 @@ import {
   type VaultImage,
   type VaultItem,
 } from "@/lib/vaultModel";
-import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+import {
+  getCategories,
+  getDefaultCategory,
+  getSubcategories,
+  getUniverses,
+  isUniverseKey,
+  UNIVERSE_LABEL,
+  type UniverseKey,
+} from "@/lib/taxonomy";
 
 const SALES_KEY = "vltd_sales_history";
 
@@ -77,9 +85,21 @@ function categoryLabel(item: VaultItem) {
 }
 
 function normUniverse(value: unknown): UniverseKey {
-  const raw = String(value ?? "").toUpperCase();
-  if (raw === "POP_CULTURE" || raw === "SPORTS" || raw === "TCG" || raw === "MUSIC" || raw === "JEWELRY_APPAREL" || raw === "GAMES" || raw === "MISC") return raw;
-  return "MISC";
+  const raw = String(value ?? "").trim().toUpperCase();
+  return isUniverseKey(raw) ? raw : "MISC";
+}
+
+function categoryCode(label: string) {
+  return label
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "") || "COLLECTORS_CHOICE";
+}
+
+function safeCategoryForUniverse(universe: UniverseKey, value: unknown) {
+  const requested = String(value ?? "").trim();
+  return requested || getDefaultCategory(universe);
 }
 
 function createdAtMs(item: VaultItem) {
@@ -146,6 +166,13 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   const [items, setItems] = useState<VaultItem[]>([]);
   const [uploading, setUploading] = useState(false);
   const [mediaMessage, setMediaMessage] = useState("");
+  const [recordMessage, setRecordMessage] = useState("");
+  const [recordDraft, setRecordDraft] = useState({
+    universe: "MISC" as UniverseKey,
+    categoryLabel: "Collectors Choice",
+    subcategoryLabel: "",
+    title: "",
+  });
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [sale, setSale] = useState<SaleRecord | null>(null);
   const [isSoldView, setIsSoldView] = useState(false);
@@ -169,6 +196,18 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
   const item = useMemo(() => items.find((entry) => String(entry.id) === String(id)) ?? sale ?? null, [items, id, sale]);
   const images = useMemo(() => (item ? getOrderedImageUrls(item) : []), [item]);
+
+  useEffect(() => {
+    if (!item) return;
+    const nextUniverse = normUniverse(item.universe);
+    const nextCategory = safeCategoryForUniverse(nextUniverse, item.categoryLabel || item.category);
+    setRecordDraft({
+      universe: nextUniverse,
+      categoryLabel: nextCategory,
+      subcategoryLabel: item.subcategoryLabel ?? "",
+      title: item.title ?? "",
+    });
+  }, [item?.id, item?.universe, item?.category, item?.categoryLabel, item?.subcategoryLabel, item?.title]);
 
   useEffect(() => {
     if (activeImageIndex > images.length - 1) {
@@ -196,6 +235,56 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
         profile_id: nextItem.profile_id || getStoredActiveProfileId(),
       });
     }
+
+    window.dispatchEvent(new Event("vltd:vault-updated"));
+  }
+
+  function setDraftUniverse(nextUniverse: UniverseKey) {
+    const nextCategory = getDefaultCategory(nextUniverse);
+    setRecordDraft((prev) => ({
+      ...prev,
+      universe: nextUniverse,
+      categoryLabel: nextCategory,
+      subcategoryLabel: "",
+    }));
+  }
+
+  function setDraftCategory(nextCategory: string) {
+    setRecordDraft((prev) => ({
+      ...prev,
+      categoryLabel: nextCategory,
+      subcategoryLabel: "",
+    }));
+  }
+
+  async function handleSaveBasicRecord() {
+    if (!item) return;
+    const title = recordDraft.title.trim();
+    if (!title) {
+      setRecordMessage("Title is required.");
+      return;
+    }
+
+    const universe = normUniverse(recordDraft.universe);
+    const categoryLabelValue = safeCategoryForUniverse(universe, recordDraft.categoryLabel);
+    const subcategoryOptions = getSubcategories(universe, categoryLabelValue);
+    const requestedSubcategory = recordDraft.subcategoryLabel.trim();
+    const subcategoryLabel =
+      requestedSubcategory && subcategoryOptions.length && !subcategoryOptions.includes(requestedSubcategory)
+        ? ""
+        : requestedSubcategory;
+
+    const nextItem: VaultItem = {
+      ...item,
+      title,
+      universe,
+      category: categoryCode(categoryLabelValue),
+      categoryLabel: categoryLabelValue,
+      subcategoryLabel: subcategoryLabel || undefined,
+    };
+
+    await persist(nextItem);
+    setRecordMessage("Basic item record saved.");
   }
 
   async function handleAddImages(files: File[]) {
@@ -531,6 +620,13 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
       : null);
   const saleProfit =
     displayedSale ? Number(displayedSale.soldPrice ?? 0) - totalCost(item) : 0;
+  const recordSelectedCategory = safeCategoryForUniverse(recordDraft.universe, recordDraft.categoryLabel);
+  const baseRecordCategoryOptions = getCategories(recordDraft.universe);
+  const recordCategoryOptions =
+    recordSelectedCategory && !baseRecordCategoryOptions.includes(recordSelectedCategory)
+      ? [recordSelectedCategory, ...baseRecordCategoryOptions]
+      : baseRecordCategoryOptions;
+  const recordSubcategoryOptions = getSubcategories(recordDraft.universe, recordSelectedCategory);
 
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
@@ -647,6 +743,88 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               </div>
             </Section>
           </div>
+        </div>
+
+        <div className="mt-5">
+          <Section title="BASIC ITEM RECORD">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <label className="grid gap-1.5">
+                <span className="text-[11px] font-medium tracking-[0.14em] text-[color:var(--muted2)]">Universe</span>
+                <select
+                  className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                  value={recordDraft.universe}
+                  onChange={(event) => setDraftUniverse(normUniverse(event.target.value))}
+                >
+                  {getUniverses().map((key) => (
+                    <option key={key} value={key}>
+                      {UNIVERSE_LABEL[key]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="grid gap-1.5">
+                <span className="text-[11px] font-medium tracking-[0.14em] text-[color:var(--muted2)]">Category</span>
+                <select
+                  className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                  value={recordSelectedCategory}
+                  onChange={(event) => setDraftCategory(event.target.value)}
+                >
+                  {recordCategoryOptions.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="grid gap-1.5">
+                <span className="text-[11px] font-medium tracking-[0.14em] text-[color:var(--muted2)]">Subcategory</span>
+                {recordSubcategoryOptions.length ? (
+                  <select
+                    className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                    value={recordDraft.subcategoryLabel}
+                    onChange={(event) => setRecordDraft((prev) => ({ ...prev, subcategoryLabel: event.target.value }))}
+                  >
+                    <option value="">Optional</option>
+                    {recordSubcategoryOptions.map((subcategory) => (
+                      <option key={subcategory} value={subcategory}>
+                        {subcategory}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                    value={recordDraft.subcategoryLabel}
+                    onChange={(event) => setRecordDraft((prev) => ({ ...prev, subcategoryLabel: event.target.value }))}
+                    placeholder="Optional"
+                  />
+                )}
+              </label>
+
+              <label className="grid gap-1.5">
+                <span className="text-[11px] font-medium tracking-[0.14em] text-[color:var(--muted2)]">Title</span>
+                <input
+                  className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                  value={recordDraft.title}
+                  onChange={(event) => setRecordDraft((prev) => ({ ...prev, title: event.target.value }))}
+                  placeholder="Batman"
+                />
+              </label>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => void handleSaveBasicRecord()}
+                className="inline-flex h-10 items-center rounded-full bg-cyan-500/15 px-4 text-sm font-medium text-cyan-100 ring-1 ring-cyan-400/25"
+              >
+                Save basic record
+              </button>
+              {recordMessage ? <div className="text-sm text-[color:var(--muted)]">{recordMessage}</div> : null}
+            </div>
+          </Section>
         </div>
 
         <div className="mt-5">
