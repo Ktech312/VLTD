@@ -493,7 +493,7 @@ function VaultCard({
       : readinessTone(readiness);
 
   return (
-    <div className="group relative h-[102px] overflow-hidden rounded-[14px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.024),rgba(255,255,255,0.01))] p-1.5 shadow-[0_8px_18px_rgba(0,0,0,0.12)]">
+    <div className="group relative h-[116px] overflow-hidden rounded-[14px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.024),rgba(255,255,255,0.01))] p-1.5 shadow-[0_8px_18px_rgba(0,0,0,0.12)]">
       <div className="absolute right-1.5 top-1.5 z-20 hidden items-center gap-1 group-hover:flex">
         <Link
           href={`/vault/item/${item.id}`}
@@ -553,7 +553,7 @@ function VaultCard({
               value={universeForItem(item)}
               onChange={(e) => void handleUniverseChange(e.target.value as UniverseKey)}
               onClick={(e) => e.stopPropagation()}
-              className="mt-0.5 min-h-[22px] w-full rounded-md bg-black/20 px-1.5 py-0.5 text-[9px] font-semibold text-[color:var(--fg)] ring-1 ring-white/10 focus:outline-none"
+              className="mt-0.5 min-h-[20px] w-full rounded-md bg-black/20 px-1.5 py-0.5 text-[9px] font-semibold text-[color:var(--fg)] ring-1 ring-white/10 focus:outline-none"
               aria-label={`Universe for ${item.title}`}
             >
               {VAULT_UNIVERSES.map((category) => (
@@ -585,12 +585,12 @@ function VaultCard({
                 <button
                   type="button"
                   onClick={() => setEditingField("value")}
-                  className="text-left text-[15px] font-extrabold leading-none text-[color:var(--fg)] hover:text-cyan-300"
+                  className="text-left text-[14px] font-extrabold leading-none text-[color:var(--fg)] hover:text-cyan-300"
                 >
                   {formatMoney(Number(item.currentValue ?? 0))}
                 </button>
               )}
-              <span className={itemGain(item) >= 0 ? "text-[12px] font-bold leading-none text-emerald-300" : "text-[12px] font-bold leading-none text-red-300"}>
+              <span className={itemGain(item) >= 0 ? "text-[11px] font-bold leading-none text-emerald-300" : "text-[11px] font-bold leading-none text-red-300"}>
                 {itemGain(item) >= 0 ? "+" : ""}
                 {formatMoney(itemGain(item))}
               </span>
