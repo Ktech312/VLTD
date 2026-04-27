@@ -1110,6 +1110,14 @@ export default function AddPage() {
     await handleApplyScanCrop();
   }
 
+  function requestCloseCropEditor() {
+    if (!isDefaultCrop(scanCrop)) {
+      const ok = window.confirm("Discard unsaved photo crop changes?");
+      if (!ok) return;
+    }
+    setIsCropEditorOpen(false);
+  }
+
   async function handleMediaImageSelection(fileList: FileList | null) {
     const files = Array.from(fileList ?? []);
     if (!files.length) return;
@@ -1752,38 +1760,29 @@ export default function AddPage() {
         ) : null}
 
         {isCropEditorOpen && cropEditorImageUrl ? (
-          <div className="fixed inset-0 z-[90] bg-black/75 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true" aria-label="Edit photo crop">
-            <div className="mx-auto flex max-h-[calc(100dvh-1rem)] max-w-3xl flex-col overflow-hidden rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:max-h-[calc(100dvh-2rem)] sm:p-4">
-              <div className="mb-2 flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">EDIT PHOTO</div>
-                  <h2 className="mt-1 text-lg font-semibold text-[color:var(--fg)]">
-                    {cropEditorTarget === "media" ? "Adjust Item Photo" : "Adjust Identify Picture"}
-                  </h2>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsCropEditorOpen(false)}
-                  className="rounded-full bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
-                >
-                  Close
-                </button>
-              </div>
-              <div className="min-h-0 overflow-auto">
-                <ScanCropEditor
-                  imageUrl={cropEditorImageUrl}
-                  crop={scanCrop}
-                  onChange={setScanCrop}
-                  title="ADJUST PHOTO"
-                  description="Drag the photo to frame it. Pinch or use Zoom to move closer."
-                  applyLabel={cropEditorTarget === "media" ? "Save Photo" : "Use This Picture"}
-                  onApply={() => void handleApplyCropEditor()}
-                  onReset={() => setScanCrop(DEFAULT_SCAN_CROP)}
-                  onCancel={() => setIsCropEditorOpen(false)}
-                  isApplying={isApplyingCrop}
-                  compact
-                />
-              </div>
+          <div
+            className="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto bg-black/75 px-2 py-3 backdrop-blur-sm sm:px-4 sm:py-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Edit photo crop"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) requestCloseCropEditor();
+            }}
+          >
+            <div className="w-full max-w-3xl">
+              <ScanCropEditor
+                imageUrl={cropEditorImageUrl}
+                crop={scanCrop}
+                onChange={setScanCrop}
+                title={cropEditorTarget === "media" ? "ADJUST ITEM PHOTO" : "ADJUST IDENTIFY PICTURE"}
+                description="Drag the photo to frame it. Pinch to zoom. Pull any white edge or corner to crop each side."
+                applyLabel={cropEditorTarget === "media" ? "Save Photo" : "Use This Picture"}
+                onApply={() => void handleApplyCropEditor()}
+                onReset={() => setScanCrop(DEFAULT_SCAN_CROP)}
+                onCancel={requestCloseCropEditor}
+                isApplying={isApplyingCrop}
+                compact
+              />
             </div>
           </div>
         ) : null}

@@ -37,6 +37,15 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
+function cropsEqual(a: ScanCropRect, b: ScanCropRect) {
+  return (
+    Math.abs(a.left - b.left) < 0.001 &&
+    Math.abs(a.top - b.top) < 0.001 &&
+    Math.abs(a.right - b.right) < 0.001 &&
+    Math.abs(a.bottom - b.bottom) < 0.001
+  );
+}
+
 function cropRectToPercentages(crop: ScanCropRect) {
   const left = clamp(crop.left, 0, 0.98);
   const top = clamp(crop.top, 0, 0.98);
@@ -130,6 +139,7 @@ export default function ScanCropEditor({
 }) {
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const resizeSessionRef = useRef<ResizeSession | null>(null);
+  const initialCropRef = useRef<ScanCropRect>(selectedCrop);
   const [cropPoint, setCropPoint] = useState<Point>(DEFAULT_CROP_POINT);
   const [zoom, setZoom] = useState(1);
   const [cropperSize, setCropperSize] = useState<Size | null>(null);
@@ -202,6 +212,16 @@ export default function ScanCropEditor({
     };
   }, [cropperSize]);
 
+  function requestCancel() {
+    const hasCropChanges = !cropsEqual(selectedCrop, initialCropRef.current);
+    const hasViewChanges = Math.abs(zoom - 1) > 0.01;
+    if ((hasCropChanges || hasViewChanges) && typeof window !== "undefined") {
+      const ok = window.confirm("Discard unsaved photo crop changes?");
+      if (!ok) return;
+    }
+    onCancel();
+  }
+
   function handleReset() {
     setCropPoint(DEFAULT_CROP_POINT);
     setZoom(1);
@@ -231,10 +251,19 @@ export default function ScanCropEditor({
   }
 
   const handleBaseClass = "absolute z-20 rounded-full border border-white/70 bg-white/90 shadow-[0_0_18px_rgba(0,0,0,0.45)] touch-none";
-  const edgeBaseClass = "absolute z-20 rounded-full bg-white/85 shadow-[0_0_14px_rgba(0,0,0,0.4)] touch-none";
+  const edgeBaseClass = "absolute z-20 rounded-full bg-white/90 shadow-[0_0_14px_rgba(0,0,0,0.4)] touch-none";
 
   return (
-    <section className={compact ? "rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]" : "rounded-[20px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-4"}>
+    <section className={compact ? "relative rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]" : "relative rounded-[20px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-4"}>
+      <button
+        type="button"
+        onClick={requestCancel}
+        aria-label="Close crop editor"
+        className="absolute right-2 top-2 z-30 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-2xl leading-none text-white ring-1 ring-white/15 backdrop-blur transition hover:bg-black/70"
+      >
+        ×
+      </button>
+
       {!compact ? (
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -282,10 +311,10 @@ export default function ScanCropEditor({
               <button type="button" aria-label="Resize crop from top right" onPointerDown={(event) => startResize("ne", event)} className={`${handleBaseClass} -right-3 -top-3 h-7 w-7 cursor-nesw-resize pointer-events-auto`} />
               <button type="button" aria-label="Resize crop from bottom left" onPointerDown={(event) => startResize("sw", event)} className={`${handleBaseClass} -bottom-3 -left-3 h-7 w-7 cursor-nesw-resize pointer-events-auto`} />
               <button type="button" aria-label="Resize crop from bottom right" onPointerDown={(event) => startResize("se", event)} className={`${handleBaseClass} -bottom-3 -right-3 h-7 w-7 cursor-nwse-resize pointer-events-auto`} />
-              <button type="button" aria-label="Resize crop from top" onPointerDown={(event) => startResize("n", event)} className={`${edgeBaseClass} -top-2 left-1/2 h-4 w-14 -translate-x-1/2 cursor-ns-resize pointer-events-auto`} />
-              <button type="button" aria-label="Resize crop from bottom" onPointerDown={(event) => startResize("s", event)} className={`${edgeBaseClass} -bottom-2 left-1/2 h-4 w-14 -translate-x-1/2 cursor-ns-resize pointer-events-auto`} />
-              <button type="button" aria-label="Resize crop from left" onPointerDown={(event) => startResize("w", event)} className={`${edgeBaseClass} -left-2 top-1/2 h-14 w-4 -translate-y-1/2 cursor-ew-resize pointer-events-auto`} />
-              <button type="button" aria-label="Resize crop from right" onPointerDown={(event) => startResize("e", event)} className={`${edgeBaseClass} -right-2 top-1/2 h-14 w-4 -translate-y-1/2 cursor-ew-resize pointer-events-auto`} />
+              <button type="button" aria-label="Resize crop from top" onPointerDown={(event) => startResize("n", event)} className={`${edgeBaseClass} -top-3 left-1/2 h-6 w-20 -translate-x-1/2 cursor-ns-resize pointer-events-auto`} />
+              <button type="button" aria-label="Resize crop from bottom" onPointerDown={(event) => startResize("s", event)} className={`${edgeBaseClass} -bottom-3 left-1/2 h-6 w-20 -translate-x-1/2 cursor-ns-resize pointer-events-auto`} />
+              <button type="button" aria-label="Resize crop from left" onPointerDown={(event) => startResize("w", event)} className={`${edgeBaseClass} -left-3 top-1/2 h-20 w-6 -translate-y-1/2 cursor-ew-resize pointer-events-auto`} />
+              <button type="button" aria-label="Resize crop from right" onPointerDown={(event) => startResize("e", event)} className={`${edgeBaseClass} -right-3 top-1/2 h-20 w-6 -translate-y-1/2 cursor-ew-resize pointer-events-auto`} />
             </div>
           ) : null}
         </div>
@@ -314,7 +343,7 @@ export default function ScanCropEditor({
         <button type="button" onClick={handleReset} className={buttonClass()}>
           Full Photo
         </button>
-        <button type="button" onClick={onCancel} className={buttonClass()}>
+        <button type="button" onClick={requestCancel} className={buttonClass()}>
           Back
         </button>
       </div>

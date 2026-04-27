@@ -22,6 +22,15 @@ type ImageEntry = {
 
 const FULL_CROP: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
 
+function cropsEqual(a: ScanCropRect, b: ScanCropRect) {
+  return (
+    Math.abs(a.left - b.left) < 0.001 &&
+    Math.abs(a.top - b.top) < 0.001 &&
+    Math.abs(a.right - b.right) < 0.001 &&
+    Math.abs(a.bottom - b.bottom) < 0.001
+  );
+}
+
 async function renderRotatedImageBlob(
   file: File,
   rotation: number,
@@ -277,6 +286,14 @@ export default function ItemMedia({
     } finally {
       setIsEditingImage(false);
     }
+  }
+
+  function requestCloseImageEdit() {
+    if (editTarget && !cropsEqual(editTarget.crop, FULL_CROP)) {
+      const ok = window.confirm("Discard unsaved photo crop changes?");
+      if (!ok) return;
+    }
+    setEditTarget(null);
   }
 
   function renderRoleControls(entry: ImageEntry) {
@@ -617,23 +634,29 @@ export default function ItemMedia({
       ) : null}
 
       {editTarget ? (
-        <div className="fixed inset-0 z-[95] bg-black/90 backdrop-blur-sm">
-          <div className="absolute inset-0 flex items-center justify-center overflow-auto px-3 py-4 sm:px-4">
-            <div className="w-full max-w-4xl">
-              <ScanCropEditor
-                imageUrl={editTarget.url}
-                crop={editTarget.crop}
-                onChange={(crop) => setEditTarget((prev) => (prev ? { ...prev, crop } : prev))}
-                onApply={() => void applyImageEdit()}
-                onReset={() => setEditTarget((prev) => (prev ? { ...prev, crop: FULL_CROP } : prev))}
-                onCancel={() => setEditTarget(null)}
-                isApplying={isEditingImage}
-                title="EDIT PHOTO"
-                description="Crop and zoom this saved item photo. The edited version replaces the current photo."
-                applyLabel="Save Photo"
-                compact
-              />
-            </div>
+        <div
+          className="fixed inset-0 z-[95] flex items-center justify-center overflow-y-auto bg-black/90 px-3 py-4 backdrop-blur-sm sm:px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Edit saved photo"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) requestCloseImageEdit();
+          }}
+        >
+          <div className="w-full max-w-4xl">
+            <ScanCropEditor
+              imageUrl={editTarget.url}
+              crop={editTarget.crop}
+              onChange={(crop) => setEditTarget((prev) => (prev ? { ...prev, crop } : prev))}
+              onApply={() => void applyImageEdit()}
+              onReset={() => setEditTarget((prev) => (prev ? { ...prev, crop: FULL_CROP } : prev))}
+              onCancel={requestCloseImageEdit}
+              isApplying={isEditingImage}
+              title="EDIT PHOTO"
+              description="Crop and zoom this saved item photo. The edited version replaces the current photo."
+              applyLabel="Save Photo"
+              compact
+            />
           </div>
         </div>
       ) : null}

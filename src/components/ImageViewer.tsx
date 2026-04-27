@@ -93,9 +93,10 @@ export default function ImageViewer({
       <button
         type="button"
         onClick={onClose}
-        className="absolute right-4 top-4 z-[100] rounded-full bg-white/10 px-3 py-2 text-sm text-white ring-1 ring-white/15 backdrop-blur"
+        aria-label="Close image viewer"
+        className="absolute right-3 top-3 z-[110] inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/12 text-2xl leading-none text-white ring-1 ring-white/20 backdrop-blur transition hover:bg-white/18 sm:right-4 sm:top-4"
       >
-        Close
+        ×
       </button>
 
       <div className="absolute left-4 top-4 z-[100] flex flex-wrap gap-2">
@@ -160,6 +161,9 @@ export default function ImageViewer({
 
       <div
         className="absolute inset-0 overflow-hidden px-8 pt-16 pb-24 sm:px-12 sm:pt-20 sm:pb-24"
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
         onWheel={(e) => {
           e.preventDefault();
           zoomBy(e.deltaY < 0 ? 0.2 : -0.2);
@@ -225,7 +229,7 @@ export default function ImageViewer({
           pinchStartRef.current = null;
         }}
       >
-        <div className="flex h-full items-start justify-center">
+        <div className="flex h-full items-center justify-center">
           {currentImage ? (
             <img
               src={currentImage}
@@ -245,8 +249,8 @@ export default function ImageViewer({
               }}
               className="select-none object-contain"
               style={{
-                maxWidth: "80vw",
-                maxHeight: "72vh",
+                maxWidth: "92vw",
+                maxHeight: "calc(100dvh - 8rem)",
                 transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
                 transformOrigin: "top center",
                 transition: "transform 140ms ease-out",
