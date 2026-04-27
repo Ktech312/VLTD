@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import ItemIntelligencePanel from "@/components/ItemIntelligencePanel";
@@ -567,7 +568,7 @@ function VaultCard({
             >
               {VAULT_CATEGORIES.map((category) => (
                 <option key={category.key} value={category.key}>
-                  {categoryDisplayName(category.key)}
+                  {category.label}
                 </option>
               ))}
             </select>
@@ -735,13 +736,13 @@ function CategoryOverviewCard({
           {coverImage ? (
             <img
               src={coverImage}
-              alt={`${categoryDisplayName(category.key)} cover`}
+              alt={`${category.label} cover`}
               className="h-full min-h-[132px] w-full object-cover transition duration-300 group-hover:scale-105"
               draggable={false}
             />
           ) : (
             <div className="flex h-full min-h-[132px] items-center justify-center px-3 text-center text-[11px] font-semibold text-[color:var(--muted)]">
-              {categoryDisplayName(category.key)}
+              {category.label}
             </div>
           )}
         </div>
@@ -751,7 +752,7 @@ function CategoryOverviewCard({
             <div className="flex items-start justify-between gap-2">
               <div>
                 <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Folder</div>
-                <h2 className="mt-1 text-xl font-semibold leading-tight text-cyan-300">{categoryDisplayName(category.key)}</h2>
+                <h2 className="mt-1 text-xl font-semibold leading-tight text-cyan-300">{category.label}</h2>
               </div>
               <div className="rounded-full bg-black/20 px-2.5 py-1 text-[11px] font-semibold ring-1 ring-white/10">
                 {items.length} {items.length === 1 ? "item" : "items"}
@@ -776,7 +777,10 @@ function CategoryOverviewCard({
   );
 }
 
-export default function VaultPage() {
+export default function VaultCategoryPage() {
+  const params = useParams<{ category: string }>();
+  const activeCategory = directCategoryMatch(params.category) || "misc";
+  const activeCategoryName = categoryDisplayName(activeCategory);
   const [items, setItems] = useState<VaultItem[]>([]);
   const [query, setQuery] = useState("");
   const [universeFilter, setUniverseFilter] = useState<UniverseFilter>("ALL");
@@ -869,6 +873,7 @@ export default function VaultPage() {
     const next = items.filter((item) => {
       const isSold = Boolean(saleInfoForItem(item, saleMap));
       if (!showSoldItems && isSold) return false;
+      if (categoryForItem(item) !== activeCategory) return false;
       if (universeFilter !== "ALL" && item.universe !== universeFilter) return false;
       if (gradedOnly && !item.grade) return false;
       const intelligence = intelligenceMap[item.id];
@@ -912,7 +917,7 @@ export default function VaultPage() {
     });
 
     return next;
-  }, [items, query, universeFilter, gradedOnly, sortMode, readinessFilter, intelligenceMap, sales, showSoldItems]);
+  }, [items, query, universeFilter, gradedOnly, sortMode, readinessFilter, intelligenceMap, sales, showSoldItems, activeCategory]);
 
   const saleMap = useMemo(
     () => Object.fromEntries(sales.map((sale) => [String(sale.id), sale])),
@@ -923,27 +928,6 @@ export default function VaultPage() {
     [items, saleMap]
   );
 
-  const categoryGroups = useMemo(() => {
-    const groups = VAULT_CATEGORIES.reduce(
-      (acc, category) => {
-        acc[category.key] = [];
-        return acc;
-      },
-      {} as Record<VaultCategoryKey, VaultItem[]>
-    );
-
-    for (const item of items) {
-      if (saleInfoForItem(item, saleMap)) continue;
-      groups[categoryForItem(item)].push(item);
-    }
-
-    for (const category of VAULT_CATEGORIES) {
-      groups[category.key].sort((a, b) => effectiveMarketValue(b) - effectiveMarketValue(a));
-    }
-
-    return groups;
-  }, [items, saleMap]);
-
   const stats = useMemo(() => {
     const totalItems = filteredItems.length;
     const totalCostValue = filteredItems.reduce((sum, item) => sum + totalCost(item), 0);
@@ -952,6 +936,31 @@ export default function VaultPage() {
     return { totalItems, totalCost: totalCostValue, totalValue, totalGain };
   }, [filteredItems]);
 
+  const featuredItem = useMemo(() => {
+    if (filteredItems.length === 0) return null;
+    return [...filteredItems].sort((a, b) => {
+      const aInt = intelligenceMap[a.id];
+      const bInt = intelligenceMap[b.id];
+      const aScore = (aInt?.valueScore ?? 0) + (aInt?.gainScore ?? 0);
+      const bScore = (bInt?.valueScore ?? 0) + (bInt?.gainScore ?? 0);
+      if (bScore !== aScore) return bScore - aScore;
+      return effectiveMarketValue(b) - effectiveMarketValue(a);
+    })[0];
+  }, [filteredItems, intelligenceMap]);
+
+  const universeCounts = useMemo(() => {
+    const counts: Record<UniverseKey, number> = {
+      POP_CULTURE: 0,
+      SPORTS: 0,
+      TCG: 0,
+      MUSIC: 0,
+      JEWELRY_APPAREL: 0,
+      GAMES: 0,
+      MISC: 0,
+    };
+    for (const item of items) counts[normalizeUniverse(item.universe)] += 1;
+    return counts;
+  }, [items]);
 
   const hasActiveFilters =
     query.trim().length > 0 ||
@@ -1020,15 +1029,21 @@ export default function VaultPage() {
           <div className="relative flex flex-col gap-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="max-w-2xl">
-                <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">VAULT</div>
+                <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">VAULT FOLDER</div>
                 <h1 className="mt-2 text-[1.7rem] font-semibold leading-tight sm:text-[1.9rem]">
-                  Vault Folders
+                  {activeCategoryName}
                 </h1>
                 <div className="mt-1.5 text-sm text-[color:var(--muted)]">
-                  Category-first inventory management. Open a folder to browse, edit, sell, and reassign items.
+                  Items in this folder. Change an item folder and it moves immediately.
                 </div>
               </div>
               <div className="shrink-0 flex flex-wrap gap-2">
+                <Link
+                  href="/vault"
+                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                >
+                  All Folders
+                </Link>
                 <Link
                   href="/vault/add"
                   className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
@@ -1102,42 +1117,95 @@ export default function VaultPage() {
         </section>
 
         <section className="mt-3 rounded-[18px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">CATEGORY FOLDERS</div>
-              <div className="mt-1 text-sm text-[color:var(--muted)]">
-                Every vault item belongs to one folder. Unknown items are assigned to Misc. and can be changed from the item card or detail page.
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href="/vault/misc"
-                className="inline-flex min-h-[36px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
-              >
-                Review Misc.
-              </Link>
-              <Link
-                href="/vault/sold"
-                className="inline-flex min-h-[36px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
-              >
-                Sold Items ({soldCount})
-              </Link>
-            </div>
+          <div className="grid gap-2 lg:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,0.7fr))]">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search vault items..."
+              className="min-h-[40px] w-full rounded-xl bg-[color:var(--input)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+            />
+            <select
+              value={universeFilter}
+              onChange={(e) => setUniverseFilter(e.target.value as UniverseFilter)}
+              className="min-h-[40px] rounded-xl bg-[color:var(--input)] px-4 py-2 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+            >
+              <option value="ALL">All Universes</option>
+              {(Object.keys(UNIVERSE_LABEL) as UniverseKey[]).map((key) => (
+                <option key={key} value={key}>
+                  {UNIVERSE_LABEL[key]} ({universeCounts[key]})
+                </option>
+              ))}
+            </select>
+            <select
+              value={readinessFilter}
+              onChange={(e) => setReadinessFilter(e.target.value as ReadinessFilter)}
+              className="min-h-[40px] rounded-xl bg-[color:var(--input)] px-4 py-2 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+            >
+              <option value="all">All Readiness</option>
+              <option value="high">High Readiness</option>
+              <option value="medium">Medium Readiness</option>
+              <option value="low">Low Readiness</option>
+            </select>
+            <select
+              value={sortMode}
+              onChange={(e) => setSortMode(e.target.value as SortMode)}
+              className="min-h-[40px] rounded-xl bg-[color:var(--input)] px-4 py-2 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+            >
+              <option value="newest">Newest</option>
+              <option value="value_desc">Value ↓</option>
+              <option value="value_asc">Value ↑</option>
+              <option value="gain_desc">Gain ↓</option>
+              <option value="gain_asc">Gain ↑</option>
+              <option value="title">Title A-Z</option>
+            </select>
+            <PillButton
+              variant={gradedOnly ? "active" : "default"}
+              onClick={() => setGradedOnly((v) => !v)}
+              className="min-h-[40px] rounded-xl px-4 py-2 text-sm font-medium text-[color:var(--fg)]"
+            >
+              {gradedOnly ? "Graded: On" : "Graded Only"}
+            </PillButton>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <PillButton
+              variant={showSoldItems ? "active" : "default"}
+              onClick={() => setShowSoldItems((value) => !value)}
+              className="min-h-[36px] rounded-full px-4 py-2 text-sm font-medium text-[color:var(--fg)]"
+            >
+              {showSoldItems ? `Hide Sold Items (${soldCount})` : `Show Sold Items (${soldCount})`}
+            </PillButton>
           </div>
         </section>
 
-        {items.length === 0 ? (
-          <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} />
+        {featuredItem ? (
+          <div className="mt-3">
+            <ItemIntelligencePanel
+              item={featuredItem}
+              intelligence={intelligenceMap[featuredItem.id] ?? null}
+            />
+          </div>
+        ) : null}
+
+        {filteredItems.length === 0 ? (
+          <VaultEmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearFilters} />
         ) : (
           <section className="mt-3">
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {VAULT_CATEGORIES.map((category) => (
-                <CategoryOverviewCard
-                  key={category.key}
-                  category={category}
-                  items={categoryGroups[category.key]}
-                />
-              ))}
+            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+              {filteredItems.map((item) => {
+                const intelligence = intelligenceMap[item.id];
+                const readiness = intelligence?.readiness ?? "Low";
+
+                return (
+                  <VaultCard
+                    key={item.id}
+                    item={item}
+                    readiness={readiness}
+                    sale={saleInfoForItem(item, saleMap)}
+                    onSaveItem={handleSaveItem}
+                    onDeleteItem={handleDeleteItem}
+                  />
+                );
+              })}
             </div>
           </section>
         )}
