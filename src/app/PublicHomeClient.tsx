@@ -1,15 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
-import {
-  GALLERY_EVENT,
-  loadAllGalleries,
-  refreshGalleriesFromSupabase,
-  type Gallery,
-} from "@/lib/galleryModel";
-import { getVaultImagePublicUrl, isDirectBrowserImageUrl } from "@/lib/vaultCloud";
+import type { Gallery } from "@/lib/galleryModel";
 
 type PublicGalleryCard = {
   id: string;
@@ -20,6 +14,11 @@ type PublicGalleryCard = {
   itemCount: number;
   views: number;
 };
+
+type VaultCloudRuntime = Pick<
+  typeof import("@/lib/vaultCloud"),
+  "getVaultImagePublicUrl" | "isDirectBrowserImageUrl"
+>;
 
 const FEATURE_LABELS = [
   "Scan collectibles into a structured vault",
@@ -57,23 +56,23 @@ const FALLBACK_GALLERIES: PublicGalleryCard[] = [
   },
 ];
 
-function resolveSnapshotImage(gallery: Gallery) {
+function resolveSnapshotImage(gallery: Gallery, cloud: VaultCloudRuntime) {
   const snapshot = gallery.publicItemSnapshots?.find(
     (item) => item.imageFrontUrl || item.imageBackUrl || item.imageFrontStoragePath || item.primaryImageKey
   );
 
   const directUrl = snapshot?.imageFrontUrl || snapshot?.imageBackUrl || "";
-  if (directUrl && isDirectBrowserImageUrl(directUrl)) return directUrl;
+  if (directUrl && cloud.isDirectBrowserImageUrl(directUrl)) return directUrl;
 
   const storagePath = snapshot?.imageFrontStoragePath || snapshot?.primaryImageKey || "";
-  if (storagePath) return getVaultImagePublicUrl(storagePath);
+  if (storagePath) return cloud.getVaultImagePublicUrl(storagePath);
 
   return "";
 }
 
-function galleryImage(gallery: Gallery) {
+function galleryImage(gallery: Gallery, cloud: VaultCloudRuntime) {
   if (gallery.coverImage) return gallery.coverImage;
-  const snapshotImage = resolveSnapshotImage(gallery);
+  const snapshotImage = resolveSnapshotImage(gallery, cloud);
   if (snapshotImage) return snapshotImage;
   if (gallery.themePack === "walnut") return "/themes/walnut-shelf-wall.webp";
   if (gallery.themePack === "midnight") return "/themes/midnight-shelf-wall.webp";
@@ -81,7 +80,7 @@ function galleryImage(gallery: Gallery) {
   return "/themes/classic-shelf-wall.webp";
 }
 
-function toPublicCard(gallery: Gallery): PublicGalleryCard {
+function toPublicCard(gallery: Gallery, cloud: VaultCloudRuntime): PublicGalleryCard {
   const token = gallery.share?.publicToken;
 
   return {
@@ -91,7 +90,7 @@ function toPublicCard(gallery: Gallery): PublicGalleryCard {
       gallery.description?.trim() ||
       `${gallery.itemIds.length || gallery.publicItemSnapshots?.length || 0} piece public collection.`,
     href: token ? `/museum/share/${encodeURIComponent(token)}` : `/gallery/${encodeURIComponent(gallery.id)}`,
-    image: galleryImage(gallery),
+    image: galleryImage(gallery, cloud),
     itemCount: gallery.itemIds.length || gallery.publicItemSnapshots?.length || 0,
     views: gallery.analytics?.views ?? 0,
   };
@@ -109,6 +108,7 @@ function PublicGalleryTile({ gallery }: { gallery: PublicGalleryCard }) {
           alt={gallery.title}
           className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
           loading="lazy"
+          decoding="async"
         />
       </div>
       <div className="p-4">
@@ -126,28 +126,46 @@ function PublicGalleryTile({ gallery }: { gallery: PublicGalleryCard }) {
 }
 
 export default function PublicHomeClient() {
-  const [galleries, setGalleries] = useState<Gallery[]>([]);
+  const [galleryCards, setGalleryCards] = useState<PublicGalleryCard[]>(FALLBACK_GALLERIES);
 
   useEffect(() => {
-    function loadPublicGalleries() {
-      setGalleries(
-        loadAllGalleries()
+    let isActive = true;
+    let removeGalleryListener = () => {};
+
+    async function loadPublicGalleries() {
+      const [galleryModel, cloud] = await Promise.all([
+        import("@/lib/galleryModel"),
+        import("@/lib/vaultCloud"),
+      ]);
+
+      if (!isActive) return;
+
+      function applyGalleries() {
+        if (!isActive) return;
+
+        const live = galleryModel
+          .loadAllGalleries()
           .filter((gallery) => gallery.state === "ACTIVE" && gallery.visibility === "PUBLIC")
           .sort((a, b) => Number(b.updatedAt ?? 0) - Number(a.updatedAt ?? 0))
-      );
+          .slice(0, 6)
+          .map((gallery) => toPublicCard(gallery, cloud));
+
+        setGalleryCards(live.length ? live : FALLBACK_GALLERIES);
+      }
+
+      applyGalleries();
+      void galleryModel.refreshGalleriesFromSupabase(true).then(applyGalleries);
+      window.addEventListener(galleryModel.GALLERY_EVENT, applyGalleries);
+      removeGalleryListener = () => window.removeEventListener(galleryModel.GALLERY_EVENT, applyGalleries);
     }
 
-    loadPublicGalleries();
-    void refreshGalleriesFromSupabase(true).then(loadPublicGalleries);
+    void loadPublicGalleries();
 
-    window.addEventListener(GALLERY_EVENT, loadPublicGalleries);
-    return () => window.removeEventListener(GALLERY_EVENT, loadPublicGalleries);
+    return () => {
+      isActive = false;
+      removeGalleryListener();
+    };
   }, []);
-
-  const galleryCards = useMemo(() => {
-    const live = galleries.slice(0, 6).map(toPublicCard);
-    return live.length ? live : FALLBACK_GALLERIES;
-  }, [galleries]);
 
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
@@ -156,6 +174,7 @@ export default function PublicHomeClient() {
           src="/themes/classic-shelf-wall.webp"
           alt="VLTD public gallery wall"
           className="absolute inset-0 h-full w-full object-cover"
+          fetchPriority="high"
         />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.84),rgba(0,0,0,0.52),rgba(0,0,0,0.16))]" />
         <div className="relative mx-auto flex min-h-[74vh] max-w-7xl flex-col justify-center px-4 py-16 sm:px-6 lg:px-8">

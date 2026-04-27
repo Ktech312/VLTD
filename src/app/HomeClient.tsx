@@ -1,12 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-
-import BiggestMoversPanel from "@/components/BiggestMoversPanel";
 import { getOnboardingStatus } from "@/lib/auth";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
+
+const BiggestMoversPanel = dynamic(() => import("@/components/BiggestMoversPanel"), {
+  loading: () => (
+    <div className="rounded-[24px] bg-[color:var(--surface)] p-6 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+      Loading movers...
+    </div>
+  ),
+});
 
 function formatMoney(value?: number) {
   const num = Number(value ?? 0);
