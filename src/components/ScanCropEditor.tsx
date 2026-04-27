@@ -1,24 +1,34 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Cropper, { type Area, type Point, type Size } from "react-easy-crop";
-import "react-easy-crop/react-easy-crop.css";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type TouchEvent as ReactTouchEvent } from "react";
 
 import type { ScanCropRect } from "@/lib/scanners/cropImageFile";
 
-const MAX_ZOOM = 8;
-const MIN_CROP_WIDTH = 72;
-const MIN_CROP_HEIGHT = 72;
-const DEFAULT_CROP_POINT: Point = { x: 0, y: 0 };
+const MIN_CROP_SIZE = 0.08;
+const ZOOM_STEP = 0.08;
 
-type ResizeHandle = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
+type DragMode =
+  | "move"
+  | "n"
+  | "s"
+  | "e"
+  | "w"
+  | "ne"
+  | "nw"
+  | "se"
+  | "sw";
 
-type ResizeSession = {
-  handle: ResizeHandle;
+type DragSession = {
+  mode: DragMode;
   startX: number;
   startY: number;
-  startWidth: number;
-  startHeight: number;
+  startCrop: ScanCropRect;
+  imageRect: DOMRect;
+};
+
+type TouchSnapshot = {
+  distance: number;
+  crop: ScanCropRect;
 };
 
 function buttonClass() {
@@ -37,6 +47,14 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
+function normalizeCrop(crop: ScanCropRect): ScanCropRect {
+  const left = clamp(Number(crop.left ?? 0), 0, 1 - MIN_CROP_SIZE);
+  const top = clamp(Number(crop.top ?? 0), 0, 1 - MIN_CROP_SIZE);
+  const right = clamp(Number(crop.right ?? 0), 0, 1 - left - MIN_CROP_SIZE);
+  const bottom = clamp(Number(crop.bottom ?? 0), 0, 1 - top - MIN_CROP_SIZE);
+  return { left, top, right, bottom };
+}
+
 function cropsEqual(a: ScanCropRect, b: ScanCropRect) {
   return (
     Math.abs(a.left - b.left) < 0.001 &&
@@ -46,66 +64,56 @@ function cropsEqual(a: ScanCropRect, b: ScanCropRect) {
   );
 }
 
-function cropRectToPercentages(crop: ScanCropRect) {
-  const left = clamp(crop.left, 0, 0.98);
-  const top = clamp(crop.top, 0, 0.98);
-  const width = clamp(1 - crop.left - crop.right, 0.02, 1);
-  const height = clamp(1 - crop.top - crop.bottom, 0.02, 1);
+function cropWidth(crop: ScanCropRect) {
+  return 1 - crop.left - crop.right;
+}
 
+function cropHeight(crop: ScanCropRect) {
+  return 1 - crop.top - crop.bottom;
+}
+
+function moveCrop(crop: ScanCropRect, dx: number, dy: number): ScanCropRect {
+  const width = cropWidth(crop);
+  const height = cropHeight(crop);
+  const left = clamp(crop.left + dx, 0, 1 - width);
+  const top = clamp(crop.top + dy, 0, 1 - height);
   return {
-    x: left * 100,
-    y: top * 100,
-    width: width * 100,
-    height: height * 100,
+    left,
+    top,
+    right: 1 - left - width,
+    bottom: 1 - top - height,
   };
 }
 
-function areaToCropRect(area: Area): ScanCropRect {
-  return {
-    left: clamp(area.x / 100, 0, 0.98),
-    top: clamp(area.y / 100, 0, 0.98),
-    right: clamp((100 - area.x - area.width) / 100, 0, 0.98),
-    bottom: clamp((100 - area.y - area.height) / 100, 0, 0.98),
-  };
+function resizeCrop(crop: ScanCropRect, mode: DragMode, dx: number, dy: number): ScanCropRect {
+  let next = { ...crop };
+
+  if (mode.includes("w")) {
+    next.left = clamp(crop.left + dx, 0, 1 - crop.right - MIN_CROP_SIZE);
+  }
+  if (mode.includes("e")) {
+    next.right = clamp(crop.right - dx, 0, 1 - next.left - MIN_CROP_SIZE);
+  }
+  if (mode.includes("n")) {
+    next.top = clamp(crop.top + dy, 0, 1 - crop.bottom - MIN_CROP_SIZE);
+  }
+  if (mode.includes("s")) {
+    next.bottom = clamp(crop.bottom - dy, 0, 1 - next.top - MIN_CROP_SIZE);
+  }
+
+  return normalizeCrop(next);
 }
 
-function maxCropFrameForViewport(viewport: Size): Size {
-  return {
-    width: Math.max(MIN_CROP_WIDTH, viewport.width * 0.92),
-    height: Math.max(MIN_CROP_HEIGHT, viewport.height * 0.88),
-  };
+function zoomCrop(crop: ScanCropRect, delta: number): ScanCropRect {
+  const left = crop.left + delta;
+  const right = crop.right + delta;
+  const top = crop.top + delta;
+  const bottom = crop.bottom + delta;
+  return normalizeCrop({ left, right, top, bottom });
 }
 
-function initialCropFrameSize(viewport: Size, crop: ScanCropRect): Size {
-  const maxFrame = maxCropFrameForViewport(viewport);
-  const widthRatio = clamp(1 - crop.left - crop.right, 0.18, 1);
-  const heightRatio = clamp(1 - crop.top - crop.bottom, 0.18, 1);
-
-  return {
-    width: clamp(maxFrame.width * widthRatio, MIN_CROP_WIDTH, maxFrame.width),
-    height: clamp(maxFrame.height * heightRatio, MIN_CROP_HEIGHT, maxFrame.height),
-  };
-}
-
-function resizeCropFrame(
-  start: Size,
-  handle: ResizeHandle,
-  deltaX: number,
-  deltaY: number,
-  maxFrame: Size
-): Size {
-  const affectsWest = handle.includes("w");
-  const affectsEast = handle.includes("e");
-  const affectsNorth = handle.includes("n");
-  const affectsSouth = handle.includes("s");
-
-  const widthDelta = (affectsEast ? deltaX : 0) + (affectsWest ? -deltaX : 0);
-  const heightDelta = (affectsSouth ? deltaY : 0) + (affectsNorth ? -deltaY : 0);
-
-  return {
-    width: clamp(start.width + widthDelta, MIN_CROP_WIDTH, maxFrame.width),
-    height: clamp(start.height + heightDelta, MIN_CROP_HEIGHT, maxFrame.height),
-  };
+function distance(a: Touch, b: Touch) {
+  return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
 }
 
 export default function ScanCropEditor({
@@ -119,7 +127,7 @@ export default function ScanCropEditor({
   rotation = 0,
   isApplying = false,
   title = "CROP BEFORE CONTINUING",
-  description = "Pinch to zoom, drag the photo, or pull the crop handles from any side.",
+  description = "Drag any side or corner to crop. Drag inside the box to reposition.",
   applyLabel = "Save Crop",
   compact = false,
 }: {
@@ -137,66 +145,34 @@ export default function ScanCropEditor({
   applyLabel?: string;
   compact?: boolean;
 }) {
-  const resizeObserverRef = useRef<ResizeObserver | null>(null);
-  const resizeSessionRef = useRef<ResizeSession | null>(null);
+  const imageFrameRef = useRef<HTMLDivElement | null>(null);
+  const dragSessionRef = useRef<DragSession | null>(null);
+  const pinchRef = useRef<TouchSnapshot | null>(null);
   const initialCropRef = useRef<ScanCropRect>(selectedCrop);
-  const [cropPoint, setCropPoint] = useState<Point>(DEFAULT_CROP_POINT);
-  const [zoom, setZoom] = useState(1);
-  const [cropperSize, setCropperSize] = useState<Size | null>(null);
-  const [cropFrameSize, setCropFrameSize] = useState<Size | null>(null);
-  const initialCroppedAreaPercentages = useMemo(
-    () => cropRectToPercentages(selectedCrop),
-    [selectedCrop]
-  );
+  const [localCrop, setLocalCrop] = useState<ScanCropRect>(() => normalizeCrop(selectedCrop));
   const normalizedRotation = ((rotation % 360) + 360) % 360;
-  const cropAspect = cropFrameSize ? cropFrameSize.width / cropFrameSize.height : 1;
-
-  const setCropperElement = useCallback((node: HTMLDivElement | null) => {
-    resizeObserverRef.current?.disconnect();
-    resizeObserverRef.current = null;
-
-    if (!node) return;
-
-    const updateSize = () => {
-      setCropperSize({
-        width: node.clientWidth,
-        height: node.clientHeight,
-      });
-    };
-
-    updateSize();
-    const observer = new ResizeObserver(updateSize);
-    observer.observe(node);
-    resizeObserverRef.current = observer;
-  }, []);
 
   useEffect(() => {
-    if (!cropperSize) return;
-    setCropFrameSize((current) => current ?? initialCropFrameSize(cropperSize, selectedCrop));
-  }, [cropperSize, selectedCrop]);
-
-  useEffect(() => {
-    return () => resizeObserverRef.current?.disconnect();
-  }, []);
+    setLocalCrop(normalizeCrop(selectedCrop));
+  }, [selectedCrop]);
 
   useEffect(() => {
     function handlePointerMove(event: PointerEvent) {
-      const session = resizeSessionRef.current;
-      if (!session || !cropperSize) return;
+      const session = dragSessionRef.current;
+      if (!session) return;
 
-      const next = resizeCropFrame(
-        { width: session.startWidth, height: session.startHeight },
-        session.handle,
-        event.clientX - session.startX,
-        event.clientY - session.startY,
-        maxCropFrameForViewport(cropperSize)
-      );
+      const dx = (event.clientX - session.startX) / Math.max(1, session.imageRect.width);
+      const dy = (event.clientY - session.startY) / Math.max(1, session.imageRect.height);
+      const next = session.mode === "move"
+        ? moveCrop(session.startCrop, dx, dy)
+        : resizeCrop(session.startCrop, session.mode, dx, dy);
 
-      setCropFrameSize(next);
+      setLocalCrop(next);
+      onChange(next);
     }
 
     function handlePointerUp() {
-      resizeSessionRef.current = null;
+      dragSessionRef.current = null;
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
     }
@@ -210,12 +186,11 @@ export default function ScanCropEditor({
       window.removeEventListener("pointerup", handlePointerUp);
       window.removeEventListener("pointercancel", handlePointerUp);
     };
-  }, [cropperSize]);
+  }, [onChange]);
 
   function requestCancel() {
-    const hasCropChanges = !cropsEqual(selectedCrop, initialCropRef.current);
-    const hasViewChanges = Math.abs(zoom - 1) > 0.01;
-    if ((hasCropChanges || hasViewChanges) && typeof window !== "undefined") {
+    const hasCropChanges = !cropsEqual(localCrop, initialCropRef.current);
+    if (hasCropChanges && typeof window !== "undefined") {
       const ok = window.confirm("Discard unsaved photo crop changes?");
       if (!ok) return;
     }
@@ -223,49 +198,81 @@ export default function ScanCropEditor({
   }
 
   function handleReset() {
-    setCropPoint(DEFAULT_CROP_POINT);
-    setZoom(1);
-    if (cropperSize) setCropFrameSize(maxCropFrameForViewport(cropperSize));
+    const fullCrop = { left: 0, top: 0, right: 0, bottom: 0 };
+    setLocalCrop(fullCrop);
+    onChange(fullCrop);
     onReset();
   }
 
-  function startResize(handle: ResizeHandle, event: React.PointerEvent<HTMLButtonElement>) {
+  function startDrag(mode: DragMode, event: ReactPointerEvent<HTMLButtonElement | HTMLDivElement>) {
     event.preventDefault();
     event.stopPropagation();
-    if (!cropFrameSize) return;
+    const imageRect = imageFrameRef.current?.getBoundingClientRect();
+    if (!imageRect) return;
 
-    resizeSessionRef.current = {
-      handle,
+    dragSessionRef.current = {
+      mode,
       startX: event.clientX,
       startY: event.clientY,
-      startWidth: cropFrameSize.width,
-      startHeight: cropFrameSize.height,
+      startCrop: localCrop,
+      imageRect,
     };
-    document.body.style.cursor = handle.includes("n") || handle.includes("s") ? "ns-resize" : "ew-resize";
+
+    document.body.style.cursor = mode === "move" ? "move" : mode.includes("n") || mode.includes("s") ? "ns-resize" : "ew-resize";
     document.body.style.userSelect = "none";
     event.currentTarget.setPointerCapture?.(event.pointerId);
   }
 
   function zoomBy(delta: number) {
-    setZoom((current) => clamp(Number((current + delta).toFixed(2)), 1, MAX_ZOOM));
+    const next = zoomCrop(localCrop, delta);
+    setLocalCrop(next);
+    onChange(next);
   }
 
-  const handleBaseClass = "absolute z-20 rounded-full border border-white/70 bg-white/90 shadow-[0_0_18px_rgba(0,0,0,0.45)] touch-none";
-  const edgeBaseClass = "absolute z-20 rounded-full bg-white/90 shadow-[0_0_14px_rgba(0,0,0,0.4)] touch-none";
+  function handleTouchStart(event: ReactTouchEvent<HTMLDivElement>) {
+    if (event.touches.length !== 2) return;
+    pinchRef.current = {
+      distance: distance(event.touches[0], event.touches[1]),
+      crop: localCrop,
+    };
+  }
+
+  function handleTouchMove(event: ReactTouchEvent<HTMLDivElement>) {
+    const snapshot = pinchRef.current;
+    if (!snapshot || event.touches.length !== 2) return;
+    event.preventDefault();
+    const currentDistance = distance(event.touches[0], event.touches[1]);
+    const zoomAmount = clamp((currentDistance - snapshot.distance) / 1400, -0.18, 0.18);
+    const next = zoomCrop(snapshot.crop, zoomAmount);
+    setLocalCrop(next);
+    onChange(next);
+  }
+
+  function handleTouchEnd() {
+    pinchRef.current = null;
+  }
+
+  const left = localCrop.left * 100;
+  const top = localCrop.top * 100;
+  const width = cropWidth(localCrop) * 100;
+  const height = cropHeight(localCrop) * 100;
+  const zoomLabel = Math.round((1 / Math.max(cropWidth(localCrop), cropHeight(localCrop))) * 100);
+  const handleBaseClass = "absolute z-30 rounded-full border border-white/80 bg-white shadow-[0_0_18px_rgba(0,0,0,0.55)] touch-none";
+  const edgeBaseClass = "absolute z-30 rounded-full bg-white/95 shadow-[0_0_14px_rgba(0,0,0,0.5)] touch-none";
 
   return (
-    <section className={compact ? "relative rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]" : "relative rounded-[20px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-4"}>
+    <section className={compact ? "relative max-h-[calc(100dvh-24px)] overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]" : "relative max-h-[calc(100dvh-24px)] overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-4"}>
       <button
         type="button"
         onClick={requestCancel}
         aria-label="Close crop editor"
-        className="absolute right-2 top-2 z-30 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-2xl leading-none text-white ring-1 ring-white/15 backdrop-blur transition hover:bg-black/70"
+        className="absolute right-2 top-2 z-40 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/65 text-2xl leading-none text-white ring-1 ring-white/15 backdrop-blur transition hover:bg-black/80"
       >
         ×
       </button>
 
       {!compact ? (
-        <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-wrap items-start justify-between gap-3 pr-12">
           <div>
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">{title}</div>
             <div className="mt-1 text-xs text-[color:var(--muted)]">{description}</div>
@@ -279,60 +286,61 @@ export default function ScanCropEditor({
         </div>
       ) : null}
 
-      <div className={compact ? "mt-2 overflow-hidden rounded-[16px] bg-black/20 p-1.5 ring-1 ring-[color:var(--border)]" : "mt-3 overflow-hidden rounded-[16px] bg-black/20 p-2 ring-1 ring-[color:var(--border)]"}>
-        <div ref={setCropperElement} className={compact ? "relative h-[68dvh] min-h-[320px] overflow-hidden rounded-[12px] bg-black/50 touch-none" : "relative h-[68dvh] min-h-[360px] max-h-[680px] overflow-hidden rounded-[12px] bg-black/50 touch-none"}>
-          <Cropper
-            image={imageUrl}
-            crop={cropPoint}
-            zoom={zoom}
-            rotation={normalizedRotation}
-            aspect={cropAspect}
-            minZoom={1}
-            maxZoom={MAX_ZOOM}
-            objectFit="contain"
-            showGrid
-            restrictPosition
-            cropSize={cropFrameSize ?? undefined}
-            initialCroppedAreaPercentages={initialCroppedAreaPercentages}
-            onCropChange={setCropPoint}
-            onZoomChange={setZoom}
-            onCropComplete={(croppedAreaPercentages) => {
-              onChange(areaToCropRect(croppedAreaPercentages));
-            }}
-          />
+      <div className={compact ? "mt-2 overflow-hidden rounded-[16px] bg-black/30 p-1.5 ring-1 ring-[color:var(--border)]" : "mt-3 overflow-hidden rounded-[16px] bg-black/30 p-2 ring-1 ring-[color:var(--border)]"}>
+        <div
+          className={compact ? "relative flex h-[min(62dvh,560px)] min-h-[280px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none" : "relative flex h-[min(64dvh,620px)] min-h-[320px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div ref={imageFrameRef} className="relative max-h-full max-w-full">
+            <img
+              src={imageUrl}
+              alt="Crop preview"
+              draggable={false}
+              className="block max-h-[min(62dvh,560px)] max-w-full select-none object-contain"
+              style={{ transform: `rotate(${normalizedRotation}deg)`, touchAction: "none" }}
+            />
 
-          {cropFrameSize ? (
+            <div className="pointer-events-none absolute inset-0 bg-black/45" />
+
             <div
-              className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
-              style={{ width: cropFrameSize.width, height: cropFrameSize.height }}
-              aria-hidden="true"
+              className="absolute z-20 border border-white/85 shadow-[0_0_0_9999px_rgba(0,0,0,0.48)] touch-none"
+              style={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%` }}
+              onPointerDown={(event) => startDrag("move", event)}
             >
-              <button type="button" aria-label="Resize crop from top left" onPointerDown={(event) => startResize("nw", event)} className={`${handleBaseClass} -left-3 -top-3 h-7 w-7 cursor-nwse-resize pointer-events-auto`} />
-              <button type="button" aria-label="Resize crop from top right" onPointerDown={(event) => startResize("ne", event)} className={`${handleBaseClass} -right-3 -top-3 h-7 w-7 cursor-nesw-resize pointer-events-auto`} />
-              <button type="button" aria-label="Resize crop from bottom left" onPointerDown={(event) => startResize("sw", event)} className={`${handleBaseClass} -bottom-3 -left-3 h-7 w-7 cursor-nesw-resize pointer-events-auto`} />
-              <button type="button" aria-label="Resize crop from bottom right" onPointerDown={(event) => startResize("se", event)} className={`${handleBaseClass} -bottom-3 -right-3 h-7 w-7 cursor-nwse-resize pointer-events-auto`} />
-              <button type="button" aria-label="Resize crop from top" onPointerDown={(event) => startResize("n", event)} className={`${edgeBaseClass} -top-3 left-1/2 h-6 w-20 -translate-x-1/2 cursor-ns-resize pointer-events-auto`} />
-              <button type="button" aria-label="Resize crop from bottom" onPointerDown={(event) => startResize("s", event)} className={`${edgeBaseClass} -bottom-3 left-1/2 h-6 w-20 -translate-x-1/2 cursor-ns-resize pointer-events-auto`} />
-              <button type="button" aria-label="Resize crop from left" onPointerDown={(event) => startResize("w", event)} className={`${edgeBaseClass} -left-3 top-1/2 h-20 w-6 -translate-y-1/2 cursor-ew-resize pointer-events-auto`} />
-              <button type="button" aria-label="Resize crop from right" onPointerDown={(event) => startResize("e", event)} className={`${edgeBaseClass} -right-3 top-1/2 h-20 w-6 -translate-y-1/2 cursor-ew-resize pointer-events-auto`} />
+              <div className="pointer-events-none absolute inset-0 grid grid-cols-3 grid-rows-3">
+                {Array.from({ length: 9 }).map((_, index) => (
+                  <div key={index} className="border border-white/22" />
+                ))}
+              </div>
+
+              <button type="button" aria-label="Crop top left" onPointerDown={(event) => startDrag("nw", event)} className={`${handleBaseClass} -left-3 -top-3 h-7 w-7 cursor-nwse-resize pointer-events-auto`} />
+              <button type="button" aria-label="Crop top right" onPointerDown={(event) => startDrag("ne", event)} className={`${handleBaseClass} -right-3 -top-3 h-7 w-7 cursor-nesw-resize pointer-events-auto`} />
+              <button type="button" aria-label="Crop bottom left" onPointerDown={(event) => startDrag("sw", event)} className={`${handleBaseClass} -bottom-3 -left-3 h-7 w-7 cursor-nesw-resize pointer-events-auto`} />
+              <button type="button" aria-label="Crop bottom right" onPointerDown={(event) => startDrag("se", event)} className={`${handleBaseClass} -bottom-3 -right-3 h-7 w-7 cursor-nwse-resize pointer-events-auto`} />
+              <button type="button" aria-label="Crop top edge" onPointerDown={(event) => startDrag("n", event)} className={`${edgeBaseClass} -top-3 left-1/2 h-6 w-20 -translate-x-1/2 cursor-ns-resize pointer-events-auto`} />
+              <button type="button" aria-label="Crop bottom edge" onPointerDown={(event) => startDrag("s", event)} className={`${edgeBaseClass} -bottom-3 left-1/2 h-6 w-20 -translate-x-1/2 cursor-ns-resize pointer-events-auto`} />
+              <button type="button" aria-label="Crop left edge" onPointerDown={(event) => startDrag("w", event)} className={`${edgeBaseClass} -left-3 top-1/2 h-20 w-6 -translate-y-1/2 cursor-ew-resize pointer-events-auto`} />
+              <button type="button" aria-label="Crop right edge" onPointerDown={(event) => startDrag("e", event)} className={`${edgeBaseClass} -right-3 top-1/2 h-20 w-6 -translate-y-1/2 cursor-ew-resize pointer-events-auto`} />
             </div>
-          ) : null}
+          </div>
         </div>
       </div>
 
       <div className={compact ? "mt-2 flex flex-wrap items-center justify-between gap-2 px-1" : "mt-3 flex flex-wrap items-center justify-between gap-2"}>
         <div className="flex flex-wrap items-center gap-2">
-          <button type="button" onClick={() => zoomBy(-0.25)} disabled={zoom <= 1} className={iconButtonClass()} aria-label="Zoom out">
+          <button type="button" onClick={() => zoomBy(-ZOOM_STEP)} disabled={left <= 0.001 && top <= 0.001 && localCrop.right <= 0.001 && localCrop.bottom <= 0.001} className={iconButtonClass()} aria-label="Zoom out">
             −
           </button>
-          <div className="min-w-[64px] text-center text-xs font-semibold text-[color:var(--muted)]">{zoom.toFixed(1)}x</div>
-          <button type="button" onClick={() => zoomBy(0.25)} disabled={zoom >= MAX_ZOOM} className={iconButtonClass()} aria-label="Zoom in">
+          <div className="min-w-[72px] text-center text-xs font-semibold text-[color:var(--muted)]">{zoomLabel}%</div>
+          <button type="button" onClick={() => zoomBy(ZOOM_STEP)} disabled={cropWidth(localCrop) <= MIN_CROP_SIZE + 0.01 || cropHeight(localCrop) <= MIN_CROP_SIZE + 0.01} className={iconButtonClass()} aria-label="Zoom in">
             +
           </button>
         </div>
 
         <div className="text-right text-[11px] leading-4 text-[color:var(--muted)]">
-          Pinch or tap + / − to zoom. Drag the photo. Pull any white handle to crop.
+          Pull one side, drag a corner, or drag inside the crop box.
         </div>
       </div>
 

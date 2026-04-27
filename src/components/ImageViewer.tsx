@@ -53,7 +53,7 @@ export default function ImageViewer({
   }
 
   function zoomBy(delta: number) {
-    setScale((prevScale) => clamp(prevScale + delta, 1, 5));
+    setScale((prevScale) => clamp(Number((prevScale + delta).toFixed(2)), 1, 5));
   }
 
   useEffect(() => {
@@ -78,11 +78,11 @@ export default function ImageViewer({
     };
   }, [images.length, onClose]);
 
-  const canPan = scale > 1;
+  const canPan = scale > 1.01;
 
   return (
     <div
-      className="fixed inset-0 z-[90] bg-black/94 backdrop-blur-sm"
+      className="fixed inset-0 z-[90] flex h-dvh w-dvw items-center justify-center overflow-hidden bg-black/94 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-label="Image viewer"
@@ -94,12 +94,12 @@ export default function ImageViewer({
         type="button"
         onClick={onClose}
         aria-label="Close image viewer"
-        className="absolute right-3 top-3 z-[110] inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/12 text-2xl leading-none text-white ring-1 ring-white/20 backdrop-blur transition hover:bg-white/18 sm:right-4 sm:top-4"
+        className="fixed right-3 top-3 z-[110] inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/12 text-2xl leading-none text-white ring-1 ring-white/20 backdrop-blur transition hover:bg-white/18 sm:right-4 sm:top-4"
       >
         ×
       </button>
 
-      <div className="absolute left-4 top-4 z-[100] flex flex-wrap gap-2">
+      <div className="fixed left-3 top-3 z-[100] flex flex-wrap gap-2 sm:left-4 sm:top-4">
         {onEdit ? (
           <button
             type="button"
@@ -125,25 +125,26 @@ export default function ImageViewer({
           <button
             type="button"
             onClick={prev}
-            className="absolute left-3 top-1/2 z-[100] -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-3xl leading-none text-white ring-1 ring-white/15 backdrop-blur"
+            className="fixed left-3 top-1/2 z-[100] -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-3xl leading-none text-white ring-1 ring-white/15 backdrop-blur"
           >
             ‹
           </button>
           <button
             type="button"
             onClick={next}
-            className="absolute right-3 top-1/2 z-[100] -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-3xl leading-none text-white ring-1 ring-white/15 backdrop-blur"
+            className="fixed right-3 top-1/2 z-[100] -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-3xl leading-none text-white ring-1 ring-white/15 backdrop-blur"
           >
             ›
           </button>
         </>
       ) : null}
 
-      <div className="absolute inset-x-0 bottom-4 z-[100] flex items-center justify-center gap-2">
+      <div className="fixed inset-x-0 bottom-4 z-[100] flex items-center justify-center gap-2">
         <button
           type="button"
           onClick={() => zoomBy(-0.25)}
-          className="rounded-full bg-white/10 px-3 py-2 text-sm text-white ring-1 ring-white/15 backdrop-blur"
+          disabled={scale <= 1}
+          className="rounded-full bg-white/10 px-3 py-2 text-sm text-white ring-1 ring-white/15 backdrop-blur disabled:opacity-40"
         >
           −
         </button>
@@ -153,14 +154,15 @@ export default function ImageViewer({
         <button
           type="button"
           onClick={() => zoomBy(0.25)}
-          className="rounded-full bg-white/10 px-3 py-2 text-sm text-white ring-1 ring-white/15 backdrop-blur"
+          disabled={scale >= 5}
+          className="rounded-full bg-white/10 px-3 py-2 text-sm text-white ring-1 ring-white/15 backdrop-blur disabled:opacity-40"
         >
           +
         </button>
       </div>
 
       <div
-        className="absolute inset-0 overflow-hidden px-8 pt-16 pb-24 sm:px-12 sm:pt-20 sm:pb-24"
+        className="relative flex h-dvh w-dvw items-center justify-center overflow-hidden px-4 py-20 sm:px-12"
         onMouseDown={(e) => {
           if (e.target === e.currentTarget) onClose();
         }}
@@ -201,6 +203,7 @@ export default function ImageViewer({
         }}
         onTouchMove={(e) => {
           if (e.touches.length === 2 && pinchStartRef.current) {
+            e.preventDefault();
             const currentDistance = distance(e.touches[0], e.touches[1]);
             const nextScale = clamp(
               pinchScaleStartRef.current * (currentDistance / pinchStartRef.current),
@@ -212,6 +215,7 @@ export default function ImageViewer({
           }
 
           if (e.touches.length === 1 && draggingRef.current && canPan) {
+            e.preventDefault();
             const dx = e.touches[0].clientX - lastPointRef.current.x;
             const dy = e.touches[0].clientY - lastPointRef.current.y;
             lastPointRef.current = {
@@ -229,37 +233,33 @@ export default function ImageViewer({
           pinchStartRef.current = null;
         }}
       >
-        <div className="flex h-full items-center justify-center">
-          {currentImage ? (
-            <img
-              src={currentImage}
-              alt=""
-              draggable={false}
-              onDoubleClick={() => {
-                if (scale > 1) {
-                  resetTransform();
-                } else {
-                  setScale(2);
-                }
-              }}
-              onMouseDown={(e) => {
-                if (!canPan) return;
-                draggingRef.current = true;
-                lastPointRef.current = { x: e.clientX, y: e.clientY };
-              }}
-              className="select-none object-contain"
-              style={{
-                maxWidth: "92vw",
-                maxHeight: "calc(100dvh - 8rem)",
-                transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
-                transformOrigin: "top center",
-                transition: "transform 140ms ease-out",
-                cursor: canPan ? "grab" : "zoom-in",
-                touchAction: "none",
-              }}
-            />
-          ) : null}
-        </div>
+        {currentImage ? (
+          <img
+            src={currentImage}
+            alt=""
+            draggable={false}
+            onDoubleClick={() => {
+              if (scale > 1) {
+                resetTransform();
+              } else {
+                setScale(2);
+              }
+            }}
+            onMouseDown={(e) => {
+              if (!canPan) return;
+              draggingRef.current = true;
+              lastPointRef.current = { x: e.clientX, y: e.clientY };
+            }}
+            className="max-h-[calc(100dvh-7rem)] max-w-[94dvw] select-none object-contain"
+            style={{
+              transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
+              transformOrigin: "center center",
+              transition: draggingRef.current ? "none" : "transform 120ms ease-out",
+              cursor: canPan ? "grab" : "zoom-in",
+              touchAction: "none",
+            }}
+          />
+        ) : null}
       </div>
     </div>
   );

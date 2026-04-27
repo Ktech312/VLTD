@@ -635,7 +635,7 @@ export default function ItemMedia({
 
       {editTarget ? (
         <div
-          className="fixed inset-0 z-[95] flex items-center justify-center overflow-y-auto bg-black/90 px-3 py-4 backdrop-blur-sm sm:px-4"
+          className="fixed inset-0 z-[95] flex h-dvh w-dvw items-center justify-center overflow-hidden bg-black/90 px-3 py-3 backdrop-blur-sm sm:px-4"
           role="dialog"
           aria-modal="true"
           aria-label="Edit saved photo"
@@ -643,7 +643,7 @@ export default function ItemMedia({
             if (event.target === event.currentTarget) requestCloseImageEdit();
           }}
         >
-          <div className="w-full max-w-4xl">
+          <div className="w-full max-w-[min(94dvw,980px)]">
             <ScanCropEditor
               imageUrl={editTarget.url}
               crop={editTarget.crop}
