@@ -39,6 +39,16 @@ type SaleInfo = {
   soldPrice?: number;
   soldAt?: number;
 };
+
+function readSales(): SaleInfo[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const parsed: unknown = JSON.parse(window.localStorage.getItem(SALES_KEY) || "[]");
+    return Array.isArray(parsed) ? (parsed as SaleInfo[]) : [];
+  } catch {
+    return [];
+  }
+}
 type VaultUniverseSlug = "pop-culture" | "sports" | "tcg" | "music" | "jewelry-apparel" | "games" | "misc";
 
 type VaultUniverseEntry = {
