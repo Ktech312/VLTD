@@ -347,11 +347,11 @@ function VaultCard({
       : readinessTone(readiness);
 
   return (
-    <div className="group relative overflow-hidden rounded-[14px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.024),rgba(255,255,255,0.01))] p-2 shadow-[0_8px_18px_rgba(0,0,0,0.12)]">
-      <div className="absolute right-2 top-2 z-20 hidden items-center gap-1 group-hover:flex">
+    <div className="group relative min-h-[92px] overflow-hidden rounded-[14px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.024),rgba(255,255,255,0.01))] p-1.5 shadow-[0_8px_18px_rgba(0,0,0,0.12)]">
+      <div className="absolute right-1.5 top-1.5 z-20 hidden items-center gap-1 group-hover:flex">
         <Link
           href={`/vault/item/${item.id}`}
-          className="inline-flex h-7 items-center justify-center rounded-full bg-black/70 px-2.5 text-[11px] text-white ring-1 ring-white/10 backdrop-blur"
+          className="inline-flex h-6 items-center justify-center rounded-full bg-black/70 px-2 text-[10px] text-white ring-1 ring-white/10 backdrop-blur"
         >
           Edit
         </Link>
@@ -359,91 +359,96 @@ function VaultCard({
           type="button"
           onClick={handleDelete}
           disabled={isDeleting}
-          className="inline-flex h-7 items-center justify-center rounded-full bg-red-600/90 px-2.5 text-[11px] text-white ring-1 ring-red-500/40"
+          className="inline-flex h-6 items-center justify-center rounded-full bg-red-600/90 px-2 text-[10px] text-white ring-1 ring-red-500/40"
         >
           {isDeleting ? "..." : "Delete"}
         </button>
       </div>
 
-      <Link
-        href={isSold ? `/vault/item/${item.id}?sold=1` : `/vault/item/${item.id}`}
-        className="grid grid-cols-[64px_minmax(0,1fr)] gap-2 pr-12"
-      >
-        <div className="overflow-hidden rounded-[10px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.04),rgba(255,255,255,0.012)_48%,rgba(0,0,0,0.16)_100%)]">
-          <div className="flex h-16 items-center justify-center bg-black/10 p-1.5">
+      <span className={["absolute right-1.5 top-1.5 z-10 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1", statusClass].join(" ")}>
+        {statusLabel}
+      </span>
+
+      <div className="grid min-h-[80px] grid-cols-[78px_minmax(0,1fr)] gap-2">
+        <Link
+          href={isSold ? `/vault/item/${item.id}?sold=1` : `/vault/item/${item.id}`}
+          className="block overflow-hidden rounded-[11px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),rgba(255,255,255,0.012)_48%,rgba(0,0,0,0.18)_100%)]"
+        >
+          <div className="flex h-full min-h-[80px] items-center justify-center bg-black/10 p-1">
             {image ? (
               <img
                 src={image}
                 alt={item.title}
-                className="h-full w-full object-contain"
+                className="h-full w-full object-cover"
                 draggable={false}
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-[10px] text-[color:var(--muted)]">
+              <div className="flex h-full w-full items-center justify-center px-1 text-center text-[9px] font-semibold text-[color:var(--muted)]">
                 No image
               </div>
             )}
           </div>
+        </Link>
+
+        <div className="flex min-w-0 flex-col justify-between py-0.5 pr-10">
+          <Link
+            href={isSold ? `/vault/item/${item.id}?sold=1` : `/vault/item/${item.id}`}
+            className="min-w-0"
+          >
+            <div className="line-clamp-1 text-[14px] font-semibold leading-tight text-cyan-300 sm:text-[15px]">
+              {item.title}
+            </div>
+            <div className="mt-1 line-clamp-1 text-[11px] font-medium text-[color:var(--fg)]">
+              {itemMeta(item)}
+            </div>
+            <div className="mt-0.5 line-clamp-1 text-[10px] text-[color:var(--muted2)]">
+              {UNIVERSE_LABEL[normalizeUniverse(item.universe)]}
+            </div>
+          </Link>
+
+          <div className="mt-1.5 flex items-end justify-between gap-2">
+            <div className="flex min-w-0 items-baseline gap-2">
+              {editingField === "value" ? (
+                <input
+                  autoFocus
+                  value={valueDraft}
+                  onChange={(e) => setValueDraft(e.target.value)}
+                  onBlur={() => void saveValueInline()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void saveValueInline();
+                    if (e.key === "Escape") {
+                      setValueDraft(String(Number(item.currentValue ?? 0)));
+                      setEditingField("");
+                    }
+                  }}
+                  className="h-6 w-20 rounded-md bg-[color:var(--pill)] px-2 text-[11px] ring-1 ring-[color:var(--border)] focus:outline-none"
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setEditingField("value")}
+                  className="text-left text-[15px] font-extrabold leading-none text-[color:var(--fg)] hover:text-cyan-300"
+                >
+                  {formatMoney(Number(item.currentValue ?? 0))}
+                </button>
+              )}
+              <span className={itemGain(item) >= 0 ? "text-[12px] font-bold leading-none text-emerald-300" : "text-[12px] font-bold leading-none text-red-300"}>
+                {itemGain(item) >= 0 ? "+" : ""}
+                {formatMoney(itemGain(item))}
+              </span>
+            </div>
+
+            {isSold ? (
+              <div className="shrink-0 text-[10px] font-semibold text-amber-200">
+                Sold {formatMoney(sale?.soldPrice)}
+              </div>
+            ) : (
+              <div className="shrink-0 scale-90 origin-right">
+                <SellItemButton item={item} />
+              </div>
+            )}
+          </div>
         </div>
-
-        <div className="min-w-0">
-          <div className="line-clamp-2 text-[13px] font-semibold leading-tight">
-            {item.title}
-          </div>
-          <div className="mt-1 line-clamp-1 text-[11px] text-[color:var(--muted)]">
-            {itemMeta(item)}
-          </div>
-          <div className="mt-1 line-clamp-1 text-[10px] text-[color:var(--muted2)]">
-            {UNIVERSE_LABEL[normalizeUniverse(item.universe)]}
-          </div>
-        </div>
-      </Link>
-
-      <span className={["absolute right-2 top-2 z-10 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1", statusClass].join(" ")}>
-        {statusLabel}
-      </span>
-
-      <div className="mt-2 flex items-center justify-between gap-2 border-t border-white/6 pt-2">
-        <div className="flex min-w-0 items-center gap-2">
-          {editingField === "value" ? (
-            <input
-              autoFocus
-              value={valueDraft}
-              onChange={(e) => setValueDraft(e.target.value)}
-              onBlur={() => void saveValueInline()}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") void saveValueInline();
-                if (e.key === "Escape") {
-                  setValueDraft(String(Number(item.currentValue ?? 0)));
-                  setEditingField("");
-                }
-              }}
-              className="h-7 w-24 rounded-md bg-[color:var(--pill)] px-2 text-[11px] ring-1 ring-[color:var(--border)] focus:outline-none"
-            />
-          ) : (
-            <button
-              type="button"
-              onClick={() => setEditingField("value")}
-              className="text-left text-[13px] font-bold text-[color:var(--fg)] hover:text-cyan-300"
-            >
-              {formatMoney(Number(item.currentValue ?? 0))}
-            </button>
-          )}
-          <span className={itemGain(item) >= 0 ? "text-[12px] font-semibold text-emerald-300" : "text-[12px] font-semibold text-red-300"}>
-            {itemGain(item) >= 0 ? "+" : ""}
-            {formatMoney(itemGain(item))}
-          </span>
-        </div>
-
-        {isSold ? (
-          <div className="shrink-0 text-[11px] font-semibold text-amber-200">
-            Sold {formatMoney(sale?.soldPrice)}
-          </div>
-        ) : (
-          <div className="shrink-0 scale-90 origin-right">
-            <SellItemButton item={item} />
-          </div>
-        )}
       </div>
     </div>
   );
@@ -940,7 +945,7 @@ export default function VaultPage() {
           <VaultEmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearFilters} />
         ) : (
           <section className="mt-3">
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
+            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {filteredItems.map((item) => {
                 const intelligence = intelligenceMap[item.id];
                 const readiness = intelligence?.readiness ?? "Low";
