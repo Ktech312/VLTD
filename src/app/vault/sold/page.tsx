@@ -189,7 +189,7 @@ function SoldCard({ item }: { item: SoldItem }) {
   return (
     <Link
       href={`/vault/item/${item.id}?sold=1`}
-      className="group grid h-[102px] grid-cols-[78px_minmax(0,1fr)_74px] gap-2 overflow-hidden rounded-[14px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.024),rgba(255,255,255,0.01))] p-1.5 shadow-[0_8px_18px_rgba(0,0,0,0.12)] transition hover:border-cyan-400/25 hover:bg-white/[0.035]"
+      className="group grid h-[118px] grid-cols-[78px_minmax(0,1fr)_74px] gap-2 overflow-hidden rounded-[14px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.024),rgba(255,255,255,0.01))] p-1.5 shadow-[0_8px_18px_rgba(0,0,0,0.12)] transition hover:border-cyan-400/25 hover:bg-white/[0.035]"
     >
       <div className="overflow-hidden rounded-[11px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),rgba(255,255,255,0.012)_48%,rgba(0,0,0,0.18)_100%)]">
         <div className="flex h-full items-center justify-center bg-black/10 p-1">
@@ -222,7 +222,7 @@ function SoldCard({ item }: { item: SoldItem }) {
           <div className="text-[8px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">
             Universe
           </div>
-          <div className="mt-0.5 truncate rounded-md bg-black/20 px-1.5 py-1 text-[9px] font-semibold text-[color:var(--fg)] ring-1 ring-white/10">
+          <div className="mt-0.5 truncate rounded-md bg-black/20 px-1.5 py-0.5 text-[9px] font-semibold text-[color:var(--fg)] ring-1 ring-white/10">
             {UNIVERSE_LABEL[universe] ?? "Misc"}
           </div>
         </div>
