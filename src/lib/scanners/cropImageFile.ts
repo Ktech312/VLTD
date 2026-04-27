@@ -9,6 +9,16 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
+function normalizeCrop(crop: ScanCropRect) {
+  const minSize = 0.02;
+  const left = clamp(Number(crop.left ?? 0), 0, 1 - minSize);
+  const top = clamp(Number(crop.top ?? 0), 0, 1 - minSize);
+  const right = clamp(Number(crop.right ?? 0), 0, 1 - left - minSize);
+  const bottom = clamp(Number(crop.bottom ?? 0), 0, 1 - top - minSize);
+
+  return { left, top, right, bottom };
+}
+
 async function loadImageFromFile(file: File | Blob): Promise<HTMLImageElement> {
   const objectUrl = URL.createObjectURL(file);
 
@@ -33,16 +43,12 @@ export async function cropImageFile(
   const image = await loadImageFromFile(file);
   const width = image.naturalWidth || image.width;
   const height = image.naturalHeight || image.height;
+  const normalizedCrop = normalizeCrop(crop);
 
-  const left = clamp(crop.left, 0, 0.45);
-  const top = clamp(crop.top, 0, 0.45);
-  const right = clamp(crop.right, 0, 0.45);
-  const bottom = clamp(crop.bottom, 0, 0.45);
-
-  const sx = Math.max(0, Math.floor(width * left));
-  const sy = Math.max(0, Math.floor(height * top));
-  const sw = Math.max(1, Math.floor(width * (1 - left - right)));
-  const sh = Math.max(1, Math.floor(height * (1 - top - bottom)));
+  const sx = Math.max(0, Math.floor(width * normalizedCrop.left));
+  const sy = Math.max(0, Math.floor(height * normalizedCrop.top));
+  const sw = Math.max(1, Math.floor(width * (1 - normalizedCrop.left - normalizedCrop.right)));
+  const sh = Math.max(1, Math.floor(height * (1 - normalizedCrop.top - normalizedCrop.bottom)));
 
   const canvas = document.createElement("canvas");
   canvas.width = sw;
