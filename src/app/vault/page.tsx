@@ -508,16 +508,12 @@ function VaultCard({
         </button>
       </div>
 
-      <span className={["absolute right-1.5 top-1.5 z-10 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1", statusClass].join(" ")}>
-        {statusLabel}
-      </span>
-
-      <div className="grid min-h-[80px] grid-cols-[78px_minmax(0,1fr)] gap-2">
+      <div className="grid min-h-[84px] grid-cols-[78px_minmax(0,1fr)_70px] gap-2">
         <Link
           href={isSold ? `/vault/item/${item.id}?sold=1` : `/vault/item/${item.id}`}
           className="block overflow-hidden rounded-[11px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),rgba(255,255,255,0.012)_48%,rgba(0,0,0,0.18)_100%)]"
         >
-          <div className="flex h-full min-h-[80px] items-center justify-center bg-black/10 p-1">
+          <div className="flex h-full min-h-[84px] items-center justify-center bg-black/10 p-1">
             {image ? (
               <img
                 src={image}
@@ -533,7 +529,7 @@ function VaultCard({
           </div>
         </Link>
 
-        <div className="flex min-w-0 flex-col justify-between py-0.5 pr-10">
+        <div className="flex min-w-0 flex-col justify-between py-0.5">
           <Link
             href={isSold ? `/vault/item/${item.id}?sold=1` : `/vault/item/${item.id}`}
             className="min-w-0"
@@ -544,20 +540,17 @@ function VaultCard({
             <div className="mt-1 line-clamp-1 text-[11px] font-medium text-[color:var(--fg)]">
               {itemMeta(item)}
             </div>
-            <div className="mt-0.5 line-clamp-1 text-[10px] text-[color:var(--muted2)]">
-              {UNIVERSE_LABEL[universeForItem(item)]}
-            </div>
           </Link>
 
-          <div className="mt-1 flex items-center gap-1.5">
-            <span className="shrink-0 text-[9px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">
+          <div className="mt-1 min-w-0">
+            <div className="text-[8px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">
               Universe
-            </span>
+            </div>
             <select
               value={universeForItem(item)}
               onChange={(e) => void handleUniverseChange(e.target.value as UniverseKey)}
               onClick={(e) => e.stopPropagation()}
-              className="min-h-[22px] w-full rounded-md bg-black/20 px-1.5 py-0.5 text-[10px] font-semibold text-[color:var(--fg)] ring-1 ring-white/10 focus:outline-none"
+              className="mt-0.5 min-h-[22px] w-full rounded-md bg-black/20 px-1.5 py-0.5 text-[9px] font-semibold text-[color:var(--fg)] ring-1 ring-white/10 focus:outline-none"
               aria-label={`Universe for ${item.title}`}
             >
               {VAULT_UNIVERSES.map((category) => (
@@ -599,17 +592,23 @@ function VaultCard({
                 {formatMoney(itemGain(item))}
               </span>
             </div>
-
-            {isSold ? (
-              <div className="shrink-0 text-[10px] font-semibold text-amber-200">
-                Sold {formatMoney(sale?.soldPrice)}
-              </div>
-            ) : (
-              <div className="shrink-0 scale-90 origin-right">
-                <SellItemButton item={item} />
-              </div>
-            )}
           </div>
+        </div>
+
+        <div className="flex min-h-full flex-col items-end justify-between py-0.5 pr-0.5">
+          <span className={["rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1", statusClass].join(" ")}>
+            {statusLabel}
+          </span>
+
+          {isSold ? (
+            <div className="shrink-0 text-right text-[10px] font-semibold text-amber-200">
+              Sold {formatMoney(sale?.soldPrice)}
+            </div>
+          ) : (
+            <div className="shrink-0 scale-90 origin-right">
+              <SellItemButton item={item} />
+            </div>
+          )}
         </div>
       </div>
     </div>
