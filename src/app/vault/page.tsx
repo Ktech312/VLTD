@@ -129,6 +129,9 @@ function directUniverseMatch(value: unknown): UniverseKey | "" {
 
   return "";
 }
+function normalizeUniverse(value: unknown): UniverseKey {
+  return directUniverseMatch(value) || "MISC";
+}
 
 function inferVaultUniverse(item: VaultItem): UniverseKey {
   const existing = normalizeUniverse(item.universe);
