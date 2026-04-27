@@ -205,6 +205,8 @@ function inferVaultUniverse(item: VaultItem): UniverseKey {
 }
 
 function universeForItem(item: VaultItem): UniverseKey {
+  const rawUniverse = typeof item.universe === "string" ? item.universe.trim() : "";
+  if (rawUniverse) return normalizeUniverse(rawUniverse);
   return inferVaultUniverse(item);
 }
 
@@ -530,7 +532,7 @@ function VaultCard({
           </div>
         </Link>
 
-        <div className="flex min-w-0 flex-col justify-between py-0.5">
+        <div className="flex min-w-0 flex-col py-0.5">
           <Link
             href={isSold ? `/vault/item/${item.id}?sold=1` : `/vault/item/${item.id}`}
             className="min-w-0"
@@ -562,7 +564,7 @@ function VaultCard({
             </select>
           </div>
 
-          <div className="mt-1.5 flex items-end justify-between gap-2">
+          <div className="mt-auto flex items-end justify-between gap-2 pt-1.5">
             <div className="flex min-w-0 items-baseline gap-2">
               {editingField === "value" ? (
                 <input
@@ -868,7 +870,7 @@ export default function VaultUniversePage() {
       const isSold = Boolean(saleInfoForItem(item, saleMap));
       if (!showSoldItems && isSold) return false;
       if (universeForItem(item) !== activeUniverse) return false;
-      if (universeFilter !== "ALL" && item.universe !== universeFilter) return false;
+      if (universeFilter !== "ALL" && universeForItem(item) !== universeFilter) return false;
       if (gradedOnly && !item.grade) return false;
       const intelligence = intelligenceMap[item.id];
       const readiness = (intelligence?.readiness ?? "Low").toLowerCase();
@@ -952,7 +954,7 @@ export default function VaultUniversePage() {
       GAMES: 0,
       MISC: 0,
     };
-    for (const item of items) counts[normalizeUniverse(item.universe)] += 1;
+    for (const item of items) counts[universeForItem(item)] += 1;
     return counts;
   }, [items]);
 
