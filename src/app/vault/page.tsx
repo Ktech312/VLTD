@@ -49,6 +49,28 @@ function readSales(): SaleInfo[] {
     return [];
   }
 }
+
+function formatMoney(value?: number) {
+  const num = Number(value ?? 0);
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(num);
+}
+
+function totalCost(item: VaultItem) {
+  return (
+    Number(item.purchasePrice ?? 0) +
+    Number(item.purchaseTax ?? 0) +
+    Number(item.purchaseShipping ?? 0) +
+    Number(item.purchaseFees ?? 0)
+  );
+}
+
+function itemGain(item: VaultItem) {
+  return Number(item.currentValue ?? 0) - totalCost(item);
+}
 type VaultUniverseSlug = "pop-culture" | "sports" | "tcg" | "music" | "jewelry-apparel" | "games" | "misc";
 
 type VaultUniverseEntry = {
