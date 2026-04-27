@@ -11,7 +11,7 @@ import {
 import type { ScanCropRect } from "@/lib/scanners/cropImageFile";
 
 const MIN_CROP_SIZE = 0.08;
-const ZOOM_STEP = 0.08;
+const ZOOM_STEP = 0.06;
 
 type DragMode =
   | "move"
@@ -293,8 +293,8 @@ export default function ScanCropEditor({
   const width = cropWidth(localCrop) * 100;
   const height = cropHeight(localCrop) * 100;
   const zoomLabel = Math.round((1 / Math.max(cropWidth(localCrop), cropHeight(localCrop))) * 100);
-  const cornerHandleClass = "absolute z-30 h-8 w-8 rounded-full border border-white/80 bg-white shadow-[0_0_18px_rgba(0,0,0,0.55)] touch-none pointer-events-auto";
-  const edgeHandleClass = "absolute z-30 rounded-full bg-white/95 shadow-[0_0_14px_rgba(0,0,0,0.5)] touch-none pointer-events-auto";
+  const cornerHandleClass = "absolute z-30 h-4 w-4 rounded-full border border-white/90 bg-white/95 shadow-[0_0_10px_rgba(0,0,0,0.55)] touch-none pointer-events-auto sm:h-5 sm:w-5";
+  const edgeHandleClass = "absolute z-30 rounded-full bg-white/95 shadow-[0_0_10px_rgba(0,0,0,0.5)] touch-none pointer-events-auto";
 
   return (
     <section className={compact ? "relative w-full max-h-[calc(100dvh-24px)] overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]" : "relative w-full max-h-[calc(100dvh-24px)] overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-4"}>
@@ -328,6 +328,10 @@ export default function ScanCropEditor({
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          onWheel={(event) => {
+            event.preventDefault();
+            zoomBy(event.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP);
+          }}
         >
           <div ref={imageFrameRef} className="relative max-h-full max-w-full">
             <img
@@ -351,14 +355,14 @@ export default function ScanCropEditor({
                 ))}
               </div>
 
-              <button type="button" aria-label="Crop top left" onPointerDown={(event) => startDrag("nw", event)} className={`${cornerHandleClass} left-1 top-1 cursor-nwse-resize`} />
-              <button type="button" aria-label="Crop top right" onPointerDown={(event) => startDrag("ne", event)} className={`${cornerHandleClass} right-1 top-1 cursor-nesw-resize`} />
-              <button type="button" aria-label="Crop bottom left" onPointerDown={(event) => startDrag("sw", event)} className={`${cornerHandleClass} bottom-1 left-1 cursor-nesw-resize`} />
-              <button type="button" aria-label="Crop bottom right" onPointerDown={(event) => startDrag("se", event)} className={`${cornerHandleClass} bottom-1 right-1 cursor-nwse-resize`} />
-              <button type="button" aria-label="Crop top edge" onPointerDown={(event) => startDrag("n", event)} className={`${edgeHandleClass} left-1/2 top-1 h-7 w-24 -translate-x-1/2 cursor-ns-resize`} />
-              <button type="button" aria-label="Crop bottom edge" onPointerDown={(event) => startDrag("s", event)} className={`${edgeHandleClass} bottom-1 left-1/2 h-7 w-24 -translate-x-1/2 cursor-ns-resize`} />
-              <button type="button" aria-label="Crop left edge" onPointerDown={(event) => startDrag("w", event)} className={`${edgeHandleClass} left-1 top-1/2 h-24 w-7 -translate-y-1/2 cursor-ew-resize`} />
-              <button type="button" aria-label="Crop right edge" onPointerDown={(event) => startDrag("e", event)} className={`${edgeHandleClass} right-1 top-1/2 h-24 w-7 -translate-y-1/2 cursor-ew-resize`} />
+              <button type="button" aria-label="Crop top left" onPointerDown={(event) => startDrag("nw", event)} className={`${cornerHandleClass} -left-2 -top-2 cursor-nwse-resize`} />
+              <button type="button" aria-label="Crop top right" onPointerDown={(event) => startDrag("ne", event)} className={`${cornerHandleClass} -right-2 -top-2 cursor-nesw-resize`} />
+              <button type="button" aria-label="Crop bottom left" onPointerDown={(event) => startDrag("sw", event)} className={`${cornerHandleClass} -bottom-2 -left-2 cursor-nesw-resize`} />
+              <button type="button" aria-label="Crop bottom right" onPointerDown={(event) => startDrag("se", event)} className={`${cornerHandleClass} -bottom-2 -right-2 cursor-nwse-resize`} />
+              <button type="button" aria-label="Crop top edge" onPointerDown={(event) => startDrag("n", event)} className={`${edgeHandleClass} -top-2 left-1/2 h-4 w-14 -translate-x-1/2 cursor-ns-resize sm:w-16`} />
+              <button type="button" aria-label="Crop bottom edge" onPointerDown={(event) => startDrag("s", event)} className={`${edgeHandleClass} -bottom-2 left-1/2 h-4 w-14 -translate-x-1/2 cursor-ns-resize sm:w-16`} />
+              <button type="button" aria-label="Crop left edge" onPointerDown={(event) => startDrag("w", event)} className={`${edgeHandleClass} -left-2 top-1/2 h-14 w-4 -translate-y-1/2 cursor-ew-resize sm:h-16`} />
+              <button type="button" aria-label="Crop right edge" onPointerDown={(event) => startDrag("e", event)} className={`${edgeHandleClass} -right-2 top-1/2 h-14 w-4 -translate-y-1/2 cursor-ew-resize sm:h-16`} />
             </div>
           </div>
         </div>
