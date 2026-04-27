@@ -34,116 +34,78 @@ type SortMode = "newest" | "value_desc" | "value_asc" | "gain_desc" | "gain_asc"
 type ReadinessFilter = "all" | "high" | "medium" | "low";
 type UniverseFilter = "ALL" | UniverseKey;
 type InlineField = "" | "value" | "cost";
-type VaultCategoryKey = "comics" | "cards" | "vinyl" | "figures" | "games" | "misc";
+type VaultUniverseSlug = "pop-culture" | "sports" | "tcg" | "music" | "jewelry-apparel" | "games" | "misc";
 
-type SaleInfo = {
-  id: string;
-  soldPrice?: number;
-  soldAt?: number;
-};
-
-function readSales(): SaleInfo[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const parsed: unknown = JSON.parse(window.localStorage.getItem(SALES_KEY) || "[]");
-    return Array.isArray(parsed) ? (parsed as SaleInfo[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function formatMoney(value?: number) {
-  const num = Number(value ?? 0);
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(num);
-}
-
-function totalCost(item: VaultItem) {
-  return (
-    Number(item.purchasePrice ?? 0) +
-    Number(item.purchaseTax ?? 0) +
-    Number(item.purchaseShipping ?? 0) +
-    Number(item.purchaseFees ?? 0)
-  );
-}
-
-function itemGain(item: VaultItem) {
-  return Number(item.currentValue ?? 0) - totalCost(item);
-}
-
-function normalizeUniverse(value: unknown): UniverseKey {
-  const raw = String(value ?? "").toUpperCase();
-  if (
-    raw === "POP_CULTURE" ||
-    raw === "SPORTS" ||
-    raw === "TCG" ||
-    raw === "MUSIC" ||
-    raw === "JEWELRY_APPAREL" ||
-    raw === "GAMES" ||
-    raw === "MISC"
-  ) {
-    return raw;
-  }
-  return "MISC";
-}
-
-const VAULT_CATEGORIES: Array<{
-  key: VaultCategoryKey;
-  label: string;
+type VaultUniverseEntry = {
+  key: UniverseKey;
+  slug: VaultUniverseSlug;
   description: string;
   href: string;
-}> = [
+};
+
+const VAULT_UNIVERSES: VaultUniverseEntry[] = [
   {
-    key: "comics",
-    label: "Comics",
-    description: "Issues, variants, slabs, signatures, and comic art.",
-    href: "/vault/comics",
+    key: "POP_CULTURE",
+    slug: "pop-culture",
+    description: "Comics, toys, art cards, character collectibles, slabs, variants, and pop-culture pieces.",
+    href: "/vault/pop-culture",
   },
   {
-    key: "cards",
-    label: "Cards",
-    description: "Sports cards, TCG, slabs, rookies, inserts, and sealed card items.",
-    href: "/vault/cards",
+    key: "SPORTS",
+    slug: "sports",
+    description: "Sports cards, jerseys, autos, game-used items, memorabilia, and athlete collectibles.",
+    href: "/vault/sports",
   },
   {
-    key: "vinyl",
-    label: "Vinyl",
-    description: "Records, albums, LPs, signed music collectibles, and audio media.",
-    href: "/vault/vinyl",
+    key: "TCG",
+    slug: "tcg",
+    description: "Pokemon, MTG, Bo Jackson Arena, sealed products, slabs, singles, foils, and promos.",
+    href: "/vault/tcg",
   },
   {
-    key: "figures",
-    label: "Figures",
-    description: "Figures, toys, statues, Funko, models, and physical display pieces.",
-    href: "/vault/figures",
+    key: "MUSIC",
+    slug: "music",
+    description: "Vinyl records, CDs, instruments, signed albums, box sets, and music collectibles.",
+    href: "/vault/music",
   },
   {
-    key: "games",
-    label: "Games",
-    description: "Video games, consoles, cartridges, sealed games, and gaming hardware.",
+    key: "JEWELRY_APPAREL",
+    slug: "jewelry-apparel",
+    description: "Watches, bags, apparel, streetwear, vintage pieces, luxury items, and limited drops.",
+    href: "/vault/jewelry-apparel",
+  },
+  {
+    key: "GAMES",
+    slug: "games",
+    description: "Video games, consoles, cartridges, controllers, sealed games, and arcade/handheld pieces.",
     href: "/vault/games",
   },
   {
-    key: "misc",
-    label: "Misc.",
-    description: "Everything that cannot be confidently assigned yet.",
+    key: "MISC",
+    slug: "misc",
+    description: "Everything that cannot be confidently assigned to another Universe yet.",
     href: "/vault/misc",
   },
 ];
 
-const VAULT_CATEGORY_LABEL: Record<VaultCategoryKey, string> = {
-  comics: "Comics",
-  cards: "Cards",
-  vinyl: "Vinyl",
-  figures: "Figures",
-  games: "Games",
-  misc: "Misc.",
-};
+function universeDisplayName(key: UniverseKey) {
+  return UNIVERSE_LABEL[key] ?? "Misc";
+}
 
-function normalizeCategoryText(value: unknown) {
+function universeToSlug(key: UniverseKey): VaultUniverseSlug {
+  return VAULT_UNIVERSES.find((entry) => entry.key === key)?.slug ?? "misc";
+}
+
+function universeFromSlug(value: unknown): UniverseKey {
+  const slug = String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, "-");
+
+  return VAULT_UNIVERSES.find((entry) => entry.slug === slug)?.key ?? "MISC";
+}
+
+function normalizeUniverseText(value: unknown) {
   return String(value ?? "")
     .trim()
     .toLowerCase()
@@ -153,29 +115,29 @@ function normalizeCategoryText(value: unknown) {
     .trim();
 }
 
-function directCategoryMatch(value: unknown): VaultCategoryKey | "" {
-  const text = normalizeCategoryText(value);
+function directUniverseMatch(value: unknown): UniverseKey | "" {
+  const text = normalizeUniverseText(value);
   if (!text) return "";
 
-  if (["comic", "comics", "comic book", "comic books", "cgc comic", "cbcs comic"].includes(text)) return "comics";
-  if (["card", "cards", "trading card", "trading cards", "sports card", "sports cards", "tcg", "pokemon", "magic", "mtg", "yugioh", "panini", "topps"].includes(text)) return "cards";
-  if (["vinyl", "record", "records", "album", "albums", "lp", "music"].includes(text)) return "vinyl";
-  if (["figure", "figures", "toy", "toys", "statue", "statues", "funko", "model", "models", "figurine", "figurines"].includes(text)) return "figures";
-  if (["game", "games", "video game", "video games", "console", "consoles", "cartridge", "cartridges", "gaming"].includes(text)) return "games";
-  if (["misc", "miscellaneous", "other", "uncategorized", "unknown"].includes(text)) return "misc";
+  if (["pop culture", "pop", "comics", "comic", "comic books", "toys", "figures", "figure", "funko", "manga", "marvel", "dc", "art cards"].includes(text)) return "POP_CULTURE";
+  if (["sports", "sports cards", "memorabilia", "jerseys", "jersey", "game used", "autographs"].includes(text)) return "SPORTS";
+  if (["tcg", "trading card game", "pokemon", "pokémon", "mtg", "magic", "magic the gathering", "yugioh", "yu gi oh", "bo jackson arena"].includes(text)) return "TCG";
+  if (["music", "vinyl", "vinyl records", "record", "records", "album", "albums", "lp", "cd", "cds", "instruments"].includes(text)) return "MUSIC";
+  if (["jewelry apparel", "jewelry and apparel", "jewelry", "apparel", "watches", "watch", "bags", "bag", "streetwear", "luxury"].includes(text)) return "JEWELRY_APPAREL";
+  if (["games", "game", "video games", "video game", "console", "consoles", "cartridge", "cartridges", "arcade", "handhelds"].includes(text)) return "GAMES";
+  if (["misc", "miscellaneous", "other", "uncategorized", "unknown", "collectors choice"].includes(text)) return "MISC";
 
   return "";
 }
 
-function inferVaultCategory(item: VaultItem): VaultCategoryKey {
-  const existing = directCategoryMatch(item.category);
-  if (existing) return existing;
+function inferVaultUniverse(item: VaultItem): UniverseKey {
+  const existing = normalizeUniverse(item.universe);
+  if (existing !== "MISC") return existing;
 
-  const labeled = directCategoryMatch(item.categoryLabel || item.customCategoryLabel || item.subcategoryLabel);
-  if (labeled) return labeled;
+  const direct = directUniverseMatch(item.categoryLabel || item.customCategoryLabel || item.category || item.subcategoryLabel);
+  if (direct) return direct;
 
-  const universe = normalizeUniverse(item.universe);
-  const text = normalizeCategoryText([
+  const text = normalizeUniverseText([
     item.category,
     item.categoryLabel,
     item.customCategoryLabel,
@@ -191,34 +153,31 @@ function inferVaultCategory(item: VaultItem): VaultCategoryKey {
 
   const hasAny = (terms: string[]) => terms.some((term) => text.includes(term));
 
-  if (hasAny(["comic", "comics", "cgc", "cbcs", "variant cover", "first appearance", "issue", "spawn", "batman", "superman", "spider man", "x men", "marvel", "dc"])) return "comics";
-  if (hasAny(["pokemon", "pokémon", "magic the gathering", " mtg ", "yugioh", "yu gi oh", "panini", "topps", "rookie", "refractor", "psa", "bgs", "sgc", "trading card", "sports card", "card"])) return "cards";
-  if (hasAny(["vinyl", "record", "records", "album", "albums", " lp ", "signed lp", "turntable"])) return "vinyl";
-  if (hasAny(["figure", "figures", "figurine", "figurines", "toy", "toys", "statue", "statues", "funko", "pop ", "action figure", "model kit"])) return "figures";
-  if (hasAny(["video game", "game cartridge", "sealed game", "console", "nintendo", "playstation", "xbox", "sega", "atari", "cartridge", "disc only"])) return "games";
+  if (hasAny(["comic", "comics", "cgc", "cbcs", "variant cover", "first appearance", "issue", "spawn", "batman", "superman", "spider man", "x men", "marvel", " dc ", "funko", "figure", "toy", "statue", "manga"])) return "POP_CULTURE";
+  if (hasAny(["sports card", "rookie", "refractor", "panini", "topps", "jersey", "game used", "autograph", "psa", "bgs", "sgc", "baseball", "basketball", "football", "soccer", "hockey"])) return "SPORTS";
+  if (hasAny(["pokemon", "pokémon", "magic the gathering", " mtg ", "yugioh", "yu gi oh", "trading card game", " tcg ", "bo jackson arena", "foil", "serialized", "base set"])) return "TCG";
+  if (hasAny(["vinyl", "record", "records", "album", "albums", " lp ", "signed lp", "cd ", "guitar", "instrument", "turntable"])) return "MUSIC";
+  if (hasAny(["watch", "watches", "jewelry", "apparel", "bag", "bags", "streetwear", "vintage clothing", "limited drop", "luxury"])) return "JEWELRY_APPAREL";
+  if (hasAny(["video game", "game cartridge", "sealed game", "console", "nintendo", "playstation", "xbox", "sega", "atari", "cartridge", "disc only", "controller", "arcade"])) return "GAMES";
 
-  if (universe === "TCG" || universe === "SPORTS") return "cards";
-  if (universe === "MUSIC") return "vinyl";
-  if (universe === "GAMES") return "games";
-
-  return "misc";
+  return "MISC";
 }
 
-function categoryForItem(item: VaultItem): VaultCategoryKey {
-  return inferVaultCategory(item);
+function universeForItem(item: VaultItem): UniverseKey {
+  return inferVaultUniverse(item);
 }
 
-function ensureVaultItemCategories() {
+function ensureVaultItemUniverses() {
   const allItems = loadItems({ includeAllProfiles: true });
   let changed = false;
   const changedIds: string[] = [];
 
   const nextItems = allItems.map((item) => {
-    const nextCategory = categoryForItem(item);
-    if (item.category === nextCategory) return item;
+    const nextUniverse = universeForItem(item);
+    if (normalizeUniverse(item.universe) === nextUniverse) return item;
     changed = true;
     changedIds.push(item.id);
-    return { ...item, category: nextCategory };
+    return { ...item, universe: nextUniverse };
   });
 
   if (!changed) return false;
@@ -226,10 +185,6 @@ function ensureVaultItemCategories() {
   saveItems(nextItems);
   for (const id of changedIds) enqueueVaultItemSync(id);
   return true;
-}
-
-function categoryDisplayName(key: VaultCategoryKey) {
-  return VAULT_CATEGORY_LABEL[key] ?? "Misc.";
 }
 
 function getCreatedAtMs(item: VaultItem) {
@@ -454,9 +409,9 @@ function VaultCard({
     setEditingField("");
   }
 
-  async function handleCategoryChange(nextCategory: VaultCategoryKey) {
-    if (nextCategory === categoryForItem(item)) return;
-    await onSaveItem({ ...item, category: nextCategory });
+  async function handleUniverseChange(nextUniverse: UniverseKey) {
+    if (nextUniverse === universeForItem(item)) return;
+    await onSaveItem({ ...item, universe: nextUniverse });
   }
 
   async function handleDelete() {
@@ -550,24 +505,24 @@ function VaultCard({
               {itemMeta(item)}
             </div>
             <div className="mt-0.5 line-clamp-1 text-[10px] text-[color:var(--muted2)]">
-              {UNIVERSE_LABEL[normalizeUniverse(item.universe)]}
+              {UNIVERSE_LABEL[universeForItem(item)]}
             </div>
           </Link>
 
           <div className="mt-1 flex items-center gap-1.5">
             <span className="shrink-0 text-[9px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">
-              Folder
+              Universe
             </span>
             <select
-              value={categoryForItem(item)}
-              onChange={(e) => void handleCategoryChange(e.target.value as VaultCategoryKey)}
+              value={universeForItem(item)}
+              onChange={(e) => void handleUniverseChange(e.target.value as UniverseKey)}
               onClick={(e) => e.stopPropagation()}
               className="min-h-[22px] w-full rounded-md bg-black/20 px-1.5 py-0.5 text-[10px] font-semibold text-[color:var(--fg)] ring-1 ring-white/10 focus:outline-none"
-              aria-label={`Category for ${item.title}`}
+              aria-label={`Universe for ${item.title}`}
             >
-              {VAULT_CATEGORIES.map((category) => (
+              {VAULT_UNIVERSES.map((category) => (
                 <option key={category.key} value={category.key}>
-                  {categoryDisplayName(category.key)}
+                  {universeDisplayName(category.key)}
                 </option>
               ))}
             </select>
@@ -689,7 +644,7 @@ function VaultEmptyState({
             <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">1</div>
             <div className="mt-1 text-sm font-medium">Create an item</div>
             <div className="mt-1 text-xs text-[color:var(--muted)]">
-              Start with title, category, and value.
+              Start with Universe, category, title, and value.
             </div>
           </div>
           <div className="rounded-[14px] bg-black/10 p-4 ring-1 ring-white/8">
@@ -712,11 +667,11 @@ function VaultEmptyState({
   );
 }
 
-function CategoryOverviewCard({
+function UniverseOverviewCard({
   category,
   items,
 }: {
-  category: (typeof VAULT_CATEGORIES)[number];
+  category: (typeof VAULT_UNIVERSES)[number];
   items: VaultItem[];
 }) {
   const coverItem = items[0];
@@ -735,13 +690,13 @@ function CategoryOverviewCard({
           {coverImage ? (
             <img
               src={coverImage}
-              alt={`${categoryDisplayName(category.key)} cover`}
+              alt={`${universeDisplayName(category.key)} cover`}
               className="h-full min-h-[132px] w-full object-cover transition duration-300 group-hover:scale-105"
               draggable={false}
             />
           ) : (
             <div className="flex h-full min-h-[132px] items-center justify-center px-3 text-center text-[11px] font-semibold text-[color:var(--muted)]">
-              {categoryDisplayName(category.key)}
+              {universeDisplayName(category.key)}
             </div>
           )}
         </div>
@@ -750,8 +705,8 @@ function CategoryOverviewCard({
           <div>
             <div className="flex items-start justify-between gap-2">
               <div>
-                <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Folder</div>
-                <h2 className="mt-1 text-xl font-semibold leading-tight text-cyan-300">{categoryDisplayName(category.key)}</h2>
+                <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Universe</div>
+                <h2 className="mt-1 text-xl font-semibold leading-tight text-cyan-300">{universeDisplayName(category.key)}</h2>
               </div>
               <div className="rounded-full bg-black/20 px-2.5 py-1 text-[11px] font-semibold ring-1 ring-white/10">
                 {items.length} {items.length === 1 ? "item" : "items"}
@@ -803,7 +758,7 @@ export default function VaultPage() {
     }
     await processVaultSyncQueue();
     await syncVaultItemsFromSupabase();
-    if (ensureVaultItemCategories()) {
+    if (ensureVaultItemUniverses()) {
       await processVaultSyncQueue();
     }
     refresh();
@@ -923,21 +878,21 @@ export default function VaultPage() {
     [items, saleMap]
   );
 
-  const categoryGroups = useMemo(() => {
-    const groups = VAULT_CATEGORIES.reduce(
+  const universeGroups = useMemo(() => {
+    const groups = VAULT_UNIVERSES.reduce(
       (acc, category) => {
         acc[category.key] = [];
         return acc;
       },
-      {} as Record<VaultCategoryKey, VaultItem[]>
+      {} as Record<UniverseKey, VaultItem[]>
     );
 
     for (const item of items) {
       if (saleInfoForItem(item, saleMap)) continue;
-      groups[categoryForItem(item)].push(item);
+      groups[universeForItem(item)].push(item);
     }
 
-    for (const category of VAULT_CATEGORIES) {
+    for (const category of VAULT_UNIVERSES) {
       groups[category.key].sort((a, b) => effectiveMarketValue(b) - effectiveMarketValue(a));
     }
 
@@ -1022,10 +977,10 @@ export default function VaultPage() {
               <div className="max-w-2xl">
                 <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">VAULT</div>
                 <h1 className="mt-2 text-[1.7rem] font-semibold leading-tight sm:text-[1.9rem]">
-                  Vault Folders
+                  Vault Universes
                 </h1>
                 <div className="mt-1.5 text-sm text-[color:var(--muted)]">
-                  Category-first inventory management. Open a folder to browse, edit, sell, and reassign items.
+                  Universe-first inventory management. Open a Universe to browse, edit, sell, and reassign items.
                 </div>
               </div>
               <div className="shrink-0 flex flex-wrap gap-2">
@@ -1104,9 +1059,9 @@ export default function VaultPage() {
         <section className="mt-3 rounded-[18px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">CATEGORY FOLDERS</div>
+              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">VAULT UNIVERSES</div>
               <div className="mt-1 text-sm text-[color:var(--muted)]">
-                Every vault item belongs to one folder. Unknown items are assigned to Misc. and can be changed from the item card or detail page.
+                Every vault item belongs to one Universe. Unknown items are assigned to Misc and can be changed from the item card or detail page.
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -1131,11 +1086,11 @@ export default function VaultPage() {
         ) : (
           <section className="mt-3">
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {VAULT_CATEGORIES.map((category) => (
-                <CategoryOverviewCard
+              {VAULT_UNIVERSES.map((category) => (
+                <UniverseOverviewCard
                   key={category.key}
                   category={category}
-                  items={categoryGroups[category.key]}
+                  items={universeGroups[category.key]}
                 />
               ))}
             </div>
