@@ -1445,6 +1445,82 @@ export default function AddPage() {
               />
             </div>
 
+              <div className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+                <div className="text-[11px] font-semibold tracking-[0.18em] text-[color:var(--muted2)]">
+                  BASIC ITEM RECORD
+                </div>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
+                  <Field label="Universe" locked={locks.universe} onToggleLock={() => handleToggleLock("universe")}>
+                    <select
+                      className={selectClass()}
+                      value={selectedUniverse}
+                      onChange={(e) => setUniverse(safeUniverse(e.target.value))}
+                    >
+                      {getUniverses().map((key) => (
+                        <option key={key} value={key}>
+                          {UNIVERSE_LABEL[key]}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+
+                  <Field label="Category" locked={locks.categoryLabel} onToggleLock={() => handleToggleLock("categoryLabel")}>
+                    <select
+                      className={selectClass()}
+                      value={selectedCategory}
+                      onChange={(e) => setCategoryLabel(e.target.value)}
+                    >
+                      {categoryOptions.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+
+                  <Field label="Subcategory" locked={locks.subcategoryLabel} onToggleLock={() => handleToggleLock("subcategoryLabel")}>
+                    {subcategoryOptions.length ? (
+                      <select
+                        className={selectClass()}
+                        value={values.subcategoryLabel}
+                        onChange={(e) => setField("subcategoryLabel", e.target.value)}
+                      >
+                        <option value="">Optional</option>
+                        {subcategoryOptions.map((subcategory) => (
+                          <option key={subcategory} value={subcategory}>
+                            {subcategory}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        className={inputClass()}
+                        value={values.subcategoryLabel}
+                        onChange={(e) => setField("subcategoryLabel", e.target.value)}
+                        placeholder="Optional"
+                      />
+                    )}
+                  </Field>
+
+                  <Field label="Title" locked={locks.title} onToggleLock={() => handleToggleLock("title")}>
+                    <div className="grid gap-2">
+                      <input
+                        ref={titleInputRef}
+                        className={inputClass()}
+                        value={values.title}
+                        onChange={(e) => setField("title", e.target.value)}
+                        placeholder="Batman"
+                      />
+                      {duplicateWarning ? (
+                        <div className="rounded-xl bg-amber-500/10 px-3 py-2 text-xs text-amber-200 ring-1 ring-amber-400/20">
+                          {duplicateWarning}
+                        </div>
+                      ) : null}
+                    </div>
+                  </Field>
+                </div>
+              </div>
+
           </div>
 
           <div ref={reviewRef} className="grid gap-3 content-start">
@@ -1525,82 +1601,6 @@ export default function AddPage() {
                   placeholder="25"
                 />
               </Field>
-
-              <div className="rounded-[18px] bg-black/10 p-3 ring-1 ring-white/8 lg:col-span-2 xl:col-span-3">
-                <div className="text-[11px] font-semibold tracking-[0.18em] text-[color:var(--muted2)]">
-                  BASIC ITEM RECORD
-                </div>
-                <div className="mt-3 grid gap-3 md:grid-cols-4">
-                  <Field label="Universe" locked={locks.universe} onToggleLock={() => handleToggleLock("universe")}>
-                    <select
-                      className={selectClass()}
-                      value={selectedUniverse}
-                      onChange={(e) => setUniverse(safeUniverse(e.target.value))}
-                    >
-                      {getUniverses().map((key) => (
-                        <option key={key} value={key}>
-                          {UNIVERSE_LABEL[key]}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-
-                  <Field label="Category" locked={locks.categoryLabel} onToggleLock={() => handleToggleLock("categoryLabel")}>
-                    <select
-                      className={selectClass()}
-                      value={selectedCategory}
-                      onChange={(e) => setCategoryLabel(e.target.value)}
-                    >
-                      {categoryOptions.map((category) => (
-                        <option key={category} value={category}>
-                          {category}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-
-                  <Field label="Subcategory" locked={locks.subcategoryLabel} onToggleLock={() => handleToggleLock("subcategoryLabel")}>
-                    {subcategoryOptions.length ? (
-                      <select
-                        className={selectClass()}
-                        value={values.subcategoryLabel}
-                        onChange={(e) => setField("subcategoryLabel", e.target.value)}
-                      >
-                        <option value="">Optional</option>
-                        {subcategoryOptions.map((subcategory) => (
-                          <option key={subcategory} value={subcategory}>
-                            {subcategory}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        className={inputClass()}
-                        value={values.subcategoryLabel}
-                        onChange={(e) => setField("subcategoryLabel", e.target.value)}
-                        placeholder="Optional"
-                      />
-                    )}
-                  </Field>
-
-                  <Field label="Title" locked={locks.title} onToggleLock={() => handleToggleLock("title")}>
-                    <div className="grid gap-2">
-                      <input
-                        ref={titleInputRef}
-                        className={inputClass()}
-                        value={values.title}
-                        onChange={(e) => setField("title", e.target.value)}
-                        placeholder="Batman"
-                      />
-                      {duplicateWarning ? (
-                        <div className="rounded-xl bg-amber-500/10 px-3 py-2 text-xs text-amber-200 ring-1 ring-amber-400/20">
-                          {duplicateWarning}
-                        </div>
-                      ) : null}
-                    </div>
-                  </Field>
-                </div>
-              </div>
 
               <Field label="Storage Location" locked={locks.storageLocation} onToggleLock={() => handleToggleLock("storageLocation")}>
                 <input
