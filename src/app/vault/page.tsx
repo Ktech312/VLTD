@@ -34,6 +34,11 @@ type SortMode = "newest" | "value_desc" | "value_asc" | "gain_desc" | "gain_asc"
 type ReadinessFilter = "all" | "high" | "medium" | "low";
 type UniverseFilter = "ALL" | UniverseKey;
 type InlineField = "" | "value" | "cost";
+type SaleInfo = {
+  id: string;
+  soldPrice?: number;
+  soldAt?: number;
+};
 type VaultUniverseSlug = "pop-culture" | "sports" | "tcg" | "music" | "jewelry-apparel" | "games" | "misc";
 
 type VaultUniverseEntry = {
