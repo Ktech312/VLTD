@@ -1798,6 +1798,7 @@ export default function AddPage() {
                         onCancel={() => setIsCropEditorOpen(false)}
                         isApplying={isApplyingCrop}
                         compact
+                        viewportFixed={cropEditorTarget === "media"}
                       />
                     </div>
                   </div>

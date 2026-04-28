@@ -120,6 +120,7 @@ export default function ScanCropEditor({
   description = "Drag any side or corner to crop. Drag inside the box to reposition.",
   applyLabel = "Save Crop",
   compact = false,
+  viewportFixed = false,
 }: {
   imageUrl: string;
   crop: ScanCropRect;
@@ -134,6 +135,7 @@ export default function ScanCropEditor({
   description?: string;
   applyLabel?: string;
   compact?: boolean;
+  viewportFixed?: boolean;
 }) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const imageBaseRef = useRef<HTMLDivElement | null>(null);
@@ -422,9 +424,22 @@ export default function ScanCropEditor({
   const cropStyle = cropBox
     ? { left: cropBox.left, top: cropBox.top, width: cropBox.width, height: cropBox.height }
     : { left: 0, top: 0, width: 0, height: 0 };
+  const sectionClassName = viewportFixed
+    ? "fixed left-1/2 top-[max(0.5rem,env(safe-area-inset-top))] z-[220] w-[calc(100dvw-1rem)] max-w-3xl -translate-x-1/2 overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]"
+    : compact
+      ? "relative w-full max-h-[calc(100dvh-24px)] overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]"
+      : "relative w-full max-h-[calc(100dvh-24px)] overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-4";
+  const viewportClassName = viewportFixed
+    ? "relative flex h-[min(54dvh,420px)] min-h-[220px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
+    : compact
+      ? "relative flex h-[min(58dvh,520px)] min-h-[260px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
+      : "relative flex h-[min(62dvh,600px)] min-h-[300px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none";
+  const imageClassName = viewportFixed
+    ? "block max-h-[min(54dvh,420px)] max-w-full select-none object-contain"
+    : "block max-h-[min(58dvh,520px)] max-w-full select-none object-contain";
 
   return (
-    <section className={compact ? "relative w-full max-h-[calc(100dvh-24px)] overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]" : "relative w-full max-h-[calc(100dvh-24px)] overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-4"}>
+    <section className={sectionClassName}>
       <button
         type="button"
         onClick={requestCancel}
@@ -452,7 +467,7 @@ export default function ScanCropEditor({
       <div className={compact ? "mt-2 overflow-hidden rounded-[16px] bg-black/30 p-1.5 ring-1 ring-[color:var(--border)]" : "mt-3 overflow-hidden rounded-[16px] bg-black/30 p-2 ring-1 ring-[color:var(--border)]"}>
         <div
           ref={viewportRef}
-          className={compact ? "relative flex h-[min(58dvh,520px)] min-h-[260px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none" : "relative flex h-[min(62dvh,600px)] min-h-[300px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"}
+          className={viewportClassName}
           onWheel={handleWheel}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -468,7 +483,7 @@ export default function ScanCropEditor({
               alt="Crop preview"
               draggable={false}
               onLoad={() => resetVisualFromCrop(currentCrop)}
-              className="block max-h-[min(58dvh,520px)] max-w-full select-none object-contain"
+              className={imageClassName}
               style={{ transform: `rotate(${normalizedRotation}deg)`, touchAction: "none" }}
             />
           </div>
