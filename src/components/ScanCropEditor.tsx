@@ -1,17 +1,24 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
   type TouchEvent as ReactTouchEvent,
+  type WheelEvent as ReactWheelEvent,
 } from "react";
 
 import type { ScanCropRect } from "@/lib/scanners/cropImageFile";
 
-const MIN_CROP_SIZE = 0.08;
-const ZOOM_STEP = 0.08;
+const MIN_CROP_SIZE_PX = 36;
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 5;
+const WHEEL_ZOOM_SPEED = 0.0018;
+const BUTTON_ZOOM_STEP = 0.18;
+
+const FULL_CROP: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
 
 type DragMode =
   | "move"
@@ -24,19 +31,26 @@ type DragMode =
   | "se"
   | "sw";
 
+type CropBox = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
+
 type DragSession = {
   mode: DragMode;
   startX: number;
   startY: number;
-  startCrop: ScanCropRect;
-  imageRect: DOMRect;
+  startBox: CropBox;
 };
 
 type TouchPoint = { clientX: number; clientY: number };
 
-type TouchSnapshot = {
+type PinchSession = {
   distance: number;
-  crop: ScanCropRect;
+  zoom: number;
+  pan: { x: number; y: number };
 };
 
 function buttonClass() {
@@ -56,10 +70,10 @@ function clamp(value: number, min: number, max: number) {
 }
 
 function normalizeCrop(crop: ScanCropRect): ScanCropRect {
-  const left = clamp(Number(crop.left ?? 0), 0, 1 - MIN_CROP_SIZE);
-  const top = clamp(Number(crop.top ?? 0), 0, 1 - MIN_CROP_SIZE);
-  const right = clamp(Number(crop.right ?? 0), 0, 1 - left - MIN_CROP_SIZE);
-  const bottom = clamp(Number(crop.bottom ?? 0), 0, 1 - top - MIN_CROP_SIZE);
+  const left = clamp(Number(crop.left ?? 0), 0, 0.98);
+  const top = clamp(Number(crop.top ?? 0), 0, 0.98);
+  const right = clamp(Number(crop.right ?? 0), 0, 1 - left - 0.02);
+  const bottom = clamp(Number(crop.bottom ?? 0), 0, 1 - top - 0.02);
   return { left, top, right, bottom };
 }
 
@@ -72,57 +86,24 @@ function cropsEqual(a: ScanCropRect, b: ScanCropRect) {
   );
 }
 
-function cropWidth(crop: ScanCropRect) {
-  return 1 - crop.left - crop.right;
+function distance(a: TouchPoint, b: TouchPoint) {
+  return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
 }
 
-function cropHeight(crop: ScanCropRect) {
-  return 1 - crop.top - crop.bottom;
-}
-
-function moveCrop(crop: ScanCropRect, dx: number, dy: number): ScanCropRect {
-  const width = cropWidth(crop);
-  const height = cropHeight(crop);
-  const left = clamp(crop.left + dx, 0, 1 - width);
-  const top = clamp(crop.top + dy, 0, 1 - height);
+function midpoint(a: TouchPoint, b: TouchPoint) {
   return {
-    left,
-    top,
-    right: 1 - left - width,
-    bottom: 1 - top - height,
+    x: (a.clientX + b.clientX) / 2,
+    y: (a.clientY + b.clientY) / 2,
   };
 }
 
-function resizeCrop(crop: ScanCropRect, mode: DragMode, dx: number, dy: number): ScanCropRect {
-  const next = { ...crop };
-
-  if (mode.includes("w")) {
-    next.left = clamp(crop.left + dx, 0, 1 - crop.right - MIN_CROP_SIZE);
-  }
-  if (mode.includes("e")) {
-    next.right = clamp(crop.right - dx, 0, 1 - next.left - MIN_CROP_SIZE);
-  }
-  if (mode.includes("n")) {
-    next.top = clamp(crop.top + dy, 0, 1 - crop.bottom - MIN_CROP_SIZE);
-  }
-  if (mode.includes("s")) {
-    next.bottom = clamp(crop.bottom - dy, 0, 1 - next.top - MIN_CROP_SIZE);
-  }
-
-  return normalizeCrop(next);
-}
-
-function zoomCrop(crop: ScanCropRect, delta: number): ScanCropRect {
-  return normalizeCrop({
-    left: crop.left + delta,
-    right: crop.right + delta,
-    top: crop.top + delta,
-    bottom: crop.bottom + delta,
-  });
-}
-
-function distance(a: TouchPoint, b: TouchPoint) {
-  return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+function scaleBox(box: CropBox, crop: ScanCropRect): CropBox {
+  return {
+    left: box.left + box.width * crop.left,
+    top: box.top + box.height * crop.top,
+    width: box.width * (1 - crop.left - crop.right),
+    height: box.height * (1 - crop.top - crop.bottom),
+  };
 }
 
 export default function ScanCropEditor({
@@ -154,16 +135,72 @@ export default function ScanCropEditor({
   applyLabel?: string;
   compact?: boolean;
 }) {
-  const imageFrameRef = useRef<HTMLDivElement | null>(null);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const imageBaseRef = useRef<HTMLDivElement | null>(null);
   const dragSessionRef = useRef<DragSession | null>(null);
-  const pinchRef = useRef<TouchSnapshot | null>(null);
+  const pinchRef = useRef<PinchSession | null>(null);
   const initialCropRef = useRef<ScanCropRect>(normalizeCrop(selectedCrop));
-  const [localCrop, setLocalCrop] = useState<ScanCropRect>(() => normalizeCrop(selectedCrop));
+  const lastSelectedCropRef = useRef<ScanCropRect>(normalizeCrop(selectedCrop));
+
+  const [cropBox, setCropBox] = useState<CropBox | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [currentCrop, setCurrentCrop] = useState<ScanCropRect>(() => normalizeCrop(selectedCrop));
   const normalizedRotation = ((rotation % 360) + 360) % 360;
 
-  useEffect(() => {
-    setLocalCrop(normalizeCrop(selectedCrop));
-  }, [selectedCrop]);
+  const getBaseBox = useCallback((): CropBox | null => {
+    const viewport = viewportRef.current;
+    const imageBase = imageBaseRef.current;
+    if (!viewport || !imageBase) return null;
+    return {
+      left: imageBase.offsetLeft,
+      top: imageBase.offsetTop,
+      width: imageBase.offsetWidth,
+      height: imageBase.offsetHeight,
+    };
+  }, []);
+
+  const getRenderedImageBox = useCallback((nextZoom = zoom, nextPan = pan): CropBox | null => {
+    const base = getBaseBox();
+    if (!base) return null;
+    return {
+      left: base.left + nextPan.x - ((nextZoom - 1) * base.width) / 2,
+      top: base.top + nextPan.y - ((nextZoom - 1) * base.height) / 2,
+      width: base.width * nextZoom,
+      height: base.height * nextZoom,
+    };
+  }, [getBaseBox, pan, zoom]);
+
+  const cropFromBox = useCallback((box: CropBox, nextZoom = zoom, nextPan = pan): ScanCropRect => {
+    const rendered = getRenderedImageBox(nextZoom, nextPan);
+    if (!rendered || rendered.width <= 0 || rendered.height <= 0) return currentCrop;
+
+    const left = clamp((box.left - rendered.left) / rendered.width, 0, 0.98);
+    const top = clamp((box.top - rendered.top) / rendered.height, 0, 0.98);
+    const right = clamp((rendered.left + rendered.width - (box.left + box.width)) / rendered.width, 0, 1 - left - 0.02);
+    const bottom = clamp((rendered.top + rendered.height - (box.top + box.height)) / rendered.height, 0, 1 - top - 0.02);
+
+    return normalizeCrop({ left, top, right, bottom });
+  }, [currentCrop, getRenderedImageBox, pan, zoom]);
+
+  const commitBox = useCallback((box: CropBox, nextZoom = zoom, nextPan = pan) => {
+    const nextCrop = cropFromBox(box, nextZoom, nextPan);
+    setCropBox(box);
+    setCurrentCrop(nextCrop);
+    lastSelectedCropRef.current = nextCrop;
+    onChange(nextCrop);
+  }, [cropFromBox, onChange, pan, zoom]);
+
+  const resetVisualFromCrop = useCallback((nextCrop: ScanCropRect) => {
+    const base = getBaseBox();
+    if (!base) return;
+    const normalized = normalizeCrop(nextCrop);
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+    const nextBox = scaleBox(base, normalized);
+    setCropBox(nextBox);
+    setCurrentCrop(normalized);
+  }, [getBaseBox]);
 
   useEffect(() => {
     const previousBodyOverflow = document.body.style.overflow;
@@ -182,19 +219,66 @@ export default function ScanCropEditor({
   }, []);
 
   useEffect(() => {
+    const nextCrop = normalizeCrop(selectedCrop);
+    if (cropsEqual(nextCrop, lastSelectedCropRef.current)) return;
+    lastSelectedCropRef.current = nextCrop;
+    resetVisualFromCrop(nextCrop);
+  }, [resetVisualFromCrop, selectedCrop]);
+
+  useEffect(() => {
+    function onResize() {
+      resetVisualFromCrop(currentCrop);
+    }
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
+    };
+  }, [currentCrop, resetVisualFromCrop]);
+
+  useEffect(() => {
     function handlePointerMove(event: PointerEvent) {
       const session = dragSessionRef.current;
       if (!session) return;
+      const base = getBaseBox();
+      if (!base) return;
 
       event.preventDefault();
-      const dx = (event.clientX - session.startX) / Math.max(1, session.imageRect.width);
-      const dy = (event.clientY - session.startY) / Math.max(1, session.imageRect.height);
-      const next = session.mode === "move"
-        ? moveCrop(session.startCrop, dx, dy)
-        : resizeCrop(session.startCrop, session.mode, dx, dy);
+      const dx = event.clientX - session.startX;
+      const dy = event.clientY - session.startY;
+      let next = { ...session.startBox };
 
-      setLocalCrop(next);
-      onChange(next);
+      if (session.mode === "move") {
+        next.left += dx;
+        next.top += dy;
+      } else {
+        if (session.mode.includes("w")) {
+          next.left = session.startBox.left + dx;
+          next.width = session.startBox.width - dx;
+        }
+        if (session.mode.includes("e")) {
+          next.width = session.startBox.width + dx;
+        }
+        if (session.mode.includes("n")) {
+          next.top = session.startBox.top + dy;
+          next.height = session.startBox.height - dy;
+        }
+        if (session.mode.includes("s")) {
+          next.height = session.startBox.height + dy;
+        }
+      }
+
+      const imageBounds = getRenderedImageBox();
+      const bounds = imageBounds ?? base;
+      next.width = Math.max(MIN_CROP_SIZE_PX, next.width);
+      next.height = Math.max(MIN_CROP_SIZE_PX, next.height);
+      next.left = clamp(next.left, bounds.left, bounds.left + bounds.width - next.width);
+      next.top = clamp(next.top, bounds.top, bounds.top + bounds.height - next.height);
+      next.width = clamp(next.width, MIN_CROP_SIZE_PX, bounds.left + bounds.width - next.left);
+      next.height = clamp(next.height, MIN_CROP_SIZE_PX, bounds.top + bounds.height - next.top);
+
+      commitBox(next);
     }
 
     function handlePointerUp() {
@@ -212,25 +296,10 @@ export default function ScanCropEditor({
       window.removeEventListener("pointerup", handlePointerUp);
       window.removeEventListener("pointercancel", handlePointerUp);
     };
-  }, [onChange]);
-
-  useEffect(() => {
-    const frame = imageFrameRef.current;
-    if (!frame) return;
-
-    function handleWheel(event: WheelEvent) {
-      event.preventDefault();
-      const next = zoomCrop(localCrop, event.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP);
-      setLocalCrop(next);
-      onChange(next);
-    }
-
-    frame.addEventListener("wheel", handleWheel, { passive: false });
-    return () => frame.removeEventListener("wheel", handleWheel);
-  }, [localCrop, onChange]);
+  }, [commitBox, getBaseBox, getRenderedImageBox]);
 
   function requestCancel() {
-    const hasCropChanges = !cropsEqual(localCrop, initialCropRef.current);
+    const hasCropChanges = !cropsEqual(currentCrop, initialCropRef.current);
     if (hasCropChanges && typeof window !== "undefined") {
       const ok = window.confirm("Discard unsaved photo crop changes?");
       if (!ok) return;
@@ -239,24 +308,22 @@ export default function ScanCropEditor({
   }
 
   function handleReset() {
-    const fullCrop = { left: 0, top: 0, right: 0, bottom: 0 };
-    setLocalCrop(fullCrop);
-    onChange(fullCrop);
+    lastSelectedCropRef.current = FULL_CROP;
+    resetVisualFromCrop(FULL_CROP);
+    onChange(FULL_CROP);
     onReset();
   }
 
   function startDrag(mode: DragMode, event: ReactPointerEvent<HTMLButtonElement | HTMLDivElement>) {
     event.preventDefault();
     event.stopPropagation();
-    const imageRect = imageFrameRef.current?.getBoundingClientRect();
-    if (!imageRect) return;
+    if (!cropBox) return;
 
     dragSessionRef.current = {
       mode,
       startX: event.clientX,
       startY: event.clientY,
-      startCrop: localCrop,
-      imageRect,
+      startBox: cropBox,
     };
 
     const cursor = mode === "move"
@@ -274,17 +341,62 @@ export default function ScanCropEditor({
     event.currentTarget.setPointerCapture?.(event.pointerId);
   }
 
+  function zoomAround(
+    screenX: number,
+    screenY: number,
+    nextZoom: number,
+    originZoom = zoom,
+    originPan = pan
+  ) {
+    const base = getBaseBox();
+    const viewport = viewportRef.current;
+    if (!base || !cropBox || !viewport) return;
+
+    const viewportRect = viewport.getBoundingClientRect();
+    const pointX = screenX - viewportRect.left;
+    const pointY = screenY - viewportRect.top;
+    const safeZoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
+    const baseCenterX = base.left + base.width / 2;
+    const baseCenterY = base.top + base.height / 2;
+    const localX = baseCenterX + (pointX - baseCenterX - originPan.x) / originZoom;
+    const localY = baseCenterY + (pointY - baseCenterY - originPan.y) / originZoom;
+    const nextPan = {
+      x: pointX - baseCenterX - safeZoom * (localX - baseCenterX),
+      y: pointY - baseCenterY - safeZoom * (localY - baseCenterY),
+    };
+
+    setZoom(safeZoom);
+    setPan(nextPan);
+    const nextCrop = cropFromBox(cropBox, safeZoom, nextPan);
+    setCurrentCrop(nextCrop);
+    lastSelectedCropRef.current = nextCrop;
+    onChange(nextCrop);
+  }
+
   function zoomBy(delta: number) {
-    const next = zoomCrop(localCrop, delta);
-    setLocalCrop(next);
-    onChange(next);
+    const box = cropBox;
+    const viewport = viewportRef.current;
+    if (!box || !viewport) return;
+    const viewportRect = viewport.getBoundingClientRect();
+    zoomAround(
+      viewportRect.left + box.left + box.width / 2,
+      viewportRect.top + box.top + box.height / 2,
+      zoom + delta
+    );
+  }
+
+  function handleWheel(event: ReactWheelEvent<HTMLDivElement>) {
+    event.preventDefault();
+    const zoomDelta = -event.deltaY * WHEEL_ZOOM_SPEED;
+    zoomAround(event.clientX, event.clientY, zoom + zoomDelta);
   }
 
   function handleTouchStart(event: ReactTouchEvent<HTMLDivElement>) {
     if (event.touches.length !== 2) return;
     pinchRef.current = {
       distance: distance(event.touches[0], event.touches[1]),
-      crop: localCrop,
+      zoom,
+      pan,
     };
   }
 
@@ -293,23 +405,23 @@ export default function ScanCropEditor({
     if (!snapshot || event.touches.length !== 2) return;
     event.preventDefault();
     const currentDistance = distance(event.touches[0], event.touches[1]);
-    const zoomAmount = clamp((currentDistance - snapshot.distance) / 700, -0.22, 0.22);
-    const next = zoomCrop(snapshot.crop, zoomAmount);
-    setLocalCrop(next);
-    onChange(next);
+    const scale = currentDistance / Math.max(1, snapshot.distance);
+    const currentCenter = midpoint(event.touches[0], event.touches[1]);
+    const nextZoom = clamp(snapshot.zoom * scale, MIN_ZOOM, MAX_ZOOM);
+
+    zoomAround(currentCenter.x, currentCenter.y, nextZoom, snapshot.zoom, snapshot.pan);
   }
 
   function handleTouchEnd() {
     pinchRef.current = null;
   }
 
-  const left = localCrop.left * 100;
-  const top = localCrop.top * 100;
-  const width = cropWidth(localCrop) * 100;
-  const height = cropHeight(localCrop) * 100;
-  const zoomLabel = Math.round((1 / Math.max(cropWidth(localCrop), cropHeight(localCrop))) * 100);
-  const cornerHandleClass = "absolute z-30 h-2.5 w-2.5 rounded-full border border-white/90 bg-white/95 shadow-[0_0_7px_rgba(0,0,0,0.55)] touch-none pointer-events-auto sm:h-3 sm:w-3";
-  const edgeHandleClass = "absolute z-30 rounded-full bg-white/95 shadow-[0_0_7px_rgba(0,0,0,0.5)] touch-none pointer-events-auto";
+  const zoomLabel = Math.round(zoom * 100);
+  const cornerHandleClass = "absolute z-30 h-1.5 w-1.5 rounded-full border border-white/90 bg-white/95 shadow-[0_0_5px_rgba(0,0,0,0.55)] touch-none pointer-events-auto";
+  const edgeHandleClass = "absolute z-30 rounded-full bg-white/95 shadow-[0_0_5px_rgba(0,0,0,0.5)] touch-none pointer-events-auto";
+  const cropStyle = cropBox
+    ? { left: cropBox.left, top: cropBox.top, width: cropBox.width, height: cropBox.height }
+    : { left: 0, top: 0, width: 0, height: 0 };
 
   return (
     <section className={compact ? "relative w-full max-h-[calc(100dvh-24px)] overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]" : "relative w-full max-h-[calc(100dvh-24px)] overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-4"}>
@@ -339,25 +451,34 @@ export default function ScanCropEditor({
 
       <div className={compact ? "mt-2 overflow-hidden rounded-[16px] bg-black/30 p-1.5 ring-1 ring-[color:var(--border)]" : "mt-3 overflow-hidden rounded-[16px] bg-black/30 p-2 ring-1 ring-[color:var(--border)]"}>
         <div
+          ref={viewportRef}
           className={compact ? "relative flex h-[min(58dvh,520px)] min-h-[260px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none" : "relative flex h-[min(62dvh,600px)] min-h-[300px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"}
+          onWheel={handleWheel}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          <div ref={imageFrameRef} className="relative max-h-full max-w-full">
+          <div
+            ref={imageBaseRef}
+            className="relative max-h-full max-w-full will-change-transform"
+            style={{ transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`, transformOrigin: "center center", touchAction: "none" }}
+          >
             <img
               src={imageUrl}
               alt="Crop preview"
               draggable={false}
+              onLoad={() => resetVisualFromCrop(currentCrop)}
               className="block max-h-[min(58dvh,520px)] max-w-full select-none object-contain"
               style={{ transform: `rotate(${normalizedRotation}deg)`, touchAction: "none" }}
             />
+          </div>
 
-            <div className="pointer-events-none absolute inset-0 bg-black/45" />
+          <div className="pointer-events-none absolute inset-0 bg-black/35" />
 
+          {cropBox ? (
             <div
               className="absolute z-20 border border-white/90 shadow-[0_0_0_9999px_rgba(0,0,0,0.48)] touch-none"
-              style={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%` }}
+              style={cropStyle}
               onPointerDown={(event) => startDrag("move", event)}
             >
               <div className="pointer-events-none absolute inset-0 grid grid-cols-3 grid-rows-3">
@@ -366,32 +487,32 @@ export default function ScanCropEditor({
                 ))}
               </div>
 
-              <button type="button" aria-label="Crop top left" onPointerDown={(event) => startDrag("nw", event)} className={`${cornerHandleClass} -left-1 -top-1 cursor-nwse-resize`} />
-              <button type="button" aria-label="Crop top right" onPointerDown={(event) => startDrag("ne", event)} className={`${cornerHandleClass} -right-1 -top-1 cursor-nesw-resize`} />
-              <button type="button" aria-label="Crop bottom left" onPointerDown={(event) => startDrag("sw", event)} className={`${cornerHandleClass} -bottom-1 -left-1 cursor-nesw-resize`} />
-              <button type="button" aria-label="Crop bottom right" onPointerDown={(event) => startDrag("se", event)} className={`${cornerHandleClass} -bottom-1 -right-1 cursor-nwse-resize`} />
-              <button type="button" aria-label="Crop top edge" onPointerDown={(event) => startDrag("n", event)} className={`${edgeHandleClass} -top-1 left-1/2 h-2.5 w-8 -translate-x-1/2 cursor-ns-resize sm:w-9`} />
-              <button type="button" aria-label="Crop bottom edge" onPointerDown={(event) => startDrag("s", event)} className={`${edgeHandleClass} -bottom-1 left-1/2 h-2.5 w-8 -translate-x-1/2 cursor-ns-resize sm:w-9`} />
-              <button type="button" aria-label="Crop left edge" onPointerDown={(event) => startDrag("w", event)} className={`${edgeHandleClass} -left-1 top-1/2 h-8 w-2.5 -translate-y-1/2 cursor-ew-resize sm:h-9`} />
-              <button type="button" aria-label="Crop right edge" onPointerDown={(event) => startDrag("e", event)} className={`${edgeHandleClass} -right-1 top-1/2 h-8 w-2.5 -translate-y-1/2 cursor-ew-resize sm:h-9`} />
+              <button type="button" aria-label="Crop top left" onPointerDown={(event) => startDrag("nw", event)} className={`${cornerHandleClass} -left-0.5 -top-0.5 cursor-nwse-resize`} />
+              <button type="button" aria-label="Crop top right" onPointerDown={(event) => startDrag("ne", event)} className={`${cornerHandleClass} -right-0.5 -top-0.5 cursor-nesw-resize`} />
+              <button type="button" aria-label="Crop bottom left" onPointerDown={(event) => startDrag("sw", event)} className={`${cornerHandleClass} -bottom-0.5 -left-0.5 cursor-nesw-resize`} />
+              <button type="button" aria-label="Crop bottom right" onPointerDown={(event) => startDrag("se", event)} className={`${cornerHandleClass} -bottom-0.5 -right-0.5 cursor-nwse-resize`} />
+              <button type="button" aria-label="Crop top edge" onPointerDown={(event) => startDrag("n", event)} className={`${edgeHandleClass} -top-0.5 left-1/2 h-1.5 w-5 -translate-x-1/2 cursor-ns-resize`} />
+              <button type="button" aria-label="Crop bottom edge" onPointerDown={(event) => startDrag("s", event)} className={`${edgeHandleClass} -bottom-0.5 left-1/2 h-1.5 w-5 -translate-x-1/2 cursor-ns-resize`} />
+              <button type="button" aria-label="Crop left edge" onPointerDown={(event) => startDrag("w", event)} className={`${edgeHandleClass} -left-0.5 top-1/2 h-5 w-1.5 -translate-y-1/2 cursor-ew-resize`} />
+              <button type="button" aria-label="Crop right edge" onPointerDown={(event) => startDrag("e", event)} className={`${edgeHandleClass} -right-0.5 top-1/2 h-5 w-1.5 -translate-y-1/2 cursor-ew-resize`} />
             </div>
-          </div>
+          ) : null}
         </div>
       </div>
 
       <div className={compact ? "mt-2 flex flex-wrap items-center justify-between gap-2 px-1" : "mt-3 flex flex-wrap items-center justify-between gap-2"}>
         <div className="flex flex-wrap items-center gap-2">
-          <button type="button" onClick={() => zoomBy(-ZOOM_STEP)} disabled={left <= 0.001 && top <= 0.001 && localCrop.right <= 0.001 && localCrop.bottom <= 0.001} className={iconButtonClass()} aria-label="Zoom out">
+          <button type="button" onClick={() => zoomBy(-BUTTON_ZOOM_STEP)} disabled={zoom <= MIN_ZOOM + 0.01} className={iconButtonClass()} aria-label="Zoom out">
             −
           </button>
           <div className="min-w-[72px] text-center text-xs font-semibold text-[color:var(--muted)]">{zoomLabel}%</div>
-          <button type="button" onClick={() => zoomBy(ZOOM_STEP)} disabled={cropWidth(localCrop) <= MIN_CROP_SIZE + 0.01 || cropHeight(localCrop) <= MIN_CROP_SIZE + 0.01} className={iconButtonClass()} aria-label="Zoom in">
+          <button type="button" onClick={() => zoomBy(BUTTON_ZOOM_STEP)} disabled={zoom >= MAX_ZOOM - 0.01} className={iconButtonClass()} aria-label="Zoom in">
             +
           </button>
         </div>
 
         <div className="text-right text-[11px] leading-4 text-[color:var(--muted)]">
-          Pull one side, drag a corner, or drag inside the crop box.
+          Pinch or scroll to zoom. Pull one side, drag a corner, or drag inside the crop box.
         </div>
       </div>
 
