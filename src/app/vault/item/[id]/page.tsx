@@ -7,6 +7,7 @@ import ItemMedia from "@/components/ItemMedia";
 import PricingMvpCard from "@/components/PricingMvpCard";
 import { removeBackgroundStub } from "@/lib/imageAI";
 import { getStoredActiveProfileId } from "@/lib/auth";
+import { generateShareImage } from "@/lib/generateShareImage";
 import { buildPricingPatch } from "@/lib/pricingMvp";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import {
@@ -173,6 +174,12 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     subcategoryLabel: "",
     title: "",
   });
+  const [shareIncludeWatermark, setShareIncludeWatermark] = useState(true);
+  const [shareIncludeUsername, setShareIncludeUsername] = useState(false);
+  const [shareUsername, setShareUsername] = useState("");
+  const [shareUseDeviceSheet, setShareUseDeviceSheet] = useState(false);
+  const [shareMessage, setShareMessage] = useState("");
+  const [isGeneratingShare, setIsGeneratingShare] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [sale, setSale] = useState<SaleRecord | null>(null);
   const [isSoldView, setIsSoldView] = useState(false);
@@ -565,6 +572,82 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     setMediaMessage("Pricing updated.");
   }
 
+  function downloadDataUrl(dataUrl: string, filename: string) {
+    const link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  async function handleShareImage() {
+    if (!item) return;
+
+    setIsGeneratingShare(true);
+    setShareMessage("Generating share image...");
+
+    try {
+      const image = await generateShareImage({
+        title: item.title,
+        subtitle: item.subtitle,
+        value: Math.round(effectiveMarketValue(item)),
+        profit: Math.round(gain(item)),
+        image: images[activeImageIndex] || item.imageFrontUrl,
+        watermark: shareIncludeWatermark,
+        username: shareIncludeUsername ? shareUsername.trim() || "VLTD Collector" : undefined,
+      });
+
+      if (!image) {
+        setShareMessage("Share image could not be generated in this browser.");
+        return;
+      }
+
+      const filename = `vltd-${String(item.title || "item")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") || "item"}-share.png`;
+
+      if (shareUseDeviceSheet && typeof navigator !== "undefined" && "share" in navigator) {
+        try {
+          const blob = await (await fetch(image)).blob();
+          const file = new File([blob], filename, { type: "image/png" });
+          const sharePayload = {
+            files: [file],
+            title: item.title,
+            text: "Shared from VLTD",
+          };
+          const shareNavigator = navigator as Navigator & {
+            canShare?: (data: { files?: File[]; title?: string; text?: string }) => boolean;
+            share: (data: { files?: File[]; title?: string; text?: string }) => Promise<void>;
+          };
+
+          if (!shareNavigator.canShare || shareNavigator.canShare(sharePayload)) {
+            await shareNavigator.share(sharePayload);
+            setShareMessage("Device share sheet opened.");
+            return;
+          }
+        } catch (error) {
+          if (error instanceof Error && error.name === "AbortError") {
+            setShareMessage("Share cancelled.");
+            return;
+          }
+        }
+      }
+
+      downloadDataUrl(image, filename);
+      setShareMessage(
+        shareUseDeviceSheet
+          ? "Device share was not available, so the PNG was downloaded."
+          : "Share PNG downloaded."
+      );
+    } catch (error) {
+      setShareMessage(error instanceof Error ? error.message : "Share image generation failed.");
+    } finally {
+      setIsGeneratingShare(false);
+    }
+  }
+
   async function handleReturnToVault() {
     if (!item) return;
     const confirmed = window.confirm("Return this item to the Vault and remove its sold status?");
@@ -742,6 +825,66 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 </div>
               </div>
             </Section>
+
+            <div className="mt-5">
+              <Section title="SHARE IMAGE">
+                <div className="space-y-3 text-sm">
+                  <div className="text-[color:var(--muted)]">
+                    Generate a branded 1080×1080 PNG for social posts.
+                  </div>
+
+                  <label className="flex items-center justify-between gap-3 rounded-2xl bg-black/10 px-3 py-2 ring-1 ring-white/8">
+                    <span>Auto watermark logo</span>
+                    <input
+                      type="checkbox"
+                      checked={shareIncludeWatermark}
+                      onChange={(event) => setShareIncludeWatermark(event.target.checked)}
+                      className="h-4 w-4 accent-cyan-400"
+                    />
+                  </label>
+
+                  <label className="flex items-center justify-between gap-3 rounded-2xl bg-black/10 px-3 py-2 ring-1 ring-white/8">
+                    <span>Add username</span>
+                    <input
+                      type="checkbox"
+                      checked={shareIncludeUsername}
+                      onChange={(event) => setShareIncludeUsername(event.target.checked)}
+                      className="h-4 w-4 accent-cyan-400"
+                    />
+                  </label>
+
+                  {shareIncludeUsername ? (
+                    <input
+                      className="h-10 w-full rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                      value={shareUsername}
+                      onChange={(event) => setShareUsername(event.target.value)}
+                      placeholder="username"
+                    />
+                  ) : null}
+
+                  <label className="flex items-center justify-between gap-3 rounded-2xl bg-black/10 px-3 py-2 ring-1 ring-white/8">
+                    <span>Direct share to Instagram/device apps</span>
+                    <input
+                      type="checkbox"
+                      checked={shareUseDeviceSheet}
+                      onChange={(event) => setShareUseDeviceSheet(event.target.checked)}
+                      className="h-4 w-4 accent-cyan-400"
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() => void handleShareImage()}
+                    disabled={isGeneratingShare}
+                    className="inline-flex h-10 w-full items-center justify-center rounded-full bg-cyan-500/15 px-4 text-sm font-medium text-cyan-100 ring-1 ring-cyan-400/25 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isGeneratingShare ? "Generating..." : "Share / Download PNG"}
+                  </button>
+
+                  {shareMessage ? <div className="text-xs text-[color:var(--muted)]">{shareMessage}</div> : null}
+                </div>
+              </Section>
+            </div>
           </div>
         </div>
 
