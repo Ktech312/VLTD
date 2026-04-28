@@ -642,7 +642,7 @@ export default function ItemMedia({
       {mounted && editTarget && typeof document !== "undefined"
         ? createPortal(
             <div
-              className="fixed inset-0 z-[95] flex h-[100dvh] w-[100dvw] items-center justify-center overflow-hidden bg-black/90 px-3 py-3 backdrop-blur-sm sm:px-4"
+              className="fixed inset-0 z-[95] flex h-[100dvh] w-[100dvw] items-start justify-center overflow-y-auto bg-black/90 px-3 pb-4 pt-3 backdrop-blur-sm sm:px-4 sm:pt-4"
               role="dialog"
               aria-modal="true"
               aria-label="Edit saved photo"
