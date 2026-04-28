@@ -424,7 +424,7 @@ export default function ScanCropEditor({
     : { left: 0, top: 0, width: 0, height: 0 };
 
   return (
-    <section className={compact ? "relative w-full max-h-[calc(100dvh-24px)] overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]" : "relative w-full max-h-[calc(100dvh-24px)] overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-4"}>
+    <section className={compact ? "relative flex max-h-[calc(100dvh-24px)] w-full flex-col overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]" : "relative flex max-h-[calc(100dvh-24px)] w-full flex-col overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-4"}>
       <button
         type="button"
         onClick={requestCancel}
@@ -449,10 +449,10 @@ export default function ScanCropEditor({
         </div>
       ) : null}
 
-      <div className={compact ? "mt-2 overflow-hidden rounded-[16px] bg-black/30 p-1.5 ring-1 ring-[color:var(--border)]" : "mt-3 overflow-hidden rounded-[16px] bg-black/30 p-2 ring-1 ring-[color:var(--border)]"}>
+      <div className={compact ? "mt-2 min-h-0 flex-1 overflow-hidden rounded-[16px] bg-black/30 p-1.5 ring-1 ring-[color:var(--border)]" : "mt-3 min-h-0 flex-1 overflow-hidden rounded-[16px] bg-black/30 p-2 ring-1 ring-[color:var(--border)]"}>
         <div
           ref={viewportRef}
-          className={compact ? "relative flex h-[min(58dvh,520px)] min-h-[260px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none" : "relative flex h-[min(62dvh,600px)] min-h-[300px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"}
+          className={compact ? "relative flex h-[min(46dvh,420px)] min-h-[180px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none" : "relative flex h-[min(58dvh,560px)] min-h-[260px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"}
           onWheel={handleWheel}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -468,7 +468,7 @@ export default function ScanCropEditor({
               alt="Crop preview"
               draggable={false}
               onLoad={() => resetVisualFromCrop(currentCrop)}
-              className="block max-h-[min(58dvh,520px)] max-w-full select-none object-contain"
+              className={compact ? "block max-h-[min(46dvh,420px)] max-w-full select-none object-contain" : "block max-h-[min(58dvh,560px)] max-w-full select-none object-contain"}
               style={{ transform: `rotate(${normalizedRotation}deg)`, touchAction: "none" }}
             />
           </div>
