@@ -424,7 +424,7 @@ export default function ScanCropEditor({
     : { left: 0, top: 0, width: 0, height: 0 };
 
   return (
-    <section className={compact ? "relative flex max-h-[calc(100dvh-24px)] w-full flex-col overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]" : "relative flex max-h-[calc(100dvh-24px)] w-full flex-col overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-4"}>
+    <section className={compact ? "fixed inset-x-2 top-2 bottom-2 z-[9999] mx-auto flex max-w-5xl flex-col overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)] shadow-[0_24px_80px_rgba(0,0,0,0.65)]" : "fixed inset-x-2 top-2 bottom-2 z-[9999] mx-auto flex max-w-5xl flex-col overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[0_24px_80px_rgba(0,0,0,0.65)] sm:inset-x-4 sm:top-4 sm:bottom-4 sm:p-4"}>
       <button
         type="button"
         onClick={requestCancel}
@@ -435,7 +435,7 @@ export default function ScanCropEditor({
       </button>
 
       {!compact ? (
-        <div className="flex flex-wrap items-start justify-between gap-3 pr-12">
+        <div className="flex shrink-0 flex-wrap items-start justify-between gap-3 pr-12">
           <div>
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">{title}</div>
             <div className="mt-1 text-xs text-[color:var(--muted)]">{description}</div>
@@ -452,7 +452,7 @@ export default function ScanCropEditor({
       <div className={compact ? "mt-2 min-h-0 flex-1 overflow-hidden rounded-[16px] bg-black/30 p-1.5 ring-1 ring-[color:var(--border)]" : "mt-3 min-h-0 flex-1 overflow-hidden rounded-[16px] bg-black/30 p-2 ring-1 ring-[color:var(--border)]"}>
         <div
           ref={viewportRef}
-          className={compact ? "relative flex h-[min(46dvh,420px)] min-h-[180px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none" : "relative flex h-[min(58dvh,560px)] min-h-[260px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"}
+          className="relative flex h-full min-h-0 items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
           onWheel={handleWheel}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -468,7 +468,7 @@ export default function ScanCropEditor({
               alt="Crop preview"
               draggable={false}
               onLoad={() => resetVisualFromCrop(currentCrop)}
-              className={compact ? "block max-h-[min(46dvh,420px)] max-w-full select-none object-contain" : "block max-h-[min(58dvh,560px)] max-w-full select-none object-contain"}
+              className="block max-h-full max-w-full select-none object-contain"
               style={{ transform: `rotate(${normalizedRotation}deg)`, touchAction: "none" }}
             />
           </div>
@@ -500,7 +500,7 @@ export default function ScanCropEditor({
         </div>
       </div>
 
-      <div className={compact ? "mt-2 flex flex-wrap items-center justify-between gap-2 px-1" : "mt-3 flex flex-wrap items-center justify-between gap-2"}>
+      <div className={compact ? "mt-2 flex shrink-0 flex-wrap items-center justify-between gap-2 px-1" : "mt-3 flex shrink-0 flex-wrap items-center justify-between gap-2"}>
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => zoomBy(-BUTTON_ZOOM_STEP)} disabled={zoom <= MIN_ZOOM + 0.01} className={iconButtonClass()} aria-label="Zoom out">
             −
@@ -516,7 +516,7 @@ export default function ScanCropEditor({
         </div>
       </div>
 
-      <div className={compact ? "mt-2 flex flex-wrap gap-2" : "mt-4 grid gap-2 sm:flex sm:flex-wrap"}>
+      <div className={compact ? "mt-2 flex shrink-0 flex-wrap gap-2" : "mt-4 grid shrink-0 gap-2 sm:flex sm:flex-wrap"}>
         <button type="button" onClick={onApply} disabled={isApplying} className={primaryButtonClass()}>
           {isApplying ? "Saving..." : applyLabel}
         </button>
