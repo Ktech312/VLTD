@@ -12,6 +12,11 @@ const CANVAS_SIZE = 1080;
 const BG = "#0B0F14";
 const SURFACE = "#111827";
 const BORDER = "rgba(255,255,255,0.12)";
+const IMAGE_FRAME_X = 140;
+const IMAGE_FRAME_Y = 120;
+const IMAGE_FRAME_W = 800;
+const IMAGE_FRAME_H = 500;
+const IMAGE_INSET = 18;
 
 function formatMoney(value: number) {
   const rounded = Math.round(Number(value) || 0);
@@ -34,25 +39,39 @@ function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width:
   ctx.closePath();
 }
 
-function drawCoverImage(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, width: number, height: number) {
+function drawContainedImage(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  x: number,
+  y: number,
+  width: number,
+  height: number
+) {
+  const innerX = x + IMAGE_INSET;
+  const innerY = y + IMAGE_INSET;
+  const innerWidth = width - IMAGE_INSET * 2;
+  const innerHeight = height - IMAGE_INSET * 2;
   const imgRatio = img.width / img.height;
-  const boxRatio = width / height;
-  let drawWidth = width;
-  let drawHeight = height;
-  let offsetX = 0;
-  let offsetY = 0;
+  const boxRatio = innerWidth / innerHeight;
 
+  let drawWidth = innerWidth;
+  let drawHeight = innerHeight;
   if (imgRatio > boxRatio) {
-    drawHeight = height;
-    drawWidth = height * imgRatio;
-    offsetX = (width - drawWidth) / 2;
+    drawWidth = innerWidth;
+    drawHeight = innerWidth / imgRatio;
   } else {
-    drawWidth = width;
-    drawHeight = width / imgRatio;
-    offsetY = (height - drawHeight) / 2;
+    drawHeight = innerHeight;
+    drawWidth = innerHeight * imgRatio;
   }
 
-  ctx.drawImage(img, x + offsetX, y + offsetY, drawWidth, drawHeight);
+  const drawX = innerX + (innerWidth - drawWidth) / 2;
+  const drawY = innerY + (innerHeight - drawHeight) / 2;
+
+  ctx.fillStyle = "#0A0F16";
+  roundedRect(ctx, innerX, innerY, innerWidth, innerHeight, 24);
+  ctx.fill();
+
+  ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
 }
 
 function loadImage(src: string) {
@@ -128,11 +147,11 @@ function drawBase(ctx: CanvasRenderingContext2D) {
 
 function drawImagePlaceholder(ctx: CanvasRenderingContext2D) {
   ctx.fillStyle = SURFACE;
-  roundedRect(ctx, 140, 120, 800, 500, 32);
+  roundedRect(ctx, IMAGE_FRAME_X, IMAGE_FRAME_Y, IMAGE_FRAME_W, IMAGE_FRAME_H, 32);
   ctx.fill();
   ctx.strokeStyle = "rgba(255,255,255,0.10)";
   ctx.lineWidth = 2;
-  roundedRect(ctx, 140, 120, 800, 500, 32);
+  roundedRect(ctx, IMAGE_FRAME_X, IMAGE_FRAME_Y, IMAGE_FRAME_W, IMAGE_FRAME_H, 32);
   ctx.stroke();
   ctx.fillStyle = "#6B7280";
   ctx.font = "700 32px Inter, system-ui, sans-serif";
@@ -147,10 +166,18 @@ async function drawShareCard(ctx: CanvasRenderingContext2D, item: ShareImageInpu
   if (includeImage && item.image) {
     try {
       const img = await loadImage(item.image);
+      ctx.fillStyle = SURFACE;
+      roundedRect(ctx, IMAGE_FRAME_X, IMAGE_FRAME_Y, IMAGE_FRAME_W, IMAGE_FRAME_H, 32);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.10)";
+      ctx.lineWidth = 2;
+      roundedRect(ctx, IMAGE_FRAME_X, IMAGE_FRAME_Y, IMAGE_FRAME_W, IMAGE_FRAME_H, 32);
+      ctx.stroke();
+
       ctx.save();
-      roundedRect(ctx, 140, 120, 800, 500, 32);
+      roundedRect(ctx, IMAGE_FRAME_X, IMAGE_FRAME_Y, IMAGE_FRAME_W, IMAGE_FRAME_H, 32);
       ctx.clip();
-      drawCoverImage(ctx, img, 140, 120, 800, 500);
+      drawContainedImage(ctx, img, IMAGE_FRAME_X, IMAGE_FRAME_Y, IMAGE_FRAME_W, IMAGE_FRAME_H);
       ctx.restore();
     } catch {
       drawImagePlaceholder(ctx);
