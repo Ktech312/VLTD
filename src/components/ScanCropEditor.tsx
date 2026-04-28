@@ -117,7 +117,7 @@ export default function ScanCropEditor({
   rotation = 0,
   isApplying = false,
   title = "CROP BEFORE CONTINUING",
-  description = "Drag any side or corner to crop. Drag inside the box to reposition.",
+  description = "Pinch or scroll to zoom. Drag any side or corner to crop. Drag inside the box to reposition.",
   applyLabel = "Save Crop",
   compact = false,
   viewportFixed = false,
@@ -526,8 +526,10 @@ export default function ScanCropEditor({
           </button>
         </div>
 
-        <div className="text-right text-[11px] leading-4 text-[color:var(--muted)]">
-          Pinch or scroll to zoom. Pull one side, drag a corner, or drag inside the crop box.
+        <div className="flex flex-wrap items-center justify-end gap-1.5 text-[10px] font-semibold text-[color:var(--muted)]">
+          <span className="rounded-full bg-white/5 px-2 py-1 ring-1 ring-white/10">Pinch/scroll to zoom</span>
+          <span className="rounded-full bg-white/5 px-2 py-1 ring-1 ring-white/10">Drag sides to crop</span>
+          <span className="rounded-full bg-white/5 px-2 py-1 ring-1 ring-white/10">Drag photo area to move</span>
         </div>
       </div>
 
@@ -536,10 +538,10 @@ export default function ScanCropEditor({
           {isApplying ? "Saving..." : applyLabel}
         </button>
         <button type="button" onClick={handleReset} className={buttonClass()}>
-          Full Photo
+          Use Full Photo
         </button>
         <button type="button" onClick={requestCancel} className={buttonClass()}>
-          Back
+          Cancel
         </button>
       </div>
     </section>
