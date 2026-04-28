@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 type Point = { x: number; y: number };
 type TouchPoint = { clientX: number; clientY: number };
@@ -26,6 +27,7 @@ export default function ImageViewer({
   onEdit?: (index: number) => void;
   onDelete?: (index: number) => void;
 }) {
+  const [mounted, setMounted] = useState(false);
   const [current, setCurrent] = useState(index || 0);
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState<Point>({ x: 0, y: 0 });
@@ -37,6 +39,10 @@ export default function ImageViewer({
 
   const currentImage = images[current] ?? "";
   const canPan = scale > 1.01;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   function resetTransform() {
     setScale(1);
@@ -90,9 +96,9 @@ export default function ImageViewer({
     };
   }, [images.length, onClose]);
 
-  return (
+  const viewerMarkup = (
     <div
-      className="fixed inset-0 z-[90] flex h-dvh w-dvw items-center justify-center overflow-hidden bg-black/94 backdrop-blur-sm"
+      className="fixed inset-0 z-[90] flex h-[100dvh] w-[100dvw] items-center justify-center overflow-hidden bg-black/94 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-label="Image viewer"
@@ -280,4 +286,7 @@ export default function ImageViewer({
       </div>
     </div>
   );
+
+  if (!mounted || typeof document === "undefined") return null;
+  return createPortal(viewerMarkup, document.body);
 }

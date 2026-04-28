@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import ImageViewer from "@/components/ImageViewer";
 import ScanCropEditor from "@/components/ScanCropEditor";
@@ -150,6 +151,7 @@ export default function ItemMedia({
   const fileRef = useRef<HTMLInputElement | null>(null);
   const cameraRef = useRef<HTMLInputElement | null>(null);
 
+  const [mounted, setMounted] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [draftFile, setDraftFile] = useState<File | null>(null);
   const [draftPreviewUrl, setDraftPreviewUrl] = useState<string>("");
@@ -193,6 +195,10 @@ export default function ItemMedia({
   const activeVisibleEntry = activeVisibleIndex >= 0 ? visibleEntries[activeVisibleIndex] : null;
   const activeImage = activeVisibleEntry?.url ?? "";
   const viewerEntries = allEntries;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -633,33 +639,36 @@ export default function ItemMedia({
         />
       ) : null}
 
-      {editTarget ? (
-        <div
-          className="fixed inset-0 z-[95] flex h-dvh w-dvw items-center justify-center overflow-hidden bg-black/90 px-3 py-3 backdrop-blur-sm sm:px-4"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Edit saved photo"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) requestCloseImageEdit();
-          }}
-        >
-          <div className="w-full max-w-[min(94dvw,980px)]">
-            <ScanCropEditor
-              imageUrl={editTarget.url}
-              crop={editTarget.crop}
-              onChange={(crop) => setEditTarget((prev) => (prev ? { ...prev, crop } : prev))}
-              onApply={() => void applyImageEdit()}
-              onReset={() => setEditTarget((prev) => (prev ? { ...prev, crop: FULL_CROP } : prev))}
-              onCancel={requestCloseImageEdit}
-              isApplying={isEditingImage}
-              title="EDIT PHOTO"
-              description="Crop and zoom this saved item photo. The edited version replaces the current photo."
-              applyLabel="Save Photo"
-              compact
-            />
-          </div>
-        </div>
-      ) : null}
+      {mounted && editTarget && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[95] flex h-[100dvh] w-[100dvw] items-center justify-center overflow-hidden bg-black/90 px-3 py-3 backdrop-blur-sm sm:px-4"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Edit saved photo"
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget) requestCloseImageEdit();
+              }}
+            >
+              <div className="w-full max-w-[min(94dvw,980px)]">
+                <ScanCropEditor
+                  imageUrl={editTarget.url}
+                  crop={editTarget.crop}
+                  onChange={(crop) => setEditTarget((prev) => (prev ? { ...prev, crop } : prev))}
+                  onApply={() => void applyImageEdit()}
+                  onReset={() => setEditTarget((prev) => (prev ? { ...prev, crop: FULL_CROP } : prev))}
+                  onCancel={requestCloseImageEdit}
+                  isApplying={isEditingImage}
+                  title="EDIT PHOTO"
+                  description="Crop and zoom this saved item photo. The edited version replaces the current photo."
+                  applyLabel="Save Photo"
+                  compact
+                />
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
 
       {draftFile ? (
         <div className="fixed inset-0 z-[95] bg-black/90 backdrop-blur-sm">
