@@ -9,14 +9,12 @@ export type ShareImageInput = {
 };
 
 const CANVAS_SIZE = 1080;
-const BG = "#0B0F14";
-const SURFACE = "#111827";
-const BORDER = "rgba(255,255,255,0.12)";
-const IMAGE_FRAME_X = 140;
-const IMAGE_FRAME_Y = 120;
-const IMAGE_FRAME_W = 800;
-const IMAGE_FRAME_H = 500;
-const IMAGE_INSET = 18;
+const OUTER_PADDING = 48;
+const CONTENT_WIDTH = CANVAS_SIZE - OUTER_PADDING * 2;
+const IMAGE_TOP = 48;
+const IMAGE_HEIGHT = 720;
+const FOOTER_TOP = 800;
+const FOOTER_HEIGHT = 232;
 
 function formatMoney(value: number) {
   const rounded = Math.round(Number(value) || 0);
@@ -24,64 +22,55 @@ function formatMoney(value: number) {
   return `${sign}$${Math.abs(rounded).toLocaleString("en-US")}`;
 }
 
-function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
-  const safeRadius = Math.min(radius, width / 2, height / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + safeRadius, y);
-  ctx.lineTo(x + width - safeRadius, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
-  ctx.lineTo(x + width, y + height - safeRadius);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - safeRadius, y + height);
-  ctx.lineTo(x + safeRadius, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
-  ctx.lineTo(x, y + safeRadius);
-  ctx.quadraticCurveTo(x, y, x + safeRadius, y);
-  ctx.closePath();
-}
-
-function drawContainedImage(
+function roundedRect(
   ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement,
   x: number,
   y: number,
   width: number,
-  height: number
+  height: number,
+  radius: number
 ) {
-  const innerX = x + IMAGE_INSET;
-  const innerY = y + IMAGE_INSET;
-  const innerWidth = width - IMAGE_INSET * 2;
-  const innerHeight = height - IMAGE_INSET * 2;
-  const imgRatio = img.width / img.height;
-  const boxRatio = innerWidth / innerHeight;
-
-  let drawWidth = innerWidth;
-  let drawHeight = innerHeight;
-  if (imgRatio > boxRatio) {
-    drawWidth = innerWidth;
-    drawHeight = innerWidth / imgRatio;
-  } else {
-    drawHeight = innerHeight;
-    drawWidth = innerHeight * imgRatio;
-  }
-
-  const drawX = innerX + (innerWidth - drawWidth) / 2;
-  const drawY = innerY + (innerHeight - drawHeight) / 2;
-
-  ctx.fillStyle = "#0A0F16";
-  roundedRect(ctx, innerX, innerY, innerWidth, innerHeight, 24);
-  ctx.fill();
-
-  ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+  const safe = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + safe, y);
+  ctx.lineTo(x + width - safe, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + safe);
+  ctx.lineTo(x + width, y + height - safe);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - safe, y + height);
+  ctx.lineTo(x + safe, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - safe);
+  ctx.lineTo(x, y + safe);
+  ctx.quadraticCurveTo(x, y, x + safe, y);
+  ctx.closePath();
 }
 
-function loadImage(src: string) {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("Image could not be loaded for share card."));
-    img.src = src;
-  });
+function drawBackground(ctx: CanvasRenderingContext2D) {
+  const bg = ctx.createLinearGradient(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+  bg.addColorStop(0, "#09131B");
+  bg.addColorStop(0.55, "#0B0F14");
+  bg.addColorStop(1, "#05070B");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+  ctx.fillStyle = "rgba(34,211,238,0.05)";
+  ctx.beginPath();
+  ctx.arc(905, 150, 210, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "rgba(255,255,255,0.03)";
+  roundedRect(ctx, OUTER_PADDING, OUTER_PADDING, CONTENT_WIDTH, CANVAS_SIZE - OUTER_PADDING * 2, 32);
+  ctx.fill();
+}
+
+function drawFooterPanel(ctx: CanvasRenderingContext2D) {
+  ctx.fillStyle = "rgba(10,15,22,0.88)";
+  roundedRect(ctx, OUTER_PADDING, FOOTER_TOP, CONTENT_WIDTH, FOOTER_HEIGHT, 28);
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(255,255,255,0.08)";
+  ctx.lineWidth = 2;
+  roundedRect(ctx, OUTER_PADDING, FOOTER_TOP, CONTENT_WIDTH, FOOTER_HEIGHT, 28);
+  ctx.stroke();
 }
 
 function drawWrappedText(
@@ -94,129 +83,205 @@ function drawWrappedText(
   maxLines: number
 ) {
   const words = text.split(/\s+/).filter(Boolean);
-  const lines: string[] = [];
-  let current = "";
+  if (words.length === 0) return 0;
 
-  for (const word of words) {
-    const test = current ? `${current} ${word}` : word;
+  const lines: string[] = [];
+  let current = words[0];
+
+  for (let i = 1; i < words.length; i += 1) {
+    const test = `${current} ${words[i]}`;
     if (ctx.measureText(test).width <= maxWidth) {
       current = test;
       continue;
     }
-
-    if (current) lines.push(current);
-    current = word;
-
-    if (lines.length === maxLines) break;
+    lines.push(current);
+    current = words[i];
+    if (lines.length === maxLines - 1) break;
   }
 
-  if (current && lines.length < maxLines) lines.push(current);
+  const consumed = lines.join(" ").split(/\s+/).filter(Boolean).length;
+  const remainingWords = words.slice(consumed);
+  if (remainingWords.length > 0 && lines.length < maxLines) {
+    let lastLine = remainingWords.join(" ");
+    while (ctx.measureText(lastLine).width > maxWidth && lastLine.includes(" ")) {
+      lastLine = lastLine.replace(/\s+\S+$/, "");
+    }
+    if (consumed + remainingWords.length < words.length || lastLine !== remainingWords.join(" ")) {
+      lastLine = `${lastLine.replace(/\s+$/, "")}…`;
+    }
+    lines.push(lastLine);
+  }
 
   lines.slice(0, maxLines).forEach((line, index) => {
-    const safeLine = index === maxLines - 1 && lines.length === maxLines && words.length > line.split(/\s+/).length
-      ? `${line.replace(/\s+\S+$/, "")}…`
-      : line;
-    ctx.fillText(safeLine, x, y + index * lineHeight);
+    ctx.fillText(line, x, y + index * lineHeight);
   });
 
-  return lines.length;
+  return Math.min(lines.length, maxLines);
 }
 
-function drawBase(ctx: CanvasRenderingContext2D) {
-  const gradient = ctx.createLinearGradient(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-  gradient.addColorStop(0, "#06151E");
-  gradient.addColorStop(0.5, BG);
-  gradient.addColorStop(1, "#05070A");
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+function loadImage(src: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Unable to load image."));
+    img.src = src;
+  });
+}
 
-  ctx.fillStyle = "rgba(34,211,238,0.08)";
-  ctx.beginPath();
-  ctx.arc(880, 120, 260, 0, Math.PI * 2);
-  ctx.fill();
+function imageFrameForAspect(ratio: number) {
+  if (ratio <= 1.1) {
+    const width = 720;
+    return {
+      x: (CANVAS_SIZE - width) / 2,
+      y: IMAGE_TOP,
+      width,
+      height: IMAGE_HEIGHT,
+      radius: 28,
+    };
+  }
 
-  ctx.fillStyle = "rgba(255,255,255,0.035)";
-  roundedRect(ctx, 70, 70, 940, 940, 44);
-  ctx.fill();
-
-  ctx.strokeStyle = BORDER;
-  ctx.lineWidth = 2;
-  roundedRect(ctx, 70, 70, 940, 940, 44);
-  ctx.stroke();
+  return {
+    x: OUTER_PADDING,
+    y: IMAGE_TOP,
+    width: CONTENT_WIDTH,
+    height: 670,
+    radius: 28,
+  };
 }
 
 function drawImagePlaceholder(ctx: CanvasRenderingContext2D) {
-  ctx.fillStyle = SURFACE;
-  roundedRect(ctx, IMAGE_FRAME_X, IMAGE_FRAME_Y, IMAGE_FRAME_W, IMAGE_FRAME_H, 32);
+  const frame = {
+    x: 180,
+    y: IMAGE_TOP,
+    width: 720,
+    height: IMAGE_HEIGHT,
+    radius: 28,
+  };
+
+  ctx.fillStyle = "rgba(7,10,15,0.95)";
+  roundedRect(ctx, frame.x, frame.y, frame.width, frame.height, frame.radius);
   ctx.fill();
-  ctx.strokeStyle = "rgba(255,255,255,0.10)";
+
+  ctx.strokeStyle = "rgba(255,255,255,0.08)";
   ctx.lineWidth = 2;
-  roundedRect(ctx, IMAGE_FRAME_X, IMAGE_FRAME_Y, IMAGE_FRAME_W, IMAGE_FRAME_H, 32);
+  roundedRect(ctx, frame.x, frame.y, frame.width, frame.height, frame.radius);
   ctx.stroke();
-  ctx.fillStyle = "#6B7280";
-  ctx.font = "700 32px Inter, system-ui, sans-serif";
+
+  ctx.fillStyle = "#8A94A6";
+  ctx.font = "700 30px Inter, system-ui, sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("VLTD ITEM", 540, 385);
+  ctx.fillText("VLTD ITEM", CANVAS_SIZE / 2, 390);
   ctx.textAlign = "left";
 }
 
-async function drawShareCard(ctx: CanvasRenderingContext2D, item: ShareImageInput, includeImage: boolean) {
-  drawBase(ctx);
+function drawContained(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  x: number,
+  y: number,
+  width: number,
+  height: number
+) {
+  const inset = 10;
+  const innerX = x + inset;
+  const innerY = y + inset;
+  const innerWidth = width - inset * 2;
+  const innerHeight = height - inset * 2;
 
-  if (includeImage && item.image) {
-    try {
-      const img = await loadImage(item.image);
-      ctx.fillStyle = SURFACE;
-      roundedRect(ctx, IMAGE_FRAME_X, IMAGE_FRAME_Y, IMAGE_FRAME_W, IMAGE_FRAME_H, 32);
-      ctx.fill();
-      ctx.strokeStyle = "rgba(255,255,255,0.10)";
-      ctx.lineWidth = 2;
-      roundedRect(ctx, IMAGE_FRAME_X, IMAGE_FRAME_Y, IMAGE_FRAME_W, IMAGE_FRAME_H, 32);
-      ctx.stroke();
+  const imgRatio = img.width / img.height;
+  const boxRatio = innerWidth / innerHeight;
 
-      ctx.save();
-      roundedRect(ctx, IMAGE_FRAME_X, IMAGE_FRAME_Y, IMAGE_FRAME_W, IMAGE_FRAME_H, 32);
-      ctx.clip();
-      drawContainedImage(ctx, img, IMAGE_FRAME_X, IMAGE_FRAME_Y, IMAGE_FRAME_W, IMAGE_FRAME_H);
-      ctx.restore();
-    } catch {
-      drawImagePlaceholder(ctx);
-    }
+  let drawWidth: number;
+  let drawHeight: number;
+  if (imgRatio > boxRatio) {
+    drawWidth = innerWidth;
+    drawHeight = drawWidth / imgRatio;
   } else {
-    drawImagePlaceholder(ctx);
+    drawHeight = innerHeight;
+    drawWidth = drawHeight * imgRatio;
   }
 
+  const drawX = innerX + (innerWidth - drawWidth) / 2;
+  const drawY = innerY + (innerHeight - drawHeight) / 2;
+
+  ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+}
+
+async function drawItemImage(ctx: CanvasRenderingContext2D, image?: string) {
+  if (!image) {
+    drawImagePlaceholder(ctx);
+    return;
+  }
+
+  try {
+    const img = await loadImage(image);
+    const frame = imageFrameForAspect(img.width / img.height);
+
+    ctx.fillStyle = "rgba(7,10,15,0.96)";
+    roundedRect(ctx, frame.x, frame.y, frame.width, frame.height, frame.radius);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.lineWidth = 2;
+    roundedRect(ctx, frame.x, frame.y, frame.width, frame.height, frame.radius);
+    ctx.stroke();
+
+    ctx.save();
+    roundedRect(ctx, frame.x, frame.y, frame.width, frame.height, frame.radius);
+    ctx.clip();
+    drawContained(ctx, img, frame.x, frame.y, frame.width, frame.height);
+    ctx.restore();
+  } catch {
+    drawImagePlaceholder(ctx);
+  }
+}
+
+function drawTextLayer(ctx: CanvasRenderingContext2D, item: ShareImageInput) {
+  drawFooterPanel(ctx);
+
   ctx.fillStyle = "#FFFFFF";
-  ctx.font = "800 54px Inter, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
-  drawWrappedText(ctx, item.title || "Untitled Item", 140, 710, 800, 60, 2);
+  ctx.font = "800 52px Inter, system-ui, sans-serif";
+  drawWrappedText(ctx, item.title || "Untitled Item", 84, 870, 650, 58, 2);
 
   if (item.subtitle) {
     ctx.fillStyle = "#9CA3AF";
-    ctx.font = "500 30px Inter, system-ui, sans-serif";
-    drawWrappedText(ctx, item.subtitle, 140, 820, 800, 38, 1);
+    ctx.font = "500 28px Inter, system-ui, sans-serif";
+    drawWrappedText(ctx, item.subtitle, 84, 948, 650, 34, 1);
   }
 
   ctx.fillStyle = "#FFFFFF";
-  ctx.font = "800 68px Inter, system-ui, sans-serif";
-  ctx.fillText(formatMoney(item.value), 140, 910);
+  ctx.font = "800 64px Inter, system-ui, sans-serif";
+  ctx.textAlign = "right";
+  ctx.fillText(formatMoney(item.value), 980, 905);
 
   ctx.fillStyle = item.profit >= 0 ? "#22C55E" : "#EF4444";
-  ctx.font = "800 38px Inter, system-ui, sans-serif";
-  ctx.fillText(`${item.profit >= 0 ? "+" : ""}${formatMoney(item.profit)}`, 140, 960);
+  ctx.font = "800 34px Inter, system-ui, sans-serif";
+  ctx.fillText(`${item.profit >= 0 ? "+" : ""}${formatMoney(item.profit)}`, 980, 950);
 
+  ctx.fillStyle = "#7A8495";
+  ctx.font = "700 22px Inter, system-ui, sans-serif";
   if (item.username) {
-    ctx.fillStyle = "#CBD5E1";
-    ctx.font = "600 26px Inter, system-ui, sans-serif";
-    ctx.fillText(`@${item.username.replace(/^@+/, "")}`, 140, 1000);
+    ctx.textAlign = "left";
+    ctx.fillText(`@${item.username.replace(/^@+/, "")}`, 84, 996);
   }
 
   if (item.watermark !== false) {
-    ctx.fillStyle = "#6B7280";
-    ctx.font = "800 32px Inter, system-ui, sans-serif";
     ctx.textAlign = "right";
-    ctx.fillText("VLTD", 940, 1000);
-    ctx.textAlign = "left";
+    ctx.fillText("VLTD", 980, 996);
   }
+
+  ctx.textAlign = "left";
+}
+
+async function render(ctx: CanvasRenderingContext2D, item: ShareImageInput, includeImage: boolean) {
+  drawBackground(ctx);
+  if (includeImage) {
+    await drawItemImage(ctx, item.image);
+  } else {
+    drawImagePlaceholder(ctx);
+  }
+  drawTextLayer(ctx, item);
 }
 
 export async function generateShareImage(item: ShareImageInput) {
@@ -229,13 +294,13 @@ export async function generateShareImage(item: ShareImageInput) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return undefined;
 
-  await drawShareCard(ctx, item, true);
+  await render(ctx, item, true);
 
   try {
     return canvas.toDataURL("image/png");
   } catch {
     ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-    await drawShareCard(ctx, item, false);
+    await render(ctx, item, false);
     return canvas.toDataURL("image/png");
   }
 }
