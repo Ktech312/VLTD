@@ -1,55 +1,103 @@
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+
 export type ReportContentType = "gallery" | "item";
 
-export type PublicContentReport = {
-  id: string;
+export type PublicContentReportInput = {
   contentType: ReportContentType;
   contentId: string;
   reason: string;
   details?: string;
-  pageUrl?: string;
-  createdAt: number;
 };
 
-const REPORTS_KEY = "vltd_public_content_reports_v1";
-const ADULT_CONFIRM_KEY = "vltd_adult_content_confirmed_v1";
+export type PublicContentReportResult = {
+  ok: boolean;
+  error?: string;
+};
 
-function makeId() {
-  return typeof crypto !== "undefined" && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `report_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+const ADULT_CONFIRM_KEY = "vltd_adult_content_confirmed_v1";
+const PUBLIC_REPORTS_TABLE = "public_content_reports";
+
+function safeString(value: unknown) {
+  return String(value ?? "").trim();
+}
+
+function cleanDetails(value: unknown) {
+  const next = safeString(value);
+  return next.length > 0 ? next.slice(0, 2000) : null;
+}
+
+function currentPageUrl() {
+  if (typeof window === "undefined") return null;
+  return window.location.href;
+}
+
+function currentUserAgent() {
+  if (typeof navigator === "undefined") return null;
+  return navigator.userAgent || null;
 }
 
 export function hasConfirmedAdultContent() {
   if (typeof window === "undefined") return false;
-  return window.localStorage.getItem(ADULT_CONFIRM_KEY) === "1";
+  return window.sessionStorage.getItem(ADULT_CONFIRM_KEY) === "1";
 }
 
 export function confirmAdultContent() {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(ADULT_CONFIRM_KEY, "1");
+  window.sessionStorage.setItem(ADULT_CONFIRM_KEY, "1");
 }
 
-export function readPublicContentReports(): PublicContentReport[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const parsed: unknown = JSON.parse(window.localStorage.getItem(REPORTS_KEY) || "[]");
-    return Array.isArray(parsed) ? (parsed as PublicContentReport[]) : [];
-  } catch {
-    return [];
+export async function createPublicContentReport(
+  input: PublicContentReportInput
+): Promise<PublicContentReportResult> {
+  const contentType = input.contentType;
+  const contentId = safeString(input.contentId);
+  const reason = safeString(input.reason);
+
+  if (contentType !== "gallery" && contentType !== "item") {
+    return { ok: false, error: "Invalid report target." };
   }
-}
 
-export function createPublicContentReport(input: Omit<PublicContentReport, "id" | "createdAt" | "pageUrl">) {
-  if (typeof window === "undefined") return null;
+  if (!contentId) {
+    return { ok: false, error: "Missing report target." };
+  }
 
-  const report: PublicContentReport = {
-    ...input,
-    id: makeId(),
-    pageUrl: window.location.href,
-    createdAt: Date.now(),
-  };
+  if (!reason) {
+    return { ok: false, error: "Choose a report reason." };
+  }
 
-  const next = [report, ...readPublicContentReports()].slice(0, 250);
-  window.localStorage.setItem(REPORTS_KEY, JSON.stringify(next));
-  return report;
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) {
+    return {
+      ok: false,
+      error: "Reporting is unavailable because the database connection is not configured.",
+    };
+  }
+
+  let reporterUserId: string | null = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    reporterUserId = data.user?.id ?? null;
+  } catch {
+    reporterUserId = null;
+  }
+
+  const { error } = await supabase.from(PUBLIC_REPORTS_TABLE).insert({
+    content_type: contentType,
+    content_id: contentId,
+    reason,
+    details: cleanDetails(input.details),
+    page_url: currentPageUrl(),
+    reporter_user_id: reporterUserId,
+    user_agent: currentUserAgent(),
+    status: "open",
+  });
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message || "Report could not be saved.",
+    };
+  }
+
+  return { ok: true };
 }

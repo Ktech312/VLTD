@@ -90,17 +90,33 @@ export function ReportContentButton({
   const [reason, setReason] = useState(REPORT_REASONS[0]);
   const [details, setDetails] = useState("");
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function submitReport() {
-    createPublicContentReport({
-      contentType,
-      contentId,
-      reason,
-      details: details.trim() || undefined,
-    });
-    setMessage("Report submitted. Thank you for helping keep VLTD safe.");
-    setDetails("");
-    setOpen(false);
+  async function submitReport() {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setMessage("");
+
+    try {
+      const result = await createPublicContentReport({
+        contentType,
+        contentId,
+        reason,
+        details: details.trim() || undefined,
+      });
+
+      if (!result.ok) {
+        setMessage(result.error || "Report could not be submitted.");
+        return;
+      }
+
+      setMessage("Report submitted. Thank you for helping keep VLTD safe.");
+      setDetails("");
+      setReason(REPORT_REASONS[0]);
+      setOpen(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -117,7 +133,9 @@ export function ReportContentButton({
         <div className="absolute right-0 top-full mt-2 w-[min(320px,calc(100vw-2rem))] rounded-2xl bg-[color:var(--surface)] p-4 text-left text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-[0_24px_70px_rgba(0,0,0,0.5)]">
           <div className="flex items-center justify-between gap-3">
             <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">REPORT CONTENT</div>
-            <button type="button" onClick={() => setOpen(false)} className="text-xs text-[color:var(--muted)]">Close</button>
+            <button type="button" onClick={() => setOpen(false)} className="text-xs text-[color:var(--muted)]">
+              Close
+            </button>
           </div>
           <label className="mt-3 grid gap-1.5">
             <span className="text-xs text-[color:var(--muted)]">Reason</span>
@@ -127,7 +145,9 @@ export function ReportContentButton({
               className="min-h-[38px] rounded-xl bg-[color:var(--input)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
             >
               {REPORT_REASONS.map((entry) => (
-                <option key={entry} value={entry}>{entry}</option>
+                <option key={entry} value={entry}>
+                  {entry}
+                </option>
               ))}
             </select>
           </label>
@@ -143,10 +163,11 @@ export function ReportContentButton({
           </label>
           <button
             type="button"
-            onClick={submitReport}
-            className="mt-3 inline-flex min-h-[38px] w-full items-center justify-center rounded-full bg-red-500/15 px-4 text-sm font-semibold text-red-100 ring-1 ring-red-400/30"
+            onClick={() => void submitReport()}
+            disabled={isSubmitting}
+            className="mt-3 inline-flex min-h-[38px] w-full items-center justify-center rounded-full bg-red-500/15 px-4 text-sm font-semibold text-red-100 ring-1 ring-red-400/30 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Submit Report
+            {isSubmitting ? "Submitting..." : "Submit Report"}
           </button>
         </div>
       ) : null}
