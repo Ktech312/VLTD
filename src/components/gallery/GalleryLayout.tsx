@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import FavoriteButton from "@/components/FavoriteButton";
 import { type VaultItem } from "@/lib/vaultModel";
 import { type GalleryLayout as GalleryLayoutType } from "@/lib/galleryLayout";
 
@@ -11,6 +12,14 @@ function itemImage(i: VaultItem) {
 
 function itemMeta(i: VaultItem) {
   return [i.subtitle, i.number, i.grade].filter(Boolean).join(" • ");
+}
+
+function favoriteMetadata(item: VaultItem) {
+  return {
+    title: item.title,
+    subtitle: item.subtitle,
+    image: item.imageFrontUrl || item.imageBackUrl || "",
+  };
 }
 
 function resolveLayoutType(layout: GalleryLayoutType | string | null | undefined) {
@@ -131,34 +140,44 @@ export default function GalleryLayout({
   return (
     <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
       {items.map((i) => (
-        <Link
+        <article
           key={i.id}
-          href={`${hrefPrefix}/${i.id}`}
-          className="rounded-2xl bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(0,0,0,0.12)]"
+          className="relative rounded-2xl bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(0,0,0,0.12)]"
         >
-          {itemImage(i) ? (
-            <div className="mb-4 overflow-hidden rounded-[18px] bg-black/15">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={itemImage(i)}
-                alt={i.title}
-                className="aspect-[3/4] w-full object-cover"
-                draggable={false}
-                loading="lazy"
-              />
-            </div>
-          ) : (
-            <div className="mb-4 flex aspect-[3/4] items-center justify-center rounded-[18px] bg-black/10 text-sm text-[color:var(--muted)]">
-              No image
-            </div>
-          )}
+          <div className="absolute right-3 top-3 z-10">
+            <FavoriteButton
+              contentType="item"
+              contentId={String(i.id)}
+              metadata={favoriteMetadata(i)}
+              compact
+            />
+          </div>
 
-          <div className="font-semibold">{i.title}</div>
+          <Link href={`${hrefPrefix}/${i.id}`} className="block">
+            {itemImage(i) ? (
+              <div className="mb-4 overflow-hidden rounded-[18px] bg-black/15">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={itemImage(i)}
+                  alt={i.title}
+                  className="aspect-[3/4] w-full object-cover"
+                  draggable={false}
+                  loading="lazy"
+                />
+              </div>
+            ) : (
+              <div className="mb-4 flex aspect-[3/4] items-center justify-center rounded-[18px] bg-black/10 text-sm text-[color:var(--muted)]">
+                No image
+              </div>
+            )}
 
-          {itemMeta(i) ? (
-            <div className="text-sm text-[color:var(--muted)]">{itemMeta(i)}</div>
-          ) : null}
-        </Link>
+            <div className="font-semibold">{i.title}</div>
+
+            {itemMeta(i) ? (
+              <div className="text-sm text-[color:var(--muted)]">{itemMeta(i)}</div>
+            ) : null}
+          </Link>
+        </article>
       ))}
     </div>
   );

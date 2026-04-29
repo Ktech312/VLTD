@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { loadGalleries, type Gallery } from "@/lib/galleryModel";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
 import { canViewPublicGallery, isAdultOnlyGallery } from "@/lib/galleryPublic";
+import FavoriteButton from "@/components/FavoriteButton";
 import { AdultContentGate, ReportContentButton, useAdultGate } from "@/components/PublicSafetyControls";
 
 import GalleryHero from "@/components/gallery/GalleryHero";
@@ -70,7 +71,14 @@ export default function PublicGalleryPage() {
 
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
 
-      <div className="fixed right-4 top-4 z-40">
+      <div className="fixed right-4 top-4 z-40 flex flex-col items-end gap-2">
+        <FavoriteButton
+          contentType="gallery"
+          contentId={gallery.id}
+          metadata={{ title: gallery.title, itemCount: gallery.itemIds.length }}
+          label="Favorite Gallery"
+          compact
+        />
         <ReportContentButton contentType="gallery" contentId={gallery.id} />
       </div>
 
