@@ -5,7 +5,8 @@ import { useParams } from "next/navigation";
 
 import { loadGalleries, type Gallery } from "@/lib/galleryModel";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
-import { canViewPublicGallery } from "@/lib/galleryPublic";
+import { canViewPublicGallery, isAdultOnlyGallery } from "@/lib/galleryPublic";
+import { AdultContentGate, ReportContentButton, useAdultGate } from "@/components/PublicSafetyControls";
 
 import GalleryHero from "@/components/gallery/GalleryHero";
 import GalleryLayout from "@/components/gallery/GalleryLayout";
@@ -36,6 +37,8 @@ export default function PublicGalleryPage() {
 
   },[gallery,items])
 
+  const adultGate = useAdultGate(isAdultOnlyGallery(gallery));
+
   if(!gallery) return null;
 
   if(!canViewPublicGallery(gallery)){
@@ -59,9 +62,17 @@ export default function PublicGalleryPage() {
     )
   }
 
+  if (adultGate.shouldGate) {
+    return <AdultContentGate onConfirm={adultGate.confirm} />;
+  }
+
   return (
 
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+
+      <div className="fixed right-4 top-4 z-40">
+        <ReportContentButton contentType="gallery" contentId={gallery.id} />
+      </div>
 
       <GalleryHero gallery={gallery} />
 

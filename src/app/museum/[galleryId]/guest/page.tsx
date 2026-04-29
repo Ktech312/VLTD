@@ -13,6 +13,7 @@ import {
 } from "@/lib/galleryModel";
 import { resolveGuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
+import { AdultContentGate, ReportContentButton, useAdultGate } from "@/components/PublicSafetyControls";
 
 function vaultItemFromGallerySnapshot(snapshot: GalleryPublicItemSnapshot): VaultItem {
   return {
@@ -123,6 +124,8 @@ export default function GuestGalleryPage() {
     [gallery, resolvedItems]
   );
 
+  const adultGate = useAdultGate(gallery?.adultOnly === true);
+
   if (isResolved && !gallery) {
     return (
       <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(30,36,46,0.96),rgba(8,10,14,1)_62%)] text-white">
@@ -149,5 +152,16 @@ export default function GuestGalleryPage() {
 
   if (!gallery) return null;
 
-  return <GuestGalleryRenderer model={model} />;
+  if (adultGate.shouldGate) {
+    return <AdultContentGate onConfirm={adultGate.confirm} />;
+  }
+
+  return (
+    <>
+      <div className="fixed right-4 top-4 z-40">
+        <ReportContentButton contentType="gallery" contentId={gallery.id} />
+      </div>
+      <GuestGalleryRenderer model={model} />
+    </>
+  );
 }

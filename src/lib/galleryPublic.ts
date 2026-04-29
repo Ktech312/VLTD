@@ -19,3 +19,7 @@ export function isInviteOnly(g: Gallery) {
 export function isPublic(g: Gallery) {
   return g.visibility === "PUBLIC";
 }
+
+export function isAdultOnlyGallery(gallery?: Pick<Gallery, "adultOnly"> | null) {
+  return gallery?.adultOnly === true;
+}

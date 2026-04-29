@@ -35,6 +35,7 @@ export default function NewMuseumGalleryPage() {
   const [themePack, setThemePack] = useState<GalleryThemePack>("classic");
   const [displayMode, setDisplayMode] = useState<"grid" | "shelf">("grid");
   const [guestViewMode, setGuestViewMode] = useState<"public" | "guest">("public");
+  const [adultOnly, setAdultOnly] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const remaining =
@@ -62,6 +63,7 @@ export default function NewMuseumGalleryPage() {
         themePack,
         displayMode,
         guestViewMode,
+        adultOnly,
         updatedAt: Date.now(),
       };
 
@@ -207,6 +209,21 @@ export default function NewMuseumGalleryPage() {
                   <option value="STORAGE">Storage</option>
                 </select>
               </div>
+
+              <label className="flex items-start justify-between gap-4 rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)]">
+                <span>
+                  <span className="block text-sm font-medium">18+ gallery</span>
+                  <span className="mt-1 block text-xs leading-5 text-[color:var(--muted)]">
+                    Require public viewers to confirm they are 18 or older before viewing this gallery.
+                  </span>
+                </span>
+                <input
+                  type="checkbox"
+                  checked={adultOnly}
+                  onChange={(e) => setAdultOnly(e.target.checked)}
+                  className="mt-1 h-4 w-4 accent-cyan-400"
+                />
+              </label>
             </div>
           </div>
 

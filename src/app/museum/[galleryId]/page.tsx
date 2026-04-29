@@ -194,6 +194,7 @@ function normalizeDraftForCompare(gallery: Gallery | null) {
     description: gallery.description,
     visibility: gallery.visibility,
     guestViewMode: gallery.guestViewMode,
+    adultOnly: gallery.adultOnly ?? false,
     itemIds: gallery.itemIds,
     coverImage: gallery.coverImage || "",
     shelfBackground: gallery.shelfBackground || "",
@@ -954,6 +955,26 @@ export default function GalleryPage() {
                   </div>
 
                   <div className="mt-3 text-xs text-[color:var(--muted2)]">Current mode: {accessDescription(selectedAccessMode)}</div>
+
+                  <label className="mt-4 flex items-start justify-between gap-4 rounded-2xl bg-black/20 px-4 py-3 ring-1 ring-white/10">
+                    <span>
+                      <span className="block text-sm font-semibold">18+ gallery</span>
+                      <span className="mt-1 block text-xs leading-5 text-[color:var(--muted)]">
+                        Public viewers must confirm they are 18 or older before entering this gallery.
+                      </span>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={draft.adultOnly === true}
+                      onChange={(event) =>
+                        patchDraft((current) => ({
+                          ...current,
+                          adultOnly: event.target.checked,
+                        }))
+                      }
+                      className="mt-1 h-4 w-4 accent-cyan-400"
+                    />
+                  </label>
                 </div>
               </div>
 

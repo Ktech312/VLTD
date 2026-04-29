@@ -137,6 +137,7 @@ export type Gallery = {
   itemNotes?: GalleryItemNote[];
   share?: GalleryShareSettings;
   analytics?: GalleryAnalytics;
+  adultOnly?: boolean;
 
   templateId?: GalleryTemplateId;
   sections?: GallerySection[];
@@ -313,6 +314,10 @@ function normalizeGuestViewMode(value: unknown): GalleryGuestViewMode {
 
 function normalizeGlassShelfOverlay(value: unknown) {
   return value === true;
+}
+
+function normalizeAdultOnly(value: unknown) {
+  return value === true || value === "true" || value === "1";
 }
 
 function normalizeShelfOverlayStyle(
@@ -616,6 +621,7 @@ function normalizeGallery(raw: any): Gallery | null {
     itemNotes: normalizeItemNotes(raw.itemNotes),
     share: normalizeShare(raw.share),
     analytics: normalizeAnalytics(raw.analytics),
+    adultOnly: normalizeAdultOnly(raw.adultOnly ?? raw.adult_only ?? raw.isAdultOnly ?? raw.is_adult_only ?? raw.layout?.adultOnly ?? raw.exhibitionLayout?.adultOnly),
     templateId: normalizeTemplateId(raw.templateId),
     sections,
     themePack: normalizeThemePack(raw.themePack),
@@ -684,6 +690,11 @@ function normalizeSupabaseGallery(raw: any): Gallery | null {
         ? Date.parse(raw.analytics_last_viewed_at) || undefined
         : undefined,
     },
+    adultOnly:
+      raw.layout?.adultOnly ??
+      raw.exhibition_layout?.adultOnly ??
+      raw.adult_only ??
+      false,
     templateId:
       raw.layout?.templateId ??
       raw.exhibition_layout?.templateId ??
@@ -758,6 +769,7 @@ function serializeGalleryForSupabase(gallery: Gallery) {
       glassShelfOverlay,
       shelfOverlayStyle,
       templateId: gallery.templateId ?? "CUSTOM",
+      adultOnly: gallery.adultOnly ?? false,
       itemIds,
       publicItemSnapshots,
     },
@@ -774,6 +786,7 @@ function serializeGalleryForSupabase(gallery: Gallery) {
       glassShelfOverlay,
       shelfOverlayStyle,
       templateId: gallery.templateId ?? "CUSTOM",
+      adultOnly: gallery.adultOnly ?? false,
       itemIds,
       publicItemSnapshots,
     },
@@ -1613,6 +1626,7 @@ export function createGallery(title: string): Gallery {
       uniqueViewKeys: [],
       lastViewedAt: undefined,
     },
+    adultOnly: false,
     templateId: "CUSTOM",
     sections,
     themePack: "classic",

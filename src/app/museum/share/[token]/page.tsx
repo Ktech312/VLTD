@@ -16,6 +16,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { resolveGuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
 import { type VaultItem } from "@/lib/vaultModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { AdultContentGate, ReportContentButton, useAdultGate } from "@/components/PublicSafetyControls";
 
 type GateMode = "loading" | "guest_allowed" | "registered_only" | "entered";
 type ShareAccessMode = "private" | "public_gallery" | "guest_view" | "registered_users";
@@ -478,6 +479,8 @@ export default function SharedGalleryPage() {
     [gallery, items, accessMode]
   );
 
+  const adultGate = useAdultGate(gallery?.adultOnly === true);
+
   if (!isResolved) {
     return (
       <GalleryBackgroundShell backgroundUrl={model.background.url}>
@@ -546,6 +549,10 @@ export default function SharedGalleryPage() {
     );
   }
 
+  if (adultGate.shouldGate) {
+    return <AdultContentGate onConfirm={adultGate.confirm} />;
+  }
+
   if (gateMode === "guest_allowed" || gateMode === "registered_only") {
     return (
       <GateCard
@@ -559,5 +566,12 @@ export default function SharedGalleryPage() {
     );
   }
 
-  return <GuestGalleryRenderer model={model} />;
+  return (
+    <>
+      <div className="fixed right-4 top-4 z-40">
+        <ReportContentButton contentType="gallery" contentId={gallery.id} />
+      </div>
+      <GuestGalleryRenderer model={model} />
+    </>
+  );
 }
