@@ -76,7 +76,7 @@ export default function PublicGalleryPage() {
           contentType="gallery"
           contentId={gallery.id}
           metadata={{ title: gallery.title, itemCount: gallery.itemIds.length }}
-          label="Favorite Gallery"
+          label="Favorite gallery"
           compact
         />
         <ReportContentButton contentType="gallery" contentId={gallery.id} />

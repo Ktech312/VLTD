@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
 
-import FavoriteButton from "@/components/FavoriteButton";
 import ItemMedia from "@/components/ItemMedia";
 import PricingMvpCard from "@/components/PricingMvpCard";
 import { removeBackgroundStub } from "@/lib/imageAI";
@@ -895,12 +894,6 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 <div className="space-y-3 text-sm">
                   <div className="text-[color:var(--muted)]">Generate a branded 1080×1080 PNG for social posts.</div>
 
-                  <FavoriteButton
-                    contentType="item"
-                    contentId={String(item.id)}
-                    metadata={{ title: item.title, subtitle: item.subtitle, image: images[activeImageIndex] || item.imageFrontUrl || "" }}
-                    label="Favorite Item"
-                  />
 
                   <div className="grid gap-2 sm:grid-cols-2">
                     <label className="flex items-center justify-between gap-3 rounded-xl bg-black/10 px-3 py-2 ring-1 ring-white/8">

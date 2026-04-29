@@ -73,12 +73,6 @@ function ViewerItemCard({
     <article className="rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))] p-3 shadow-[0_12px_28px_rgba(0,0,0,0.18)] backdrop-blur-sm">
       <div className="mb-2 flex items-center justify-between gap-2 text-[10px] tracking-[0.16em] text-[color:var(--muted2)]">
         <span>{label}</span>
-        <FavoriteButton
-          contentType="item"
-          contentId={String(item.id)}
-          metadata={{ title: item.title, subtitle: item.subtitle, image: imageUrl || "" }}
-          compact
-        />
       </div>
 
       <div className="mb-3 aspect-[4/5] overflow-hidden rounded-[14px] bg-black/20 p-2">
@@ -207,7 +201,8 @@ export default function GuestGalleryRenderer({
                     contentType="gallery"
                     contentId={String(model.gallery?.id || model.galleryTitle)}
                     metadata={{ title: model.galleryTitle, itemCount: model.galleryItems.length }}
-                    label="Favorite Gallery"
+                    label="Favorite gallery"
+                    compact
                   />
                   <div className="rounded-full bg-black/15 px-4 py-2 text-sm font-semibold ring-1 ring-white/10">
                     Estimated market value {formatMoney(model.totalValue)}
