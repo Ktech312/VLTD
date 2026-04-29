@@ -230,6 +230,11 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     async function loadShareUsername() {
       try {
         const client = getSupabaseBrowserClient();
+        if (!client) {
+          if (isActive) setShareResolvedUsername("");
+          return;
+        }
+
         const { data: authData } = await client.auth.getUser();
         const authUser = authData?.user;
         const authName =
