@@ -6,15 +6,15 @@ export type ShareImageInput = {
   image?: string;
   watermark?: boolean;
   username?: string;
+  includeFinancials?: boolean;
 };
 
-const CANVAS_SIZE = 1080;
-const OUTER_PADDING = 48;
-const CONTENT_WIDTH = CANVAS_SIZE - OUTER_PADDING * 2;
+const SIZE = 1080;
+const OUTER = 42;
 const IMAGE_TOP = 48;
 const IMAGE_HEIGHT = 720;
-const FOOTER_TOP = 800;
-const FOOTER_HEIGHT = 232;
+const FOOTER_Y = 800;
+const FOOTER_H = 238;
 
 function formatMoney(value: number) {
   const rounded = Math.round(Number(value) || 0);
@@ -22,55 +22,19 @@ function formatMoney(value: number) {
   return `${sign}$${Math.abs(rounded).toLocaleString("en-US")}`;
 }
 
-function roundedRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  radius: number
-) {
-  const safe = Math.min(radius, width / 2, height / 2);
+function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  const radius = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
-  ctx.moveTo(x + safe, y);
-  ctx.lineTo(x + width - safe, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + safe);
-  ctx.lineTo(x + width, y + height - safe);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - safe, y + height);
-  ctx.lineTo(x + safe, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - safe);
-  ctx.lineTo(x, y + safe);
-  ctx.quadraticCurveTo(x, y, x + safe, y);
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
   ctx.closePath();
-}
-
-function drawBackground(ctx: CanvasRenderingContext2D) {
-  const bg = ctx.createLinearGradient(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-  bg.addColorStop(0, "#09131B");
-  bg.addColorStop(0.55, "#0B0F14");
-  bg.addColorStop(1, "#05070B");
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-
-  ctx.fillStyle = "rgba(34,211,238,0.05)";
-  ctx.beginPath();
-  ctx.arc(905, 150, 210, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = "rgba(255,255,255,0.03)";
-  roundedRect(ctx, OUTER_PADDING, OUTER_PADDING, CONTENT_WIDTH, CANVAS_SIZE - OUTER_PADDING * 2, 32);
-  ctx.fill();
-}
-
-function drawFooterPanel(ctx: CanvasRenderingContext2D) {
-  ctx.fillStyle = "rgba(10,15,22,0.88)";
-  roundedRect(ctx, OUTER_PADDING, FOOTER_TOP, CONTENT_WIDTH, FOOTER_HEIGHT, 28);
-  ctx.fill();
-
-  ctx.strokeStyle = "rgba(255,255,255,0.08)";
-  ctx.lineWidth = 2;
-  roundedRect(ctx, OUTER_PADDING, FOOTER_TOP, CONTENT_WIDTH, FOOTER_HEIGHT, 28);
-  ctx.stroke();
 }
 
 function drawWrappedText(
@@ -86,30 +50,29 @@ function drawWrappedText(
   if (words.length === 0) return 0;
 
   const lines: string[] = [];
-  let current = words[0];
+  let current = "";
 
-  for (let i = 1; i < words.length; i += 1) {
-    const test = `${current} ${words[i]}`;
-    if (ctx.measureText(test).width <= maxWidth) {
-      current = test;
+  for (const word of words) {
+    const testLine = current ? `${current} ${word}` : word;
+    if (ctx.measureText(testLine).width <= maxWidth) {
+      current = testLine;
       continue;
     }
-    lines.push(current);
-    current = words[i];
+
+    if (current) lines.push(current);
+    current = word;
     if (lines.length === maxLines - 1) break;
   }
 
-  const consumed = lines.join(" ").split(/\s+/).filter(Boolean).length;
-  const remainingWords = words.slice(consumed);
-  if (remainingWords.length > 0 && lines.length < maxLines) {
-    let lastLine = remainingWords.join(" ");
-    while (ctx.measureText(lastLine).width > maxWidth && lastLine.includes(" ")) {
-      lastLine = lastLine.replace(/\s+\S+$/, "");
+  if (current && lines.length < maxLines) {
+    let finalLine = current;
+    while (ctx.measureText(finalLine).width > maxWidth && finalLine.includes(" ")) {
+      finalLine = finalLine.replace(/\s+\S+$/, "");
     }
-    if (consumed + remainingWords.length < words.length || lastLine !== remainingWords.join(" ")) {
-      lastLine = `${lastLine.replace(/\s+$/, "")}…`;
+    if (words.join(" ") !== [...lines, current].join(" ")) {
+      finalLine = `${finalLine.replace(/\s+$/, "")}…`;
     }
-    lines.push(lastLine);
+    lines.push(finalLine);
   }
 
   lines.slice(0, maxLines).forEach((line, index) => {
@@ -121,185 +84,210 @@ function drawWrappedText(
 
 function loadImage(src: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("Unable to load image."));
-    img.src = src;
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Could not load image."));
+    image.src = src;
   });
 }
 
-function imageFrameForAspect(ratio: number) {
-  if (ratio <= 1.1) {
-    const width = 720;
-    return {
-      x: (CANVAS_SIZE - width) / 2,
-      y: IMAGE_TOP,
-      width,
-      height: IMAGE_HEIGHT,
-      radius: 28,
-    };
-  }
+function drawBackground(ctx: CanvasRenderingContext2D) {
+  const gradient = ctx.createLinearGradient(0, 0, SIZE, SIZE);
+  gradient.addColorStop(0, "#08131C");
+  gradient.addColorStop(0.55, "#0B0F14");
+  gradient.addColorStop(1, "#05070A");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, SIZE, SIZE);
 
-  return {
-    x: OUTER_PADDING,
-    y: IMAGE_TOP,
-    width: CONTENT_WIDTH,
-    height: 670,
-    radius: 28,
-  };
-}
+  ctx.fillStyle = "rgba(34,211,238,0.05)";
+  ctx.beginPath();
+  ctx.arc(900, 150, 215, 0, Math.PI * 2);
+  ctx.fill();
 
-function drawImagePlaceholder(ctx: CanvasRenderingContext2D) {
-  const frame = {
-    x: 180,
-    y: IMAGE_TOP,
-    width: 720,
-    height: IMAGE_HEIGHT,
-    radius: 28,
-  };
-
-  ctx.fillStyle = "rgba(7,10,15,0.95)";
-  roundedRect(ctx, frame.x, frame.y, frame.width, frame.height, frame.radius);
+  ctx.fillStyle = "rgba(255,255,255,0.03)";
+  roundedRect(ctx, OUTER, OUTER, SIZE - OUTER * 2, SIZE - OUTER * 2, 28);
   ctx.fill();
 
   ctx.strokeStyle = "rgba(255,255,255,0.08)";
   ctx.lineWidth = 2;
-  roundedRect(ctx, frame.x, frame.y, frame.width, frame.height, frame.radius);
+  roundedRect(ctx, OUTER, OUTER, SIZE - OUTER * 2, SIZE - OUTER * 2, 28);
   ctx.stroke();
-
-  ctx.fillStyle = "#8A94A6";
-  ctx.font = "700 30px Inter, system-ui, sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText("VLTD ITEM", CANVAS_SIZE / 2, 390);
-  ctx.textAlign = "left";
 }
 
-function drawContained(
+function drawFooter(ctx: CanvasRenderingContext2D) {
+  ctx.fillStyle = "rgba(8,12,18,0.9)";
+  roundedRect(ctx, OUTER + 12, FOOTER_Y, SIZE - (OUTER + 12) * 2, FOOTER_H, 24);
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(255,255,255,0.06)";
+  ctx.lineWidth = 1.5;
+  roundedRect(ctx, OUTER + 12, FOOTER_Y, SIZE - (OUTER + 12) * 2, FOOTER_H, 24);
+  ctx.stroke();
+}
+
+function getPortraitFrame(ratio: number) {
+  const maxInnerHeight = IMAGE_HEIGHT - 12;
+  const drawHeight = maxInnerHeight;
+  const drawWidth = drawHeight * ratio;
+  const frameWidth = Math.max(Math.min(drawWidth + 30, 860), 420);
+  const frameX = (SIZE - frameWidth) / 2;
+  return {
+    x: frameX,
+    y: IMAGE_TOP,
+    width: frameWidth,
+    height: IMAGE_HEIGHT,
+    radius: 24,
+  };
+}
+
+function getLandscapeFrame() {
+  return {
+    x: OUTER + 18,
+    y: IMAGE_TOP,
+    width: SIZE - (OUTER + 18) * 2,
+    height: 650,
+    radius: 24,
+  };
+}
+
+function drawContainedImage(
   ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement,
+  image: HTMLImageElement,
   x: number,
   y: number,
   width: number,
   height: number
 ) {
-  const inset = 10;
-  const innerX = x + inset;
-  const innerY = y + inset;
-  const innerWidth = width - inset * 2;
-  const innerHeight = height - inset * 2;
+  const pad = 8;
+  const innerX = x + pad;
+  const innerY = y + pad;
+  const innerW = width - pad * 2;
+  const innerH = height - pad * 2;
+  const imgRatio = image.width / image.height;
+  const boxRatio = innerW / innerH;
 
-  const imgRatio = img.width / img.height;
-  const boxRatio = innerWidth / innerHeight;
-
-  let drawWidth: number;
-  let drawHeight: number;
+  let drawW: number;
+  let drawH: number;
   if (imgRatio > boxRatio) {
-    drawWidth = innerWidth;
-    drawHeight = drawWidth / imgRatio;
+    drawW = innerW;
+    drawH = drawW / imgRatio;
   } else {
-    drawHeight = innerHeight;
-    drawWidth = drawHeight * imgRatio;
+    drawH = innerH;
+    drawW = drawH * imgRatio;
   }
 
-  const drawX = innerX + (innerWidth - drawWidth) / 2;
-  const drawY = innerY + (innerHeight - drawHeight) / 2;
+  const drawX = innerX + (innerW - drawW) / 2;
+  const drawY = innerY + (innerH - drawH) / 2;
 
-  ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+  ctx.drawImage(image, drawX, drawY, drawW, drawH);
 }
 
-async function drawItemImage(ctx: CanvasRenderingContext2D, image?: string) {
-  if (!image) {
-    drawImagePlaceholder(ctx);
+function drawPlaceholder(ctx: CanvasRenderingContext2D) {
+  const frame = { x: 300, y: IMAGE_TOP, width: 480, height: IMAGE_HEIGHT, radius: 24 };
+  ctx.fillStyle = "rgba(6,10,16,0.96)";
+  roundedRect(ctx, frame.x, frame.y, frame.width, frame.height, frame.radius);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,0.08)";
+  ctx.lineWidth = 2;
+  roundedRect(ctx, frame.x, frame.y, frame.width, frame.height, frame.radius);
+  ctx.stroke();
+  ctx.fillStyle = "#7D8797";
+  ctx.font = "700 28px Inter, system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("VLTD ITEM", SIZE / 2, 400);
+  ctx.textAlign = "left";
+}
+
+async function drawImagePanel(ctx: CanvasRenderingContext2D, imageUrl?: string) {
+  if (!imageUrl) {
+    drawPlaceholder(ctx);
     return;
   }
 
   try {
-    const img = await loadImage(image);
-    const frame = imageFrameForAspect(img.width / img.height);
+    const img = await loadImage(imageUrl);
+    const ratio = img.width / img.height;
+    const frame = ratio <= 1.1 ? getPortraitFrame(ratio) : getLandscapeFrame();
 
-    ctx.fillStyle = "rgba(7,10,15,0.96)";
+    ctx.fillStyle = "rgba(6,10,16,0.96)";
     roundedRect(ctx, frame.x, frame.y, frame.width, frame.height, frame.radius);
     ctx.fill();
-
-    ctx.strokeStyle = "rgba(255,255,255,0.08)";
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(255,255,255,0.07)";
+    ctx.lineWidth = 1.5;
     roundedRect(ctx, frame.x, frame.y, frame.width, frame.height, frame.radius);
     ctx.stroke();
 
     ctx.save();
     roundedRect(ctx, frame.x, frame.y, frame.width, frame.height, frame.radius);
     ctx.clip();
-    drawContained(ctx, img, frame.x, frame.y, frame.width, frame.height);
+    drawContainedImage(ctx, img, frame.x, frame.y, frame.width, frame.height);
     ctx.restore();
   } catch {
-    drawImagePlaceholder(ctx);
+    drawPlaceholder(ctx);
   }
 }
 
-function drawTextLayer(ctx: CanvasRenderingContext2D, item: ShareImageInput) {
-  drawFooterPanel(ctx);
+function drawText(ctx: CanvasRenderingContext2D, item: ShareImageInput) {
+  drawFooter(ctx);
 
   ctx.fillStyle = "#FFFFFF";
-  ctx.font = "800 52px Inter, system-ui, sans-serif";
-  drawWrappedText(ctx, item.title || "Untitled Item", 84, 870, 650, 58, 2);
+  ctx.font = "800 54px Inter, system-ui, sans-serif";
+  drawWrappedText(ctx, item.title || "Untitled Item", 84, 872, 580, 58, 2);
 
   if (item.subtitle) {
     ctx.fillStyle = "#9CA3AF";
     ctx.font = "500 28px Inter, system-ui, sans-serif";
-    drawWrappedText(ctx, item.subtitle, 84, 948, 650, 34, 1);
+    drawWrappedText(ctx, item.subtitle, 84, 948, 580, 34, 1);
   }
 
-  ctx.fillStyle = "#FFFFFF";
-  ctx.font = "800 64px Inter, system-ui, sans-serif";
-  ctx.textAlign = "right";
-  ctx.fillText(formatMoney(item.value), 980, 905);
+  if (item.includeFinancials !== false) {
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "800 62px Inter, system-ui, sans-serif";
+    ctx.fillText(formatMoney(item.value), 978, 900);
+    ctx.fillStyle = item.profit >= 0 ? "#22C55E" : "#EF4444";
+    ctx.font = "800 34px Inter, system-ui, sans-serif";
+    ctx.fillText(`${item.profit >= 0 ? "+" : ""}${formatMoney(item.profit)}`, 978, 946);
+    ctx.textAlign = "left";
+  }
 
-  ctx.fillStyle = item.profit >= 0 ? "#22C55E" : "#EF4444";
-  ctx.font = "800 34px Inter, system-ui, sans-serif";
-  ctx.fillText(`${item.profit >= 0 ? "+" : ""}${formatMoney(item.profit)}`, 980, 950);
-
-  ctx.fillStyle = "#7A8495";
+  ctx.fillStyle = "#7D8797";
   ctx.font = "700 22px Inter, system-ui, sans-serif";
   if (item.username) {
     ctx.textAlign = "left";
     ctx.fillText(`@${item.username.replace(/^@+/, "")}`, 84, 996);
   }
-
   if (item.watermark !== false) {
     ctx.textAlign = "right";
-    ctx.fillText("VLTD", 980, 996);
+    ctx.fillText("VLTD", 978, 996);
   }
-
   ctx.textAlign = "left";
 }
 
-async function render(ctx: CanvasRenderingContext2D, item: ShareImageInput, includeImage: boolean) {
+async function render(ctx: CanvasRenderingContext2D, item: ShareImageInput, withImage: boolean) {
   drawBackground(ctx);
-  if (includeImage) {
-    await drawItemImage(ctx, item.image);
+  if (withImage) {
+    await drawImagePanel(ctx, item.image);
   } else {
-    drawImagePlaceholder(ctx);
+    drawPlaceholder(ctx);
   }
-  drawTextLayer(ctx, item);
+  drawText(ctx, item);
 }
 
 export async function generateShareImage(item: ShareImageInput) {
   if (typeof document === "undefined") return undefined;
-
   const canvas = document.createElement("canvas");
-  canvas.width = CANVAS_SIZE;
-  canvas.height = CANVAS_SIZE;
-
+  canvas.width = SIZE;
+  canvas.height = SIZE;
   const ctx = canvas.getContext("2d");
   if (!ctx) return undefined;
 
   await render(ctx, item, true);
-
   try {
     return canvas.toDataURL("image/png");
   } catch {
-    ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    ctx.clearRect(0, 0, SIZE, SIZE);
     await render(ctx, item, false);
     return canvas.toDataURL("image/png");
   }

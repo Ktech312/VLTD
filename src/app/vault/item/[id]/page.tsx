@@ -175,8 +175,9 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     title: "",
   });
   const [shareIncludeWatermark, setShareIncludeWatermark] = useState(true);
-  const [shareIncludeUsername, setShareIncludeUsername] = useState(false);
-  const [shareUsername, setShareUsername] = useState("");
+  const [shareIncludeUsername, setShareIncludeUsername] = useState(true);
+  const [shareIncludeFinancials, setShareIncludeFinancials] = useState(true);
+  const [shareResolvedUsername, setShareResolvedUsername] = useState("");
   const [shareUseDeviceSheet, setShareUseDeviceSheet] = useState(false);
   const [shareMessage, setShareMessage] = useState("");
   const [isGeneratingShare, setIsGeneratingShare] = useState(false);
@@ -221,6 +222,62 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
       setActiveImageIndex(Math.max(0, images.length - 1));
     }
   }, [images.length, activeImageIndex]);
+
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadShareUsername() {
+      try {
+        const client = getSupabaseBrowserClient();
+        const { data: authData } = await client.auth.getUser();
+        const authUser = authData?.user;
+        const authName =
+          typeof authUser?.user_metadata?.username === "string"
+            ? authUser.user_metadata.username
+            : typeof authUser?.user_metadata?.handle === "string"
+              ? authUser.user_metadata.handle
+              : typeof authUser?.user_metadata?.display_name === "string"
+                ? authUser.user_metadata.display_name
+                : undefined;
+
+        if (authName && isActive) {
+          setShareResolvedUsername(authName);
+          return;
+        }
+
+        const activeProfileId = getStoredActiveProfileId();
+        if (!activeProfileId) return;
+
+        const { data: profile } = await client
+          .from("profiles")
+          .select("username,handle,display_name,name")
+          .eq("id", activeProfileId)
+          .maybeSingle();
+
+        const profileName =
+          typeof profile?.username === "string"
+            ? profile.username
+            : typeof profile?.handle === "string"
+              ? profile.handle
+              : typeof profile?.display_name === "string"
+                ? profile.display_name
+                : typeof profile?.name === "string"
+                  ? profile.name
+                  : "";
+
+        if (isActive) setShareResolvedUsername(profileName);
+      } catch {
+        if (isActive) setShareResolvedUsername("");
+      }
+    }
+
+    void loadShareUsername();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   if (!item) {
     return (
@@ -595,7 +652,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
         profit: Math.round(gain(item)),
         image: images[activeImageIndex] || item.imageFrontUrl,
         watermark: shareIncludeWatermark,
-        username: shareIncludeUsername ? shareUsername.trim() || "VLTD Collector" : undefined,
+        username: shareIncludeUsername ? shareResolvedUsername || undefined : undefined,
+        includeFinancials: shareIncludeFinancials,
       });
 
       if (!image) {
@@ -829,48 +887,55 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
             <div className="mt-5">
               <Section title="SHARE IMAGE">
                 <div className="space-y-3 text-sm">
-                  <div className="text-[color:var(--muted)]">
-                    Generate a branded 1080×1080 PNG for social posts.
+                  <div className="text-[color:var(--muted)]">Generate a branded 1080×1080 PNG for social posts.</div>
+
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <label className="flex items-center justify-between gap-3 rounded-xl bg-black/10 px-3 py-2 ring-1 ring-white/8">
+                      <span className="text-sm">Watermark</span>
+                      <input
+                        type="checkbox"
+                        checked={shareIncludeWatermark}
+                        onChange={(event) => setShareIncludeWatermark(event.target.checked)}
+                        className="h-4 w-4 accent-cyan-400"
+                      />
+                    </label>
+
+                    <label className="flex items-center justify-between gap-3 rounded-xl bg-black/10 px-3 py-2 ring-1 ring-white/8">
+                      <span className="text-sm">Username</span>
+                      <input
+                        type="checkbox"
+                        checked={shareIncludeUsername}
+                        onChange={(event) => setShareIncludeUsername(event.target.checked)}
+                        className="h-4 w-4 accent-cyan-400"
+                      />
+                    </label>
+
+                    <label className="flex items-center justify-between gap-3 rounded-xl bg-black/10 px-3 py-2 ring-1 ring-white/8">
+                      <span className="text-sm">Financials</span>
+                      <input
+                        type="checkbox"
+                        checked={shareIncludeFinancials}
+                        onChange={(event) => setShareIncludeFinancials(event.target.checked)}
+                        className="h-4 w-4 accent-cyan-400"
+                      />
+                    </label>
+
+                    <label className="flex items-center justify-between gap-3 rounded-xl bg-black/10 px-3 py-2 ring-1 ring-white/8">
+                      <span className="text-sm">Direct share</span>
+                      <input
+                        type="checkbox"
+                        checked={shareUseDeviceSheet}
+                        onChange={(event) => setShareUseDeviceSheet(event.target.checked)}
+                        className="h-4 w-4 accent-cyan-400"
+                      />
+                    </label>
                   </div>
 
-                  <label className="flex items-center justify-between gap-3 rounded-2xl bg-black/10 px-3 py-2 ring-1 ring-white/8">
-                    <span>Auto watermark logo</span>
-                    <input
-                      type="checkbox"
-                      checked={shareIncludeWatermark}
-                      onChange={(event) => setShareIncludeWatermark(event.target.checked)}
-                      className="h-4 w-4 accent-cyan-400"
-                    />
-                  </label>
-
-                  <label className="flex items-center justify-between gap-3 rounded-2xl bg-black/10 px-3 py-2 ring-1 ring-white/8">
-                    <span>Add username</span>
-                    <input
-                      type="checkbox"
-                      checked={shareIncludeUsername}
-                      onChange={(event) => setShareIncludeUsername(event.target.checked)}
-                      className="h-4 w-4 accent-cyan-400"
-                    />
-                  </label>
-
                   {shareIncludeUsername ? (
-                    <input
-                      className="h-10 w-full rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
-                      value={shareUsername}
-                      onChange={(event) => setShareUsername(event.target.value)}
-                      placeholder="username"
-                    />
+                    <div className="rounded-xl bg-black/10 px-3 py-2 text-xs text-[color:var(--muted)] ring-1 ring-white/8">
+                      Username pulled from profile: <span className="text-[color:var(--fg)]">{shareResolvedUsername ? `@${shareResolvedUsername.replace(/^@+/, "")}` : "No profile username found"}</span>
+                    </div>
                   ) : null}
-
-                  <label className="flex items-center justify-between gap-3 rounded-2xl bg-black/10 px-3 py-2 ring-1 ring-white/8">
-                    <span>Direct share to Instagram/device apps</span>
-                    <input
-                      type="checkbox"
-                      checked={shareUseDeviceSheet}
-                      onChange={(event) => setShareUseDeviceSheet(event.target.checked)}
-                      className="h-4 w-4 accent-cyan-400"
-                    />
-                  </label>
 
                   <button
                     type="button"
