@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
+import FavoriteButton from "@/components/FavoriteButton";
 import type { GalleryShelfOverlayStyle } from "@/lib/galleryModel";
 import type { VaultItem } from "@/lib/vaultModel";
 
@@ -97,6 +98,14 @@ function getShelfThemeClasses(themePack?: string | null) {
   }
 }
 
+function favoriteMetadata(item: VaultItem) {
+  return {
+    title: item.title,
+    subtitle: itemSubtitle(item),
+    image: itemImage(item),
+  };
+}
+
 function DisplayCard({
   item,
   theme,
@@ -119,31 +128,44 @@ function DisplayCard({
         <div className="mt-1 font-medium">Estimated market value {formatMoney(item.currentValue)}</div>
       </div>
 
-      <Link href={`${galleryHrefPrefix}/${item.id}`} className="group block w-full">
-        <div
-          className={[
-            "relative w-full overflow-hidden rounded-[12px] ring-1 shadow-[0_8px_18px_rgba(0,0,0,0.18)] sm:rounded-[14px]",
-            theme.tile,
-          ].join(" ")}
-        >
-          <div className="aspect-[4/5] w-full p-1.5 sm:p-2">
-            {itemImage(item) ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={itemImage(item)}
-                alt={item.title}
-                className="h-full w-full object-contain object-bottom transition duration-300 group-hover:scale-[1.02]"
-                draggable={false}
-                loading="lazy"
-              />
-            ) : (
-              <div className="flex h-full items-end justify-center pb-4 text-sm text-white/65">
-                No image
-              </div>
-            )}
+      <div className="relative w-full">
+        <Link href={`${galleryHrefPrefix}/${item.id}`} className="group block w-full">
+          <div
+            className={[
+              "relative w-full overflow-hidden rounded-[12px] ring-1 shadow-[0_8px_18px_rgba(0,0,0,0.18)] sm:rounded-[14px]",
+              theme.tile,
+            ].join(" ")}
+          >
+            <div className="aspect-[4/5] w-full p-1.5 sm:p-2">
+              {itemImage(item) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={itemImage(item)}
+                  alt={item.title}
+                  className="h-full w-full object-contain object-bottom transition duration-300 group-hover:scale-[1.02]"
+                  draggable={false}
+                  loading="lazy"
+                />
+              ) : (
+                <div className="flex h-full items-end justify-center pb-4 text-sm text-white/65">
+                  No image
+                </div>
+              )}
+            </div>
           </div>
+        </Link>
+
+        <div className="absolute bottom-2 right-2 z-20">
+          <FavoriteButton
+            contentType="item"
+            contentId={String(item.id)}
+            metadata={favoriteMetadata(item)}
+            label="Favorite item"
+            compact
+            showMessage={false}
+          />
         </div>
-      </Link>
+      </div>
     </div>
   );
 }
