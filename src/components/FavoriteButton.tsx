@@ -98,11 +98,22 @@ export default function FavoriteButton({
             void handleToggle();
           }}
           disabled={loading || !contentId}
+          onPointerDown={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          }}
+          onMouseDown={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          }}
+          onTouchStart={(event) => {
+            event.stopPropagation();
+          }}
           aria-pressed={favorited}
           aria-label={buttonLabel}
           title={buttonLabel}
           className={[
-            "inline-flex items-center justify-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-60",
+            "pointer-events-auto inline-flex items-center justify-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-60",
             compact ? "h-7 w-7" : "h-9 w-9",
             favorited
               ? "text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.35)]"

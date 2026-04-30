@@ -155,7 +155,7 @@ function DisplayCard({
           </div>
         </Link>
 
-        <div className="absolute bottom-2 right-2 z-20">
+        <div className="pointer-events-auto absolute right-2 top-2 z-30">
           <FavoriteButton
             contentType="item"
             contentId={String(item.id)}
