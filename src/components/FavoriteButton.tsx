@@ -8,15 +8,15 @@ import {
   type FavoriteContentType,
 } from "@/lib/favorites";
 
-function StarIcon({ filled }: { filled: boolean }) {
+function StarIcon({ filled, className }: { filled: boolean; className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="relative z-[1] h-[18px] w-[18px]"
+      className={className || "h-5 w-5"}
       aria-hidden="true"
       fill={filled ? "currentColor" : "none"}
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.9"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
@@ -29,7 +29,7 @@ export default function FavoriteButton({
   contentType,
   contentId,
   metadata,
-  label = "Favorite gallery",
+  label = "Favorite",
   compact = false,
 }: {
   contentType: FavoriteContentType;
@@ -85,7 +85,7 @@ export default function FavoriteButton({
 
   return (
     <div className={compact ? "inline-flex flex-col items-end gap-1" : "inline-flex flex-col gap-1"}>
-      <div className="inline-flex items-center gap-2">
+      <div className="inline-flex items-center gap-1.5">
         <button
           type="button"
           onClick={(event) => {
@@ -98,28 +98,17 @@ export default function FavoriteButton({
           aria-label={buttonLabel}
           title={buttonLabel}
           className={[
-            "group relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-[16px] ring-1 transition disabled:cursor-not-allowed disabled:opacity-60",
-            compact ? "h-10 w-10" : "h-11 w-11",
+            "inline-flex items-center justify-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-60",
+            compact ? "h-7 w-7" : "h-9 w-9",
             favorited
-              ? "bg-[linear-gradient(145deg,rgba(72,203,255,0.32),rgba(104,80,255,0.34))] text-white ring-cyan-300/30 shadow-[0_10px_30px_rgba(67,190,255,0.22)]"
-              : "bg-[linear-gradient(145deg,rgba(255,255,255,0.10),rgba(255,255,255,0.04))] text-white/78 ring-white/12 hover:bg-[linear-gradient(145deg,rgba(72,203,255,0.18),rgba(104,80,255,0.18))] hover:text-white",
+              ? "text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.35)]"
+              : "text-white/72 hover:text-cyan-200",
           ].join(" ")}
         >
-          <span
-            aria-hidden="true"
-            className={[
-              "pointer-events-none absolute inset-[1px] rounded-[15px]",
-              favorited
-                ? "bg-[radial-gradient(circle_at_30%_25%,rgba(255,255,255,0.32),rgba(255,255,255,0)_52%),linear-gradient(180deg,rgba(13,22,40,0.18),rgba(13,22,40,0.42))]"
-                : "bg-[radial-gradient(circle_at_30%_25%,rgba(255,255,255,0.18),rgba(255,255,255,0)_48%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(0,0,0,0.12))]",
-            ].join(" ")}
-          />
-          <StarIcon filled={favorited} />
+          <StarIcon filled={favorited} className={compact ? "h-4 w-4" : "h-5 w-5"} />
         </button>
 
-        <span className="min-w-[28px] rounded-full bg-black/18 px-2 py-1 text-center text-[11px] font-semibold leading-none text-white/86 ring-1 ring-white/10">
-          {count}
-        </span>
+        <span className={["font-semibold leading-none text-white/82", compact ? "text-[10px]" : "text-xs"].join(" ")}>{count}</span>
       </div>
 
       {message ? <div className="max-w-[220px] text-right text-[10px] text-rose-200">{message}</div> : null}

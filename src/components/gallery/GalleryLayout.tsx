@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import FavoriteButton from "@/components/FavoriteButton";
 import { type VaultItem } from "@/lib/vaultModel";
 import { type GalleryLayout as GalleryLayoutType } from "@/lib/galleryLayout";
 
@@ -11,6 +12,14 @@ function itemImage(i: VaultItem) {
 
 function itemMeta(i: VaultItem) {
   return [i.subtitle, i.number, i.grade].filter(Boolean).join(" • ");
+}
+
+function favoriteMetadata(item: VaultItem) {
+  return {
+    title: item.title,
+    subtitle: item.subtitle,
+    image: item.imageFrontUrl || item.imageBackUrl || "",
+  };
 }
 
 function resolveLayoutType(layout: GalleryLayoutType | string | null | undefined) {
@@ -48,6 +57,7 @@ export default function GalleryLayout({
             className="grid items-center gap-8 rounded-[26px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_42px_rgba(0,0,0,0.14)] md:grid-cols-2"
           >
             {itemImage(i) ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={itemImage(i)}
                 alt={i.title}
@@ -107,6 +117,7 @@ export default function GalleryLayout({
             className="block rounded-[26px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_42px_rgba(0,0,0,0.14)]"
           >
             {itemImage(i) ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={itemImage(i)}
                 alt={i.title}
@@ -133,9 +144,19 @@ export default function GalleryLayout({
           key={i.id}
           className="relative rounded-2xl bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(0,0,0,0.12)]"
         >
+          <div className="absolute right-3 top-3 z-10">
+            <FavoriteButton
+              contentType="item"
+              contentId={String(i.id)}
+              metadata={favoriteMetadata(i)}
+              compact
+            />
+          </div>
+
           <Link href={`${hrefPrefix}/${i.id}`} className="block">
             {itemImage(i) ? (
               <div className="mb-4 overflow-hidden rounded-[18px] bg-black/15">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={itemImage(i)}
                   alt={i.title}
