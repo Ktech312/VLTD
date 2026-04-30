@@ -31,12 +31,16 @@ export default function FavoriteButton({
   metadata,
   label = "Favorite",
   compact = false,
+  showMessage = true,
+  className = "",
 }: {
   contentType: FavoriteContentType;
   contentId: string;
   metadata?: Record<string, unknown>;
   label?: string;
   compact?: boolean;
+  showMessage?: boolean;
+  className?: string;
 }) {
   const [favorited, setFavorited] = useState(false);
   const [count, setCount] = useState(0);
@@ -84,7 +88,7 @@ export default function FavoriteButton({
   const buttonLabel = favorited ? `Remove ${label}` : label;
 
   return (
-    <div className={compact ? "inline-flex flex-col items-end gap-1" : "inline-flex flex-col gap-1"}>
+    <div className={[compact ? "inline-flex flex-col items-end gap-1" : "inline-flex flex-col gap-1", className].filter(Boolean).join(" ")}>
       <div className="inline-flex items-center gap-1.5">
         <button
           type="button"
@@ -111,7 +115,7 @@ export default function FavoriteButton({
         <span className={["font-semibold leading-none text-white/82", compact ? "text-[10px]" : "text-xs"].join(" ")}>{count}</span>
       </div>
 
-      {message ? <div className="max-w-[220px] text-right text-[10px] text-rose-200">{message}</div> : null}
+      {showMessage && message ? <div className="max-w-[220px] text-right text-[10px] text-rose-200">{message}</div> : null}
     </div>
   );
 }
