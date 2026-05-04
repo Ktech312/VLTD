@@ -27,8 +27,7 @@ body:has(a[href="/insurance"]) section:first-of-type h1 {
   letter-spacing: -0.045em !important;
 }
 
-body:has(a[href="/insurance"]) a[href="/insurance"],
-body:has(a[href="/insurance"]) button:contains("Export CSV") {
+body:has(a[href="/insurance"]) a[href="/insurance"] {
   background: #52d6f4 !important;
   color: #06101d !important;
   border-color: rgba(82, 214, 244, 0.46) !important;
