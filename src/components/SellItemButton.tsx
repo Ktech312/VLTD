@@ -4,20 +4,36 @@ import { useState } from "react";
 import type { VaultItem } from "@/lib/vaultModel";
 
 const SALES_KEY = "vltd_sales_history";
+const VAULT_ITEMS_KEY = "vltd_vault_items_v1";
 
-function getSales() {
+type SoldVaultItem = VaultItem & {
+  soldPrice: number;
+  soldAt: number;
+};
+
+function getSales(): SoldVaultItem[] {
   try {
-    return JSON.parse(localStorage.getItem(SALES_KEY) || "[]");
+    const data: unknown = JSON.parse(localStorage.getItem(SALES_KEY) || "[]");
+    return Array.isArray(data) ? (data as SoldVaultItem[]) : [];
   } catch {
     return [];
   }
 }
 
-function setSales(data) {
+function setSales(data: SoldVaultItem[]) {
   localStorage.setItem(SALES_KEY, JSON.stringify(data));
 }
 
-export default function SellItemButton({ item }) {
+function getVaultItems(): VaultItem[] {
+  try {
+    const data: unknown = JSON.parse(localStorage.getItem(VAULT_ITEMS_KEY) || "[]");
+    return Array.isArray(data) ? (data as VaultItem[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export default function SellItemButton({ item }: { item: VaultItem }) {
   const [loading, setLoading] = useState(false);
 
   function handleSell() {
@@ -43,13 +59,13 @@ export default function SellItemButton({ item }) {
 
       setSales(sales);
 
-      const items = JSON.parse(localStorage.getItem("vltd_vault_items_v1") || "[]");
-      const updated = items.filter((i) => i.id !== item.id);
-      localStorage.setItem("vltd_vault_items_v1", JSON.stringify(updated));
+      const items = getVaultItems();
+      const updated = items.filter((vaultItem) => vaultItem.id !== item.id);
+      localStorage.setItem(VAULT_ITEMS_KEY, JSON.stringify(updated));
 
       window.dispatchEvent(new Event("vltd:vault-updated"));
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error(error);
       alert("Failed to sell item");
     } finally {
       setLoading(false);
@@ -57,7 +73,7 @@ export default function SellItemButton({ item }) {
   }
 
   return (
-    <button onClick={handleSell} disabled={loading}>
+    <button type="button" onClick={handleSell} disabled={loading}>
       {loading ? "Selling..." : "Sell Item"}
     </button>
   );
