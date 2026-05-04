@@ -29,49 +29,55 @@ export default function BiggestMoversPanel({ items }: { items: VaultItem[] }) {
     .filter((entry) => Number.isFinite(entry.gain))
     .sort((a, b) => b.gain - a.gain);
 
-  const topGainer = ranked[0] ?? null;
+  const movers = ranked.filter((entry) => entry.gain !== 0).slice(0, 5);
   const topLoser = ranked.length > 1 ? [...ranked].sort((a, b) => a.gain - b.gain)[0] : null;
+  const rows = movers.length ? movers : ranked.slice(0, 3);
 
   return (
-    <div className="rounded-[18px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
-      <div className="text-[10px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">
-        Top Movers
+    <section className="rounded-[28px] border border-[color:var(--border)] bg-[rgba(15,29,49,0.78)] p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-[12px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">
+          Top Performers
+        </div>
+        <div className="text-sm font-semibold text-[color:var(--muted2)]">Portfolio →</div>
       </div>
 
       {ranked.length === 0 ? (
-        <div className="mt-2 text-sm text-[color:var(--muted)]">
+        <div className="mt-4 rounded-2xl border border-dashed border-[color:var(--border)] p-5 text-sm text-[color:var(--muted)]">
           Add purchase prices and current values to see movers.
         </div>
       ) : (
-        <div className="mt-2 divide-y divide-[color:var(--border)]">
-          {topGainer ? (
-            <div className="flex items-center justify-between gap-3 py-2">
-              <div className="min-w-0">
-                <div className="text-[10px] uppercase tracking-[0.16em] text-emerald-300">
-                  Top Gainer
+        <div className="mt-4 space-y-3">
+          {rows.map((entry) => {
+            const positive = entry.gain >= 0;
+            return (
+              <div
+                key={entry.item.id}
+                className={positive ?
+                  "rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.07] px-4 py-3" :
+                  "rounded-2xl border border-rose-400/20 bg-rose-400/[0.07] px-4 py-3"
+                }
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="truncate text-base font-semibold text-[color:var(--fg)]">{entry.item.title}</div>
+                    <div className="mt-0.5 text-sm text-[color:var(--muted2)]">{entry.item.universe || entry.item.category || "Collectible"}</div>
+                  </div>
+                  <div className={positive ? "shrink-0 text-right text-base font-black text-emerald-300" : "shrink-0 text-right text-base font-black text-rose-300"}>
+                    {positive ? "+" : ""}{money(entry.gain)}
+                  </div>
                 </div>
-                <div className="mt-0.5 truncate text-sm font-semibold">{topGainer.item.title}</div>
               </div>
-              <div className="shrink-0 text-sm font-semibold text-emerald-300">
-                {topGainer.gain >= 0 ? "+" : ""}
-                {money(topGainer.gain)}
-              </div>
-            </div>
-          ) : null}
+            );
+          })}
 
-          {topLoser ? (
-            <div className="flex items-center justify-between gap-3 py-2">
-              <div className="min-w-0">
-                <div className="text-[10px] uppercase tracking-[0.16em] text-rose-300">
-                  Top Loser
-                </div>
-                <div className="mt-0.5 truncate text-sm font-semibold">{topLoser.item.title}</div>
-              </div>
-              <div className="shrink-0 text-sm font-semibold text-rose-300">{money(topLoser.gain)}</div>
+          {topLoser && topLoser.gain < 0 ? (
+            <div className="border-t border-[color:var(--border)] pt-3 text-xs text-[color:var(--muted2)]">
+              Biggest loss: <span className="font-semibold text-rose-300">{topLoser.item.title} {money(topLoser.gain)}</span>
             </div>
           ) : null}
         </div>
       )}
-    </div>
+    </section>
   );
 }
