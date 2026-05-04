@@ -103,3 +103,106 @@ body {
   outline: none;
   box-shadow: 0 0 0 3px rgba(82, 214, 244, 0.16);
 }
+
+/* Pass 4: Vault page depth + phone-friendly item cards.
+   Scoped to the vault inventory page by its search input, so auth/landing/dashboard stay untouched. */
+main:has(input[placeholder="Search vault items..."]) {
+  background:
+    radial-gradient(circle at 46% 12%, rgba(82, 214, 244, 0.14), transparent 34%),
+    radial-gradient(circle at 82% 26%, rgba(82, 214, 244, 0.08), transparent 26%),
+    linear-gradient(180deg, var(--vltd-bg), var(--vltd-bg-deep)) !important;
+}
+
+main:has(input[placeholder="Search vault items..."]) section,
+main:has(input[placeholder="Search vault items..."]) [class*="rounded-"] {
+  border-color: rgba(104, 146, 196, 0.24);
+}
+
+main:has(input[placeholder="Search vault items..."]) section {
+  box-shadow: 0 18px 58px rgba(0, 0, 0, 0.18);
+}
+
+main:has(input[placeholder="Search vault items..."]) section:has(h2),
+main:has(input[placeholder="Search vault items..."]) section:has(input[placeholder="Search vault items..."]) {
+  background:
+    linear-gradient(180deg, rgba(16, 34, 58, 0.90), rgba(9, 20, 36, 0.90)) !important;
+}
+
+main:has(input[placeholder="Search vault items..."]) section:has(h2) {
+  border-color: rgba(82, 214, 244, 0.28) !important;
+  box-shadow:
+    0 0 0 1px rgba(82, 214, 244, 0.04),
+    0 22px 72px rgba(82, 214, 244, 0.08),
+    0 18px 70px rgba(0, 0, 0, 0.28) !important;
+}
+
+main:has(input[placeholder="Search vault items..."]) div.group.relative {
+  background:
+    linear-gradient(180deg, rgba(17, 35, 59, 0.78), rgba(9, 20, 36, 0.82)) !important;
+  border-color: rgba(104, 146, 196, 0.22) !important;
+}
+
+main:has(input[placeholder="Search vault items..."]) div.group.relative:hover {
+  border-color: rgba(82, 214, 244, 0.34) !important;
+  box-shadow: 0 14px 38px rgba(82, 214, 244, 0.08) !important;
+}
+
+@media (max-width: 640px) {
+  main:has(input[placeholder="Search vault items..."]) {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  main:has(input[placeholder="Search vault items..."]) div.group.relative {
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 10px !important;
+    border-radius: 18px !important;
+  }
+
+  main:has(input[placeholder="Search vault items..."]) div.group.relative > div.grid {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    gap: 10px !important;
+  }
+
+  main:has(input[placeholder="Search vault items..."]) div.group.relative > div.grid > a:first-child {
+    height: 168px !important;
+    width: 100% !important;
+    border-radius: 14px !important;
+  }
+
+  main:has(input[placeholder="Search vault items..."]) div.group.relative > div.grid > div:nth-child(2) {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+  }
+
+  main:has(input[placeholder="Search vault items..."]) div.group.relative > div.grid > div:nth-child(3) {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  main:has(input[placeholder="Search vault items..."]) div.group.relative select {
+    min-height: 34px !important;
+    font-size: 13px !important;
+    border-radius: 10px !important;
+    padding: 6px 10px !important;
+  }
+
+  main:has(input[placeholder="Search vault items..."]) div.group.relative [class*="line-clamp-1"] {
+    white-space: normal !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  main:has(input[placeholder="Search vault items..."]) div.group.relative button,
+  main:has(input[placeholder="Search vault items..."]) div.group.relative a {
+    min-height: 34px;
+  }
+}
