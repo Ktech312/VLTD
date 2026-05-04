@@ -43,70 +43,57 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] px-4 py-10 text-[color:var(--fg)]">
-      <div className="mx-auto max-w-md rounded-[28px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-8">
-        <div className="text-[11px] uppercase tracking-[0.24em] text-[color:var(--muted2)]">Signup</div>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">Create your account</h1>
-        <p className="mt-2 text-sm text-[color:var(--muted)]">
-          Keep it fast. Get in, finish onboarding, start building.
-        </p>
+    <main className="vltd-page-depth min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6 sm:py-10">
+      <div className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-5xl flex-col">
+        <Link href="/" className="w-fit text-sm font-medium text-[color:var(--muted2)] transition hover:text-[color:var(--fg)]">
+          &lsaquo; Back to VLTD
+        </Link>
 
-        {error ? (
-          <div className="mt-4 rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-            {error}
-          </div>
-        ) : null}
+        <div className="flex flex-1 items-center justify-center py-8">
+          <div className="vltd-vault-surface w-full max-w-[560px] rounded-[34px] p-7 backdrop-blur-xl sm:p-10">
+            <div className="flex items-center gap-3">
+              <span className="vltd-brand-dot" />
+              <div className="text-2xl font-black tracking-[0.08em]">VLTD <span className="align-super text-[9px] text-[color:var(--muted2)]">TM</span></div>
+            </div>
 
-        <div className="mt-6 grid gap-4">
-          <div>
-            <div className="text-sm font-medium">Email</div>
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              type="email"
-              autoComplete="email"
-              className="mt-2 h-12 w-full rounded-2xl bg-[color:var(--input)] px-4 ring-1 ring-[color:var(--border)] outline-none"
-            />
-          </div>
+            <div className="mt-8 text-[12px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted2)]">Start your vault</div>
+            <h1 className="mt-2 text-4xl font-black tracking-[-0.04em]">Create your VLTD account</h1>
+            <p className="mt-2 text-base text-[color:var(--muted)]">Free to start. Build your vault, track value, and share galleries.</p>
 
-          <div>
-            <div className="text-sm font-medium">Password</div>
-            <input
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              type="password"
-              autoComplete="new-password"
-              className="mt-2 h-12 w-full rounded-2xl bg-[color:var(--input)] px-4 ring-1 ring-[color:var(--border)] outline-none"
-            />
+            {error ? <div className="mt-5 rounded-2xl border border-red-400/35 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}
+
+            <div className="mt-8 grid gap-5">
+              <label className="block">
+                <span className="text-base font-medium text-[color:var(--muted)]">Email</span>
+                <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="email" placeholder="you@example.com" className="vltd-input mt-3 h-16 w-full rounded-[22px] px-6 text-lg" />
+              </label>
+
+              <label className="block">
+                <span className="text-base font-medium text-[color:var(--muted)]">Password</span>
+                <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" autoComplete="new-password" placeholder="••••••••" className="vltd-input mt-3 h-16 w-full rounded-[22px] px-6 text-lg" />
+              </label>
+            </div>
+
+            <div className="mt-7 flex flex-col gap-4">
+              <button type="button" disabled={submitting} onClick={() => void handleSignup()} className="vltd-primary-button inline-flex h-16 items-center justify-center rounded-full px-6 text-base font-black transition disabled:translate-y-0 disabled:opacity-45">
+                {submitting ? "Creating..." : "Create your vault — free"}
+              </button>
+
+              <div className="flex items-center gap-4 text-sm text-[color:var(--muted2)]"><span className="h-px flex-1 bg-[color:var(--border)]" />or<span className="h-px flex-1 bg-[color:var(--border)]" /></div>
+
+              <button type="button" disabled={googleSubmitting} onClick={() => void handleGoogleSignup()} className="inline-flex h-14 items-center justify-center gap-3 rounded-full border border-[color:var(--border)] bg-[color:var(--pill)] px-6 text-base font-semibold text-[color:var(--muted)] transition hover:bg-[color:var(--pill-hover)] hover:text-[color:var(--fg)] disabled:opacity-45">
+                <span className="text-xl font-black text-[color:var(--accent)]">G</span>
+                {googleSubmitting ? "Redirecting..." : "Continue with Google"}
+              </button>
+            </div>
+
+            <div className="mt-7 text-center text-base text-[color:var(--muted2)]">
+              Already have a VLTD account? <Link href="/login" className="font-semibold text-[color:var(--fg)] underline underline-offset-4">Log in</Link>
+            </div>
           </div>
         </div>
 
-        <div className="mt-6 flex flex-col gap-3">
-          <button
-            type="button"
-            disabled={submitting}
-            onClick={() => void handleSignup()}
-            className="inline-flex h-11 items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-5 text-sm font-semibold text-[color:var(--fg)] disabled:opacity-40"
-          >
-            {submitting ? "Creating..." : "Create Account"}
-          </button>
-
-          <button
-            type="button"
-            disabled={googleSubmitting}
-            onClick={() => void handleGoogleSignup()}
-            className="inline-flex h-11 items-center justify-center rounded-full bg-[color:var(--pill)] px-5 text-sm font-medium ring-1 ring-[color:var(--border)] disabled:opacity-40"
-          >
-            {googleSubmitting ? "Redirecting..." : "Continue with Google"}
-          </button>
-        </div>
-
-        <div className="mt-6 text-sm text-[color:var(--muted)]">
-          Already have an account?{" "}
-          <Link href="/login" className="text-[color:var(--fg)] underline">
-            Log in
-          </Link>
-        </div>
+        <p className="pb-2 text-center text-sm italic text-[color:var(--muted2)]">VLTD — pronounced &quot;Vaulted&quot;</p>
       </div>
     </main>
   );
