@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./vltd-design.css";
 import "./vault-pass.css";
+import "./museum-pass.css";
 import TopNav from "@/components/TopNav";
 import Providers from "@/components/Providers";
 import { ThemeBoot } from "@/components/ThemeBoot";
