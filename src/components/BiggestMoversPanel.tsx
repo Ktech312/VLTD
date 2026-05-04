@@ -33,24 +33,26 @@ export default function BiggestMoversPanel({ items }: { items: VaultItem[] }) {
   const topLoser = ranked.length > 1 ? [...ranked].sort((a, b) => a.gain - b.gain)[0] : null;
 
   return (
-    <div className="rounded-[24px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)]">
+    <div className="rounded-[22px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
       <div className="text-[11px] uppercase tracking-[0.24em] text-[color:var(--muted2)]">
-        Biggest Movers
+        Top Movers
       </div>
 
       {ranked.length === 0 ? (
-        <div className="mt-4 text-sm text-[color:var(--muted)]">
+        <div className="mt-3 text-sm text-[color:var(--muted)]">
           Add purchase prices and current values to see movers.
         </div>
       ) : (
-        <div className="mt-4 grid gap-3">
+        <div className="mt-3 divide-y divide-[color:var(--border)]">
           {topGainer ? (
-            <div className="rounded-2xl bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-emerald-300">
-                Top Gainer
+            <div className="flex items-center justify-between gap-4 py-3">
+              <div className="min-w-0">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-emerald-300">
+                  Top Gainer
+                </div>
+                <div className="mt-1 truncate text-sm font-semibold">{topGainer.item.title}</div>
               </div>
-              <div className="mt-2 text-lg font-semibold">{topGainer.item.title}</div>
-              <div className="mt-1 text-sm text-[color:var(--muted)]">
+              <div className="shrink-0 text-sm font-semibold text-emerald-300">
                 {topGainer.gain >= 0 ? "+" : ""}
                 {money(topGainer.gain)}
               </div>
@@ -58,12 +60,14 @@ export default function BiggestMoversPanel({ items }: { items: VaultItem[] }) {
           ) : null}
 
           {topLoser ? (
-            <div className="rounded-2xl bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-rose-300">
-                Top Loser
+            <div className="flex items-center justify-between gap-4 py-3">
+              <div className="min-w-0">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-rose-300">
+                  Top Loser
+                </div>
+                <div className="mt-1 truncate text-sm font-semibold">{topLoser.item.title}</div>
               </div>
-              <div className="mt-2 text-lg font-semibold">{topLoser.item.title}</div>
-              <div className="mt-1 text-sm text-[color:var(--muted)]">{money(topLoser.gain)}</div>
+              <div className="shrink-0 text-sm font-semibold text-rose-300">{money(topLoser.gain)}</div>
             </div>
           ) : null}
         </div>
