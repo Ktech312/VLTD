@@ -9,7 +9,7 @@ import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vau
 
 const BiggestMoversPanel = dynamic(() => import("@/components/BiggestMoversPanel"), {
   loading: () => (
-    <div className="rounded-[20px] bg-[color:var(--surface)] p-4 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+    <div className="rounded-[18px] bg-[color:var(--surface)] p-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
       Loading movers...
     </div>
   ),
@@ -83,10 +83,10 @@ export default function HomeClient() {
   if (error) return <main className="min-h-screen bg-[color:var(--bg)] px-4 py-10 text-[color:var(--fg)]"><div className="mx-auto max-w-4xl rounded-[24px] border border-red-500/40 bg-red-500/10 p-6 text-red-200">{error}</div></main>;
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] px-4 py-5 text-[color:var(--fg)] sm:px-6">
+    <main className="min-h-screen bg-[color:var(--bg)] px-4 py-3 text-[color:var(--fg)] sm:px-6">
       <div className="mx-auto max-w-4xl">
-        <section className="rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-6">
-          <div className="text-[11px] uppercase tracking-[0.24em] text-[color:var(--muted2)]">Home</div>
+        <section className="rounded-[22px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+          <div className="text-[10px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Home</div>
           <div className="mt-2 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Hi{displayName ? `, ${displayName}` : ""}</h1>
@@ -97,45 +97,45 @@ export default function HomeClient() {
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-[18px] bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)]"><div className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Items</div><div className="mt-1 text-xl font-semibold">{stats.totalItems}</div></div>
-            <div className="rounded-[18px] bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)]"><div className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Cost</div><div className="mt-1 text-xl font-semibold">{formatMoney(stats.totalCostValue)}</div></div>
-            <div className="rounded-[18px] bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)]"><div className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Value</div><div className="mt-1 text-xl font-semibold">{formatMoney(stats.totalValue)}</div></div>
-            <div className="rounded-[18px] bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)]"><div className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Gain</div><div className="mt-1 text-xl font-semibold">{stats.totalGain >= 0 ? "+" : ""}{formatMoney(stats.totalGain)}</div></div>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="rounded-2xl bg-[color:var(--pill)] p-2.5 ring-1 ring-[color:var(--border)]"><div className="text-[10px] uppercase tracking-[0.16em] text-[color:var(--muted2)]">Items</div><div className="mt-1 text-lg font-semibold">{stats.totalItems}</div></div>
+            <div className="rounded-2xl bg-[color:var(--pill)] p-2.5 ring-1 ring-[color:var(--border)]"><div className="text-[10px] uppercase tracking-[0.16em] text-[color:var(--muted2)]">Cost</div><div className="mt-1 text-lg font-semibold">{formatMoney(stats.totalCostValue)}</div></div>
+            <div className="rounded-2xl bg-[color:var(--pill)] p-2.5 ring-1 ring-[color:var(--border)]"><div className="text-[10px] uppercase tracking-[0.16em] text-[color:var(--muted2)]">Value</div><div className="mt-1 text-lg font-semibold">{formatMoney(stats.totalValue)}</div></div>
+            <div className="rounded-2xl bg-[color:var(--pill)] p-2.5 ring-1 ring-[color:var(--border)]"><div className="text-[10px] uppercase tracking-[0.16em] text-[color:var(--muted2)]">Gain</div><div className="mt-1 text-lg font-semibold">{stats.totalGain >= 0 ? "+" : ""}{formatMoney(stats.totalGain)}</div></div>
           </div>
 
-          <Link href="/capture" className="mt-4 flex items-center justify-between rounded-[18px] bg-[color:var(--pill-active-bg)] px-4 py-3 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]">
+          <Link href="/capture" className="mt-3 flex items-center justify-between rounded-2xl bg-[color:var(--pill-active-bg)] px-3 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]">
             <span>Smart Scan</span>
             <span className="text-xs font-medium text-[color:var(--muted)]">Capture, identify, and add faster</span>
           </Link>
         </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          <div className="space-y-4">
-            <section className="rounded-[22px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
-              <div className="text-[11px] uppercase tracking-[0.24em] text-[color:var(--muted2)]">Quick Actions</div>
-              <div className="mt-3 grid grid-cols-3 gap-3">
-                <Link href="/vault/quick" className="rounded-2xl bg-[color:var(--pill-active-bg)] px-3 py-3 text-center text-xs font-semibold text-[color:var(--fg)]">Quick Add</Link>
-                <Link href="/vault/import" className="rounded-2xl bg-[color:var(--pill)] px-3 py-3 text-center text-xs font-medium ring-1 ring-[color:var(--border)]">Import</Link>
-                <Link href="/vault" className="rounded-2xl bg-[color:var(--pill)] px-3 py-3 text-center text-xs font-medium ring-1 ring-[color:var(--border)]">Vault</Link>
-                <Link href="/museum" className="rounded-2xl bg-[color:var(--pill)] px-3 py-3 text-center text-xs font-medium ring-1 ring-[color:var(--border)]">Gallery</Link>
-                <Link href="/vault/add" className="rounded-2xl bg-[color:var(--pill)] px-3 py-3 text-center text-xs font-medium ring-1 ring-[color:var(--border)]">Add</Link>
-                <Link href="/account" className="rounded-2xl bg-[color:var(--pill)] px-3 py-3 text-center text-xs font-medium ring-1 ring-[color:var(--border)]">Account</Link>
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="space-y-3">
+            <section className="rounded-[18px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
+              <div className="text-[10px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Quick Actions</div>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                <Link href="/vault/quick" className="rounded-lg bg-[color:var(--pill-active-bg)] px-2 py-2 text-center text-xs font-semibold text-[color:var(--fg)]">Quick Add</Link>
+                <Link href="/vault/import" className="rounded-lg bg-[color:var(--pill)] px-2 py-2 text-center text-xs font-medium ring-1 ring-[color:var(--border)]">Import</Link>
+                <Link href="/vault" className="rounded-lg bg-[color:var(--pill)] px-2 py-2 text-center text-xs font-medium ring-1 ring-[color:var(--border)]">Vault</Link>
+                <Link href="/museum" className="rounded-lg bg-[color:var(--pill)] px-2 py-2 text-center text-xs font-medium ring-1 ring-[color:var(--border)]">Gallery</Link>
+                <Link href="/vault/add" className="rounded-lg bg-[color:var(--pill)] px-2 py-2 text-center text-xs font-medium ring-1 ring-[color:var(--border)]">Add</Link>
+                <Link href="/account" className="rounded-lg bg-[color:var(--pill)] px-2 py-2 text-center text-xs font-medium ring-1 ring-[color:var(--border)]">Account</Link>
               </div>
             </section>
 
-            <section className="rounded-[22px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
-              <div className="flex items-center justify-between gap-4">
-                <div className="text-[11px] uppercase tracking-[0.24em] text-[color:var(--muted2)]">Recently Added</div>
+            <section className="rounded-[18px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-[10px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Recently Added</div>
                 <Link href="/vault" className="text-xs font-medium text-[color:var(--muted)] hover:text-[color:var(--fg)]">View all</Link>
               </div>
 
               {recentItems.length === 0 ? (
-                <div className="mt-3 text-sm text-[color:var(--muted)]">No items yet. Start with Quick Add or Smart Scan.</div>
+                <div className="mt-2 text-sm text-[color:var(--muted)]">No items yet. Start with Quick Add or Smart Scan.</div>
               ) : (
-                <div className="mt-3 divide-y divide-[color:var(--border)]">
+                <div className="mt-2 divide-y divide-[color:var(--border)]">
                   {recentItems.map((item) => (
-                    <Link key={item.id} href={`/vault/item/${item.id}`} className="flex items-center justify-between gap-4 py-2 text-sm hover:text-[color:var(--fg)]">
+                    <Link key={item.id} href={`/vault/item/${item.id}`} className="flex items-center justify-between gap-3 py-2 text-sm hover:text-[color:var(--fg)]">
                       <span className="min-w-0 truncate font-medium">{item.title}</span>
                       <span className="shrink-0 text-xs text-[color:var(--muted)]">{formatMoney(item.currentValue ?? item.estimatedValue ?? 0)}</span>
                     </Link>
@@ -145,7 +145,7 @@ export default function HomeClient() {
             </section>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             <BiggestMoversPanel items={items} />
           </div>
         </div>
