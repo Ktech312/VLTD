@@ -110,8 +110,8 @@ export default function HomeClient() {
           </Link>
         </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <div className="space-y-4">
             <section className="rounded-[22px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
               <div className="text-[11px] uppercase tracking-[0.24em] text-[color:var(--muted2)]">Quick Actions</div>
               <div className="mt-3 grid grid-cols-3 gap-3">
@@ -145,9 +145,9 @@ export default function HomeClient() {
             </section>
           </div>
 
-          <section>
+          <div className="space-y-4">
             <BiggestMoversPanel items={items} />
-          </section>
+          </div>
         </div>
       </div>
     </main>
