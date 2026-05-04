@@ -138,10 +138,10 @@ function parseQuerySmart(raw: string): Parsed {
 
 function navPillClass(active: boolean) {
   return [
-    "inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm ring-1 transition whitespace-nowrap",
+    "inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold ring-1 transition whitespace-nowrap",
     active
-      ? "bg-[color:var(--pill)] text-[color:var(--fg)] vltd-pill-main"
-      : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]",
+      ? "bg-[rgba(18,43,72,0.86)] text-[color:var(--accent)] ring-[rgba(82,214,244,0.62)] shadow-[0_0_0_1px_rgba(82,214,244,0.12)]"
+      : "bg-[rgba(24,37,55,0.72)] text-[color:var(--muted)] ring-[rgba(104,146,196,0.18)] hover:bg-[rgba(32,52,78,0.82)] hover:text-[color:var(--accent)]",
   ].join(" ");
 }
 
@@ -440,13 +440,13 @@ function TopNavInner() {
 
                   {signedIn ? (
                     <div className="border-t border-[color:var(--border)] px-2 py-2">
-                    <button
-                      type="button"
-                      onClick={handleSignOut}
-                      className="block w-full rounded-xl px-3 py-2.5 text-left text-sm text-[color:var(--fg)] transition hover:bg-[color:var(--pill)]"
-                    >
-                      Sign Out
-                    </button>
+                      <button
+                        type="button"
+                        onClick={handleSignOut}
+                        className="block w-full rounded-xl px-3 py-2.5 text-left text-sm text-[color:var(--fg)] transition hover:bg-[color:var(--pill)]"
+                      >
+                        Sign Out
+                      </button>
                     </div>
                   ) : null}
                 </div>
