@@ -1,0 +1,105 @@
+/* Path: src/app/vltd-design.css */
+/* VLTD visual foundation: dark financial vault surfaces, brand accents, auth/public primitives. */
+
+:root {
+  --vltd-bg: #07101f;
+  --vltd-bg-deep: #050b15;
+  --vltd-surface: rgba(15, 29, 49, 0.88);
+  --vltd-surface-strong: rgba(17, 35, 59, 0.96);
+  --vltd-border: rgba(104, 146, 196, 0.22);
+  --vltd-border-strong: rgba(116, 165, 220, 0.34);
+  --vltd-muted: rgba(205, 220, 240, 0.74);
+  --vltd-muted-2: rgba(145, 165, 195, 0.52);
+  --vltd-cyan: #52d6f4;
+  --vltd-cyan-soft: rgba(82, 214, 244, 0.16);
+  --vltd-gold: #f5aa3c;
+  --vltd-green: #2fe082;
+  --vltd-red: #ff5f6d;
+}
+
+.dark {
+  --bg: var(--vltd-bg);
+  --surface: var(--vltd-surface);
+  --surface-strong: var(--vltd-surface-strong);
+  --fg: #f5f8ff;
+  --muted: var(--vltd-muted);
+  --muted2: var(--vltd-muted-2);
+  --border: var(--vltd-border);
+  --border-strong: var(--vltd-border-strong);
+  --divider: rgba(104, 146, 196, 0.16);
+  --pill: rgba(34, 55, 86, 0.72);
+  --pill-hover: rgba(48, 76, 116, 0.82);
+  --input: rgba(16, 32, 57, 0.82);
+  --input-hover: rgba(27, 49, 82, 0.9);
+  --accent: var(--vltd-cyan);
+  --accent-2: var(--vltd-gold);
+  --accent-soft: rgba(82, 214, 244, 0.22);
+  --frame-ring: rgba(82, 214, 244, 0.30);
+  --bg-glow:
+    radial-gradient(1100px 560px at 50% -10%, rgba(82, 214, 244, 0.18), transparent 60%),
+    radial-gradient(780px 420px at 82% 8%, rgba(245, 170, 60, 0.08), transparent 58%),
+    linear-gradient(180deg, #07101f 0%, #050b15 100%);
+}
+
+body {
+  background-color: var(--vltd-bg);
+}
+
+.vltd-brand-dot {
+  display: inline-block;
+  width: 0.72rem;
+  height: 0.72rem;
+  border-radius: 999px;
+  background: var(--vltd-cyan);
+  box-shadow: 0 0 18px rgba(82, 214, 244, 0.50);
+}
+
+.vltd-page-depth {
+  background:
+    radial-gradient(circle at 50% 12%, rgba(82, 214, 244, 0.13), transparent 32%),
+    radial-gradient(circle at 70% 78%, rgba(245, 170, 60, 0.08), transparent 30%),
+    linear-gradient(180deg, var(--vltd-bg), var(--vltd-bg-deep));
+}
+
+.vltd-page-grid {
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(82, 214, 244, 0.14), transparent 36%),
+    linear-gradient(rgba(82, 214, 244, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(82, 214, 244, 0.045) 1px, transparent 1px);
+  background-size: auto, 28px 28px, 28px 28px;
+}
+
+.vltd-vault-surface {
+  background:
+    linear-gradient(180deg, rgba(17, 35, 59, 0.92), rgba(10, 22, 39, 0.92)),
+    var(--vltd-surface);
+  border: 1px solid var(--vltd-border);
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.32);
+}
+
+.vltd-primary-button {
+  background: var(--vltd-cyan);
+  color: #06101d;
+  box-shadow: 0 16px 42px rgba(82, 214, 244, 0.22);
+}
+
+.vltd-primary-button:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+.vltd-input {
+  background: rgba(16, 32, 57, 0.72);
+  border: 1px solid var(--vltd-border);
+  color: #f5f8ff;
+}
+
+.vltd-input::placeholder {
+  color: var(--vltd-muted-2);
+}
+
+.vltd-input:focus {
+  border-color: var(--vltd-cyan);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(82, 214, 244, 0.16);
+}
