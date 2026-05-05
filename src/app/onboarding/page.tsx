@@ -12,6 +12,15 @@ function slugifyUsername(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9_]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 24);
 }
 
+function accountTypeCardClass(active: boolean) {
+  return [
+    "rounded-2xl border p-5 text-left transition",
+    active
+      ? "border-[rgba(82,214,244,0.82)] bg-[linear-gradient(180deg,rgba(82,214,244,0.24),rgba(18,56,86,0.72))] text-white shadow-[0_0_0_1px_rgba(82,214,244,0.18),0_18px_48px_rgba(82,214,244,0.18)]"
+      : "border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] text-[color:var(--muted)] hover:border-[rgba(82,214,244,0.38)] hover:bg-[rgba(82,214,244,0.08)] hover:text-white",
+  ].join(" ");
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -155,27 +164,23 @@ export default function OnboardingPage() {
                     <button
                       type="button"
                       onClick={() => setProfileType("personal")}
-                      className={[
-                        "rounded-2xl border p-5 text-left transition",
-                        profileType === "personal"
-                          ? "border-[rgba(82,214,244,0.42)] bg-[rgba(82,214,244,0.12)] text-white"
-                          : "border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] text-[color:var(--muted)] hover:text-white",
-                      ].join(" ")}
+                      className={accountTypeCardClass(profileType === "personal")}
                     >
-                      <div className="text-base font-black">Collector</div>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-base font-black">Collector</div>
+                        {profileType === "personal" ? <div className="rounded-full bg-[#52d6f4] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#06101d]">Selected</div> : null}
+                      </div>
                       <div className="mt-2 text-sm leading-6 text-[color:var(--muted)]">Personal vault, portfolio, and public galleries.</div>
                     </button>
                     <button
                       type="button"
                       onClick={() => setProfileType("business")}
-                      className={[
-                        "rounded-2xl border p-5 text-left transition",
-                        profileType === "business"
-                          ? "border-[rgba(82,214,244,0.42)] bg-[rgba(82,214,244,0.12)] text-white"
-                          : "border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] text-[color:var(--muted)] hover:text-white",
-                      ].join(" ")}
+                      className={accountTypeCardClass(profileType === "business")}
                     >
-                      <div className="text-base font-black">Business</div>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-base font-black">Business</div>
+                        {profileType === "business" ? <div className="rounded-full bg-[#52d6f4] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#06101d]">Selected</div> : null}
+                      </div>
                       <div className="mt-2 text-sm leading-6 text-[color:var(--muted)]">Shop, team, resale, or inventory workflow.</div>
                     </button>
                   </div>
