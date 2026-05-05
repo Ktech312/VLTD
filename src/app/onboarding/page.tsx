@@ -12,6 +12,15 @@ function slugifyUsername(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9_]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 24);
 }
 
+function accountTypeCardClass(active: boolean) {
+  return [
+    "rounded-2xl border p-5 text-left transition",
+    active
+      ? "border-[rgba(82,214,244,0.82)] bg-[linear-gradient(180deg,rgba(82,214,244,0.24),rgba(18,56,86,0.72))] text-white shadow-[0_0_0_1px_rgba(82,214,244,0.18),0_18px_48px_rgba(82,214,244,0.18)]"
+      : "border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] text-[color:var(--muted)] hover:border-[rgba(82,214,244,0.38)] hover:bg-[rgba(82,214,244,0.08)] hover:text-white",
+  ].join(" ");
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -66,19 +75,166 @@ export default function OnboardingPage() {
     }
   }
 
-  if (loading) return <main className="min-h-screen bg-[color:var(--bg)] px-4 py-12 text-[color:var(--fg)]"><div className="mx-auto max-w-2xl rounded-[24px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)]">Loading onboarding...</div></main>;
+  if (loading) {
+    return (
+      <main className="vltd-page-depth min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl rounded-[28px] border border-[color:var(--border)] bg-[rgba(15,29,49,0.82)] p-6 text-[color:var(--muted)] shadow-[0_22px_72px_rgba(0,0,0,0.24)]">
+          Loading onboarding...
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] px-4 py-8 text-[color:var(--fg)] sm:px-6">
-      <div className="mx-auto max-w-2xl rounded-[28px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-8">
-        <div className="text-[11px] uppercase tracking-[0.24em] text-[color:var(--muted2)]">Welcome to VLTD</div>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">Let’s get you in fast</h1>
-        <p className="mt-2 text-sm text-[color:var(--muted)]">Minimal setup now. Richer profile data later.</p>
-        <div className="mt-6 flex gap-2">{[1,2,3].map((n)=><div key={n} className={["h-2 flex-1 rounded-full", step>=n?"bg-[color:var(--pill-active-bg)]":"bg-[color:var(--pill)]"].join(" ")} />)}</div>
-        {error ? <div className="mt-4 rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</div> : null}
-        {step===1 ? <div className="mt-6 space-y-4"><div><div className="text-sm font-medium">Display name</div><input value={displayName} onChange={(e)=>{ const next=e.target.value; setDisplayName(next); if(!username.trim()) setUsername(slugifyUsername(next)); }} className="mt-2 h-12 w-full rounded-2xl bg-[color:var(--input)] px-4 ring-1 ring-[color:var(--border)] outline-none" /></div><div><div className="text-sm font-medium">Username</div><input value={username} onChange={(e)=>setUsername(slugifyUsername(e.target.value))} className="mt-2 h-12 w-full rounded-2xl bg-[color:var(--input)] px-4 ring-1 ring-[color:var(--border)] outline-none" /></div><button type="button" disabled={!canContinueIdentity} onClick={()=>setStep(2)} className="inline-flex h-11 items-center rounded-full bg-[color:var(--pill-active-bg)] px-5 text-sm font-semibold text-[color:var(--fg)] disabled:opacity-40">Continue</button></div> : null}
-        {step===2 ? <div className="mt-6 space-y-4"><div className="text-sm font-medium">Account type</div><div className="grid gap-3 sm:grid-cols-2"><button type="button" onClick={()=>setProfileType("personal")} className={["rounded-2xl p-4 text-left ring-1", profileType==="personal"?"bg-[color:var(--pill-active-bg)] ring-[color:var(--pill-active-bg)]":"bg-[color:var(--pill)] ring-[color:var(--border)]"].join(" ")}>Collector</button><button type="button" onClick={()=>setProfileType("business")} className={["rounded-2xl p-4 text-left ring-1", profileType==="business"?"bg-[color:var(--pill-active-bg)] ring-[color:var(--pill-active-bg)]":"bg-[color:var(--pill)] ring-[color:var(--border)]"].join(" ")}>Business</button></div><div><button type="button" onClick={()=>setStep(3)} className="inline-flex h-11 items-center rounded-full bg-[color:var(--pill-active-bg)] px-5 text-sm font-semibold text-[color:var(--fg)]">Continue</button><button type="button" onClick={()=>setStep(1)} className="ml-2 inline-flex h-11 items-center rounded-full bg-[color:var(--pill)] px-5 text-sm font-medium ring-1 ring-[color:var(--border)]">Back</button></div></div> : null}
-        {step===3 ? <div className="mt-6 space-y-4"><div><div className="text-sm font-medium">Primary collection focus</div><select value={primaryFocus} onChange={(e)=>setPrimaryFocus(e.target.value)} className="mt-2 h-12 w-full rounded-2xl bg-[color:var(--input)] px-4 ring-1 ring-[color:var(--border)] outline-none"><option value="">Skip for now</option>{FOCUS_OPTIONS.map((o)=><option key={o} value={o}>{o}</option>)}</select></div><div className="rounded-2xl bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)] text-sm">Username: @{slugifyUsername(username)}<br/>Display name: {displayName.trim()}<br/>Account type: {profileType === "business" ? "Business" : "Collector"}<br/>Focus: {primaryFocus || "Not set yet"}</div><div><button type="button" disabled={saving || !canContinueIdentity} onClick={()=>void handleFinish()} className="inline-flex h-11 items-center rounded-full bg-[color:var(--pill-active-bg)] px-5 text-sm font-semibold text-[color:var(--fg)] disabled:opacity-40">{saving ? "Finishing..." : "Finish setup"}</button><button type="button" onClick={()=>setStep(2)} className="ml-2 inline-flex h-11 items-center rounded-full bg-[color:var(--pill)] px-5 text-sm font-medium ring-1 ring-[color:var(--border)]">Back</button></div></div> : null}
+    <main className="vltd-page-depth min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-4xl">
+        <section className="relative overflow-hidden rounded-[34px] border border-[rgba(82,214,244,0.30)] bg-[linear-gradient(180deg,rgba(18,38,66,0.92),rgba(8,18,32,0.94))] p-5 shadow-[0_26px_86px_rgba(82,214,244,0.10),0_24px_88px_rgba(0,0,0,0.32)] sm:p-7">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(82,214,244,0.14),transparent_30%),radial-gradient(circle_at_82%_8%,rgba(245,170,60,0.08),transparent_28%)]" />
+
+          <div className="relative">
+            <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)]">
+              Welcome to VLTD
+            </div>
+            <h1 className="mt-3 text-4xl font-black leading-[0.98] tracking-[-0.055em] text-white sm:text-5xl">
+              Let’s get you in fast.
+            </h1>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-[color:var(--muted)]">
+              Minimal setup now. Richer profile, vault, and gallery controls later.
+            </p>
+
+            <div className="mt-7 grid gap-2 sm:grid-cols-3">
+              {[1, 2, 3].map((n) => (
+                <div
+                  key={n}
+                  className={[
+                    "h-2 rounded-full transition",
+                    step >= n ? "bg-[#52d6f4] shadow-[0_0_18px_rgba(82,214,244,0.28)]" : "bg-[rgba(104,146,196,0.18)]",
+                  ].join(" ")}
+                />
+              ))}
+            </div>
+
+            {error ? (
+              <div className="mt-5 rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                {error}
+              </div>
+            ) : null}
+
+            {step === 1 ? (
+              <div className="mt-7 grid gap-5">
+                <label className="block">
+                  <span className="text-sm font-semibold text-white">Display name</span>
+                  <input
+                    value={displayName}
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      setDisplayName(next);
+                      if (!username.trim()) setUsername(slugifyUsername(next));
+                    }}
+                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-[rgba(9,20,36,0.82)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(82,214,244,0.12)]"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="text-sm font-semibold text-white">Username</span>
+                  <input
+                    value={username}
+                    onChange={(e) => setUsername(slugifyUsername(e.target.value))}
+                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-[rgba(9,20,36,0.82)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(82,214,244,0.12)]"
+                  />
+                  <div className="mt-2 text-xs text-[color:var(--muted2)]">Public handle preview: @{slugifyUsername(username) || "username"}</div>
+                </label>
+
+                <button
+                  type="button"
+                  disabled={!canContinueIdentity}
+                  onClick={() => setStep(2)}
+                  className="inline-flex h-12 w-fit items-center rounded-full bg-[#52d6f4] px-6 text-sm font-black text-[#06101d] shadow-[0_16px_42px_rgba(82,214,244,0.20)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Continue
+                </button>
+              </div>
+            ) : null}
+
+            {step === 2 ? (
+              <div className="mt-7 space-y-5">
+                <div>
+                  <div className="text-sm font-semibold text-white">Account type</div>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() => setProfileType("personal")}
+                      className={accountTypeCardClass(profileType === "personal")}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-base font-black">Collector</div>
+                        {profileType === "personal" ? <div className="rounded-full bg-[#52d6f4] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#06101d]">Selected</div> : null}
+                      </div>
+                      <div className="mt-2 text-sm leading-6 text-[color:var(--muted)]">Personal vault, portfolio, and public galleries.</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setProfileType("business")}
+                      className={accountTypeCardClass(profileType === "business")}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-base font-black">Business</div>
+                        {profileType === "business" ? <div className="rounded-full bg-[#52d6f4] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#06101d]">Selected</div> : null}
+                      </div>
+                      <div className="mt-2 text-sm leading-6 text-[color:var(--muted)]">Shop, team, resale, or inventory workflow.</div>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  <button type="button" onClick={() => setStep(3)} className="inline-flex h-12 items-center rounded-full bg-[#52d6f4] px-6 text-sm font-black text-[#06101d] shadow-[0_16px_42px_rgba(82,214,244,0.20)] transition hover:-translate-y-0.5 hover:brightness-105">
+                    Continue
+                  </button>
+                  <button type="button" onClick={() => setStep(1)} className="inline-flex h-12 items-center rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] px-6 text-sm font-semibold text-[color:var(--muted)] transition hover:text-white">
+                    Back
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {step === 3 ? (
+              <div className="mt-7 space-y-5">
+                <label className="block">
+                  <span className="text-sm font-semibold text-white">Primary collection focus</span>
+                  <select
+                    value={primaryFocus}
+                    onChange={(e) => setPrimaryFocus(e.target.value)}
+                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-[rgba(9,20,36,0.82)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(82,214,244,0.12)]"
+                  >
+                    <option value="">Skip for now</option>
+                    {FOCUS_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </label>
+
+                <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] p-5 text-sm leading-7 text-[color:var(--muted)]">
+                  <div><span className="text-[color:var(--muted2)]">Username:</span> <span className="font-semibold text-white">@{slugifyUsername(username)}</span></div>
+                  <div><span className="text-[color:var(--muted2)]">Display name:</span> <span className="font-semibold text-white">{displayName.trim()}</span></div>
+                  <div><span className="text-[color:var(--muted2)]">Account type:</span> <span className="font-semibold text-white">{profileType === "business" ? "Business" : "Collector"}</span></div>
+                  <div><span className="text-[color:var(--muted2)]">Focus:</span> <span className="font-semibold text-white">{primaryFocus || "Not set yet"}</span></div>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    disabled={saving || !canContinueIdentity}
+                    onClick={() => void handleFinish()}
+                    className="inline-flex h-12 items-center rounded-full bg-[#52d6f4] px-6 text-sm font-black text-[#06101d] shadow-[0_16px_42px_rgba(82,214,244,0.20)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {saving ? "Finishing..." : "Finish setup"}
+                  </button>
+                  <button type="button" onClick={() => setStep(2)} className="inline-flex h-12 items-center rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] px-6 text-sm font-semibold text-[color:var(--muted)] transition hover:text-white">
+                    Back
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </section>
       </div>
     </main>
   );
