@@ -7,6 +7,7 @@ import "./museum-pass.css";
 import "./portfolio-pass.css";
 import "./quick-add-pass.css";
 import "./vault-utility-pass.css";
+import "./vault-directives-pass.css";
 import TopNav from "@/components/TopNav";
 import Providers from "@/components/Providers";
 import { ThemeBoot } from "@/components/ThemeBoot";

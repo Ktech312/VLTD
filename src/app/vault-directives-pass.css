@@ -1,0 +1,116 @@
+/* Path: src/app/vault-directives-pass.css */
+/* Vault visual directives from April handoff. Scoped away from gallery files. */
+
+main:has(input[placeholder="Search vault items..."]) {
+  --vltd-directive-green: #2ecc71;
+  --vltd-directive-gold: #c9a84c;
+}
+
+/* Change 1: force top stat sets to hold 4-up from small/tablet widths where Tailwind may wrap. */
+@media (min-width: 640px) {
+  main:has(input[placeholder="Search vault items..."]) section:first-of-type div.grid:has(> div:nth-child(4)) {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Change 2: collapse sync/info strips if present. Keep controls tiny and inline. */
+main:has(input[placeholder="Search vault items..."]) button:where([type="button"]),
+main:has(input[placeholder="Search vault items..."]) a:where([href]) {
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+/* Change 4: reduce heavy universe header/card nesting when the sold/review buttons are present. */
+main:has(input[placeholder="Search vault items..."]) section:has(a[href="/vault/sold"]) {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Change 3: remove redundant tiny UNIVERSE eyebrow on universe cards where links route to universe filters. */
+main:has(input[placeholder="Search vault items..."]) a[href^="/vault?u="] [class*="uppercase"],
+main:has(input[placeholder="Search vault items..."]) a[href*="universe="] [class*="uppercase"] {
+  font-size: 0 !important;
+  line-height: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+}
+
+/* Change 5: empty-looking universe cards should feel quiet, not broken. */
+main:has(input[placeholder="Search vault items..."]) a[href^="/vault?u="]:has(:where(div,span):empty),
+main:has(input[placeholder="Search vault items..."]) a[href*="universe="]:has(:where(div,span):empty) {
+  opacity: 0.6;
+}
+
+/* Change 6: NEW badge should be cyan, not red. */
+main:has(input[placeholder="Search vault items..."]) [class*="bg-red-600"][class*="rounded-full"],
+main:has(input[placeholder="Search vault items..."]) [class*="bg-red-"][class*="rounded-full"] {
+  background: rgba(82, 214, 244, 0.12) !important;
+  border: 0.5px solid rgba(82, 214, 244, 0.25) !important;
+  color: var(--accent) !important;
+  box-shadow: 0 0 18px rgba(82, 214, 244, 0.12) !important;
+}
+
+/* Change 8: Universe selector should read like a text link, not a boxed control. */
+main:has(input[placeholder="Search vault items..."]) select[aria-label^="Universe for"] {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: var(--accent) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  min-height: 22px !important;
+  height: 22px !important;
+  padding: 0 14px 0 0 !important;
+  width: auto !important;
+  max-width: 100% !important;
+  appearance: auto !important;
+}
+
+main:has(input[placeholder="Search vault items..."]) select[aria-label^="Universe for"]:focus {
+  outline: none !important;
+  box-shadow: 0 2px 0 rgba(82, 214, 244, 0.28) !important;
+}
+
+/* Hide the redundant UNIVERSE label directly above item-card universe selectors. */
+main:has(input[placeholder="Search vault items..."]) div:has(> select[aria-label^="Universe for"]) > div:first-child {
+  display: none !important;
+}
+
+/* Change 7: cleaner no-image placeholder treatment for empty image wells. */
+main:has(input[placeholder="Search vault items..."]) div.group.relative:has(select[aria-label^="Universe for"]) div:not(:has(img)):has(> div) {
+  --no-img-bg: linear-gradient(135deg, #0a1424, #162038);
+}
+
+main:has(input[placeholder="Search vault items..."]) div.group.relative:has(select[aria-label^="Universe for"]) div:not(:has(img)) > div:only-child {
+  background: var(--no-img-bg) !important;
+  color: transparent !important;
+}
+
+main:has(input[placeholder="Search vault items..."]) div.group.relative:has(select[aria-label^="Universe for"]) div:not(:has(img)) > div:only-child::before {
+  content: "NO\A IMG";
+  white-space: pre;
+  display: grid;
+  place-items: center;
+  color: #334455;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1.05;
+}
+
+/* Change 12: valued item cards get a subtle green left rail. */
+main:has(input[placeholder="Search vault items..."]) div.group.relative:has(select[aria-label^="Universe for"]):has([class*="text-emerald"]),
+main:has(input[placeholder="Search vault items..."]) div.group.relative:has(select[aria-label^="Universe for"]):has([class*="$"]),
+main:has(input[placeholder="Search vault items..."]) div.group.relative:has(select[aria-label^="Universe for"]):has(:where(div,span)) {
+  border-left: 2px solid rgba(16, 185, 129, 0.22) !important;
+}
+
+@media (max-width: 640px) {
+  main:has(input[placeholder="Search vault items..."]) section:first-of-type div.grid:has(> div:nth-child(4)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}

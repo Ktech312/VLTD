@@ -60,26 +60,49 @@ function Signal({
 function ScoreBar({
   label,
   value,
+  tone,
 }: {
   label: string;
   value: number;
+  tone: "value" | "gain";
 }) {
   const width = Math.max(6, Math.min(100, value));
+  const numberClass = tone === "gain" ? "text-[#C9A84C]" : "text-[#52D6F4]";
+  const fillStyle = {
+    width: `${width}%`,
+    background:
+      tone === "gain"
+        ? "linear-gradient(90deg, #C9A84C, #2ECC71)"
+        : "linear-gradient(90deg, #52D6F4, #2ECC71)",
+  };
 
   return (
     <div>
       <div className="mb-2 flex items-center justify-between gap-3">
         <div className="text-sm font-medium">{label}</div>
-        <div className="text-sm font-semibold">{value}</div>
+        <div className={`text-sm font-black ${numberClass}`}>{value}</div>
       </div>
 
       <div className="h-3 overflow-hidden rounded-full bg-black/15 ring-1 ring-[color:var(--border)]">
-        <div
-          className="h-full rounded-full bg-[color:var(--pill-active-bg)]"
-          style={{ width: `${width}%` }}
-        />
+        <div className="h-full rounded-full" style={fillStyle} />
       </div>
     </div>
+  );
+}
+
+function ProvenancePill({ signal }: { signal: string }) {
+  const isNotes = signal === "Notes present";
+
+  return (
+    <span
+      className={
+        isNotes
+          ? "rounded-full border border-[rgba(46,204,113,0.20)] bg-[rgba(46,204,113,0.10)] px-3 py-1 text-xs font-semibold text-[#86efac]"
+          : "rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10"
+      }
+    >
+      {signal}
+    </span>
   );
 }
 
@@ -141,15 +164,15 @@ export default function ItemIntelligencePanel({
 
           {intelligence ? (
             <div className="mt-4 grid gap-4">
-              <ScoreBar label="Value Score" value={intelligence.valueScore} />
-              <ScoreBar label="Gain Score" value={intelligence.gainScore} />
+              <ScoreBar label="Value Score" value={intelligence.valueScore} tone="value" />
+              <ScoreBar label="Gain Score" value={intelligence.gainScore} tone="gain" />
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="vltd-panel-soft rounded-[18px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
                   <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">
                     VALUE RANK
                   </div>
-                  <div className="mt-2 text-xl font-semibold">
+                  <div className="mt-2 text-xl font-black text-[color:var(--accent)]">
                     #{intelligence.valueRank}
                   </div>
                 </div>
@@ -158,7 +181,7 @@ export default function ItemIntelligencePanel({
                   <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">
                     GAIN RANK
                   </div>
-                  <div className="mt-2 text-xl font-semibold">
+                  <div className="mt-2 text-xl font-black text-[#C9A84C]">
                     #{intelligence.gainRank}
                   </div>
                 </div>
@@ -192,12 +215,7 @@ export default function ItemIntelligencePanel({
               {provenanceSignals.length > 0 ? (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {provenanceSignals.map((signal) => (
-                    <span
-                      key={signal}
-                      className="rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10"
-                    >
-                      {signal}
-                    </span>
+                    <ProvenancePill key={signal} signal={signal} />
                   ))}
                 </div>
               ) : (
