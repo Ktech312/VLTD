@@ -5,6 +5,7 @@ import "./vltd-design.css";
 import "./vault-pass.css";
 import "./museum-pass.css";
 import "./portfolio-pass.css";
+import "./quick-add-pass.css";
 import TopNav from "@/components/TopNav";
 import Providers from "@/components/Providers";
 import { ThemeBoot } from "@/components/ThemeBoot";
