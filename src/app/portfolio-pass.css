@@ -1,0 +1,82 @@
+/* Path: src/app/portfolio-pass.css */
+/* Pass 7: Portfolio page visual alignment. Scoped by the Insurance PDF action. */
+
+body:has(a[href="/insurance"]) main {
+  background:
+    radial-gradient(circle at 48% 8%, rgba(82, 214, 244, 0.16), transparent 34%),
+    radial-gradient(circle at 82% 22%, rgba(245, 170, 60, 0.08), transparent 26%),
+    linear-gradient(180deg, #07101f 0%, #050b15 100%) !important;
+}
+
+body:has(a[href="/insurance"]) main > div {
+  max-width: 1180px !important;
+}
+
+body:has(a[href="/insurance"]) section:first-of-type {
+  border-color: rgba(82, 214, 244, 0.30) !important;
+  background:
+    linear-gradient(180deg, rgba(18, 38, 66, 0.91), rgba(8, 18, 32, 0.94)) !important;
+  box-shadow:
+    0 0 0 1px rgba(82, 214, 244, 0.07),
+    0 26px 86px rgba(82, 214, 244, 0.10),
+    0 24px 88px rgba(0, 0, 0, 0.32) !important;
+}
+
+body:has(a[href="/insurance"]) section:first-of-type h1 {
+  font-weight: 900 !important;
+  letter-spacing: -0.045em !important;
+}
+
+body:has(a[href="/insurance"]) a[href="/insurance"] {
+  background: #52d6f4 !important;
+  color: #06101d !important;
+  border-color: rgba(82, 214, 244, 0.46) !important;
+  box-shadow: 0 16px 42px rgba(82, 214, 244, 0.18) !important;
+}
+
+body:has(a[href="/insurance"]) .vltd-panel-main,
+body:has(a[href="/insurance"]) .vltd-panel-soft {
+  border-color: rgba(104, 146, 196, 0.26) !important;
+  background:
+    linear-gradient(180deg, rgba(17, 35, 59, 0.88), rgba(9, 20, 36, 0.92)) !important;
+  box-shadow:
+    0 0 0 1px rgba(82, 214, 244, 0.035),
+    0 18px 56px rgba(0, 0, 0, 0.24) !important;
+}
+
+body:has(a[href="/insurance"]) .vltd-panel-main:hover,
+body:has(a[href="/insurance"]) .vltd-panel-soft:hover {
+  border-color: rgba(82, 214, 244, 0.34) !important;
+}
+
+body:has(a[href="/insurance"]) svg polyline {
+  filter: drop-shadow(0 0 8px rgba(82, 214, 244, 0.34));
+}
+
+body:has(a[href="/insurance"]) button,
+body:has(a[href="/insurance"]) a {
+  border-color: rgba(104, 146, 196, 0.22);
+}
+
+@media (max-width: 700px) {
+  body:has(a[href="/insurance"]) main > div {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  body:has(a[href="/insurance"]) section:first-of-type {
+    border-radius: 24px !important;
+    padding: 16px !important;
+  }
+
+  body:has(a[href="/insurance"]) section:first-of-type h1 {
+    font-size: 2rem !important;
+    line-height: 1 !important;
+  }
+
+  body:has(a[href="/insurance"]) .vltd-panel-main,
+  body:has(a[href="/insurance"]) .vltd-panel-soft {
+    border-radius: 22px !important;
+    padding: 16px !important;
+  }
+}
