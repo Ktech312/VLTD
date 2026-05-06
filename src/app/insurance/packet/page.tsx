@@ -18,7 +18,8 @@ type Item = ModelItem & {
 };
 
 const LS_INSURANCE_EXCLUDED = "vltd_insurance_excluded_item_ids_v1";
-const ITEMS_PER_PACKET_PAGE = 20;
+const ITEMS_PER_PAGE_NO_IMAGES = 25;
+const ITEMS_PER_PAGE_WITH_IMAGES = 5;
 
 function clamp(n: number) {
   return Number.isFinite(n) ? n : 0;
@@ -86,7 +87,12 @@ export default function InsurancePacketPage() {
     setExcludedIds(readExcludedIds());
   }, []);
 
+  useEffect(() => {
+    setPageIndex(0);
+  }, [includeImages]);
+
   const selectedItems = useMemo(() => items.filter((item) => !excludedIds.has(String(item.id))), [items, excludedIds]);
+  const itemsPerPage = includeImages ? ITEMS_PER_PAGE_WITH_IMAGES : ITEMS_PER_PAGE_NO_IMAGES;
 
   const totals = useMemo(() => {
     const cost = selectedItems.reduce((s, i) => s + clamp(Number(i.purchasePrice ?? 0)), 0);
@@ -94,44 +100,50 @@ export default function InsurancePacketPage() {
     return { cost, value };
   }, [selectedItems]);
 
-  const totalPages = Math.max(1, Math.ceil(selectedItems.length / ITEMS_PER_PACKET_PAGE));
+  const totalPages = Math.max(1, Math.ceil(selectedItems.length / itemsPerPage));
   const safePageIndex = Math.min(pageIndex, totalPages - 1);
-  const visibleItems = selectedItems.slice(
-    safePageIndex * ITEMS_PER_PACKET_PAGE,
-    safePageIndex * ITEMS_PER_PACKET_PAGE + ITEMS_PER_PACKET_PAGE,
-  );
-
-  function printCurrentPage() {
-    window.print();
-  }
+  const start = safePageIndex * itemsPerPage;
+  const visibleItems = selectedItems.slice(start, start + itemsPerPage);
 
   return (
     <main className="vltd-page-depth min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <style>{`
         @media print {
-          @page { margin: 0.45in; }
+          @page { size: landscape; margin: 0.25in; }
           .no-print { display: none !important; }
           .print-only { display: block !important; }
-          .screen-only { display: none !important; }
-          .page-break { break-before: auto !important; page-break-before: auto !important; }
-          body, main, section, article, div, table, thead, tbody, tr, th, td { background: white !important; color: black !important; box-shadow: none !important; }
+          body, main, section, div, table, thead, tbody, tr, th, td { background: white !important; color: black !important; box-shadow: none !important; }
           main { padding: 0 !important; }
-          .packet-card { border: 1px solid #ddd !important; break-inside: avoid; page-break-inside: avoid; margin: 0 0 10px 0 !important; padding: 12px !important; }
-          .packet-grid { display: block !important; }
-          .packet-image { display: none !important; }
-          .packet-details-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 8px !important; margin-top: 10px !important; }
-          .packet-box { border: 1px solid #ddd !important; padding: 8px !important; }
-          .packet-title { font-size: 16px !important; color: black !important; }
-          .packet-meta, .packet-small, .packet-box * { color: black !important; }
-          .print-image-enabled img { display: block !important; max-height: 140px !important; width: auto !important; }
-          .print-image-enabled .packet-image { display: block !important; margin-bottom: 10px !important; }
+          .packet-shell { max-width: none !important; }
+          .packet-header { border: 0 !important; padding: 0 0 8px 0 !important; }
+          .packet-title { font-size: 16px !important; line-height: 1.1 !important; margin: 0 !important; color: black !important; }
+          .packet-meta { font-size: 8px !important; color: #333 !important; margin-top: 2px !important; }
+          .packet-table-wrap { margin-top: 8px !important; border: 0 !important; overflow: visible !important; }
+          table { width: 100% !important; table-layout: fixed !important; border-collapse: collapse !important; font-size: 7.5px !important; line-height: 1.12 !important; }
+          thead { display: table-header-group; }
+          tr { break-inside: avoid; page-break-inside: avoid; }
+          th, td { border: 1px solid #d8d8d8 !important; padding: 2px 3px !important; vertical-align: top !important; color: black !important; }
+          th { background: #f1f1f1 !important; font-size: 7px !important; font-weight: 700 !important; text-transform: uppercase !important; }
+          .col-img { width: 0 !important; display: none !important; }
+          .packet-img-cell { display: none !important; }
+          .print-with-images .col-img { width: 10% !important; display: table-cell !important; }
+          .print-with-images .packet-img-cell { display: table-cell !important; }
+          .packet-thumb { max-height: 70px !important; max-width: 70px !important; object-fit: contain !important; }
+          .col-item { width: 20% !important; }
+          .col-category { width: 22% !important; }
+          .col-id { width: 10% !important; }
+          .col-storage { width: 12% !important; }
+          .col-money { width: 8% !important; }
+          .col-source { width: 12% !important; }
+          .item-title { font-weight: 700 !important; color: black !important; }
+          .muted-print { color: #333 !important; font-size: 7px !important; }
         }
         @media screen {
           .print-only { display: none !important; }
         }
       `}</style>
 
-      <div className="mx-auto max-w-6xl">
+      <div className="packet-shell mx-auto max-w-6xl">
         <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[rgba(82,214,244,0.24)] bg-[rgba(15,29,49,0.72)] p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
           <Link href="/insurance" className="rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(82,214,244,0.42)]">
             ← Back
@@ -144,7 +156,7 @@ export default function InsurancePacketPage() {
                 onChange={(event) => setIncludeImages(event.target.checked)}
                 className="h-4 w-4 accent-[#52d6f4]"
               />
-              Include images
+              Include images ({includeImages ? "5" : "25"}/page)
             </label>
             <button
               disabled={safePageIndex === 0}
@@ -164,7 +176,7 @@ export default function InsurancePacketPage() {
               Next
             </button>
             <button
-              onClick={printCurrentPage}
+              onClick={() => window.print()}
               className="rounded-full bg-[#52d6f4] px-4 py-2 text-sm font-black text-[#06101d] shadow-[0_14px_38px_rgba(82,214,244,0.18)]"
             >
               Print Current Page
@@ -172,77 +184,69 @@ export default function InsurancePacketPage() {
           </div>
         </div>
 
-        <section className="rounded-[30px] border border-[rgba(82,214,244,0.28)] bg-[linear-gradient(180deg,rgba(18,38,66,0.94),rgba(8,18,32,0.96))] p-5 shadow-[0_26px_86px_rgba(82,214,244,0.10),0_24px_88px_rgba(0,0,0,0.32)] sm:p-6">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">Insurance Packet</div>
-          <h1 className="mt-2 text-3xl font-black tracking-[-0.045em] text-white">Insurance Policy Packet</h1>
-          <div className="mt-2 text-sm text-[color:var(--muted)]">
-            Generated {new Date().toLocaleString()} • Included {selectedItems.length} of {items.length} items • Total Value {fmtMoney(totals.value)}
+        <section className="packet-header rounded-[30px] border border-[rgba(82,214,244,0.28)] bg-[linear-gradient(180deg,rgba(18,38,66,0.94),rgba(8,18,32,0.96))] p-5 shadow-[0_26px_86px_rgba(82,214,244,0.10),0_24px_88px_rgba(0,0,0,0.32)] sm:p-6">
+          <div className="no-print text-[11px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">Insurance Packet</div>
+          <h1 className="packet-title mt-2 text-3xl font-black tracking-[-0.045em] text-white">Insurance Policy Packet</h1>
+          <div className="packet-meta mt-2 text-sm text-[color:var(--muted)]">
+            Generated {new Date().toLocaleString()} • Included {selectedItems.length} of {items.length} items • Total Value {fmtMoney(totals.value)} • Page {safePageIndex + 1} of {totalPages} • Showing {visibleItems.length} items
           </div>
           <div className="no-print mt-3 rounded-2xl border border-[rgba(82,214,244,0.18)] bg-[rgba(82,214,244,0.07)] px-4 py-3 text-sm text-[color:var(--muted)]">
-            Packet export is paginated at {ITEMS_PER_PACKET_PAGE} items per page so Chrome can render PDF previews reliably. Use Back to select which items are included.
+            This packet is intentionally exported in chunks. Without images: 25 items per PDF page. With images: 5 items per PDF page.
           </div>
         </section>
 
-        <div className="print-only mt-3 text-sm">
-          Insurance Policy Packet • Generated {new Date().toLocaleString()} • Page {safePageIndex + 1} of {totalPages} • Items {visibleItems.length} of {selectedItems.length} • Total Value {fmtMoney(totals.value)}
-        </div>
-
-        <div className="mt-6 space-y-4">
-          {visibleItems.map((item) => (
-            <article key={item.id} className={includeImages ? "packet-card print-image-enabled rounded-[24px] border border-[rgba(104,146,196,0.24)] bg-[linear-gradient(180deg,rgba(17,35,59,0.88),rgba(9,20,36,0.94))] p-4 shadow-[0_18px_56px_rgba(0,0,0,0.24)]" : "packet-card rounded-[24px] border border-[rgba(104,146,196,0.24)] bg-[linear-gradient(180deg,rgba(17,35,59,0.88),rgba(9,20,36,0.94))] p-4 shadow-[0_18px_56px_rgba(0,0,0,0.24)]"}>
-              <div className="packet-grid grid gap-4 md:grid-cols-[150px_minmax(0,1fr)]">
-                <div className="packet-image w-full shrink-0">
-                  {includeImages && item.imageFrontUrl ? (
-                    <img
-                      src={item.imageFrontUrl}
-                      alt={item.title}
-                      loading="lazy"
-                      className="max-h-[220px] w-full rounded-2xl border border-[rgba(104,146,196,0.24)] object-contain shadow-[0_18px_42px_rgba(0,0,0,0.24)]"
-                    />
-                  ) : (
-                    <div className="grid h-44 w-full place-items-center rounded-2xl border border-[rgba(104,146,196,0.24)] bg-[linear-gradient(135deg,#0a1424,#162038)] text-xs font-black tracking-[0.16em] text-[color:var(--muted2)]">
-                      NO IMG
+        <div className="packet-table-wrap mt-6 overflow-x-auto rounded-2xl border border-[rgba(104,146,196,0.22)] bg-[rgba(7,16,31,0.42)]">
+          <table className={includeImages ? "print-with-images w-full border-collapse text-sm text-[#dbeafe]" : "w-full border-collapse text-sm text-[#dbeafe]"}>
+            <thead>
+              <tr className="border-b border-[rgba(104,146,196,0.22)] text-left text-[11px] uppercase tracking-[0.18em] text-[#7ddff5]">
+                <th className="packet-img-cell col-img py-3 pl-4 pr-3">Image</th>
+                <th className="col-item py-3 pl-4 pr-3">Item</th>
+                <th className="col-category py-3 pr-3">Category</th>
+                <th className="col-id py-3 pr-3">ID</th>
+                <th className="col-storage py-3 pr-3">Storage</th>
+                <th className="col-money py-3 pr-3">Cost</th>
+                <th className="col-money py-3 pr-3">Value</th>
+                <th className="col-source py-3 pr-4">Appraisal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleItems.map((item) => (
+                <tr key={item.id} className="border-b border-[rgba(104,146,196,0.14)] align-top last:border-b-0">
+                  <td className="packet-img-cell py-3 pl-4 pr-3">
+                    {includeImages && item.imageFrontUrl ? (
+                      <img src={item.imageFrontUrl} alt={item.title} className="packet-thumb max-h-20 max-w-20 rounded-lg object-contain" />
+                    ) : null}
+                  </td>
+                  <td className="py-3 pl-4 pr-3">
+                    <div className="item-title font-black text-white">{item.title}</div>
+                    <div className="muted-print mt-0.5 text-xs text-[color:var(--muted)]">
+                      {item.subtitle ? `${item.subtitle} • ` : ""}
+                      {item.number ?? ""}
                     </div>
-                  )}
-                </div>
-
-                <div className="min-w-0">
-                  <h2 className="packet-title text-xl font-black tracking-[-0.03em] text-white">{item.title}</h2>
-                  <div className="packet-meta mt-1 text-sm text-[color:var(--muted)]">{itemLabel(item)}</div>
-
-                  <div className="packet-details-grid mt-4 grid gap-3 sm:grid-cols-2">
-                    <div className="packet-box rounded-2xl border border-[rgba(104,146,196,0.20)] bg-[rgba(7,16,31,0.42)] p-3 text-sm text-[#dbeafe]">
-                      <div className="packet-small text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Identification</div>
-                      <div className="mt-2 space-y-1">
-                        <div><span className="text-[color:var(--muted)]">Grade:</span> {item.grade ?? "-"}</div>
-                        <div><span className="text-[color:var(--muted)]">Cert #:</span> {item.certNumber ?? "-"}</div>
-                        <div><span className="text-[color:var(--muted)]">Serial #:</span> {item.serialNumber ?? "-"}</div>
-                      </div>
+                  </td>
+                  <td className="py-3 pr-3 text-[color:var(--muted)]">{itemLabel(item)}</td>
+                  <td className="py-3 pr-3">
+                    <div>Grade: {item.grade ?? "-"}</div>
+                    <div className="muted-print text-xs text-[color:var(--muted)]">Cert: {item.certNumber ?? "-"}</div>
+                    <div className="muted-print text-xs text-[color:var(--muted)]">Serial: {item.serialNumber ?? "-"}</div>
+                  </td>
+                  <td className="py-3 pr-3">{item.storageLocation ?? "-"}</td>
+                  <td className="py-3 pr-3 font-semibold text-white">{fmtMoney(item.purchasePrice)}</td>
+                  <td className="py-3 pr-3 font-semibold text-white">{fmtMoney(item.currentValue)}</td>
+                  <td className="py-3 pr-4 text-xs text-[color:var(--muted)]">
+                    <div>{item.valueSource ?? ""}</div>
+                    <div className="muted-print">
+                      {item.valueUpdatedAt ? fmtDate(item.valueUpdatedAt) : ""}
+                      {typeof item.valueConfidence === "number" ? ` • ${item.valueConfidence}%` : ""}
                     </div>
-                    <div className="packet-box rounded-2xl border border-[rgba(104,146,196,0.20)] bg-[rgba(7,16,31,0.42)] p-3 text-sm text-[#dbeafe]">
-                      <div className="packet-small text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Value / Storage</div>
-                      <div className="mt-2 space-y-1">
-                        <div><span className="text-[color:var(--muted)]">Storage:</span> {item.storageLocation ?? "-"}</div>
-                        <div><span className="text-[color:var(--muted)]">Cost:</span> <span className="font-semibold text-white">{fmtMoney(item.purchasePrice)}</span></div>
-                        <div><span className="text-[color:var(--muted)]">Value:</span> <span className="font-semibold text-white">{fmtMoney(item.currentValue)}</span></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {item.valueSource && (
-                    <div className="packet-small mt-3 rounded-2xl border border-[rgba(104,146,196,0.20)] bg-[rgba(7,16,31,0.30)] p-3 text-xs text-[color:var(--muted)]">
-                      Source: {item.valueSource} • Updated {fmtDate(item.valueUpdatedAt)} • Confidence {item.valueConfidence ?? 0}%
-                    </div>
-                  )}
-                </div>
-              </div>
-            </article>
-          ))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
           {visibleItems.length === 0 ? (
-            <div className="rounded-[24px] border border-[rgba(104,146,196,0.24)] bg-[rgba(15,29,49,0.72)] p-6 text-center text-[color:var(--muted)]">
-              No items selected for this insurance packet.
-            </div>
+            <div className="py-6 text-center text-[color:var(--muted)]">No items selected for this insurance packet.</div>
           ) : null}
         </div>
       </div>
