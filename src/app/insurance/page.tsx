@@ -95,86 +95,86 @@ export default function InsuranceExportPage() {
   }, [items]);
 
   return (
-    <main className="min-h-screen bg-white text-black">
+    <main className="vltd-page-depth min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <style>{`
         @media print {
           .no-print { display: none !important; }
-          .print-wrap { padding: 0 !important; }
+          .print-wrap { padding: 0 !important; max-width: none !important; }
+          body, main, section, table, thead, tbody, tr, th, td, div { background: white !important; color: black !important; box-shadow: none !important; }
           a { color: black !important; text-decoration: none !important; }
           .card { box-shadow: none !important; border: 1px solid #ddd !important; }
           thead { display: table-header-group; }
         }
       `}</style>
 
-      <div className="print-wrap mx-auto max-w-6xl p-6">
-        <div className="no-print flex flex-wrap items-center justify-between gap-3">
+      <div className="print-wrap mx-auto max-w-6xl">
+        <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[rgba(82,214,244,0.24)] bg-[rgba(15,29,49,0.72)] p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
           <div className="flex flex-wrap items-center gap-2">
-            <Link href="/vault" className="rounded-lg border border-black/15 px-3 py-2 text-sm">
+            <Link href="/vault" className="rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(82,214,244,0.42)]">
               ← Back to Vault
             </Link>
-            <Link href="/portfolio" className="rounded-lg border border-black/15 px-3 py-2 text-sm">
+            <Link href="/portfolio" className="rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(82,214,244,0.42)]">
               Portfolio
             </Link>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Link href="/insurance/packet" className="rounded-lg border border-black/15 px-3 py-2 text-sm">
+            <Link href="/insurance/packet" className="rounded-full border border-[rgba(82,214,244,0.42)] bg-[rgba(82,214,244,0.10)] px-4 py-2 text-sm font-black text-[color:var(--accent)] shadow-[0_14px_38px_rgba(82,214,244,0.12)]">
               Policy Packet (PDF)
             </Link>
-            <button onClick={() => window.print()} className="rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white">
+            <button onClick={() => window.print()} className="rounded-full bg-[#52d6f4] px-4 py-2 text-sm font-black text-[#06101d] shadow-[0_14px_38px_rgba(82,214,244,0.18)]">
               Print / Save as PDF
             </button>
           </div>
         </div>
 
-        <div className="mt-6 card rounded-2xl border border-black/10 p-6">
-          <div className="text-xs tracking-widest text-black/50">INSURANCE INVENTORY</div>
-          <div className="mt-2 text-2xl font-semibold">Vault Inventory Report</div>
-          <div className="mt-1 text-sm text-black/60">
-            Generated {new Date().toLocaleString()} • Items {items.length} • Total Value {fmtMoney(totals.value)} • Total Cost{" "}
-            {fmtMoney(totals.cost)}
+        <section className="card rounded-[30px] border border-[rgba(82,214,244,0.28)] bg-[linear-gradient(180deg,rgba(18,38,66,0.94),rgba(8,18,32,0.96))] p-5 shadow-[0_26px_86px_rgba(82,214,244,0.10),0_24px_88px_rgba(0,0,0,0.32)] sm:p-6">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">Insurance Inventory</div>
+          <h1 className="mt-2 text-3xl font-black tracking-[-0.045em] text-white">Vault Inventory Report</h1>
+          <div className="mt-2 text-sm text-[color:var(--muted)]">
+            Generated {new Date().toLocaleString()} • Items {items.length} • Total Value {fmtMoney(totals.value)} • Total Cost {fmtMoney(totals.cost)}
           </div>
 
-          <div className="mt-5 overflow-x-auto">
-            <table className="w-full border-collapse text-sm">
+          <div className="mt-6 overflow-x-auto rounded-2xl border border-[rgba(104,146,196,0.22)] bg-[rgba(7,16,31,0.42)]">
+            <table className="w-full border-collapse text-sm text-[#dbeafe]">
               <thead>
-                <tr className="border-b border-black/10 text-left text-xs uppercase tracking-wider text-black/50">
-                  <th className="py-2 pr-3">Item</th>
-                  <th className="py-2 pr-3">Category</th>
-                  <th className="py-2 pr-3">Grade</th>
-                  <th className="py-2 pr-3">Cert #</th>
-                  <th className="py-2 pr-3">Serial #</th>
-                  <th className="py-2 pr-3">Storage</th>
-                  <th className="py-2 pr-3">Cost</th>
-                  <th className="py-2 pr-3">Value</th>
-                  <th className="py-2 pr-3">Appraisal</th>
+                <tr className="border-b border-[rgba(104,146,196,0.22)] text-left text-[11px] uppercase tracking-[0.18em] text-[#7ddff5]">
+                  <th className="py-3 pl-4 pr-3">Item</th>
+                  <th className="py-3 pr-3">Category</th>
+                  <th className="py-3 pr-3">Grade</th>
+                  <th className="py-3 pr-3">Cert #</th>
+                  <th className="py-3 pr-3">Serial #</th>
+                  <th className="py-3 pr-3">Storage</th>
+                  <th className="py-3 pr-3">Cost</th>
+                  <th className="py-3 pr-3">Value</th>
+                  <th className="py-3 pr-4">Appraisal</th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((i) => (
-                  <tr key={i.id} className="border-b border-black/10 align-top">
-                    <td className="py-2 pr-3">
-                      <div className="font-semibold">{i.title}</div>
-                      <div className="text-xs text-black/60">
+                  <tr key={i.id} className="border-b border-[rgba(104,146,196,0.14)] align-top last:border-b-0">
+                    <td className="py-3 pl-4 pr-3">
+                      <div className="font-black text-white">{i.title}</div>
+                      <div className="mt-0.5 text-xs text-[color:var(--muted)]">
                         {i.subtitle ? `${i.subtitle} • ` : ""}
                         {i.number ?? ""}
                       </div>
                       <div className="no-print mt-2">
-                        <Link href={`/insurance/item?id=${encodeURIComponent(String(i.id))}`} className="text-xs underline">
+                        <Link href={`/insurance/item?id=${encodeURIComponent(String(i.id))}`} className="text-xs font-semibold text-[color:var(--accent)] underline underline-offset-4">
                           Per-item sheet →
                         </Link>
                       </div>
                     </td>
-                    <td className="py-2 pr-3">{itemLabel(i)}</td>
-                    <td className="py-2 pr-3">{i.grade ?? ""}</td>
-                    <td className="py-2 pr-3">{i.certNumber ?? ""}</td>
-                    <td className="py-2 pr-3">{i.serialNumber ?? ""}</td>
-                    <td className="py-2 pr-3">{i.storageLocation ?? ""}</td>
-                    <td className="py-2 pr-3">{fmtMoney(Number(i.purchasePrice ?? 0))}</td>
-                    <td className="py-2 pr-3">{fmtMoney(Number(i.currentValue ?? 0))}</td>
-                    <td className="py-2 pr-3 text-xs">
+                    <td className="py-3 pr-3 text-[color:var(--muted)]">{itemLabel(i)}</td>
+                    <td className="py-3 pr-3">{i.grade ?? ""}</td>
+                    <td className="py-3 pr-3">{i.certNumber ?? ""}</td>
+                    <td className="py-3 pr-3">{i.serialNumber ?? ""}</td>
+                    <td className="py-3 pr-3">{i.storageLocation ?? ""}</td>
+                    <td className="py-3 pr-3 font-semibold text-white">{fmtMoney(Number(i.purchasePrice ?? 0))}</td>
+                    <td className="py-3 pr-3 font-semibold text-white">{fmtMoney(Number(i.currentValue ?? 0))}</td>
+                    <td className="py-3 pr-4 text-xs text-[color:var(--muted)]">
                       <div>{(i as any).valueSource ?? ""}</div>
-                      <div className="text-black/60">
+                      <div>
                         {(i as any).valueUpdatedAt ? fmtDate((i as any).valueUpdatedAt) : ""}
                         {typeof (i as any).valueConfidence === "number" ? ` • ${(i as any).valueConfidence}%` : ""}
                       </div>
@@ -184,9 +184,9 @@ export default function InsuranceExportPage() {
               </tbody>
             </table>
 
-            {items.length === 0 ? <div className="py-6 text-black/60">No items found.</div> : null}
+            {items.length === 0 ? <div className="py-6 text-center text-[color:var(--muted)]">No items found.</div> : null}
           </div>
-        </div>
+        </section>
       </div>
     </main>
   );
