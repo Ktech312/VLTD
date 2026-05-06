@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import CameraCapturePanel from "@/components/CameraCapturePanel";
 import ScanCropEditor from "@/components/ScanCropEditor";
+import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { PillButton } from "@/components/ui/PillButton";
 import { AI_ASSIST_SETUP_MESSAGE, analyzeImageWithVision } from "@/lib/ai/openaiVision";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
@@ -215,7 +216,13 @@ function RecentItemCard({ item }: { item: SavedItemPreview }) {
         </div>
       ) : null}
       {imageUrl ? (
-        <img src={imageUrl} alt={item.title} className="h-16 w-16 rounded-2xl object-contain bg-black/10" />
+        <ProgressiveImage
+          src={imageUrl}
+          alt={item.title}
+          className="h-16 w-16 rounded-2xl bg-black/10"
+          imageClassName="object-contain"
+          draggable={false}
+        />
       ) : (
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[color:var(--surface)] text-xs text-[color:var(--muted2)] ring-1 ring-[color:var(--border)]">
           No Img
@@ -589,7 +596,7 @@ export default function QuickAddClient() {
 
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
-      <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col px-3 py-4 sm:px-5 sm:py-6">
+      <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col px-3 py-3 sm:px-5 sm:py-5">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">
@@ -605,19 +612,19 @@ export default function QuickAddClient() {
           </Link>
         </div>
 
-        <div className="mt-4 rounded-[24px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-          <div className="grid gap-3 sm:grid-cols-2">
+        <div className="mt-3 rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-4">
+          <div className="grid gap-2 sm:grid-cols-2">
             <button
               type="button"
               onClick={() => setIsCameraPanelOpen(true)}
-              className="rounded-[22px] bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]"
+              className="rounded-[18px] bg-[color:var(--pill)] px-4 py-3 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
             >
               Use Camera
             </button>
             <button
               type="button"
               onClick={() => uploadInputRef.current?.click()}
-              className="rounded-[22px] bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]"
+              className="rounded-[18px] bg-[color:var(--pill)] px-4 py-3 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
             >
               Upload Image
             </button>
@@ -640,7 +647,7 @@ export default function QuickAddClient() {
           />
 
           {activePreview ? (
-            <div className="mt-4 overflow-hidden rounded-[20px] bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)]">
+            <div className="mt-3 overflow-hidden rounded-[18px] bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)]">
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-black/10 px-3 py-1 text-xs ring-1 ring-black/10">
                   {frontImage ? "Locked In" : "Draft"}
@@ -650,12 +657,14 @@ export default function QuickAddClient() {
               <button
                 type="button"
                 onClick={() => setIsCropEditorOpen(true)}
-                className="block w-full overflow-hidden rounded-[14px] bg-[color:var(--input)] aspect-[4/3] focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)]"
+                className="block aspect-[16/10] max-h-[300px] w-full overflow-hidden rounded-[14px] bg-[color:var(--input)] focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)]"
               >
-                <img
+                <ProgressiveImage
                   src={activePreview}
                   alt="Item preview"
-                  className="h-full w-full object-contain bg-black/10"
+                  className="h-full w-full bg-black/10"
+                  imageClassName="object-contain"
+                  draggable={false}
                 />
               </button>
 
@@ -663,7 +672,7 @@ export default function QuickAddClient() {
                 Tap the photo to edit it again.
               </div>
 
-              <div className="mt-3 grid gap-2 sm:flex sm:flex-wrap">
+              <div className="mt-3 grid grid-cols-3 gap-2">
                 <PillButton onClick={() => setIsCropEditorOpen(true)} disabled={isSaving}>
                   Edit Photo
                 </PillButton>

@@ -2,6 +2,7 @@
 
 import { useState, type ChangeEvent } from "react";
 
+import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { type ScanItemType } from "@/lib/scanAutofill";
 import type { ScanSessionState } from "@/lib/scanners/scanSession";
 
@@ -97,7 +98,7 @@ export default function ScanPanel({
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
-    <section className="rounded-[24px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+    <section className="rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">CAPTURE AND IDENTIFY</div>
@@ -112,8 +113,8 @@ export default function ScanPanel({
         </div>
       </div>
 
-      <div className="mt-3 grid gap-3 lg:grid-cols-[112px_minmax(0,1fr)_180px]">
-        <div className="min-h-[118px] rounded-[18px] bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)] sm:min-h-[142px] lg:min-h-0">
+      <div className="mt-3 grid gap-2 lg:grid-cols-[108px_minmax(0,1fr)_168px]">
+        <div className="min-h-[104px] rounded-[16px] bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)] sm:min-h-[126px] lg:min-h-0">
           <div className="mb-2 flex items-center justify-between gap-2">
             <div className="text-[10px] tracking-[0.16em] text-[color:var(--muted2)]">PICTURES TAKEN</div>
             <div className="rounded-full bg-black/15 px-2 py-0.5 text-[10px] text-[color:var(--muted)]">
@@ -122,7 +123,7 @@ export default function ScanPanel({
           </div>
 
           {capturedPhotos.length ? (
-            <div className="grid max-h-[126px] grid-cols-3 gap-1.5 overflow-auto pr-1">
+            <div className="grid max-h-[112px] grid-cols-3 gap-1.5 overflow-auto pr-1">
               {capturedPhotos.map((photo) => (
                 <button
                   key={photo.id}
@@ -137,7 +138,13 @@ export default function ScanPanel({
                   title={`Use ${photo.role} photo for identify`}
                 >
                   <span className="block aspect-square overflow-hidden rounded-md">
-                    <img src={photo.previewUrl} alt={`${photo.role} item photo`} className="h-full w-full object-cover" />
+                    <ProgressiveImage
+                      src={photo.previewUrl}
+                      alt={`${photo.role} item photo`}
+                      className="h-full w-full"
+                      imageClassName="object-cover"
+                      draggable={false}
+                    />
                   </span>
                 </button>
               ))}
@@ -146,7 +153,7 @@ export default function ScanPanel({
             <button
               type="button"
               onClick={onUseCamera}
-              className="flex h-[84px] w-full items-center justify-center rounded-[14px] border border-dashed border-white/20 text-xs text-[color:var(--muted)]"
+              className="flex h-[72px] w-full items-center justify-center rounded-[14px] border border-dashed border-white/20 text-xs text-[color:var(--muted)]"
             >
               No pictures yet
             </button>
@@ -156,13 +163,15 @@ export default function ScanPanel({
         <button
           type="button"
           onClick={previewUrl ? onCropImage : onUseCamera}
-          className="flex min-h-[118px] items-center justify-center overflow-hidden rounded-[24px] bg-black/20 p-2 text-center ring-1 ring-[color:var(--border)] transition hover:bg-black/25 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)] sm:min-h-[142px] lg:min-h-0"
+          className="flex min-h-[104px] items-center justify-center overflow-hidden rounded-[20px] bg-black/20 p-2 text-center ring-1 ring-[color:var(--border)] transition hover:bg-black/25 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)] sm:min-h-[126px] lg:min-h-0"
         >
           {previewUrl ? (
-            <img
+            <ProgressiveImage
               src={previewUrl}
               alt="Selected item photo for identify"
-              className="h-full max-h-[160px] w-full object-contain opacity-95"
+              className="h-full max-h-[142px] w-full"
+              imageClassName="object-contain opacity-95"
+              draggable={false}
             />
           ) : (
             <span className="rounded-full border border-white/60 px-4 py-2 text-xs text-[color:var(--fg)]">
@@ -171,7 +180,7 @@ export default function ScanPanel({
           )}
         </button>
 
-        <div className="grid content-start gap-2 rounded-[18px] bg-black/10 p-2 ring-1 ring-white/8">
+        <div className="grid content-start gap-1.5 rounded-[16px] bg-black/10 p-2 ring-1 ring-white/8">
           <div className="grid grid-cols-2 gap-2">
             <button type="button" onClick={onUseCamera} className={actionButtonClass(true)}>
               Camera
@@ -222,7 +231,7 @@ export default function ScanPanel({
         </div>
       </div>
 
-      <div className="mt-2 rounded-[12px] bg-black/10 px-3 py-2 text-[11px] leading-5 text-[color:var(--muted2)] ring-1 ring-white/8">
+      <div className="mt-2 rounded-[12px] bg-black/10 px-3 py-1.5 text-[11px] leading-5 text-[color:var(--muted2)] ring-1 ring-white/8">
         Auto Identify reads the selected picture for barcode, text, and AI clues. Barcode/OCR can work without AI; Gemini needs
         {" "}
         `GEMINI_API_KEY`

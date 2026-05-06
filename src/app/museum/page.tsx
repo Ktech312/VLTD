@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { getGalleryScore } from "@/lib/galleryScore";
 import {
   GALLERY_EVENT,
@@ -403,30 +404,32 @@ export default function MuseumPage() {
               </div>
             </div>
           ) : (
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid justify-center gap-5 [grid-template-columns:repeat(auto-fill,minmax(300px,360px))]">
               {orderedGalleries.map(({ gallery, score, totalValue, views }) => {
                 const coverImage = resolveGalleryImage(gallery.coverImage);
 
                 return (
                   <article
                     key={gallery.id}
-                    className="vltd-panel-soft group relative overflow-hidden rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.018))] p-5 shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.28)]"
+                    className="vltd-panel-soft group relative flex h-[430px] w-full max-w-[360px] flex-col overflow-hidden rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.018))] p-4 shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.28)]"
                   >
-                    {coverImage ? (
-                      <>
-                        <div
-                          className="absolute inset-0 opacity-30"
-                          style={{
-                            backgroundImage: `url(${coverImage})`,
-                            backgroundSize: "cover",
-                            backgroundPosition: "center",
-                          }}
+                    <div className="mb-4 h-[178px] overflow-hidden rounded-[18px] bg-black/20 ring-1 ring-white/8">
+                      {coverImage ? (
+                        <ProgressiveImage
+                          src={coverImage}
+                          alt={`${gallery.title} cover`}
+                          className="h-full w-full"
+                          imageClassName="object-cover transition duration-300 group-hover:scale-[1.03]"
+                          draggable={false}
                         />
-                        <div className="absolute inset-0 bg-black/55" />
-                      </>
-                    ) : null}
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-white/32">
+                          No cover
+                        </div>
+                      )}
+                    </div>
 
-                    <div className="relative">
+                    <div className="relative flex min-h-0 flex-1 flex-col">
                       <div className="flex items-start justify-between gap-3">
                         <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                           CURATED GALLERY
@@ -461,19 +464,19 @@ export default function MuseumPage() {
                       <button
                         type="button"
                         onClick={() => openGallery(gallery.id)}
-                        className="mt-4 block w-full text-left"
+                        className="mt-3 flex min-h-0 flex-1 flex-col text-left"
                       >
-                        <h2 className="line-clamp-2 text-2xl font-semibold leading-tight">
+                        <h2 className="line-clamp-2 text-xl font-semibold leading-tight">
                           {gallery.title}
                         </h2>
 
-                        <p className="mt-3 line-clamp-3 min-h-[60px] text-sm leading-6 text-[color:var(--muted)]">
+                        <p className="mt-2 line-clamp-2 text-sm leading-5 text-[color:var(--muted)]">
                           {gallery.description?.trim()
                             ? gallery.description
                             : "A museum-style presentation built from selected collection pieces."}
                         </p>
 
-                        <div className="mt-4 flex flex-wrap gap-2">
+                        <div className="mt-3 flex flex-wrap gap-2">
                           <span className="rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10">
                             Score {score.score}/100
                           </span>
@@ -485,7 +488,7 @@ export default function MuseumPage() {
                           </span>
                         </div>
 
-                        <div className="mt-5 grid grid-cols-2 gap-3 rounded-[20px] bg-black/20 px-4 py-3 ring-1 ring-white/8">
+                        <div className="mt-auto grid grid-cols-2 gap-3 rounded-[18px] bg-black/20 px-3 py-2.5 ring-1 ring-white/8">
                           <div>
                             <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                               ITEMS
@@ -501,7 +504,7 @@ export default function MuseumPage() {
                           </div>
                         </div>
 
-                        <div className="mt-4 flex items-center justify-between text-sm text-[color:var(--muted)]">
+                        <div className="mt-3 flex items-center justify-between text-sm text-[color:var(--muted)]">
                           <div>
                             {score.signals.sections} sections • {score.signals.featuredWorks} featured
                           </div>

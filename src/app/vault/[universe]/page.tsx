@@ -619,25 +619,28 @@ function UniverseOverviewCard({
   const totalValue = items.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
   const totalCostValue = items.reduce((sum, item) => sum + totalCost(item), 0);
   const totalGain = totalValue - totalCostValue;
+  const hasItems = items.length > 0;
+  const showGain = Math.abs(totalGain) > 0.49;
 
   return (
     <Link
       href={category.href}
       className="group overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:ring-cyan-400/30"
     >
-      <div className="grid min-h-[132px] grid-cols-[96px_minmax(0,1fr)] gap-3 sm:grid-cols-[112px_minmax(0,1fr)]">
+      <div className="grid min-h-[124px] grid-cols-[92px_minmax(0,1fr)] gap-3 sm:grid-cols-[104px_minmax(0,1fr)]">
         <div className="overflow-hidden rounded-[14px] bg-black/20 ring-1 ring-white/8">
           {coverImage ? (
             <ProgressiveImage
               src={coverImage}
               alt={`${universeDisplayName(category.key)} cover`}
-              className="h-full min-h-[132px] w-full"
+              className="h-full min-h-[124px] w-full"
               imageClassName="object-cover transition duration-300 group-hover:scale-105"
               draggable={false}
             />
           ) : (
-            <div className="flex h-full min-h-[132px] items-center justify-center px-3 text-center text-[11px] font-semibold text-[color:var(--muted)]">
-              {universeDisplayName(category.key)}
+            <div className="flex h-full min-h-[124px] flex-col items-center justify-center gap-1 px-3 text-center text-[11px] font-semibold text-[color:var(--muted)]">
+              <span className="text-xl leading-none text-cyan-200/55">+</span>
+              <span>{hasItems ? universeDisplayName(category.key) : "Add items"}</span>
             </div>
           )}
         </div>
@@ -653,17 +656,20 @@ function UniverseOverviewCard({
                 {items.length} {items.length === 1 ? "item" : "items"}
               </div>
             </div>
-            <div className="mt-2 line-clamp-2 text-xs text-[color:var(--muted)]">{category.description}</div>
+            <div className="mt-2 line-clamp-2 text-xs text-[color:var(--muted)]">
+              {hasItems ? category.description : "No items here yet. Tap to start adding to this universe."}
+            </div>
           </div>
 
           <div className="mt-3 flex items-end justify-between gap-3">
             <div>
               <div className="text-[10px] uppercase tracking-[0.16em] text-[color:var(--muted2)]">Value</div>
-              <div className="mt-0.5 text-lg font-extrabold leading-none text-[color:var(--fg)]">{formatMoney(totalValue)}</div>
+              <div className="mt-0.5 text-lg font-extrabold leading-none text-[color:var(--fg)]">
+                {hasItems ? formatMoney(totalValue) : "—"}
+              </div>
             </div>
-            <div className={totalGain >= 0 ? "text-right text-sm font-bold text-emerald-300" : "text-right text-sm font-bold text-red-300"}>
-              {totalGain >= 0 ? "+" : ""}
-              {formatMoney(totalGain)}
+            <div className={showGain ? (totalGain >= 0 ? "text-right text-sm font-bold text-emerald-300" : "text-right text-sm font-bold text-red-300") : "text-right text-sm font-bold text-white/35"}>
+              {showGain ? `${totalGain >= 0 ? "+" : ""}${formatMoney(totalGain)}` : "—"}
             </div>
           </div>
         </div>
