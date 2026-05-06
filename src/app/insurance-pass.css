@@ -16,6 +16,7 @@ body:has(input[type="checkbox"]):has(main) main {
     radial-gradient(circle at 48% 8%, rgba(82, 214, 244, 0.16), transparent 34%),
     radial-gradient(circle at 84% 20%, rgba(245, 170, 60, 0.08), transparent 26%),
     linear-gradient(180deg, #07101f 0%, #050b15 100%) !important;
+  color: #eaf2ff !important;
 }
 
 body:has(a[href="/insurance/packet"]) main > div,
@@ -31,6 +32,18 @@ body:has(a[href="/portfolio"]):has(a[href="/insurance"]) h1,
 body:has(input[type="checkbox"]):has(main) h1 {
   font-weight: 900 !important;
   letter-spacing: -0.045em !important;
+  color: #ffffff !important;
+}
+
+body:has(a[href="/insurance/packet"]) h2,
+body:has(a[href="/insurance/item"]) h2,
+body:has(a[href="/portfolio"]):has(a[href="/insurance"]) h2,
+body:has(input[type="checkbox"]):has(main) h2,
+body:has(a[href="/insurance/packet"]) h3,
+body:has(a[href="/insurance/item"]) h3,
+body:has(a[href="/portfolio"]):has(a[href="/insurance"]) h3,
+body:has(input[type="checkbox"]):has(main) h3 {
+  color: #f5f8ff !important;
 }
 
 body:has(a[href="/insurance/packet"]) section:first-of-type,
@@ -39,7 +52,8 @@ body:has(a[href="/portfolio"]):has(a[href="/insurance"]) section:first-of-type,
 body:has(input[type="checkbox"]):has(main) section:first-of-type {
   border-color: rgba(82, 214, 244, 0.30) !important;
   background:
-    linear-gradient(180deg, rgba(18, 38, 66, 0.91), rgba(8, 18, 32, 0.94)) !important;
+    linear-gradient(180deg, rgba(18, 38, 66, 0.95), rgba(8, 18, 32, 0.96)) !important;
+  color: #eaf2ff !important;
   box-shadow:
     0 0 0 1px rgba(82, 214, 244, 0.07),
     0 26px 86px rgba(82, 214, 244, 0.10),
@@ -55,10 +69,51 @@ body:has(a[href="/insurance/item"]) article,
 body:has(input[type="checkbox"]):has(main) article {
   border-color: rgba(104, 146, 196, 0.26) !important;
   background:
-    linear-gradient(180deg, rgba(17, 35, 59, 0.88), rgba(9, 20, 36, 0.92)) !important;
+    linear-gradient(180deg, rgba(17, 35, 59, 0.92), rgba(9, 20, 36, 0.95)) !important;
+  color: #eaf2ff !important;
   box-shadow:
     0 0 0 1px rgba(82, 214, 244, 0.035),
     0 18px 56px rgba(0, 0, 0, 0.24) !important;
+}
+
+/* Insurance report pages had dark text inherited from printable/report markup. Force readable app-mode colors. */
+body:has(a[href="/insurance/packet"]) section,
+body:has(a[href="/insurance/item"]) section,
+body:has(a[href="/portfolio"]):has(a[href="/insurance"]) section,
+body:has(input[type="checkbox"]):has(main) section,
+body:has(a[href="/insurance/packet"]) section *,
+body:has(a[href="/insurance/item"]) section *,
+body:has(a[href="/portfolio"]):has(a[href="/insurance"]) section *,
+body:has(input[type="checkbox"]):has(main) section *,
+body:has(a[href="/insurance/packet"]) table,
+body:has(a[href="/insurance/item"]) table,
+body:has(a[href="/insurance/packet"]) th,
+body:has(a[href="/insurance/item"]) th,
+body:has(a[href="/insurance/packet"]) td,
+body:has(a[href="/insurance/item"]) td {
+  color: #dbeafe !important;
+}
+
+body:has(a[href="/insurance/packet"]) th,
+body:has(a[href="/insurance/item"]) th,
+body:has(a[href="/portfolio"]):has(a[href="/insurance"]) th,
+body:has(input[type="checkbox"]):has(main) th {
+  color: #7ddff5 !important;
+  border-color: rgba(104, 146, 196, 0.24) !important;
+}
+
+body:has(a[href="/insurance/packet"]) td,
+body:has(a[href="/insurance/item"]) td,
+body:has(a[href="/portfolio"]):has(a[href="/insurance"]) td,
+body:has(input[type="checkbox"]):has(main) td {
+  border-color: rgba(104, 146, 196, 0.16) !important;
+}
+
+body:has(a[href="/insurance/packet"]) a,
+body:has(a[href="/insurance/item"]) a,
+body:has(a[href="/portfolio"]):has(a[href="/insurance"]) a,
+body:has(input[type="checkbox"]):has(main) a {
+  color: #52d6f4 !important;
 }
 
 body:has(a[href="/insurance/packet"]) a[href="/insurance/packet"],
@@ -97,6 +152,25 @@ body:has(input[type="checkbox"]):has(main) button:hover,
 body:has(a[href="/insurance/packet"]) a:hover,
 body:has(a[href="/insurance/item"]) a:hover {
   border-color: rgba(82, 214, 244, 0.44) !important;
+}
+
+@media print {
+  body:has(a[href="/insurance/packet"]) main,
+  body:has(a[href="/insurance/item"]) main,
+  body:has(a[href="/insurance/packet"]) section,
+  body:has(a[href="/insurance/item"]) section,
+  body:has(a[href="/insurance/packet"]) table,
+  body:has(a[href="/insurance/item"]) table,
+  body:has(a[href="/insurance/packet"]) th,
+  body:has(a[href="/insurance/item"]) th,
+  body:has(a[href="/insurance/packet"]) td,
+  body:has(a[href="/insurance/item"]) td,
+  body:has(a[href="/insurance/packet"]) section *,
+  body:has(a[href="/insurance/item"]) section * {
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+  }
 }
 
 @media (max-width: 700px) {
