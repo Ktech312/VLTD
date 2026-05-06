@@ -61,7 +61,7 @@ export default function MuseumGalleryCard({
             src={gallery.coverImage}
             alt={`${gallery.title} cover`}
             className="h-full w-full"
-            imageClassName="object-cover transition duration-300 group-hover:scale-[1.03]"
+            imageClassName="object-contain object-center transition duration-300 group-hover:scale-[1.03]"
             draggable={false}
           />
         ) : (

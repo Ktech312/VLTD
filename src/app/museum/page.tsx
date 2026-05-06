@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
@@ -11,14 +11,17 @@ import {
   deleteGallery,
   loadGalleries,
   refreshGalleriesFromSupabase,
+  updateGallery,
   type Gallery,
 } from "@/lib/galleryModel";
 import { getGalleryLimits } from "@/lib/galleryTier";
 import { getTierSafe, onTierChange, type Tier } from "@/lib/subscription";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
 import { getVaultImagePublicUrl } from "@/lib/vaultCloud";
 
 const ACTIVE_PROFILE_EVENT = "vltd:active-profile";
+const GALLERY_ASSET_BUCKET = "gallery-backgrounds";
 
 function visibilityLabel(v: Gallery["visibility"]) {
   if (v === "LOCKED") return "Locked";
@@ -65,6 +68,30 @@ function formatMoney(value: number) {
   }).format(value);
 }
 
+async function uploadGalleryCover(galleryId: string, file: File) {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) {
+    throw new Error("Supabase storage is not available for gallery cover uploads.");
+  }
+
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `${galleryId}/cover/${Date.now()}_${safeName}`;
+
+  const { error } = await supabase.storage.from(GALLERY_ASSET_BUCKET).upload(path, file, {
+    cacheControl: "3600",
+    upsert: true,
+    contentType: file.type || "application/octet-stream",
+  });
+
+  if (error) throw error;
+
+  const { data } = supabase.storage.from(GALLERY_ASSET_BUCKET).getPublicUrl(path);
+  const publicUrl = typeof data?.publicUrl === "string" ? data.publicUrl.trim() : "";
+  if (!publicUrl) throw new Error("Failed to resolve uploaded gallery cover URL.");
+
+  return publicUrl;
+}
+
 export default function MuseumPage() {
   const router = useRouter();
 
@@ -72,7 +99,12 @@ export default function MuseumPage() {
   const [items, setItems] = useState<VaultItem[]>([]);
   const [tier, setTier] = useState<Tier>(getTierSafe());
   const [galleryPendingDelete, setGalleryPendingDelete] = useState<Gallery | null>(null);
+  const [gallerySettings, setGallerySettings] = useState<Gallery | null>(null);
+  const [coverTargetGallery, setCoverTargetGallery] = useState<Gallery | null>(null);
+  const [statusMessage, setStatusMessage] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const coverInputRef = useRef<HTMLInputElement | null>(null);
 
   function refresh() {
     setGalleries(loadGalleries());
@@ -211,9 +243,52 @@ export default function MuseumPage() {
     }
   }
 
+  function handleOpenCoverPicker(gallery: Gallery) {
+    setCoverTargetGallery(gallery);
+    coverInputRef.current?.click();
+  }
+
+  async function handleCoverSelection(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !coverTargetGallery || isUploadingCover) return;
+
+    setIsUploadingCover(true);
+    setStatusMessage("Uploading gallery cover...");
+
+    try {
+      const publicUrl = await uploadGalleryCover(coverTargetGallery.id, file);
+      updateGallery({ ...coverTargetGallery, coverImage: publicUrl });
+      refresh();
+      setStatusMessage("Gallery cover updated.");
+    } catch (error) {
+      console.error("Failed uploading gallery cover:", error);
+      setStatusMessage(error instanceof Error ? error.message : "Gallery cover upload failed.");
+    } finally {
+      setIsUploadingCover(false);
+      setCoverTargetGallery(null);
+    }
+  }
+
+  function handleSaveGallerySettings() {
+    if (!gallerySettings) return;
+    updateGallery(gallerySettings);
+    refresh();
+    setGallerySettings(null);
+    setStatusMessage("Gallery settings updated.");
+  }
+
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-7">
+        <input
+          ref={coverInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(event) => void handleCoverSelection(event)}
+        />
+
         <section className="vltd-panel-main relative overflow-hidden rounded-[26px] border border-white/8 bg-[linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] px-5 py-5 shadow-[0_18px_54px_rgba(0,0,0,0.3)] sm:px-6 sm:py-6">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),rgba(255,255,255,0)_28%),radial-gradient(circle_at_75%_0%,rgba(255,205,120,0.06),rgba(255,205,120,0)_22%)]" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.18))]" />
@@ -381,6 +456,12 @@ export default function MuseumPage() {
         ) : null}
 
         <section className="mt-6">
+          {statusMessage ? (
+            <div className="mb-4 rounded-2xl bg-[color:var(--surface)] px-4 py-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+              {statusMessage}
+            </div>
+          ) : null}
+
           {galleries.length === 0 ? (
             <div className="vltd-panel-main rounded-[26px] bg-[color:var(--surface)] p-7 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
@@ -411,15 +492,16 @@ export default function MuseumPage() {
                 return (
                   <article
                     key={gallery.id}
-                    className="vltd-panel-soft group relative flex h-[430px] w-full max-w-[360px] flex-col overflow-hidden rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.018))] p-4 shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.28)]"
+                    onClick={() => openGallery(gallery.id)}
+                    className="vltd-panel-soft group relative flex h-[430px] w-full max-w-[360px] cursor-pointer flex-col overflow-hidden rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.018))] p-4 shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.28)]"
                   >
-                    <div className="mb-4 h-[178px] overflow-hidden rounded-[18px] bg-black/20 ring-1 ring-white/8">
+                    <div className="relative mb-4 h-[178px] overflow-hidden rounded-[18px] bg-black/20 ring-1 ring-white/8">
                       {coverImage ? (
                         <ProgressiveImage
                           src={coverImage}
                           alt={`${gallery.title} cover`}
                           className="h-full w-full"
-                          imageClassName="object-cover transition duration-300 group-hover:scale-[1.03]"
+                          imageClassName="object-contain object-center transition duration-300 group-hover:scale-[1.03]"
                           draggable={false}
                         />
                       ) : (
@@ -427,6 +509,19 @@ export default function MuseumPage() {
                           No cover
                         </div>
                       )}
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          handleOpenCoverPicker(gallery);
+                        }}
+                        disabled={isUploadingCover}
+                        className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-cyan-400/18 text-lg font-semibold text-cyan-100 ring-1 ring-cyan-300/35 transition hover:bg-cyan-400/28 disabled:opacity-50"
+                        aria-label={`Change cover image for ${gallery.title}`}
+                      >
+                        +
+                      </button>
                     </div>
 
                     <div className="relative flex min-h-0 flex-1 flex-col">
@@ -435,37 +530,39 @@ export default function MuseumPage() {
                           CURATED GALLERY
                         </div>
 
-                        <div className="flex items-start gap-2">
-                          <div className="flex flex-wrap items-center justify-end gap-2">
-                            <span className="rounded-full bg-black/20 px-2.5 py-1 text-[10px] tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-white/10">
-                              {visibilityLabel(gallery.visibility)}
-                            </span>
-
-                            <span className="rounded-full bg-black/20 px-2.5 py-1 text-[10px] tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-white/10">
-                              {stateLabel(gallery.state)}
-                            </span>
-                          </div>
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              setGallerySettings(gallery);
+                            }}
+                            className="rounded-full bg-black/20 px-2.5 py-1 text-[10px] tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-white/10 transition hover:text-cyan-100 hover:ring-cyan-300/30"
+                          >
+                            {visibilityLabel(gallery.visibility)}
+                          </button>
 
                           <button
                             type="button"
                             onClick={(event) => {
                               event.preventDefault();
                               event.stopPropagation();
-                              handleAskDelete(gallery);
+                              setGallerySettings(gallery);
                             }}
-                            className="inline-flex min-h-[32px] items-center justify-center rounded-full bg-[rgba(120,18,18,0.68)] px-3 py-1 text-[11px] font-semibold text-white ring-1 ring-red-400/30 transition hover:bg-[rgba(145,20,20,0.88)]"
-                            aria-label={`Delete gallery ${gallery.title}`}
+                            className={[
+                              "rounded-full px-2.5 py-1 text-[10px] tracking-[0.14em] ring-1 transition hover:ring-cyan-300/30",
+                              gallery.state === "ACTIVE"
+                                ? "bg-emerald-500/14 text-emerald-200 ring-emerald-400/25"
+                                : "bg-black/20 text-[color:var(--muted2)] ring-white/10",
+                            ].join(" ")}
                           >
-                            Delete
+                            {stateLabel(gallery.state)}
                           </button>
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => openGallery(gallery.id)}
-                        className="mt-3 flex min-h-0 flex-1 flex-col text-left"
-                      >
+                      <div className="mt-3 flex min-h-0 flex-1 flex-col text-left">
                         <h2 className="line-clamp-2 text-xl font-semibold leading-tight">
                           {gallery.title}
                         </h2>
@@ -508,9 +605,20 @@ export default function MuseumPage() {
                           <div>
                             {score.signals.sections} sections • {score.signals.featuredWorks} featured
                           </div>
-                          <div className="transition group-hover:translate-x-0.5">Open →</div>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              handleAskDelete(gallery);
+                            }}
+                            className="inline-flex min-h-[28px] items-center justify-center rounded-full bg-red-500/10 px-3 py-1 text-[11px] font-semibold text-red-100 ring-1 ring-red-400/20 transition hover:bg-red-500/18"
+                            aria-label={`Delete gallery ${gallery.title}`}
+                          >
+                            Delete
+                          </button>
                         </div>
-                      </button>
+                      </div>
                     </div>
                   </article>
                 );
@@ -556,6 +664,67 @@ export default function MuseumPage() {
                 className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel, save My Gallery
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {gallerySettings ? (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[26px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
+            <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
+              GALLERY STATUS
+            </div>
+            <h2 className="mt-2 text-xl font-semibold">{gallerySettings.title}</h2>
+
+            <label className="mt-5 block text-xs font-semibold tracking-[0.16em] text-[color:var(--muted2)]">
+              Visibility
+            </label>
+            <select
+              value={gallerySettings.visibility}
+              onChange={(event) =>
+                setGallerySettings((current) =>
+                  current ? { ...current, visibility: event.target.value as Gallery["visibility"] } : current
+                )
+              }
+              className="mt-2 h-11 w-full rounded-2xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+            >
+              <option value="PUBLIC">Public</option>
+              <option value="INVITE">Invite Only</option>
+              <option value="LOCKED">Locked</option>
+            </select>
+
+            <label className="mt-4 block text-xs font-semibold tracking-[0.16em] text-[color:var(--muted2)]">
+              State
+            </label>
+            <select
+              value={gallerySettings.state}
+              onChange={(event) =>
+                setGallerySettings((current) =>
+                  current ? { ...current, state: event.target.value as Gallery["state"] } : current
+                )
+              }
+              className="mt-2 h-11 w-full rounded-2xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+            >
+              <option value="ACTIVE">Active</option>
+              <option value="STORAGE">Storage</option>
+            </select>
+
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setGallerySettings(null)}
+                className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveGallerySettings}
+                className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-cyan-400/16 px-4 py-2 text-sm font-semibold text-cyan-100 ring-1 ring-cyan-300/30"
+              >
+                Save
               </button>
             </div>
           </div>

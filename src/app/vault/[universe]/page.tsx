@@ -453,7 +453,7 @@ function VaultCard({
             src={image}
             alt={item.title}
             className="h-full w-full"
-            imageClassName="object-cover"
+            imageClassName="object-contain object-center"
             draggable={false}
           />
         ) : (
