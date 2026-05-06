@@ -9,6 +9,7 @@ import "./quick-add-pass.css";
 import "./vault-utility-pass.css";
 import "./vault-directives-pass.css";
 import "./insurance-pass.css";
+import "./user-pass.css";
 import TopNav from "@/components/TopNav";
 import Providers from "@/components/Providers";
 import { ThemeBoot } from "@/components/ThemeBoot";
