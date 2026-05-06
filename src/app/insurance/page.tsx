@@ -144,12 +144,32 @@ export default function InsuranceExportPage() {
     <main className="vltd-page-depth min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <style>{`
         @media print {
+          @page { size: landscape; margin: 0.28in; }
           .no-print { display: none !important; }
           .print-wrap { padding: 0 !important; max-width: none !important; }
           body, main, section, table, thead, tbody, tr, th, td, div { background: white !important; color: black !important; box-shadow: none !important; }
+          main { padding: 0 !important; }
           a { color: black !important; text-decoration: none !important; }
-          .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+          .card { box-shadow: none !important; border: 0 !important; padding: 0 !important; }
+          .insurance-summary { margin: 0 0 8px 0 !important; font-size: 9px !important; color: black !important; }
+          .insurance-title { font-size: 16px !important; line-height: 1.1 !important; margin: 0 0 2px 0 !important; color: black !important; }
+          .insurance-eyebrow { font-size: 8px !important; color: black !important; letter-spacing: 0.08em !important; }
+          .insurance-table-wrap { border: 0 !important; overflow: visible !important; margin-top: 8px !important; }
+          table { width: 100% !important; table-layout: fixed !important; border-collapse: collapse !important; font-size: 7.5px !important; line-height: 1.15 !important; }
           thead { display: table-header-group; }
+          tr { break-inside: avoid; page-break-inside: avoid; }
+          th, td { border: 1px solid #d7d7d7 !important; padding: 2px 3px !important; vertical-align: top !important; color: black !important; }
+          th { font-size: 7px !important; font-weight: 700 !important; text-transform: uppercase !important; letter-spacing: 0.02em !important; background: #f0f0f0 !important; }
+          .item-title { font-weight: 700 !important; color: black !important; }
+          .item-subtitle, .muted-print { color: #333 !important; font-size: 7px !important; }
+          .col-item { width: 20% !important; }
+          .col-category { width: 22% !important; }
+          .col-grade { width: 7% !important; }
+          .col-cert { width: 10% !important; }
+          .col-serial { width: 9% !important; }
+          .col-storage { width: 10% !important; }
+          .col-money { width: 7% !important; }
+          .col-appraisal { width: 8% !important; }
         }
       `}</style>
 
@@ -175,42 +195,62 @@ export default function InsuranceExportPage() {
               Policy Packet (PDF)
             </Link>
             <button onClick={() => window.print()} className="rounded-full bg-[#52d6f4] px-4 py-2 text-sm font-black text-[#06101d] shadow-[0_14px_38px_rgba(82,214,244,0.18)]">
-              Print / Save as PDF
+              Print Inventory PDF
             </button>
           </div>
         </div>
 
         <section className="card rounded-[30px] border border-[rgba(82,214,244,0.28)] bg-[linear-gradient(180deg,rgba(18,38,66,0.94),rgba(8,18,32,0.96))] p-5 shadow-[0_26px_86px_rgba(82,214,244,0.10),0_24px_88px_rgba(0,0,0,0.32)] sm:p-6">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">Insurance Inventory</div>
-          <h1 className="mt-2 text-3xl font-black tracking-[-0.045em] text-white">Vault Inventory Report</h1>
-          <div className="mt-2 text-sm text-[color:var(--muted)]">
+          <div className="insurance-eyebrow text-[11px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">Insurance Inventory</div>
+          <h1 className="insurance-title mt-2 text-3xl font-black tracking-[-0.045em] text-white">Vault Inventory Report</h1>
+          <div className="insurance-summary mt-2 text-sm text-[color:var(--muted)]">
             Generated {new Date().toLocaleString()} • Included {selectedItems.length} of {items.length} items • Total Value {fmtMoney(totals.value)} • Total Cost {fmtMoney(totals.cost)}
           </div>
           <div className="no-print mt-3 rounded-2xl border border-[rgba(82,214,244,0.18)] bg-[rgba(82,214,244,0.07)] px-4 py-3 text-sm text-[color:var(--muted)]">
-            Checked items are included in insurance reports and the policy packet. Uncheck anything that should not be part of insurance documentation.
+            Checked items are included in insurance reports and the policy packet. Uncheck anything that should not be part of insurance documentation. Inventory print uses compact landscape formatting.
           </div>
 
-          <div className="mt-6 overflow-x-auto rounded-2xl border border-[rgba(104,146,196,0.22)] bg-[rgba(7,16,31,0.42)]">
+          <div className="insurance-table-wrap mt-6 overflow-x-auto rounded-2xl border border-[rgba(104,146,196,0.22)] bg-[rgba(7,16,31,0.42)]">
             <table className="w-full border-collapse text-sm text-[#dbeafe]">
               <thead>
                 <tr className="border-b border-[rgba(104,146,196,0.22)] text-left text-[11px] uppercase tracking-[0.18em] text-[#7ddff5]">
                   <th className="no-print py-3 pl-4 pr-3">Insure</th>
-                  <th className="py-3 pl-4 pr-3">Item</th>
-                  <th className="py-3 pr-3">Category</th>
-                  <th className="py-3 pr-3">Grade</th>
-                  <th className="py-3 pr-3">Cert #</th>
-                  <th className="py-3 pr-3">Serial #</th>
-                  <th className="py-3 pr-3">Storage</th>
-                  <th className="py-3 pr-3">Cost</th>
-                  <th className="py-3 pr-3">Value</th>
-                  <th className="py-3 pr-4">Appraisal</th>
+                  <th className="col-item py-3 pl-4 pr-3">Item</th>
+                  <th className="col-category py-3 pr-3">Category</th>
+                  <th className="col-grade py-3 pr-3">Grade</th>
+                  <th className="col-cert py-3 pr-3">Cert #</th>
+                  <th className="col-serial py-3 pr-3">Serial #</th>
+                  <th className="col-storage py-3 pr-3">Storage</th>
+                  <th className="col-money py-3 pr-3">Cost</th>
+                  <th className="col-money py-3 pr-3">Value</th>
+                  <th className="col-appraisal py-3 pr-4">Appraisal</th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((i) => {
                   const included = !excludedIds.has(String(i.id));
+                  if (!included) {
+                    return (
+                      <tr key={i.id} className="no-print border-b border-[rgba(104,146,196,0.10)] align-top opacity-45 last:border-b-0">
+                        <td className="py-3 pl-4 pr-3">
+                          <input
+                            type="checkbox"
+                            checked={false}
+                            onChange={(event) => setItemIncluded(String(i.id), event.target.checked)}
+                            className="h-5 w-5 accent-[#52d6f4]"
+                            aria-label={`Include ${i.title} in insurance`}
+                          />
+                        </td>
+                        <td className="py-3 pl-4 pr-3" colSpan={9}>
+                          <div className="font-black text-white">{i.title}</div>
+                          <div className="mt-0.5 text-xs text-[color:var(--muted)]">Excluded from insurance packet.</div>
+                        </td>
+                      </tr>
+                    );
+                  }
+
                   return (
-                    <tr key={i.id} className={included ? "border-b border-[rgba(104,146,196,0.14)] align-top last:border-b-0" : "border-b border-[rgba(104,146,196,0.10)] align-top opacity-45 last:border-b-0"}>
+                    <tr key={i.id} className="border-b border-[rgba(104,146,196,0.14)] align-top last:border-b-0">
                       <td className="no-print py-3 pl-4 pr-3">
                         <input
                           type="checkbox"
@@ -221,8 +261,8 @@ export default function InsuranceExportPage() {
                         />
                       </td>
                       <td className="py-3 pl-4 pr-3">
-                        <div className="font-black text-white">{i.title}</div>
-                        <div className="mt-0.5 text-xs text-[color:var(--muted)]">
+                        <div className="item-title font-black text-white">{i.title}</div>
+                        <div className="item-subtitle mt-0.5 text-xs text-[color:var(--muted)]">
                           {i.subtitle ? `${i.subtitle} • ` : ""}
                           {i.number ?? ""}
                         </div>
@@ -241,7 +281,7 @@ export default function InsuranceExportPage() {
                       <td className="py-3 pr-3 font-semibold text-white">{fmtMoney(Number(i.currentValue ?? 0))}</td>
                       <td className="py-3 pr-4 text-xs text-[color:var(--muted)]">
                         <div>{(i as any).valueSource ?? ""}</div>
-                        <div>
+                        <div className="muted-print">
                           {(i as any).valueUpdatedAt ? fmtDate((i as any).valueUpdatedAt) : ""}
                           {typeof (i as any).valueConfidence === "number" ? ` • ${(i as any).valueConfidence}%` : ""}
                         </div>
