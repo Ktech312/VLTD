@@ -8,7 +8,7 @@ import ItemIntelligencePanel from "@/components/ItemIntelligencePanel";
 import RestoreVaultButton from "@/components/RestoreVaultButton";
 import SellItemButton from "@/components/SellItemButton";
 import { PillButton } from "@/components/ui/PillButton";
-import { confidenceLabel, confidenceTone, formatPriceUpdatedAt } from "@/lib/pricingMvp";
+import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
@@ -282,13 +282,6 @@ function effectiveMarketValue(item: VaultItem) {
   return 0;
 }
 
-function priceSourceLabel(item: VaultItem) {
-  if (item.priceSource?.trim()) return item.priceSource.trim();
-  if (typeof item.lastCompValue === "number" && Number.isFinite(item.lastCompValue)) return "Last comp";
-  if (typeof item.estimatedValue === "number" && Number.isFinite(item.estimatedValue)) return "Estimate";
-  return "No pricing source";
-}
-
 function saleInfoForItem(item: VaultItem, saleMap: Record<string, SaleInfo | undefined>): SaleInfo | null {
   if (item.status === "SOLD" || item.soldAt || item.soldPrice !== undefined) {
     return {
@@ -299,16 +292,6 @@ function saleInfoForItem(item: VaultItem, saleMap: Record<string, SaleInfo | und
   }
 
   return saleMap[item.id] ?? null;
-}
-
-function formatSoldAt(ms?: number) {
-  if (!ms) return "Sold";
-  return `Sold ${new Date(ms).toLocaleString(undefined, {
-    month: "short",
-    day: "2-digit",
-    hour: "numeric",
-    minute: "2-digit",
-  })}`;
 }
 
 function promoteLegacySalesToItems() {
@@ -349,53 +332,35 @@ function promoteLegacySalesToItems() {
   return changed;
 }
 
-function CardMetric({
-  label,
-  editing,
-  value,
-  onStartEdit,
-  inputValue,
-  onInputChange,
-  onSave,
-  onCancel,
-}: {
-  label: string;
-  editing: boolean;
-  value: string;
-  onStartEdit: () => void;
-  inputValue: string;
-  onInputChange: (value: string) => void;
-  onSave: () => void;
-  onCancel: () => void;
-}) {
+function CameraIcon({ className = "h-5 w-5" }: { className?: string }) {
   return (
-    <div className="rounded-lg bg-black/15 px-2 py-1.5 ring-1 ring-black/10">
-      <div className="text-[10px] text-[color:var(--muted2)]">{label}</div>
-      {editing ? (
-        <div className="mt-1">
-          <input
-            autoFocus
-            value={inputValue}
-            onChange={(e) => onInputChange(e.target.value)}
-            onBlur={onSave}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") onSave();
-              if (e.key === "Escape") onCancel();
-            }}
-            className="h-7 w-full rounded-md bg-[color:var(--pill)] px-2 text-[11px] ring-1 ring-[color:var(--border)] focus:outline-none"
-          />
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={onStartEdit}
-          className="mt-0.5 block text-left text-[11px] font-medium text-[color:var(--fg)] hover:text-cyan-300"
-        >
-          {value}
-        </button>
-      )}
-    </div>
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M8.75 7.25 10.1 5.5h3.8l1.35 1.75h2.25A2.5 2.5 0 0 1 20 9.75v6.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.25v-6.5a2.5 2.5 0 0 1 2.5-2.5h2.25Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 15.75a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+    </svg>
   );
+}
+
+function itemCardSubtitle(item: VaultItem) {
+  const universe = universeDisplayName(universeForItem(item));
+  const category =
+    item.categoryLabel ||
+    item.customCategoryLabel ||
+    item.category ||
+    item.subcategoryLabel ||
+    itemMeta(item) ||
+    "Collector's Choice";
+
+  return `${universe} · ${category}`;
 }
 
 function VaultCard({
@@ -416,13 +381,11 @@ function VaultCard({
 
   const [editingField, setEditingField] = useState<InlineField>("");
   const [valueDraft, setValueDraft] = useState(String(Number(item.currentValue ?? 0)));
-  const [costDraft, setCostDraft] = useState(String(totalCost(item)));
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     setValueDraft(String(Number(item.currentValue ?? 0)));
-    setCostDraft(String(totalCost(item)));
-  }, [item.currentValue, item.purchasePrice, item.purchaseTax, item.purchaseShipping, item.purchaseFees]);
+  }, [item.currentValue]);
 
   async function saveValueInline() {
     const nextValue = parseMoneyInput(valueDraft);
@@ -432,29 +395,6 @@ function VaultCard({
     }
     await onSaveItem({ ...item, currentValue: nextValue });
     setEditingField("");
-  }
-
-  async function saveCostInline() {
-    const nextCost = parseMoneyInput(costDraft);
-    const currentCost = totalCost(item);
-    if (nextCost === currentCost) {
-      setEditingField("");
-      return;
-    }
-
-    await onSaveItem({
-      ...item,
-      purchasePrice: nextCost,
-      purchaseTax: 0,
-      purchaseShipping: 0,
-      purchaseFees: 0,
-    });
-    setEditingField("");
-  }
-
-  async function handleUniverseChange(nextUniverse: UniverseKey) {
-    if (nextUniverse === universeForItem(item)) return;
-    await onSaveItem({ ...item, universe: nextUniverse });
   }
 
   async function handleDelete() {
@@ -468,35 +408,27 @@ function VaultCard({
     }
   }
 
-  const pricingMvpValue = effectiveMarketValue(item);
-  const pricingConfidenceText = item.priceConfidence ? confidenceLabel(item.priceConfidence) : "";
-  const pricingConfidenceTone = item.priceConfidence ? confidenceTone(item.priceConfidence) : "";
-  const pricingSource = priceSourceLabel(item);
-  const pricingUpdatedAt = formatPriceUpdatedAt(item.priceUpdatedAt);
-  const lastCompValue =
-    typeof item.lastCompValue === "number" && Number.isFinite(item.lastCompValue)
-      ? item.lastCompValue
-      : null;
-  void pricingMvpValue;
-  void pricingConfidenceText;
-  void pricingConfidenceTone;
-  void pricingSource;
-  void pricingUpdatedAt;
-  void lastCompValue;
-  void saveCostInline;
-
   const statusLabel = isSold ? "SOLD" : item.isNew ? "NEW" : readiness;
   const statusClass = isSold
     ? "bg-amber-500/18 text-amber-100 ring-amber-400/30"
     : item.isNew
       ? "bg-red-600/18 text-red-100 ring-red-400/30"
       : readinessTone(readiness);
+  const marketValue = Number(item.currentValue ?? 0);
+  const gain = itemGain(item);
+  const showGain = Math.abs(gain) > 0.49;
+  const detailHref = isSold ? `/vault/item/${item.id}?sold=1` : `/vault/item/${item.id}`;
 
   return (
-    <div className="group relative h-[116px] overflow-hidden rounded-[14px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.024),rgba(255,255,255,0.01))] p-1.5 shadow-[0_8px_18px_rgba(0,0,0,0.12)]">
+    <div
+      className={[
+        "group relative flex h-[174px] flex-col overflow-hidden rounded-[14px] border border-white/8 bg-[#07101d]/88 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-cyan-400/10 transition hover:-translate-y-0.5 hover:ring-cyan-300/30",
+        marketValue > 0 ? "border-l-2 border-l-emerald-400/55" : "border-l border-l-white/8",
+      ].join(" ")}
+    >
       <div className="absolute right-1.5 top-1.5 z-20 hidden items-center gap-1 group-hover:flex">
         <Link
-          href={`/vault/item/${item.id}`}
+          href={detailHref}
           className="inline-flex h-6 items-center justify-center rounded-full bg-black/70 px-2 text-[10px] text-white ring-1 ring-white/10 backdrop-blur"
         >
           Edit
@@ -511,108 +443,74 @@ function VaultCard({
         </button>
       </div>
 
-      <div className="grid h-full grid-cols-[78px_minmax(0,1fr)_70px] gap-2">
-        <Link
-          href={isSold ? `/vault/item/${item.id}?sold=1` : `/vault/item/${item.id}`}
-          className="block overflow-hidden rounded-[11px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),rgba(255,255,255,0.012)_48%,rgba(0,0,0,0.18)_100%)]"
-        >
-          <div className="flex h-full items-center justify-center bg-black/10 p-1">
-            {image ? (
-              <img
-                src={image}
-                alt={item.title}
-                className="h-full w-full object-cover"
-                draggable={false}
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center px-1 text-center text-[9px] font-semibold text-[color:var(--muted)]">
-                No image
-              </div>
-            )}
-          </div>
-        </Link>
+      <span className={["absolute right-2 top-2 z-10 rounded-full px-1.5 py-0.5 text-[8px] font-semibold ring-1", statusClass].join(" ")}>
+        {statusLabel}
+      </span>
 
-        <div className="flex min-w-0 flex-col py-0.5">
-          <Link
-            href={isSold ? `/vault/item/${item.id}?sold=1` : `/vault/item/${item.id}`}
-            className="min-w-0"
-          >
-            <div className="line-clamp-1 text-[14px] font-semibold leading-tight text-cyan-300 sm:text-[15px]">
-              {item.title}
-            </div>
-            <div className="mt-1 line-clamp-1 text-[11px] font-medium text-[color:var(--fg)]">
-              {itemMeta(item)}
-            </div>
-          </Link>
-
-          <div className="mt-1 min-w-0">
-            <div className="text-[8px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">
-              Universe
-            </div>
-            <select
-              value={universeForItem(item)}
-              onChange={(e) => void handleUniverseChange(e.target.value as UniverseKey)}
-              onClick={(e) => e.stopPropagation()}
-              className="mt-0.5 min-h-[20px] w-full rounded-md bg-black/20 px-1.5 py-0.5 text-[9px] font-semibold text-[color:var(--fg)] ring-1 ring-white/10 focus:outline-none"
-              aria-label={`Universe for ${item.title}`}
-            >
-              {VAULT_UNIVERSES.map((category) => (
-                <option key={category.key} value={category.key}>
-                  {universeDisplayName(category.key)}
-                </option>
-              ))}
-            </select>
+      <Link href={detailHref} className="block h-[78px] overflow-hidden rounded-[10px] bg-black/18">
+        {image ? (
+          <ProgressiveImage
+            src={image}
+            alt={item.title}
+            className="h-full w-full"
+            imageClassName="object-cover"
+            draggable={false}
+          />
+        ) : (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-white/28">
+            <CameraIcon className="h-5 w-5" />
+            <span>No photo</span>
           </div>
+        )}
+      </Link>
 
-          <div className="mt-auto flex items-end justify-between gap-2 pt-1.5">
-            <div className="flex min-w-0 items-baseline gap-2">
-              {editingField === "value" ? (
-                <input
-                  autoFocus
-                  value={valueDraft}
-                  onChange={(e) => setValueDraft(e.target.value)}
-                  onBlur={() => void saveValueInline()}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") void saveValueInline();
-                    if (e.key === "Escape") {
-                      setValueDraft(String(Number(item.currentValue ?? 0)));
-                      setEditingField("");
-                    }
-                  }}
-                  className="h-6 w-20 rounded-md bg-[color:var(--pill)] px-2 text-[11px] ring-1 ring-[color:var(--border)] focus:outline-none"
-                />
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setEditingField("value")}
-                  className="text-left text-[14px] font-extrabold leading-none text-[color:var(--fg)] hover:text-cyan-300"
-                >
-                  {formatMoney(Number(item.currentValue ?? 0))}
-                </button>
-              )}
-              <span className={itemGain(item) >= 0 ? "text-[11px] font-bold leading-none text-emerald-300" : "text-[11px] font-bold leading-none text-red-300"}>
-                {itemGain(item) >= 0 ? "+" : ""}
-                {formatMoney(itemGain(item))}
-              </span>
-            </div>
-          </div>
+      <Link href={detailHref} className="mt-2 min-w-0">
+        <div className="line-clamp-1 text-[13px] font-extrabold leading-tight text-white sm:text-[14px]">
+          {item.title}
         </div>
+        <div className="mt-0.5 line-clamp-1 text-[10px] font-medium text-cyan-100/55">
+          {itemCardSubtitle(item)}
+        </div>
+      </Link>
 
-        <div className="flex min-h-full flex-col items-end justify-between py-0.5 pr-0.5">
-          <span className={["rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1", statusClass].join(" ")}>
-            {statusLabel}
-          </span>
-
-          {isSold ? (
-            <div className="shrink-0 text-right text-[10px] font-semibold text-amber-200">
-              Sold {formatMoney(sale?.soldPrice)}
-            </div>
+      <div className="mt-auto flex items-end justify-between gap-2 pt-2">
+        <div className="min-w-0">
+          {editingField === "value" ? (
+            <input
+              autoFocus
+              value={valueDraft}
+              onChange={(e) => setValueDraft(e.target.value)}
+              onBlur={() => void saveValueInline()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void saveValueInline();
+                if (e.key === "Escape") {
+                  setValueDraft(String(Number(item.currentValue ?? 0)));
+                  setEditingField("");
+                }
+              }}
+              className="h-6 w-20 rounded-md bg-[color:var(--pill)] px-2 text-[11px] ring-1 ring-[color:var(--border)] focus:outline-none"
+            />
           ) : (
-            <div className="shrink-0 scale-90 origin-right">
-              <SellItemButton item={item} />
-            </div>
+            <button
+              type="button"
+              onClick={() => setEditingField("value")}
+              className="block text-left text-[13px] font-extrabold leading-none text-white hover:text-cyan-300"
+            >
+              {formatMoney(marketValue)}
+            </button>
           )}
+          <div className={showGain ? (gain >= 0 ? "mt-1 text-[10px] font-bold leading-none text-emerald-300" : "mt-1 text-[10px] font-bold leading-none text-red-300") : "mt-1 text-[10px] font-bold leading-none text-white/35"}>
+            {showGain ? `${gain >= 0 ? "+" : ""}${formatMoney(gain)}` : "—"}
+          </div>
         </div>
+
+        {isSold ? (
+          <div className="shrink-0 rounded-full bg-amber-500/12 px-2.5 py-1 text-[10px] font-semibold text-amber-200 ring-1 ring-amber-400/20">
+            Sold {formatMoney(sale?.soldPrice)}
+          </div>
+        ) : (
+          <SellItemButton item={item} />
+        )}
       </div>
     </div>
   );
@@ -730,10 +628,11 @@ function UniverseOverviewCard({
       <div className="grid min-h-[132px] grid-cols-[96px_minmax(0,1fr)] gap-3 sm:grid-cols-[112px_minmax(0,1fr)]">
         <div className="overflow-hidden rounded-[14px] bg-black/20 ring-1 ring-white/8">
           {coverImage ? (
-            <img
+            <ProgressiveImage
               src={coverImage}
               alt={`${universeDisplayName(category.key)} cover`}
-              className="h-full min-h-[132px] w-full object-cover transition duration-300 group-hover:scale-105"
+              className="h-full min-h-[132px] w-full"
+              imageClassName="object-cover transition duration-300 group-hover:scale-105"
               draggable={false}
             />
           ) : (
@@ -1031,7 +930,7 @@ export default function VaultUniversePage() {
                   {activeUniverseName}
                 </h1>
                 <div className="mt-1.5 text-sm text-[color:var(--muted)]">
-                  Items in this Universe. Change an item's Universe and it moves immediately.
+                  Items in this Universe. Change an item&apos;s Universe and it moves immediately.
                 </div>
               </div>
               <div className="shrink-0 flex flex-wrap gap-2">
