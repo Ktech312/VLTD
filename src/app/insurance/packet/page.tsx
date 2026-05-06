@@ -17,13 +17,10 @@ type Item = ModelItem & {
   valueConfidence?: number;
 };
 
-const LS_POLICY = "vltd_policy_packet_v1";
-
 function clamp(n: number) {
   return Number.isFinite(n) ? n : 0;
 }
 
-// ✅ Accept undefined safely
 function fmtMoney(n?: number | null) {
   const v = clamp(typeof n === "number" ? n : 0);
   const sign = v < 0 ? "-" : "";
@@ -79,85 +76,89 @@ export default function InsurancePacketPage() {
   }, [items]);
 
   return (
-    <main className="min-h-screen bg-white text-black">
+    <main className="vltd-page-depth min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <style>{`
         @media print {
           .no-print { display: none !important; }
           .page-break { break-before: page; page-break-before: always; }
           img { break-inside: avoid; }
+          body, main, section, article, div { background: white !important; color: black !important; box-shadow: none !important; }
+          .packet-card { border: 1px solid #ddd !important; }
         }
       `}</style>
 
-      <div className="mx-auto max-w-4xl p-6">
-        <div className="no-print flex justify-between mb-6">
-          <Link href="/insurance">← Back</Link>
+      <div className="mx-auto max-w-6xl">
+        <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[rgba(82,214,244,0.24)] bg-[rgba(15,29,49,0.72)] p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
+          <Link href="/insurance" className="rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(82,214,244,0.42)]">
+            ← Back
+          </Link>
           <button
             onClick={() => window.print()}
-            className="bg-black text-white px-4 py-2 rounded-lg"
+            className="rounded-full bg-[#52d6f4] px-4 py-2 text-sm font-black text-[#06101d] shadow-[0_14px_38px_rgba(82,214,244,0.18)]"
           >
             Print / Save as PDF
           </button>
         </div>
 
-        <div>
-          <h1 className="text-3xl font-semibold">Insurance Policy Packet</h1>
-          <div className="mt-2 text-sm text-black/60">
-            Generated {new Date().toLocaleString()} • Items {items.length} •
-            Total Value {fmtMoney(totals.value)}
+        <section className="rounded-[30px] border border-[rgba(82,214,244,0.28)] bg-[linear-gradient(180deg,rgba(18,38,66,0.94),rgba(8,18,32,0.96))] p-5 shadow-[0_26px_86px_rgba(82,214,244,0.10),0_24px_88px_rgba(0,0,0,0.32)] sm:p-6">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">Insurance Packet</div>
+          <h1 className="mt-2 text-3xl font-black tracking-[-0.045em] text-white">Insurance Policy Packet</h1>
+          <div className="mt-2 text-sm text-[color:var(--muted)]">
+            Generated {new Date().toLocaleString()} • Items {items.length} • Total Value {fmtMoney(totals.value)}
           </div>
-        </div>
+        </section>
 
-        {items.map((item) => (
-          <div key={item.id} className="page-break mt-10">
-            <div className="border border-black/10 p-6 rounded-xl">
-              <div className="flex gap-6">
-                {/* IMAGE */}
-                <div className="w-48 shrink-0">
+        <div className="mt-6 space-y-5">
+          {items.map((item) => (
+            <article key={item.id} className="packet-card page-break rounded-[28px] border border-[rgba(104,146,196,0.24)] bg-[linear-gradient(180deg,rgba(17,35,59,0.88),rgba(9,20,36,0.94))] p-5 shadow-[0_18px_56px_rgba(0,0,0,0.24)]">
+              <div className="grid gap-5 md:grid-cols-[190px_minmax(0,1fr)]">
+                <div className="w-full shrink-0">
                   {item.imageFrontUrl ? (
                     <img
                       src={item.imageFrontUrl}
                       alt={item.title}
-                      className="w-full h-auto rounded-lg border border-black/10"
+                      className="max-h-[280px] w-full rounded-2xl border border-[rgba(104,146,196,0.24)] object-contain shadow-[0_18px_42px_rgba(0,0,0,0.24)]"
                     />
                   ) : (
-                    <div className="w-full h-64 bg-gray-200 flex items-center justify-center text-xs text-gray-500 rounded-lg">
-                      No Image
+                    <div className="grid h-64 w-full place-items-center rounded-2xl border border-[rgba(104,146,196,0.24)] bg-[linear-gradient(135deg,#0a1424,#162038)] text-xs font-black tracking-[0.16em] text-[color:var(--muted2)]">
+                      NO IMG
                     </div>
                   )}
                 </div>
 
-                {/* DETAILS */}
-                <div className="flex-1">
-                  <h2 className="text-xl font-semibold">{item.title}</h2>
-                  <div className="text-sm text-black/60 mt-1">
-                    {itemLabel(item)}
-                  </div>
+                <div className="min-w-0">
+                  <h2 className="text-2xl font-black tracking-[-0.03em] text-white">{item.title}</h2>
+                  <div className="mt-1 text-sm text-[color:var(--muted)]">{itemLabel(item)}</div>
 
-                  <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <div><strong>Grade:</strong> {item.grade ?? "-"}</div>
-                      <div><strong>Cert #:</strong> {item.certNumber ?? "-"}</div>
-                      <div><strong>Serial #:</strong> {item.serialNumber ?? "-"}</div>
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-[rgba(104,146,196,0.20)] bg-[rgba(7,16,31,0.42)] p-4 text-sm text-[#dbeafe]">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Identification</div>
+                      <div className="mt-3 space-y-1">
+                        <div><span className="text-[color:var(--muted)]">Grade:</span> {item.grade ?? "-"}</div>
+                        <div><span className="text-[color:var(--muted)]">Cert #:</span> {item.certNumber ?? "-"}</div>
+                        <div><span className="text-[color:var(--muted)]">Serial #:</span> {item.serialNumber ?? "-"}</div>
+                      </div>
                     </div>
-                    <div>
-                      <div><strong>Storage:</strong> {item.storageLocation ?? "-"}</div>
-                      <div><strong>Cost:</strong> {fmtMoney(item.purchasePrice)}</div>
-                      <div><strong>Value:</strong> {fmtMoney(item.currentValue)}</div>
+                    <div className="rounded-2xl border border-[rgba(104,146,196,0.20)] bg-[rgba(7,16,31,0.42)] p-4 text-sm text-[#dbeafe]">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Value / Storage</div>
+                      <div className="mt-3 space-y-1">
+                        <div><span className="text-[color:var(--muted)]">Storage:</span> {item.storageLocation ?? "-"}</div>
+                        <div><span className="text-[color:var(--muted)]">Cost:</span> <span className="font-semibold text-white">{fmtMoney(item.purchasePrice)}</span></div>
+                        <div><span className="text-[color:var(--muted)]">Value:</span> <span className="font-semibold text-white">{fmtMoney(item.currentValue)}</span></div>
+                      </div>
                     </div>
                   </div>
 
                   {item.valueSource && (
-                    <div className="mt-4 text-xs text-black/60">
-                      Source: {item.valueSource} • Updated{" "}
-                      {fmtDate(item.valueUpdatedAt)} • Confidence{" "}
-                      {item.valueConfidence ?? 0}%
+                    <div className="mt-4 rounded-2xl border border-[rgba(104,146,196,0.20)] bg-[rgba(7,16,31,0.30)] p-3 text-xs text-[color:var(--muted)]">
+                      Source: {item.valueSource} • Updated {fmtDate(item.valueUpdatedAt)} • Confidence {item.valueConfidence ?? 0}%
                     </div>
                   )}
                 </div>
               </div>
-            </div>
-          </div>
-        ))}
+            </article>
+          ))}
+        </div>
       </div>
     </main>
   );
