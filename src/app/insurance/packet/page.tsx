@@ -62,6 +62,7 @@ function toSeedItemsFromDemo(): Item[] {
 
 export default function InsurancePacketPage() {
   const [items, setItems] = useState<Item[]>([]);
+  const [includeImages, setIncludeImages] = useState(false);
 
   useEffect(() => {
     const seed = toSeedItemsFromDemo();
@@ -79,11 +80,24 @@ export default function InsurancePacketPage() {
     <main className="vltd-page-depth min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <style>{`
         @media print {
+          @page { margin: 0.45in; }
           .no-print { display: none !important; }
-          .page-break { break-before: page; page-break-before: always; }
-          img { break-inside: avoid; }
-          body, main, section, article, div { background: white !important; color: black !important; box-shadow: none !important; }
-          .packet-card { border: 1px solid #ddd !important; }
+          .print-only { display: block !important; }
+          .screen-only { display: none !important; }
+          .page-break { break-before: auto !important; page-break-before: auto !important; }
+          img { display: none !important; }
+          body, main, section, article, div, table, thead, tbody, tr, th, td { background: white !important; color: black !important; box-shadow: none !important; }
+          main { padding: 0 !important; }
+          .packet-card { border: 1px solid #ddd !important; break-inside: avoid; page-break-inside: avoid; margin: 0 0 10px 0 !important; padding: 12px !important; }
+          .packet-grid { display: block !important; }
+          .packet-image { display: none !important; }
+          .packet-details-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 8px !important; margin-top: 10px !important; }
+          .packet-box { border: 1px solid #ddd !important; padding: 8px !important; }
+          .packet-title { font-size: 16px !important; color: black !important; }
+          .packet-meta, .packet-small, .packet-box * { color: black !important; }
+        }
+        @media screen {
+          .print-only { display: none !important; }
         }
       `}</style>
 
@@ -92,12 +106,23 @@ export default function InsurancePacketPage() {
           <Link href="/insurance" className="rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(82,214,244,0.42)]">
             ← Back
           </Link>
-          <button
-            onClick={() => window.print()}
-            className="rounded-full bg-[#52d6f4] px-4 py-2 text-sm font-black text-[#06101d] shadow-[0_14px_38px_rgba(82,214,244,0.18)]"
-          >
-            Print / Save as PDF
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] px-4 py-2 text-sm text-[color:var(--muted)]">
+              <input
+                type="checkbox"
+                checked={includeImages}
+                onChange={(event) => setIncludeImages(event.target.checked)}
+                className="h-4 w-4 accent-[#52d6f4]"
+              />
+              Show images on screen
+            </label>
+            <button
+              onClick={() => window.print()}
+              className="rounded-full bg-[#52d6f4] px-4 py-2 text-sm font-black text-[#06101d] shadow-[0_14px_38px_rgba(82,214,244,0.18)]"
+            >
+              Print / Save as PDF
+            </button>
+          </div>
         </div>
 
         <section className="rounded-[30px] border border-[rgba(82,214,244,0.28)] bg-[linear-gradient(180deg,rgba(18,38,66,0.94),rgba(8,18,32,0.96))] p-5 shadow-[0_26px_86px_rgba(82,214,244,0.10),0_24px_88px_rgba(0,0,0,0.32)] sm:p-6">
@@ -106,42 +131,50 @@ export default function InsurancePacketPage() {
           <div className="mt-2 text-sm text-[color:var(--muted)]">
             Generated {new Date().toLocaleString()} • Items {items.length} • Total Value {fmtMoney(totals.value)}
           </div>
+          <div className="no-print mt-3 rounded-2xl border border-[rgba(82,214,244,0.18)] bg-[rgba(82,214,244,0.07)] px-4 py-3 text-sm text-[color:var(--muted)]">
+            PDF export is optimized without images so Chrome can generate the preview quickly. Use per-item sheets when you need photo-heavy documentation.
+          </div>
         </section>
 
-        <div className="mt-6 space-y-5">
+        <div className="print-only mt-3 text-sm">
+          Generated {new Date().toLocaleString()} • Items {items.length} • Total Value {fmtMoney(totals.value)}
+        </div>
+
+        <div className="mt-6 space-y-4">
           {items.map((item) => (
-            <article key={item.id} className="packet-card page-break rounded-[28px] border border-[rgba(104,146,196,0.24)] bg-[linear-gradient(180deg,rgba(17,35,59,0.88),rgba(9,20,36,0.94))] p-5 shadow-[0_18px_56px_rgba(0,0,0,0.24)]">
-              <div className="grid gap-5 md:grid-cols-[190px_minmax(0,1fr)]">
-                <div className="w-full shrink-0">
-                  {item.imageFrontUrl ? (
+            <article key={item.id} className="packet-card rounded-[24px] border border-[rgba(104,146,196,0.24)] bg-[linear-gradient(180deg,rgba(17,35,59,0.88),rgba(9,20,36,0.94))] p-4 shadow-[0_18px_56px_rgba(0,0,0,0.24)]">
+              <div className="packet-grid grid gap-4 md:grid-cols-[150px_minmax(0,1fr)]">
+                <div className="packet-image w-full shrink-0">
+                  {includeImages && item.imageFrontUrl ? (
                     <img
                       src={item.imageFrontUrl}
                       alt={item.title}
-                      className="max-h-[280px] w-full rounded-2xl border border-[rgba(104,146,196,0.24)] object-contain shadow-[0_18px_42px_rgba(0,0,0,0.24)]"
+                      loading="lazy"
+                      className="max-h-[220px] w-full rounded-2xl border border-[rgba(104,146,196,0.24)] object-contain shadow-[0_18px_42px_rgba(0,0,0,0.24)]"
                     />
                   ) : (
-                    <div className="grid h-64 w-full place-items-center rounded-2xl border border-[rgba(104,146,196,0.24)] bg-[linear-gradient(135deg,#0a1424,#162038)] text-xs font-black tracking-[0.16em] text-[color:var(--muted2)]">
+                    <div className="grid h-44 w-full place-items-center rounded-2xl border border-[rgba(104,146,196,0.24)] bg-[linear-gradient(135deg,#0a1424,#162038)] text-xs font-black tracking-[0.16em] text-[color:var(--muted2)]">
                       NO IMG
                     </div>
                   )}
                 </div>
 
                 <div className="min-w-0">
-                  <h2 className="text-2xl font-black tracking-[-0.03em] text-white">{item.title}</h2>
-                  <div className="mt-1 text-sm text-[color:var(--muted)]">{itemLabel(item)}</div>
+                  <h2 className="packet-title text-xl font-black tracking-[-0.03em] text-white">{item.title}</h2>
+                  <div className="packet-meta mt-1 text-sm text-[color:var(--muted)]">{itemLabel(item)}</div>
 
-                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl border border-[rgba(104,146,196,0.20)] bg-[rgba(7,16,31,0.42)] p-4 text-sm text-[#dbeafe]">
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Identification</div>
-                      <div className="mt-3 space-y-1">
+                  <div className="packet-details-grid mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="packet-box rounded-2xl border border-[rgba(104,146,196,0.20)] bg-[rgba(7,16,31,0.42)] p-3 text-sm text-[#dbeafe]">
+                      <div className="packet-small text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Identification</div>
+                      <div className="mt-2 space-y-1">
                         <div><span className="text-[color:var(--muted)]">Grade:</span> {item.grade ?? "-"}</div>
                         <div><span className="text-[color:var(--muted)]">Cert #:</span> {item.certNumber ?? "-"}</div>
                         <div><span className="text-[color:var(--muted)]">Serial #:</span> {item.serialNumber ?? "-"}</div>
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-[rgba(104,146,196,0.20)] bg-[rgba(7,16,31,0.42)] p-4 text-sm text-[#dbeafe]">
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Value / Storage</div>
-                      <div className="mt-3 space-y-1">
+                    <div className="packet-box rounded-2xl border border-[rgba(104,146,196,0.20)] bg-[rgba(7,16,31,0.42)] p-3 text-sm text-[#dbeafe]">
+                      <div className="packet-small text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Value / Storage</div>
+                      <div className="mt-2 space-y-1">
                         <div><span className="text-[color:var(--muted)]">Storage:</span> {item.storageLocation ?? "-"}</div>
                         <div><span className="text-[color:var(--muted)]">Cost:</span> <span className="font-semibold text-white">{fmtMoney(item.purchasePrice)}</span></div>
                         <div><span className="text-[color:var(--muted)]">Value:</span> <span className="font-semibold text-white">{fmtMoney(item.currentValue)}</span></div>
@@ -150,7 +183,7 @@ export default function InsurancePacketPage() {
                   </div>
 
                   {item.valueSource && (
-                    <div className="mt-4 rounded-2xl border border-[rgba(104,146,196,0.20)] bg-[rgba(7,16,31,0.30)] p-3 text-xs text-[color:var(--muted)]">
+                    <div className="packet-small mt-3 rounded-2xl border border-[rgba(104,146,196,0.20)] bg-[rgba(7,16,31,0.30)] p-3 text-xs text-[color:var(--muted)]">
                       Source: {item.valueSource} • Updated {fmtDate(item.valueUpdatedAt)} • Confidence {item.valueConfidence ?? 0}%
                     </div>
                   )}
