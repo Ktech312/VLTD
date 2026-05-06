@@ -18,6 +18,8 @@ type Item = ModelItem & {
   valueConfidence?: number;
 };
 
+const LS_INSURANCE_EXCLUDED = "vltd_insurance_excluded_item_ids_v1";
+
 function clamp(n: number) {
   return Number.isFinite(n) ? n : 0;
 }
@@ -79,20 +81,64 @@ function itemLabel(i: Item) {
   return s ? `${u} • ${c} • ${s}` : `${u} • ${c}`;
 }
 
+function readExcludedIds() {
+  if (typeof window === "undefined") return new Set<string>();
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(LS_INSURANCE_EXCLUDED) ?? "[]");
+    return new Set(Array.isArray(parsed) ? parsed.map(String) : []);
+  } catch {
+    return new Set<string>();
+  }
+}
+
+function saveExcludedIds(ids: Set<string>) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(LS_INSURANCE_EXCLUDED, JSON.stringify(Array.from(ids)));
+}
+
 export default function InsuranceExportPage() {
   const [items, setItems] = useState<Item[]>([]);
+  const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const seed = toSeedItemsFromDemo();
     const loaded = loadItemsOrSeed(seed as any) as any as Item[];
     setItems(loaded);
+    setExcludedIds(readExcludedIds());
   }, []);
 
+  const selectedItems = useMemo(() => items.filter((item) => !excludedIds.has(String(item.id))), [items, excludedIds]);
+
   const totals = useMemo(() => {
-    const cost = items.reduce((s, i) => s + clamp(Number(i.purchasePrice ?? 0)), 0);
-    const value = items.reduce((s, i) => s + clamp(Number(i.currentValue ?? 0)), 0);
+    const cost = selectedItems.reduce((s, i) => s + clamp(Number(i.purchasePrice ?? 0)), 0);
+    const value = selectedItems.reduce((s, i) => s + clamp(Number(i.currentValue ?? 0)), 0);
     return { cost, value };
-  }, [items]);
+  }, [selectedItems]);
+
+  function setItemIncluded(id: string, included: boolean) {
+    setExcludedIds((prev) => {
+      const next = new Set(prev);
+      if (included) next.delete(id);
+      else next.add(id);
+      saveExcludedIds(next);
+      return next;
+    });
+  }
+
+  function includeAll() {
+    const next = new Set<string>();
+    setExcludedIds(next);
+    saveExcludedIds(next);
+  }
+
+  function excludeZeroValue() {
+    const next = new Set(excludedIds);
+    items.forEach((item) => {
+      if (Number(item.currentValue ?? 0) <= 0) next.add(String(item.id));
+    });
+    setExcludedIds(next);
+    saveExcludedIds(next);
+  }
 
   return (
     <main className="vltd-page-depth min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
@@ -119,6 +165,12 @@ export default function InsuranceExportPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <button onClick={includeAll} className="rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] px-4 py-2 text-sm font-semibold text-[color:var(--accent)]">
+              Include all
+            </button>
+            <button onClick={excludeZeroValue} className="rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] px-4 py-2 text-sm font-semibold text-[color:var(--accent)]">
+              Exclude $0 value
+            </button>
             <Link href="/insurance/packet" className="rounded-full border border-[rgba(82,214,244,0.42)] bg-[rgba(82,214,244,0.10)] px-4 py-2 text-sm font-black text-[color:var(--accent)] shadow-[0_14px_38px_rgba(82,214,244,0.12)]">
               Policy Packet (PDF)
             </Link>
@@ -132,13 +184,17 @@ export default function InsuranceExportPage() {
           <div className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">Insurance Inventory</div>
           <h1 className="mt-2 text-3xl font-black tracking-[-0.045em] text-white">Vault Inventory Report</h1>
           <div className="mt-2 text-sm text-[color:var(--muted)]">
-            Generated {new Date().toLocaleString()} • Items {items.length} • Total Value {fmtMoney(totals.value)} • Total Cost {fmtMoney(totals.cost)}
+            Generated {new Date().toLocaleString()} • Included {selectedItems.length} of {items.length} items • Total Value {fmtMoney(totals.value)} • Total Cost {fmtMoney(totals.cost)}
+          </div>
+          <div className="no-print mt-3 rounded-2xl border border-[rgba(82,214,244,0.18)] bg-[rgba(82,214,244,0.07)] px-4 py-3 text-sm text-[color:var(--muted)]">
+            Checked items are included in insurance reports and the policy packet. Uncheck anything that should not be part of insurance documentation.
           </div>
 
           <div className="mt-6 overflow-x-auto rounded-2xl border border-[rgba(104,146,196,0.22)] bg-[rgba(7,16,31,0.42)]">
             <table className="w-full border-collapse text-sm text-[#dbeafe]">
               <thead>
                 <tr className="border-b border-[rgba(104,146,196,0.22)] text-left text-[11px] uppercase tracking-[0.18em] text-[#7ddff5]">
+                  <th className="no-print py-3 pl-4 pr-3">Insure</th>
                   <th className="py-3 pl-4 pr-3">Item</th>
                   <th className="py-3 pr-3">Category</th>
                   <th className="py-3 pr-3">Grade</th>
@@ -151,36 +207,48 @@ export default function InsuranceExportPage() {
                 </tr>
               </thead>
               <tbody>
-                {items.map((i) => (
-                  <tr key={i.id} className="border-b border-[rgba(104,146,196,0.14)] align-top last:border-b-0">
-                    <td className="py-3 pl-4 pr-3">
-                      <div className="font-black text-white">{i.title}</div>
-                      <div className="mt-0.5 text-xs text-[color:var(--muted)]">
-                        {i.subtitle ? `${i.subtitle} • ` : ""}
-                        {i.number ?? ""}
-                      </div>
-                      <div className="no-print mt-2">
-                        <Link href={`/insurance/item?id=${encodeURIComponent(String(i.id))}`} className="text-xs font-semibold text-[color:var(--accent)] underline underline-offset-4">
-                          Per-item sheet →
-                        </Link>
-                      </div>
-                    </td>
-                    <td className="py-3 pr-3 text-[color:var(--muted)]">{itemLabel(i)}</td>
-                    <td className="py-3 pr-3">{i.grade ?? ""}</td>
-                    <td className="py-3 pr-3">{i.certNumber ?? ""}</td>
-                    <td className="py-3 pr-3">{i.serialNumber ?? ""}</td>
-                    <td className="py-3 pr-3">{i.storageLocation ?? ""}</td>
-                    <td className="py-3 pr-3 font-semibold text-white">{fmtMoney(Number(i.purchasePrice ?? 0))}</td>
-                    <td className="py-3 pr-3 font-semibold text-white">{fmtMoney(Number(i.currentValue ?? 0))}</td>
-                    <td className="py-3 pr-4 text-xs text-[color:var(--muted)]">
-                      <div>{(i as any).valueSource ?? ""}</div>
-                      <div>
-                        {(i as any).valueUpdatedAt ? fmtDate((i as any).valueUpdatedAt) : ""}
-                        {typeof (i as any).valueConfidence === "number" ? ` • ${(i as any).valueConfidence}%` : ""}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {items.map((i) => {
+                  const included = !excludedIds.has(String(i.id));
+                  return (
+                    <tr key={i.id} className={included ? "border-b border-[rgba(104,146,196,0.14)] align-top last:border-b-0" : "border-b border-[rgba(104,146,196,0.10)] align-top opacity-45 last:border-b-0"}>
+                      <td className="no-print py-3 pl-4 pr-3">
+                        <input
+                          type="checkbox"
+                          checked={included}
+                          onChange={(event) => setItemIncluded(String(i.id), event.target.checked)}
+                          className="h-5 w-5 accent-[#52d6f4]"
+                          aria-label={`Include ${i.title} in insurance`}
+                        />
+                      </td>
+                      <td className="py-3 pl-4 pr-3">
+                        <div className="font-black text-white">{i.title}</div>
+                        <div className="mt-0.5 text-xs text-[color:var(--muted)]">
+                          {i.subtitle ? `${i.subtitle} • ` : ""}
+                          {i.number ?? ""}
+                        </div>
+                        <div className="no-print mt-2">
+                          <Link href={`/insurance/item?id=${encodeURIComponent(String(i.id))}`} className="text-xs font-semibold text-[color:var(--accent)] underline underline-offset-4">
+                            Per-item sheet →
+                          </Link>
+                        </div>
+                      </td>
+                      <td className="py-3 pr-3 text-[color:var(--muted)]">{itemLabel(i)}</td>
+                      <td className="py-3 pr-3">{i.grade ?? ""}</td>
+                      <td className="py-3 pr-3">{i.certNumber ?? ""}</td>
+                      <td className="py-3 pr-3">{i.serialNumber ?? ""}</td>
+                      <td className="py-3 pr-3">{i.storageLocation ?? ""}</td>
+                      <td className="py-3 pr-3 font-semibold text-white">{fmtMoney(Number(i.purchasePrice ?? 0))}</td>
+                      <td className="py-3 pr-3 font-semibold text-white">{fmtMoney(Number(i.currentValue ?? 0))}</td>
+                      <td className="py-3 pr-4 text-xs text-[color:var(--muted)]">
+                        <div>{(i as any).valueSource ?? ""}</div>
+                        <div>
+                          {(i as any).valueUpdatedAt ? fmtDate((i as any).valueUpdatedAt) : ""}
+                          {typeof (i as any).valueConfidence === "number" ? ` • ${(i as any).valueConfidence}%` : ""}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
 
