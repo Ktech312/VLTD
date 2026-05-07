@@ -227,7 +227,7 @@ function SoldCard({
               src={item.imageFrontUrl}
               alt={item.title}
               className="h-full w-full"
-              imageClassName="object-contain"
+              imageClassName="object-cover object-center"
               draggable={false}
             />
           ) : (
