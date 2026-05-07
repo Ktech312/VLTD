@@ -6,7 +6,7 @@ import Link from "next/link";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
-import { loadItems, saveItem, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
+import { getPrimaryImageUrl, loadItems, saveItem, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 
 const SALES_KEY = "vltd_sales_history";
@@ -162,7 +162,7 @@ function soldItemFromVaultItem(item: VaultItem): SoldItem | null {
     categoryLabel: item.categoryLabel,
     customCategoryLabel: item.customCategoryLabel,
     subcategoryLabel: item.subcategoryLabel,
-    imageFrontUrl: item.imageFrontUrl,
+    imageFrontUrl: getPrimaryImageUrl(item) || item.imageFrontUrl,
     purchasePrice: item.purchasePrice,
     purchaseTax: item.purchaseTax,
     purchaseShipping: item.purchaseShipping,
@@ -204,13 +204,16 @@ function soldStats(items: SoldItem[]): SoldStats {
 function SoldCard({
   item,
   onReturnToVault,
+  onViewImage,
 }: {
   item: SoldItem;
   onReturnToVault: (item: SoldItem) => void;
+  onViewImage: (item: SoldItem, imageUrl: string) => void;
 }) {
   const profit = item.soldPrice - cost(item);
   const universe = inferSoldUniverse(item);
   const detailHref = `/vault/item/${item.id}?sold=1`;
+  const imageUrl = getPrimaryImageUrl(item as unknown as VaultItem) || item.imageFrontUrl || "";
 
   return (
     <article
@@ -220,23 +223,36 @@ function SoldCard({
         SOLD
       </span>
 
-      <Link href={detailHref} className="block h-[78px] overflow-hidden rounded-[10px] bg-black/18">
-        <div className="flex h-full items-center justify-center bg-black/10 p-1">
-          {item.imageFrontUrl ? (
+      {imageUrl ? (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onViewImage(item, imageUrl);
+          }}
+          className="block h-[78px] overflow-hidden rounded-[10px] bg-black/18"
+          aria-label={`View image for ${item.title}`}
+        >
+          <div className="flex h-full items-center justify-center bg-black/10 p-1">
             <ProgressiveImage
-              src={item.imageFrontUrl}
+              src={imageUrl}
               alt={item.title}
               className="h-full w-full"
               imageClassName="object-contain object-center"
               draggable={false}
             />
-          ) : (
+          </div>
+        </button>
+      ) : (
+        <Link href={detailHref} className="block h-[78px] overflow-hidden rounded-[10px] bg-black/18">
+          <div className="flex h-full items-center justify-center bg-black/10 p-1">
             <div className="flex h-full w-full items-center justify-center px-1 text-center text-[9px] font-semibold text-[color:var(--muted)]">
               No image
             </div>
-          )}
-        </div>
-      </Link>
+          </div>
+        </Link>
+      )}
 
       <Link href={detailHref} className="mt-2 min-w-0">
         <div className="line-clamp-1 text-[13px] font-extrabold leading-tight text-white sm:text-[14px]">
@@ -282,6 +298,7 @@ function SoldCard({
 export default function SoldPage() {
   const [items, setItems] = useState<SoldItem[]>(() => buildSoldItems());
   const [status, setStatus] = useState("");
+  const [imagePreview, setImagePreview] = useState<{ title: string; imageUrl: string } | null>(null);
 
   function load() {
     setItems(buildSoldItems());
@@ -406,12 +423,44 @@ export default function SoldPage() {
           ) : (
             <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {items.map((item) => (
-                <SoldCard key={item.id} item={item} onReturnToVault={(target) => void handleReturnToVault(target)} />
+                <SoldCard
+                  key={item.id}
+                  item={item}
+                  onReturnToVault={(target) => void handleReturnToVault(target)}
+                  onViewImage={(target, imageUrl) => setImagePreview({ title: target.title, imageUrl })}
+                />
               ))}
             </div>
           )}
         </section>
       </div>
+
+      {imagePreview ? (
+        <button
+          type="button"
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/78 p-4 backdrop-blur-sm"
+          onClick={() => setImagePreview(null)}
+          aria-label="Close image preview"
+        >
+          <span className="relative block max-h-[88vh] w-full max-w-4xl rounded-[24px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.5)]">
+            <span className="mb-3 flex items-center justify-between gap-3">
+              <span className="line-clamp-1 text-left text-sm font-semibold text-white">{imagePreview.title}</span>
+              <span className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-cyan-100 ring-1 ring-[color:var(--border)]">
+                Close
+              </span>
+            </span>
+            <span className="block max-h-[78vh] overflow-hidden rounded-[18px] bg-black/30">
+              <ProgressiveImage
+                src={imagePreview.imageUrl}
+                alt={imagePreview.title}
+                className="h-[78vh] w-full"
+                imageClassName="object-contain object-center"
+                draggable={false}
+              />
+            </span>
+          </span>
+        </button>
+      ) : null}
     </main>
   );
 }
