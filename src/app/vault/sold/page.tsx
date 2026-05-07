@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
+import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
-import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
+import { loadItems, saveItem, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
+import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 
 const SALES_KEY = "vltd_sales_history";
 
@@ -129,6 +131,19 @@ function readSales(): SoldItem[] {
   }
 }
 
+function writeSales(items: SoldItem[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(SALES_KEY, JSON.stringify(items));
+  } catch {
+    // Sales history is a compatibility cache. Cloud item state remains primary.
+  }
+}
+
+function removeSaleRecord(itemId: string) {
+  writeSales(readSales().filter((sale) => String(sale.id) !== String(itemId)));
+}
+
 function soldItemFromVaultItem(item: VaultItem): SoldItem | null {
   if (item.status !== "SOLD" && !item.soldAt && item.soldPrice === undefined) return null;
 
@@ -182,22 +197,29 @@ function soldStats(items: SoldItem[]): SoldStats {
   );
 }
 
-function SoldCard({ item }: { item: SoldItem }) {
+function SoldCard({
+  item,
+  onReturnToVault,
+}: {
+  item: SoldItem;
+  onReturnToVault: (item: SoldItem) => void;
+}) {
   const profit = item.soldPrice - cost(item);
   const universe = inferSoldUniverse(item);
+  const detailHref = `/vault/item/${item.id}?sold=1`;
 
   return (
-    <Link
-      href={`/vault/item/${item.id}?sold=1`}
+    <article
       className="group grid h-[118px] grid-cols-[78px_minmax(0,1fr)_74px] gap-2 overflow-hidden rounded-[14px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.024),rgba(255,255,255,0.01))] p-1.5 shadow-[0_8px_18px_rgba(0,0,0,0.12)] transition hover:border-cyan-400/25 hover:bg-white/[0.035]"
     >
-      <div className="overflow-hidden rounded-[11px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),rgba(255,255,255,0.012)_48%,rgba(0,0,0,0.18)_100%)]">
+      <Link href={detailHref} className="overflow-hidden rounded-[11px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),rgba(255,255,255,0.012)_48%,rgba(0,0,0,0.18)_100%)]">
         <div className="flex h-full items-center justify-center bg-black/10 p-1">
           {item.imageFrontUrl ? (
-            <img
+            <ProgressiveImage
               src={item.imageFrontUrl}
               alt={item.title}
-              className="h-full w-full object-cover"
+              className="h-full w-full"
+              imageClassName="object-contain"
               draggable={false}
             />
           ) : (
@@ -206,9 +228,9 @@ function SoldCard({ item }: { item: SoldItem }) {
             </div>
           )}
         </div>
-      </div>
+      </Link>
 
-      <div className="flex min-w-0 flex-col py-0.5">
+      <Link href={detailHref} className="flex min-w-0 flex-col py-0.5">
         <div className="min-w-0">
           <div className="line-clamp-1 text-[14px] font-semibold leading-tight text-cyan-300 sm:text-[15px]">
             {item.title}
@@ -236,26 +258,36 @@ function SoldCard({ item }: { item: SoldItem }) {
             {money(profit)}
           </span>
         </div>
-      </div>
+      </Link>
 
       <div className="flex min-h-full flex-col items-end justify-between py-0.5 pr-0.5">
-        <span className="rounded-full bg-amber-500/18 px-2 py-0.5 text-[10px] font-semibold text-amber-100 ring-1 ring-amber-400/30">
-          SOLD
-        </span>
-        <div className="text-right text-[9px] font-semibold leading-tight text-[color:var(--muted2)]">
-          {new Date(item.soldAt).toLocaleDateString(undefined, {
-            month: "short",
-            day: "numeric",
-            year: "2-digit",
-          })}
-        </div>
+        <Link href={detailHref} className="text-right">
+          <span className="rounded-full bg-amber-500/18 px-2 py-0.5 text-[10px] font-semibold text-amber-100 ring-1 ring-amber-400/30">
+            SOLD
+          </span>
+          <div className="mt-2 text-[9px] font-semibold leading-tight text-[color:var(--muted2)]">
+            {new Date(item.soldAt).toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+              year: "2-digit",
+            })}
+          </div>
+        </Link>
+        <button
+          type="button"
+          onClick={() => onReturnToVault(item)}
+          className="rounded-full bg-cyan-400/12 px-2 py-1 text-[10px] font-semibold text-cyan-100 ring-1 ring-cyan-300/25 transition hover:bg-cyan-400/20"
+        >
+          Return
+        </button>
       </div>
-    </Link>
+    </article>
   );
 }
 
 export default function SoldPage() {
   const [items, setItems] = useState<SoldItem[]>(() => buildSoldItems());
+  const [status, setStatus] = useState("");
 
   function load() {
     setItems(buildSoldItems());
@@ -273,6 +305,30 @@ export default function SoldPage() {
   }, []);
 
   const stats = useMemo(() => soldStats(items), [items]);
+
+  async function handleReturnToVault(item: SoldItem) {
+    const confirmed = window.confirm(`Return "${item.title}" to the Vault and remove its sold status?`);
+    if (!confirmed) return;
+
+    const existing = loadItems({ includeAllProfiles: true }).find((entry) => String(entry.id) === String(item.id));
+    const restored: VaultItem = {
+      ...(existing ?? (item as unknown as VaultItem)),
+      id: item.id,
+      title: item.title || existing?.title || "Restored item",
+      status: "COLLECTION",
+      soldPrice: undefined,
+      soldAt: undefined,
+      createdAt: existing?.createdAt ?? Date.now(),
+    };
+
+    saveItem(restored);
+    removeSaleRecord(item.id);
+    setItems((prev) => prev.filter((entry) => String(entry.id) !== String(item.id)));
+    setStatus(`Returned ${restored.title} to Vault.`);
+    enqueueVaultItemSync(restored.id);
+    await processVaultSyncQueue();
+    window.dispatchEvent(new Event("vltd:vault-updated"));
+  }
 
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
@@ -320,6 +376,12 @@ export default function SoldPage() {
                 </div>
               </div>
             </div>
+
+            {status ? (
+              <div className="rounded-[14px] bg-cyan-400/10 px-3 py-2 text-sm text-cyan-100 ring-1 ring-cyan-300/20">
+                {status}
+              </div>
+            ) : null}
           </div>
         </section>
 
@@ -331,7 +393,7 @@ export default function SoldPage() {
           ) : (
             <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {items.map((item) => (
-                <SoldCard key={item.id} item={item} />
+                <SoldCard key={item.id} item={item} onReturnToVault={(target) => void handleReturnToVault(target)} />
               ))}
             </div>
           )}
