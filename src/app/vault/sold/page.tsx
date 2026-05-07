@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { loadItems, saveItem, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
@@ -28,6 +29,7 @@ type SoldItem = {
   purchaseFees?: number;
   soldPrice: number;
   soldAt: number;
+  itemId?: string;
 };
 
 type SoldStats = {
@@ -141,7 +143,9 @@ function writeSales(items: SoldItem[]) {
 }
 
 function removeSaleRecord(itemId: string) {
-  writeSales(readSales().filter((sale) => String(sale.id) !== String(itemId)));
+  writeSales(
+    readSales().filter((sale) => String(sale.id) !== String(itemId) && String(sale.itemId ?? "") !== String(itemId))
+  );
 }
 
 function soldItemFromVaultItem(item: VaultItem): SoldItem | null {
@@ -210,12 +214,13 @@ function SoldCard({
 
   return (
     <article
-      className="group grid min-h-[118px] grid-cols-[88px_minmax(0,1fr)] gap-2 overflow-hidden rounded-[16px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.014))] p-2 shadow-[0_10px_22px_rgba(0,0,0,0.14)] transition hover:border-cyan-400/25 hover:bg-white/[0.035] sm:grid-cols-[92px_minmax(0,1fr)_132px]"
+      className="group relative flex h-[174px] flex-col overflow-hidden rounded-[14px] border border-white/8 bg-[#07101d]/88 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-cyan-400/10 transition hover:-translate-y-0.5 hover:ring-cyan-300/30"
     >
-      <Link href={detailHref} className="relative block h-[102px] overflow-hidden rounded-[13px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),rgba(255,255,255,0.012)_48%,rgba(0,0,0,0.18)_100%)]">
-        <span className="absolute right-2 top-2 z-10 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-100 ring-1 ring-amber-400/30">
-          SOLD
-        </span>
+      <span className="absolute right-2 top-2 z-10 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[8px] font-semibold text-amber-100 ring-1 ring-amber-400/30">
+        SOLD
+      </span>
+
+      <Link href={detailHref} className="block h-[78px] overflow-hidden rounded-[10px] bg-black/18">
         <div className="flex h-full items-center justify-center bg-black/10 p-1">
           {item.imageFrontUrl ? (
             <ProgressiveImage
@@ -233,49 +238,42 @@ function SoldCard({
         </div>
       </Link>
 
-      <Link href={detailHref} className="flex min-w-0 flex-col justify-center rounded-[13px] bg-black/10 px-2.5 py-2 ring-1 ring-white/6">
-        <div className="min-w-0">
-          <div className="line-clamp-1 text-[15px] font-extrabold leading-tight text-white">
-            {item.title}
-          </div>
-          <div className="mt-1 line-clamp-1 text-[11px] font-medium text-cyan-100/65">
-            {itemMeta(item)}
-          </div>
+      <Link href={detailHref} className="mt-2 min-w-0">
+        <div className="line-clamp-1 text-[13px] font-extrabold leading-tight text-white sm:text-[14px]">
+          {item.title}
         </div>
-
-        <div className="mt-2 inline-flex w-fit max-w-full rounded-full bg-black/20 px-2 py-0.5 text-[10px] font-semibold text-cyan-100/70 ring-1 ring-white/10">
-          <span className="truncate">{UNIVERSE_LABEL[universe] ?? "Misc"}</span>
+        <div className="mt-0.5 line-clamp-1 text-[10px] font-medium text-cyan-100/55">
+          {UNIVERSE_LABEL[universe] ?? "Misc"} · {itemMeta(item)}
         </div>
       </Link>
 
-      <div className="col-span-2 rounded-[13px] bg-black/16 p-2 ring-1 ring-white/8 sm:col-span-1">
-        <div className="flex items-start justify-between gap-3 sm:block">
-          <div>
-            <div className="text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Sold Price</div>
-            <div className="mt-1 text-lg font-extrabold leading-none text-white">{money(item.soldPrice)}</div>
-          </div>
-          <div className={profit >= 0 ? "text-right text-sm font-bold text-emerald-300 sm:mt-1 sm:text-left" : "text-right text-sm font-bold text-red-300 sm:mt-1 sm:text-left"}>
+      <div className="mt-auto flex items-end justify-between gap-2 pt-2">
+        <div className="min-w-0">
+          <div className="text-[13px] font-extrabold leading-none text-white">{money(item.soldPrice)}</div>
+          <div className={profit >= 0 ? "mt-1 text-[10px] font-bold leading-none text-emerald-300" : "mt-1 text-[10px] font-bold leading-none text-red-300"}>
             {profit >= 0 ? "+" : ""}
             {money(profit)}
           </div>
-        </div>
-
-        <div className="mt-2 flex items-center justify-between gap-2 sm:block">
-          <Link href={detailHref} className="text-[10px] font-semibold text-[color:var(--muted2)] transition hover:text-cyan-200">
+          <div className="mt-1 text-[9px] font-semibold text-[color:var(--muted2)]">
             {new Date(item.soldAt).toLocaleDateString(undefined, {
               month: "short",
               day: "numeric",
               year: "2-digit",
             })}
-          </Link>
-          <button
-            type="button"
-            onClick={() => onReturnToVault(item)}
-            className="rounded-full bg-cyan-400/14 px-3 py-1.5 text-[11px] font-semibold text-cyan-100 ring-1 ring-cyan-300/25 transition hover:bg-cyan-400/22 sm:mt-2 sm:w-full"
-          >
-            Return
-          </button>
+          </div>
         </div>
+
+        <button
+          type="button"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onReturnToVault(item);
+          }}
+          className="shrink-0 rounded-full bg-cyan-400/14 px-2.5 py-1.5 text-[10px] font-semibold text-cyan-100 ring-1 ring-cyan-300/25 transition hover:bg-cyan-400/22"
+        >
+          Return
+        </button>
       </div>
     </article>
   );
@@ -321,8 +319,27 @@ export default function SoldPage() {
     removeSaleRecord(item.id);
     setItems((prev) => prev.filter((entry) => String(entry.id) !== String(item.id)));
     setStatus(`Returned ${restored.title} to Vault.`);
+
+    const supabase = getSupabaseBrowserClient();
+    if (supabase) {
+      const { error } = await supabase
+        .from("vault_items")
+        .update({
+          status: "COLLECTION",
+          sold_price: null,
+          sold_at: null,
+        })
+        .eq("id", item.id);
+
+      if (error) {
+        setStatus(`${error.message} Returned locally only.`);
+      }
+    }
+
     enqueueVaultItemSync(restored.id);
     await processVaultSyncQueue();
+    await syncVaultItemsFromSupabase();
+    load();
     window.dispatchEvent(new Event("vltd:vault-updated"));
   }
 
@@ -387,7 +404,7 @@ export default function SoldPage() {
               No sold items yet.
             </div>
           ) : (
-            <div className="grid gap-2 lg:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {items.map((item) => (
                 <SoldCard key={item.id} item={item} onReturnToVault={(target) => void handleReturnToVault(target)} />
               ))}
