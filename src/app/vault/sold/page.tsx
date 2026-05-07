@@ -210,9 +210,12 @@ function SoldCard({
 
   return (
     <article
-      className="group grid h-[118px] grid-cols-[78px_minmax(0,1fr)_74px] gap-2 overflow-hidden rounded-[14px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.024),rgba(255,255,255,0.01))] p-1.5 shadow-[0_8px_18px_rgba(0,0,0,0.12)] transition hover:border-cyan-400/25 hover:bg-white/[0.035]"
+      className="group flex min-h-[236px] flex-col overflow-hidden rounded-[18px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.014))] p-2 shadow-[0_12px_28px_rgba(0,0,0,0.16)] transition hover:border-cyan-400/25 hover:bg-white/[0.035]"
     >
-      <Link href={detailHref} className="overflow-hidden rounded-[11px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),rgba(255,255,255,0.012)_48%,rgba(0,0,0,0.18)_100%)]">
+      <Link href={detailHref} className="relative block h-[108px] overflow-hidden rounded-[14px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),rgba(255,255,255,0.012)_48%,rgba(0,0,0,0.18)_100%)]">
+        <span className="absolute right-2 top-2 z-10 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-100 ring-1 ring-amber-400/30">
+          SOLD
+        </span>
         <div className="flex h-full items-center justify-center bg-black/10 p-1">
           {item.imageFrontUrl ? (
             <ProgressiveImage
@@ -230,56 +233,51 @@ function SoldCard({
         </div>
       </Link>
 
-      <Link href={detailHref} className="flex min-w-0 flex-col py-0.5">
+      <Link href={detailHref} className="mt-2 flex min-w-0 flex-1 flex-col">
         <div className="min-w-0">
-          <div className="line-clamp-1 text-[14px] font-semibold leading-tight text-cyan-300 sm:text-[15px]">
+          <div className="line-clamp-1 text-[15px] font-extrabold leading-tight text-white">
             {item.title}
           </div>
-          <div className="mt-1 line-clamp-1 text-[11px] font-medium text-[color:var(--fg)]">
+          <div className="mt-1 line-clamp-1 text-[11px] font-medium text-cyan-100/65">
             {itemMeta(item)}
           </div>
         </div>
 
-        <div className="mt-1 min-w-0">
-          <div className="text-[8px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">
-            Universe
-          </div>
-          <div className="mt-0.5 truncate rounded-md bg-black/20 px-1.5 py-0.5 text-[9px] font-semibold text-[color:var(--fg)] ring-1 ring-white/10">
-            {UNIVERSE_LABEL[universe] ?? "Misc"}
-          </div>
+        <div className="mt-2 inline-flex w-fit max-w-full rounded-full bg-black/20 px-2 py-0.5 text-[10px] font-semibold text-cyan-100/70 ring-1 ring-white/10">
+          <span className="truncate">{UNIVERSE_LABEL[universe] ?? "Misc"}</span>
         </div>
 
-        <div className="mt-auto flex items-baseline gap-2 pt-1.5">
-          <span className="text-[15px] font-extrabold leading-none text-[color:var(--fg)]">
-            {money(item.soldPrice)}
-          </span>
-          <span className={profit >= 0 ? "text-[12px] font-bold leading-none text-emerald-300" : "text-[12px] font-bold leading-none text-red-300"}>
-            {profit >= 0 ? "+" : ""}
-            {money(profit)}
-          </span>
-        </div>
+        <div className="mt-auto pt-3" />
       </Link>
 
-      <div className="flex min-h-full flex-col items-end justify-between py-0.5 pr-0.5">
-        <Link href={detailHref} className="text-right">
-          <span className="rounded-full bg-amber-500/18 px-2 py-0.5 text-[10px] font-semibold text-amber-100 ring-1 ring-amber-400/30">
-            SOLD
-          </span>
-          <div className="mt-2 text-[9px] font-semibold leading-tight text-[color:var(--muted2)]">
+      <div className="mt-2 rounded-[14px] bg-black/16 p-2 ring-1 ring-white/8">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <div className="text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Sold Price</div>
+            <div className="mt-1 text-lg font-extrabold leading-none text-white">{money(item.soldPrice)}</div>
+          </div>
+          <div className={profit >= 0 ? "text-right text-sm font-bold text-emerald-300" : "text-right text-sm font-bold text-red-300"}>
+            {profit >= 0 ? "+" : ""}
+            {money(profit)}
+          </div>
+        </div>
+
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <Link href={detailHref} className="text-[10px] font-semibold text-[color:var(--muted2)] transition hover:text-cyan-200">
             {new Date(item.soldAt).toLocaleDateString(undefined, {
               month: "short",
               day: "numeric",
               year: "2-digit",
             })}
-          </div>
-        </Link>
-        <button
-          type="button"
-          onClick={() => onReturnToVault(item)}
-          className="rounded-full bg-cyan-400/12 px-2 py-1 text-[10px] font-semibold text-cyan-100 ring-1 ring-cyan-300/25 transition hover:bg-cyan-400/20"
-        >
-          Return
-        </button>
+          </Link>
+          <button
+            type="button"
+            onClick={() => onReturnToVault(item)}
+            className="rounded-full bg-cyan-400/14 px-3 py-1.5 text-[11px] font-semibold text-cyan-100 ring-1 ring-cyan-300/25 transition hover:bg-cyan-400/22"
+          >
+            Return to Vault
+          </button>
+        </div>
       </div>
     </article>
   );
@@ -391,7 +389,7 @@ export default function SoldPage() {
               No sold items yet.
             </div>
           ) : (
-            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            <div className="grid justify-start gap-3 [grid-template-columns:repeat(auto-fill,minmax(260px,300px))]">
               {items.map((item) => (
                 <SoldCard key={item.id} item={item} onReturnToVault={(target) => void handleReturnToVault(target)} />
               ))}
