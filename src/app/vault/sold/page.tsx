@@ -210,9 +210,9 @@ function SoldCard({
 
   return (
     <article
-      className="group flex min-h-[236px] flex-col overflow-hidden rounded-[18px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.014))] p-2 shadow-[0_12px_28px_rgba(0,0,0,0.16)] transition hover:border-cyan-400/25 hover:bg-white/[0.035]"
+      className="group grid min-h-[118px] grid-cols-[88px_minmax(0,1fr)] gap-2 overflow-hidden rounded-[16px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.014))] p-2 shadow-[0_10px_22px_rgba(0,0,0,0.14)] transition hover:border-cyan-400/25 hover:bg-white/[0.035] sm:grid-cols-[92px_minmax(0,1fr)_132px]"
     >
-      <Link href={detailHref} className="relative block h-[108px] overflow-hidden rounded-[14px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),rgba(255,255,255,0.012)_48%,rgba(0,0,0,0.18)_100%)]">
+      <Link href={detailHref} className="relative block h-[102px] overflow-hidden rounded-[13px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),rgba(255,255,255,0.012)_48%,rgba(0,0,0,0.18)_100%)]">
         <span className="absolute right-2 top-2 z-10 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-100 ring-1 ring-amber-400/30">
           SOLD
         </span>
@@ -233,7 +233,7 @@ function SoldCard({
         </div>
       </Link>
 
-      <Link href={detailHref} className="mt-2 flex min-w-0 flex-1 flex-col">
+      <Link href={detailHref} className="flex min-w-0 flex-col justify-center rounded-[13px] bg-black/10 px-2.5 py-2 ring-1 ring-white/6">
         <div className="min-w-0">
           <div className="line-clamp-1 text-[15px] font-extrabold leading-tight text-white">
             {item.title}
@@ -246,23 +246,21 @@ function SoldCard({
         <div className="mt-2 inline-flex w-fit max-w-full rounded-full bg-black/20 px-2 py-0.5 text-[10px] font-semibold text-cyan-100/70 ring-1 ring-white/10">
           <span className="truncate">{UNIVERSE_LABEL[universe] ?? "Misc"}</span>
         </div>
-
-        <div className="mt-auto pt-3" />
       </Link>
 
-      <div className="mt-2 rounded-[14px] bg-black/16 p-2 ring-1 ring-white/8">
-        <div className="flex items-end justify-between gap-3">
+      <div className="col-span-2 rounded-[13px] bg-black/16 p-2 ring-1 ring-white/8 sm:col-span-1">
+        <div className="flex items-start justify-between gap-3 sm:block">
           <div>
             <div className="text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Sold Price</div>
             <div className="mt-1 text-lg font-extrabold leading-none text-white">{money(item.soldPrice)}</div>
           </div>
-          <div className={profit >= 0 ? "text-right text-sm font-bold text-emerald-300" : "text-right text-sm font-bold text-red-300"}>
+          <div className={profit >= 0 ? "text-right text-sm font-bold text-emerald-300 sm:mt-1 sm:text-left" : "text-right text-sm font-bold text-red-300 sm:mt-1 sm:text-left"}>
             {profit >= 0 ? "+" : ""}
             {money(profit)}
           </div>
         </div>
 
-        <div className="mt-2 flex items-center justify-between gap-2">
+        <div className="mt-2 flex items-center justify-between gap-2 sm:block">
           <Link href={detailHref} className="text-[10px] font-semibold text-[color:var(--muted2)] transition hover:text-cyan-200">
             {new Date(item.soldAt).toLocaleDateString(undefined, {
               month: "short",
@@ -273,9 +271,9 @@ function SoldCard({
           <button
             type="button"
             onClick={() => onReturnToVault(item)}
-            className="rounded-full bg-cyan-400/14 px-3 py-1.5 text-[11px] font-semibold text-cyan-100 ring-1 ring-cyan-300/25 transition hover:bg-cyan-400/22"
+            className="rounded-full bg-cyan-400/14 px-3 py-1.5 text-[11px] font-semibold text-cyan-100 ring-1 ring-cyan-300/25 transition hover:bg-cyan-400/22 sm:mt-2 sm:w-full"
           >
-            Return to Vault
+            Return
           </button>
         </div>
       </div>
@@ -389,7 +387,7 @@ export default function SoldPage() {
               No sold items yet.
             </div>
           ) : (
-            <div className="grid justify-start gap-3 [grid-template-columns:repeat(auto-fill,minmax(260px,300px))]">
+            <div className="grid gap-2 lg:grid-cols-2 2xl:grid-cols-3">
               {items.map((item) => (
                 <SoldCard key={item.id} item={item} onReturnToVault={(target) => void handleReturnToVault(target)} />
               ))}
