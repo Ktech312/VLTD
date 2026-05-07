@@ -214,13 +214,13 @@ function SoldCard({
 
   return (
     <article
-      className="group relative flex h-[174px] flex-col overflow-hidden rounded-[14px] border border-white/8 bg-[#07101d]/88 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-cyan-400/10 transition hover:-translate-y-0.5 hover:ring-cyan-300/30"
+      className="group relative flex h-[188px] flex-col overflow-hidden rounded-[14px] border border-white/8 bg-[#07101d]/88 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-cyan-400/10 transition hover:-translate-y-0.5 hover:ring-cyan-300/30"
     >
       <span className="absolute right-2 top-2 z-10 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[8px] font-semibold text-amber-100 ring-1 ring-amber-400/30">
         SOLD
       </span>
 
-      <Link href={detailHref} className="block h-[78px] overflow-hidden rounded-[10px] bg-black/18">
+      <Link href={detailHref} className="block h-[94px] overflow-hidden rounded-[10px] bg-black/18">
         <div className="flex h-full items-center justify-center bg-black/10 p-1">
           {item.imageFrontUrl ? (
             <ProgressiveImage
@@ -243,7 +243,7 @@ function SoldCard({
           {item.title}
         </div>
         <div className="mt-0.5 line-clamp-1 text-[10px] font-medium text-cyan-100/55">
-          {UNIVERSE_LABEL[universe] ?? "Misc"} · {itemMeta(item)}
+          {UNIVERSE_LABEL[universe] ?? "Misc"} - {itemMeta(item)}
         </div>
       </Link>
 
