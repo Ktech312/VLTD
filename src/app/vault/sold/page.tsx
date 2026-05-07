@@ -217,7 +217,7 @@ function SoldCard({
 
   return (
     <article
-      className="group relative flex h-[198px] flex-col overflow-hidden rounded-[14px] border border-white/8 bg-[#07101d]/88 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-cyan-400/10 transition hover:-translate-y-0.5 hover:ring-cyan-300/30"
+      className="group relative flex h-[222px] flex-col overflow-hidden rounded-[14px] border border-white/8 bg-[#07101d]/88 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-cyan-400/10 transition hover:-translate-y-0.5 hover:ring-cyan-300/30"
     >
       <span className="absolute right-2 top-2 z-10 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[8px] font-semibold text-amber-100 ring-1 ring-amber-400/30">
         SOLD
@@ -231,7 +231,7 @@ function SoldCard({
             event.stopPropagation();
             onViewImage(item, imageUrl);
           }}
-          className="block h-[106px] overflow-hidden rounded-[10px] bg-black/18"
+          className="block h-[134px] overflow-hidden rounded-[10px] bg-black/18"
           aria-label={`View image for ${item.title}`}
         >
           <div className="flex h-full items-center justify-center bg-black/10 p-1">
@@ -245,7 +245,7 @@ function SoldCard({
           </div>
         </button>
       ) : (
-        <Link href={detailHref} className="block h-[106px] overflow-hidden rounded-[10px] bg-black/18">
+        <Link href={detailHref} className="block h-[134px] overflow-hidden rounded-[10px] bg-black/18">
           <div className="flex h-full items-center justify-center bg-black/10 p-1">
             <div className="flex h-full w-full items-center justify-center px-1 text-center text-[9px] font-semibold text-[color:var(--muted)]">
               No image
