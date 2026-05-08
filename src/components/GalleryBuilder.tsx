@@ -397,35 +397,8 @@ export default function GalleryBuilder({
       return;
     }
 
-    if (selectedSet.has(draggingId)) {
-      const next = reorderIds(gallery.itemIds, draggingId, targetId);
-      onChange(next);
-    } else {
-      const targetIndex = gallery.itemIds.indexOf(targetId);
-      const next = [...gallery.itemIds];
-      if (targetIndex >= 0) {
-        next.splice(targetIndex, 0, draggingId);
-      } else {
-        next.push(draggingId);
-      }
-      onChange(next);
-    }
-
-    setDraggingId(null);
-    setDropTargetId(null);
-  }
-
-  function onDropIntoSelectedList() {
-    if (!draggingId) {
-      setDraggingId(null);
-      setDropTargetId(null);
-      return;
-    }
-
-    if (!selectedSet.has(draggingId)) {
-      onChange([...gallery.itemIds, draggingId]);
-    }
-
+    const next = reorderIds(gallery.itemIds, draggingId, targetId);
+    onChange(next);
     setDraggingId(null);
     setDropTargetId(null);
   }
@@ -883,7 +856,7 @@ export default function GalleryBuilder({
               <div>
                 <div className="text-sm font-semibold">Selected Items</div>
                 <div className="mt-1 text-sm text-[color:var(--muted)]">
-                  Drag items here, then reorder the gallery flow.
+                  Tap + to add. Drag selected items to reorder.
                 </div>
               </div>
 
@@ -912,33 +885,11 @@ export default function GalleryBuilder({
           </div>
 
           {selectedItems.length === 0 ? (
-            <div
-              className={[
-                "mt-4 rounded-[18px] bg-[color:var(--surface)] p-5 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition",
-                draggingId && !selectedSet.has(draggingId)
-                  ? "bg-cyan-400/5 ring-cyan-300/25"
-                  : "",
-              ].join(" ")}
-              onDragOver={(event) => {
-                event.preventDefault();
-              }}
-              onDrop={onDropIntoSelectedList}
-            >
-              No items selected yet. Drag or tap pieces from the Vault search panel.
+            <div className="mt-4 rounded-[18px] bg-[color:var(--surface)] p-5 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+              No items selected yet. Tap + on pieces from the Vault search panel.
             </div>
           ) : (
-            <div
-              className={[
-                "mt-4 grid gap-3 rounded-[18px] transition",
-                draggingId && !selectedSet.has(draggingId)
-                  ? "bg-cyan-400/5 p-2 ring-1 ring-cyan-300/20"
-                  : "",
-              ].join(" ")}
-              onDragOver={(event) => {
-                event.preventDefault();
-              }}
-              onDrop={onDropIntoSelectedList}
-            >
+            <div className="mt-4 grid gap-2">
               {selectedItems.map((item, index) => {
                 const isDragging = draggingId === item.id;
                 const isDropTarget = dropTargetId === item.id && draggingId !== item.id;
@@ -960,7 +911,7 @@ export default function GalleryBuilder({
                       onDropOn(item.id);
                     }}
                     className={[
-                      "relative rounded-[18px] bg-[color:var(--surface)] p-3 pr-10 ring-1 transition",
+                      "relative rounded-[16px] bg-[color:var(--surface)] p-2.5 pr-10 ring-1 transition",
                       isDragging
                         ? "scale-[0.99] opacity-60 ring-[color:var(--border)]"
                         : isDropTarget
@@ -968,12 +919,12 @@ export default function GalleryBuilder({
                           : "ring-[color:var(--border)]",
                     ].join(" ")}
                   >
-                    <div className="flex gap-3">
+                    <div className="flex gap-2.5">
                       <div className="flex w-4 shrink-0 cursor-grab items-center justify-center active:cursor-grabbing">
                         <DragHandle />
                       </div>
 
-                      <div className="h-16 w-14 shrink-0 overflow-hidden rounded-xl bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.24))] p-1 ring-1 ring-white/10">
+                      <div className="h-12 w-11 shrink-0 overflow-hidden rounded-lg bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.24))] p-1 ring-1 ring-white/10">
                         {itemImage(item) ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -991,7 +942,7 @@ export default function GalleryBuilder({
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-3">
-                          <div className="text-[10px] tracking-[0.16em] text-[color:var(--muted2)]">
+                          <div className="text-[9px] tracking-[0.15em] text-[color:var(--muted2)]">
                             EXHIBIT #{index + 1}
                           </div>
 
@@ -1002,13 +953,13 @@ export default function GalleryBuilder({
                           ) : null}
                         </div>
 
-                        <div className="mt-0.5 line-clamp-1 text-sm font-semibold">{item.title}</div>
+                        <div className="line-clamp-1 text-sm font-semibold leading-tight">{item.title}</div>
 
                         <div className="mt-0.5 line-clamp-1 text-xs text-[color:var(--muted)]">
                           {itemUniverseLabel(item)}
                         </div>
 
-                        <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-[color:var(--muted)]">
+                        <div className="mt-1 flex flex-wrap gap-3 text-[10px] text-[color:var(--muted)]">
                           {typeof item.currentValue === "number" ? (
                             <span>
                               Value {formatMoney(item.currentValue)}
@@ -1024,7 +975,7 @@ export default function GalleryBuilder({
                     <button
                       type="button"
                       onClick={() => removeItem(item.id)}
-                      className="absolute bottom-3 right-3 grid h-7 w-7 place-items-center rounded-full bg-red-500/16 text-sm font-bold text-transparent ring-1 ring-red-400/25 transition after:text-red-100 after:content-['X'] hover:bg-red-500/26"
+                      className="absolute bottom-2 right-2 grid h-7 w-7 place-items-center rounded-full bg-red-500/16 text-xs font-bold text-transparent ring-1 ring-red-400/25 transition after:text-red-100 after:content-['X'] hover:bg-red-500/26"
                       aria-label={`Remove ${item.title} from selected items`}
                     >
                       ×
@@ -1115,9 +1066,6 @@ export default function GalleryBuilder({
                 return (
                   <article
                     key={item.id}
-                    draggable
-                    onDragStart={() => onDragStart(item.id)}
-                    onDragEnd={onDragEnd}
                     className={[
                       "vltd-selectable group overflow-hidden rounded-[22px] border text-left transition duration-300",
                       active
