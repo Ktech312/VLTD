@@ -10,6 +10,7 @@ import {
   type Gallery,
 } from "@/lib/galleryModel";
 import { getVaultImagePublicUrl, isDirectBrowserImageUrl } from "@/lib/vaultCloud";
+import VltdVaultLogoAnimation from "@/components/VltdVaultLogoAnimation";
 
 type PublicGalleryCard = {
   id: string;
@@ -236,11 +237,11 @@ function PublicGalleryTile({ gallery }: { gallery: PublicGalleryCard }) {
       href={gallery.href}
       className="group overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[rgba(15,29,49,0.82)] transition hover:-translate-y-1 hover:border-[rgba(82,214,244,0.34)] hover:bg-[rgba(20,39,66,0.94)]"
     >
-      <div className="relative aspect-[16/10] overflow-hidden bg-black/20">
+      <div className="relative aspect-[16/10] overflow-hidden bg-[radial-gradient(circle_at_35%_20%,rgba(255,255,255,0.12),rgba(82,214,244,0.06)_34%,rgba(0,0,0,0.22)_100%)] p-3">
         <img
           src={gallery.image}
           alt={gallery.title}
-          className="h-full w-full object-cover opacity-70 transition duration-500 group-hover:scale-[1.04] group-hover:opacity-85"
+          className="h-full w-full object-contain opacity-80 transition duration-500 group-hover:scale-[1.025] group-hover:opacity-95"
           loading="lazy"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#07101f] via-transparent to-transparent" />
@@ -304,6 +305,8 @@ export default function PublicHomeClient() {
         </div>
 
         <div className="mx-auto max-w-5xl px-4 pb-16 pt-12 text-center sm:px-6 sm:pb-20 sm:pt-20 lg:px-8">
+          <VltdVaultLogoAnimation className="mx-auto mb-8" />
+
           <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-[rgba(82,214,244,0.28)] bg-[rgba(10,22,39,0.82)] px-4 py-2 text-xs font-medium text-[color:var(--accent)]">
             <span className="vltd-brand-dot h-2 w-2" /> VLTD{" "}
             <span className="text-[color:var(--muted2)]">—</span> pronounced

@@ -685,3 +685,932 @@ hr {
     0 0 24px var(--pill-glow-strong),
     0 0 44px var(--pill-glow-mid) !important;
 }
+
+/* =========================================================
+   HOMEPAGE VAULT LOGO ANIMATION
+========================================================= */
+
+.vltd-vault-logo-animation {
+  position: relative;
+  width: min(58vw, 300px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+}
+
+.vltd-vault-logo-animation__halo {
+  position: absolute;
+  inset: 3%;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--accent) 38%, transparent), transparent 46%),
+    radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--accent-2) 22%, transparent), transparent 58%);
+  filter: blur(20px);
+  opacity: 0.8;
+  animation: vltd-vault-halo 5.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.vltd-vault-logo-animation__shadow {
+  position: absolute;
+  left: 20%;
+  right: 20%;
+  bottom: 4%;
+  height: 11%;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.34);
+  filter: blur(18px);
+  transform-origin: center;
+  animation: vltd-vault-shadow 5.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.vltd-vault-logo-animation__vault {
+  position: relative;
+  width: 78%;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.02) 26%, rgba(0, 0, 0, 0.35)),
+    radial-gradient(circle at 48% 44%, #24344a, #111827 58%, #070d16 100%);
+  box-shadow:
+    inset 0 2px 14px rgba(255, 255, 255, 0.18),
+    inset 0 -18px 32px rgba(0, 0, 0, 0.38),
+    0 24px 70px rgba(0, 0, 0, 0.34);
+  transform-origin: 56% 50%;
+  animation: vltd-vault-body 5.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.vltd-vault-logo-animation__door {
+  position: absolute;
+  inset: 9%;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 34% 26%, rgba(255, 255, 255, 0.24), transparent 24%),
+    conic-gradient(from 16deg, #273b55, #111b29, #314867, #0b111b, #273b55);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+    inset 0 0 0 13px rgba(255, 255, 255, 0.05),
+    0 12px 32px rgba(0, 0, 0, 0.34);
+  transform-origin: 20% 50%;
+  animation: vltd-vault-door 5.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.vltd-vault-logo-animation__rim {
+  position: absolute;
+  inset: 12%;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    inset 0 0 22px rgba(82, 214, 244, 0.16),
+    0 0 28px rgba(82, 214, 244, 0.12);
+}
+
+.vltd-vault-logo-animation__spokes {
+  position: absolute;
+  inset: 22%;
+  border-radius: 999px;
+  animation: vltd-vault-wheel 5.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.vltd-vault-logo-animation__spokes span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 42%;
+  height: 5px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.68));
+  transform-origin: left center;
+}
+
+.vltd-vault-logo-animation__spokes span:nth-child(1) {
+  transform: rotate(0deg);
+}
+
+.vltd-vault-logo-animation__spokes span:nth-child(2) {
+  transform: rotate(90deg);
+}
+
+.vltd-vault-logo-animation__spokes span:nth-child(3) {
+  transform: rotate(180deg);
+}
+
+.vltd-vault-logo-animation__spokes span:nth-child(4) {
+  transform: rotate(270deg);
+}
+
+.vltd-vault-logo-animation__logo {
+  position: absolute;
+  inset: 28%;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(7, 13, 22, 0.8);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 0 28px rgba(82, 214, 244, 0.16);
+  animation: vltd-vault-logo-turn 5.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.vltd-vault-logo-animation__logo img {
+  width: 78%;
+  height: 78%;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+}
+
+.vltd-vault-logo-animation__lock-light {
+  position: absolute;
+  right: 21%;
+  top: 48%;
+  width: 8%;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: #273343;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.16);
+  animation: vltd-vault-light 5.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.vltd-vault-logo-animation__gap {
+  position: absolute;
+  inset: 7% 3% 7% 48%;
+  border-radius: 0 999px 999px 0;
+  background: linear-gradient(90deg, rgba(82, 214, 244, 0), rgba(82, 214, 244, 0.32), rgba(255, 255, 255, 0.18));
+  filter: blur(8px);
+  opacity: 0;
+  animation: vltd-vault-gap 5.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.vltd-vault-logo-animation__key {
+  position: absolute;
+  right: -4%;
+  top: 42%;
+  width: 28%;
+  transform-origin: 18% 50%;
+  animation: vltd-vault-key 5.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.vltd-vault-logo-animation__key img {
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.34));
+  user-select: none;
+  pointer-events: none;
+}
+
+@keyframes vltd-vault-wheel {
+  0%,
+  12% {
+    transform: rotate(0deg);
+  }
+  38%,
+  100% {
+    transform: rotate(540deg);
+  }
+}
+
+@keyframes vltd-vault-logo-turn {
+  0%,
+  12% {
+    transform: rotateY(0deg) rotate(0deg) scale(1);
+  }
+  34% {
+    transform: rotateY(180deg) rotate(180deg) scale(0.96);
+  }
+  48%,
+  100% {
+    transform: rotateY(360deg) rotate(360deg) scale(1);
+  }
+}
+
+@keyframes vltd-vault-key {
+  0%,
+  10% {
+    opacity: 0;
+    transform: translateX(54%) rotate(-18deg) scale(0.9);
+  }
+  24% {
+    opacity: 1;
+    transform: translateX(0) rotate(-18deg) scale(1);
+  }
+  38% {
+    opacity: 1;
+    transform: translateX(0) rotate(52deg) scale(1);
+  }
+  52%,
+  100% {
+    opacity: 0;
+    transform: translateX(42%) rotate(52deg) scale(0.94);
+  }
+}
+
+@keyframes vltd-vault-door {
+  0%,
+  42% {
+    transform: perspective(700px) rotateY(0deg) translateX(0);
+    filter: brightness(1);
+  }
+  62%,
+  78% {
+    transform: perspective(700px) rotateY(-36deg) translateX(-4%);
+    filter: brightness(1.12);
+  }
+  100% {
+    transform: perspective(700px) rotateY(0deg) translateX(0);
+    filter: brightness(1);
+  }
+}
+
+@keyframes vltd-vault-gap {
+  0%,
+  42%,
+  100% {
+    opacity: 0;
+    transform: scaleX(0.72);
+  }
+  58%,
+  78% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes vltd-vault-light {
+  0%,
+  34%,
+  100% {
+    background: #273343;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.16);
+  }
+  44%,
+  78% {
+    background: #87ff9f;
+    box-shadow:
+      inset 0 0 0 2px rgba(255, 255, 255, 0.36),
+      0 0 22px rgba(135, 255, 159, 0.78);
+  }
+}
+
+@keyframes vltd-vault-body {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  46% {
+    transform: translateY(-3%) scale(1.015);
+  }
+  74% {
+    transform: translateY(-1%) scale(1);
+  }
+}
+
+@keyframes vltd-vault-halo {
+  0%,
+  100% {
+    opacity: 0.54;
+    transform: scale(0.94);
+  }
+  48%,
+  78% {
+    opacity: 0.92;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes vltd-vault-shadow {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scaleX(0.9);
+  }
+  48%,
+  78% {
+    opacity: 0.34;
+    transform: scaleX(0.78);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vltd-vault-logo-animation *,
+  .vltd-vault-logo-animation *::before,
+  .vltd-vault-logo-animation *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Strong card-based VLTD homepage animation */
+.vltd-vault-card-animation {
+  position: relative;
+  width: min(92vw, 860px);
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: clamp(22px, 4vw, 42px);
+  background: #030303;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+  appearance: none;
+  box-shadow:
+    0 0 0 1px rgba(232, 201, 121, 0.18),
+    0 24px 80px rgba(0, 0, 0, 0.48),
+    0 0 70px rgba(82, 214, 244, 0.14);
+  isolation: isolate;
+}
+
+.vltd-vault-card-animation__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  pointer-events: none;
+  transform-origin: 35% 38%;
+  transition:
+    filter 520ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 520ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vltd-vault-card-animation:hover .vltd-vault-card-animation__art,
+.vltd-vault-card-animation:focus-visible .vltd-vault-card-animation__art {
+  filter: saturate(1.08) contrast(1.06);
+  transform: scale(1.01);
+}
+
+.vltd-vault-card-animation__shine {
+  position: absolute;
+  inset: -20%;
+  background: linear-gradient(112deg, transparent 20%, rgba(255, 255, 255, 0.22) 42%, transparent 58%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform: translateX(-64%) rotate(3deg);
+  transition:
+    opacity 560ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 820ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vltd-vault-card-animation--open .vltd-vault-card-animation__shine {
+  opacity: 0.42;
+  transform: translateX(52%) rotate(3deg);
+}
+
+.vltd-vault-card-animation__vault {
+  position: absolute;
+  left: 22%;
+  top: 21%;
+  width: 22%;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  z-index: 6;
+  transform-origin: center;
+  pointer-events: none;
+  transition: transform 560ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vltd-vault-card-animation--open .vltd-vault-card-animation__vault {
+  transform: scale(1.07);
+}
+
+.vltd-vault-card-animation__white-glow {
+  position: absolute;
+  inset: -8%;
+  border-radius: 999px;
+  z-index: 2;
+  background:
+    radial-gradient(circle, #ffffff 0%, #ffffff 28%, rgba(255, 255, 255, 0.82) 44%, rgba(82, 214, 244, 0.2) 64%, transparent 74%);
+  opacity: 0;
+  filter: blur(2px);
+  transform: scale(0.35);
+  transition:
+    opacity 440ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 620ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vltd-vault-card-animation--open .vltd-vault-card-animation__white-glow {
+  opacity: 1;
+  transform: scale(1.16);
+}
+
+.vltd-vault-card-animation__intake {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  z-index: 5;
+  pointer-events: none;
+  transition:
+    opacity 360ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vltd-vault-card-animation--open .vltd-vault-card-animation__intake {
+  opacity: 1;
+}
+
+.vltd-vault-card-animation__item {
+  position: absolute;
+  left: 33%;
+  top: 42%;
+  width: var(--w);
+  aspect-ratio: auto;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.08) rotate(-10deg);
+  filter:
+    drop-shadow(0 12px 18px rgba(0, 0, 0, 0.46))
+    drop-shadow(0 0 12px rgba(255, 255, 255, 0.18));
+  transform-origin: center;
+}
+
+.vltd-vault-card-animation--open .vltd-vault-card-animation__item {
+  animation: vltd-card-item-from-vault 1.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--delay);
+}
+
+.vltd-vault-card-animation__item img {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  pointer-events: none;
+}
+
+.vltd-vault-card-animation__item--comic {
+  --x: 48%;
+  --y: 78%;
+  --w: clamp(38px, 5.6vw, 64px);
+  --delay: 0.08s;
+  --settle-rotate: -6deg;
+}
+
+.vltd-vault-card-animation__item--sports {
+  --x: 56%;
+  --y: 78%;
+  --w: clamp(34px, 5vw, 58px);
+  --delay: 0.34s;
+  --settle-rotate: 5deg;
+}
+
+.vltd-vault-card-animation__item--figure {
+  --x: 64%;
+  --y: 80%;
+  --w: clamp(38px, 5.4vw, 62px);
+  --delay: 0.6s;
+  --settle-rotate: -2deg;
+}
+
+.vltd-vault-card-animation__item--vinyl {
+  --x: 73%;
+  --y: 78%;
+  --w: clamp(58px, 7.8vw, 92px);
+  --delay: 0.86s;
+  --settle-rotate: 4deg;
+}
+
+.vltd-vault-card-animation__item--guitar {
+  --x: 83%;
+  --y: 71%;
+  --w: clamp(34px, 4.4vw, 54px);
+  --delay: 1.12s;
+  --settle-rotate: -9deg;
+}
+
+.vltd-vault-card-animation__item--poster {
+  --x: 92%;
+  --y: 72%;
+  --w: clamp(28px, 3.6vw, 44px);
+  --delay: 1.38s;
+  --settle-rotate: 7deg;
+}
+
+.vltd-vault-card-animation__shelf {
+  position: absolute;
+  left: 43%;
+  right: 4%;
+  top: 91%;
+  height: clamp(6px, 0.9vw, 10px);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 242, 190, 0.96), rgba(156, 104, 42, 0.95) 54%, rgba(69, 38, 14, 0.98));
+  box-shadow:
+    0 12px 20px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    0 0 18px rgba(232, 201, 121, 0.24);
+  opacity: 0;
+  transform: scaleX(0.5);
+  transform-origin: left center;
+  transition:
+    opacity 360ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 520ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vltd-vault-card-animation--open .vltd-vault-card-animation__shelf {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.vltd-vault-card-animation__mouth {
+  position: absolute;
+  inset: -2%;
+  z-index: 3;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.06) 42%, transparent 68%);
+  opacity: 0;
+  transition: opacity 360ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vltd-vault-card-animation--open .vltd-vault-card-animation__mouth {
+  opacity: 1;
+}
+
+.vltd-vault-card-animation__door {
+  position: absolute;
+  inset: 4%;
+  border-radius: 999px;
+  z-index: 4;
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.26), transparent 22%),
+    radial-gradient(circle at 50% 52%, rgba(230, 191, 85, 0.22), transparent 42%),
+    radial-gradient(circle at 50% 50%, rgba(9, 9, 7, 0.78), rgba(0, 0, 0, 0.9) 68%);
+  border: 2px solid rgba(232, 201, 121, 0.68);
+  box-shadow:
+    inset 0 0 0 7px rgba(232, 201, 121, 0.08),
+    inset 0 -16px 26px rgba(0, 0, 0, 0.55),
+    0 0 22px rgba(232, 201, 121, 0.28);
+  transform-origin: 8% 50%;
+  opacity: 0;
+  transition:
+    opacity 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 680ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 680ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vltd-vault-card-animation--open .vltd-vault-card-animation__door {
+  opacity: 1;
+  filter: brightness(1.18);
+  transform: perspective(680px) rotateY(-62deg) translateX(-36%) scaleX(0.56);
+}
+
+@media (max-width: 640px) {
+  .vltd-vault-card-animation {
+    width: min(94vw, 560px);
+    border-radius: 24px;
+  }
+}
+
+@keyframes vltd-card-item-from-vault {
+  0%,
+  10% {
+    left: 33%;
+    top: 42%;
+    opacity: 0;
+    filter:
+      blur(2px)
+      drop-shadow(0 0 18px rgba(255, 255, 255, 0.9));
+    transform: translate(-50%, -50%) scale(0.08) rotate(-10deg);
+  }
+  24% {
+    left: 36%;
+    top: 44%;
+    opacity: 1;
+    filter:
+      blur(0)
+      drop-shadow(0 12px 18px rgba(0, 0, 0, 0.46))
+      drop-shadow(0 0 14px rgba(255, 255, 255, 0.36));
+    transform: translate(-50%, -50%) scale(0.34) rotate(-6deg);
+  }
+  68% {
+    left: 48%;
+    top: 48%;
+    opacity: 1;
+    filter:
+      drop-shadow(0 14px 18px rgba(0, 0, 0, 0.48))
+      drop-shadow(0 0 10px rgba(255, 255, 255, 0.18));
+    transform: translate(-50%, -50%) scale(0.82) rotate(8deg);
+  }
+  88% {
+    left: var(--x);
+    top: calc(var(--y) - 2%);
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.04) rotate(var(--settle-rotate));
+  }
+  100% {
+    left: var(--x);
+    top: var(--y);
+    opacity: 1;
+    filter:
+      drop-shadow(0 12px 18px rgba(0, 0, 0, 0.46))
+      drop-shadow(0 0 12px rgba(255, 255, 255, 0.18));
+    transform: translate(-50%, -50%) scale(1) rotate(var(--settle-rotate));
+  }
+}
+
+/* Logo-accurate vault animation override */
+.vltd-vault-logo-animation {
+  width: min(62vw, 330px);
+  perspective: 900px;
+}
+
+.vltd-vault-logo-animation__halo {
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.28), transparent 18%),
+    radial-gradient(circle at 50% 50%, rgba(221, 175, 67, 0.38), transparent 42%),
+    radial-gradient(circle at 50% 58%, color-mix(in srgb, var(--accent) 24%, transparent), transparent 62%);
+  filter: blur(18px);
+  animation: vltd-logo-vault-halo 5.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.vltd-vault-logo-animation__shadow {
+  left: 18%;
+  right: 18%;
+  bottom: 2%;
+  animation: vltd-logo-vault-shadow 5.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.vltd-vault-logo-animation__vault {
+  width: 86%;
+  overflow: visible;
+  background:
+    radial-gradient(circle at 38% 30%, rgba(255, 255, 255, 0.18), transparent 18%),
+    radial-gradient(circle at 50% 50%, rgba(221, 175, 67, 0.2), transparent 38%),
+    radial-gradient(circle at 50% 50%, #101c2e 0%, #071120 62%, #030814 100%);
+  box-shadow:
+    inset 0 0 0 2px rgba(221, 175, 67, 0.34),
+    inset 0 0 0 14px rgba(9, 19, 33, 0.92),
+    inset 0 0 38px rgba(0, 0, 0, 0.62),
+    0 24px 78px rgba(0, 0, 0, 0.4);
+  transform-style: preserve-3d;
+  animation: vltd-logo-vault-body 5.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.vltd-vault-logo-animation__white-glow {
+  position: absolute;
+  inset: 13%;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 48% 48%, #ffffff 0%, #ffffff 34%, rgba(255, 255, 255, 0.72) 48%, rgba(82, 214, 244, 0.18) 68%, transparent 76%);
+  opacity: 0;
+  filter: blur(4px);
+  transform: scale(0.54);
+  animation: vltd-logo-vault-white-glow 5.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.vltd-vault-logo-animation__door {
+  inset: 0;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  transform-origin: 8% 50%;
+  transform-style: preserve-3d;
+  animation: vltd-logo-vault-door-open 5.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.vltd-vault-logo-animation__door::before,
+.vltd-vault-logo-animation__door::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.vltd-vault-logo-animation__door::before {
+  inset: -1.5%;
+  border: 2px solid rgba(221, 175, 67, 0.7);
+  box-shadow:
+    inset 0 0 0 8px rgba(221, 175, 67, 0.08),
+    inset 0 0 22px rgba(82, 214, 244, 0.12),
+    0 0 26px rgba(221, 175, 67, 0.22);
+}
+
+.vltd-vault-logo-animation__door::after {
+  inset: 10%;
+  border: 1px solid rgba(221, 175, 67, 0.42);
+  box-shadow: inset 0 0 0 7px rgba(221, 175, 67, 0.04);
+}
+
+.vltd-vault-logo-animation__door-face {
+  position: absolute;
+  inset: 2%;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 34% 24%, rgba(255, 255, 255, 0.2), transparent 20%),
+    radial-gradient(circle at 50% 55%, #162844, #071120 72%);
+  backface-visibility: hidden;
+  box-shadow:
+    inset 0 0 0 2px rgba(221, 175, 67, 0.7),
+    inset 0 0 0 12px rgba(221, 175, 67, 0.08),
+    inset 0 -18px 34px rgba(0, 0, 0, 0.42);
+  filter:
+    drop-shadow(0 0 14px rgba(221, 175, 67, 0.32))
+    drop-shadow(0 18px 30px rgba(0, 0, 0, 0.36));
+}
+
+.vltd-vault-logo-animation__real-door {
+  position: absolute;
+  left: -22%;
+  top: -14%;
+  width: 250%;
+  height: auto;
+  max-width: none;
+  user-select: none;
+  pointer-events: none;
+  filter:
+    saturate(1.08)
+    contrast(1.06)
+    drop-shadow(0 0 14px rgba(220, 178, 76, 0.38));
+  animation: vltd-logo-vault-face-turn 5.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.vltd-vault-logo-animation__door-sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(130deg, transparent 0%, rgba(255, 255, 255, 0.22) 28%, transparent 42%),
+    radial-gradient(circle at 28% 20%, rgba(255, 255, 255, 0.32), transparent 18%);
+  mix-blend-mode: screen;
+  opacity: 0.62;
+  animation: vltd-logo-vault-sheen 5.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.vltd-vault-logo-animation__hinge {
+  position: absolute;
+  left: 3%;
+  top: 22%;
+  bottom: 22%;
+  width: 8px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, transparent, rgba(221, 175, 67, 0.74) 20%, rgba(221, 175, 67, 0.95) 50%, rgba(221, 175, 67, 0.74) 80%, transparent);
+  opacity: 0;
+  box-shadow: 0 0 18px rgba(221, 175, 67, 0.38);
+  animation: vltd-logo-vault-hinge 5.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.vltd-vault-logo-animation__key {
+  right: -17%;
+  top: 41%;
+  width: 44%;
+  z-index: 6;
+  transform-origin: 18% 50%;
+  animation: vltd-logo-vault-key-unlock 5.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.vltd-vault-logo-animation__key img {
+  filter:
+    drop-shadow(0 0 10px rgba(221, 175, 67, 0.22))
+    drop-shadow(0 12px 20px rgba(0, 0, 0, 0.38));
+}
+
+@keyframes vltd-logo-vault-face-turn {
+  0%,
+  16% {
+    transform: rotate(0deg) scale(1);
+  }
+  38% {
+    transform: rotate(350deg) scale(1.015);
+  }
+  48%,
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes vltd-logo-vault-sheen {
+  0%,
+  20%,
+  100% {
+    opacity: 0.42;
+    transform: translateX(-18%) rotate(0deg);
+  }
+  38% {
+    opacity: 0.86;
+    transform: translateX(14%) rotate(8deg);
+  }
+  68% {
+    opacity: 0.62;
+    transform: translateX(0) rotate(0deg);
+  }
+}
+
+@keyframes vltd-logo-vault-key-unlock {
+  0%,
+  16% {
+    opacity: 0;
+    transform: translateX(72%) rotate(-8deg) scale(0.88);
+  }
+  30% {
+    opacity: 1;
+    transform: translateX(4%) rotate(-8deg) scale(1);
+  }
+  48% {
+    opacity: 1;
+    transform: translateX(4%) rotate(64deg) scale(1);
+  }
+  58% {
+    opacity: 1;
+    transform: translateX(2%) rotate(64deg) scale(0.98);
+  }
+  72%,
+  100% {
+    opacity: 0;
+    transform: translateX(58%) rotate(64deg) scale(0.9);
+  }
+}
+
+@keyframes vltd-logo-vault-door-open {
+  0%,
+  50% {
+    transform: perspective(900px) rotateY(0deg) translateX(0) scaleX(1) skewY(0deg);
+    filter: brightness(1);
+  }
+  62%,
+  88% {
+    transform: perspective(900px) rotateY(-64deg) translateX(-30%) scaleX(0.58) skewY(-2deg);
+    filter: brightness(1.24);
+  }
+  100% {
+    transform: perspective(900px) rotateY(0deg) translateX(0) scaleX(1) skewY(0deg);
+    filter: brightness(1);
+  }
+}
+
+@keyframes vltd-logo-vault-white-glow {
+  0%,
+  52%,
+  100% {
+    opacity: 0;
+    transform: scale(0.54);
+  }
+  60% {
+    opacity: 0.86;
+    transform: scale(0.9);
+  }
+  70%,
+  90% {
+    opacity: 1;
+    transform: scale(1.18);
+  }
+}
+
+@keyframes vltd-logo-vault-hinge {
+  0%,
+  44%,
+  100% {
+    opacity: 0;
+  }
+  54%,
+  80% {
+    opacity: 1;
+  }
+}
+
+@keyframes vltd-logo-vault-body {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  38% {
+    transform: translateY(-2%) scale(1.02);
+  }
+  72% {
+    transform: translateY(-1%) scale(1.01);
+  }
+}
+
+@keyframes vltd-logo-vault-halo {
+  0%,
+  100% {
+    opacity: 0.48;
+    transform: scale(0.92);
+  }
+  38% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  70%,
+  82% {
+    opacity: 1;
+    transform: scale(1.16);
+  }
+}
+
+@keyframes vltd-logo-vault-shadow {
+  0%,
+  100% {
+    opacity: 0.52;
+    transform: scaleX(0.92);
+  }
+  38% {
+    opacity: 0.42;
+    transform: scaleX(0.84);
+  }
+  72% {
+    opacity: 0.3;
+    transform: scaleX(0.74);
+  }
+}
