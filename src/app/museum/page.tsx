@@ -33,6 +33,17 @@ function stateLabel(v: Gallery["state"]) {
   return v === "STORAGE" ? "Storage" : "Active";
 }
 
+function visibilityPillClass(v: Gallery["visibility"]) {
+  if (v === "PUBLIC") return "bg-cyan-400/14 text-cyan-100 ring-cyan-300/28";
+  if (v === "INVITE") return "bg-amber-400/14 text-amber-100 ring-amber-300/28";
+  return "bg-white/7 text-[color:var(--muted2)] ring-white/12";
+}
+
+function statePillClass(v: Gallery["state"]) {
+  if (v === "ACTIVE") return "bg-emerald-500/14 text-emerald-200 ring-emerald-400/25";
+  return "bg-black/20 text-[color:var(--muted2)] ring-white/10";
+}
+
 function scoreBandTone(band: "Basic" | "Curated" | "Exhibition Grade") {
   if (band === "Exhibition Grade") return "Exhibition Grade";
   if (band === "Curated") return "Curated";
@@ -493,15 +504,24 @@ export default function MuseumPage() {
                   <article
                     key={gallery.id}
                     onClick={() => openGallery(gallery.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        openGallery(gallery.id);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Open gallery ${gallery.title}`}
                     className="vltd-panel-soft group relative flex h-[430px] w-full max-w-[360px] cursor-pointer flex-col overflow-hidden rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.018))] p-4 shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.28)]"
                   >
-                    <div className="relative mb-4 h-[178px] overflow-hidden rounded-[18px] bg-black/20 ring-1 ring-white/8">
+                    <div className="relative mb-4 h-[188px] overflow-hidden rounded-[18px] bg-black/20 ring-1 ring-white/8">
                       {coverImage ? (
                         <ProgressiveImage
                           src={coverImage}
                           alt={`${gallery.title} cover`}
                           className="h-full w-full"
-                          imageClassName="object-contain object-center transition duration-300 group-hover:scale-[1.03]"
+                          imageClassName="object-cover object-center transition duration-300 group-hover:scale-[1.03]"
                           draggable={false}
                         />
                       ) : (
@@ -538,7 +558,10 @@ export default function MuseumPage() {
                               event.stopPropagation();
                               setGallerySettings(gallery);
                             }}
-                            className="rounded-full bg-black/20 px-2.5 py-1 text-[10px] tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-white/10 transition hover:text-cyan-100 hover:ring-cyan-300/30"
+                            className={[
+                              "rounded-full px-2.5 py-1 text-[10px] tracking-[0.14em] ring-1 transition hover:ring-cyan-300/40",
+                              visibilityPillClass(gallery.visibility),
+                            ].join(" ")}
                           >
                             {visibilityLabel(gallery.visibility)}
                           </button>
@@ -552,9 +575,7 @@ export default function MuseumPage() {
                             }}
                             className={[
                               "rounded-full px-2.5 py-1 text-[10px] tracking-[0.14em] ring-1 transition hover:ring-cyan-300/30",
-                              gallery.state === "ACTIVE"
-                                ? "bg-emerald-500/14 text-emerald-200 ring-emerald-400/25"
-                                : "bg-black/20 text-[color:var(--muted2)] ring-white/10",
+                              statePillClass(gallery.state),
                             ].join(" ")}
                           >
                             {stateLabel(gallery.state)}
@@ -601,7 +622,7 @@ export default function MuseumPage() {
                           </div>
                         </div>
 
-                        <div className="mt-3 flex items-center justify-between text-sm text-[color:var(--muted)]">
+                        <div className="mt-3 flex items-center justify-between gap-3 text-sm text-[color:var(--muted)]">
                           <div>
                             {score.signals.sections} sections • {score.signals.featuredWorks} featured
                           </div>
@@ -612,7 +633,7 @@ export default function MuseumPage() {
                               event.stopPropagation();
                               handleAskDelete(gallery);
                             }}
-                            className="inline-flex min-h-[28px] items-center justify-center rounded-full bg-red-500/10 px-3 py-1 text-[11px] font-semibold text-red-100 ring-1 ring-red-400/20 transition hover:bg-red-500/18"
+                            className="order-first inline-flex min-h-[28px] items-center justify-center rounded-full bg-red-500/10 px-3 py-1 text-[11px] font-semibold text-red-100 ring-1 ring-red-400/20 transition hover:bg-red-500/18"
                             aria-label={`Delete gallery ${gallery.title}`}
                           >
                             Delete
