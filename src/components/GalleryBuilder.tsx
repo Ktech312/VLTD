@@ -20,6 +20,7 @@ import {
 } from "@/lib/galleryModel";
 import BuilderPreviewBridge from "@/components/gallery/BuilderPreviewBridge";
 import { PillSelect, type PillSelectOption } from "@/components/ui/PillSelect";
+import { getUniverses, isUniverseKey, UNIVERSE_LABEL } from "@/lib/taxonomy";
 
 type Props = {
   gallery: Gallery;
@@ -107,6 +108,12 @@ function searchText(i: VaultItem) {
 
 function itemMeta(i: VaultItem) {
   return [i.subtitle, i.number, i.grade].filter(Boolean).join(" - ");
+}
+
+function itemUniverseLabel(i: VaultItem) {
+  const key = String(i.universe ?? "").toUpperCase();
+  if (isUniverseKey(key)) return UNIVERSE_LABEL[key];
+  return String(i.universe || "Misc");
 }
 
 function DragHandle() {
@@ -274,6 +281,7 @@ export default function GalleryBuilder({
   const previewScale = 0.36;
   const previewWidthPercent = 100 / previewScale;
   const [query, setQuery] = useState("");
+  const [visibleUniverses, setVisibleUniverses] = useState<string[]>([]);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
   const [shelfFileName, setShelfFileName] = useState("");
@@ -289,9 +297,15 @@ export default function GalleryBuilder({
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const pool = !q ? items : items.filter((item) => searchText(item).includes(q));
-    return sortSelectedFirst(pool, gallery.itemIds);
-  }, [items, query, gallery.itemIds]);
+    const selectedUniverses = new Set(visibleUniverses);
+    const availableItems = items.filter((item) => !selectedSet.has(item.id));
+    const universeFiltered =
+      selectedUniverses.size === 0
+        ? availableItems
+        : availableItems.filter((item) => selectedUniverses.has(String(item.universe ?? "").toUpperCase()));
+    const pool = !q ? universeFiltered : universeFiltered.filter((item) => searchText(item).includes(q));
+    return sortSelectedFirst(pool, []);
+  }, [items, query, selectedSet, visibleUniverses]);
 
   const selectedCount = gallery.itemIds.length;
 
@@ -305,6 +319,8 @@ export default function GalleryBuilder({
   const selectedCost = useMemo(() => {
     return selectedItems.reduce((sum, item) => sum + totalCost(item), 0);
   }, [selectedItems]);
+
+  const universeFilters = useMemo(() => getUniverses(), []);
 
   const themePack = getGalleryThemePack(gallery);
   const displayMode = getGalleryDisplayMode(gallery);
@@ -352,19 +368,12 @@ export default function GalleryBuilder({
     onChange([...gallery.itemIds, id]);
   }
 
-  function moveItem(id: string, direction: -1 | 1) {
-    const index = gallery.itemIds.indexOf(id);
-    if (index < 0) return;
-
-    const target = index + direction;
-    if (target < 0 || target >= gallery.itemIds.length) return;
-
-    const next = [...gallery.itemIds];
-    const temp = next[index];
-    next[index] = next[target];
-    next[target] = temp;
-
-    onChange(next);
+  function toggleUniverseFilter(universe: string) {
+    setVisibleUniverses((current) =>
+      current.includes(universe)
+        ? current.filter((value) => value !== universe)
+        : [...current, universe]
+    );
   }
 
   function removeItem(id: string) {
@@ -847,7 +856,7 @@ export default function GalleryBuilder({
               <div>
                 <div className="text-sm font-semibold">Selected Items</div>
                 <div className="mt-1 text-sm text-[color:var(--muted)]">
-                  Drag exhibits to reorder the main gallery flow, or use move controls for precise adjustments.
+                  Drag exhibits to reorder the gallery flow.
                 </div>
               </div>
 
@@ -899,7 +908,7 @@ export default function GalleryBuilder({
                     }}
                     onDrop={() => onDropOn(item.id)}
                     className={[
-                      "rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 transition",
+                      "relative rounded-[18px] bg-[color:var(--surface)] p-3 pr-10 ring-1 transition",
                       isDragging
                         ? "scale-[0.99] opacity-60 ring-[color:var(--border)]"
                         : isDropTarget
@@ -907,12 +916,12 @@ export default function GalleryBuilder({
                           : "ring-[color:var(--border)]",
                     ].join(" ")}
                   >
-                    <div className="flex gap-4">
+                    <div className="flex gap-3">
                       <div className="flex w-4 shrink-0 cursor-grab items-center justify-center active:cursor-grabbing">
                         <DragHandle />
                       </div>
 
-                      <div className="h-20 w-16 shrink-0 overflow-hidden rounded-xl bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.24))] p-1.5 ring-1 ring-white/10">
+                      <div className="h-16 w-14 shrink-0 overflow-hidden rounded-xl bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.24))] p-1 ring-1 ring-white/10">
                         {itemImage(item) ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -930,7 +939,7 @@ export default function GalleryBuilder({
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-3">
-                          <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">
+                          <div className="text-[10px] tracking-[0.16em] text-[color:var(--muted2)]">
                             EXHIBIT #{index + 1}
                           </div>
 
@@ -941,53 +950,33 @@ export default function GalleryBuilder({
                           ) : null}
                         </div>
 
-                        <div className="mt-1 line-clamp-2 text-base font-semibold">{item.title}</div>
+                        <div className="mt-0.5 line-clamp-1 text-sm font-semibold">{item.title}</div>
 
-                        <div className="mt-1 line-clamp-1 text-sm text-[color:var(--muted)]">
-                          {itemMeta(item) || "-"}
+                        <div className="mt-0.5 line-clamp-1 text-xs text-[color:var(--muted)]">
+                          {itemUniverseLabel(item)}
                         </div>
 
-                        <div className="mt-3 flex flex-wrap gap-2">
+                        <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-[color:var(--muted)]">
                           {typeof item.currentValue === "number" ? (
-                            <span className="rounded-full bg-black/10 px-3 py-1 text-xs ring-1 ring-black/10">
+                            <span>
                               Value {formatMoney(item.currentValue)}
                             </span>
                           ) : null}
 
-                          <span className="rounded-full bg-black/10 px-3 py-1 text-xs ring-1 ring-black/10">
+                          <span>
                             Cost {formatMoney(totalCost(item))}
                           </span>
                         </div>
-
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => moveItem(item.id, -1)}
-                            disabled={index === 0}
-                            className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] disabled:cursor-not-allowed disabled:opacity-45"
-                          >
-                            Move Up
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => moveItem(item.id, 1)}
-                            disabled={index === selectedItems.length - 1}
-                            className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] disabled:cursor-not-allowed disabled:opacity-45"
-                          >
-                            Move Down
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => removeItem(item.id)}
-                            className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
-                          >
-                            Remove
-                          </button>
-                        </div>
                       </div>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => removeItem(item.id)}
+                      className="absolute bottom-3 right-3 grid h-7 w-7 place-items-center rounded-full bg-red-500/16 text-sm font-bold text-red-100 ring-1 ring-red-400/25 transition hover:bg-red-500/26"
+                      aria-label={`Remove ${item.title} from selected items`}
+                    >
+                      ×
+                    </button>
                   </div>
                 );
               })}
@@ -1027,6 +1016,37 @@ export default function GalleryBuilder({
                 placeholder="Search vault..."
                 className="ml-2 min-w-0 flex-1 bg-transparent text-sm text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] focus:outline-none"
               />
+            </div>
+
+            <div className="mt-3">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">
+                Only show selected
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {universeFilters.map((universe) => {
+                  const checked = visibleUniverses.includes(universe);
+
+                  return (
+                    <label
+                      key={universe}
+                      className={[
+                        "inline-flex min-h-[30px] cursor-pointer items-center gap-2 rounded-full px-3 py-1 text-xs ring-1 transition",
+                        checked
+                          ? "bg-cyan-400/14 text-cyan-100 ring-cyan-300/30"
+                          : "bg-black/12 text-[color:var(--muted)] ring-white/10 hover:text-[color:var(--fg)]",
+                      ].join(" ")}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleUniverseFilter(universe)}
+                        className="h-3.5 w-3.5 accent-cyan-300"
+                      />
+                      {UNIVERSE_LABEL[universe]}
+                    </label>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
