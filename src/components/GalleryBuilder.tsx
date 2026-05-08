@@ -1126,22 +1126,7 @@ export default function GalleryBuilder({
         </section>
 
         <section>
-          <div
-            className={[
-              "rounded-[20px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)] transition",
-              draggingId && selectedSet.has(draggingId) ? "bg-red-400/5 ring-red-300/25" : "",
-            ].join(" ")}
-            onDragOver={(event) => {
-              if (!selectedSet.has(draggingId ?? "")) return;
-              event.preventDefault();
-              event.dataTransfer.dropEffect = "move";
-            }}
-            onDrop={(event) => {
-              if (!selectedSet.has(draggingId ?? "")) return;
-              event.preventDefault();
-              onDropIntoVaultSearch(event);
-            }}
-          >
+          <div className="rounded-[20px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)] transition">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="max-w-2xl">
                 <div className="text-sm font-semibold">Search the Vault</div>
@@ -1204,6 +1189,22 @@ export default function GalleryBuilder({
                 })}
               </div>
             </div>
+
+            {draggingId && selectedSet.has(draggingId) ? (
+              <div
+                className="mt-3 rounded-2xl bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-100 shadow-[0_0_18px_rgba(248,113,113,0.22)] ring-1 ring-red-400/30"
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = "move";
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  onDropIntoVaultSearch(event);
+                }}
+              >
+                Drop here to remove from selected
+              </div>
+            ) : null}
           </div>
 
           {filtered.length === 0 ? (
@@ -1229,14 +1230,13 @@ export default function GalleryBuilder({
                         : "border-[color:var(--border)] bg-[color:var(--surface)] hover:-translate-y-0.5 hover:shadow-[0_16px_42px_rgba(0,0,0,0.12)]",
                     ].join(" ")}
                   >
-                    <button
-                      type="button"
-                      onClick={() => toggle(item.id)}
-                      aria-label={toggleLabel}
-                      aria-pressed={active}
-                      className="block w-full text-left"
-                    >
-                      <div className="relative aspect-[16/10] w-full overflow-hidden bg-[radial-gradient(circle_at_35%_20%,rgba(255,255,255,0.12),rgba(82,214,244,0.06)_34%,rgba(0,0,0,0.22)_100%)] p-3">
+                    <div className="relative">
+                      <Link
+                        href={`/vault/item/${item.id}`}
+                        className="block"
+                        aria-label={`Open image editor for ${item.title}`}
+                      >
+                        <div className="relative aspect-[16/10] w-full overflow-hidden bg-[radial-gradient(circle_at_35%_20%,rgba(255,255,255,0.12),rgba(82,214,244,0.06)_34%,rgba(0,0,0,0.22)_100%)] p-3">
                         {itemImage(item) ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -1252,24 +1252,18 @@ export default function GalleryBuilder({
                         )}
 
                         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.16)_0%,rgba(255,255,255,0.04)_22%,rgba(255,255,255,0)_52%)] mix-blend-screen" />
-                        {active ? (
-                          <>
-                            <div className="pointer-events-none absolute inset-0 grid place-items-center">
-                              <span className="relative inline-flex h-14 w-28 items-center justify-center rounded-[14px] border-2 border-[#ff8a1f] bg-[rgba(255,88,0,0.08)] shadow-[0_0_16px_rgba(255,120,0,0.72),inset_0_0_18px_rgba(255,136,31,0.22)]">
-                                <span className="h-[4px] w-14 rounded-full bg-[#ffd0a2] shadow-[0_0_10px_rgba(255,222,173,0.85)]" />
-                              </span>
-                            </div>
-                            <div className="pointer-events-none absolute right-3 top-3 rounded-full px-2.5 py-1 text-[10px] tracking-[0.14em] ring-1 backdrop-blur-sm">
-                              SELECTED
-                            </div>
-                          </>
-                        ) : (
-                          <div className="pointer-events-none absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full border border-emerald-200/40 bg-emerald-400/12 text-3xl font-light leading-none text-emerald-100 shadow-[0_0_16px_rgba(52,211,153,0.42)] ring-1 ring-emerald-300/25 backdrop-blur-sm">
-                            +
-                          </div>
-                        )}
-                      </div>
-                    </button>
+                        </div>
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => toggle(item.id)}
+                        aria-label={toggleLabel}
+                        aria-pressed={active}
+                        className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full border border-emerald-200/40 bg-emerald-400/12 text-3xl font-light leading-none text-emerald-100 shadow-[0_0_16px_rgba(52,211,153,0.42)] ring-1 ring-emerald-300/25 backdrop-blur-sm transition hover:bg-emerald-400/20"
+                      >
+                        +
+                      </button>
+                    </div>
 
                     <Link
                       href={`/vault/item/${item.id}`}

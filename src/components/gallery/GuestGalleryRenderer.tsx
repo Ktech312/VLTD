@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import FavoriteButton from "@/components/FavoriteButton";
 import GalleryShelfScene from "@/components/gallery/GalleryShelfScene";
 import { PillButton } from "@/components/ui/PillButton";
-import { getGalleryThemeLabel } from "@/lib/galleryModel";
+import { getGallerySections, getGalleryThemeLabel } from "@/lib/galleryModel";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import type { GuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
 
@@ -120,6 +120,14 @@ export default function GuestGalleryRenderer({
   const chipClass = getThemeChipClass(model.themePack);
   const backgroundImageUrl = model.background.url;
   const coverImageUrl = typeof model.gallery?.coverImage === "string" ? model.gallery.coverImage.trim() : "";
+  const sectionViews = getGallerySections(model.gallery)
+    .map((section) => ({
+      section,
+      items: section.itemIds
+        .map((itemId) => model.galleryItems.find((item) => item.id === itemId))
+        .filter(Boolean) as VaultItem[],
+    }))
+    .filter((entry) => entry.items.length > 0);
 
   return (
     <main
@@ -169,7 +177,7 @@ export default function GuestGalleryRenderer({
                 <img
                   src={coverImageUrl}
                   alt={model.galleryTitle}
-                  className="absolute inset-0 h-full w-full object-cover opacity-28"
+                  className="absolute inset-0 h-full w-full object-contain p-5 opacity-28 sm:p-8"
                   draggable={false}
                 />
                 <div className="absolute inset-0 bg-black/35" />
@@ -200,6 +208,9 @@ export default function GuestGalleryRenderer({
                     </DetailPill>
                     <DetailPill className={chipClass}>{model.layoutType} layout</DetailPill>
                     <DetailPill className={chipClass}>{model.displayMode} mode</DetailPill>
+                    {sectionViews.length ? (
+                      <DetailPill className={chipClass}>{sectionViews.length} sections</DetailPill>
+                    ) : null}
                     <DetailPill className={chipClass}>Background {model.background.type}</DetailPill>
                   </div>
                 </div>
@@ -250,6 +261,47 @@ export default function GuestGalleryRenderer({
               </div>
             </section>
           )}
+
+          {sectionViews.length ? (
+            <section className={["mt-3 mx-auto rounded-[30px] border border-white/12 bg-black/18 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.28)] backdrop-blur-sm", GALLERY_STAGE_WIDTH_CLASS].join(" ")}>
+              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
+                CURATED SECTIONS
+              </div>
+              <div className="mt-4 grid gap-4">
+                {sectionViews.map(({ section, items: sectionItems }, sectionIndex) => (
+                  <div
+                    key={section.id}
+                    className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(20,24,30,0.78),rgba(10,12,16,0.64))] p-4"
+                  >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                      <div>
+                        <div className="text-[10px] tracking-[0.18em] text-[color:var(--muted2)]">
+                          SECTION #{sectionIndex + 1}
+                        </div>
+                        <h2 className="mt-1 text-xl font-semibold">{section.title}</h2>
+                        {section.description ? (
+                          <p className="mt-1 max-w-2xl text-sm text-[color:var(--muted)]">
+                            {section.description}
+                          </p>
+                        ) : null}
+                      </div>
+                      <DetailPill className={chipClass}>{sectionItems.length} items</DetailPill>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      {sectionItems.map((item, itemIndex) => (
+                        <ViewerItemCard
+                          key={`${section.id}_${item.id}`}
+                          item={item}
+                          label={section.featuredItemId === item.id ? "FEATURED" : `SECTION ITEM #${itemIndex + 1}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
 
           {model.galleryItems.length === 0 ? (
             <section className={["mt-6 mx-auto", GALLERY_STAGE_WIDTH_CLASS].join(" ")}>
