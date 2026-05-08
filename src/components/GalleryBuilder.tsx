@@ -712,13 +712,13 @@ export default function GalleryBuilder({
                             className="rounded-[18px] bg-[color:var(--input)] p-3 ring-1 ring-[color:var(--border)]"
                           >
                             <div className="flex gap-3">
-                              <div className="h-20 w-16 shrink-0 overflow-hidden rounded-xl bg-black ring-1 ring-white/10">
+                              <div className="h-20 w-16 shrink-0 overflow-hidden rounded-xl bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.24))] p-1.5 ring-1 ring-white/10">
                                 {itemImage(item) ? (
                                   // eslint-disable-next-line @next/next/no-img-element
                                   <img
                                     src={itemImage(item)}
                                     alt={item.title}
-                                    className="h-full w-full object-cover"
+                                    className="h-full w-full object-contain"
                                     draggable={false}
                                   />
                                 ) : (
@@ -840,7 +840,7 @@ export default function GalleryBuilder({
         )}
       </section>
 
-      <div className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
+      <div className="grid gap-5 xl:grid-cols-[520px_minmax(0,1fr)]">
         <section className="rounded-[24px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between gap-3">
@@ -857,18 +857,18 @@ export default function GalleryBuilder({
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-[18px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
                 <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">EXHIBITS</div>
                 <div className="mt-2 text-xl font-semibold">{selectedCount}</div>
               </div>
 
-              <div className="rounded-[18px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+              <div className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
                 <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">CURATED VALUE</div>
                 <div className="mt-2 text-xl font-semibold">{formatMoney(selectedValue) ?? "-"}</div>
               </div>
 
-              <div className="rounded-[18px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+              <div className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
                 <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">CURATED COST</div>
                 <div className="mt-2 text-xl font-semibold">{formatMoney(selectedCost) ?? "-"}</div>
               </div>
@@ -912,13 +912,13 @@ export default function GalleryBuilder({
                         <DragHandle />
                       </div>
 
-                      <div className="h-20 w-16 shrink-0 overflow-hidden rounded-xl bg-black ring-1 ring-white/10">
+                      <div className="h-20 w-16 shrink-0 overflow-hidden rounded-xl bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.24))] p-1.5 ring-1 ring-white/10">
                         {itemImage(item) ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={itemImage(item)}
                             alt={item.title}
-                            className="h-full w-full object-cover"
+                            className="h-full w-full object-contain"
                             draggable={false}
                           />
                         ) : (
@@ -1010,12 +1010,24 @@ export default function GalleryBuilder({
               </div>
             </div>
 
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search vault items..."
-              className="mt-4 min-h-[46px] w-full rounded-2xl bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)] focus:outline-none"
-            />
+            <div className="mt-4 flex h-[42px] items-center rounded-full bg-[color:var(--input)] px-3 ring-1 ring-[color:var(--border)]">
+              <span className="shrink-0 text-[color:var(--muted)]" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4">
+                  <path
+                    d="m21 21-4.35-4.35m1.35-5.15a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search vault..."
+                className="ml-2 min-w-0 flex-1 bg-transparent text-sm text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] focus:outline-none"
+              />
+            </div>
           </div>
 
           {filtered.length === 0 ? (
@@ -1045,13 +1057,13 @@ export default function GalleryBuilder({
                       aria-pressed={active}
                       className="block w-full text-left"
                     >
-                      <div className="relative aspect-[16/10] w-full overflow-hidden bg-[linear-gradient(180deg,#11161f_0%,#0a0d12_100%)]">
+                      <div className="relative aspect-[16/10] w-full overflow-hidden bg-[radial-gradient(circle_at_35%_20%,rgba(255,255,255,0.12),rgba(82,214,244,0.06)_34%,rgba(0,0,0,0.22)_100%)] p-3">
                         {itemImage(item) ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={itemImage(item)}
                             alt={item.title}
-                            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                            className="h-full w-full object-contain transition duration-500 group-hover:scale-[1.025]"
                             draggable={false}
                           />
                         ) : (
