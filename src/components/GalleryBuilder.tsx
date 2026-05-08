@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import type { DragEvent } from "react";
 
 import { type VaultItem } from "@/lib/vaultModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -380,7 +381,10 @@ export default function GalleryBuilder({
     onChange(gallery.itemIds.filter((itemId) => itemId !== id));
   }
 
-  function onDragStart(id: string) {
+  function onDragStart(id: string, event: DragEvent<HTMLElement>) {
+    event.dataTransfer.effectAllowed = selectedSet.has(id) ? "move" : "copy";
+    event.dataTransfer.setData("text/plain", id);
+    event.dataTransfer.setData("application/x-vltd-item-id", id);
     setDraggingId(id);
     setDropTargetId(id);
   }
@@ -390,15 +394,43 @@ export default function GalleryBuilder({
     setDropTargetId(null);
   }
 
-  function onDropOn(targetId: string) {
-    if (!draggingId || !targetId || draggingId === targetId) {
+  function getDroppedItemId(event: DragEvent<HTMLElement>) {
+    return (
+      draggingId ||
+      event.dataTransfer.getData("application/x-vltd-item-id") ||
+      event.dataTransfer.getData("text/plain")
+    );
+  }
+
+  function onDropOn(targetId: string, event: DragEvent<HTMLElement>) {
+    const droppedId = getDroppedItemId(event);
+    if (!droppedId || !targetId || droppedId === targetId) {
       setDraggingId(null);
       setDropTargetId(null);
       return;
     }
 
-    const next = reorderIds(gallery.itemIds, draggingId, targetId);
-    onChange(next);
+    if (selectedSet.has(droppedId)) {
+      onChange(reorderIds(gallery.itemIds, droppedId, targetId));
+    } else {
+      const targetIndex = gallery.itemIds.indexOf(targetId);
+      const next = [...gallery.itemIds];
+      if (!next.includes(droppedId)) {
+        next.splice(Math.max(0, targetIndex), 0, droppedId);
+      }
+      onChange(next);
+    }
+
+    setDraggingId(null);
+    setDropTargetId(null);
+  }
+
+  function onDropIntoSelectedList(event: DragEvent<HTMLElement>) {
+    const droppedId = getDroppedItemId(event);
+    if (droppedId && !selectedSet.has(droppedId)) {
+      onChange([...gallery.itemIds, droppedId]);
+    }
+
     setDraggingId(null);
     setDropTargetId(null);
   }
@@ -856,7 +888,7 @@ export default function GalleryBuilder({
               <div>
                 <div className="text-sm font-semibold">Selected Items</div>
                 <div className="mt-1 text-sm text-[color:var(--muted)]">
-                  Tap + to add. Drag selected items to reorder.
+                  Tap + to add, or drag cards here. Drag selected items to reorder.
                 </div>
               </div>
 
@@ -885,11 +917,37 @@ export default function GalleryBuilder({
           </div>
 
           {selectedItems.length === 0 ? (
-            <div className="mt-4 rounded-[18px] bg-[color:var(--surface)] p-5 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
-              No items selected yet. Tap + on pieces from the Vault search panel.
+            <div
+              className={[
+                "mt-4 rounded-[18px] bg-[color:var(--surface)] p-5 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition",
+                draggingId && !selectedSet.has(draggingId) ? "bg-cyan-400/6 ring-cyan-300/30" : "",
+              ].join(" ")}
+              onDragOver={(event) => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "copy";
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                onDropIntoSelectedList(event);
+              }}
+            >
+              No items selected yet. Tap + or drag pieces from the Vault search panel.
             </div>
           ) : (
-            <div className="mt-4 grid gap-2">
+            <div
+              className={[
+                "mt-4 grid gap-2 rounded-[18px] transition",
+                draggingId && !selectedSet.has(draggingId) ? "bg-cyan-400/6 p-2 ring-1 ring-cyan-300/25" : "",
+              ].join(" ")}
+              onDragOver={(event) => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = selectedSet.has(draggingId ?? "") ? "move" : "copy";
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                onDropIntoSelectedList(event);
+              }}
+            >
               {selectedItems.map((item, index) => {
                 const isDragging = draggingId === item.id;
                 const isDropTarget = dropTargetId === item.id && draggingId !== item.id;
@@ -900,15 +958,16 @@ export default function GalleryBuilder({
                   <div
                     key={item.id}
                     draggable
-                    onDragStart={() => onDragStart(item.id)}
+                    onDragStart={(event) => onDragStart(item.id, event)}
                     onDragEnd={onDragEnd}
                     onDragOver={(e) => {
                       e.preventDefault();
                       if (dropTargetId !== item.id) setDropTargetId(item.id);
                     }}
                     onDrop={(event) => {
+                      event.preventDefault();
                       event.stopPropagation();
-                      onDropOn(item.id);
+                      onDropOn(item.id, event);
                     }}
                     className={[
                       "relative rounded-[14px] bg-[color:var(--surface)] p-2 pr-9 ring-1 transition",
@@ -1066,8 +1125,11 @@ export default function GalleryBuilder({
                 return (
                   <article
                     key={item.id}
+                    draggable
+                    onDragStart={(event) => onDragStart(item.id, event)}
+                    onDragEnd={onDragEnd}
                     className={[
-                      "vltd-selectable group overflow-hidden rounded-[22px] border text-left transition duration-300",
+                      "vltd-selectable group cursor-grab overflow-hidden rounded-[22px] border text-left transition duration-300 active:cursor-grabbing",
                       active
                         ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] shadow-[0_16px_42px_rgba(0,0,0,0.2)]"
                         : "border-[color:var(--border)] bg-[color:var(--surface)] hover:-translate-y-0.5 hover:shadow-[0_16px_42px_rgba(0,0,0,0.12)]",
