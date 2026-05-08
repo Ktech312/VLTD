@@ -397,8 +397,35 @@ export default function GalleryBuilder({
       return;
     }
 
-    const next = reorderIds(gallery.itemIds, draggingId, targetId);
-    onChange(next);
+    if (selectedSet.has(draggingId)) {
+      const next = reorderIds(gallery.itemIds, draggingId, targetId);
+      onChange(next);
+    } else {
+      const targetIndex = gallery.itemIds.indexOf(targetId);
+      const next = [...gallery.itemIds];
+      if (targetIndex >= 0) {
+        next.splice(targetIndex, 0, draggingId);
+      } else {
+        next.push(draggingId);
+      }
+      onChange(next);
+    }
+
+    setDraggingId(null);
+    setDropTargetId(null);
+  }
+
+  function onDropIntoSelectedList() {
+    if (!draggingId) {
+      setDraggingId(null);
+      setDropTargetId(null);
+      return;
+    }
+
+    if (!selectedSet.has(draggingId)) {
+      onChange([...gallery.itemIds, draggingId]);
+    }
+
     setDraggingId(null);
     setDropTargetId(null);
   }
@@ -856,7 +883,7 @@ export default function GalleryBuilder({
               <div>
                 <div className="text-sm font-semibold">Selected Items</div>
                 <div className="mt-1 text-sm text-[color:var(--muted)]">
-                  Drag exhibits to reorder the gallery flow.
+                  Drag items here, then reorder the gallery flow.
                 </div>
               </div>
 
@@ -885,11 +912,33 @@ export default function GalleryBuilder({
           </div>
 
           {selectedItems.length === 0 ? (
-            <div className="mt-4 rounded-[18px] bg-[color:var(--surface)] p-5 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
-              No items selected yet. Add pieces from the Vault search panel.
+            <div
+              className={[
+                "mt-4 rounded-[18px] bg-[color:var(--surface)] p-5 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition",
+                draggingId && !selectedSet.has(draggingId)
+                  ? "bg-cyan-400/5 ring-cyan-300/25"
+                  : "",
+              ].join(" ")}
+              onDragOver={(event) => {
+                event.preventDefault();
+              }}
+              onDrop={onDropIntoSelectedList}
+            >
+              No items selected yet. Drag or tap pieces from the Vault search panel.
             </div>
           ) : (
-            <div className="mt-4 grid gap-3">
+            <div
+              className={[
+                "mt-4 grid gap-3 rounded-[18px] transition",
+                draggingId && !selectedSet.has(draggingId)
+                  ? "bg-cyan-400/5 p-2 ring-1 ring-cyan-300/20"
+                  : "",
+              ].join(" ")}
+              onDragOver={(event) => {
+                event.preventDefault();
+              }}
+              onDrop={onDropIntoSelectedList}
+            >
               {selectedItems.map((item, index) => {
                 const isDragging = draggingId === item.id;
                 const isDropTarget = dropTargetId === item.id && draggingId !== item.id;
@@ -906,7 +955,10 @@ export default function GalleryBuilder({
                       e.preventDefault();
                       if (dropTargetId !== item.id) setDropTargetId(item.id);
                     }}
-                    onDrop={() => onDropOn(item.id)}
+                    onDrop={(event) => {
+                      event.stopPropagation();
+                      onDropOn(item.id);
+                    }}
                     className={[
                       "relative rounded-[18px] bg-[color:var(--surface)] p-3 pr-10 ring-1 transition",
                       isDragging
@@ -972,7 +1024,7 @@ export default function GalleryBuilder({
                     <button
                       type="button"
                       onClick={() => removeItem(item.id)}
-                      className="absolute bottom-3 right-3 grid h-7 w-7 place-items-center rounded-full bg-red-500/16 text-sm font-bold text-red-100 ring-1 ring-red-400/25 transition hover:bg-red-500/26"
+                      className="absolute bottom-3 right-3 grid h-7 w-7 place-items-center rounded-full bg-red-500/16 text-sm font-bold text-transparent ring-1 ring-red-400/25 transition after:text-red-100 after:content-['X'] hover:bg-red-500/26"
                       aria-label={`Remove ${item.title} from selected items`}
                     >
                       ×
@@ -1063,6 +1115,9 @@ export default function GalleryBuilder({
                 return (
                   <article
                     key={item.id}
+                    draggable
+                    onDragStart={() => onDragStart(item.id)}
+                    onDragEnd={onDragEnd}
                     className={[
                       "vltd-selectable group overflow-hidden rounded-[22px] border text-left transition duration-300",
                       active
