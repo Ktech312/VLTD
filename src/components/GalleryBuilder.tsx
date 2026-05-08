@@ -911,7 +911,7 @@ export default function GalleryBuilder({
                       onDropOn(item.id);
                     }}
                     className={[
-                      "relative rounded-[16px] bg-[color:var(--surface)] p-2.5 pr-10 ring-1 transition",
+                      "relative rounded-[14px] bg-[color:var(--surface)] p-2 pr-9 ring-1 transition",
                       isDragging
                         ? "scale-[0.99] opacity-60 ring-[color:var(--border)]"
                         : isDropTarget
@@ -919,12 +919,12 @@ export default function GalleryBuilder({
                           : "ring-[color:var(--border)]",
                     ].join(" ")}
                   >
-                    <div className="flex gap-2.5">
+                    <div className="flex gap-2">
                       <div className="flex w-4 shrink-0 cursor-grab items-center justify-center active:cursor-grabbing">
                         <DragHandle />
                       </div>
 
-                      <div className="h-12 w-11 shrink-0 overflow-hidden rounded-lg bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.24))] p-1 ring-1 ring-white/10">
+                      <div className="h-10 w-9 shrink-0 overflow-hidden rounded-lg bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.24))] p-1 ring-1 ring-white/10">
                         {itemImage(item) ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -947,19 +947,19 @@ export default function GalleryBuilder({
                           </div>
 
                           {assignedSection ? (
-                            <span className="rounded-full bg-black/10 px-2.5 py-1 text-[10px] ring-1 ring-black/10">
+                            <span className="rounded-full bg-black/10 px-2 py-0.5 text-[9px] ring-1 ring-black/10">
                               {assignedSection.title}
                             </span>
                           ) : null}
                         </div>
 
-                        <div className="line-clamp-1 text-sm font-semibold leading-tight">{item.title}</div>
+                        <div className="line-clamp-1 text-[13px] font-semibold leading-tight">{item.title}</div>
 
-                        <div className="mt-0.5 line-clamp-1 text-xs text-[color:var(--muted)]">
+                        <div className="line-clamp-1 text-[11px] leading-tight text-[color:var(--muted)]">
                           {itemUniverseLabel(item)}
                         </div>
 
-                        <div className="mt-1 flex flex-wrap gap-3 text-[10px] text-[color:var(--muted)]">
+                        <div className="mt-0.5 flex flex-wrap gap-3 text-[10px] leading-tight text-[color:var(--muted)]">
                           {typeof item.currentValue === "number" ? (
                             <span>
                               Value {formatMoney(item.currentValue)}
@@ -975,7 +975,7 @@ export default function GalleryBuilder({
                     <button
                       type="button"
                       onClick={() => removeItem(item.id)}
-                      className="absolute bottom-2 right-2 grid h-7 w-7 place-items-center rounded-full bg-red-500/16 text-xs font-bold text-transparent ring-1 ring-red-400/25 transition after:text-red-100 after:content-['X'] hover:bg-red-500/26"
+                      className="absolute bottom-2 right-2 grid h-6 w-6 place-items-center rounded-full bg-red-500/16 text-[0px] font-bold text-transparent ring-1 ring-red-400/25 transition after:text-xs after:text-red-100 after:content-['X'] hover:bg-red-500/26"
                       aria-label={`Remove ${item.title} from selected items`}
                     >
                       ×
