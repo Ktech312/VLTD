@@ -435,8 +435,65 @@ export default function GalleryBuilder({
     setDropTargetId(null);
   }
 
+  function onDropIntoVaultSearch(event: DragEvent<HTMLElement>) {
+    const droppedId = getDroppedItemId(event);
+    if (droppedId && selectedSet.has(droppedId)) {
+      removeItem(droppedId);
+    }
+
+    setDraggingId(null);
+    setDropTargetId(null);
+  }
+
   function getItemSectionId(itemId: string) {
     return sections.find((section) => section.itemIds.includes(itemId))?.id ?? "";
+  }
+
+  function assignItemToSection(sectionId: string, itemId: string) {
+    if (!itemId) return;
+
+    onGalleryChange((current) => {
+      const nextSections = getGallerySections(current).map((entry) => {
+        const withoutItem = entry.itemIds.filter((id) => id !== itemId);
+
+        if (entry.id !== sectionId) {
+          return {
+            ...entry,
+            itemIds: withoutItem,
+            featuredItemId: withoutItem.includes(entry.featuredItemId ?? "")
+              ? entry.featuredItemId
+              : withoutItem[0],
+          };
+        }
+
+        const nextItemIds = withoutItem.includes(itemId) ? withoutItem : [...withoutItem, itemId];
+        return {
+          ...entry,
+          itemIds: nextItemIds,
+          featuredItemId: entry.featuredItemId || nextItemIds[0],
+        };
+      });
+
+      return syncSectionsAndLayout(current, nextSections);
+    });
+  }
+
+  function removeItemFromSection(sectionId: string, itemId: string) {
+    onGalleryChange((current) => {
+      const nextSections = getGallerySections(current).map((entry) => {
+        if (entry.id !== sectionId) return entry;
+        const nextItemIds = entry.itemIds.filter((id) => id !== itemId);
+        return {
+          ...entry,
+          itemIds: nextItemIds,
+          featuredItemId: nextItemIds.includes(entry.featuredItemId ?? "")
+            ? entry.featuredItemId
+            : nextItemIds[0],
+        };
+      });
+
+      return syncSectionsAndLayout(current, nextSections);
+    });
   }
 
   async function handleShelfBackgroundUpload(file: File) {
@@ -683,13 +740,16 @@ export default function GalleryBuilder({
               const sectionItems = section.itemIds
                 .map((id) => items.find((item) => item.id === id))
                 .filter(Boolean) as VaultItem[];
+              const unassignedSelectedItems = selectedItems.filter(
+                (item) => !getItemSectionId(item.id)
+              );
 
               return (
                 <div
                   key={section.id}
-                  className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]"
+                  className="rounded-[18px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]"
                 >
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex-1">
                       <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">
                         SECTION #{sectionIndex + 1}
@@ -707,7 +767,7 @@ export default function GalleryBuilder({
                             return syncSectionsAndLayout(current, nextSections);
                           })
                         }
-                        className="mt-2 min-h-[42px] w-full rounded-2xl bg-[color:var(--input)] px-4 py-3 text-sm font-semibold ring-1 ring-[color:var(--border)] focus:outline-none"
+                        className="mt-2 min-h-[38px] w-full rounded-xl bg-[color:var(--input)] px-3 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)] focus:outline-none"
                       />
 
                       <textarea
@@ -720,17 +780,38 @@ export default function GalleryBuilder({
                             return syncSectionsAndLayout(current, nextSections);
                           })
                         }
-                        rows={3}
+                        rows={2}
                         placeholder="Section curatorial description..."
-                        className="mt-3 w-full rounded-2xl bg-[color:var(--input)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                        className="mt-2 w-full rounded-xl bg-[color:var(--input)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
                       />
                     </div>
 
-                    <div className="flex shrink-0 gap-2">
+                    <div className="flex shrink-0 flex-col gap-2 sm:min-w-[220px]">
+                      <select
+                        value=""
+                        onChange={(event) => {
+                          assignItemToSection(section.id, event.target.value);
+                          event.currentTarget.value = "";
+                        }}
+                        className="min-h-[36px] rounded-full bg-[color:var(--input)] px-3 py-1 text-xs ring-1 ring-[color:var(--border)]"
+                      >
+                        <option value="">+ Assign selected item</option>
+                        {selectedItems.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {getItemSectionId(item.id) ? "Move" : "Add"} - {item.title}
+                          </option>
+                        ))}
+                      </select>
+                      {unassignedSelectedItems.length ? (
+                        <div className="text-[10px] text-[color:var(--muted2)]">
+                          {unassignedSelectedItems.length} selected item
+                          {unassignedSelectedItems.length === 1 ? "" : "s"} not in a section.
+                        </div>
+                      ) : null}
                       <button
                         type="button"
                         onClick={() => onGalleryChange((current) => syncSectionsAndLayout(current, getGallerySections(current).filter((entry) => entry.id !== section.id)))}
-                        className="rounded-full bg-[color:var(--pill)] px-4 py-2 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                        className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
                       >
                         Remove Section
                       </button>
@@ -738,11 +819,11 @@ export default function GalleryBuilder({
                   </div>
 
                   {sectionItems.length === 0 ? (
-                    <div className="mt-4 rounded-[18px] bg-[color:var(--input)] p-4 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
-                      No items assigned to this section yet.
+                    <div className="mt-3 rounded-[14px] bg-[color:var(--input)] p-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+                      No items assigned yet. Use “Assign selected item” above.
                     </div>
                   ) : (
-                    <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                       {sectionItems.map((item, index) => {
                         const featured = section.featuredItemId === item.id;
                         const valueLabel = formatMoney(item.currentValue);
@@ -750,10 +831,10 @@ export default function GalleryBuilder({
                         return (
                           <div
                             key={`${section.id}_${item.id}`}
-                            className="rounded-[18px] bg-[color:var(--input)] p-3 ring-1 ring-[color:var(--border)]"
+                            className="rounded-[14px] bg-[color:var(--input)] p-2.5 ring-1 ring-[color:var(--border)]"
                           >
-                            <div className="flex gap-3">
-                              <div className="h-20 w-16 shrink-0 overflow-hidden rounded-xl bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.24))] p-1.5 ring-1 ring-white/10">
+                            <div className="flex gap-2.5">
+                              <div className="h-14 w-12 shrink-0 overflow-hidden rounded-lg bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.24))] p-1 ring-1 ring-white/10">
                                 {itemImage(item) ? (
                                   // eslint-disable-next-line @next/next/no-img-element
                                   <img
@@ -770,12 +851,12 @@ export default function GalleryBuilder({
                               </div>
 
                               <div className="min-w-0 flex-1">
-                                <div className="line-clamp-2 text-sm font-semibold">{item.title}</div>
-                                <div className="mt-1 line-clamp-1 text-xs text-[color:var(--muted)]">
+                                <div className="line-clamp-1 text-sm font-semibold">{item.title}</div>
+                                <div className="mt-0.5 line-clamp-1 text-xs text-[color:var(--muted)]">
                                   {itemMeta(item) || "-"}
                                 </div>
 
-                                <div className="mt-2 flex flex-wrap gap-2">
+                                <div className="mt-1.5 flex flex-wrap gap-2">
                                   {valueLabel ? (
                                     <span className="rounded-full bg-black/10 px-2.5 py-1 text-[10px] ring-1 ring-black/10">
                                       {valueLabel}
@@ -787,7 +868,7 @@ export default function GalleryBuilder({
                                   </span>
                                 </div>
 
-                                <div className="mt-3 flex flex-wrap gap-2">
+                                <div className="mt-2 flex flex-wrap gap-2">
                                   <button
                                     type="button"
                                     onClick={() =>
@@ -853,15 +934,13 @@ export default function GalleryBuilder({
                                       ))}
                                     </select>
                                   ) : null}
-                                </div>
-
-                                <div className="mt-3">
-                                  <Link
-                                    href={`/vault/item/${item.id}`}
-                                    className="inline-flex min-h-[30px] items-center justify-center rounded-full bg-[color:var(--pill)] px-3 py-1 text-[11px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                                  <button
+                                    type="button"
+                                    onClick={() => removeItemFromSection(section.id, item.id)}
+                                    className="rounded-full bg-red-500/10 px-2.5 py-1 text-[11px] font-semibold text-red-100 ring-1 ring-red-400/20"
                                   >
-                                    Open Item
-                                  </Link>
+                                    Remove
+                                  </button>
                                 </div>
                               </div>
                             </div>
@@ -1034,7 +1113,7 @@ export default function GalleryBuilder({
                     <button
                       type="button"
                       onClick={() => removeItem(item.id)}
-                      className="absolute bottom-2 right-2 grid h-6 w-6 place-items-center rounded-full bg-red-500/16 text-[0px] font-bold text-transparent ring-1 ring-red-400/25 transition after:text-xs after:text-red-100 after:content-['X'] hover:bg-red-500/26"
+                      className="absolute bottom-2 right-2 grid h-6 w-6 place-items-center rounded-full bg-red-500/16 text-[0px] font-bold text-transparent shadow-[0_0_14px_rgba(248,113,113,0.36)] ring-1 ring-red-400/35 transition after:text-base after:leading-none after:text-red-100 after:content-['-'] hover:bg-red-500/26"
                       aria-label={`Remove ${item.title} from selected items`}
                     >
                       ×
@@ -1047,7 +1126,22 @@ export default function GalleryBuilder({
         </section>
 
         <section>
-          <div className="rounded-[20px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
+          <div
+            className={[
+              "rounded-[20px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)] transition",
+              draggingId && selectedSet.has(draggingId) ? "bg-red-400/5 ring-red-300/25" : "",
+            ].join(" ")}
+            onDragOver={(event) => {
+              if (!selectedSet.has(draggingId ?? "")) return;
+              event.preventDefault();
+              event.dataTransfer.dropEffect = "move";
+            }}
+            onDrop={(event) => {
+              if (!selectedSet.has(draggingId ?? "")) return;
+              event.preventDefault();
+              onDropIntoVaultSearch(event);
+            }}
+          >
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="max-w-2xl">
                 <div className="text-sm font-semibold">Search the Vault</div>
@@ -1153,10 +1247,7 @@ export default function GalleryBuilder({
                           />
                         ) : (
                           <div className="grid h-full w-full place-items-center">
-                            <div className="text-center">
-                              <div className="text-sm font-medium opacity-90">{item.title}</div>
-                              <div className="mt-1 text-xs opacity-60">No image available</div>
-                            </div>
+                            <div className="text-xs opacity-60">No image</div>
                           </div>
                         )}
 
@@ -1173,7 +1264,7 @@ export default function GalleryBuilder({
                             </div>
                           </>
                         ) : (
-                          <div className="pointer-events-none absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full border border-cyan-200/35 bg-[rgba(10,22,38,0.55)] text-3xl font-light leading-none text-cyan-100 shadow-[0_0_14px_rgba(34,211,238,0.45)] ring-1 ring-cyan-300/20 backdrop-blur-sm">
+                          <div className="pointer-events-none absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full border border-emerald-200/40 bg-emerald-400/12 text-3xl font-light leading-none text-emerald-100 shadow-[0_0_16px_rgba(52,211,153,0.42)] ring-1 ring-emerald-300/25 backdrop-blur-sm">
                             +
                           </div>
                         )}
@@ -1187,20 +1278,12 @@ export default function GalleryBuilder({
                       <div className="line-clamp-2 text-lg font-semibold leading-tight">{item.title}</div>
                       <div className="mt-2 line-clamp-1 text-sm opacity-75">{itemMeta(item) || "-"}</div>
 
-                      <div className="mt-4 flex flex-wrap items-center gap-2">
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
                         {typeof item.currentValue === "number" ? (
                           <span className="rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10">
                             Value {formatMoney(item.currentValue)}
                           </span>
                         ) : null}
-
-                        <span className="rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10">
-                          Cost {formatMoney(totalCost(item))}
-                        </span>
-                      </div>
-
-                      <div className="mt-4 text-xs font-medium uppercase tracking-[0.14em] text-[color:var(--muted2)]">
-                        Open item details
                       </div>
                     </Link>
                   </article>
