@@ -1113,7 +1113,7 @@ export default function GalleryBuilder({
                     <button
                       type="button"
                       onClick={() => removeItem(item.id)}
-                      className="absolute bottom-2 right-2 grid h-9 w-9 place-items-center overflow-visible rounded-full border-[3px] border-red-500 bg-white text-[0px] text-transparent ring-1 ring-red-100/70 transition hover:scale-105"
+                      className="absolute bottom-2 right-2 grid h-9 w-9 place-items-center overflow-visible rounded-full border-[3px] border-red-500 bg-transparent text-[0px] text-transparent ring-1 ring-red-100/70 transition hover:scale-105"
                       style={{
                         boxShadow:
                           "0 0 14px rgba(248,113,113,0.92), 0 0 30px rgba(248,113,113,0.48), inset 0 0 8px rgba(248,113,113,0.24)",
@@ -1122,7 +1122,7 @@ export default function GalleryBuilder({
                     >
                       <span className="pointer-events-none absolute -inset-2 rounded-full bg-red-500/30 blur-md" aria-hidden="true" />
                       <span
-                        className="relative z-10 h-[5px] w-4 rounded-full bg-red-500"
+                        className="absolute left-1/2 top-1/2 z-10 h-[5px] w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500"
                         style={{
                           boxShadow:
                             "0 0 7px rgba(255,255,255,0.95), 0 0 12px rgba(248,113,113,0.95), 0 0 20px rgba(248,113,113,0.78)",
@@ -1272,7 +1272,7 @@ export default function GalleryBuilder({
                         onClick={() => toggle(item.id)}
                         aria-label={toggleLabel}
                         aria-pressed={active}
-                        className="absolute right-3 top-3 grid h-11 w-11 place-items-center overflow-visible rounded-full border-[3px] border-emerald-500 bg-white text-transparent ring-1 ring-emerald-100/70 transition hover:scale-105"
+                        className="absolute right-3 top-3 grid h-11 w-11 place-items-center overflow-visible rounded-full border-[3px] border-emerald-500 bg-transparent text-transparent ring-1 ring-emerald-100/70 transition hover:scale-105"
                         style={{
                           boxShadow:
                             "0 0 16px rgba(74,222,128,0.96), 0 0 34px rgba(74,222,128,0.54), inset 0 0 10px rgba(74,222,128,0.24)",
