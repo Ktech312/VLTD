@@ -1113,13 +1113,18 @@ export default function GalleryBuilder({
                     <button
                       type="button"
                       onClick={() => removeItem(item.id)}
-                      className="absolute bottom-2 right-2 grid h-8 w-8 place-items-center rounded-full border border-red-200/60 bg-red-500/20 text-[0px] font-light leading-none text-transparent ring-1 ring-red-300/40 transition after:absolute after:left-1/2 after:top-1/2 after:-translate-x-1/2 after:-translate-y-[55%] after:text-2xl after:leading-none after:text-red-100 after:content-['-'] hover:bg-red-500/30"
+                      className="absolute bottom-2 right-2 grid h-9 w-9 place-items-center overflow-visible rounded-full border border-red-100/70 bg-red-500/30 text-[0px] font-light leading-none text-transparent ring-1 ring-red-200/50 transition hover:bg-red-500/40"
                       style={{
                         boxShadow:
                           "0 0 18px rgba(248,113,113,0.78), 0 0 34px rgba(248,113,113,0.34), inset 0 0 14px rgba(248,113,113,0.24)",
                       }}
                       aria-label={`Remove ${item.title} from selected items`}
                     >
+                      <span className="pointer-events-none absolute -inset-2 rounded-full bg-red-400/35 blur-md" aria-hidden="true" />
+                      <span className="pointer-events-none absolute -inset-1 rounded-full bg-red-500/20" aria-hidden="true" />
+                      <span className="relative z-10 grid h-full w-full place-items-center text-3xl font-light leading-none text-red-50" aria-hidden="true">
+                        -
+                      </span>
                       ×
                     </button>
                   </div>
@@ -1263,13 +1268,17 @@ export default function GalleryBuilder({
                         onClick={() => toggle(item.id)}
                         aria-label={toggleLabel}
                         aria-pressed={active}
-                        className="absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-full border border-emerald-200/60 bg-emerald-400/18 text-4xl font-light leading-none text-emerald-50 shadow-[0_0_22px_rgba(52,211,153,0.68),inset_0_0_16px_rgba(52,211,153,0.18)] ring-1 ring-emerald-300/40 backdrop-blur-sm transition hover:bg-emerald-400/26"
+                        className="absolute right-3 top-3 grid h-11 w-11 place-items-center overflow-visible rounded-full border border-emerald-100/70 bg-emerald-400/28 text-emerald-50 ring-1 ring-emerald-200/50 backdrop-blur-sm transition hover:bg-emerald-400/38"
                         style={{
                           boxShadow:
                             "0 0 22px rgba(52,211,153,0.82), 0 0 42px rgba(52,211,153,0.34), inset 0 0 16px rgba(52,211,153,0.24)",
                         }}
                       >
-                        +
+                        <span className="pointer-events-none absolute -inset-2 rounded-full bg-emerald-300/35 blur-md" aria-hidden="true" />
+                        <span className="pointer-events-none absolute -inset-1 rounded-full bg-emerald-400/20" aria-hidden="true" />
+                        <span className="relative z-10 grid h-full w-full place-items-center text-4xl font-light leading-none text-emerald-50" aria-hidden="true">
+                          +
+                        </span>
                       </button>
                     </div>
 
