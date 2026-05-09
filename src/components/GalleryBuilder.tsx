@@ -1113,7 +1113,7 @@ export default function GalleryBuilder({
                     <button
                       type="button"
                       onClick={() => removeItem(item.id)}
-                      className="absolute bottom-2 right-2 grid h-6 w-6 place-items-center rounded-full bg-red-500/16 text-[0px] font-bold text-transparent shadow-[0_0_14px_rgba(248,113,113,0.36)] ring-1 ring-red-400/35 transition after:text-base after:leading-none after:text-red-100 after:content-['-'] hover:bg-red-500/26"
+                      className="absolute bottom-2 right-2 grid h-8 w-8 place-items-center rounded-full border border-red-200/45 bg-red-500/16 text-[0px] font-light leading-none text-transparent shadow-[0_0_18px_rgba(248,113,113,0.58),inset_0_0_14px_rgba(248,113,113,0.18)] ring-1 ring-red-300/35 transition after:text-2xl after:leading-none after:text-red-100 after:content-['-'] hover:bg-red-500/24"
                       aria-label={`Remove ${item.title} from selected items`}
                     >
                       ×
@@ -1232,7 +1232,7 @@ export default function GalleryBuilder({
                   >
                     <div className="relative">
                       <Link
-                        href={`/vault/item/${item.id}`}
+                        href={`/vault/item/${item.id}#media`}
                         className="block"
                         aria-label={`Open image editor for ${item.title}`}
                       >
@@ -1259,7 +1259,7 @@ export default function GalleryBuilder({
                         onClick={() => toggle(item.id)}
                         aria-label={toggleLabel}
                         aria-pressed={active}
-                        className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full border border-emerald-200/40 bg-emerald-400/12 text-3xl font-light leading-none text-emerald-100 shadow-[0_0_16px_rgba(52,211,153,0.42)] ring-1 ring-emerald-300/25 backdrop-blur-sm transition hover:bg-emerald-400/20"
+                        className="absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-full border border-emerald-200/60 bg-emerald-400/18 text-4xl font-light leading-none text-emerald-50 shadow-[0_0_22px_rgba(52,211,153,0.68),inset_0_0_16px_rgba(52,211,153,0.18)] ring-1 ring-emerald-300/40 backdrop-blur-sm transition hover:bg-emerald-400/26"
                       >
                         +
                       </button>

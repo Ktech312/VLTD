@@ -830,7 +830,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               </div>
             )}
 
-            <div className="mt-4">
+            <div id="media" className="mt-4 scroll-mt-24">
               <Section title="MEDIA">
                 <ItemMedia
                   images={images}
