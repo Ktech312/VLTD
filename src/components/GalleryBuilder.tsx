@@ -1113,18 +1113,22 @@ export default function GalleryBuilder({
                     <button
                       type="button"
                       onClick={() => removeItem(item.id)}
-                      className="absolute bottom-2 right-2 grid h-9 w-9 place-items-center overflow-visible rounded-full border border-red-100/70 bg-red-500/30 text-[0px] font-light leading-none text-transparent ring-1 ring-red-200/50 transition hover:bg-red-500/40"
+                      className="absolute bottom-2 right-2 grid h-9 w-9 place-items-center overflow-visible rounded-full border-[3px] border-red-500 bg-white text-[0px] text-transparent ring-1 ring-red-100/70 transition hover:scale-105"
                       style={{
                         boxShadow:
-                          "0 0 18px rgba(248,113,113,0.78), 0 0 34px rgba(248,113,113,0.34), inset 0 0 14px rgba(248,113,113,0.24)",
+                          "0 0 14px rgba(248,113,113,0.92), 0 0 30px rgba(248,113,113,0.48), inset 0 0 8px rgba(248,113,113,0.24)",
                       }}
                       aria-label={`Remove ${item.title} from selected items`}
                     >
-                      <span className="pointer-events-none absolute -inset-2 rounded-full bg-red-400/35 blur-md" aria-hidden="true" />
-                      <span className="pointer-events-none absolute -inset-1 rounded-full bg-red-500/20" aria-hidden="true" />
-                      <span className="relative z-10 grid h-full w-full place-items-center text-3xl font-light leading-none text-red-50" aria-hidden="true">
-                        -
-                      </span>
+                      <span className="pointer-events-none absolute -inset-2 rounded-full bg-red-500/30 blur-md" aria-hidden="true" />
+                      <span
+                        className="relative z-10 h-[5px] w-4 rounded-full bg-red-500"
+                        style={{
+                          boxShadow:
+                            "0 0 7px rgba(255,255,255,0.95), 0 0 12px rgba(248,113,113,0.95), 0 0 20px rgba(248,113,113,0.78)",
+                        }}
+                        aria-hidden="true"
+                      />
                       ×
                     </button>
                   </div>
@@ -1268,16 +1272,28 @@ export default function GalleryBuilder({
                         onClick={() => toggle(item.id)}
                         aria-label={toggleLabel}
                         aria-pressed={active}
-                        className="absolute right-3 top-3 grid h-11 w-11 place-items-center overflow-visible rounded-full border border-emerald-100/70 bg-emerald-400/28 text-emerald-50 ring-1 ring-emerald-200/50 backdrop-blur-sm transition hover:bg-emerald-400/38"
+                        className="absolute right-3 top-3 grid h-11 w-11 place-items-center overflow-visible rounded-full border-[3px] border-emerald-500 bg-white text-transparent ring-1 ring-emerald-100/70 transition hover:scale-105"
                         style={{
                           boxShadow:
-                            "0 0 22px rgba(52,211,153,0.82), 0 0 42px rgba(52,211,153,0.34), inset 0 0 16px rgba(52,211,153,0.24)",
+                            "0 0 16px rgba(74,222,128,0.96), 0 0 34px rgba(74,222,128,0.54), inset 0 0 10px rgba(74,222,128,0.24)",
                         }}
                       >
-                        <span className="pointer-events-none absolute -inset-2 rounded-full bg-emerald-300/35 blur-md" aria-hidden="true" />
-                        <span className="pointer-events-none absolute -inset-1 rounded-full bg-emerald-400/20" aria-hidden="true" />
-                        <span className="relative z-10 grid h-full w-full place-items-center text-4xl font-light leading-none text-emerald-50" aria-hidden="true">
-                          +
+                        <span className="pointer-events-none absolute -inset-2 rounded-full bg-emerald-400/35 blur-md" aria-hidden="true" />
+                        <span className="relative z-10 grid h-full w-full place-items-center" aria-hidden="true">
+                          <span
+                            className="absolute h-[5px] w-5 rounded-full bg-emerald-500"
+                            style={{
+                              boxShadow:
+                                "0 0 7px rgba(255,255,255,0.95), 0 0 12px rgba(74,222,128,0.98), 0 0 22px rgba(74,222,128,0.82)",
+                            }}
+                          />
+                          <span
+                            className="absolute h-5 w-[5px] rounded-full bg-emerald-500"
+                            style={{
+                              boxShadow:
+                                "0 0 7px rgba(255,255,255,0.95), 0 0 12px rgba(74,222,128,0.98), 0 0 22px rgba(74,222,128,0.82)",
+                            }}
+                          />
                         </span>
                       </button>
                     </div>
