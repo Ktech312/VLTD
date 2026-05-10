@@ -4,9 +4,8 @@
 /* =========================================================
    VLTD THEME SYSTEM
    Mode: Light / Dark
-   Palette: Mirror / Purple Rain
-   Goal: Apple-clean pills + calm accents + readable contrast
-   Update: Neon portfolio-aligned accents (cyan + violet)
+   Palette: Gold / Deep Vault
+   Goal: Premium collectibles — metallic gold, deep black, warm depth
 ========================================================= */
 
 :root {
@@ -15,6 +14,9 @@
   /* ✅ Reserve TopNav height so content never jumps */
   --topnav-h: 72px;
 
+  /* Reserve BottomNav height so content clears it on mobile */
+  --bottomnav-h: 68px;
+
   /* ---------------------------------------------------------
      NAV / SHELL VARS
      - AppShellEffects sets --topnav-shift ("0%" or "-110%")
@@ -22,12 +24,14 @@
   --topnav-shift: 0%;
 
   /* ---------------------------------------------------------
-     PALETTE (default = Mirror)
-     NOTE: Mirror + Purple now share the same "neon pair"
-     but swap which color is primary.
+     PALETTE — Gold System
   --------------------------------------------------------- */
-  --accent: #52d6f4; /* Neon Cyan (portfolio neon) */
-  --accent-2: #9615db; /* Neon Violet (portfolio neon) */
+  --accent: #F5B548;   /* Gold — primary accent everywhere */
+  --accent-2: #C8941F; /* Dark gold — depth / secondary */
+
+  /* Cyan kept ONLY for prices, data values, and market numbers */
+  --data-color: #52d6f4;
+  --warm-gray: #A0956B; /* secondary / muted text */
 
   /* ---------------------------------------------------------
      LIGHT MODE BASE
@@ -83,16 +87,16 @@
   /* Tables / rows */
   --table-row-hover: rgba(0, 0, 0, 0.03);
 
-  /* Subtle “glow” layer (keeps color calm) */
+  /* Subtle “glow” layer — warm gold depth, not flat */
   --bg-glow: radial-gradient(
-      1200px 600px at 50% -10%,
-      color-mix(in srgb, var(--accent) 10%, transparent),
-      transparent 60%
+      ellipse 90% 50% at 50% -8%,
+      color-mix(in srgb, var(--accent) 8%, transparent),
+      transparent 65%
     ),
     radial-gradient(
-      900px 450px at 85% 0%,
-      color-mix(in srgb, var(--accent-2) 8%, transparent),
-      transparent 55%
+      ellipse 60% 35% at 80% 110%,
+      color-mix(in srgb, var(--accent-2) 5%, transparent),
+      transparent 60%
     );
 
   /* =========================================================
@@ -106,10 +110,10 @@
   --safe-r: env(safe-area-inset-right, 0px);
 }
 
-/* Slightly shorter header on small screens */
-@media (max-width: 640px) {
+/* Mobile: main bar (56px) + slim search row (46px) */
+@media (max-width: 767px) {
   :root {
-    --topnav-h: 64px;
+    --topnav-h: 102px;
   }
 }
 
@@ -118,9 +122,9 @@
 ========================================================= */
 
 .dark {
-  --bg: #0a0a0a;
-  --surface: rgba(18, 18, 18, 0.82);
-  --surface-strong: rgba(24, 24, 24, 0.95);
+  --bg: #0B0B0B;
+  --surface: rgba(20, 20, 20, 0.92);
+  --surface-strong: rgba(26, 26, 26, 0.98);
 
   --fg: #ededed;
   --muted: rgba(255, 255, 255, 0.72);
@@ -162,34 +166,35 @@
 
   --table-row-hover: rgba(255, 255, 255, 0.05);
 
+  /* Deep vault — warm gold haze over pure black */
   --bg-glow: radial-gradient(
-      1200px 600px at 50% -10%,
-      color-mix(in srgb, var(--accent) 14%, transparent),
-      transparent 60%
+      ellipse 100% 55% at 50% -10%,
+      color-mix(in srgb, var(--accent) 10%, transparent),
+      transparent 68%
     ),
     radial-gradient(
-      900px 450px at 85% 0%,
-      color-mix(in srgb, var(--accent-2) 10%, transparent),
-      transparent 55%
+      ellipse 55% 30% at 88% 105%,
+      color-mix(in srgb, var(--accent-2) 7%, transparent),
+      transparent 58%
     );
 }
 
 /* =========================================================
-   PALETTE: MIRROR (cyan forward)
+   PALETTE: GOLD (primary — warm gold forward)
 ========================================================= */
 
 .theme-mirror {
-  --accent: #52d6f4; /* Neon Cyan */
-  --accent-2: #9615db; /* Neon Violet */
+  --accent: #F5B548;   /* Gold */
+  --accent-2: #C8941F; /* Dark gold */
 }
 
 /* =========================================================
-   PALETTE: PURPLE RAIN (violet forward)
+   PALETTE: DEEP GOLD (rich, darker)
 ========================================================= */
 
 .theme-purple {
-  --accent: #9615db; /* Neon Violet */
-  --accent-2: #52d6f4; /* Neon Cyan */
+  --accent: #E8A820;   /* Deeper gold */
+  --accent-2: #F5B548; /* Bright gold */
 }
 
 /* =========================================================
@@ -212,7 +217,7 @@ html {
 body {
   background: var(--bg);
   color: var(--fg);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter, Inter), system-ui, Arial, sans-serif;
 
   /* calm, palette-aware depth without distraction */
   background-image: var(--bg-glow);
@@ -244,7 +249,7 @@ select {
 }
 
 option {
-  background-color: #151922;
+  background-color: #141414;
   color: #f5f7fb;
 }
 
@@ -545,33 +550,34 @@ hr {
 }
 
 /* ---------------------------------------------------------
-   STYLE: NEON PURPLE
+   STYLE: ENGRAVED GOLD
+   Rich metallic gold emphasis
 --------------------------------------------------------- */
 
 .style-neon_purple {
-  --accent: #9615db;
-  --accent-2: #52d6f4;
+  --accent: #F5B548;
+  --accent-2: #C8941F;
 }
 
 .style-neon_purple .rounded-3xl {
   box-shadow:
-    0 0 18px rgba(150,21,219,0.35),
-    inset 0 0 4px rgba(150,21,219,0.25);
+    0 0 18px rgba(245,181,72,0.28),
+    inset 0 0 4px rgba(245,181,72,0.14);
 }
 
 .style-neon_purple .vltd-frame-glow,
 .style-neon_purple .vltd-panel-main {
   box-shadow:
     0 0 0 1px var(--frame-ring),
-    0 0 30px rgba(150,21,219,0.30),
-    0 0 58px rgba(150,21,219,0.18) !important;
+    0 0 30px rgba(245,181,72,0.24),
+    0 0 58px rgba(245,181,72,0.12) !important;
 }
 
 .style-neon_purple .vltd-panel-soft {
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--frame-ring) 80%, var(--border) 20%),
-    0 0 24px rgba(150,21,219,0.24),
-    0 0 46px rgba(150,21,219,0.14) !important;
+    0 0 24px rgba(245,181,72,0.18),
+    0 0 46px rgba(245,181,72,0.10) !important;
 }
 
 /* ---------------------------------------------------------
@@ -761,8 +767,8 @@ hr {
   border-radius: 999px;
   border: 2px solid rgba(255, 255, 255, 0.22);
   box-shadow:
-    inset 0 0 22px rgba(82, 214, 244, 0.16),
-    0 0 28px rgba(82, 214, 244, 0.12);
+    inset 0 0 22px rgba(245, 181, 72, 0.16),
+    0 0 28px rgba(245, 181, 72, 0.12);
 }
 
 .vltd-vault-logo-animation__spokes {
@@ -808,7 +814,7 @@ hr {
   background: rgba(7, 13, 22, 0.8);
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.12),
-    0 0 28px rgba(82, 214, 244, 0.16);
+    0 0 28px rgba(245, 181, 72, 0.16);
   animation: vltd-vault-logo-turn 5.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
 
@@ -836,7 +842,7 @@ hr {
   position: absolute;
   inset: 7% 3% 7% 48%;
   border-radius: 0 999px 999px 0;
-  background: linear-gradient(90deg, rgba(82, 214, 244, 0), rgba(82, 214, 244, 0.32), rgba(255, 255, 255, 0.18));
+  background: linear-gradient(90deg, rgba(245, 181, 72, 0), rgba(245, 181, 72, 0.32), rgba(255, 255, 255, 0.18));
   filter: blur(8px);
   opacity: 0;
   animation: vltd-vault-gap 5.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
@@ -1015,9 +1021,9 @@ hr {
   padding: 0;
   appearance: none;
   box-shadow:
-    0 0 0 1px rgba(232, 201, 121, 0.18),
+    0 0 0 1px rgba(245, 181, 72, 0.22),
     0 24px 80px rgba(0, 0, 0, 0.48),
-    0 0 70px rgba(82, 214, 244, 0.14);
+    0 0 70px rgba(245, 181, 72, 0.14);
   isolation: isolate;
 }
 
@@ -1081,7 +1087,7 @@ hr {
   border-radius: 999px;
   z-index: 2;
   background:
-    radial-gradient(circle, #ffffff 0%, #ffffff 28%, rgba(255, 255, 255, 0.82) 44%, rgba(82, 214, 244, 0.2) 64%, transparent 74%);
+    radial-gradient(circle, #ffffff 0%, #ffffff 28%, rgba(255, 255, 255, 0.82) 44%, rgba(245, 181, 72, 0.20) 64%, transparent 74%);
   opacity: 0;
   filter: blur(2px);
   transform: scale(0.35);
@@ -1350,7 +1356,7 @@ hr {
   inset: 13%;
   border-radius: 999px;
   background:
-    radial-gradient(circle at 48% 48%, #ffffff 0%, #ffffff 34%, rgba(255, 255, 255, 0.72) 48%, rgba(82, 214, 244, 0.18) 68%, transparent 76%);
+    radial-gradient(circle at 48% 48%, #ffffff 0%, #ffffff 34%, rgba(255, 255, 255, 0.72) 48%, rgba(245, 181, 72, 0.18) 68%, transparent 76%);
   opacity: 0;
   filter: blur(4px);
   transform: scale(0.54);
@@ -1380,7 +1386,7 @@ hr {
   border: 2px solid rgba(221, 175, 67, 0.7);
   box-shadow:
     inset 0 0 0 8px rgba(221, 175, 67, 0.08),
-    inset 0 0 22px rgba(82, 214, 244, 0.12),
+    inset 0 0 22px rgba(245, 181, 72, 0.12),
     0 0 26px rgba(221, 175, 67, 0.22);
 }
 
@@ -1612,5 +1618,91 @@ hr {
   72% {
     opacity: 0.3;
     transform: scaleX(0.74);
+  }
+}
+
+/* =========================================================
+   GOLD SYSTEM
+   Metallic gold utilities — use on buttons, headings, CTAs.
+   Never use flat #F5B548; always use the gradient system.
+========================================================= */
+
+/* Metallic gold text — gradient shimmer */
+.vltd-gold-text {
+  background: linear-gradient(
+    135deg,
+    #C8941F 0%,
+    #F5B548 32%,
+    #FFE08A 52%,
+    #F5B548 68%,
+    #C8941F 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Metallic gold button — multi-stop gradient with hover shimmer */
+.vltd-gold-btn {
+  background: linear-gradient(
+    135deg,
+    #8B6914 0%,
+    #C8941F 22%,
+    #F5B548 48%,
+    #FFE08A 62%,
+    #C8941F 82%,
+    #8B6914 100%
+  );
+  background-size: 200% 100%;
+  background-position: 0% 0%;
+  color: #1A0F00;
+  transition:
+    background-position 0.42s ease,
+    box-shadow 0.25s ease,
+    transform 0.15s ease;
+}
+
+.vltd-gold-btn:hover {
+  background-position: 100% 0%;
+  box-shadow:
+    0 16px 48px rgba(245, 181, 72, 0.48),
+    0 4px 14px rgba(245, 181, 72, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+.vltd-gold-btn:active {
+  transform: translateY(0);
+  box-shadow:
+    0 8px 24px rgba(245, 181, 72, 0.35),
+    0 2px 8px rgba(245, 181, 72, 0.20);
+}
+
+/* Gold glow for cards / borders */
+.vltd-gold-glow {
+  border-color: rgba(245, 181, 72, 0.30) !important;
+  box-shadow:
+    0 0 0 1px rgba(245, 181, 72, 0.18),
+    0 0 24px rgba(245, 181, 72, 0.12),
+    0 0 48px rgba(200, 148, 31, 0.08) !important;
+}
+
+.vltd-gold-glow:hover {
+  border-color: rgba(245, 181, 72, 0.45) !important;
+  box-shadow:
+    0 0 0 1px rgba(245, 181, 72, 0.28),
+    0 0 32px rgba(245, 181, 72, 0.18),
+    0 0 60px rgba(200, 148, 31, 0.12) !important;
+}
+
+/* Data / price color — cyan kept only for numeric market data */
+.vltd-price {
+  color: var(--data-color);
+}
+
+/* Bottom nav clearance — applied to main content wrapper on mobile */
+@media (max-width: 767px) {
+  .vltd-content-wrap {
+    padding-bottom: calc(var(--bottomnav-h) + env(safe-area-inset-bottom, 0px));
   }
 }
