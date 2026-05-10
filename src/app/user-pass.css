@@ -1,0 +1,135 @@
+/* Path: src/app/user-pass.css */
+/* Pass 14: User settings / style controls visual alignment. */
+
+body:has(a[href="/user/style"]),
+body:has(a[href="/user/profile"]),
+body:has(input[accept="application/json,.json"]),
+body:has(input[accept="image/png,image/jpeg,image/webp"]) {
+  background: #07101f;
+}
+
+body:has(a[href="/user/style"]) main,
+body:has(a[href="/user/profile"]) main,
+body:has(input[accept="application/json,.json"]) main,
+body:has(input[accept="image/png,image/jpeg,image/webp"]) main {
+  background:
+    radial-gradient(circle at 48% 8%, rgba(82, 214, 244, 0.16), transparent 34%),
+    radial-gradient(circle at 84% 20%, rgba(245, 170, 60, 0.08), transparent 26%),
+    linear-gradient(180deg, #07101f 0%, #050b15 100%) !important;
+}
+
+body:has(a[href="/user/style"]) main > div,
+body:has(a[href="/user/profile"]) main > div,
+body:has(input[accept="application/json,.json"]) main > div,
+body:has(input[accept="image/png,image/jpeg,image/webp"]) main > div {
+  max-width: 1180px !important;
+}
+
+body:has(a[href="/user/style"]) main > div > div:first-child,
+body:has(a[href="/user/profile"]) main > div > div:first-child,
+body:has(input[accept="application/json,.json"]) main > div > div:first-child,
+body:has(input[accept="image/png,image/jpeg,image/webp"]) main > div > div:first-child {
+  border: 1px solid rgba(82, 214, 244, 0.28);
+  border-radius: 30px;
+  background:
+    linear-gradient(180deg, rgba(18, 38, 66, 0.88), rgba(8, 18, 32, 0.92));
+  padding: 18px;
+  box-shadow:
+    0 0 0 1px rgba(82, 214, 244, 0.06),
+    0 22px 76px rgba(82, 214, 244, 0.08),
+    0 24px 88px rgba(0, 0, 0, 0.30);
+}
+
+body:has(a[href="/user/style"]) h1,
+body:has(a[href="/user/profile"]) h1,
+body:has(input[accept="application/json,.json"]) h1,
+body:has(input[accept="image/png,image/jpeg,image/webp"]) h1 {
+  font-weight: 900 !important;
+  letter-spacing: -0.045em !important;
+}
+
+body:has(a[href="/user/style"]) section,
+body:has(a[href="/user/profile"]) section,
+body:has(input[accept="application/json,.json"]) section,
+body:has(input[accept="image/png,image/jpeg,image/webp"]) section {
+  border-color: rgba(104, 146, 196, 0.26) !important;
+  background:
+    linear-gradient(180deg, rgba(17, 35, 59, 0.88), rgba(9, 20, 36, 0.92)) !important;
+  box-shadow:
+    0 0 0 1px rgba(82, 214, 244, 0.035),
+    0 18px 56px rgba(0, 0, 0, 0.24) !important;
+}
+
+body:has(a[href="/user/style"]) section:hover,
+body:has(a[href="/user/profile"]) section:hover,
+body:has(input[accept="application/json,.json"]) section:hover,
+body:has(input[accept="image/png,image/jpeg,image/webp"]) section:hover {
+  border-color: rgba(82, 214, 244, 0.34) !important;
+}
+
+body:has(a[href="/user/style"]) button,
+body:has(a[href="/user/profile"]) button,
+body:has(input[accept="application/json,.json"]) button,
+body:has(input[accept="image/png,image/jpeg,image/webp"]) button,
+body:has(a[href="/user/style"]) a,
+body:has(a[href="/user/profile"]) a,
+body:has(input[accept="application/json,.json"]) a,
+body:has(input[accept="image/png,image/jpeg,image/webp"]) a {
+  border-color: rgba(104, 146, 196, 0.24);
+}
+
+body:has(a[href="/user/style"]) button:hover,
+body:has(a[href="/user/profile"]) button:hover,
+body:has(input[accept="application/json,.json"]) button:hover,
+body:has(input[accept="image/png,image/jpeg,image/webp"]) button:hover,
+body:has(a[href="/user/style"]) a:hover,
+body:has(a[href="/user/profile"]) a:hover,
+body:has(input[accept="application/json,.json"]) a:hover,
+body:has(input[accept="image/png,image/jpeg,image/webp"]) a:hover {
+  border-color: rgba(82, 214, 244, 0.42) !important;
+}
+
+body:has(a[href="/user/style"]) .vltd-panel-soft,
+body:has(a[href="/user/profile"]) .vltd-panel-soft,
+body:has(input[accept="application/json,.json"]) .vltd-panel-soft,
+body:has(input[accept="image/png,image/jpeg,image/webp"]) .vltd-panel-soft {
+  border-color: rgba(104, 146, 196, 0.22) !important;
+  background: rgba(9, 20, 36, 0.74) !important;
+}
+
+body:has(input[accept="image/png,image/jpeg,image/webp"]) div[style*="aspect-ratio"],
+body:has(input[accept="image/png,image/jpeg,image/webp"]) div[style*="aspectRatio"] {
+  box-shadow:
+    inset 0 0 80px rgba(0, 0, 0, 0.35),
+    0 18px 56px rgba(0, 0, 0, 0.28) !important;
+}
+
+@media (max-width: 700px) {
+  body:has(a[href="/user/style"]) main > div,
+  body:has(a[href="/user/profile"]) main > div,
+  body:has(input[accept="application/json,.json"]) main > div,
+  body:has(input[accept="image/png,image/jpeg,image/webp"]) main > div {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  body:has(a[href="/user/style"]) main > div > div:first-child,
+  body:has(a[href="/user/profile"]) main > div > div:first-child,
+  body:has(input[accept="application/json,.json"]) main > div > div:first-child,
+  body:has(input[accept="image/png,image/jpeg,image/webp"]) main > div > div:first-child,
+  body:has(a[href="/user/style"]) section,
+  body:has(a[href="/user/profile"]) section,
+  body:has(input[accept="application/json,.json"]) section,
+  body:has(input[accept="image/png,image/jpeg,image/webp"]) section {
+    border-radius: 22px !important;
+    padding: 14px !important;
+  }
+
+  body:has(a[href="/user/style"]) h1,
+  body:has(a[href="/user/profile"]) h1,
+  body:has(input[accept="application/json,.json"]) h1,
+  body:has(input[accept="image/png,image/jpeg,image/webp"]) h1 {
+    font-size: 2rem !important;
+    line-height: 1 !important;
+  }
+}
