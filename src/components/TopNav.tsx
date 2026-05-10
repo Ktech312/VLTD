@@ -140,8 +140,8 @@ function navPillClass(active: boolean) {
   return [
     "inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold ring-1 transition whitespace-nowrap",
     active
-      ? "bg-[rgba(18,43,72,0.86)] text-[color:var(--accent)] ring-[rgba(82,214,244,0.62)] shadow-[0_0_0_1px_rgba(82,214,244,0.12)]"
-      : "bg-[rgba(24,37,55,0.72)] text-[color:var(--muted)] ring-[rgba(104,146,196,0.18)] hover:bg-[rgba(32,52,78,0.82)] hover:text-[color:var(--accent)]",
+      ? "bg-[rgba(245,181,72,0.10)] text-[#F5B548] ring-[rgba(245,181,72,0.50)] shadow-[0_0_0_1px_rgba(245,181,72,0.12),0_0_16px_rgba(245,181,72,0.12)]"
+      : "bg-[rgba(255,255,255,0.04)] text-[color:var(--muted)] ring-[rgba(255,255,255,0.08)] hover:bg-[rgba(245,181,72,0.07)] hover:text-[#F5B548] hover:ring-[rgba(245,181,72,0.24)]",
   ].join(" ");
 }
 
@@ -306,18 +306,31 @@ function TopNavInner() {
           </div>
 
           <div className="hidden min-w-0 items-center justify-center md:flex">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <Link href="/" className={navPillClass(pathname === "/")}>
+                Home
+              </Link>
               <Link href="/vault" className={navPillClass(pathname.startsWith("/vault"))}>
                 <IconVault />
                 Vault
               </Link>
               <Link href="/museum" className={navPillClass(pathname.startsWith("/museum"))}>
                 <IconMuseum />
-                Museum
+                Exhibitions
+              </Link>
+              <Link href="/vault" className={navPillClass(false)}>
+                <IconSearch className="h-3.5 w-3.5" />
+                Discover
               </Link>
               <Link href="/portfolio" className={navPillClass(pathname.startsWith("/portfolio"))}>
                 <IconChart />
-                Portfolio
+                Activity
+              </Link>
+              <Link href="/wishlist" className={navPillClass(pathname.startsWith("/wishlist"))}>
+                Watchlist
+              </Link>
+              <Link href="/portfolio" className={navPillClass(false)}>
+                Insights
               </Link>
             </div>
           </div>
@@ -455,42 +468,26 @@ function TopNavInner() {
           </div>
         </div>
 
-        <div className="border-t border-[color:var(--border)]/60 md:hidden">
-          <div className="mx-auto flex max-w-7xl items-center gap-2 overflow-x-auto px-4 py-2 sm:px-5">
-            <Link href="/vault" className={navPillClass(pathname.startsWith("/vault"))}>
-              <IconVault />
-              Vault
-            </Link>
-            <Link href="/museum" className={navPillClass(pathname.startsWith("/museum"))}>
-              <IconMuseum />
-              Museum
-            </Link>
-            <Link href="/portfolio" className={navPillClass(pathname.startsWith("/portfolio"))}>
-              <IconChart />
-              Portfolio
-            </Link>
-          </div>
-
-          <div className="px-4 pb-3 sm:px-5">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                applySearch(input);
-              }}
-            >
-              <div className="flex h-[42px] items-center rounded-full bg-[color:var(--input)] px-3 ring-1 ring-[color:var(--border)]">
-                <button type="submit" className="shrink-0 text-[color:var(--muted)]" aria-label="Search vault">
-                  <IconSearch />
-                </button>
-                <input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Search vault..."
-                  className="ml-2 min-w-0 flex-1 bg-transparent text-sm text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] focus:outline-none"
-                />
-              </div>
-            </form>
-          </div>
+        {/* Mobile search row — compact, no pill nav (bottom nav handles that) */}
+        <div className="border-t border-[color:var(--border)]/40 px-4 pb-2.5 pt-2 md:hidden">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              applySearch(input);
+            }}
+          >
+            <div className="flex h-[38px] items-center rounded-full bg-[color:var(--input)] px-3 ring-1 ring-[color:var(--border)]">
+              <button type="submit" className="shrink-0 text-[color:var(--muted)]" aria-label="Search vault">
+                <IconSearch className="h-3.5 w-3.5" />
+              </button>
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Search vault, exhibitions, collectors…"
+                className="ml-2 min-w-0 flex-1 bg-transparent text-sm text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] focus:outline-none"
+              />
+            </div>
+          </form>
         </div>
       </div>
 

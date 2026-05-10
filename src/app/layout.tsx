@@ -1,6 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
+});
 import "./vltd-design.css";
 import "./vault-pass.css";
 import "./museum-pass.css";
@@ -10,6 +17,7 @@ import "./vault-utility-pass.css";
 import "./vault-directives-pass.css";
 import "./insurance-pass.css";
 import TopNav from "@/components/TopNav";
+import BottomNav from "@/components/BottomNav";
 import Providers from "@/components/Providers";
 import { ThemeBoot } from "@/components/ThemeBoot";
 import ThemeScript from "@/components/ThemeScript";
@@ -81,12 +89,12 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: "cover",
-  themeColor: "#050816",
+  themeColor: "#0B0B0B",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={inter.variable}>
       <head>
         <ThemeScript />
       </head>
@@ -95,7 +103,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <Providers>
           <TopNav />
-          <div style={{ paddingTop: "var(--topnav-h)" }}>{children}</div>
+          <div
+            style={{ paddingTop: "var(--topnav-h)" }}
+            className="vltd-content-wrap"
+          >
+            {children}
+          </div>
+          <BottomNav />
         </Providers>
       </body>
     </html>

@@ -9,8 +9,8 @@ import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vau
 
 const BiggestMoversPanel = dynamic(() => import("@/components/BiggestMoversPanel"), {
   loading: () => (
-    <div className="rounded-[24px] border border-[color:var(--border)] bg-[rgba(15,29,49,0.82)] p-4 text-sm text-[color:var(--muted)]">
-      Loading movers...
+    <div className="rounded-[24px] border border-[#1E1E1E] bg-[#141414] p-4 text-sm text-[#A0956B]">
+      Loading movers…
     </div>
   ),
 });
@@ -37,14 +37,64 @@ function itemTimestamp(item: VaultItem) {
   return Number(item.createdAt ?? item.valueUpdatedAt ?? item.priceUpdatedAt ?? 0);
 }
 
-function statToneClass(tone?: "primary" | "gain" | "quiet") {
-  if (tone === "primary") {
-    return "border-[rgba(82,214,244,0.34)] bg-[linear-gradient(180deg,rgba(24,49,82,0.95),rgba(13,27,48,0.92))] shadow-[0_18px_48px_rgba(82,214,244,0.08)]";
-  }
-  if (tone === "gain") {
-    return "border-emerald-400/35 bg-[linear-gradient(180deg,rgba(13,48,39,0.82),rgba(11,31,31,0.90))]";
-  }
-  return "border-[color:var(--border)] bg-[rgba(15,29,49,0.82)]";
+/* ── Stat chip — compact single-row format ─────────────── */
+function StatChip({
+  label,
+  value,
+  sub,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  tone?: "default" | "gold" | "gain" | "loss";
+}) {
+  const valueColor =
+    tone === "gold"
+      ? "#F5B548"
+      : tone === "gain"
+      ? "#4ade80"
+      : tone === "loss"
+      ? "#f87171"
+      : "#ffffff";
+
+  const borderColor =
+    tone === "gold"
+      ? "rgba(245,181,72,0.28)"
+      : tone === "gain"
+      ? "rgba(74,222,128,0.24)"
+      : tone === "loss"
+      ? "rgba(248,113,113,0.24)"
+      : "#1E1E1E";
+
+  const bgColor =
+    tone === "gold"
+      ? "rgba(245,181,72,0.07)"
+      : tone === "gain"
+      ? "rgba(74,222,128,0.06)"
+      : tone === "loss"
+      ? "rgba(248,113,113,0.06)"
+      : "#141414";
+
+  const boxShadow =
+    tone === "gold"
+      ? "0 4px 20px rgba(245,181,72,0.10)"
+      : tone === "gain"
+      ? "0 4px 16px rgba(74,222,128,0.08)"
+      : "none";
+
+  return (
+    <div
+      className="flex flex-col gap-0.5 rounded-[16px] border px-3.5 py-2.5 flex-1 min-w-0"
+      style={{ background: bgColor, borderColor, boxShadow }}
+    >
+      <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#A0956B]">{label}</span>
+      <span className="text-lg font-black tracking-[-0.04em] leading-none" style={{ color: valueColor }}>
+        {value}
+      </span>
+      {sub && <span className="text-[10px] text-[#A0956B]">{sub}</span>}
+    </div>
+  );
 }
 
 export default function HomeClient() {
@@ -62,14 +112,8 @@ export default function HomeClient() {
       setError("");
       try {
         const status = await getOnboardingStatus();
-        if (!status.isAuthenticated) {
-          router.replace("/login");
-          return;
-        }
-        if (status.needsOnboarding) {
-          router.replace("/onboarding");
-          return;
-        }
+        if (!status.isAuthenticated) { router.replace("/login"); return; }
+        if (status.needsOnboarding) { router.replace("/onboarding"); return; }
         setDisplayName(status.activeProfile?.display_name ?? "");
         setProfileType(status.activeProfile?.profile_type ?? "");
         setPrimaryFocus(String(status.activeProfile?.primary_focus ?? ""));
@@ -99,23 +143,27 @@ export default function HomeClient() {
       .slice(0, 4);
   }, [items]);
 
+  const gainTone = stats.totalGain >= 0 ? "gain" : "loss";
+  const gainPrefix = stats.totalGain >= 0 ? "+" : "";
   const summaryLine = stats.totalGain >= 0
     ? `Your vault is up ${formatMoney(stats.totalGain)} overall.`
     : `Your vault is down ${formatMoney(Math.abs(stats.totalGain))} overall.`;
 
+  /* ── Loading ─────────────────────────────────────────── */
   if (loading) {
     return (
-      <main className="vltd-page-depth min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6">
-        <div className="mx-auto max-w-6xl rounded-[24px] border border-[color:var(--border)] bg-[rgba(15,29,49,0.82)] p-5 text-[color:var(--muted)]">
-          Loading dashboard...
+      <main className="min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6">
+        <div className="mx-auto max-w-6xl rounded-[24px] border border-[#1E1E1E] bg-[#141414] p-5 text-[#A0956B]">
+          Loading dashboard…
         </div>
       </main>
     );
   }
 
+  /* ── Error ───────────────────────────────────────────── */
   if (error) {
     return (
-      <main className="vltd-page-depth min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6">
+      <main className="min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6">
         <div className="mx-auto max-w-6xl rounded-[24px] border border-red-500/40 bg-red-500/10 p-5 text-red-100">
           {error}
         </div>
@@ -123,86 +171,222 @@ export default function HomeClient() {
     );
   }
 
+  /* ── Render ──────────────────────────────────────────── */
   return (
-    <main className="vltd-page-depth min-h-screen px-4 py-5 text-[color:var(--fg)] sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl">
-        <section className="rounded-[28px] border border-[color:var(--border)] bg-[linear-gradient(180deg,rgba(12,26,45,0.92),rgba(8,18,32,0.92))] p-4 shadow-[0_22px_72px_rgba(0,0,0,0.26)] sm:p-5">
-          <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+    <main className="min-h-screen px-4 py-5 text-[color:var(--fg)] sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl space-y-4">
+
+        {/* ── Hero section ─────────────────────────────── */}
+        <section
+          className="rounded-[28px] border p-4 sm:p-5"
+          style={{
+            background: "linear-gradient(180deg, rgba(20,16,8,0.98) 0%, rgba(14,12,6,0.98) 100%)",
+            borderColor: "rgba(245,181,72,0.18)",
+            boxShadow: "0 0 0 1px rgba(245,181,72,0.08), 0 24px 80px rgba(0,0,0,0.55), 0 0 60px rgba(245,181,72,0.05)",
+          }}
+        >
+          {/* Greeting row */}
+          <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted2)]">Dashboard</div>
-              <h1 className="mt-2 text-3xl font-black tracking-[-0.05em] text-white sm:text-4xl">
-                Hi{displayName ? `, ${displayName}` : ""}
+              <p className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">
+                Welcome back,
+              </p>
+              <h1 className="mt-0.5 text-2xl font-black tracking-[-0.04em] text-white sm:text-3xl">
+                {displayName || "Collector"}
               </h1>
-              <p className="mt-1.5 text-base font-medium text-[color:var(--muted)]">{summaryLine}</p>
+              <p className="mt-1 text-sm text-[#A0956B]">{summaryLine}</p>
             </div>
 
-            <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(5,11,21,0.38)] px-3 py-2 text-sm text-[color:var(--muted)]">
-              <span className="text-[color:var(--muted2)]">Focus</span>{" "}
-              <span className="font-semibold text-white">{primaryFocus || (profileType === "business" ? "Business" : "Collection")}</span>
+            {/* Focus badge */}
+            <div
+              className="shrink-0 rounded-2xl border px-3 py-1.5 text-right"
+              style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}
+            >
+              <p className="text-[10px] uppercase tracking-[0.18em] text-[#A0956B]">Focus</p>
+              <p className="text-sm font-bold text-[#F5B548]">
+                {primaryFocus || (profileType === "business" ? "Business" : "Collector")}
+              </p>
             </div>
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className={`rounded-[20px] border p-4 ${statToneClass("quiet")}`}>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Items</div>
-              <div className="mt-2 text-2xl font-black tracking-[-0.04em] text-white">{stats.totalItems}</div>
-              <div className="mt-0.5 text-xs text-[color:var(--muted2)]">in vault</div>
-            </div>
-            <div className={`rounded-[20px] border p-4 ${statToneClass("quiet")}`}>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Invested</div>
-              <div className="mt-2 text-2xl font-black tracking-[-0.04em] text-white">{formatMoney(stats.totalCostValue)}</div>
-              <div className="mt-0.5 text-xs text-[color:var(--muted2)]">cost basis</div>
-            </div>
-            <div className={`rounded-[20px] border p-4 ${statToneClass("primary")}`}>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Value</div>
-              <div className="mt-2 text-2xl font-black tracking-[-0.04em] text-white">{formatMoney(stats.totalValue)}</div>
-              <div className="mt-0.5 text-xs text-[color:var(--muted2)]">current est.</div>
-            </div>
-            <div className={`rounded-[20px] border p-4 ${statToneClass("gain")}`}>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Gain / Loss</div>
-              <div className={stats.totalGain >= 0 ? "mt-2 text-2xl font-black tracking-[-0.04em] text-emerald-300" : "mt-2 text-2xl font-black tracking-[-0.04em] text-rose-300"}>
-                {stats.totalGain >= 0 ? "+" : ""}{formatMoney(stats.totalGain)}
-              </div>
-              <div className="mt-0.5 text-xs text-emerald-300/70">
-                {stats.totalCostValue > 0 ? `${stats.gainPct >= 0 ? "+" : ""}${stats.gainPct.toFixed(1)}% return` : "add costs for return"}
-              </div>
-            </div>
+          {/* Compact stats row */}
+          <div className="mt-4 flex gap-2 overflow-x-auto pb-0.5 no-scrollbar">
+            <StatChip label="Items"    value={String(stats.totalItems)} sub="in vault" />
+            <StatChip label="Invested" value={formatMoney(stats.totalCostValue)} sub="cost basis" />
+            <StatChip label="Value"    value={formatMoney(stats.totalValue)} sub="current est." tone="gold" />
+            <StatChip
+              label="Gain / Loss"
+              value={`${gainPrefix}${formatMoney(stats.totalGain)}`}
+              sub={stats.totalCostValue > 0 ? `${gainPrefix}${stats.gainPct.toFixed(1)}% return` : "add costs"}
+              tone={gainTone}
+            />
           </div>
 
+          {/* Smart Scan CTA — gold metallic */}
           <Link
             href="/capture"
-            className="mt-4 flex min-h-14 items-center justify-between gap-3 rounded-[20px] bg-[linear-gradient(90deg,#52d6f4,#4bc7e9)] px-4 py-3 text-[#05101e] shadow-[0_16px_42px_rgba(82,214,244,0.20)] transition hover:-translate-y-0.5 hover:brightness-105"
+            className="mt-4 flex min-h-[52px] items-center justify-between gap-3 rounded-[18px] px-4 py-3 font-black no-select vltd-gold-btn"
           >
-            <span className="flex items-center gap-3 text-base font-black">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#06101d]/10">▣</span>
+            <span className="flex items-center gap-3 text-sm">
+              <span
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-xl"
+                style={{ background: "rgba(26,15,0,0.25)" }}
+              >
+                ▣
+              </span>
               Smart Scan — add any item to your VLTD vault instantly
             </span>
-            <span className="hidden text-sm font-black sm:inline">Scan item →</span>
+            <span className="hidden shrink-0 text-sm sm:inline">Scan →</span>
           </Link>
+
+          {/* Quick action pills */}
+          <div className="mt-3 flex gap-2">
+            <Link
+              href="/museum"
+              className="flex-1 rounded-[14px] border py-2.5 text-center text-sm font-semibold transition hover:brightness-110"
+              style={{
+                borderColor: "rgba(245,181,72,0.28)",
+                background: "rgba(245,181,72,0.09)",
+                color: "#F5B548",
+              }}
+            >
+              Explore Exhibitions
+            </Link>
+            <Link
+              href="/vault"
+              className="flex-1 rounded-[14px] border border-[#1E1E1E] bg-[#141414] py-2.5 text-center text-sm font-semibold text-[#A0956B] transition hover:text-white hover:border-[rgba(255,255,255,0.14)]"
+            >
+              Go to Vault
+            </Link>
+          </div>
         </section>
 
-        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* ── Featured Exhibition ───────────────────────── */}
+        <section
+          className="relative overflow-hidden rounded-[24px] border p-5"
+          style={{
+            background: "linear-gradient(135deg, rgba(20,16,8,0.98) 0%, rgba(16,12,4,0.98) 100%)",
+            borderColor: "rgba(245,181,72,0.16)",
+          }}
+        >
+          {/* Warm glow in corner */}
+          <div
+            className="pointer-events-none absolute -right-8 -top-8 h-48 w-48 rounded-full"
+            style={{
+              background: "radial-gradient(circle, rgba(245,181,72,0.12) 0%, transparent 70%)",
+              filter: "blur(24px)",
+            }}
+          />
+
+          <div className="relative flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">
+                Featured Exhibition
+              </p>
+              <h2 className="mt-1.5 text-xl font-black tracking-[-0.03em] text-white">
+                Your Museum Awaits
+              </h2>
+              <p className="mt-1 max-w-[340px] text-sm leading-relaxed text-[#A0956B]">
+                Curate and display your collection for the world. Create exhibitions that tell the story of what you collect.
+              </p>
+              <div className="mt-4 flex items-center gap-2.5">
+                <Link
+                  href="/museum/new"
+                  className="rounded-full px-4 py-2 text-sm font-black vltd-gold-btn"
+                >
+                  Create Exhibition
+                </Link>
+                <Link
+                  href="/museum"
+                  className="rounded-full border border-[rgba(245,181,72,0.22)] px-4 py-2 text-sm font-semibold text-[#F5B548] transition hover:bg-[rgba(245,181,72,0.09)]"
+                >
+                  View all →
+                </Link>
+              </div>
+            </div>
+
+            {/* Decorative vault icon */}
+            <div
+              className="hidden shrink-0 sm:flex h-20 w-20 items-center justify-center rounded-2xl border text-3xl"
+              style={{
+                borderColor: "rgba(245,181,72,0.22)",
+                background: "rgba(245,181,72,0.07)",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+              }}
+            >
+              🏛
+            </div>
+          </div>
+        </section>
+
+        {/* ── Two-column: actions + recent / movers ─────── */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+
+          {/* Left column */}
           <div className="space-y-4">
-            <section className="rounded-[24px] border border-[color:var(--border)] bg-[rgba(15,29,49,0.78)] p-3.5">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--muted2)]">Quick Actions</div>
-              <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-                <Link href="/vault/quick" className="rounded-2xl border border-[rgba(82,214,244,0.22)] bg-[rgba(82,214,244,0.09)] px-3 py-3 text-center text-sm font-black text-[color:var(--accent)] transition hover:bg-[rgba(82,214,244,0.14)]">Quick Add</Link>
-                <Link href="/vault/import" className="rounded-2xl border border-[color:var(--border)] bg-[rgba(5,11,21,0.26)] px-3 py-3 text-center text-sm font-semibold text-[color:var(--muted)] transition hover:text-white">Import</Link>
-                <Link href="/vault" className="rounded-2xl border border-[color:var(--border)] bg-[rgba(5,11,21,0.26)] px-3 py-3 text-center text-sm font-semibold text-[color:var(--muted)] transition hover:text-white">Vault</Link>
-                <Link href="/museum" className="rounded-2xl border border-[color:var(--border)] bg-[rgba(5,11,21,0.26)] px-3 py-3 text-center text-sm font-semibold text-[color:var(--muted)] transition hover:text-white">Gallery</Link>
-                <Link href="/vault/add" className="rounded-2xl border border-[color:var(--border)] bg-[rgba(5,11,21,0.26)] px-3 py-3 text-center text-sm font-semibold text-[color:var(--muted)] transition hover:text-white">Add Item</Link>
-                <Link href="/account" className="rounded-2xl border border-[color:var(--border)] bg-[rgba(5,11,21,0.26)] px-3 py-3 text-center text-sm font-semibold text-[color:var(--muted)] transition hover:text-white">Account</Link>
+
+            {/* Quick Actions */}
+            <section
+              className="rounded-[24px] border border-[#1E1E1E] p-4"
+              style={{ background: "#141414" }}
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#A0956B]">
+                Quick Actions
+              </p>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {[
+                  { label: "Quick Add", href: "/vault/quick", accent: true },
+                  { label: "Import",    href: "/vault/import" },
+                  { label: "Vault",     href: "/vault" },
+                  { label: "Gallery",   href: "/museum" },
+                  { label: "Add Item",  href: "/vault/add" },
+                  { label: "Account",   href: "/account" },
+                ].map(({ label, href, accent }) => (
+                  <Link
+                    key={href + label}
+                    href={href}
+                    className="rounded-2xl border px-3 py-3 text-center text-sm font-semibold transition"
+                    style={accent
+                      ? {
+                          borderColor: "rgba(245,181,72,0.28)",
+                          background: "rgba(245,181,72,0.09)",
+                          color: "#F5B548",
+                        }
+                      : {
+                          borderColor: "#1E1E1E",
+                          background: "rgba(14,14,14,0.60)",
+                          color: "#A0956B",
+                        }
+                    }
+                  >
+                    {label}
+                  </Link>
+                ))}
               </div>
             </section>
 
-            <section className="rounded-[24px] border border-[color:var(--border)] bg-[rgba(15,29,49,0.78)] p-3.5">
+            {/* Recently Added */}
+            <section
+              className="rounded-[24px] border border-[#1E1E1E] p-4"
+              style={{ background: "#141414" }}
+            >
               <div className="flex items-center justify-between gap-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--muted2)]">Recently Added</div>
-                <Link href="/vault" className="text-sm font-semibold text-[color:var(--muted2)] transition hover:text-[color:var(--accent)]">View all →</Link>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#A0956B]">
+                  Recently Added
+                </p>
+                <Link
+                  href="/vault"
+                  className="text-sm font-semibold text-[#A0956B] transition hover:text-[#F5B548]"
+                >
+                  View all →
+                </Link>
               </div>
 
               {recentItems.length === 0 ? (
-                <div className="mt-3 rounded-2xl border border-dashed border-[color:var(--border)] p-4 text-sm text-[color:var(--muted)]">
+                <div
+                  className="mt-3 rounded-2xl border border-dashed p-4 text-sm text-[#A0956B]"
+                  style={{ borderColor: "#1E1E1E" }}
+                >
                   No items yet. Start with Quick Add or Smart Scan.
                 </div>
               ) : (
@@ -211,15 +395,26 @@ export default function HomeClient() {
                     <Link
                       key={item.id}
                       href={`/vault/item/${item.id}`}
-                      className="flex items-center justify-between gap-4 rounded-2xl bg-[rgba(18,38,66,0.74)] px-3.5 py-2.5 transition hover:bg-[rgba(27,54,88,0.9)]"
+                      className="flex items-center justify-between gap-4 rounded-2xl border border-transparent px-3.5 py-2.5 transition"
+                      style={{ background: "rgba(20,20,20,0.80)" }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(245,181,72,0.14)";
+                        (e.currentTarget as HTMLAnchorElement).style.background = "rgba(30,28,20,0.90)";
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLAnchorElement).style.borderColor = "transparent";
+                        (e.currentTarget as HTMLAnchorElement).style.background = "rgba(20,20,20,0.80)";
+                      }}
                     >
                       <div className="min-w-0">
-                        <div className="truncate text-sm font-semibold text-[color:var(--fg)]">{item.title}</div>
-                        <div className="mt-0.5 text-xs text-[color:var(--muted2)]">{item.universe || item.category || "Collectible"}</div>
+                        <p className="truncate text-sm font-semibold text-white">{item.title}</p>
+                        <p className="mt-0.5 text-xs text-[#A0956B]">
+                          {item.universe || item.category || "Collectible"}
+                        </p>
                       </div>
-                      <div className="shrink-0 text-sm font-semibold text-[color:var(--muted)]">
+                      <p className="shrink-0 text-sm font-semibold text-[#A0956B]">
                         {formatMoney(item.currentValue ?? item.estimatedValue ?? 0)}
-                      </div>
+                      </p>
                     </Link>
                   ))}
                 </div>
@@ -227,6 +422,7 @@ export default function HomeClient() {
             </section>
           </div>
 
+          {/* Right column — biggest movers */}
           <BiggestMoversPanel items={items} />
         </div>
       </div>
