@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 
+import Image from "next/image";
 import CommandPalette from "@/components/CommandPalette";
 import { ThemePicker } from "@/components/ui/ThemePicker";
 import { useTheme } from "@/lib/ThemeContext";
@@ -336,7 +337,7 @@ function TopNavInner() {
 
           {/* Logo */}
           <Link href="/" className="shrink-0 flex items-center">
-            <img src="/brand/vltd-logo.png" alt="VLTD" className="h-[42px] w-auto" />
+            <Image src="/brand/vltd-logo.png" alt="VLTD" width={120} height={42} className="h-[42px] w-auto" priority />
           </Link>
 
           {/* Desktop icon nav — centered */}

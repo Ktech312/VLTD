@@ -4,7 +4,6 @@ export function backupVault() {
     if (!raw) return;
 
     localStorage.setItem("vltd_vault_backup", raw);
-    console.log("Vault backup saved");
   } catch {}
 }
 

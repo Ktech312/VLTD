@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 
 type ThemeMode = "system" | "dark" | "light";
 type Palette = "mirror" | "purple";
@@ -126,8 +127,7 @@ function MiniShell() {
       <div className="flex items-center justify-between gap-2 px-3 py-2 bg-[color:var(--surface)]/90 backdrop-blur">
         <div className="flex items-center gap-2 min-w-0">
           <div className="h-8 w-8 rounded-xl bg-[color:var(--pill)] ring-1 ring-[color:var(--border)] overflow-hidden grid place-items-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/vltd-logo.png" alt="VLTD" className="h-8 w-8 object-contain p-1" />
+            <Image src="/brand/vltd-logo.png" alt="VLTD" width={32} height={32} className="h-8 w-8 object-contain p-1" />
           </div>
           <div className="min-w-0">
             <div className="text-xs font-semibold truncate">VLTD</div>
