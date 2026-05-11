@@ -419,7 +419,7 @@ function TopNavInner() {
                   onBlur={() => { if (!input.trim()) setSearchExpanded(false); }}
                   placeholder="Search vault, exhibitions, collectors..."
                   className="min-w-0 flex-1 bg-transparent text-[13px] focus:outline-none"
-                  style={{ color: "#F0EAD6" }}
+                  style={{ color: "var(--theme-text-primary, #F0EAD6)" }}
                 />
                 <span className="shrink-0 hidden lg:inline text-[11px] rounded px-1.5 py-0.5"
                   style={{ background: "rgba(255,255,255,0.07)", color: "#5A5040", fontFamily: "monospace" }}>
@@ -503,7 +503,7 @@ function TopNavInner() {
                   <div className="px-4 py-3.5" style={{ borderBottom: "1px solid rgba(245,181,72,0.10)" }}>
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="truncate text-sm font-semibold" style={{ color: "#F0EAD6" }}>
+                        <div className="truncate text-sm font-semibold" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
                           {activeProfile?.display_name || accountEmail || "Guest"}
                         </div>
                         <div className="mt-0.5 truncate text-xs" style={{ color: "#A0956B" }}>
@@ -526,7 +526,7 @@ function TopNavInner() {
                         ].map(({ href, label }) => (
                           <Link key={href} href={href} onClick={() => setUserOpen(false)}
                             className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
-                            style={{ color: "#F0EAD6" }}>
+                            style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
                             {label}
                           </Link>
                         ))}
@@ -534,7 +534,7 @@ function TopNavInner() {
                           <button type="button"
                             onClick={() => { setUserOpen(false); setCommandOpen(true); }}
                             className="block w-full rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
-                            style={{ color: "#F0EAD6" }}>
+                            style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
                             Switch Account
                           </button>
                         )}
@@ -543,10 +543,10 @@ function TopNavInner() {
                       <>
                         <Link href="/login" onClick={() => setUserOpen(false)}
                           className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
-                          style={{ color: "#F0EAD6" }}>Log In</Link>
+                          style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>Log In</Link>
                         <Link href="/signup" onClick={() => setUserOpen(false)}
                           className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
-                          style={{ color: "#F0EAD6" }}>Create Account</Link>
+                          style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>Create Account</Link>
                       </>
                     )}
                   </div>
@@ -605,7 +605,7 @@ function TopNavInner() {
                     >
                       <Icon active={active} />
                       <div>
-                        <p className="text-[12px] font-bold leading-none" style={{ color: active ? "#F5B548" : "#F0EAD6" }}>
+                        <p className="text-[12px] font-bold leading-none" style={{ color: active ? "#F5B548" : "var(--theme-text-primary, #F0EAD6)" }}>
                           {item.label}
                         </p>
                         <p className="mt-1 text-[11px] leading-snug" style={{ color: "#5A5040" }}>
@@ -632,7 +632,7 @@ function TopNavInner() {
                     🏛
                   </div>
                   <div>
-                    <p className="text-[12px] font-black leading-snug" style={{ color: "#F0EAD6" }}>
+                    <p className="text-[12px] font-black leading-snug" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
                       Your Collection.<br />Your Museum.<br />Your Legacy.
                     </p>
                     <Link
@@ -665,7 +665,7 @@ function TopNavInner() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Search vault, exhibitions, collectors…"
                 className="ml-2 min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
-                style={{ color: "#F0EAD6" }}
+                style={{ color: "var(--theme-text-primary, #F0EAD6)" }}
               />
             </div>
           </form>

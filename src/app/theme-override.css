@@ -232,6 +232,31 @@
   color: var(--theme-text-primary, #1A1A2E) !important;
 }
 
+/* Button text in light mode */
+.theme-light body button:not([class*="btn-gold"]):not([class*="vltd-gold"]):not([class*="bg-red"]) {
+  color: var(--theme-text-primary, #1A1A2E) !important;
+}
+
+/* Link text in light mode — unless gold */
+.theme-light body a:not([class*="gold"]):not([class*="btn-gold"]):not([class*="vltd-gold"]) {
+  color: var(--theme-text-primary, #1A1A2E) !important;
+}
+
+/* Hardcoded dark bg overrides in light mode */
+.theme-light body [class*="bg-[#14"],
+.theme-light body [class*="bg-[#0"],
+.theme-light body [class*="bg-[rgba(20"],
+.theme-light body [class*="bg-[rgba(15"],
+.theme-light body [class*="bg-[rgba(14"] {
+  background: var(--theme-card, rgba(255,255,255,0.85)) !important;
+  color: var(--theme-text-primary, #1A1A2E) !important;
+}
+
+/* Section/card headings in light mode — keep gold labels gold */
+.theme-light body [class*="tracking-[0.2"]:not([class*="gold"]):not([class*="text-[#F5"]) {
+  color: var(--theme-text-muted, #5A5A6A) !important;
+}
+
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--theme-card, #141414); }
