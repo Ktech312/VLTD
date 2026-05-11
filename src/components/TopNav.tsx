@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 
 import CommandPalette from "@/components/CommandPalette";
+import { ThemePicker } from "@/components/ui/ThemePicker";
 import {
   getCurrentUser,
   initAuthListener,
@@ -218,6 +219,7 @@ function TopNavInner() {
   const [userOpen, setUserOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [themeOpen, setThemeOpen] = useState(false);
   const [searchExpanded, setSearchExpanded] = useState(false);
 
   const [signedIn, setSignedIn] = useState(false);
@@ -227,6 +229,7 @@ function TopNavInner() {
 
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const guideRef = useRef<HTMLDivElement | null>(null);
+  const themeRef = useRef<HTMLDivElement | null>(null);
   const loadingAuthRef = useRef(false);
   const initializedRef = useRef(false);
 
@@ -285,6 +288,7 @@ function TopNavInner() {
       const target = event.target as Node;
       if (userMenuRef.current && !userMenuRef.current.contains(target)) setUserOpen(false);
       if (guideRef.current && !guideRef.current.contains(target)) setGuideOpen(false);
+      if (themeRef.current && !themeRef.current.contains(target)) setThemeOpen(false);
     }
     document.addEventListener("mousedown", handleOutside);
     return () => document.removeEventListener("mousedown", handleOutside);
@@ -320,7 +324,7 @@ function TopNavInner() {
     <>
       <div
         className="sticky top-0 z-40 backdrop-blur-xl"
-        style={{ background: "rgba(11,11,11,0.96)", borderBottom: "1px solid rgba(245,181,72,0.15)" }}
+        style={{ background: "var(--theme-nav-bg, rgba(11,19,32,0.96))", borderBottom: "1px solid var(--theme-nav-border, rgba(245,181,72,0.15))" }}
       >
         {/* ── Main nav row ── */}
         <div className="mx-auto flex h-[64px] max-w-[1400px] items-center gap-4 px-4 sm:px-6">
@@ -428,6 +432,35 @@ function TopNavInner() {
             >
               <IconBell />
             </button>
+
+            {/* Theme picker */}
+            <div ref={themeRef} className="relative hidden md:block">
+              <button
+                type="button"
+                onClick={() => setThemeOpen((v) => !v)}
+                className="flex h-[36px] w-[36px] items-center justify-center rounded-full transition"
+                style={{
+                  background: themeOpen ? "rgba(245,181,72,0.12)" : "rgba(255,255,255,0.04)",
+                  border: `1px solid ${themeOpen ? "rgba(245,181,72,0.35)" : "rgba(255,255,255,0.08)"}`,
+                  color: themeOpen ? "#F5B548" : "#A0956B",
+                }}
+                aria-label="Change theme"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12" />
+                </svg>
+              </button>
+              {themeOpen && (
+                <div
+                  className="absolute right-0 mt-2 w-[280px] overflow-hidden rounded-2xl shadow-[0_18px_50px_rgba(0,0,0,0.6)]"
+                  style={{ background: "var(--theme-nav-bg, #141414)", border: "1px solid var(--theme-nav-border, rgba(245,181,72,0.18))" }}
+                >
+                  <ThemePicker />
+                </div>
+              )}
+            </div>
 
             {/* User menu */}
             <div ref={userMenuRef} className="relative">

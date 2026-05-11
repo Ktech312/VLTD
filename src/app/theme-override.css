@@ -1,0 +1,198 @@
+/* Path: src/app/theme-override.css */
+/* ============================================
+   VLTD THEME OVERRIDE — loads last, wins always
+   To change the entire app appearance, edit
+   only this file and themes.ts
+   ============================================ */
+
+/* Force background on every possible container */
+html, body,
+#__next,
+main,
+[data-theme],
+.min-h-screen {
+  background: var(--theme-bg, #0B1320) !important;
+  background-attachment: fixed !important;
+  color: var(--theme-text-primary, #F0EAD6) !important;
+}
+
+/* ── CARDS & SURFACES ── */
+[class*="card"],
+[class*="Card"],
+[class*="panel"],
+[class*="Panel"],
+[class*="modal"],
+[class*="Modal"],
+[class*="drawer"],
+[class*="Drawer"],
+[class*="dialog"],
+[class*="Dialog"],
+[class*="popover"],
+[class*="Popover"],
+[class*="dropdown"],
+[class*="sheet"],
+[class*="sidebar"],
+[class*="Sidebar"] {
+  background: var(--theme-card) !important;
+  border-color: var(--theme-border) !important;
+  color: var(--theme-text-primary) !important;
+}
+
+/* ── KILL ALL BLUE & NAVY ── */
+[style*="background-color: rgb(7, 16, 31)"],
+[style*="background-color: rgb(10, 22, 40)"],
+[style*="background-color: rgb(15, 29, 49)"],
+[style*="background-color: #07101f"],
+[style*="background-color: #0a1628"],
+[style*="background-color: #0f1d31"] {
+  background-color: var(--theme-card) !important;
+}
+
+/* ── NAVIGATION ── */
+nav,
+header,
+[role="navigation"],
+[class*="nav"],
+[class*="Nav"],
+[class*="header"],
+[class*="Header"],
+[class*="topbar"],
+[class*="toolbar"] {
+  background: var(--theme-nav-bg) !important;
+  border-color: var(--theme-nav-border) !important;
+}
+
+/* Bottom nav specific */
+[class*="bottom"],
+[class*="BottomNav"],
+[class*="tabbar"],
+[class*="TabBar"] {
+  background: var(--theme-nav-bg) !important;
+  border-top-color: var(--theme-nav-border) !important;
+}
+
+/* ── TEXT ── */
+[class*="text-white"]:not(.keep-white) {
+  color: var(--theme-text-primary) !important;
+}
+[class*="text-gray-400"],
+[class*="text-gray-500"],
+[class*="text-zinc-400"],
+[class*="text-neutral-400"] {
+  color: var(--theme-text-secondary) !important;
+}
+[class*="text-gray-600"],
+[class*="text-zinc-500"] {
+  color: var(--theme-text-muted) !important;
+}
+
+/* ── BUTTONS ── */
+button[class*="bg-blue"],
+button[class*="bg-indigo"],
+button[class*="bg-cyan"],
+a[class*="bg-blue"],
+a[class*="bg-indigo"],
+[class*="btn-primary"]:not(.btn-gold),
+[class*="btn-blue"] {
+  background: var(--theme-gold-gradient) !important;
+  color: #0B0B0B !important;
+  border-color: transparent !important;
+  box-shadow: var(--theme-gold-glow) !important;
+}
+
+/* Kill blue text */
+[class*="text-blue-"],
+[class*="text-indigo-"],
+[class*="text-cyan-"]:not(.keep-cyan) {
+  color: var(--theme-gold) !important;
+}
+
+/* Kill blue borders */
+[class*="border-blue-"],
+[class*="border-indigo-"],
+[class*="border-cyan-"]:not(.keep-cyan) {
+  border-color: var(--theme-gold-border) !important;
+}
+
+/* Kill blue backgrounds on non-button elements */
+[class*="bg-blue-"]:not(button):not(a),
+[class*="bg-indigo-"]:not(button):not(a),
+[class*="bg-cyan-"]:not(button):not(a):not(.keep-cyan) {
+  background-color: var(--theme-gold-subtle) !important;
+}
+
+/* ── INPUTS & FORMS ── */
+input, textarea, select,
+[class*="input"],
+[class*="Input"],
+[class*="select"],
+[class*="Select"] {
+  background: var(--theme-elevated) !important;
+  border-color: var(--theme-border) !important;
+  color: var(--theme-text-primary) !important;
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--theme-text-muted) !important;
+}
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--theme-gold-border) !important;
+  box-shadow: 0 0 0 2px var(--theme-gold-subtle) !important;
+  outline: none !important;
+}
+
+/* ── PRICE & DATA — keep cyan ONLY here ── */
+[class*="price"],
+[class*="Price"],
+[class*="value"],
+[class*="Value"],
+[class*="gain"],
+[class*="Gain"],
+[data-type="price"],
+[data-type="value"] {
+  color: #52D6F4 !important;
+}
+
+/* ── GOLD ELEMENTS ── */
+.gold-text,
+[class*="gold-text"] {
+  background: var(--theme-gold-gradient) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+.btn-gold,
+[class*="btn-gold"] {
+  background: var(--theme-gold-gradient) !important;
+  color: #0B0B0B !important;
+  box-shadow: var(--theme-gold-glow) !important;
+}
+
+/* ── LIGHT THEME ADJUSTMENTS ── */
+.theme-light [class*="text-white"]:not(.keep-white) {
+  color: var(--theme-text-primary) !important;
+}
+.theme-light nav,
+.theme-light header {
+  box-shadow: 0 1px 20px rgba(0,0,0,0.1) !important;
+}
+.theme-light [class*="card"],
+.theme-light [class*="Card"] {
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08) !important;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track {
+  background: var(--theme-card);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--theme-border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-gold-border);
+}

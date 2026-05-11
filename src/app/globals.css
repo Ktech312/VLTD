@@ -1871,7 +1871,10 @@ hr {
 .theme-light .vault-card { box-shadow: 0 2px 16px rgba(0,0,0,0.12); }
 
 /* Scrollbar styling */
+/* scrollbar base — overridden by theme-override.css below */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: #141414; }
 ::-webkit-scrollbar-thumb { background: #2A2418; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(245,181,72,0.4); }
+
+@import './theme-override.css';

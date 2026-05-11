@@ -16,6 +16,7 @@ import "./quick-add-pass.css";
 import "./vault-utility-pass.css";
 import "./vault-directives-pass.css";
 import "./insurance-pass.css";
+import "./theme-override.css";
 import TopNav from "@/components/TopNav";
 import BottomNav from "@/components/BottomNav";
 import Providers from "@/components/Providers";
