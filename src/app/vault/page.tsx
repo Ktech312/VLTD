@@ -629,7 +629,6 @@ function UniverseOverviewCard({
       style={{
         background: "var(--theme-card, rgba(15,25,45,0.85))",
         borderColor: "var(--theme-border, rgba(245,181,72,0.12))",
-        ringColor: "var(--theme-border)",
       }}
     >
       <div className="grid min-h-[124px] grid-cols-[92px_minmax(0,1fr)] gap-3 sm:grid-cols-[104px_minmax(0,1fr)]">
