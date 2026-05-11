@@ -16,7 +16,7 @@ import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vau
 
 const BiggestMoversPanel = dynamic(() => import("@/components/BiggestMoversPanel"), {
   loading: () => (
-    <div className="rounded-[24px] border border-[#1E1E1E] bg-[#141414] p-4 text-sm text-[#A0956B]">
+    <div className="rounded-[24px] border p-4 text-sm text-[#A0956B]" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
       Loading movers…
     </div>
   ),
@@ -72,7 +72,7 @@ function StatChip({
       ? "rgba(76,175,130,0.24)"
       : tone === "loss"
       ? "rgba(224,82,82,0.24)"
-      : "#2A2418";
+      : "var(--theme-border, rgba(245,181,72,0.12))";
 
   const bgColor =
     tone === "gold"
@@ -81,7 +81,7 @@ function StatChip({
       ? "rgba(76,175,130,0.06)"
       : tone === "loss"
       ? "rgba(224,82,82,0.06)"
-      : "#141414";
+      : "var(--theme-card, rgba(15,25,45,0.85))";
 
   const boxShadow =
     tone === "gold"
@@ -267,7 +267,8 @@ export default function HomeClient() {
             </Link>
             <Link
               href="/vault"
-              className="flex-1 rounded-[14px] border border-[#1E1E1E] bg-[#141414] py-2.5 text-center text-sm font-semibold text-[#A0956B] transition hover:text-text-primary hover:border-[rgba(255,255,255,0.14)]"
+              className="flex-1 rounded-[14px] border py-2.5 text-center text-sm font-semibold text-[#A0956B] transition hover:text-text-primary"
+              style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}
             >
               Go to Vault
             </Link>
