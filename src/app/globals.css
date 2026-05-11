@@ -249,6 +249,61 @@
 }
 
 /* =========================================================
+   THEME CLASS BRIDGES
+   ThemeProvider adds .theme-dark / .theme-light to <html>,
+   NOT .dark — so these blocks are what actually fires.
+========================================================= */
+
+.theme-dark {
+  --bg: var(--theme-bg, #0B1320);
+  --surface: var(--theme-card, rgba(15, 25, 45, 0.85));
+  --surface-strong: var(--theme-elevated, rgba(20, 32, 55, 0.9));
+
+  --fg: var(--theme-text-primary, #F0EAD6);
+  --muted: var(--theme-text-secondary, rgba(200, 185, 140, 0.85));
+  --muted2: var(--theme-text-muted, rgba(160, 149, 107, 0.75));
+
+  --border: var(--theme-border, rgba(245, 181, 72, 0.12));
+  --border-strong: var(--theme-gold-border, rgba(245, 181, 72, 0.25));
+  --divider: rgba(255, 255, 255, 0.1);
+
+  --pill: rgba(255, 255, 255, 0.07);
+  --pill-hover: rgba(255, 255, 255, 0.12);
+  --pill-fg: rgba(255, 255, 255, 0.92);
+  --pill-fg-muted: rgba(255, 255, 255, 0.7);
+
+  --input: rgba(255, 255, 255, 0.06);
+  --input-hover: rgba(255, 255, 255, 0.1);
+  --table-row-hover: rgba(255, 255, 255, 0.05);
+}
+
+.theme-light {
+  --bg: var(--theme-bg, #F5F0E8);
+  --surface: var(--theme-card, rgba(255, 252, 245, 0.9));
+  --surface-strong: var(--theme-elevated, rgba(245, 240, 228, 0.95));
+
+  --fg: var(--theme-text-primary, #1A1510);
+  --muted: var(--theme-text-secondary, rgba(80, 65, 35, 0.8));
+  --muted2: var(--theme-text-muted, rgba(110, 90, 45, 0.65));
+
+  --border: var(--theme-border, rgba(180, 140, 60, 0.18));
+  --border-strong: var(--theme-gold-border, rgba(180, 140, 60, 0.32));
+  --divider: rgba(0, 0, 0, 0.08);
+
+  --pill: rgba(0, 0, 0, 0.06);
+  --pill-hover: rgba(0, 0, 0, 0.1);
+  --pill-fg: rgba(30, 20, 5, 0.88);
+  --pill-fg-muted: rgba(30, 20, 5, 0.6);
+
+  --input: rgba(0, 0, 0, 0.04);
+  --input-hover: rgba(0, 0, 0, 0.07);
+  --table-row-hover: rgba(0, 0, 0, 0.04);
+
+  --shadow-soft: 0 1px 0 rgba(255, 255, 255, 0.8);
+  --shadow-pill: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* =========================================================
    PALETTE: GOLD (primary — warm gold forward)
 ========================================================= */
 
