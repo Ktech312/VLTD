@@ -13,13 +13,9 @@ body:has(a[href="/insurance"]) main > div {
 }
 
 body:has(a[href="/insurance"]) section:first-of-type {
-  border-color: rgba(245, 181, 72, 0.25) !important;
-  background:
-    linear-gradient(180deg, rgba(20, 16, 8, 0.92), rgba(12, 10, 4, 0.96)) !important;
-  box-shadow:
-    0 0 0 1px rgba(245, 181, 72, 0.06),
-    0 26px 86px rgba(245, 181, 72, 0.06),
-    0 24px 88px rgba(0, 0, 0, 0.50) !important;
+  border-color: rgba(245, 181, 72, 0.12) !important;
+  background: var(--theme-card, rgba(15, 25, 45, 0.85)) !important;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.2) !important;
 }
 
 body:has(a[href="/insurance"]) section:first-of-type h1 {
@@ -36,12 +32,9 @@ body:has(a[href="/insurance"]) a[href="/insurance"] {
 
 body:has(a[href="/insurance"]) .vltd-panel-main,
 body:has(a[href="/insurance"]) .vltd-panel-soft {
-  border-color: rgba(245, 181, 72, 0.20) !important;
-  background:
-    linear-gradient(180deg, rgba(20, 16, 8, 0.88), rgba(12, 10, 4, 0.92)) !important;
-  box-shadow:
-    0 0 0 1px rgba(245, 181, 72, 0.04),
-    0 18px 56px rgba(0, 0, 0, 0.40) !important;
+  border-color: rgba(245, 181, 72, 0.12) !important;
+  background: var(--theme-card, rgba(15, 25, 45, 0.85)) !important;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.2) !important;
 }
 
 body:has(a[href="/insurance"]) .vltd-panel-main:hover,
