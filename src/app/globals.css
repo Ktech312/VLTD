@@ -279,6 +279,9 @@
 
 .theme-light {
   --bg: var(--theme-bg, #F5F0E8);
+  /* Override vltd-design.css hardcoded dark vars so vltd-page-depth/grid render correctly on light themes */
+  --vltd-bg: var(--theme-bg, #F5F0E8);
+  --vltd-bg-deep: var(--theme-bg, #EDE8E0);
   --surface: var(--theme-card, rgba(255, 252, 245, 0.9));
   --surface-strong: var(--theme-elevated, rgba(245, 240, 228, 0.95));
 
