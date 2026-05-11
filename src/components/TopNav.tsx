@@ -161,16 +161,16 @@ const NAV_ITEMS = [
     desc: "Find collectors, museums and inspiration.",
   },
   {
-    label: "Activity",    href: "/portfolio",  icon: IconActivity,    exact: true,  subpathOnly: false,
-    desc: "See updates, comments, appreciations and follows.",
+    label: "Insights",    href: "/portfolio",  icon: IconInsights,    exact: true,  subpathOnly: false,
+    desc: "Track value, growth, provenance and collection health.",
   },
   {
     label: "Watchlist",   href: "/wishlist",   icon: IconWatchlist,   exact: false, subpathOnly: false,
     desc: "Save pieces, collectors and exhibitions you love.",
   },
   {
-    label: "Insights",    href: "/portfolio",  icon: IconInsights,    exact: false, subpathOnly: true,
-    desc: "Track value, growth, provenance and collection health.",
+    label: "Activity",    href: "/portfolio",  icon: IconActivity,    exact: false, subpathOnly: true,
+    desc: "See updates, comments, appreciations and follows.",
   },
 ];
 

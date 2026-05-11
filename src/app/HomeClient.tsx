@@ -160,7 +160,7 @@ export default function HomeClient() {
   if (loading) {
     return (
       <main className="min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6">
-        <div className="mx-auto max-w-6xl rounded-[24px] border border-[#1E1E1E] bg-[#141414] p-5 text-[#A0956B]">
+        <div className="mx-auto max-w-6xl rounded-[24px] border p-5 text-[#A0956B]" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
           Loading dashboard…
         </div>
       </main>
@@ -340,8 +340,8 @@ export default function HomeClient() {
 
             {/* Quick Actions */}
             <section
-              className="rounded-[24px] border border-[#1E1E1E] p-4"
-              style={{ background: "#141414" }}
+              className="rounded-[24px] border p-4"
+              style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}
             >
               <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#A0956B]">
                 Quick Actions
@@ -366,8 +366,8 @@ export default function HomeClient() {
                           color: "#F5B548",
                         }
                       : {
-                          borderColor: "#1E1E1E",
-                          background: "rgba(14,14,14,0.60)",
+                          borderColor: "var(--theme-border, rgba(245,181,72,0.12))",
+                          background: "var(--theme-elevated, rgba(20,32,55,0.9))",
                           color: "#A0956B",
                         }
                     }
@@ -380,8 +380,8 @@ export default function HomeClient() {
 
             {/* Recently Added */}
             <section
-              className="rounded-[24px] border border-[#1E1E1E] p-4"
-              style={{ background: "#141414" }}
+              className="rounded-[24px] border p-4"
+              style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}
             >
               <div className="flex items-center justify-between gap-3">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#A0956B]">
@@ -415,14 +415,14 @@ export default function HomeClient() {
                       key={item.id}
                       href={`/vault/item/${item.id}`}
                       className="flex items-center justify-between gap-4 rounded-2xl border border-transparent px-3.5 py-2.5 transition"
-                      style={{ background: "rgba(20,20,20,0.80)" }}
+                      style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))" }}
                       onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(245,181,72,0.14)";
-                        (e.currentTarget as HTMLAnchorElement).style.background = "rgba(30,28,20,0.90)";
+                        (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(245,181,72,0.18)";
+                        (e.currentTarget as HTMLAnchorElement).style.background = "var(--theme-elevated, rgba(25,38,62,0.95))";
                       }}
                       onMouseLeave={(e) => {
                         (e.currentTarget as HTMLAnchorElement).style.borderColor = "transparent";
-                        (e.currentTarget as HTMLAnchorElement).style.background = "rgba(20,20,20,0.80)";
+                        (e.currentTarget as HTMLAnchorElement).style.background = "var(--theme-elevated, rgba(20,32,55,0.9))";
                       }}
                     >
                       <div className="min-w-0">

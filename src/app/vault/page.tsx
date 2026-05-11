@@ -421,9 +421,10 @@ function VaultCard({
   return (
     <div
       className={[
-        "group relative flex h-[174px] flex-col overflow-hidden rounded-[14px] border border-white/8 bg-[#141414]/88 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-gold/10 transition hover:-translate-y-0.5 hover:ring-cyan-300/30",
+        "group relative flex h-[174px] flex-col overflow-hidden rounded-[14px] border border-white/8 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-gold/10 transition hover:-translate-y-0.5",
         marketValue > 0 ? "border-l-2 border-l-emerald-400/55" : "border-l border-l-white/8",
       ].join(" ")}
+      style={{ background: "var(--theme-card, rgba(15,25,45,0.85))" }}
     >
       <div className="absolute right-1.5 top-1.5 z-20 hidden items-center gap-1 group-hover:flex">
         <Link
