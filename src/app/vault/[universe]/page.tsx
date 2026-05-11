@@ -422,7 +422,7 @@ function VaultCard({
   return (
     <div
       className={[
-        "group relative flex h-[174px] flex-col overflow-hidden rounded-[14px] border border-[color:var(--border)] bg-[#141414]/88 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-gold/10 transition hover:-translate-y-0.5 hover:ring-cyan-300/30",
+        "group relative flex h-[174px] flex-col overflow-hidden rounded-[14px] border border-[color:var(--border)] bg-[color:var(--theme-card)] p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-gold/10 transition hover:-translate-y-0.5 hover:ring-cyan-300/30",
         marketValue > 0 ? "border-l-2 border-l-emerald-400/55" : "border-l border-l-[color:var(--border)]",
       ].join(" ")}
     >

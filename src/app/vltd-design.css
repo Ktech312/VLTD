@@ -100,8 +100,7 @@ main:has(input[placeholder="Search vault items..."]) section {
 
 main:has(input[placeholder="Search vault items..."]) section:has(h2),
 main:has(input[placeholder="Search vault items..."]) section:has(input[placeholder="Search vault items..."]) {
-  background:
-    linear-gradient(180deg, rgba(26, 22, 14, 0.90), rgba(14, 12, 6, 0.90)) !important;
+  background: var(--theme-card, rgba(15,25,45,0.85)) !important;
 }
 
 main:has(input[placeholder="Search vault items..."]) section:has(h2) {
@@ -113,8 +112,7 @@ main:has(input[placeholder="Search vault items..."]) section:has(h2) {
 }
 
 main:has(input[placeholder="Search vault items..."]) div.group.relative {
-  background:
-    linear-gradient(180deg, rgba(20, 16, 8, 0.78), rgba(14, 12, 6, 0.82)) !important;
+  background: var(--theme-card, rgba(15,25,45,0.85)) !important;
   border-color: rgba(245, 181, 72, 0.12) !important;
 }
 
