@@ -625,10 +625,18 @@ function UniverseOverviewCard({
   return (
     <Link
       href={category.href}
-      className="group overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:ring-gold/30"
+      className="group overflow-hidden rounded-[18px] p-2 ring-1 shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5"
+      style={{
+        background: "var(--theme-card, rgba(15,25,45,0.85))",
+        borderColor: "var(--theme-border, rgba(245,181,72,0.12))",
+        ringColor: "var(--theme-border)",
+      }}
     >
       <div className="grid min-h-[124px] grid-cols-[92px_minmax(0,1fr)] gap-3 sm:grid-cols-[104px_minmax(0,1fr)]">
-        <div className="overflow-hidden rounded-[14px] bg-black/20 ring-1 ring-white/8">
+        <div
+          className="overflow-hidden rounded-[14px]"
+          style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))", border: "1px solid var(--theme-border, rgba(245,181,72,0.08))" }}
+        >
           {coverImage ? (
             <ProgressiveImage
               src={coverImage}
@@ -638,8 +646,8 @@ function UniverseOverviewCard({
               draggable={false}
             />
           ) : (
-            <div className="flex h-full min-h-[124px] flex-col items-center justify-center gap-1 px-3 text-center text-[11px] font-semibold text-[color:var(--muted)]">
-              <span className="text-xl leading-none text-cyan-200/55">+</span>
+            <div className="flex h-full min-h-[124px] flex-col items-center justify-center gap-1 px-3 text-center text-[11px] font-semibold" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
+              <span className="text-xl leading-none" style={{ color: "var(--theme-gold, #F5B548)", opacity: 0.7 }}>+</span>
               <span>{hasItems ? universeDisplayName(category.key) : "Add items"}</span>
             </div>
           )}
@@ -649,26 +657,32 @@ function UniverseOverviewCard({
           <div>
             <div className="flex items-start justify-between gap-2">
               <div>
-                <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Universe</div>
-                <h2 className="mt-1 text-xl font-semibold leading-tight text-gold-light">{universeDisplayName(category.key)}</h2>
+                <div className="text-[11px] uppercase tracking-[0.18em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>Universe</div>
+                <h2 className="mt-1 text-xl font-semibold leading-tight" style={{ color: "var(--theme-gold, #F5B548)" }}>{universeDisplayName(category.key)}</h2>
               </div>
-              <div className="rounded-full bg-black/20 px-2.5 py-1 text-[11px] font-semibold ring-1 ring-white/10">
+              <div
+                className="rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))", border: "1px solid var(--theme-border, rgba(245,181,72,0.12))", color: "var(--theme-text-primary, #F0EAD6)" }}
+              >
                 {items.length} {items.length === 1 ? "item" : "items"}
               </div>
             </div>
-            <div className="mt-2 line-clamp-2 text-xs text-[color:var(--muted)]">
+            <div className="mt-2 line-clamp-2 text-xs" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
               {hasItems ? category.description : "No items here yet. Tap to start adding to this universe."}
             </div>
           </div>
 
           <div className="mt-3 flex items-end justify-between gap-3">
             <div>
-              <div className="text-[10px] uppercase tracking-[0.16em] text-[color:var(--muted2)]">Value</div>
-              <div className="mt-0.5 text-lg font-extrabold leading-none text-[color:var(--fg)]">
+              <div className="text-[10px] uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>Value</div>
+              <div className="mt-0.5 text-lg font-extrabold leading-none" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
                 {hasItems ? formatMoney(totalValue) : "—"}
               </div>
             </div>
-            <div className={showGain ? (totalGain >= 0 ? "text-right text-sm font-bold text-emerald-300" : "text-right text-sm font-bold text-red-300") : "text-right text-sm font-bold text-white/35"}>
+            <div
+              className="text-right text-sm font-bold"
+              style={{ color: showGain ? (totalGain >= 0 ? "var(--color-gain, #4CAF82)" : "var(--color-loss, #E05252)") : "var(--theme-text-muted, #A0956B)" }}
+            >
               {showGain ? `${totalGain >= 0 ? "+" : ""}${formatMoney(totalGain)}` : "—"}
             </div>
           </div>
@@ -919,7 +933,10 @@ export default function VaultPage() {
   return (
     <main className="min-h-screen text-[color:var(--fg)]" style={{ background: 'var(--theme-bg, #0B1320)' }}>
       <div className="mx-auto max-w-[1500px] px-3 py-3 sm:px-4 sm:py-4">
-        <section className="relative overflow-hidden rounded-[18px] border border-white/8 bg-[linear-gradient(135deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)]">
+        <section
+          className="relative overflow-hidden rounded-[18px] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)]"
+          style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", border: "1px solid var(--theme-border, rgba(245,181,72,0.12))" }}
+        >
           <div className="relative flex flex-col gap-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="max-w-2xl">
