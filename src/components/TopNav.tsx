@@ -434,7 +434,7 @@ function TopNavInner() {
             </button>
 
             {/* Theme picker */}
-            <div ref={themeRef} className="relative hidden md:block">
+            <div ref={themeRef} className="relative block">
               <button
                 type="button"
                 onClick={() => setThemeOpen((v) => !v)}
@@ -492,8 +492,8 @@ function TopNavInner() {
 
               {/* User dropdown */}
               {userOpen && (
-                <div className="absolute right-0 mt-2 w-[260px] overflow-hidden rounded-2xl shadow-[0_18px_50px_rgba(0,0,0,0.6)]"
-                  style={{ background: "#141414", border: "1px solid rgba(245,181,72,0.18)" }}>
+                <div className="absolute right-0 mt-2 w-[300px] overflow-hidden rounded-2xl shadow-[0_18px_50px_rgba(0,0,0,0.6)]"
+                  style={{ background: "var(--theme-nav-bg, #141414)", border: "1px solid var(--theme-nav-border, rgba(245,181,72,0.18))" }}>
                   <div className="px-4 py-3.5" style={{ borderBottom: "1px solid rgba(245,181,72,0.10)" }}>
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
@@ -544,6 +544,11 @@ function TopNavInner() {
                       </>
                     )}
                   </div>
+                  {/* Appearance / Theme picker */}
+                  <div style={{ borderTop: "1px solid rgba(245,181,72,0.10)" }}>
+                    <ThemePicker />
+                  </div>
+
                   {signedIn && (
                     <div className="px-2 py-2" style={{ borderTop: "1px solid rgba(245,181,72,0.10)" }}>
                       <button type="button" onClick={handleSignOut}

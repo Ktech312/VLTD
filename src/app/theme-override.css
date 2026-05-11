@@ -1,198 +1,149 @@
 /* Path: src/app/theme-override.css */
 /* ============================================
    VLTD THEME OVERRIDE — loads last, wins always
-   To change the entire app appearance, edit
-   only this file and themes.ts
+
+   Specificity strategy:
+   - Pass files use body:has(a[href="..."]) selectors ≈ (0,1,3)
+   - [data-vltd-theme] prefix is set by ThemeContext on <html>
+   - [data-vltd-theme] body main = (0,2,2) → beats pass files
+   - [data-vltd-theme] body .vltd-panel-main = (0,3,1) → beats pass files
+
+   The data-vltd-theme attribute is applied by ThemeContext on mount.
+   :root defaults in globals.css cover SSR until JS hydrates.
    ============================================ */
 
-/* Force background on every possible container */
-html, body,
-#__next,
-main,
-[data-theme],
-.min-h-screen {
+/* ── PAGE BACKGROUNDS ── */
+[data-vltd-theme] body,
+[data-vltd-theme] body main,
+[data-vltd-theme] body #__next,
+[data-vltd-theme] body .min-h-screen,
+[data-vltd-theme] body .vltd-page-depth {
   background: var(--theme-bg, #0B1320) !important;
   background-attachment: fixed !important;
   color: var(--theme-text-primary, #F0EAD6) !important;
 }
 
-/* ── CARDS & SURFACES ── */
-[class*="card"],
-[class*="Card"],
-[class*="panel"],
-[class*="Panel"],
-[class*="modal"],
-[class*="Modal"],
-[class*="drawer"],
-[class*="Drawer"],
-[class*="dialog"],
-[class*="Dialog"],
-[class*="popover"],
-[class*="Popover"],
-[class*="dropdown"],
-[class*="sheet"],
-[class*="sidebar"],
-[class*="Sidebar"] {
-  background: var(--theme-card) !important;
-  border-color: var(--theme-border) !important;
-  color: var(--theme-text-primary) !important;
+/* ── PANEL & SECTION BACKGROUNDS ── */
+[data-vltd-theme] body .vltd-panel-main,
+[data-vltd-theme] body .vltd-panel-soft,
+[data-vltd-theme] body section,
+[data-vltd-theme] body article {
+  background: var(--theme-card, rgba(15,25,45,0.85)) !important;
+  border-color: var(--theme-gold-border, rgba(245,181,72,0.25)) !important;
+  color: var(--theme-text-primary, #F0EAD6) !important;
 }
 
-/* ── KILL ALL BLUE & NAVY ── */
-[style*="background-color: rgb(7, 16, 31)"],
-[style*="background-color: rgb(10, 22, 40)"],
-[style*="background-color: rgb(15, 29, 49)"],
-[style*="background-color: #07101f"],
-[style*="background-color: #0a1628"],
-[style*="background-color: #0f1d31"] {
-  background-color: var(--theme-card) !important;
+/* Hero sections with special styling keep their structure but theme colors */
+[data-vltd-theme] body section:first-of-type {
+  background: var(--theme-elevated, rgba(20,32,55,0.9)) !important;
+  border-color: var(--theme-gold-border, rgba(245,181,72,0.28)) !important;
+}
+
+/* ── CARDS ── */
+[data-vltd-theme] body [class*="rounded-[2"],
+[data-vltd-theme] body [class*="rounded-3xl"],
+[data-vltd-theme] body .vault-card,
+[data-vltd-theme] body .vault-card-gold {
+  background: var(--theme-card, rgba(15,25,45,0.85)) !important;
+  border-color: var(--theme-border, rgba(245,181,72,0.12)) !important;
 }
 
 /* ── NAVIGATION ── */
-nav,
-header,
-[role="navigation"],
-[class*="nav"],
-[class*="Nav"],
-[class*="header"],
-[class*="Header"],
-[class*="topbar"],
-[class*="toolbar"] {
-  background: var(--theme-nav-bg) !important;
-  border-color: var(--theme-nav-border) !important;
+[data-vltd-theme] body nav,
+[data-vltd-theme] body header,
+[data-vltd-theme] body [role="navigation"] {
+  background: var(--theme-nav-bg, rgba(11,19,32,0.95)) !important;
+  border-color: var(--theme-nav-border, rgba(245,181,72,0.15)) !important;
 }
 
-/* Bottom nav specific */
-[class*="bottom"],
-[class*="BottomNav"],
-[class*="tabbar"],
-[class*="TabBar"] {
-  background: var(--theme-nav-bg) !important;
-  border-top-color: var(--theme-nav-border) !important;
+/* ── INPUTS ── */
+[data-vltd-theme] body input:not([type="checkbox"]):not([type="radio"]),
+[data-vltd-theme] body textarea,
+[data-vltd-theme] body select {
+  background: var(--theme-elevated, rgba(20,32,55,0.9)) !important;
+  border-color: var(--theme-border, rgba(245,181,72,0.12)) !important;
+  color: var(--theme-text-primary, #F0EAD6) !important;
 }
-
-/* ── TEXT ── */
-[class*="text-white"]:not(.keep-white) {
-  color: var(--theme-text-primary) !important;
+[data-vltd-theme] body input::placeholder,
+[data-vltd-theme] body textarea::placeholder {
+  color: var(--theme-text-muted, #5A5040) !important;
 }
-[class*="text-gray-400"],
-[class*="text-gray-500"],
-[class*="text-zinc-400"],
-[class*="text-neutral-400"] {
-  color: var(--theme-text-secondary) !important;
-}
-[class*="text-gray-600"],
-[class*="text-zinc-500"] {
-  color: var(--theme-text-muted) !important;
-}
-
-/* ── BUTTONS ── */
-button[class*="bg-blue"],
-button[class*="bg-indigo"],
-button[class*="bg-cyan"],
-a[class*="bg-blue"],
-a[class*="bg-indigo"],
-[class*="btn-primary"]:not(.btn-gold),
-[class*="btn-blue"] {
-  background: var(--theme-gold-gradient) !important;
-  color: #0B0B0B !important;
-  border-color: transparent !important;
-  box-shadow: var(--theme-gold-glow) !important;
-}
-
-/* Kill blue text */
-[class*="text-blue-"],
-[class*="text-indigo-"],
-[class*="text-cyan-"]:not(.keep-cyan) {
-  color: var(--theme-gold) !important;
-}
-
-/* Kill blue borders */
-[class*="border-blue-"],
-[class*="border-indigo-"],
-[class*="border-cyan-"]:not(.keep-cyan) {
-  border-color: var(--theme-gold-border) !important;
-}
-
-/* Kill blue backgrounds on non-button elements */
-[class*="bg-blue-"]:not(button):not(a),
-[class*="bg-indigo-"]:not(button):not(a),
-[class*="bg-cyan-"]:not(button):not(a):not(.keep-cyan) {
-  background-color: var(--theme-gold-subtle) !important;
-}
-
-/* ── INPUTS & FORMS ── */
-input, textarea, select,
-[class*="input"],
-[class*="Input"],
-[class*="select"],
-[class*="Select"] {
-  background: var(--theme-elevated) !important;
-  border-color: var(--theme-border) !important;
-  color: var(--theme-text-primary) !important;
-}
-input::placeholder,
-textarea::placeholder {
-  color: var(--theme-text-muted) !important;
-}
-input:focus,
-textarea:focus,
-select:focus {
-  border-color: var(--theme-gold-border) !important;
-  box-shadow: 0 0 0 2px var(--theme-gold-subtle) !important;
+[data-vltd-theme] body input:focus,
+[data-vltd-theme] body textarea:focus,
+[data-vltd-theme] body select:focus {
+  border-color: var(--theme-gold-border, rgba(245,181,72,0.3)) !important;
+  box-shadow: 0 0 0 2px var(--theme-gold-subtle, rgba(245,181,72,0.08)) !important;
   outline: none !important;
 }
 
-/* ── PRICE & DATA — keep cyan ONLY here ── */
-[class*="price"],
-[class*="Price"],
-[class*="value"],
-[class*="Value"],
-[class*="gain"],
-[class*="Gain"],
-[data-type="price"],
-[data-type="value"] {
-  color: #52D6F4 !important;
+/* ── GOLD ELEMENTS — preserve gold regardless of theme ── */
+[data-vltd-theme] body .btn-gold,
+[data-vltd-theme] body [class*="btn-gold"] {
+  background: var(--theme-gold-gradient) !important;
+  color: #0B0B0B !important;
+  box-shadow: var(--theme-gold-glow) !important;
 }
 
-/* ── GOLD ELEMENTS ── */
-.gold-text,
-[class*="gold-text"] {
+[data-vltd-theme] body .gold-text,
+[data-vltd-theme] body [class*="gold-text"] {
   background: var(--theme-gold-gradient) !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   background-clip: text !important;
 }
 
-.btn-gold,
-[class*="btn-gold"] {
-  background: var(--theme-gold-gradient) !important;
-  color: #0B0B0B !important;
-  box-shadow: var(--theme-gold-glow) !important;
+/* ── KILL HARDCODED BLUE / NAVY ── */
+/* Blue text → gold */
+[data-vltd-theme] body [class*="text-blue-"],
+[data-vltd-theme] body [class*="text-indigo-"],
+[data-vltd-theme] body [class*="text-cyan-"]:not([class*="keep-cyan"]) {
+  color: var(--theme-gold, #F5B548) !important;
 }
 
-/* ── LIGHT THEME ADJUSTMENTS ── */
-.theme-light [class*="text-white"]:not(.keep-white) {
+/* Blue backgrounds → theme subtle */
+[data-vltd-theme] body [class*="bg-blue-"]:not(button):not(a),
+[data-vltd-theme] body [class*="bg-indigo-"]:not(button):not(a),
+[data-vltd-theme] body [class*="bg-cyan-"]:not(button):not(a):not([class*="keep-cyan"]) {
+  background-color: var(--theme-gold-subtle, rgba(245,181,72,0.08)) !important;
+}
+
+/* Blue borders → theme gold border */
+[data-vltd-theme] body [class*="border-blue-"],
+[data-vltd-theme] body [class*="border-indigo-"],
+[data-vltd-theme] body [class*="border-cyan-"]:not([class*="keep-cyan"]) {
+  border-color: var(--theme-gold-border, rgba(245,181,72,0.3)) !important;
+}
+
+/* Blue buttons → gold */
+[data-vltd-theme] body button[class*="bg-blue"],
+[data-vltd-theme] body button[class*="bg-indigo"],
+[data-vltd-theme] body button[class*="bg-cyan"],
+[data-vltd-theme] body a[class*="bg-blue"],
+[data-vltd-theme] body a[class*="bg-indigo"] {
+  background: var(--theme-gold-gradient) !important;
+  color: #0B0B0B !important;
+  border-color: transparent !important;
+}
+
+/* ── PRICE & DATA — cyan stays ── */
+[class*="price"],
+[class*="Price"],
+[data-type="price"],
+[data-type="value"] {
+  color: #52D6F4 !important;
+}
+
+/* ── LIGHT THEME ── */
+.theme-light [data-vltd-theme] body,
+[data-vltd-theme].theme-light body {
   color: var(--theme-text-primary) !important;
 }
-.theme-light nav,
-.theme-light header {
-  box-shadow: 0 1px 20px rgba(0,0,0,0.1) !important;
-}
-.theme-light [class*="card"],
-.theme-light [class*="Card"] {
-  box-shadow: 0 2px 16px rgba(0,0,0,0.08) !important;
+.theme-light [class*="text-white"]:not(.keep-white) {
+  color: var(--theme-text-primary) !important;
 }
 
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track {
-  background: var(--theme-card);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--theme-border);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--theme-gold-border);
-}
+::-webkit-scrollbar-track { background: var(--theme-card, #141414); }
+::-webkit-scrollbar-thumb { background: var(--theme-border, #2A2418); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--theme-gold-border, rgba(245,181,72,0.4)); }

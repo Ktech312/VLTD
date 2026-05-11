@@ -17,6 +17,7 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 function applyThemeVars(theme: Theme) {
   const root = document.documentElement
+  root.setAttribute('data-vltd-theme', theme.id)
   root.style.setProperty('--theme-bg', theme.background)
   root.style.setProperty('--theme-card', theme.bgCard)
   root.style.setProperty('--theme-elevated', theme.bgElevated)
