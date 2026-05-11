@@ -1866,11 +1866,13 @@ main {
 
 /* Standard vault card */
 .vault-card {
-  background: var(--theme-card, rgba(15, 25, 45, 0.85));
-  border: 1px solid var(--theme-border, rgba(245, 181, 72, 0.12));
+  background: var(--theme-card, rgba(15, 25, 45, 0.85)) !important;
+  border: 1px solid var(--theme-border, rgba(245, 181, 72, 0.12)) !important;
+  color: var(--theme-text-primary, #F0EAD6) !important;
   border-radius: 14px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.2);
 }
+.vault-card * { color: inherit; }
 
 /* Gold-accented card — for featured / highlighted items */
 .vault-card-gold {
