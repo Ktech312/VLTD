@@ -35,7 +35,7 @@ export const themes: Record<ThemeId, Theme> = {
     id: 'deep-vault',
     name: 'Deep Vault',
     mode: 'dark',
-    background: `#0B1320 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E")`,
+    background: 'radial-gradient(ellipse 100% 60% at 50% 0%, rgba(30,45,70,0.6) 0%, #0B1320 50%, #080E18 100%)',
     bgCard: 'rgba(15, 25, 45, 0.85)',
     bgElevated: 'rgba(20, 32, 55, 0.9)',
     bgBorder: 'rgba(245, 181, 72, 0.12)',
