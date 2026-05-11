@@ -157,15 +157,15 @@ const NAV_ITEMS = [
     desc: "Find collectors, museums and inspiration.",
   },
   {
-    label: "Activity",    href: "/portfolio",  icon: IconActivity,    exact: false,
+    label: "Activity",    href: "/portfolio",  icon: IconActivity,    exact: true,  subpathOnly: false,
     desc: "See updates, comments, appreciations and follows.",
   },
   {
-    label: "Watchlist",   href: "/wishlist",   icon: IconWatchlist,   exact: false,
+    label: "Watchlist",   href: "/wishlist",   icon: IconWatchlist,   exact: false, subpathOnly: false,
     desc: "Save pieces, collectors and exhibitions you love.",
   },
   {
-    label: "Insights",    href: "/portfolio",  icon: IconInsights,    exact: false,
+    label: "Insights",    href: "/portfolio",  icon: IconInsights,    exact: false, subpathOnly: true,
     desc: "Track value, growth, provenance and collection health.",
   },
 ];
@@ -307,6 +307,7 @@ function TopNavInner() {
   }
 
   function isActive(item: typeof NAV_ITEMS[0]) {
+    if (item.subpathOnly) return pathname.startsWith(item.href + '/');
     return item.exact ? pathname === item.href : pathname.startsWith(item.href);
   }
 
