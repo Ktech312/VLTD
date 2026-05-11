@@ -53,34 +53,34 @@ function StatChip({
     tone === "gold"
       ? "#F5B548"
       : tone === "gain"
-      ? "#4ade80"
+      ? "#4CAF82"
       : tone === "loss"
-      ? "#f87171"
-      : "#ffffff";
+      ? "#E05252"
+      : "#F0EAD6";
 
   const borderColor =
     tone === "gold"
       ? "rgba(245,181,72,0.28)"
       : tone === "gain"
-      ? "rgba(74,222,128,0.24)"
+      ? "rgba(76,175,130,0.24)"
       : tone === "loss"
-      ? "rgba(248,113,113,0.24)"
-      : "#1E1E1E";
+      ? "rgba(224,82,82,0.24)"
+      : "#2A2418";
 
   const bgColor =
     tone === "gold"
       ? "rgba(245,181,72,0.07)"
       : tone === "gain"
-      ? "rgba(74,222,128,0.06)"
+      ? "rgba(76,175,130,0.06)"
       : tone === "loss"
-      ? "rgba(248,113,113,0.06)"
+      ? "rgba(224,82,82,0.06)"
       : "#141414";
 
   const boxShadow =
     tone === "gold"
       ? "0 4px 20px rgba(245,181,72,0.10)"
       : tone === "gain"
-      ? "0 4px 16px rgba(74,222,128,0.08)"
+      ? "0 4px 16px rgba(76,175,130,0.08)"
       : "none";
 
   return (
@@ -412,7 +412,7 @@ export default function HomeClient() {
                           {item.universe || item.category || "Collectible"}
                         </p>
                       </div>
-                      <p className="shrink-0 text-sm font-semibold text-[#A0956B]">
+                      <p className="shrink-0 text-sm font-semibold tabular-nums" style={{ color: "#52D6F4" }}>
                         {formatMoney(item.currentValue ?? item.estimatedValue ?? 0)}
                       </p>
                     </Link>

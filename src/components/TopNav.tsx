@@ -297,7 +297,7 @@ function TopNavInner() {
 
   return (
     <>
-      <div className="sticky top-0 z-40 border-b border-[color:var(--border)] bg-[color:var(--surface)]/82 backdrop-blur-xl">
+      <div className="sticky top-0 z-40 backdrop-blur-xl" style={{ background: "rgba(11,11,11,0.95)", borderBottom: "1px solid rgba(245,181,72,0.15)" }}>
         <div className="mx-auto grid h-[72px] max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-4 px-4 sm:px-5">
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
@@ -369,7 +369,12 @@ function TopNavInner() {
               <button
                 type="button"
                 onClick={() => setUserOpen((v) => !v)}
-                className="grid h-[48px] w-[48px] place-items-center rounded-full bg-[color:var(--pill)] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
+                className="grid h-[48px] w-[48px] place-items-center rounded-full text-sm font-bold transition"
+                style={{
+                  background: "rgba(42,36,24,0.70)",
+                  border: "1px solid rgba(245,181,72,0.22)",
+                  color: "#F5B548",
+                }}
               >
                 {avatarText}
               </button>
@@ -469,7 +474,7 @@ function TopNavInner() {
         </div>
 
         {/* Mobile search row — compact, no pill nav (bottom nav handles that) */}
-        <div className="border-t border-[color:var(--border)]/40 px-4 pb-2.5 pt-2 md:hidden">
+        <div className="px-4 pb-2.5 pt-2 md:hidden" style={{ borderTop: "1px solid rgba(245,181,72,0.08)" }}>
           <form
             onSubmit={(e) => {
               e.preventDefault();
