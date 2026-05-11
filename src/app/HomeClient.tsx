@@ -3,6 +3,7 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
+import { PackagePlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { getOnboardingStatus } from "@/lib/auth";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
@@ -390,10 +391,16 @@ export default function HomeClient() {
 
               {recentItems.length === 0 ? (
                 <div
-                  className="mt-3 rounded-2xl border border-dashed p-4 text-sm text-[#A0956B]"
-                  style={{ borderColor: "#1E1E1E" }}
+                  className="mt-3 flex flex-col items-center rounded-2xl border border-dashed px-4 py-6 text-center"
+                  style={{ borderColor: "rgba(245,181,72,0.15)" }}
                 >
-                  No items yet. Start with Quick Add or Smart Scan.
+                  <PackagePlus size={28} style={{ color: "#A0956B", opacity: 0.6 }} />
+                  <p className="mt-2 text-sm font-semibold" style={{ color: "#A0956B" }}>
+                    Start building your collection
+                  </p>
+                  <p className="mt-0.5 text-xs" style={{ color: "#5A5040" }}>
+                    Use Smart Scan or Quick Add to catalog your first item.
+                  </p>
                 </div>
               ) : (
                 <div className="mt-3 space-y-2">

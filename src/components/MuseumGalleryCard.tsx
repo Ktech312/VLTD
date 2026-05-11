@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ImageIcon } from "lucide-react";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import type { Gallery } from "@/lib/galleryModel";
 
@@ -65,8 +66,11 @@ export default function MuseumGalleryCard({
             draggable={false}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-white/32">
-            No cover
+          <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-center">
+            <ImageIcon size={24} className="opacity-25" />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] opacity-40">
+              Add a cover photo
+            </span>
           </div>
         )}
       </div>

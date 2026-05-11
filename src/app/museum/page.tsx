@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { LayoutTemplate } from "lucide-react";
 
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { getGalleryScore } from "@/lib/galleryScore";
@@ -474,24 +475,51 @@ export default function MuseumPage() {
           ) : null}
 
           {galleries.length === 0 ? (
-            <div className="vltd-panel-main rounded-[26px] bg-[color:var(--surface)] p-7 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
-                START THE MUSEUM
+            <div
+              className="rounded-[26px] border p-8 text-center"
+              style={{
+                background: "var(--theme-card, rgba(15,25,45,0.85))",
+                borderColor: "var(--theme-border, rgba(245,181,72,0.12))",
+              }}
+            >
+              <div
+                className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"
+                style={{
+                  background: "var(--theme-gold-subtle, rgba(245,181,72,0.10))",
+                  border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.25))",
+                }}
+              >
+                <LayoutTemplate size={24} style={{ color: "var(--theme-gold, #F5B548)" }} />
               </div>
 
-              <h2 className="mt-3 text-2xl font-semibold">No galleries yet</h2>
+              <h2 className="text-xl font-black" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
+                Your museum is waiting
+              </h2>
 
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
-                Create your first gallery from the active profile and shape a public or
-                private museum-quality story.
+              <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
+                Create your first gallery and shape a museum-quality story from your collection — public or private.
               </p>
 
-              <div className="mt-6">
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
                 <Link
                   href="/museum/new"
-                  className="inline-flex min-h-[40px] items-center justify-center rounded-full bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-ring)] vltd-pill-main-glow transition hover:bg-[color:var(--pill-hover)]"
+                  className="inline-flex min-h-[40px] items-center justify-center rounded-full px-5 py-2 text-sm font-semibold transition"
+                  style={{
+                    background: "linear-gradient(135deg, #8B6914 0%, #C8941F 25%, #F5B548 50%, #FFE08A 70%, #C8941F 100%)",
+                    color: "#0B0B0B",
+                  }}
                 >
                   Create First Gallery
+                </Link>
+                <Link
+                  href="/vault"
+                  className="inline-flex min-h-[40px] items-center justify-center rounded-full border px-5 py-2 text-sm font-semibold transition"
+                  style={{
+                    borderColor: "var(--theme-gold-border, rgba(245,181,72,0.30))",
+                    color: "var(--theme-gold, #F5B548)",
+                  }}
+                >
+                  Browse your vault →
                 </Link>
               </div>
             </div>
