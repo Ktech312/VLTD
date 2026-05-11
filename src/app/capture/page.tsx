@@ -24,17 +24,17 @@ export default function CapturePage() {
               </p>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] p-4">
+                <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">1</div>
                   <div className="mt-2 text-sm font-black text-text-primary">Capture</div>
                   <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">Use camera or upload a photo.</div>
                 </div>
-                <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] p-4">
+                <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">2</div>
                   <div className="mt-2 text-sm font-black text-text-primary">Identify</div>
                   <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">Confirm title, category, and universe.</div>
                 </div>
-                <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] p-4">
+                <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">3</div>
                   <div className="mt-2 text-sm font-black text-text-primary">Vault</div>
                   <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">Save it with value and notes.</div>
@@ -44,13 +44,13 @@ export default function CapturePage() {
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
                   href="/vault/quick"
-                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] px-5 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-[color:var(--border)] bg-vault-card px-5 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
                 >
                   Quick Add instead
                 </Link>
                 <Link
                   href="/vault/add"
-                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] px-5 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-[color:var(--border)] bg-vault-card px-5 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
                 >
                   Manual Add
                 </Link>

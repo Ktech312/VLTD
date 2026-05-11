@@ -34,7 +34,7 @@ function stateLabel(v: Gallery["state"]) {
 }
 
 function visibilityPillClass(v: Gallery["visibility"]) {
-  if (v === "PUBLIC") return "bg-cyan-400/14 text-cyan-100 ring-cyan-300/28";
+  if (v === "PUBLIC") return "bg-gold/14 text-cyan-100 ring-cyan-300/28";
   if (v === "INVITE") return "bg-amber-400/14 text-amber-100 ring-amber-300/28";
   return "bg-white/7 text-[color:var(--muted2)] ring-white/12";
 }
@@ -537,7 +537,7 @@ export default function MuseumPage() {
                           handleOpenCoverPicker(gallery);
                         }}
                         disabled={isUploadingCover}
-                        className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-cyan-400/18 text-lg font-semibold text-cyan-100 ring-1 ring-cyan-300/35 transition hover:bg-cyan-400/28 disabled:opacity-50"
+                        className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-gold/18 text-lg font-semibold text-cyan-100 ring-1 ring-cyan-300/35 transition hover:bg-gold/28 disabled:opacity-50"
                         aria-label={`Change cover image for ${gallery.title}`}
                       >
                         +
@@ -743,7 +743,7 @@ export default function MuseumPage() {
               <button
                 type="button"
                 onClick={handleSaveGallerySettings}
-                className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-cyan-400/16 px-4 py-2 text-sm font-semibold text-cyan-100 ring-1 ring-cyan-300/30"
+                className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-gold/16 px-4 py-2 text-sm font-semibold text-cyan-100 ring-1 ring-cyan-300/30"
               >
                 Save
               </button>

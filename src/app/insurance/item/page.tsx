@@ -104,16 +104,16 @@ export default function InsuranceItemPage() {
       `}</style>
 
       <div className="mx-auto max-w-4xl">
-        <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[rgba(82,214,244,0.24)] bg-[rgba(15,29,49,0.72)] p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
+        <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[rgba(82,214,244,0.24)] bg-vault-card p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
           <div className="flex flex-wrap items-center gap-2">
-            <Link href="/insurance" className="rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(82,214,244,0.42)]">
+            <Link href="/insurance" className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(82,214,244,0.42)]">
               ← Back to Report
             </Link>
-            <Link href="/vault" className="rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(82,214,244,0.42)]">
+            <Link href="/vault" className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(82,214,244,0.42)]">
               Vault
             </Link>
           </div>
-          <button onClick={() => window.print()} className="rounded-full bg-[#52d6f4] px-4 py-2 text-sm font-black text-[#06101d] shadow-[0_14px_38px_rgba(82,214,244,0.18)]">
+          <button onClick={() => window.print()} className="rounded-full bg-[#52d6f4] px-4 py-2 text-sm font-black text-[#141414] shadow-[0_14px_38px_rgba(82,214,244,0.18)]">
             Print / Save as PDF
           </button>
         </div>
@@ -122,7 +122,7 @@ export default function InsuranceItemPage() {
           <div className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">Insurance Item Sheet</div>
 
           {!item ? (
-            <div className="mt-4 rounded-2xl border border-[rgba(104,146,196,0.22)] bg-[rgba(7,16,31,0.42)] p-4 text-[color:var(--muted)]">
+            <div className="mt-4 rounded-2xl border border-[rgba(104,146,196,0.22)] bg-vault-card p-4 text-[color:var(--muted)]">
               Item not found. Go back and open a per-item sheet from the report.
             </div>
           ) : (
@@ -141,14 +141,14 @@ export default function InsuranceItemPage() {
                       className="max-h-[320px] w-full rounded-2xl border border-[rgba(104,146,196,0.24)] object-contain shadow-[0_18px_42px_rgba(0,0,0,0.24)]"
                     />
                   ) : (
-                    <div className="grid h-72 w-full place-items-center rounded-2xl border border-[rgba(104,146,196,0.24)] bg-[linear-gradient(135deg,#0a1424,#162038)] text-xs font-black tracking-[0.16em] text-[color:var(--muted2)]">
+                    <div className="grid h-72 w-full place-items-center rounded-2xl border border-[rgba(104,146,196,0.24)] bg-[linear-gradient(135deg,#141414,#141414)] text-xs font-black tracking-[0.16em] text-[color:var(--muted2)]">
                       NO IMG
                     </div>
                   )}
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-[rgba(104,146,196,0.20)] bg-[rgba(7,16,31,0.42)] p-4">
+                  <div className="rounded-2xl border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Identification</div>
                     <div className="mt-3 space-y-1 text-sm text-[#dbeafe]">
                       <div><span className="text-[color:var(--muted)]">Grade:</span> {item.grade ?? ""}</div>
@@ -157,14 +157,14 @@ export default function InsuranceItemPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-[rgba(104,146,196,0.20)] bg-[rgba(7,16,31,0.42)] p-4">
+                  <div className="rounded-2xl border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Storage</div>
                     <div className="mt-3 space-y-1 text-sm text-[#dbeafe]">
                       <div><span className="text-[color:var(--muted)]">Location:</span> {item.storageLocation ?? ""}</div>
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-[rgba(104,146,196,0.20)] bg-[rgba(7,16,31,0.42)] p-4">
+                  <div className="rounded-2xl border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Financial</div>
                     <div className="mt-3 space-y-1 text-sm text-[#dbeafe]">
                       <div><span className="text-[color:var(--muted)]">Purchase Cost:</span> <span className="font-semibold text-text-primary">{fmtMoney(Number(item.purchasePrice ?? 0))}</span></div>
@@ -172,7 +172,7 @@ export default function InsuranceItemPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-[rgba(104,146,196,0.20)] bg-[rgba(7,16,31,0.42)] p-4">
+                  <div className="rounded-2xl border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Appraisal</div>
                     <div className="mt-3 space-y-1 text-sm text-[#dbeafe]">
                       <div><span className="text-[color:var(--muted)]">Source:</span> {item.valueSource ?? ""}</div>
@@ -184,7 +184,7 @@ export default function InsuranceItemPage() {
               </div>
 
               {item.notes ? (
-                <div className="mt-6 rounded-2xl border border-[rgba(104,146,196,0.20)] bg-[rgba(7,16,31,0.42)] p-4">
+                <div className="mt-6 rounded-2xl border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Notes</div>
                   <div className="mt-3 whitespace-pre-wrap text-sm text-[#dbeafe]">{item.notes}</div>
                 </div>

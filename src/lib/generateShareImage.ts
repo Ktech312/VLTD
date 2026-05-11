@@ -94,9 +94,9 @@ function loadImage(src: string) {
 
 function drawBackground(ctx: CanvasRenderingContext2D) {
   const gradient = ctx.createLinearGradient(0, 0, SIZE, SIZE);
-  gradient.addColorStop(0, "#08131C");
-  gradient.addColorStop(0.55, "#0B0F14");
-  gradient.addColorStop(1, "#05070A");
+  gradient.addColorStop(0, "#141414");
+  gradient.addColorStop(0.55, "#141414");
+  gradient.addColorStop(1, "#141414");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, SIZE, SIZE);
 

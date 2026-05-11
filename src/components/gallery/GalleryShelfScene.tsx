@@ -56,22 +56,22 @@ function getShelfThemeClasses(themePack?: string | null) {
       };
     case "midnight":
       return {
-        stageShell: "ring-cyan-300/12 bg-[rgba(5,10,17,0.08)]",
-        plaque: "bg-[rgba(9,20,33,0.84)] text-cyan-100 ring-cyan-300/16",
-        tile: "bg-[rgba(8,18,30,0.44)] ring-cyan-300/12",
+        stageShell: "ring-cyan-300/12 bg-vault-card",
+        plaque: "bg-vault-card text-cyan-100 ring-cyan-300/16",
+        tile: "bg-vault-card ring-cyan-300/12",
         shelfTop: "from-[#48627f] to-[#2c425d]",
-        shelfFace: "from-[#1b2739] to-[#0d1625]",
-        support: "from-[#304963] to-[#0d1625]",
+        shelfFace: "from-[#141414] to-[#141414]",
+        support: "from-[#304963] to-[#141414]",
         vignette: "bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.00)_0%,rgba(0,0,0,0.10)_62%,rgba(0,0,0,0.34)_100%)]",
       };
     case "cold-blue":
       return {
-        stageShell: "ring-white/10 bg-[rgba(10,10,14,0.10)]",
-        plaque: "bg-[rgba(20,20,24,0.84)] text-stone-100 ring-white/12",
-        tile: "bg-[rgba(18,18,24,0.46)] ring-white/10",
+        stageShell: "ring-white/10 bg-vault-card",
+        plaque: "bg-vault-card text-stone-100 ring-white/12",
+        tile: "bg-vault-card ring-white/10",
         shelfTop: "from-[#5f5f69] to-[#3f4048]",
-        shelfFace: "from-[#262832] to-[#13141a]",
-        support: "from-[#4a4d58] to-[#13141a]",
+        shelfFace: "from-[#262832] to-[#141414]",
+        support: "from-[#4a4d58] to-[#141414]",
         vignette: "bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.00)_0%,rgba(0,0,0,0.14)_62%,rgba(0,0,0,0.38)_100%)]",
       };
     case "marble":

@@ -67,8 +67,8 @@ function placeholderDataUri(title: string, category: string) {
     <defs>
       <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0" stop-color="#171717"/>
-        <stop offset="0.5" stop-color="#0f172a"/>
-        <stop offset="1" stop-color="#0b1220"/>
+        <stop offset="0.5" stop-color="#141414"/>
+        <stop offset="1" stop-color="#141414"/>
       </linearGradient>
       <radialGradient id="r" cx="35%" cy="18%" r="80%">
         <stop offset="0" stop-color="rgba(255,255,255,0.14)"/>
@@ -98,9 +98,9 @@ function genericCoverDataUri(label: string) {
   <svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200">
     <defs>
       <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="#0b1220"/>
-        <stop offset="0.55" stop-color="#111827"/>
-        <stop offset="1" stop-color="#05070c"/>
+        <stop offset="0" stop-color="#141414"/>
+        <stop offset="0.55" stop-color="#141414"/>
+        <stop offset="1" stop-color="#141414"/>
       </linearGradient>
       <radialGradient id="r" cx="25%" cy="18%" r="85%">
         <stop offset="0" stop-color="rgba(255,255,255,0.10)"/>
@@ -298,7 +298,7 @@ function getFrameClasses(style: FrameStyle) {
       return {
         card: "bg-transparent",
         outer: "relative rounded-[16px] bg-[linear-gradient(180deg,#454c56_0%,#252a32_100%)] p-[10px] shadow-[0_18px_34px_rgba(0,0,0,0.60)] ring-1 ring-white/10",
-        middle: "rounded-[11px] bg-[linear-gradient(180deg,#1d2128_0%,#10141a_100%)] p-[8px] ring-1 ring-white/8",
+        middle: "rounded-[11px] bg-[linear-gradient(180deg,#141414_0%,#141414_100%)] p-[8px] ring-1 ring-white/8",
         inner: "rounded-[8px] bg-black/80 p-[6px] ring-1 ring-white/6",
         media: "rounded-[5px] overflow-hidden bg-black",
         glass: true,
@@ -345,7 +345,7 @@ function GalleryWall({
           backgroundSize: backgroundMode === "contain" ? "contain" : "cover",
           backgroundPosition: "center top",
           backgroundRepeat: "no-repeat",
-          backgroundColor: "#05070b",
+          backgroundColor: "#141414",
         }}
       />
 

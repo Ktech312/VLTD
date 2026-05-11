@@ -217,7 +217,7 @@ function SoldCard({
 
   return (
     <article
-      className="group relative flex h-[250px] flex-col overflow-hidden rounded-[14px] border border-white/8 bg-[#07101d]/88 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-cyan-400/10 transition hover:-translate-y-0.5 hover:ring-cyan-300/30"
+      className="group relative flex h-[250px] flex-col overflow-hidden rounded-[14px] border border-white/8 bg-[#141414]/88 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-gold/10 transition hover:-translate-y-0.5 hover:ring-cyan-300/30"
     >
       <span className="absolute right-2 top-2 z-10 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[8px] font-semibold text-amber-100 ring-1 ring-amber-400/30">
         SOLD
@@ -286,7 +286,7 @@ function SoldCard({
             event.stopPropagation();
             onReturnToVault(item);
           }}
-          className="shrink-0 rounded-full bg-cyan-400/14 px-2.5 py-1.5 text-[10px] font-semibold text-cyan-100 ring-1 ring-cyan-300/25 transition hover:bg-cyan-400/22"
+          className="shrink-0 rounded-full bg-gold/14 px-2.5 py-1.5 text-[10px] font-semibold text-cyan-100 ring-1 ring-cyan-300/25 transition hover:bg-gold/22"
         >
           Return
         </button>
@@ -408,7 +408,7 @@ export default function SoldPage() {
             </div>
 
             {status ? (
-              <div className="rounded-[14px] bg-cyan-400/10 px-3 py-2 text-sm text-cyan-100 ring-1 ring-cyan-300/20">
+              <div className="rounded-[14px] bg-gold/10 px-3 py-2 text-sm text-cyan-100 ring-1 ring-cyan-300/20">
                 {status}
               </div>
             ) : null}

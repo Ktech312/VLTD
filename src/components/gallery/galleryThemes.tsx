@@ -83,8 +83,8 @@ export const GALLERY_THEMES: GalleryThemeDefinition[] = [
     label: "Museum Noir",
     description: "Dark cinematic walls with spotlight contrast.",
     roomClass:
-      "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_22%),linear-gradient(180deg,#11161d_0%,#0a0d12_100%)]",
-    panelClass: "bg-[rgba(10,12,16,0.68)] ring-white/10",
+      "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_22%),linear-gradient(180deg,#141414_0%,#141414_100%)]",
+    panelClass: "bg-vault-card ring-white/10",
     cardClass:
       "bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.018))] border-white/8",
     shelfGlowClass: "shadow-[0_18px_40px_rgba(0,0,0,0.45)]",
@@ -111,8 +111,8 @@ export const GALLERY_THEMES: GalleryThemeDefinition[] = [
     label: "Vault Steel",
     description: "Industrial steel gallery with cool reflections.",
     roomClass:
-      "bg-[radial-gradient(circle_at_top,rgba(140,190,255,0.12),transparent_24%),linear-gradient(180deg,#1a2129_0%,#0c1015_100%)]",
-    panelClass: "bg-[rgba(14,18,24,0.72)] ring-cyan-200/10",
+      "bg-[radial-gradient(circle_at_top,rgba(140,190,255,0.12),transparent_24%),linear-gradient(180deg,#141414_0%,#141414_100%)]",
+    panelClass: "bg-vault-card ring-cyan-200/10",
     cardClass:
       "bg-[linear-gradient(180deg,rgba(190,220,255,0.045),rgba(190,220,255,0.015))] border-cyan-100/10",
     shelfGlowClass: "shadow-[0_20px_50px_rgba(0,0,0,0.5)]",
@@ -139,8 +139,8 @@ export const GALLERY_THEMES: GalleryThemeDefinition[] = [
     label: "Neon Future",
     description: "Collector lab style with futuristic glow.",
     roomClass:
-      "bg-[radial-gradient(circle_at_top,rgba(82,214,244,0.16),transparent_22%),radial-gradient(circle_at_80%_0%,rgba(150,21,219,0.16),transparent_26%),linear-gradient(180deg,#0c0d15_0%,#08090f_100%)]",
-    panelClass: "bg-[rgba(8,10,16,0.74)] ring-fuchsia-300/10",
+      "bg-[radial-gradient(circle_at_top,rgba(82,214,244,0.16),transparent_22%),radial-gradient(circle_at_80%_0%,rgba(150,21,219,0.16),transparent_26%),linear-gradient(180deg,#141414_0%,#141414_100%)]",
+    panelClass: "bg-vault-card ring-fuchsia-300/10",
     cardClass:
       "bg-[linear-gradient(180deg,rgba(82,214,244,0.05),rgba(150,21,219,0.03))] border-white/8",
     shelfGlowClass:
@@ -193,7 +193,7 @@ export const BACKDROP_STYLES: BackdropStyleDefinition[] = [
   {
     id: "charcoal",
     label: "Charcoal Wall",
-    wallClass: "bg-[linear-gradient(180deg,#20242c_0%,#11141a_100%)]",
+    wallClass: "bg-[linear-gradient(180deg,#141414_0%,#141414_100%)]",
     vignetteClass:
       "bg-[radial-gradient(circle_at_center,transparent_30%,rgba(0,0,0,0.28)_100%)]",
   },
@@ -207,7 +207,7 @@ export const BACKDROP_STYLES: BackdropStyleDefinition[] = [
   {
     id: "midnight-blue",
     label: "Midnight Blue",
-    wallClass: "bg-[linear-gradient(180deg,#19253c_0%,#0b111c_100%)]",
+    wallClass: "bg-[linear-gradient(180deg,#141414_0%,#141414_100%)]",
     vignetteClass:
       "bg-[radial-gradient(circle_at_center,transparent_35%,rgba(0,0,0,0.22)_100%)]",
   },

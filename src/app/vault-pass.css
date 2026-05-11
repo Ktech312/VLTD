@@ -5,7 +5,7 @@ body:has(input[placeholder="Search vault items..."]) main {
   background:
     radial-gradient(circle at 50% 7%, rgba(82, 214, 244, 0.20), transparent 34%),
     radial-gradient(circle at 88% 24%, rgba(245, 170, 60, 0.07), transparent 26%),
-    linear-gradient(180deg, #07101f 0%, #050b15 100%) !important;
+    linear-gradient(180deg, #0B0B0B 0%, #080808 100%) !important;
 }
 
 body:has(input[placeholder="Search vault items..."]) main > div {
@@ -73,7 +73,7 @@ body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="
   font-size: 11px !important;
 }
 
-body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"] [class*="text-cyan-300"] {
+body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"] [class*="text-gold-light"] {
   color: #7ee7fb !important;
 }
 
