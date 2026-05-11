@@ -1,6 +1,6 @@
 /* Path: src/app/globals.css */
 @import “tailwindcss”;
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+/* Inter loaded via next/font/google in layout.tsx → var(--font-inter) */
 
 /* =========================================================
    VLTD DESIGN SYSTEM — Premium Collectibles
