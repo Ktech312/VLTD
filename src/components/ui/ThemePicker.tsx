@@ -119,6 +119,9 @@ export function ThemePicker() {
               <SwatchButton key={t.id} t={t} active={themeId === t.id} onSelect={setTheme} />
             ))}
           </div>
+          <p className="mt-2 text-[10px]" style={{ color: 'var(--theme-text-muted, #5A5040)' }}>
+            Light themes are in beta — some pages may look best on dark.
+          </p>
         </div>
       )}
 
