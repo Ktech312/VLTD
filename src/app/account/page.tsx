@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ThemePicker } from "@/components/ui/ThemePicker";
 
 import { getOnboardingStatus, updateProfile } from "@/lib/auth";
 
@@ -79,8 +80,16 @@ export default function AccountPage() {
   return (
     <main className="vltd-page-depth min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
-        <section className="relative overflow-hidden rounded-[34px] border border-[rgba(82,214,244,0.30)] bg-[linear-gradient(180deg,rgba(18,38,66,0.92),rgba(8,18,32,0.94))] p-5 shadow-[0_26px_86px_rgba(82,214,244,0.10),0_24px_88px_rgba(0,0,0,0.32)] sm:p-7">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(82,214,244,0.14),transparent_30%),radial-gradient(circle_at_82%_8%,rgba(245,170,60,0.08),transparent_28%)]" />
+        <section
+          className="relative overflow-hidden rounded-[34px] p-5 sm:p-7"
+          style={{
+            background: 'var(--theme-elevated, rgba(20,32,55,0.9))',
+            border: '1px solid var(--theme-gold-border, rgba(245,181,72,0.25))',
+            boxShadow: '0 26px 86px rgba(0,0,0,0.32)',
+          }}
+        >
+          <div className="pointer-events-none absolute inset-0"
+            style={{ background: 'radial-gradient(circle at 18% 0%, var(--theme-gold-subtle, rgba(245,181,72,0.06)), transparent 30%)' }} />
 
           <div className="relative grid gap-7 lg:grid-cols-[1fr_340px]">
             <div>
@@ -112,7 +121,7 @@ export default function AccountPage() {
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="Display name"
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(82,214,244,0.12)]"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
                   />
                 </label>
 
@@ -122,7 +131,7 @@ export default function AccountPage() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]+/g, "_"))}
                     placeholder="Username"
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(82,214,244,0.12)]"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
                   />
                 </label>
 
@@ -133,7 +142,7 @@ export default function AccountPage() {
                     className={[
                       "rounded-2xl border p-4 text-left transition",
                       profileType === "personal"
-                        ? "border-[rgba(82,214,244,0.42)] bg-[rgba(82,214,244,0.12)] text-text-primary"
+                        ? "border-[rgba(245,181,72,0.42)] bg-[rgba(245,181,72,0.10)] text-text-primary"
                         : "border-[color:var(--border)] bg-vault-card text-[color:var(--muted)] hover:text-text-primary",
                     ].join(" ")}
                   >
@@ -146,7 +155,7 @@ export default function AccountPage() {
                     className={[
                       "rounded-2xl border p-4 text-left transition",
                       profileType === "business"
-                        ? "border-[rgba(82,214,244,0.42)] bg-[rgba(82,214,244,0.12)] text-text-primary"
+                        ? "border-[rgba(245,181,72,0.42)] bg-[rgba(245,181,72,0.10)] text-text-primary"
                         : "border-[color:var(--border)] bg-vault-card text-[color:var(--muted)] hover:text-text-primary",
                     ].join(" ")}
                   >
@@ -161,7 +170,7 @@ export default function AccountPage() {
                     value={primaryFocus}
                     onChange={(e) => setPrimaryFocus(e.target.value)}
                     placeholder="Primary focus"
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(82,214,244,0.12)]"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
                   />
                 </label>
               </div>
@@ -171,14 +180,15 @@ export default function AccountPage() {
                   type="button"
                   disabled={saving}
                   onClick={() => void handleSave()}
-                  className="inline-flex h-12 items-center rounded-full bg-[#52d6f4] px-6 text-sm font-black text-[#141414] shadow-[0_16px_42px_rgba(82,214,244,0.20)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex h-12 items-center rounded-full px-6 text-sm font-black text-[#0B0B0B] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{ background: 'var(--theme-gold-gradient)', boxShadow: 'var(--theme-gold-glow)' }}
                 >
                   {saving ? "Saving..." : "Save changes"}
                 </button>
               </div>
             </div>
 
-            <aside className="rounded-[28px] border border-[color:var(--border)] bg-vault-card p-5">
+            <aside className="rounded-[28px] p-5" style={{ background: 'var(--theme-card)', border: '1px solid var(--theme-border)' }}>
               <div className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">
                 Profile Summary
               </div>
@@ -202,6 +212,13 @@ export default function AccountPage() {
               </div>
             </aside>
           </div>
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
+          <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-1">
+            Appearance
+          </div>
+          <ThemePicker />
         </section>
       </div>
     </main>

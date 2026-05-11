@@ -16,8 +16,8 @@ function accountTypeCardClass(active: boolean) {
   return [
     "rounded-2xl border p-5 text-left transition",
     active
-      ? "border-[rgba(82,214,244,0.82)] bg-[linear-gradient(180deg,rgba(82,214,244,0.24),rgba(18,56,86,0.72))] text-text-primary shadow-[0_0_0_1px_rgba(82,214,244,0.18),0_18px_48px_rgba(82,214,244,0.18)]"
-      : "border-[color:var(--border)] bg-vault-card text-[color:var(--muted)] hover:border-[rgba(82,214,244,0.38)] hover:bg-[rgba(82,214,244,0.08)] hover:text-text-primary",
+      ? "border-[rgba(245,181,72,0.55)] bg-[rgba(245,181,72,0.10)] text-text-primary shadow-[0_0_0_1px_rgba(245,181,72,0.18),0_18px_48px_rgba(245,181,72,0.12)]"
+      : "border-[color:var(--border)] bg-vault-card text-[color:var(--muted)] hover:border-[rgba(245,181,72,0.35)] hover:bg-[rgba(245,181,72,0.06)] hover:text-text-primary",
   ].join(" ");
 }
 
@@ -88,8 +88,16 @@ export default function OnboardingPage() {
   return (
     <main className="vltd-page-depth min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
-        <section className="relative overflow-hidden rounded-[34px] border border-[rgba(82,214,244,0.30)] bg-[linear-gradient(180deg,rgba(18,38,66,0.92),rgba(8,18,32,0.94))] p-5 shadow-[0_26px_86px_rgba(82,214,244,0.10),0_24px_88px_rgba(0,0,0,0.32)] sm:p-7">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(82,214,244,0.14),transparent_30%),radial-gradient(circle_at_82%_8%,rgba(245,170,60,0.08),transparent_28%)]" />
+        <section
+          className="relative overflow-hidden rounded-[34px] p-5 sm:p-7"
+          style={{
+            background: 'var(--theme-elevated, rgba(20,32,55,0.9))',
+            border: '1px solid var(--theme-gold-border, rgba(245,181,72,0.25))',
+            boxShadow: '0 26px 86px rgba(0,0,0,0.32)',
+          }}
+        >
+          <div className="pointer-events-none absolute inset-0"
+            style={{ background: 'radial-gradient(circle at 18% 0%, var(--theme-gold-subtle, rgba(245,181,72,0.06)), transparent 30%)' }} />
 
           <div className="relative">
             <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)]">
@@ -108,7 +116,7 @@ export default function OnboardingPage() {
                   key={n}
                   className={[
                     "h-2 rounded-full transition",
-                    step >= n ? "bg-[#52d6f4] shadow-[0_0_18px_rgba(82,214,244,0.28)]" : "bg-[rgba(104,146,196,0.18)]",
+                    step >= n ? "bg-[#F5B548] shadow-[0_0_18px_rgba(245,181,72,0.28)]" : "bg-[rgba(245,181,72,0.12)]",
                   ].join(" ")}
                 />
               ))}
@@ -131,7 +139,7 @@ export default function OnboardingPage() {
                       setDisplayName(next);
                       if (!username.trim()) setUsername(slugifyUsername(next));
                     }}
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(82,214,244,0.12)]"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
                   />
                 </label>
 
@@ -140,7 +148,7 @@ export default function OnboardingPage() {
                   <input
                     value={username}
                     onChange={(e) => setUsername(slugifyUsername(e.target.value))}
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(82,214,244,0.12)]"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
                   />
                   <div className="mt-2 text-xs text-[color:var(--muted2)]">Public handle preview: @{slugifyUsername(username) || "username"}</div>
                 </label>
@@ -149,7 +157,8 @@ export default function OnboardingPage() {
                   type="button"
                   disabled={!canContinueIdentity}
                   onClick={() => setStep(2)}
-                  className="inline-flex h-12 w-fit items-center rounded-full bg-[#52d6f4] px-6 text-sm font-black text-[#141414] shadow-[0_16px_42px_rgba(82,214,244,0.20)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex h-12 w-fit items-center rounded-full px-6 text-sm font-black text-[#0B0B0B] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{ background: 'var(--theme-gold-gradient)', boxShadow: 'var(--theme-gold-glow)' }}
                 >
                   Continue
                 </button>
@@ -168,7 +177,7 @@ export default function OnboardingPage() {
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="text-base font-black">Collector</div>
-                        {profileType === "personal" ? <div className="rounded-full bg-[#52d6f4] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#141414]">Selected</div> : null}
+                        {profileType === "personal" ? <div className="rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#0B0B0B]" style={{ background: 'var(--theme-gold-gradient)' }}>Selected</div> : null}
                       </div>
                       <div className="mt-2 text-sm leading-6 text-[color:var(--muted)]">Personal vault, portfolio, and public galleries.</div>
                     </button>
@@ -179,7 +188,7 @@ export default function OnboardingPage() {
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="text-base font-black">Business</div>
-                        {profileType === "business" ? <div className="rounded-full bg-[#52d6f4] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#141414]">Selected</div> : null}
+                        {profileType === "business" ? <div className="rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#0B0B0B]" style={{ background: 'var(--theme-gold-gradient)' }}>Selected</div> : null}
                       </div>
                       <div className="mt-2 text-sm leading-6 text-[color:var(--muted)]">Shop, team, resale, or inventory workflow.</div>
                     </button>
@@ -187,7 +196,7 @@ export default function OnboardingPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  <button type="button" onClick={() => setStep(3)} className="inline-flex h-12 items-center rounded-full bg-[#52d6f4] px-6 text-sm font-black text-[#141414] shadow-[0_16px_42px_rgba(82,214,244,0.20)] transition hover:-translate-y-0.5 hover:brightness-105">
+                  <button type="button" onClick={() => setStep(3)} className="inline-flex h-12 items-center rounded-full px-6 text-sm font-black text-[#0B0B0B] transition hover:-translate-y-0.5 hover:brightness-105" style={{ background: 'var(--theme-gold-gradient)', boxShadow: 'var(--theme-gold-glow)' }}>
                     Continue
                   </button>
                   <button type="button" onClick={() => setStep(1)} className="inline-flex h-12 items-center rounded-full border border-[color:var(--border)] bg-vault-card px-6 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary">
@@ -204,7 +213,7 @@ export default function OnboardingPage() {
                   <select
                     value={primaryFocus}
                     onChange={(e) => setPrimaryFocus(e.target.value)}
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(82,214,244,0.12)]"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
                   >
                     <option value="">Skip for now</option>
                     {FOCUS_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
@@ -223,7 +232,8 @@ export default function OnboardingPage() {
                     type="button"
                     disabled={saving || !canContinueIdentity}
                     onClick={() => void handleFinish()}
-                    className="inline-flex h-12 items-center rounded-full bg-[#52d6f4] px-6 text-sm font-black text-[#141414] shadow-[0_16px_42px_rgba(82,214,244,0.20)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex h-12 items-center rounded-full px-6 text-sm font-black text-[#0B0B0B] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{ background: 'var(--theme-gold-gradient)', boxShadow: 'var(--theme-gold-glow)' }}
                   >
                     {saving ? "Finishing..." : "Finish setup"}
                   </button>

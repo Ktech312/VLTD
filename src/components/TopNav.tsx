@@ -5,6 +5,9 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 
 import CommandPalette from "@/components/CommandPalette";
+import { ThemePicker } from "@/components/ui/ThemePicker";
+import { useTheme } from "@/lib/ThemeContext";
+import { themes } from "@/lib/themes";
 import {
   getCurrentUser,
   initAuthListener,
@@ -157,15 +160,15 @@ const NAV_ITEMS = [
     desc: "Find collectors, museums and inspiration.",
   },
   {
-    label: "Activity",    href: "/portfolio",  icon: IconActivity,    exact: false,
+    label: "Activity",    href: "/portfolio",  icon: IconActivity,    exact: true,  subpathOnly: false,
     desc: "See updates, comments, appreciations and follows.",
   },
   {
-    label: "Watchlist",   href: "/wishlist",   icon: IconWatchlist,   exact: false,
+    label: "Watchlist",   href: "/wishlist",   icon: IconWatchlist,   exact: false, subpathOnly: false,
     desc: "Save pieces, collectors and exhibitions you love.",
   },
   {
-    label: "Insights",    href: "/portfolio",  icon: IconInsights,    exact: false,
+    label: "Insights",    href: "/portfolio",  icon: IconInsights,    exact: false, subpathOnly: true,
     desc: "Track value, growth, provenance and collection health.",
   },
 ];
@@ -218,6 +221,7 @@ function TopNavInner() {
   const [userOpen, setUserOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [themeOpen, setThemeOpen] = useState(false);
   const [searchExpanded, setSearchExpanded] = useState(false);
 
   const [signedIn, setSignedIn] = useState(false);
@@ -227,6 +231,7 @@ function TopNavInner() {
 
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const guideRef = useRef<HTMLDivElement | null>(null);
+  const themeRef = useRef<HTMLDivElement | null>(null);
   const loadingAuthRef = useRef(false);
   const initializedRef = useRef(false);
 
@@ -285,6 +290,7 @@ function TopNavInner() {
       const target = event.target as Node;
       if (userMenuRef.current && !userMenuRef.current.contains(target)) setUserOpen(false);
       if (guideRef.current && !guideRef.current.contains(target)) setGuideOpen(false);
+      if (themeRef.current && !themeRef.current.contains(target)) setThemeOpen(false);
     }
     document.addEventListener("mousedown", handleOutside);
     return () => document.removeEventListener("mousedown", handleOutside);
@@ -307,8 +313,12 @@ function TopNavInner() {
   }
 
   function isActive(item: typeof NAV_ITEMS[0]) {
+    if (item.subpathOnly) return pathname.startsWith(item.href + '/');
     return item.exact ? pathname === item.href : pathname.startsWith(item.href);
   }
+
+  const { themeId } = useTheme();
+  const currentTheme = themes[themeId];
 
   const avatarText = signedIn
     ? (activeProfile?.display_name || accountEmail || "U").slice(0, 1).toUpperCase()
@@ -319,7 +329,7 @@ function TopNavInner() {
     <>
       <div
         className="sticky top-0 z-40 backdrop-blur-xl"
-        style={{ background: "rgba(11,11,11,0.96)", borderBottom: "1px solid rgba(245,181,72,0.15)" }}
+        style={{ background: "var(--theme-nav-bg, rgba(11,19,32,0.96))", borderBottom: "1px solid var(--theme-nav-border, rgba(245,181,72,0.15))" }}
       >
         {/* ── Main nav row ── */}
         <div className="mx-auto flex h-[64px] max-w-[1400px] items-center gap-4 px-4 sm:px-6">
@@ -428,38 +438,68 @@ function TopNavInner() {
               <IconBell />
             </button>
 
+            {/* Theme picker */}
+            <div ref={themeRef} className="relative hidden md:block">
+              <button
+                type="button"
+                onClick={() => setThemeOpen((v) => !v)}
+                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold transition"
+                style={{
+                  background: themeOpen ? "rgba(245,181,72,0.12)" : "rgba(255,255,255,0.05)",
+                  border: `1px solid ${themeOpen ? "rgba(245,181,72,0.35)" : "rgba(255,255,255,0.10)"}`,
+                  color: themeOpen ? "#F5B548" : "#A0956B",
+                }}
+                aria-label="Change theme"
+              >
+                {currentTheme.mode === 'dark' ? (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
+                  </svg>
+                ) : (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="5" />
+                    <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                  </svg>
+                )}
+                <span className="hidden lg:inline">{currentTheme.name}</span>
+                <span style={{ transform: themeOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", display: "inline-flex" }}>
+                  <IconChevron size={11} />
+                </span>
+              </button>
+              {themeOpen && (
+                <div
+                  className="absolute right-0 mt-2 w-[280px] overflow-hidden rounded-2xl shadow-[0_18px_50px_rgba(0,0,0,0.6)]"
+                  style={{ background: "var(--theme-nav-bg, #141414)", border: "1px solid var(--theme-nav-border, rgba(245,181,72,0.18))" }}
+                >
+                  <ThemePicker />
+                </div>
+              )}
+            </div>
+
             {/* User menu */}
             <div ref={userMenuRef} className="relative">
               <button
                 type="button"
                 onClick={() => setUserOpen((v) => !v)}
-                className="flex items-center gap-2 rounded-full pl-1 pr-2 py-1 transition"
+                className="flex items-center gap-1 rounded-full p-1 transition"
                 style={{
                   background: "rgba(42,36,24,0.70)",
                   border: "1px solid rgba(245,181,72,0.22)",
                 }}
               >
                 <div
-                  className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full text-sm font-bold"
-                  style={{ background: "rgba(245,181,72,0.15)", color: "#F5B548" }}
+                  className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full text-[13px] font-bold"
+                  style={{ background: 'var(--theme-gold-gradient, linear-gradient(135deg,#8B6914,#F5B548))', color: "#0B0B0B" }}
                 >
                   {avatarText}
-                </div>
-                <div className="hidden lg:flex flex-col items-start leading-none">
-                  <span className="text-[12px] font-semibold" style={{ color: "#F0EAD6" }}>
-                    {activeProfile?.display_name || (signedIn ? "Collector" : "Guest")}
-                  </span>
-                  <span className="text-[10px]" style={{ color: "#A0956B" }}>
-                    {signedIn ? accountTypeLabel : "Sign in"}
-                  </span>
                 </div>
                 <IconChevron size={12} />
               </button>
 
               {/* User dropdown */}
               {userOpen && (
-                <div className="absolute right-0 mt-2 w-[260px] overflow-hidden rounded-2xl shadow-[0_18px_50px_rgba(0,0,0,0.6)]"
-                  style={{ background: "#141414", border: "1px solid rgba(245,181,72,0.18)" }}>
+                <div className="absolute right-0 mt-2 w-[300px] overflow-hidden rounded-2xl shadow-[0_18px_50px_rgba(0,0,0,0.6)]"
+                  style={{ background: "var(--theme-nav-bg, #141414)", border: "1px solid var(--theme-nav-border, rgba(245,181,72,0.18))" }}>
                   <div className="px-4 py-3.5" style={{ borderBottom: "1px solid rgba(245,181,72,0.10)" }}>
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
@@ -510,6 +550,11 @@ function TopNavInner() {
                       </>
                     )}
                   </div>
+                  {/* Appearance / Theme picker */}
+                  <div style={{ borderTop: "1px solid rgba(245,181,72,0.10)" }}>
+                    <ThemePicker />
+                  </div>
+
                   {signedIn && (
                     <div className="px-2 py-2" style={{ borderTop: "1px solid rgba(245,181,72,0.10)" }}>
                       <button type="button" onClick={handleSignOut}

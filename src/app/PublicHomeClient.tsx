@@ -235,9 +235,9 @@ function PublicGalleryTile({ gallery }: { gallery: PublicGalleryCard }) {
   return (
     <Link
       href={gallery.href}
-      className="group overflow-hidden rounded-2xl border border-[color:var(--border)] bg-vault-card transition hover:-translate-y-1 hover:border-[rgba(82,214,244,0.34)] hover:bg-vault-card"
+      className="group overflow-hidden rounded-2xl border border-[color:var(--border)] bg-vault-card transition hover:-translate-y-1 hover:border-[rgba(245,181,72,0.34)] hover:bg-vault-card"
     >
-      <div className="relative aspect-[16/10] overflow-hidden bg-[radial-gradient(circle_at_35%_20%,rgba(255,255,255,0.12),rgba(82,214,244,0.06)_34%,rgba(0,0,0,0.22)_100%)] p-3">
+      <div className="relative aspect-[16/10] overflow-hidden bg-[radial-gradient(circle_at_35%_20%,rgba(255,255,255,0.12),rgba(245,181,72,0.04)_34%,rgba(0,0,0,0.22)_100%)] p-3">
         <img
           src={gallery.image}
           alt={gallery.title}
@@ -307,7 +307,7 @@ export default function PublicHomeClient() {
         <div className="mx-auto max-w-5xl px-4 pb-16 pt-12 text-center sm:px-6 sm:pb-20 sm:pt-20 lg:px-8">
           <VltdVaultLogoAnimation className="mx-auto mb-8" />
 
-          <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-[rgba(82,214,244,0.28)] bg-vault-card px-4 py-2 text-xs font-medium text-[color:var(--accent)]">
+          <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-[rgba(245,181,72,0.28)] bg-vault-card px-4 py-2 text-xs font-medium text-[color:var(--accent)]">
             <span className="vltd-brand-dot h-2 w-2" /> VLTD{" "}
             <span className="text-[color:var(--muted2)]">—</span> pronounced
             “Vaulted”
@@ -345,7 +345,7 @@ export default function PublicHomeClient() {
         <div className="mx-auto grid max-w-7xl divide-y divide-[color:var(--border)] px-4 sm:px-6 md:grid-cols-4 md:divide-x md:divide-y-0 lg:px-8">
           {FEATURE_CARDS.map((feature) => (
             <div key={feature.title} className="px-2 py-7 md:px-6">
-              <div className="mb-3 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[rgba(82,214,244,0.22)] bg-[rgba(82,214,244,0.10)] text-[color:var(--accent)]">
+              <div className="mb-3 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[rgba(245,181,72,0.22)] bg-[rgba(245,181,72,0.08)] text-[color:var(--accent)]">
                 {feature.icon}
               </div>
               <div className="text-sm font-black text-text-primary">{feature.title}</div>
@@ -397,7 +397,7 @@ export default function PublicHomeClient() {
           ))}
           <Link
             href="/signup"
-            className="flex min-h-[150px] flex-col items-center justify-center rounded-2xl border border-dashed border-[rgba(82,214,244,0.34)] bg-vault-card p-5 text-center text-[color:var(--accent)] transition hover:bg-[rgba(82,214,244,0.08)]"
+            className="flex min-h-[150px] flex-col items-center justify-center rounded-2xl border border-dashed border-[rgba(245,181,72,0.34)] bg-vault-card p-5 text-center text-[color:var(--accent)] transition hover:bg-[rgba(245,181,72,0.06)]"
           >
             <span className="text-2xl">+</span>
             <span className="mt-2 text-sm font-black">Start your vault</span>
@@ -442,10 +442,10 @@ export default function PublicHomeClient() {
         </p>
 
         <div className="mx-auto mt-8 max-w-3xl overflow-hidden rounded-2xl border border-[color:var(--border)] bg-vault-card text-left">
-          <div className="grid grid-cols-[1fr_100px_100px] border-b border-[color:var(--border)] bg-[rgba(82,214,244,0.08)] text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">
+          <div className="grid grid-cols-[1fr_100px_100px] border-b border-[color:var(--border)] bg-[rgba(245,181,72,0.06)] text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">
             <div className="px-5 py-3">Feature</div>
             <div className="px-5 py-3 text-center">Others</div>
-            <div className="bg-[rgba(82,214,244,0.10)] px-5 py-3 text-center text-[color:var(--accent)]">
+            <div className="bg-[rgba(245,181,72,0.08)] px-5 py-3 text-center text-[color:var(--accent)]">
               VLTD
             </div>
           </div>
@@ -458,7 +458,7 @@ export default function PublicHomeClient() {
               <div className="px-5 py-4 text-center text-sm text-[color:var(--muted2)]">
                 {others}
               </div>
-              <div className="bg-[rgba(82,214,244,0.045)] px-5 py-4 text-center text-sm text-[color:var(--vltd-green)]">
+              <div className="bg-[rgba(245,181,72,0.05)] px-5 py-4 text-center text-sm text-[color:var(--vltd-green)]">
                 {vltd}
               </div>
             </div>

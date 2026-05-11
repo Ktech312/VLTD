@@ -2,9 +2,9 @@
 /* VLTD visual foundation: deep black vault surfaces, gold accent system. */
 
 :root {
-  --vltd-bg: #0B0B0B;
-  --vltd-bg-deep: #080808;
-  --vltd-surface: rgba(20, 20, 20, 0.92);
+  --vltd-bg: #0B1320;
+  --vltd-bg-deep: #070E1A;
+  --vltd-surface: rgba(15, 25, 45, 0.88);
   --vltd-surface-strong: rgba(26, 22, 14, 0.96);
   --vltd-border: rgba(245, 181, 72, 0.14);
   --vltd-border-strong: rgba(245, 181, 72, 0.28);

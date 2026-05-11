@@ -8,8 +8,16 @@ export default function CapturePage() {
   return (
     <main className="vltd-page-depth min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
-        <section className="relative overflow-hidden rounded-[34px] border border-[rgba(82,214,244,0.30)] bg-[linear-gradient(180deg,rgba(18,38,66,0.92),rgba(8,18,32,0.94))] p-5 shadow-[0_26px_86px_rgba(82,214,244,0.10),0_24px_88px_rgba(0,0,0,0.32)] sm:p-7">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(82,214,244,0.14),transparent_30%),radial-gradient(circle_at_82%_10%,rgba(245,170,60,0.10),transparent_28%)]" />
+        <section
+          className="relative overflow-hidden rounded-[34px] p-5 sm:p-7"
+          style={{
+            background: 'var(--theme-elevated, rgba(20,32,55,0.9))',
+            border: '1px solid var(--theme-gold-border, rgba(245,181,72,0.25))',
+            boxShadow: '0 26px 86px rgba(0,0,0,0.32)',
+          }}
+        >
+          <div className="pointer-events-none absolute inset-0"
+            style={{ background: 'radial-gradient(circle at 20% 0%, var(--theme-gold-subtle, rgba(245,181,72,0.06)), transparent 30%)' }} />
 
           <div className="relative grid gap-7 lg:grid-cols-[1fr_360px] lg:items-center">
             <div>
