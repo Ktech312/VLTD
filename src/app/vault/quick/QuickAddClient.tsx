@@ -211,7 +211,7 @@ function RecentItemCard({ item }: { item: SavedItemPreview }) {
       className="relative flex items-center gap-3 rounded-2xl bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
     >
       {item.isNew ? (
-        <div className="absolute right-3 top-3 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white">
+        <div className="absolute right-3 top-3 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-text-primary">
           NEW
         </div>
       ) : null}

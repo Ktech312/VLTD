@@ -673,7 +673,7 @@ export default function MuseumPage() {
                 type="button"
                 onClick={handleConfirmDelete}
                 disabled={isDeleting}
-                className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-[rgba(145,20,20,0.92)] px-5 py-2 text-sm font-semibold text-white ring-1 ring-red-400/30 transition hover:bg-[rgba(170,24,24,1)] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-[rgba(145,20,20,0.92)] px-5 py-2 text-sm font-semibold text-text-primary ring-1 ring-red-400/30 transition hover:bg-[rgba(170,24,24,1)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isDeleting ? "Deleting..." : "Yes Delete FOREVER"}
               </button>

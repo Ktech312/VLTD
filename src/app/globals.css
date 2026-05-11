@@ -2,6 +2,55 @@
 @import "tailwindcss";
 
 /* =========================================================
+   TAILWIND v4 DESIGN TOKENS
+   Single source of truth — edit here, classes update everywhere.
+   Colors:  bg-gold, text-gold, border-gold-border, etc.
+   Shadows: shadow-card, shadow-gold, shadow-elevated
+   Radius:  rounded-sm(6), rounded-DEFAULT(10), rounded-lg(14), rounded-xl(20)
+========================================================= */
+
+@theme {
+  /* Gold palette */
+  --color-gold: #F5B548;
+  --color-gold-light: #FFE08A;
+  --color-gold-dark: #8B6914;
+  --color-gold-mid: #C8941F;
+  --color-gold-subtle: rgba(245,181,72,0.15);
+  --color-gold-border: rgba(245,181,72,0.3);
+
+  /* Vault surfaces */
+  --color-vault-base: #0B0B0B;
+  --color-vault-card: #141414;
+  --color-vault-elevated: #1E1E1E;
+  --color-vault-border: #2A2418;
+
+  /* Text scale */
+  --color-text-primary: #F0EAD6;
+  --color-text-secondary: #A0956B;
+  --color-text-muted: #5A5040;
+
+  /* Data / status — cyan reserved for prices & numbers only */
+  --color-data: #52D6F4;
+  --color-gain: #4CAF82;
+  --color-loss: #E05252;
+
+  /* Shadows */
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.6);
+  --shadow-gold: 0 0 20px rgba(245,181,72,0.25), 0 0 40px rgba(245,181,72,0.1);
+  --shadow-elevated: 0 8px 40px rgba(0,0,0,0.8);
+
+  /* Border radius */
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Typography */
+  --font-family-sans: var(--font-inter, Inter), sans-serif;
+}
+
+/* =========================================================
    VLTD THEME SYSTEM
    Mode: Light / Dark
    Palette: Gold / Deep Vault
@@ -1706,3 +1755,102 @@ hr {
     padding-bottom: calc(var(--bottomnav-h) + env(safe-area-inset-bottom, 0px));
   }
 }
+
+/* =========================================================
+   VLTD TOKEN UTILITY CLASSES
+   Use these instead of hardcoding colors anywhere.
+   Scroll down to find: gold-text, gold-shimmer, vault-card,
+   vault-card-gold, btn-gold, btn-gold-outline
+========================================================= */
+
+/* Metallic gold text — wraps text in a gold gradient */
+.gold-text {
+  background: linear-gradient(135deg, #C8941F, #F5B548, #FFE08A, #F5B548);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Shimmer sweep animation — add to buttons, badges, any gold surface */
+.gold-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.gold-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,224,138,0.4) 50%, transparent 60%);
+  animation: vltd-shimmer 3s infinite;
+}
+@keyframes vltd-shimmer {
+  0%   { left: -100%; }
+  100% { left: 200%; }
+}
+
+/* Background image utilities (defined explicitly for Tailwind v4 compatibility) */
+.bg-gold-gradient {
+  background-image: linear-gradient(135deg, #8B6914 0%, #C8941F 25%, #F5B548 50%, #FFE08A 70%, #C8941F 100%);
+}
+.bg-gold-gradient-text {
+  background-image: linear-gradient(135deg, #C8941F, #F5B548, #FFE08A);
+}
+.bg-vault-base-glow {
+  background-image: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(245,181,72,0.06) 0%, transparent 70%);
+}
+.bg-card-overlay {
+  background-image: linear-gradient(to top, rgba(11,11,11,0.9) 0%, transparent 60%);
+}
+
+/* Standard vault card */
+.vault-card {
+  background: #141414;
+  border: 1px solid #2A2418;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+}
+
+/* Gold-accented card — for featured / highlighted items */
+.vault-card-gold {
+  background: #141414;
+  border: 1px solid rgba(245,181,72,0.3);
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 0 20px rgba(245,181,72,0.1);
+}
+
+/* Primary gold gradient button */
+.btn-gold {
+  background: linear-gradient(135deg, #8B6914 0%, #C8941F 25%, #F5B548 50%, #FFE08A 70%, #C8941F 100%);
+  color: #0B0B0B;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(245,181,72,0.25);
+  transition: filter 0.2s, box-shadow 0.2s;
+}
+.btn-gold:hover {
+  filter: brightness(1.12);
+  box-shadow: 0 0 30px rgba(245,181,72,0.4);
+}
+
+/* Outline gold button */
+.btn-gold-outline {
+  background: transparent;
+  border: 1px solid rgba(245,181,72,0.3);
+  color: #F5B548;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.btn-gold-outline:hover {
+  background: rgba(245,181,72,0.1);
+  box-shadow: 0 0 16px rgba(245,181,72,0.15);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #141414; }
+::-webkit-scrollbar-thumb { background: #2A2418; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(245,181,72,0.4); }

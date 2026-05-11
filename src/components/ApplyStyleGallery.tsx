@@ -148,7 +148,7 @@ function MiniShell() {
               <div className="text-[10px] tracking-widest text-[color:var(--muted2)]">PORTFOLIO</div>
               <div className="mt-1 text-sm font-semibold">Today</div>
             </div>
-            <div className="rounded-full px-3 py-1 text-xs bg-[color:var(--accent)] text-white">
+            <div className="rounded-full px-3 py-1 text-xs bg-[color:var(--accent)] text-text-primary">
               {sampleMoney(12850)}
             </div>
           </div>

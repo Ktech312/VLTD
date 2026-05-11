@@ -34,7 +34,7 @@ export default function CaptureCamera() {
         <div className="relative grid h-20 w-20 place-items-center rounded-[24px] border border-[rgba(82,214,244,0.28)] bg-[rgba(82,214,244,0.10)] text-3xl shadow-[0_18px_42px_rgba(82,214,244,0.12)]">
           ▣
         </div>
-        <div className="relative mt-5 text-xl font-black tracking-[-0.03em] text-white">
+        <div className="relative mt-5 text-xl font-black tracking-[-0.03em] text-text-primary">
           Capture Item Photo
         </div>
         <div className="relative mt-2 max-w-[260px] text-sm leading-6 text-[color:var(--muted)]">
@@ -48,7 +48,7 @@ export default function CaptureCamera() {
       <div className="mt-4 rounded-2xl border border-[color:var(--border)] bg-[rgba(9,20,36,0.72)] px-4 py-3 text-sm text-[color:var(--muted)]">
         {fileName ? (
           <span>
-            Selected: <span className="font-semibold text-white">{fileName}</span>
+            Selected: <span className="font-semibold text-text-primary">{fileName}</span>
           </span>
         ) : (
           "No photo selected yet."

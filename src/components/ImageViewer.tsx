@@ -113,7 +113,7 @@ export default function ImageViewer({
         type="button"
         onClick={onClose}
         aria-label="Close image viewer"
-        className="fixed right-3 top-3 z-[110] inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/14 text-2xl leading-none text-white ring-1 ring-white/25 backdrop-blur transition hover:bg-white/20 sm:right-4 sm:top-4"
+        className="fixed right-3 top-3 z-[110] inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/14 text-2xl leading-none text-text-primary ring-1 ring-white/25 backdrop-blur transition hover:bg-white/20 sm:right-4 sm:top-4"
       >
         ×
       </button>
@@ -123,7 +123,7 @@ export default function ImageViewer({
           <button
             type="button"
             onClick={() => onEdit(current)}
-            className="rounded-full bg-white/10 px-3 py-2 text-sm text-white ring-1 ring-white/15 backdrop-blur"
+            className="rounded-full bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-white/15 backdrop-blur"
           >
             Edit Photo
           </button>
@@ -132,7 +132,7 @@ export default function ImageViewer({
           <button
             type="button"
             onClick={() => onDelete(current)}
-            className="rounded-full bg-red-600/75 px-3 py-2 text-sm text-white ring-1 ring-red-400/35 backdrop-blur"
+            className="rounded-full bg-red-600/75 px-3 py-2 text-sm text-text-primary ring-1 ring-red-400/35 backdrop-blur"
           >
             Delete
           </button>
@@ -144,7 +144,7 @@ export default function ImageViewer({
           <button
             type="button"
             onClick={prev}
-            className="fixed left-3 top-1/2 z-[100] -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-3xl leading-none text-white ring-1 ring-white/15 backdrop-blur"
+            className="fixed left-3 top-1/2 z-[100] -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-3xl leading-none text-text-primary ring-1 ring-white/15 backdrop-blur"
             aria-label="Previous image"
           >
             ‹
@@ -152,7 +152,7 @@ export default function ImageViewer({
           <button
             type="button"
             onClick={next}
-            className="fixed right-3 top-1/2 z-[100] -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-3xl leading-none text-white ring-1 ring-white/15 backdrop-blur"
+            className="fixed right-3 top-1/2 z-[100] -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-3xl leading-none text-text-primary ring-1 ring-white/15 backdrop-blur"
             aria-label="Next image"
           >
             ›
@@ -165,14 +165,14 @@ export default function ImageViewer({
           type="button"
           onClick={() => zoomBy(-0.25)}
           disabled={scale <= 1}
-          className="rounded-full bg-white/10 px-3 py-2 text-sm text-white ring-1 ring-white/15 backdrop-blur disabled:opacity-40"
+          className="rounded-full bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-white/15 backdrop-blur disabled:opacity-40"
         >
           −
         </button>
         <button
           type="button"
           onClick={resetTransform}
-          className="rounded-full bg-white/10 px-3 py-2 text-sm text-white ring-1 ring-white/15 backdrop-blur"
+          className="rounded-full bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-white/15 backdrop-blur"
         >
           Fit {Math.round(scale * 100)}%
         </button>
@@ -180,7 +180,7 @@ export default function ImageViewer({
           type="button"
           onClick={() => zoomBy(0.25)}
           disabled={scale >= 5}
-          className="rounded-full bg-white/10 px-3 py-2 text-sm text-white ring-1 ring-white/15 backdrop-blur disabled:opacity-40"
+          className="rounded-full bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-white/15 backdrop-blur disabled:opacity-40"
         >
           +
         </button>

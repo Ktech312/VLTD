@@ -128,7 +128,7 @@ export default function GuestGalleryPage() {
 
   if (isResolved && !gallery) {
     return (
-      <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(30,36,46,0.96),rgba(8,10,14,1)_62%)] text-white">
+      <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(30,36,46,0.96),rgba(8,10,14,1)_62%)] text-text-primary">
         <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
           <div className="rounded-[28px] border border-white/10 bg-black/25 p-8 text-center ring-1 ring-white/10 backdrop-blur-sm">
             <div className="text-[11px] tracking-[0.22em] text-white/55">GUEST PREVIEW</div>

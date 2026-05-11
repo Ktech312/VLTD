@@ -326,7 +326,7 @@ export default function ItemMedia({
           className={[
             "rounded-full px-2 py-1 text-[10px] ring-1",
             entry.role === "detail"
-              ? "bg-white/15 text-white ring-white/20"
+              ? "bg-white/15 text-text-primary ring-white/20"
               : "bg-[color:var(--pill)] ring-[color:var(--border)]",
           ].join(" ")}
           title="Set as detail"
@@ -413,7 +413,7 @@ export default function ItemMedia({
                 <button
                   type="button"
                   onClick={() => onDeleteImage(entry.originalIndex)}
-                  className="rounded-full bg-red-600/85 px-2 py-1 text-[10px] text-white ring-1 ring-red-500/40"
+                  className="rounded-full bg-red-600/85 px-2 py-1 text-[10px] text-text-primary ring-1 ring-red-500/40"
                   title="Delete image"
                 >
                   ×
@@ -485,7 +485,7 @@ export default function ItemMedia({
                 <button
                   type="button"
                   onClick={() => openEditorForEntry(activeVisibleEntry)}
-                  className="rounded-full bg-black/45 px-3 py-2 text-xs text-white ring-1 ring-white/15 backdrop-blur"
+                  className="rounded-full bg-black/45 px-3 py-2 text-xs text-text-primary ring-1 ring-white/15 backdrop-blur"
                 >
                   Edit Photo
                 </button>
@@ -493,14 +493,14 @@ export default function ItemMedia({
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                className="rounded-full bg-black/45 px-3 py-2 text-xs text-white ring-1 ring-white/15 backdrop-blur"
+                className="rounded-full bg-black/45 px-3 py-2 text-xs text-text-primary ring-1 ring-white/15 backdrop-blur"
               >
                 Add image
               </button>
               <button
                 type="button"
                 onClick={() => cameraRef.current?.click()}
-                className="rounded-full bg-black/45 px-3 py-2 text-xs text-white ring-1 ring-white/15 backdrop-blur"
+                className="rounded-full bg-black/45 px-3 py-2 text-xs text-text-primary ring-1 ring-white/15 backdrop-blur"
               >
                 Camera
               </button>
@@ -508,7 +508,7 @@ export default function ItemMedia({
                 <button
                   type="button"
                   onClick={() => onRemoveBackground(activeVisibleEntry.originalIndex)}
-                  className="rounded-full bg-black/45 px-3 py-2 text-xs text-white ring-1 ring-white/15 backdrop-blur"
+                  className="rounded-full bg-black/45 px-3 py-2 text-xs text-text-primary ring-1 ring-white/15 backdrop-blur"
                 >
                   Remove BG
                 </button>
@@ -517,7 +517,7 @@ export default function ItemMedia({
                 <button
                   type="button"
                   onClick={() => onRevertBackground(activeVisibleEntry.originalIndex)}
-                  className="rounded-full bg-black/45 px-3 py-2 text-xs text-white ring-1 ring-white/15 backdrop-blur"
+                  className="rounded-full bg-black/45 px-3 py-2 text-xs text-text-primary ring-1 ring-white/15 backdrop-blur"
                 >
                   Revert
                 </button>
@@ -569,7 +569,7 @@ export default function ItemMedia({
                       <button
                         type="button"
                         onClick={() => onDeleteImage(entry.originalIndex)}
-                        className="rounded-full bg-red-600/85 px-2 py-1 text-[10px] text-white ring-1 ring-red-500/40"
+                        className="rounded-full bg-red-600/85 px-2 py-1 text-[10px] text-text-primary ring-1 ring-red-500/40"
                         title="Delete image"
                       >
                         Delete

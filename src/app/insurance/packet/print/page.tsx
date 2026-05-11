@@ -123,7 +123,7 @@ export default function InsurancePacketPrintPage() {
         <Link href="/insurance/packet" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900">
           ← Back to Packet
         </Link>
-        <button onClick={() => window.print()} className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-bold text-white">
+        <button onClick={() => window.print()} className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-bold text-text-primary">
           Print This Page
         </button>
       </div>
