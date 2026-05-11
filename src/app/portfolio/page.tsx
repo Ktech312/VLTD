@@ -502,8 +502,8 @@ export default function PortfolioPage() {
     <main className="min-h-screen text-[color:var(--fg)]" style={{ background: 'var(--theme-bg, #0B1320)' }}>
       <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-7">
         <section
-          className="vltd-panel-main relative overflow-hidden rounded-[26px] px-5 py-5 shadow-[0_18px_54px_rgba(0,0,0,0.3)] sm:px-6 sm:py-6"
-          style={{ background: 'var(--theme-elevated, rgba(20,32,55,0.9))', border: '1px solid var(--theme-gold-border, rgba(245,181,72,0.18))' }}
+          className="relative overflow-hidden rounded-[18px] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)]"
+          style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}
         >
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),rgba(255,255,255,0)_28%),radial-gradient(circle_at_75%_0%,rgba(255,205,120,0.06),rgba(255,205,120,0)_22%)]" />
 

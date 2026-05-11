@@ -307,7 +307,7 @@ export default function MuseumPage() {
           onChange={(event) => void handleCoverSelection(event)}
         />
 
-        <section className="vltd-panel-main relative overflow-hidden rounded-[26px] px-5 py-5 sm:px-6 sm:py-6" style={{ background: "var(--surface)", boxShadow: "0 18px 54px rgba(0,0,0,0.28)" }}>
+        <section className="relative overflow-hidden rounded-[18px] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)]" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),rgba(255,255,255,0)_28%),radial-gradient(circle_at_75%_0%,rgba(255,205,120,0.06),rgba(255,205,120,0)_22%)]" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.18))]" />
 
