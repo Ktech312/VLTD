@@ -20,6 +20,7 @@ import "./theme-override.css";
 import TopNav from "@/components/TopNav";
 import BottomNav from "@/components/BottomNav";
 import Providers from "@/components/Providers";
+import RouteTransition from "@/components/RouteTransition";
 import { ThemeBoot } from "@/components/ThemeBoot";
 import ThemeScript from "@/components/ThemeScript";
 import { ThemeProvider } from "@/lib/ThemeContext";
@@ -111,7 +112,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               style={{ paddingTop: "var(--topnav-h)" }}
               className="vltd-content-wrap"
             >
-              {children}
+              <RouteTransition>{children}</RouteTransition>
             </div>
             <BottomNav />
             <FloatingThemeButton />
