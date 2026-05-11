@@ -27,11 +27,21 @@ export default function CaptureCamera() {
       <button
         type="button"
         onClick={capture}
-        className="group relative flex min-h-[340px] w-full flex-col items-center justify-center overflow-hidden rounded-[24px] border border-dashed border-[rgba(82,214,244,0.38)] bg-[radial-gradient(circle_at_50%_0%,rgba(82,214,244,0.14),rgba(82,214,244,0.03)_38%,rgba(5,11,21,0.62)_100%)] px-5 text-center transition hover:-translate-y-0.5 hover:border-[rgba(82,214,244,0.58)] hover:bg-[radial-gradient(circle_at_50%_0%,rgba(82,214,244,0.20),rgba(82,214,244,0.04)_38%,rgba(5,11,21,0.70)_100%)]"
+        className="group relative flex min-h-[340px] w-full flex-col items-center justify-center overflow-hidden rounded-[24px] border border-dashed px-5 text-center transition hover:-translate-y-0.5"
+        style={{
+          borderColor: 'var(--theme-gold-border, rgba(245,181,72,0.35))',
+          background: 'radial-gradient(circle at 50% 0%, var(--theme-gold-subtle, rgba(245,181,72,0.08)), rgba(5,11,21,0.62) 100%)',
+        }}
       >
-        <div className="absolute inset-x-8 top-8 h-24 rounded-full bg-[rgba(82,214,244,0.12)] blur-3xl transition group-hover:bg-[rgba(82,214,244,0.18)]" />
+        <div className="absolute inset-x-8 top-8 h-24 rounded-full blur-3xl transition"
+          style={{ background: 'var(--theme-gold-subtle, rgba(245,181,72,0.10))' }} />
 
-        <div className="relative grid h-20 w-20 place-items-center rounded-[24px] border border-[rgba(82,214,244,0.28)] bg-[rgba(82,214,244,0.10)] text-3xl shadow-[0_18px_42px_rgba(82,214,244,0.12)]">
+        <div className="relative grid h-20 w-20 place-items-center rounded-[24px] text-3xl"
+          style={{
+            border: '1px solid var(--theme-gold-border, rgba(245,181,72,0.25))',
+            background: 'var(--theme-gold-subtle, rgba(245,181,72,0.08))',
+            boxShadow: '0 18px 42px rgba(245,181,72,0.10)',
+          }}>
           ▣
         </div>
         <div className="relative mt-5 text-xl font-black tracking-[-0.03em] text-text-primary">
@@ -40,7 +50,8 @@ export default function CaptureCamera() {
         <div className="relative mt-2 max-w-[260px] text-sm leading-6 text-[color:var(--muted)]">
           Use your camera on mobile or upload an image from desktop.
         </div>
-        <div className="relative mt-5 inline-flex min-h-12 items-center justify-center rounded-full bg-[#52d6f4] px-6 text-sm font-black text-[#141414] shadow-[0_16px_42px_rgba(82,214,244,0.20)]">
+        <div className="relative mt-5 inline-flex min-h-12 items-center justify-center rounded-full px-6 text-sm font-black text-[#0B0B0B]"
+          style={{ background: 'var(--theme-gold-gradient)', boxShadow: 'var(--theme-gold-glow)' }}>
           Open camera / upload
         </div>
       </button>

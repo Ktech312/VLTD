@@ -109,8 +109,8 @@ export default function InsurancePacketPage() {
   return (
     <main className="vltd-page-depth min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <div className="packet-shell mx-auto max-w-6xl">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[rgba(82,214,244,0.24)] bg-vault-card p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
-          <Link href="/insurance" className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(82,214,244,0.42)]">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[color:var(--border)] bg-vault-card p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
+          <Link href="/insurance" className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(245,181,72,0.42)]">
             ← Back to Insurance
           </Link>
           <div className="flex flex-wrap items-center gap-3">
@@ -119,7 +119,7 @@ export default function InsurancePacketPage() {
                 type="checkbox"
                 checked={includeImages}
                 onChange={(event) => setIncludeImages(event.target.checked)}
-                className="h-4 w-4 accent-[#52d6f4]"
+                className="h-4 w-4 accent-[#F5B548]"
               />
               Include images ({includeImages ? "5" : "25"}/page)
             </label>
@@ -143,28 +143,36 @@ export default function InsurancePacketPage() {
             <Link
               href={printHref}
               target="_blank"
-              className="rounded-full bg-[#52d6f4] px-4 py-2 text-sm font-black text-[#141414] shadow-[0_14px_38px_rgba(82,214,244,0.18)]"
+              className="rounded-full px-4 py-2 text-sm font-black text-[#0B0B0B]"
+              style={{ background: 'var(--theme-gold-gradient)', boxShadow: 'var(--theme-gold-glow)' }}
             >
               Open Printable Page
             </Link>
           </div>
         </div>
 
-        <section className="rounded-[30px] border border-[rgba(82,214,244,0.28)] bg-[linear-gradient(180deg,rgba(18,38,66,0.94),rgba(8,18,32,0.96))] p-5 shadow-[0_26px_86px_rgba(82,214,244,0.10),0_24px_88px_rgba(0,0,0,0.32)] sm:p-6">
+        <section
+          className="rounded-[30px] p-5 sm:p-6"
+          style={{
+            background: 'var(--theme-elevated, rgba(20,32,55,0.9))',
+            border: '1px solid var(--theme-gold-border, rgba(245,181,72,0.25))',
+            boxShadow: '0 26px 86px rgba(0,0,0,0.32)',
+          }}
+        >
           <div className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">Insurance Packet</div>
           <h1 className="mt-2 text-3xl font-black tracking-[-0.045em] text-text-primary">Insurance Policy Packet</h1>
           <div className="mt-2 text-sm text-[color:var(--muted)]">
             Generated {new Date().toLocaleString()} • Included {selectedItems.length} of {items.length} items • Total Value {fmtMoney(totals.value)} • Page {safePageIndex + 1} of {totalPages} • Showing {visibleItems.length} items
           </div>
-          <div className="mt-3 rounded-2xl border border-[rgba(82,214,244,0.18)] bg-[rgba(82,214,244,0.07)] px-4 py-3 text-sm text-[color:var(--muted)]">
+          <div className="mt-3 rounded-2xl border border-[rgba(245,181,72,0.18)] bg-[rgba(245,181,72,0.06)] px-4 py-3 text-sm text-[color:var(--muted)]">
             Use Open Printable Page to generate the PDF from a lightweight print-only route. Without images: 25 items per page. With images: 5 items per page.
           </div>
         </section>
 
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-[rgba(104,146,196,0.22)] bg-vault-card">
-          <table className={includeImages ? "w-full border-collapse text-sm text-[#dbeafe]" : "w-full border-collapse text-sm text-[#dbeafe]"}>
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-[color:var(--border)] bg-vault-card">
+          <table className={includeImages ? "w-full border-collapse text-sm text-[color:var(--fg)]" : "w-full border-collapse text-sm text-[color:var(--fg)]"}>
             <thead>
-              <tr className="border-b border-[rgba(104,146,196,0.22)] text-left text-[11px] uppercase tracking-[0.18em] text-[#7ddff5]">
+              <tr className="border-b border-[color:var(--border)] text-left text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">
                 {includeImages ? <th className="py-3 pl-4 pr-3">Image</th> : null}
                 <th className="py-3 pl-4 pr-3">Item</th>
                 <th className="py-3 pr-3">Category</th>

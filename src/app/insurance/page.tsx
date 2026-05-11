@@ -174,12 +174,12 @@ export default function InsuranceExportPage() {
       `}</style>
 
       <div className="print-wrap mx-auto max-w-6xl">
-        <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[rgba(82,214,244,0.24)] bg-vault-card p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
+        <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[color:var(--border)] bg-vault-card p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
           <div className="flex flex-wrap items-center gap-2">
-            <Link href="/vault" className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(82,214,244,0.42)]">
+            <Link href="/vault" className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(245,181,72,0.42)]">
               ← Back to Vault
             </Link>
-            <Link href="/portfolio" className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(82,214,244,0.42)]">
+            <Link href="/portfolio" className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(245,181,72,0.42)]">
               Portfolio
             </Link>
           </div>
@@ -191,29 +191,36 @@ export default function InsuranceExportPage() {
             <button onClick={excludeZeroValue} className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)]">
               Exclude $0 value
             </button>
-            <Link href="/insurance/packet" className="rounded-full border border-[rgba(82,214,244,0.42)] bg-[rgba(82,214,244,0.10)] px-4 py-2 text-sm font-black text-[color:var(--accent)] shadow-[0_14px_38px_rgba(82,214,244,0.12)]">
+            <Link href="/insurance/packet" className="rounded-full border border-[rgba(245,181,72,0.42)] bg-[rgba(245,181,72,0.10)] px-4 py-2 text-sm font-black" style={{ color: 'var(--theme-gold, #F5B548)' }}>
               Policy Packet (PDF)
             </Link>
-            <button onClick={() => window.print()} className="rounded-full bg-[#52d6f4] px-4 py-2 text-sm font-black text-[#141414] shadow-[0_14px_38px_rgba(82,214,244,0.18)]">
+            <button onClick={() => window.print()} className="rounded-full px-4 py-2 text-sm font-black text-[#0B0B0B]" style={{ background: 'var(--theme-gold-gradient)', boxShadow: 'var(--theme-gold-glow)' }}>
               Print Inventory PDF
             </button>
           </div>
         </div>
 
-        <section className="card rounded-[30px] border border-[rgba(82,214,244,0.28)] bg-[linear-gradient(180deg,rgba(18,38,66,0.94),rgba(8,18,32,0.96))] p-5 shadow-[0_26px_86px_rgba(82,214,244,0.10),0_24px_88px_rgba(0,0,0,0.32)] sm:p-6">
+        <section
+          className="card rounded-[30px] p-5 sm:p-6"
+          style={{
+            background: 'var(--theme-elevated, rgba(20,32,55,0.9))',
+            border: '1px solid var(--theme-gold-border, rgba(245,181,72,0.25))',
+            boxShadow: '0 26px 86px rgba(0,0,0,0.32)',
+          }}
+        >
           <div className="insurance-eyebrow text-[11px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">Insurance Inventory</div>
           <h1 className="insurance-title mt-2 text-3xl font-black tracking-[-0.045em] text-text-primary">Vault Inventory Report</h1>
           <div className="insurance-summary mt-2 text-sm text-[color:var(--muted)]">
             Generated {new Date().toLocaleString()} • Included {selectedItems.length} of {items.length} items • Total Value {fmtMoney(totals.value)} • Total Cost {fmtMoney(totals.cost)}
           </div>
-          <div className="no-print mt-3 rounded-2xl border border-[rgba(82,214,244,0.18)] bg-[rgba(82,214,244,0.07)] px-4 py-3 text-sm text-[color:var(--muted)]">
+          <div className="no-print mt-3 rounded-2xl border border-[rgba(245,181,72,0.18)] bg-[rgba(245,181,72,0.06)] px-4 py-3 text-sm text-[color:var(--muted)]">
             Checked items are included in insurance reports and the policy packet. Uncheck anything that should not be part of insurance documentation. Inventory print uses compact landscape formatting.
           </div>
 
-          <div className="insurance-table-wrap mt-6 overflow-x-auto rounded-2xl border border-[rgba(104,146,196,0.22)] bg-vault-card">
-            <table className="w-full border-collapse text-sm text-[#dbeafe]">
+          <div className="insurance-table-wrap mt-6 overflow-x-auto rounded-2xl border border-[color:var(--border)] bg-vault-card">
+            <table className="w-full border-collapse text-sm text-[color:var(--fg)]">
               <thead>
-                <tr className="border-b border-[rgba(104,146,196,0.22)] text-left text-[11px] uppercase tracking-[0.18em] text-[#7ddff5]">
+                <tr className="border-b border-[color:var(--border)] text-left text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">
                   <th className="no-print py-3 pl-4 pr-3">Insure</th>
                   <th className="col-item py-3 pl-4 pr-3">Item</th>
                   <th className="col-category py-3 pr-3">Category</th>
@@ -231,13 +238,13 @@ export default function InsuranceExportPage() {
                   const included = !excludedIds.has(String(i.id));
                   if (!included) {
                     return (
-                      <tr key={i.id} className="no-print border-b border-[rgba(104,146,196,0.10)] align-top opacity-45 last:border-b-0">
+                      <tr key={i.id} className="no-print border-b border-[color:var(--border)] align-top opacity-45 last:border-b-0">
                         <td className="py-3 pl-4 pr-3">
                           <input
                             type="checkbox"
                             checked={false}
                             onChange={(event) => setItemIncluded(String(i.id), event.target.checked)}
-                            className="h-5 w-5 accent-[#52d6f4]"
+                            className="h-5 w-5 accent-[#F5B548]"
                             aria-label={`Include ${i.title} in insurance`}
                           />
                         </td>
@@ -250,13 +257,13 @@ export default function InsuranceExportPage() {
                   }
 
                   return (
-                    <tr key={i.id} className="border-b border-[rgba(104,146,196,0.14)] align-top last:border-b-0">
+                    <tr key={i.id} className="border-b border-[color:var(--border)] align-top last:border-b-0">
                       <td className="no-print py-3 pl-4 pr-3">
                         <input
                           type="checkbox"
                           checked={included}
                           onChange={(event) => setItemIncluded(String(i.id), event.target.checked)}
-                          className="h-5 w-5 accent-[#52d6f4]"
+                          className="h-5 w-5 accent-[#F5B548]"
                           aria-label={`Include ${i.title} in insurance`}
                         />
                       </td>
