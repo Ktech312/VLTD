@@ -528,7 +528,7 @@ export default function PortfolioPage() {
             </div>
 
             <div className="grid gap-3 md:grid-cols-3">
-              <div className="vltd-panel-soft rounded-[20px] p-4" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
+              <div className="rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   TOTAL VALUE
                 </div>
@@ -538,7 +538,7 @@ export default function PortfolioPage() {
                 </div>
               </div>
 
-              <div className="vltd-panel-soft rounded-[20px] p-4" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
+              <div className="rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   NET CHANGE
                 </div>
@@ -548,7 +548,7 @@ export default function PortfolioPage() {
                 </div>
               </div>
 
-              <div className="vltd-panel-soft rounded-[20px] p-4" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
+              <div className="rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   ROI
                 </div>

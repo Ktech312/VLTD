@@ -155,10 +155,6 @@
 /* Cards/panels — white or very light bg, visible shadow for depth */
 .theme-light body .vltd-panel-main,
 .theme-light body .vltd-panel-soft,
-.theme-light body section,
-.theme-light body article,
-.theme-light body [class*="rounded-[2"],
-.theme-light body [class*="rounded-3xl"],
 .theme-light body .vault-card {
   background: var(--theme-card, rgba(255,255,255,0.85)) !important;
   box-shadow: 0 2px 12px rgba(0,0,0,0.08) !important;
