@@ -196,18 +196,18 @@ export default function InsuranceReportPage() {
           </div>
 
           <div className="mt-5 grid gap-3 md:grid-cols-3">
-            <div className="rounded-2xl bg-black/15 p-4 ring-1 ring-white/10">
+            <div className="rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
               <div className="text-xs tracking-widest text-[color:var(--muted2)]">ITEMS</div>
               <div className="mt-2 text-2xl font-semibold">{sorted.length}</div>
             </div>
 
-            <div className="rounded-2xl bg-black/15 p-4 ring-1 ring-white/10">
+            <div className="rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
               <div className="text-xs tracking-widest text-[color:var(--muted2)]">TOTAL VALUE</div>
               <div className="mt-2 text-2xl font-semibold">{fmtMoney(totals.value)}</div>
               <div className="mt-1 text-sm text-[color:var(--muted)]">Cost {fmtMoney(totals.cost)}</div>
             </div>
 
-            <div className="rounded-2xl bg-black/15 p-4 ring-1 ring-white/10">
+            <div className="rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
               <div className="text-xs tracking-widest text-[color:var(--muted2)]">TOTAL GAIN</div>
               <div className="mt-2 text-2xl font-semibold">{fmtMoney(totals.gain)}</div>
               <div className="mt-1 text-sm text-[color:var(--muted)]">Value − Cost</div>
@@ -229,7 +229,7 @@ export default function InsuranceReportPage() {
               const pool = byUniverse.get(u) ?? [];
               const val = pool.reduce((s, i) => s + clamp(Number(i.currentValue ?? 0)), 0);
               return (
-                <div key={u} className="rounded-2xl bg-black/15 p-4 ring-1 ring-white/10">
+                <div key={u} className="rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
                   <div className="text-sm font-semibold">{UNIVERSE_LABEL[u]}</div>
                   <div className="mt-1 text-sm text-[color:var(--muted)]">
                     {pool.length} items • {fmtMoney(val)}
@@ -257,20 +257,20 @@ export default function InsuranceReportPage() {
             <table className="print-table w-full border-collapse text-sm">
               <thead>
                 <tr className="text-left">
-                  {includePhotos ? <th className="border-b border-white/10 pb-2 pr-3">Photo</th> : null}
-                  <th className="border-b border-white/10 pb-2 pr-3">Title</th>
-                  <th className="border-b border-white/10 pb-2 pr-3">Universe</th>
-                  <th className="border-b border-white/10 pb-2 pr-3">Category</th>
-                  <th className="border-b border-white/10 pb-2 pr-3">Subcat</th>
-                  <th className="border-b border-white/10 pb-2 pr-3">Grade</th>
-                  <th className="border-b border-white/10 pb-2 pr-3">#</th>
-                  <th className="border-b border-white/10 pb-2 pr-3">Cost</th>
-                  <th className="border-b border-white/10 pb-2 pr-3">Value</th>
-                  <th className="border-b border-white/10 pb-2 pr-3">Gain</th>
-                  <th className="border-b border-white/10 pb-2 pr-3">Storage</th>
-                  <th className="border-b border-white/10 pb-2 pr-3">Cert #</th>
-                  <th className="border-b border-white/10 pb-2 pr-3">Serial #</th>
-                  <th className="border-b border-white/10 pb-2">Notes</th>
+                  {includePhotos ? <th className="border-b border-[color:var(--border)] pb-2 pr-3">Photo</th> : null}
+                  <th className="border-b border-[color:var(--border)] pb-2 pr-3">Title</th>
+                  <th className="border-b border-[color:var(--border)] pb-2 pr-3">Universe</th>
+                  <th className="border-b border-[color:var(--border)] pb-2 pr-3">Category</th>
+                  <th className="border-b border-[color:var(--border)] pb-2 pr-3">Subcat</th>
+                  <th className="border-b border-[color:var(--border)] pb-2 pr-3">Grade</th>
+                  <th className="border-b border-[color:var(--border)] pb-2 pr-3">#</th>
+                  <th className="border-b border-[color:var(--border)] pb-2 pr-3">Cost</th>
+                  <th className="border-b border-[color:var(--border)] pb-2 pr-3">Value</th>
+                  <th className="border-b border-[color:var(--border)] pb-2 pr-3">Gain</th>
+                  <th className="border-b border-[color:var(--border)] pb-2 pr-3">Storage</th>
+                  <th className="border-b border-[color:var(--border)] pb-2 pr-3">Cert #</th>
+                  <th className="border-b border-[color:var(--border)] pb-2 pr-3">Serial #</th>
+                  <th className="border-b border-[color:var(--border)] pb-2">Notes</th>
                 </tr>
               </thead>
 
@@ -278,12 +278,12 @@ export default function InsuranceReportPage() {
                 {sorted.map((i) => (
                   <tr key={i.id} className="align-top">
                     {includePhotos ? (
-                      <td className="border-b border-white/10 py-3 pr-3">
+                      <td className="border-b border-[color:var(--border)] py-3 pr-3">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={i.imageFrontUrl || "/"}
                           alt=""
-                          className="h-16 w-12 rounded-lg object-cover ring-1 ring-white/10"
+                          className="h-16 w-12 rounded-lg object-cover ring-1 ring-[color:var(--border)]"
                           onError={(e) => {
                             // Hide broken images (keeps PDF clean)
                             (e.currentTarget as HTMLImageElement).style.display = "none";
@@ -292,23 +292,23 @@ export default function InsuranceReportPage() {
                       </td>
                     ) : null}
 
-                    <td className="border-b border-white/10 py-3 pr-3">
+                    <td className="border-b border-[color:var(--border)] py-3 pr-3">
                       <div className="font-semibold">{i.title}</div>
                       {i.subtitle ? <div className="text-xs text-[color:var(--muted2)]">{i.subtitle}</div> : null}
                     </td>
 
-                    <td className="border-b border-white/10 py-3 pr-3">{UNIVERSE_LABEL[itemUniverse(i)]}</td>
-                    <td className="border-b border-white/10 py-3 pr-3">{itemCategory(i)}</td>
-                    <td className="border-b border-white/10 py-3 pr-3">{itemSubcategory(i) ?? ""}</td>
-                    <td className="border-b border-white/10 py-3 pr-3">{i.grade ?? ""}</td>
-                    <td className="border-b border-white/10 py-3 pr-3">{i.number ?? ""}</td>
-                    <td className="border-b border-white/10 py-3 pr-3">{fmtMoney(Number(i.purchasePrice ?? 0))}</td>
-                    <td className="border-b border-white/10 py-3 pr-3">{fmtMoney(Number(i.currentValue ?? 0))}</td>
-                    <td className="border-b border-white/10 py-3 pr-3">{fmtMoney(gain(i))}</td>
-                    <td className="border-b border-white/10 py-3 pr-3">{i.storageLocation ?? ""}</td>
-                    <td className="border-b border-white/10 py-3 pr-3">{i.certNumber ?? ""}</td>
-                    <td className="border-b border-white/10 py-3 pr-3">{i.serialNumber ?? ""}</td>
-                    <td className="border-b border-white/10 py-3">{trimNotes(i.notes)}</td>
+                    <td className="border-b border-[color:var(--border)] py-3 pr-3">{UNIVERSE_LABEL[itemUniverse(i)]}</td>
+                    <td className="border-b border-[color:var(--border)] py-3 pr-3">{itemCategory(i)}</td>
+                    <td className="border-b border-[color:var(--border)] py-3 pr-3">{itemSubcategory(i) ?? ""}</td>
+                    <td className="border-b border-[color:var(--border)] py-3 pr-3">{i.grade ?? ""}</td>
+                    <td className="border-b border-[color:var(--border)] py-3 pr-3">{i.number ?? ""}</td>
+                    <td className="border-b border-[color:var(--border)] py-3 pr-3">{fmtMoney(Number(i.purchasePrice ?? 0))}</td>
+                    <td className="border-b border-[color:var(--border)] py-3 pr-3">{fmtMoney(Number(i.currentValue ?? 0))}</td>
+                    <td className="border-b border-[color:var(--border)] py-3 pr-3">{fmtMoney(gain(i))}</td>
+                    <td className="border-b border-[color:var(--border)] py-3 pr-3">{i.storageLocation ?? ""}</td>
+                    <td className="border-b border-[color:var(--border)] py-3 pr-3">{i.certNumber ?? ""}</td>
+                    <td className="border-b border-[color:var(--border)] py-3 pr-3">{i.serialNumber ?? ""}</td>
+                    <td className="border-b border-[color:var(--border)] py-3">{trimNotes(i.notes)}</td>
                   </tr>
                 ))}
               </tbody>

@@ -124,7 +124,7 @@ export function ReportContentButton({
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="inline-flex min-h-[34px] items-center justify-center rounded-full bg-black/45 px-3 py-1 text-xs font-semibold text-white/85 ring-1 ring-white/15 backdrop-blur transition hover:bg-black/65"
+        className="inline-flex min-h-[34px] items-center justify-center rounded-full bg-black/45 px-3 py-1 text-xs font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] backdrop-blur transition hover:bg-black/65"
       >
         {label}
       </button>

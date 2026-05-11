@@ -170,7 +170,7 @@ export default function ApplyStyleGalleryClient() {
                 <div
                   className={[
                     "rounded-2xl overflow-hidden ring-1 ring-[color:var(--border)]",
-                    "bg-black/15",
+                    "bg-[color:var(--surface)]",
                   ].join(" ")}
                 >
                   <div className="p-5">

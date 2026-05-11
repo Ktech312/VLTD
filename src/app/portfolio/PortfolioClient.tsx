@@ -413,7 +413,7 @@ export default function PortfolioClient() {
                           "radial-gradient(90% 90% at 30% 20%, rgba(82,214,244,0.18), transparent 60%), linear-gradient(135deg, rgba(255,255,255,0.06), rgba(0,0,0,0.15))",
                       }}
                     >
-                      <span className="text-white/90">{initials || "VL"}</span>
+                      <span className="text-[color:var(--fg)]">{initials || "VL"}</span>
                     </div>
                   </div>
 

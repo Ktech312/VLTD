@@ -10,7 +10,7 @@ export default function WorkspaceMembersPanel() {
   ];
 
   return (
-    <div className="rounded-xl p-4 ring-1 ring-white/10">
+    <div className="rounded-xl p-4 ring-1 ring-[color:var(--border)]">
       <div className="font-semibold mb-3">Workspace Members</div>
       {members.map((m) => (
         <div key={m.name} className="flex justify-between py-1">

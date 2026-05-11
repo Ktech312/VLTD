@@ -119,15 +119,15 @@ export default function MiniSparklines({
         {/* overall */}
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <div className="text-xs tracking-widest text-white/50">OVERALL</div>
-            <div className="mt-1 text-sm text-white/80">
+            <div className="text-xs tracking-widest text-[color:var(--muted)]">OVERALL</div>
+            <div className="mt-1 text-sm text-[color:var(--fg)]">
               12-month {modeLabel} trend • Total {fmtShortMoney(totalNow)}
             </div>
           </div>
-          <div className="text-xs text-white/45">{monthLabels.join(" ")}</div>
+          <div className="text-xs text-[color:var(--muted)]">{monthLabels.join(" ")}</div>
         </div>
 
-        <div className="mt-3 rounded-2xl bg-black/15 ring-1 ring-white/10 p-3">
+        <div className="mt-3 rounded-2xl bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] p-3">
           <Sparkline values={overall} width={980} height={70} />
         </div>
 
@@ -138,10 +138,10 @@ export default function MiniSparklines({
             const sum = series.reduce((s, x) => s + clamp(x), 0);
 
             return (
-              <div key={u} className="rounded-2xl bg-black/12 ring-1 ring-white/10 p-3">
+              <div key={u} className="rounded-2xl bg-black/12 ring-1 ring-[color:var(--border)] p-3">
                 <div className="flex items-center justify-between gap-2">
-                  <div className="text-xs tracking-widest text-white/50">{universeLabels[u]}</div>
-                  <div className="text-xs text-white/60">{fmtShortMoney(sum)}</div>
+                  <div className="text-xs tracking-widest text-[color:var(--muted)]">{universeLabels[u]}</div>
+                  <div className="text-xs text-[color:var(--muted)]">{fmtShortMoney(sum)}</div>
                 </div>
                 <div className="mt-2">
                   <Sparkline values={series} width={420} height={54} />

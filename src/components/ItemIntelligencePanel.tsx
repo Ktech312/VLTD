@@ -83,7 +83,7 @@ function ScoreBar({
         <div className={`text-sm font-black ${numberClass}`}>{value}</div>
       </div>
 
-      <div className="h-3 overflow-hidden rounded-full bg-black/15 ring-1 ring-[color:var(--border)]">
+      <div className="h-3 overflow-hidden rounded-full bg-[color:var(--surface)] ring-1 ring-[color:var(--border)]">
         <div className="h-full rounded-full" style={fillStyle} />
       </div>
     </div>
@@ -98,7 +98,7 @@ function ProvenancePill({ signal }: { signal: string }) {
       className={
         isNotes
           ? "rounded-full border border-[rgba(46,204,113,0.20)] bg-[rgba(46,204,113,0.10)] px-3 py-1 text-xs font-semibold text-[#86efac]"
-          : "rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10"
+          : "rounded-full bg-[color:var(--surface)] px-3 py-1 text-xs ring-1 ring-black/10"
       }
     >
       {signal}

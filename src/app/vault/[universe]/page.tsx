@@ -249,7 +249,7 @@ function getCreatedAtMs(item: VaultItem) {
 function readinessTone(readiness: string) {
   if (readiness === "High") return "bg-emerald-500/15 text-emerald-200 ring-emerald-400/20";
   if (readiness === "Medium") return "bg-amber-500/15 text-amber-200 ring-amber-400/20";
-  return "bg-white/10 text-white/75 ring-white/10";
+  return "bg-[color:var(--surface)] text-[color:var(--fg)] ring-[color:var(--border)]";
 }
 
 function itemMeta(item: VaultItem) {
@@ -422,14 +422,14 @@ function VaultCard({
   return (
     <div
       className={[
-        "group relative flex h-[174px] flex-col overflow-hidden rounded-[14px] border border-white/8 bg-[#141414]/88 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-gold/10 transition hover:-translate-y-0.5 hover:ring-cyan-300/30",
-        marketValue > 0 ? "border-l-2 border-l-emerald-400/55" : "border-l border-l-white/8",
+        "group relative flex h-[174px] flex-col overflow-hidden rounded-[14px] border border-[color:var(--border)] bg-[#141414]/88 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-gold/10 transition hover:-translate-y-0.5 hover:ring-cyan-300/30",
+        marketValue > 0 ? "border-l-2 border-l-emerald-400/55" : "border-l border-l-[color:var(--border)]",
       ].join(" ")}
     >
       <div className="absolute right-1.5 top-1.5 z-20 hidden items-center gap-1 group-hover:flex">
         <Link
           href={detailHref}
-          className="inline-flex h-6 items-center justify-center rounded-full bg-black/70 px-2 text-[10px] text-text-primary ring-1 ring-white/10 backdrop-blur"
+          className="inline-flex h-6 items-center justify-center rounded-full bg-black/70 px-2 text-[10px] text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
         >
           Edit
         </Link>
@@ -499,7 +499,7 @@ function VaultCard({
               {formatMoney(marketValue)}
             </button>
           )}
-          <div className={showGain ? (gain >= 0 ? "mt-1 text-[10px] font-bold leading-none text-emerald-300" : "mt-1 text-[10px] font-bold leading-none text-red-300") : "mt-1 text-[10px] font-bold leading-none text-white/35"}>
+          <div className={showGain ? (gain >= 0 ? "mt-1 text-[10px] font-bold leading-none text-emerald-300" : "mt-1 text-[10px] font-bold leading-none text-red-300") : "mt-1 text-[10px] font-bold leading-none text-[color:var(--muted)]"}>
             {showGain ? `${gain >= 0 ? "+" : ""}${formatMoney(gain)}` : "—"}
           </div>
         </div>
@@ -580,21 +580,21 @@ function VaultEmptyState({
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-[14px] bg-black/10 p-4 ring-1 ring-white/8">
+          <div className="rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
             <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">1</div>
             <div className="mt-1 text-sm font-medium">Create an item</div>
             <div className="mt-1 text-xs text-[color:var(--muted)]">
               Start with Universe, category, title, and value.
             </div>
           </div>
-          <div className="rounded-[14px] bg-black/10 p-4 ring-1 ring-white/8">
+          <div className="rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
             <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">2</div>
             <div className="mt-1 text-sm font-medium">Add pricing</div>
             <div className="mt-1 text-xs text-[color:var(--muted)]">
               Save estimate, source, confidence, and notes.
             </div>
           </div>
-          <div className="rounded-[14px] bg-black/10 p-4 ring-1 ring-white/8">
+          <div className="rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
             <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">3</div>
             <div className="mt-1 text-sm font-medium">Browse and edit</div>
             <div className="mt-1 text-xs text-[color:var(--muted)]">
@@ -628,7 +628,7 @@ function UniverseOverviewCard({
       className="group overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:ring-gold/30"
     >
       <div className="grid min-h-[124px] grid-cols-[92px_minmax(0,1fr)] gap-3 sm:grid-cols-[104px_minmax(0,1fr)]">
-        <div className="overflow-hidden rounded-[14px] bg-black/20 ring-1 ring-white/8">
+        <div className="overflow-hidden rounded-[14px] bg-[color:var(--surface)] ring-1 ring-[color:var(--border)]">
           {coverImage ? (
             <ProgressiveImage
               src={coverImage}
@@ -652,7 +652,7 @@ function UniverseOverviewCard({
                 <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Universe</div>
                 <h2 className="mt-1 text-xl font-semibold leading-tight text-gold-light">{universeDisplayName(category.key)}</h2>
               </div>
-              <div className="rounded-full bg-black/20 px-2.5 py-1 text-[11px] font-semibold ring-1 ring-white/10">
+              <div className="rounded-full bg-[color:var(--surface)] px-2.5 py-1 text-[11px] font-semibold ring-1 ring-[color:var(--border)]">
                 {items.length} {items.length === 1 ? "item" : "items"}
               </div>
             </div>
@@ -668,7 +668,7 @@ function UniverseOverviewCard({
                 {hasItems ? formatMoney(totalValue) : "—"}
               </div>
             </div>
-            <div className={showGain ? (totalGain >= 0 ? "text-right text-sm font-bold text-emerald-300" : "text-right text-sm font-bold text-red-300") : "text-right text-sm font-bold text-white/35"}>
+            <div className={showGain ? (totalGain >= 0 ? "text-right text-sm font-bold text-emerald-300" : "text-right text-sm font-bold text-red-300") : "text-right text-sm font-bold text-[color:var(--muted)]"}>
               {showGain ? `${totalGain >= 0 ? "+" : ""}${formatMoney(totalGain)}` : "—"}
             </div>
           </div>
@@ -927,7 +927,7 @@ export default function VaultUniversePage() {
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1500px] px-3 py-3 sm:px-4 sm:py-4">
-        <section className="relative overflow-hidden rounded-[18px] border border-white/8 bg-[linear-gradient(135deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)]">
+        <section className="relative overflow-hidden rounded-[18px] border border-[color:var(--border)] bg-[linear-gradient(135deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)]">
           <div className="relative flex flex-col gap-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="max-w-2xl">
@@ -975,19 +975,19 @@ export default function VaultUniversePage() {
             </div>
 
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
-              <div className="rounded-[14px] bg-black/16 p-2.5 ring-1 ring-white/8">
+              <div className="rounded-[14px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)]">
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">FILTERED ITEMS</div>
                 <div className="mt-1 text-lg font-semibold">{stats.totalItems}</div>
               </div>
-              <div className="rounded-[14px] bg-black/16 p-2.5 ring-1 ring-white/8">
+              <div className="rounded-[14px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)]">
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">FILTERED COST</div>
                 <div className="mt-1 text-lg font-semibold">{formatMoney(stats.totalCost)}</div>
               </div>
-              <div className="rounded-[14px] bg-black/16 p-2.5 ring-1 ring-white/8">
+              <div className="rounded-[14px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)]">
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">FILTERED VALUE</div>
                 <div className="mt-1 text-lg font-semibold">{formatMoney(stats.totalValue)}</div>
               </div>
-              <div className="rounded-[14px] bg-black/16 p-2.5 ring-1 ring-white/8">
+              <div className="rounded-[14px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)]">
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">FILTERED GAIN</div>
                 <div className="mt-1 text-lg font-semibold">
                   {stats.totalGain >= 0 ? "+" : ""}

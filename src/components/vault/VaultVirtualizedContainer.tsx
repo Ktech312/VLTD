@@ -11,7 +11,7 @@ export default function VaultVirtualizedContainer({ items }: { items:any[] }){
 
   return (
     <div>
-      <div className="mb-3 text-sm text-white/60">
+      <div className="mb-3 text-sm text-[color:var(--muted)]">
         Virtualized mode enabled
       </div>
 

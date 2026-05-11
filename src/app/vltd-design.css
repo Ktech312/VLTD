@@ -18,30 +18,6 @@
   --vltd-red: #E05252;
 }
 
-.dark {
-  --bg: var(--vltd-bg);
-  --surface: var(--vltd-surface);
-  --surface-strong: var(--vltd-surface-strong);
-  --fg: #F0EAD6;
-  --muted: var(--vltd-muted);
-  --muted2: var(--vltd-muted-2);
-  --border: var(--vltd-border);
-  --border-strong: var(--vltd-border-strong);
-  --divider: rgba(245, 181, 72, 0.10);
-  --pill: rgba(42, 36, 24, 0.72);
-  --pill-hover: rgba(58, 48, 28, 0.86);
-  --input: rgba(20, 16, 8, 0.82);
-  --input-hover: rgba(30, 24, 12, 0.90);
-  --accent: var(--vltd-gold);
-  --accent-2: var(--vltd-cyan);
-  --accent-soft: rgba(245, 181, 72, 0.14);
-  --frame-ring: rgba(245, 181, 72, 0.28);
-  --bg-glow:
-    radial-gradient(1100px 560px at 50% -10%, rgba(245, 181, 72, 0.08), transparent 60%),
-    radial-gradient(780px 420px at 82% 8%, rgba(245, 181, 72, 0.04), transparent 58%),
-    linear-gradient(180deg, #0B0B0B 0%, #080808 100%);
-}
-
 body {
   background-color: #0B0B0B;
 }

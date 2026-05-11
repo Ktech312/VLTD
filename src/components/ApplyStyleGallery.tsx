@@ -161,9 +161,9 @@ function MiniShell() {
           </div>
 
           <div className="mt-3 grid grid-cols-3 gap-2">
-            <div className="rounded-xl bg-black/10 dark:bg-white/10 h-10 ring-1 ring-[color:var(--border)]" />
-            <div className="rounded-xl bg-black/10 dark:bg-white/10 h-10 ring-1 ring-[color:var(--border)]" />
-            <div className="rounded-xl bg-black/10 dark:bg-white/10 h-10 ring-1 ring-[color:var(--border)]" />
+            <div className="rounded-xl bg-[color:var(--surface)] dark:bg-white/10 h-10 ring-1 ring-[color:var(--border)]" />
+            <div className="rounded-xl bg-[color:var(--surface)] dark:bg-white/10 h-10 ring-1 ring-[color:var(--border)]" />
+            <div className="rounded-xl bg-[color:var(--surface)] dark:bg-white/10 h-10 ring-1 ring-[color:var(--border)]" />
           </div>
         </div>
       </div>

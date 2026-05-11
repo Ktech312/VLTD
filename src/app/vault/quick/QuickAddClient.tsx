@@ -219,7 +219,7 @@ function RecentItemCard({ item }: { item: SavedItemPreview }) {
         <ProgressiveImage
           src={imageUrl}
           alt={item.title}
-          className="h-16 w-16 rounded-2xl bg-black/10"
+          className="h-16 w-16 rounded-2xl bg-[color:var(--surface)]"
           imageClassName="object-contain"
           draggable={false}
         />
@@ -649,7 +649,7 @@ export default function QuickAddClient() {
           {activePreview ? (
             <div className="mt-3 overflow-hidden rounded-[18px] bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)]">
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-black/10 px-3 py-1 text-xs ring-1 ring-black/10">
+                <span className="rounded-full bg-[color:var(--surface)] px-3 py-1 text-xs ring-1 ring-black/10">
                   {frontImage ? "Locked In" : "Draft"}
                 </span>
               </div>
@@ -662,7 +662,7 @@ export default function QuickAddClient() {
                 <ProgressiveImage
                   src={activePreview}
                   alt="Item preview"
-                  className="h-full w-full bg-black/10"
+                  className="h-full w-full bg-[color:var(--surface)]"
                   imageClassName="object-contain"
                   draggable={false}
                 />
@@ -689,7 +689,7 @@ export default function QuickAddClient() {
                 </PillButton>
               </div>
 
-              <div className="mt-3 rounded-[14px] bg-black/10 px-3 py-2 text-[11px] text-[color:var(--muted2)] ring-1 ring-white/8">
+              <div className="mt-3 rounded-[14px] bg-[color:var(--surface)] px-3 py-2 text-[11px] text-[color:var(--muted2)] ring-1 ring-[color:var(--border)]">
                 AI Assist needs `GEMINI_API_KEY` or `GOOGLE_API_KEY` on the server.
                 If it is not set in Vercel yet, crop and manual save still work.
               </div>

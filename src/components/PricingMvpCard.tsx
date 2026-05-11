@@ -228,21 +228,21 @@ export default function PricingMvpCard({
       ) : (
         <div className="mt-3 grid gap-3">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-[14px] bg-black/10 p-3 ring-1 ring-white/8">
+            <div className="rounded-[14px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
               <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">
                 ESTIMATE
               </div>
               <div className="mt-1 text-lg font-semibold">{summaryValue}</div>
             </div>
 
-            <div className="rounded-[14px] bg-black/10 p-3 ring-1 ring-white/8">
+            <div className="rounded-[14px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
               <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">
                 LAST COMP
               </div>
               <div className="mt-1 text-lg font-semibold">{formatPrice(value.lastCompValue)}</div>
             </div>
 
-            <div className="rounded-[14px] bg-black/10 p-3 ring-1 ring-white/8">
+            <div className="rounded-[14px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
               <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">
                 CONFIDENCE
               </div>
@@ -258,7 +258,7 @@ export default function PricingMvpCard({
               </div>
             </div>
 
-            <div className="rounded-[14px] bg-black/10 p-3 ring-1 ring-white/8">
+            <div className="rounded-[14px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
               <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">
                 UPDATED
               </div>

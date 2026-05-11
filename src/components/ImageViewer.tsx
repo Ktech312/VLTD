@@ -123,7 +123,7 @@ export default function ImageViewer({
           <button
             type="button"
             onClick={() => onEdit(current)}
-            className="rounded-full bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-white/15 backdrop-blur"
+            className="rounded-full bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
           >
             Edit Photo
           </button>
@@ -144,7 +144,7 @@ export default function ImageViewer({
           <button
             type="button"
             onClick={prev}
-            className="fixed left-3 top-1/2 z-[100] -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-3xl leading-none text-text-primary ring-1 ring-white/15 backdrop-blur"
+            className="fixed left-3 top-1/2 z-[100] -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-3xl leading-none text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
             aria-label="Previous image"
           >
             ‹
@@ -152,7 +152,7 @@ export default function ImageViewer({
           <button
             type="button"
             onClick={next}
-            className="fixed right-3 top-1/2 z-[100] -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-3xl leading-none text-text-primary ring-1 ring-white/15 backdrop-blur"
+            className="fixed right-3 top-1/2 z-[100] -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-3xl leading-none text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
             aria-label="Next image"
           >
             ›
@@ -165,14 +165,14 @@ export default function ImageViewer({
           type="button"
           onClick={() => zoomBy(-0.25)}
           disabled={scale <= 1}
-          className="rounded-full bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-white/15 backdrop-blur disabled:opacity-40"
+          className="rounded-full bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur disabled:opacity-40"
         >
           −
         </button>
         <button
           type="button"
           onClick={resetTransform}
-          className="rounded-full bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-white/15 backdrop-blur"
+          className="rounded-full bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
         >
           Fit {Math.round(scale * 100)}%
         </button>
@@ -180,7 +180,7 @@ export default function ImageViewer({
           type="button"
           onClick={() => zoomBy(0.25)}
           disabled={scale >= 5}
-          className="rounded-full bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-white/15 backdrop-blur disabled:opacity-40"
+          className="rounded-full bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur disabled:opacity-40"
         >
           +
         </button>

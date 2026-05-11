@@ -758,14 +758,14 @@ export default function PortfolioPage() {
 
                           <div className="mt-1 text-center text-xs leading-tight text-[color:var(--theme-text-secondary)]">
                             {r.label}
-                            <div className="mt-1 text-[11px] text-white/45">{r.count} items</div>
+                            <div className="mt-1 text-[11px] text-[color:var(--muted)]">{r.count} items</div>
                           </div>
                         </Link>
                       );
                     })}
                   </div>
 
-                  <div className="absolute bottom-2 left-4 text-xs text-white/45">
+                  <div className="absolute bottom-2 left-4 text-xs text-[color:var(--muted)]">
                     {rankMode === "gain" ? "Gain" : "Value"} scale
                   </div>
                 </div>

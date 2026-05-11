@@ -26,7 +26,7 @@ export default function SellItemModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
-      <div className="bg-black p-6 rounded-xl ring-1 ring-white/10 w-[400px]">
+      <div className="bg-black p-6 rounded-xl ring-1 ring-[color:var(--border)] w-[400px]">
         <h2 className="text-lg font-semibold mb-4">Sell Item</h2>
 
         <div className="mb-2">Purchase: ${purchase}</div>
@@ -35,7 +35,7 @@ export default function SellItemModal({
           placeholder="Sale price"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
-          className="w-full p-2 rounded bg-black/40 ring-1 ring-white/10 mb-3"
+          className="w-full p-2 rounded bg-black/40 ring-1 ring-[color:var(--border)] mb-3"
         />
 
         <div className="mb-4">Profit: ${profit}</div>

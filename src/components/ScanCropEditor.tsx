@@ -444,7 +444,7 @@ export default function ScanCropEditor({
         type="button"
         onClick={requestCancel}
         aria-label="Close crop editor"
-        className="absolute right-2 top-2 z-40 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/65 text-2xl leading-none text-text-primary ring-1 ring-white/15 backdrop-blur transition hover:bg-black/80"
+        className="absolute right-2 top-2 z-40 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/65 text-2xl leading-none text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur transition hover:bg-black/80"
       >
         ×
       </button>
@@ -464,7 +464,7 @@ export default function ScanCropEditor({
         </div>
       ) : null}
 
-      <div className={compact ? "mt-2 overflow-hidden rounded-[16px] bg-black/30 p-1.5 ring-1 ring-[color:var(--border)]" : "mt-3 overflow-hidden rounded-[16px] bg-black/30 p-2 ring-1 ring-[color:var(--border)]"}>
+      <div className={compact ? "mt-2 overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-1.5 ring-1 ring-[color:var(--border)]" : "mt-3 overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]"}>
         <div
           ref={viewportRef}
           className={viewportClassName}
@@ -527,9 +527,9 @@ export default function ScanCropEditor({
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-1.5 text-[10px] font-semibold text-[color:var(--muted)]">
-          <span className="rounded-full bg-white/5 px-2 py-1 ring-1 ring-white/10">Pinch/scroll to zoom</span>
-          <span className="rounded-full bg-white/5 px-2 py-1 ring-1 ring-white/10">Drag sides to crop</span>
-          <span className="rounded-full bg-white/5 px-2 py-1 ring-1 ring-white/10">Drag photo area to move</span>
+          <span className="rounded-full bg-white/5 px-2 py-1 ring-1 ring-[color:var(--border)]">Pinch/scroll to zoom</span>
+          <span className="rounded-full bg-white/5 px-2 py-1 ring-1 ring-[color:var(--border)]">Drag sides to crop</span>
+          <span className="rounded-full bg-white/5 px-2 py-1 ring-1 ring-[color:var(--border)]">Drag photo area to move</span>
         </div>
       </div>
 

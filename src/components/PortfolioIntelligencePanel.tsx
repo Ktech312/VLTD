@@ -197,7 +197,7 @@ export default function PortfolioIntelligencePanel({ metrics }: Props) {
                       </div>
                     </div>
 
-                    <div className="h-3 overflow-hidden rounded-full bg-black/15 ring-1 ring-[color:var(--border)]">
+                    <div className="h-3 overflow-hidden rounded-full bg-[color:var(--surface)] ring-1 ring-[color:var(--border)]">
                       <div
                         className="h-full rounded-full bg-[color:var(--pill-active-bg)]"
                         style={{ width: `${width}%` }}
@@ -239,7 +239,7 @@ export default function PortfolioIntelligencePanel({ metrics }: Props) {
                       </div>
                     </div>
 
-                    <div className="h-3 overflow-hidden rounded-full bg-black/15 ring-1 ring-[color:var(--border)]">
+                    <div className="h-3 overflow-hidden rounded-full bg-[color:var(--surface)] ring-1 ring-[color:var(--border)]">
                       <div
                         className="h-full rounded-full bg-[color:var(--pill-active-bg)]"
                         style={{ width: `${width}%` }}

@@ -258,7 +258,7 @@ function Donut({
   return (
     <div className="flex flex-col gap-6 md:flex-row md:items-center">
       <div
-        className="relative h-52 w-52 shrink-0 rounded-full ring-1 ring-white/10"
+        className="relative h-52 w-52 shrink-0 rounded-full ring-1 ring-[color:var(--border)]"
         style={{
           background: `conic-gradient(${stops})`,
           boxShadow: "0 24px 70px rgba(0,0,0,0.50)",
@@ -809,7 +809,7 @@ export function AnalyticsDashboard(props: {
                         <div className="text-sm font-semibold truncate">{r.label}</div>
                         <div className="text-sm text-[color:var(--fg)]">{metricLabel}</div>
                       </div>
-                      <div className="mt-2 text-xs text-white/55">
+                      <div className="mt-2 text-xs text-[color:var(--muted)]">
                         {r.count} items • Allocation {allocLabel}
                       </div>
                       <div className="mt-3">

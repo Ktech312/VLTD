@@ -22,7 +22,7 @@ export default function ImageThumbnailRail({
           onClick={() => onSelect(i)}
           className={[
             "overflow-hidden rounded border",
-            i === active ? "border-white/60" : "border-white/10",
+            i === active ? "border-white/60" : "border-[color:var(--border)]",
           ].join(" ")}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}

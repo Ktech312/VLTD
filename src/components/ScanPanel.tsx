@@ -19,7 +19,7 @@ function actionButtonClass(primary = false) {
 function chipClass(active = false) {
   return active
     ? "rounded-full bg-[color:var(--pill-active-bg)] px-2.5 py-0.5 text-[10px] font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]"
-    : "rounded-full bg-black/10 px-2.5 py-0.5 text-[10px] text-[color:var(--muted)] ring-1 ring-white/8";
+    : "rounded-full bg-[color:var(--surface)] px-2.5 py-0.5 text-[10px] text-[color:var(--muted)] ring-1 ring-[color:var(--border)]";
 }
 
 function confidenceTone(confidence: "low" | "medium" | "high") {
@@ -117,7 +117,7 @@ export default function ScanPanel({
         <div className="min-h-[104px] rounded-[16px] bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)] sm:min-h-[126px] lg:min-h-0">
           <div className="mb-2 flex items-center justify-between gap-2">
             <div className="text-[10px] tracking-[0.16em] text-[color:var(--muted2)]">PICTURES TAKEN</div>
-            <div className="rounded-full bg-black/15 px-2 py-0.5 text-[10px] text-[color:var(--muted)]">
+            <div className="rounded-full bg-[color:var(--surface)] px-2 py-0.5 text-[10px] text-[color:var(--muted)]">
               {capturedPhotos.length}
             </div>
           </div>
@@ -130,10 +130,10 @@ export default function ScanPanel({
                   type="button"
                   onClick={() => onSelectCapturedPhoto?.(photo.id)}
                   className={[
-                    "overflow-hidden rounded-xl bg-black/20 p-1 ring-1 transition",
+                    "overflow-hidden rounded-xl bg-[color:var(--surface)] p-1 ring-1 transition",
                     activeCapturedPhotoId === photo.id
                       ? "ring-[color:var(--pill-active-bg)]"
-                      : "ring-white/10",
+                      : "ring-[color:var(--border)]",
                   ].join(" ")}
                   title={`Use ${photo.role} photo for identify`}
                 >
@@ -163,7 +163,7 @@ export default function ScanPanel({
         <button
           type="button"
           onClick={previewUrl ? onCropImage : onUseCamera}
-          className="flex min-h-[104px] items-center justify-center overflow-hidden rounded-[20px] bg-black/20 p-2 text-center ring-1 ring-[color:var(--border)] transition hover:bg-black/25 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)] sm:min-h-[126px] lg:min-h-0"
+          className="flex min-h-[104px] items-center justify-center overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-2 text-center ring-1 ring-[color:var(--border)] transition hover:bg-black/25 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)] sm:min-h-[126px] lg:min-h-0"
         >
           {previewUrl ? (
             <ProgressiveImage
@@ -180,7 +180,7 @@ export default function ScanPanel({
           )}
         </button>
 
-        <div className="grid content-start gap-1.5 rounded-[16px] bg-black/10 p-2 ring-1 ring-white/8">
+        <div className="grid content-start gap-1.5 rounded-[16px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]">
           <div className="grid grid-cols-2 gap-2">
             <button type="button" onClick={onUseCamera} className={actionButtonClass(true)}>
               Camera
@@ -231,7 +231,7 @@ export default function ScanPanel({
         </div>
       </div>
 
-      <div className="mt-2 rounded-[12px] bg-black/10 px-3 py-1.5 text-[11px] leading-5 text-[color:var(--muted2)] ring-1 ring-white/8">
+      <div className="mt-2 rounded-[12px] bg-[color:var(--surface)] px-3 py-1.5 text-[11px] leading-5 text-[color:var(--muted2)] ring-1 ring-[color:var(--border)]">
         Auto Identify reads the selected picture for barcode, text, and AI clues. Barcode/OCR can work without AI; Gemini needs
         {" "}
         `GEMINI_API_KEY`
@@ -240,7 +240,7 @@ export default function ScanPanel({
       </div>
 
       {showAdvanced ? (
-        <div className="mt-2 grid gap-3 rounded-[16px] bg-black/10 p-3 ring-1 ring-white/8 md:grid-cols-[220px_minmax(0,1fr)]">
+        <div className="mt-2 grid gap-3 rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] md:grid-cols-[220px_minmax(0,1fr)]">
           <div className="grid gap-1.5">
             <label className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">IDENTIFY MODE</label>
             <div className="text-xs text-[color:var(--muted)]">
@@ -308,7 +308,7 @@ export default function ScanPanel({
       ) : null}
 
       {(session.status !== "idle" || review || session.errorMessage) && (
-        <div className="mt-2 rounded-[16px] bg-black/10 p-3 ring-1 ring-white/8">
+        <div className="mt-2 rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">STATUS</span>
             <span className="text-sm text-[color:var(--fg)]">{prettyStatus(session.status)}</span>

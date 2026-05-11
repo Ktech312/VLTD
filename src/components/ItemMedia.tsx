@@ -112,7 +112,7 @@ function roleTone(role: ImageRole) {
   if (role === "proof") {
     return "bg-amber-500/20 text-amber-100 ring-amber-400/30";
   }
-  return "bg-white/10 text-white/80 ring-white/10";
+  return "bg-white/10 text-[color:var(--fg)] ring-[color:var(--border)]";
 }
 
 function roleLabel(role: ImageRole) {
@@ -372,7 +372,7 @@ export default function ItemMedia({
                 <img
                   src={entry.url}
                   alt=""
-                  className="h-full w-full object-contain bg-black/15 p-1.5"
+                  className="h-full w-full object-contain bg-[color:var(--surface)] p-1.5"
                   draggable={false}
                 />
                 <div className="pointer-events-none absolute left-1.5 top-1.5">
@@ -451,7 +451,7 @@ export default function ItemMedia({
                   src={activeImage}
                   alt=""
                   draggable={false}
-                  className="h-full w-full object-contain bg-black/10 p-3 transition duration-300 group-hover:scale-[1.01]"
+                  className="h-full w-full object-contain bg-[color:var(--surface)] p-3 transition duration-300 group-hover:scale-[1.01]"
                 />
               </button>
             ) : (
@@ -485,7 +485,7 @@ export default function ItemMedia({
                 <button
                   type="button"
                   onClick={() => openEditorForEntry(activeVisibleEntry)}
-                  className="rounded-full bg-black/45 px-3 py-2 text-xs text-text-primary ring-1 ring-white/15 backdrop-blur"
+                  className="rounded-full bg-black/45 px-3 py-2 text-xs text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
                 >
                   Edit Photo
                 </button>
@@ -493,14 +493,14 @@ export default function ItemMedia({
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                className="rounded-full bg-black/45 px-3 py-2 text-xs text-text-primary ring-1 ring-white/15 backdrop-blur"
+                className="rounded-full bg-black/45 px-3 py-2 text-xs text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
               >
                 Add image
               </button>
               <button
                 type="button"
                 onClick={() => cameraRef.current?.click()}
-                className="rounded-full bg-black/45 px-3 py-2 text-xs text-text-primary ring-1 ring-white/15 backdrop-blur"
+                className="rounded-full bg-black/45 px-3 py-2 text-xs text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
               >
                 Camera
               </button>
@@ -508,7 +508,7 @@ export default function ItemMedia({
                 <button
                   type="button"
                   onClick={() => onRemoveBackground(activeVisibleEntry.originalIndex)}
-                  className="rounded-full bg-black/45 px-3 py-2 text-xs text-text-primary ring-1 ring-white/15 backdrop-blur"
+                  className="rounded-full bg-black/45 px-3 py-2 text-xs text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
                 >
                   Remove BG
                 </button>
@@ -517,7 +517,7 @@ export default function ItemMedia({
                 <button
                   type="button"
                   onClick={() => onRevertBackground(activeVisibleEntry.originalIndex)}
-                  className="rounded-full bg-black/45 px-3 py-2 text-xs text-text-primary ring-1 ring-white/15 backdrop-blur"
+                  className="rounded-full bg-black/45 px-3 py-2 text-xs text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
                 >
                   Revert
                 </button>
@@ -526,7 +526,7 @@ export default function ItemMedia({
           </div>
 
           {proofEntries.length > 0 ? (
-            <div className="mt-3 rounded-[18px] bg-black/10 p-3 ring-1 ring-white/8">
+            <div className="mt-3 rounded-[18px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
                 PROOF IMAGES
               </div>
@@ -551,7 +551,7 @@ export default function ItemMedia({
                       <img
                         src={entry.url}
                         alt=""
-                        className="h-full w-full object-contain bg-black/15 p-2"
+                        className="h-full w-full object-contain bg-[color:var(--surface)] p-2"
                         draggable={false}
                       />
                     </button>
@@ -697,7 +697,7 @@ export default function ItemMedia({
                   <img
                     src={draftPreviewUrl}
                     alt="Draft preview"
-                    className="h-full w-full object-contain bg-black/10 p-3"
+                    className="h-full w-full object-contain bg-[color:var(--surface)] p-3"
                     style={{ transform: `rotate(${rotation}deg)` }}
                     draggable={false}
                   />

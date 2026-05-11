@@ -880,7 +880,7 @@ export default function AddPage() {
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1500px] px-3 py-3 sm:px-4 sm:py-4">
-        <div className="sticky top-0 z-20 mb-3 rounded-[16px] border border-white/8 bg-[color:var(--surface)]/92 p-3 backdrop-blur">
+        <div className="sticky top-0 z-20 mb-3 rounded-[16px] border border-[color:var(--border)] bg-[color:var(--surface)]/92 p-3 backdrop-blur">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">VAULT ADD</div>
@@ -1126,7 +1126,7 @@ export default function AddPage() {
                 This is the real item photo that saves with the invited item.
               </div>
               <div className="mt-2 overflow-hidden rounded-[14px] bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)]">
-                <div className="flex h-[180px] items-center justify-center overflow-hidden rounded-[10px] bg-black/10">
+                <div className="flex h-[180px] items-center justify-center overflow-hidden rounded-[10px] bg-[color:var(--surface)]">
                   {mediaPreviewUrl ? (
                     <img src={mediaPreviewUrl} alt="Item media preview" className="h-full w-full object-contain" />
                   ) : (

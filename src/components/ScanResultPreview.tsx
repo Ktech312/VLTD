@@ -19,7 +19,7 @@ function ReviewRow({
   if (!value) return null;
 
   return (
-    <div className="grid gap-1 rounded-xl bg-black/10 p-3 ring-1 ring-white/8">
+    <div className="grid gap-1 rounded-xl bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
       <div className="text-[10px] tracking-[0.12em] text-[color:var(--muted2)]">{label}</div>
       <div className="break-words text-sm text-[color:var(--fg)]">{value}</div>
     </div>
@@ -46,7 +46,7 @@ export default function ScanResultPreview({
   const hasAnyFields = Object.values(review.fields).some((value) => String(value ?? "").trim().length > 0);
 
   return (
-    <div className="mb-3 rounded-[18px] bg-black/10 p-3 ring-1 ring-white/8 sm:p-4">
+    <div className="mb-3 rounded-[18px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] sm:p-4">
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -114,7 +114,7 @@ export default function ScanResultPreview({
         <ReviewRow label="Subcategory" value={review.fields.subcategoryLabel} />
       </div>
 
-      <details className="mt-3 rounded-[16px] bg-black/10 p-3 ring-1 ring-white/8">
+      <details className="mt-3 rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
         <summary className="cursor-pointer text-[11px] tracking-[0.12em] text-[color:var(--muted2)]">
           Show scan text
         </summary>

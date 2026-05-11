@@ -21,7 +21,7 @@ export default function ItemMedia({ images }: ItemMediaProps) {
         <ImageThumbnailRail images={safeImages} active={index} onSelect={setIndex} />
 
         <div
-          className="aspect-[4/3] overflow-hidden rounded bg-black/20"
+          className="aspect-[4/3] overflow-hidden rounded bg-[color:var(--surface)]"
           onClick={() => {
             if (current) setOpen(true);
           }}

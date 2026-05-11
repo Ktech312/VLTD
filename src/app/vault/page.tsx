@@ -499,7 +499,7 @@ function VaultCard({
               {formatMoney(marketValue)}
             </button>
           )}
-          <div className={showGain ? (gain >= 0 ? "mt-1 text-[10px] font-bold leading-none text-emerald-300" : "mt-1 text-[10px] font-bold leading-none text-red-300") : "mt-1 text-[10px] font-bold leading-none text-white/35"}>
+          <div className={showGain ? (gain >= 0 ? "mt-1 text-[10px] font-bold leading-none text-emerald-300" : "mt-1 text-[10px] font-bold leading-none text-red-300") : "mt-1 text-[10px] font-bold leading-none text-[color:var(--muted)]"}>
             {showGain ? `${gain >= 0 ? "+" : ""}${formatMoney(gain)}` : "—"}
           </div>
         </div>

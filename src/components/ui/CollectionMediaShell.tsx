@@ -57,9 +57,9 @@ export default function CollectionMediaShell({
       type={onClick ? "button" : undefined}
       onClick={onClick}
       className={[
-        "group relative block w-full overflow-hidden rounded-[18px] p-2 ring-1 ring-white/8 shadow-[0_10px_28px_rgba(0,0,0,0.28)]",
+        "group relative block w-full overflow-hidden rounded-[18px] p-2 ring-1 ring-[color:var(--border)] shadow-[0_10px_28px_rgba(0,0,0,0.28)]",
         tone.shell,
-        onClick ? "text-left transition hover:ring-white/12" : "",
+        onClick ? "text-left transition hover:ring-[color:var(--border)]" : "",
       ].join(" ")}
     >
       <div className="pointer-events-none absolute inset-x-[12%] top-0 h-16 rounded-full bg-white/8 blur-3xl" />
@@ -78,9 +78,9 @@ export default function CollectionMediaShell({
             />
           </div>
         ) : (
-          <div className="flex h-full items-center justify-center text-center text-xs text-white/45">
+          <div className="flex h-full items-center justify-center text-center text-xs text-[color:var(--muted)]">
             <div>
-              <div className="text-sm font-medium text-white/60">No image</div>
+              <div className="text-sm font-medium text-[color:var(--muted)]">No image</div>
               <div className="mt-1">Add a photo</div>
             </div>
           </div>

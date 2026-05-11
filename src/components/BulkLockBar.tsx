@@ -116,7 +116,7 @@ export default function BulkLockBar({
         {GROUPS.map((group) => (
           <div
             key={group.title}
-            className="rounded-[14px] bg-black/10 p-3 ring-1 ring-white/8"
+            className="rounded-[14px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]"
           >
             <div className="text-[10px] tracking-[0.18em] text-[color:var(--muted2)]">
               {group.title}

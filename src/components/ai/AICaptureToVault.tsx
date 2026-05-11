@@ -34,7 +34,7 @@ export default function AICaptureToVault() {
       <input type="file" accept="image/*" onChange={handleFile} />
 
       {result && (
-        <div className="p-4 rounded-xl bg-black/20 ring-1 ring-white/10">
+        <div className="p-4 rounded-xl bg-[color:var(--surface)] ring-1 ring-[color:var(--border)]">
           <div>Detected: {result.title}</div>
           <div>Category: {result.category}</div>
           <div>Value: ${result.estimatedValue}</div>

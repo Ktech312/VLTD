@@ -334,8 +334,8 @@ export default function CameraCapturePanel({
           </div>
         ) : (
           <>
-            <div className="mt-3 overflow-hidden rounded-[18px] bg-black/30 p-2 ring-1 ring-[color:var(--border)]">
-              <div className="flex h-[58dvh] min-h-[260px] max-h-[560px] items-center justify-center overflow-hidden rounded-[14px] bg-black/30">
+            <div className="mt-3 overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]">
+              <div className="flex h-[58dvh] min-h-[260px] max-h-[560px] items-center justify-center overflow-hidden rounded-[14px] bg-[color:var(--surface)]">
                 {cameraError ? (
                   <div className="max-w-lg px-5 text-center text-sm text-red-200">
                     <div>{cameraError}</div>
