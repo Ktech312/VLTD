@@ -98,7 +98,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <ThemeScript />
       </head>
-      <body>
+      <body className={`${inter.className} bg-vault-base min-h-screen`}>
         <ThemeBoot />
 
         <Providers>

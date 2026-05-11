@@ -798,7 +798,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 <button
                   type="button"
                   onClick={() => void handleReturnToVault()}
-                  className="inline-flex h-10 items-center rounded-full bg-cyan-500/15 px-4 text-sm font-medium text-cyan-100 ring-1 ring-cyan-400/25"
+                  className="inline-flex h-10 items-center rounded-full bg-gold/15 px-4 text-sm font-medium text-cyan-100 ring-1 ring-gold/25"
                 >
                   Return to Vault
                 </button>
@@ -947,7 +947,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                     type="button"
                     onClick={() => void handleShareImage()}
                     disabled={isGeneratingShare}
-                    className="inline-flex h-10 w-full items-center justify-center rounded-full bg-cyan-500/15 px-4 text-sm font-medium text-cyan-100 ring-1 ring-cyan-400/25 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex h-10 w-full items-center justify-center rounded-full bg-gold/15 px-4 text-sm font-medium text-cyan-100 ring-1 ring-gold/25 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isGeneratingShare ? "Generating..." : "Share / Download PNG"}
                   </button>
@@ -1032,7 +1032,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               <button
                 type="button"
                 onClick={() => void handleSaveBasicRecord()}
-                className="inline-flex h-10 items-center rounded-full bg-cyan-500/15 px-4 text-sm font-medium text-cyan-100 ring-1 ring-cyan-400/25"
+                className="inline-flex h-10 items-center rounded-full bg-gold/15 px-4 text-sm font-medium text-cyan-100 ring-1 ring-gold/25"
               >
                 Save basic record
               </button>

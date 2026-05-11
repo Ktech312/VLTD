@@ -235,7 +235,7 @@ function PublicGalleryTile({ gallery }: { gallery: PublicGalleryCard }) {
   return (
     <Link
       href={gallery.href}
-      className="group overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[rgba(15,29,49,0.82)] transition hover:-translate-y-1 hover:border-[rgba(82,214,244,0.34)] hover:bg-[rgba(20,39,66,0.94)]"
+      className="group overflow-hidden rounded-2xl border border-[color:var(--border)] bg-vault-card transition hover:-translate-y-1 hover:border-[rgba(82,214,244,0.34)] hover:bg-vault-card"
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-[radial-gradient(circle_at_35%_20%,rgba(255,255,255,0.12),rgba(82,214,244,0.06)_34%,rgba(0,0,0,0.22)_100%)] p-3">
         <img
@@ -244,7 +244,7 @@ function PublicGalleryTile({ gallery }: { gallery: PublicGalleryCard }) {
           className="h-full w-full object-contain opacity-80 transition duration-500 group-hover:scale-[1.025] group-hover:opacity-95"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#07101f] via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-transparent to-transparent" />
       </div>
       <div className="p-4">
         <div className="text-sm font-black text-[color:var(--fg)]">{gallery.title}</div>
@@ -307,7 +307,7 @@ export default function PublicHomeClient() {
         <div className="mx-auto max-w-5xl px-4 pb-16 pt-12 text-center sm:px-6 sm:pb-20 sm:pt-20 lg:px-8">
           <VltdVaultLogoAnimation className="mx-auto mb-8" />
 
-          <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-[rgba(82,214,244,0.28)] bg-[rgba(10,22,39,0.82)] px-4 py-2 text-xs font-medium text-[color:var(--accent)]">
+          <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-[rgba(82,214,244,0.28)] bg-vault-card px-4 py-2 text-xs font-medium text-[color:var(--accent)]">
             <span className="vltd-brand-dot h-2 w-2" /> VLTD{" "}
             <span className="text-[color:var(--muted2)]">—</span> pronounced
             “Vaulted”
@@ -330,7 +330,7 @@ export default function PublicHomeClient() {
             </Link>
             <Link
               href="#public-galleries"
-              className="inline-flex h-14 items-center justify-center rounded-full border border-[color:var(--border)] bg-[rgba(10,22,39,0.72)] px-8 text-base font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
+              className="inline-flex h-14 items-center justify-center rounded-full border border-[color:var(--border)] bg-vault-card px-8 text-base font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
             >
               Browse public galleries →
             </Link>
@@ -341,7 +341,7 @@ export default function PublicHomeClient() {
         </div>
       </section>
 
-      <section className="border-b border-[color:var(--border)] bg-[rgba(7,16,31,0.76)]">
+      <section className="border-b border-[color:var(--border)] bg-vault-card">
         <div className="mx-auto grid max-w-7xl divide-y divide-[color:var(--border)] px-4 sm:px-6 md:grid-cols-4 md:divide-x md:divide-y-0 lg:px-8">
           {FEATURE_CARDS.map((feature) => (
             <div key={feature.title} className="px-2 py-7 md:px-6">
@@ -376,7 +376,7 @@ export default function PublicHomeClient() {
           {VAULT_UNIVERSES.map((universe) => (
             <div
               key={universe.title}
-              className="rounded-2xl border border-[color:var(--border)] bg-[rgba(15,29,49,0.82)] p-5"
+              className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-5"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -397,7 +397,7 @@ export default function PublicHomeClient() {
           ))}
           <Link
             href="/signup"
-            className="flex min-h-[150px] flex-col items-center justify-center rounded-2xl border border-dashed border-[rgba(82,214,244,0.34)] bg-[rgba(10,22,39,0.54)] p-5 text-center text-[color:var(--accent)] transition hover:bg-[rgba(82,214,244,0.08)]"
+            className="flex min-h-[150px] flex-col items-center justify-center rounded-2xl border border-dashed border-[rgba(82,214,244,0.34)] bg-vault-card p-5 text-center text-[color:var(--accent)] transition hover:bg-[rgba(82,214,244,0.08)]"
           >
             <span className="text-2xl">+</span>
             <span className="mt-2 text-sm font-black">Start your vault</span>
@@ -406,7 +406,7 @@ export default function PublicHomeClient() {
         </div>
       </section>
 
-      <section id="public-galleries" className="border-y border-[color:var(--border)] bg-[rgba(5,11,21,0.42)]">
+      <section id="public-galleries" className="border-y border-[color:var(--border)] bg-vault-card">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted2)]">
@@ -441,7 +441,7 @@ export default function PublicHomeClient() {
           solves all of them — together, in one vault.
         </p>
 
-        <div className="mx-auto mt-8 max-w-3xl overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[rgba(10,22,39,0.72)] text-left">
+        <div className="mx-auto mt-8 max-w-3xl overflow-hidden rounded-2xl border border-[color:var(--border)] bg-vault-card text-left">
           <div className="grid grid-cols-[1fr_100px_100px] border-b border-[color:var(--border)] bg-[rgba(82,214,244,0.08)] text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">
             <div className="px-5 py-3">Feature</div>
             <div className="px-5 py-3 text-center">Others</div>

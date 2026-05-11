@@ -34,7 +34,7 @@ export default function BiggestMoversPanel({ items }: { items: VaultItem[] }) {
   const rows = movers.length ? movers : ranked.slice(0, 3);
 
   return (
-    <section className="rounded-[24px] border border-[color:var(--border)] bg-[rgba(15,29,49,0.78)] p-3.5">
+    <section className="rounded-[24px] border border-[color:var(--border)] bg-vault-card p-3.5">
       <div className="flex items-center justify-between gap-3">
         <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--muted2)]">
           Top Performers

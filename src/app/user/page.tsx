@@ -491,7 +491,7 @@ export default function UserSettingsPage() {
                     className="relative overflow-hidden rounded-[24px] bg-black"
                     style={{
                       aspectRatio: "16 / 10",
-                      backgroundColor: "#05070b",
+                      backgroundColor: "#141414",
                       backgroundImage: museumBackgroundImage ? `url(${museumBackgroundImage})` : undefined,
                       backgroundPosition: "center center",
                       backgroundRepeat: "no-repeat",

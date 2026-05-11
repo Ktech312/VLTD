@@ -107,7 +107,7 @@ async function renderRotatedImageBlob(
 
 function roleTone(role: ImageRole) {
   if (role === "primary") {
-    return "bg-cyan-500/20 text-cyan-100 ring-cyan-400/30";
+    return "bg-gold/20 text-cyan-100 ring-gold/30";
   }
   if (role === "proof") {
     return "bg-amber-500/20 text-amber-100 ring-amber-400/30";
@@ -313,7 +313,7 @@ export default function ItemMedia({
           className={[
             "rounded-full px-2 py-1 text-[10px] ring-1",
             entry.role === "primary"
-              ? "bg-cyan-500/20 text-cyan-100 ring-cyan-400/30"
+              ? "bg-gold/20 text-cyan-100 ring-gold/30"
               : "bg-[color:var(--pill)] ring-[color:var(--border)]",
           ].join(" ")}
           title="Set as primary"

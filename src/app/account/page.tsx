@@ -69,7 +69,7 @@ export default function AccountPage() {
   if (loading) {
     return (
       <main className="vltd-page-depth min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl rounded-[28px] border border-[color:var(--border)] bg-[rgba(15,29,49,0.82)] p-6 text-[color:var(--muted)] shadow-[0_22px_72px_rgba(0,0,0,0.24)]">
+        <div className="mx-auto max-w-4xl rounded-[28px] border border-[color:var(--border)] bg-vault-card p-6 text-[color:var(--muted)] shadow-[0_22px_72px_rgba(0,0,0,0.24)]">
           Loading account...
         </div>
       </main>
@@ -112,7 +112,7 @@ export default function AccountPage() {
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="Display name"
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-[rgba(9,20,36,0.82)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(82,214,244,0.12)]"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(82,214,244,0.12)]"
                   />
                 </label>
 
@@ -122,7 +122,7 @@ export default function AccountPage() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]+/g, "_"))}
                     placeholder="Username"
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-[rgba(9,20,36,0.82)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(82,214,244,0.12)]"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(82,214,244,0.12)]"
                   />
                 </label>
 
@@ -134,7 +134,7 @@ export default function AccountPage() {
                       "rounded-2xl border p-4 text-left transition",
                       profileType === "personal"
                         ? "border-[rgba(82,214,244,0.42)] bg-[rgba(82,214,244,0.12)] text-text-primary"
-                        : "border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] text-[color:var(--muted)] hover:text-text-primary",
+                        : "border-[color:var(--border)] bg-vault-card text-[color:var(--muted)] hover:text-text-primary",
                     ].join(" ")}
                   >
                     <div className="text-sm font-black">Collector</div>
@@ -147,7 +147,7 @@ export default function AccountPage() {
                       "rounded-2xl border p-4 text-left transition",
                       profileType === "business"
                         ? "border-[rgba(82,214,244,0.42)] bg-[rgba(82,214,244,0.12)] text-text-primary"
-                        : "border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] text-[color:var(--muted)] hover:text-text-primary",
+                        : "border-[color:var(--border)] bg-vault-card text-[color:var(--muted)] hover:text-text-primary",
                     ].join(" ")}
                   >
                     <div className="text-sm font-black">Business</div>
@@ -161,7 +161,7 @@ export default function AccountPage() {
                     value={primaryFocus}
                     onChange={(e) => setPrimaryFocus(e.target.value)}
                     placeholder="Primary focus"
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-[rgba(9,20,36,0.82)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(82,214,244,0.12)]"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(82,214,244,0.12)]"
                   />
                 </label>
               </div>
@@ -171,31 +171,31 @@ export default function AccountPage() {
                   type="button"
                   disabled={saving}
                   onClick={() => void handleSave()}
-                  className="inline-flex h-12 items-center rounded-full bg-[#52d6f4] px-6 text-sm font-black text-[#06101d] shadow-[0_16px_42px_rgba(82,214,244,0.20)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex h-12 items-center rounded-full bg-[#52d6f4] px-6 text-sm font-black text-[#141414] shadow-[0_16px_42px_rgba(82,214,244,0.20)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {saving ? "Saving..." : "Save changes"}
                 </button>
               </div>
             </div>
 
-            <aside className="rounded-[28px] border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] p-5">
+            <aside className="rounded-[28px] border border-[color:var(--border)] bg-vault-card p-5">
               <div className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">
                 Profile Summary
               </div>
               <div className="mt-5 grid gap-3">
-                <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(9,20,36,0.70)] p-4">
+                <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Name</div>
                   <div className="mt-1 font-black text-text-primary">{displayName || "Not set"}</div>
                 </div>
-                <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(9,20,36,0.70)] p-4">
+                <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Handle</div>
                   <div className="mt-1 font-black text-text-primary">@{username || "username"}</div>
                 </div>
-                <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(9,20,36,0.70)] p-4">
+                <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Type</div>
                   <div className="mt-1 font-black text-text-primary">{profileType === "business" ? "Business" : "Collector"}</div>
                 </div>
-                <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(9,20,36,0.70)] p-4">
+                <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Focus</div>
                   <div className="mt-1 font-black text-text-primary">{primaryFocus || "Not set"}</div>
                 </div>

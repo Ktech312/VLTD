@@ -174,27 +174,27 @@ export default function InsuranceExportPage() {
       `}</style>
 
       <div className="print-wrap mx-auto max-w-6xl">
-        <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[rgba(82,214,244,0.24)] bg-[rgba(15,29,49,0.72)] p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
+        <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[rgba(82,214,244,0.24)] bg-vault-card p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
           <div className="flex flex-wrap items-center gap-2">
-            <Link href="/vault" className="rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(82,214,244,0.42)]">
+            <Link href="/vault" className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(82,214,244,0.42)]">
               ← Back to Vault
             </Link>
-            <Link href="/portfolio" className="rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(82,214,244,0.42)]">
+            <Link href="/portfolio" className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(82,214,244,0.42)]">
               Portfolio
             </Link>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button onClick={includeAll} className="rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] px-4 py-2 text-sm font-semibold text-[color:var(--accent)]">
+            <button onClick={includeAll} className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)]">
               Include all
             </button>
-            <button onClick={excludeZeroValue} className="rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] px-4 py-2 text-sm font-semibold text-[color:var(--accent)]">
+            <button onClick={excludeZeroValue} className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)]">
               Exclude $0 value
             </button>
             <Link href="/insurance/packet" className="rounded-full border border-[rgba(82,214,244,0.42)] bg-[rgba(82,214,244,0.10)] px-4 py-2 text-sm font-black text-[color:var(--accent)] shadow-[0_14px_38px_rgba(82,214,244,0.12)]">
               Policy Packet (PDF)
             </Link>
-            <button onClick={() => window.print()} className="rounded-full bg-[#52d6f4] px-4 py-2 text-sm font-black text-[#06101d] shadow-[0_14px_38px_rgba(82,214,244,0.18)]">
+            <button onClick={() => window.print()} className="rounded-full bg-[#52d6f4] px-4 py-2 text-sm font-black text-[#141414] shadow-[0_14px_38px_rgba(82,214,244,0.18)]">
               Print Inventory PDF
             </button>
           </div>
@@ -210,7 +210,7 @@ export default function InsuranceExportPage() {
             Checked items are included in insurance reports and the policy packet. Uncheck anything that should not be part of insurance documentation. Inventory print uses compact landscape formatting.
           </div>
 
-          <div className="insurance-table-wrap mt-6 overflow-x-auto rounded-2xl border border-[rgba(104,146,196,0.22)] bg-[rgba(7,16,31,0.42)]">
+          <div className="insurance-table-wrap mt-6 overflow-x-auto rounded-2xl border border-[rgba(104,146,196,0.22)] bg-vault-card">
             <table className="w-full border-collapse text-sm text-[#dbeafe]">
               <thead>
                 <tr className="border-b border-[rgba(104,146,196,0.22)] text-left text-[11px] uppercase tracking-[0.18em] text-[#7ddff5]">

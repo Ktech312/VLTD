@@ -5,7 +5,7 @@
 body:has(textarea[placeholder^="Paste rows directly"]),
 body:has(a[href="/vault/item/"][href*="sold=1"]),
 body:has(input[type="file"][accept=".xlsx,.xls,.csv"]) {
-  background: #07101f;
+  background: #0B0B0B;
 }
 
 body:has(textarea[placeholder^="Paste rows directly"]) main,
@@ -14,7 +14,7 @@ body:has(a[href*="?sold=1"]) main {
   background:
     radial-gradient(circle at 50% 7%, rgba(82, 214, 244, 0.16), transparent 34%),
     radial-gradient(circle at 86% 22%, rgba(245, 170, 60, 0.07), transparent 26%),
-    linear-gradient(180deg, #07101f 0%, #050b15 100%) !important;
+    linear-gradient(180deg, #0B0B0B 0%, #080808 100%) !important;
 }
 
 /* Import page */

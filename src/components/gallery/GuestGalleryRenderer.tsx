@@ -50,9 +50,9 @@ function getThemeChipClass(themePack: string) {
     case "walnut":
       return "bg-[rgba(64,38,23,0.78)] text-[#f1dcc3] ring-[#c4966d]/35";
     case "midnight":
-      return "bg-[rgba(9,19,33,0.80)] text-cyan-100 ring-cyan-300/22";
+      return "bg-vault-card text-cyan-100 ring-cyan-300/22";
     case "cold-blue":
-      return "bg-[rgba(22,22,28,0.82)] text-stone-100 ring-white/12";
+      return "bg-vault-card text-stone-100 ring-white/12";
     case "marble":
       return "bg-[rgba(255,255,255,0.82)] text-slate-900 ring-slate-300/55";
     default:

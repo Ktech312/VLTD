@@ -17,7 +17,7 @@ function accountTypeCardClass(active: boolean) {
     "rounded-2xl border p-5 text-left transition",
     active
       ? "border-[rgba(82,214,244,0.82)] bg-[linear-gradient(180deg,rgba(82,214,244,0.24),rgba(18,56,86,0.72))] text-text-primary shadow-[0_0_0_1px_rgba(82,214,244,0.18),0_18px_48px_rgba(82,214,244,0.18)]"
-      : "border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] text-[color:var(--muted)] hover:border-[rgba(82,214,244,0.38)] hover:bg-[rgba(82,214,244,0.08)] hover:text-text-primary",
+      : "border-[color:var(--border)] bg-vault-card text-[color:var(--muted)] hover:border-[rgba(82,214,244,0.38)] hover:bg-[rgba(82,214,244,0.08)] hover:text-text-primary",
   ].join(" ");
 }
 
@@ -78,7 +78,7 @@ export default function OnboardingPage() {
   if (loading) {
     return (
       <main className="vltd-page-depth min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl rounded-[28px] border border-[color:var(--border)] bg-[rgba(15,29,49,0.82)] p-6 text-[color:var(--muted)] shadow-[0_22px_72px_rgba(0,0,0,0.24)]">
+        <div className="mx-auto max-w-3xl rounded-[28px] border border-[color:var(--border)] bg-vault-card p-6 text-[color:var(--muted)] shadow-[0_22px_72px_rgba(0,0,0,0.24)]">
           Loading onboarding...
         </div>
       </main>
@@ -131,7 +131,7 @@ export default function OnboardingPage() {
                       setDisplayName(next);
                       if (!username.trim()) setUsername(slugifyUsername(next));
                     }}
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-[rgba(9,20,36,0.82)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(82,214,244,0.12)]"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(82,214,244,0.12)]"
                   />
                 </label>
 
@@ -140,7 +140,7 @@ export default function OnboardingPage() {
                   <input
                     value={username}
                     onChange={(e) => setUsername(slugifyUsername(e.target.value))}
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-[rgba(9,20,36,0.82)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(82,214,244,0.12)]"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(82,214,244,0.12)]"
                   />
                   <div className="mt-2 text-xs text-[color:var(--muted2)]">Public handle preview: @{slugifyUsername(username) || "username"}</div>
                 </label>
@@ -149,7 +149,7 @@ export default function OnboardingPage() {
                   type="button"
                   disabled={!canContinueIdentity}
                   onClick={() => setStep(2)}
-                  className="inline-flex h-12 w-fit items-center rounded-full bg-[#52d6f4] px-6 text-sm font-black text-[#06101d] shadow-[0_16px_42px_rgba(82,214,244,0.20)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex h-12 w-fit items-center rounded-full bg-[#52d6f4] px-6 text-sm font-black text-[#141414] shadow-[0_16px_42px_rgba(82,214,244,0.20)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Continue
                 </button>
@@ -168,7 +168,7 @@ export default function OnboardingPage() {
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="text-base font-black">Collector</div>
-                        {profileType === "personal" ? <div className="rounded-full bg-[#52d6f4] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#06101d]">Selected</div> : null}
+                        {profileType === "personal" ? <div className="rounded-full bg-[#52d6f4] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#141414]">Selected</div> : null}
                       </div>
                       <div className="mt-2 text-sm leading-6 text-[color:var(--muted)]">Personal vault, portfolio, and public galleries.</div>
                     </button>
@@ -179,7 +179,7 @@ export default function OnboardingPage() {
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="text-base font-black">Business</div>
-                        {profileType === "business" ? <div className="rounded-full bg-[#52d6f4] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#06101d]">Selected</div> : null}
+                        {profileType === "business" ? <div className="rounded-full bg-[#52d6f4] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#141414]">Selected</div> : null}
                       </div>
                       <div className="mt-2 text-sm leading-6 text-[color:var(--muted)]">Shop, team, resale, or inventory workflow.</div>
                     </button>
@@ -187,10 +187,10 @@ export default function OnboardingPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  <button type="button" onClick={() => setStep(3)} className="inline-flex h-12 items-center rounded-full bg-[#52d6f4] px-6 text-sm font-black text-[#06101d] shadow-[0_16px_42px_rgba(82,214,244,0.20)] transition hover:-translate-y-0.5 hover:brightness-105">
+                  <button type="button" onClick={() => setStep(3)} className="inline-flex h-12 items-center rounded-full bg-[#52d6f4] px-6 text-sm font-black text-[#141414] shadow-[0_16px_42px_rgba(82,214,244,0.20)] transition hover:-translate-y-0.5 hover:brightness-105">
                     Continue
                   </button>
-                  <button type="button" onClick={() => setStep(1)} className="inline-flex h-12 items-center rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] px-6 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary">
+                  <button type="button" onClick={() => setStep(1)} className="inline-flex h-12 items-center rounded-full border border-[color:var(--border)] bg-vault-card px-6 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary">
                     Back
                   </button>
                 </div>
@@ -204,14 +204,14 @@ export default function OnboardingPage() {
                   <select
                     value={primaryFocus}
                     onChange={(e) => setPrimaryFocus(e.target.value)}
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-[rgba(9,20,36,0.82)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(82,214,244,0.12)]"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(82,214,244,0.12)]"
                   >
                     <option value="">Skip for now</option>
                     {FOCUS_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
                   </select>
                 </label>
 
-                <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] p-5 text-sm leading-7 text-[color:var(--muted)]">
+                <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-5 text-sm leading-7 text-[color:var(--muted)]">
                   <div><span className="text-[color:var(--muted2)]">Username:</span> <span className="font-semibold text-text-primary">@{slugifyUsername(username)}</span></div>
                   <div><span className="text-[color:var(--muted2)]">Display name:</span> <span className="font-semibold text-text-primary">{displayName.trim()}</span></div>
                   <div><span className="text-[color:var(--muted2)]">Account type:</span> <span className="font-semibold text-text-primary">{profileType === "business" ? "Business" : "Collector"}</span></div>
@@ -223,11 +223,11 @@ export default function OnboardingPage() {
                     type="button"
                     disabled={saving || !canContinueIdentity}
                     onClick={() => void handleFinish()}
-                    className="inline-flex h-12 items-center rounded-full bg-[#52d6f4] px-6 text-sm font-black text-[#06101d] shadow-[0_16px_42px_rgba(82,214,244,0.20)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex h-12 items-center rounded-full bg-[#52d6f4] px-6 text-sm font-black text-[#141414] shadow-[0_16px_42px_rgba(82,214,244,0.20)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {saving ? "Finishing..." : "Finish setup"}
                   </button>
-                  <button type="button" onClick={() => setStep(2)} className="inline-flex h-12 items-center rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] px-6 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary">
+                  <button type="button" onClick={() => setStep(2)} className="inline-flex h-12 items-center rounded-full border border-[color:var(--border)] bg-vault-card px-6 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary">
                     Back
                   </button>
                 </div>

@@ -999,7 +999,7 @@ export default function GalleryBuilder({
             <div
               className={[
                 "mt-4 rounded-[18px] bg-[color:var(--surface)] p-5 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition",
-                draggingId && !selectedSet.has(draggingId) ? "bg-cyan-400/6 ring-cyan-300/30" : "",
+                draggingId && !selectedSet.has(draggingId) ? "bg-gold/6 ring-cyan-300/30" : "",
               ].join(" ")}
               onDragOver={(event) => {
                 event.preventDefault();
@@ -1016,7 +1016,7 @@ export default function GalleryBuilder({
             <div
               className={[
                 "mt-4 grid gap-2 rounded-[18px] transition",
-                draggingId && !selectedSet.has(draggingId) ? "bg-cyan-400/6 p-2 ring-1 ring-cyan-300/25" : "",
+                draggingId && !selectedSet.has(draggingId) ? "bg-gold/6 p-2 ring-1 ring-cyan-300/25" : "",
               ].join(" ")}
               onDragOver={(event) => {
                 event.preventDefault();
@@ -1186,7 +1186,7 @@ export default function GalleryBuilder({
                       className={[
                         "inline-flex min-h-[30px] cursor-pointer items-center gap-2 rounded-full px-3 py-1 text-xs ring-1 transition",
                         checked
-                          ? "bg-cyan-400/14 text-cyan-100 ring-cyan-300/30"
+                          ? "bg-gold/14 text-cyan-100 ring-cyan-300/30"
                           : "bg-black/12 text-[color:var(--muted)] ring-white/10 hover:text-[color:var(--fg)]",
                       ].join(" ")}
                     >

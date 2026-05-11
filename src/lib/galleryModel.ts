@@ -1521,7 +1521,7 @@ export function getGalleryThemePresentation(
         heroPanelClass:
           "border-cyan-300/18 bg-[linear-gradient(135deg,rgba(10,18,28,0.62),rgba(4,9,16,0.72))] text-slate-100 shadow-[0_28px_90px_rgba(0,0,0,0.56)]",
         chipClass:
-          "bg-[rgba(15,24,36,0.64)] text-slate-100 ring-cyan-300/18",
+          "bg-vault-card text-slate-100 ring-cyan-300/18",
         sectionPanelClass:
           "bg-[linear-gradient(180deg,rgba(8,13,22,0.82),rgba(4,8,15,0.86))] ring-cyan-300/16 text-slate-100",
         cardClass:
@@ -1540,7 +1540,7 @@ export function getGalleryThemePresentation(
         heroPanelClass:
           "border-white/10 bg-[linear-gradient(135deg,rgba(25,25,30,0.62),rgba(10,10,14,0.76))] text-stone-100 shadow-[0_28px_90px_rgba(0,0,0,0.56)]",
         chipClass:
-          "bg-[rgba(22,22,28,0.68)] text-stone-100 ring-white/12",
+          "bg-vault-card text-stone-100 ring-white/12",
         sectionPanelClass:
           "bg-[linear-gradient(180deg,rgba(20,20,25,0.82),rgba(8,8,12,0.88))] ring-white/10 text-stone-100",
         cardClass:

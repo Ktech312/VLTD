@@ -421,7 +421,7 @@ function VaultCard({
   return (
     <div
       className={[
-        "group relative flex h-[174px] flex-col overflow-hidden rounded-[14px] border border-white/8 bg-[#07101d]/88 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-cyan-400/10 transition hover:-translate-y-0.5 hover:ring-cyan-300/30",
+        "group relative flex h-[174px] flex-col overflow-hidden rounded-[14px] border border-white/8 bg-[#141414]/88 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-gold/10 transition hover:-translate-y-0.5 hover:ring-cyan-300/30",
         marketValue > 0 ? "border-l-2 border-l-emerald-400/55" : "border-l border-l-white/8",
       ].join(" ")}
     >
@@ -493,7 +493,7 @@ function VaultCard({
             <button
               type="button"
               onClick={() => setEditingField("value")}
-              className="block text-left text-[13px] font-extrabold leading-none text-text-primary hover:text-cyan-300"
+              className="block text-left text-[13px] font-extrabold leading-none text-text-primary hover:text-gold-light"
             >
               {formatMoney(marketValue)}
             </button>
@@ -624,7 +624,7 @@ function UniverseOverviewCard({
   return (
     <Link
       href={category.href}
-      className="group overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:ring-cyan-400/30"
+      className="group overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:ring-gold/30"
     >
       <div className="grid min-h-[124px] grid-cols-[92px_minmax(0,1fr)] gap-3 sm:grid-cols-[104px_minmax(0,1fr)]">
         <div className="overflow-hidden rounded-[14px] bg-black/20 ring-1 ring-white/8">
@@ -649,7 +649,7 @@ function UniverseOverviewCard({
             <div className="flex items-start justify-between gap-2">
               <div>
                 <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Universe</div>
-                <h2 className="mt-1 text-xl font-semibold leading-tight text-cyan-300">{universeDisplayName(category.key)}</h2>
+                <h2 className="mt-1 text-xl font-semibold leading-tight text-gold-light">{universeDisplayName(category.key)}</h2>
               </div>
               <div className="rounded-full bg-black/20 px-2.5 py-1 text-[11px] font-semibold ring-1 ring-white/10">
                 {items.length} {items.length === 1 ? "item" : "items"}

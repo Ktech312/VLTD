@@ -11,7 +11,7 @@ export default function CaptureCamera() {
   }
 
   return (
-    <div className="rounded-[30px] border border-[color:var(--border)] bg-[rgba(7,16,31,0.50)] p-4 shadow-[0_18px_56px_rgba(0,0,0,0.24)]">
+    <div className="rounded-[30px] border border-[color:var(--border)] bg-vault-card p-4 shadow-[0_18px_56px_rgba(0,0,0,0.24)]">
       <input
         ref={ref}
         type="file"
@@ -40,12 +40,12 @@ export default function CaptureCamera() {
         <div className="relative mt-2 max-w-[260px] text-sm leading-6 text-[color:var(--muted)]">
           Use your camera on mobile or upload an image from desktop.
         </div>
-        <div className="relative mt-5 inline-flex min-h-12 items-center justify-center rounded-full bg-[#52d6f4] px-6 text-sm font-black text-[#06101d] shadow-[0_16px_42px_rgba(82,214,244,0.20)]">
+        <div className="relative mt-5 inline-flex min-h-12 items-center justify-center rounded-full bg-[#52d6f4] px-6 text-sm font-black text-[#141414] shadow-[0_16px_42px_rgba(82,214,244,0.20)]">
           Open camera / upload
         </div>
       </button>
 
-      <div className="mt-4 rounded-2xl border border-[color:var(--border)] bg-[rgba(9,20,36,0.72)] px-4 py-3 text-sm text-[color:var(--muted)]">
+      <div className="mt-4 rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 py-3 text-sm text-[color:var(--muted)]">
         {fileName ? (
           <span>
             Selected: <span className="font-semibold text-text-primary">{fileName}</span>

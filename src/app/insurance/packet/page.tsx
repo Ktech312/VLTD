@@ -109,12 +109,12 @@ export default function InsurancePacketPage() {
   return (
     <main className="vltd-page-depth min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <div className="packet-shell mx-auto max-w-6xl">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[rgba(82,214,244,0.24)] bg-[rgba(15,29,49,0.72)] p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
-          <Link href="/insurance" className="rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(82,214,244,0.42)]">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[rgba(82,214,244,0.24)] bg-vault-card p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
+          <Link href="/insurance" className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(82,214,244,0.42)]">
             ← Back to Insurance
           </Link>
           <div className="flex flex-wrap items-center gap-3">
-            <label className="flex items-center gap-2 rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] px-4 py-2 text-sm text-[color:var(--muted)]">
+            <label className="flex items-center gap-2 rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm text-[color:var(--muted)]">
               <input
                 type="checkbox"
                 checked={includeImages}
@@ -126,7 +126,7 @@ export default function InsurancePacketPage() {
             <button
               disabled={safePageIndex === 0}
               onClick={() => setPageIndex((prev) => Math.max(0, prev - 1))}
-              className="rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] px-4 py-2 text-sm font-semibold text-[color:var(--accent)] disabled:opacity-40"
+              className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] disabled:opacity-40"
             >
               Prev
             </button>
@@ -136,14 +136,14 @@ export default function InsurancePacketPage() {
             <button
               disabled={safePageIndex >= totalPages - 1}
               onClick={() => setPageIndex((prev) => Math.min(totalPages - 1, prev + 1))}
-              className="rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] px-4 py-2 text-sm font-semibold text-[color:var(--accent)] disabled:opacity-40"
+              className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] disabled:opacity-40"
             >
               Next
             </button>
             <Link
               href={printHref}
               target="_blank"
-              className="rounded-full bg-[#52d6f4] px-4 py-2 text-sm font-black text-[#06101d] shadow-[0_14px_38px_rgba(82,214,244,0.18)]"
+              className="rounded-full bg-[#52d6f4] px-4 py-2 text-sm font-black text-[#141414] shadow-[0_14px_38px_rgba(82,214,244,0.18)]"
             >
               Open Printable Page
             </Link>
@@ -161,7 +161,7 @@ export default function InsurancePacketPage() {
           </div>
         </section>
 
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-[rgba(104,146,196,0.22)] bg-[rgba(7,16,31,0.42)]">
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-[rgba(104,146,196,0.22)] bg-vault-card">
           <table className={includeImages ? "w-full border-collapse text-sm text-[#dbeafe]" : "w-full border-collapse text-sm text-[#dbeafe]"}>
             <thead>
               <tr className="border-b border-[rgba(104,146,196,0.22)] text-left text-[11px] uppercase tracking-[0.18em] text-[#7ddff5]">

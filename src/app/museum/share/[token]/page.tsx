@@ -209,7 +209,7 @@ function GalleryBackgroundShell({
     <main className="relative min-h-screen text-text-primary" style={getBackgroundShellStyle(backgroundUrl)}>
       {hasBackground ? (
         <div
-          className="absolute inset-0 bg-[rgba(7,10,18,0.58)] backdrop-blur-[1.5px]"
+          className="absolute inset-0 bg-vault-card backdrop-blur-[1.5px]"
           aria-hidden="true"
         />
       ) : null}

@@ -31,7 +31,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     description: "Black + warm gold. Closest to the current brand look.",
     preview: { hero: "/brand/vltd-mark.png", logo: "/brand/vltd-logo.png" },
     vars: {
-      "--bg": "#07070A",
+      "--bg": "#141414",
       "--fg": "#F2F2F2",
       "--muted": "rgba(242,242,242,0.72)",
       "--muted2": "rgba(242,242,242,0.58)",
@@ -62,7 +62,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     description: "A sharper, modern take with silver accents.",
     preview: { hero: "/brand/vltd-mark.png", logo: "/brand/vltd-logo.png" },
     vars: {
-      "--bg": "#07080C",
+      "--bg": "#141414",
       "--fg": "#F5F7FA",
       "--muted": "rgba(245,247,250,0.72)",
       "--muted2": "rgba(245,247,250,0.56)",
@@ -80,7 +80,7 @@ export const THEME_PRESETS: ThemePreset[] = [
       "--pill-fg-muted": "rgba(255,255,255,0.68)",
 
       "--pill-active-bg": "#D9DEE7",
-      "--pill-active-fg": "#0B0C10",
+      "--pill-active-fg": "#141414",
 
       "--shadow-soft": "0 12px 30px rgba(0,0,0,0.45)",
       "--shadow-pill": "0 16px 40px rgba(0,0,0,0.55)",
@@ -122,7 +122,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     name: "Midnight (Neon Hint)",
     description: "Dark with a subtle neon energy for dashboards.",
     vars: {
-      "--bg": "#05060A",
+      "--bg": "#141414",
       "--fg": "#EAF0FF",
       "--muted": "rgba(234,240,255,0.72)",
       "--muted2": "rgba(234,240,255,0.54)",
@@ -140,7 +140,7 @@ export const THEME_PRESETS: ThemePreset[] = [
       "--pill-fg-muted": "rgba(234,240,255,0.70)",
 
       "--pill-active-bg": "#6EE7FF",
-      "--pill-active-fg": "#071018",
+      "--pill-active-fg": "#141414",
 
       "--shadow-soft": "0 12px 30px rgba(0,0,0,0.50)",
       "--shadow-pill": "0 18px 46px rgba(0,0,0,0.60)",
