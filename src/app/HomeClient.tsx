@@ -187,7 +187,7 @@ export default function HomeClient() {
         <section
           className="rounded-[28px] border p-4 sm:p-5"
           style={{
-            background: "linear-gradient(180deg, rgba(20,16,8,0.98) 0%, rgba(14,12,6,0.98) 100%)",
+            background: "var(--theme-card, rgba(15,25,45,0.85))",
             borderColor: "rgba(245,181,72,0.18)",
             boxShadow: "0 0 0 1px rgba(245,181,72,0.08), 0 24px 80px rgba(0,0,0,0.55), 0 0 60px rgba(245,181,72,0.05)",
           }}
@@ -278,7 +278,7 @@ export default function HomeClient() {
         <section
           className="relative overflow-hidden rounded-[24px] border p-5"
           style={{
-            background: "linear-gradient(135deg, rgba(20,16,8,0.98) 0%, rgba(16,12,4,0.98) 100%)",
+            background: "var(--theme-card, rgba(15,25,45,0.85))",
             borderColor: "rgba(245,181,72,0.16)",
           }}
         >

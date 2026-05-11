@@ -5,7 +5,7 @@ body:has(a[href="/museum/new"]) main {
   background:
     radial-gradient(circle at 48% 8%, rgba(245, 181, 72, 0.07), transparent 34%),
     radial-gradient(circle at 82% 22%, rgba(245, 181, 72, 0.04), transparent 26%),
-    linear-gradient(180deg, #0B0B0B 0%, #080808 100%) !important;
+    var(--theme-bg, #0B1320) !important;
 }
 
 body:has(a[href="/museum/new"]) main > div {

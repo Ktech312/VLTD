@@ -5,7 +5,7 @@ body:has(input[placeholder="Search vault items..."]) main {
   background:
     radial-gradient(circle at 50% 7%, rgba(245, 181, 72, 0.07), transparent 34%),
     radial-gradient(circle at 88% 24%, rgba(245, 181, 72, 0.04), transparent 26%),
-    linear-gradient(180deg, #0B0B0B 0%, #080808 100%) !important;
+    var(--theme-bg, #0B1320) !important;
 }
 
 body:has(input[placeholder="Search vault items..."]) main > div {
@@ -14,8 +14,7 @@ body:has(input[placeholder="Search vault items..."]) main > div {
 
 body:has(input[placeholder="Search vault items..."]) section {
   border-color: rgba(245, 181, 72, 0.18) !important;
-  background:
-    linear-gradient(180deg, rgba(20, 16, 8, 0.88), rgba(12, 10, 4, 0.92)) !important;
+  background: var(--theme-card, rgba(15,25,45,0.85)) !important;
   box-shadow:
     0 0 0 1px rgba(245, 181, 72, 0.04),
     0 22px 72px rgba(0, 0, 0, 0.40) !important;
@@ -31,7 +30,7 @@ body:has(input[placeholder="Search vault items..."]) section:first-of-type {
 
 body:has(input[placeholder="Search vault items..."]) input[placeholder="Search vault items..."],
 body:has(input[placeholder="Search vault items..."]) select {
-  background: rgba(20, 16, 8, 0.76) !important;
+  background: var(--theme-elevated, rgba(20,32,55,0.9)) !important;
   border: 1px solid rgba(245, 181, 72, 0.18) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
 }
@@ -40,8 +39,7 @@ body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="
   height: 142px !important;
   border-radius: 22px !important;
   padding: 10px !important;
-  background:
-    linear-gradient(180deg, rgba(20, 16, 8, 0.90), rgba(12, 10, 4, 0.92)) !important;
+  background: var(--theme-card, rgba(15,25,45,0.85)) !important;
   border-color: rgba(245, 181, 72, 0.16) !important;
   box-shadow:
     0 0 0 1px rgba(245, 181, 72, 0.04),
