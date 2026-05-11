@@ -116,7 +116,7 @@ export default function HomeClient() {
         if (status.needsOnboarding) { router.replace("/onboarding"); return; }
         setDisplayName(status.activeProfile?.display_name ?? "");
         setProfileType(status.activeProfile?.profile_type ?? "");
-        setPrimaryFocus(String(status.activeProfile?.primary_focus ?? ""));
+        setPrimaryFocus(status.activeProfile?.primary_focus ?? "");
         await syncVaultItemsFromSupabase();
         setItems(loadItems());
       } catch (err) {
@@ -197,16 +197,16 @@ export default function HomeClient() {
               <p className="mt-1 text-sm text-[#A0956B]">{summaryLine}</p>
             </div>
 
-            {/* Focus badge */}
-            <div
-              className="shrink-0 rounded-2xl border px-3 py-1.5 text-right"
-              style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}
-            >
-              <p className="text-[10px] uppercase tracking-[0.18em] text-[#A0956B]">Focus</p>
-              <p className="text-sm font-bold text-[#F5B548]">
-                {primaryFocus || (profileType === "business" ? "Business" : "Collector")}
-              </p>
-            </div>
+            {/* Focus badge — hidden when no valid focus value */}
+            {primaryFocus && primaryFocus.toLowerCase() !== "null" && (
+              <div
+                className="shrink-0 rounded-2xl border px-3 py-1.5 text-right"
+                style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}
+              >
+                <p className="text-[10px] uppercase tracking-[0.18em] text-[#A0956B]">Focus</p>
+                <p className="text-sm font-bold text-[#F5B548]">{primaryFocus}</p>
+              </div>
+            )}
           </div>
 
           {/* Compact stats row */}
