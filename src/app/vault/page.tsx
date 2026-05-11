@@ -916,7 +916,7 @@ export default function VaultPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+    <main className="min-h-screen text-[color:var(--fg)]" style={{ background: 'var(--theme-bg, #0B1320)' }}>
       <div className="mx-auto max-w-[1500px] px-3 py-3 sm:px-4 sm:py-4">
         <section className="relative overflow-hidden rounded-[18px] border border-white/8 bg-[linear-gradient(135deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)]">
           <div className="relative flex flex-col gap-4">
@@ -960,19 +960,19 @@ export default function VaultPage() {
             </div>
 
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
-              <div className="rounded-[14px] bg-black/16 p-2.5 ring-1 ring-white/8">
+              <div className="rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">FILTERED ITEMS</div>
                 <div className="mt-1 text-lg font-semibold">{stats.totalItems}</div>
               </div>
-              <div className="rounded-[14px] bg-black/16 p-2.5 ring-1 ring-white/8">
+              <div className="rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">FILTERED COST</div>
                 <div className="mt-1 text-lg font-semibold">{formatMoney(stats.totalCost)}</div>
               </div>
-              <div className="rounded-[14px] bg-black/16 p-2.5 ring-1 ring-white/8">
+              <div className="rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">FILTERED VALUE</div>
                 <div className="mt-1 text-lg font-semibold">{formatMoney(stats.totalValue)}</div>
               </div>
-              <div className="rounded-[14px] bg-black/16 p-2.5 ring-1 ring-white/8">
+              <div className="rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))', borderLeft: '3px solid var(--color-gain, #4CAF82)' }}>
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">FILTERED GAIN</div>
                 <div className="mt-1 text-lg font-semibold">
                   {stats.totalGain >= 0 ? "+" : ""}

@@ -481,25 +481,17 @@ function TopNavInner() {
               <button
                 type="button"
                 onClick={() => setUserOpen((v) => !v)}
-                className="flex items-center gap-2 rounded-full pl-1 pr-2 py-1 transition"
+                className="flex items-center gap-1 rounded-full p-1 transition"
                 style={{
                   background: "rgba(42,36,24,0.70)",
                   border: "1px solid rgba(245,181,72,0.22)",
                 }}
               >
                 <div
-                  className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full text-sm font-bold"
-                  style={{ background: "rgba(245,181,72,0.15)", color: "#F5B548" }}
+                  className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full text-[13px] font-bold"
+                  style={{ background: 'var(--theme-gold-gradient, linear-gradient(135deg,#8B6914,#F5B548))', color: "#0B0B0B" }}
                 >
                   {avatarText}
-                </div>
-                <div className="hidden lg:flex flex-col items-start leading-none">
-                  <span className="text-[12px] font-semibold" style={{ color: "#F0EAD6" }}>
-                    {activeProfile?.display_name || (signedIn ? "Collector" : "Guest")}
-                  </span>
-                  <span className="text-[10px]" style={{ color: "#A0956B" }}>
-                    {signedIn ? accountTypeLabel : "Sign in"}
-                  </span>
                 </div>
                 <IconChevron size={12} />
               </button>

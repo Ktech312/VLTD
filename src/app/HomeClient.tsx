@@ -222,21 +222,27 @@ export default function HomeClient() {
             />
           </div>
 
-          {/* Smart Scan CTA — gold metallic */}
+          {/* Smart Scan CTA — dark gold glow bar */}
           <Link
             href="/capture"
-            className="mt-4 flex min-h-[52px] items-center justify-between gap-3 rounded-[18px] px-4 py-3 font-black no-select vltd-gold-btn"
+            className="mt-4 flex min-h-[52px] items-center justify-between gap-3 rounded-[18px] px-4 py-3 font-semibold no-select transition hover:-translate-y-0.5"
+            style={{
+              background: 'linear-gradient(135deg, rgba(139,105,20,0.25) 0%, rgba(200,148,31,0.15) 50%, rgba(139,105,20,0.25) 100%)',
+              border: '1px solid var(--theme-gold-border, rgba(245,181,72,0.35))',
+              boxShadow: '0 0 20px rgba(245,181,72,0.15)',
+              color: 'var(--theme-gold, #F5B548)',
+            }}
           >
-            <span className="flex items-center gap-3 text-sm">
+            <span className="flex items-center gap-3 text-sm font-semibold">
               <span
                 className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-xl"
-                style={{ background: "rgba(26,15,0,0.25)" }}
+                style={{ background: 'var(--theme-gold-subtle, rgba(245,181,72,0.10))', border: '1px solid var(--theme-gold-border, rgba(245,181,72,0.25))' }}
               >
                 ▣
               </span>
               Smart Scan — add any item to your VLTD vault instantly
             </span>
-            <span className="hidden shrink-0 text-sm sm:inline">Scan →</span>
+            <span className="hidden shrink-0 text-sm font-semibold sm:inline">Scan →</span>
           </Link>
 
           {/* Quick action pills */}

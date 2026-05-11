@@ -137,7 +137,7 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className="vltd-panel-soft rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+    <div className="vltd-panel-soft rounded-3xl p-6 shadow-[0_8px_32px_rgba(0,0,0,0.22)]" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
       <div className="flex items-start justify-between gap-3">
         <div className="text-xs tracking-widest text-[color:var(--muted2)]">{title}</div>
         {right}
@@ -499,9 +499,12 @@ export default function PortfolioPage() {
           : "All time";
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+    <main className="min-h-screen text-[color:var(--fg)]" style={{ background: 'var(--theme-bg, #0B1320)' }}>
       <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-7">
-        <section className="vltd-panel-main relative overflow-hidden rounded-[26px] border border-white/8 bg-[linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] px-5 py-5 shadow-[0_18px_54px_rgba(0,0,0,0.3)] sm:px-6 sm:py-6">
+        <section
+          className="vltd-panel-main relative overflow-hidden rounded-[26px] px-5 py-5 shadow-[0_18px_54px_rgba(0,0,0,0.3)] sm:px-6 sm:py-6"
+          style={{ background: 'var(--theme-elevated, rgba(20,32,55,0.9))', border: '1px solid var(--theme-gold-border, rgba(245,181,72,0.18))' }}
+        >
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),rgba(255,255,255,0)_28%),radial-gradient(circle_at_75%_0%,rgba(255,205,120,0.06),rgba(255,205,120,0)_22%)]" />
 
           <div className="relative flex flex-col gap-5">
@@ -525,7 +528,7 @@ export default function PortfolioPage() {
             </div>
 
             <div className="grid gap-3 md:grid-cols-3">
-              <div className="vltd-panel-soft rounded-[20px] bg-black/16 p-4 ring-1 ring-white/8">
+              <div className="vltd-panel-soft rounded-[20px] p-4" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   TOTAL VALUE
                 </div>
@@ -535,7 +538,7 @@ export default function PortfolioPage() {
                 </div>
               </div>
 
-              <div className="vltd-panel-soft rounded-[20px] bg-black/16 p-4 ring-1 ring-white/8">
+              <div className="vltd-panel-soft rounded-[20px] p-4" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   NET CHANGE
                 </div>
@@ -545,7 +548,7 @@ export default function PortfolioPage() {
                 </div>
               </div>
 
-              <div className="vltd-panel-soft rounded-[20px] bg-black/16 p-4 ring-1 ring-white/8">
+              <div className="vltd-panel-soft rounded-[20px] p-4" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   ROI
                 </div>
@@ -566,7 +569,7 @@ export default function PortfolioPage() {
           <PortfolioIntelligencePanel metrics={collectionMetrics} />
         </div>
 
-        <div className="vltd-panel-main mt-6 flex flex-col gap-3 rounded-3xl bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="vltd-panel-main mt-6 flex flex-col gap-3 rounded-3xl p-5 shadow-[0_8px_32px_rgba(0,0,0,0.22)]" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <div className="text-xs tracking-widest text-[color:var(--muted2)]">CONTROLS</div>
@@ -668,7 +671,7 @@ export default function PortfolioPage() {
           </Card>
         </div>
 
-        <div className="vltd-panel-main mt-6 rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="vltd-panel-main mt-6 rounded-3xl p-6 shadow-[0_8px_32px_rgba(0,0,0,0.22)]" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="text-xs tracking-widest text-[color:var(--muted2)]">HISTORY</div>
@@ -680,7 +683,7 @@ export default function PortfolioPage() {
             <div className="text-sm font-semibold text-white/80">{fmtMoney(totalsAll.value)}</div>
           </div>
 
-          <div className="vltd-panel-soft mt-4 rounded-2xl bg-black/20 p-4 ring-1 ring-white/10">
+          <div className="vltd-panel-soft mt-4 rounded-2xl p-4" style={{ background: 'var(--theme-elevated, rgba(20,32,55,0.9))', border: '1px solid var(--theme-border, rgba(245,181,72,0.10))' }}>
             {!mounted ? (
               <div className="text-sm text-[color:var(--muted)]">—</div>
             ) : historySeries.values.length >= 2 ? (
@@ -693,7 +696,7 @@ export default function PortfolioPage() {
           </div>
         </div>
 
-        <div className="vltd-panel-main mt-6 rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="vltd-panel-main mt-6 rounded-3xl p-6 shadow-[0_8px_32px_rgba(0,0,0,0.22)]" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="text-xs tracking-widest text-[color:var(--muted2)]">ANALYTICS</div>
@@ -707,7 +710,7 @@ export default function PortfolioPage() {
             </div>
           </div>
 
-          <div className="vltd-panel-soft mt-5 rounded-3xl bg-black/25 p-5 ring-1 ring-white/10">
+          <div className="vltd-panel-soft mt-5 rounded-3xl p-5" style={{ background: 'var(--theme-elevated, rgba(20,32,55,0.9))', border: '1px solid var(--theme-border, rgba(245,181,72,0.10))' }}>
             {view === "bars" ? (
               <div className="h-[320px] w-full">
                 <div className="relative h-full w-full overflow-hidden rounded-2xl bg-black/15 ring-1 ring-white/10">
