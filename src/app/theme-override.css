@@ -257,6 +257,18 @@
   color: var(--theme-text-muted, #5A5A6A) !important;
 }
 
+/* ── PILL/BADGE DARK BG CATCH-ALL (light themes) ── */
+/* Any pill or small badge with black/dark inline bg gets flipped to theme surface */
+.theme-light body [class*="rounded-full"][class*="bg-black"],
+.theme-light body [class*="rounded-full"][class*="bg-[rgba(0"],
+.theme-light body [class*="rounded-2xl"][class*="bg-black"],
+.theme-light body [class*="rounded-xl"][class*="bg-black"],
+.theme-light body [class*="rounded-lg"][class*="bg-black"] {
+  background: var(--theme-elevated, rgba(245,240,228,0.95)) !important;
+  color: var(--theme-text-secondary, #4A3A1A) !important;
+  border: 1px solid var(--theme-border, rgba(180,140,60,0.18)) !important;
+}
+
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--theme-card, #141414); }
