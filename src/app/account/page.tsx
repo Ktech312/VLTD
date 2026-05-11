@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ThemePicker } from "@/components/ui/ThemePicker";
 
 import { getOnboardingStatus, updateProfile } from "@/lib/auth";
 
@@ -202,6 +203,13 @@ export default function AccountPage() {
               </div>
             </aside>
           </div>
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
+          <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-1">
+            Appearance
+          </div>
+          <ThemePicker />
         </section>
       </div>
     </main>

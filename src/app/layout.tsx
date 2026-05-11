@@ -21,6 +21,7 @@ import BottomNav from "@/components/BottomNav";
 import Providers from "@/components/Providers";
 import { ThemeBoot } from "@/components/ThemeBoot";
 import ThemeScript from "@/components/ThemeScript";
+import { ThemeProvider } from "@/lib/ThemeContext";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://vltd.app";
 
@@ -101,16 +102,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${inter.className} bg-vault-base min-h-screen`}>
         <ThemeBoot />
 
-        <Providers>
-          <TopNav />
-          <div
-            style={{ paddingTop: "var(--topnav-h)" }}
-            className="vltd-content-wrap"
-          >
-            {children}
-          </div>
-          <BottomNav />
-        </Providers>
+        <ThemeProvider>
+          <Providers>
+            <TopNav />
+            <div
+              style={{ paddingTop: "var(--topnav-h)" }}
+              className="vltd-content-wrap"
+            >
+              {children}
+            </div>
+            <BottomNav />
+          </Providers>
+        </ThemeProvider>
       </body>
     </html>
   );

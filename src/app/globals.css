@@ -19,10 +19,10 @@
   --color-gold-border: rgba(245,181,72,0.3);
 
   /* Vault surfaces */
-  --color-vault-base: #0B0B0B;
-  --color-vault-card: #141414;
-  --color-vault-elevated: #1E1E1E;
-  --color-vault-border: #2A2418;
+  --color-vault-base: #0B1320;
+  --color-vault-card: rgba(15, 25, 45, 0.85);
+  --color-vault-elevated: rgba(20, 32, 55, 0.9);
+  --color-vault-border: rgba(245, 181, 72, 0.12);
 
   /* Text scale */
   --color-text-primary: #F0EAD6;
@@ -59,6 +59,26 @@
 
 :root {
   --radius: 999px;
+
+  /* =========================================================
+     THEME SYSTEM DEFAULTS (deep-vault)
+     Overridden at runtime by ThemeProvider via setProperty.
+     These ensure SSR and first-paint use the correct defaults.
+  ========================================================= */
+  --theme-bg: #0B1320;
+  --theme-card: rgba(15, 25, 45, 0.85);
+  --theme-elevated: rgba(20, 32, 55, 0.9);
+  --theme-border: rgba(245, 181, 72, 0.12);
+  --theme-text-primary: #F0EAD6;
+  --theme-text-secondary: #A0956B;
+  --theme-text-muted: #5A5040;
+  --theme-gold: #F5B548;
+  --theme-gold-gradient: linear-gradient(135deg, #8B6914 0%, #C8941F 25%, #F5B548 50%, #FFE08A 70%, #C8941F 100%);
+  --theme-gold-border: rgba(245, 181, 72, 0.3);
+  --theme-gold-glow: 0 0 20px rgba(245,181,72,0.25), 0 0 40px rgba(245,181,72,0.1);
+  --theme-gold-subtle: rgba(245, 181, 72, 0.08);
+  --theme-nav-bg: rgba(11, 19, 32, 0.95);
+  --theme-nav-border: rgba(245, 181, 72, 0.15);
 
   /* ✅ Reserve TopNav height so content never jumps */
   --topnav-h: 72px;
@@ -171,8 +191,8 @@
 ========================================================= */
 
 .dark {
-  --bg: #0B0B0B;
-  --surface: rgba(20, 20, 20, 0.92);
+  --bg: #0B1320;
+  --surface: rgba(15, 25, 45, 0.88);
   --surface-strong: rgba(26, 26, 26, 0.98);
 
   --fg: #ededed;
@@ -264,13 +284,11 @@ html {
 
 /* Better tap behavior on mobile */
 body {
-  background: var(--bg);
-  color: var(--fg);
-  font-family: var(--font-inter, Inter), system-ui, Arial, sans-serif;
-
-  /* calm, palette-aware depth without distraction */
-  background-image: var(--bg-glow);
+  background: var(--theme-bg, #0B1320);
   background-attachment: fixed;
+  color: var(--theme-text-primary, #F0EAD6);
+  font-family: var(--font-inter, Inter), system-ui, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
 
   /* iOS momentum scroll + less accidental sideways rubber-banding */
   -webkit-overflow-scrolling: touch;
@@ -1765,7 +1783,7 @@ hr {
 
 /* Metallic gold text — wraps text in a gold gradient */
 .gold-text {
-  background: linear-gradient(135deg, #C8941F, #F5B548, #FFE08A, #F5B548);
+  background: var(--theme-gold-gradient, linear-gradient(135deg, #C8941F, #F5B548, #FFE08A, #F5B548));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -1807,47 +1825,50 @@ hr {
 
 /* Standard vault card */
 .vault-card {
-  background: #141414;
-  border: 1px solid #2A2418;
+  background: var(--theme-card, rgba(15, 25, 45, 0.85));
+  border: 1px solid var(--theme-border, rgba(245, 181, 72, 0.12));
   border-radius: 14px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
 }
 
 /* Gold-accented card — for featured / highlighted items */
 .vault-card-gold {
-  background: #141414;
-  border: 1px solid rgba(245,181,72,0.3);
+  background: var(--theme-card, rgba(15, 25, 45, 0.85));
+  border: 1px solid var(--theme-gold-border, rgba(245,181,72,0.3));
   border-radius: 14px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 0 20px rgba(245,181,72,0.1);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4), var(--theme-gold-glow, 0 0 20px rgba(245,181,72,0.1));
 }
 
 /* Primary gold gradient button */
 .btn-gold {
-  background: linear-gradient(135deg, #8B6914 0%, #C8941F 25%, #F5B548 50%, #FFE08A 70%, #C8941F 100%);
+  background: var(--theme-gold-gradient, linear-gradient(135deg, #8B6914 0%, #C8941F 25%, #F5B548 50%, #FFE08A 70%, #C8941F 100%));
   color: #0B0B0B;
   font-weight: 600;
   border-radius: 8px;
-  box-shadow: 0 0 20px rgba(245,181,72,0.25);
+  box-shadow: var(--theme-gold-glow, 0 0 20px rgba(245,181,72,0.25));
   transition: filter 0.2s, box-shadow 0.2s;
 }
 .btn-gold:hover {
   filter: brightness(1.12);
-  box-shadow: 0 0 30px rgba(245,181,72,0.4);
 }
 
 /* Outline gold button */
 .btn-gold-outline {
   background: transparent;
-  border: 1px solid rgba(245,181,72,0.3);
-  color: #F5B548;
+  border: 1px solid var(--theme-gold-border, rgba(245,181,72,0.3));
+  color: var(--theme-gold, #F5B548);
   font-weight: 500;
   border-radius: 8px;
   transition: background 0.2s, box-shadow 0.2s;
 }
 .btn-gold-outline:hover {
-  background: rgba(245,181,72,0.1);
-  box-shadow: 0 0 16px rgba(245,181,72,0.15);
+  background: var(--theme-gold-subtle, rgba(245,181,72,0.1));
 }
+
+/* Light theme text overrides */
+.theme-light .text-text-primary { color: var(--theme-text-primary) !important; }
+.theme-light .text-text-secondary { color: var(--theme-text-secondary) !important; }
+.theme-light .vault-card { box-shadow: 0 2px 16px rgba(0,0,0,0.12); }
 
 /* Scrollbar styling */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
