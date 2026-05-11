@@ -303,6 +303,13 @@
   --shadow-pill: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
+/* Nav seam fix: light themes use near-opaque navBg, disable blur so there's no frosted-glass color strip */
+.theme-light nav,
+.theme-light header {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
 /* =========================================================
    PALETTE: GOLD (primary — warm gold forward)
 ========================================================= */

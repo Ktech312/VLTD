@@ -104,7 +104,7 @@ export const themes: Record<ThemeId, Theme> = {
     goldBorder: 'rgba(184, 134, 11, 0.4)',
     goldGlow: '0 0 20px rgba(184,134,11,0.2)',
     goldSubtle: 'rgba(184, 134, 11, 0.08)',
-    navBg: 'rgba(232, 236, 240, 0.95)',
+    navBg: 'rgba(232, 236, 240, 0.99)',
     navBorder: 'rgba(150, 160, 170, 0.3)',
   },
   'cloud-gradient': {
@@ -123,7 +123,7 @@ export const themes: Record<ThemeId, Theme> = {
     goldBorder: 'rgba(200, 148, 31, 0.4)',
     goldGlow: '0 0 20px rgba(200,148,31,0.2)',
     goldSubtle: 'rgba(200, 148, 31, 0.08)',
-    navBg: 'rgba(184, 212, 232, 0.95)',
+    navBg: 'rgba(184, 212, 232, 0.99)',
     navBorder: 'rgba(100, 140, 180, 0.25)',
   },
   'pearl-light': {
@@ -142,7 +142,7 @@ export const themes: Record<ThemeId, Theme> = {
     goldBorder: 'rgba(139, 105, 20, 0.4)',
     goldGlow: '0 0 20px rgba(139,105,20,0.2)',
     goldSubtle: 'rgba(139, 105, 20, 0.08)',
-    navBg: 'rgba(245, 240, 232, 0.95)',
+    navBg: 'rgba(245, 240, 232, 0.99)',
     navBorder: 'rgba(180, 160, 100, 0.25)',
   },
 }
