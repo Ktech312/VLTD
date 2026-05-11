@@ -191,16 +191,16 @@
 ========================================================= */
 
 .dark {
-  --bg: #0B1320;
-  --surface: rgba(15, 25, 45, 0.88);
-  --surface-strong: rgba(26, 26, 26, 0.98);
+  --bg: var(--theme-bg, #0B1320);
+  --surface: var(--theme-card, rgba(15, 25, 45, 0.85));
+  --surface-strong: var(--theme-elevated, rgba(20, 32, 55, 0.9));
 
   --fg: #ededed;
   --muted: rgba(255, 255, 255, 0.72);
   --muted2: rgba(255, 255, 255, 0.44);
 
-  --border: rgba(255, 255, 255, 0.14);
-  --border-strong: rgba(255, 255, 255, 0.22);
+  --border: var(--theme-border, rgba(245, 181, 72, 0.12));
+  --border-strong: var(--theme-gold-border, rgba(245, 181, 72, 0.25));
   --divider: rgba(255, 255, 255, 0.1);
 
   --shadow-soft: 0 1px 0 rgba(255, 255, 255, 0.05);
