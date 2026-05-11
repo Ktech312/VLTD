@@ -23,6 +23,7 @@ import Providers from "@/components/Providers";
 import { ThemeBoot } from "@/components/ThemeBoot";
 import ThemeScript from "@/components/ThemeScript";
 import { ThemeProvider } from "@/lib/ThemeContext";
+import { FloatingThemeButton } from "@/components/ui/FloatingThemeButton";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://vltd.app";
 
@@ -113,6 +114,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               {children}
             </div>
             <BottomNav />
+            <FloatingThemeButton />
           </Providers>
         </ThemeProvider>
       </body>
