@@ -259,7 +259,7 @@ function Donut({
           <Link
             key={r.key}
             href={`/portfolio/universe/${r.key}`}
-            className="flex items-center justify-between rounded-2xl bg-black/20 px-4 py-2 ring-1 ring-white/10 transition hover:bg-black/25"
+            className="flex items-center justify-between rounded-2xl bg-[color:var(--surface)] px-4 py-2 ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--input)]"
           >
             <div className="text-sm">{r.label}</div>
             <div className="text-sm font-semibold">{fmtMoney(r.value)}</div>
@@ -680,7 +680,7 @@ export default function PortfolioPage() {
                 Real daily snapshots (local). Range: {rangeLabel}.
               </div>
             </div>
-            <div className="text-sm font-semibold text-white/80">{fmtMoney(totalsAll.value)}</div>
+            <div className="text-sm font-semibold text-[color:var(--fg)]">{fmtMoney(totalsAll.value)}</div>
           </div>
 
           <div className="vltd-panel-soft mt-4 rounded-2xl p-4" style={{ background: 'var(--theme-elevated, rgba(20,32,55,0.9))', border: '1px solid var(--theme-border, rgba(245,181,72,0.10))' }}>
@@ -781,16 +781,16 @@ export default function PortfolioPage() {
                   <Link
                     key={r.key}
                     href={`/portfolio/universe/${r.key}`}
-                    className="rounded-2xl bg-black/20 p-4 ring-1 ring-white/10 transition hover:bg-black/25"
+                    className="rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--input)]"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold">{r.label}</div>
-                      <div className="text-sm text-white/85">{fmtMoney(r.value)}</div>
+                      <div className="text-sm text-[color:var(--fg)]">{fmtMoney(r.value)}</div>
                     </div>
                     <div className="mt-3">
                       <MiniSparkline values={sparkByUniverse[r.key] ?? [0, 0]} />
                     </div>
-                    <div className="mt-2 text-xs text-white/55">{r.count} items in range</div>
+                    <div className="mt-2 text-xs text-[color:var(--muted)]">{r.count} items in range</div>
                   </Link>
                 ))}
               </div>

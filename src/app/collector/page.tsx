@@ -187,7 +187,7 @@ export default function CollectorProfilePage() {
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-7">
 
-        <section className="vltd-panel-main relative overflow-hidden rounded-[26px] border border-white/8 bg-[linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] px-5 py-5 shadow-[0_18px_54px_rgba(0,0,0,0.3)] sm:px-6 sm:py-6">
+        <section className="vltd-panel-main relative overflow-hidden rounded-[26px] border border-[color:var(--border)] bg-[color:var(--surface)] px-5 py-5 shadow-[0_18px_54px_rgba(0,0,0,0.3)] sm:px-6 sm:py-6">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),rgba(255,255,255,0)_28%),radial-gradient(circle_at_75%_0%,rgba(255,205,120,0.06),rgba(255,205,120,0)_22%)]" />
 
           <div className="relative grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
@@ -214,7 +214,7 @@ export default function CollectorProfilePage() {
               </div>
             </div>
 
-            <div className="vltd-panel-soft rounded-[22px] bg-black/16 p-5 ring-1 ring-white/8">
+            <div className="vltd-panel-soft rounded-[22px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)]">
               <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                 COLLECTOR STRENGTH
               </div>
@@ -398,7 +398,7 @@ export default function CollectorProfilePage() {
                   className="vltd-panel-soft rounded-[20px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]"
                 >
                   <div className="flex gap-4">
-                    <div className="h-24 w-20 shrink-0 overflow-hidden rounded-xl bg-black/20">
+                    <div className="h-24 w-20 shrink-0 overflow-hidden rounded-xl bg-[color:var(--input)]">
                       {itemImage(item) ? (
                         <img
                           src={itemImage(item)}

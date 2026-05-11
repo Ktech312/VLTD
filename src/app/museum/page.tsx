@@ -339,7 +339,7 @@ export default function MuseumPage() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-              <div className="rounded-[20px] bg-black/16 p-4 ring-1 ring-white/8">
+              <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   TOTAL
                 </div>
@@ -349,7 +349,7 @@ export default function MuseumPage() {
                 </div>
               </div>
 
-              <div className="rounded-[20px] bg-black/16 p-4 ring-1 ring-white/8">
+              <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   ACTIVE
                 </div>
@@ -359,7 +359,7 @@ export default function MuseumPage() {
                 </div>
               </div>
 
-              <div className="rounded-[20px] bg-black/16 p-4 ring-1 ring-white/8">
+              <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   PUBLIC
                 </div>
@@ -369,7 +369,7 @@ export default function MuseumPage() {
                 </div>
               </div>
 
-              <div className="rounded-[20px] bg-black/16 p-4 ring-1 ring-white/8">
+              <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   TOTAL VIEWS
                 </div>
@@ -379,7 +379,7 @@ export default function MuseumPage() {
                 </div>
               </div>
 
-              <div className="rounded-[20px] bg-black/16 p-4 ring-1 ring-white/8">
+              <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   TIER LIMIT
                 </div>

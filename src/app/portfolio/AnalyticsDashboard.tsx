@@ -279,7 +279,7 @@ function Donut({
             <Link
               key={r.label}
               href={r.href}
-              className="flex items-center justify-between rounded-2xl bg-black/20 px-4 py-2 ring-1 ring-white/10 hover:bg-black/25 transition"
+              className="flex items-center justify-between rounded-2xl bg-[color:var(--surface)] px-4 py-2 ring-1 ring-[color:var(--border)] hover:bg-[color:var(--input)] transition"
             >
               <div className="text-sm">{r.label}</div>
               <div className="text-sm font-semibold">{fmtMoney(r.value)}</div>
@@ -287,7 +287,7 @@ function Donut({
           ) : (
             <div
               key={r.label}
-              className="flex items-center justify-between rounded-2xl bg-black/20 px-4 py-2 ring-1 ring-white/10"
+              className="flex items-center justify-between rounded-2xl bg-[color:var(--surface)] px-4 py-2 ring-1 ring-[color:var(--border)]"
             >
               <div className="text-sm">{r.label}</div>
               <div className="text-sm font-semibold">{fmtMoney(r.value)}</div>
@@ -739,11 +739,11 @@ export function AnalyticsDashboard(props: {
                 <Link
                   key={r.id}
                   href={`/vault/item/${r.id}`}
-                  className="flex items-center justify-between rounded-2xl bg-black/20 px-4 py-2 ring-1 ring-white/10 hover:bg-black/25 transition"
+                  className="flex items-center justify-between rounded-2xl bg-[color:var(--surface)] px-4 py-2 ring-1 ring-[color:var(--border)] hover:bg-[color:var(--input)] transition"
                 >
                   <div className="min-w-0">
                     <div className="text-sm font-semibold truncate">{r.title}</div>
-                    <div className="text-xs text-white/55 truncate">
+                    <div className="text-xs text-[color:var(--muted)] truncate">
                       {r.categoryLabel}
                       {r.subcategoryLabel !== "—" ? ` • ${r.subcategoryLabel}` : ""} • Gain {fmtMoney(r.gain)}
                     </div>
@@ -764,10 +764,10 @@ export function AnalyticsDashboard(props: {
               <div className="mt-2 text-xl font-semibold">Portfolio value over time</div>
               <div className="mt-1 text-sm text-[color:var(--muted)]">Real daily snapshots (local). Range: {rangeLabel}.</div>
             </div>
-            <div className="text-sm text-white/80 font-semibold">{fmtMoney(totals.value)}</div>
+            <div className="text-sm font-semibold text-[color:var(--fg)]">{fmtMoney(totals.value)}</div>
           </div>
 
-          <div className="mt-4 rounded-2xl bg-black/20 p-4 ring-1 ring-white/10">
+          <div className="mt-4 rounded-2xl bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
             {historySeries.values.length >= 2 ? (
               <MiniLineChart values={historySeries.values} height={80} />
             ) : (
@@ -784,7 +784,7 @@ export function AnalyticsDashboard(props: {
             Metric: {rankMode === "value" ? "Value" : "Gain"} • Allocation: {allocMode === "dollars" ? "$" : "%"} (based on value)
           </div>
 
-          <div className="mt-5 rounded-3xl bg-black/25 p-5 ring-1 ring-white/10">
+          <div className="mt-5 rounded-3xl bg-[color:var(--input)] p-5 ring-1 ring-[color:var(--border)]">
             {view === "donut" ? (
               <Donut
                 rows={breakdown.map((r) => ({ label: r.label, value: r.value, href: r.href }))}
@@ -801,13 +801,13 @@ export function AnalyticsDashboard(props: {
                       key={r.key}
                       href={r.href ?? "#"}
                       className={[
-                        "rounded-2xl bg-black/20 p-4 ring-1 ring-white/10 transition",
-                        r.href ? "hover:bg-black/25" : "opacity-70 pointer-events-none",
+                        "rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] transition",
+                        r.href ? "hover:bg-[color:var(--input)]" : "opacity-70 pointer-events-none",
                       ].join(" ")}
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="text-sm font-semibold truncate">{r.label}</div>
-                        <div className="text-sm text-white/85">{metricLabel}</div>
+                        <div className="text-sm text-[color:var(--fg)]">{metricLabel}</div>
                       </div>
                       <div className="mt-2 text-xs text-white/55">
                         {r.count} items • Allocation {allocLabel}
@@ -831,24 +831,24 @@ export function AnalyticsDashboard(props: {
                       key={r.key}
                       href={r.href ?? "#"}
                       className={[
-                        "rounded-2xl bg-black/20 px-4 py-3 ring-1 ring-white/10 transition",
-                        r.href ? "hover:bg-black/25" : "opacity-70 pointer-events-none",
+                        "rounded-2xl bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)] transition",
+                        r.href ? "hover:bg-[color:var(--input)]" : "opacity-70 pointer-events-none",
                       ].join(" ")}
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
                           <div className="text-sm font-semibold truncate">{r.label}</div>
-                          <div className="mt-0.5 text-xs text-white/55">
+                          <div className="mt-0.5 text-xs text-[color:var(--muted)]">
                             {r.count} items • Allocation {allocLabel}
                           </div>
                         </div>
                         <div className="text-right">
                           <div className="text-sm font-semibold">{metricLabel}</div>
-                          <div className="text-xs text-white/55">{rankMode === "value" ? "Value" : "Gain"}</div>
+                          <div className="text-xs text-[color:var(--muted)]">{rankMode === "value" ? "Value" : "Gain"}</div>
                         </div>
                       </div>
 
-                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10 ring-1 ring-white/10">
+                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-[color:var(--input)] ring-1 ring-[color:var(--border)]">
                         <div
                           className="h-full"
                           style={{
@@ -872,24 +872,24 @@ export function AnalyticsDashboard(props: {
           <div className="mt-2 text-xl font-semibold">Items</div>
           <div className="mt-1 text-sm text-[color:var(--muted)]">Sorted by {rankMode === "value" ? "value" : "gain"}.</div>
 
-          <div className="mt-4 overflow-hidden rounded-2xl ring-1 ring-white/10">
-            <div className="grid grid-cols-12 gap-2 bg-black/30 px-4 py-3 text-xs text-white/70">
+          <div className="mt-4 overflow-hidden rounded-2xl ring-1 ring-[color:var(--border)]">
+            <div className="grid grid-cols-12 gap-2 bg-[color:var(--input)] px-4 py-3 text-xs text-[color:var(--muted)]">
               <div className="col-span-5">Item</div>
               <div className="col-span-3">Category</div>
               <div className="col-span-2 text-right">Cost</div>
               <div className="col-span-2 text-right">Value</div>
             </div>
 
-            <div className="divide-y divide-white/10 bg-black/20">
+            <div className="divide-y divide-[color:var(--border)] bg-[color:var(--surface)]">
               {tableRows.map((r) => (
                 <Link
                   key={r.id}
                   href={`/vault/item/${r.id}`}
-                  className="grid grid-cols-12 gap-2 px-4 py-3 hover:bg-black/25 transition"
+                  className="grid grid-cols-12 gap-2 px-4 py-3 hover:bg-[color:var(--input)] transition"
                 >
                   <div className="col-span-5 min-w-0">
                     <div className="text-sm font-semibold truncate">{r.title}</div>
-                    <div className="mt-0.5 text-xs text-white/55">
+                    <div className="mt-0.5 text-xs text-[color:var(--muted)]">
                       {r.categoryLabel}
                       {r.subcategoryLabel !== "—" ? ` • ${r.subcategoryLabel}` : ""} • Added {fmtMonthDay(r.added)} • Gain{" "}
                       {fmtMoney(r.gain)}
@@ -897,7 +897,7 @@ export function AnalyticsDashboard(props: {
                   </div>
                   <div className="col-span-3 min-w-0">
                     <div className="text-sm truncate">{r.categoryLabel}</div>
-                    <div className="text-xs text-white/55 truncate">{r.subcategoryLabel}</div>
+                    <div className="text-xs text-[color:var(--muted)] truncate">{r.subcategoryLabel}</div>
                   </div>
                   <div className="col-span-2 text-right text-sm">{fmtMoney(r.cost)}</div>
                   <div className="col-span-2 text-right text-sm font-semibold">{fmtMoney(r.value)}</div>

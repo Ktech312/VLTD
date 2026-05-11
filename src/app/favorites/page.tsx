@@ -84,7 +84,7 @@ export default function FavoritesPage() {
         href={favoriteHref(record)}
         className="grid grid-cols-[76px_minmax(0,1fr)] gap-3 rounded-[18px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(0,0,0,0.16)]"
       >
-        <div className="h-[76px] overflow-hidden rounded-[14px] bg-black/20">
+        <div className="h-[76px] overflow-hidden rounded-[14px] bg-[color:var(--input)]">
           {image ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={image} alt="" className="h-full w-full object-cover" draggable={false} />
