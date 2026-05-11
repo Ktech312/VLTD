@@ -206,7 +206,7 @@ function GalleryBackgroundShell({
   const hasBackground = !!backgroundUrl?.trim();
 
   return (
-    <main className="relative min-h-screen text-white" style={getBackgroundShellStyle(backgroundUrl)}>
+    <main className="relative min-h-screen text-text-primary" style={getBackgroundShellStyle(backgroundUrl)}>
       {hasBackground ? (
         <div
           className="absolute inset-0 bg-[rgba(7,10,18,0.58)] backdrop-blur-[1.5px]"

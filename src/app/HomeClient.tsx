@@ -191,7 +191,7 @@ export default function HomeClient() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">
                 Welcome back,
               </p>
-              <h1 className="mt-0.5 text-2xl font-black tracking-[-0.04em] text-white sm:text-3xl">
+              <h1 className="mt-0.5 text-2xl font-black tracking-[-0.04em] text-text-primary sm:text-3xl">
                 {displayName || "Collector"}
               </h1>
               <p className="mt-1 text-sm text-[#A0956B]">{summaryLine}</p>
@@ -254,7 +254,7 @@ export default function HomeClient() {
             </Link>
             <Link
               href="/vault"
-              className="flex-1 rounded-[14px] border border-[#1E1E1E] bg-[#141414] py-2.5 text-center text-sm font-semibold text-[#A0956B] transition hover:text-white hover:border-[rgba(255,255,255,0.14)]"
+              className="flex-1 rounded-[14px] border border-[#1E1E1E] bg-[#141414] py-2.5 text-center text-sm font-semibold text-[#A0956B] transition hover:text-text-primary hover:border-[rgba(255,255,255,0.14)]"
             >
               Go to Vault
             </Link>
@@ -283,7 +283,7 @@ export default function HomeClient() {
               <p className="text-[10px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">
                 Featured Exhibition
               </p>
-              <h2 className="mt-1.5 text-xl font-black tracking-[-0.03em] text-white">
+              <h2 className="mt-1.5 text-xl font-black tracking-[-0.03em] text-text-primary">
                 Your Museum Awaits
               </h2>
               <p className="mt-1 max-w-[340px] text-sm leading-relaxed text-[#A0956B]">
@@ -407,7 +407,7 @@ export default function HomeClient() {
                       }}
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-white">{item.title}</p>
+                        <p className="truncate text-sm font-semibold text-text-primary">{item.title}</p>
                         <p className="mt-0.5 text-xs text-[#A0956B]">
                           {item.universe || item.category || "Collectible"}
                         </p>

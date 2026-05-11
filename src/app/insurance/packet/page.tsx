@@ -152,7 +152,7 @@ export default function InsurancePacketPage() {
 
         <section className="rounded-[30px] border border-[rgba(82,214,244,0.28)] bg-[linear-gradient(180deg,rgba(18,38,66,0.94),rgba(8,18,32,0.96))] p-5 shadow-[0_26px_86px_rgba(82,214,244,0.10),0_24px_88px_rgba(0,0,0,0.32)] sm:p-6">
           <div className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">Insurance Packet</div>
-          <h1 className="mt-2 text-3xl font-black tracking-[-0.045em] text-white">Insurance Policy Packet</h1>
+          <h1 className="mt-2 text-3xl font-black tracking-[-0.045em] text-text-primary">Insurance Policy Packet</h1>
           <div className="mt-2 text-sm text-[color:var(--muted)]">
             Generated {new Date().toLocaleString()} • Included {selectedItems.length} of {items.length} items • Total Value {fmtMoney(totals.value)} • Page {safePageIndex + 1} of {totalPages} • Showing {visibleItems.length} items
           </div>
@@ -184,7 +184,7 @@ export default function InsurancePacketPage() {
                     </td>
                   ) : null}
                   <td className="py-3 pl-4 pr-3">
-                    <div className="font-black text-white">{item.title}</div>
+                    <div className="font-black text-text-primary">{item.title}</div>
                     <div className="mt-0.5 text-xs text-[color:var(--muted)]">
                       {item.subtitle ? `${item.subtitle} • ` : ""}
                       {item.number ?? ""}
@@ -197,8 +197,8 @@ export default function InsurancePacketPage() {
                     <div className="text-xs text-[color:var(--muted)]">Serial: {item.serialNumber ?? "-"}</div>
                   </td>
                   <td className="py-3 pr-3">{item.storageLocation ?? "-"}</td>
-                  <td className="py-3 pr-3 font-semibold text-white">{fmtMoney(item.purchasePrice)}</td>
-                  <td className="py-3 pr-3 font-semibold text-white">{fmtMoney(item.currentValue)}</td>
+                  <td className="py-3 pr-3 font-semibold text-text-primary">{fmtMoney(item.purchasePrice)}</td>
+                  <td className="py-3 pr-3 font-semibold text-text-primary">{fmtMoney(item.currentValue)}</td>
                   <td className="py-3 pr-4 text-xs text-[color:var(--muted)]">
                     <div>{item.valueSource ?? ""}</div>
                     <div>

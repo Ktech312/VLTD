@@ -16,8 +16,8 @@ function accountTypeCardClass(active: boolean) {
   return [
     "rounded-2xl border p-5 text-left transition",
     active
-      ? "border-[rgba(82,214,244,0.82)] bg-[linear-gradient(180deg,rgba(82,214,244,0.24),rgba(18,56,86,0.72))] text-white shadow-[0_0_0_1px_rgba(82,214,244,0.18),0_18px_48px_rgba(82,214,244,0.18)]"
-      : "border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] text-[color:var(--muted)] hover:border-[rgba(82,214,244,0.38)] hover:bg-[rgba(82,214,244,0.08)] hover:text-white",
+      ? "border-[rgba(82,214,244,0.82)] bg-[linear-gradient(180deg,rgba(82,214,244,0.24),rgba(18,56,86,0.72))] text-text-primary shadow-[0_0_0_1px_rgba(82,214,244,0.18),0_18px_48px_rgba(82,214,244,0.18)]"
+      : "border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] text-[color:var(--muted)] hover:border-[rgba(82,214,244,0.38)] hover:bg-[rgba(82,214,244,0.08)] hover:text-text-primary",
   ].join(" ");
 }
 
@@ -95,7 +95,7 @@ export default function OnboardingPage() {
             <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)]">
               Welcome to VLTD
             </div>
-            <h1 className="mt-3 text-4xl font-black leading-[0.98] tracking-[-0.055em] text-white sm:text-5xl">
+            <h1 className="mt-3 text-4xl font-black leading-[0.98] tracking-[-0.055em] text-text-primary sm:text-5xl">
               Let’s get you in fast.
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-[color:var(--muted)]">
@@ -123,7 +123,7 @@ export default function OnboardingPage() {
             {step === 1 ? (
               <div className="mt-7 grid gap-5">
                 <label className="block">
-                  <span className="text-sm font-semibold text-white">Display name</span>
+                  <span className="text-sm font-semibold text-text-primary">Display name</span>
                   <input
                     value={displayName}
                     onChange={(e) => {
@@ -136,7 +136,7 @@ export default function OnboardingPage() {
                 </label>
 
                 <label className="block">
-                  <span className="text-sm font-semibold text-white">Username</span>
+                  <span className="text-sm font-semibold text-text-primary">Username</span>
                   <input
                     value={username}
                     onChange={(e) => setUsername(slugifyUsername(e.target.value))}
@@ -159,7 +159,7 @@ export default function OnboardingPage() {
             {step === 2 ? (
               <div className="mt-7 space-y-5">
                 <div>
-                  <div className="text-sm font-semibold text-white">Account type</div>
+                  <div className="text-sm font-semibold text-text-primary">Account type</div>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <button
                       type="button"
@@ -190,7 +190,7 @@ export default function OnboardingPage() {
                   <button type="button" onClick={() => setStep(3)} className="inline-flex h-12 items-center rounded-full bg-[#52d6f4] px-6 text-sm font-black text-[#06101d] shadow-[0_16px_42px_rgba(82,214,244,0.20)] transition hover:-translate-y-0.5 hover:brightness-105">
                     Continue
                   </button>
-                  <button type="button" onClick={() => setStep(1)} className="inline-flex h-12 items-center rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] px-6 text-sm font-semibold text-[color:var(--muted)] transition hover:text-white">
+                  <button type="button" onClick={() => setStep(1)} className="inline-flex h-12 items-center rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] px-6 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary">
                     Back
                   </button>
                 </div>
@@ -200,7 +200,7 @@ export default function OnboardingPage() {
             {step === 3 ? (
               <div className="mt-7 space-y-5">
                 <label className="block">
-                  <span className="text-sm font-semibold text-white">Primary collection focus</span>
+                  <span className="text-sm font-semibold text-text-primary">Primary collection focus</span>
                   <select
                     value={primaryFocus}
                     onChange={(e) => setPrimaryFocus(e.target.value)}
@@ -212,10 +212,10 @@ export default function OnboardingPage() {
                 </label>
 
                 <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(7,16,31,0.48)] p-5 text-sm leading-7 text-[color:var(--muted)]">
-                  <div><span className="text-[color:var(--muted2)]">Username:</span> <span className="font-semibold text-white">@{slugifyUsername(username)}</span></div>
-                  <div><span className="text-[color:var(--muted2)]">Display name:</span> <span className="font-semibold text-white">{displayName.trim()}</span></div>
-                  <div><span className="text-[color:var(--muted2)]">Account type:</span> <span className="font-semibold text-white">{profileType === "business" ? "Business" : "Collector"}</span></div>
-                  <div><span className="text-[color:var(--muted2)]">Focus:</span> <span className="font-semibold text-white">{primaryFocus || "Not set yet"}</span></div>
+                  <div><span className="text-[color:var(--muted2)]">Username:</span> <span className="font-semibold text-text-primary">@{slugifyUsername(username)}</span></div>
+                  <div><span className="text-[color:var(--muted2)]">Display name:</span> <span className="font-semibold text-text-primary">{displayName.trim()}</span></div>
+                  <div><span className="text-[color:var(--muted2)]">Account type:</span> <span className="font-semibold text-text-primary">{profileType === "business" ? "Business" : "Collector"}</span></div>
+                  <div><span className="text-[color:var(--muted2)]">Focus:</span> <span className="font-semibold text-text-primary">{primaryFocus || "Not set yet"}</span></div>
                 </div>
 
                 <div className="flex flex-wrap gap-3">
@@ -227,7 +227,7 @@ export default function OnboardingPage() {
                   >
                     {saving ? "Finishing..." : "Finish setup"}
                   </button>
-                  <button type="button" onClick={() => setStep(2)} className="inline-flex h-12 items-center rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] px-6 text-sm font-semibold text-[color:var(--muted)] transition hover:text-white">
+                  <button type="button" onClick={() => setStep(2)} className="inline-flex h-12 items-center rounded-full border border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] px-6 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary">
                     Back
                   </button>
                 </div>

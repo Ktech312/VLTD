@@ -79,7 +79,7 @@ export default function ProtectedRoute({
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center text-white">
+      <main className="min-h-screen flex items-center justify-center text-text-primary">
         Checking access...
       </main>
     );
@@ -95,7 +95,7 @@ export default function ProtectedRoute({
 
   if (!allowed) {
     return (
-      <main className="min-h-screen flex items-center justify-center text-white">
+      <main className="min-h-screen flex items-center justify-center text-text-primary">
         Redirecting...
       </main>
     );

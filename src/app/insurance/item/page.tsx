@@ -127,7 +127,7 @@ export default function InsuranceItemPage() {
             </div>
           ) : (
             <>
-              <h1 className="mt-2 text-3xl font-black tracking-[-0.045em] text-white">{item.title}</h1>
+              <h1 className="mt-2 text-3xl font-black tracking-[-0.045em] text-text-primary">{item.title}</h1>
               <div className="mt-2 text-sm text-[color:var(--muted)]">
                 {itemLabel(item)} {item.subtitle ? `• ${item.subtitle}` : ""} {item.number ? `• ${item.number}` : ""}
               </div>
@@ -167,8 +167,8 @@ export default function InsuranceItemPage() {
                   <div className="rounded-2xl border border-[rgba(104,146,196,0.20)] bg-[rgba(7,16,31,0.42)] p-4">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Financial</div>
                     <div className="mt-3 space-y-1 text-sm text-[#dbeafe]">
-                      <div><span className="text-[color:var(--muted)]">Purchase Cost:</span> <span className="font-semibold text-white">{fmtMoney(Number(item.purchasePrice ?? 0))}</span></div>
-                      <div><span className="text-[color:var(--muted)]">Current Value:</span> <span className="font-semibold text-white">{fmtMoney(Number(item.currentValue ?? 0))}</span></div>
+                      <div><span className="text-[color:var(--muted)]">Purchase Cost:</span> <span className="font-semibold text-text-primary">{fmtMoney(Number(item.purchasePrice ?? 0))}</span></div>
+                      <div><span className="text-[color:var(--muted)]">Current Value:</span> <span className="font-semibold text-text-primary">{fmtMoney(Number(item.currentValue ?? 0))}</span></div>
                     </div>
                   </div>
 

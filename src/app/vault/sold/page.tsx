@@ -255,7 +255,7 @@ function SoldCard({
       )}
 
       <Link href={detailHref} className="mt-2 min-w-0">
-        <div className="line-clamp-1 text-[13px] font-extrabold leading-tight text-white sm:text-[14px]">
+        <div className="line-clamp-1 text-[13px] font-extrabold leading-tight text-text-primary sm:text-[14px]">
           {item.title}
         </div>
         <div className="mt-0.5 line-clamp-1 text-[10px] font-medium text-cyan-100/55">
@@ -265,7 +265,7 @@ function SoldCard({
 
       <div className="mt-auto flex items-end justify-between gap-2 pt-2">
         <div className="min-w-0">
-          <div className="text-[13px] font-extrabold leading-none text-white">{money(item.soldPrice)}</div>
+          <div className="text-[13px] font-extrabold leading-none text-text-primary">{money(item.soldPrice)}</div>
           <div className={profit >= 0 ? "mt-1 text-[10px] font-bold leading-none text-emerald-300" : "mt-1 text-[10px] font-bold leading-none text-red-300"}>
             {profit >= 0 ? "+" : ""}
             {money(profit)}
@@ -444,7 +444,7 @@ export default function SoldPage() {
         >
           <span className="relative block max-h-[88vh] w-full max-w-4xl rounded-[24px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.5)]">
             <span className="mb-3 flex items-center justify-between gap-3">
-              <span className="line-clamp-1 text-left text-sm font-semibold text-white">{imagePreview.title}</span>
+              <span className="line-clamp-1 text-left text-sm font-semibold text-text-primary">{imagePreview.title}</span>
               <span className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-cyan-100 ring-1 ring-[color:var(--border)]">
                 Close
               </span>

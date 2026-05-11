@@ -444,7 +444,7 @@ export default function ScanCropEditor({
         type="button"
         onClick={requestCancel}
         aria-label="Close crop editor"
-        className="absolute right-2 top-2 z-40 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/65 text-2xl leading-none text-white ring-1 ring-white/15 backdrop-blur transition hover:bg-black/80"
+        className="absolute right-2 top-2 z-40 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/65 text-2xl leading-none text-text-primary ring-1 ring-white/15 backdrop-blur transition hover:bg-black/80"
       >
         ×
       </button>

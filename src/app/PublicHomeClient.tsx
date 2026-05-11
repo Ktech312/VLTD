@@ -223,7 +223,7 @@ function toPublicCard(gallery: Gallery): PublicGalleryCard {
 
 function BrandMark() {
   return (
-    <div className="flex items-center gap-2 font-black tracking-[0.08em] text-white">
+    <div className="flex items-center gap-2 font-black tracking-[0.08em] text-text-primary">
       <span className="vltd-brand-dot h-2.5 w-2.5" />
       <span>VLTD</span>
       <span className="text-[8px] text-[color:var(--muted2)]">TM</span>
@@ -291,7 +291,7 @@ export default function PublicHomeClient() {
           <div className="flex items-center gap-3">
             <Link
               href="/login"
-              className="rounded-full border border-[color:var(--border)] px-5 py-2 text-sm font-semibold text-[color:var(--muted)] transition hover:text-white"
+              className="rounded-full border border-[color:var(--border)] px-5 py-2 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
             >
               Log in
             </Link>
@@ -313,7 +313,7 @@ export default function PublicHomeClient() {
             “Vaulted”
           </div>
 
-          <h1 className="mx-auto mt-7 max-w-3xl text-5xl font-black leading-[0.96] tracking-[-0.06em] text-white sm:text-6xl lg:text-7xl">
+          <h1 className="mx-auto mt-7 max-w-3xl text-5xl font-black leading-[0.96] tracking-[-0.06em] text-text-primary sm:text-6xl lg:text-7xl">
             The vault for <span className="text-[color:var(--accent)]">serious collectors.</span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[color:var(--muted)]">
@@ -330,7 +330,7 @@ export default function PublicHomeClient() {
             </Link>
             <Link
               href="#public-galleries"
-              className="inline-flex h-14 items-center justify-center rounded-full border border-[color:var(--border)] bg-[rgba(10,22,39,0.72)] px-8 text-base font-semibold text-[color:var(--muted)] transition hover:text-white"
+              className="inline-flex h-14 items-center justify-center rounded-full border border-[color:var(--border)] bg-[rgba(10,22,39,0.72)] px-8 text-base font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
             >
               Browse public galleries →
             </Link>
@@ -348,7 +348,7 @@ export default function PublicHomeClient() {
               <div className="mb-3 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[rgba(82,214,244,0.22)] bg-[rgba(82,214,244,0.10)] text-[color:var(--accent)]">
                 {feature.icon}
               </div>
-              <div className="text-sm font-black text-white">{feature.title}</div>
+              <div className="text-sm font-black text-text-primary">{feature.title}</div>
               <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">
                 {feature.description}
               </p>
@@ -362,7 +362,7 @@ export default function PublicHomeClient() {
           <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted2)]">
             Vault Universes
           </div>
-          <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-white">
+          <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-text-primary">
             Every category. One vault.
           </h2>
           <p className="mt-3 text-base leading-7 text-[color:var(--muted)]">
@@ -380,7 +380,7 @@ export default function PublicHomeClient() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-sm font-black text-white">
+                  <div className="text-sm font-black text-text-primary">
                     <span className="mr-2">{universe.icon}</span>
                     {universe.title}
                   </div>
@@ -412,7 +412,7 @@ export default function PublicHomeClient() {
             <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted2)]">
               Public Galleries
             </div>
-            <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-white">
+            <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-text-primary">
               Your collection, displayed like it deserves.
             </h2>
             <p className="mt-3 text-base leading-7 text-[color:var(--muted)]">
@@ -433,7 +433,7 @@ export default function PublicHomeClient() {
         <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted2)]">
           Why VLTD
         </div>
-        <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-white">
+        <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-text-primary">
           Every other app does one thing.
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-base leading-7 text-[color:var(--muted)]">
@@ -470,7 +470,7 @@ export default function PublicHomeClient() {
         <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted2)]">
           Get Started
         </div>
-        <h2 className="mx-auto mt-2 max-w-2xl text-4xl font-black leading-tight tracking-[-0.05em] text-white">
+        <h2 className="mx-auto mt-2 max-w-2xl text-4xl font-black leading-tight tracking-[-0.05em] text-text-primary">
           Your collection deserves a real home.
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-[color:var(--muted)]">
@@ -486,7 +486,7 @@ export default function PublicHomeClient() {
           </Link>
           <Link
             href="/login"
-            className="inline-flex h-14 items-center justify-center rounded-full border border-[color:var(--border)] px-8 text-base font-semibold text-[color:var(--muted)] transition hover:text-white"
+            className="inline-flex h-14 items-center justify-center rounded-full border border-[color:var(--border)] px-8 text-base font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
           >
             Already have an account
           </Link>
@@ -497,9 +497,9 @@ export default function PublicHomeClient() {
         <div className="mx-auto flex max-w-7xl flex-col gap-3 text-sm text-[color:var(--muted2)] sm:flex-row sm:items-center sm:justify-between">
           <BrandMark />
           <div className="flex gap-5">
-            <Link href="/login" className="hover:text-white">Log in</Link>
-            <Link href="/signup" className="hover:text-white">Sign up</Link>
-            <Link href="#public-galleries" className="hover:text-white">Galleries</Link>
+            <Link href="/login" className="hover:text-text-primary">Log in</Link>
+            <Link href="/signup" className="hover:text-text-primary">Sign up</Link>
+            <Link href="#public-galleries" className="hover:text-text-primary">Galleries</Link>
           </div>
           <div className="italic">© 2026 VLTD. Pronounced “Vaulted.”</div>
         </div>

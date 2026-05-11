@@ -429,7 +429,7 @@ function VaultCard({
       <div className="absolute right-1.5 top-1.5 z-20 hidden items-center gap-1 group-hover:flex">
         <Link
           href={detailHref}
-          className="inline-flex h-6 items-center justify-center rounded-full bg-black/70 px-2 text-[10px] text-white ring-1 ring-white/10 backdrop-blur"
+          className="inline-flex h-6 items-center justify-center rounded-full bg-black/70 px-2 text-[10px] text-text-primary ring-1 ring-white/10 backdrop-blur"
         >
           Edit
         </Link>
@@ -437,7 +437,7 @@ function VaultCard({
           type="button"
           onClick={handleDelete}
           disabled={isDeleting}
-          className="inline-flex h-6 items-center justify-center rounded-full bg-red-600/90 px-2 text-[10px] text-white ring-1 ring-red-500/40"
+          className="inline-flex h-6 items-center justify-center rounded-full bg-red-600/90 px-2 text-[10px] text-text-primary ring-1 ring-red-500/40"
         >
           {isDeleting ? "..." : "Delete"}
         </button>
@@ -465,7 +465,7 @@ function VaultCard({
       </Link>
 
       <Link href={detailHref} className="mt-2 min-w-0">
-        <div className="line-clamp-1 text-[13px] font-extrabold leading-tight text-white sm:text-[14px]">
+        <div className="line-clamp-1 text-[13px] font-extrabold leading-tight text-text-primary sm:text-[14px]">
           {item.title}
         </div>
         <div className="mt-0.5 line-clamp-1 text-[10px] font-medium text-cyan-100/55">
@@ -494,7 +494,7 @@ function VaultCard({
             <button
               type="button"
               onClick={() => setEditingField("value")}
-              className="block text-left text-[13px] font-extrabold leading-none text-white hover:text-cyan-300"
+              className="block text-left text-[13px] font-extrabold leading-none text-text-primary hover:text-cyan-300"
             >
               {formatMoney(marketValue)}
             </button>

@@ -26,7 +26,7 @@ export default function SalesHistoryPage() {
 
       <div className="grid gap-4">
         {sales.length === 0 && (
-          <div className="text-sm text-gray-400">
+          <div className="text-sm text-text-secondary">
             No sales recorded yet.
           </div>
         )}

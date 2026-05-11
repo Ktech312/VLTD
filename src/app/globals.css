@@ -1,157 +1,284 @@
 /* Path: src/app/globals.css */
 @import "tailwindcss";
-/* Inter loaded via next/font/google in layout.tsx → var(--font-inter) */
 
 /* =========================================================
-   VLTD DESIGN SYSTEM — Premium Collectibles
-   Palette : Deep Black + Metallic Gold
-   Data    : Cyan (#52D6F4) reserved ONLY for prices/numbers
+   TAILWIND v4 DESIGN TOKENS
+   Single source of truth — edit here, classes update everywhere.
+   Colors:  bg-gold, text-gold, border-gold-border, etc.
+   Shadows: shadow-card, shadow-gold, shadow-elevated
+   Radius:  rounded-sm(6), rounded-DEFAULT(10), rounded-lg(14), rounded-xl(20)
+========================================================= */
+
+@theme {
+  /* Gold palette */
+  --color-gold: #F5B548;
+  --color-gold-light: #FFE08A;
+  --color-gold-dark: #8B6914;
+  --color-gold-mid: #C8941F;
+  --color-gold-subtle: rgba(245,181,72,0.15);
+  --color-gold-border: rgba(245,181,72,0.3);
+
+  /* Vault surfaces */
+  --color-vault-base: #0B0B0B;
+  --color-vault-card: #141414;
+  --color-vault-elevated: #1E1E1E;
+  --color-vault-border: #2A2418;
+
+  /* Text scale */
+  --color-text-primary: #F0EAD6;
+  --color-text-secondary: #A0956B;
+  --color-text-muted: #5A5040;
+
+  /* Data / status — cyan reserved for prices & numbers only */
+  --color-data: #52D6F4;
+  --color-gain: #4CAF82;
+  --color-loss: #E05252;
+
+  /* Shadows */
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.6);
+  --shadow-gold: 0 0 20px rgba(245,181,72,0.25), 0 0 40px rgba(245,181,72,0.1);
+  --shadow-elevated: 0 8px 40px rgba(0,0,0,0.8);
+
+  /* Border radius */
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Typography */
+  --font-family-sans: var(--font-inter, Inter), sans-serif;
+}
+
+/* =========================================================
+   VLTD THEME SYSTEM
+   Mode: Light / Dark
+   Palette: Gold / Deep Vault
+   Goal: Premium collectibles — metallic gold, deep black, warm depth
 ========================================================= */
 
 :root {
-  /* ── Layout ──────────────────────────────────────────── */
-  --topnav-h:    72px;
-  --bottomnav-h: 64px;
+  --radius: 999px;
+
+  /* ✅ Reserve TopNav height so content never jumps */
+  --topnav-h: 72px;
+
+  /* Reserve BottomNav height so content clears it on mobile */
+  --bottomnav-h: 68px;
+
+  /* ---------------------------------------------------------
+     NAV / SHELL VARS
+     - AppShellEffects sets --topnav-shift ("0%" or "-110%")
+  --------------------------------------------------------- */
   --topnav-shift: 0%;
 
-  /* ── Base backgrounds ────────────────────────────────── */
-  --bg-base:        #0B0B0B;
-  --bg-card:        #141414;
-  --bg-card-hover:  #1A1A1A;
-  --bg-card-border: #2A2418;
-  --bg-elevated:    #1E1E1E;
+  /* ---------------------------------------------------------
+     PALETTE — Gold System
+  --------------------------------------------------------- */
+  --accent: #F5B548;   /* Gold — primary accent everywhere */
+  --accent-2: #C8941F; /* Dark gold — depth / secondary */
 
-  /* ── Metallic gold — NEVER use flat colour ───────────── */
-  --gold:          #F5B548;
-  --gold-gradient: linear-gradient(135deg, #8B6914 0%, #C8941F 25%, #F5B548 50%, #FFE08A 70%, #C8941F 100%);
-  --gold-subtle:   rgba(245, 181, 72, 0.15);
-  --gold-border:   rgba(245, 181, 72, 0.30);
-  --gold-glow:     0 0 20px rgba(245, 181, 72, 0.25), 0 0 40px rgba(245, 181, 72, 0.10);
-  --gold-text:     linear-gradient(135deg, #C8941F, #F5B548, #FFE08A, #F5B548);
-  --gold-shimmer:  linear-gradient(105deg, transparent 40%, rgba(255, 224, 138, 0.40) 50%, transparent 60%);
+  /* Cyan kept ONLY for prices, data values, and market numbers */
+  --data-color: #52d6f4;
+  --warm-gray: #A0956B; /* secondary / muted text */
 
-  /* ── Cyan — prices & data numbers ONLY ──────────────── */
-  --data-cyan:  #52D6F4;
+  /* ---------------------------------------------------------
+     LIGHT MODE BASE
+  --------------------------------------------------------- */
+  --bg: #f6f6f6; /* White Smoke */
+  --surface: #ffffff; /* cards/topbar */
+  --surface-strong: #f0f0f0; /* drawers/strong surfaces */
 
-  /* ── Text hierarchy ──────────────────────────────────── */
-  --text-primary:   #F0EAD6;
-  --text-secondary: #A0956B;
-  --text-muted:     #5A5040;
-  --text-inverse:   #0B0B0B;
+  --fg: #171717;
+  --muted: rgba(0, 0, 0, 0.62);
+  --muted2: rgba(0, 0, 0, 0.38);
 
-  /* ── Status ──────────────────────────────────────────── */
-  --gain-green: #4CAF82;
-  --loss-red:   #E05252;
+  /* Borders / dividers / shadows */
+  --border: rgba(0, 0, 0, 0.14);
+  --border-strong: rgba(0, 0, 0, 0.22);
+  --divider: rgba(0, 0, 0, 0.1);
 
-  /* ── Borders ─────────────────────────────────────────── */
-  --border-default: #2A2418;
-  --border-gold:    rgba(245, 181, 72, 0.30);
-  --border-subtle:  rgba(255, 255, 255, 0.05);
+  --shadow-soft: 0 1px 0 rgba(0, 0, 0, 0.04);
+  --shadow-pill: 0 10px 24px rgba(0, 0, 0, 0.1);
 
-  /* ── Shadows ─────────────────────────────────────────── */
-  --shadow-card:     0 4px 24px rgba(0, 0, 0, 0.60);
-  --shadow-gold:     0 0 20px rgba(245, 181, 72, 0.25);
-  --shadow-elevated: 0 8px 40px rgba(0, 0, 0, 0.80);
+  /* ---------------------------------------------------------
+     PILLS (Apple-like)
+  --------------------------------------------------------- */
+  --pill: rgba(0, 0, 0, 0.04);
+  --pill-hover: rgba(0, 0, 0, 0.07);
 
-  /* ── Backwards-compat aliases (used by existing components) ── */
-  --accent:          #F5B548;
-  --accent-2:        #C8941F;
-  --data-color:      #52D6F4;
-  --warm-gray:       #A0956B;
-  --bg:              #0B0B0B;
-  --fg:              #F0EAD6;
-  --muted:           #A0956B;
-  --muted2:          #5A5040;
-  --surface:         rgba(20, 20, 20, 0.92);
-  --surface-strong:  rgba(26, 26, 26, 0.98);
-  --border:          rgba(255, 255, 255, 0.08);
-  --border-strong:   rgba(255, 255, 255, 0.14);
-  --divider:         rgba(255, 255, 255, 0.06);
-  --shadow-soft:     0 1px 0 rgba(0, 0, 0, 0.40);
-  --shadow-pill:     0 10px 24px rgba(0, 0, 0, 0.55);
-  --pill:            rgba(255, 255, 255, 0.06);
-  --pill-hover:      rgba(255, 255, 255, 0.10);
-  --pill-fg:         rgba(255, 255, 255, 0.92);
-  --pill-fg-muted:   rgba(255, 255, 255, 0.50);
-  --pill-active-bg:  rgba(245, 181, 72, 0.12);
-  --pill-active-fg:  #F5B548;
-  --pill-active-ring: rgba(245, 181, 72, 0.55);
-  --pill-glow-soft:  rgba(245, 181, 72, 0.20);
-  --pill-glow-mid:   rgba(245, 181, 72, 0.35);
-  --pill-glow-strong: rgba(245, 181, 72, 0.55);
-  --frame-glow-soft:  rgba(245, 181, 72, 0.12);
-  --frame-glow-mid:   rgba(245, 181, 72, 0.22);
-  --frame-glow-strong: rgba(245, 181, 72, 0.36);
-  --frame-ring:       rgba(245, 181, 72, 0.28);
-  --input:            rgba(255, 255, 255, 0.06);
-  --input-hover:      rgba(255, 255, 255, 0.10);
-  --link:             #F5B548;
-  --link-hover:       #FFE08A;
-  --accent-soft:      rgba(245, 181, 72, 0.18);
-  --table-row-hover:  rgba(255, 255, 255, 0.04);
+  --pill-fg: rgba(0, 0, 0, 0.82);
+  --pill-fg-muted: rgba(0, 0, 0, 0.62);
 
-  /* ── Safe-area insets ────────────────────────────────── */
+  /* Active pill stays readable and neutral, glow comes from outline */
+  --pill-active-bg: color-mix(in srgb, var(--surface) 97%, var(--accent) 3%);
+  --pill-active-fg: var(--fg);
+  --pill-active-ring: color-mix(in srgb, var(--accent) 82%, transparent);
+  --pill-glow-soft: color-mix(in srgb, var(--accent) 28%, transparent);
+  --pill-glow-mid: color-mix(in srgb, var(--accent) 40%, transparent);
+  --pill-glow-strong: color-mix(in srgb, var(--accent) 56%, transparent);
+
+  /* Major frame glow */
+  --frame-glow-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  --frame-glow-mid: color-mix(in srgb, var(--accent) 24%, transparent);
+  --frame-glow-strong: color-mix(in srgb, var(--accent) 34%, transparent);
+  --frame-ring: color-mix(in srgb, var(--accent) 34%, var(--border) 66%);
+
+  /* Inputs */
+  --input: rgba(0, 0, 0, 0.035);
+  --input-hover: rgba(0, 0, 0, 0.06);
+
+  /* Links + focus */
+  --link: color-mix(in srgb, var(--accent) 92%, black 8%);
+  --link-hover: color-mix(in srgb, var(--accent) 92%, black 18%);
+  --accent-soft: color-mix(in srgb, var(--accent) 35%, transparent);
+
+  /* Tables / rows */
+  --table-row-hover: rgba(0, 0, 0, 0.03);
+
+  /* Subtle “glow” layer — warm gold depth, not flat */
+  --bg-glow: radial-gradient(
+      ellipse 90% 50% at 50% -8%,
+      color-mix(in srgb, var(--accent) 8%, transparent),
+      transparent 65%
+    ),
+    radial-gradient(
+      ellipse 60% 35% at 80% 110%,
+      color-mix(in srgb, var(--accent-2) 5%, transparent),
+      transparent 60%
+    );
+
+  /* =========================================================
+     MOBILE / TOUCH WINS (global)
+  ========================================================= */
+
+  /* safe-area helpers (iPhone notch/home bar) */
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
   --safe-l: env(safe-area-inset-left, 0px);
   --safe-r: env(safe-area-inset-right, 0px);
 }
 
-/* Mobile: topbar (60px) + search row (42px) */
+/* Mobile: main bar (56px) + slim search row (46px) */
 @media (max-width: 767px) {
-  :root { --topnav-h: 102px; }
+  :root {
+    --topnav-h: 102px;
+  }
 }
 
-/* App is dark-first; .dark kept for ThemeBoot compatibility */
+/* =========================================================
+   DARK MODE
+========================================================= */
+
 .dark {
-  --bg:            #0B0B0B;
-  --surface:       rgba(20, 20, 20, 0.92);
+  --bg: #0B0B0B;
+  --surface: rgba(20, 20, 20, 0.92);
   --surface-strong: rgba(26, 26, 26, 0.98);
+
+  --fg: #ededed;
+  --muted: rgba(255, 255, 255, 0.72);
+  --muted2: rgba(255, 255, 255, 0.44);
+
+  --border: rgba(255, 255, 255, 0.14);
+  --border-strong: rgba(255, 255, 255, 0.22);
+  --divider: rgba(255, 255, 255, 0.1);
+
+  --shadow-soft: 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-pill: 0 16px 34px rgba(0, 0, 0, 0.55);
+
+  --pill: rgba(255, 255, 255, 0.07);
+  --pill-hover: rgba(255, 255, 255, 0.12);
+
+  --pill-fg: rgba(255, 255, 255, 0.92);
+  --pill-fg-muted: rgba(255, 255, 255, 0.7);
+
+  /* Active pill stays readable and neutral, glow comes from outline */
+  --pill-active-bg: color-mix(in srgb, var(--surface) 94%, var(--accent) 6%);
+  --pill-active-fg: var(--fg);
+  --pill-active-ring: color-mix(in srgb, var(--accent) 86%, transparent);
+  --pill-glow-soft: color-mix(in srgb, var(--accent) 34%, transparent);
+  --pill-glow-mid: color-mix(in srgb, var(--accent) 48%, transparent);
+  --pill-glow-strong: color-mix(in srgb, var(--accent) 64%, transparent);
+
+  /* Major frame glow */
+  --frame-glow-soft: color-mix(in srgb, var(--accent) 22%, transparent);
+  --frame-glow-mid: color-mix(in srgb, var(--accent) 32%, transparent);
+  --frame-glow-strong: color-mix(in srgb, var(--accent) 44%, transparent);
+  --frame-ring: color-mix(in srgb, var(--accent) 42%, var(--border) 58%);
+
+  --input: rgba(255, 255, 255, 0.06);
+  --input-hover: rgba(255, 255, 255, 0.1);
+
+  --link: color-mix(in srgb, var(--accent) 92%, white 8%);
+  --link-hover: color-mix(in srgb, var(--accent) 92%, white 18%);
+  --accent-soft: color-mix(in srgb, var(--accent) 45%, transparent);
+
+  --table-row-hover: rgba(255, 255, 255, 0.05);
+
+  /* Deep vault — warm gold haze over pure black */
+  --bg-glow: radial-gradient(
+      ellipse 100% 55% at 50% -10%,
+      color-mix(in srgb, var(--accent) 10%, transparent),
+      transparent 68%
+    ),
+    radial-gradient(
+      ellipse 55% 30% at 88% 105%,
+      color-mix(in srgb, var(--accent-2) 7%, transparent),
+      transparent 58%
+    );
 }
 
-/* Theme palette aliases — legacy support */
-.theme-mirror { --accent: #F5B548; --accent-2: #C8941F; }
-.theme-purple  { --accent: #E8A820; --accent-2: #F5B548; }
+/* =========================================================
+   PALETTE: GOLD (primary — warm gold forward)
+========================================================= */
+
+.theme-mirror {
+  --accent: #F5B548;   /* Gold */
+  --accent-2: #C8941F; /* Dark gold */
+}
+
+/* =========================================================
+   PALETTE: DEEP GOLD (rich, darker)
+========================================================= */
+
+.theme-purple {
+  --accent: #E8A820;   /* Deeper gold */
+  --accent-2: #F5B548; /* Bright gold */
+}
 
 /* =========================================================
    GLOBAL BASE
 ========================================================= */
 
-html, body { height: 100%; }
+html,
+body {
+  height: 100%;
+}
 
+/* Prevent iOS “focus zoom” by ensuring >=16px font-size on inputs */
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   scroll-behavior: smooth;
 }
 
+/* Better tap behavior on mobile */
 body {
-  background-color: #0B0B0B;
-  background-image: radial-gradient(
-    ellipse 80% 40% at 50% 0%,
-    rgba(245, 181, 72, 0.06) 0%,
-    transparent 70%
-  );
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-inter, Inter), system-ui, Arial, sans-serif;
+
+  /* calm, palette-aware depth without distraction */
+  background-image: var(--bg-glow);
   background-attachment: fixed;
-  color: var(--text-primary);
-  font-family: var(--font-inter, 'Inter'), system-ui, Arial, sans-serif;
+
+  /* iOS momentum scroll + less accidental sideways rubber-banding */
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: none;
   overscroll-behavior-y: contain;
+
+  /* fast taps; prevent 300ms delay on old browsers */
   touch-action: manipulation;
-}
-
-/* ── Universal card base ─────────────────────────────── */
-.vltd-card {
-  background: var(--bg-card);
-  border: 1px solid var(--bg-card-border);
-  box-shadow: var(--shadow-card);
-  border-radius: 12px;
-}
-
-.vltd-card:hover {
-  border-color: var(--border-gold);
-  box-shadow: var(--shadow-card), var(--shadow-gold);
 }
 
 /* Make form controls inherit theme colors */
@@ -180,85 +307,6 @@ input,
 select,
 textarea {
   font-size: 16px; /* iOS no-zoom */
-}
-
-/* =========================================================
-   GLOBAL BUTTON SYSTEM
-========================================================= */
-
-/* Primary — gold metallic */
-.btn-primary,
-button[data-variant="primary"] {
-  background: var(--gold-gradient);
-  color: #0B0B0B;
-  font-weight: 600;
-  border: none;
-  border-radius: 8px;
-  box-shadow: var(--shadow-gold);
-  transition: filter 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
-}
-.btn-primary:hover,
-button[data-variant="primary"]:hover {
-  filter: brightness(1.1);
-  box-shadow: var(--shadow-gold), 0 0 40px rgba(245, 181, 72, 0.20);
-  transform: translateY(-1px);
-}
-
-/* Secondary — outlined gold */
-.btn-secondary,
-button[data-variant="secondary"] {
-  background: transparent;
-  border: 1px solid var(--border-gold);
-  color: var(--gold);
-  font-weight: 500;
-  border-radius: 8px;
-  transition: background 0.2s ease;
-}
-.btn-secondary:hover,
-button[data-variant="secondary"]:hover {
-  background: var(--gold-subtle);
-}
-
-/* ── Gold text shimmer utility ────────────────────────── */
-.vltd-gold-text {
-  background: var(--gold-text);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* ── Gold button shimmer utility ──────────────────────── */
-.vltd-gold-btn {
-  background: var(--gold-gradient);
-  background-size: 200% 100%;
-  background-position: 0% 0%;
-  color: #0B0B0B;
-  font-weight: 700;
-  transition: background-position 0.4s ease, box-shadow 0.25s ease, transform 0.15s ease;
-}
-.vltd-gold-btn:hover {
-  background-position: 100% 0%;
-  box-shadow: 0 16px 48px rgba(245, 181, 72, 0.45), 0 4px 14px rgba(245, 181, 72, 0.25),
-              inset 0 1px 0 rgba(255, 255, 255, 0.30);
-  transform: translateY(-1px);
-}
-.vltd-gold-btn:active { transform: translateY(0); }
-
-/* ── Gold glow border utility ─────────────────────────── */
-.vltd-gold-glow {
-  border-color: var(--border-gold) !important;
-  box-shadow: var(--shadow-gold) !important;
-}
-
-/* ── Data / price — cyan kept here ONLY ──────────────── */
-.vltd-price,
-.vltd-data { color: var(--data-cyan); }
-
-/* ── Bottom nav content clearance (mobile) ───────────── */
-@media (max-width: 767px) {
-  .vltd-content-wrap {
-    padding-bottom: calc(var(--bottomnav-h) + env(safe-area-inset-bottom, 0px));
-  }
 }
 
 /* Accessible focus ring that matches palette */
@@ -457,7 +505,7 @@ hr {
   -webkit-user-select: none;
 }
 
-/* Better "tap target" baseline */
+/* Better “tap target” baseline */
 .tap-44 {
   min-height: 44px;
   min-width: 44px;
@@ -1622,4 +1670,187 @@ hr {
   }
 }
 
-/* (gold utilities defined above in GLOBAL BUTTON SYSTEM) */
+/* =========================================================
+   GOLD SYSTEM
+   Metallic gold utilities — use on buttons, headings, CTAs.
+   Never use flat #F5B548; always use the gradient system.
+========================================================= */
+
+/* Metallic gold text — gradient shimmer */
+.vltd-gold-text {
+  background: linear-gradient(
+    135deg,
+    #C8941F 0%,
+    #F5B548 32%,
+    #FFE08A 52%,
+    #F5B548 68%,
+    #C8941F 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Metallic gold button — multi-stop gradient with hover shimmer */
+.vltd-gold-btn {
+  background: linear-gradient(
+    135deg,
+    #8B6914 0%,
+    #C8941F 22%,
+    #F5B548 48%,
+    #FFE08A 62%,
+    #C8941F 82%,
+    #8B6914 100%
+  );
+  background-size: 200% 100%;
+  background-position: 0% 0%;
+  color: #1A0F00;
+  transition:
+    background-position 0.42s ease,
+    box-shadow 0.25s ease,
+    transform 0.15s ease;
+}
+
+.vltd-gold-btn:hover {
+  background-position: 100% 0%;
+  box-shadow:
+    0 16px 48px rgba(245, 181, 72, 0.48),
+    0 4px 14px rgba(245, 181, 72, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+.vltd-gold-btn:active {
+  transform: translateY(0);
+  box-shadow:
+    0 8px 24px rgba(245, 181, 72, 0.35),
+    0 2px 8px rgba(245, 181, 72, 0.20);
+}
+
+/* Gold glow for cards / borders */
+.vltd-gold-glow {
+  border-color: rgba(245, 181, 72, 0.30) !important;
+  box-shadow:
+    0 0 0 1px rgba(245, 181, 72, 0.18),
+    0 0 24px rgba(245, 181, 72, 0.12),
+    0 0 48px rgba(200, 148, 31, 0.08) !important;
+}
+
+.vltd-gold-glow:hover {
+  border-color: rgba(245, 181, 72, 0.45) !important;
+  box-shadow:
+    0 0 0 1px rgba(245, 181, 72, 0.28),
+    0 0 32px rgba(245, 181, 72, 0.18),
+    0 0 60px rgba(200, 148, 31, 0.12) !important;
+}
+
+/* Data / price color — cyan kept only for numeric market data */
+.vltd-price {
+  color: var(--data-color);
+}
+
+/* Bottom nav clearance — applied to main content wrapper on mobile */
+@media (max-width: 767px) {
+  .vltd-content-wrap {
+    padding-bottom: calc(var(--bottomnav-h) + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* =========================================================
+   VLTD TOKEN UTILITY CLASSES
+   Use these instead of hardcoding colors anywhere.
+   Scroll down to find: gold-text, gold-shimmer, vault-card,
+   vault-card-gold, btn-gold, btn-gold-outline
+========================================================= */
+
+/* Metallic gold text — wraps text in a gold gradient */
+.gold-text {
+  background: linear-gradient(135deg, #C8941F, #F5B548, #FFE08A, #F5B548);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Shimmer sweep animation — add to buttons, badges, any gold surface */
+.gold-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.gold-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,224,138,0.4) 50%, transparent 60%);
+  animation: vltd-shimmer 3s infinite;
+}
+@keyframes vltd-shimmer {
+  0%   { left: -100%; }
+  100% { left: 200%; }
+}
+
+/* Background image utilities (defined explicitly for Tailwind v4 compatibility) */
+.bg-gold-gradient {
+  background-image: linear-gradient(135deg, #8B6914 0%, #C8941F 25%, #F5B548 50%, #FFE08A 70%, #C8941F 100%);
+}
+.bg-gold-gradient-text {
+  background-image: linear-gradient(135deg, #C8941F, #F5B548, #FFE08A);
+}
+.bg-vault-base-glow {
+  background-image: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(245,181,72,0.06) 0%, transparent 70%);
+}
+.bg-card-overlay {
+  background-image: linear-gradient(to top, rgba(11,11,11,0.9) 0%, transparent 60%);
+}
+
+/* Standard vault card */
+.vault-card {
+  background: #141414;
+  border: 1px solid #2A2418;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+}
+
+/* Gold-accented card — for featured / highlighted items */
+.vault-card-gold {
+  background: #141414;
+  border: 1px solid rgba(245,181,72,0.3);
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 0 20px rgba(245,181,72,0.1);
+}
+
+/* Primary gold gradient button */
+.btn-gold {
+  background: linear-gradient(135deg, #8B6914 0%, #C8941F 25%, #F5B548 50%, #FFE08A 70%, #C8941F 100%);
+  color: #0B0B0B;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(245,181,72,0.25);
+  transition: filter 0.2s, box-shadow 0.2s;
+}
+.btn-gold:hover {
+  filter: brightness(1.12);
+  box-shadow: 0 0 30px rgba(245,181,72,0.4);
+}
+
+/* Outline gold button */
+.btn-gold-outline {
+  background: transparent;
+  border: 1px solid rgba(245,181,72,0.3);
+  color: #F5B548;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.btn-gold-outline:hover {
+  background: rgba(245,181,72,0.1);
+  box-shadow: 0 0 16px rgba(245,181,72,0.15);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #141414; }
+::-webkit-scrollbar-thumb { background: #2A2418; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(245,181,72,0.4); }

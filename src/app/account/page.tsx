@@ -87,7 +87,7 @@ export default function AccountPage() {
               <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)]">
                 Account
               </div>
-              <h1 className="mt-3 text-4xl font-black leading-[0.98] tracking-[-0.055em] text-white sm:text-5xl">
+              <h1 className="mt-3 text-4xl font-black leading-[0.98] tracking-[-0.055em] text-text-primary sm:text-5xl">
                 Account settings
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-7 text-[color:var(--muted)]">
@@ -107,7 +107,7 @@ export default function AccountPage() {
 
               <div className="mt-6 grid gap-4">
                 <label className="block">
-                  <span className="text-sm font-semibold text-white">Display name</span>
+                  <span className="text-sm font-semibold text-text-primary">Display name</span>
                   <input
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
@@ -117,7 +117,7 @@ export default function AccountPage() {
                 </label>
 
                 <label className="block">
-                  <span className="text-sm font-semibold text-white">Username</span>
+                  <span className="text-sm font-semibold text-text-primary">Username</span>
                   <input
                     value={username}
                     onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]+/g, "_"))}
@@ -133,8 +133,8 @@ export default function AccountPage() {
                     className={[
                       "rounded-2xl border p-4 text-left transition",
                       profileType === "personal"
-                        ? "border-[rgba(82,214,244,0.42)] bg-[rgba(82,214,244,0.12)] text-white"
-                        : "border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] text-[color:var(--muted)] hover:text-white",
+                        ? "border-[rgba(82,214,244,0.42)] bg-[rgba(82,214,244,0.12)] text-text-primary"
+                        : "border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] text-[color:var(--muted)] hover:text-text-primary",
                     ].join(" ")}
                   >
                     <div className="text-sm font-black">Collector</div>
@@ -146,8 +146,8 @@ export default function AccountPage() {
                     className={[
                       "rounded-2xl border p-4 text-left transition",
                       profileType === "business"
-                        ? "border-[rgba(82,214,244,0.42)] bg-[rgba(82,214,244,0.12)] text-white"
-                        : "border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] text-[color:var(--muted)] hover:text-white",
+                        ? "border-[rgba(82,214,244,0.42)] bg-[rgba(82,214,244,0.12)] text-text-primary"
+                        : "border-[color:var(--border)] bg-[rgba(7,16,31,0.42)] text-[color:var(--muted)] hover:text-text-primary",
                     ].join(" ")}
                   >
                     <div className="text-sm font-black">Business</div>
@@ -156,7 +156,7 @@ export default function AccountPage() {
                 </div>
 
                 <label className="block">
-                  <span className="text-sm font-semibold text-white">Primary focus</span>
+                  <span className="text-sm font-semibold text-text-primary">Primary focus</span>
                   <input
                     value={primaryFocus}
                     onChange={(e) => setPrimaryFocus(e.target.value)}
@@ -185,19 +185,19 @@ export default function AccountPage() {
               <div className="mt-5 grid gap-3">
                 <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(9,20,36,0.70)] p-4">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Name</div>
-                  <div className="mt-1 font-black text-white">{displayName || "Not set"}</div>
+                  <div className="mt-1 font-black text-text-primary">{displayName || "Not set"}</div>
                 </div>
                 <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(9,20,36,0.70)] p-4">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Handle</div>
-                  <div className="mt-1 font-black text-white">@{username || "username"}</div>
+                  <div className="mt-1 font-black text-text-primary">@{username || "username"}</div>
                 </div>
                 <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(9,20,36,0.70)] p-4">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Type</div>
-                  <div className="mt-1 font-black text-white">{profileType === "business" ? "Business" : "Collector"}</div>
+                  <div className="mt-1 font-black text-text-primary">{profileType === "business" ? "Business" : "Collector"}</div>
                 </div>
                 <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(9,20,36,0.70)] p-4">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Focus</div>
-                  <div className="mt-1 font-black text-white">{primaryFocus || "Not set"}</div>
+                  <div className="mt-1 font-black text-text-primary">{primaryFocus || "Not set"}</div>
                 </div>
               </div>
             </aside>

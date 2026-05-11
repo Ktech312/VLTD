@@ -202,7 +202,7 @@ export default function InsuranceExportPage() {
 
         <section className="card rounded-[30px] border border-[rgba(82,214,244,0.28)] bg-[linear-gradient(180deg,rgba(18,38,66,0.94),rgba(8,18,32,0.96))] p-5 shadow-[0_26px_86px_rgba(82,214,244,0.10),0_24px_88px_rgba(0,0,0,0.32)] sm:p-6">
           <div className="insurance-eyebrow text-[11px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">Insurance Inventory</div>
-          <h1 className="insurance-title mt-2 text-3xl font-black tracking-[-0.045em] text-white">Vault Inventory Report</h1>
+          <h1 className="insurance-title mt-2 text-3xl font-black tracking-[-0.045em] text-text-primary">Vault Inventory Report</h1>
           <div className="insurance-summary mt-2 text-sm text-[color:var(--muted)]">
             Generated {new Date().toLocaleString()} • Included {selectedItems.length} of {items.length} items • Total Value {fmtMoney(totals.value)} • Total Cost {fmtMoney(totals.cost)}
           </div>
@@ -242,7 +242,7 @@ export default function InsuranceExportPage() {
                           />
                         </td>
                         <td className="py-3 pl-4 pr-3" colSpan={9}>
-                          <div className="font-black text-white">{i.title}</div>
+                          <div className="font-black text-text-primary">{i.title}</div>
                           <div className="mt-0.5 text-xs text-[color:var(--muted)]">Excluded from insurance packet.</div>
                         </td>
                       </tr>
@@ -261,7 +261,7 @@ export default function InsuranceExportPage() {
                         />
                       </td>
                       <td className="py-3 pl-4 pr-3">
-                        <div className="item-title font-black text-white">{i.title}</div>
+                        <div className="item-title font-black text-text-primary">{i.title}</div>
                         <div className="item-subtitle mt-0.5 text-xs text-[color:var(--muted)]">
                           {i.subtitle ? `${i.subtitle} • ` : ""}
                           {i.number ?? ""}
@@ -277,8 +277,8 @@ export default function InsuranceExportPage() {
                       <td className="py-3 pr-3">{i.certNumber ?? ""}</td>
                       <td className="py-3 pr-3">{i.serialNumber ?? ""}</td>
                       <td className="py-3 pr-3">{i.storageLocation ?? ""}</td>
-                      <td className="py-3 pr-3 font-semibold text-white">{fmtMoney(Number(i.purchasePrice ?? 0))}</td>
-                      <td className="py-3 pr-3 font-semibold text-white">{fmtMoney(Number(i.currentValue ?? 0))}</td>
+                      <td className="py-3 pr-3 font-semibold text-text-primary">{fmtMoney(Number(i.purchasePrice ?? 0))}</td>
+                      <td className="py-3 pr-3 font-semibold text-text-primary">{fmtMoney(Number(i.currentValue ?? 0))}</td>
                       <td className="py-3 pr-4 text-xs text-[color:var(--muted)]">
                         <div>{(i as any).valueSource ?? ""}</div>
                         <div className="muted-print">
