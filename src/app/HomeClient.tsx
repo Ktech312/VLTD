@@ -3,7 +3,13 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
-import { PackagePlus } from "lucide-react";
+function IconPackagePlus({ size = 24, style }: { size?: number; style?: Record<string, string | number> }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+      <path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" y1="22" x2="12" y2="12"/><line x1="19" y1="3" x2="19" y2="9"/><line x1="22" y1="6" x2="16" y2="6"/>
+    </svg>
+  );
+}
 import { useRouter } from "next/navigation";
 import { getOnboardingStatus } from "@/lib/auth";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
@@ -394,7 +400,7 @@ export default function HomeClient() {
                   className="mt-3 flex flex-col items-center rounded-2xl border border-dashed px-4 py-6 text-center"
                   style={{ borderColor: "rgba(245,181,72,0.15)" }}
                 >
-                  <PackagePlus size={28} style={{ color: "#A0956B", opacity: 0.6 }} />
+                  <IconPackagePlus size={28} style={{ color: "#A0956B", opacity: 0.6 }} />
                   <p className="mt-2 text-sm font-semibold" style={{ color: "#A0956B" }}>
                     Start building your collection
                   </p>
