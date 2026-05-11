@@ -29,60 +29,148 @@ type Parsed = {
   grade?: string;
 };
 
+/* ── Icons ──────────────────────────────────────────────── */
+
+function IconHome({ active }: { active: boolean }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
+      <path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9.5Z"
+        stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
+        fill={active ? "rgba(245,181,72,0.14)" : "none"} />
+      <path d="M9 21V13h6v8" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconVault({ active }: { active: boolean }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
+      <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.75"
+        fill={active ? "rgba(245,181,72,0.10)" : "none"} />
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.75" />
+      <path d="M12 9v-2M12 17v-2M15 12h2M7 12h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconExhibitions({ active }: { active: boolean }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
+      <path d="M3 21h18" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+      <path d="M5 21V11M19 21V11" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+      <path d="M2 11h20" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+      <path d="M12 4 2 11h20L12 4Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
+        fill={active ? "rgba(245,181,72,0.12)" : "none"} />
+      <path d="M9 21v-5h6v5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconDiscover({ active }: { active: boolean }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
+      <circle cx="11" cy="11" r="7.5" stroke="currentColor" strokeWidth="1.75"
+        fill={active ? "rgba(245,181,72,0.10)" : "none"} />
+      <path d="M16.5 16.5 21 21" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+      <circle cx="11" cy="11" r="2.5" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  );
+}
+
+function IconActivity({ active }: { active: boolean }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
+      <rect x="3" y="13" width="3.5" height="8" rx="1" stroke="currentColor" strokeWidth="1.75"
+        fill={active ? "rgba(245,181,72,0.20)" : "rgba(160,149,107,0.14)"} />
+      <rect x="8.5" y="9" width="3.5" height="12" rx="1" stroke="currentColor" strokeWidth="1.75"
+        fill={active ? "rgba(245,181,72,0.20)" : "rgba(160,149,107,0.14)"} />
+      <rect x="14" y="5" width="3.5" height="16" rx="1" stroke="currentColor" strokeWidth="1.75"
+        fill={active ? "rgba(245,181,72,0.28)" : "rgba(160,149,107,0.14)"} />
+    </svg>
+  );
+}
+
+function IconWatchlist({ active }: { active: boolean }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
+      <path d="M12 21C12 21 3.5 14 3.5 8.5A4.5 4.5 0 0 1 12 6a4.5 4.5 0 0 1 8.5 2.5C20.5 14 12 21 12 21Z"
+        stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
+        fill={active ? "rgba(245,181,72,0.14)" : "none"} />
+    </svg>
+  );
+}
+
+function IconInsights({ active }: { active: boolean }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
+      <path d="M3 17l4.5-5.5 4 3.5 4.5-6 4.5 3.5"
+        stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3 20h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
+    </svg>
+  );
+}
+
 function IconSearch({ className = "h-4 w-4" }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <path
-        d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
-        stroke="currentColor"
-        strokeWidth="2"
-      />
-      <path
-        d="M16.4 16.4 21 21"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+      <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" strokeWidth="2" />
+      <path d="M16.4 16.4 21 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
 
-function IconVault({ className = "h-4 w-4" }: { className?: string }) {
+function IconBell() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <path d="M5 10h14v9H5z" stroke="currentColor" strokeWidth="2" />
-      <path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" strokeWidth="2" />
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: "#A0956B" }}>
+      <path d="M15 17H9a3 3 0 0 0 6 0Z" stroke="currentColor" strokeWidth="1.75" />
+      <path d="M4 17h16M12 3v1m0 0a7 7 0 0 1 7 7v3.5H5V11a7 7 0 0 1 7-7Z"
+        stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
     </svg>
   );
 }
 
-function IconMuseum({ className = "h-4 w-4" }: { className?: string }) {
+function IconChevron({ size = 14 }: { size?: number }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <path d="M4 10h16" stroke="currentColor" strokeWidth="2" />
-      <path d="M6 10v8M12 10v8M18 10v8M3 18h18" stroke="currentColor" strokeWidth="2" />
-      <path
-        d="M12 4 4 8h16L12 4Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
-function IconChart({ className = "h-4 w-4" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <path
-        d="M5 19V9M12 19V5M19 19v-7"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
+/* ── Nav items ──────────────────────────────────────────── */
+
+const NAV_ITEMS = [
+  {
+    label: "Home",        href: "/",          icon: IconHome,        exact: true,
+    desc: "Your personal museum command center.",
+  },
+  {
+    label: "Vault",       href: "/vault",      icon: IconVault,       exact: false,
+    desc: "Your private collection inventory.",
+  },
+  {
+    label: "Exhibitions", href: "/museum",     icon: IconExhibitions, exact: false,
+    desc: "Curate and display collections for the world.",
+  },
+  {
+    label: "Discover",    href: "/discover",   icon: IconDiscover,    exact: false,
+    desc: "Find collectors, museums and inspiration.",
+  },
+  {
+    label: "Activity",    href: "/portfolio",  icon: IconActivity,    exact: false,
+    desc: "See updates, comments, appreciations and follows.",
+  },
+  {
+    label: "Watchlist",   href: "/wishlist",   icon: IconWatchlist,   exact: false,
+    desc: "Save pieces, collectors and exhibitions you love.",
+  },
+  {
+    label: "Insights",    href: "/portfolio",  icon: IconInsights,    exact: false,
+    desc: "Track value, growth, provenance and collection health.",
+  },
+];
+
+/* ── Helpers ────────────────────────────────────────────── */
 
 function normalize(s: string) {
   return s.trim().replace(/\s+/g, " ");
@@ -94,41 +182,24 @@ function parseQuerySmart(raw: string): Parsed {
   let leftover = s;
 
   const catMap: Record<string, string> = {
-    comics: "COMICS",
-    comic: "COMICS",
-    sports: "SPORTS",
-    sport: "SPORTS",
-    pokemon: "POKEMON",
-    "pokémon": "POKEMON",
-    mtg: "MTG",
-    magic: "MTG",
-    custom: "CUSTOM",
+    comics: "COMICS", comic: "COMICS", sports: "SPORTS", sport: "SPORTS",
+    pokemon: "POKEMON", "pokémon": "POKEMON", mtg: "MTG", magic: "MTG", custom: "CUSTOM",
   };
-
   for (const key of Object.keys(catMap)) {
     const re = new RegExp(`\\b${key}\\b`, "i");
-    if (re.test(leftover)) {
-      out.cat = catMap[key];
-      leftover = leftover.replace(re, " ");
-    }
+    if (re.test(leftover)) { out.cat = catMap[key]; leftover = leftover.replace(re, " "); }
   }
 
   const graders = ["cgc", "psa", "bgs", "sgc"];
   for (const g of graders) {
     const re = new RegExp(`\\b${g}\\b`, "i");
-    if (re.test(leftover)) {
-      out.graded = g.toUpperCase();
-      leftover = leftover.replace(re, " ");
-    }
+    if (re.test(leftover)) { out.graded = g.toUpperCase(); leftover = leftover.replace(re, " "); }
   }
 
   const gradeInline = leftover.match(/\b(\d{1,2}(?:\.\d)?)\b/);
   if (gradeInline?.[1]) {
     const maybe = gradeInline[1];
-    if (Number(maybe) >= 1 && Number(maybe) <= 10) {
-      out.grade = maybe;
-      leftover = leftover.replace(gradeInline[0], " ");
-    }
+    if (Number(maybe) >= 1 && Number(maybe) <= 10) { out.grade = maybe; leftover = leftover.replace(gradeInline[0], " "); }
   }
 
   const cleaned = normalize(leftover).trim();
@@ -136,14 +207,7 @@ function parseQuerySmart(raw: string): Parsed {
   return out;
 }
 
-function navPillClass(active: boolean) {
-  return [
-    "inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold ring-1 transition whitespace-nowrap",
-    active
-      ? "bg-[rgba(245,181,72,0.10)] text-[#F5B548] ring-[rgba(245,181,72,0.50)] shadow-[0_0_0_1px_rgba(245,181,72,0.12),0_0_16px_rgba(245,181,72,0.12)]"
-      : "bg-[rgba(255,255,255,0.04)] text-[color:var(--muted)] ring-[rgba(255,255,255,0.08)] hover:bg-[rgba(245,181,72,0.07)] hover:text-[#F5B548] hover:ring-[rgba(245,181,72,0.24)]",
-  ].join(" ");
-}
+/* ── Main component ─────────────────────────────────────── */
 
 function TopNavInner() {
   const pathname = usePathname();
@@ -153,6 +217,7 @@ function TopNavInner() {
   const [input, setInput] = useState("");
   const [userOpen, setUserOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const [searchExpanded, setSearchExpanded] = useState(false);
 
   const [signedIn, setSignedIn] = useState(false);
@@ -161,335 +226,401 @@ function TopNavInner() {
   const [activeProfileId, setActiveProfileId] = useState("");
 
   const userMenuRef = useRef<HTMLDivElement | null>(null);
+  const guideRef = useRef<HTMLDivElement | null>(null);
   const loadingAuthRef = useRef(false);
   const initializedRef = useRef(false);
 
   const activeProfile = useMemo(
-    () => profiles.find((profile) => profile.id === activeProfileId) ?? null,
+    () => profiles.find((p) => p.id === activeProfileId) ?? null,
     [profiles, activeProfileId]
   );
 
-  useEffect(() => {
-    setInput(sp.get("q") ?? "");
-  }, [sp]);
+  useEffect(() => { setInput(sp.get("q") ?? ""); }, [sp]);
 
   useEffect(() => {
     let active = true;
-
     initAuthListener();
 
     async function loadAuthState(reason: "initial" | "auth-change" = "initial") {
       if (loadingAuthRef.current) return;
       loadingAuthRef.current = true;
-
       try {
-        const {
-          data: { user },
-        } = await getCurrentUser();
-
+        const { data: { user } } = await getCurrentUser();
         if (!active) return;
-
         if (!user) {
-          setSignedIn(false);
-          setAccountEmail("");
-          setProfiles([]);
-          setActiveProfileId("");
-          initializedRef.current = true;
-          return;
+          setSignedIn(false); setAccountEmail(""); setProfiles([]); setActiveProfileId("");
+          initializedRef.current = true; return;
         }
-
-        setSignedIn(true);
-        setAccountEmail(user.email ?? "");
-
+        setSignedIn(true); setAccountEmail(user.email ?? "");
         const { data } = await listMyProfiles();
         if (!active) return;
-
         const nextProfiles = (data ?? []) as ProfileRow[];
         setProfiles(nextProfiles);
-
-        const stored =
-          typeof window !== "undefined"
-            ? localStorage.getItem(ACTIVE_PROFILE_KEY)
-            : "";
-
+        const stored = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_PROFILE_KEY) : "";
         const nextActive =
           nextProfiles.find((p) => p.id === stored)?.id ??
           nextProfiles.find((p) => p.username === "clerk")?.id ??
-          nextProfiles[0]?.id ??
-          "";
-
+          nextProfiles[0]?.id ?? "";
         setActiveProfileId(nextActive);
-
-        if (
-          typeof window !== "undefined" &&
-          nextActive &&
-          nextActive !== stored
-        ) {
+        if (typeof window !== "undefined" && nextActive && nextActive !== stored) {
           localStorage.setItem(ACTIVE_PROFILE_KEY, nextActive);
           window.dispatchEvent(new Event("vltd:active-profile"));
         }
-
-        if (reason === "initial") {
-          initializedRef.current = true;
-        }
+        if (reason === "initial") initializedRef.current = true;
       } finally {
         loadingAuthRef.current = false;
       }
     }
 
     void loadAuthState("initial");
-
     const { data: subscription } = onAuthStateChange(() => {
       if (!initializedRef.current) return;
       void loadAuthState("auth-change");
     });
-
-    return () => {
-      active = false;
-      subscription.subscription.unsubscribe();
-    };
+    return () => { active = false; subscription.subscription.unsubscribe(); };
   }, []);
 
   useEffect(() => {
     function handleOutside(event: MouseEvent) {
       const target = event.target as Node;
-      if (userMenuRef.current && !userMenuRef.current.contains(target)) {
-        setUserOpen(false);
-      }
+      if (userMenuRef.current && !userMenuRef.current.contains(target)) setUserOpen(false);
+      if (guideRef.current && !guideRef.current.contains(target)) setGuideOpen(false);
     }
-
-    if (userOpen) {
-      document.addEventListener("mousedown", handleOutside);
-    }
-
+    document.addEventListener("mousedown", handleOutside);
     return () => document.removeEventListener("mousedown", handleOutside);
-  }, [userOpen]);
+  }, []);
 
   function applySearch(raw: string) {
     const parsed = parseQuerySmart(raw);
     const params = new URLSearchParams();
-
     if (parsed.q) params.set("q", parsed.q);
     if (parsed.cat) params.set("cat", parsed.cat);
     if (parsed.graded) params.set("graded", parsed.graded);
     if (parsed.grade) params.set("grade", parsed.grade);
-
     router.push("/vault" + (params.toString() ? `?${params.toString()}` : ""));
   }
 
   async function handleSignOut() {
     await signOut();
-    setUserOpen(false);
-    setSignedIn(false);
-    setAccountEmail("");
-    setProfiles([]);
-    setActiveProfileId("");
-    router.push("/login");
-    router.refresh();
+    setUserOpen(false); setSignedIn(false); setAccountEmail(""); setProfiles([]); setActiveProfileId("");
+    router.push("/login"); router.refresh();
+  }
+
+  function isActive(item: typeof NAV_ITEMS[0]) {
+    return item.exact ? pathname === item.href : pathname.startsWith(item.href);
   }
 
   const avatarText = signedIn
     ? (activeProfile?.display_name || accountEmail || "U").slice(0, 1).toUpperCase()
     : "G";
-
-  const accountTypeLabel =
-    activeProfile?.profile_type === "business" ? "Business" : "Collector";
+  const accountTypeLabel = activeProfile?.profile_type === "business" ? "Business" : "Collector";
 
   return (
     <>
-      <div className="sticky top-0 z-40 backdrop-blur-xl" style={{ background: "rgba(11,11,11,0.95)", borderBottom: "1px solid rgba(245,181,72,0.15)" }}>
-        <div className="mx-auto grid h-[72px] max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-4 px-4 sm:px-5">
-          <div className="flex items-center">
-            <Link href="/" className="flex items-center">
-              <img src="/brand/vltd-logo.png" alt="VLTD" className="h-[44px] w-auto sm:h-[48px]" />
-            </Link>
-          </div>
+      <div
+        className="sticky top-0 z-40 backdrop-blur-xl"
+        style={{ background: "rgba(11,11,11,0.96)", borderBottom: "1px solid rgba(245,181,72,0.15)" }}
+      >
+        {/* ── Main nav row ── */}
+        <div className="mx-auto flex h-[64px] max-w-[1400px] items-center gap-4 px-4 sm:px-6">
 
-          <div className="hidden min-w-0 items-center justify-center md:flex">
-            <div className="flex items-center gap-1.5">
-              <Link href="/" className={navPillClass(pathname === "/")}>
-                Home
-              </Link>
-              <Link href="/vault" className={navPillClass(pathname.startsWith("/vault"))}>
-                <IconVault />
-                Vault
-              </Link>
-              <Link href="/museum" className={navPillClass(pathname.startsWith("/museum"))}>
-                <IconMuseum />
-                Exhibitions
-              </Link>
-              <Link href="/vault" className={navPillClass(false)}>
-                <IconSearch className="h-3.5 w-3.5" />
-                Discover
-              </Link>
-              <Link href="/portfolio" className={navPillClass(pathname.startsWith("/portfolio"))}>
-                <IconChart />
-                Activity
-              </Link>
-              <Link href="/wishlist" className={navPillClass(pathname.startsWith("/wishlist"))}>
-                Watchlist
-              </Link>
-              <Link href="/portfolio" className={navPillClass(false)}>
-                Insights
-              </Link>
+          {/* Logo */}
+          <Link href="/" className="shrink-0 flex items-center">
+            <img src="/brand/vltd-logo.png" alt="VLTD" className="h-[42px] w-auto" />
+          </Link>
+
+          {/* Desktop icon nav — centered */}
+          <div className="hidden md:flex flex-1 items-center justify-center">
+            <div className="flex items-end gap-1">
+              {NAV_ITEMS.map((item) => {
+                const active = isActive(item);
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href + item.label}
+                    href={item.href}
+                    className="relative flex flex-col items-center gap-[3px] px-3 pt-2 pb-[10px] transition-opacity hover:opacity-100"
+                    style={{ opacity: active ? 1 : 0.65 }}
+                  >
+                    <Icon active={active} />
+                    <span
+                      className="text-[10px] font-semibold tracking-[0.04em] leading-none whitespace-nowrap"
+                      style={{ color: active ? "#F5B548" : "#A0956B" }}
+                    >
+                      {item.label}
+                    </span>
+                    {/* Active underline */}
+                    {active && (
+                      <span
+                        className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
+                        style={{ background: "linear-gradient(90deg, transparent, #F5B548, transparent)" }}
+                      />
+                    )}
+                  </Link>
+                );
+              })}
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 sm:gap-3">
+          {/* Right controls */}
+          <div className="flex items-center gap-2 shrink-0">
+
+            {/* Guide button */}
+            <div ref={guideRef} className="relative hidden md:block">
+              <button
+                type="button"
+                onClick={() => setGuideOpen((v) => !v)}
+                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold transition"
+                style={{
+                  background: guideOpen ? "rgba(245,181,72,0.12)" : "rgba(255,255,255,0.05)",
+                  border: `1px solid ${guideOpen ? "rgba(245,181,72,0.35)" : "rgba(255,255,255,0.10)"}`,
+                  color: guideOpen ? "#F5B548" : "#A0956B",
+                }}
+              >
+                Guide
+                <span style={{ transform: guideOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", display: "inline-flex" }}>
+                  <IconChevron />
+                </span>
+              </button>
+            </div>
+
+            {/* Search bar */}
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                applySearch(input);
-              }}
+              onSubmit={(e) => { e.preventDefault(); applySearch(input); }}
               className="hidden md:block"
             >
               <div
-                className={[
-                  "flex h-[42px] items-center overflow-hidden rounded-full bg-[color:var(--input)] ring-1 ring-[color:var(--border)] transition-all duration-200",
-                  searchExpanded ? "w-[280px] px-3" : "w-[176px] px-3",
-                ].join(" ")}
+                className="flex items-center gap-2 rounded-full px-3"
+                style={{
+                  height: "36px",
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.10)",
+                  width: searchExpanded ? "300px" : "220px",
+                  transition: "width 0.2s",
+                }}
               >
-                <button type="submit" className="shrink-0 text-[color:var(--muted)]" aria-label="Search vault">
-                  <IconSearch />
+                <button type="submit" className="shrink-0" style={{ color: "#5A5040" }} aria-label="Search">
+                  <IconSearch className="h-3.5 w-3.5" />
                 </button>
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onFocus={() => setSearchExpanded(true)}
-                  onBlur={() => {
-                    if (!input.trim()) setSearchExpanded(false);
-                  }}
-                  placeholder="Search vault..."
-                  className="ml-2 min-w-0 flex-1 bg-transparent text-sm text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] focus:outline-none"
+                  onBlur={() => { if (!input.trim()) setSearchExpanded(false); }}
+                  placeholder="Search vault, exhibitions, collectors..."
+                  className="min-w-0 flex-1 bg-transparent text-[13px] focus:outline-none"
+                  style={{ color: "#F0EAD6" }}
                 />
+                <span className="shrink-0 hidden lg:inline text-[11px] rounded px-1.5 py-0.5"
+                  style={{ background: "rgba(255,255,255,0.07)", color: "#5A5040", fontFamily: "monospace" }}>
+                  ⌘K
+                </span>
               </div>
             </form>
 
+            {/* Bell */}
+            <button
+              type="button"
+              className="hidden md:flex h-[36px] w-[36px] items-center justify-center rounded-full transition"
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+              aria-label="Notifications"
+            >
+              <IconBell />
+            </button>
+
+            {/* User menu */}
             <div ref={userMenuRef} className="relative">
               <button
                 type="button"
                 onClick={() => setUserOpen((v) => !v)}
-                className="grid h-[48px] w-[48px] place-items-center rounded-full text-sm font-bold transition"
+                className="flex items-center gap-2 rounded-full pl-1 pr-2 py-1 transition"
                 style={{
                   background: "rgba(42,36,24,0.70)",
                   border: "1px solid rgba(245,181,72,0.22)",
-                  color: "#F5B548",
                 }}
               >
-                {avatarText}
+                <div
+                  className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full text-sm font-bold"
+                  style={{ background: "rgba(245,181,72,0.15)", color: "#F5B548" }}
+                >
+                  {avatarText}
+                </div>
+                <div className="hidden lg:flex flex-col items-start leading-none">
+                  <span className="text-[12px] font-semibold" style={{ color: "#F0EAD6" }}>
+                    {activeProfile?.display_name || (signedIn ? "Collector" : "Guest")}
+                  </span>
+                  <span className="text-[10px]" style={{ color: "#A0956B" }}>
+                    {signedIn ? accountTypeLabel : "Sign in"}
+                  </span>
+                </div>
+                <IconChevron size={12} />
               </button>
 
-              {userOpen ? (
-                <div className="absolute right-0 mt-3 w-[280px] overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-strong)] shadow-[0_18px_50px_rgba(0,0,0,0.35)]">
-                  <div className="border-b border-[color:var(--border)] px-4 py-4">
-                    <div className="flex items-start justify-between gap-3">
+              {/* User dropdown */}
+              {userOpen && (
+                <div className="absolute right-0 mt-2 w-[260px] overflow-hidden rounded-2xl shadow-[0_18px_50px_rgba(0,0,0,0.6)]"
+                  style={{ background: "#141414", border: "1px solid rgba(245,181,72,0.18)" }}>
+                  <div className="px-4 py-3.5" style={{ borderBottom: "1px solid rgba(245,181,72,0.10)" }}>
+                    <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="truncate text-sm font-semibold text-[color:var(--fg)]">
+                        <div className="truncate text-sm font-semibold" style={{ color: "#F0EAD6" }}>
                           {activeProfile?.display_name || accountEmail || "Guest"}
                         </div>
-                        <div className="mt-1 truncate text-xs text-[color:var(--muted)]">
+                        <div className="mt-0.5 truncate text-xs" style={{ color: "#A0956B" }}>
                           {accountEmail || "Not signed in"}
                         </div>
                       </div>
-                      <div className="shrink-0 rounded-full bg-[color:var(--pill)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]">
+                      <div className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.10em]"
+                        style={{ background: "rgba(245,181,72,0.12)", color: "#F5B548", border: "1px solid rgba(245,181,72,0.22)" }}>
                         {accountTypeLabel}
                       </div>
                     </div>
                   </div>
-
                   <div className="px-2 py-2">
                     {signedIn ? (
-                      <Link
-                        href="/dashboard"
-                        onClick={() => setUserOpen(false)}
-                        className="block rounded-xl px-3 py-2.5 text-sm text-[color:var(--fg)] transition hover:bg-[color:var(--pill)]"
-                      >
-                        Dashboard
-                      </Link>
-                    ) : null}
-                    {signedIn ? (
                       <>
-                        <Link
-                          href="/collector"
-                          onClick={() => setUserOpen(false)}
-                          className="block rounded-xl px-3 py-2.5 text-sm text-[color:var(--fg)] transition hover:bg-[color:var(--pill)]"
-                        >
-                          Collector Profile
-                        </Link>
-                        <Link
-                          href="/account"
-                          onClick={() => setUserOpen(false)}
-                          className="block rounded-xl px-3 py-2.5 text-sm text-[color:var(--fg)] transition hover:bg-[color:var(--pill)]"
-                        >
-                          Account Settings
-                        </Link>
-                        {profiles.length > 1 ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setUserOpen(false);
-                              setCommandOpen(true);
-                            }}
-                            className="block w-full rounded-xl px-3 py-2.5 text-left text-sm text-[color:var(--fg)] transition hover:bg-[color:var(--pill)]"
-                          >
+                        {[
+                          { href: "/dashboard", label: "Dashboard" },
+                          { href: "/collector", label: "Collector Profile" },
+                          { href: "/account", label: "Account Settings" },
+                        ].map(({ href, label }) => (
+                          <Link key={href} href={href} onClick={() => setUserOpen(false)}
+                            className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
+                            style={{ color: "#F0EAD6" }}>
+                            {label}
+                          </Link>
+                        ))}
+                        {profiles.length > 1 && (
+                          <button type="button"
+                            onClick={() => { setUserOpen(false); setCommandOpen(true); }}
+                            className="block w-full rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
+                            style={{ color: "#F0EAD6" }}>
                             Switch Account
                           </button>
-                        ) : null}
+                        )}
                       </>
                     ) : (
                       <>
-                        <Link
-                          href="/login"
-                          onClick={() => setUserOpen(false)}
-                          className="block rounded-xl px-3 py-2.5 text-sm text-[color:var(--fg)] transition hover:bg-[color:var(--pill)]"
-                        >
-                          Log In
-                        </Link>
-                        <Link
-                          href="/signup"
-                          onClick={() => setUserOpen(false)}
-                          className="block rounded-xl px-3 py-2.5 text-sm text-[color:var(--fg)] transition hover:bg-[color:var(--pill)]"
-                        >
-                          Create Account
-                        </Link>
+                        <Link href="/login" onClick={() => setUserOpen(false)}
+                          className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
+                          style={{ color: "#F0EAD6" }}>Log In</Link>
+                        <Link href="/signup" onClick={() => setUserOpen(false)}
+                          className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
+                          style={{ color: "#F0EAD6" }}>Create Account</Link>
                       </>
                     )}
                   </div>
-
-                  {signedIn ? (
-                    <div className="border-t border-[color:var(--border)] px-2 py-2">
-                      <button
-                        type="button"
-                        onClick={handleSignOut}
-                        className="block w-full rounded-xl px-3 py-2.5 text-left text-sm text-[color:var(--fg)] transition hover:bg-[color:var(--pill)]"
-                      >
+                  {signedIn && (
+                    <div className="px-2 py-2" style={{ borderTop: "1px solid rgba(245,181,72,0.10)" }}>
+                      <button type="button" onClick={handleSignOut}
+                        className="block w-full rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-[rgba(224,82,82,0.08)]"
+                        style={{ color: "#E05252" }}>
                         Sign Out
                       </button>
                     </div>
-                  ) : null}
+                  )}
                 </div>
-              ) : null}
+              )}
             </div>
           </div>
         </div>
 
-        {/* Mobile search row — compact, no pill nav (bottom nav handles that) */}
-        <div className="px-4 pb-2.5 pt-2 md:hidden" style={{ borderTop: "1px solid rgba(245,181,72,0.08)" }}>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              applySearch(input);
-            }}
+        {/* ── Guide dropdown panel ── */}
+        {guideOpen && (
+          <div
+            className="border-t"
+            style={{ borderColor: "rgba(245,181,72,0.10)", background: "rgba(11,11,11,0.98)" }}
           >
-            <div className="flex h-[38px] items-center rounded-full bg-[color:var(--input)] px-3 ring-1 ring-[color:var(--border)]">
-              <button type="submit" className="shrink-0 text-[color:var(--muted)]" aria-label="Search vault">
+            <div className="mx-auto max-w-[1400px] px-6 py-5">
+              <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: "#5A5040" }}>
+                Explore VLTD
+              </p>
+              <div className="grid grid-cols-4 gap-3 lg:grid-cols-8">
+                {NAV_ITEMS.map((item) => {
+                  const active = isActive(item);
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href + item.label + "guide"}
+                      href={item.href}
+                      onClick={() => setGuideOpen(false)}
+                      className="group flex flex-col gap-2 rounded-2xl p-3 transition"
+                      style={{
+                        background: active ? "rgba(245,181,72,0.07)" : "rgba(255,255,255,0.02)",
+                        border: `1px solid ${active ? "rgba(245,181,72,0.20)" : "rgba(255,255,255,0.06)"}`,
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLElement).style.background = "rgba(245,181,72,0.07)";
+                        (e.currentTarget as HTMLElement).style.borderColor = "rgba(245,181,72,0.20)";
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLElement).style.background = active ? "rgba(245,181,72,0.07)" : "rgba(255,255,255,0.02)";
+                        (e.currentTarget as HTMLElement).style.borderColor = active ? "rgba(245,181,72,0.20)" : "rgba(255,255,255,0.06)";
+                      }}
+                    >
+                      <Icon active={active} />
+                      <div>
+                        <p className="text-[12px] font-bold leading-none" style={{ color: active ? "#F5B548" : "#F0EAD6" }}>
+                          {item.label}
+                        </p>
+                        <p className="mt-1 text-[11px] leading-snug" style={{ color: "#5A5040" }}>
+                          {item.desc}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
+
+                {/* Brand card */}
+                <div
+                  className="col-span-1 flex flex-col items-end justify-between rounded-2xl p-3"
+                  style={{
+                    background: "linear-gradient(135deg, rgba(42,36,24,0.90), rgba(26,20,8,0.90))",
+                    border: "1px solid rgba(245,181,72,0.25)",
+                    boxShadow: "0 0 24px rgba(245,181,72,0.08)",
+                  }}
+                >
+                  <div
+                    className="h-10 w-10 rounded-xl flex items-center justify-center text-lg"
+                    style={{ background: "rgba(245,181,72,0.12)", border: "1px solid rgba(245,181,72,0.25)" }}
+                  >
+                    🏛
+                  </div>
+                  <div>
+                    <p className="text-[12px] font-black leading-snug" style={{ color: "#F0EAD6" }}>
+                      Your Collection.<br />Your Museum.<br />Your Legacy.
+                    </p>
+                    <Link
+                      href="/about"
+                      onClick={() => setGuideOpen(false)}
+                      className="mt-2 inline-block text-[11px] font-semibold"
+                      style={{ color: "#F5B548" }}
+                    >
+                      Learn more about VLTD →
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Mobile search row ── */}
+        <div className="px-4 pb-2.5 pt-2 md:hidden" style={{ borderTop: "1px solid rgba(245,181,72,0.08)" }}>
+          <form onSubmit={(e) => { e.preventDefault(); applySearch(input); }}>
+            <div
+              className="flex h-[38px] items-center rounded-full px-3"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+            >
+              <button type="submit" className="shrink-0" style={{ color: "#5A5040" }} aria-label="Search">
                 <IconSearch className="h-3.5 w-3.5" />
               </button>
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Search vault, exhibitions, collectors…"
-                className="ml-2 min-w-0 flex-1 bg-transparent text-sm text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] focus:outline-none"
+                className="ml-2 min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
+                style={{ color: "#F0EAD6" }}
               />
             </div>
           </form>
