@@ -248,7 +248,7 @@ function getCreatedAtMs(item: VaultItem) {
 function readinessTone(readiness: string) {
   if (readiness === "High") return "bg-emerald-500/15 text-emerald-200 ring-emerald-400/20";
   if (readiness === "Medium") return "bg-amber-500/15 text-amber-200 ring-amber-400/20";
-  return "bg-white/10 text-white/75 ring-white/10";
+  return "bg-white/10 text-[color:var(--theme-text-secondary)] ring-[color:var(--theme-border)]";
 }
 
 function itemMeta(item: VaultItem) {
@@ -421,7 +421,7 @@ function VaultCard({
   return (
     <div
       className={[
-        "group relative flex h-[174px] flex-col overflow-hidden rounded-[14px] border border-white/8 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-gold/10 transition hover:-translate-y-0.5",
+        "group relative flex h-[174px] flex-col overflow-hidden rounded-[14px] border border-[color:var(--theme-border)] p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-gold/10 transition hover:-translate-y-0.5",
         marketValue > 0 ? "border-l-2 border-l-emerald-400/55" : "border-l border-l-white/8",
       ].join(" ")}
       style={{ background: "var(--theme-card, rgba(15,25,45,0.85))" }}
@@ -429,7 +429,7 @@ function VaultCard({
       <div className="absolute right-1.5 top-1.5 z-20 hidden items-center gap-1 group-hover:flex">
         <Link
           href={detailHref}
-          className="inline-flex h-6 items-center justify-center rounded-full bg-black/70 px-2 text-[10px] text-text-primary ring-1 ring-white/10 backdrop-blur"
+          className="inline-flex h-6 items-center justify-center rounded-full bg-black/70 px-2 text-[10px] text-text-primary ring-1 ring-[color:var(--theme-border)] backdrop-blur"
         >
           Edit
         </Link>
@@ -580,21 +580,21 @@ function VaultEmptyState({
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-[14px] bg-black/10 p-4 ring-1 ring-white/8">
+          <div className="rounded-[14px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
             <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">1</div>
             <div className="mt-1 text-sm font-medium">Create an item</div>
             <div className="mt-1 text-xs text-[color:var(--muted)]">
               Start with Universe, category, title, and value.
             </div>
           </div>
-          <div className="rounded-[14px] bg-black/10 p-4 ring-1 ring-white/8">
+          <div className="rounded-[14px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
             <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">2</div>
             <div className="mt-1 text-sm font-medium">Add pricing</div>
             <div className="mt-1 text-xs text-[color:var(--muted)]">
               Save estimate, source, confidence, and notes.
             </div>
           </div>
-          <div className="rounded-[14px] bg-black/10 p-4 ring-1 ring-white/8">
+          <div className="rounded-[14px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
             <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">3</div>
             <div className="mt-1 text-sm font-medium">Browse and edit</div>
             <div className="mt-1 text-xs text-[color:var(--muted)]">

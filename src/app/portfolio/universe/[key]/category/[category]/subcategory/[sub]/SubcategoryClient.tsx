@@ -258,7 +258,7 @@ export default function SubcategoryClient({
                 Value
               </PillButton>
 
-              <div className="mx-1 h-6 w-px bg-white/10" />
+              <div className="mx-1 h-6 w-px bg-[color:var(--theme-border)]" />
 
               <PillButton active={range === "7d"} onClick={() => setRange("7d")}>
                 7d
@@ -321,26 +321,26 @@ export default function SubcategoryClient({
           <div className="mt-2 text-xl font-semibold">Items</div>
           <div className="mt-1 text-sm text-[color:var(--muted)]">Sorted by {rankMode === "value" ? "value" : "gain"}.</div>
 
-          <div className="mt-4 overflow-hidden rounded-2xl ring-1 ring-white/10">
-            <div className="grid grid-cols-12 gap-2 bg-black/30 px-4 py-3 text-xs text-white/70">
+          <div className="mt-4 overflow-hidden rounded-2xl ring-1 ring-[color:var(--theme-border)]">
+            <div className="grid grid-cols-12 gap-2 bg-[color:var(--theme-card)] px-4 py-3 text-xs text-[color:var(--theme-text-secondary)]">
               <div className="col-span-6">Item</div>
               <div className="col-span-2">Grade</div>
               <div className="col-span-2 text-right">Cost</div>
               <div className="col-span-2 text-right">Value</div>
             </div>
 
-            <div className="divide-y divide-white/10 bg-black/20">
+            <div className="divide-y divide-[color:var(--theme-border)] bg-[color:var(--theme-elevated)]">
               {tableRows.map((r) => {
                 const g = r.value - r.cost;
                 return (
                   <Link
                     key={r.id}
                     href={`/vault/item/${r.id}`}
-                    className="grid grid-cols-12 gap-2 px-4 py-3 hover:bg-black/25 transition"
+                    className="grid grid-cols-12 gap-2 px-4 py-3 hover:bg-[color:var(--theme-card)] transition"
                   >
                     <div className="col-span-6 min-w-0">
                       <div className="text-sm font-semibold truncate">{r.title}</div>
-                      <div className="mt-0.5 text-xs text-white/55">
+                      <div className="mt-0.5 text-xs text-[color:var(--theme-text-muted)]">
                         Added {fmtMonthDay(r.added)} • Gain {fmtMoney(g)}
                       </div>
                     </div>

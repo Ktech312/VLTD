@@ -347,7 +347,7 @@ export default function UniverseClient({ uKey }: { uKey: string }) {
                 Value
               </PillButton>
 
-              <div className="mx-1 h-6 w-px bg-white/10" />
+              <div className="mx-1 h-6 w-px bg-[color:var(--theme-border)]" />
 
               <PillButton active={allocMode === "dollars"} onClick={() => setAllocModeLocal("dollars")}>
                 $
@@ -356,7 +356,7 @@ export default function UniverseClient({ uKey }: { uKey: string }) {
                 %
               </PillButton>
 
-              <div className="mx-1 h-6 w-px bg-white/10" />
+              <div className="mx-1 h-6 w-px bg-[color:var(--theme-border)]" />
 
               <PillButton active={range === "7d"} onClick={() => setRangeLocal("7d")}>
                 7d
@@ -371,7 +371,7 @@ export default function UniverseClient({ uKey }: { uKey: string }) {
                 All
               </PillButton>
 
-              <div className="mx-1 h-6 w-px bg-white/10" />
+              <div className="mx-1 h-6 w-px bg-[color:var(--theme-border)]" />
 
               <button
                 type="button"
@@ -437,11 +437,11 @@ export default function UniverseClient({ uKey }: { uKey: string }) {
                 <Link
                   key={r.id}
                   href={`/vault/item/${r.id}`}
-                  className="flex items-center justify-between rounded-2xl bg-black/20 px-4 py-3 ring-1 ring-white/10 hover:bg-black/25 transition"
+                  className="flex items-center justify-between rounded-2xl bg-[color:var(--theme-elevated)] px-4 py-3 ring-1 ring-[color:var(--theme-border)] hover:bg-[color:var(--theme-card)] transition"
                 >
                   <div className="min-w-0">
                     <div className="text-sm font-semibold truncate">{r.title}</div>
-                    <div className="mt-0.5 text-xs text-white/55 truncate">
+                    <div className="mt-0.5 text-xs text-[color:var(--theme-text-muted)] truncate">
                       {r.category ? `Category: ${r.category}` : ""} {r.subcategory ? `• Sub: ${r.subcategory}` : ""} • Added{" "}
                       {fmtMonthDay(r.added)}
                     </div>
@@ -451,7 +451,7 @@ export default function UniverseClient({ uKey }: { uKey: string }) {
                     <div className="text-sm font-semibold">
                       {allocMode === "percent" ? fmtPct(r.allocPct) : fmtMoney(r.allocValue)}
                     </div>
-                    <div className="text-xs text-white/55">{rankMode === "value" ? "Value" : "Gain"}</div>
+                    <div className="text-xs text-[color:var(--theme-text-muted)]">{rankMode === "value" ? "Value" : "Gain"}</div>
                   </div>
                 </Link>
               ))
@@ -474,15 +474,15 @@ export default function UniverseClient({ uKey }: { uKey: string }) {
               <Link
                 key={r.category}
                 href={`/portfolio/universe/${encodeURIComponent(universe)}/category/${encodeURIComponent(r.category)}`}
-                className="flex items-center justify-between rounded-2xl bg-black/20 px-4 py-3 ring-1 ring-white/10 hover:bg-black/25 transition"
+                className="flex items-center justify-between rounded-2xl bg-[color:var(--theme-elevated)] px-4 py-3 ring-1 ring-[color:var(--theme-border)] hover:bg-[color:var(--theme-card)] transition"
               >
                 <div className="min-w-0">
                   <div className="text-sm font-semibold truncate">{r.category}</div>
-                  <div className="mt-0.5 text-xs text-white/55">{r.count} items</div>
+                  <div className="mt-0.5 text-xs text-[color:var(--theme-text-muted)]">{r.count} items</div>
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-semibold">{rankMode === "value" ? fmtMoney(r.value) : fmtMoney(r.gain)}</div>
-                  <div className="text-xs text-white/55">{rankMode === "value" ? "Value" : "Gain"}</div>
+                  <div className="text-xs text-[color:var(--theme-text-muted)]">{rankMode === "value" ? "Value" : "Gain"}</div>
                 </div>
               </Link>
             ))}

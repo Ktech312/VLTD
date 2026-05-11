@@ -239,7 +239,7 @@ function Donut({
   return (
     <div className="flex flex-col gap-6 md:flex-row md:items-center">
       <div
-        className="relative h-52 w-52 shrink-0 rounded-full ring-1 ring-white/10"
+        className="relative h-52 w-52 shrink-0 rounded-full ring-1 ring-[color:var(--theme-border)]"
         style={{
           background: `conic-gradient(${stops})`,
           boxShadow: "0 24px 70px rgba(0,0,0,0.50)",
@@ -586,7 +586,7 @@ export default function PortfolioPage() {
                 Value
               </PillButton>
 
-              <div className="mx-1 h-6 w-px bg-white/10" />
+              <div className="mx-1 h-6 w-px bg-[color:var(--theme-border)]" />
 
               <PillButton active={range === "7d"} onClick={() => setRangeLocal("7d")}>
                 7d
@@ -601,7 +601,7 @@ export default function PortfolioPage() {
                 All
               </PillButton>
 
-              <div className="mx-1 h-6 w-px bg-white/10" />
+              <div className="mx-1 h-6 w-px bg-[color:var(--theme-border)]" />
 
               <button
                 type="button"
@@ -713,7 +713,7 @@ export default function PortfolioPage() {
           <div className="vltd-panel-soft mt-5 rounded-3xl p-5" style={{ background: 'var(--theme-elevated, rgba(20,32,55,0.9))', border: '1px solid var(--theme-border, rgba(245,181,72,0.10))' }}>
             {view === "bars" ? (
               <div className="h-[320px] w-full">
-                <div className="relative h-full w-full overflow-hidden rounded-2xl bg-black/15 ring-1 ring-white/10">
+                <div className="relative h-full w-full overflow-hidden rounded-2xl bg-[color:var(--theme-elevated)] ring-1 ring-[color:var(--theme-border)]">
                   <div
                     className="absolute inset-0 opacity-90"
                     style={{
@@ -727,7 +727,7 @@ export default function PortfolioPage() {
                       {Array.from({ length: 6 }).map((_, idx) => (
                         <div
                           key={idx}
-                          className="absolute left-0 right-0 border-t border-white/10"
+                          className="absolute left-0 right-0 border-t border-[color:var(--theme-border)]"
                           style={{ top: `${(idx * 100) / 5}%` }}
                         />
                       ))}
@@ -743,10 +743,10 @@ export default function PortfolioPage() {
                           href={`/portfolio/universe/${r.key}`}
                           className="flex w-full flex-col items-center gap-2 transition hover:opacity-95"
                         >
-                          <div className="text-xs font-semibold text-white/90">{fmtMoney(r.value)}</div>
+                          <div className="text-xs font-semibold text-[color:var(--theme-text-primary)]">{fmtMoney(r.value)}</div>
 
                           <div
-                            className="w-full max-w-[140px] rounded-2xl ring-1 ring-white/15"
+                            className="w-full max-w-[140px] rounded-2xl ring-1 ring-[color:var(--theme-border)]"
                             style={{
                               height: `${Math.max(10, h)}px`,
                               background:
@@ -756,7 +756,7 @@ export default function PortfolioPage() {
                             }}
                           />
 
-                          <div className="mt-1 text-center text-xs leading-tight text-white/70">
+                          <div className="mt-1 text-center text-xs leading-tight text-[color:var(--theme-text-secondary)]">
                             {r.label}
                             <div className="mt-1 text-[11px] text-white/45">{r.count} items</div>
                           </div>

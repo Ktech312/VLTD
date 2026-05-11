@@ -265,7 +265,7 @@ export default function CategoryClient({ uKey, categorySlug }: { uKey: string; c
                 Value
               </PillButton>
 
-              <div className="mx-1 h-6 w-px bg-white/10" />
+              <div className="mx-1 h-6 w-px bg-[color:var(--theme-border)]" />
 
               <PillButton active={range === "7d"} onClick={() => setRange("7d")}>
                 7d
@@ -334,15 +334,15 @@ export default function CategoryClient({ uKey, categorySlug }: { uKey: string; c
                 href={`/portfolio/universe/${encodeURIComponent(universe)}/category/${encodeURIComponent(
                   category
                 )}/subcategory/${encodeURIComponent(r.sub === "—" ? "NONE" : r.sub)}`}
-                className="flex items-center justify-between rounded-2xl bg-black/20 px-4 py-3 ring-1 ring-white/10 hover:bg-black/25 transition"
+                className="flex items-center justify-between rounded-2xl bg-[color:var(--theme-elevated)] px-4 py-3 ring-1 ring-[color:var(--theme-border)] hover:bg-[color:var(--theme-card)] transition"
               >
                 <div className="min-w-0">
                   <div className="text-sm font-semibold truncate">{r.sub}</div>
-                  <div className="mt-0.5 text-xs text-white/55">{r.count} items</div>
+                  <div className="mt-0.5 text-xs text-[color:var(--theme-text-muted)]">{r.count} items</div>
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-semibold">{rankMode === "value" ? fmtMoney(r.value) : fmtMoney(r.gain)}</div>
-                  <div className="text-xs text-white/55">{rankMode === "value" ? "Value" : "Gain"}</div>
+                  <div className="text-xs text-[color:var(--theme-text-muted)]">{rankMode === "value" ? "Value" : "Gain"}</div>
                 </div>
               </Link>
             ))}
@@ -361,17 +361,17 @@ export default function CategoryClient({ uKey, categorySlug }: { uKey: string; c
                 <Link
                   key={r.id}
                   href={`/vault/item/${r.id}`}
-                  className="flex items-center justify-between rounded-2xl bg-black/20 px-4 py-3 ring-1 ring-white/10 hover:bg-black/25 transition"
+                  className="flex items-center justify-between rounded-2xl bg-[color:var(--theme-elevated)] px-4 py-3 ring-1 ring-[color:var(--theme-border)] hover:bg-[color:var(--theme-card)] transition"
                 >
                   <div className="min-w-0">
                     <div className="text-sm font-semibold truncate">{r.title}</div>
-                    <div className="mt-0.5 text-xs text-white/55 truncate">
+                    <div className="mt-0.5 text-xs text-[color:var(--theme-text-muted)] truncate">
                       Sub: {r.subcategory} • Added {fmtMonthDay(r.added)}
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-semibold">{rankMode === "value" ? fmtMoney(r.value) : fmtMoney(r.gain)}</div>
-                    <div className="text-xs text-white/55">{rankMode === "value" ? "Value" : "Gain"}</div>
+                    <div className="text-xs text-[color:var(--theme-text-muted)]">{rankMode === "value" ? "Value" : "Gain"}</div>
                   </div>
                 </Link>
               ))

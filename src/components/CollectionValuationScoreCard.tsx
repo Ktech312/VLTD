@@ -18,7 +18,7 @@ function Ring({
 
   return (
     <div
-      className="relative h-40 w-40 rounded-full ring-1 ring-white/10"
+      className="relative h-40 w-40 rounded-full ring-1 ring-[color:var(--theme-border)]"
       style={{
         background: `conic-gradient(rgba(82,214,244,0.95) 0deg ${angle}deg, rgba(255,255,255,0.08) ${angle}deg 360deg)`,
         boxShadow: "0 24px 70px rgba(0,0,0,0.45)",
@@ -54,7 +54,7 @@ function ScoreBar({
         <div className="text-sm font-semibold">{value}/25</div>
       </div>
 
-      <div className="h-3 overflow-hidden rounded-full bg-black/15 ring-1 ring-[color:var(--border)]">
+      <div className="h-3 overflow-hidden rounded-full bg-[color:var(--theme-elevated)] ring-1 ring-[color:var(--border)]">
         <div
           className="h-full rounded-full bg-[color:var(--pill-active-bg)]"
           style={{ width: `${width}%` }}

@@ -156,7 +156,7 @@ function readinessTone(readiness?: string) {
   if (readiness === "Medium") {
     return "bg-amber-500/15 text-amber-200 ring-amber-400/20";
   }
-  return "bg-white/10 text-white/75 ring-white/10";
+  return "bg-white/10 text-[color:var(--theme-text-secondary)] ring-[color:var(--theme-border)]";
 }
 
 function setRankModeLocal(next: RankMode, set: (value: RankMode) => void) {
@@ -468,7 +468,7 @@ export default function UniverseDrillPage({
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto max-w-6xl px-5 py-10">
-        <section className="relative overflow-hidden rounded-[26px] border border-white/8 bg-[linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] px-5 py-5 shadow-[0_18px_54px_rgba(0,0,0,0.3)] sm:px-6 sm:py-6">
+        <section className="relative overflow-hidden rounded-[26px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] px-5 py-5 shadow-[0_18px_54px_rgba(0,0,0,0.3)] sm:px-6 sm:py-6">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),rgba(255,255,255,0)_28%),radial-gradient(circle_at_75%_0%,rgba(255,205,120,0.06),rgba(255,205,120,0)_22%)]" />
 
           <div className="relative flex items-start justify-between gap-4">
@@ -499,7 +499,7 @@ export default function UniverseDrillPage({
           </div>
 
           <div className="relative mt-6 grid gap-3 md:grid-cols-4">
-            <div className="rounded-[20px] bg-black/16 p-4 ring-1 ring-white/8">
+            <div className="rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
               <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                 TOTAL VALUE
               </div>
@@ -509,7 +509,7 @@ export default function UniverseDrillPage({
               </div>
             </div>
 
-            <div className="rounded-[20px] bg-black/16 p-4 ring-1 ring-white/8">
+            <div className="rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
               <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                 TOTAL COST
               </div>
@@ -519,7 +519,7 @@ export default function UniverseDrillPage({
               </div>
             </div>
 
-            <div className="rounded-[20px] bg-black/16 p-4 ring-1 ring-white/8">
+            <div className="rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
               <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                 NET GAIN
               </div>
@@ -532,7 +532,7 @@ export default function UniverseDrillPage({
               </div>
             </div>
 
-            <div className="rounded-[20px] bg-black/16 p-4 ring-1 ring-white/8">
+            <div className="rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
               <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">ROI</div>
               <div className="mt-2 text-2xl font-semibold">{fmtPct(totals.roi)}</div>
               <div className="mt-1 text-sm text-[color:var(--muted)]">
@@ -704,29 +704,29 @@ export default function UniverseDrillPage({
               <Link
                 key={r.category}
                 href={`/portfolio/universe/${uKey}/category/${encodeURIComponent(r.category)}`}
-                className="rounded-2xl bg-black/20 px-4 py-4 ring-1 ring-white/10 transition hover:bg-black/25"
+                className="rounded-2xl bg-[color:var(--theme-elevated)] px-4 py-4 ring-1 ring-[color:var(--theme-border)] transition hover:bg-[color:var(--theme-card)]"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="truncate text-sm font-semibold">{r.category}</div>
-                    <div className="mt-0.5 text-xs text-white/55">{r.count} items</div>
+                    <div className="mt-0.5 text-xs text-[color:var(--theme-text-muted)]">{r.count} items</div>
                   </div>
 
                   <div className="text-right">
                     <div className="text-sm font-semibold">
                       {rankMode === "value" ? fmtMoney(r.value) : fmtMoney(r.gain)}
                     </div>
-                    <div className="text-xs text-white/55">
+                    <div className="text-xs text-[color:var(--theme-text-muted)]">
                       {rankMode === "value" ? "Value" : "Gain"}
                     </div>
                   </div>
                 </div>
 
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="rounded-full bg-black/10 px-3 py-1 text-xs ring-1 ring-black/10">
+                  <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
                     ROI {fmtPct(r.roi)}
                   </span>
-                  <span className="rounded-full bg-black/10 px-3 py-1 text-xs ring-1 ring-black/10">
+                  <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
                     Cost {fmtMoney(r.cost)}
                   </span>
                 </div>
@@ -761,9 +761,9 @@ export default function UniverseDrillPage({
                   <Link
                     key={item.id}
                     href={`/vault/item/${item.id}`}
-                    className="block rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.018))] p-4 shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_48px_rgba(0,0,0,0.26)]"
+                    className="block rounded-[22px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] p-4 shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_48px_rgba(0,0,0,0.26)]"
                   >
-                    <div className="mb-4 aspect-[4/5] overflow-hidden rounded-[16px] bg-black/25">
+                    <div className="mb-4 aspect-[4/5] overflow-hidden rounded-[16px] bg-[color:var(--theme-card)]">
                       {itemImage(item) ? (
                         <img
                           src={itemImage(item)}
@@ -782,10 +782,10 @@ export default function UniverseDrillPage({
                     <div className="mt-1 text-sm text-[color:var(--muted)]">{meta || "—"}</div>
 
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <span className="rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10">
+                      <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
                         Value {fmtMoney(value)}
                       </span>
-                      <span className="rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10">
+                      <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
                         Gain {gainValue >= 0 ? "+" : ""}
                         {fmtMoney(gainValue)}
                       </span>
@@ -803,10 +803,10 @@ export default function UniverseDrillPage({
 
                       {intelligence ? (
                         <>
-                          <span className="rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10">
+                          <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
                             Value Rank #{intelligence.valueRank}
                           </span>
-                          <span className="rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10">
+                          <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
                             Gain Rank #{intelligence.gainRank}
                           </span>
                         </>
@@ -831,24 +831,24 @@ export default function UniverseDrillPage({
             Sorted by {rankMode === "value" ? "value" : "gain"}.
           </div>
 
-          <div className="mt-4 overflow-hidden rounded-2xl ring-1 ring-white/10">
-            <div className="grid grid-cols-12 gap-2 bg-black/30 px-4 py-3 text-xs text-white/70">
+          <div className="mt-4 overflow-hidden rounded-2xl ring-1 ring-[color:var(--theme-border)]">
+            <div className="grid grid-cols-12 gap-2 bg-[color:var(--theme-card)] px-4 py-3 text-xs text-[color:var(--theme-text-secondary)]">
               <div className="col-span-5">Item</div>
               <div className="col-span-3">Category</div>
               <div className="col-span-2 text-right">Cost</div>
               <div className="col-span-2 text-right">Value</div>
             </div>
 
-            <div className="divide-y divide-white/10 bg-black/20">
+            <div className="divide-y divide-[color:var(--theme-border)] bg-[color:var(--theme-elevated)]">
               {tableRows.map((r) => (
                 <Link
                   key={r.id}
                   href={`/vault/item/${r.id}`}
-                  className="grid grid-cols-12 gap-2 px-4 py-3 transition hover:bg-black/25"
+                  className="grid grid-cols-12 gap-2 px-4 py-3 transition hover:bg-[color:var(--theme-card)]"
                 >
                   <div className="col-span-5 min-w-0">
                     <div className="truncate text-sm font-semibold">{r.title}</div>
-                    <div className="mt-0.5 text-xs text-white/55">
+                    <div className="mt-0.5 text-xs text-[color:var(--theme-text-muted)]">
                       {r.subcategory !== "—" ? `${r.category} • ${r.subcategory}` : r.category} • Added{" "}
                       {fmtMonthDay(r.added)} • Gain {r.gain >= 0 ? "+" : ""}
                       {fmtMoney(r.gain)}
@@ -857,7 +857,7 @@ export default function UniverseDrillPage({
 
                   <div className="col-span-3 min-w-0">
                     <div className="truncate text-sm">{r.category}</div>
-                    <div className="truncate text-xs text-white/55">{r.subcategory}</div>
+                    <div className="truncate text-xs text-[color:var(--theme-text-muted)]">{r.subcategory}</div>
                   </div>
 
                   <div className="col-span-2 text-right text-sm">{fmtMoney(r.cost)}</div>

@@ -575,7 +575,7 @@ function TopNavInner() {
         {guideOpen && (
           <div
             className="border-t"
-            style={{ borderColor: "rgba(245,181,72,0.10)", background: "rgba(11,11,11,0.98)" }}
+            style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.10))", background: "var(--theme-nav-bg, rgba(11,11,11,0.98))" }}
           >
             <div className="mx-auto max-w-[1400px] px-6 py-5">
               <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: "#5A5040" }}>

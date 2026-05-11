@@ -107,7 +107,7 @@ function QuietCard({
 
 function TinyBadge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10">
+    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
       {children}
     </span>
   );

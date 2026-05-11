@@ -874,10 +874,10 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 />
               </div>
 
-              <div className="mt-5 rounded-[20px] bg-black/10 p-4 ring-1 ring-white/8">
+              <div className="mt-5 rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
                 <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">MARKET</div>
                 <div className="mt-3 text-[40px] font-semibold leading-none">{fmtMoney(effectiveMarketValue(item))}</div>
-                <div className="mt-4 border-t border-white/8 pt-3">
+                <div className="mt-4 border-t border-[color:var(--theme-border)] pt-3">
                   <DetailGrid
                     rows={[
                       { label: "ROI", value: fmtPct(roi(item)) },
@@ -896,7 +896,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
 
                   <div className="grid gap-2 sm:grid-cols-2">
-                    <label className="flex items-center justify-between gap-3 rounded-xl bg-black/10 px-3 py-2 ring-1 ring-white/8">
+                    <label className="flex items-center justify-between gap-3 rounded-xl bg-[color:var(--theme-elevated)] px-3 py-2 ring-[color:var(--theme-border)]">
                       <span className="text-sm">Watermark</span>
                       <input
                         type="checkbox"
@@ -906,7 +906,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                       />
                     </label>
 
-                    <label className="flex items-center justify-between gap-3 rounded-xl bg-black/10 px-3 py-2 ring-1 ring-white/8">
+                    <label className="flex items-center justify-between gap-3 rounded-xl bg-[color:var(--theme-elevated)] px-3 py-2 ring-[color:var(--theme-border)]">
                       <span className="text-sm">Username</span>
                       <input
                         type="checkbox"
@@ -916,7 +916,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                       />
                     </label>
 
-                    <label className="flex items-center justify-between gap-3 rounded-xl bg-black/10 px-3 py-2 ring-1 ring-white/8">
+                    <label className="flex items-center justify-between gap-3 rounded-xl bg-[color:var(--theme-elevated)] px-3 py-2 ring-[color:var(--theme-border)]">
                       <span className="text-sm">Financials</span>
                       <input
                         type="checkbox"
@@ -926,7 +926,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                       />
                     </label>
 
-                    <label className="flex items-center justify-between gap-3 rounded-xl bg-black/10 px-3 py-2 ring-1 ring-white/8">
+                    <label className="flex items-center justify-between gap-3 rounded-xl bg-[color:var(--theme-elevated)] px-3 py-2 ring-[color:var(--theme-border)]">
                       <span className="text-sm">Direct share</span>
                       <input
                         type="checkbox"
@@ -938,7 +938,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                   </div>
 
                   {shareIncludeUsername ? (
-                    <div className="rounded-xl bg-black/10 px-3 py-2 text-xs text-[color:var(--muted)] ring-1 ring-white/8">
+                    <div className="rounded-xl bg-[color:var(--theme-elevated)] px-3 py-2 text-xs text-[color:var(--muted)] ring-[color:var(--theme-border)]">
                       Username pulled from profile: <span className="text-[color:var(--fg)]">{shareResolvedUsername ? `@${shareResolvedUsername.replace(/^@+/, "")}` : "No profile username found"}</span>
                     </div>
                   ) : null}

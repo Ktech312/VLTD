@@ -217,7 +217,7 @@ function SoldCard({
 
   return (
     <article
-      className="group relative flex h-[250px] flex-col overflow-hidden rounded-[14px] border border-white/8 bg-[#141414]/88 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-gold/10 transition hover:-translate-y-0.5 hover:ring-cyan-300/30"
+      className="group relative flex h-[250px] flex-col overflow-hidden rounded-[14px] border border-[color:var(--theme-border)] bg-[#141414]/88 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-gold/10 transition hover:-translate-y-0.5 hover:ring-cyan-300/30"
     >
       <span className="absolute right-2 top-2 z-10 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[8px] font-semibold text-amber-100 ring-1 ring-amber-400/30">
         SOLD
@@ -234,7 +234,7 @@ function SoldCard({
           className="block h-[162px] overflow-hidden rounded-[10px] bg-black/18"
           aria-label={`View image for ${item.title}`}
         >
-          <div className="flex h-full items-center justify-center bg-black/10 p-1">
+          <div className="flex h-full items-center justify-center bg-[color:var(--theme-elevated)] p-1">
             <ProgressiveImage
               src={imageUrl}
               alt={item.title}
@@ -246,7 +246,7 @@ function SoldCard({
         </button>
       ) : (
         <Link href={detailHref} className="block h-[162px] overflow-hidden rounded-[10px] bg-black/18">
-          <div className="flex h-full items-center justify-center bg-black/10 p-1">
+          <div className="flex h-full items-center justify-center bg-[color:var(--theme-elevated)] p-1">
             <div className="flex h-full w-full items-center justify-center px-1 text-center text-[9px] font-semibold text-[color:var(--muted)]">
               No image
             </div>
@@ -363,7 +363,7 @@ export default function SoldPage() {
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1500px] px-3 py-3 sm:px-4 sm:py-4">
-        <section className="relative overflow-hidden rounded-[18px] border border-white/8 bg-[linear-gradient(135deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)]">
+        <section className="relative overflow-hidden rounded-[18px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)]">
           <div className="relative flex flex-col gap-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="max-w-2xl">
@@ -386,19 +386,19 @@ export default function SoldPage() {
             </div>
 
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-[14px] bg-black/15 px-3 py-2 ring-1 ring-white/8">
+              <div className="rounded-[14px] bg-[color:var(--theme-elevated)] px-3 py-2 ring-1 ring-[color:var(--theme-border)]">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Sold</div>
                 <div className="mt-1 text-lg font-extrabold leading-none">{stats.count}</div>
               </div>
-              <div className="rounded-[14px] bg-black/15 px-3 py-2 ring-1 ring-white/8">
+              <div className="rounded-[14px] bg-[color:var(--theme-elevated)] px-3 py-2 ring-1 ring-[color:var(--theme-border)]">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Revenue</div>
                 <div className="mt-1 text-lg font-extrabold leading-none">{money(stats.realizedRevenue)}</div>
               </div>
-              <div className="rounded-[14px] bg-black/15 px-3 py-2 ring-1 ring-white/8">
+              <div className="rounded-[14px] bg-[color:var(--theme-elevated)] px-3 py-2 ring-1 ring-[color:var(--theme-border)]">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Cost Basis</div>
                 <div className="mt-1 text-lg font-extrabold leading-none">{money(stats.totalCost)}</div>
               </div>
-              <div className="rounded-[14px] bg-black/15 px-3 py-2 ring-1 ring-white/8">
+              <div className="rounded-[14px] bg-[color:var(--theme-elevated)] px-3 py-2 ring-1 ring-[color:var(--theme-border)]">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Realized Profit</div>
                 <div className={stats.totalProfit >= 0 ? "mt-1 text-lg font-extrabold leading-none text-emerald-300" : "mt-1 text-lg font-extrabold leading-none text-red-300"}>
                   {stats.totalProfit >= 0 ? "+" : ""}
@@ -449,7 +449,7 @@ export default function SoldPage() {
                 Close
               </span>
             </span>
-            <span className="block max-h-[78vh] overflow-hidden rounded-[18px] bg-black/30">
+            <span className="block max-h-[78vh] overflow-hidden rounded-[18px] bg-[color:var(--theme-card)]">
               <ProgressiveImage
                 src={imagePreview.imageUrl}
                 alt={imagePreview.title}

@@ -93,7 +93,7 @@ export default function NewMuseumGalleryPage() {
           </Link>
         </div>
 
-        <section className="relative overflow-hidden rounded-[26px] border border-white/8 bg-[linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-5 shadow-[0_18px_54px_rgba(0,0,0,0.3)] sm:p-6">
+        <section className="relative overflow-hidden rounded-[26px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] p-5 shadow-[0_18px_54px_rgba(0,0,0,0.3)] sm:p-6">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),rgba(255,255,255,0)_28%),radial-gradient(circle_at_75%_0%,rgba(255,205,120,0.06),rgba(255,205,120,0)_22%)]" />
 
           <div className="relative">
@@ -112,7 +112,7 @@ export default function NewMuseumGalleryPage() {
             </p>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-[20px] bg-black/16 p-4 ring-1 ring-white/8">
+              <div className="rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   TIER
                 </div>
@@ -122,7 +122,7 @@ export default function NewMuseumGalleryPage() {
                 </div>
               </div>
 
-              <div className="rounded-[20px] bg-black/16 p-4 ring-1 ring-white/8">
+              <div className="rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   CURRENT GALLERIES
                 </div>
@@ -132,7 +132,7 @@ export default function NewMuseumGalleryPage() {
                 </div>
               </div>
 
-              <div className="rounded-[20px] bg-black/16 p-4 ring-1 ring-white/8">
+              <div className="rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   REMAINING
                 </div>

@@ -1372,7 +1372,7 @@ export default function AddPage() {
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1500px] px-3 py-3 sm:px-4 sm:py-4">
-        <div className="sticky top-0 z-20 mb-3 rounded-[16px] border border-white/8 bg-[color:var(--surface)]/92 p-3 backdrop-blur">
+        <div className="sticky top-0 z-20 mb-3 rounded-[16px] border border-[color:var(--theme-border)] bg-[color:var(--surface)]/92 p-3 backdrop-blur">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">VAULT ADD</div>
@@ -1715,7 +1715,7 @@ export default function AddPage() {
                 </button>
               </div>
 
-              <div className="mt-3 min-h-0 overflow-hidden rounded-[16px] bg-black/30 p-2 ring-1 ring-[color:var(--border)]">
+              <div className="mt-3 min-h-0 overflow-hidden rounded-[16px] bg-[color:var(--theme-card)] p-2 ring-1 ring-[color:var(--border)]">
                 <img
                   src={selectedMediaImage.previewUrl}
                   alt={`${selectedMediaImage.role} item photo`}

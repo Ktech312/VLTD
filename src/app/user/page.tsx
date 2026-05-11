@@ -501,8 +501,8 @@ export default function UserSettingsPage() {
                     {!museumBackgroundImage ? (
                       <div className="grid h-full w-full place-items-center">
                         <div className="text-center">
-                          <div className="text-sm font-medium text-white/90">No museum background uploaded</div>
-                          <div className="mt-1 text-xs text-white/55">Upload a wall image to preview it here</div>
+                          <div className="text-sm font-medium text-[color:var(--theme-text-primary)]">No museum background uploaded</div>
+                          <div className="mt-1 text-xs text-[color:var(--theme-text-muted)]">Upload a wall image to preview it here</div>
                         </div>
                       </div>
                     ) : null}
@@ -511,9 +511,9 @@ export default function UserSettingsPage() {
                     <div className="pointer-events-none absolute inset-x-[7%] bottom-[9.5%] h-[12px] rounded-full bg-[linear-gradient(180deg,rgba(204,212,224,0.92)_0%,rgba(102,111,123,0.92)_45%,rgba(29,33,39,0.98)_100%)] shadow-[0_10px_16px_rgba(0,0,0,0.45)]" />
                     <div className="pointer-events-none absolute inset-x-[10%] bottom-[5%] h-[10px] rounded-full bg-white/8 blur-xl" />
 
-                    <div className="pointer-events-none absolute left-[16%] bottom-[13%] h-[34%] w-[18%] rounded-[18px] border border-white/10 bg-black/20 shadow-[0_18px_28px_rgba(0,0,0,0.50)] backdrop-blur-[1px]" />
-                    <div className="pointer-events-none absolute left-[41%] bottom-[13%] h-[36%] w-[18%] rounded-[18px] border border-white/10 bg-black/20 shadow-[0_18px_28px_rgba(0,0,0,0.50)] backdrop-blur-[1px]" />
-                    <div className="pointer-events-none absolute left-[66%] bottom-[13%] h-[33%] w-[18%] rounded-[18px] border border-white/10 bg-black/20 shadow-[0_18px_28px_rgba(0,0,0,0.50)] backdrop-blur-[1px]" />
+                    <div className="pointer-events-none absolute left-[16%] bottom-[13%] h-[34%] w-[18%] rounded-[18px] border border-[color:var(--theme-border)] bg-[color:var(--theme-elevated)] shadow-[0_18px_28px_rgba(0,0,0,0.50)] backdrop-blur-[1px]" />
+                    <div className="pointer-events-none absolute left-[41%] bottom-[13%] h-[36%] w-[18%] rounded-[18px] border border-[color:var(--theme-border)] bg-[color:var(--theme-elevated)] shadow-[0_18px_28px_rgba(0,0,0,0.50)] backdrop-blur-[1px]" />
+                    <div className="pointer-events-none absolute left-[66%] bottom-[13%] h-[33%] w-[18%] rounded-[18px] border border-[color:var(--theme-border)] bg-[color:var(--theme-elevated)] shadow-[0_18px_28px_rgba(0,0,0,0.50)] backdrop-blur-[1px]" />
                   </div>
                 </div>
               </div>

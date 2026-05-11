@@ -36,7 +36,7 @@ export default function SalesHistoryPage() {
             Number(s.salePrice ?? 0) - Number(s.purchasePrice ?? 0);
 
           return (
-            <div key={s.id} className="p-4 rounded-xl bg-black/20 ring-1 ring-white/10">
+            <div key={s.id} className="p-4 rounded-xl bg-[color:var(--theme-elevated)] ring-1 ring-[color:var(--theme-border)]">
               <div className="font-medium">{s.title ?? "Untitled"}</div>
 
               <div className="text-sm opacity-70 mt-1">
