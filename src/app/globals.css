@@ -291,6 +291,9 @@ body {
   -webkit-font-smoothing: antialiased;
   position: relative;
 
+  /* Prevent horizontal scroll on mobile */
+  overflow-x: hidden;
+
   /* iOS momentum scroll + less accidental sideways rubber-banding */
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: none;

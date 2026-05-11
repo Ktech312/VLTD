@@ -60,7 +60,7 @@ function LoginInner() {
             </div>
 
             <div className="mt-8 text-[12px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted2)]">Welcome back</div>
-            <h1 className="mt-2 text-4xl font-black tracking-[-0.04em]">Log in to your vault</h1>
+            <h1 className="mt-2 text-2xl font-black tracking-[-0.04em] sm:text-4xl">Log in to your vault</h1>
             <p className="mt-2 text-base text-[color:var(--muted)]">Get back into your vault.</p>
 
             {error ? <div className="mt-5 rounded-2xl border border-red-400/35 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}

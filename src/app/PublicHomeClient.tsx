@@ -470,7 +470,7 @@ export default function PublicHomeClient() {
         <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted2)]">
           Get Started
         </div>
-        <h2 className="mx-auto mt-2 max-w-2xl text-4xl font-black leading-tight tracking-[-0.05em] text-text-primary">
+        <h2 className="mx-auto mt-2 max-w-2xl text-2xl font-black leading-tight tracking-[-0.05em] text-text-primary sm:text-4xl">
           Your collection deserves a real home.
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-[color:var(--muted)]">

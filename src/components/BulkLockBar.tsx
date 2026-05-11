@@ -95,7 +95,7 @@ export default function BulkLockBar({
             <button
               type="button"
               onClick={onLockAll}
-              className="inline-flex h-9 items-center rounded-full bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)]"
+              className="inline-flex min-h-[44px] items-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-medium ring-1 ring-[color:var(--border)]"
             >
               Lock All
             </button>
@@ -104,7 +104,7 @@ export default function BulkLockBar({
             <button
               type="button"
               onClick={onUnlockAll}
-              className="inline-flex h-9 items-center rounded-full bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)]"
+              className="inline-flex min-h-[44px] items-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-medium ring-1 ring-[color:var(--border)]"
             >
               Unlock All
             </button>
@@ -132,7 +132,7 @@ export default function BulkLockBar({
                     type="button"
                     onClick={() => onToggleLock(field.key)}
                     className={[
-                      "inline-flex min-h-[30px] items-center rounded-full px-3 py-1.5 text-xs font-medium ring-1 transition",
+                      "inline-flex min-h-[36px] items-center rounded-full px-3 py-2 text-xs font-medium ring-1 transition",
                       locked
                         ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[color:var(--pill-active-bg)]"
                         : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)] hover:text-[color:var(--fg)]",
