@@ -1,5 +1,5 @@
 /* Path: src/app/globals.css */
-@import “tailwindcss”;
+@import "tailwindcss";
 /* Inter loaded via next/font/google in layout.tsx → var(--font-inter) */
 
 /* =========================================================
@@ -457,7 +457,7 @@ hr {
   -webkit-user-select: none;
 }
 
-/* Better “tap target” baseline */
+/* Better "tap target" baseline */
 .tap-44 {
   min-height: 44px;
   min-width: 44px;
