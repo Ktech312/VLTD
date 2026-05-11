@@ -307,7 +307,7 @@ export default function MuseumPage() {
           onChange={(event) => void handleCoverSelection(event)}
         />
 
-        <section className="vltd-panel-main relative overflow-hidden rounded-[26px] px-5 py-5 sm:px-6 sm:py-6" style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "0 18px 54px rgba(0,0,0,0.18)" }}>
+        <section className="vltd-panel-main relative overflow-hidden rounded-[26px] px-5 py-5 sm:px-6 sm:py-6" style={{ background: "var(--surface)", boxShadow: "0 18px 54px rgba(0,0,0,0.28)" }}>
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),rgba(255,255,255,0)_28%),radial-gradient(circle_at_75%_0%,rgba(255,205,120,0.06),rgba(255,205,120,0)_22%)]" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.18))]" />
 
@@ -339,7 +339,7 @@ export default function MuseumPage() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-              <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+              <div className="rounded-[20px] p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--input)" }}>
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   TOTAL
                 </div>
@@ -349,7 +349,7 @@ export default function MuseumPage() {
                 </div>
               </div>
 
-              <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+              <div className="rounded-[20px] p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--input)" }}>
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   ACTIVE
                 </div>
@@ -359,7 +359,7 @@ export default function MuseumPage() {
                 </div>
               </div>
 
-              <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+              <div className="rounded-[20px] p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--input)" }}>
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   PUBLIC
                 </div>
@@ -369,7 +369,7 @@ export default function MuseumPage() {
                 </div>
               </div>
 
-              <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+              <div className="rounded-[20px] p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--input)" }}>
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   TOTAL VIEWS
                 </div>
@@ -379,7 +379,7 @@ export default function MuseumPage() {
                 </div>
               </div>
 
-              <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+              <div className="rounded-[20px] p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--input)" }}>
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   TIER LIMIT
                 </div>

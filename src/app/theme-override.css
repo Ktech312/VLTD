@@ -23,29 +23,19 @@
   color: var(--theme-text-primary, #F0EAD6) !important;
 }
 
-/* ── PANEL & SECTION BACKGROUNDS ── */
+/* ── PANEL BACKGROUNDS — only vltd-specific classes, never broad section/article/rounded ── */
 [data-vltd-theme] body .vltd-panel-main,
-[data-vltd-theme] body .vltd-panel-soft,
-[data-vltd-theme] body section,
-[data-vltd-theme] body article {
-  background: var(--theme-card, rgba(15,25,45,0.85)) !important;
-  border-color: var(--theme-gold-border, rgba(245,181,72,0.25)) !important;
+[data-vltd-theme] body .vltd-panel-soft {
+  background: var(--surface, var(--theme-card, rgba(15,25,45,0.85))) !important;
+  border-color: var(--frame-ring, var(--theme-gold-border, rgba(245,181,72,0.25))) !important;
   color: var(--theme-text-primary, #F0EAD6) !important;
 }
 
-/* Hero sections with special styling keep their structure but theme colors */
-[data-vltd-theme] body section:first-of-type {
-  background: var(--theme-elevated, rgba(20,32,55,0.9)) !important;
-  border-color: var(--theme-gold-border, rgba(245,181,72,0.28)) !important;
-}
-
-/* ── CARDS ── */
-[data-vltd-theme] body [class*="rounded-[2"],
-[data-vltd-theme] body [class*="rounded-3xl"],
+/* ── CARDS — only named classes, not every rounded element ── */
 [data-vltd-theme] body .vault-card,
 [data-vltd-theme] body .vault-card-gold {
-  background: var(--theme-card, rgba(15,25,45,0.85)) !important;
-  border-color: var(--theme-border, rgba(245,181,72,0.12)) !important;
+  background: var(--surface, var(--theme-card, rgba(15,25,45,0.85))) !important;
+  border-color: var(--border, var(--theme-border, rgba(245,181,72,0.12))) !important;
 }
 
 /* ── NAVIGATION ── */
