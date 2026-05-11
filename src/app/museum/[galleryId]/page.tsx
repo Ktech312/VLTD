@@ -718,7 +718,7 @@ export default function GalleryPage() {
           </div>
         ) : null}
 
-        <section className="relative overflow-hidden rounded-[34px] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.42)] sm:p-8 lg:p-10">
+        <section className="relative overflow-hidden rounded-[34px] border border-[color:var(--border)] bg-[color:var(--surface)] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.42)] sm:p-8 lg:p-10">
           {draft.coverImage ? (
             <>
               <div
@@ -801,7 +801,7 @@ export default function GalleryPage() {
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2 lg:w-[440px]">
-                <div className="rounded-3xl bg-black/20 p-4 ring-1 ring-white/10 backdrop-blur-sm">
+                <div className="rounded-3xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
                   <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                     GALLERY VALUE
                   </div>
@@ -811,7 +811,7 @@ export default function GalleryPage() {
                   </div>
                 </div>
 
-                <div className="rounded-3xl bg-black/20 p-4 ring-1 ring-white/10 backdrop-blur-sm">
+                <div className="rounded-3xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
                   <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                     ROI
                   </div>
@@ -824,7 +824,7 @@ export default function GalleryPage() {
                   </div>
                 </div>
 
-                <div className="rounded-3xl bg-black/20 p-4 ring-1 ring-white/10 backdrop-blur-sm">
+                <div className="rounded-3xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
                   <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                     NOTES COVERAGE
                   </div>
@@ -836,7 +836,7 @@ export default function GalleryPage() {
                   </div>
                 </div>
 
-                <div className="rounded-3xl bg-black/20 p-4 ring-1 ring-white/10 backdrop-blur-sm">
+                <div className="rounded-3xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
                   <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                     LAST VIEWED
                   </div>
@@ -851,7 +851,7 @@ export default function GalleryPage() {
             </div>
 
             <div className="mt-8 grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px]">
-              <div className="rounded-[28px] bg-black/20 p-5 ring-1 ring-white/10">
+              <div className="rounded-[28px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)]">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
@@ -875,7 +875,7 @@ export default function GalleryPage() {
                   <input
                     value={shareUrl}
                     readOnly
-                    className="min-h-[48px] w-full rounded-2xl bg-black/35 px-4 py-3 text-sm ring-1 ring-white/10 focus:outline-none"
+                    className="min-h-[48px] w-full rounded-2xl bg-[color:var(--input)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
                   />
                   <button
                     type="button"
@@ -919,7 +919,7 @@ export default function GalleryPage() {
                       <div className="mt-2"><strong>Guest View</strong> - Anyone with access to the shared link can view your gallery.</div>
                       <div className="mt-2"><strong>Registered Users</strong> - Any registered user with access to the shared link can view your gallery and analytics track signed-in views.</div>
                       <div className="mt-2"><strong>Private Gallery</strong> - For your own testing before sharing with anyone.</div>
-                      <div className="mt-3 rounded-xl bg-black/20 px-3 py-2 text-xs text-[color:var(--muted)] ring-1 ring-white/10">Current mode: {accessDescription(selectedAccessMode)}</div>
+                      <div className="mt-3 rounded-xl bg-[color:var(--input)] px-3 py-2 text-xs text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">Current mode: {accessDescription(selectedAccessMode)}</div>
                     </div>
                   ) : null}
 
@@ -956,7 +956,7 @@ export default function GalleryPage() {
 
                   <div className="mt-3 text-xs text-[color:var(--muted2)]">Current mode: {accessDescription(selectedAccessMode)}</div>
 
-                  <label className="mt-4 flex items-start justify-between gap-4 rounded-2xl bg-black/20 px-4 py-3 ring-1 ring-white/10">
+                  <label className="mt-4 flex items-start justify-between gap-4 rounded-2xl bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)]">
                     <span>
                       <span className="block text-sm font-semibold">18+ gallery</span>
                       <span className="mt-1 block text-xs leading-5 text-[color:var(--muted)]">
@@ -978,7 +978,7 @@ export default function GalleryPage() {
                 </div>
               </div>
 
-              <div className="rounded-[28px] bg-black/20 p-5 ring-1 ring-white/10">
+              <div className="rounded-[28px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)]">
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                   COVER IMAGE
                 </div>
@@ -1045,13 +1045,13 @@ export default function GalleryPage() {
                   return (
                     <article
                       key={`${item.id}_${index}`}
-                      className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.20)]"
+                      className="rounded-[26px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.20)]"
                     >
                       <div className="mb-2 text-xs tracking-[0.16em] text-[color:var(--muted2)]">
                         EXHIBIT #{index + 1}
                       </div>
 
-                      <div className="mb-4 aspect-[4/5] overflow-hidden rounded-xl bg-black/25">
+                      <div className="mb-4 aspect-[4/5] overflow-hidden rounded-xl bg-[color:var(--input)]">
                         {itemImage(item) ? (
                           <img
                             src={itemImage(item)}
@@ -1075,7 +1075,7 @@ export default function GalleryPage() {
                         defaultValue={existingNote}
                         placeholder="Curator note..."
                         onBlur={(e) => updateNote(item.id, e.target.value)}
-                        className="mt-4 min-h-[110px] w-full rounded-2xl bg-black/30 p-3 text-sm ring-1 ring-white/10 focus:outline-none"
+                        className="mt-4 min-h-[110px] w-full rounded-2xl bg-[color:var(--input)] p-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
                       />
                     </article>
                   );

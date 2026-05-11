@@ -43,7 +43,10 @@ export default function BuilderPreviewBridge({ gallery, items, onHeightChange }:
 
   return (
     <div ref={containerRef}>
-      <GuestGalleryRenderer model={model} embedded />
+      {/* Gallery shelf is a virtual room — always dark regardless of app theme */}
+      <div style={{ isolation: "isolate", background: "#0B1320", borderRadius: "16px", overflow: "hidden" }}>
+        <GuestGalleryRenderer model={model} embedded />
+      </div>
     </div>
   );
 }

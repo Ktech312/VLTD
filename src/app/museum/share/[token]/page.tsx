@@ -571,7 +571,9 @@ export default function SharedGalleryPage() {
       <div className="fixed right-4 top-4 z-40">
         <ReportContentButton contentType="gallery" contentId={gallery.id} />
       </div>
-      <GuestGalleryRenderer model={model} />
+      <div style={{ isolation: "isolate", background: "#0B1320" }}>
+        <GuestGalleryRenderer model={model} />
+      </div>
     </>
   );
 }
