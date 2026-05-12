@@ -142,6 +142,18 @@
   color: var(--theme-text-primary) !important;
 }
 
+/* In light themes, make all bg-vault-card elements use the theme card color */
+.theme-light body .bg-vault-card,
+.theme-light body [class~="bg-vault-card"] {
+  background: var(--theme-card, rgba(255,255,255,0.80)) !important;
+}
+
+/* In light themes, fix sections and their child cards */
+.theme-light body section,
+.theme-light body article {
+  background: var(--theme-card, rgba(255,255,255,0.80)) !important;
+}
+
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--theme-card, #141414); }
