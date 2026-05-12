@@ -610,9 +610,11 @@ function VaultEmptyState({
 function UniverseOverviewCard({
   category,
   items,
+  className = "",
 }: {
   category: (typeof VAULT_UNIVERSES)[number];
   items: VaultItem[];
+  className?: string;
 }) {
   const coverItem = items[0];
   const coverImage = useResolvedVaultImage(coverItem ?? null);
@@ -625,7 +627,7 @@ function UniverseOverviewCard({
   return (
     <Link
       href={category.href}
-      className="group overflow-hidden rounded-[18px] p-2 ring-1 shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5"
+      className={["group overflow-hidden rounded-[18px] p-2 ring-1 shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5", className].filter(Boolean).join(" ")}
       style={{
         background: "var(--theme-card, rgba(15,25,45,0.85))",
         borderColor: "var(--theme-border, rgba(245,181,72,0.12))",
@@ -1003,12 +1005,13 @@ export default function VaultPage() {
           <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} />
         ) : (
           <section className="mt-3">
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-2 gap-4">
               {VAULT_UNIVERSES.map((category) => (
                 <UniverseOverviewCard
                   key={category.key}
                   category={category}
                   items={universeGroups[category.key]}
+                  className={category.key === "MISC" ? "col-span-2" : ""}
                 />
               ))}
             </div>
