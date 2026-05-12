@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { ThemePicker } from "@/components/ui/ThemePicker";
 
 import { getOnboardingStatus, updateProfile } from "@/lib/auth";
+import { processVaultSyncQueue } from "@/lib/vaultSyncQueue";
+import { syncVaultItemsFromSupabase } from "@/lib/vaultModel";
+import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
 
 export default function AccountPage() {
   const router = useRouter();
@@ -17,6 +20,9 @@ export default function AccountPage() {
   const [username, setUsername] = useState("");
   const [profileType, setProfileType] = useState<"personal" | "business">("personal");
   const [primaryFocus, setPrimaryFocus] = useState("");
+  const [syncStatus, setSyncStatus] = useState("");
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isMigrating, setIsMigrating] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -45,6 +51,35 @@ export default function AccountPage() {
     }
     void load();
   }, [router]);
+
+  async function handleSyncNow() {
+    setIsSyncing(true);
+    setSyncStatus("Syncing...");
+    try {
+      await processVaultSyncQueue();
+      await syncVaultItemsFromSupabase();
+      setSyncStatus("Sync complete.");
+    } catch (err) {
+      setSyncStatus(err instanceof Error ? err.message : "Sync failed.");
+    } finally {
+      setIsSyncing(false);
+    }
+  }
+
+  async function handleRepairMigrate() {
+    setIsMigrating(true);
+    setSyncStatus("Migrating local-only images to Supabase...");
+    try {
+      const result = await migrateExistingVaultImagesToSupabase();
+      await processVaultSyncQueue();
+      await syncVaultItemsFromSupabase();
+      setSyncStatus(`Migration finished. ${result.migrated} migrated, ${result.skipped} skipped.`);
+    } catch (err) {
+      setSyncStatus(err instanceof Error ? err.message : "Migration failed.");
+    } finally {
+      setIsMigrating(false);
+    }
+  }
 
   async function handleSave() {
     if (!profileId) return;
@@ -224,6 +259,33 @@ export default function AccountPage() {
             Appearance
           </div>
           <ThemePicker />
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
+          <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-4">
+            Vault Maintenance
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => void handleSyncNow()}
+              disabled={isSyncing || isMigrating}
+              className="inline-flex h-10 items-center rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-5 text-sm font-semibold text-[color:var(--fg)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSyncing ? "Syncing..." : "Sync Now"}
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleRepairMigrate()}
+              disabled={isSyncing || isMigrating}
+              className="inline-flex h-10 items-center rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-5 text-sm font-semibold text-[color:var(--fg)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isMigrating ? "Migrating..." : "Repair / Migrate Images"}
+            </button>
+          </div>
+          {syncStatus ? (
+            <p className="mt-3 text-sm text-[color:var(--muted)]">{syncStatus}</p>
+          ) : null}
         </section>
       </div>
     </main>
