@@ -1003,7 +1003,7 @@ export default function VaultPage() {
         {items.length === 0 ? (
           <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} />
         ) : (
-          <section className="mt-3">
+          <div className="mt-3">
             <div className="grid grid-cols-2 gap-4">
               {VAULT_UNIVERSES.map((category) => (
                 <div key={category.key} className={category.key === "MISC" ? "col-span-2" : ""}>
@@ -1014,7 +1014,7 @@ export default function VaultPage() {
                 </div>
               ))}
             </div>
-          </section>
+          </div>
         )}
       </div>
     </main>
