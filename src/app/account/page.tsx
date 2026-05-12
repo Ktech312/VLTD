@@ -70,7 +70,7 @@ export default function AccountPage() {
   if (loading) {
     return (
       <main className="vltd-page-depth min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl rounded-[28px] border border-[color:var(--border)] bg-vault-card p-6 text-[color:var(--muted)] shadow-[0_22px_72px_rgba(0,0,0,0.24)]">
+        <div className="mx-auto max-w-4xl rounded-[28px] border border-[color:var(--border)] p-6 text-[color:var(--muted)] shadow-[0_22px_72px_rgba(0,0,0,0.24)]" style={{ background: "var(--theme-card)" }}>
           Loading account...
         </div>
       </main>
@@ -121,7 +121,8 @@ export default function AccountPage() {
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="Display name"
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
+                    style={{ background: "var(--theme-card)" }}
                   />
                 </label>
 
@@ -131,7 +132,8 @@ export default function AccountPage() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]+/g, "_"))}
                     placeholder="Username"
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
+                    style={{ background: "var(--theme-card)" }}
                   />
                 </label>
 
@@ -142,9 +144,10 @@ export default function AccountPage() {
                     className={[
                       "rounded-2xl border p-4 text-left transition",
                       profileType === "personal"
-                        ? "border-[rgba(245,181,72,0.42)] bg-[rgba(245,181,72,0.10)] text-text-primary"
-                        : "border-[color:var(--border)] bg-vault-card text-[color:var(--muted)] hover:text-text-primary",
+                        ? "border-[rgba(245,181,72,0.42)] text-text-primary"
+                        : "border-[color:var(--border)] text-[color:var(--muted)] hover:text-text-primary",
                     ].join(" ")}
+                    style={{ background: profileType === "personal" ? "rgba(245,181,72,0.10)" : "var(--theme-card)" }}
                   >
                     <div className="text-sm font-black">Collector</div>
                     <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">Personal vault and gallery.</div>
@@ -155,9 +158,10 @@ export default function AccountPage() {
                     className={[
                       "rounded-2xl border p-4 text-left transition",
                       profileType === "business"
-                        ? "border-[rgba(245,181,72,0.42)] bg-[rgba(245,181,72,0.10)] text-text-primary"
-                        : "border-[color:var(--border)] bg-vault-card text-[color:var(--muted)] hover:text-text-primary",
+                        ? "border-[rgba(245,181,72,0.42)] text-text-primary"
+                        : "border-[color:var(--border)] text-[color:var(--muted)] hover:text-text-primary",
                     ].join(" ")}
+                    style={{ background: profileType === "business" ? "rgba(245,181,72,0.10)" : "var(--theme-card)" }}
                   >
                     <div className="text-sm font-black">Business</div>
                     <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">Shop, team, or inventory workflow.</div>
@@ -170,7 +174,8 @@ export default function AccountPage() {
                     value={primaryFocus}
                     onChange={(e) => setPrimaryFocus(e.target.value)}
                     placeholder="Primary focus"
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
+                    style={{ background: "var(--theme-card)" }}
                   />
                 </label>
               </div>
@@ -193,19 +198,19 @@ export default function AccountPage() {
                 Profile Summary
               </div>
               <div className="mt-5 grid gap-3">
-                <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4">
+                <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Name</div>
                   <div className="mt-1 font-black text-text-primary">{displayName || "Not set"}</div>
                 </div>
-                <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4">
+                <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Handle</div>
                   <div className="mt-1 font-black text-text-primary">@{username || "username"}</div>
                 </div>
-                <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4">
+                <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Type</div>
                   <div className="mt-1 font-black text-text-primary">{profileType === "business" ? "Business" : "Collector"}</div>
                 </div>
-                <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4">
+                <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Focus</div>
                   <div className="mt-1 font-black text-text-primary">{primaryFocus || "Not set"}</div>
                 </div>
