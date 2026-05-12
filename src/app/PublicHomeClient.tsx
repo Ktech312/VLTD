@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useTheme } from "@/lib/ThemeContext";
 
 import {
   GALLERY_EVENT,
@@ -232,11 +233,12 @@ function BrandMark() {
 }
 
 function PublicGalleryTile({ gallery }: { gallery: PublicGalleryCard }) {
+  const { theme } = useTheme();
   return (
     <Link
       href={gallery.href}
       className="group overflow-hidden rounded-2xl border border-[color:var(--border)] transition hover:-translate-y-1 hover:border-[rgba(245,181,72,0.34)]"
-      style={{ background: "var(--theme-card)" }}
+      style={{ background: theme.bgCard }}
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-[radial-gradient(circle_at_35%_20%,rgba(255,255,255,0.12),rgba(245,181,72,0.04)_34%,rgba(0,0,0,0.22)_100%)] p-3">
         <img
@@ -258,6 +260,8 @@ function PublicGalleryTile({ gallery }: { gallery: PublicGalleryCard }) {
 }
 
 export default function PublicHomeClient() {
+  const { theme } = useTheme();
+  const cardBg = theme.bgCard;
   const [galleries, setGalleries] = useState<Gallery[]>([]);
 
   useEffect(() => {
@@ -308,7 +312,7 @@ export default function PublicHomeClient() {
         <div className="mx-auto max-w-5xl px-4 pb-16 pt-12 text-center sm:px-6 sm:pb-20 sm:pt-20 lg:px-8">
           <VltdVaultLogoAnimation className="mx-auto mb-8" />
 
-          <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-[rgba(245,181,72,0.28)] px-4 py-2 text-xs font-medium text-[color:var(--accent)]" style={{ background: "var(--theme-card)" }}>
+          <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-[rgba(245,181,72,0.28)] px-4 py-2 text-xs font-medium text-[color:var(--accent)]" style={{ background: cardBg }}>
             <span className="vltd-brand-dot h-2 w-2" /> VLTD{" "}
             <span className="text-[color:var(--muted2)]">—</span> pronounced
             “Vaulted”
@@ -332,7 +336,7 @@ export default function PublicHomeClient() {
             <Link
               href="#public-galleries"
               className="inline-flex h-14 items-center justify-center rounded-full border border-[color:var(--border)] px-8 text-base font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
-              style={{ background: "var(--theme-card)" }}
+              style={{ background: cardBg }}
             >
               Browse public galleries →
             </Link>
@@ -379,7 +383,7 @@ export default function PublicHomeClient() {
             <div
               key={universe.title}
               className="rounded-2xl border border-[color:var(--border)] p-5"
-              style={{ background: "var(--theme-card)" }}
+              style={{ background: cardBg }}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -401,7 +405,7 @@ export default function PublicHomeClient() {
           <Link
             href="/signup"
             className="flex min-h-[150px] flex-col items-center justify-center rounded-2xl border border-dashed border-[rgba(245,181,72,0.34)] p-5 text-center text-[color:var(--accent)] transition hover:bg-[rgba(245,181,72,0.06)]"
-            style={{ background: "var(--theme-card)" }}
+            style={{ background: cardBg }}
           >
             <span className="text-2xl">+</span>
             <span className="mt-2 text-sm font-black">Start your vault</span>
@@ -410,7 +414,7 @@ export default function PublicHomeClient() {
         </div>
       </section>
 
-      <section id="public-galleries" className="border-y border-[color:var(--border)]" style={{ background: "var(--theme-card)" }}>
+      <section id="public-galleries" className="border-y border-[color:var(--border)]" style={{ background: cardBg }}>
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted2)]">
@@ -445,7 +449,7 @@ export default function PublicHomeClient() {
           solves all of them — together, in one vault.
         </p>
 
-        <div className="mx-auto mt-8 max-w-3xl overflow-hidden rounded-2xl border border-[color:var(--border)] text-left" style={{ background: "var(--theme-card)" }}>
+        <div className="mx-auto mt-8 max-w-3xl overflow-hidden rounded-2xl border border-[color:var(--border)] text-left" style={{ background: cardBg }}>
           <div className="grid grid-cols-[1fr_100px_100px] border-b border-[color:var(--border)] bg-[rgba(245,181,72,0.06)] text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">
             <div className="px-5 py-3">Feature</div>
             <div className="px-5 py-3 text-center">Others</div>
