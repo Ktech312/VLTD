@@ -167,7 +167,7 @@ const NAV_ITEMS = [
     desc: "Save pieces, collectors and exhibitions you love.",
   },
   {
-    label: "Activity",    href: "/portfolio",  icon: IconActivity,    exact: false, subpathOnly: true,
+    label: "Activity",    href: "/activity",   icon: IconActivity,    exact: false, subpathOnly: false,
     desc: "See updates, comments, appreciations and follows.",
   },
 ];
