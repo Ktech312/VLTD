@@ -662,7 +662,7 @@ function UniverseOverviewCard({
                 <h2 className="mt-1 text-xl font-semibold leading-tight" style={{ color: "var(--theme-gold, #F5B548)" }}>{universeDisplayName(category.key)}</h2>
               </div>
               <div
-                className="rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                className="rounded-full px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap"
                 style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))", border: "1px solid var(--theme-border, rgba(245,181,72,0.12))", color: "var(--theme-text-primary, #F0EAD6)" }}
               >
                 {items.length} {items.length === 1 ? "item" : "items"}
