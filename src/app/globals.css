@@ -1870,6 +1870,12 @@ hr {
 .theme-light .text-text-secondary { color: var(--theme-text-secondary) !important; }
 .theme-light .vault-card { box-shadow: 0 2px 16px rgba(0,0,0,0.12); }
 
+/* Light theme: make Tailwind vault color tokens respond to the active theme */
+.theme-light {
+  --color-vault-card: rgba(255, 255, 255, 0.85);
+  --color-vault-elevated: rgba(248, 252, 255, 0.95);
+}
+
 /* Scrollbar styling */
 /* scrollbar base — overridden by theme-override.css below */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
