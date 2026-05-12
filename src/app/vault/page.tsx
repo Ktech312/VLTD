@@ -986,16 +986,16 @@ export default function VaultPage() {
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">FILTERED COST</div>
                 <div className="mt-1 text-lg font-semibold">{formatMoney(stats.totalCost)}</div>
               </div>
-              <div className="rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
-                <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">FILTERED VALUE</div>
-                <div className="mt-1 text-lg font-semibold">{formatMoney(stats.totalValue)}</div>
-              </div>
               <div className="rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))', borderLeft: '3px solid var(--color-gain, #4CAF82)' }}>
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">FILTERED GAIN</div>
                 <div className="mt-1 text-lg font-semibold">
                   {stats.totalGain >= 0 ? "+" : ""}
                   {formatMoney(stats.totalGain)}
                 </div>
+              </div>
+              <div className="col-start-2 rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
+                <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">FILTERED VALUE</div>
+                <div className="mt-1 text-lg font-semibold">{formatMoney(stats.totalValue)}</div>
               </div>
             </div>
           </div>
