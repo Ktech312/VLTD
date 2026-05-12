@@ -195,16 +195,16 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid gap-1.5">
+    <div className="grid gap-1">
       <div className="flex items-center justify-between gap-2">
-        <label className="text-[11px] font-medium tracking-[0.14em] text-[color:var(--muted2)]">
+        <label className="text-xs font-medium tracking-[0.14em] text-[color:var(--muted2)]">
           {label}
         </label>
         <button
           type="button"
           onClick={onToggleLock}
           className={[
-            "inline-flex h-6 min-w-[44px] items-center justify-center rounded-full px-2 text-[10px] font-semibold ring-1 transition",
+            "inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 transition",
             locked
               ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[color:var(--pill-active-bg)]"
               : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]",
@@ -1417,7 +1417,7 @@ export default function AddPage() {
           ) : null}
         </div>
 
-        <div className="mb-3 grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_360px]">
+        <div className="mb-3 grid gap-3">
           <div className="grid gap-3">
             <div ref={scanStageRef}>
               <ScanPanel
@@ -1529,30 +1529,13 @@ export default function AddPage() {
 
           </div>
 
-          <div ref={reviewRef} className="grid gap-3 content-start">
-            {scanSession.review ? (
-              <ScanResultPreview
-                review={scanSession.review}
-                title={reviewTitleFromSource(scanSession.review?.source)}
-                onApplyEmptyOnly={() => applyScanReview("emptyOnly")}
-                onApplyAll={() => applyScanReview("all")}
-                onCancel={() => setScanSession((prev) => clearScanSessionReview(prev))}
-              />
-            ) : (
-              <section className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-                <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">SCAN REVIEW</div>
-                <div className="mt-2 text-sm text-[color:var(--muted)]">
-                  Run Auto Identify and the review will appear here.
-                </div>
-              </section>
-            )}
-          </div>
+          {/* Scan review panel removed — results apply directly to fields */}
         </div>
 
         {/* BulkLockBar hidden — per-field lock/unlock buttons still active */}
 
-        <section className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-          <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+        <section className="mx-auto max-w-4xl rounded-[16px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               <Field label="Subtitle / Set" locked={locks.subtitle} onToggleLock={() => handleToggleLock("subtitle")}>
                 <input
                   className={inputClass()}
@@ -1646,7 +1629,7 @@ export default function AddPage() {
                 />
               </Field>
 
-              <div className="lg:col-span-2 xl:col-span-3">
+              <div className="sm:col-span-2 lg:col-span-3">
                 <Field label="Notes" locked={locks.notes} onToggleLock={() => handleToggleLock("notes")}>
                   <textarea
                     className={textareaClass()}
