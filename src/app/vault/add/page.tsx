@@ -1371,7 +1371,7 @@ export default function AddPage() {
 
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
-      <div className="mx-auto max-w-[1500px] px-3 py-3 sm:px-4 sm:py-4">
+      <div className="w-full px-4 py-3 sm:px-6 sm:py-4">
         <div className="sticky top-0 z-20 mb-3 rounded-[16px] border border-[color:var(--theme-border)] bg-[color:var(--surface)]/92 p-3 backdrop-blur">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -1417,7 +1417,7 @@ export default function AddPage() {
           ) : null}
         </div>
 
-        <div className="mb-3 grid gap-3">
+        <div className="mb-3 w-full max-w-5xl mx-auto grid gap-3">
           <div className="grid gap-3">
             <div ref={scanStageRef}>
               <ScanPanel
@@ -1534,7 +1534,7 @@ export default function AddPage() {
 
         {/* BulkLockBar hidden — per-field lock/unlock buttons still active */}
 
-        <section className="mx-auto max-w-4xl rounded-[16px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <section className="w-full max-w-5xl mx-auto rounded-[16px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               <Field label="Subtitle / Set" locked={locks.subtitle} onToggleLock={() => handleToggleLock("subtitle")}>
                 <input
