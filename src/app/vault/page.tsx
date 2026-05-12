@@ -1004,7 +1004,7 @@ export default function VaultPage() {
         {items.length === 0 ? (
           <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} />
         ) : (
-          <section className="mt-3">
+          <section className="mt-3 max-w-4xl mx-auto">
             <div className="grid grid-cols-2 gap-4">
               {VAULT_UNIVERSES.map((category) => (
                 <UniverseOverviewCard
