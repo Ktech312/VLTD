@@ -65,7 +65,7 @@ export default function DiscoverPage() {
   const featuredGalleries = galleries.slice(0, 6);
 
   return (
-    <main className="min-h-screen text-[color:var(--fg)]" style={{ background: "var(--theme-bg, #0B1320)" }}>
+    <main className="min-h-screen text-[color:var(--fg)]">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
 
         {/* Page header */}
