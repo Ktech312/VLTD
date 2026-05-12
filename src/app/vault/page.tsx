@@ -935,7 +935,7 @@ export default function VaultPage() {
     <main className="min-h-screen text-[color:var(--fg)]" style={{ background: 'var(--theme-bg, #0B1320)' }}>
       <div className="mx-auto max-w-[1500px] px-3 py-3 sm:px-4 sm:py-4">
         <section
-          className="relative overflow-hidden rounded-[18px] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)]"
+          className="relative overflow-hidden rounded-[18px] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)] max-w-3xl mx-auto w-full"
           style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", border: "1px solid var(--theme-border, rgba(245,181,72,0.12))" }}
         >
           <div className="relative flex flex-col gap-4">
@@ -986,7 +986,7 @@ export default function VaultPage() {
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">FILTERED COST</div>
                 <div className="mt-1 text-lg font-semibold">{formatMoney(stats.totalCost)}</div>
               </div>
-              <div className="rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))', borderLeft: '3px solid var(--color-gain, #4CAF82)' }}>
+              <div className="col-start-1 rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))', borderLeft: '3px solid var(--color-gain, #4CAF82)' }}>
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">FILTERED GAIN</div>
                 <div className="mt-1 text-lg font-semibold">
                   {stats.totalGain >= 0 ? "+" : ""}
@@ -1004,7 +1004,7 @@ export default function VaultPage() {
         {items.length === 0 ? (
           <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} />
         ) : (
-          <section className="mt-3 max-w-4xl mx-auto">
+          <section className="mt-3 max-w-3xl mx-auto w-full">
             <div className="grid grid-cols-2 gap-4">
               {VAULT_UNIVERSES.map((category) => (
                 <UniverseOverviewCard
