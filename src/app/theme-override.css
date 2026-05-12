@@ -161,6 +161,23 @@
   color: var(--theme-text-primary, #1A1A2E) !important;
 }
 
+/* bg-vault-card Tailwind utility — force theme-responsive in light mode */
+.theme-light body .bg-vault-card,
+.theme-light body [class~="bg-vault-card"] {
+  background: var(--theme-card, rgba(255,255,255,0.80)) !important;
+}
+
+/* Sections and articles in light mode */
+.theme-light body section,
+.theme-light body article {
+  background: var(--theme-card, rgba(255,255,255,0.80)) !important;
+}
+
+/* Browse public galleries button */
+.theme-light body a[href="#public-galleries"] {
+  background: var(--theme-card, rgba(255,255,255,0.80)) !important;
+}
+
 /* Nav/header — light surface */
 .theme-light body nav,
 .theme-light body header,
