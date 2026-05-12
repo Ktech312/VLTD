@@ -34,7 +34,7 @@ export default function BiggestMoversPanel({ items }: { items: VaultItem[] }) {
   const rows = movers.length ? movers : ranked.slice(0, 3);
 
   return (
-    <section className="rounded-[24px] border border-[color:var(--border)] bg-vault-card p-3.5">
+    <section className="rounded-[24px] border p-3.5" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
       <div className="flex items-center justify-between gap-3">
         <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--muted2)]">
           Top Performers
@@ -53,10 +53,11 @@ export default function BiggestMoversPanel({ items }: { items: VaultItem[] }) {
             return (
               <div
                 key={entry.item.id}
-                className={positive ?
-                  "rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.07] px-3.5 py-2.5" :
-                  "rounded-2xl border border-rose-400/20 bg-rose-400/[0.07] px-3.5 py-2.5"
-                }
+                className="rounded-2xl border px-3.5 py-2.5"
+                style={{
+                  background: "var(--theme-card, rgba(15,25,45,0.85))",
+                  borderColor: positive ? "rgba(76,175,130,0.20)" : "rgba(224,82,82,0.20)",
+                }}
               >
                 <div className="flex items-center justify-between gap-4">
                   <div className="min-w-0">

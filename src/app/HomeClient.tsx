@@ -65,23 +65,9 @@ function StatChip({
       ? "#E05252"
       : "#F0EAD6";
 
-  const borderColor =
-    tone === "gold"
-      ? "rgba(245,181,72,0.28)"
-      : tone === "gain"
-      ? "rgba(76,175,130,0.24)"
-      : tone === "loss"
-      ? "rgba(224,82,82,0.24)"
-      : "var(--theme-border, rgba(245,181,72,0.12))";
+  const borderColor = "var(--theme-border, rgba(245,181,72,0.12))";
 
-  const bgColor =
-    tone === "gold"
-      ? "rgba(245,181,72,0.07)"
-      : tone === "gain"
-      ? "rgba(76,175,130,0.06)"
-      : tone === "loss"
-      ? "rgba(224,82,82,0.06)"
-      : "var(--theme-card, rgba(15,25,45,0.85))";
+  const bgColor = "var(--theme-card, rgba(15,25,45,0.85))";
 
   const boxShadow =
     tone === "gold"
