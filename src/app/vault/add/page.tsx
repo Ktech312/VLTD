@@ -1549,14 +1549,7 @@ export default function AddPage() {
           </div>
         </div>
 
-        <div className="mb-3">
-          <BulkLockBar
-            locks={locks}
-            onToggleLock={handleToggleLock}
-            onLockAll={handleLockAll}
-            onUnlockAll={handleUnlockAll}
-          />
-        </div>
+        {/* BulkLockBar hidden — per-field lock/unlock buttons still active */}
 
         <section className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
