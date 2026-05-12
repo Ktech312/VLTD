@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Wishlist — VLTD",
+  title: "Watchlist — VLTD",
   description: "Items on your watchlist",
 };
 
