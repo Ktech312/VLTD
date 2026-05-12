@@ -1004,13 +1004,14 @@ export default function VaultPage() {
           <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} />
         ) : (
           <section className="mt-3">
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-2 gap-4">
               {VAULT_UNIVERSES.map((category) => (
-                <UniverseOverviewCard
-                  key={category.key}
-                  category={category}
-                  items={universeGroups[category.key]}
-                />
+                <div key={category.key} className={category.key === "MISC" ? "col-span-2" : ""}>
+                  <UniverseOverviewCard
+                    category={category}
+                    items={universeGroups[category.key]}
+                  />
+                </div>
               ))}
             </div>
           </section>
