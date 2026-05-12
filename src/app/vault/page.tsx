@@ -972,7 +972,6 @@ export default function VaultPage() {
                 >
                   Sold
                 </Link>
-                <RestoreVaultButton />
               </div>
             </div>
 
@@ -996,51 +995,6 @@ export default function VaultPage() {
                   {formatMoney(stats.totalGain)}
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-3 rounded-[18px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">CLOUD + OFFLINE STATUS</div>
-              <div className="mt-1 text-sm text-[color:var(--muted)]">
-                Queue: <span className="font-semibold text-[color:var(--fg)]">{pendingSyncCount}</span>
-                {" • "}
-                {isOnline === null ? "Checking..." : isOnline ? "Online" : "Offline"}
-              </div>
-              {syncStatus ? <div className="mt-2 text-sm text-[color:var(--fg)]">{syncStatus}</div> : null}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <PillButton onClick={() => void hydrateAll()}>Sync Now</PillButton>
-              <PillButton onClick={() => void runMigration()} disabled={isMigrating}>
-                {isMigrating ? "Migrating..." : "Repair / Migrate Images"}
-              </PillButton>
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-3 rounded-[18px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">VAULT UNIVERSES</div>
-              <div className="mt-1 text-sm text-[color:var(--muted)]">
-                Every vault item belongs to one Universe. Unknown items are assigned to Misc and can be changed from the item card or detail page.
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href="/vault/misc"
-                className="inline-flex min-h-[36px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
-              >
-                Review Misc.
-              </Link>
-              <Link
-                href="/vault/sold"
-                className="inline-flex min-h-[36px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
-              >
-                Sold Items ({soldCount})
-              </Link>
             </div>
           </div>
         </section>
