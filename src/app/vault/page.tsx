@@ -1011,7 +1011,7 @@ export default function VaultPage() {
                   key={category.key}
                   category={category}
                   items={universeGroups[category.key]}
-                  className={category.key === "MISC" ? "col-span-2" : ""}
+                  className=""
                 />
               ))}
             </div>
