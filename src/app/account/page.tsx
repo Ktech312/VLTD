@@ -193,19 +193,19 @@ export default function AccountPage() {
                 Profile Summary
               </div>
               <div className="mt-5 grid gap-3">
-                <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4">
+                <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Name</div>
                   <div className="mt-1 font-black text-text-primary">{displayName || "Not set"}</div>
                 </div>
-                <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4">
+                <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Handle</div>
                   <div className="mt-1 font-black text-text-primary">@{username || "username"}</div>
                 </div>
-                <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4">
+                <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Type</div>
                   <div className="mt-1 font-black text-text-primary">{profileType === "business" ? "Business" : "Collector"}</div>
                 </div>
-                <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4">
+                <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Focus</div>
                   <div className="mt-1 font-black text-text-primary">{primaryFocus || "Not set"}</div>
                 </div>
