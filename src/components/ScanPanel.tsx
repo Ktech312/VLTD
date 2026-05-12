@@ -153,7 +153,7 @@ export default function ScanPanel({
             <button
               type="button"
               onClick={onUseCamera}
-              className="flex h-[72px] w-full items-center justify-center rounded-[14px] border border-dashed border-white/20 text-xs text-[color:var(--muted)]"
+              className="flex h-[44px] w-full items-center justify-center rounded-[14px] border border-dashed border-white/20 text-xs text-[color:var(--muted)]"
             >
               No pictures yet
             </button>
@@ -174,7 +174,14 @@ export default function ScanPanel({
               draggable={false}
             />
           ) : (
-            <span className="rounded-full border border-white/60 px-4 py-2 text-xs text-[color:var(--fg)]">
+            <span
+              className="flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-xs font-bold"
+              style={{ background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B" }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
               Take New Picture
             </span>
           )}
@@ -205,9 +212,13 @@ export default function ScanPanel({
             type="button"
             onClick={onScanAutofill}
             disabled={!hasImage || isIdentifying}
-            className={actionButtonClass(true)}
+            className="flex w-full items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-bold transition disabled:opacity-40"
+            style={{ background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B", boxShadow: "0 4px 18px rgba(245,181,72,0.28)" }}
           >
-            {isIdentifying ? "Reading..." : "Auto Identify"}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+            {isIdentifying ? "Reading..." : "Auto Identify with AI"}
           </button>
 
           <button

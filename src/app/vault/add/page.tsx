@@ -211,7 +211,17 @@ function Field({
           ].join(" ")}
           title={locked ? "Locked for next item" : "Unlocked for next item"}
         >
-          {locked ? "LOCK" : "OPEN"}
+          {locked ? (
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: "var(--theme-gold, #F5B548)" }}>
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          ) : (
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: "var(--muted)" }}>
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+            </svg>
+          )}
         </button>
       </div>
       {children}
@@ -1398,9 +1408,15 @@ export default function AddPage() {
               <PillButton onClick={() => void saveForm(false)} disabled={!canSave}>
                 {isSaving && !isPreparingImage ? "Saving..." : "Save"}
               </PillButton>
-              <PillButton variant="primary" onClick={() => void saveForm(true)} disabled={!canSave}>
+              <button
+                type="button"
+                onClick={() => void saveForm(true)}
+                disabled={!canSave}
+                className="inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50 sm:h-10"
+                style={{ background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B", boxShadow: "0 4px 18px rgba(245,181,72,0.28)" }}
+              >
                 {isSaving ? "Saving..." : "Save & Next"}
-              </PillButton>
+              </button>
               <PillButton onClick={resetUnlockedFields} disabled={isSaving}>
                 Reset Unlocked
               </PillButton>
