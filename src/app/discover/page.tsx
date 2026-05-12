@@ -1,107 +1,298 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
-function IconCompass({ size = 48, style }: { size?: number; style?: Record<string, string | number> }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={style}>
-      <circle cx="12" cy="12" r="10"/>
-      <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
-    </svg>
-  );
-}
+type PublicGallery = {
+  id: string;
+  title: string;
+  cover_image: string;
+  profile_id: string;
+  analytics_views: number;
+};
+
+type PublicProfile = {
+  id: string;
+  display_name: string;
+  username: string;
+};
+
+const FILTER_TABS = ["For You", "Trending", "Art Toys", "Sneakers", "Watches", "Comics", "All"] as const;
 
 export default function DiscoverPage() {
+  const [query, setQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<string>("For You");
+  const [galleries, setGalleries] = useState<PublicGallery[]>([]);
+  const [profiles, setProfiles] = useState<PublicProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) { setLoading(false); return; }
+
+      try {
+        const { data: galleriesData } = await supabase
+          .from("galleries")
+          .select("id,title,cover_image,profile_id,analytics_views")
+          .eq("visibility", "PUBLIC")
+          .eq("state", "ACTIVE")
+          .order("analytics_views", { ascending: false })
+          .limit(8);
+
+        const fetched = (galleriesData ?? []) as PublicGallery[];
+        setGalleries(fetched);
+
+        const profileIds = [...new Set(fetched.map((g) => g.profile_id).filter(Boolean))].slice(0, 6);
+        if (profileIds.length > 0) {
+          const { data: profilesData } = await supabase
+            .from("profiles")
+            .select("id,display_name,username")
+            .in("id", profileIds)
+            .limit(6);
+          setProfiles((profilesData ?? []) as PublicProfile[]);
+        }
+      } catch {
+        // fail silently — show empty states
+      } finally {
+        setLoading(false);
+      }
+    }
+    void fetchData();
+  }, []);
+
+  const featuredGalleries = galleries.slice(0, 6);
+
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
-      <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 sm:py-24">
-        <div className="flex flex-col items-center text-center">
-          <div
-            className="mb-8 flex h-24 w-24 items-center justify-center rounded-full"
-            style={{
-              background: "var(--theme-card, rgba(15,25,45,0.85))",
-              border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.25))",
-              boxShadow: "0 0 40px rgba(245,181,72,0.08)",
-            }}
-          >
-            <IconCompass size={40} style={{ color: "var(--theme-gold, #F5B548)", opacity: 0.85 }} />
-          </div>
+    <main className="min-h-screen text-[color:var(--fg)]" style={{ background: "var(--theme-bg, #0B1320)" }}>
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
 
-          <div
-            className="mb-4 rounded-full px-3 py-1 text-[11px] tracking-[0.2em]"
-            style={{
-              background: "var(--theme-elevated, rgba(20,32,55,0.9))",
-              border: "1px solid var(--theme-border, rgba(245,181,72,0.12))",
-              color: "var(--theme-gold, #F5B548)",
-            }}
-          >
-            COMING SOON
-          </div>
-
-          <h1 className="text-3xl font-semibold sm:text-4xl" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
-            Discover
-          </h1>
-
-          <p className="mt-4 max-w-md text-base leading-7" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
-            Browse public galleries from collectors around the world. Explore curated exhibitions,
-            discover new categories, and find inspiration for your own collection.
+        {/* Page header */}
+        <div className="mb-8">
+          <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">DISCOVER</div>
+          <h1 className="mt-2 text-3xl font-semibold sm:text-4xl">Explore Collections</h1>
+          <p className="mt-2 text-sm text-[color:var(--muted)]">
+            Browse public museums and collectors from around the world.
           </p>
-
-          <div className="mt-10 flex flex-wrap justify-center gap-3">
-            <Link
-              href="/museum"
-              className="inline-flex min-h-[48px] items-center justify-center rounded-full px-6 py-3 text-sm font-semibold transition"
-              style={{
-                background: "var(--theme-gold, #F5B548)",
-                color: "#0B1320",
-                boxShadow: "0 4px 20px rgba(245,181,72,0.25)",
-              }}
-            >
-              Browse Your Museum
-            </Link>
-
-            <Link
-              href="/vault"
-              className="inline-flex min-h-[48px] items-center justify-center rounded-full px-6 py-3 text-sm font-semibold transition"
-              style={{
-                background: "var(--theme-card, rgba(15,25,45,0.85))",
-                border: "1px solid var(--theme-border, rgba(245,181,72,0.15))",
-                color: "var(--theme-text-primary, #F0EAD6)",
-              }}
-            >
-              Open Vault
-            </Link>
-          </div>
         </div>
 
-        <div
-          className="mt-16 grid gap-4 sm:grid-cols-3"
-        >
-          {[
-            { label: "Public Galleries", value: "—", desc: "Curated by collectors" },
-            { label: "Featured Works", value: "—", desc: "Handpicked highlights" },
-            { label: "Active Collectors", value: "—", desc: "Growing community" },
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              className="rounded-[20px] p-5 text-center"
-              style={{
-                background: "var(--theme-card, rgba(15,25,45,0.85))",
-                border: "1px solid var(--theme-border, rgba(245,181,72,0.12))",
-              }}
+        {/* SECTION 1 — Search */}
+        <div className="mb-6 flex justify-center">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search collectors, exhibitions, pieces..."
+            className="h-12 w-full max-w-2xl rounded-2xl px-5 text-sm outline-none transition"
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              color: "var(--fg)",
+            }}
+          />
+        </div>
+
+        {/* SECTION 2 — Filter tabs */}
+        <div className="mb-8 flex flex-wrap gap-2">
+          {FILTER_TABS.map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className="rounded-full px-4 py-1.5 text-sm font-semibold transition"
+              style={
+                activeTab === tab
+                  ? { background: "var(--theme-gold, #F5B548)", color: "#0B0B0B", border: "1px solid transparent" }
+                  : { background: "transparent", border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.3))", color: "var(--fg)" }
+              }
             >
-              <div className="text-2xl font-semibold" style={{ color: "var(--theme-gold, #F5B548)" }}>
-                {stat.value}
-              </div>
-              <div className="mt-1 text-sm font-semibold" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
-                {stat.label}
-              </div>
-              <div className="mt-1 text-xs" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
-                {stat.desc}
-              </div>
-            </div>
+              {tab}
+            </button>
           ))}
         </div>
+
+        {/* SECTION 3 — Featured Museums */}
+        <div className="mb-10">
+          <div className="mb-4 text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">FEATURED MUSEUMS</div>
+          {loading ? (
+            <div className="grid gap-4 sm:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-[180px] animate-pulse rounded-[18px]" style={{ background: "var(--surface)" }} />
+              ))}
+            </div>
+          ) : featuredGalleries.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-3">
+              {featuredGalleries.map((gallery) => (
+                <Link
+                  key={gallery.id}
+                  href="/museum"
+                  className="group relative overflow-hidden rounded-[18px] p-4 transition hover:-translate-y-0.5"
+                  style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+                >
+                  <div
+                    className="mb-3 h-[110px] overflow-hidden rounded-[12px]"
+                    style={{
+                      background: gallery.cover_image
+                        ? `url(${gallery.cover_image}) center/cover no-repeat`
+                        : "linear-gradient(135deg, rgba(245,181,72,0.15), rgba(20,32,55,0.9))",
+                      border: "1px solid var(--border)",
+                    }}
+                  />
+                  <div className="text-sm font-bold" style={{ color: "var(--theme-gold, #F5B548)" }}>
+                    {gallery.title}
+                  </div>
+                  <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
+                    {gallery.analytics_views > 0 ? `${gallery.analytics_views} views` : "New exhibition"}
+                  </div>
+                  <div
+                    className="absolute inset-0 flex items-center justify-center rounded-[18px] opacity-0 transition group-hover:opacity-100"
+                    style={{ background: "rgba(0,0,0,0.55)" }}
+                  >
+                    <span
+                      className="rounded-full px-4 py-2 text-xs font-bold"
+                      style={{ background: "var(--theme-gold, #F5B548)", color: "#0B0B0B" }}
+                    >
+                      View Museum
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div
+              className="rounded-[18px] p-8 text-center"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+            >
+              <div className="mb-2 text-3xl">🏛</div>
+              <div className="font-semibold" style={{ color: "var(--fg)" }}>Be the first to share your collection</div>
+              <div className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
+                No public museums yet. Create yours and inspire other collectors.
+              </div>
+              <Link
+                href="/museum/new"
+                className="mt-4 inline-flex items-center rounded-full px-5 py-2 text-sm font-bold transition"
+                style={{ background: "var(--theme-gold, #F5B548)", color: "#0B0B0B" }}
+              >
+                Create Museum
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* SECTION 4 — Trending Exhibitions */}
+        <div className="mb-10">
+          <div className="mb-4 text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">TRENDING EXHIBITIONS</div>
+          {loading ? (
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-[160px] w-[220px] flex-none animate-pulse rounded-[16px]" style={{ background: "var(--surface)" }} />
+              ))}
+            </div>
+          ) : galleries.length > 0 ? (
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {galleries.map((gallery) => (
+                <Link
+                  key={gallery.id}
+                  href="/museum"
+                  className="w-[220px] flex-none overflow-hidden rounded-[16px] transition hover:-translate-y-0.5"
+                  style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+                >
+                  <div
+                    className="h-[120px]"
+                    style={{
+                      background: gallery.cover_image
+                        ? `url(${gallery.cover_image}) center/cover no-repeat`
+                        : "linear-gradient(135deg, rgba(245,181,72,0.12), rgba(15,25,45,0.9))",
+                    }}
+                  />
+                  <div className="p-3">
+                    <div className="line-clamp-1 text-sm font-semibold" style={{ color: "var(--fg)" }}>
+                      {gallery.title}
+                    </div>
+                    <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
+                      {gallery.analytics_views > 0 ? `${gallery.analytics_views} views` : "New"}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div
+              className="rounded-[18px] p-8 text-center"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+            >
+              <div className="font-semibold" style={{ color: "var(--fg)" }}>No public exhibitions yet. Create yours and be first.</div>
+              <Link
+                href="/museum/new"
+                className="mt-4 inline-flex items-center rounded-full px-5 py-2 text-sm font-bold transition"
+                style={{ background: "var(--theme-gold, #F5B548)", color: "#0B0B0B" }}
+              >
+                Create Exhibition
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* SECTION 5 — Top Collectors */}
+        <div>
+          <div className="mb-4 text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">TOP COLLECTORS</div>
+          {loading ? (
+            <div className="grid gap-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-[60px] animate-pulse rounded-[14px]" style={{ background: "var(--surface)" }} />
+              ))}
+            </div>
+          ) : profiles.length > 0 ? (
+            <div className="grid gap-2">
+              {profiles.map((profile) => (
+                <div
+                  key={profile.id}
+                  className="flex items-center gap-3 rounded-[14px] px-4 py-3"
+                  style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+                >
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold"
+                    style={{
+                      background: "rgba(245,181,72,0.15)",
+                      border: "1px solid rgba(245,181,72,0.25)",
+                      color: "var(--theme-gold, #F5B548)",
+                    }}
+                  >
+                    {(profile.display_name || profile.username || "?")[0]?.toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold" style={{ color: "var(--fg)" }}>
+                      {profile.display_name || profile.username || "Collector"}
+                    </div>
+                    {profile.username ? (
+                      <div className="text-xs" style={{ color: "var(--muted)" }}>@{profile.username}</div>
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    className="rounded-full px-3 py-1 text-xs font-semibold transition"
+                    style={{
+                      border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.3))",
+                      color: "var(--theme-gold, #F5B548)",
+                    }}
+                  >
+                    Follow
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div
+              className="rounded-[18px] p-6 text-center"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+            >
+              <div className="text-sm" style={{ color: "var(--muted)" }}>
+                No public collectors yet. Be the first to go public!
+              </div>
+            </div>
+          )}
+        </div>
+
       </div>
     </main>
   );
