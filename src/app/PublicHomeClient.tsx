@@ -341,7 +341,7 @@ export default function PublicHomeClient() {
         </div>
       </section>
 
-      <section className="border-b border-[color:var(--border)] bg-vault-card">
+      <section className="border-b border-[color:var(--border)]" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))" }}>
         <div className="mx-auto grid max-w-7xl divide-y divide-[color:var(--border)] px-4 sm:px-6 md:grid-cols-4 md:divide-x md:divide-y-0 lg:px-8">
           {FEATURE_CARDS.map((feature) => (
             <div key={feature.title} className="px-2 py-7 md:px-6">

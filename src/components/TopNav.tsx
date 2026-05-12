@@ -6,8 +6,6 @@ import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 
 import CommandPalette from "@/components/CommandPalette";
 import { ThemePicker } from "@/components/ui/ThemePicker";
-import { useTheme } from "@/lib/ThemeContext";
-import { themes } from "@/lib/themes";
 import {
   getCurrentUser,
   initAuthListener,
@@ -221,7 +219,6 @@ function TopNavInner() {
   const [userOpen, setUserOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
-  const [themeOpen, setThemeOpen] = useState(false);
   const [searchExpanded, setSearchExpanded] = useState(false);
 
   const [signedIn, setSignedIn] = useState(false);
@@ -231,7 +228,6 @@ function TopNavInner() {
 
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const guideRef = useRef<HTMLDivElement | null>(null);
-  const themeRef = useRef<HTMLDivElement | null>(null);
   const loadingAuthRef = useRef(false);
   const initializedRef = useRef(false);
 
@@ -290,7 +286,6 @@ function TopNavInner() {
       const target = event.target as Node;
       if (userMenuRef.current && !userMenuRef.current.contains(target)) setUserOpen(false);
       if (guideRef.current && !guideRef.current.contains(target)) setGuideOpen(false);
-      if (themeRef.current && !themeRef.current.contains(target)) setThemeOpen(false);
     }
     document.addEventListener("mousedown", handleOutside);
     return () => document.removeEventListener("mousedown", handleOutside);
@@ -316,9 +311,6 @@ function TopNavInner() {
     if (item.subpathOnly) return pathname.startsWith(item.href + '/');
     return item.exact ? pathname === item.href : pathname.startsWith(item.href);
   }
-
-  const { themeId } = useTheme();
-  const currentTheme = themes[themeId];
 
   const avatarText = signedIn
     ? (activeProfile?.display_name || accountEmail || "U").slice(0, 1).toUpperCase()
@@ -387,7 +379,16 @@ function TopNavInner() {
                   color: guideOpen ? "#F5B548" : "#A0956B",
                 }}
               >
-                Guide
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-label="Guide">
+                  <path d="M4 4h7a1 1 0 0 1 1 1v14a1 1 0 0 0-1-1H4V4Z"
+                    stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
+                    fill={guideOpen ? "rgba(245,181,72,0.16)" : "rgba(245,181,72,0.06)"} />
+                  <path d="M20 4h-7a1 1 0 0 0-1 1v14a1 1 0 0 1 1-1h7V4Z"
+                    stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
+                    fill={guideOpen ? "rgba(245,181,72,0.16)" : "rgba(245,181,72,0.06)"} />
+                  <path d="M12 5v14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
+                  <text x="15.5" y="15" textAnchor="middle" fontSize="7" fontWeight="bold" fill="currentColor">?</text>
+                </svg>
                 <span style={{ transform: guideOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", display: "inline-flex" }}>
                   <IconChevron />
                 </span>
@@ -438,54 +439,13 @@ function TopNavInner() {
               <IconBell />
             </button>
 
-            {/* Theme picker */}
-            <div ref={themeRef} className="relative hidden md:block">
-              <button
-                type="button"
-                onClick={() => setThemeOpen((v) => !v)}
-                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold transition"
-                style={{
-                  background: themeOpen ? "rgba(245,181,72,0.12)" : "rgba(255,255,255,0.05)",
-                  border: `1px solid ${themeOpen ? "rgba(245,181,72,0.35)" : "rgba(255,255,255,0.10)"}`,
-                  color: themeOpen ? "#F5B548" : "#A0956B",
-                }}
-                aria-label="Change theme"
-              >
-                {currentTheme.mode === 'dark' ? (
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
-                  </svg>
-                ) : (
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="5" />
-                    <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-                  </svg>
-                )}
-                <span className="hidden lg:inline">{currentTheme.name}</span>
-                <span style={{ transform: themeOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", display: "inline-flex" }}>
-                  <IconChevron size={11} />
-                </span>
-              </button>
-              {themeOpen && (
-                <div
-                  className="absolute right-0 mt-2 w-[280px] overflow-hidden rounded-2xl shadow-[0_18px_50px_rgba(0,0,0,0.6)]"
-                  style={{ background: "var(--theme-nav-bg, #141414)", border: "1px solid var(--theme-nav-border, rgba(245,181,72,0.18))" }}
-                >
-                  <ThemePicker />
-                </div>
-              )}
-            </div>
-
             {/* User menu */}
             <div ref={userMenuRef} className="relative">
               <button
                 type="button"
                 onClick={() => setUserOpen((v) => !v)}
                 className="flex items-center gap-1 rounded-full p-1 transition"
-                style={{
-                  background: "rgba(42,36,24,0.70)",
-                  border: "1px solid rgba(245,181,72,0.22)",
-                }}
+                style={{ background: "transparent", border: "none" }}
               >
                 <div
                   className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full text-[13px] font-bold"
