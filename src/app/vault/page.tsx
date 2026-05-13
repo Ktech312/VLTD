@@ -932,7 +932,7 @@ export default function VaultPage() {
   }
 
   return (
-    <main className="min-h-screen text-[color:var(--fg)]" style={{ background: 'var(--theme-bg, #0B1320)' }}>
+    <main className="min-h-screen text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1500px] px-3 py-3 sm:px-4 sm:py-4">
         <section
           className="relative overflow-hidden rounded-[18px] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)] max-w-3xl mx-auto w-full"

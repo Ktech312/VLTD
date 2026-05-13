@@ -1111,7 +1111,7 @@ export default function VaultInner() {
   const closestRows = useMemo(() => chunkItems(closestMatches, 4), [closestMatches]);
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+    <main className="min-h-screen text-[color:var(--fg)]">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-5 sm:py-8">
         <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
