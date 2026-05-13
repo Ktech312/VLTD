@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
 
     const arrayBuffer = await image.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString("base64");
-    const model = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+    const model = "gemini-1.5-flash";
 
     const prompt = [
       "Analyze this collectible or product photo and return JSON only.",
@@ -176,7 +176,6 @@ export async function POST(req: NextRequest) {
             generationConfig: {
               temperature: 0.2,
               maxOutputTokens: 700,
-              responseMimeType: "application/json",
             },
           }),
         }
