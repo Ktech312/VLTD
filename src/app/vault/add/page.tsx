@@ -920,6 +920,8 @@ export default function AddPage() {
         })
       );
 
+      applyScanReview("emptyOnly");
+
       setStatus(
         safeToAutofill
           ? "Image identify found a likely match. Review and apply."
@@ -1466,15 +1468,6 @@ export default function AddPage() {
                 }))}
                 activeCapturedPhotoId={activeMediaImageId}
                 onSelectCapturedPhoto={setSelectedMediaImageId}
-              />
-            </div>
-
-            <div ref={reviewRef}>
-              <ScanResultPreview
-                review={scanSession.review ?? null}
-                onApplyEmptyOnly={() => applyScanReview("emptyOnly")}
-                onApplyAll={() => applyScanReview("all")}
-                onCancel={() => setScanSession((prev) => clearScanSessionReview(prev))}
               />
             </div>
 
