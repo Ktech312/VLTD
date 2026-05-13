@@ -920,7 +920,23 @@ export default function AddPage() {
         })
       );
 
-      applyScanReview("emptyOnly");
+      setValues((prev) => {
+        const next = { ...prev };
+        const apply = (key: keyof FormValues, value?: string) => {
+          if (!value?.trim()) return;
+          if (String(next[key] ?? "").trim()) return;
+          next[key] = value;
+        };
+        apply("title", vision.title);
+        apply("subtitle", vision.subtitle);
+        apply("number", vision.number);
+        apply("grade", vision.grade);
+        apply("certNumber", vision.certNumber);
+        apply("notes", vision.description);
+        return normalizeHierarchy(next);
+      });
+
+      setScanSession((prev) => markScanSessionApplied(prev));
 
       setStatus(
         safeToAutofill
