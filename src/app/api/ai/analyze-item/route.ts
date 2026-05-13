@@ -48,10 +48,6 @@ function sanitizeVisionResult(raw: Partial<VisionRouteResult>): VisionRouteResul
     number: typeof raw.number === "string" ? raw.number.trim() : undefined,
     grade: typeof raw.grade === "string" ? raw.grade.trim() : undefined,
     certNumber: typeof raw.certNumber === "string" ? raw.certNumber.trim() : undefined,
-    categoryLabel: typeof raw.categoryLabel === "string" ? raw.categoryLabel.trim() : undefined,
-    subcategoryLabel:
-      typeof raw.subcategoryLabel === "string" ? raw.subcategoryLabel.trim() : undefined,
-    universe: typeof raw.universe === "string" ? raw.universe.trim() : undefined,
     notes: typeof raw.notes === "string" ? raw.notes.trim() : undefined,
     year: typeof raw.year === "string" ? raw.year.trim() : undefined,
     brand: typeof raw.brand === "string" ? raw.brand.trim() : undefined,
@@ -91,15 +87,11 @@ export async function POST(req: NextRequest) {
       JSON.stringify(
         {
           detectedTitle: "string — full item name",
-          detectedCategory: "string — e.g. Comics, Trading Cards, Books, Games, Music, Jewelry / Apparel, Misc, or Products",
           confidence: 0.0,
           subtitle: "string — series name, set name, or subtitle if applicable",
           number: "string — issue number, card number, or item number",
           grade: "string — grading score if visible e.g. 9.8, NM, Mint",
           certNumber: "string — PSA/CGC/BCCG cert number if visible",
-          categoryLabel: "string — concise display label",
-          subcategoryLabel: "string — sub-type within category",
-          universe: "string — franchise, brand universe, or series e.g. Marvel, Pokemon, Star Wars",
           notes: "string — brief description of the item",
           year: "string — publication or release year if visible",
           brand: "string — manufacturer or publisher",
@@ -181,8 +173,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       title: parsed.detectedTitle,
       subtitle: parsed.subtitle ?? "",
-      category: parsed.detectedCategory,
-      universe: parsed.universe ?? "",
       year: parsed.year ?? "",
       brand: parsed.brand ?? "",
       grade: parsed.grade ?? "",
@@ -192,8 +182,6 @@ export async function POST(req: NextRequest) {
       confidence: parsed.confidence,
       barcode: parsed.barcode ?? "",
       number: parsed.number ?? "",
-      categoryLabel: parsed.categoryLabel ?? "",
-      subcategoryLabel: parsed.subcategoryLabel ?? "",
       estimatedValue: parsed.estimatedValue,
     });
   } catch (error) {
