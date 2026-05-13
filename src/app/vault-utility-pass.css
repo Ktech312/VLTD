@@ -7,15 +7,6 @@ body:has(input[type="file"][accept=".xlsx,.xls,.csv"]) {
   background: var(--theme-bg, #0B1320);
 }
 
-body:has(textarea[placeholder^="Paste rows directly"]) main,
-body:has(input[type="file"][accept=".xlsx,.xls,.csv"]) main,
-body:has(a[href*="?sold=1"]) main {
-  background:
-    radial-gradient(circle at 50% 7%, rgba(245, 181, 72, 0.07), transparent 34%),
-    radial-gradient(circle at 86% 22%, rgba(245, 181, 72, 0.04), transparent 26%),
-    transparent !important;
-}
-
 body:has(textarea[placeholder^="Paste rows directly"]) main > div,
 body:has(input[type="file"][accept=".xlsx,.xls,.csv"]) main > div {
   max-width: 1180px !important;

@@ -19,6 +19,11 @@
   color: var(--theme-text-primary, #F0EAD6) !important;
 }
 
+/* Force all <main> elements transparent — body fixed gradient shows through */
+[data-vltd-theme] body main {
+  background: transparent !important;
+}
+
 /* ── PANEL BACKGROUNDS — only vltd-specific classes, never broad section/article/rounded ── */
 [data-vltd-theme] body .vltd-panel-main,
 [data-vltd-theme] body .vltd-panel-soft {

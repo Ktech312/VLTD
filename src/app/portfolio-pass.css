@@ -1,13 +1,6 @@
 /* Path: src/app/portfolio-pass.css */
 /* Pass 7: Portfolio page visual alignment. Scoped by the Insurance PDF action. */
 
-body:has(a[href="/insurance"]) main {
-  background:
-    radial-gradient(circle at 48% 8%, rgba(245, 181, 72, 0.07), transparent 34%),
-    radial-gradient(circle at 82% 22%, rgba(245, 181, 72, 0.04), transparent 26%),
-    transparent !important;
-}
-
 body:has(a[href="/insurance"]) main > div {
   max-width: 1180px !important;
 }
