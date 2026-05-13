@@ -187,6 +187,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (response.status === 429) {
+      return NextResponse.json(
+        { error: "AI is busy right now. Please wait a moment and try again." },
+        { status: 429 }
+      );
+    }
+
     if (!response.ok) {
       const details = await response.text();
       console.error("Gemini non-OK response:", response.status, details);
