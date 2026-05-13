@@ -89,6 +89,8 @@ function sanitizeVisionResult(raw: Partial<VisionRouteResult>): VisionRouteResul
 export async function POST(req: NextRequest) {
   try {
     const apiKey = process.env.Gemini_API_Key || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    console.log("API Key found:", !!process.env.Gemini_API_Key);
+    console.log("Fallback key found:", !!process.env.GEMINI_API_KEY);
     if (!apiKey) {
       return NextResponse.json(
         {

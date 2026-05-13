@@ -243,11 +243,7 @@ export default function ScanPanel({
       </div>
 
       <div className="mt-2 rounded-[12px] bg-[color:var(--surface)] px-3 py-1.5 text-[11px] leading-5 text-[color:var(--muted2)] ring-1 ring-[color:var(--border)]">
-        Auto Identify reads the selected picture for barcode, text, and AI clues. Barcode/OCR can work without AI; Gemini needs
-        {" "}
-        `GEMINI_API_KEY`
-        {" "}
-        or `GOOGLE_API_KEY` on the server.
+        Auto Identify reads the selected picture for barcode, text, and AI clues. Barcode/OCR can work without AI; Gemini needs `Gemini_API_Key` set in Vercel environment variables.
       </div>
 
       {showAdvanced ? (

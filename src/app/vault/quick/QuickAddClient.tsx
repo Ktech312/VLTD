@@ -695,8 +695,8 @@ export default function QuickAddClient() {
               </div>
 
               <div className="mt-3 rounded-[14px] bg-[color:var(--surface)] px-3 py-2 text-[11px] text-[color:var(--muted2)] ring-1 ring-[color:var(--border)]">
-                AI Assist needs `GEMINI_API_KEY` or `GOOGLE_API_KEY` on the server.
-                If it is not set in Vercel yet, crop and manual save still work.
+                AI Assist needs `Gemini_API_Key` set in Vercel environment variables.
+                If it is not set yet, crop and manual save still work.
               </div>
             </div>
           ) : null}
