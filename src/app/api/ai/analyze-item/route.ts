@@ -73,6 +73,9 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const image = formData.get("image");
     const hints = String(formData.get("hints") ?? "").trim();
+    const universe = String(formData.get("universe") ?? "").trim();
+    const category = String(formData.get("category") ?? "").trim();
+    const subcategory = String(formData.get("subcategory") ?? "").trim();
 
     if (!(image instanceof File)) {
       return NextResponse.json({ error: "Missing image upload." }, { status: 400 });
@@ -83,6 +86,9 @@ export async function POST(req: NextRequest) {
 
     const prompt = [
       "Analyze this collectible or product photo and return JSON only.",
+      universe || category || subcategory
+        ? `Context: This item has been pre-classified as:\nUniverse: ${universe || "unknown"}\nCategory: ${category || "unknown"}\nSubcategory: ${subcategory || "unknown"}\nUse this context to focus your identification on the specific item name, set name, number, year, grade, and condition. Do not return universe or category fields.`
+        : "",
       "Use this exact schema:",
       JSON.stringify(
         {
