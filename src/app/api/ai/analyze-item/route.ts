@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
   try {
     console.log("=== ANALYZE ITEM CALLED ===");
     console.log("ANTHROPIC_API_KEY exists:", !!process.env.ANTHROPIC_API_KEY);
+    console.log("All env keys available:", Object.keys(process.env).filter(k => k.includes("ANTHROP") || k.includes("API")));
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
