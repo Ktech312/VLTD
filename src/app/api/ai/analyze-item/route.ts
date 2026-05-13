@@ -88,9 +88,12 @@ function sanitizeVisionResult(raw: Partial<VisionRouteResult>): VisionRouteResul
 
 export async function POST(req: NextRequest) {
   try {
+    console.log("=== ANALYZE ITEM CALLED ===");
+    console.log("Gemini_API_Key exists:", !!process.env.Gemini_API_Key);
+    console.log("GEMINI_API_KEY exists:", !!process.env.GEMINI_API_KEY);
+    console.log("GOOGLE_API_KEY exists:", !!process.env.GOOGLE_API_KEY);
+
     const apiKey = process.env.Gemini_API_Key || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-    console.log("API Key found:", !!process.env.Gemini_API_Key);
-    console.log("Fallback key found:", !!process.env.GEMINI_API_KEY);
     if (!apiKey) {
       return NextResponse.json(
         {
@@ -143,42 +146,52 @@ export async function POST(req: NextRequest) {
       .filter(Boolean)
       .join("\n\n");
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [
-                {
-                  text: prompt,
-                },
-                {
-                  inline_data: {
-                    mime_type: image.type || "image/jpeg",
-                    data: base64,
-                  },
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 700,
-            responseMimeType: "application/json",
+    let response: Response;
+    try {
+      response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey,
           },
-        }),
-      }
-    );
+          body: JSON.stringify({
+            contents: [
+              {
+                role: "user",
+                parts: [
+                  {
+                    text: prompt,
+                  },
+                  {
+                    inline_data: {
+                      mime_type: image.type || "image/jpeg",
+                      data: base64,
+                    },
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: 700,
+              responseMimeType: "application/json",
+            },
+          }),
+        }
+      );
+    } catch (err) {
+      console.error("Gemini fetch error:", err);
+      return NextResponse.json(
+        { error: "Gemini failed", detail: String(err) },
+        { status: 503 }
+      );
+    }
 
     if (!response.ok) {
       const details = await response.text();
+      console.error("Gemini non-OK response:", response.status, details);
       return NextResponse.json(
         { error: "Gemini Vision request failed.", details },
         { status: 502 }
