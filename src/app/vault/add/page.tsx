@@ -113,16 +113,31 @@ function parseMoney(input: string) {
   return Number.isFinite(value) ? value : undefined;
 }
 
-function inputClass() {
-  return "h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none";
+function inputClass(isAiFilled?: boolean) {
+  return [
+    "h-10 rounded-xl px-3 text-sm ring-1 focus:outline-none transition-all",
+    isAiFilled
+      ? "bg-[rgba(245,181,72,0.12)] ring-[rgba(245,181,72,0.5)] text-[#F5B548] font-medium"
+      : "bg-[color:var(--pill)] ring-[color:var(--border)]",
+  ].join(" ");
 }
 
-function selectClass() {
-  return "h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none";
+function selectClass(isAiFilled?: boolean) {
+  return [
+    "h-10 rounded-xl px-3 text-sm ring-1 focus:outline-none transition-all",
+    isAiFilled
+      ? "bg-[rgba(245,181,72,0.12)] ring-[rgba(245,181,72,0.5)] text-[#F5B548] font-medium"
+      : "bg-[color:var(--pill)] ring-[color:var(--border)]",
+  ].join(" ");
 }
 
-function textareaClass() {
-  return "min-h-[78px] rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm ring-1 ring-[color:var(--border)] focus:outline-none";
+function textareaClass(isAiFilled?: boolean) {
+  return [
+    "min-h-[78px] rounded-xl px-3 py-2.5 text-sm ring-1 focus:outline-none transition-all",
+    isAiFilled
+      ? "bg-[rgba(245,181,72,0.12)] ring-[rgba(245,181,72,0.5)] text-[#F5B548] font-medium"
+      : "bg-[color:var(--pill)] ring-[color:var(--border)]",
+  ].join(" ");
 }
 
 function categoryCode(label: string) {
@@ -270,6 +285,7 @@ export default function AddPage() {
   const [isComicLookupRunning, setIsComicLookupRunning] = useState(false);
   const [isUpcLookupRunning, setIsUpcLookupRunning] = useState(false);
   const [isVisionLookupRunning, setIsVisionLookupRunning] = useState(false);
+  const [aiFilledFields, setAiFilledFields] = useState<Set<keyof FormValues>>(new Set());
   const [scanType, setScanType] = useState<ScanItemType>("auto");
   const [existingItems, setExistingItems] = useState<VaultItem[]>([]);
   const [duplicateWarning, setDuplicateWarning] = useState("");
@@ -922,10 +938,12 @@ export default function AddPage() {
 
       setValues((prev) => {
         const next = { ...prev };
+        const newlyFilled = new Set<keyof FormValues>();
         const apply = (key: keyof FormValues, value?: string) => {
           if (!value?.trim()) return;
           if (String(next[key] ?? "").trim()) return;
           next[key] = value;
+          newlyFilled.add(key);
         };
         apply("title", vision.title);
         apply("subtitle", vision.subtitle);
@@ -933,6 +951,7 @@ export default function AddPage() {
         apply("grade", vision.grade);
         apply("certNumber", vision.certNumber);
         apply("notes", vision.description);
+        setAiFilledFields(newlyFilled);
         return normalizeHierarchy(next);
       });
 
@@ -1382,6 +1401,7 @@ export default function AddPage() {
       const nextValues = resetUnlockedBulkValues(normalizedValues, locks);
       setValues(nextValues);
       setScanSession((prev) => clearScanSessionReview(prev));
+      setAiFilledFields(new Set());
 
       if (saveAndNext) {
         window.setTimeout(() => numberInputRef.current?.focus(), 0);
@@ -1494,9 +1514,9 @@ export default function AddPage() {
                 <div className="mt-3 grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
                   <Field label="Universe" locked={locks.universe} onToggleLock={() => handleToggleLock("universe")}>
                     <select
-                      className={selectClass()}
+                      className={selectClass(aiFilledFields.has("universe"))}
                       value={selectedUniverse}
-                      onChange={(e) => setUniverse(safeUniverse(e.target.value))}
+                      onChange={(e) => { setAiFilledFields(prev => { const n = new Set(prev); n.delete("universe"); return n; }); setUniverse(safeUniverse(e.target.value)); }}
                     >
                       {getUniverses().map((key) => (
                         <option key={key} value={key}>
@@ -1508,9 +1528,9 @@ export default function AddPage() {
 
                   <Field label="Category" locked={locks.categoryLabel} onToggleLock={() => handleToggleLock("categoryLabel")}>
                     <select
-                      className={selectClass()}
+                      className={selectClass(aiFilledFields.has("categoryLabel"))}
                       value={selectedCategory}
-                      onChange={(e) => setCategoryLabel(e.target.value)}
+                      onChange={(e) => { setAiFilledFields(prev => { const n = new Set(prev); n.delete("categoryLabel"); return n; }); setCategoryLabel(e.target.value); }}
                     >
                       {categoryOptions.map((category) => (
                         <option key={category} value={category}>
@@ -1523,9 +1543,9 @@ export default function AddPage() {
                   <Field label="Subcategory" locked={locks.subcategoryLabel} onToggleLock={() => handleToggleLock("subcategoryLabel")}>
                     {subcategoryOptions.length ? (
                       <select
-                        className={selectClass()}
+                        className={selectClass(aiFilledFields.has("subcategoryLabel"))}
                         value={values.subcategoryLabel}
-                        onChange={(e) => setField("subcategoryLabel", e.target.value)}
+                        onChange={(e) => { setAiFilledFields(prev => { const n = new Set(prev); n.delete("subcategoryLabel"); return n; }); setField("subcategoryLabel", e.target.value); }}
                       >
                         <option value="">Optional</option>
                         {subcategoryOptions.map((subcategory) => (
@@ -1536,9 +1556,9 @@ export default function AddPage() {
                       </select>
                     ) : (
                       <input
-                        className={inputClass()}
+                        className={inputClass(aiFilledFields.has("subcategoryLabel"))}
                         value={values.subcategoryLabel}
-                        onChange={(e) => setField("subcategoryLabel", e.target.value)}
+                        onChange={(e) => { setAiFilledFields(prev => { const n = new Set(prev); n.delete("subcategoryLabel"); return n; }); setField("subcategoryLabel", e.target.value); }}
                         placeholder="Optional"
                       />
                     )}
@@ -1548,9 +1568,9 @@ export default function AddPage() {
                     <div className="grid gap-2">
                       <input
                         ref={titleInputRef}
-                        className={inputClass()}
+                        className={inputClass(aiFilledFields.has("title"))}
                         value={values.title}
-                        onChange={(e) => setField("title", e.target.value)}
+                        onChange={(e) => { setAiFilledFields(prev => { const n = new Set(prev); n.delete("title"); return n; }); setField("title", e.target.value); }}
                         placeholder="Batman"
                       />
                       {duplicateWarning ? (
@@ -1574,9 +1594,9 @@ export default function AddPage() {
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               <Field label="Subtitle / Set" locked={locks.subtitle} onToggleLock={() => handleToggleLock("subtitle")}>
                 <input
-                  className={inputClass()}
+                  className={inputClass(aiFilledFields.has("subtitle"))}
                   value={values.subtitle}
-                  onChange={(e) => setField("subtitle", e.target.value)}
+                  onChange={(e) => { setAiFilledFields(prev => { const n = new Set(prev); n.delete("subtitle"); return n; }); setField("subtitle", e.target.value); }}
                   placeholder="Series / set / run"
                 />
               </Field>
@@ -1584,18 +1604,18 @@ export default function AddPage() {
               <Field label="Number / Issue" locked={locks.number} onToggleLock={() => handleToggleLock("number")}>
                 <input
                   ref={numberInputRef}
-                  className={inputClass()}
+                  className={inputClass(aiFilledFields.has("number"))}
                   value={values.number}
-                  onChange={(e) => setField("number", e.target.value)}
+                  onChange={(e) => { setAiFilledFields(prev => { const n = new Set(prev); n.delete("number"); return n; }); setField("number", e.target.value); }}
                   placeholder="#129"
                 />
               </Field>
 
               <Field label="Grade" locked={locks.grade} onToggleLock={() => handleToggleLock("grade")}>
                 <input
-                  className={inputClass()}
+                  className={inputClass(aiFilledFields.has("grade"))}
                   value={values.grade}
-                  onChange={(e) => setField("grade", e.target.value)}
+                  onChange={(e) => { setAiFilledFields(prev => { const n = new Set(prev); n.delete("grade"); return n; }); setField("grade", e.target.value); }}
                   placeholder="CGC 9.8"
                 />
               </Field>
@@ -1649,9 +1669,9 @@ export default function AddPage() {
 
               <Field label="Cert #" locked={locks.certNumber} onToggleLock={() => handleToggleLock("certNumber")}>
                 <input
-                  className={inputClass()}
+                  className={inputClass(aiFilledFields.has("certNumber"))}
                   value={values.certNumber}
-                  onChange={(e) => setField("certNumber", e.target.value)}
+                  onChange={(e) => { setAiFilledFields(prev => { const n = new Set(prev); n.delete("certNumber"); return n; }); setField("certNumber", e.target.value); }}
                   placeholder="Certification number"
                 />
               </Field>
@@ -1668,9 +1688,9 @@ export default function AddPage() {
               <div className="sm:col-span-2 lg:col-span-3">
                 <Field label="Notes" locked={locks.notes} onToggleLock={() => handleToggleLock("notes")}>
                   <textarea
-                    className={textareaClass()}
+                    className={textareaClass(aiFilledFields.has("notes"))}
                     value={values.notes}
-                    onChange={(e) => setField("notes", e.target.value)}
+                    onChange={(e) => { setAiFilledFields(prev => { const n = new Set(prev); n.delete("notes"); return n; }); setField("notes", e.target.value); }}
                     placeholder="Notes, artist, run info, or anything repeated until dedicated fields exist."
                   />
                 </Field>
