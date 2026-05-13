@@ -1467,6 +1467,15 @@ export default function AddPage() {
               />
             </div>
 
+            <div ref={reviewRef}>
+              <ScanResultPreview
+                review={scanSession.review ?? null}
+                onApplyEmptyOnly={() => applyScanReview("emptyOnly")}
+                onApplyAll={() => applyScanReview("all")}
+                onCancel={() => setScanSession((prev) => clearScanSessionReview(prev))}
+              />
+            </div>
+
               <div className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
                 <div className="text-[11px] font-semibold tracking-[0.18em] text-[color:var(--muted2)]">
                   BASIC ITEM RECORD
