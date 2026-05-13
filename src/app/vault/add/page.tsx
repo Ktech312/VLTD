@@ -1361,9 +1361,11 @@ export default function AddPage() {
       clearAllImages();
       clearPricing();
 
+      const nextValues = resetUnlockedBulkValues(normalizedValues, locks);
+      setValues(nextValues);
+      setScanSession((prev) => clearScanSessionReview(prev));
+
       if (saveAndNext) {
-        const nextValues = resetUnlockedBulkValues(normalizedValues, locks);
-        setValues(nextValues);
         window.setTimeout(() => numberInputRef.current?.focus(), 0);
       }
     } catch (error) {
