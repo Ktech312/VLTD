@@ -15,6 +15,10 @@ type VisionRouteResult = {
   subcategoryLabel?: string;
   universe?: string;
   notes?: string;
+  year?: string;
+  brand?: string;
+  condition?: string;
+  barcode?: string;
 };
 
 function extractTextFromGeminiPayload(payload: unknown) {
@@ -75,12 +79,16 @@ function sanitizeVisionResult(raw: Partial<VisionRouteResult>): VisionRouteResul
       typeof raw.subcategoryLabel === "string" ? raw.subcategoryLabel.trim() : undefined,
     universe: typeof raw.universe === "string" ? raw.universe.trim() : undefined,
     notes: typeof raw.notes === "string" ? raw.notes.trim() : undefined,
+    year: typeof raw.year === "string" ? raw.year.trim() : undefined,
+    brand: typeof raw.brand === "string" ? raw.brand.trim() : undefined,
+    condition: typeof raw.condition === "string" ? raw.condition.trim() : undefined,
+    barcode: typeof raw.barcode === "string" ? raw.barcode.trim() : undefined,
   };
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    const apiKey = process.env.Gemini_API_Key || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
         {
@@ -107,25 +115,27 @@ export async function POST(req: NextRequest) {
       "Use this exact schema:",
       JSON.stringify(
         {
-          detectedTitle: "string",
-          detectedCategory: "string",
-          estimatedValue: 0,
+          detectedTitle: "string — full item name",
+          detectedCategory: "string — e.g. Comics, Trading Cards, Books, Games, Music, Jewelry / Apparel, Misc, or Products",
           confidence: 0.0,
-          subtitle: "string",
-          number: "string",
-          grade: "string",
-          certNumber: "string",
-          categoryLabel: "string",
-          subcategoryLabel: "string",
-          universe: "string",
-          notes: "string",
+          subtitle: "string — series name, set name, or subtitle if applicable",
+          number: "string — issue number, card number, or item number",
+          grade: "string — grading score if visible e.g. 9.8, NM, Mint",
+          certNumber: "string — PSA/CGC/BCCG cert number if visible",
+          categoryLabel: "string — concise display label",
+          subcategoryLabel: "string — sub-type within category",
+          universe: "string — franchise, brand universe, or series e.g. Marvel, Pokemon, Star Wars",
+          notes: "string — brief description of the item",
+          year: "string — publication or release year if visible",
+          brand: "string — manufacturer or publisher",
+          condition: "string — overall condition e.g. Near Mint, Very Fine, Good",
+          barcode: "string — UPC or barcode digits if clearly visible, else empty",
         },
         null,
         2
       ),
-      "Confidence must be between 0 and 1.",
-      "If you are unsure, leave optional fields empty and lower the confidence.",
-      "Prefer concise category labels like Comics, Trading Cards, Books, Games, Music, Jewelry / Apparel, Misc, or Products.",
+      "confidence must be between 0 and 1. Lower it if unsure.",
+      "Leave fields empty string if not visible or not applicable.",
       hints ? `Extra hints from app: ${hints}` : "",
     ]
       .filter(Boolean)
@@ -177,7 +187,25 @@ export async function POST(req: NextRequest) {
     const rawText = extractTextFromGeminiPayload(payload);
     const parsed = sanitizeVisionResult(extractJsonObject(rawText));
 
-    return NextResponse.json(parsed);
+    return NextResponse.json({
+      title: parsed.detectedTitle,
+      subtitle: parsed.subtitle ?? "",
+      category: parsed.detectedCategory,
+      universe: parsed.universe ?? "",
+      year: parsed.year ?? "",
+      brand: parsed.brand ?? "",
+      grade: parsed.grade ?? "",
+      certNumber: parsed.certNumber ?? "",
+      condition: parsed.condition ?? "",
+      description: parsed.notes ?? "",
+      confidence: parsed.confidence,
+      barcode: parsed.barcode ?? "",
+      number: parsed.number ?? "",
+      categoryLabel: parsed.categoryLabel ?? "",
+      subcategoryLabel: parsed.subcategoryLabel ?? "",
+      // keep estimatedValue through for any consumers that want it
+      estimatedValue: parsed.estimatedValue,
+    });
   } catch (error) {
     return NextResponse.json(
       {

@@ -893,7 +893,7 @@ export default function AddPage() {
       });
 
       const safeToAutofill =
-        vision.confidence >= 0.45 && Boolean(String(vision.detectedTitle ?? "").trim());
+        vision.confidence >= 0.45 && Boolean(String(vision.title ?? "").trim());
 
       setScanSession((prev) =>
         setScanSessionReview(prev, {
@@ -905,17 +905,17 @@ export default function AddPage() {
           warnings: safeToAutofill
             ? []
             : ["Image identify was not confident enough to safely autofill everything."],
-          rawText: vision.notes || `AI detected: ${vision.detectedTitle} (${vision.detectedCategory})`,
+          rawText: vision.description || `AI detected: ${vision.title} (${vision.category})`,
           fields: {
-            title: vision.detectedTitle,
+            title: vision.title,
             subtitle: vision.subtitle,
             number: vision.number,
             grade: vision.grade,
             certNumber: vision.certNumber,
             universe: vision.universe,
-            categoryLabel: vision.categoryLabel || vision.detectedCategory,
+            categoryLabel: vision.categoryLabel || vision.category,
             subcategoryLabel: vision.subcategoryLabel,
-            notes: vision.notes,
+            notes: vision.description,
           },
         })
       );

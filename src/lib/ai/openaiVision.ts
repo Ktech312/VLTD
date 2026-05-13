@@ -1,20 +1,24 @@
 export type VisionAnalysisResult = {
-  detectedTitle: string;
-  detectedCategory: string;
-  estimatedValue?: number;
+  title: string;
+  subtitle: string;
+  category: string;
+  universe: string;
+  year: string;
+  brand: string;
+  grade: string;
+  certNumber: string;
+  condition: string;
+  description: string;
   confidence: number;
-  subtitle?: string;
-  number?: string;
-  grade?: string;
-  certNumber?: string;
-  categoryLabel?: string;
-  subcategoryLabel?: string;
-  universe?: string;
-  notes?: string;
+  barcode: string;
+  number: string;
+  categoryLabel: string;
+  subcategoryLabel: string;
+  estimatedValue?: number;
 };
 
 export const AI_ASSIST_SETUP_MESSAGE =
-  "AI Assist is unavailable until GEMINI_API_KEY or GOOGLE_API_KEY is set in Vercel.";
+  "AI Assist is unavailable. Please set the Gemini_API_Key environment variable in Vercel.";
 
 export async function analyzeImageWithVision(
   file: File,
@@ -40,38 +44,35 @@ export async function analyzeImageWithVision(
     const message =
       payload.error || payload.details || "Vision analysis failed.";
 
-    if (/GEMINI_API_KEY|GOOGLE_API_KEY|AI Assist is not set up/i.test(message)) {
+    if (/Gemini_API_Key|GEMINI_API_KEY|GOOGLE_API_KEY|AI Assist is not set up|unavailable/i.test(message)) {
       throw new Error(AI_ASSIST_SETUP_MESSAGE);
     }
 
-    throw new Error(
-      message
-    );
+    throw new Error(message);
   }
 
   return {
-    detectedTitle: String(payload.detectedTitle ?? "").trim() || "Unknown Item",
-    detectedCategory: String(payload.detectedCategory ?? "").trim() || "Unknown",
+    title: String(payload.title ?? "").trim() || "Unknown Item",
+    subtitle: String(payload.subtitle ?? "").trim(),
+    category: String(payload.category ?? "").trim() || "Unknown",
+    universe: String(payload.universe ?? "").trim(),
+    year: String(payload.year ?? "").trim(),
+    brand: String(payload.brand ?? "").trim(),
+    grade: String(payload.grade ?? "").trim(),
+    certNumber: String(payload.certNumber ?? "").trim(),
+    condition: String(payload.condition ?? "").trim(),
+    description: String(payload.description ?? "").trim(),
+    confidence:
+      typeof payload.confidence === "number" && Number.isFinite(payload.confidence)
+        ? Math.max(0, Math.min(1, payload.confidence))
+        : 0.45,
+    barcode: String(payload.barcode ?? "").trim(),
+    number: String(payload.number ?? "").trim(),
+    categoryLabel: String(payload.categoryLabel ?? "").trim(),
+    subcategoryLabel: String(payload.subcategoryLabel ?? "").trim(),
     estimatedValue:
       typeof payload.estimatedValue === "number" && Number.isFinite(payload.estimatedValue)
         ? payload.estimatedValue
         : undefined,
-    confidence:
-      typeof payload.confidence === "number" && Number.isFinite(payload.confidence)
-        ? payload.confidence
-        : 0.45,
-    subtitle: typeof payload.subtitle === "string" ? payload.subtitle.trim() : undefined,
-    number: typeof payload.number === "string" ? payload.number.trim() : undefined,
-    grade: typeof payload.grade === "string" ? payload.grade.trim() : undefined,
-    certNumber:
-      typeof payload.certNumber === "string" ? payload.certNumber.trim() : undefined,
-    categoryLabel:
-      typeof payload.categoryLabel === "string" ? payload.categoryLabel.trim() : undefined,
-    subcategoryLabel:
-      typeof payload.subcategoryLabel === "string"
-        ? payload.subcategoryLabel.trim()
-        : undefined,
-    universe: typeof payload.universe === "string" ? payload.universe.trim() : undefined,
-    notes: typeof payload.notes === "string" ? payload.notes.trim() : undefined,
   };
 }

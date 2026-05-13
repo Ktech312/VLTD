@@ -451,8 +451,8 @@ export default function QuickAddClient() {
           "Identify the collectible or product in this quick add photo. Return the clearest likely title and any visible number, grade, cert, category, or short notes.",
       });
 
-      if (vision.detectedTitle?.trim()) {
-        setTitle(vision.detectedTitle.trim());
+      if (vision.title?.trim()) {
+        setTitle(vision.title.trim());
       }
 
       const detailLines = [
@@ -460,10 +460,10 @@ export default function QuickAddClient() {
         vision.number ? `Number: ${vision.number}` : "",
         vision.grade ? `Grade: ${vision.grade}` : "",
         vision.certNumber ? `Cert: ${vision.certNumber}` : "",
-        vision.categoryLabel || vision.detectedCategory
-          ? `Category: ${vision.categoryLabel || vision.detectedCategory}`
+        vision.categoryLabel || vision.category
+          ? `Category: ${vision.categoryLabel || vision.category}`
           : "",
-        vision.notes || "",
+        vision.description || "",
       ]
         .filter(Boolean)
         .join("\n");

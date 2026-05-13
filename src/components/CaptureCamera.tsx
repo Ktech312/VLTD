@@ -2,7 +2,11 @@
 
 import { useRef, useState } from "react";
 
-export default function CaptureCamera() {
+type CaptureCameraProps = {
+  onCapture?: (file: File) => void;
+};
+
+export default function CaptureCamera({ onCapture }: CaptureCameraProps = {}) {
   const ref = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState("");
 
@@ -21,6 +25,9 @@ export default function CaptureCamera() {
         onChange={(event) => {
           const nextFile = event.target.files?.[0];
           setFileName(nextFile?.name ?? "");
+          if (nextFile && onCapture) {
+            onCapture(nextFile);
+          }
         }}
       />
 

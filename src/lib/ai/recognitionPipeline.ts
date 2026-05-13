@@ -6,8 +6,8 @@ export async function runRecognitionPipeline(file: File) {
   const vision = await analyzeImageWithVision(file);
 
   return {
-    title: vision.detectedTitle,
-    category: vision.detectedCategory,
+    title: vision.title,
+    category: vision.category,
     estimatedValue: vision.estimatedValue,
     confidence: vision.confidence,
   };
