@@ -13,11 +13,7 @@
    ============================================ */
 
 /* ── PAGE BACKGROUNDS ── */
-[data-vltd-theme] body,
-[data-vltd-theme] body main,
-[data-vltd-theme] body #__next,
-[data-vltd-theme] body .min-h-screen,
-[data-vltd-theme] body .vltd-page-depth {
+[data-vltd-theme] body {
   background: var(--theme-bg, #0B1320) !important;
   background-attachment: fixed !important;
   color: var(--theme-text-primary, #F0EAD6) !important;
