@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { AI_ASSIST_SETUP_MESSAGE } from "@/lib/ai/openaiVision";
-
 type VisionRouteResult = {
   detectedTitle: string;
   detectedCategory: string;
@@ -21,30 +19,6 @@ type VisionRouteResult = {
   barcode?: string;
 };
 
-function extractTextFromGeminiPayload(payload: unknown) {
-  if (!payload || typeof payload !== "object") return "";
-
-  const candidates = (payload as { candidates?: unknown[] }).candidates;
-  if (!Array.isArray(candidates)) return "";
-
-  return candidates
-    .flatMap((candidate) => {
-      if (!candidate || typeof candidate !== "object") return [];
-      const content = (candidate as { content?: { parts?: unknown[] } }).content;
-      const parts = content?.parts;
-      if (!Array.isArray(parts)) return [];
-
-      return parts.map((part) => {
-        if (!part || typeof part !== "object") return "";
-        return typeof (part as { text?: string }).text === "string"
-          ? String((part as { text?: string }).text ?? "")
-          : "";
-      });
-    })
-    .join("\n")
-    .trim();
-}
-
 function extractJsonObject(raw: string) {
   const fenced = raw.match(/```json\s*([\s\S]*?)```/i)?.[1];
   const source = fenced || raw;
@@ -52,7 +26,7 @@ function extractJsonObject(raw: string) {
   const firstBrace = source.indexOf("{");
   const lastBrace = source.lastIndexOf("}");
   if (firstBrace < 0 || lastBrace <= firstBrace) {
-    throw new Error("Gemini did not return JSON.");
+    throw new Error("AI did not return JSON.");
   }
 
   return JSON.parse(source.slice(firstBrace, lastBrace + 1)) as Partial<VisionRouteResult>;
@@ -89,16 +63,12 @@ function sanitizeVisionResult(raw: Partial<VisionRouteResult>): VisionRouteResul
 export async function POST(req: NextRequest) {
   try {
     console.log("=== ANALYZE ITEM CALLED ===");
-    console.log("Gemini_API_Key exists:", !!process.env.Gemini_API_Key);
-    console.log("GEMINI_API_KEY exists:", !!process.env.GEMINI_API_KEY);
-    console.log("GOOGLE_API_KEY exists:", !!process.env.GOOGLE_API_KEY);
+    console.log("ANTHROPIC_API_KEY exists:", !!process.env.ANTHROPIC_API_KEY);
 
-    const apiKey = process.env.Gemini_API_Key || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        {
-          error: AI_ASSIST_SETUP_MESSAGE,
-        },
+        { error: "AI identification is not configured." },
         { status: 503 }
       );
     }
@@ -113,7 +83,6 @@ export async function POST(req: NextRequest) {
 
     const arrayBuffer = await image.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString("base64");
-    const model = "gemini-1.5-flash-latest";
 
     const prompt = [
       "Analyze this collectible or product photo and return JSON only.",
@@ -140,7 +109,8 @@ export async function POST(req: NextRequest) {
         2
       ),
       "confidence must be between 0 and 1. Lower it if unsure.",
-      "Leave fields empty string if not visible or not applicable.",
+      "Leave fields as empty string if not visible or not applicable.",
+      "Return ONLY the JSON object. No explanation, no markdown, no extra text.",
       hints ? `Extra hints from app: ${hints}` : "",
     ]
       .filter(Boolean)
@@ -148,41 +118,41 @@ export async function POST(req: NextRequest) {
 
     let response: Response;
     try {
-      response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                role: "user",
-                parts: [
-                  {
-                    text: prompt,
+      response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.ANTHROPIC_API_KEY || "",
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 1024,
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "image",
+                  source: {
+                    type: "base64",
+                    media_type: image.type || "image/jpeg",
+                    data: base64,
                   },
-                  {
-                    inline_data: {
-                      mime_type: image.type || "image/jpeg",
-                      data: base64,
-                    },
-                  },
-                ],
-              },
-            ],
-            generationConfig: {
-              temperature: 0.2,
-              maxOutputTokens: 700,
+                },
+                {
+                  type: "text",
+                  text: prompt,
+                },
+              ],
             },
-          }),
-        }
-      );
+          ],
+        }),
+      });
     } catch (err) {
-      console.error("Gemini fetch error:", err);
+      console.error("Claude fetch error:", err);
       return NextResponse.json(
-        { error: "Gemini failed", detail: String(err) },
+        { error: "AI request failed", detail: String(err) },
         { status: 503 }
       );
     }
@@ -196,15 +166,15 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const details = await response.text();
-      console.error("Gemini non-OK response:", response.status, details);
+      console.error("Claude non-OK response:", response.status, details);
       return NextResponse.json(
-        { error: "Gemini Vision request failed.", details },
+        { error: "AI Vision request failed.", details },
         { status: 502 }
       );
     }
 
-    const payload = (await response.json()) as unknown;
-    const rawText = extractTextFromGeminiPayload(payload);
+    const result = (await response.json()) as { content?: { type: string; text: string }[] };
+    const rawText = result.content?.[0]?.text || "{}";
     const parsed = sanitizeVisionResult(extractJsonObject(rawText));
 
     return NextResponse.json({
@@ -223,7 +193,6 @@ export async function POST(req: NextRequest) {
       number: parsed.number ?? "",
       categoryLabel: parsed.categoryLabel ?? "",
       subcategoryLabel: parsed.subcategoryLabel ?? "",
-      // keep estimatedValue through for any consumers that want it
       estimatedValue: parsed.estimatedValue,
     });
   } catch (error) {
