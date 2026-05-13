@@ -265,7 +265,7 @@ export default function UserProfilePage() {
     );
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+    <main className="min-h-screen text-[color:var(--fg)]">
       <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-10">
         <div className="mb-5 flex flex-wrap items-center gap-3">
           <Link href="/account">

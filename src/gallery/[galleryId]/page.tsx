@@ -34,7 +34,7 @@ export default function PublicGalleryPage() {
 
   if(blocked){
     return (
-      <main className="min-h-screen grid place-items-center bg-[color:var(--bg)] text-[color:var(--fg)]">
+      <main className="min-h-screen grid place-items-center text-[color:var(--fg)]">
         <div className="text-center rounded-[28px] vltd-panel-main bg-[color:var(--surface)] p-8 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <h1 className="text-3xl font-semibold">Gallery Locked</h1>
           <div className="mt-3 opacity-70">
@@ -51,7 +51,7 @@ export default function PublicGalleryPage() {
 
   return (
 
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+    <main className="min-h-screen text-[color:var(--fg)]">
 
       <div className="mx-auto max-w-6xl px-6 py-12">
 

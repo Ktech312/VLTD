@@ -45,7 +45,7 @@ export default function PublicGalleryPage() {
   if(!canViewPublicGallery(gallery)){
 
     return (
-      <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+      <main className="min-h-screen text-[color:var(--fg)]">
 
         <div className="mx-auto max-w-4xl px-6 py-16">
 
@@ -69,7 +69,7 @@ export default function PublicGalleryPage() {
 
   return (
 
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+    <main className="min-h-screen text-[color:var(--fg)]">
 
       <div className="fixed right-4 top-4 z-40 flex flex-col items-end gap-2">
         <FavoriteButton

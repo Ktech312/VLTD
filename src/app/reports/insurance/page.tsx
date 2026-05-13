@@ -110,7 +110,7 @@ export default function InsuranceReportPage() {
   const generatedAt = useMemo(() => Date.now(), []);
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+    <main className="min-h-screen text-[color:var(--fg)]">
       {/* Print styles */}
       <style jsx global>{`
         @media print {

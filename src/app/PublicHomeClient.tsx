@@ -288,7 +288,7 @@ export default function PublicHomeClient() {
   }, [galleries]);
 
   return (
-    <main className="vltd-page-depth min-h-screen text-[color:var(--fg)]">
+    <main className="min-h-screen text-[color:var(--fg)]">
       <section className="vltd-page-grid border-b border-[color:var(--border)]">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <BrandMark />

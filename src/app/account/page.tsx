@@ -104,7 +104,7 @@ export default function AccountPage() {
 
   if (loading) {
     return (
-      <main className="vltd-page-depth min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6 lg:px-8">
+      <main className="min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl rounded-[28px] border border-[color:var(--border)] p-6 text-[color:var(--muted)] shadow-[0_22px_72px_rgba(0,0,0,0.24)]" style={{ background: "var(--theme-card)" }}>
           Loading account...
         </div>
@@ -113,7 +113,7 @@ export default function AccountPage() {
   }
 
   return (
-    <main className="vltd-page-depth min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
+    <main className="min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
         <section
           className="relative overflow-hidden rounded-[34px] p-5 sm:p-7"

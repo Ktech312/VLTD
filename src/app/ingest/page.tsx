@@ -45,7 +45,7 @@ function Card({
 
 export default function IngestHubPage() {
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+    <main className="min-h-screen text-[color:var(--fg)]">
       <div className="mx-auto max-w-6xl px-5 py-10">
         <div className="flex items-start justify-between gap-4">
           <div>

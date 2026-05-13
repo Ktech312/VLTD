@@ -141,7 +141,7 @@ export default function InsuranceExportPage() {
   }
 
   return (
-    <main className="vltd-page-depth min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
+    <main className="min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <style>{`
         @media print {
           @page { size: landscape; margin: 0.28in; }

@@ -671,7 +671,7 @@ export default function GalleryPage() {
 
   if (!draft || !metrics) {
     return (
-      <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+      <main className="min-h-screen text-[color:var(--fg)]">
         <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
           <div className="rounded-[28px] vltd-panel-main bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
@@ -693,7 +693,7 @@ export default function GalleryPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+    <main className="min-h-screen text-[color:var(--fg)]">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <Link href="/museum" className={neutralPillClass()}>

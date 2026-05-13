@@ -31,7 +31,7 @@ export function AdultContentGate({
   }
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] px-4 py-10 text-[color:var(--fg)]">
+    <main className="min-h-screen px-4 py-10 text-[color:var(--fg)]">
       <div className="mx-auto flex min-h-[70vh] max-w-xl items-center justify-center">
         <section className="w-full rounded-[28px] bg-[color:var(--surface)] p-6 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">18+ CONTENT</div>

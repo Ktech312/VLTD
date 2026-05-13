@@ -184,7 +184,7 @@ export default function CollectorProfilePage() {
   const highestValue = collection.intelligence.highestValue;
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+    <main className="min-h-screen text-[color:var(--fg)]">
       <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-7">
 
         <section className="vltd-panel-main relative overflow-hidden rounded-[26px] border border-[color:var(--border)] bg-[color:var(--surface)] px-5 py-5 shadow-[0_18px_54px_rgba(0,0,0,0.3)] sm:px-6 sm:py-6">

@@ -102,7 +102,7 @@ export default function FavoritesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] px-4 py-8 text-[color:var(--fg)] sm:px-6">
+    <main className="min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6">
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>

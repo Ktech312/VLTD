@@ -6,7 +6,7 @@ import { ApplyStyleGallery } from "@/components/ApplyStyleGallery";
 
 export default function UserStyleGalleryPage() {
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+    <main className="min-h-screen text-[color:var(--fg)]">
       <div className="mx-auto max-w-6xl px-5 py-8 vltd-page-tight">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>

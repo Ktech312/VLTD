@@ -878,7 +878,7 @@ export default function AddPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+    <main className="min-h-screen text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1500px] px-3 py-3 sm:px-4 sm:py-4">
         <div className="sticky top-0 z-20 mb-3 rounded-[16px] border border-[color:var(--border)] bg-[color:var(--surface)]/92 p-3 backdrop-blur">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
