@@ -90,9 +90,8 @@ export default function LearnPage() {
       {/* ── Nav ── */}
       <nav className="border-b border-[color:var(--border)]">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-2 font-black tracking-[-0.04em] text-text-primary">
-            <span className="text-xl" style={{ color: "var(--theme-gold, #F5B548)" }}>▣</span>
-            <span>VLTD</span>
+          <Link href="/" className="font-black tracking-[-0.04em] text-text-primary">
+            VLTD
           </Link>
           <div className="flex items-center gap-3">
             <Link
@@ -103,8 +102,8 @@ export default function LearnPage() {
             </Link>
             <Link
               href="/signup"
-              className="rounded-full px-5 py-2 text-sm font-black text-[#0B0B0B] transition"
-              style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
+              className="rounded-full px-5 py-2 text-sm font-bold transition"
+              style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)", color: "#0B0B0B" }}
             >
               Get started — free
             </Link>
@@ -128,8 +127,8 @@ export default function LearnPage() {
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link
               href="/signup"
-              className="inline-flex min-h-12 items-center justify-center rounded-full px-7 text-sm font-black text-[#0B0B0B]"
-              style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
+              className="inline-flex min-h-12 items-center justify-center rounded-full px-7 text-sm font-bold"
+              style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)", color: "#0B0B0B" }}
             >
               Start your vault — free
             </Link>
@@ -288,8 +287,8 @@ export default function LearnPage() {
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link
               href="/signup"
-              className="inline-flex min-h-12 items-center justify-center rounded-full px-8 text-sm font-black text-[#0B0B0B]"
-              style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
+              className="inline-flex min-h-12 items-center justify-center rounded-full px-8 text-sm font-bold"
+              style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)", color: "#0B0B0B" }}
             >
               Create your vault — free
             </Link>
