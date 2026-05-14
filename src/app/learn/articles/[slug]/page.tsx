@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { PortableText } from "@portabletext/react";
 import { getArticle } from "@/lib/sanity";
-import imageUrlBuilder from "@sanity/image-url";
+import { createImageUrlBuilder as imageUrlBuilder } from "@sanity/image-url";
 import { client } from "@/lib/sanity";
 
 const builder = imageUrlBuilder(client);

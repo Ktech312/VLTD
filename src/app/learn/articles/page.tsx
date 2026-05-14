@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { getArticles } from "@/lib/sanity";
-import imageUrlBuilder from "@sanity/image-url";
+import { createImageUrlBuilder as imageUrlBuilder } from "@sanity/image-url";
 import { client } from "@/lib/sanity";
 
 export const metadata: Metadata = {

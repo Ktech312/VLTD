@@ -1,8 +1,7 @@
 export const dynamic = 'force-dynamic'
 
-import { NextStudio } from 'next-sanity/studio'
-import config from '@sanity-config'
+import StudioPageClient from './StudioPageClient'
 
 export default function StudioPage() {
-  return <NextStudio config={config} />
+  return <StudioPageClient />
 }
