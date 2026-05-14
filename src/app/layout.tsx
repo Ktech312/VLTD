@@ -17,14 +17,12 @@ import "./vault-utility-pass.css";
 import "./vault-directives-pass.css";
 import "./insurance-pass.css";
 import "./theme-override.css";
-import TopNav from "@/components/TopNav";
-import BottomNav from "@/components/BottomNav";
+import NavShell from "@/components/NavShell";
 import Providers from "@/components/Providers";
 import RouteTransition from "@/components/RouteTransition";
 import { ThemeBoot } from "@/components/ThemeBoot";
 import ThemeScript from "@/components/ThemeScript";
 import { ThemeProvider } from "@/lib/ThemeContext";
-import { FloatingThemeButton } from "@/components/ui/FloatingThemeButton";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://vltd.app";
 
@@ -107,15 +105,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <ThemeProvider>
           <Providers>
-            <TopNav />
-            <div
-              style={{ paddingTop: "var(--topnav-h)" }}
-              className="vltd-content-wrap"
-            >
+            <NavShell>
               <RouteTransition>{children}</RouteTransition>
-            </div>
-            <BottomNav />
-            <FloatingThemeButton />
+            </NavShell>
           </Providers>
         </ThemeProvider>
       </body>
