@@ -267,7 +267,6 @@ export default function AddPage() {
 
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const [isPreparingImage, setIsPreparingImage] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [isBookLookupRunning, setIsBookLookupRunning] = useState(false);
   const [isComicLookupRunning, setIsComicLookupRunning] = useState(false);
@@ -1235,7 +1234,6 @@ export default function AddPage() {
     }
 
     setIsSaving(true);
-    setIsPreparingImage(Boolean(draftMediaImages.length || (scanFile && saveScanAsPhoto)));
 
     try {
       const now = Date.now();
@@ -1380,7 +1378,6 @@ export default function AddPage() {
       setStatus(error instanceof Error ? error.message : "Failed to save item.");
     } finally {
       setIsSaving(false);
-      setIsPreparingImage(false);
     }
   }
 
@@ -1392,7 +1389,7 @@ export default function AddPage() {
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="w-full px-4 py-3 sm:px-6 sm:py-4">
-        <div className="sticky top-0 z-20 mb-3 rounded-[16px] border border-[color:var(--theme-border)] bg-[color:var(--surface)]/92 p-3 backdrop-blur">
+        <div className="sticky top-0 z-20 mx-auto mb-3 w-full max-w-5xl rounded-[16px] border border-[color:var(--theme-border)] bg-[color:var(--surface)]/92 p-3 backdrop-blur">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">VAULT ADD</div>
@@ -1404,20 +1401,11 @@ export default function AddPage() {
 
             <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
               <Link
-                href="/vault"
-                className="inline-flex h-10 items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]"
-              >
-                Vault
-              </Link>
-              <Link
                 href="/vault/quick"
                 className="inline-flex h-10 items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]"
               >
                 Quick Add
               </Link>
-              <PillButton onClick={() => void saveForm(false)} disabled={!canSave}>
-                {isSaving && !isPreparingImage ? "Saving..." : "Save"}
-              </PillButton>
               <button
                 type="button"
                 onClick={() => void saveForm(true)}
