@@ -4,6 +4,7 @@ import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
 
 import CostToSellPanel from "@/components/CostToSellPanel";
+import ExportListingButton from "@/components/ExportListingButton";
 import ItemMedia from "@/components/ItemMedia";
 import PricingMvpCard from "@/components/PricingMvpCard";
 import ShareBar from "@/components/ShareBar";
@@ -902,6 +903,10 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 shippingCost={clamp(item.purchaseShipping)}
                 category={categoryLabel(item)}
               />
+            </div>
+
+            <div className="mt-5">
+              <ExportListingButton item={item} />
             </div>
 
             <div className="mt-5">
