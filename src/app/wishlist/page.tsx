@@ -1,24 +1,62 @@
-
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-function IconHeart({ size = 24, style }: { size?: number; style?: Record<string, string | number> }) {
+import { useMemo, useState } from "react";
+import WishlistCard from "@/components/WishlistCard";
+import { loadWishlist, type WishlistItem } from "@/lib/wishlistModel";
+
+function IconHeart({
+  size = 24,
+  style,
+}: {
+  size?: number;
+  style?: Record<string, string | number>;
+}) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={style}
+    >
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
     </svg>
   );
 }
-import { loadWishlist } from "@/lib/wishlistModel";
-import WishlistCard from "@/components/WishlistCard";
+
+type SortMode = "newest" | "price-asc" | "price-desc" | "priority";
 
 export default function WishlistPage() {
-  const [items, setItems] = useState<any[]>([]);
+  const [items] = useState<WishlistItem[]>(() => loadWishlist());
+  const [sort, setSort] = useState<SortMode>("newest");
+  const [filterPriority, setFilterPriority] = useState<string>("all");
 
-  useEffect(() => {
-    setItems(loadWishlist());
-  }, []);
+  const sorted = useMemo(() => {
+    let list = [...items];
+
+    if (filterPriority !== "all") {
+      list = list.filter((item) => item.priority === filterPriority);
+    }
+
+    if (sort === "price-asc") {
+      list.sort((a, b) => (a.targetPrice ?? Infinity) - (b.targetPrice ?? Infinity));
+    } else if (sort === "price-desc") {
+      list.sort((a, b) => (b.targetPrice ?? -Infinity) - (a.targetPrice ?? -Infinity));
+    } else if (sort === "priority") {
+      const order: Record<string, number> = { high: 0, medium: 1, low: 2 };
+      list.sort((a, b) => (order[a.priority ?? ""] ?? 3) - (order[b.priority ?? ""] ?? 3));
+    } else {
+      list.sort((a, b) => b.createdAt - a.createdAt);
+    }
+
+    return list;
+  }, [items, sort, filterPriority]);
 
   return (
     <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
@@ -31,7 +69,10 @@ export default function WishlistPage() {
             >
               Wishlist
             </h1>
-            <p className="mt-0.5 text-sm" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
+            <p
+              className="mt-0.5 text-sm"
+              style={{ color: "var(--theme-text-muted, #A0956B)" }}
+            >
               Items you&apos;re watching or saving for later
             </p>
           </div>
@@ -47,6 +88,38 @@ export default function WishlistPage() {
             + Add Item
           </Link>
         </div>
+
+        {items.length > 0 && (
+          <div className="flex flex-wrap gap-3">
+            <select
+              value={sort}
+              onChange={(event) => setSort(event.target.value as SortMode)}
+              className="h-9 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              style={{ color: "var(--fg)" }}
+            >
+              <option value="newest">Newest First</option>
+              <option value="priority">Priority</option>
+              <option value="price-asc">Target Price Up</option>
+              <option value="price-desc">Target Price Down</option>
+            </select>
+
+            <select
+              value={filterPriority}
+              onChange={(event) => setFilterPriority(event.target.value)}
+              className="h-9 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              style={{ color: "var(--fg)" }}
+            >
+              <option value="all">All Priorities</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+
+            <span className="self-center text-xs" style={{ color: "var(--muted)" }}>
+              {sorted.length} item{sorted.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+        )}
 
         {items.length === 0 ? (
           <div
@@ -75,15 +148,17 @@ export default function WishlistPage() {
               className="mx-auto mt-2 max-w-xs text-sm leading-relaxed"
               style={{ color: "var(--theme-text-muted, #A0956B)" }}
             >
-              Save items you&apos;re eyeing to track prices and build toward your next acquisition.
+              Save items you&apos;re eyeing to track prices and build toward your next
+              acquisition.
             </p>
             <div className="mt-5 flex flex-wrap justify-center gap-3">
               <Link
                 href="/vault/add"
                 className="rounded-full px-5 py-2 text-sm font-semibold transition"
                 style={{
-                  background: "linear-gradient(135deg, #8B6914 0%, #C8941F 25%, #F5B548 50%, #FFE08A 70%, #C8941F 100%)",
-                  color: "#0B0B0B",
+                  background:
+                    "linear-gradient(135deg, var(--gold-dark, #8B6914) 0%, var(--gold-mid, #C8941F) 25%, var(--theme-gold, #F5B548) 50%, var(--gold-light, #FFE08A) 70%, var(--gold-mid, #C8941F) 100%)",
+                  color: "var(--ink, #0B0B0B)",
                 }}
               >
                 Browse &amp; Add Items
@@ -102,8 +177,8 @@ export default function WishlistPage() {
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-3">
-            {items.map((i) => (
-              <WishlistCard key={i.id} item={i} />
+            {sorted.map((item) => (
+              <WishlistCard key={item.id} item={item} />
             ))}
           </div>
         )}

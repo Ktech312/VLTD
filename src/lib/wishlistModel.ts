@@ -4,6 +4,10 @@ export type WishlistItem = {
   targetPrice?: number;
   notes?: string;
   createdAt: number;
+  universe?: string;
+  category?: string;
+  condition?: "any" | "raw" | "graded" | "nm" | "ex";
+  priority?: "low" | "medium" | "high";
 };
 
 const STORAGE_KEY = "vltd_wishlist";
@@ -24,11 +28,21 @@ export function saveWishlist(items: WishlistItem[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
 }
 
-export function addWishlistItem(item: WishlistItem) {
+export function addWishlistItem(
+  fields: Pick<
+    WishlistItem,
+    "title" | "targetPrice" | "notes" | "universe" | "category" | "condition" | "priority"
+  >
+): WishlistItem {
+  const item: WishlistItem = {
+    id: `wish_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    createdAt: Date.now(),
+    ...fields,
+  };
   const existing = loadWishlist();
   const next = [item, ...existing];
   saveWishlist(next);
-  return next;
+  return item;
 }
 
 export function removeWishlistItem(id: string) {

@@ -4,11 +4,7 @@ import { addWishlistItem } from "@/lib/wishlistModel";
 
 export default function AddToWishlistButton({ title }: { title: string }) {
   function add() {
-    addWishlistItem({
-      id: `wish_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      title,
-      createdAt: Date.now(),
-    });
+    addWishlistItem({ title });
     alert("Added to wishlist");
   }
 
