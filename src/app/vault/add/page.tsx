@@ -267,6 +267,7 @@ export default function AddPage() {
 
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [hasDraftChanges, setHasDraftChanges] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [isBookLookupRunning, setIsBookLookupRunning] = useState(false);
   const [isComicLookupRunning, setIsComicLookupRunning] = useState(false);
@@ -355,21 +356,7 @@ export default function AddPage() {
   }, [existingItems, values.certNumber, values.number, values.title]);
 
   const canSave = useMemo(() => values.title.trim().length > 0 && !isSaving, [values.title, isSaving]);
-  const hasDraftProgress = useMemo(() => {
-    const hasFormValues = Object.values(values).some((value) => String(value ?? "").trim().length > 0);
-    const hasPricingValues = Object.values(pricingValues).some((value) =>
-      String(value ?? "").trim().length > 0
-    );
-
-    return (
-      hasFormValues ||
-      hasPricingValues ||
-      Boolean(scanFile || scanSession.image || scanSession.review || isCropEditorOpen) ||
-      draftMediaImages.length > 0
-    );
-  }, [draftMediaImages.length, isCropEditorOpen, pricingValues, scanFile, scanSession.image, scanSession.review, values]);
-
-  useUnsavedChangesGuard(hasDraftProgress && !isSaving);
+  useUnsavedChangesGuard(hasDraftChanges && !isSaving);
 
   const selectedUniverse = safeUniverse(values.universe);
   const selectedCategory = safeCategoryForUniverse(
@@ -383,28 +370,57 @@ export default function AddPage() {
       : baseCategoryOptions;
   const subcategoryOptions = getSubcategories(selectedUniverse, selectedCategory);
 
+  function markDraftChanged() {
+    setHasDraftChanges(true);
+  }
+
   function setField<K extends keyof FormValues>(key: K, value: FormValues[K]) {
-    setValues((prev) => ({ ...prev, [key]: value }));
+    setValues((prev) => {
+      if (prev[key] === value) return prev;
+      setHasDraftChanges(true);
+      return { ...prev, [key]: value };
+    });
   }
 
   function setUniverse(nextUniverse: UniverseKey) {
     const nextCategory = getDefaultCategory(nextUniverse);
-    setValues((prev) => ({
-      ...prev,
-      universe: nextUniverse,
-      category: categoryCode(nextCategory),
-      categoryLabel: nextCategory,
-      subcategoryLabel: "",
-    }));
+    setValues((prev) => {
+      if (
+        prev.universe === nextUniverse &&
+        prev.category === categoryCode(nextCategory) &&
+        prev.categoryLabel === nextCategory &&
+        !prev.subcategoryLabel
+      ) {
+        return prev;
+      }
+      setHasDraftChanges(true);
+      return {
+        ...prev,
+        universe: nextUniverse,
+        category: categoryCode(nextCategory),
+        categoryLabel: nextCategory,
+        subcategoryLabel: "",
+      };
+    });
   }
 
   function setCategoryLabel(nextCategory: string) {
-    setValues((prev) => ({
-      ...prev,
-      category: categoryCode(nextCategory),
-      categoryLabel: nextCategory,
-      subcategoryLabel: "",
-    }));
+    setValues((prev) => {
+      if (
+        prev.category === categoryCode(nextCategory) &&
+        prev.categoryLabel === nextCategory &&
+        !prev.subcategoryLabel
+      ) {
+        return prev;
+      }
+      setHasDraftChanges(true);
+      return {
+        ...prev,
+        category: categoryCode(nextCategory),
+        categoryLabel: nextCategory,
+        subcategoryLabel: "",
+      };
+    });
   }
 
   function applyScanFieldsToEmpty(fields: ScanSessionReview["fields"]) {
@@ -431,6 +447,7 @@ export default function AddPage() {
       apply("notes", fields.notes);
 
       if (newlyFilled.size) {
+        setHasDraftChanges(true);
         setAiFilledFields((prevFields) => {
           const nextFields = new Set(prevFields);
           newlyFilled.forEach((field) => nextFields.add(field));
@@ -483,6 +500,8 @@ export default function AddPage() {
       return [];
     }
 
+    markDraftChanged();
+
     const newEntries: DraftMediaImage[] = imageFiles.map((file, index) => ({
       id: newId(),
       file,
@@ -518,6 +537,11 @@ export default function AddPage() {
   function clearAllImages() {
     clearScanImage();
     clearMediaImage();
+  }
+
+  function handleToggleSaveScanAsPhoto(next: boolean) {
+    setSaveScanAsPhoto(next);
+    markDraftChanged();
   }
 
   function removeDraftMediaImage(imageId: string) {
@@ -1143,6 +1167,7 @@ export default function AddPage() {
           )
         )
       );
+      markDraftChanged();
 
       if (activeMediaImageId === image.id) {
         replaceScanImage(croppedFile);
@@ -1212,6 +1237,7 @@ export default function AddPage() {
     clearAllImages();
     clearPricing();
     setAiFilledFields(new Set());
+    setHasDraftChanges(false);
     setStatus("Unlocked fields reset.");
     window.setTimeout(() => numberInputRef.current?.focus(), 0);
   }
@@ -1222,6 +1248,7 @@ export default function AddPage() {
     clearAllImages();
     clearPricing();
     setAiFilledFields(new Set());
+    setHasDraftChanges(false);
     setStatus("Form reset.");
   }
 
@@ -1370,6 +1397,7 @@ export default function AddPage() {
       setValues(nextValues);
       setScanSession((prev) => clearScanSessionReview(prev));
       setAiFilledFields(new Set());
+      setHasDraftChanges(false);
 
       if (saveAndNext) {
         window.setTimeout(() => numberInputRef.current?.focus(), 0);
@@ -1452,7 +1480,7 @@ export default function AddPage() {
                 onComicLookup={() => void handleComicLookup()}
                 onUpcLookup={() => void handleUpcLookup()}
                 onClearImage={clearScanImage}
-                onToggleSaveScanAsPhoto={setSaveScanAsPhoto}
+                onToggleSaveScanAsPhoto={handleToggleSaveScanAsPhoto}
                 onSaveItem={() => void saveForm(false)}
                 canSaveItem={canSave}
                 capturedPhotos={draftMediaImages.map((image) => ({
