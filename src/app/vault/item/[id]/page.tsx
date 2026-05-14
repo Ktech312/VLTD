@@ -1095,6 +1095,51 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 { label: "Serial #", value: detailValue(item.serialNumber) },
               ]}
             />
+            {(item.edition || item.variant || item.printRun || item.isFirstEdition) && (
+              <div className="mt-4 rounded-2xl bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
+                <div className="text-[11px] uppercase tracking-[0.24em] text-[color:var(--muted2)]">
+                  Edition / Variant
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {item.isFirstEdition ? (
+                    <span
+                      className="rounded-full px-3 py-1 text-xs font-semibold ring-1"
+                      style={{
+                        background: "var(--theme-gold-subtle)",
+                        borderColor: "var(--theme-gold-border)",
+                        color: "var(--theme-gold)",
+                      }}
+                    >
+                      1st Edition
+                    </span>
+                  ) : null}
+                  {item.edition && !item.isFirstEdition ? (
+                    <span
+                      className="rounded-full px-3 py-1 text-xs ring-1 ring-[color:var(--border)]"
+                      style={{ color: "var(--fg)" }}
+                    >
+                      {item.edition}
+                    </span>
+                  ) : null}
+                  {item.variant ? (
+                    <span
+                      className="rounded-full px-3 py-1 text-xs ring-1 ring-[color:var(--border)]"
+                      style={{ color: "var(--fg)" }}
+                    >
+                      {item.variant}
+                    </span>
+                  ) : null}
+                  {item.printRun ? (
+                    <span
+                      className="rounded-full px-3 py-1 text-xs ring-1 ring-[color:var(--border)]"
+                      style={{ color: "var(--fg)" }}
+                    >
+                      # {item.printRun}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            )}
           </Section>
 
           <Section title="PURCHASE">

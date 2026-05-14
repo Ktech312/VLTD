@@ -1368,6 +1368,10 @@ export default function AddPage() {
         purchaseLocation: normalizedValues.purchaseLocation.trim() || undefined,
         certNumber: normalizedValues.certNumber.trim() || undefined,
         serialNumber: normalizedValues.serialNumber.trim() || undefined,
+        edition: normalizedValues.edition.trim() || undefined,
+        variant: normalizedValues.variant.trim() || undefined,
+        printRun: normalizedValues.printRun.trim() || undefined,
+        isFirstEdition: normalizedValues.isFirstEdition === "true" || undefined,
         notes: normalizedValues.notes.trim() || undefined,
         primaryImageKey,
         images,
@@ -1668,6 +1672,45 @@ export default function AddPage() {
                 />
               </Field>
 
+              <Field label="Edition" locked={locks.edition} onToggleLock={() => handleToggleLock("edition")}>
+                <input
+                  className={inputClass()}
+                  value={values.edition}
+                  onChange={(e) => setField("edition", e.target.value)}
+                  placeholder="1st Edition, Unlimited, Shadowless"
+                />
+              </Field>
+
+              <Field label="Variant / Finish" locked={locks.variant} onToggleLock={() => handleToggleLock("variant")}>
+                <input
+                  className={inputClass()}
+                  value={values.variant}
+                  onChange={(e) => setField("variant", e.target.value)}
+                  placeholder="Holo, Reverse Holo, Foil"
+                />
+              </Field>
+
+              <Field label="Print Run" locked={locks.printRun} onToggleLock={() => handleToggleLock("printRun")}>
+                <input
+                  className={inputClass()}
+                  value={values.printRun}
+                  onChange={(e) => setField("printRun", e.target.value)}
+                  placeholder="1/1, 47/250, Artist Proof"
+                />
+              </Field>
+
+              <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <input
+                  type="checkbox"
+                  checked={values.isFirstEdition === "true"}
+                  onChange={(e) => setField("isFirstEdition", e.target.checked ? "true" : "")}
+                  className="h-4 w-4 rounded accent-[color:var(--theme-gold)]"
+                />
+                <span className="text-sm" style={{ color: "var(--fg)" }}>
+                  First Edition / First Print
+                </span>
+              </label>
+
               <div className="sm:col-span-2 lg:col-span-3">
                 <Field label="Notes" locked={locks.notes} onToggleLock={() => handleToggleLock("notes")}>
                   <textarea
@@ -1731,6 +1774,7 @@ export default function AddPage() {
               </div>
 
               <div className="mt-3 min-h-0 overflow-hidden rounded-[16px] bg-[color:var(--theme-card)] p-2 ring-1 ring-[color:var(--border)]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={selectedMediaImage.previewUrl}
                   alt={`${selectedMediaImage.role} item photo`}

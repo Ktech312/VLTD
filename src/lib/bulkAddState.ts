@@ -14,6 +14,10 @@ export type BulkAddFieldKey =
   | "purchaseLocation"
   | "certNumber"
   | "serialNumber"
+  | "edition"
+  | "variant"
+  | "printRun"
+  | "isFirstEdition"
   | "notes";
 
 export type BulkAddValues = Record<BulkAddFieldKey, string>;
@@ -37,6 +41,10 @@ export const EMPTY_BULK_ADD_VALUES: BulkAddValues = {
   purchaseLocation: "",
   certNumber: "",
   serialNumber: "",
+  edition: "",
+  variant: "",
+  printRun: "",
+  isFirstEdition: "",
   notes: "",
 };
 
@@ -56,6 +64,10 @@ export const DEFAULT_BULK_ADD_LOCKS: BulkAddLocks = {
   purchaseLocation: false,
   certNumber: false,
   serialNumber: false,
+  edition: false,
+  variant: false,
+  printRun: false,
+  isFirstEdition: false,
   notes: false,
 };
 

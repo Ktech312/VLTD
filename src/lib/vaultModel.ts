@@ -48,6 +48,10 @@ export type VaultItem = {
   storageLocation?: string;
   certNumber?: string;
   serialNumber?: string;
+  edition?: string;
+  variant?: string;
+  printRun?: string;
+  isFirstEdition?: boolean;
   valueSource?: string;
   valueUpdatedAt?: number;
   valueConfidence?: number;
@@ -322,6 +326,10 @@ function normalizeOne(input: unknown): VaultItem | null {
     storageLocation: raw.storageLocation ?? undefined,
     certNumber: raw.certNumber ?? undefined,
     serialNumber: raw.serialNumber ?? undefined,
+    edition: raw.edition ?? undefined,
+    variant: raw.variant ?? undefined,
+    printRun: raw.printRun ?? undefined,
+    isFirstEdition: raw.isFirstEdition === true,
     valueSource: raw.valueSource ?? undefined,
     valueUpdatedAt:
       typeof raw.valueUpdatedAt === "number" && Number.isFinite(raw.valueUpdatedAt)

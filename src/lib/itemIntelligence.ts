@@ -129,12 +129,17 @@ function notableSearchText(item: VaultItem) {
     item.notes ?? "",
     item.certNumber ?? "",
     item.serialNumber ?? "",
+    item.edition ?? "",
+    item.variant ?? "",
+    item.printRun ?? "",
   ]
     .join(" ")
     .toLowerCase();
 }
 
 export function isNotable(item: VaultItem): boolean {
+  if (item.isFirstEdition) return true;
+
   const searchable = notableSearchText(item);
   const keywordMatch = NOTABLE_KEYWORDS.some((keyword) => searchable.includes(keyword));
   const highValue =
@@ -149,7 +154,7 @@ export function notableReason(item: VaultItem): string {
   const searchable = notableSearchText(item);
   const reasons: string[] = [];
 
-  if (searchable.includes("1st edition") || searchable.includes("first edition")) {
+  if (item.isFirstEdition || searchable.includes("1st edition") || searchable.includes("first edition")) {
     reasons.push("1st Edition");
   }
   if (searchable.includes("rookie") || searchable.includes(" rc ")) {
