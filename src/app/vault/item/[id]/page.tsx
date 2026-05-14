@@ -5,6 +5,7 @@ import { use, useEffect, useMemo, useState } from "react";
 
 import ItemMedia from "@/components/ItemMedia";
 import PricingMvpCard from "@/components/PricingMvpCard";
+import ShareBar from "@/components/ShareBar";
 import { removeBackgroundStub } from "@/lib/imageAI";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { generateShareImage } from "@/lib/generateShareImage";
@@ -804,6 +805,10 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 </button>
               </div>
             ) : null}
+
+            <div className="mt-4">
+              <ShareBar title={item.title} />
+            </div>
 
             {isSoldView && displayedSale && (
               <div className="mb-5 mt-4">
