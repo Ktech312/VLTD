@@ -4,17 +4,14 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import BulkLockBar from "@/components/BulkLockBar";
 import CameraCapturePanel from "@/components/CameraCapturePanel";
 import { type ImageRole } from "@/components/ImageRoleSelector";
 import ScanCropEditor from "@/components/ScanCropEditor";
 import ScanPanel from "@/components/ScanPanel";
-import ScanResultPreview from "@/components/ScanResultPreview";
 import { PillButton } from "@/components/ui/PillButton";
 import {
   applyBulkLockedValues,
   buildRememberedValues,
-  createDefaultBulkAddState,
   DEFAULT_BULK_ADD_LOCKS,
   EMPTY_BULK_ADD_VALUES,
   readBulkAddState,
@@ -182,14 +179,6 @@ function normalizeHierarchy(values: FormValues): FormValues {
   };
 }
 
-function reviewTitleFromSource(source?: ScanSessionReview["source"]) {
-  if (source === "book_lookup") return "BOOK LOOKUP REVIEW";
-  if (source === "comic_lookup") return "COMIC LOOKUP REVIEW";
-  if (source === "barcode_lookup") return "BARCODE REVIEW";
-  if (source === "vision") return "AI IDENTIFY REVIEW";
-  return "SCAN REVIEW";
-}
-
 function looksLikeBookBarcode(digits?: string) {
   const clean = String(digits ?? "").trim();
   if (!clean) return false;
@@ -252,7 +241,6 @@ export default function AddPage() {
   const numberInputRef = useRef<HTMLInputElement | null>(null);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
   const scanStageRef = useRef<HTMLDivElement | null>(null);
-  const reviewRef = useRef<HTMLDivElement | null>(null);
   const mediaImagesRef = useRef<DraftMediaImage[]>([]);
 
   const [values, setValues] = useState<FormValues>(EMPTY_VALUES);
@@ -367,13 +355,6 @@ export default function AddPage() {
     );
   }, [existingItems, values.certNumber, values.number, values.title]);
 
-  useEffect(() => {
-    if (!scanSession.review) return;
-    window.setTimeout(() => {
-      reviewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 50);
-  }, [scanSession.review]);
-
   const canSave = useMemo(() => values.title.trim().length > 0 && !isSaving, [values.title, isSaving]);
   const hasDraftProgress = useMemo(() => {
     const hasFormValues = Object.values(values).some((value) => String(value ?? "").trim().length > 0);
@@ -427,24 +408,43 @@ export default function AddPage() {
     }));
   }
 
+  function applyScanFieldsToEmpty(fields: ScanSessionReview["fields"]) {
+    setValues((prev) => {
+      const next = { ...prev };
+      const newlyFilled = new Set<keyof FormValues>();
+      const apply = (key: keyof FormValues, value?: string) => {
+        if (!value?.trim()) return;
+        if (String(next[key] ?? "").trim()) return;
+        next[key] = value;
+        newlyFilled.add(key);
+      };
+
+      apply("title", fields.title);
+      apply("subtitle", fields.subtitle);
+      apply("number", fields.number);
+      apply("grade", fields.grade);
+      apply("certNumber", fields.certNumber);
+      apply("universe", fields.universe);
+      apply("category", fields.category);
+      apply("categoryLabel", fields.categoryLabel);
+      apply("subcategoryLabel", fields.subcategoryLabel);
+      apply("serialNumber", fields.serialNumber);
+      apply("notes", fields.notes);
+
+      if (newlyFilled.size) {
+        setAiFilledFields((prevFields) => {
+          const nextFields = new Set(prevFields);
+          newlyFilled.forEach((field) => nextFields.add(field));
+          return nextFields;
+        });
+      }
+
+      return normalizeHierarchy(next);
+    });
+  }
+
   function handleToggleLock(key: BulkAddFieldKey) {
     setLocks((prev) => toggleBulkAddLock(prev, key));
-  }
-
-  function handleLockAll() {
-    const next = createDefaultBulkAddState().locks;
-    (Object.keys(next) as BulkAddFieldKey[]).forEach((key) => {
-      next[key] = true;
-    });
-    setLocks(next);
-  }
-
-  function handleUnlockAll() {
-    const next = createDefaultBulkAddState().locks;
-    (Object.keys(next) as BulkAddFieldKey[]).forEach((key) => {
-      next[key] = false;
-    });
-    setLocks(next);
   }
 
   function clearScanImage() {
@@ -655,6 +655,9 @@ export default function AddPage() {
       const book = await lookupBookByIsbn(isbn);
 
       if (!book) {
+        const fields = {
+          serialNumber: isbn,
+        };
         setScanSession((prev) =>
           setScanSessionReview(prev, {
             source: "book_lookup",
@@ -663,16 +666,26 @@ export default function AddPage() {
             safeToAutofill: true,
             warnings: ["ISBN found, but no metadata source returned a book match."],
             rawText: rawText || `ISBN detected: ${isbn}`,
-            fields: {
-              serialNumber: isbn,
-            },
+            fields,
           })
         );
-        setStatus("ISBN found, but no metadata was returned.");
+        applyScanFieldsToEmpty(fields);
+        setScanSession((prev) => markScanSessionApplied(prev));
+        setStatus("ISBN found and added. No book metadata was returned.");
         return false;
       }
 
       const notes = book.notes || `ISBN: ${book.isbn}`;
+      const fields = {
+        title: book.title,
+        subtitle: book.subtitle || "",
+        universe: "POP_CULTURE",
+        category: "BOOKS",
+        categoryLabel: "Books",
+        subcategoryLabel: "Book",
+        serialNumber: book.isbn,
+        notes,
+      };
 
       setScanSession((prev) =>
         setScanSessionReview(prev, {
@@ -682,20 +695,13 @@ export default function AddPage() {
           safeToAutofill: true,
           warnings: [],
           rawText: rawText || `ISBN detected: ${book.isbn}`,
-          fields: {
-            title: book.title,
-            subtitle: book.subtitle || "",
-            universe: "POP_CULTURE",
-            category: "BOOKS",
-            categoryLabel: "Books",
-            subcategoryLabel: "Book",
-            serialNumber: book.isbn,
-            notes,
-          },
+          fields,
         })
       );
 
-      setStatus("Book metadata found. Review and apply.");
+      applyScanFieldsToEmpty(fields);
+      setScanSession((prev) => markScanSessionApplied(prev));
+      setStatus("Book metadata filled where fields were empty.");
       return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Book lookup failed.";
@@ -722,6 +728,16 @@ export default function AddPage() {
         fallbackOcrText: fallbackOcr.rawText,
         barcodeDigits: barcodeDigits || regionScan.barcode,
       });
+      const fields = {
+        title: parsed.title,
+        subtitle: parsed.subtitle,
+        number: parsed.issueNumber,
+        universe: "POP_CULTURE",
+        category: "COMICS",
+        categoryLabel: "Comics",
+        subcategoryLabel: "Comic Book",
+        notes: parsed.notes || undefined,
+      };
 
       setScanSession((prev) => {
         let next = prev;
@@ -748,23 +764,19 @@ export default function AddPage() {
                 ]
               : parsed.warnings,
           rawText: parsed.notes || fallbackOcr.rawText || "",
-          fields: {
-            title: parsed.title,
-            subtitle: parsed.subtitle,
-            number: parsed.issueNumber,
-            universe: "POP_CULTURE",
-            category: "COMICS",
-            categoryLabel: "Comics",
-            subcategoryLabel: "Comic Book",
-            notes: parsed.notes || undefined,
-          },
+          fields,
         });
       });
 
+      if (parsed.confidence !== "low") {
+        applyScanFieldsToEmpty(fields);
+        setScanSession((prev) => markScanSessionApplied(prev));
+      }
+
       setStatus(
         parsed.confidence !== "low"
-          ? "Comic scan complete. Review and apply."
-          : "Comic scan was weak. Review and try a better scan."
+          ? "Comic scan filled what it could."
+          : "Comic scan was weak. Try a better scan or use image identify."
       );
 
       return parsed.confidence !== "low";
@@ -793,6 +805,17 @@ export default function AddPage() {
         return false;
       }
 
+      const fields = {
+        title: result.title,
+        subtitle: result.subtitle || "",
+        serialNumber: result.code,
+        universe: result.universe || "",
+        category: result.source === "openlibrary" ? "BOOKS" : "PRODUCTS",
+        categoryLabel: result.categoryLabel || "",
+        subcategoryLabel: result.subcategoryLabel || "",
+        notes: result.notes || "",
+      };
+
       setScanSession((prev) => {
         let next = prev;
 
@@ -807,7 +830,7 @@ export default function AddPage() {
           safeToAutofill: true,
           warnings:
             result.source === "upcitemdb"
-              ? ["Catalog product lookup matched. Review the title and category before applying."]
+              ? ["Catalog product lookup matched. Check the title and category before saving."]
               : [],
           rawText: [
             `Barcode detected: ${digits}`,
@@ -816,23 +839,16 @@ export default function AddPage() {
           ]
             .filter(Boolean)
             .join("\n"),
-          fields: {
-            title: result.title,
-            subtitle: result.subtitle || "",
-            serialNumber: result.code,
-            universe: result.universe || "",
-            category: result.source === "openlibrary" ? "BOOKS" : "PRODUCTS",
-            categoryLabel: result.categoryLabel || "",
-            subcategoryLabel: result.subcategoryLabel || "",
-            notes: result.notes || "",
-          },
+          fields,
         });
       });
 
+      applyScanFieldsToEmpty(fields);
+      setScanSession((prev) => markScanSessionApplied(prev));
       setStatus(
         result.source === "openlibrary"
-          ? "Book lookup found. Review and apply."
-          : "Product lookup found. Review and apply."
+          ? "Book lookup filled what it could."
+          : "Product lookup filled what it could."
       );
       return true;
     } catch (error) {
@@ -868,9 +884,14 @@ export default function AddPage() {
         })
       );
 
+      if (result.quality.safeToAutofill) {
+        applyScanFieldsToEmpty(result.fields);
+        setScanSession((prev) => markScanSessionApplied(prev));
+      }
+
       setStatus(
         result.quality.safeToAutofill
-          ? "Text scan found something useful. Review and apply."
+          ? "Text scan filled what it could."
           : "Text scan was weak. Trying image identify may work better."
       );
 
@@ -910,6 +931,17 @@ export default function AddPage() {
 
       const safeToAutofill =
         vision.confidence >= 0.45 && Boolean(String(vision.title ?? "").trim());
+      const fields = {
+        title: vision.title,
+        subtitle: vision.subtitle,
+        number: vision.number,
+        grade: vision.grade,
+        certNumber: vision.certNumber,
+        universe: vision.universe,
+        categoryLabel: vision.categoryLabel || vision.category,
+        subcategoryLabel: vision.subcategoryLabel,
+        notes: vision.description,
+      };
 
       setScanSession((prev) =>
         setScanSessionReview(prev, {
@@ -922,45 +954,19 @@ export default function AddPage() {
             ? []
             : ["Image identify was not confident enough to safely autofill everything."],
           rawText: vision.description || `AI detected: ${vision.title} (${vision.category})`,
-          fields: {
-            title: vision.title,
-            subtitle: vision.subtitle,
-            number: vision.number,
-            grade: vision.grade,
-            certNumber: vision.certNumber,
-            universe: vision.universe,
-            categoryLabel: vision.categoryLabel || vision.category,
-            subcategoryLabel: vision.subcategoryLabel,
-            notes: vision.description,
-          },
+          fields,
         })
       );
 
-      setValues((prev) => {
-        const next = { ...prev };
-        const newlyFilled = new Set<keyof FormValues>();
-        const apply = (key: keyof FormValues, value?: string) => {
-          if (!value?.trim()) return;
-          if (String(next[key] ?? "").trim()) return;
-          next[key] = value;
-          newlyFilled.add(key);
-        };
-        apply("title", vision.title);
-        apply("subtitle", vision.subtitle);
-        apply("number", vision.number);
-        apply("grade", vision.grade);
-        apply("certNumber", vision.certNumber);
-        apply("notes", vision.description);
-        setAiFilledFields(newlyFilled);
-        return normalizeHierarchy(next);
-      });
-
-      setScanSession((prev) => markScanSessionApplied(prev));
+      if (safeToAutofill) {
+        applyScanFieldsToEmpty(fields);
+        setScanSession((prev) => markScanSessionApplied(prev));
+      }
 
       setStatus(
         safeToAutofill
-          ? "Image identify found a likely match. Review and apply."
-          : "Image identify was not confident. Review before applying anything."
+          ? "Image identify filled what it could."
+          : "Image identify was not confident enough to fill fields."
       );
 
       return safeToAutofill;
@@ -1201,49 +1207,12 @@ export default function AddPage() {
     await runComicLookupForFile(scanFile, barcode?.digits, barcode?.rawValue);
   }
 
-  function applyScanReview(mode: "all" | "emptyOnly") {
-    const review = scanSession.review;
-    if (!review) return;
-    if (mode === "all" && (!review.safeToAutofill || review.confidence === "low")) return;
-
-    setValues((prev) => {
-      const next = { ...prev };
-      const fields = review.fields;
-
-      const apply = (key: keyof FormValues, value?: string) => {
-        if (!value) return;
-        if (mode === "emptyOnly" && String(next[key] ?? "").trim()) return;
-        next[key] = value;
-      };
-
-      apply("title", fields.title);
-      apply("subtitle", fields.subtitle);
-      apply("number", fields.number);
-      apply("grade", fields.grade);
-      apply("certNumber", fields.certNumber);
-      apply("universe", fields.universe);
-      apply("category", fields.category);
-      apply("categoryLabel", fields.categoryLabel);
-      apply("subcategoryLabel", fields.subcategoryLabel);
-      apply("serialNumber", fields.serialNumber);
-      apply("notes", fields.notes);
-
-      return normalizeHierarchy(next);
-    });
-
-    setScanSession((prev) => markScanSessionApplied(prev));
-    setStatus(mode === "all" ? "Scan fields applied." : "Scan fields applied to empty fields only.");
-    window.setTimeout(() => {
-      titleInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      titleInputRef.current?.focus();
-    }, 60);
-  }
-
   function resetUnlockedFields() {
     const nextValues = resetUnlockedBulkValues(normalizeHierarchy(values), locks);
     setValues(nextValues);
     clearAllImages();
     clearPricing();
+    setAiFilledFields(new Set());
     setStatus("Unlocked fields reset.");
     window.setTimeout(() => numberInputRef.current?.focus(), 0);
   }
@@ -1253,6 +1222,7 @@ export default function AddPage() {
     setLocks({ ...DEFAULT_BULK_ADD_LOCKS });
     clearAllImages();
     clearPricing();
+    setAiFilledFields(new Set());
     setStatus("Form reset.");
   }
 
@@ -1585,10 +1555,7 @@ export default function AddPage() {
 
           </div>
 
-          {/* Scan review panel removed — results apply directly to fields */}
         </div>
-
-        {/* BulkLockBar hidden — per-field lock/unlock buttons still active */}
 
         <section className="w-full max-w-5xl mx-auto rounded-[16px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
