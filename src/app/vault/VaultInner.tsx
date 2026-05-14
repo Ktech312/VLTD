@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import UniverseRail from "@/components/UniverseRail";
+import SwipeStack from "@/components/SwipeStack";
 import { TAXONOMY, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { loadItemsOrSeed, saveItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { type Tier, getTierSafe, onTierChange } from "@/lib/subscription";
@@ -29,6 +30,7 @@ const FRAME_OPTIONS: { value: FrameStyle; label: string }[] = [
 ];
 
 const LS_FRAME_KEY = "vltd_frame_style";
+const LS_VAULT_VIEW_MODE_KEY = "vltd_vault_view_mode";
 
 function normalizeGrade(s: string) {
   return s.toLowerCase().replace(/\s+/g, "");
@@ -672,6 +674,7 @@ export default function VaultInner() {
   const [sFilter, setSFilter] = useState<string>("ALL");
 
   const [frameStyle, setFrameStyle] = useState<FrameStyle>("gallery");
+  const [viewMode, setViewMode] = useState<"shelf" | "swipe">("shelf");
   const [open, setOpen] = useState(false);
   const [bulkEnabled, setBulkEnabled] = useState(false);
 
@@ -722,8 +725,17 @@ export default function VaultInner() {
   }, []);
 
   useEffect(() => {
+    const saved = window.localStorage.getItem(LS_VAULT_VIEW_MODE_KEY);
+    if (saved === "shelf" || saved === "swipe") setViewMode(saved);
+  }, []);
+
+  useEffect(() => {
     window.localStorage.setItem(LS_FRAME_KEY, frameStyle);
   }, [frameStyle]);
+
+  useEffect(() => {
+    window.localStorage.setItem(LS_VAULT_VIEW_MODE_KEY, viewMode);
+  }, [viewMode]);
 
   useEffect(() => {
     setTier(getTierSafe());
@@ -1214,7 +1226,39 @@ export default function VaultInner() {
         )}
 
         <div className="mt-6 text-sm text-[color:var(--muted)]">
-          Showing <span className="font-medium text-[color:var(--fg)]">{filtered.length}</span> items
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              Showing <span className="font-medium text-[color:var(--fg)]">{filtered.length}</span> items
+            </div>
+            {filtered.length > 0 ? (
+              <div className="flex rounded-full bg-[color:var(--pill)] p-1 ring-1 ring-[color:var(--border)]">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("shelf")}
+                  className={[
+                    "rounded-full px-3 py-1 text-[11px] font-semibold transition",
+                    viewMode === "shelf"
+                      ? "bg-[color:var(--theme-gold-subtle,rgba(245,181,72,0.12))] text-[color:var(--theme-gold,#F5B548)]"
+                      : "text-[color:var(--muted)]",
+                  ].join(" ")}
+                >
+                  Shelf
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("swipe")}
+                  className={[
+                    "rounded-full px-3 py-1 text-[11px] font-semibold transition",
+                    viewMode === "swipe"
+                      ? "bg-[color:var(--theme-gold-subtle,rgba(245,181,72,0.12))] text-[color:var(--theme-gold,#F5B548)]"
+                      : "text-[color:var(--muted)]",
+                  ].join(" ")}
+                >
+                  Flip
+                </button>
+              </div>
+            ) : null}
+          </div>
         </div>
 
         {isTrulyEmpty && !hasApplied && (
@@ -1315,6 +1359,17 @@ export default function VaultInner() {
 
         {filtered.length > 0 && (
           <section className="mt-6">
+            {viewMode === "swipe" ? (
+              <div className="mx-auto max-w-sm">
+                <SwipeStack
+                  items={filtered}
+                  mode="vault"
+                  onOpen={(item) => {
+                    router.push(`/vault/item/${item.id}`);
+                  }}
+                />
+              </div>
+            ) : (
             <GalleryWall backgroundImage={museumBackgroundImage} backgroundMode={museumBackgroundMode}>
               {shelfRows.map((row, rowIndex) => (
                 <ShelfRow key={`row-${rowIndex}`} shelfIndex={rowIndex}>
@@ -1337,6 +1392,7 @@ export default function VaultInner() {
                 </ShelfRow>
               ))}
             </GalleryWall>
+            )}
           </section>
         )}
       </div>

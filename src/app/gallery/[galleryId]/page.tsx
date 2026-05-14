@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useMemo, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 
-import { loadGalleries, type Gallery } from "@/lib/galleryModel";
-import { loadItems, type VaultItem } from "@/lib/vaultModel";
+import { loadGalleries } from "@/lib/galleryModel";
+import { loadItems } from "@/lib/vaultModel";
 import { canViewPublicGallery, isAdultOnlyGallery } from "@/lib/galleryPublic";
+import { addWishlistItem } from "@/lib/wishlistModel";
 import FavoriteButton from "@/components/FavoriteButton";
 import { AdultContentGate, ReportContentButton, useAdultGate } from "@/components/PublicSafetyControls";
+import SwipeStack from "@/components/SwipeStack";
 
 import GalleryHero from "@/components/gallery/GalleryHero";
 import GalleryLayout from "@/components/gallery/GalleryLayout";
@@ -15,20 +17,16 @@ import GalleryLayout from "@/components/gallery/GalleryLayout";
 export default function PublicGalleryPage() {
 
   const params = useParams();
+  const router = useRouter();
   const id = params.galleryId as string;
 
-  const [gallery,setGallery] = useState<Gallery | null>(null);
-  const [items,setItems] = useState<VaultItem[]>([]);
+  const [galleryMode, setGalleryMode] = useState<"grid" | "swipe">("grid");
 
-  useEffect(()=>{
-
+  const gallery = useMemo(() => {
     const galleries = loadGalleries();
-    const g = galleries.find(x=>x.id === id) ?? null;
-
-    setGallery(g);
-    setItems(loadItems());
-
-  },[id])
+    return galleries.find((entry) => entry.id === id) ?? null;
+  }, [id]);
+  const items = useMemo(() => loadItems(), []);
 
   const galleryItems = useMemo(()=>{
 
@@ -85,11 +83,55 @@ export default function PublicGalleryPage() {
       <GalleryHero gallery={gallery} />
 
       <div className="mx-auto max-w-7xl px-6 py-10">
+        <div className="mb-5 flex justify-end">
+          <button
+            type="button"
+            onClick={() => setGalleryMode((current) => (current === "grid" ? "swipe" : "grid"))}
+            className="rounded-full px-3 py-1.5 text-[12px] font-semibold ring-1 transition"
+            style={
+              galleryMode === "swipe"
+                ? {
+                    background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))",
+                    borderColor: "var(--theme-gold-border, rgba(245,181,72,0.4))",
+                    color: "var(--theme-gold, #F5B548)",
+                  }
+                : {
+                    background: "var(--surface)",
+                    borderColor: "var(--border)",
+                    color: "var(--muted)",
+                  }
+            }
+          >
+            {galleryMode === "swipe" ? "Swipe Mode" : "Swipe"}
+          </button>
+        </div>
 
-        <GalleryLayout
-          layout={gallery.layout}
-          items={galleryItems}
-        />
+        {galleryMode === "swipe" ? (
+          <div className="mx-auto max-w-sm px-4 pt-4">
+            <SwipeStack
+              items={galleryItems}
+              mode="gallery"
+              onWant={(item) => {
+                addWishlistItem({
+                  title: item.title,
+                  targetPrice: item.currentValue ?? undefined,
+                  notes: `Spotted in ${gallery.title}'s gallery`,
+                  universe: item.universe,
+                  category: item.category,
+                });
+              }}
+              onOpen={(item) => {
+                router.push(`/vault/item/${item.id}`);
+              }}
+              onEnd={() => setGalleryMode("grid")}
+            />
+          </div>
+        ) : (
+          <GalleryLayout
+            layout={gallery.layout}
+            items={galleryItems}
+          />
+        )}
 
       </div>
 
