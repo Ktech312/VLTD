@@ -4,6 +4,13 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: __dirname,
   },
+  transpilePackages: [
+    "sanity",
+    "@sanity/ui",
+    "@sanity/icons",
+    "@sanity/vision",
+    "next-sanity",
+  ],
   images: {
     remotePatterns: [
       {
