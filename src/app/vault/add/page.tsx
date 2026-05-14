@@ -115,28 +115,28 @@ function parseMoney(input: string) {
 
 function inputClass(isAiFilled?: boolean) {
   return [
-    "h-10 rounded-xl px-3 text-sm ring-1 focus:outline-none transition-all",
+    "h-10 rounded-xl px-3 text-sm focus:outline-none transition-all placeholder:text-[color:var(--muted)] placeholder:italic placeholder:text-xs",
     isAiFilled
-      ? "bg-[rgba(245,181,72,0.12)] ring-[rgba(245,181,72,0.5)] text-[#F5B548] font-medium"
-      : "bg-[color:var(--pill)] ring-[color:var(--border)]",
+      ? "bg-[rgba(245,181,72,0.18)] ring-2 ring-[rgba(245,181,72,0.7)] text-[#FFE08A] font-semibold"
+      : "bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]",
   ].join(" ");
 }
 
 function selectClass(isAiFilled?: boolean) {
   return [
-    "h-10 rounded-xl px-3 text-sm ring-1 focus:outline-none transition-all",
+    "h-10 rounded-xl px-3 text-sm focus:outline-none transition-all",
     isAiFilled
-      ? "bg-[rgba(245,181,72,0.12)] ring-[rgba(245,181,72,0.5)] text-[#F5B548] font-medium"
-      : "bg-[color:var(--pill)] ring-[color:var(--border)]",
+      ? "bg-[rgba(245,181,72,0.18)] ring-2 ring-[rgba(245,181,72,0.7)] text-[#FFE08A] font-semibold"
+      : "bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]",
   ].join(" ");
 }
 
 function textareaClass(isAiFilled?: boolean) {
   return [
-    "min-h-[78px] rounded-xl px-3 py-2.5 text-sm ring-1 focus:outline-none transition-all",
+    "min-h-[78px] rounded-xl px-3 py-2.5 text-sm focus:outline-none transition-all placeholder:text-[color:var(--muted)] placeholder:italic placeholder:text-xs",
     isAiFilled
-      ? "bg-[rgba(245,181,72,0.12)] ring-[rgba(245,181,72,0.5)] text-[#F5B548] font-medium"
-      : "bg-[color:var(--pill)] ring-[color:var(--border)]",
+      ? "bg-[rgba(245,181,72,0.18)] ring-2 ring-[rgba(245,181,72,0.7)] text-[#FFE08A] font-semibold"
+      : "bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]",
   ].join(" ");
 }
 
