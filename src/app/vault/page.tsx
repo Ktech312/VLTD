@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import ItemIntelligencePanel from "@/components/ItemIntelligencePanel";
 import RestoreVaultButton from "@/components/RestoreVaultButton";
 import SellItemButton from "@/components/SellItemButton";
+import VaultExportButton from "@/components/VaultExportButton";
 import { PillButton } from "@/components/ui/PillButton";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -950,6 +951,7 @@ export default function VaultPage() {
                 </div>
               </div>
               <div className="shrink-0 flex flex-wrap gap-2">
+                <VaultExportButton />
                 <Link
                   href="/vault/add"
                   className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"

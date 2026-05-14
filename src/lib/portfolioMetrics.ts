@@ -66,6 +66,10 @@ function safeArray<T>(value: T[] | null | undefined): T[] {
   return Array.isArray(value) ? value : [];
 }
 
+function optionalRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+}
+
 export function itemTotalCost(item: VaultItem) {
   return (
     safeNumber(item.purchasePrice) +
@@ -151,7 +155,7 @@ export function getCollectionMetrics(items: VaultItem[]): CollectionMetrics {
     .slice(0, 6);
 
   const recentItems = [...safeItems]
-    .sort((a, b) => safeNumber((b as any).createdAt) - safeNumber((a as any).createdAt))
+    .sort((a, b) => safeNumber(b.createdAt) - safeNumber(a.createdAt))
     .slice(0, 6);
 
   const maxSegmentValue = topValueSegments[0]?.value ?? 0;
@@ -210,17 +214,16 @@ export function getGalleryMetrics(gallery: Gallery, allItems: VaultItem[]): Gall
   const delta = totalValue - totalCost;
   const roi = totalCost > 0 ? (delta / totalCost) * 100 : 0;
 
-  const notesCount = safeArray(gallery.itemNotes).filter((note) =>
-    safeString((note as any)?.note).length > 0
-  ).length;
+  const notesCount = safeArray(gallery.itemNotes).filter((note) => safeString(optionalRecord(note).note).length > 0).length;
 
   const notesCoverage = totalItems > 0 ? (notesCount / totalItems) * 100 : 0;
   const views = safeNumber(gallery.analytics?.views);
   const uniqueViewers = safeArray(gallery.analytics?.uniqueViewKeys).length;
 
   const inviteCount = safeArray(gallery.share?.inviteTokens).filter((token) => {
-    if (!safeString((token as any)?.token)) return false;
-    if ((token as any)?.disabled) return false;
+    const invite = optionalRecord(token);
+    if (!safeString(invite.token)) return false;
+    if (invite.disabled) return false;
     return true;
   }).length;
 
@@ -288,4 +291,53 @@ export function formatMoney(value: number) {
     currency: "USD",
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+export type NetProceedsResult = {
+  totalCurrentValue: number;
+  totalCostBasis: number;
+  estimatedFees: number;
+  estimatedShipping: number;
+  netProceeds: number;
+  netGainLoss: number;
+  netRoi: number;
+  itemCount: number;
+};
+
+const PLATFORM_FEE_RATES: Record<string, number> = {
+  ebay: 0.129,
+  mercari: 0.1,
+  whatnot: 0.088,
+  pwcc: 0.2,
+  discogs: 0.09,
+  custom: 0.129,
+};
+
+const AVG_SHIPPING_PER_ITEM = 5;
+
+export function getNetProceedsEstimate(
+  items: VaultItem[],
+  platform: keyof typeof PLATFORM_FEE_RATES = "ebay"
+): NetProceedsResult {
+  const safeItems = safeArray(items).filter((item) => item.status !== "SOLD" && item.status !== "WISHLIST");
+  const feeRate = PLATFORM_FEE_RATES[platform] ?? PLATFORM_FEE_RATES.ebay;
+
+  const totalCurrentValue = safeItems.reduce((sum, item) => sum + itemCurrentValue(item), 0);
+  const totalCostBasis = safeItems.reduce((sum, item) => sum + itemTotalCost(item), 0);
+  const estimatedFees = totalCurrentValue * feeRate;
+  const estimatedShipping = safeItems.length * AVG_SHIPPING_PER_ITEM;
+  const netProceeds = totalCurrentValue - estimatedFees - estimatedShipping;
+  const netGainLoss = netProceeds - totalCostBasis;
+  const netRoi = totalCostBasis > 0 ? (netGainLoss / totalCostBasis) * 100 : 0;
+
+  return {
+    totalCurrentValue,
+    totalCostBasis,
+    estimatedFees,
+    estimatedShipping,
+    netProceeds,
+    netGainLoss,
+    netRoi,
+    itemCount: safeItems.length,
+  };
 }

@@ -10,12 +10,14 @@ import { loadItemsOrSeed, saveItems, type VaultItem as ModelItem } from "@/lib/v
 import NeonBarChart from "@/components/ui/NeonBarChart";
 import NeonDonut from "@/components/ui/NeonDonut";
 import MiniSparklines from "@/components/ui/MiniSparklines";
+import PortfolioNetProceedsPanel from "@/components/PortfolioNetProceedsPanel";
 
 type RankMode = "gain" | "value";
 const LS_RANK_MODE = "vltd_rank_mode";
 
 type PortfolioView = "bars" | "donut" | "sparklines";
 const LS_PORTFOLIO_VIEW = "vltd_portfolio_view";
+const PORTFOLIO_UNIVERSES: UniverseKey[] = ["POP_CULTURE", "SPORTS", "TCG", "MUSIC", "JEWELRY_APPAREL", "GAMES", "MISC"];
 
 function clamp(n: number) {
   return Number.isFinite(n) ? n : 0;
@@ -32,7 +34,7 @@ function fmtPct(n: number) {
   return `${(v * 100).toFixed(1)}%`;
 }
 
-function isUniverseKey(u: any): u is UniverseKey {
+function isUniverseKey(u: unknown): u is UniverseKey {
   return (
     u === "POP_CULTURE" ||
     u === "SPORTS" ||
@@ -44,13 +46,13 @@ function isUniverseKey(u: any): u is UniverseKey {
   );
 }
 
-function getUniverse(i: any): UniverseKey {
-  if (isUniverseKey(i?.universe)) return i.universe;
+function getUniverse(item: Pick<ModelItem, "universe">): UniverseKey {
+  if (isUniverseKey(item.universe)) return item.universe;
   return "MISC";
 }
 
-function getCreatedAtMs(i: any): number {
-  const v = i?.createdAt;
+function getCreatedAtMs(item: Pick<ModelItem, "createdAt" | "id">): number {
+  const v = item.createdAt;
   if (typeof v === "number" && Number.isFinite(v)) return v;
   if (typeof v === "string") {
     const parsed = Date.parse(v);
@@ -58,11 +60,11 @@ function getCreatedAtMs(i: any): number {
     const n = Number(v);
     if (Number.isFinite(n)) return n;
   }
-  if (typeof i?.id === "string") {
-    const n = Number(i.id);
+  if (typeof item.id === "string") {
+    const n = Number(item.id);
     if (Number.isFinite(n) && n > 1_000_000_000) return n;
   }
-  return Date.now();
+  return 0;
 }
 
 function fmtMonthYear(ms: number) {
@@ -70,19 +72,19 @@ function fmtMonthYear(ms: number) {
 }
 
 function toSeedItemsFromDemo(): ModelItem[] {
-  return (DEMO_ITEMS as any[]).map((d) => ({
+  return (DEMO_ITEMS as Array<Record<string, unknown>>).map((d) => ({
     id: String(d.id),
-    category: d.category,
-    customCategoryLabel: d.customCategoryLabel,
-    title: d.title,
-    subtitle: d.subtitle,
-    number: d.number,
-    grade: d.grade,
+    category: String(d.category ?? ""),
+    customCategoryLabel: typeof d.customCategoryLabel === "string" ? d.customCategoryLabel : undefined,
+    title: String(d.title ?? "Untitled"),
+    subtitle: typeof d.subtitle === "string" ? d.subtitle : undefined,
+    number: typeof d.number === "string" ? d.number : undefined,
+    grade: typeof d.grade === "string" ? d.grade : undefined,
     purchasePrice: Number(d.purchasePrice ?? 0),
     currentValue: Number(d.currentValue ?? 0),
-    imageFrontUrl: d.imageFrontUrl ?? d.imageUrl,
-    imageBackUrl: d.imageBackUrl,
-    notes: d.notes ?? "",
+    imageFrontUrl: typeof d.imageFrontUrl === "string" ? d.imageFrontUrl : typeof d.imageUrl === "string" ? d.imageUrl : undefined,
+    imageBackUrl: typeof d.imageBackUrl === "string" ? d.imageBackUrl : undefined,
+    notes: typeof d.notes === "string" ? d.notes : "",
   })) as ModelItem[];
 }
 
@@ -141,20 +143,22 @@ function monthKey(d: Date) {
 }
 
 export default function PortfolioClient() {
-  const [items, setItems] = useState<ModelItem[]>([]);
-  const [rankMode, setRankMode] = useState<RankMode>("gain");
-  const [portfolioView, setPortfolioView] = useState<PortfolioView>("bars");
+  const [items] = useState<ModelItem[]>(() => {
+    const seed = toSeedItemsFromDemo();
+    const loaded = loadItemsOrSeed(seed);
+    saveItems(loaded);
+    return loaded;
+  });
+  const [rankMode, setRankMode] = useState<RankMode>(() => {
+    const stored = typeof window !== "undefined" ? window.localStorage.getItem(LS_RANK_MODE) : null;
+    return stored === "value" ? "value" : "gain";
+  });
+  const [portfolioView, setPortfolioView] = useState<PortfolioView>(() => {
+    const stored = typeof window !== "undefined" ? window.localStorage.getItem(LS_PORTFOLIO_VIEW) : null;
+    return stored === "donut" || stored === "sparklines" ? stored : "bars";
+  });
 
   useEffect(() => {
-    const rm = (typeof window !== "undefined" ? window.localStorage.getItem(LS_RANK_MODE) : null) as RankMode | null;
-    if (rm === "gain" || rm === "value") setRankMode(rm);
-
-    const pv = (typeof window !== "undefined" ? window.localStorage.getItem(LS_PORTFOLIO_VIEW) : null) as
-      | PortfolioView
-      | null;
-    if (pv === "bars" || pv === "donut" || pv === "sparklines") setPortfolioView(pv);
-
-    // live update if settings change in another tab/page
     function onSettingEvent() {
       const pv2 = window.localStorage.getItem(LS_PORTFOLIO_VIEW) as PortfolioView | null;
       if (pv2 === "bars" || pv2 === "donut" || pv2 === "sparklines") setPortfolioView(pv2);
@@ -170,13 +174,6 @@ export default function PortfolioClient() {
     };
   }, []);
 
-  useEffect(() => {
-    const seed = toSeedItemsFromDemo();
-    const loaded = loadItemsOrSeed(seed);
-    saveItems(loaded); // persist normalized fields
-    setItems(loaded);
-  }, []);
-
   const totals = useMemo(() => {
     const cost = items.reduce((s, i) => s + clamp(Number(i.purchasePrice ?? 0)), 0);
     const value = items.reduce((s, i) => s + clamp(Number(i.currentValue ?? 0)), 0);
@@ -186,10 +183,10 @@ export default function PortfolioClient() {
   }, [items]);
 
   const bestThisWeek = useMemo(() => {
-    const now = Date.now();
+    const now = items.reduce((latest, item) => Math.max(latest, getCreatedAtMs(item)), 0) || 0;
     const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
     const recent = items
-      .map((i) => ({ i, created: getCreatedAtMs(i as any) }))
+      .map((i) => ({ i, created: getCreatedAtMs(i) }))
       .filter((x) => x.created >= weekAgo);
 
     if (recent.length === 0) return null;
@@ -197,10 +194,8 @@ export default function PortfolioClient() {
     return recent[0];
   }, [items]);
 
-  const universes: UniverseKey[] = ["POP_CULTURE", "SPORTS", "TCG", "MUSIC", "JEWELRY_APPAREL", "GAMES", "MISC"];
-
   const byUniverse = useMemo(() => {
-    return universes.map((u) => {
+    return PORTFOLIO_UNIVERSES.map((u) => {
       const pool = items.filter((i) => getUniverse(i) === u);
       const cost = pool.reduce((s, i) => s + clamp(Number(i.purchasePrice ?? 0)), 0);
       const value = pool.reduce((s, i) => s + clamp(Number(i.currentValue ?? 0)), 0);
@@ -248,10 +243,10 @@ export default function PortfolioClient() {
     const init = () => keys.map(() => 0);
     const overall = init();
     const perUniverse: Record<string, number[]> = {};
-    universes.forEach((u) => (perUniverse[u] = init()));
+    PORTFOLIO_UNIVERSES.forEach((u) => (perUniverse[u] = init()));
 
     items.forEach((it) => {
-      const ms = getCreatedAtMs(it as any);
+      const ms = getCreatedAtMs(it);
       const d = new Date(ms);
       const k = monthKey(new Date(d.getFullYear(), d.getMonth(), 1));
       const idx = keys.indexOf(k);
@@ -323,6 +318,10 @@ export default function PortfolioClient() {
           />
         </div>
 
+        <div className="mt-6">
+          <PortfolioNetProceedsPanel items={items} />
+        </div>
+
         {/* Chart area (selectable) */}
         <div className="mt-6 rounded-3xl bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
@@ -358,7 +357,7 @@ export default function PortfolioClient() {
                 overall={sparkData.overall}
                 perUniverse={sparkData.perUniverse}
                 universeLabels={UNIVERSE_LABEL}
-                universes={universes}
+                universes={PORTFOLIO_UNIVERSES}
                 modeLabel={rankMode === "value" ? "Value" : "Gain"}
               />
             )}
@@ -371,7 +370,7 @@ export default function PortfolioClient() {
             .filter((r) => r.top)
             .map((r) => {
               const item = r.top!;
-              const created = getCreatedAtMs(item as any);
+               const created = getCreatedAtMs(item);
               const score = rankMode === "value" ? clamp(Number(item.currentValue ?? 0)) : gain(item);
 
               const initials = (item.title || "VL")
