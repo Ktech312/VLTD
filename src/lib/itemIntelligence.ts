@@ -73,3 +73,104 @@ export function computeItemIntelligence(
 
   return result;
 }
+
+const NOTABLE_KEYWORDS = [
+  "psa 10",
+  "psa 9",
+  "bgs 9.5",
+  "bgs 10",
+  "cgc 9.8",
+  "cgc 9.9",
+  "cgc 10",
+  "sgc 10",
+  "graded",
+  "gem mint",
+  "perfect",
+  "1st edition",
+  "first edition",
+  "first print",
+  "1st print",
+  "limited edition",
+  "limited run",
+  "1/1",
+  "numbered",
+  "gold label",
+  "black label",
+  "rookie",
+  "rc",
+  "auto",
+  "autograph",
+  "refractor",
+  "prizm",
+  "superfractor",
+  "key issue",
+  "1st appearance",
+  "first appearance",
+  "origin",
+  "death of",
+  "error",
+  "misprint",
+  "variant",
+  "prototype",
+  "proof",
+  "factory sealed",
+  "sealed",
+  "mint in box",
+  "mib",
+];
+
+const NOTABLE_VALUE_THRESHOLD = 100;
+
+function notableSearchText(item: VaultItem) {
+  return [
+    item.title ?? "",
+    item.subtitle ?? "",
+    item.grade ?? "",
+    item.notes ?? "",
+    item.certNumber ?? "",
+    item.serialNumber ?? "",
+  ]
+    .join(" ")
+    .toLowerCase();
+}
+
+export function isNotable(item: VaultItem): boolean {
+  const searchable = notableSearchText(item);
+  const keywordMatch = NOTABLE_KEYWORDS.some((keyword) => searchable.includes(keyword));
+  const highValue =
+    typeof item.currentValue === "number" &&
+    Number.isFinite(item.currentValue) &&
+    item.currentValue >= NOTABLE_VALUE_THRESHOLD;
+
+  return keywordMatch || highValue;
+}
+
+export function notableReason(item: VaultItem): string {
+  const searchable = notableSearchText(item);
+  const reasons: string[] = [];
+
+  if (searchable.includes("1st edition") || searchable.includes("first edition")) {
+    reasons.push("1st Edition");
+  }
+  if (searchable.includes("rookie") || searchable.includes(" rc ")) {
+    reasons.push("Rookie");
+  }
+  if (searchable.includes("autograph") || searchable.includes(" auto")) {
+    reasons.push("Autograph");
+  }
+  if (/psa\s*10|bgs\s*9\.5|cgc\s*9\.8/.test(searchable)) {
+    reasons.push("High Grade");
+  }
+  if (searchable.includes("1/1")) {
+    reasons.push("1/1");
+  }
+  if (
+    typeof item.currentValue === "number" &&
+    Number.isFinite(item.currentValue) &&
+    item.currentValue >= NOTABLE_VALUE_THRESHOLD
+  ) {
+    reasons.push(`$${Math.round(item.currentValue).toLocaleString()}`);
+  }
+
+  return reasons.length > 0 ? reasons.join(" - ") : "Notable";
+}

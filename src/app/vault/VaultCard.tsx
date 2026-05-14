@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import NotableBadge from "@/components/NotableBadge";
+import { isNotable, notableReason } from "@/lib/itemIntelligence";
 import { type VaultItem as ModelItem } from "@/lib/vaultModel";
+
+type VaultCardFrame = {
+  card: string;
+  frame: string;
+  imgWrap: string;
+};
 
 function useTilt() {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -64,10 +72,11 @@ export default function VaultCard({
 }: {
   item: ModelItem;
   imgSrc: string;
-  frame: any;
+  frame: VaultCardFrame;
   label: string;
 }) {
   const tiltRef = useTilt();
+  const notable = isNotable(item);
 
   return (
     <a href={`/vault/item/${item.id}`} className="block">
@@ -91,8 +100,11 @@ export default function VaultCard({
 
         <div className="mt-2.5">
           <div className="text-xs text-[color:var(--muted2)]">{label}</div>
-          <div className="mt-1 text-[14px] sm:text-[15px] font-medium text-[color:var(--fg)]">
-            {item.title}
+          <div className="mt-1 flex items-start justify-between gap-2">
+            <div className="min-w-0 text-[14px] font-medium text-[color:var(--fg)] sm:text-[15px]">
+              {item.title}
+            </div>
+            {notable ? <NotableBadge reason={notableReason(item)} /> : null}
           </div>
           <div className="text-sm text-[color:var(--muted)]">
             {item.subtitle} {item.number} {item.grade ? `• ${item.grade}` : ""}

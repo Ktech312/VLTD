@@ -6,11 +6,13 @@ import { use, useEffect, useMemo, useState } from "react";
 import CostToSellPanel from "@/components/CostToSellPanel";
 import ExportListingButton from "@/components/ExportListingButton";
 import ItemMedia from "@/components/ItemMedia";
+import NotableBadge from "@/components/NotableBadge";
 import PricingMvpCard from "@/components/PricingMvpCard";
 import ShareBar from "@/components/ShareBar";
 import { removeBackgroundStub } from "@/lib/imageAI";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { generateShareImage } from "@/lib/generateShareImage";
+import { isNotable, notableReason } from "@/lib/itemIntelligence";
 import { buildPricingPatch } from "@/lib/pricingMvp";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import {
@@ -776,6 +778,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
       ? [recordSelectedCategory, ...baseRecordCategoryOptions]
       : baseRecordCategoryOptions;
   const recordSubcategoryOptions = getSubcategories(recordDraft.universe, recordSelectedCategory);
+  const notable = isNotable(item);
 
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
@@ -783,7 +786,10 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_360px]">
           <div>
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ITEM</div>
-            <h1 className="mt-2 text-4xl font-semibold leading-tight">{item.title}</h1>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <h1 className="text-4xl font-semibold leading-tight">{item.title}</h1>
+              {notable ? <NotableBadge reason={notableReason(item)} /> : null}
+            </div>
             <div className="mt-2 text-sm text-[color:var(--muted)]">
               {UNIVERSE_LABEL[universe]} • {categoryLabel(item)}
               {item.subcategoryLabel ? ` • ${item.subcategoryLabel}` : ""}
@@ -862,7 +868,10 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
           <div>
             <Section title="ITEM SUMMARY">
-              <div className="text-3xl font-semibold leading-tight">{item.title}</div>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="text-3xl font-semibold leading-tight">{item.title}</div>
+                {notable ? <NotableBadge reason={notableReason(item)} /> : null}
+              </div>
               <div className="mt-2 text-sm text-[color:var(--muted)]">
                 {item.subtitle || "Collector piece"}
                 {item.number ? ` • ${item.number}` : ""}
