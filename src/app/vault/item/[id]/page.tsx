@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
 
+import CostToSellPanel from "@/components/CostToSellPanel";
 import ItemMedia from "@/components/ItemMedia";
 import PricingMvpCard from "@/components/PricingMvpCard";
 import ShareBar from "@/components/ShareBar";
@@ -216,7 +217,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
       subcategoryLabel: item.subcategoryLabel ?? "",
       title: item.title ?? "",
     });
-  }, [item?.id, item?.universe, item?.category, item?.categoryLabel, item?.subcategoryLabel, item?.title]);
+  }, [item]);
 
   useEffect(() => {
     if (activeImageIndex > images.length - 1) {
@@ -893,6 +894,15 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 </div>
               </div>
             </Section>
+
+            <div className="mt-5">
+              <CostToSellPanel
+                price={effectiveMarketValue(item)}
+                costBasis={totalCost(item)}
+                shippingCost={clamp(item.purchaseShipping)}
+                category={categoryLabel(item)}
+              />
+            </div>
 
             <div className="mt-5">
               <Section title="SHARE IMAGE">
