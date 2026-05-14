@@ -294,6 +294,12 @@ export default function PublicHomeClient() {
           <BrandMark />
           <div className="flex items-center gap-3">
             <Link
+              href="/learn"
+              className="rounded-full px-5 py-2 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
+            >
+              Learn
+            </Link>
+            <Link
               href="/login"
               className="rounded-full border border-[color:var(--border)] px-5 py-2 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
             >
@@ -506,6 +512,7 @@ export default function PublicHomeClient() {
           <div className="flex gap-5">
             <Link href="/login" className="hover:text-text-primary">Log in</Link>
             <Link href="/signup" className="hover:text-text-primary">Sign up</Link>
+            <Link href="/learn" className="hover:text-text-primary">Learn</Link>
             <Link href="#public-galleries" className="hover:text-text-primary">Galleries</Link>
           </div>
           <div className="italic">© 2026 VLTD. Pronounced “Vaulted.”</div>
