@@ -102,6 +102,20 @@ function IconWatchlist({ active }: { active: boolean }) {
   );
 }
 
+function IconLearn({ active }: { active: boolean }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
+      <path d="M4 4h7a1 1 0 0 1 1 1v14a1 1 0 0 0-1-1H4V4Z"
+        stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
+        fill={active ? "rgba(245,181,72,0.14)" : "none"} />
+      <path d="M20 4h-7a1 1 0 0 0-1 1v14a1 1 0 0 1 1-1h7V4Z"
+        stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
+        fill={active ? "rgba(245,181,72,0.10)" : "none"} />
+      <path d="M12 5v14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.45" />
+    </svg>
+  );
+}
+
 function IconInsights({ active }: { active: boolean }) {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
@@ -165,6 +179,10 @@ const NAV_ITEMS = [
   {
     label: "Watchlist",   href: "/wishlist",   icon: IconWatchlist,   exact: false, subpathOnly: false,
     desc: "Save pieces, collectors and exhibitions you love.",
+  },
+  {
+    label: "Learn",       href: "/learn",      icon: IconLearn,       exact: false, subpathOnly: false,
+    desc: "Universe guide, grading scales, and collecting tips.",
   },
   {
     label: "Activity",    href: "/activity",   icon: IconActivity,    exact: false, subpathOnly: false,
@@ -541,7 +559,7 @@ function TopNavInner() {
               <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: "#5A5040" }}>
                 Explore VLTD
               </p>
-              <div className="grid grid-cols-4 gap-3 lg:grid-cols-8">
+              <div className="grid grid-cols-4 gap-3 lg:grid-cols-9">
                 {NAV_ITEMS.map((item) => {
                   const active = isActive(item);
                   const Icon = item.icon;
