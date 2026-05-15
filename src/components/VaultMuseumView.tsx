@@ -4,6 +4,8 @@
 // Renders the "Museum" browse mode: spotlight hero + universe carousel rails.
 // Drop-in alongside the existing GalleryWall view in VaultInner.tsx.
 
+import { useEffect, useRef, useState } from "react";
+
 import { isNotable, notableReason } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import type { VaultItem as ModelItem } from "@/lib/vaultModel";
@@ -65,7 +67,7 @@ function SpotlightCard({ item }: { item: ModelItem }) {
         style={{ background: "var(--surface)" }}
       >
         {/* Image section */}
-        <div className="relative w-full" style={{ aspectRatio: "16/9", overflow: "hidden", background: "var(--pill)" }}>
+        <div className="relative w-full" style={{ aspectRatio: "5/2", maxHeight: 220, overflow: "hidden", background: "var(--pill)" }}>
           {imgSrc ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -307,6 +309,54 @@ function UniverseSection({
 }) {
   const label = UNIVERSE_LABEL[universeKey] ?? universeKey;
   const totalValue = items.reduce((sum, i) => sum + itemCurrentValue(i), 0);
+  const railRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(items.length > 3);
+  const isDragging = useRef(false);
+  const dragStartX = useRef(0);
+  const dragStartScrollLeft = useRef(0);
+
+  function handleScroll() {
+    const rail = railRef.current;
+    if (!rail) return;
+    setCanScrollLeft(rail.scrollLeft > 4);
+    setCanScrollRight(rail.scrollLeft + rail.clientWidth < rail.scrollWidth - 4);
+  }
+
+  function scrollRailBy(px: number) {
+    railRef.current?.scrollBy({ left: px, behavior: "smooth" });
+  }
+
+  function onMouseDown(event: React.MouseEvent<HTMLDivElement>) {
+    const rail = railRef.current;
+    if (!rail) return;
+    isDragging.current = true;
+    dragStartX.current = event.clientX;
+    dragStartScrollLeft.current = rail.scrollLeft;
+    rail.style.cursor = "grabbing";
+    rail.style.userSelect = "none";
+  }
+
+  function onMouseMove(event: React.MouseEvent<HTMLDivElement>) {
+    if (!isDragging.current || !railRef.current) return;
+    const dx = event.clientX - dragStartX.current;
+    railRef.current.scrollLeft = dragStartScrollLeft.current - dx;
+  }
+
+  function onMouseUpOrLeave() {
+    isDragging.current = false;
+    if (railRef.current) {
+      railRef.current.style.cursor = "grab";
+      railRef.current.style.userSelect = "";
+    }
+  }
+
+  useEffect(() => {
+    const rail = railRef.current;
+    if (!rail) return;
+    setCanScrollLeft(rail.scrollLeft > 4);
+    setCanScrollRight(rail.scrollLeft + rail.clientWidth < rail.scrollWidth - 4);
+  }, [items.length]);
 
   return (
     <div>
@@ -336,22 +386,63 @@ function UniverseSection({
             </span>
           )}
         </div>
-        <button
-          type="button"
-          onClick={() => onViewAll(universeKey)}
-          className="text-[11px] transition-opacity hover:opacity-80"
-          style={{ color: "var(--theme-gold, #F5B548)" }}
-        >
-          See all →
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            aria-label="Scroll left"
+            onClick={() => scrollRailBy(-260)}
+            disabled={!canScrollLeft}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-sm ring-1 transition-opacity"
+            style={{
+              background: "var(--surface)",
+              color: canScrollLeft ? "var(--fg)" : "var(--muted2)",
+              borderColor: "var(--border)",
+              cursor: canScrollLeft ? "pointer" : "default",
+              opacity: canScrollLeft ? 1 : 0.35,
+            }}
+          >
+            {"‹"}
+          </button>
+          <button
+            type="button"
+            aria-label="Scroll right"
+            onClick={() => scrollRailBy(260)}
+            disabled={!canScrollRight}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-sm ring-1 transition-opacity"
+            style={{
+              background: "var(--surface)",
+              color: canScrollRight ? "var(--fg)" : "var(--muted2)",
+              borderColor: "var(--border)",
+              cursor: canScrollRight ? "pointer" : "default",
+              opacity: canScrollRight ? 1 : 0.35,
+            }}
+          >
+            {"›"}
+          </button>
+          <button
+            type="button"
+            onClick={() => onViewAll(universeKey)}
+            className="text-[11px] transition-opacity hover:opacity-80"
+            style={{ color: "var(--theme-gold, #F5B548)" }}
+          >
+            See all →
+          </button>
+        </div>
       </div>
 
       {/* Horizontal scroll rail */}
       <div
+        ref={railRef}
+        onScroll={handleScroll}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUpOrLeave}
+        onMouseLeave={onMouseUpOrLeave}
         className="flex gap-3 overflow-x-auto pb-1"
         style={{
           scrollbarWidth: "none",
           msOverflowStyle: "none",
+          cursor: "grab",
         }}
       >
         {items.map((item) => (
