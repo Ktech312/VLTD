@@ -442,8 +442,7 @@ function UniverseSection({
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const sectionRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(items.length > 3);
+  const canLoop = items.length > 1;
   const isDragging = useRef(false);
   const dragStartX = useRef(0);
   const dragStartScrollLeft = useRef(0);
@@ -477,6 +476,16 @@ function UniverseSection({
     if (shouldFeature) onFeaturedChange?.(items[centered]);
   }
 
+  function scrollToIndex(index: number) {
+    const rail = railRef.current;
+    const card = cardRefs.current[index];
+    if (!rail || !card) return;
+    const left = card.offsetLeft + card.offsetWidth / 2 - rail.clientWidth / 2;
+    rail.scrollTo({ left, behavior: "smooth" });
+    setActiveIndex(index);
+    onFeaturedChange?.(items[index]);
+  }
+
   function syncIfVisible() {
     if (syncFrame.current !== null) window.cancelAnimationFrame(syncFrame.current);
     syncFrame.current = window.requestAnimationFrame(() => {
@@ -490,18 +499,10 @@ function UniverseSection({
   }
 
   function handleScroll() {
-    const rail = railRef.current;
-    if (!rail) return;
-    setCanScrollLeft(rail.scrollLeft > 4);
-    setCanScrollRight(rail.scrollLeft + rail.clientWidth < rail.scrollWidth - 4);
     syncCenteredCard(true);
   }
 
   useEffect(() => {
-    const rail = railRef.current;
-    if (!rail) return;
-    setCanScrollLeft(rail.scrollLeft > 4);
-    setCanScrollRight(rail.scrollLeft + rail.clientWidth < rail.scrollWidth - 4);
     syncIfVisible();
     window.addEventListener("scroll", syncIfVisible, { passive: true });
     window.addEventListener("resize", syncIfVisible);
@@ -514,8 +515,12 @@ function UniverseSection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items.length]);
 
-  function scrollRailBy(px: number) {
-    railRef.current?.scrollBy({ left: px, behavior: "smooth" });
+  function scrollStep(direction: -1 | 1) {
+    if (!canLoop) return;
+    const rail = railRef.current;
+    const current = activeIndex >= 0 ? activeIndex : rail ? findCenterIndex(rail) : 0;
+    const next = (current + direction + items.length) % items.length;
+    scrollToIndex(next);
   }
 
   function onMouseDown(event: MouseEvent<HTMLDivElement>) {
@@ -572,32 +577,32 @@ function UniverseSection({
         <div className="flex items-center gap-1.5">
           <button
             type="button"
-            aria-label="Scroll left"
-            onClick={() => scrollRailBy(-300)}
-            disabled={!canScrollLeft}
+            aria-label="Previous item"
+            onClick={() => scrollStep(-1)}
+            disabled={!canLoop}
             className="flex h-7 w-7 items-center justify-center rounded-full text-sm ring-1 transition-opacity"
             style={{
               background: "var(--surface)",
               borderColor: "var(--border)",
-              color: canScrollLeft ? "var(--fg)" : "var(--muted2)",
-              cursor: canScrollLeft ? "pointer" : "default",
-              opacity: canScrollLeft ? 1 : 0.35,
+              color: canLoop ? "var(--fg)" : "var(--muted2)",
+              cursor: canLoop ? "pointer" : "default",
+              opacity: canLoop ? 1 : 0.35,
             }}
           >
             {"<"}
           </button>
           <button
             type="button"
-            aria-label="Scroll right"
-            onClick={() => scrollRailBy(300)}
-            disabled={!canScrollRight}
+            aria-label="Next item"
+            onClick={() => scrollStep(1)}
+            disabled={!canLoop}
             className="flex h-7 w-7 items-center justify-center rounded-full text-sm ring-1 transition-opacity"
             style={{
               background: "var(--surface)",
               borderColor: "var(--border)",
-              color: canScrollRight ? "var(--fg)" : "var(--muted2)",
-              cursor: canScrollRight ? "pointer" : "default",
-              opacity: canScrollRight ? 1 : 0.35,
+              color: canLoop ? "var(--fg)" : "var(--muted2)",
+              cursor: canLoop ? "pointer" : "default",
+              opacity: canLoop ? 1 : 0.35,
             }}
           >
             {">"}
@@ -629,6 +634,7 @@ function UniverseSection({
           scrollSnapType: "x mandatory",
         }}
       >
+        <div aria-hidden="true" style={{ flex: "0 0 calc(50% - 70px)" }} />
         {items.map((item, i) => (
           <div
             key={item.id}
@@ -640,6 +646,7 @@ function UniverseSection({
             <MuseumCard item={item} isActive={i === activeIndex} />
           </div>
         ))}
+        <div aria-hidden="true" style={{ flex: "0 0 calc(50% - 70px)" }} />
       </div>
     </div>
   );
