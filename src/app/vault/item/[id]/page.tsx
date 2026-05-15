@@ -834,6 +834,15 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               </Link>
             </div>
 
+            <div className="mt-2">
+              <Link
+                href={`/vault/item/${encodeURIComponent(item.id)}/present`}
+                className="inline-flex h-10 items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]"
+              >
+                Stream
+              </Link>
+            </div>
+
             {displayedSale ? (
               <div className="mt-2">
                 <button
