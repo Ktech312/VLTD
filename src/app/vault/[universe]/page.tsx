@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import ItemIntelligencePanel from "@/components/ItemIntelligencePanel";
 import RestoreVaultButton from "@/components/RestoreVaultButton";
 import SellItemButton from "@/components/SellItemButton";
+import SwipeStack from "@/components/SwipeStack";
 import { PillButton } from "@/components/ui/PillButton";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
+import VaultMuseumView from "@/components/VaultMuseumView";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
@@ -30,10 +32,12 @@ import { hasSupabaseEnv, VAULT_ITEMS_TABLE } from "@/lib/vaultCloud";
 
 const ACTIVE_PROFILE_EVENT = "vltd:active-profile";
 const SALES_KEY = "vltd_sales_history";
+const VIEW_MODE_KEY = "vltd_vault_view_mode";
 
 type SortMode = "newest" | "value_desc" | "value_asc" | "gain_desc" | "gain_asc" | "title";
 type ReadinessFilter = "all" | "high" | "medium" | "low";
 type UniverseFilter = "ALL" | UniverseKey;
+type ViewMode = "museum" | "shelf" | "swipe";
 type InlineField = "" | "value" | "cost";
 type SaleInfo = {
   id: string;
@@ -680,6 +684,7 @@ function UniverseOverviewCard({
 
 export default function VaultUniversePage() {
   const params = useParams<{ universe: string }>();
+  const router = useRouter();
   const activeUniverse = universeFromSlug(params.universe);
   const activeUniverseName = universeDisplayName(activeUniverse);
   const [items, setItems] = useState<VaultItem[]>([]);
@@ -688,6 +693,7 @@ export default function VaultUniversePage() {
   const [readinessFilter, setReadinessFilter] = useState<ReadinessFilter>("all");
   const [gradedOnly, setGradedOnly] = useState(false);
   const [sortMode, setSortMode] = useState<SortMode>("newest");
+  const [viewMode, setViewMode] = useState<ViewMode>("museum");
   const [showSoldItems, setShowSoldItems] = useState(false);
   const [sales, setSales] = useState<SaleInfo[]>([]);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
@@ -746,6 +752,17 @@ export default function VaultUniversePage() {
       window.removeEventListener("online", onOnline);
     };
   }, []);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem(VIEW_MODE_KEY);
+    if (saved === "museum" || saved === "shelf" || saved === "swipe") {
+      setViewMode(saved);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(VIEW_MODE_KEY, viewMode);
+  }, [viewMode]);
 
   useEffect(() => {
     setIsOnline(window.navigator.onLine);
@@ -1069,6 +1086,40 @@ export default function VaultUniversePage() {
             </PillButton>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
+            {filteredItems.length > 0 ? (
+              <div className="flex flex-wrap items-center gap-2 rounded-full bg-[color:var(--input)] px-2 py-1 ring-1 ring-[color:var(--border)]">
+                <span className="px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">
+                  View
+                </span>
+                {(
+                  [
+                    ["museum", "Museum"],
+                    ["shelf", "Shelf"],
+                    ["swipe", "Flip"],
+                  ] as const
+                ).map(([mode, label]) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setViewMode(mode)}
+                    className="min-h-[30px] rounded-full px-3 py-1 text-[12px] font-semibold transition"
+                    style={
+                      viewMode === mode
+                        ? {
+                            background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))",
+                            color: "var(--theme-gold, #F5B548)",
+                          }
+                        : {
+                            background: "transparent",
+                            color: "var(--muted)",
+                          }
+                    }
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             <PillButton
               variant={showSoldItems ? "active" : "default"}
               onClick={() => setShowSoldItems((value) => !value)}
@@ -1092,23 +1143,43 @@ export default function VaultUniversePage() {
           <VaultEmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearFilters} />
         ) : (
           <section className="mt-3">
-            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-              {filteredItems.map((item) => {
-                const intelligence = intelligenceMap[item.id];
-                const readiness = intelligence?.readiness ?? "Low";
+            {viewMode === "museum" ? (
+              <VaultMuseumView
+                items={filteredItems}
+                onFilterToUniverse={(universe) => {
+                  setUniverseFilter("ALL");
+                  router.push(`/vault/${universeToSlug(universe)}`);
+                }}
+              />
+            ) : viewMode === "swipe" ? (
+              <div className="mx-auto max-w-sm">
+                <SwipeStack
+                  items={filteredItems}
+                  mode="vault"
+                  onOpen={(item) => {
+                    router.push(`/vault/item/${item.id}`);
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                {filteredItems.map((item) => {
+                  const intelligence = intelligenceMap[item.id];
+                  const readiness = intelligence?.readiness ?? "Low";
 
-                return (
-                  <VaultCard
-                    key={item.id}
-                    item={item}
-                    readiness={readiness}
-                    sale={saleInfoForItem(item, saleMap)}
-                    onSaveItem={handleSaveItem}
-                    onDeleteItem={handleDeleteItem}
-                  />
-                );
-              })}
-            </div>
+                  return (
+                    <VaultCard
+                      key={item.id}
+                      item={item}
+                      readiness={readiness}
+                      sale={saleInfoForItem(item, saleMap)}
+                      onSaveItem={handleSaveItem}
+                      onDeleteItem={handleDeleteItem}
+                    />
+                  );
+                })}
+              </div>
+            )}
           </section>
         )}
       </div>
