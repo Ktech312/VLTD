@@ -1,20 +1,14 @@
 "use client";
 
-// VaultMuseumView.tsx
-// Renders the "Museum" browse mode: spotlight hero + universe carousel rails.
-// Drop-in alongside the existing GalleryWall view in VaultInner.tsx.
-
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 
 import { isNotable, notableReason } from "@/lib/itemIntelligence";
+import { itemCurrentValue, itemProfit, itemTotalCost } from "@/lib/portfolioMetrics";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import type { VaultItem as ModelItem } from "@/lib/vaultModel";
-import { itemTotalCost, itemCurrentValue, itemProfit } from "@/lib/portfolioMetrics";
-
-// ─── helpers ─────────────────────────────────────────────────────────────────
 
 function money(n: number) {
-  if (!Number.isFinite(n) || n === 0) return "—";
+  if (!Number.isFinite(n) || n === 0) return "-";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -32,18 +26,28 @@ function museumImgSrc(i: ModelItem): string {
   return i.imageFrontUrl || "";
 }
 
+function museumAllImages(i: ModelItem): string[] {
+  const urls: string[] = [];
+  if (i.imageFrontUrl) urls.push(i.imageFrontUrl);
+  if (i.imageBackUrl && i.imageBackUrl !== i.imageFrontUrl) urls.push(i.imageBackUrl);
+  if (Array.isArray(i.images)) {
+    for (const img of i.images) {
+      const u = img?.url || img?.storageKey || "";
+      if (u && !urls.includes(u)) urls.push(u);
+    }
+  }
+  return urls.filter(Boolean);
+}
+
 function itemUniverseKey(i: ModelItem): UniverseKey {
-  return ((i.universe ?? "MISC") as UniverseKey);
+  return (i.universe ?? "MISC") as UniverseKey;
 }
 
 function itemGradeShort(i: ModelItem): string | null {
   const g = i.grade?.trim();
   if (!g) return null;
-  // truncate long grades to ~10 chars for badge
   return g.length > 10 ? g.slice(0, 10) : g;
 }
-
-// ─── Spotlight hero card ──────────────────────────────────────────────────────
 
 function SpotlightCard({ item }: { item: ModelItem }) {
   const grade = itemGradeShort(item);
@@ -52,172 +56,243 @@ function SpotlightCard({ item }: { item: ModelItem }) {
   const gain = itemProfit(item);
   const notable = isNotable(item);
   const reason = notable ? notableReason(item) : null;
-  const imgSrc = museumImgSrc(item);
+  const allImages = museumAllImages(item);
   const universeName = UNIVERSE_LABEL[itemUniverseKey(item)] ?? "Collection";
   const label = item.categoryLabel ?? universeName;
+  const [imgIndex, setImgIndex] = useState(0);
+
+  useEffect(() => {
+    if (allImages.length <= 1) return;
+    const timer = window.setInterval(() => {
+      setImgIndex((prev) => (prev + 1) % allImages.length);
+    }, 4000);
+    return () => window.clearInterval(timer);
+  }, [allImages.length]);
+
+  const currentImg = allImages[imgIndex] ?? "";
 
   return (
-    <a
-      href={`/vault/item/${item.id}`}
-      className="block group"
-      draggable={false}
+    <div
+      className="overflow-hidden rounded-[20px] ring-1 ring-[color:var(--border)]"
+      style={{ background: "var(--surface)" }}
     >
       <div
-        className="rounded-[20px] overflow-hidden ring-1 ring-[color:var(--border)] transition-all duration-300 group-hover:ring-[color:var(--theme-gold-border,rgba(245,181,72,0.4))]"
-        style={{ background: "var(--surface)" }}
+        className="relative w-full"
+        style={{
+          aspectRatio: "5/2",
+          background: "var(--pill)",
+          maxHeight: 220,
+          overflow: "hidden",
+        }}
       >
-        {/* Image section */}
-        <div className="relative w-full" style={{ aspectRatio: "5/2", maxHeight: 220, overflow: "hidden", background: "var(--pill)" }}>
-          {imgSrc ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={imgSrc}
-              alt={item.title}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-              loading="lazy"
-              draggable={false}
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center">
-              <div
-                className="text-[11px] font-bold uppercase tracking-[0.28em]"
-                style={{ color: "var(--muted2)" }}
-              >
-                {label}
-              </div>
-            </div>
-          )}
-
-          {/* Dark gradient overlay for readability */}
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{ background: "linear-gradient(transparent 40%, rgba(0,0,0,0.72) 100%)" }}
+        {currentImg ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={currentImg}
+            src={currentImg}
+            alt={item.title}
+            className="h-full w-full object-cover transition-opacity duration-500"
+            loading="lazy"
+            draggable={false}
           />
-
-          {/* Notable badge — top left */}
-          {notable && reason && (
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
             <div
-              className="absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] ring-1"
-              style={{
-                background: "var(--theme-gold-subtle, rgba(245,181,72,0.15))",
-                color: "var(--theme-gold, #F5B548)",
-                borderColor: "var(--theme-gold-border, rgba(245,181,72,0.4))",
-              }}
+              className="text-[11px] font-bold uppercase tracking-[0.28em]"
+              style={{ color: "var(--muted2)" }}
             >
-              ★ Key Item
+              {label}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Grade badge — top right */}
-          {grade && (
-            <div
-              className="absolute right-3 top-3 rounded-lg px-2.5 py-1 text-[11px] font-bold ring-1"
-              style={{
-                background: "rgba(10,8,0,0.8)",
-                color: "var(--theme-gold, #F5B548)",
-                borderColor: "var(--theme-gold-border, rgba(245,181,72,0.45))",
-              }}
-            >
-              {grade}
-            </div>
-          )}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{ background: "linear-gradient(transparent 40%, rgba(0,0,0,0.72) 100%)" }}
+        />
 
-          {/* Value overlay — bottom left */}
-          <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
-            <div>
-              <div className="text-[10px] uppercase tracking-[0.18em]" style={{ color: "rgba(255,255,255,0.55)" }}>
-                {label}
-              </div>
-              <div className="mt-0.5 text-lg font-bold leading-tight" style={{ color: "#F0EAD6" }}>
-                {item.title}
-              </div>
+        {notable && reason && (
+          <div
+            className="absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] ring-1"
+            style={{
+              background: "var(--theme-gold-subtle, rgba(245,181,72,0.15))",
+              borderColor: "var(--theme-gold-border, rgba(245,181,72,0.4))",
+              color: "var(--theme-gold, #F5B548)",
+            }}
+          >
+            Key Item
+          </div>
+        )}
+
+        {grade && (
+          <div
+            className="absolute right-3 top-3 rounded-lg px-2.5 py-1 text-[11px] font-bold ring-1"
+            style={{
+              background: "rgba(10,8,0,0.8)",
+              borderColor: "var(--theme-gold-border, rgba(245,181,72,0.45))",
+              color: "var(--theme-gold, #F5B548)",
+            }}
+          >
+            {grade}
+          </div>
+        )}
+
+        {allImages.length > 1 && (
+          <div className="absolute bottom-10 left-1/2 flex gap-1" style={{ transform: "translateX(-50%)" }}>
+            {allImages.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                aria-label={`Show image ${i + 1}`}
+                onClick={() => setImgIndex(i)}
+                style={{
+                  background: i === imgIndex ? "#F5B548" : "rgba(255,255,255,0.35)",
+                  border: "none",
+                  borderRadius: 99,
+                  cursor: "pointer",
+                  height: 6,
+                  padding: 0,
+                  transition: "width 0.2s, background 0.2s",
+                  width: i === imgIndex ? 16 : 6,
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        <a
+          href={`/vault/item/${item.id}`}
+          aria-label="Expand item"
+          title="View item detail"
+          className="absolute bottom-2 left-1/2 flex items-center justify-center rounded-full text-sm font-semibold"
+          style={{
+            backdropFilter: "blur(4px)",
+            background: "rgba(59,130,246,0.85)",
+            border: "2px solid rgba(255,255,255,0.25)",
+            boxShadow: "0 2px 12px rgba(59,130,246,0.4)",
+            color: "#fff",
+            height: 32,
+            textDecoration: "none",
+            transform: "translateX(-50%)",
+            width: 32,
+          }}
+        >
+          ↗
+        </a>
+
+        <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
+          <div className="min-w-0 pr-12">
+            <div className="text-[10px] uppercase tracking-[0.18em]" style={{ color: "rgba(255,255,255,0.55)" }}>
+              {label}
             </div>
-            <div className="text-right">
-              <div className="text-[10px] uppercase tracking-[0.18em]" style={{ color: "rgba(255,255,255,0.55)" }}>
-                Value
-              </div>
-              <div className="text-xl font-bold" style={{ color: "var(--theme-gold, #F5B548)" }}>
-                {money(value)}
-              </div>
+            <div className="mt-0.5 truncate text-lg font-bold leading-tight" style={{ color: "#F0EAD6" }}>
+              {item.title}
+            </div>
+          </div>
+          <div className="shrink-0 text-right">
+            <div className="text-[10px] uppercase tracking-[0.18em]" style={{ color: "rgba(255,255,255,0.55)" }}>
+              Value
+            </div>
+            <div className="text-xl font-bold" style={{ color: "var(--theme-gold, #F5B548)" }}>
+              {money(value)}
             </div>
           </div>
         </div>
-
-        {/* Stats row */}
-        <div
-          className="flex items-center gap-4 px-4 py-3"
-          style={{ borderTop: "1px solid var(--border)" }}
-        >
-          {cost > 0 && (
-            <div>
-              <div className="text-[9px] uppercase tracking-[0.18em]" style={{ color: "var(--muted2)" }}>
-                Cost Basis
-              </div>
-              <div className="mt-0.5 text-sm font-semibold" style={{ color: "var(--fg)" }}>
-                {money(cost)}
-              </div>
-            </div>
-          )}
-          {cost > 0 && value > 0 && (
-            <div>
-              <div className="text-[9px] uppercase tracking-[0.18em]" style={{ color: "var(--muted2)" }}>
-                Gain / Loss
-              </div>
-              <div
-                className="mt-0.5 text-sm font-semibold"
-                style={{ color: gainColor(gain) }}
-              >
-                {gain >= 0 ? "+" : ""}
-                {money(gain)}
-              </div>
-            </div>
-          )}
-          {notable && reason && (
-            <div className="ml-auto text-right">
-              <div className="text-[9px] uppercase tracking-[0.18em]" style={{ color: "var(--muted2)" }}>
-                Notable
-              </div>
-              <div className="mt-0.5 text-xs" style={{ color: "var(--theme-gold, #F5B548)" }}>
-                {reason}
-              </div>
-            </div>
-          )}
-        </div>
       </div>
-    </a>
+
+      <div
+        className="flex flex-wrap items-center gap-4 px-4 py-3"
+        style={{ borderTop: "1px solid var(--border)" }}
+      >
+        {cost > 0 && (
+          <div>
+            <div className="text-[9px] uppercase tracking-[0.18em]" style={{ color: "var(--muted2)" }}>
+              Cost Basis
+            </div>
+            <div className="mt-0.5 text-sm font-semibold" style={{ color: "var(--fg)" }}>
+              {money(cost)}
+            </div>
+          </div>
+        )}
+        {cost > 0 && value > 0 && (
+          <div>
+            <div className="text-[9px] uppercase tracking-[0.18em]" style={{ color: "var(--muted2)" }}>
+              Gain / Loss
+            </div>
+            <div className="mt-0.5 text-sm font-semibold" style={{ color: gainColor(gain) }}>
+              {gain >= 0 ? "+" : ""}
+              {money(gain)}
+            </div>
+          </div>
+        )}
+        {notable && reason && (
+          <div>
+            <div className="text-[9px] uppercase tracking-[0.18em]" style={{ color: "var(--muted2)" }}>
+              Notable
+            </div>
+            <div className="mt-0.5 text-xs" style={{ color: "var(--theme-gold, #F5B548)" }}>
+              {reason}
+            </div>
+          </div>
+        )}
+        <a
+          href={`/vault/item/${item.id}`}
+          className="ml-auto text-[11px] font-semibold transition-opacity hover:opacity-80"
+          style={{ color: "var(--theme-gold, #F5B548)" }}
+        >
+          View details →
+        </a>
+      </div>
+    </div>
   );
 }
 
-// ─── Museum carousel card ─────────────────────────────────────────────────────
-
-function MuseumCard({ item }: { item: ModelItem }) {
+function MuseumCard({
+  item,
+  isActive = false,
+}: {
+  item: ModelItem;
+  isActive?: boolean;
+}) {
   const grade = itemGradeShort(item);
   const value = itemCurrentValue(item);
   const notable = isNotable(item);
   const imgSrc = museumImgSrc(item);
 
   return (
-    <a
-      href={`/vault/item/${item.id}`}
-      className="block group flex-shrink-0"
-      style={{ width: "130px" }}
+    <div
+      className="flex-shrink-0 select-none"
+      style={{
+        position: "relative",
+        transform: isActive ? "scale(1.08) translateY(-4px)" : "scale(1)",
+        transition: "transform 0.25s cubic-bezier(0.34,1.2,0.64,1)",
+        width: 140,
+        zIndex: isActive ? 2 : 1,
+      }}
       draggable={false}
     >
       <div
-        className="overflow-hidden rounded-[14px] ring-1 transition-all duration-300 group-hover:ring-[color:var(--theme-gold-border,rgba(245,181,72,0.4))]"
-        style={{ background: "var(--surface)", borderColor: "var(--border)" }}
+        className="overflow-hidden rounded-[14px] ring-1 transition-all duration-300"
+        style={{
+          background: "var(--surface)",
+          borderColor: isActive
+            ? "var(--theme-gold-border, rgba(245,181,72,0.55))"
+            : "var(--border)",
+          boxShadow: isActive ? "0 8px 32px rgba(245,181,72,0.18)" : "none",
+        }}
       >
-        {/* Image */}
         <div
           className="relative w-full overflow-hidden"
-          style={{ aspectRatio: "3/4", background: "var(--pill)" }}
+          style={{ background: "var(--pill)", cursor: "default", height: 168 }}
+          onClick={(event) => event.preventDefault()}
         >
           {imgSrc ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={imgSrc}
-              alt={item.title}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+              alt=""
+              aria-hidden="true"
+              className="h-full w-full object-cover"
               loading="lazy"
               draggable={false}
             />
@@ -232,41 +307,37 @@ function MuseumCard({ item }: { item: ModelItem }) {
             </div>
           )}
 
-          {/* Gradient overlay */}
           <div
             className="pointer-events-none absolute inset-0"
-            style={{ background: "linear-gradient(transparent 50%, rgba(0,0,0,0.75) 100%)" }}
+            style={{ background: "linear-gradient(transparent 50%, rgba(0,0,0,0.78) 100%)" }}
           />
 
-          {/* Notable star — top left */}
           {notable && (
             <div
               className="absolute left-1.5 top-1.5 rounded-md px-1.5 py-0.5 text-[9px] font-bold ring-1"
               style={{
                 background: "rgba(245,181,72,0.15)",
-                color: "var(--theme-gold, #F5B548)",
                 borderColor: "rgba(245,181,72,0.4)",
+                color: "var(--theme-gold, #F5B548)",
               }}
             >
-              ★
+              Key
             </div>
           )}
 
-          {/* Grade badge — top right */}
           {grade && (
             <div
               className="absolute right-1.5 top-1.5 rounded-md px-1.5 py-0.5 text-[9px] font-bold ring-1"
               style={{
                 background: "rgba(10,8,0,0.82)",
-                color: "var(--theme-gold, #F5B548)",
                 borderColor: "rgba(245,181,72,0.4)",
+                color: "var(--theme-gold, #F5B548)",
               }}
             >
               {grade}
             </div>
           )}
 
-          {/* Value overlay — bottom */}
           <div className="absolute bottom-1.5 left-2">
             <div className="text-[11px] font-bold" style={{ color: "#F0EAD6" }}>
               {money(value)}
@@ -274,62 +345,110 @@ function MuseumCard({ item }: { item: ModelItem }) {
           </div>
         </div>
 
-        {/* Title */}
-        <div className="px-2.5 pb-2.5 pt-2">
-          <div
-            className="line-clamp-1 text-[11px] font-semibold"
-            style={{ color: "var(--fg)" }}
-          >
+        <a
+          href={`/vault/item/${item.id}`}
+          className="block"
+          draggable={false}
+          style={{
+            cursor: "pointer",
+            display: "flex",
+            flexDirection: "column",
+            height: 48,
+            justifyContent: "center",
+            padding: "6px 10px 8px",
+          }}
+        >
+          <div className="line-clamp-1 text-[11px] font-semibold" style={{ color: "var(--fg)" }}>
             {item.title}
           </div>
           {(item.subtitle || item.number || item.grade) && (
-            <div
-              className="mt-0.5 line-clamp-1 text-[10px]"
-              style={{ color: "var(--muted)" }}
-            >
+            <div className="mt-0.5 line-clamp-1 text-[10px]" style={{ color: "var(--muted)" }}>
               {[item.subtitle, item.number, item.grade].filter(Boolean).join(" · ")}
             </div>
           )}
-        </div>
+        </a>
       </div>
-    </a>
+    </div>
   );
 }
-
-// ─── Universe section rail ────────────────────────────────────────────────────
 
 function UniverseSection({
   universeKey,
   items,
   onViewAll,
+  onFeaturedChange,
 }: {
   universeKey: UniverseKey;
   items: ModelItem[];
   onViewAll: (u: UniverseKey) => void;
+  onFeaturedChange?: (item: ModelItem) => void;
 }) {
   const label = UNIVERSE_LABEL[universeKey] ?? universeKey;
   const totalValue = items.reduce((sum, i) => sum + itemCurrentValue(i), 0);
   const railRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(items.length > 3);
   const isDragging = useRef(false);
   const dragStartX = useRef(0);
   const dragStartScrollLeft = useRef(0);
+  const userMovedRail = useRef(false);
+
+  useEffect(() => {
+    const rail = railRef.current;
+    if (!rail || items.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        let bestRatio = 0;
+        let bestIndex = activeIndex;
+        entries.forEach((entry) => {
+          const idx = cardRefs.current.indexOf(entry.target as HTMLDivElement);
+          if (idx >= 0 && entry.intersectionRatio > bestRatio) {
+            bestRatio = entry.intersectionRatio;
+            bestIndex = idx;
+          }
+        });
+
+        if (bestRatio > 0.5) {
+          setActiveIndex(bestIndex);
+          if (userMovedRail.current) {
+            onFeaturedChange?.(items[bestIndex]);
+          }
+        }
+      },
+      { root: rail, threshold: [0.5, 0.75, 1] }
+    );
+
+    cardRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => observer.disconnect();
+  }, [activeIndex, items, onFeaturedChange]);
 
   function handleScroll() {
     const rail = railRef.current;
     if (!rail) return;
+    if (rail.scrollLeft > 4) userMovedRail.current = true;
     setCanScrollLeft(rail.scrollLeft > 4);
     setCanScrollRight(rail.scrollLeft + rail.clientWidth < rail.scrollWidth - 4);
   }
 
+  useEffect(() => {
+    handleScroll();
+  }, [items.length]);
+
   function scrollRailBy(px: number) {
+    userMovedRail.current = true;
     railRef.current?.scrollBy({ left: px, behavior: "smooth" });
   }
 
-  function onMouseDown(event: React.MouseEvent<HTMLDivElement>) {
+  function onMouseDown(event: MouseEvent<HTMLDivElement>) {
     const rail = railRef.current;
     if (!rail) return;
+    userMovedRail.current = true;
     isDragging.current = true;
     dragStartX.current = event.clientX;
     dragStartScrollLeft.current = rail.scrollLeft;
@@ -337,10 +456,9 @@ function UniverseSection({
     rail.style.userSelect = "none";
   }
 
-  function onMouseMove(event: React.MouseEvent<HTMLDivElement>) {
+  function onMouseMove(event: MouseEvent<HTMLDivElement>) {
     if (!isDragging.current || !railRef.current) return;
-    const dx = event.clientX - dragStartX.current;
-    railRef.current.scrollLeft = dragStartScrollLeft.current - dx;
+    railRef.current.scrollLeft = dragStartScrollLeft.current - (event.clientX - dragStartX.current);
   }
 
   function onMouseUpOrLeave() {
@@ -351,16 +469,8 @@ function UniverseSection({
     }
   }
 
-  useEffect(() => {
-    const rail = railRef.current;
-    if (!rail) return;
-    setCanScrollLeft(rail.scrollLeft > 4);
-    setCanScrollRight(rail.scrollLeft + rail.clientWidth < rail.scrollWidth - 4);
-  }, [items.length]);
-
   return (
-    <div>
-      {/* Section header */}
+    <div style={{ overflowX: "visible", overflowY: "visible" }}>
       <div className="mb-3 flex items-center justify-between px-0.5">
         <div className="flex items-center gap-2">
           <div
@@ -378,46 +488,47 @@ function UniverseSection({
               className="rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1"
               style={{
                 background: "var(--theme-gold-subtle, rgba(245,181,72,0.08))",
-                color: "var(--theme-gold, #F5B548)",
                 borderColor: "var(--theme-gold-border, rgba(245,181,72,0.25))",
+                color: "var(--theme-gold, #F5B548)",
               }}
             >
               {money(totalValue)}
             </span>
           )}
         </div>
+
         <div className="flex items-center gap-1.5">
           <button
             type="button"
             aria-label="Scroll left"
-            onClick={() => scrollRailBy(-260)}
+            onClick={() => scrollRailBy(-300)}
             disabled={!canScrollLeft}
             className="flex h-7 w-7 items-center justify-center rounded-full text-sm ring-1 transition-opacity"
             style={{
               background: "var(--surface)",
-              color: canScrollLeft ? "var(--fg)" : "var(--muted2)",
               borderColor: "var(--border)",
+              color: canScrollLeft ? "var(--fg)" : "var(--muted2)",
               cursor: canScrollLeft ? "pointer" : "default",
               opacity: canScrollLeft ? 1 : 0.35,
             }}
           >
-            {"‹"}
+            {"<"}
           </button>
           <button
             type="button"
             aria-label="Scroll right"
-            onClick={() => scrollRailBy(260)}
+            onClick={() => scrollRailBy(300)}
             disabled={!canScrollRight}
             className="flex h-7 w-7 items-center justify-center rounded-full text-sm ring-1 transition-opacity"
             style={{
               background: "var(--surface)",
-              color: canScrollRight ? "var(--fg)" : "var(--muted2)",
               borderColor: "var(--border)",
+              color: canScrollRight ? "var(--fg)" : "var(--muted2)",
               cursor: canScrollRight ? "pointer" : "default",
               opacity: canScrollRight ? 1 : 0.35,
             }}
           >
-            {"›"}
+            {">"}
           </button>
           <button
             type="button"
@@ -430,7 +541,6 @@ function UniverseSection({
         </div>
       </div>
 
-      {/* Horizontal scroll rail */}
       <div
         ref={railRef}
         onScroll={handleScroll}
@@ -438,22 +548,30 @@ function UniverseSection({
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUpOrLeave}
         onMouseLeave={onMouseUpOrLeave}
-        className="flex gap-3 overflow-x-auto pb-1"
+        className="flex gap-3 overflow-x-auto pb-3 pt-2"
         style={{
-          scrollbarWidth: "none",
-          msOverflowStyle: "none",
           cursor: "grab",
+          msOverflowStyle: "none",
+          overflowY: "visible",
+          scrollbarWidth: "none",
+          scrollSnapType: "x mandatory",
         }}
       >
-        {items.map((item) => (
-          <MuseumCard key={item.id} item={item} />
+        {items.map((item, i) => (
+          <div
+            key={item.id}
+            ref={(el) => {
+              cardRefs.current[i] = el;
+            }}
+            style={{ flexShrink: 0, scrollSnapAlign: "center" }}
+          >
+            <MuseumCard item={item} isActive={i === activeIndex} />
+          </div>
         ))}
       </div>
     </div>
   );
 }
-
-// ─── Main museum view ─────────────────────────────────────────────────────────
 
 const UNIVERSE_ORDER: UniverseKey[] = [
   "TCG",
@@ -470,11 +588,11 @@ export default function VaultMuseumView({
   onFilterToUniverse,
 }: {
   items: ModelItem[];
-  /** Called when user taps "See all →" on a universe section */
   onFilterToUniverse: (u: UniverseKey) => void;
 }) {
-  // Pick the spotlight item: first Notable by value, then simply highest-value
-  const spotlight = (() => {
+  const [featuredOverride, setFeaturedOverride] = useState<ModelItem | null>(null);
+
+  const defaultSpotlight = (() => {
     const notableItems = items.filter(isNotable);
     if (notableItems.length > 0) {
       return notableItems.reduce((best, i) =>
@@ -487,7 +605,12 @@ export default function VaultMuseumView({
     );
   })();
 
-  // Group remaining items by universe (spotlight excluded from its section)
+  const validFeaturedOverride =
+    featuredOverride && items.some((item) => item.id === featuredOverride.id)
+      ? featuredOverride
+      : null;
+  const spotlight = validFeaturedOverride ?? defaultSpotlight;
+
   const universeGroups = (() => {
     const groups: Partial<Record<UniverseKey, ModelItem[]>> = {};
     for (const item of items) {
@@ -498,14 +621,12 @@ export default function VaultMuseumView({
     return groups;
   })();
 
-  // Ordered list of universes that have items
   const orderedUniverses = UNIVERSE_ORDER.filter((u) => (universeGroups[u]?.length ?? 0) > 0);
 
   if (items.length === 0) return null;
 
   return (
     <div className="space-y-8">
-      {/* Spotlight */}
       {spotlight && (
         <div>
           <div className="mb-3 flex items-center gap-2 px-0.5">
@@ -521,19 +642,18 @@ export default function VaultMuseumView({
                 className="rounded-full px-2 py-0.5 text-[10px] font-bold ring-1"
                 style={{
                   background: "var(--theme-gold-subtle, rgba(245,181,72,0.1))",
-                  color: "var(--theme-gold, #F5B548)",
                   borderColor: "var(--theme-gold-border, rgba(245,181,72,0.35))",
+                  color: "var(--theme-gold, #F5B548)",
                 }}
               >
-                ★ Key Item
+                Key Item
               </span>
             )}
           </div>
-          <SpotlightCard item={spotlight} />
+          <SpotlightCard key={spotlight.id} item={spotlight} />
         </div>
       )}
 
-      {/* Universe sections */}
       {orderedUniverses.map((u) => {
         const sectionItems = universeGroups[u] ?? [];
         return (
@@ -542,6 +662,7 @@ export default function VaultMuseumView({
             universeKey={u}
             items={sectionItems}
             onViewAll={onFilterToUniverse}
+            onFeaturedChange={setFeaturedOverride}
           />
         );
       })}
