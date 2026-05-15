@@ -402,53 +402,47 @@ function UniverseSection({
   const totalValue = items.reduce((sum, i) => sum + itemCurrentValue(i), 0);
   const railRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(items.length > 3);
   const isDragging = useRef(false);
   const dragStartX = useRef(0);
   const dragStartScrollLeft = useRef(0);
 
-  useEffect(() => {
-    const rail = railRef.current;
-    if (!rail || items.length === 0) return;
+  function findCenterIndex(rail: HTMLDivElement): number {
+    const railCenter = rail.scrollLeft + rail.clientWidth / 2;
+    let bestIndex = 0;
+    let bestDistance = Infinity;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        let bestRatio = 0;
-        let bestIndex = activeIndex;
-        entries.forEach((entry) => {
-          const idx = cardRefs.current.indexOf(entry.target as HTMLDivElement);
-          if (idx >= 0 && entry.intersectionRatio > bestRatio) {
-            bestRatio = entry.intersectionRatio;
-            bestIndex = idx;
-          }
-        });
-
-        if (bestRatio > 0.5) {
-          setActiveIndex(bestIndex);
-          onFeaturedChange?.(items[bestIndex]);
-        }
-      },
-      { root: rail, threshold: [0.5, 0.75, 1] }
-    );
-
-    cardRefs.current.forEach((ref) => {
-      if (ref) observer.observe(ref);
+    cardRefs.current.forEach((card, i) => {
+      if (!card) return;
+      const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+      const distance = Math.abs(cardCenter - railCenter);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestIndex = i;
+      }
     });
 
-    return () => observer.disconnect();
-  }, [activeIndex, items, onFeaturedChange]);
+    return bestIndex;
+  }
 
   function handleScroll() {
     const rail = railRef.current;
     if (!rail) return;
     setCanScrollLeft(rail.scrollLeft > 4);
     setCanScrollRight(rail.scrollLeft + rail.clientWidth < rail.scrollWidth - 4);
+
+    const centered = findCenterIndex(rail);
+    setActiveIndex(centered);
+    onFeaturedChange?.(items[centered]);
   }
 
   useEffect(() => {
-    handleScroll();
+    const rail = railRef.current;
+    if (!rail) return;
+    setCanScrollLeft(rail.scrollLeft > 4);
+    setCanScrollRight(rail.scrollLeft + rail.clientWidth < rail.scrollWidth - 4);
   }, [items.length]);
 
   function scrollRailBy(px: number) {
