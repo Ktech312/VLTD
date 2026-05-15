@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 
+import InsurancePdfButton from "@/components/InsurancePdfButton";
 import { exportVaultCsv, exportVaultJson } from "@/lib/vaultExport";
+import { loadItems } from "@/lib/vaultModel";
 
 export default function VaultExportButton() {
   const [open, setOpen] = useState(false);
+  const items = open ? loadItems({ includeAllProfiles: true }) : [];
 
   return (
     <div className="relative">
@@ -47,6 +50,11 @@ export default function VaultExportButton() {
             >
               Download JSON
             </button>
+            <InsurancePdfButton
+              items={items}
+              label="Insurance PDF"
+              className="w-full rounded-xl px-4 py-2.5 text-left text-sm transition hover:brightness-110"
+            />
           </div>
         </>
       ) : null}

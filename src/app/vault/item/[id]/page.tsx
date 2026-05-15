@@ -6,6 +6,7 @@ import { use, useEffect, useMemo, useState } from "react";
 import ConditionAssessmentPanel from "@/components/ConditionAssessmentPanel";
 import CostToSellPanel from "@/components/CostToSellPanel";
 import ExportListingButton from "@/components/ExportListingButton";
+import InsurancePdfButton from "@/components/InsurancePdfButton";
 import ItemMedia from "@/components/ItemMedia";
 import NotableBadge from "@/components/NotableBadge";
 import PricingMvpCard from "@/components/PricingMvpCard";
@@ -841,6 +842,11 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               >
                 Stream
               </Link>
+              <InsurancePdfButton
+                items={[item]}
+                label="Insurance Doc"
+                className="ml-2 inline-flex h-10 items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]"
+              />
             </div>
 
             {displayedSale ? (
