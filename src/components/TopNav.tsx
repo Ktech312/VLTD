@@ -102,6 +102,23 @@ function IconWatchlist({ active }: { active: boolean }) {
   );
 }
 
+function IconGoals({ active }: { active: boolean }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
+      <circle
+        cx="12"
+        cy="12"
+        r="8"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        fill={active ? "rgba(245,181,72,0.12)" : "none"}
+      />
+      <circle cx="12" cy="12" r="3.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function IconLearn({ active }: { active: boolean }) {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
@@ -179,6 +196,10 @@ const NAV_ITEMS = [
   {
     label: "Watchlist",   href: "/wishlist",   icon: IconWatchlist,   exact: false, subpathOnly: false,
     desc: "Save pieces, collectors and exhibitions you love.",
+  },
+  {
+    label: "Goals",       href: "/goals",      icon: IconGoals,       exact: false, subpathOnly: false,
+    desc: "Track collection completion targets.",
   },
   {
     label: "Learn",       href: "/learn",      icon: IconLearn,       exact: false, subpathOnly: false,

@@ -6,6 +6,7 @@ export type WishlistItem = {
   createdAt: number;
   universe?: string;
   category?: string;
+  subject?: string;
   condition?: "any" | "raw" | "graded" | "nm" | "ex";
   priority?: "low" | "medium" | "high";
 };
@@ -31,7 +32,7 @@ export function saveWishlist(items: WishlistItem[]) {
 export function addWishlistItem(
   fields: Pick<
     WishlistItem,
-    "title" | "targetPrice" | "notes" | "universe" | "category" | "condition" | "priority"
+    "title" | "targetPrice" | "notes" | "universe" | "category" | "subject" | "condition" | "priority"
   >
 ): WishlistItem {
   const item: WishlistItem = {

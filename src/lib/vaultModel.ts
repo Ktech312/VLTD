@@ -48,6 +48,7 @@ export type VaultItem = {
   storageLocation?: string;
   certNumber?: string;
   serialNumber?: string;
+  subject?: string;
   edition?: string;
   variant?: string;
   printRun?: string;
@@ -326,6 +327,10 @@ function normalizeOne(input: unknown): VaultItem | null {
     storageLocation: raw.storageLocation ?? undefined,
     certNumber: raw.certNumber ?? undefined,
     serialNumber: raw.serialNumber ?? undefined,
+    subject:
+      typeof raw.subject === "string" && raw.subject.trim()
+        ? raw.subject.trim()
+        : undefined,
     edition: raw.edition ?? undefined,
     variant: raw.variant ?? undefined,
     printRun: raw.printRun ?? undefined,

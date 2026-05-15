@@ -178,6 +178,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     categoryLabel: "Collectors Choice",
     subcategoryLabel: "",
     title: "",
+    subject: "",
   });
   const [shareIncludeWatermark, setShareIncludeWatermark] = useState(true);
   const [shareIncludeUsername, setShareIncludeUsername] = useState(true);
@@ -219,6 +220,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
       categoryLabel: nextCategory,
       subcategoryLabel: item.subcategoryLabel ?? "",
       title: item.title ?? "",
+      subject: item.subject ?? "",
     });
   }, [item]);
 
@@ -355,6 +357,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
       category: categoryCode(categoryLabelValue),
       categoryLabel: categoryLabelValue,
       subcategoryLabel: subcategoryLabel || undefined,
+      subject: recordDraft.subject.trim() || undefined,
     };
 
     await persist(nextItem);
@@ -1055,6 +1058,16 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                   placeholder="Batman"
                 />
               </label>
+
+              <label className="grid gap-1.5">
+                <span className="text-[11px] font-medium tracking-[0.14em] text-[color:var(--muted2)]">Subject</span>
+                <input
+                  className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                  value={recordDraft.subject}
+                  onChange={(event) => setRecordDraft((prev) => ({ ...prev, subject: event.target.value }))}
+                  placeholder="Player, character, artist, franchise"
+                />
+              </label>
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -1140,6 +1153,23 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 </div>
               </div>
             )}
+            {item.subject ? (
+              <div className="mt-3 flex items-center gap-2">
+                <span className="text-[11px] uppercase tracking-[0.14em]" style={{ color: "var(--muted2)" }}>
+                  Subject
+                </span>
+                <span
+                  className="rounded-full px-2.5 py-0.5 text-[12px] font-semibold ring-1"
+                  style={{
+                    background: "var(--theme-gold-subtle)",
+                    borderColor: "var(--theme-gold-border)",
+                    color: "var(--theme-gold)",
+                  }}
+                >
+                  {item.subject}
+                </span>
+              </div>
+            ) : null}
           </Section>
 
           <Section title="PURCHASE">

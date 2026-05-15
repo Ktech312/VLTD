@@ -1366,6 +1366,7 @@ export default function AddPage() {
         storageLocation: normalizedValues.storageLocation.trim() || undefined,
         purchaseSource: normalizedValues.purchaseSource.trim() || undefined,
         purchaseLocation: normalizedValues.purchaseLocation.trim() || undefined,
+        subject: normalizedValues.subject.trim() || undefined,
         certNumber: normalizedValues.certNumber.trim() || undefined,
         serialNumber: normalizedValues.serialNumber.trim() || undefined,
         edition: normalizedValues.edition.trim() || undefined,
@@ -1652,6 +1653,28 @@ export default function AddPage() {
                   onChange={(e) => setField("purchaseLocation", e.target.value)}
                   placeholder="Dallas"
                 />
+              </Field>
+
+              <Field label="Subject" locked={locks.subject} onToggleLock={() => handleToggleLock("subject")}>
+                <input
+                  className={inputClass()}
+                  value={values.subject}
+                  onChange={(e) => setField("subject", e.target.value)}
+                  placeholder={
+                    values.universe === "SPORTS"
+                      ? "Shohei Ohtani"
+                      : values.universe === "TCG"
+                        ? "Pikachu"
+                        : values.universe === "MUSIC"
+                          ? "David Bowie"
+                          : values.universe === "GAMES"
+                            ? "The Legend of Zelda"
+                            : "Player, character, artist, franchise"
+                  }
+                />
+                <p className="mt-1 text-[11px]" style={{ color: "var(--muted2)" }}>
+                  Used for Vault Registry rankings.
+                </p>
               </Field>
 
               <Field label="Cert #" locked={locks.certNumber} onToggleLock={() => handleToggleLock("certNumber")}>

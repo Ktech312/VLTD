@@ -14,6 +14,7 @@ export type BulkAddFieldKey =
   | "purchaseLocation"
   | "certNumber"
   | "serialNumber"
+  | "subject"
   | "edition"
   | "variant"
   | "printRun"
@@ -41,6 +42,7 @@ export const EMPTY_BULK_ADD_VALUES: BulkAddValues = {
   purchaseLocation: "",
   certNumber: "",
   serialNumber: "",
+  subject: "",
   edition: "",
   variant: "",
   printRun: "",
@@ -64,6 +66,7 @@ export const DEFAULT_BULK_ADD_LOCKS: BulkAddLocks = {
   purchaseLocation: false,
   certNumber: false,
   serialNumber: false,
+  subject: false,
   edition: false,
   variant: false,
   printRun: false,

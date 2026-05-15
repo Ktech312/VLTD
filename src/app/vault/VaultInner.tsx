@@ -173,22 +173,27 @@ async function normalizeImageForTier(file: File, tier: Tier): Promise<string> {
 }
 
 function toSeedItemsFromDemo(): ModelItem[] {
-  return (DEMO_ITEMS as any[]).map((d) => ({
+  return (DEMO_ITEMS as Array<Record<string, unknown>>).map((d) => ({
     id: String(d.id),
-    category: d.category,
-    customCategoryLabel: d.customCategoryLabel,
-    title: d.title,
-    subtitle: d.subtitle,
-    number: d.number,
-    grade: d.grade,
+    category: typeof d.category === "string" ? d.category : undefined,
+    customCategoryLabel: typeof d.customCategoryLabel === "string" ? d.customCategoryLabel : undefined,
+    title: typeof d.title === "string" ? d.title : "Untitled",
+    subtitle: typeof d.subtitle === "string" ? d.subtitle : undefined,
+    number: typeof d.number === "string" ? d.number : undefined,
+    grade: typeof d.grade === "string" ? d.grade : undefined,
     purchasePrice: Number(d.purchasePrice ?? 0),
     currentValue: Number(d.currentValue ?? 0),
-    imageFrontUrl: d.imageFrontUrl ?? d.imageUrl,
-    imageBackUrl: d.imageBackUrl,
-    notes: d.notes ?? "",
-    universe: d.universe,
-    categoryLabel: d.categoryLabel,
-    subcategoryLabel: d.subcategoryLabel,
+    imageFrontUrl:
+      typeof d.imageFrontUrl === "string"
+        ? d.imageFrontUrl
+        : typeof d.imageUrl === "string"
+          ? d.imageUrl
+          : undefined,
+    imageBackUrl: typeof d.imageBackUrl === "string" ? d.imageBackUrl : undefined,
+    notes: typeof d.notes === "string" ? d.notes : "",
+    universe: typeof d.universe === "string" ? d.universe : undefined,
+    categoryLabel: typeof d.categoryLabel === "string" ? d.categoryLabel : undefined,
+    subcategoryLabel: typeof d.subcategoryLabel === "string" ? d.subcategoryLabel : undefined,
   }));
 }
 
@@ -469,7 +474,7 @@ function VaultCard({
       <div
         className="pointer-events-none absolute left-1/2 top-[14px] h-[72px] w-[68%] -translate-x-1/2 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
         style={{
-          opacity: "var(--a)" as any,
+          opacity: "var(--a)",
           background: "radial-gradient(ellipse at center, rgba(255,255,255,0.20), rgba(255,255,255,0) 70%)",
           filter: "blur(14px)",
         }}
@@ -672,6 +677,7 @@ export default function VaultInner() {
   const [uFilter, setUFilter] = useState<UniverseKey | "ALL">("ALL");
   const [cFilter, setCFilter] = useState<string>("ALL");
   const [sFilter, setSFilter] = useState<string>("ALL");
+  const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
 
   const [frameStyle, setFrameStyle] = useState<FrameStyle>("gallery");
   const [viewMode, setViewMode] = useState<"shelf" | "swipe">("shelf");
@@ -770,6 +776,7 @@ export default function VaultInner() {
     setGrade(sp.get("grade") ?? "");
     setMin(sp.get("min") ?? "");
     setMax(sp.get("max") ?? "");
+    setSubjectFilter(sp.get("subject"));
 
     const u = sp.get("u") as UniverseKey | null;
     const c = sp.get("c");
@@ -802,12 +809,6 @@ export default function VaultInner() {
   }, [sp]);
 
   const wantsAdd = sp.get("add") === "1" || sp.get("new") === "1";
-
-  useEffect(() => {
-    if (!wantsAdd) return;
-    resetModal(true);
-    setOpen(true);
-  }, [wantsAdd]);
 
   function closeAddAndCleanUrl() {
     const params = new URLSearchParams(sp.toString());
@@ -852,8 +853,9 @@ export default function VaultInner() {
       const matchesC = cFilter === "ALL" ? true : itemCategory(i) === cFilter;
       const matchesS = sFilter === "ALL" ? true : (itemSubcategory(i) ?? "").toLowerCase() === sFilter.toLowerCase();
 
-      const hay = `${i.title} ${i.subtitle ?? ""} ${i.number ?? ""} ${i.grade ?? ""} ${i.notes ?? ""} ${itemLabel(i)}`.toLowerCase();
+      const hay = `${i.title} ${i.subtitle ?? ""} ${i.number ?? ""} ${i.grade ?? ""} ${i.notes ?? ""} ${i.subject ?? ""} ${itemLabel(i)}`.toLowerCase();
       const matchesQuery = query.length === 0 ? true : hay.includes(query);
+      const matchesSubject = subjectFilter ? (i.subject ?? "").toLowerCase() === subjectFilter.toLowerCase() : true;
 
       const gradeText = (i.grade ?? "").toLowerCase();
       const matchesGrader = gradedQ.length === 0 ? true : gradeText.includes(gradedQ);
@@ -865,9 +867,9 @@ export default function VaultInner() {
       const withinMin = minN === null ? true : val >= minN || cost >= minN;
       const withinMax = maxN === null ? true : val <= maxN || cost <= maxN;
 
-      return matchesU && matchesC && matchesS && matchesQuery && matchesGrader && matchesGradeExact && withinMin && withinMax;
+      return matchesU && matchesC && matchesS && matchesSubject && matchesQuery && matchesGrader && matchesGradeExact && withinMin && withinMax;
     });
-  }, [items, q, graded, grade, min, max, uFilter, cFilter, sFilter]);
+  }, [items, q, graded, grade, min, max, uFilter, cFilter, sFilter, subjectFilter]);
 
   const emptyTaxonomySliceCount = useMemo(() => {
     return items.filter((i) => {
@@ -886,7 +888,8 @@ export default function VaultInner() {
     max.trim() ||
     uFilter !== "ALL" ||
     cFilter !== "ALL" ||
-    sFilter !== "ALL";
+    sFilter !== "ALL" ||
+    subjectFilter;
 
   const sliceLabel =
     uFilter === "ALL"
@@ -1054,6 +1057,13 @@ export default function VaultInner() {
   }
 
   useEffect(() => {
+    if (!wantsAdd) return;
+    resetModal(true);
+    setOpen(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantsAdd]);
+
+  useEffect(() => {
     if (!open) return;
     setTimeout(() => titleInputRef.current?.focus(), 0);
   }, [open]);
@@ -1067,6 +1077,7 @@ export default function VaultInner() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {
@@ -1117,7 +1128,7 @@ export default function VaultInner() {
   }
 
   const isTrulyEmpty = items.length === 0;
-  const displayItems = filtered.length > 0 ? filtered : [];
+  const displayItems = useMemo(() => (filtered.length > 0 ? filtered : []), [filtered]);
 
   const shelfRows = useMemo(() => chunkItems(displayItems, 4), [displayItems]);
   const closestRows = useMemo(() => chunkItems(closestMatches, 4), [closestMatches]);
@@ -1224,6 +1235,33 @@ export default function VaultInner() {
             <div className="text-xs text-[color:var(--muted2)]">{sliceLabel}</div>
           </div>
         )}
+
+        {subjectFilter ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div
+              className="flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-semibold ring-1"
+              style={{
+                background: "var(--theme-gold-subtle)",
+                borderColor: "var(--theme-gold-border)",
+                color: "var(--theme-gold)",
+              }}
+            >
+              Subject: {subjectFilter}
+              <button
+                type="button"
+                onClick={() => {
+                  setSubjectFilter(null);
+                  const params = new URLSearchParams(sp.toString());
+                  params.delete("subject");
+                  router.replace(`${pathname}${params.toString() ? `?${params.toString()}` : ""}`);
+                }}
+                className="ml-0.5 text-[11px] opacity-70 hover:opacity-100"
+              >
+                x
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         <div className="mt-6 text-sm text-[color:var(--muted)]">
           <div className="flex flex-wrap items-center justify-between gap-3">

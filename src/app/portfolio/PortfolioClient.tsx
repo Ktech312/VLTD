@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
+import { loadGoals } from "@/lib/collectionGoals";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { loadItemsOrSeed, saveItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
 
@@ -11,6 +13,8 @@ import NeonBarChart from "@/components/ui/NeonBarChart";
 import NeonDonut from "@/components/ui/NeonDonut";
 import MiniSparklines from "@/components/ui/MiniSparklines";
 import PortfolioNetProceedsPanel from "@/components/PortfolioNetProceedsPanel";
+import SubjectRankingsWidget from "@/components/SubjectRankingsWidget";
+import GoalsProgressWidget from "@/components/GoalsProgressWidget";
 
 type RankMode = "gain" | "value";
 const LS_RANK_MODE = "vltd_rank_mode";
@@ -143,6 +147,7 @@ function monthKey(d: Date) {
 }
 
 export default function PortfolioClient() {
+  const router = useRouter();
   const [items] = useState<ModelItem[]>(() => {
     const seed = toSeedItemsFromDemo();
     const loaded = loadItemsOrSeed(seed);
@@ -157,6 +162,7 @@ export default function PortfolioClient() {
     const stored = typeof window !== "undefined" ? window.localStorage.getItem(LS_PORTFOLIO_VIEW) : null;
     return stored === "donut" || stored === "sparklines" ? stored : "bars";
   });
+  const [goals, setGoals] = useState(loadGoals);
 
   useEffect(() => {
     function onSettingEvent() {
@@ -166,11 +172,16 @@ export default function PortfolioClient() {
       const rm2 = window.localStorage.getItem(LS_RANK_MODE) as RankMode | null;
       if (rm2 === "gain" || rm2 === "value") setRankMode(rm2);
     }
+    function onFocus() {
+      setGoals(loadGoals());
+    }
     window.addEventListener("vltd:portfolioView", onSettingEvent);
     window.addEventListener("vltd:rankMode", onSettingEvent);
+    window.addEventListener("focus", onFocus);
     return () => {
       window.removeEventListener("vltd:portfolioView", onSettingEvent);
       window.removeEventListener("vltd:rankMode", onSettingEvent);
+      window.removeEventListener("focus", onFocus);
     };
   }, []);
 
@@ -320,6 +331,19 @@ export default function PortfolioClient() {
 
         <div className="mt-6">
           <PortfolioNetProceedsPanel items={items} />
+        </div>
+
+        <div className="mt-6">
+          <SubjectRankingsWidget
+            items={items}
+            onFilter={(subject) => {
+              router.push(`/vault?subject=${encodeURIComponent(subject)}`);
+            }}
+          />
+        </div>
+
+        <div className="mt-6">
+          <GoalsProgressWidget goals={goals} items={items} />
         </div>
 
         {/* Chart area (selectable) */}

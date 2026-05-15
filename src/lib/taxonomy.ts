@@ -78,6 +78,8 @@ export const UNIVERSE_LABEL: Record<UniverseKey, string> = {
   MISC: "Misc",
 };
 
+export const UNIVERSE_KEYS = getUniverses();
+
 // Simple icons (emoji for now). Swap to SVG later if needed.
 export const UNIVERSE_ICON: Record<UniverseKey, string> = {
   POP_CULTURE: "🦸",

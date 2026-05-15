@@ -11,6 +11,7 @@ const CSV_COLUMNS: (keyof VaultItem)[] = [
   "grade",
   "certNumber",
   "serialNumber",
+  "subject",
   "edition",
   "variant",
   "printRun",
