@@ -718,7 +718,7 @@ export default function GalleryPage() {
           </div>
         ) : null}
 
-        <section className="relative overflow-hidden rounded-[34px] border border-[color:var(--border)] bg-[color:var(--surface)] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.42)] sm:p-8 lg:p-10">
+        <section className="relative overflow-hidden rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4 shadow-[0_20px_60px_rgba(0,0,0,0.38)] sm:p-5">
           {draft.coverImage ? (
             <>
               <div
@@ -736,7 +736,7 @@ export default function GalleryPage() {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.10),rgba(255,255,255,0)_28%),radial-gradient(circle_at_80%_0%,rgba(255,225,170,0.10),rgba(255,225,170,0)_24%)]" />
 
           <div className="relative">
-            <div className="mb-6 flex flex-wrap items-center gap-3">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={saveDraft}
@@ -765,23 +765,23 @@ export default function GalleryPage() {
               </span>
             </div>
 
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-3xl">
                 <div className="text-[11px] tracking-[0.28em] text-[color:var(--muted2)]">
                   CURATED GALLERY
                 </div>
 
-                <h1 className="mt-3 text-3xl font-semibold sm:text-4xl lg:text-5xl">
+                <h1 className="mt-2 text-2xl font-semibold sm:text-3xl">
                   {draft.title}
                 </h1>
 
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--muted)] sm:text-base">
+                <p className="mt-1 max-w-2xl text-sm leading-5 text-[color:var(--muted)]">
                   {draft.description?.trim()
                     ? draft.description
                     : "Curated collection presentation"}
                 </p>
 
-                <div className="mt-5 flex flex-wrap items-center gap-2">
+                <div className="mt-3 flex flex-wrap items-center gap-1.5">
                   <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]">
                     {visibilityLabel(draft.visibility)}
                   </span>
@@ -800,57 +800,32 @@ export default function GalleryPage() {
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2 lg:w-[440px]">
-                <div className="rounded-3xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
-                  <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                    GALLERY VALUE
-                  </div>
-                  <div className="mt-2 text-2xl font-semibold">{formatMoney(metrics.totalValue)}</div>
-                  <div className="mt-1 text-sm text-[color:var(--muted)]">
-                    Current exhibit value
+              <div className="flex flex-wrap gap-2 lg:justify-end">
+                <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)]">
+                  <div className="text-[9px] tracking-[0.18em] text-[color:var(--muted2)]">VALUE</div>
+                  <div className="mt-0.5 text-lg font-semibold leading-tight">{formatMoney(metrics.totalValue)}</div>
+                </div>
+
+                <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)]">
+                  <div className="text-[9px] tracking-[0.18em] text-[color:var(--muted2)]">ROI</div>
+                  <div className="mt-0.5 text-lg font-semibold leading-tight">
+                    {metrics.roi >= 0 ? "+" : ""}{metrics.roi.toFixed(1)}%
                   </div>
                 </div>
 
-                <div className="rounded-3xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
-                  <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                    ROI
-                  </div>
-                  <div className="mt-2 text-2xl font-semibold">
-                    {metrics.roi >= 0 ? "+" : ""}
-                    {metrics.roi.toFixed(1)}%
-                  </div>
-                  <div className="mt-1 text-sm text-[color:var(--muted)]">
-                    Based on purchase totals
-                  </div>
+                <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)]">
+                  <div className="text-[9px] tracking-[0.18em] text-[color:var(--muted2)]">NOTES</div>
+                  <div className="mt-0.5 text-lg font-semibold leading-tight">{metrics.notesCoverage.toFixed(0)}%</div>
                 </div>
 
-                <div className="rounded-3xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
-                  <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                    NOTES COVERAGE
-                  </div>
-                  <div className="mt-2 text-2xl font-semibold">
-                    {metrics.notesCoverage.toFixed(0)}%
-                  </div>
-                  <div className="mt-1 text-sm text-[color:var(--muted)]">
-                    {metrics.notesCount} noted exhibits
-                  </div>
-                </div>
-
-                <div className="rounded-3xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
-                  <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                    LAST VIEWED
-                  </div>
-                  <div className="mt-2 text-sm font-semibold">
-                    {formatDateTime(draft.analytics?.lastViewedAt)}
-                  </div>
-                  <div className="mt-1 text-sm text-[color:var(--muted)]">
-                    Latest tracked access time
-                  </div>
+                <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)]">
+                  <div className="text-[9px] tracking-[0.18em] text-[color:var(--muted2)]">VIEWS</div>
+                  <div className="mt-0.5 text-lg font-semibold leading-tight">{metrics.views}</div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-8 grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px]">
+            <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
               <div className="rounded-[28px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)]">
                 <div className="flex items-start justify-between gap-4">
                   <div>
