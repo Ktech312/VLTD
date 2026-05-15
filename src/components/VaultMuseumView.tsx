@@ -286,7 +286,7 @@ function MuseumCard({
             : "var(--border)",
           boxShadow: isActive
             ? "0 0 0 2px rgba(245,181,72,0.75), 0 4px 28px rgba(245,181,72,0.45)"
-            : "none",
+            : "0 0 0 1px rgba(245,181,72,0.28)",
         }}
       >
         <div
@@ -409,6 +409,7 @@ function UniverseSection({
   const isDragging = useRef(false);
   const dragStartX = useRef(0);
   const dragStartScrollLeft = useRef(0);
+  const syncFrame = useRef<number | null>(null);
 
   function findCenterIndex(rail: HTMLDivElement): number {
     const railRect = rail.getBoundingClientRect();
@@ -438,6 +439,18 @@ function UniverseSection({
     if (shouldFeature) onFeaturedChange?.(items[centered]);
   }
 
+  function syncIfVisible() {
+    if (syncFrame.current !== null) window.cancelAnimationFrame(syncFrame.current);
+    syncFrame.current = window.requestAnimationFrame(() => {
+      const section = sectionRef.current;
+      if (!section) return;
+      const rect = section.getBoundingClientRect();
+      const isVisible = rect.bottom > 0 && rect.top < window.innerHeight;
+      syncCenteredCard(isVisible);
+      syncFrame.current = null;
+    });
+  }
+
   function handleScroll() {
     const rail = railRef.current;
     if (!rail) return;
@@ -451,14 +464,14 @@ function UniverseSection({
     if (!rail) return;
     setCanScrollLeft(rail.scrollLeft > 4);
     setCanScrollRight(rail.scrollLeft + rail.clientWidth < rail.scrollWidth - 4);
-    const frame = window.requestAnimationFrame(() => {
-      const section = sectionRef.current;
-      if (!section) return;
-      const rect = section.getBoundingClientRect();
-      const isVisible = rect.bottom > 0 && rect.top < window.innerHeight;
-      syncCenteredCard(isVisible);
-    });
-    return () => window.cancelAnimationFrame(frame);
+    syncIfVisible();
+    window.addEventListener("scroll", syncIfVisible, { passive: true });
+    window.addEventListener("resize", syncIfVisible);
+    return () => {
+      window.removeEventListener("scroll", syncIfVisible);
+      window.removeEventListener("resize", syncIfVisible);
+      if (syncFrame.current !== null) window.cancelAnimationFrame(syncFrame.current);
+    };
     // Only rerun after the rendered rail item count changes; scroll events keep it synced after that.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items.length]);
