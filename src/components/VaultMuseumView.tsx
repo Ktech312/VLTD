@@ -402,6 +402,7 @@ function UniverseSection({
   const totalValue = items.reduce((sum, i) => sum + itemCurrentValue(i), 0);
   const railRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const sectionRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(items.length > 3);
@@ -410,13 +411,15 @@ function UniverseSection({
   const dragStartScrollLeft = useRef(0);
 
   function findCenterIndex(rail: HTMLDivElement): number {
-    const railCenter = rail.scrollLeft + rail.clientWidth / 2;
+    const railRect = rail.getBoundingClientRect();
+    const railCenter = railRect.left + railRect.width / 2;
     let bestIndex = 0;
     let bestDistance = Infinity;
 
     cardRefs.current.forEach((card, i) => {
       if (!card) return;
-      const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+      const cardRect = card.getBoundingClientRect();
+      const cardCenter = cardRect.left + cardRect.width / 2;
       const distance = Math.abs(cardCenter - railCenter);
       if (distance < bestDistance) {
         bestDistance = distance;
@@ -427,15 +430,20 @@ function UniverseSection({
     return bestIndex;
   }
 
+  function syncCenteredCard(shouldFeature: boolean) {
+    const rail = railRef.current;
+    if (!rail) return;
+    const centered = findCenterIndex(rail);
+    setActiveIndex(centered);
+    if (shouldFeature) onFeaturedChange?.(items[centered]);
+  }
+
   function handleScroll() {
     const rail = railRef.current;
     if (!rail) return;
     setCanScrollLeft(rail.scrollLeft > 4);
     setCanScrollRight(rail.scrollLeft + rail.clientWidth < rail.scrollWidth - 4);
-
-    const centered = findCenterIndex(rail);
-    setActiveIndex(centered);
-    onFeaturedChange?.(items[centered]);
+    syncCenteredCard(true);
   }
 
   useEffect(() => {
@@ -443,6 +451,16 @@ function UniverseSection({
     if (!rail) return;
     setCanScrollLeft(rail.scrollLeft > 4);
     setCanScrollRight(rail.scrollLeft + rail.clientWidth < rail.scrollWidth - 4);
+    const frame = window.requestAnimationFrame(() => {
+      const section = sectionRef.current;
+      if (!section) return;
+      const rect = section.getBoundingClientRect();
+      const isVisible = rect.bottom > 0 && rect.top < window.innerHeight;
+      syncCenteredCard(isVisible);
+    });
+    return () => window.cancelAnimationFrame(frame);
+    // Only rerun after the rendered rail item count changes; scroll events keep it synced after that.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items.length]);
 
   function scrollRailBy(px: number) {
@@ -473,7 +491,7 @@ function UniverseSection({
   }
 
   return (
-    <div style={{ overflowX: "visible", overflowY: "visible" }}>
+    <div ref={sectionRef} style={{ overflowX: "visible", overflowY: "visible" }}>
       <div className="mb-3 flex items-center justify-between px-0.5">
         <div className="flex items-center gap-2">
           <div
