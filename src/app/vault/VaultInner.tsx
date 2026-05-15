@@ -6,6 +6,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import UniverseRail from "@/components/UniverseRail";
 import SwipeStack from "@/components/SwipeStack";
+import VaultMuseumView from "@/components/VaultMuseumView";
 import { TAXONOMY, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { loadItemsOrSeed, saveItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { type Tier, getTierSafe, onTierChange } from "@/lib/subscription";
@@ -720,7 +721,7 @@ export default function VaultInner() {
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
 
   const [frameStyle, setFrameStyle] = useState<FrameStyle>("gallery");
-  const [viewMode, setViewMode] = useState<"shelf" | "swipe">("shelf");
+  const [viewMode, setViewMode] = useState<"museum" | "shelf" | "swipe">("museum");
   const [open, setOpen] = useState(false);
   const [bulkEnabled, setBulkEnabled] = useState(false);
 
@@ -772,7 +773,7 @@ export default function VaultInner() {
 
   useEffect(() => {
     const saved = window.localStorage.getItem(LS_VAULT_VIEW_MODE_KEY);
-    if (saved === "shelf" || saved === "swipe") setViewMode(saved);
+    if (saved === "museum" || saved === "shelf" || saved === "swipe") setViewMode(saved);
   }, []);
 
   useEffect(() => {
@@ -1363,6 +1364,18 @@ export default function VaultInner() {
               <div className="flex rounded-full bg-[color:var(--pill)] p-1 ring-1 ring-[color:var(--border)]">
                 <button
                   type="button"
+                  onClick={() => setViewMode("museum")}
+                  className={[
+                    "rounded-full px-3 py-1 text-[11px] font-semibold transition",
+                    viewMode === "museum"
+                      ? "bg-[color:var(--theme-gold-subtle,rgba(245,181,72,0.12))] text-[color:var(--theme-gold,#F5B548)]"
+                      : "text-[color:var(--muted)]",
+                  ].join(" ")}
+                >
+                  Museum
+                </button>
+                <button
+                  type="button"
                   onClick={() => setViewMode("shelf")}
                   className={[
                     "rounded-full px-3 py-1 text-[11px] font-semibold transition",
@@ -1489,7 +1502,15 @@ export default function VaultInner() {
 
         {filtered.length > 0 && (
           <section className="mt-6">
-            {viewMode === "swipe" ? (
+            {viewMode === "museum" ? (
+              <VaultMuseumView
+                items={filtered}
+                onFilterToUniverse={(u) => {
+                  setUFilter(u);
+                  pushFilters({ u, c: "ALL", s: "ALL" });
+                }}
+              />
+            ) : viewMode === "swipe" ? (
               <div className="mx-auto max-w-sm">
                 <SwipeStack
                   items={filtered}
@@ -1500,7 +1521,7 @@ export default function VaultInner() {
                 />
               </div>
             ) : (
-            <GalleryWall backgroundImage={museumBackgroundImage} backgroundMode={museumBackgroundMode}>
+              <GalleryWall backgroundImage={museumBackgroundImage} backgroundMode={museumBackgroundMode}>
               {shelfRows.map((row, rowIndex) => (
                 <ShelfRow key={`row-${rowIndex}`} shelfIndex={rowIndex}>
                   {row.map((i) => (
@@ -1522,7 +1543,7 @@ export default function VaultInner() {
                   ))}
                 </ShelfRow>
               ))}
-            </GalleryWall>
+              </GalleryWall>
             )}
           </section>
         )}
