@@ -79,9 +79,8 @@ function SpotlightCard({ item }: { item: ModelItem }) {
       <div
         className="relative w-full"
         style={{
-          aspectRatio: "5/2",
           background: "var(--pill)",
-          maxHeight: 220,
+          height: 220,
           overflow: "hidden",
         }}
       >
@@ -160,26 +159,6 @@ function SpotlightCard({ item }: { item: ModelItem }) {
           </div>
         )}
 
-        <a
-          href={`/vault/item/${item.id}`}
-          aria-label="Expand item"
-          title="View item detail"
-          className="absolute bottom-2 left-1/2 flex items-center justify-center rounded-full text-sm font-semibold"
-          style={{
-            backdropFilter: "blur(4px)",
-            background: "rgba(59,130,246,0.85)",
-            border: "2px solid rgba(255,255,255,0.25)",
-            boxShadow: "0 2px 12px rgba(59,130,246,0.4)",
-            color: "#fff",
-            height: 32,
-            textDecoration: "none",
-            transform: "translateX(-50%)",
-            width: 32,
-          }}
-        >
-          ↗
-        </a>
-
         <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
           <div className="min-w-0 pr-12">
             <div className="text-[10px] uppercase tracking-[0.18em]" style={{ color: "rgba(255,255,255,0.55)" }}>
@@ -235,13 +214,40 @@ function SpotlightCard({ item }: { item: ModelItem }) {
             </div>
           </div>
         )}
-        <a
-          href={`/vault/item/${item.id}`}
-          className="ml-auto text-[11px] font-semibold transition-opacity hover:opacity-80"
-          style={{ color: "var(--theme-gold, #F5B548)" }}
-        >
-          View details →
-        </a>
+        <div className="ml-auto flex items-center gap-2">
+          <a
+            href={`/vault/item/${item.id}`}
+            aria-label="Open item detail"
+            className="flex items-center justify-center rounded-full transition-opacity hover:opacity-90"
+            style={{
+              background: "rgba(59,130,246,0.9)",
+              border: "1.5px solid rgba(255,255,255,0.22)",
+              boxShadow: "0 2px 10px rgba(59,130,246,0.45)",
+              color: "#fff",
+              flexShrink: 0,
+              height: 28,
+              textDecoration: "none",
+              width: 28,
+            }}
+          >
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+              <path
+                d="M1 4.5V1h3.5M8.5 1H12v3.5M12 8.5V12H8.5M4.5 12H1V8.5"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </a>
+          <a
+            href={`/vault/item/${item.id}`}
+            className="text-[11px] font-semibold transition-opacity hover:opacity-80"
+            style={{ color: "var(--theme-gold, #F5B548)" }}
+          >
+            View details →
+          </a>
+        </div>
       </div>
     </div>
   );
@@ -278,7 +284,9 @@ function MuseumCard({
           borderColor: isActive
             ? "var(--theme-gold-border, rgba(245,181,72,0.55))"
             : "var(--border)",
-          boxShadow: isActive ? "0 8px 32px rgba(245,181,72,0.18)" : "none",
+          boxShadow: isActive
+            ? "0 0 0 2px rgba(245,181,72,0.75), 0 4px 28px rgba(245,181,72,0.45)"
+            : "none",
         }}
       >
         <div
