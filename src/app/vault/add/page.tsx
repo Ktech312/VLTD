@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import CameraCapturePanel from "@/components/CameraCapturePanel";
+import HaulReviewSheet from "@/components/HaulReviewSheet";
 import { type ImageRole } from "@/components/ImageRoleSelector";
 import ScanCropEditor from "@/components/ScanCropEditor";
 import ScanPanel from "@/components/ScanPanel";
@@ -24,6 +26,16 @@ import {
 } from "@/lib/bulkAddState";
 import { lookupBookByIsbn, detectBookIsbnFromFile, extractIsbnFromText } from "@/lib/bookIsbn";
 import { buildDuplicateWarning } from "@/lib/duplicateDetector";
+import {
+  addHaulItem,
+  clearHaulSession,
+  createHaulSession,
+  haulItemFromVaultItem,
+  haulSessionStats,
+  loadHaulSession,
+  saveHaulSession,
+  type HaulSession,
+} from "@/lib/haulSession";
 import { buildPricingPatch, type PricingMvpFields } from "@/lib/pricingMvp";
 import { parseComicScanResult, scanComicRegionsFromFile } from "@/lib/scanners/comicParser";
 import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
@@ -76,6 +88,7 @@ import {
 } from "@/lib/taxonomy";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
+const HAUL_AUTOSTART_KEY = "vltd_haul_autostart_v1";
 
 type FormValues = BulkAddValues;
 
@@ -234,6 +247,7 @@ function Field({
 }
 
 export default function AddPage() {
+  const router = useRouter();
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const mediaInputRef = useRef<HTMLInputElement | null>(null);
@@ -277,11 +291,31 @@ export default function AddPage() {
   const [scanType, setScanType] = useState<ScanItemType>("auto");
   const [existingItems, setExistingItems] = useState<VaultItem[]>([]);
   const [duplicateWarning, setDuplicateWarning] = useState("");
+  const [haulMode, setHaulMode] = useState(false);
+  const [haulSession, setHaulSession] = useState<HaulSession | null>(null);
+  const [showHaulReview, setShowHaulReview] = useState(false);
 
   useEffect(() => {
     const state = readBulkAddState();
     setLocks(state.locks);
     setValues(applyBulkLockedValues(undefined, state.rememberedValues, state.locks));
+
+    const existingHaul = loadHaulSession();
+    const shouldAutostart = window.localStorage.getItem(HAUL_AUTOSTART_KEY) === "1";
+    if (shouldAutostart) {
+      window.localStorage.removeItem(HAUL_AUTOSTART_KEY);
+    }
+
+    if (existingHaul && existingHaul.items.length > 0) {
+      setHaulSession(existingHaul);
+      setHaulMode(true);
+    } else if (shouldAutostart) {
+      const session = createHaulSession();
+      saveHaulSession(session);
+      setHaulSession(session);
+      setHaulMode(true);
+      setStatus("Haul Mode started. Save items back-to-back, then review the batch.");
+    }
   }, []);
 
   useEffect(() => {
@@ -463,6 +497,28 @@ export default function AddPage() {
 
   function handleToggleLock(key: BulkAddFieldKey) {
     setLocks((prev) => toggleBulkAddLock(prev, key));
+  }
+
+  function startHaul() {
+    const session = createHaulSession();
+    saveHaulSession(session);
+    setHaulSession(session);
+    setHaulMode(true);
+    setShowHaulReview(false);
+    setStatus("Haul Mode started. Save items back-to-back, then review the batch.");
+  }
+
+  function endHaul() {
+    if (!haulSession) return;
+    setShowHaulReview(true);
+  }
+
+  function finishHaul() {
+    clearHaulSession();
+    setHaulMode(false);
+    setHaulSession(null);
+    setShowHaulReview(false);
+    router.push("/vault");
   }
 
   function clearScanImage() {
@@ -1406,7 +1462,22 @@ export default function AddPage() {
       await processVaultSyncQueue();
       setExistingItems((prev) => [item, ...prev]);
 
-      setStatus(saveAndNext ? "Saved. Ready for next item." : "Saved.");
+      if (haulMode && haulSession) {
+        const nextHaul = addHaulItem(
+          haulSession,
+          haulItemFromVaultItem(item, scanSession.review?.confidence)
+        );
+        saveHaulSession(nextHaul);
+        setHaulSession(nextHaul);
+      }
+
+      setStatus(
+        haulMode
+          ? "Saved to haul. Ready for the next item."
+          : saveAndNext
+            ? "Saved. Ready for next item."
+            : "Saved."
+      );
       clearAllImages();
       clearPricing();
 
@@ -1418,6 +1489,13 @@ export default function AddPage() {
 
       if (saveAndNext) {
         window.setTimeout(() => numberInputRef.current?.focus(), 0);
+      }
+
+      if (haulMode) {
+        window.setTimeout(() => {
+          setCameraTarget("scan");
+          setIsCameraPanelOpen(true);
+        }, 350);
       }
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Failed to save item.");
@@ -1433,7 +1511,7 @@ export default function AddPage() {
 
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
-      <div className="w-full px-4 py-3 sm:px-6 sm:py-4">
+      <div className={`w-full px-4 py-3 sm:px-6 sm:py-4 ${haulMode ? "pb-24" : ""}`}>
         <div className="sticky top-0 z-20 mx-auto mb-3 w-full max-w-5xl rounded-[16px] border border-[color:var(--theme-border)] bg-[color:var(--surface)]/92 p-3 backdrop-blur">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -1445,6 +1523,28 @@ export default function AddPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+              <button
+                type="button"
+                onClick={haulMode ? endHaul : startHaul}
+                className="inline-flex h-10 items-center justify-center rounded-full px-4 text-sm font-semibold ring-1 transition"
+                style={
+                  haulMode
+                    ? {
+                        background: "rgba(74,222,128,0.12)",
+                        color: "#4ade80",
+                        borderColor: "rgba(74,222,128,0.35)",
+                      }
+                    : {
+                        background: "var(--pill)",
+                        color: "var(--fg)",
+                        borderColor: "var(--border)",
+                      }
+                }
+              >
+                {haulMode && haulSession
+                  ? `Haul Live · ${haulSessionStats(haulSession).count}`
+                  : "Haul Mode"}
+              </button>
               <Link
                 href="/vault/quick"
                 className="inline-flex h-10 items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]"
@@ -1901,6 +2001,40 @@ export default function AddPage() {
               document.body
             )
           : null}
+
+        {haulMode && haulSession && !showHaulReview ? (
+          <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-4 border-t border-[color:var(--border)] bg-[color:var(--surface)] px-5 py-3 shadow-[0_-8px_32px_rgba(0,0,0,0.35)]">
+            <div>
+              <div className="text-sm font-bold">{haulSession.name}</div>
+              <div className="text-xs text-[color:var(--muted)]">
+                {haulSessionStats(haulSession).count} saved
+                {haulSessionStats(haulSession).totalValue > 0
+                  ? ` · ${haulSessionStats(haulSession).totalValue.toLocaleString(undefined, {
+                      style: "currency",
+                      currency: "USD",
+                      maximumFractionDigits: 0,
+                    })} est. value`
+                  : ""}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={endHaul}
+              className="rounded-full px-4 py-2 text-sm font-bold"
+              style={{ background: "var(--theme-gold, #F5B548)", color: "#0A0800" }}
+            >
+              Done · Review
+            </button>
+          </div>
+        ) : null}
+
+        {showHaulReview && haulSession ? (
+          <HaulReviewSheet
+            session={haulSession}
+            onClose={() => setShowHaulReview(false)}
+            onFinish={finishHaul}
+          />
+        ) : null}
 
         {isCameraPanelOpen ? (
           <CameraCapturePanel

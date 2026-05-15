@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import UniverseRail from "@/components/UniverseRail";
@@ -1206,6 +1207,16 @@ export default function VaultInner() {
             </div>
 
             {hasApplied ? <PillButton onClick={clearApplied}>Clear</PillButton> : null}
+
+            <Link
+              href="/vault/add"
+              onClick={() => {
+                window.localStorage.setItem("vltd_haul_autostart_v1", "1");
+              }}
+              className="inline-flex min-h-[44px] items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+            >
+              Haul Mode
+            </Link>
 
             <PillButton variant="primary" onClick={goQuickAdd}>
               + Quick Add
