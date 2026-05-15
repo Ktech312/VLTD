@@ -20,6 +20,8 @@ export type ScanSessionParsedFieldKey =
   | "subtitle"
   | "number"
   | "grade"
+  | "conditionReason"
+  | "conditionSource"
   | "certNumber"
   | "serialNumber"
   | "universe"
@@ -123,6 +125,8 @@ function sanitizeFields(value: unknown): ScanSessionFields {
     "subtitle",
     "number",
     "grade",
+    "conditionReason",
+    "conditionSource",
     "certNumber",
     "serialNumber",
     "universe",

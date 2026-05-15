@@ -438,6 +438,8 @@ export default function AddPage() {
       apply("subtitle", fields.subtitle);
       apply("number", fields.number);
       apply("grade", fields.grade);
+      apply("conditionReason", fields.conditionReason);
+      apply("conditionSource", fields.conditionSource);
       apply("certNumber", fields.certNumber);
       apply("universe", fields.universe);
       apply("category", fields.category);
@@ -950,6 +952,9 @@ export default function AddPage() {
 
       const vision = await analyzeImageWithVision(file, {
         hints: hintsByType[forcedType],
+        universe: values.universe,
+        category: values.categoryLabel || values.category,
+        subcategory: values.subcategoryLabel,
       });
 
       const safeToAutofill =
@@ -959,6 +964,8 @@ export default function AddPage() {
         subtitle: vision.subtitle,
         number: vision.number,
         grade: vision.grade,
+        conditionReason: vision.conditionReason || vision.condition,
+        conditionSource: vision.grade || vision.conditionReason || vision.condition ? "ai" : "",
         certNumber: vision.certNumber,
         universe: vision.universe,
         categoryLabel: vision.categoryLabel || vision.category,
@@ -1357,6 +1364,11 @@ export default function AddPage() {
         subtitle: normalizedValues.subtitle.trim() || undefined,
         number: normalizedValues.number.trim() || undefined,
         grade: normalizedValues.grade.trim() || undefined,
+        conditionReason: normalizedValues.conditionReason.trim() || undefined,
+        conditionSource:
+          normalizedValues.conditionSource === "ai" || normalizedValues.conditionSource === "manual"
+            ? normalizedValues.conditionSource
+            : undefined,
         purchasePrice,
         currentValue,
         universe: normalizedValues.universe.trim() || "MISC",

@@ -8,6 +8,8 @@ export type VisionAnalysisResult = {
   grade: string;
   certNumber: string;
   condition: string;
+  conditionReason: string;
+  conditionConfidence: number;
   description: string;
   confidence: number;
   barcode: string;
@@ -22,13 +24,16 @@ export const AI_ASSIST_SETUP_MESSAGE =
 
 export async function analyzeImageWithVision(
   file: File,
-  options?: { hints?: string }
+  options?: { hints?: string; universe?: string; category?: string; subcategory?: string }
 ): Promise<VisionAnalysisResult> {
   const formData = new FormData();
   formData.append("image", file);
   if (options?.hints?.trim()) {
     formData.append("hints", options.hints.trim());
   }
+  if (options?.universe?.trim()) formData.append("universe", options.universe.trim());
+  if (options?.category?.trim()) formData.append("category", options.category.trim());
+  if (options?.subcategory?.trim()) formData.append("subcategory", options.subcategory.trim());
 
   const response = await fetch("/api/ai/analyze-item", {
     method: "POST",
@@ -61,6 +66,8 @@ export async function analyzeImageWithVision(
     grade: String(payload.grade ?? "").trim(),
     certNumber: String(payload.certNumber ?? "").trim(),
     condition: String(payload.condition ?? "").trim(),
+    conditionReason: String(payload.conditionReason ?? "").trim(),
+    conditionConfidence: Number(payload.conditionConfidence ?? 0),
     description: String(payload.description ?? "").trim(),
     confidence:
       typeof payload.confidence === "number" && Number.isFinite(payload.confidence)

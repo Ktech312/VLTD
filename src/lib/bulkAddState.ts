@@ -3,6 +3,8 @@ export type BulkAddFieldKey =
   | "subtitle"
   | "number"
   | "grade"
+  | "conditionReason"
+  | "conditionSource"
   | "purchasePrice"
   | "currentValue"
   | "universe"
@@ -31,6 +33,8 @@ export const EMPTY_BULK_ADD_VALUES: BulkAddValues = {
   subtitle: "",
   number: "",
   grade: "",
+  conditionReason: "",
+  conditionSource: "",
   purchasePrice: "",
   currentValue: "",
   universe: "",
@@ -55,6 +59,8 @@ export const DEFAULT_BULK_ADD_LOCKS: BulkAddLocks = {
   subtitle: false,
   number: false,
   grade: false,
+  conditionReason: false,
+  conditionSource: false,
   purchasePrice: false,
   currentValue: false,
   universe: true,

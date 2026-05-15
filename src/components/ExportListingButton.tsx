@@ -3,20 +3,24 @@
 import { useMemo, useState } from "react";
 
 import {
+  generateDiscogsListing,
   generateEbayListing,
   generateEtsyListing,
   generateIconaListing,
+  generateWhatnotListing,
   itemToListingInput,
   type ListingOutput,
 } from "@/lib/listingGenerator";
 import type { VaultItem } from "@/lib/vaultModel";
 
-type Platform = "ebay" | "etsy" | "icona";
+type Platform = "ebay" | "etsy" | "icona" | "whatnot" | "discogs";
 
 const PLATFORM_LABEL: Record<Platform, string> = {
   ebay: "eBay",
   etsy: "Etsy",
   icona: "Icona",
+  whatnot: "Whatnot",
+  discogs: "Discogs",
 };
 
 function buildCopyText(listing: ListingOutput) {
@@ -57,6 +61,8 @@ export default function ExportListingButton({ item }: { item: VaultItem }) {
   const listing = useMemo(() => {
     if (platform === "etsy") return generateEtsyListing(input);
     if (platform === "icona") return generateIconaListing(input);
+    if (platform === "whatnot") return generateWhatnotListing(input);
+    if (platform === "discogs") return generateDiscogsListing(input);
     return generateEbayListing(input);
   }, [input, platform]);
 

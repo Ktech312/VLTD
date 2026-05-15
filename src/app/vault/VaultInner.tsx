@@ -216,6 +216,41 @@ function itemLabel(i: ModelItem) {
   return s ? `${u} • ${c} • ${s}` : `${u} • ${c}`;
 }
 
+function itemBadges(i: ModelItem) {
+  const shortGrade = i.grade ? (i.grade.length > 10 ? i.grade.slice(0, 10) : i.grade) : "";
+
+  if (i.status !== "FOR_SALE" && !shortGrade) return null;
+
+  return (
+    <>
+      {i.status === "FOR_SALE" ? (
+        <span
+          className="rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1"
+          style={{
+            background: "rgba(74,222,128,0.12)",
+            borderColor: "rgba(74,222,128,0.35)",
+            color: "#4ade80",
+          }}
+        >
+          For Sale
+        </span>
+      ) : null}
+      {shortGrade ? (
+        <span
+          className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold ring-1"
+          style={{
+            background: "rgba(10,8,0,0.75)",
+            borderColor: "rgba(245,181,72,0.4)",
+            color: "var(--theme-gold)",
+          }}
+        >
+          {shortGrade}
+        </span>
+      ) : null}
+    </>
+  );
+}
+
 function legacyCatToTaxonomy(cat: string | null): { u?: UniverseKey; c?: string } | null {
   if (!cat) return null;
   const v = String(cat).toUpperCase();
@@ -400,6 +435,7 @@ function VaultCard({
   metaLabel,
   subtitleLine,
   valueLine,
+  badgeLine,
 }: {
   href: string;
   frameStyle: FrameStyle;
@@ -408,6 +444,7 @@ function VaultCard({
   metaLabel: string;
   subtitleLine: string;
   valueLine: React.ReactNode;
+  badgeLine?: React.ReactNode;
 }) {
   const ref = useRef<HTMLAnchorElement | null>(null);
   const raf = useRef<number | null>(null);
@@ -467,6 +504,7 @@ function VaultCard({
       <div className="pb-1.5 text-center">
         <div className="line-clamp-1 text-[10px] tracking-[0.16em] text-[color:var(--muted2)]">{metaLabel}</div>
         <div className="mt-1 line-clamp-1 text-[12px] font-semibold text-[color:var(--fg)] sm:text-[14px]">{title}</div>
+        {badgeLine ? <div className="mt-1 flex justify-center gap-1.5">{badgeLine}</div> : null}
         <div className="line-clamp-1 text-[10px] text-[color:var(--muted)] sm:text-[11px]">{subtitleLine || "—"}</div>
         <div className="mt-1 text-[10px] text-[color:var(--fg)] sm:text-[11px]">{valueLine}</div>
       </div>
@@ -671,8 +709,10 @@ export default function VaultInner() {
   const [q, setQ] = useState("");
   const [graded, setGraded] = useState("");
   const [grade, setGrade] = useState("");
+  const [gradeFilter, setGradeFilter] = useState("");
   const [min, setMin] = useState("");
   const [max, setMax] = useState("");
+  const [forSaleOnly, setForSaleOnly] = useState(false);
 
   const [uFilter, setUFilter] = useState<UniverseKey | "ALL">("ALL");
   const [cFilter, setCFilter] = useState<string>("ALL");
@@ -845,6 +885,7 @@ export default function VaultInner() {
     const query = q.trim().toLowerCase();
     const gradedQ = graded.trim().toLowerCase();
     const gradeQ = grade.trim().toLowerCase();
+    const quickGradeQ = gradeFilter.trim().toLowerCase();
     const minN = min.trim() ? Number(min) : null;
     const maxN = max.trim() ? Number(max) : null;
 
@@ -860,6 +901,8 @@ export default function VaultInner() {
       const gradeText = (i.grade ?? "").toLowerCase();
       const matchesGrader = gradedQ.length === 0 ? true : gradeText.includes(gradedQ);
       const matchesGradeExact = gradeQ.length === 0 ? true : normalizeGrade(i.grade ?? "").includes(normalizeGrade(gradeQ));
+      const matchesQuickGrade = quickGradeQ.length === 0 ? true : gradeText.includes(quickGradeQ);
+      const matchesForSale = forSaleOnly ? i.status === "FOR_SALE" : true;
 
       const val = Number(i.currentValue ?? 0);
       const cost = Number(i.purchasePrice ?? 0);
@@ -867,9 +910,9 @@ export default function VaultInner() {
       const withinMin = minN === null ? true : val >= minN || cost >= minN;
       const withinMax = maxN === null ? true : val <= maxN || cost <= maxN;
 
-      return matchesU && matchesC && matchesS && matchesSubject && matchesQuery && matchesGrader && matchesGradeExact && withinMin && withinMax;
+      return matchesU && matchesC && matchesS && matchesSubject && matchesQuery && matchesGrader && matchesGradeExact && matchesQuickGrade && matchesForSale && withinMin && withinMax;
     });
-  }, [items, q, graded, grade, min, max, uFilter, cFilter, sFilter, subjectFilter]);
+  }, [items, q, graded, grade, gradeFilter, min, max, uFilter, cFilter, sFilter, subjectFilter, forSaleOnly]);
 
   const emptyTaxonomySliceCount = useMemo(() => {
     return items.filter((i) => {
@@ -886,6 +929,8 @@ export default function VaultInner() {
     grade.trim() ||
     min.trim() ||
     max.trim() ||
+    gradeFilter.trim() ||
+    forSaleOnly ||
     uFilter !== "ALL" ||
     cFilter !== "ALL" ||
     sFilter !== "ALL" ||
@@ -1263,6 +1308,52 @@ export default function VaultInner() {
           </div>
         ) : null}
 
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setForSaleOnly((value) => !value)}
+            className="rounded-full px-3 py-1 text-[11px] font-semibold ring-1 transition"
+            style={
+              forSaleOnly
+                ? {
+                    background: "rgba(74,222,128,0.12)",
+                    borderColor: "rgba(74,222,128,0.35)",
+                    color: "#4ade80",
+                  }
+                : {
+                    background: "var(--surface)",
+                    borderColor: "var(--border)",
+                    color: "var(--muted)",
+                  }
+            }
+          >
+            For Sale
+          </button>
+          {["PSA 10", "PSA 9", "NM", "Sealed"].map((filter) => (
+            <button
+              key={filter}
+              type="button"
+              onClick={() => setGradeFilter((value) => (value === filter ? "" : filter))}
+              className="rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition"
+              style={
+                gradeFilter === filter
+                  ? {
+                      background: "var(--theme-gold-subtle)",
+                      borderColor: "var(--theme-gold-border)",
+                      color: "var(--theme-gold)",
+                    }
+                  : {
+                      background: "var(--surface)",
+                      borderColor: "var(--border)",
+                      color: "var(--muted)",
+                    }
+              }
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
+
         <div className="mt-6 text-sm text-[color:var(--muted)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -1381,6 +1472,7 @@ export default function VaultInner() {
                         title={i.title}
                         metaLabel={itemLabel(i)}
                         subtitleLine={`${i.subtitle ?? ""} ${i.number ?? ""} ${i.grade ? `• ${i.grade}` : ""}`.trim()}
+                        badgeLine={itemBadges(i)}
                         valueLine={
                           <>
                             Value: <span className="font-medium">${i.currentValue ?? 0}</span>
@@ -1420,6 +1512,7 @@ export default function VaultInner() {
                       title={i.title}
                       metaLabel={itemLabel(i)}
                       subtitleLine={`${i.subtitle ?? ""} ${i.number ?? ""} ${i.grade ? `• ${i.grade}` : ""}`.trim()}
+                      badgeLine={itemBadges(i)}
                       valueLine={
                         <>
                           Value: <span className="font-medium">${i.currentValue ?? 0}</span> • Cost: ${i.purchasePrice ?? 0}

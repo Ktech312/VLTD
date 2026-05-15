@@ -31,11 +31,14 @@ export type VaultItem = {
   subtitle?: string;
   number?: string;
   grade?: string;
+  conditionReason?: string;
+  conditionSource?: "ai" | "manual";
   purchasePrice?: number;
   purchaseTax?: number;
   purchaseShipping?: number;
   purchaseFees?: number;
   currentValue?: number;
+  askingPrice?: number;
   purchaseSource?: string;
   purchaseLocation?: string;
   orderNumber?: string;
@@ -62,7 +65,7 @@ export type VaultItem = {
   priceConfidence?: PriceConfidence;
   priceUpdatedAt?: number;
   priceNotes?: string;
-  status?: "COLLECTION" | "SOLD" | "WISHLIST";
+  status?: "COLLECTION" | "FOR_SALE" | "SOLD" | "WISHLIST";
   soldPrice?: number;
   soldAt?: number;
   createdAt?: number;
@@ -137,7 +140,7 @@ function sanitizePriceConfidence(value: unknown): PriceConfidence | undefined {
 }
 
 function sanitizeVaultStatus(value: unknown): VaultItem["status"] {
-  if (value === "COLLECTION" || value === "SOLD" || value === "WISHLIST") return value;
+  if (value === "COLLECTION" || value === "FOR_SALE" || value === "SOLD" || value === "WISHLIST") return value;
   return undefined;
 }
 
@@ -307,11 +310,23 @@ function normalizeOne(input: unknown): VaultItem | null {
     subtitle: raw.subtitle ?? undefined,
     number: raw.number ?? undefined,
     grade: raw.grade ?? undefined,
+    conditionReason:
+      typeof raw.conditionReason === "string" && raw.conditionReason.trim()
+        ? raw.conditionReason.trim()
+        : undefined,
+    conditionSource:
+      raw.conditionSource === "ai" || raw.conditionSource === "manual"
+        ? raw.conditionSource
+        : undefined,
     purchasePrice: clampNum(raw.purchasePrice, 0),
     purchaseTax: clampNum(raw.purchaseTax, 0),
     purchaseShipping: clampNum(raw.purchaseShipping, 0),
     purchaseFees: clampNum(raw.purchaseFees, 0),
     currentValue: clampNum(raw.currentValue, clampNum(raw.purchasePrice, 0)),
+    askingPrice:
+      typeof raw.askingPrice === "number" && Number.isFinite(raw.askingPrice) && raw.askingPrice > 0
+        ? raw.askingPrice
+        : undefined,
     purchaseSource: raw.purchaseSource ?? undefined,
     purchaseLocation: raw.purchaseLocation ?? undefined,
     orderNumber: raw.orderNumber ?? undefined,

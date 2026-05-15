@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
 
+import ConditionAssessmentPanel from "@/components/ConditionAssessmentPanel";
 import CostToSellPanel from "@/components/CostToSellPanel";
 import ExportListingButton from "@/components/ExportListingButton";
 import ItemMedia from "@/components/ItemMedia";
@@ -761,6 +762,41 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     window.dispatchEvent(new Event("vltd:vault-updated"));
   }
 
+  async function handleToggleForSale() {
+    if (!item || item.status === "SOLD") return;
+    const nextStatus = item.status === "FOR_SALE" ? "COLLECTION" : "FOR_SALE";
+    const nextItem: VaultItem = {
+      ...item,
+      status: nextStatus,
+      askingPrice:
+        nextStatus === "FOR_SALE"
+          ? item.askingPrice ?? effectiveMarketValue(item)
+          : item.askingPrice,
+    };
+
+    await persist(nextItem);
+    setMediaMessage(nextStatus === "FOR_SALE" ? "Marked for sale." : "Removed from For Sale.");
+  }
+
+  async function handleAskingPriceBlur(value: string) {
+    if (!item) return;
+    const trimmed = value.trim();
+    const parsed = Number(trimmed);
+    const askingPrice = trimmed && Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+    await persist({ ...item, askingPrice });
+    setMediaMessage(askingPrice ? "Asking price saved." : "Asking price cleared.");
+  }
+
+  async function handleUpdateCondition(patch: {
+    grade?: string;
+    conditionReason?: string;
+    conditionSource?: "ai" | "manual";
+  }) {
+    if (!item) return;
+    await persist({ ...item, ...patch });
+    setMediaMessage("Condition updated.");
+  }
+
   const universe = normUniverse(item.universe);
   const addedAt = createdAtMs(item);
   const displayedSale: SaleRecord | null =
@@ -906,6 +942,60 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                   />
                 </div>
               </div>
+
+              {item.status !== "SOLD" ? (
+                <div className="mt-5 rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <div className="text-[13px] font-semibold">
+                        {item.status === "FOR_SALE" ? "Listed for sale" : "Mark for sale"}
+                      </div>
+                      <div className="mt-1 text-[11px] text-[color:var(--muted)]">
+                        {item.status === "FOR_SALE"
+                          ? "Keeps this item in your vault while enabling listing tools."
+                          : "Adds a For Sale badge and unlocks listing copy."}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void handleToggleForSale()}
+                      aria-pressed={item.status === "FOR_SALE"}
+                      className="relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors"
+                      style={{
+                        background:
+                          item.status === "FOR_SALE"
+                            ? "var(--theme-gold)"
+                            : "var(--pill)",
+                      }}
+                    >
+                      <span
+                        className="mt-1 inline-block h-5 w-5 rounded-full bg-white shadow transition-transform"
+                        style={{
+                          transform:
+                            item.status === "FOR_SALE"
+                              ? "translateX(24px)"
+                              : "translateX(4px)",
+                        }}
+                      />
+                    </button>
+                  </div>
+
+                  {item.status === "FOR_SALE" ? (
+                    <label className="mt-4 grid gap-1.5">
+                      <span className="text-[11px] font-semibold tracking-[0.16em] text-[color:var(--muted2)]">
+                        Asking Price
+                      </span>
+                      <input
+                        type="number"
+                        defaultValue={item.askingPrice ?? effectiveMarketValue(item) ?? ""}
+                        onBlur={(event) => void handleAskingPriceBlur(event.target.value)}
+                        className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                        placeholder={String(effectiveMarketValue(item) || "")}
+                      />
+                    </label>
+                  ) : null}
+                </div>
+              ) : null}
             </Section>
 
             <div className="mt-5">
@@ -918,7 +1008,22 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
             </div>
 
             <div className="mt-5">
-              <ExportListingButton item={item} />
+              <ConditionAssessmentPanel
+                item={item}
+                onUpdate={(patch) => void handleUpdateCondition(patch)}
+              />
+            </div>
+
+            <div className="mt-5">
+              {item.status === "FOR_SALE" ? (
+                <ExportListingButton item={item} />
+              ) : (
+                <div className="rounded-[24px] bg-[color:var(--surface)] p-5 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+                  <div className="text-sm text-[color:var(--muted)]">
+                    Mark this item for sale to generate marketplace listing copy.
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="mt-5">
