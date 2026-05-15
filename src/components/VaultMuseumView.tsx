@@ -85,15 +85,53 @@ function SpotlightCard({ item }: { item: ModelItem }) {
         }}
       >
         {currentImg ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            key={currentImg}
-            src={currentImg}
-            alt={item.title}
-            className="h-full w-full object-cover transition-opacity duration-500"
-            loading="lazy"
-            draggable={false}
-          />
+          <div className="absolute inset-0 flex items-center justify-center px-5 pb-14 pt-4">
+            <div className="relative flex h-full max-h-[184px] w-full max-w-[190px] items-center justify-center">
+              {allImages.length > 1 &&
+                allImages.slice(1, 3).map((src, i) => (
+                  <div
+                    key={`${src}-${i}`}
+                    className="absolute inset-0 overflow-hidden rounded-[16px] ring-1"
+                    style={{
+                      background: "var(--pill)",
+                      borderColor: "rgba(245,181,72,0.18)",
+                      boxShadow: "0 8px 22px rgba(0,0,0,0.28)",
+                      opacity: i === 0 ? 0.62 : 0.38,
+                      transform: `translate(${(i + 1) * 10}px, ${-(i + 1) * 7}px) rotate(${(i + 1) * 2}deg)`,
+                      zIndex: i + 1,
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={src}
+                      alt=""
+                      aria-hidden="true"
+                      className="h-full w-full object-contain"
+                      loading="lazy"
+                      draggable={false}
+                    />
+                  </div>
+                ))}
+              <div
+                className="relative z-10 flex h-full w-full items-center justify-center overflow-hidden rounded-[16px] ring-1"
+                style={{
+                  background: "rgba(10,16,30,0.72)",
+                  borderColor: "var(--theme-gold-border, rgba(245,181,72,0.35))",
+                  boxShadow: "0 16px 40px rgba(0,0,0,0.36)",
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  key={currentImg}
+                  src={currentImg}
+                  alt={item.title}
+                  className="h-full w-full object-contain transition-opacity duration-500"
+                  loading="lazy"
+                  draggable={false}
+                />
+              </div>
+            </div>
+          </div>
         ) : (
           <div className="flex h-full w-full items-center justify-center">
             <div
