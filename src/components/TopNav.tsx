@@ -576,11 +576,11 @@ function TopNavInner() {
             className="border-t"
             style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.10))", background: "var(--theme-nav-bg, rgba(11,11,11,0.98))" }}
           >
-            <div className="mx-auto max-w-[1400px] px-6 py-5">
-              <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: "#5A5040" }}>
+            <div className="mx-auto max-w-[1400px] px-6 py-3">
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.28em]" style={{ color: "#5A5040" }}>
                 Explore VLTD
               </p>
-              <div className="grid grid-cols-4 gap-3 lg:grid-cols-9">
+              <div className="grid grid-cols-4 gap-2 lg:grid-cols-10">
                 {NAV_ITEMS.map((item) => {
                   const active = isActive(item);
                   const Icon = item.icon;
@@ -589,7 +589,7 @@ function TopNavInner() {
                       key={item.href + item.label + "guide"}
                       href={item.href}
                       onClick={() => setGuideOpen(false)}
-                      className="group flex flex-col gap-2 rounded-2xl p-3 transition"
+                      className="group flex min-h-[74px] flex-col gap-1 rounded-xl p-2 transition"
                       style={{
                         background: active ? "rgba(245,181,72,0.07)" : "rgba(255,255,255,0.02)",
                         border: `1px solid ${active ? "rgba(245,181,72,0.20)" : "rgba(255,255,255,0.06)"}`,
@@ -603,12 +603,14 @@ function TopNavInner() {
                         (e.currentTarget as HTMLElement).style.borderColor = active ? "rgba(245,181,72,0.20)" : "rgba(255,255,255,0.06)";
                       }}
                     >
-                      <Icon active={active} />
+                      <div className="[&_svg]:h-3.5 [&_svg]:w-3.5">
+                        <Icon active={active} />
+                      </div>
                       <div>
-                        <p className="text-[12px] font-bold leading-none" style={{ color: active ? "#F5B548" : "var(--theme-text-primary, #F0EAD6)" }}>
+                        <p className="text-[11px] font-bold leading-none" style={{ color: active ? "#F5B548" : "var(--theme-text-primary, #F0EAD6)" }}>
                           {item.label}
                         </p>
-                        <p className="mt-1 text-[11px] leading-snug" style={{ color: "#5A5040" }}>
+                        <p className="mt-0.5 line-clamp-2 text-[10px] leading-tight" style={{ color: "#5A5040" }}>
                           {item.desc}
                         </p>
                       </div>
@@ -618,7 +620,7 @@ function TopNavInner() {
 
                 {/* Brand card */}
                 <div
-                  className="col-span-1 flex flex-col items-end justify-between rounded-2xl p-3"
+                  className="col-span-1 flex min-h-[74px] flex-col justify-between rounded-xl p-2"
                   style={{
                     background: "linear-gradient(135deg, rgba(42,36,24,0.90), rgba(26,20,8,0.90))",
                     border: "1px solid rgba(245,181,72,0.25)",
@@ -626,19 +628,19 @@ function TopNavInner() {
                   }}
                 >
                   <div
-                    className="h-10 w-10 rounded-xl flex items-center justify-center text-lg"
+                    className="flex h-7 w-7 items-center justify-center self-end rounded-lg text-sm"
                     style={{ background: "rgba(245,181,72,0.12)", border: "1px solid rgba(245,181,72,0.25)" }}
                   >
                     🏛
                   </div>
                   <div>
-                    <p className="text-[12px] font-black leading-snug" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
+                    <p className="text-[10px] font-black leading-tight" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
                       Your Collection.<br />Your Museum.<br />Your Legacy.
                     </p>
                     <Link
                       href="/about"
                       onClick={() => setGuideOpen(false)}
-                      className="mt-2 inline-block text-[11px] font-semibold"
+                      className="mt-1 inline-block text-[10px] font-semibold leading-tight"
                       style={{ color: "#F5B548" }}
                     >
                       Learn more about VLTD →
