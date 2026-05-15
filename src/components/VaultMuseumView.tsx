@@ -346,11 +346,18 @@ function MuseumCard({
             </div>
           )}
 
-          <div className="absolute bottom-1.5 left-2">
-            <div className="text-[11px] font-bold" style={{ color: "#F0EAD6" }}>
+          {value > 0 && (
+            <div
+              className="absolute bottom-1.5 left-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1"
+              style={{
+                background: "rgba(245,181,72,0.18)",
+                borderColor: "rgba(245,181,72,0.45)",
+                color: "var(--theme-gold, #F5B548)",
+              }}
+            >
               {money(value)}
             </div>
-          </div>
+          )}
         </div>
 
         <a
@@ -401,7 +408,6 @@ function UniverseSection({
   const isDragging = useRef(false);
   const dragStartX = useRef(0);
   const dragStartScrollLeft = useRef(0);
-  const userMovedRail = useRef(false);
 
   useEffect(() => {
     const rail = railRef.current;
@@ -421,9 +427,7 @@ function UniverseSection({
 
         if (bestRatio > 0.5) {
           setActiveIndex(bestIndex);
-          if (userMovedRail.current) {
-            onFeaturedChange?.(items[bestIndex]);
-          }
+          onFeaturedChange?.(items[bestIndex]);
         }
       },
       { root: rail, threshold: [0.5, 0.75, 1] }
@@ -439,7 +443,6 @@ function UniverseSection({
   function handleScroll() {
     const rail = railRef.current;
     if (!rail) return;
-    if (rail.scrollLeft > 4) userMovedRail.current = true;
     setCanScrollLeft(rail.scrollLeft > 4);
     setCanScrollRight(rail.scrollLeft + rail.clientWidth < rail.scrollWidth - 4);
   }
@@ -449,14 +452,12 @@ function UniverseSection({
   }, [items.length]);
 
   function scrollRailBy(px: number) {
-    userMovedRail.current = true;
     railRef.current?.scrollBy({ left: px, behavior: "smooth" });
   }
 
   function onMouseDown(event: MouseEvent<HTMLDivElement>) {
     const rail = railRef.current;
     if (!rail) return;
-    userMovedRail.current = true;
     isDragging.current = true;
     dragStartX.current = event.clientX;
     dragStartScrollLeft.current = rail.scrollLeft;
