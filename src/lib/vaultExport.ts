@@ -25,6 +25,11 @@ const CSV_COLUMNS: (keyof VaultItem)[] = [
   "currentValue",
   "askingPrice",
   "estimatedValue",
+  "valueLow",
+  "valueMedian",
+  "valueHigh",
+  "comparables",
+  "priceSources",
   "priceConfidence",
   "purchaseSource",
   "valueSource",
@@ -37,7 +42,16 @@ const CSV_COLUMNS: (keyof VaultItem)[] = [
 
 export function exportVaultCsv() {
   const items = loadItems({ includeAllProfiles: true });
-  downloadCsv("vltd-vault-export.csv", items, CSV_COLUMNS);
+  const rows = items.map((item) => ({
+    ...item,
+    comparables: (item.comparables ?? [])
+      .map((comp) => `${comp.source} $${comp.salePrice}${comp.saleDate ? ` (${comp.saleDate})` : ""}`)
+      .join("; "),
+    priceSources: (item.priceSources ?? [])
+      .map((source) => `${source.platform} $${source.value}`)
+      .join("; "),
+  }));
+  downloadCsv("vltd-vault-export.csv", rows, CSV_COLUMNS);
 }
 
 export function exportVaultJson() {

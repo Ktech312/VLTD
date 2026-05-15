@@ -14,7 +14,7 @@ import { removeBackgroundStub } from "@/lib/imageAI";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { generateShareImage } from "@/lib/generateShareImage";
 import { isNotable, notableReason } from "@/lib/itemIntelligence";
-import { buildPricingPatch } from "@/lib/pricingMvp";
+import { buildPricingPatch, displayPrimaryValue, type PricingMvpFields } from "@/lib/pricingMvp";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import {
   deleteVaultImageFromSupabase,
@@ -124,6 +124,9 @@ function totalCost(item: VaultItem) {
 }
 
 function effectiveMarketValue(item: VaultItem) {
+  if (typeof item.valueMedian === "number" && Number.isFinite(item.valueMedian)) {
+    return item.valueMedian;
+  }
   if (typeof item.estimatedValue === "number" && Number.isFinite(item.estimatedValue)) {
     return item.estimatedValue;
   }
@@ -606,22 +609,10 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     }
   }
 
-  async function handleSavePricing(patch: {
-    estimatedValue?: number;
-    lastCompValue?: number;
-    priceSource?: string;
-    priceConfidence?: "low" | "medium" | "high";
-    priceNotes?: string;
-  }) {
+  async function handleSavePricing(patch: PricingMvpFields) {
     if (!item) return;
 
-    const pricingPatch = buildPricingPatch({
-      estimatedValue: patch.estimatedValue,
-      lastCompValue: patch.lastCompValue,
-      priceSource: patch.priceSource,
-      priceConfidence: patch.priceConfidence,
-      priceNotes: patch.priceNotes,
-    });
+    const pricingPatch = buildPricingPatch(patch);
 
     const nextItem: VaultItem = {
       ...item,
@@ -633,10 +624,12 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
       priceConfidence: pricingPatch.priceConfidence,
       priceUpdatedAt: pricingPatch.priceUpdatedAt,
       priceNotes: pricingPatch.priceNotes,
-      currentValue:
-        pricingPatch.estimatedValue ??
-        pricingPatch.lastCompValue ??
-        item.currentValue,
+      valueLow: pricingPatch.valueLow,
+      valueMedian: pricingPatch.valueMedian,
+      valueHigh: pricingPatch.valueHigh,
+      comparables: pricingPatch.comparables,
+      priceSources: pricingPatch.priceSources,
+      currentValue: displayPrimaryValue(pricingPatch) ?? item.currentValue,
     };
 
     await persist(nextItem);
@@ -1198,7 +1191,16 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               priceConfidence: item.priceConfidence,
               priceUpdatedAt: item.priceUpdatedAt,
               priceNotes: item.priceNotes,
+              valueLow: item.valueLow,
+              valueMedian: item.valueMedian,
+              valueHigh: item.valueHigh,
+              comparables: item.comparables,
+              priceSources: item.priceSources,
             }}
+            universe={item.universe}
+            categoryLabel={categoryLabel(item)}
+            grade={item.grade}
+            itemTitle={item.title}
             onSave={handleSavePricing}
           />
         </div>

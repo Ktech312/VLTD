@@ -80,7 +80,7 @@ export function itemTotalCost(item: VaultItem) {
 }
 
 export function itemCurrentValue(item: VaultItem) {
-  return safeNumber(item.currentValue);
+  return safeNumber(item.valueMedian ?? item.currentValue ?? item.estimatedValue ?? item.lastCompValue);
 }
 
 export function itemProfit(item: VaultItem) {

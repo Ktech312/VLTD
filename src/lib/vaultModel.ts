@@ -6,6 +6,12 @@ import {
 } from "@/lib/vaultCloud";
 import { newId } from "@/lib/id";
 import { getDemoItems } from "@/lib/demoSeed";
+import {
+  normalizeComparables,
+  normalizePriceSources,
+  type PriceComparable,
+  type PricingSource,
+} from "@/lib/pricingMvp";
 
 export type PriceConfidence = "low" | "medium" | "high";
 export type VaultImageRole = "primary" | "detail" | "proof";
@@ -61,6 +67,11 @@ export type VaultItem = {
   valueConfidence?: number;
   estimatedValue?: number;
   lastCompValue?: number;
+  valueLow?: number;
+  valueMedian?: number;
+  valueHigh?: number;
+  comparables?: PriceComparable[];
+  priceSources?: PricingSource[];
   priceSource?: string;
   priceConfidence?: PriceConfidence;
   priceUpdatedAt?: number;
@@ -367,6 +378,20 @@ function normalizeOne(input: unknown): VaultItem | null {
       typeof raw.lastCompValue === "number" && Number.isFinite(raw.lastCompValue)
         ? raw.lastCompValue
         : undefined,
+    valueLow:
+      typeof raw.valueLow === "number" && Number.isFinite(raw.valueLow) && raw.valueLow > 0
+        ? raw.valueLow
+        : undefined,
+    valueMedian:
+      typeof raw.valueMedian === "number" && Number.isFinite(raw.valueMedian) && raw.valueMedian > 0
+        ? raw.valueMedian
+        : undefined,
+    valueHigh:
+      typeof raw.valueHigh === "number" && Number.isFinite(raw.valueHigh) && raw.valueHigh > 0
+        ? raw.valueHigh
+        : undefined,
+    comparables: normalizeComparables(raw.comparables),
+    priceSources: normalizePriceSources(raw.priceSources),
     priceSource:
       typeof raw.priceSource === "string" && raw.priceSource.trim()
         ? raw.priceSource.trim()

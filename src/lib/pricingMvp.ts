@@ -1,5 +1,22 @@
 export type PriceConfidence = "low" | "medium" | "high";
 
+export type PriceComparable = {
+  source: string;
+  salePrice: number;
+  saleDate?: string;
+  condition?: string;
+  url?: string;
+  notes?: string;
+};
+
+export type PricingSource = {
+  platform: string;
+  value: number;
+  confidence: PriceConfidence;
+  fetchedAt?: number;
+  notes?: string;
+};
+
 export type PricingMvpFields = {
   estimatedValue?: number;
   lastCompValue?: number;
@@ -7,6 +24,11 @@ export type PricingMvpFields = {
   priceConfidence?: PriceConfidence;
   priceUpdatedAt?: number;
   priceNotes?: string;
+  valueLow?: number;
+  valueMedian?: number;
+  valueHigh?: number;
+  priceSources?: PricingSource[];
+  comparables?: PriceComparable[];
 };
 
 export function parsePriceInput(input: string): number | undefined {
@@ -64,6 +86,11 @@ export function hasPricingData(input: PricingMvpFields): boolean {
   return (
     (typeof input.estimatedValue === "number" && Number.isFinite(input.estimatedValue)) ||
     (typeof input.lastCompValue === "number" && Number.isFinite(input.lastCompValue)) ||
+    (typeof input.valueLow === "number" && Number.isFinite(input.valueLow)) ||
+    (typeof input.valueMedian === "number" && Number.isFinite(input.valueMedian)) ||
+    (typeof input.valueHigh === "number" && Number.isFinite(input.valueHigh)) ||
+    (Array.isArray(input.priceSources) && input.priceSources.length > 0) ||
+    (Array.isArray(input.comparables) && input.comparables.length > 0) ||
     Boolean(String(input.priceSource ?? "").trim()) ||
     Boolean(input.priceConfidence) ||
     Boolean(String(input.priceNotes ?? "").trim())
@@ -76,6 +103,11 @@ export function buildPricingPatch(input: {
   priceSource?: string;
   priceConfidence?: PriceConfidence;
   priceNotes?: string;
+  valueLow?: number;
+  valueMedian?: number;
+  valueHigh?: number;
+  priceSources?: PricingSource[];
+  comparables?: PriceComparable[];
 }): PricingMvpFields {
   const hasMeaningfulValue = hasPricingData(input);
 
@@ -86,10 +118,174 @@ export function buildPricingPatch(input: {
     priceConfidence: input.priceConfidence,
     priceUpdatedAt: hasMeaningfulValue ? Date.now() : undefined,
     priceNotes: String(input.priceNotes ?? "").trim() || undefined,
+    valueLow: input.valueLow,
+    valueMedian: input.valueMedian,
+    valueHigh: input.valueHigh,
+    priceSources: normalizePriceSources(input.priceSources),
+    comparables: normalizeComparables(input.comparables),
   };
 }
 
-export function effectivePricingValue(input: Pick<PricingMvpFields, "estimatedValue" | "lastCompValue">): number | undefined {
+export type MarketplaceSuggestion = {
+  platform: string;
+  url: string;
+  searchHint: string;
+  note: string;
+};
+
+export function getPricingSuggestions(
+  universe: string,
+  categoryLabel: string,
+  grade?: string,
+  title?: string
+): MarketplaceSuggestion[] {
+  const u = (universe ?? "").toUpperCase();
+  const c = (categoryLabel ?? "").toLowerCase();
+  const isSlabbed = /psa|bgs|cgc|beckett|slab/i.test(grade ?? "");
+  const cleanTitle = String(title ?? "").trim();
+  const searchQuery = encodeURIComponent(`${cleanTitle} ${grade ?? ""}`.trim());
+
+  const ebay: MarketplaceSuggestion = {
+    platform: "eBay Sold Listings",
+    url: `https://www.ebay.com/sch/i.html?_nkw=${searchQuery}&LH_Sold=1&LH_Complete=1`,
+    searchHint: `"${cleanTitle}" ${grade ?? ""}`.trim(),
+    note: "Best volume; use Completed Listings filter.",
+  };
+
+  if (u === "SPORTS" || u === "TCG") {
+    if (isSlabbed) {
+      return [
+        ebay,
+        {
+          platform: "PWCC Marketplace",
+          url: `https://www.pwccmarketplace.com/search?q=${searchQuery}`,
+          searchHint: `${cleanTitle} ${grade ?? ""}`.trim(),
+          note: "Strong source for graded card auction comps.",
+        },
+        {
+          platform: "MySlabs",
+          url: "https://www.myslabs.com/",
+          searchHint: "Search by cert number for exact grade history.",
+          note: "Useful for graded slab transaction context.",
+        },
+      ];
+    }
+
+    return [
+      ebay,
+      {
+        platform: "130point",
+        url: "https://www.130point.com/sales/",
+        searchHint: cleanTitle,
+        note: "Aggregated sold data, helpful for raw cards.",
+      },
+    ];
+  }
+
+  if (u === "MUSIC" || c.includes("vinyl") || c.includes("record")) {
+    return [
+      ebay,
+      {
+        platform: "Discogs",
+        url: `https://www.discogs.com/search/?q=${searchQuery}&type=all&format=Vinyl`,
+        searchHint: cleanTitle,
+        note: "Primary vinyl source; check sales history on the release page.",
+      },
+    ];
+  }
+
+  if (u === "POP_CULTURE" && c.includes("comic")) {
+    return [
+      ebay,
+      {
+        platform: "MyComicShop",
+        url: `https://www.mycomicshop.com/search?q=${searchQuery}`,
+        searchHint: cleanTitle,
+        note: "Good for raw comics and dealer price context.",
+      },
+      {
+        platform: "CovrPrice",
+        url: "https://covrprice.com/",
+        searchHint: cleanTitle,
+        note: "Comic-focused comparable sales and FMV ranges.",
+      },
+    ];
+  }
+
+  if (u === "GAMES") {
+    return [
+      ebay,
+      {
+        platform: "PriceCharting",
+        url: `https://www.pricecharting.com/search-products?q=${searchQuery}`,
+        searchHint: cleanTitle,
+        note: "Best quick reference for loose, CIB, and sealed tiers.",
+      },
+    ];
+  }
+
+  return [ebay];
+}
+
+export function effectiveValueRange(fields: PricingMvpFields): {
+  low?: number;
+  median?: number;
+  high?: number;
+} {
+  if (
+    fields.valueLow !== undefined ||
+    fields.valueMedian !== undefined ||
+    fields.valueHigh !== undefined
+  ) {
+    return {
+      low: fields.valueLow,
+      median: fields.valueMedian,
+      high: fields.valueHigh,
+    };
+  }
+
+  const single = fields.estimatedValue ?? fields.lastCompValue;
+  return single !== undefined ? { median: single } : {};
+}
+
+export function displayPrimaryValue(fields: PricingMvpFields): number | undefined {
+  return fields.valueMedian ?? fields.estimatedValue ?? fields.lastCompValue;
+}
+
+export function normalizePriceSources(value: unknown): PricingSource[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const sources = value.filter((source): source is PricingSource => {
+    if (!source || typeof source !== "object") return false;
+    const record = source as Record<string, unknown>;
+    return (
+      typeof record.platform === "string" &&
+      typeof record.value === "number" &&
+      Number.isFinite(record.value)
+    );
+  });
+  return sources.length ? sources : undefined;
+}
+
+export function normalizeComparables(value: unknown): PriceComparable[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const comparables = value.filter((comp): comp is PriceComparable => {
+    if (!comp || typeof comp !== "object") return false;
+    const record = comp as Record<string, unknown>;
+    return (
+      typeof record.source === "string" &&
+      record.source.trim().length > 0 &&
+      typeof record.salePrice === "number" &&
+      Number.isFinite(record.salePrice) &&
+      record.salePrice > 0
+    );
+  });
+  return comparables.length ? comparables : undefined;
+}
+
+export function effectivePricingValue(
+  input: Pick<PricingMvpFields, "estimatedValue" | "lastCompValue" | "valueMedian">
+): number | undefined {
+  if (typeof input.valueMedian === "number" && Number.isFinite(input.valueMedian)) return input.valueMedian;
   if (typeof input.estimatedValue === "number" && Number.isFinite(input.estimatedValue)) return input.estimatedValue;
   if (typeof input.lastCompValue === "number" && Number.isFinite(input.lastCompValue)) return input.lastCompValue;
   return undefined;
