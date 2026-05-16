@@ -308,7 +308,8 @@ function MuseumCard({
       className="flex-shrink-0 select-none"
       style={{
         position: "relative",
-        transform: isActive ? "scale(1.08) translateY(-4px)" : "scale(1)",
+        transform: isActive ? "translateY(-10px) scale(1.07)" : "translateY(0) scale(1)",
+        transformOrigin: "center center",
         transition: "transform 0.25s cubic-bezier(0.34,1.2,0.64,1)",
         width: 140,
         zIndex: isActive ? 2 : 1,
@@ -651,7 +652,7 @@ function UniverseSection({
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUpOrLeave}
         onMouseLeave={onMouseUpOrLeave}
-        className="flex gap-3 overflow-x-auto pb-3 pt-2"
+        className="flex gap-3 overflow-x-auto pb-6 pt-8"
         style={{
           cursor: "grab",
           msOverflowStyle: "none",
