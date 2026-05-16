@@ -2044,6 +2044,7 @@ export default function AddPage() {
                 ? "Take an item picture. It will be added to this item and used for identify/autofill."
                 : "Capture a real item photo and add it to this item's saved photo list."
             }
+            universe={values.universe}
             onCapture={handleCapturedPhoto}
             onClose={() => setIsCameraPanelOpen(false)}
             onUseFileInstead={() => {

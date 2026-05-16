@@ -115,6 +115,7 @@ export default function ScanCropEditor({
   onCancel,
   onRotate,
   rotation = 0,
+  imageFilter = "",
   isApplying = false,
   title = "CROP BEFORE CONTINUING",
   description = "Pinch or scroll to zoom. Drag any side or corner to crop. Drag inside the box to reposition.",
@@ -130,6 +131,7 @@ export default function ScanCropEditor({
   onCancel: () => void;
   onRotate?: () => void;
   rotation?: number;
+  imageFilter?: string;
   isApplying?: boolean;
   title?: string;
   description?: string;
@@ -224,6 +226,7 @@ export default function ScanCropEditor({
     const nextCrop = normalizeCrop(selectedCrop);
     if (cropsEqual(nextCrop, lastSelectedCropRef.current)) return;
     lastSelectedCropRef.current = nextCrop;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     resetVisualFromCrop(nextCrop);
   }, [resetVisualFromCrop, selectedCrop]);
 
@@ -249,7 +252,7 @@ export default function ScanCropEditor({
       event.preventDefault();
       const dx = event.clientX - session.startX;
       const dy = event.clientY - session.startY;
-      let next = { ...session.startBox };
+      const next = { ...session.startBox };
 
       if (session.mode === "move") {
         next.left += dx;
@@ -478,13 +481,14 @@ export default function ScanCropEditor({
             className="relative max-h-full max-w-full will-change-transform"
             style={{ transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`, transformOrigin: "center center", touchAction: "none" }}
           >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imageUrl}
               alt="Crop preview"
               draggable={false}
               onLoad={() => resetVisualFromCrop(currentCrop)}
               className={imageClassName}
-              style={{ transform: `rotate(${normalizedRotation}deg)`, touchAction: "none" }}
+              style={{ filter: imageFilter || undefined, transform: `rotate(${normalizedRotation}deg)`, touchAction: "none" }}
             />
           </div>
 

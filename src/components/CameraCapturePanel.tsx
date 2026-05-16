@@ -3,6 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 
 import ScanCropEditor from "@/components/ScanCropEditor";
+import {
+  buildCaptureFilterCss,
+  CAPTURE_FILTER_PRESETS,
+  DEFAULT_CAPTURE_ADJUSTMENTS,
+  isOriginalCaptureTreatment,
+  type CaptureAdjustments,
+} from "@/components/capture/captureFilters";
+import { getCaptureFrame, getCaptureUniverseLabel } from "@/components/capture/captureFrames";
+import { applyCssFilterToFile, assessCanvasBlur, type BlurAssessment } from "@/components/capture/captureUtils";
 import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 
 type CameraPermissionState = "granted" | "prompt" | "denied" | "unknown";
@@ -15,12 +24,15 @@ function isDefaultCrop(crop: ScanCropRect) {
 
 export default function CameraCapturePanel({
   title,
+  description,
+  universe,
   onCapture,
   onClose,
   onUseFileInstead,
 }: {
   title: string;
   description: string;
+  universe?: string | null;
   onCapture: (file: File) => void;
   onClose: () => void;
   onUseFileInstead: () => void;
@@ -39,6 +51,16 @@ export default function CameraCapturePanel({
   const [capturedPreviewUrl, setCapturedPreviewUrl] = useState("");
   const [captureCrop, setCaptureCrop] = useState<ScanCropRect>(DEFAULT_CROP);
   const [isApplyingCrop, setIsApplyingCrop] = useState(false);
+  const [selectedFilterId, setSelectedFilterId] = useState("original");
+  const [adjustments, setAdjustments] = useState<CaptureAdjustments>(DEFAULT_CAPTURE_ADJUSTMENTS);
+  const [blurAssessment, setBlurAssessment] = useState<BlurAssessment | null>(null);
+
+  const activeFilter =
+    CAPTURE_FILTER_PRESETS.find((preset) => preset.id === selectedFilterId) ??
+    CAPTURE_FILTER_PRESETS[0];
+  const imageFilter = buildCaptureFilterCss(activeFilter, adjustments);
+  const frame = getCaptureFrame(universe);
+  const universeLabel = getCaptureUniverseLabel(universe);
 
   function stopCameraStream() {
     const stream = streamRef.current;
@@ -237,6 +259,7 @@ export default function CameraCapturePanel({
       if (!ctx) throw new Error("Canvas is not available.");
 
       ctx.drawImage(video, 0, 0, width, height);
+      setBlurAssessment(assessCanvasBlur(canvas));
 
       const blob = await new Promise<Blob | null>((resolve) => {
         canvas.toBlob(resolve, "image/jpeg", 0.9);
@@ -258,6 +281,8 @@ export default function CameraCapturePanel({
       setCapturedFile(file);
       setCapturedPreviewUrl(URL.createObjectURL(file));
       setCaptureCrop(DEFAULT_CROP);
+      setSelectedFilterId("original");
+      setAdjustments(DEFAULT_CAPTURE_ADJUSTMENTS);
       stopCameraStream();
     } catch (error) {
       setCameraError(error instanceof Error ? error.message : "Failed to capture photo.");
@@ -272,9 +297,13 @@ export default function CameraCapturePanel({
     setIsApplyingCrop(true);
 
     try {
-      const finalFile = isDefaultCrop(captureCrop)
+      const croppedFile = isDefaultCrop(captureCrop)
         ? capturedFile
         : await cropImageFile(capturedFile, captureCrop);
+
+      const finalFile = isOriginalCaptureTreatment(activeFilter, adjustments)
+        ? croppedFile
+        : await applyCssFilterToFile(croppedFile, imageFilter);
 
       onCapture(finalFile);
     } catch (error) {
@@ -293,7 +322,14 @@ export default function CameraCapturePanel({
     setCapturedPreviewUrl("");
     setCaptureCrop(DEFAULT_CROP);
     setCameraError("");
+    setBlurAssessment(null);
+    setSelectedFilterId("original");
+    setAdjustments(DEFAULT_CAPTURE_ADJUSTMENTS);
     setRetryCount((count) => count + 1);
+  }
+
+  function updateAdjustment(key: keyof CaptureAdjustments, value: number) {
+    setAdjustments((current) => ({ ...current, [key]: value }));
   }
 
   return (
@@ -305,6 +341,7 @@ export default function CameraCapturePanel({
               {capturedFile ? "ADJUST PHOTO" : "LIVE CAMERA"}
             </div>
             <h2 className="mt-1 text-lg font-semibold text-[color:var(--fg)]">{capturedFile ? "Adjust Photo" : title}</h2>
+            <div className="mt-1 max-w-xl text-xs text-[color:var(--muted)]">{description}</div>
           </div>
 
           <button
@@ -317,7 +354,18 @@ export default function CameraCapturePanel({
         </div>
 
         {capturedFile && capturedPreviewUrl ? (
-          <div className="mt-3 min-h-0 overflow-hidden">
+          <div className="mt-3 min-h-0 overflow-y-auto pr-1">
+            {blurAssessment?.isBlurry ? (
+              <div className="mb-2 rounded-2xl bg-[color:var(--pill)] px-3 py-2 text-xs ring-1 ring-[color:var(--theme-gold-border,rgba(245,181,72,0.32))]">
+                <div className="font-semibold text-[color:var(--theme-gold,#F5B548)]">
+                  Soft focus detected
+                </div>
+                <div className="mt-0.5 text-[color:var(--muted)]">
+                  Retake if this is for identification or insurance. Score: {blurAssessment.score.toFixed(1)}.
+                </div>
+              </div>
+            ) : null}
+
             <ScanCropEditor
               imageUrl={capturedPreviewUrl}
               crop={captureCrop}
@@ -328,14 +376,98 @@ export default function CameraCapturePanel({
               onApply={() => void handleUseCapturedPhoto()}
               onReset={() => setCaptureCrop(DEFAULT_CROP)}
               onCancel={handleRetakePhoto}
+              imageFilter={imageFilter}
               isApplying={isApplyingCrop}
               compact
             />
+
+            <div className="mt-3 rounded-[18px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
+                    CAPTURE STUDIO
+                  </div>
+                  <div className="mt-0.5 text-xs text-[color:var(--muted)]">
+                    Filters and adjustments are applied when you use the photo.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedFilterId("original");
+                    setAdjustments(DEFAULT_CAPTURE_ADJUSTMENTS);
+                  }}
+                  className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs ring-1 ring-[color:var(--border)]"
+                >
+                  Reset
+                </button>
+              </div>
+
+              <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                {CAPTURE_FILTER_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => setSelectedFilterId(preset.id)}
+                    className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 transition"
+                    style={
+                      selectedFilterId === preset.id
+                        ? {
+                            background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))",
+                            borderColor: "var(--theme-gold-border, rgba(245,181,72,0.38))",
+                            color: "var(--theme-gold, #F5B548)",
+                          }
+                        : {
+                            background: "var(--pill)",
+                            borderColor: "var(--border)",
+                            color: "var(--muted)",
+                          }
+                    }
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {[
+                  { key: "brightness", label: "Brightness", min: 70, max: 130 },
+                  { key: "contrast", label: "Contrast", min: 70, max: 140 },
+                  { key: "saturation", label: "Saturation", min: 60, max: 150 },
+                  { key: "warmth", label: "Warmth", min: -40, max: 40 },
+                  { key: "sharpness", label: "Sharpness", min: 0, max: 30 },
+                ].map((control) => (
+                  <label key={control.key} className="rounded-2xl bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">
+                        {control.label}
+                      </span>
+                      <span className="text-xs font-semibold text-[color:var(--fg)]">
+                        {adjustments[control.key as keyof CaptureAdjustments]}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={control.min}
+                      max={control.max}
+                      value={adjustments[control.key as keyof CaptureAdjustments]}
+                      onChange={(event) =>
+                        updateAdjustment(
+                          control.key as keyof CaptureAdjustments,
+                          Number(event.target.value)
+                        )
+                      }
+                      className="mt-2 w-full accent-[color:var(--theme-gold)]"
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
           </div>
         ) : (
           <>
             <div className="mt-3 overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]">
-              <div className="flex h-[58dvh] min-h-[260px] max-h-[560px] items-center justify-center overflow-hidden rounded-[14px] bg-[color:var(--surface)]">
+              <div className="relative flex h-[58dvh] min-h-[260px] max-h-[560px] items-center justify-center overflow-hidden rounded-[14px] bg-[color:var(--surface)]">
                 {cameraError ? (
                   <div className="max-w-lg px-5 text-center text-sm text-red-200">
                     <div>{cameraError}</div>
@@ -352,6 +484,29 @@ export default function CameraCapturePanel({
                     className="h-full w-full object-contain"
                   />
                 )}
+
+                {!cameraError ? (
+                  <div
+                    className="pointer-events-none absolute left-1/2 top-1/2 flex max-h-[82%] max-w-[82%] -translate-x-1/2 -translate-y-1/2 items-start justify-center ring-2 ring-[color:var(--theme-gold)] shadow-[0_0_0_9999px_rgba(0,0,0,0.18)]"
+                    style={{
+                      aspectRatio: frame.aspectRatio,
+                      borderRadius: frame.radius,
+                      height: `calc(100% - ${frame.inset})`,
+                      width: "auto",
+                    }}
+                  >
+                    <div
+                      className="mt-2 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] ring-1"
+                      style={{
+                        background: "rgba(0,0,0,0.48)",
+                        borderColor: "var(--theme-gold-border, rgba(245,181,72,0.35))",
+                        color: "var(--theme-gold, #F5B548)",
+                      }}
+                    >
+                      {universeLabel} · {frame.label}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
 
