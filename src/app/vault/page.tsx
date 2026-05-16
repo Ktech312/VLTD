@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import ItemIntelligencePanel from "@/components/ItemIntelligencePanel";
+import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
 import RestoreVaultButton from "@/components/RestoreVaultButton";
 import SellItemButton from "@/components/SellItemButton";
 import VaultExportButton from "@/components/VaultExportButton";
@@ -27,9 +28,11 @@ import {
   type VaultItem,
 } from "@/lib/vaultModel";
 import { hasSupabaseEnv, VAULT_ITEMS_TABLE } from "@/lib/vaultCloud";
+import { getPublicVaultUrl, syncPublicProfile } from "@/lib/publicProfile";
 
 const ACTIVE_PROFILE_EVENT = "vltd:active-profile";
 const SALES_KEY = "vltd_sales_history";
+const FOCUS_LS_KEY = "vltd_primary_focus";
 
 type SortMode = "newest" | "value_desc" | "value_asc" | "gain_desc" | "gain_asc" | "title";
 type ReadinessFilter = "all" | "high" | "medium" | "low";
@@ -169,6 +172,18 @@ function directUniverseMatch(value: unknown): UniverseKey | "" {
 }
 function normalizeUniverse(value: unknown): UniverseKey {
   return directUniverseMatch(value) || "MISC";
+}
+
+function readFocusUniverseKey(): UniverseKey | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(FOCUS_LS_KEY) ?? "";
+    if (!raw || raw.toLowerCase() === "null") return null;
+    const key = normalizeUniverse(raw);
+    return key !== "MISC" ? key : null;
+  } catch {
+    return null;
+  }
 }
 
 function inferVaultUniverse(item: VaultItem): UniverseKey {
@@ -448,22 +463,27 @@ function VaultCard({
         {statusLabel}
       </span>
 
-      <Link href={detailHref} className="block h-[78px] overflow-hidden rounded-[10px] bg-black/18">
-        {image ? (
-          <ProgressiveImage
-            src={image}
-            alt={item.title}
-            className="h-full w-full"
-            imageClassName="object-contain object-center"
-            draggable={false}
-          />
-        ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-white/28">
-            <CameraIcon className="h-5 w-5" />
-            <span>No photo</span>
-          </div>
-        )}
-      </Link>
+      <div className="relative h-[78px] overflow-hidden rounded-[10px] bg-black/18">
+        <Link href={detailHref} className="block h-full">
+          {image ? (
+            <ProgressiveImage
+              src={image}
+              alt={item.title}
+              className="h-full w-full"
+              imageClassName="object-contain object-center"
+              draggable={false}
+            />
+          ) : (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-white/28">
+              <CameraIcon className="h-5 w-5" />
+              <span>No photo</span>
+            </div>
+          )}
+        </Link>
+        <div className="absolute right-1.5 top-1.5 z-30">
+          <ItemVisibilityToggle item={item} />
+        </div>
+      </div>
 
       <Link href={detailHref} className="mt-2 min-w-0">
         <div className="line-clamp-1 text-[13px] font-extrabold leading-tight text-text-primary sm:text-[14px]">
@@ -497,7 +517,7 @@ function VaultCard({
               onClick={() => setEditingField("value")}
               className="block text-left text-[13px] font-extrabold leading-none text-text-primary hover:text-gold-light"
             >
-              {formatMoney(marketValue)}
+              {marketValue > 0 ? formatMoney(marketValue) : "No value"}
             </button>
           )}
           <div className={showGain ? (gain >= 0 ? "mt-1 text-[10px] font-bold leading-none text-emerald-300" : "mt-1 text-[10px] font-bold leading-none text-red-300") : "mt-1 text-[10px] font-bold leading-none text-[color:var(--muted)]"}>
@@ -612,10 +632,12 @@ function UniverseOverviewCard({
   category,
   items,
   className = "",
+  isFocus = false,
 }: {
   category: (typeof VAULT_UNIVERSES)[number];
   items: VaultItem[];
   className?: string;
+  isFocus?: boolean;
 }) {
   const coverItem = items[0];
   const coverImage = useResolvedVaultImage(coverItem ?? null);
@@ -660,7 +682,12 @@ function UniverseOverviewCard({
             <div className="flex items-start justify-between gap-2">
               <div>
                 <div className="text-[11px] uppercase tracking-[0.18em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>Universe</div>
-                <h2 className="mt-1 text-xl font-semibold leading-tight" style={{ color: "var(--theme-gold, #F5B548)" }}>{universeDisplayName(category.key)}</h2>
+                <h2 className="mt-1 text-xl font-semibold leading-tight" style={{ color: "var(--theme-gold, #F5B548)" }}>
+                  {universeDisplayName(category.key)}
+                  {isFocus && (
+                    <span className="ml-2 text-xs font-medium" style={{ color: "var(--theme-text-muted, #A0956B)" }}>· Your Focus</span>
+                  )}
+                </h2>
               </div>
               <div
                 className="rounded-full px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap"
@@ -695,6 +722,7 @@ function UniverseOverviewCard({
 }
 
 export default function VaultPage() {
+  const [focusKey] = useState<UniverseKey | null>(() => readFocusUniverseKey());
   const [items, setItems] = useState<VaultItem[]>([]);
   const [query, setQuery] = useState("");
   const [universeFilter, setUniverseFilter] = useState<UniverseFilter>("ALL");
@@ -707,6 +735,7 @@ export default function VaultPage() {
   const [syncStatus, setSyncStatus] = useState("");
   const [isMigrating, setIsMigrating] = useState(false);
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
+  const [shareMessage, setShareMessage] = useState("");
 
   function refresh() {
     setItems(loadItems());
@@ -862,6 +891,16 @@ export default function VaultPage() {
     return groups;
   }, [items, saleMap]);
 
+  const orderedUniverses = useMemo(() => {
+    if (!focusKey) return VAULT_UNIVERSES;
+    const idx = VAULT_UNIVERSES.findIndex((u) => u.key === focusKey);
+    if (idx <= 0) return VAULT_UNIVERSES;
+    const arr = [...VAULT_UNIVERSES];
+    const [focusEntry] = arr.splice(idx, 1);
+    arr.unshift(focusEntry);
+    return arr;
+  }, [focusKey]);
+
   const stats = useMemo(() => {
     const totalItems = filteredItems.length;
     const totalCostValue = filteredItems.reduce((sum, item) => sum + totalCost(item), 0);
@@ -932,6 +971,25 @@ export default function VaultPage() {
     setSortMode("newest");
   }
 
+  async function handleShareVault() {
+    const url = getPublicVaultUrl();
+    if (!url) {
+      setShareMessage("No active profile");
+      window.setTimeout(() => setShareMessage(""), 2000);
+      return;
+    }
+
+    try {
+      await syncPublicProfile();
+      await navigator.clipboard.writeText(url);
+      setShareMessage("Copied!");
+    } catch (error) {
+      setShareMessage(error instanceof Error ? error.message : "Could not copy link");
+    }
+
+    window.setTimeout(() => setShareMessage(""), 2000);
+  }
+
   return (
     <main className="min-h-screen text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1500px] px-3 py-3 sm:px-4 sm:py-4">
@@ -951,6 +1009,13 @@ export default function VaultPage() {
                 </div>
               </div>
               <div className="shrink-0 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => void handleShareVault()}
+                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                >
+                  {shareMessage || "Share vault"}
+                </button>
                 <VaultExportButton />
                 <Link
                   href="/vault/add"
@@ -1008,11 +1073,12 @@ export default function VaultPage() {
         ) : (
           <section className="mt-3 max-w-3xl mx-auto w-full">
             <div className="grid grid-cols-2 gap-4">
-              {VAULT_UNIVERSES.map((category) => (
+              {orderedUniverses.map((category) => (
                 <UniverseOverviewCard
                   key={category.key}
                   category={category}
                   items={universeGroups[category.key]}
+                  isFocus={focusKey === category.key}
                   className=""
                 />
               ))}
