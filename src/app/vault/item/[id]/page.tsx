@@ -689,14 +689,15 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               </Link>
               <Link
                 href={`/vault/item/${encodeURIComponent(item.id)}/present`}
-                className="inline-flex h-10 items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]"
+                className="inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-[12px] font-semibold ring-1 transition"
+                style={{ background: "var(--surface)", color: "var(--muted)", borderColor: "var(--border)" }}
               >
                 Stream
               </Link>
               <InsurancePdfButton
                 items={[item]}
-                label="Insurance Doc"
-                className="inline-flex h-10 items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]"
+                label="Insurance PDF"
+                className="inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-[12px] font-semibold ring-1 transition"
               />
             </div>
 

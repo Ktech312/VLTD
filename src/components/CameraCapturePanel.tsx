@@ -11,10 +11,19 @@ import {
   type CaptureAdjustments,
 } from "@/components/capture/captureFilters";
 import { getCaptureFrame, getCaptureUniverseLabel } from "@/components/capture/captureFrames";
-import { applyCssFilterToFile, assessCanvasBlur, type BlurAssessment } from "@/components/capture/captureUtils";
+import {
+  applyCssFilterToFile,
+  assessCanvasBlur,
+  CAPTURE_BACKGROUNDS,
+  compositeBackgroundToFile,
+  removeBackgroundFromFile,
+  type BlurAssessment,
+} from "@/components/capture/captureUtils";
 import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 
 type CameraPermissionState = "granted" | "prompt" | "denied" | "unknown";
+type DetectionState = "idle" | "loading" | "ready" | "unavailable";
+type DetectionBox = { x: number; y: number; width: number; height: number };
 
 const DEFAULT_CROP: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
 
@@ -54,6 +63,12 @@ export default function CameraCapturePanel({
   const [selectedFilterId, setSelectedFilterId] = useState("original");
   const [adjustments, setAdjustments] = useState<CaptureAdjustments>(DEFAULT_CAPTURE_ADJUSTMENTS);
   const [blurAssessment, setBlurAssessment] = useState<BlurAssessment | null>(null);
+  const [detectionState, setDetectionState] = useState<DetectionState>("idle");
+  const [detectionBox, setDetectionBox] = useState<DetectionBox | null>(null);
+  const [isRemovingBackground, setIsRemovingBackground] = useState(false);
+  const [backgroundError, setBackgroundError] = useState("");
+  const [isBackgroundRemoved, setIsBackgroundRemoved] = useState(false);
+  const [selectedBackgroundId, setSelectedBackgroundId] = useState("transparent");
 
   const activeFilter =
     CAPTURE_FILTER_PRESETS.find((preset) => preset.id === selectedFilterId) ??
@@ -61,6 +76,9 @@ export default function CameraCapturePanel({
   const imageFilter = buildCaptureFilterCss(activeFilter, adjustments);
   const frame = getCaptureFrame(universe);
   const universeLabel = getCaptureUniverseLabel(universe);
+  const selectedBackground =
+    CAPTURE_BACKGROUNDS.find((background) => background.id === selectedBackgroundId) ??
+    CAPTURE_BACKGROUNDS[0];
 
   function stopCameraStream() {
     const stream = streamRef.current;
@@ -221,6 +239,78 @@ export default function CameraCapturePanel({
   }, [capturedFile, retryCount, selectedDeviceId]);
 
   useEffect(() => {
+    if (capturedFile || cameraError || isStarting) {
+      setDetectionBox(null);
+      return;
+    }
+
+    let isActive = true;
+    let detectionTimer: number | null = null;
+    let model: {
+      detect: (input: HTMLVideoElement) => Promise<Array<{ bbox: [number, number, number, number] }>>;
+    } | null = null;
+
+    async function loadDetector() {
+      setDetectionState("loading");
+      try {
+        const tf = await import("@tensorflow/tfjs");
+        const cocoSsd = await import("@tensorflow-models/coco-ssd");
+        await tf.ready();
+        model = await cocoSsd.load();
+        if (!isActive) return;
+        setDetectionState("ready");
+        void detectNextFrame();
+      } catch {
+        if (isActive) {
+          setDetectionState("unavailable");
+          setDetectionBox(null);
+        }
+      }
+    }
+
+    async function detectNextFrame() {
+      const video = videoRef.current;
+      if (!isActive || !model || !video || !video.videoWidth || !video.videoHeight) {
+        if (isActive) {
+          detectionTimer = window.setTimeout(() => void detectNextFrame(), 900);
+        }
+        return;
+      }
+
+      try {
+        const predictions = await model.detect(video);
+        const primary = predictions[0];
+        if (primary) {
+          const [x, y, width, height] = primary.bbox;
+          setDetectionBox({
+            x: (x / video.videoWidth) * 100,
+            y: (y / video.videoHeight) * 100,
+            width: (width / video.videoWidth) * 100,
+            height: (height / video.videoHeight) * 100,
+          });
+        } else {
+          setDetectionBox(null);
+        }
+      } catch {
+        setDetectionBox(null);
+      }
+
+      if (isActive) {
+        detectionTimer = window.setTimeout(() => void detectNextFrame(), 900);
+      }
+    }
+
+    void loadDetector();
+
+    return () => {
+      isActive = false;
+      if (detectionTimer) {
+        window.clearTimeout(detectionTimer);
+      }
+    };
+  }, [cameraError, capturedFile, isStarting, retryCount, selectedDeviceId]);
+
+  useEffect(() => {
     return () => {
       if (capturedPreviewUrl.startsWith("blob:")) {
         URL.revokeObjectURL(capturedPreviewUrl);
@@ -283,6 +373,9 @@ export default function CameraCapturePanel({
       setCaptureCrop(DEFAULT_CROP);
       setSelectedFilterId("original");
       setAdjustments(DEFAULT_CAPTURE_ADJUSTMENTS);
+      setBackgroundError("");
+      setIsBackgroundRemoved(false);
+      setSelectedBackgroundId("transparent");
       stopCameraStream();
     } catch (error) {
       setCameraError(error instanceof Error ? error.message : "Failed to capture photo.");
@@ -305,7 +398,11 @@ export default function CameraCapturePanel({
         ? croppedFile
         : await applyCssFilterToFile(croppedFile, imageFilter);
 
-      onCapture(finalFile);
+      const finishedFile = isBackgroundRemoved
+        ? await compositeBackgroundToFile(finalFile, selectedBackground)
+        : finalFile;
+
+      onCapture(finishedFile);
     } catch (error) {
       setCameraError(error instanceof Error ? error.message : "Failed to crop photo.");
     } finally {
@@ -325,11 +422,37 @@ export default function CameraCapturePanel({
     setBlurAssessment(null);
     setSelectedFilterId("original");
     setAdjustments(DEFAULT_CAPTURE_ADJUSTMENTS);
+    setBackgroundError("");
+    setIsBackgroundRemoved(false);
+    setSelectedBackgroundId("transparent");
     setRetryCount((count) => count + 1);
   }
 
   function updateAdjustment(key: keyof CaptureAdjustments, value: number) {
     setAdjustments((current) => ({ ...current, [key]: value }));
+  }
+
+  async function handleRemoveBackground() {
+    if (!capturedFile) return;
+
+    setIsRemovingBackground(true);
+    setBackgroundError("");
+
+    try {
+      const nextFile = await removeBackgroundFromFile(capturedFile);
+      if (capturedPreviewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(capturedPreviewUrl);
+      }
+      setCapturedFile(nextFile);
+      setCapturedPreviewUrl(URL.createObjectURL(nextFile));
+      setCaptureCrop(DEFAULT_CROP);
+      setIsBackgroundRemoved(true);
+      setSelectedBackgroundId("vault");
+    } catch {
+      setBackgroundError("Background removal could not finish in this browser. The photo is still usable.");
+    } finally {
+      setIsRemovingBackground(false);
+    }
   }
 
   return (
@@ -463,6 +586,74 @@ export default function CameraCapturePanel({
                   </label>
                 ))}
               </div>
+
+              <div className="mt-2 rounded-2xl bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)]">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">
+                      Background
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-[color:var(--muted)]">
+                      Browser-only removal; no upload needed.
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void handleRemoveBackground()}
+                    disabled={isRemovingBackground || !capturedFile}
+                    className="rounded-full px-3 py-1.5 text-xs font-semibold ring-1 disabled:opacity-45"
+                    style={{
+                      background: isBackgroundRemoved
+                        ? "var(--theme-gold-subtle, rgba(245,181,72,0.12))"
+                        : "var(--surface)",
+                      borderColor: "var(--theme-gold-border, rgba(245,181,72,0.32))",
+                      color: "var(--theme-gold, #F5B548)",
+                    }}
+                  >
+                    {isRemovingBackground
+                      ? "Removing..."
+                      : isBackgroundRemoved
+                        ? "Remove Again"
+                        : "Remove BG"}
+                  </button>
+                </div>
+
+                {backgroundError ? (
+                  <div className="mt-2 rounded-xl bg-red-500/10 px-3 py-2 text-[11px] text-red-200 ring-1 ring-red-500/20">
+                    {backgroundError}
+                  </div>
+                ) : null}
+
+                {isBackgroundRemoved ? (
+                  <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                    {CAPTURE_BACKGROUNDS.map((background) => (
+                      <button
+                        key={background.id}
+                        type="button"
+                        onClick={() => setSelectedBackgroundId(background.id)}
+                        className="shrink-0 rounded-xl px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] ring-1"
+                        style={{
+                          background: selectedBackgroundId === background.id
+                            ? "var(--theme-gold-subtle, rgba(245,181,72,0.12))"
+                            : "var(--surface)",
+                          borderColor: selectedBackgroundId === background.id
+                            ? "var(--theme-gold-border, rgba(245,181,72,0.38))"
+                            : "var(--border)",
+                          color: selectedBackgroundId === background.id
+                            ? "var(--theme-gold, #F5B548)"
+                            : "var(--muted)",
+                        }}
+                      >
+                        <span
+                          className="mb-1 block h-8 w-12 rounded-lg ring-1 ring-white/10"
+                          style={{ background: background.swatch }}
+                        />
+                        {background.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
         ) : (
@@ -506,6 +697,30 @@ export default function CameraCapturePanel({
                     >
                       {universeLabel} · {frame.label}
                     </div>
+                  </div>
+                ) : null}
+
+                {!cameraError && detectionBox ? (
+                  <div
+                    className="pointer-events-none absolute rounded-md border border-cyan-300/70 shadow-[0_0_18px_rgba(34,211,238,0.18)]"
+                    style={{
+                      left: `${detectionBox.x}%`,
+                      top: `${detectionBox.y}%`,
+                      width: `${detectionBox.width}%`,
+                      height: `${detectionBox.height}%`,
+                    }}
+                  />
+                ) : null}
+
+                {!cameraError && detectionState !== "idle" ? (
+                  <div className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-black/50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/55 ring-1 ring-white/10">
+                    {detectionState === "loading"
+                      ? "Loading guide"
+                      : detectionState === "ready"
+                        ? detectionBox
+                          ? "Object guide"
+                          : "Guide ready"
+                        : "Guide unavailable"}
                   </div>
                 ) : null}
               </div>
