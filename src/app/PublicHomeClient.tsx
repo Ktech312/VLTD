@@ -35,22 +35,32 @@ const FEATURE_CARDS = [
   {
     icon: "▣",
     title: "AI Scanning",
-    description: "Point at any item. AI identifies it automatically.",
+    description: "Point at any item. AI identifies it, prices it, and adds it to your vault instantly.",
   },
   {
     icon: "▤",
     title: "Public Gallery",
-    description: "Build a showcase. Your private vault stays private.",
+    description: "Build a museum-style showcase with one link. Your private vault stays completely private.",
   },
   {
     icon: "↗",
     title: "Portfolio View",
-    description: "Track cost, value, and gain across every item.",
+    description: "Track cost basis, current value, and gain/loss across every item in every category.",
   },
   {
     icon: "☆",
     title: "Insurance Docs",
-    description: "Generate complete insurance packets built in.",
+    description: "Generate complete insurance-ready documentation packets from your vault in seconds.",
+  },
+  {
+    icon: "⟳",
+    title: "Stream Mode",
+    description: "Rapid-fire scanning for bulk hauls. Add 50 items in a single session without breaking flow.",
+  },
+  {
+    icon: "◎",
+    title: "Auto-Lock Scanner",
+    description: "Captures the sharpest frame automatically. No tapping, no blur, no retakes needed.",
   },
 ];
 
@@ -100,12 +110,15 @@ const VAULT_UNIVERSES: UniverseCard[] = [
 ];
 
 const COMPARISON_ROWS = [
-  ["Multi-category vault", "No", "Yes"],
-  ["Portfolio analytics", "No", "Yes"],
-  ["Gallery & showcase", "No", "Yes"],
+  ["Multi-category vault", "One category", "All 7 universes"],
+  ["Portfolio analytics", "Basic", "Full P&L tracking"],
+  ["Museum-style gallery", "No", "Yes"],
   ["Insurance documentation", "No", "Yes"],
-  ["AI scanning", "Partial", "Yes"],
-  ["Team workspace", "No", "Yes"],
+  ["AI identification & pricing", "Manual", "Auto on scan"],
+  ["Bulk haul / stream mode", "No", "Yes"],
+  ["Auto-lock blur detection", "No", "Yes"],
+  ["Public share link", "Partial", "One-tap share"],
+  ["Team & multi-profile", "No", "Yes"],
 ];
 
 const FALLBACK_GALLERIES: PublicGalleryCard[] = [
@@ -324,11 +337,12 @@ export default function PublicHomeClient() {
           </div>
 
           <h1 className="mx-auto mt-7 max-w-3xl text-5xl font-black leading-[0.96] tracking-[-0.06em] text-text-primary sm:text-6xl lg:text-7xl">
-            The vault for <span className="text-[color:var(--accent)]">serious collectors.</span>
+            Scan. Vault. <span className="text-[color:var(--accent)]">Know what it's worth.</span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[color:var(--muted)]">
-            Track every item across every category. Build a stunning public gallery.
-            Know exactly what your collection is worth. All in one place.
+            VLTD is the collector's operating system — AI scanning, full portfolio
+            analytics, museum-style galleries, and insurance docs across every category.
+            One vault. Every collectible.
           </p>
 
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
@@ -353,7 +367,7 @@ export default function PublicHomeClient() {
       </section>
 
       <section className="border-b" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-        <div className="mx-auto grid max-w-7xl divide-y divide-[color:var(--border)] px-4 sm:px-6 md:grid-cols-4 md:divide-x md:divide-y-0 lg:px-8">
+        <div className="mx-auto grid max-w-7xl divide-y divide-[color:var(--border)] px-4 sm:px-6 sm:grid-cols-2 sm:divide-x sm:divide-y-0 md:grid-cols-3 lg:grid-cols-6 lg:divide-x lg:divide-y-0 lg:px-8">
           {FEATURE_CARDS.map((feature) => (
             <div key={feature.title} className="px-2 py-7 md:px-6">
               <div className="mb-3 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[rgba(245,181,72,0.22)] bg-[rgba(245,181,72,0.08)] text-[color:var(--accent)]">
@@ -419,6 +433,55 @@ export default function PublicHomeClient() {
         </div>
       </section>
 
+      {/* ── Scanner callout — Haul Mode ──────────────────────────── */}
+      <section className="border-b" style={{ borderColor: 'var(--border)' }}>
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+          <div className="overflow-hidden rounded-3xl" style={{ background: 'linear-gradient(135deg, rgba(139,105,20,0.18) 0%, rgba(15,25,45,0.92) 50%, rgba(10,18,38,0.98) 100%)', border: '1px solid rgba(245,181,72,0.22)', boxShadow: '0 0 60px rgba(245,181,72,0.06)' }}>
+            <div className="grid gap-0 lg:grid-cols-2">
+              {/* Left — copy */}
+              <div className="flex flex-col justify-center px-8 py-10 lg:py-14">
+                <div className="mb-3 inline-flex w-fit items-center gap-2 rounded-full border border-[rgba(245,181,72,0.28)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: '#F5B548', background: 'rgba(245,181,72,0.07)' }}>
+                  ⟳ Haul Mode
+                </div>
+                <h2 className="text-3xl font-black tracking-[-0.04em] text-text-primary sm:text-4xl">
+                  50 items in one sitting.
+                </h2>
+                <p className="mt-4 max-w-md text-base leading-7 text-[color:var(--muted)]">
+                  Stream Mode keeps the scanner live between items — point, lock, done. Auto-Lock detects the sharpest frame so you never tap the screen. Bulk hauls that used to take hours now take minutes.
+                </p>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Link href="/signup" className="vltd-primary-button inline-flex h-11 items-center justify-center rounded-full px-6 text-sm font-black transition">
+                    Start scanning — free
+                  </Link>
+                  <Link href="/learn" className="inline-flex h-11 items-center justify-center rounded-full border border-[rgba(245,181,72,0.28)] px-6 text-sm font-semibold transition hover:bg-[rgba(245,181,72,0.06)]" style={{ color: '#F5B548' }}>
+                    Learn more →
+                  </Link>
+                </div>
+              </div>
+              {/* Right — feature list */}
+              <div className="flex flex-col justify-center gap-4 border-t border-[rgba(245,181,72,0.12)] px-8 py-10 lg:border-l lg:border-t-0 lg:py-14">
+                {[
+                  { icon: "◎", title: "Auto-Lock Scanner", desc: "Captures the sharpest frame automatically. No tapping, no blur, no retakes." },
+                  { icon: "⟳", title: "Stream Mode", desc: "Scanner stays live between items. Continuous flow for large hauls." },
+                  { icon: "▣", title: "AI Identification", desc: "Name, category, estimated value — filled in the moment it locks." },
+                  { icon: "↗", title: "Instant Portfolio Update", desc: "Every scanned item updates your P&L in real time." },
+                ].map(({ icon, title, desc }) => (
+                  <div key={title} className="flex items-start gap-4">
+                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[rgba(245,181,72,0.22)] bg-[rgba(245,181,72,0.08)] text-base" style={{ color: '#F5B548' }}>
+                      {icon}
+                    </div>
+                    <div>
+                      <div className="text-sm font-black text-text-primary">{title}</div>
+                      <p className="mt-0.5 text-sm leading-5 text-[color:var(--muted)]">{desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="public-galleries" className="border-y" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
@@ -442,6 +505,26 @@ export default function PublicHomeClient() {
         </div>
       </section>
 
+      {/* ── Social proof — 3 stats ────────────────────────────────── */}
+      <section className="border-b" style={{ borderColor: 'var(--border)' }}>
+        <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
+          <div className="grid gap-px overflow-hidden rounded-2xl sm:grid-cols-3" style={{ background: 'var(--border)' }}>
+            {[
+              { stat: "7", label: "Collecting universes", sub: "Every category, one vault" },
+              { stat: "∞", label: "Items supported", sub: "No limits on vault size" },
+              { stat: "1 link", label: "To share your gallery", sub: "Private vault, public showcase" },
+            ].map(({ stat, label, sub }) => (
+              <div key={label} className="flex flex-col items-center justify-center py-10 text-center" style={{ background: cardBg }}>
+                <div className="text-5xl font-black tracking-[-0.05em]" style={{ color: '#F5B548' }}>{stat}</div>
+                <div className="mt-2 text-sm font-black text-text-primary">{label}</div>
+                <div className="mt-1 text-xs text-[color:var(--muted2)]">{sub}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Comparison table ──────────────────────────────────────── */}
       <section className="mx-auto max-w-5xl px-4 py-16 text-center sm:px-6 lg:px-8">
         <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted2)]">
           Why VLTD
@@ -455,23 +538,24 @@ export default function PublicHomeClient() {
         </p>
 
         <div className="mx-auto mt-8 max-w-3xl overflow-hidden rounded-2xl border border-[color:var(--border)] text-left" style={{ background: cardBg }}>
-          <div className="grid grid-cols-[1fr_100px_100px] border-b border-[color:var(--border)] bg-[rgba(245,181,72,0.06)] text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">
-            <div className="px-5 py-3">Feature</div>
-            <div className="px-5 py-3 text-center">Others</div>
-            <div className="bg-[rgba(245,181,72,0.08)] px-5 py-3 text-center text-[color:var(--accent)]">
+          {/* Header row */}
+          <div className="grid grid-cols-[1fr_110px_110px] border-b border-[color:var(--border)] bg-[rgba(245,181,72,0.06)]">
+            <div className="px-5 py-3 text-[11px] font-bold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Feature</div>
+            <div className="px-5 py-3 text-center text-[11px] font-bold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Others</div>
+            <div className="bg-[rgba(245,181,72,0.10)] px-5 py-3 text-center text-[11px] font-black uppercase tracking-[0.22em] text-[color:var(--accent)]">
               VLTD
             </div>
           </div>
           {COMPARISON_ROWS.map(([feature, others, vltd]) => (
             <div
               key={feature}
-              className="grid grid-cols-[1fr_100px_100px] border-b border-[color:var(--border)] last:border-b-0"
+              className="grid grid-cols-[1fr_110px_110px] border-b border-[color:var(--border)] last:border-b-0"
             >
-              <div className="px-5 py-4 text-sm text-[color:var(--muted)]">{feature}</div>
-              <div className="px-5 py-4 text-center text-sm text-[color:var(--muted2)]">
+              <div className="px-5 py-3.5 text-sm font-medium text-[color:var(--muted)]">{feature}</div>
+              <div className="px-5 py-3.5 text-center text-sm text-[color:var(--muted2)]">
                 {others}
               </div>
-              <div className="bg-[rgba(245,181,72,0.05)] px-5 py-4 text-center text-sm text-[color:var(--vltd-green)]">
+              <div className="bg-[rgba(245,181,72,0.04)] px-5 py-3.5 text-center text-sm font-semibold text-[color:var(--vltd-green)]">
                 {vltd}
               </div>
             </div>
@@ -484,38 +568,70 @@ export default function PublicHomeClient() {
           Get Started
         </div>
         <h2 className="mx-auto mt-2 max-w-2xl text-2xl font-black leading-tight tracking-[-0.05em] text-text-primary sm:text-4xl">
-          Your collection deserves a real home.
+          Your collection is worth tracking properly.
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-[color:var(--muted)]">
-          VLTD is built for collectors who take their collection seriously. Free to
-          start. No credit card needed.
+          Scan your first item in under 60 seconds. Free to start — no credit card,
+          no category limit, no cap on vault size.
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Link
             href="/signup"
             className="vltd-primary-button inline-flex h-14 items-center justify-center rounded-full px-8 text-base font-black transition"
           >
-            Create your vault — it&apos;s free
+            Vault your collection — free
           </Link>
           <Link
             href="/login"
             className="inline-flex h-14 items-center justify-center rounded-full border border-[color:var(--border)] px-8 text-base font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
           >
-            Already have an account
+            Sign in →
           </Link>
         </div>
+        <p className="mt-4 text-xs text-[color:var(--muted2)]">
+          Free forever · No credit card · All 7 universes included
+        </p>
       </section>
 
-      <footer className="border-t border-[color:var(--border)] px-4 py-5 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 text-sm text-[color:var(--muted2)] sm:flex-row sm:items-center sm:justify-between">
-          <BrandMark />
-          <div className="flex gap-5">
-            <Link href="/login" className="hover:text-text-primary">Log in</Link>
-            <Link href="/signup" className="hover:text-text-primary">Sign up</Link>
-            <Link href="/learn" className="hover:text-text-primary">Learn</Link>
-            <Link href="#public-galleries" className="hover:text-text-primary">Galleries</Link>
+      <footer className=”border-t border-[color:var(--border)] px-4 py-6 sm:px-6 lg:px-8”>
+        <div className=”mx-auto max-w-7xl”>
+          <div className=”flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between”>
+            <div className=”flex flex-col gap-1”>
+              <BrandMark />
+              <p className=”mt-1 max-w-xs text-xs text-[color:var(--muted2)]”>
+                The collector's operating system. Every category. One vault.
+              </p>
+            </div>
+            <div className=”grid grid-cols-2 gap-x-10 gap-y-2 text-sm sm:grid-cols-3”>
+              <div>
+                <div className=”mb-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--muted2)]”>Product</div>
+                <div className=”flex flex-col gap-1.5”>
+                  <Link href=”/signup” className=”text-[color:var(--muted)] hover:text-text-primary transition”>Sign up</Link>
+                  <Link href=”/login” className=”text-[color:var(--muted)] hover:text-text-primary transition”>Log in</Link>
+                  <Link href=”/learn” className=”text-[color:var(--muted)] hover:text-text-primary transition”>Learn</Link>
+                </div>
+              </div>
+              <div>
+                <div className=”mb-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--muted2)]”>Explore</div>
+                <div className=”flex flex-col gap-1.5”>
+                  <Link href=”#public-galleries” className=”text-[color:var(--muted)] hover:text-text-primary transition”>Galleries</Link>
+                  <Link href=”/discover” className=”text-[color:var(--muted)] hover:text-text-primary transition”>Discover</Link>
+                  <Link href=”/museum” className=”text-[color:var(--muted)] hover:text-text-primary transition”>Museum</Link>
+                </div>
+              </div>
+              <div>
+                <div className=”mb-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--muted2)]”>Universes</div>
+                <div className=”flex flex-col gap-1.5”>
+                  <Link href=”/signup” className=”text-[color:var(--muted)] hover:text-text-primary transition”>TCG</Link>
+                  <Link href=”/signup” className=”text-[color:var(--muted)] hover:text-text-primary transition”>Sports</Link>
+                  <Link href=”/signup” className=”text-[color:var(--muted)] hover:text-text-primary transition”>Pop Culture</Link>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="italic">© 2026 VLTD. Pronounced “Vaulted.”</div>
+          <div className=”mt-6 border-t border-[color:var(--border)] pt-4 text-xs text-[color:var(--muted2)]”>
+            © 2026 VLTD. Pronounced “Vaulted.” — free to start · no credit card required
+          </div>
         </div>
       </footer>
     </main>
