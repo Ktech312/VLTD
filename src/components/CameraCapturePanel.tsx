@@ -334,14 +334,14 @@ export default function CameraCapturePanel({
 
   return (
     <div className="fixed inset-0 z-[80] bg-black/75 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="mx-auto flex max-h-[calc(100dvh-1rem)] max-w-3xl flex-col overflow-hidden rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:max-h-[calc(100dvh-2rem)] sm:p-4">
+      <div className="mx-auto flex max-h-[calc(100dvh-1rem)] max-w-3xl flex-col overflow-hidden rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:max-h-[calc(100dvh-2rem)]">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               {capturedFile ? "ADJUST PHOTO" : "LIVE CAMERA"}
             </div>
             <h2 className="mt-1 text-lg font-semibold text-[color:var(--fg)]">{capturedFile ? "Adjust Photo" : title}</h2>
-            <div className="mt-1 max-w-xl text-xs text-[color:var(--muted)]">{description}</div>
+            <div className="mt-0.5 max-w-xl text-xs text-[color:var(--muted)]">{description}</div>
           </div>
 
           <button
@@ -354,7 +354,7 @@ export default function CameraCapturePanel({
         </div>
 
         {capturedFile && capturedPreviewUrl ? (
-          <div className="mt-3 min-h-0 overflow-y-auto pr-1">
+          <div className="mt-2 min-h-0 overflow-hidden">
             {blurAssessment?.isBlurry ? (
               <div className="mb-2 rounded-2xl bg-[color:var(--pill)] px-3 py-2 text-xs ring-1 ring-[color:var(--theme-gold-border,rgba(245,181,72,0.32))]">
                 <div className="font-semibold text-[color:var(--theme-gold,#F5B548)]">
@@ -379,15 +379,16 @@ export default function CameraCapturePanel({
               imageFilter={imageFilter}
               isApplying={isApplyingCrop}
               compact
+              compactViewport="short"
             />
 
-            <div className="mt-3 rounded-[18px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
+            <div className="mt-2 rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
+                  <div className="text-[10px] tracking-[0.2em] text-[color:var(--muted2)]">
                     CAPTURE STUDIO
                   </div>
-                  <div className="mt-0.5 text-xs text-[color:var(--muted)]">
+                  <div className="mt-0.5 text-[11px] text-[color:var(--muted)]">
                     Filters and adjustments are applied when you use the photo.
                   </div>
                 </div>
@@ -397,19 +398,19 @@ export default function CameraCapturePanel({
                     setSelectedFilterId("original");
                     setAdjustments(DEFAULT_CAPTURE_ADJUSTMENTS);
                   }}
-                  className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs ring-1 ring-[color:var(--border)]"
+                  className="rounded-full bg-[color:var(--pill)] px-3 py-1 text-xs ring-1 ring-[color:var(--border)]"
                 >
                   Reset
                 </button>
               </div>
 
-              <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+              <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
                 {CAPTURE_FILTER_PRESETS.map((preset) => (
                   <button
                     key={preset.id}
                     type="button"
                     onClick={() => setSelectedFilterId(preset.id)}
-                    className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 transition"
+                    className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition"
                     style={
                       selectedFilterId === preset.id
                         ? {
@@ -429,7 +430,7 @@ export default function CameraCapturePanel({
                 ))}
               </div>
 
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <div className="mt-2 grid gap-1.5 sm:grid-cols-3">
                 {[
                   { key: "brightness", label: "Brightness", min: 70, max: 130 },
                   { key: "contrast", label: "Contrast", min: 70, max: 140 },
@@ -437,12 +438,12 @@ export default function CameraCapturePanel({
                   { key: "warmth", label: "Warmth", min: -40, max: 40 },
                   { key: "sharpness", label: "Sharpness", min: 0, max: 30 },
                 ].map((control) => (
-                  <label key={control.key} className="rounded-2xl bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]">
+                  <label key={control.key} className="rounded-xl bg-[color:var(--pill)] px-2.5 py-1.5 ring-1 ring-[color:var(--border)]">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
                         {control.label}
                       </span>
-                      <span className="text-xs font-semibold text-[color:var(--fg)]">
+                      <span className="text-[11px] font-semibold text-[color:var(--fg)]">
                         {adjustments[control.key as keyof CaptureAdjustments]}
                       </span>
                     </div>
@@ -457,7 +458,7 @@ export default function CameraCapturePanel({
                           Number(event.target.value)
                         )
                       }
-                      className="mt-2 w-full accent-[color:var(--theme-gold)]"
+                      className="mt-1 w-full accent-[color:var(--theme-gold)]"
                     />
                   </label>
                 ))}

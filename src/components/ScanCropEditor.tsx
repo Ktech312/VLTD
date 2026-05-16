@@ -121,6 +121,7 @@ export default function ScanCropEditor({
   description = "Pinch or scroll to zoom. Drag any side or corner to crop. Drag inside the box to reposition.",
   applyLabel = "Save Crop",
   compact = false,
+  compactViewport = "default",
   viewportFixed = false,
 }: {
   imageUrl: string;
@@ -137,6 +138,7 @@ export default function ScanCropEditor({
   description?: string;
   applyLabel?: string;
   compact?: boolean;
+  compactViewport?: "default" | "short";
   viewportFixed?: boolean;
 }) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
@@ -435,11 +437,15 @@ export default function ScanCropEditor({
   const viewportClassName = viewportFixed
     ? "relative flex h-[min(54dvh,420px)] min-h-[220px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
     : compact
-      ? "relative flex h-[min(58dvh,520px)] min-h-[260px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
+      ? compactViewport === "short"
+        ? "relative flex h-[min(31dvh,260px)] min-h-[150px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
+        : "relative flex h-[min(58dvh,520px)] min-h-[260px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
       : "relative flex h-[min(62dvh,600px)] min-h-[300px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none";
   const imageClassName = viewportFixed
     ? "block max-h-[min(54dvh,420px)] max-w-full select-none object-contain"
-    : "block max-h-[min(58dvh,520px)] max-w-full select-none object-contain";
+    : compact && compactViewport === "short"
+      ? "block max-h-[min(31dvh,260px)] max-w-full select-none object-contain"
+      : "block max-h-[min(58dvh,520px)] max-w-full select-none object-contain";
 
   return (
     <section className={sectionClassName}>
