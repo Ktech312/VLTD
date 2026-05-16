@@ -438,20 +438,28 @@ function UniverseSection({
 }) {
   const label = UNIVERSE_LABEL[universeKey] ?? universeKey;
   const totalValue = items.reduce((sum, i) => sum + itemCurrentValue(i), 0);
+  const canLoop = items.length > 1;
+  const loopItems = canLoop ? [...items, ...items, ...items] : items;
+  const loopBaseIndex = canLoop ? items.length : 0;
   const railRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const sectionRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const canLoop = items.length > 1;
   const isDragging = useRef(false);
   const dragStartX = useRef(0);
   const dragStartScrollLeft = useRef(0);
   const syncFrame = useRef<number | null>(null);
+  const recenterTimer = useRef<number | null>(null);
 
-  function findCenterIndex(rail: HTMLDivElement): number {
+  function logicalIndex(displayIndex: number): number {
+    if (items.length === 0) return 0;
+    return ((displayIndex % items.length) + items.length) % items.length;
+  }
+
+  function findCenterDisplayIndex(rail: HTMLDivElement): number {
     const railRect = rail.getBoundingClientRect();
     const railCenter = railRect.left + railRect.width / 2;
-    let bestIndex = 0;
+    let bestIndex = loopBaseIndex;
     let bestDistance = Infinity;
 
     cardRefs.current.forEach((card, i) => {
@@ -471,19 +479,22 @@ function UniverseSection({
   function syncCenteredCard(shouldFeature: boolean) {
     const rail = railRef.current;
     if (!rail) return;
-    const centered = findCenterIndex(rail);
-    setActiveIndex(centered);
-    if (shouldFeature) onFeaturedChange?.(items[centered]);
+    const centered = findCenterDisplayIndex(rail);
+    const logical = logicalIndex(centered);
+    setActiveIndex(logical);
+    if (shouldFeature) onFeaturedChange?.(items[logical]);
   }
 
-  function scrollToIndex(index: number) {
+  function scrollToDisplayIndex(index: number, behavior: ScrollBehavior = "smooth", shouldFeature = true) {
     const rail = railRef.current;
     const card = cardRefs.current[index];
     if (!rail || !card) return;
     const left = card.offsetLeft + card.offsetWidth / 2 - rail.clientWidth / 2;
-    rail.scrollTo({ left, behavior: "smooth" });
-    setActiveIndex(index);
-    onFeaturedChange?.(items[index]);
+    rail.scrollTo({ left, behavior });
+
+    const logical = logicalIndex(index);
+    setActiveIndex(logical);
+    if (shouldFeature) onFeaturedChange?.(items[logical]);
   }
 
   function syncIfVisible() {
@@ -503,13 +514,21 @@ function UniverseSection({
   }
 
   useEffect(() => {
+    const rail = railRef.current;
+    if (!rail) return;
+    const initFrame = window.requestAnimationFrame(() => {
+      scrollToDisplayIndex(loopBaseIndex, "auto", false);
+      syncIfVisible();
+    });
     syncIfVisible();
     window.addEventListener("scroll", syncIfVisible, { passive: true });
     window.addEventListener("resize", syncIfVisible);
     return () => {
+      window.cancelAnimationFrame(initFrame);
       window.removeEventListener("scroll", syncIfVisible);
       window.removeEventListener("resize", syncIfVisible);
       if (syncFrame.current !== null) window.cancelAnimationFrame(syncFrame.current);
+      if (recenterTimer.current !== null) window.clearTimeout(recenterTimer.current);
     };
     // Only rerun after the rendered rail item count changes; scroll events keep it synced after that.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -518,9 +537,16 @@ function UniverseSection({
   function scrollStep(direction: -1 | 1) {
     if (!canLoop) return;
     const rail = railRef.current;
-    const current = activeIndex >= 0 ? activeIndex : rail ? findCenterIndex(rail) : 0;
-    const next = (current + direction + items.length) % items.length;
-    scrollToIndex(next);
+    const currentDisplay = rail ? findCenterDisplayIndex(rail) : loopBaseIndex;
+    const targetDisplay = currentDisplay + direction;
+    scrollToDisplayIndex(targetDisplay);
+
+    if (recenterTimer.current !== null) window.clearTimeout(recenterTimer.current);
+    recenterTimer.current = window.setTimeout(() => {
+      const targetLogical = logicalIndex(targetDisplay);
+      scrollToDisplayIndex(loopBaseIndex + targetLogical, "auto", false);
+      recenterTimer.current = null;
+    }, 420);
   }
 
   function onMouseDown(event: MouseEvent<HTMLDivElement>) {
@@ -634,19 +660,17 @@ function UniverseSection({
           scrollSnapType: "x mandatory",
         }}
       >
-        <div aria-hidden="true" style={{ flex: "0 0 calc(50% - 70px)" }} />
-        {items.map((item, i) => (
+        {loopItems.map((item, i) => (
           <div
-            key={item.id}
+            key={`${item.id}-${i}`}
             ref={(el) => {
               cardRefs.current[i] = el;
             }}
             style={{ flexShrink: 0, scrollSnapAlign: "center" }}
           >
-            <MuseumCard item={item} isActive={i === activeIndex} />
+            <MuseumCard item={item} isActive={logicalIndex(i) === activeIndex} />
           </div>
         ))}
-        <div aria-hidden="true" style={{ flex: "0 0 calc(50% - 70px)" }} />
       </div>
     </div>
   );
