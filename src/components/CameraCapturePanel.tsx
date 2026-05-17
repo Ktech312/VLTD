@@ -79,6 +79,7 @@ export default function CameraCapturePanel({
   const preferredDeviceIdRef = useRef("");
   const [cameraError, setCameraError] = useState("");
   const [isStarting, setIsStarting] = useState(true);
+  const [cameraReady, setCameraReady] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [permissionState, setPermissionState] = useState<CameraPermissionState>("unknown");
@@ -195,6 +196,7 @@ export default function CameraCapturePanel({
 
       stopCameraStream();
       setCameraError("");
+      setCameraReady(false);
       setIsStarting(true);
 
       if (!navigator.mediaDevices?.getUserMedia) {
@@ -203,14 +205,18 @@ export default function CameraCapturePanel({
         return;
       }
 
+      // Flip isStarting to false immediately now that we know getUserMedia
+      // exists. The camera stream request can take 5–15 s (OS-level hardware
+      // negotiation) and there is nothing we can do to shorten it — but we
+      // should not hold the entire UI hostage while it happens. The Capture
+      // button is gated by cameraReady (set by the video element's onCanPlay
+      // event) so it only enables once the first frame arrives. handleCapture()
+      // also guards videoWidth===0 as a safety net.
+      setIsStarting(false);
+
       try {
         let stream: MediaStream;
         const preferredDeviceId = preferredDeviceIdRef.current;
-        // When no preferred device is stored, request any camera with { video: true }.
-        // facingMode: { ideal: "environment" } forces Chrome to enumerate all input
-        // devices and fetch their facing-mode metadata before settling — that's the
-        // ~15 s stall on desktop. Mobile browsers default to the rear camera anyway,
-        // so facingMode adds no practical benefit on the first open.
         const requestedDevice = preferredDeviceId
           ? { deviceId: { exact: preferredDeviceId } }
           : true;
@@ -237,16 +243,10 @@ export default function CameraCapturePanel({
 
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          // Do NOT await play(). On many devices the camera hardware takes
-          // 5–15 s to produce its first frame after the OS grants the stream.
-          // Awaiting keeps isStarting=true (button disabled, "Starting Camera…")
-          // for that entire warmup. Firing play() without await lets isStarting
-          // flip to false as soon as we have the stream — the video element
-          // fills in frames as soon as hardware is ready. If the user taps
-          // Capture before frames arrive, the videoWidth===0 guard catches it.
           void videoRef.current.play().catch(() => undefined);
         }
       } catch (error) {
+        if (!isActive) return;
         const message = error instanceof Error ? error.message : "Camera access failed.";
         const currentSecureContext =
           typeof window === "undefined" ? true : window.isSecureContext;
@@ -265,10 +265,6 @@ export default function CameraCapturePanel({
         } else {
           setCameraError(message || "Camera access failed. Use the file picker instead.");
         }
-      } finally {
-        if (isActive) {
-          setIsStarting(false);
-        }
       }
     }
 
@@ -286,7 +282,7 @@ export default function CameraCapturePanel({
   }, [capturedFile, retryCount]);
 
   useEffect(() => {
-    if (capturedFile || cameraError || isStarting) {
+    if (capturedFile || cameraError || !cameraReady) {
       setDetectionBox(null);
       return;
     }
@@ -356,7 +352,7 @@ export default function CameraCapturePanel({
         window.clearTimeout(detectionTimer);
       }
     };
-  }, [cameraError, capturedFile, isStarting, retryCount]);
+  }, [cameraError, capturedFile, cameraReady, retryCount]);
 
   useEffect(() => {
     return () => {
@@ -467,6 +463,7 @@ export default function CameraCapturePanel({
     setCapturedPreviewUrl("");
     setCaptureCrop(DEFAULT_CROP);
     setCameraError("");
+    setCameraReady(false);
     setBlurAssessment(null);
     setSelectedFilterId("original");
     setAdjustments(DEFAULT_CAPTURE_ADJUSTMENTS);
@@ -760,6 +757,7 @@ export default function CameraCapturePanel({
                     autoPlay
                     muted
                     playsInline
+                    onCanPlay={() => setCameraReady(true)}
                     className="h-full w-full object-contain"
                   />
                 )}
@@ -838,10 +836,10 @@ export default function CameraCapturePanel({
               <button
                 type="button"
                 onClick={() => void handleCapture()}
-                disabled={Boolean(cameraError) || isStarting || isCapturing}
+                disabled={Boolean(cameraError) || !cameraReady || isCapturing}
                 className="vltd-primary-button min-h-11 rounded-xl px-3 py-2 text-sm font-black transition disabled:opacity-40"
               >
-                {isStarting ? "Starting Camera..." : isCapturing ? "Capturing..." : "Capture Photo"}
+                {!cameraReady && !cameraError ? "Starting Camera..." : isCapturing ? "Capturing..." : "Capture Photo"}
               </button>
               <div className="grid gap-2 sm:grid-cols-2">
                 <button
