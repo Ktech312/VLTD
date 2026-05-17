@@ -81,6 +81,7 @@ export type VaultItem = {
   soldAt?: number;
   createdAt?: number;
   isNew?: boolean;
+  isPublic?: boolean;
 };
 
 type LoadItemsOptions = {
@@ -419,6 +420,12 @@ function normalizeOne(input: unknown): VaultItem | null {
         ? raw.createdAt
         : Date.now(),
     isNew: typeof raw.isNew === "boolean" ? raw.isNew : true,
+    isPublic:
+      typeof raw.isPublic === "boolean"
+        ? raw.isPublic
+        : typeof raw.is_public === "boolean"
+          ? raw.is_public
+          : false,
   };
 }
 

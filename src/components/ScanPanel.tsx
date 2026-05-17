@@ -50,6 +50,7 @@ export default function ScanPanel({
   onUseCamera,
   onUploadImage,
   onScanAutofill,
+  onOpenImage,
   onCropImage = () => {},
   onBookLookup,
   onComicLookup,
@@ -74,6 +75,7 @@ export default function ScanPanel({
   onUseCamera: () => void;
   onUploadImage: () => void;
   onScanAutofill: () => void;
+  onOpenImage?: () => void;
   onCropImage?: () => void;
   onBookLookup: () => void;
   onComicLookup: () => void;
@@ -162,8 +164,9 @@ export default function ScanPanel({
 
         <button
           type="button"
-          onClick={previewUrl ? onCropImage : onUseCamera}
+          onClick={previewUrl ? onOpenImage ?? onCropImage : onUseCamera}
           className="flex min-h-[104px] items-center justify-center overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-2 text-center ring-1 ring-[color:var(--border)] transition hover:bg-black/25 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)] sm:min-h-[126px] lg:min-h-0"
+          title={previewUrl ? "Open photo options" : "Take a new picture"}
         >
           {previewUrl ? (
             <ProgressiveImage

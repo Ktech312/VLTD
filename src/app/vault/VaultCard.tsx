@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
 import NotableBadge from "@/components/NotableBadge";
 import { isNotable, notableReason } from "@/lib/itemIntelligence";
 import { type VaultItem as ModelItem } from "@/lib/vaultModel";
@@ -86,7 +87,7 @@ export default function VaultCard({
       >
         <div className={frame.frame}>
           <div className={frame.imgWrap}>
-            <div className="aspect-[3/4] w-full">
+            <div className="relative aspect-[3/4] w-full">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={imgSrc}
@@ -94,6 +95,9 @@ export default function VaultCard({
                 className="h-full w-full object-cover"
                 loading="lazy"
               />
+              <div className="absolute right-2 top-2 z-10">
+                <ItemVisibilityToggle item={item} />
+              </div>
             </div>
           </div>
         </div>
@@ -109,9 +113,11 @@ export default function VaultCard({
           <div className="text-sm text-[color:var(--muted)]">
             {item.subtitle} {item.number} {item.grade ? `• ${item.grade}` : ""}
           </div>
-          <div className="mt-2 text-sm text-[color:var(--fg)]">
-            Value: <span className="font-medium">${item.currentValue ?? 0}</span>
-          </div>
+          {typeof item.currentValue === "number" && item.currentValue > 0 ? (
+            <div className="mt-2 text-sm text-[color:var(--fg)]">
+              Value: <span className="font-medium">${item.currentValue}</span>
+            </div>
+          ) : null}
         </div>
       </div>
     </a>

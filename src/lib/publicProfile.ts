@@ -1,0 +1,161 @@
+"use client";
+
+import { getProfileSafe } from "@/lib/userProfile";
+import { getStoredActiveProfileId } from "@/lib/auth";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { getVaultImagePublicUrl, isDirectBrowserImageUrl, VAULT_ITEMS_TABLE } from "@/lib/vaultCloud";
+import type { VaultImage, VaultItem } from "@/lib/vaultModel";
+
+type UnknownRecord = Record<string, unknown>;
+
+export type PublicProfile = {
+  profileId: string;
+  displayName: string;
+  avatarEmoji: string;
+};
+
+function asRecord(value: unknown): UnknownRecord {
+  return value && typeof value === "object" ? (value as UnknownRecord) : {};
+}
+
+function optionalString(value: unknown) {
+  return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+function optionalNumber(value: unknown) {
+  const next = Number(value);
+  return Number.isFinite(next) ? next : undefined;
+}
+
+function rowToVaultImage(entry: unknown, index: number): VaultImage | null {
+  const image = asRecord(entry);
+  const storageKey = String(image.storageKey ?? "").trim();
+  const url = String(image.url ?? "").trim();
+  if (!storageKey && !url) return null;
+  return {
+    id: String(image.id ?? storageKey ?? url).trim() || `image_${index}`,
+    storageKey: storageKey || url,
+    url: url || undefined,
+    order: Number.isFinite(Number(image.order)) ? Number(image.order) : index,
+    localOnly: Boolean(image.localOnly),
+  };
+}
+
+function publicRowToItem(input: unknown): VaultItem {
+  const row = asRecord(input);
+  const imageFrontUrlRaw = typeof row.image_front_url === "string" ? row.image_front_url : "";
+  const imageFrontStoragePath =
+    typeof row.image_front_storage_path === "string" ? row.image_front_storage_path : "";
+  const images = Array.isArray(row.images_json)
+    ? row.images_json.map(rowToVaultImage).filter((image): image is VaultImage => Boolean(image))
+    : [];
+  const primaryImageKey =
+    (typeof row.primary_image_key === "string" && row.primary_image_key) ||
+    imageFrontStoragePath ||
+    imageFrontUrlRaw ||
+    undefined;
+  const imageFrontUrl =
+    imageFrontUrlRaw && isDirectBrowserImageUrl(imageFrontUrlRaw)
+      ? imageFrontUrlRaw
+      : imageFrontStoragePath
+        ? getVaultImagePublicUrl(imageFrontStoragePath)
+        : images[0]?.url;
+
+  return {
+    id: String(row.id),
+    profile_id: optionalString(row.profile_id),
+    universe: optionalString(row.universe),
+    category: optionalString(row.category),
+    categoryLabel: optionalString(row.category_label),
+    subcategoryLabel: optionalString(row.subcategory_label),
+    title: optionalString(row.title) || "Untitled item",
+    subtitle: optionalString(row.subtitle),
+    number: optionalString(row.number),
+    grade: optionalString(row.grade),
+    purchasePrice: optionalNumber(row.purchase_price),
+    currentValue: optionalNumber(row.current_value),
+    imageFrontUrl,
+    imageFrontStoragePath: imageFrontStoragePath || undefined,
+    images,
+    primaryImageKey,
+    notes: optionalString(row.notes),
+    storageLocation: optionalString(row.storage_location),
+    certNumber: optionalString(row.cert_number),
+    serialNumber: optionalString(row.serial_number),
+    subject: optionalString(row.subject),
+    status:
+      row.status === "COLLECTION" || row.status === "FOR_SALE" || row.status === "SOLD" || row.status === "WISHLIST"
+        ? row.status
+        : undefined,
+    createdAt: optionalNumber(row.created_at) ?? Date.now(),
+    isNew: typeof row.is_new === "boolean" ? row.is_new : false,
+    isPublic: typeof row.is_public === "boolean" ? row.is_public : true,
+  };
+}
+
+export async function syncPublicProfile(profileId = getStoredActiveProfileId()) {
+  const supabase = getSupabaseBrowserClient();
+  const cleanProfileId = String(profileId ?? "").trim();
+  if (!supabase || !cleanProfileId) return null;
+
+  const profile = getProfileSafe();
+  const payload = {
+    profile_id: cleanProfileId,
+    display_name: profile.displayName?.trim() || profile.username?.trim() || "Collector",
+    avatar_emoji: profile.avatarEmoji?.trim() || "🗝️",
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data, error } = await supabase
+    .from("public_profiles")
+    .upsert(payload, { onConflict: "profile_id" })
+    .select("*")
+    .single();
+
+  if (error) throw new Error(error.message || "Failed to sync public profile.");
+  return data;
+}
+
+export async function fetchPublicProfile(profileId: string): Promise<PublicProfile | null> {
+  const supabase = getSupabaseBrowserClient();
+  const cleanProfileId = String(profileId ?? "").trim();
+  if (!supabase || !cleanProfileId) return null;
+
+  const { data, error } = await supabase
+    .from("public_profiles")
+    .select("profile_id, display_name, avatar_emoji")
+    .eq("profile_id", cleanProfileId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message || "Failed to load public profile.");
+  if (!data) return null;
+
+  return {
+    profileId: String(data.profile_id),
+    displayName: String(data.display_name || "Collector"),
+    avatarEmoji: String(data.avatar_emoji || "🗝️"),
+  };
+}
+
+export async function fetchPublicVaultItems(profileId: string): Promise<VaultItem[]> {
+  const supabase = getSupabaseBrowserClient();
+  const cleanProfileId = String(profileId ?? "").trim();
+  if (!supabase || !cleanProfileId) return [];
+
+  const { data, error } = await supabase
+    .from(VAULT_ITEMS_TABLE)
+    .select("*, images_json, primary_image_key")
+    .eq("profile_id", cleanProfileId)
+    .eq("is_public", true)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message || "Failed to load public vault.");
+  return (data ?? []).map(publicRowToItem);
+}
+
+export function getPublicVaultUrl(profileId = getStoredActiveProfileId()) {
+  const cleanProfileId = String(profileId ?? "").trim();
+  if (!cleanProfileId) return "";
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  return `${origin}/v/${encodeURIComponent(cleanProfileId)}`;
+}

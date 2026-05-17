@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
+import { LockKeyhole } from "lucide-react";
 import { isNotable, notableReason } from "@/lib/itemIntelligence";
 import { itemCurrentValue, itemProfit, itemTotalCost } from "@/lib/portfolioMetrics";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
@@ -47,6 +49,21 @@ function itemGradeShort(i: ModelItem): string | null {
   const g = i.grade?.trim();
   if (!g) return null;
   return g.length > 10 ? g.slice(0, 10) : g;
+}
+
+function PrivateBadge({ compact = false }: { compact?: boolean }) {
+  return (
+    <div
+      className={[
+        "pointer-events-none inline-flex items-center gap-1 rounded-full bg-black/68 font-bold uppercase tracking-[0.1em] text-white/72 ring-1 ring-white/14 backdrop-blur",
+        compact ? "px-1.5 py-0.5 text-[8px]" : "px-2.5 py-1 text-[10px]",
+      ].join(" ")}
+      title="Private item"
+    >
+      <LockKeyhole size={compact ? 10 : 12} strokeWidth={2.2} aria-hidden="true" />
+      Private
+    </div>
+  );
 }
 
 function SpotlightCard({ item }: { item: ModelItem }) {
@@ -160,6 +177,12 @@ function SpotlightCard({ item }: { item: ModelItem }) {
             Key Item
           </div>
         )}
+
+        {!item.isPublic ? (
+          <div className="absolute left-3 top-12">
+            <PrivateBadge />
+          </div>
+        ) : null}
 
         {grade && (
           <div
@@ -372,6 +395,12 @@ function MuseumCard({
             </div>
           )}
 
+          {!item.isPublic ? (
+            <div className="absolute bottom-1.5 right-1.5">
+              <PrivateBadge compact />
+            </div>
+          ) : null}
+
           {grade && (
             <div
               className="absolute right-1.5 top-1.5 rounded-md px-1.5 py-0.5 text-[9px] font-bold ring-1"
@@ -559,7 +588,7 @@ function UniverseSection({
               opacity: canScrollLeft ? 1 : 0.35,
             }}
           >
-            {"<"}
+            <ChevronLeft size={15} strokeWidth={2.4} aria-hidden="true" />
           </button>
           <button
             type="button"
@@ -575,7 +604,7 @@ function UniverseSection({
               opacity: canScrollRight ? 1 : 0.35,
             }}
           >
-            {">"}
+            <ChevronRight size={15} strokeWidth={2.4} aria-hidden="true" />
           </button>
           <button
             type="button"

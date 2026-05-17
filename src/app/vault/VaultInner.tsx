@@ -8,6 +8,7 @@ import { DEMO_ITEMS } from "@/lib/demoVault";
 import UniverseRail from "@/components/UniverseRail";
 import SwipeStack from "@/components/SwipeStack";
 import VaultMuseumView from "@/components/VaultMuseumView";
+import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
 import { TAXONOMY, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { loadItemsOrSeed, saveItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { type Tier, getTierSafe, onTierChange } from "@/lib/subscription";
@@ -430,6 +431,7 @@ function ShelfRow({
 }
 
 function VaultCard({
+  item,
   href,
   frameStyle,
   imgSrc,
@@ -439,6 +441,7 @@ function VaultCard({
   valueLine,
   badgeLine,
 }: {
+  item: ModelItem;
   href: string;
   frameStyle: FrameStyle;
   imgSrc: string;
@@ -508,7 +511,13 @@ function VaultCard({
         <div className="mt-1 line-clamp-1 text-[12px] font-semibold text-[color:var(--fg)] sm:text-[14px]">{title}</div>
         {badgeLine ? <div className="mt-1 flex justify-center gap-1.5">{badgeLine}</div> : null}
         <div className="line-clamp-1 text-[10px] text-[color:var(--muted)] sm:text-[11px]">{subtitleLine || "—"}</div>
-        <div className="mt-1 text-[10px] text-[color:var(--fg)] sm:text-[11px]">{valueLine}</div>
+        <div className="mt-1 text-[10px] text-[color:var(--fg)] sm:text-[11px]">
+          {Number(item.currentValue ?? 0) > 0 || Number(item.purchasePrice ?? 0) > 0 ? (
+            valueLine
+          ) : (
+            <span className="text-[color:var(--muted2)]">No value yet</span>
+          )}
+        </div>
       </div>
 
       <div
@@ -548,6 +557,9 @@ function VaultCard({
                   loading="lazy"
                   draggable={false}
                 />
+                <div className="absolute right-2 top-2 z-20">
+                  <ItemVisibilityToggle item={item} />
+                </div>
 
                 {frame.glass ? (
                   <>
@@ -1490,6 +1502,7 @@ export default function VaultInner() {
                     {row.map((i) => (
                       <VaultCard
                         key={i.id}
+                        item={i}
                         href={`/vault/item/${i.id}`}
                         frameStyle={frameStyle}
                         imgSrc={museumImgSrc(i)}
@@ -1499,7 +1512,13 @@ export default function VaultInner() {
                         badgeLine={itemBadges(i)}
                         valueLine={
                           <>
-                            Value: <span className="font-medium">${i.currentValue ?? 0}</span>
+                            {Number(i.currentValue ?? 0) > 0 ? (
+                              <>
+                                Value: <span className="font-medium">${i.currentValue}</span>
+                              </>
+                            ) : (
+                              <span className="text-[color:var(--muted2)]">No value yet</span>
+                            )}
                           </>
                         }
                       />
@@ -1538,6 +1557,7 @@ export default function VaultInner() {
                   {row.map((i) => (
                     <VaultCard
                       key={i.id}
+                      item={i}
                       href={`/vault/item/${i.id}`}
                       frameStyle={frameStyle}
                       imgSrc={museumImgSrc(i)}

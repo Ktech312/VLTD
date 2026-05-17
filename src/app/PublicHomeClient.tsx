@@ -333,14 +333,14 @@ export default function PublicHomeClient() {
           <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-[rgba(245,181,72,0.28)] px-4 py-2 text-xs font-medium text-[color:var(--accent)]" style={{ background: cardBg }}>
             <span className="vltd-brand-dot h-2 w-2" /> VLTD{" "}
             <span className="text-[color:var(--muted2)]">—</span> pronounced
-            “Vaulted”
+            &ldquo;Vaulted&rdquo;
           </div>
 
           <h1 className="mx-auto mt-7 max-w-3xl text-5xl font-black leading-[0.96] tracking-[-0.06em] text-text-primary sm:text-6xl lg:text-7xl">
-            Scan. Vault. <span className="text-[color:var(--accent)]">Know what it's worth.</span>
+            Scan. Vault. <span className="text-[color:var(--accent)]">Know what it&apos;s worth.</span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[color:var(--muted)]">
-            VLTD is the collector's operating system — AI scanning, full portfolio
+            VLTD is the collector&apos;s operating system — AI scanning, full portfolio
             analytics, museum-style galleries, and insurance docs across every category.
             One vault. Every collectible.
           </p>
@@ -593,43 +593,43 @@ export default function PublicHomeClient() {
         </p>
       </section>
 
-      <footer className=”border-t border-[color:var(--border)] px-4 py-6 sm:px-6 lg:px-8”>
-        <div className=”mx-auto max-w-7xl”>
-          <div className=”flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between”>
-            <div className=”flex flex-col gap-1”>
+      <footer className="border-t border-[color:var(--border)] px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex flex-col gap-1">
               <BrandMark />
-              <p className=”mt-1 max-w-xs text-xs text-[color:var(--muted2)]”>
-                The collector's operating system. Every category. One vault.
+              <p className="mt-1 max-w-xs text-xs text-[color:var(--muted2)]">
+                The collector&apos;s operating system. Every category. One vault.
               </p>
             </div>
-            <div className=”grid grid-cols-2 gap-x-10 gap-y-2 text-sm sm:grid-cols-3”>
+            <div className="grid grid-cols-2 gap-x-10 gap-y-2 text-sm sm:grid-cols-3">
               <div>
-                <div className=”mb-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--muted2)]”>Product</div>
-                <div className=”flex flex-col gap-1.5”>
-                  <Link href=”/signup” className=”text-[color:var(--muted)] hover:text-text-primary transition”>Sign up</Link>
-                  <Link href=”/login” className=”text-[color:var(--muted)] hover:text-text-primary transition”>Log in</Link>
-                  <Link href=”/learn” className=”text-[color:var(--muted)] hover:text-text-primary transition”>Learn</Link>
+                <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Product</div>
+                <div className="flex flex-col gap-1.5">
+                  <Link href="/signup" className="text-[color:var(--muted)] hover:text-text-primary transition">Sign up</Link>
+                  <Link href="/login" className="text-[color:var(--muted)] hover:text-text-primary transition">Log in</Link>
+                  <Link href="/learn" className="text-[color:var(--muted)] hover:text-text-primary transition">Learn</Link>
                 </div>
               </div>
               <div>
-                <div className=”mb-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--muted2)]”>Explore</div>
-                <div className=”flex flex-col gap-1.5”>
-                  <Link href=”#public-galleries” className=”text-[color:var(--muted)] hover:text-text-primary transition”>Galleries</Link>
-                  <Link href=”/discover” className=”text-[color:var(--muted)] hover:text-text-primary transition”>Discover</Link>
-                  <Link href=”/museum” className=”text-[color:var(--muted)] hover:text-text-primary transition”>Museum</Link>
+                <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Explore</div>
+                <div className="flex flex-col gap-1.5">
+                  <Link href="#public-galleries" className="text-[color:var(--muted)] hover:text-text-primary transition">Galleries</Link>
+                  <Link href="/discover" className="text-[color:var(--muted)] hover:text-text-primary transition">Discover</Link>
+                  <Link href="/museum" className="text-[color:var(--muted)] hover:text-text-primary transition">Museum</Link>
                 </div>
               </div>
               <div>
-                <div className=”mb-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--muted2)]”>Universes</div>
-                <div className=”flex flex-col gap-1.5”>
-                  <Link href=”/signup” className=”text-[color:var(--muted)] hover:text-text-primary transition”>TCG</Link>
-                  <Link href=”/signup” className=”text-[color:var(--muted)] hover:text-text-primary transition”>Sports</Link>
-                  <Link href=”/signup” className=”text-[color:var(--muted)] hover:text-text-primary transition”>Pop Culture</Link>
+                <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Universes</div>
+                <div className="flex flex-col gap-1.5">
+                  <Link href="/signup" className="text-[color:var(--muted)] hover:text-text-primary transition">TCG</Link>
+                  <Link href="/signup" className="text-[color:var(--muted)] hover:text-text-primary transition">Sports</Link>
+                  <Link href="/signup" className="text-[color:var(--muted)] hover:text-text-primary transition">Pop Culture</Link>
                 </div>
               </div>
             </div>
           </div>
-          <div className=”mt-6 border-t border-[color:var(--border)] pt-4 text-xs text-[color:var(--muted2)]”>
+          <div className="mt-6 border-t border-[color:var(--border)] pt-4 text-xs text-[color:var(--muted2)]">
             © 2026 VLTD. Pronounced “Vaulted.” — free to start · no credit card required
           </div>
         </div>

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import ItemIntelligencePanel from "@/components/ItemIntelligencePanel";
+import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
 import RestoreVaultButton from "@/components/RestoreVaultButton";
 import SellItemButton from "@/components/SellItemButton";
 import SwipeStack from "@/components/SwipeStack";
@@ -451,22 +452,27 @@ function VaultCard({
         {statusLabel}
       </span>
 
-      <Link href={detailHref} className="block h-[78px] overflow-hidden rounded-[10px] bg-black/18">
-        {image ? (
-          <ProgressiveImage
-            src={image}
-            alt={item.title}
-            className="h-full w-full"
-            imageClassName="object-contain object-center"
-            draggable={false}
-          />
-        ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-white/28">
-            <CameraIcon className="h-5 w-5" />
-            <span>No photo</span>
-          </div>
-        )}
-      </Link>
+      <div className="relative h-[78px] overflow-hidden rounded-[10px] bg-black/18">
+        <Link href={detailHref} className="block h-full">
+          {image ? (
+            <ProgressiveImage
+              src={image}
+              alt={item.title}
+              className="h-full w-full"
+              imageClassName="object-contain object-center"
+              draggable={false}
+            />
+          ) : (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-white/28">
+              <CameraIcon className="h-5 w-5" />
+              <span>No photo</span>
+            </div>
+          )}
+        </Link>
+        <div className="absolute right-1.5 top-1.5 z-30">
+          <ItemVisibilityToggle item={item} />
+        </div>
+      </div>
 
       <Link href={detailHref} className="mt-2 min-w-0">
         <div className="line-clamp-1 text-[13px] font-extrabold leading-tight text-text-primary sm:text-[14px]">
@@ -500,7 +506,7 @@ function VaultCard({
               onClick={() => setEditingField("value")}
               className="block text-left text-[13px] font-extrabold leading-none text-text-primary hover:text-gold-light"
             >
-              {formatMoney(marketValue)}
+              {marketValue > 0 ? formatMoney(marketValue) : "No value"}
             </button>
           )}
           <div className={showGain ? (gain >= 0 ? "mt-1 text-[10px] font-bold leading-none text-emerald-300" : "mt-1 text-[10px] font-bold leading-none text-red-300") : "mt-1 text-[10px] font-bold leading-none text-[color:var(--muted)]"}>

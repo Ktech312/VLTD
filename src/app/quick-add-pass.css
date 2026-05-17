@@ -70,9 +70,23 @@ body:has(input[placeholder="Title *"]) textarea::placeholder {
 }
 
 body:has(input[placeholder="Title *"]) a[href="/"] {
-  background: rgba(245, 181, 72, 0.08) !important;
-  border-color: rgba(245, 181, 72, 0.22) !important;
-  color: #F5B548 !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  color: inherit !important;
+}
+
+/* Remove drop-shadow from logo and nav icons on Quick Add page */
+body:has(input[placeholder="Title *"]) nav img,
+body:has(input[placeholder="Title *"]) header img,
+body:has(input[placeholder="Title *"]) nav svg {
+  filter: none !important;
+}
+
+/* Soften the top card shadow: less gold glow, more neutral depth */
+body:has(input[placeholder="Title *"]) main > div > div:first-child {
+  box-shadow:
+    0 0 0 1px rgba(245, 181, 72, 0.04),
+    0 12px 48px rgba(0, 0, 0, 0.36) !important;
 }
 
 @media (max-width: 700px) {
