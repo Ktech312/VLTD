@@ -456,8 +456,8 @@ export default function CameraCapturePanel({
   }
 
   return (
-    <div className="fixed inset-0 z-[80] bg-black/75 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="mx-auto flex max-h-[calc(100dvh-1rem)] max-w-3xl flex-col overflow-hidden rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:max-h-[calc(100dvh-2rem)]">
+    <div className="fixed inset-0 z-[80] overflow-y-auto overscroll-contain bg-black/75 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="mx-auto flex max-w-3xl flex-col rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
@@ -477,7 +477,7 @@ export default function CameraCapturePanel({
         </div>
 
         {capturedFile && capturedPreviewUrl ? (
-          <div className="mt-2 min-h-0 overflow-hidden">
+          <div className="mt-2">
             {blurAssessment?.isBlurry ? (
               <div className="mb-2 rounded-2xl bg-[color:var(--pill)] px-3 py-2 text-xs ring-1 ring-[color:var(--theme-gold-border,rgba(245,181,72,0.32))]">
                 <div className="font-semibold text-[color:var(--theme-gold,#F5B548)]">
