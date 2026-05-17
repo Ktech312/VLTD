@@ -234,10 +234,11 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
 
     async function startCamera() {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } },
-        });
+        // { video: true } grabs the first available camera immediately.
+        // Specifying facingMode forces Chrome to probe all input sources for
+        // facing-mode metadata before settling — that's the 20-second stall on
+        // desktop. Mobile browsers default to the rear camera regardless.
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         if (!active) {
           stream.getTracks().forEach((track) => track.stop());
           return;
@@ -466,7 +467,12 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
-      <div className="relative min-h-0 flex-1 bg-[#040912]">
+      {/* Inline style caps height reliably — Tailwind JIT can silently drop
+          CSS min() inside arbitrary-value brackets on some builds. */}
+      <div
+        className="relative w-full shrink-0 bg-[#040912]"
+        style={{ height: "min(36dvh, 320px)", overflow: "hidden" }}
+      >
         <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />
         <FrameOverlay frameType={frameType} lockProgress={lockProgress} />
 
