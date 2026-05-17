@@ -10,7 +10,11 @@ import {
   isOriginalCaptureTreatment,
   type CaptureAdjustments,
 } from "@/components/capture/captureFilters";
-import { getCaptureFrame, getCaptureUniverseLabel } from "@/components/capture/captureFrames";
+import {
+  getCaptureFrame,
+  getCaptureUniverseLabel,
+  type CaptureFrame,
+} from "@/components/capture/captureFrames";
 import {
   applyCssFilterToFile,
   assessCanvasBlur,
@@ -26,6 +30,29 @@ type DetectionState = "idle" | "loading" | "ready" | "unavailable";
 type DetectionBox = { x: number; y: number; width: number; height: number };
 
 const DEFAULT_CROP: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
+
+const FRAME_PRESETS: Array<{ id: string; label: string; frame: CaptureFrame }> = [
+  {
+    id: "card",
+    label: "Card",
+    frame: { label: "Card frame", aspectRatio: "2.5 / 3.5", inset: "10%", radius: "14px" },
+  },
+  {
+    id: "book",
+    label: "Book",
+    frame: { label: "Book frame", aspectRatio: "2 / 3", inset: "7%", radius: "16px" },
+  },
+  {
+    id: "jewelry",
+    label: "Jewelry",
+    frame: { label: "Jewelry frame", aspectRatio: "1 / 1", inset: "12%", radius: "999px" },
+  },
+  {
+    id: "art",
+    label: "Art",
+    frame: { label: "Art frame", aspectRatio: "4 / 5", inset: "8%", radius: "14px" },
+  },
+];
 
 function isDefaultCrop(crop: ScanCropRect) {
   return crop.left === 0 && crop.top === 0 && crop.right === 0 && crop.bottom === 0;
@@ -69,12 +96,15 @@ export default function CameraCapturePanel({
   const [backgroundError, setBackgroundError] = useState("");
   const [isBackgroundRemoved, setIsBackgroundRemoved] = useState(false);
   const [selectedBackgroundId, setSelectedBackgroundId] = useState("transparent");
+  const [selectedFrameId, setSelectedFrameId] = useState("");
+  const [showFineTune, setShowFineTune] = useState(false);
 
   const activeFilter =
     CAPTURE_FILTER_PRESETS.find((preset) => preset.id === selectedFilterId) ??
     CAPTURE_FILTER_PRESETS[0];
   const imageFilter = buildCaptureFilterCss(activeFilter, adjustments);
-  const frame = getCaptureFrame(universe);
+  const selectedFramePreset = FRAME_PRESETS.find((preset) => preset.id === selectedFrameId);
+  const frame = selectedFramePreset?.frame ?? getCaptureFrame(universe);
   const universeLabel = getCaptureUniverseLabel(universe);
   const selectedBackground =
     CAPTURE_BACKGROUNDS.find((background) => background.id === selectedBackgroundId) ??
@@ -478,6 +508,35 @@ export default function CameraCapturePanel({
 
         {capturedFile && capturedPreviewUrl ? (
           <div className="mt-2">
+            <div className="mb-2 flex flex-wrap gap-1.5">
+              {FRAME_PRESETS.map((preset) => {
+                const isSelected = selectedFrameId === preset.id;
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => setSelectedFrameId(preset.id)}
+                    className="rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition"
+                    style={
+                      isSelected
+                        ? {
+                            background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))",
+                            borderColor: "var(--theme-gold-border, rgba(245,181,72,0.38))",
+                            color: "var(--theme-gold, #F5B548)",
+                          }
+                        : {
+                            background: "var(--pill)",
+                            borderColor: "var(--border)",
+                            color: "var(--muted)",
+                          }
+                    }
+                  >
+                    {preset.label}
+                  </button>
+                );
+              })}
+            </div>
+
             {blurAssessment?.isBlurry ? (
               <div className="mb-2 rounded-2xl bg-[color:var(--pill)] px-3 py-2 text-xs ring-1 ring-[color:var(--theme-gold-border,rgba(245,181,72,0.32))]">
                 <div className="font-semibold text-[color:var(--theme-gold,#F5B548)]">
@@ -553,39 +612,49 @@ export default function CameraCapturePanel({
                 ))}
               </div>
 
-              <div className="mt-2 grid gap-1.5 sm:grid-cols-3">
-                {[
-                  { key: "brightness", label: "Brightness", min: 70, max: 130 },
-                  { key: "contrast", label: "Contrast", min: 70, max: 140 },
-                  { key: "saturation", label: "Saturation", min: 60, max: 150 },
-                  { key: "warmth", label: "Warmth", min: -40, max: 40 },
-                  { key: "sharpness", label: "Sharpness", min: 0, max: 30 },
-                ].map((control) => (
-                  <label key={control.key} className="rounded-xl bg-[color:var(--pill)] px-2.5 py-1.5 ring-1 ring-[color:var(--border)]">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
-                        {control.label}
-                      </span>
-                      <span className="text-[11px] font-semibold text-[color:var(--fg)]">
-                        {adjustments[control.key as keyof CaptureAdjustments]}
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min={control.min}
-                      max={control.max}
-                      value={adjustments[control.key as keyof CaptureAdjustments]}
-                      onChange={(event) =>
-                        updateAdjustment(
-                          control.key as keyof CaptureAdjustments,
-                          Number(event.target.value)
-                        )
-                      }
-                      className="mt-1 w-full accent-[color:var(--theme-gold)]"
-                    />
-                  </label>
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={() => setShowFineTune((value) => !value)}
+                className="mt-2 rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
+              >
+                Fine Tune {showFineTune ? "▴" : "▾"}
+              </button>
+
+              {showFineTune ? (
+                <div className="mt-2 grid gap-1.5 sm:grid-cols-3">
+                  {[
+                    { key: "brightness", label: "Brightness", min: 70, max: 130 },
+                    { key: "contrast", label: "Contrast", min: 70, max: 140 },
+                    { key: "saturation", label: "Saturation", min: 60, max: 150 },
+                    { key: "warmth", label: "Warmth", min: -40, max: 40 },
+                    { key: "sharpness", label: "Sharpness", min: 0, max: 30 },
+                  ].map((control) => (
+                    <label key={control.key} className="rounded-xl bg-[color:var(--pill)] px-2.5 py-1.5 ring-1 ring-[color:var(--border)]">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
+                          {control.label}
+                        </span>
+                        <span className="text-[11px] font-semibold text-[color:var(--fg)]">
+                          {adjustments[control.key as keyof CaptureAdjustments]}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={control.min}
+                        max={control.max}
+                        value={adjustments[control.key as keyof CaptureAdjustments]}
+                        onChange={(event) =>
+                          updateAdjustment(
+                            control.key as keyof CaptureAdjustments,
+                            Number(event.target.value)
+                          )
+                        }
+                        className="mt-1 w-full accent-[color:var(--theme-gold)]"
+                      />
+                    </label>
+                  ))}
+                </div>
+              ) : null}
 
               <div className="mt-2 rounded-2xl bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)]">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -741,39 +810,31 @@ export default function CameraCapturePanel({
               </select>
             ) : null}
 
-            <div className="mt-2 grid gap-2 sm:grid-cols-3">
+            <div className="mt-2 grid gap-2">
               <button
                 type="button"
                 onClick={() => void handleCapture()}
                 disabled={Boolean(cameraError) || isStarting || isCapturing}
-                className="min-h-10 rounded-xl bg-[color:var(--pill-active-bg)] px-3 py-2 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)] disabled:opacity-40"
+                className="vltd-primary-button min-h-11 rounded-xl px-3 py-2 text-sm font-black transition disabled:opacity-40"
               >
                 {isStarting ? "Starting Camera..." : isCapturing ? "Capturing..." : "Capture Photo"}
               </button>
-              <button
-                type="button"
-                onClick={() => setRetryCount((count) => count + 1)}
-                className="min-h-10 rounded-xl bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
-              >
-                Retry Camera
-              </button>
-              <button
-                type="button"
-                onClick={onUseFileInstead}
-                className="min-h-10 rounded-xl bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
-              >
-                Choose File Instead
-              </button>
-            </div>
-
-            <div className="mt-2 grid gap-2 sm:grid-cols-1">
-              <button
-                type="button"
-                onClick={onClose}
-                className="min-h-10 rounded-xl bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
-              >
-                Cancel
-              </button>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => setRetryCount((count) => count + 1)}
+                  className="min-h-10 rounded-xl bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
+                >
+                  Retry Camera
+                </button>
+                <button
+                  type="button"
+                  onClick={onUseFileInstead}
+                  className="min-h-10 rounded-xl bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
+                >
+                  Choose File
+                </button>
+              </div>
             </div>
           </>
         )}
