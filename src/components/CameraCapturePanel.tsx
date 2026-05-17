@@ -75,6 +75,7 @@ export default function CameraCapturePanel({
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const selectedDeviceIdRef = useRef("");
   const [cameraError, setCameraError] = useState("");
   const [isStarting, setIsStarting] = useState(true);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -110,6 +111,10 @@ export default function CameraCapturePanel({
     CAPTURE_BACKGROUNDS.find((background) => background.id === selectedBackgroundId) ??
     CAPTURE_BACKGROUNDS[0];
 
+  useEffect(() => {
+    selectedDeviceIdRef.current = selectedDeviceId;
+  }, [selectedDeviceId]);
+
   function stopCameraStream() {
     const stream = streamRef.current;
     streamRef.current = null;
@@ -133,7 +138,8 @@ export default function CameraCapturePanel({
         const cameras = devices.filter((device) => device.kind === "videoinput");
         setVideoDevices(cameras);
 
-        if (selectedDeviceId && cameras.some((camera) => camera.deviceId === selectedDeviceId)) {
+        const currentDeviceId = selectedDeviceIdRef.current;
+        if (currentDeviceId && cameras.some((camera) => camera.deviceId === currentDeviceId)) {
           return;
         }
 
@@ -198,9 +204,9 @@ export default function CameraCapturePanel({
 
       try {
         let stream: MediaStream;
-        const requestedDevice = selectedDeviceId
+        const requestedDevice = selectedDeviceIdRef.current
           ? {
-              deviceId: { exact: selectedDeviceId },
+              deviceId: { exact: selectedDeviceIdRef.current },
             }
           : {
               facingMode: { ideal: "environment" },
@@ -266,7 +272,7 @@ export default function CameraCapturePanel({
       }
       stopCameraStream();
     };
-  }, [capturedFile, retryCount, selectedDeviceId]);
+  }, [capturedFile, retryCount]);
 
   useEffect(() => {
     if (capturedFile || cameraError || isStarting) {
@@ -338,7 +344,7 @@ export default function CameraCapturePanel({
         window.clearTimeout(detectionTimer);
       }
     };
-  }, [cameraError, capturedFile, isStarting, retryCount, selectedDeviceId]);
+  }, [cameraError, capturedFile, isStarting, retryCount]);
 
   useEffect(() => {
     return () => {
@@ -798,7 +804,10 @@ export default function CameraCapturePanel({
             {videoDevices.length > 1 ? (
               <select
                 value={selectedDeviceId}
-                onChange={(event) => setSelectedDeviceId(event.target.value)}
+                onChange={(event) => {
+                  setSelectedDeviceId(event.target.value);
+                  setRetryCount((count) => count + 1);
+                }}
                 className="mt-2 h-8 rounded-xl bg-[color:var(--pill)] px-3 text-xs text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
                 aria-label="Select camera"
               >
