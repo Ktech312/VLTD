@@ -76,6 +76,7 @@ export default function CameraCapturePanel({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const selectedDeviceIdRef = useRef("");
+  const preferredDeviceIdRef = useRef("");
   const [cameraError, setCameraError] = useState("");
   const [isStarting, setIsStarting] = useState(true);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -204,9 +205,10 @@ export default function CameraCapturePanel({
 
       try {
         let stream: MediaStream;
-        const requestedDevice = selectedDeviceIdRef.current
+        const preferredDeviceId = preferredDeviceIdRef.current;
+        const requestedDevice = preferredDeviceId
           ? {
-              deviceId: { exact: selectedDeviceIdRef.current },
+              deviceId: { exact: preferredDeviceId },
             }
           : {
               facingMode: { ideal: "environment" },
@@ -262,8 +264,8 @@ export default function CameraCapturePanel({
       }
     }
 
-    void readPermissionState();
     void startCamera();
+    void readPermissionState();
 
     return () => {
       isActive = false;
@@ -336,10 +338,11 @@ export default function CameraCapturePanel({
       }
     }
 
-    void loadDetector();
+    const loadTimer = window.setTimeout(() => void loadDetector(), 1400);
 
     return () => {
       isActive = false;
+      window.clearTimeout(loadTimer);
       if (detectionTimer) {
         window.clearTimeout(detectionTimer);
       }
@@ -805,7 +808,10 @@ export default function CameraCapturePanel({
               <select
                 value={selectedDeviceId}
                 onChange={(event) => {
-                  setSelectedDeviceId(event.target.value);
+                  const nextDeviceId = event.target.value;
+                  selectedDeviceIdRef.current = nextDeviceId;
+                  preferredDeviceIdRef.current = nextDeviceId;
+                  setSelectedDeviceId(nextDeviceId);
                   setRetryCount((count) => count + 1);
                 }}
                 className="mt-2 h-8 rounded-xl bg-[color:var(--pill)] px-3 text-xs text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
