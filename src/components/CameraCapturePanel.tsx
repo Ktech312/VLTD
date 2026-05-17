@@ -456,21 +456,21 @@ export default function CameraCapturePanel({
   }
 
   return (
-    <div className="fixed inset-0 z-[80] overflow-y-auto overscroll-contain bg-black/75 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="mx-auto flex max-w-3xl flex-col rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-        <div className="flex items-start justify-between gap-3">
+    <div className="fixed inset-0 z-[80] overflow-y-auto overscroll-contain bg-black/75 p-2 backdrop-blur-sm sm:p-3" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="mx-auto flex max-w-2xl flex-col rounded-[18px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="flex items-start justify-between gap-2">
           <div>
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               {capturedFile ? "ADJUST PHOTO" : "LIVE CAMERA"}
             </div>
-            <h2 className="mt-1 text-lg font-semibold text-[color:var(--fg)]">{capturedFile ? "Adjust Photo" : title}</h2>
-            <div className="mt-0.5 max-w-xl text-xs text-[color:var(--muted)]">{description}</div>
+            <h2 className="mt-0.5 text-base font-semibold text-[color:var(--fg)]">{capturedFile ? "Adjust Photo" : title}</h2>
+            <div className="mt-0.5 max-w-xl text-xs leading-snug text-[color:var(--muted)]">{description}</div>
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
+            className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-sm ring-1 ring-[color:var(--border)]"
           >
             Close
           </button>
@@ -658,8 +658,8 @@ export default function CameraCapturePanel({
           </div>
         ) : (
           <>
-            <div className="mt-3 overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]">
-              <div className="relative flex h-[58dvh] min-h-[260px] max-h-[560px] items-center justify-center overflow-hidden rounded-[14px] bg-[color:var(--surface)]">
+            <div className="mt-2 overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-1.5 ring-1 ring-[color:var(--border)]">
+              <div className="relative flex h-[min(42dvh,360px)] min-h-[210px] items-center justify-center overflow-hidden rounded-[12px] bg-[color:var(--surface)]">
                 {cameraError ? (
                   <div className="max-w-lg px-5 text-center text-sm text-red-200">
                     <div>{cameraError}</div>
@@ -730,7 +730,7 @@ export default function CameraCapturePanel({
               <select
                 value={selectedDeviceId}
                 onChange={(event) => setSelectedDeviceId(event.target.value)}
-                className="mt-2 h-9 rounded-xl bg-[color:var(--pill)] px-3 text-xs text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+                className="mt-2 h-8 rounded-xl bg-[color:var(--pill)] px-3 text-xs text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
                 aria-label="Select camera"
               >
                 {videoDevices.map((device, index) => (
@@ -741,26 +741,26 @@ export default function CameraCapturePanel({
               </select>
             ) : null}
 
-            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            <div className="mt-2 grid gap-2 sm:grid-cols-3">
               <button
                 type="button"
                 onClick={() => void handleCapture()}
                 disabled={Boolean(cameraError) || isStarting || isCapturing}
-                className="min-h-12 rounded-2xl bg-[color:var(--pill-active-bg)] px-4 py-3 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)] disabled:opacity-40"
+                className="min-h-10 rounded-xl bg-[color:var(--pill-active-bg)] px-3 py-2 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)] disabled:opacity-40"
               >
                 {isStarting ? "Starting Camera..." : isCapturing ? "Capturing..." : "Capture Photo"}
               </button>
               <button
                 type="button"
                 onClick={() => setRetryCount((count) => count + 1)}
-                className="min-h-12 rounded-2xl bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]"
+                className="min-h-10 rounded-xl bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
               >
                 Retry Camera
               </button>
               <button
                 type="button"
                 onClick={onUseFileInstead}
-                className="min-h-12 rounded-2xl bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]"
+                className="min-h-10 rounded-xl bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
               >
                 Choose File Instead
               </button>
@@ -770,7 +770,7 @@ export default function CameraCapturePanel({
               <button
                 type="button"
                 onClick={onClose}
-                className="min-h-12 rounded-2xl bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]"
+                className="min-h-10 rounded-xl bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
               >
                 Cancel
               </button>
