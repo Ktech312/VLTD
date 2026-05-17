@@ -272,6 +272,7 @@ export default function CameraCapturePanel({
       }
     }
 
+    void refreshVideoDevices();
     void startCamera();
     void readPermissionState();
 
