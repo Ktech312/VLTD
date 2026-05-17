@@ -206,13 +206,14 @@ export default function CameraCapturePanel({
       try {
         let stream: MediaStream;
         const preferredDeviceId = preferredDeviceIdRef.current;
+        // When no preferred device is stored, request any camera with { video: true }.
+        // facingMode: { ideal: "environment" } forces Chrome to enumerate all input
+        // devices and fetch their facing-mode metadata before settling — that's the
+        // ~15 s stall on desktop. Mobile browsers default to the rear camera anyway,
+        // so facingMode adds no practical benefit on the first open.
         const requestedDevice = preferredDeviceId
-          ? {
-              deviceId: { exact: preferredDeviceId },
-            }
-          : {
-              facingMode: { ideal: "environment" },
-            };
+          ? { deviceId: { exact: preferredDeviceId } }
+          : true;
 
         try {
           stream = await navigator.mediaDevices.getUserMedia({
