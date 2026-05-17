@@ -237,7 +237,14 @@ export default function CameraCapturePanel({
 
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          await videoRef.current.play().catch(() => undefined);
+          // Do NOT await play(). On many devices the camera hardware takes
+          // 5–15 s to produce its first frame after the OS grants the stream.
+          // Awaiting keeps isStarting=true (button disabled, "Starting Camera…")
+          // for that entire warmup. Firing play() without await lets isStarting
+          // flip to false as soon as we have the stream — the video element
+          // fills in frames as soon as hardware is ready. If the user taps
+          // Capture before frames arrive, the videoWidth===0 guard catches it.
+          void videoRef.current.play().catch(() => undefined);
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : "Camera access failed.";
