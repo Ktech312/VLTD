@@ -495,8 +495,8 @@ export default function CameraCapturePanel({
   }
 
   return (
-    <div className="fixed inset-0 z-[80] overflow-y-auto overscroll-contain bg-black/75 p-2 backdrop-blur-sm sm:p-3" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="mx-auto flex max-w-2xl flex-col rounded-[18px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 p-2 backdrop-blur-sm sm:items-center sm:p-3" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="flex max-h-[calc(100dvh-1rem)] w-full max-w-2xl flex-col overflow-y-auto overscroll-contain rounded-t-[18px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:max-h-[calc(100dvh-1.5rem)] sm:rounded-[18px]">
         <div className="flex items-start justify-between gap-2">
           <div>
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
@@ -737,7 +737,7 @@ export default function CameraCapturePanel({
         ) : (
           <>
             <div className="mt-2 overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-1.5 ring-1 ring-[color:var(--border)]">
-              <div className="relative flex h-[min(42dvh,360px)] min-h-[210px] items-center justify-center overflow-hidden rounded-[12px] bg-[color:var(--surface)]">
+              <div className="relative flex h-[min(36dvh,320px)] min-h-[190px] items-center justify-center overflow-hidden rounded-[12px] bg-[color:var(--surface)]">
                 {cameraError ? (
                   <div className="max-w-lg px-5 text-center text-sm text-red-200">
                     <div>{cameraError}</div>
