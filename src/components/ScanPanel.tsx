@@ -162,13 +162,13 @@ export default function ScanPanel({
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={previewUrl ? onOpenImage ?? onCropImage : onUseCamera}
-          className="flex min-h-[104px] items-center justify-center overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-2 text-center ring-1 ring-[color:var(--border)] transition hover:bg-black/25 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)] sm:min-h-[126px] md:min-h-0"
-          title={previewUrl ? "Open photo options" : "Take a new picture"}
-        >
-          {previewUrl ? (
+        {previewUrl ? (
+          <button
+            type="button"
+            onClick={onOpenImage ?? onCropImage}
+            className="flex min-h-[104px] items-center justify-center overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-2 text-center ring-1 ring-[color:var(--border)] transition hover:bg-black/25 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)] sm:min-h-[126px] md:min-h-0"
+            title="Open photo options"
+          >
             <ProgressiveImage
               src={previewUrl}
               alt="Selected item photo for identify"
@@ -176,9 +176,13 @@ export default function ScanPanel({
               imageClassName="object-contain opacity-95"
               draggable={false}
             />
-          ) : (
-            <span
-              className="flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-xs font-bold"
+          </button>
+        ) : (
+          <div className="flex min-h-[104px] items-center justify-center overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-2 text-center ring-1 ring-[color:var(--border)] sm:min-h-[126px] md:min-h-0">
+            <button
+              type="button"
+              onClick={onUseCamera}
+              className="relative z-10 flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)]"
               style={{ background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B" }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -186,9 +190,9 @@ export default function ScanPanel({
                 <circle cx="12" cy="13" r="4"/>
               </svg>
               Take New Picture
-            </span>
-          )}
-        </button>
+            </button>
+          </div>
+        )}
 
         <div className="grid content-start gap-1.5 rounded-[16px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]">
           <div className="grid grid-cols-2 gap-2">
