@@ -305,24 +305,25 @@ export default function PublicHomeClient() {
       <section className="border-b border-[color:var(--border)]">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <BrandMark />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link
               href="/learn"
-              className="rounded-full px-5 py-2 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
+              className="hidden sm:inline-flex rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap text-[color:var(--muted)] transition hover:text-text-primary"
             >
               Learn
             </Link>
             <Link
               href="/login"
-              className="rounded-full border border-[color:var(--border)] px-5 py-2 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
+              className="rounded-full border border-[color:var(--border)] px-4 py-2 text-sm font-semibold whitespace-nowrap text-[color:var(--muted)] transition hover:text-text-primary"
             >
               Log in
             </Link>
             <Link
               href="/signup"
-              className="vltd-primary-button rounded-full px-5 py-2 text-sm font-black transition"
+              className="vltd-primary-button rounded-full px-4 py-2 text-sm font-black whitespace-nowrap transition"
             >
-              Get started — free
+              <span className="sm:hidden">Get started</span>
+              <span className="hidden sm:inline">Get started — free</span>
             </Link>
           </div>
         </div>
