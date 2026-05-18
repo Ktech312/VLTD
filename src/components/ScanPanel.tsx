@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ChangeEvent } from "react";
+import { useState, type ChangeEvent } from "react";
 
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { type ScanItemType } from "@/lib/scanAutofill";
@@ -98,14 +98,6 @@ export default function ScanPanel({
   const isIdentifying =
     isScanning || isBookLookupRunning || isComicLookupRunning || isUpcLookupRunning || isVisionLookupRunning;
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const lastCameraOpenAtRef = useRef(0);
-
-  function requestCameraOpen() {
-    const now = Date.now();
-    if (now - lastCameraOpenAtRef.current < 350) return;
-    lastCameraOpenAtRef.current = now;
-    onUseCamera();
-  }
 
   return (
     <section className="rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
@@ -162,7 +154,7 @@ export default function ScanPanel({
           ) : (
             <button
               type="button"
-              onClick={requestCameraOpen}
+              onClick={onUseCamera}
               className="flex h-[44px] w-full items-center justify-center rounded-[14px] border border-dashed border-white/20 text-xs text-[color:var(--muted)]"
             >
               No pictures yet
@@ -188,8 +180,7 @@ export default function ScanPanel({
         ) : (
           <button
             type="button"
-            onPointerDown={requestCameraOpen}
-            onClick={requestCameraOpen}
+            onClick={onUseCamera}
             className="flex min-h-[104px] items-center justify-center overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-2 text-center ring-1 ring-[color:var(--border)] transition hover:bg-black/25 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)] sm:min-h-[126px] md:min-h-0"
             title="Take a new picture"
           >
@@ -208,7 +199,7 @@ export default function ScanPanel({
 
         <div className="grid content-start gap-1.5 rounded-[16px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]">
           <div className="grid grid-cols-2 gap-2">
-            <button type="button" onClick={requestCameraOpen} className={actionButtonClass(true)}>
+            <button type="button" onClick={onUseCamera} className={actionButtonClass(true)}>
               Camera
             </button>
             <button type="button" onClick={onUploadImage} className={actionButtonClass()}>

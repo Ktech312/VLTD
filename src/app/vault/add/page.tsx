@@ -274,6 +274,7 @@ export default function AddPage() {
   const [selectedMediaImageId, setSelectedMediaImageId] = useState("");
   const [cameraTarget, setCameraTarget] = useState<"scan" | "item">("scan");
   const [isCameraPanelOpen, setIsCameraPanelOpen] = useState(false);
+  const [cameraPanelKey, setCameraPanelKey] = useState(0);
 
   const [pricingValues, setPricingValues] = useState<PricingMvpFields>(EMPTY_PRICING_VALUES);
 
@@ -638,7 +639,12 @@ export default function AddPage() {
 
   function openCameraFor(target: "scan" | "item") {
     setCameraTarget(target);
+    setCameraPanelKey((key) => key + 1);
     setIsCameraPanelOpen(true);
+  }
+
+  function openScanCamera() {
+    openCameraFor("scan");
   }
 
   function handleCapturedPhoto(file: File) {
@@ -1605,7 +1611,7 @@ export default function AddPage() {
                 isVisionLookupRunning={isVisionLookupRunning}
                 saveScanAsPhoto={saveScanAsPhoto}
                 onScanTypeChange={setScanType}
-                onUseCamera={() => openCameraFor("scan")}
+                onUseCamera={openScanCamera}
                 onUploadImage={() => uploadInputRef.current?.click()}
                 onScanAutofill={() => void handleScanAutofill()}
                 onOpenImage={openActivePhotoOptions}
@@ -2055,6 +2061,7 @@ export default function AddPage() {
 
         {isCameraPanelOpen ? (
           <CameraCapturePanel
+            key={cameraPanelKey}
             title={cameraTarget === "scan" ? "Capture Item Picture" : "Capture Item Photo"}
             description={
               cameraTarget === "scan"
