@@ -637,10 +637,23 @@ export default function AddPage() {
     setStatus("Photo removed.");
   }
 
-  function openCameraFor(target: "scan" | "item") {
+  function openLiveCameraPanelFor(target: "scan" | "item") {
     setCameraTarget(target);
     setCameraPanelKey((key) => key + 1);
     setIsCameraPanelOpen(true);
+  }
+
+  function openCameraFor(target: "scan" | "item") {
+    setCameraTarget(target);
+
+    const input = target === "scan" ? cameraInputRef.current : mediaCameraInputRef.current;
+    if (!input) {
+      setStatus("Camera input is not ready yet. Try File instead.");
+      return;
+    }
+
+    input.value = "";
+    input.click();
   }
 
   function openScanCamera() {
@@ -1515,8 +1528,7 @@ export default function AddPage() {
 
       if (haulMode) {
         window.setTimeout(() => {
-          setCameraTarget("scan");
-          setIsCameraPanelOpen(true);
+          openLiveCameraPanelFor("scan");
         }, 350);
       }
     } catch (error) {
@@ -1895,7 +1907,7 @@ export default function AddPage() {
           type="file"
           accept="image/*"
           capture="environment"
-          className="hidden"
+          className="fixed left-[-9999px] top-0 h-px w-px opacity-0"
           onChange={(e) => void handleMediaImageSelection(e.target.files)}
         />
         <input
@@ -1903,7 +1915,7 @@ export default function AddPage() {
           type="file"
           accept="image/*"
           capture="environment"
-          className="hidden"
+          className="fixed left-[-9999px] top-0 h-px w-px opacity-0"
           onChange={(e) => void handleScanImageSelection(e.target.files)}
         />
         <input
