@@ -501,7 +501,7 @@ export default function CameraCapturePanel({
   }
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 p-2 backdrop-blur-sm sm:items-start sm:pt-[72px] sm:p-3" role="dialog" aria-modal="true" aria-label={title}>
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 p-2 backdrop-blur-sm sm:items-start sm:px-3 sm:pb-3 sm:pt-[66px]" role="dialog" aria-modal="true" aria-label={title}>
       <div className="flex max-h-[calc(100dvh-1rem)] w-full max-w-[520px] flex-col overflow-y-auto overscroll-contain rounded-t-[18px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:max-h-[calc(100dvh-80px)] sm:rounded-[18px]">
         {capturedFile ? (
           <div className="flex items-start justify-between gap-2">
