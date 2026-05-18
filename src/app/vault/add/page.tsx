@@ -637,23 +637,10 @@ export default function AddPage() {
     setStatus("Photo removed.");
   }
 
-  function openLiveCameraPanelFor(target: "scan" | "item") {
+  function openCameraFor(target: "scan" | "item") {
     setCameraTarget(target);
     setCameraPanelKey((key) => key + 1);
     setIsCameraPanelOpen(true);
-  }
-
-  function openCameraFor(target: "scan" | "item") {
-    setCameraTarget(target);
-
-    const input = target === "scan" ? cameraInputRef.current : mediaCameraInputRef.current;
-    if (!input) {
-      setStatus("Camera input is not ready yet. Try File instead.");
-      return;
-    }
-
-    input.value = "";
-    input.click();
   }
 
   function openScanCamera() {
@@ -1528,7 +1515,7 @@ export default function AddPage() {
 
       if (haulMode) {
         window.setTimeout(() => {
-          openLiveCameraPanelFor("scan");
+          openCameraFor("scan");
         }, 350);
       }
     } catch (error) {
