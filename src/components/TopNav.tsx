@@ -405,7 +405,7 @@ function TopNavInner() {
           </div>
 
           {/* Right controls */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="ml-auto flex items-center gap-2 shrink-0">
 
             {/* Guide button */}
             <div ref={guideRef} className="relative hidden md:block">
