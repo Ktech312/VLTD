@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import ScanCropEditor from "@/components/ScanCropEditor";
 import {
@@ -78,6 +79,7 @@ export default function CameraCapturePanel({
   const selectedDeviceIdRef = useRef("");
   const preferredDeviceIdRef = useRef("");
   const [cameraError, setCameraError] = useState("");
+  const [mounted, setMounted] = useState(false);
   const [isStarting, setIsStarting] = useState(true);
   const [cameraReady, setCameraReady] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -112,6 +114,8 @@ export default function CameraCapturePanel({
   const selectedBackground =
     CAPTURE_BACKGROUNDS.find((background) => background.id === selectedBackgroundId) ??
     CAPTURE_BACKGROUNDS[0];
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     selectedDeviceIdRef.current = selectedDeviceId;
@@ -500,7 +504,9 @@ export default function CameraCapturePanel({
     }
   }
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 p-2 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={title}>
       <div className="flex max-h-[calc(100dvh-1rem)] w-full max-w-[520px] flex-col overflow-y-auto overscroll-contain rounded-t-[18px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:absolute sm:top-[68px] sm:left-1/2 sm:-translate-x-1/2 sm:w-[calc(100%-24px)] sm:max-h-[calc(100dvh-80px)] sm:rounded-[18px]">
         {capturedFile ? (
@@ -845,6 +851,7 @@ export default function CameraCapturePanel({
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
