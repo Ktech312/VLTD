@@ -99,6 +99,7 @@ export default function BottomNav() {
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 md:hidden no-select"
+      style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999 }}
       aria-label="Main navigation"
     >
       {/* Subtle top separator gradient */}
