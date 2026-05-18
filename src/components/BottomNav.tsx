@@ -80,11 +80,11 @@ type Tab = {
 };
 
 const TABS: (Tab | null)[] = [
-  { label: "Home",        href: "/",         icon: IconHome,        exact: true  },
-  { label: "Exhibitions", href: "/museum",    icon: IconExhibitions, exact: false },
+  { label: "Home",     href: "/",         icon: IconHome,        exact: true  },
+  { label: "Vault",    href: "/vault",    icon: IconDiscover,    exact: false },
   null, // gold + button (capture)
-  { label: "Discover",    href: "/vault",     icon: IconDiscover,    exact: false },
-  { label: "Activity",    href: "/portfolio", icon: IconActivity,    exact: false },
+  { label: "Discover", href: "/discover", icon: IconExhibitions, exact: false },
+  { label: "Activity", href: "/portfolio", icon: IconActivity,   exact: false },
 ];
 
 /* ── Component ──────────────────────────────────────────── */

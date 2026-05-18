@@ -743,7 +743,10 @@ export default function CameraCapturePanel({
         ) : (
           <>
             <div className="mt-2 overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-1.5 ring-1 ring-[color:var(--border)]">
-              <div className="relative flex h-[min(36dvh,320px)] min-h-[190px] items-center justify-center overflow-hidden rounded-[12px] bg-[color:var(--surface)]">
+              <div
+                  className="relative flex items-center justify-center overflow-hidden rounded-[12px] bg-[color:var(--surface)]"
+                  style={{ height: "min(30dvh, 240px)", minHeight: "160px" }}
+                >
                 {cameraError ? (
                   <div className="max-w-lg px-5 text-center text-sm text-red-200">
                     <div>{cameraError}</div>
