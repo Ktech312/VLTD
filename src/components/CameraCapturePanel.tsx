@@ -523,43 +523,10 @@ export default function CameraCapturePanel({
 
         {capturedFile && capturedPreviewUrl ? (
           <div className="mt-2">
-            <div className="mb-2 flex flex-wrap gap-1.5">
-              {FRAME_PRESETS.map((preset) => {
-                const isSelected = selectedFrameId === preset.id;
-                return (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    onClick={() => setSelectedFrameId(preset.id)}
-                    className="rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition"
-                    style={
-                      isSelected
-                        ? {
-                            background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))",
-                            borderColor: "var(--theme-gold-border, rgba(245,181,72,0.38))",
-                            color: "var(--theme-gold, #F5B548)",
-                          }
-                        : {
-                            background: "var(--pill)",
-                            borderColor: "var(--border)",
-                            color: "var(--muted)",
-                          }
-                    }
-                  >
-                    {preset.label}
-                  </button>
-                );
-              })}
-            </div>
-
             {blurAssessment?.isBlurry ? (
-              <div className="mb-2 rounded-2xl bg-[color:var(--pill)] px-3 py-2 text-xs ring-1 ring-[color:var(--theme-gold-border,rgba(245,181,72,0.32))]">
-                <div className="font-semibold text-[color:var(--theme-gold,#F5B548)]">
-                  Soft focus detected
-                </div>
-                <div className="mt-0.5 text-[color:var(--muted)]">
-                  Retake if this is for identification or insurance. Score: {blurAssessment.score.toFixed(1)}.
-                </div>
+              <div className="mb-1.5 flex items-center gap-2 rounded-xl bg-[color:var(--pill)] px-3 py-1.5 text-xs ring-1 ring-[color:var(--theme-gold-border,rgba(245,181,72,0.32))]">
+                <span className="font-semibold text-[color:var(--theme-gold,#F5B548)]">Soft focus</span>
+                <span className="text-[color:var(--muted)]">Score {blurAssessment.score.toFixed(1)} — retake for ID or insurance</span>
               </div>
             ) : null}
 
@@ -767,25 +734,14 @@ export default function CameraCapturePanel({
 
                 {!cameraError ? (
                   <div
-                    className="pointer-events-none absolute left-1/2 top-1/2 flex max-h-[82%] max-w-[82%] -translate-x-1/2 -translate-y-1/2 items-start justify-center ring-2 ring-[color:var(--theme-gold)] shadow-[0_0_0_9999px_rgba(0,0,0,0.18)]"
+                    className="pointer-events-none absolute left-1/2 top-1/2 max-h-[82%] max-w-[82%] -translate-x-1/2 -translate-y-1/2 ring-2 ring-[color:var(--theme-gold)] shadow-[0_0_0_9999px_rgba(0,0,0,0.18)]"
                     style={{
                       aspectRatio: frame.aspectRatio,
                       borderRadius: frame.radius,
                       height: `calc(100% - ${frame.inset})`,
                       width: "auto",
                     }}
-                  >
-                    <div
-                      className="mt-2 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] ring-1"
-                      style={{
-                        background: "rgba(0,0,0,0.48)",
-                        borderColor: "var(--theme-gold-border, rgba(245,181,72,0.35))",
-                        color: "var(--theme-gold, #F5B548)",
-                      }}
-                    >
-                      {universeLabel} · {frame.label}
-                    </div>
-                  </div>
+                  />
                 ) : null}
 
                 {!cameraError && detectionBox ? (

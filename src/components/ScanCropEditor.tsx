@@ -209,6 +209,11 @@ export default function ScanCropEditor({
   }, [getBaseBox]);
 
   useEffect(() => {
+    // Only lock body scroll when the editor owns the full screen (not compact).
+    // In compact mode it lives inside a scrollable modal; locking body overflow
+    // would prevent that parent modal from scrolling to reveal the buttons.
+    if (compact) return;
+
     const previousBodyOverflow = document.body.style.overflow;
     const previousHtmlOverflow = document.documentElement.style.overflow;
 
@@ -219,7 +224,7 @@ export default function ScanCropEditor({
       document.body.style.overflow = previousBodyOverflow;
       document.documentElement.style.overflow = previousHtmlOverflow;
     };
-  }, []);
+  }, [compact]);
 
   useEffect(() => {
     const nextCrop = normalizeCrop(selectedCrop);
