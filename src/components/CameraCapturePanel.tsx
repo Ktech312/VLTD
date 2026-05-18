@@ -502,24 +502,22 @@ export default function CameraCapturePanel({
 
   return (
     <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 p-2 backdrop-blur-sm sm:items-start sm:pt-[72px] sm:p-3" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="flex max-h-[calc(100dvh-1rem)] w-full max-w-2xl flex-col overflow-y-auto overscroll-contain rounded-t-[18px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:max-h-[calc(100dvh-1.5rem)] sm:rounded-[18px]">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
-              {capturedFile ? "ADJUST PHOTO" : "LIVE CAMERA"}
+      <div className="flex max-h-[calc(100dvh-1rem)] w-full max-w-[520px] flex-col overflow-y-auto overscroll-contain rounded-t-[18px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:max-h-[calc(100dvh-80px)] sm:rounded-[18px]">
+        {capturedFile ? (
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ADJUST PHOTO</div>
+              <h2 className="mt-0.5 text-base font-semibold text-[color:var(--fg)]">Adjust Photo</h2>
+              <div className="mt-0.5 max-w-xl text-xs leading-snug text-[color:var(--muted)]">{description}</div>
             </div>
-            <h2 className="mt-0.5 text-base font-semibold text-[color:var(--fg)]">{capturedFile ? "Adjust Photo" : title}</h2>
-            <div className="mt-0.5 max-w-xl text-xs leading-snug text-[color:var(--muted)]">{description}</div>
+            <button type="button" onClick={onClose} className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-sm ring-1 ring-[color:var(--border)]">Close</button>
           </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-sm ring-1 ring-[color:var(--border)]"
-          >
-            Close
-          </button>
-        </div>
+        ) : (
+          <div className="flex items-center justify-between">
+            <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">LIVE CAMERA</div>
+            <button type="button" onClick={onClose} className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-sm ring-1 ring-[color:var(--border)]">Close</button>
+          </div>
+        )}
 
         {capturedFile && capturedPreviewUrl ? (
           <div className="mt-2">
@@ -712,7 +710,7 @@ export default function CameraCapturePanel({
             <div className="mt-2 overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-1.5 ring-1 ring-[color:var(--border)]">
               <div
                   className="relative flex items-center justify-center overflow-hidden rounded-[12px] bg-[color:var(--surface)]"
-                  style={{ height: "min(30dvh, 240px)", minHeight: "160px" }}
+                  style={{ height: "min(54dvh, 460px)", minHeight: "240px" }}
                 >
                 {cameraError ? (
                   <div className="max-w-lg px-5 text-center text-sm text-red-200">
@@ -770,7 +768,7 @@ export default function CameraCapturePanel({
               </div>
             </div>
 
-            {videoDevices.length > 1 ? (
+            {videoDevices.length >= 1 ? (
               <select
                 value={selectedDeviceId}
                 onChange={(event) => {
@@ -780,7 +778,7 @@ export default function CameraCapturePanel({
                   setSelectedDeviceId(nextDeviceId);
                   setRetryCount((count) => count + 1);
                 }}
-                className="mt-2 h-8 rounded-xl bg-[color:var(--pill)] px-3 text-xs text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+                className="mt-2 w-full h-8 rounded-xl bg-[color:var(--pill)] px-3 text-xs text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
                 aria-label="Select camera"
               >
                 {videoDevices.map((device, index) => (
@@ -791,31 +789,58 @@ export default function CameraCapturePanel({
               </select>
             ) : null}
 
-            <div className="mt-2 grid gap-2">
+            {/* Single camera button row */}
+            <div className="mt-3 mb-1 flex items-center justify-center gap-8">
+              <button
+                type="button"
+                onClick={() => setRetryCount((count) => count + 1)}
+                className="text-xs font-medium text-[color:var(--muted)] transition hover:text-[color:var(--fg)]"
+              >
+                Retry
+              </button>
+
               <button
                 type="button"
                 onClick={() => void handleCapture()}
                 disabled={Boolean(cameraError) || !cameraReady || isCapturing}
-                className="vltd-primary-button min-h-11 rounded-xl px-3 py-2 text-sm font-black transition disabled:opacity-40"
+                aria-label="Capture photo"
+                className="flex items-center justify-center rounded-full transition-transform active:scale-95 disabled:opacity-40"
+                style={{
+                  width: 68,
+                  height: 68,
+                  background: "linear-gradient(145deg, #FFE08A 0%, #F5B548 30%, #C8941F 60%, #8B6914 100%)",
+                  boxShadow: [
+                    "0 0 0 3px #0B0B0B",
+                    "0 0 0 4px rgba(245,181,72,0.30)",
+                    "0 8px 24px rgba(245,181,72,0.50)",
+                    "inset 0 1px 0 rgba(255,255,255,0.38)",
+                    "inset 0 -2px 4px rgba(0,0,0,0.28)",
+                  ].join(", "),
+                }}
               >
-                {!cameraReady && !cameraError ? "Starting Camera..." : isCapturing ? "Capturing..." : "Capture Photo"}
+                {isCapturing || (!cameraReady && !cameraError) ? (
+                  <div className="h-5 w-5 rounded-full border-[2.5px] border-[#1A0F00]/30 border-t-[#1A0F00] animate-spin" />
+                ) : (
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+                      stroke="#1A0F00"
+                      strokeWidth="1.6"
+                      strokeLinejoin="round"
+                      fill="rgba(26,15,0,0.12)"
+                    />
+                    <circle cx="12" cy="13" r="4" stroke="#1A0F00" strokeWidth="1.6" />
+                  </svg>
+                )}
               </button>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => setRetryCount((count) => count + 1)}
-                  className="min-h-10 rounded-xl bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
-                >
-                  Retry Camera
-                </button>
-                <button
-                  type="button"
-                  onClick={onUseFileInstead}
-                  className="min-h-10 rounded-xl bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
-                >
-                  Choose File
-                </button>
-              </div>
+
+              <button
+                type="button"
+                onClick={onUseFileInstead}
+                className="text-xs font-medium text-[color:var(--muted)] transition hover:text-[color:var(--fg)]"
+              >
+                File
+              </button>
             </div>
           </>
         )}
