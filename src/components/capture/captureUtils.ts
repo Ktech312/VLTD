@@ -68,3 +68,128 @@ export async function applyCssFilterToFile(file: File, filter: string) {
     lastModified: Date.now(),
   });
 }
+
+export type CaptureBackground = {
+  id: string;
+  label: string;
+  swatch: string;
+  fill: string;
+};
+
+export const CAPTURE_BACKGROUNDS: CaptureBackground[] = [
+  {
+    id: "transparent",
+    label: "Clear",
+    swatch: "repeating-conic-gradient(#3f3f46 0% 25%, #27272a 0% 50%) 0 0 / 14px 14px",
+    fill: "transparent",
+  },
+  { id: "black", label: "Black", swatch: "#050505", fill: "#050505" },
+  { id: "white", label: "White", swatch: "#f8fafc", fill: "#f8fafc" },
+  {
+    id: "vault",
+    label: "Vault",
+    swatch: "linear-gradient(135deg, #090806 0%, #231808 100%)",
+    fill: "vault",
+  },
+  {
+    id: "gold",
+    label: "Gold",
+    swatch: "linear-gradient(135deg, #171006 0%, #4a3309 100%)",
+    fill: "gold",
+  },
+  {
+    id: "slate",
+    label: "Slate",
+    swatch: "linear-gradient(135deg, #111827 0%, #334155 100%)",
+    fill: "slate",
+  },
+  {
+    id: "ruby",
+    label: "Ruby",
+    swatch: "linear-gradient(135deg, #2b0606 0%, #7f1d1d 100%)",
+    fill: "ruby",
+  },
+  {
+    id: "cobalt",
+    label: "Cobalt",
+    swatch: "linear-gradient(135deg, #0f1d46 0%, #1d4ed8 100%)",
+    fill: "cobalt",
+  },
+];
+
+export async function removeBackgroundFromFile(file: File) {
+  const { removeBackground } = await import("@imgly/background-removal");
+  const result = await removeBackground(file);
+  return new File([result], replaceExtension(file.name, "png"), {
+    type: "image/png",
+    lastModified: Date.now(),
+  });
+}
+
+export async function compositeBackgroundToFile(file: File, background: CaptureBackground) {
+  if (background.id === "transparent") return file;
+
+  const bitmap = await createImageBitmap(file);
+  const canvas = document.createElement("canvas");
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    bitmap.close();
+    return file;
+  }
+
+  paintBackground(ctx, canvas.width, canvas.height, background.fill);
+  ctx.drawImage(bitmap, 0, 0);
+  bitmap.close();
+
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, "image/jpeg", 0.92);
+  });
+
+  if (!blob) return file;
+
+  return new File([blob], replaceExtension(file.name, "jpg"), {
+    type: "image/jpeg",
+    lastModified: Date.now(),
+  });
+}
+
+function paintBackground(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  fill: string
+) {
+  if (fill.startsWith("#")) {
+    ctx.fillStyle = fill;
+    ctx.fillRect(0, 0, width, height);
+    return;
+  }
+
+  const gradient = ctx.createLinearGradient(0, 0, width, height);
+  if (fill === "gold") {
+    gradient.addColorStop(0, "#171006");
+    gradient.addColorStop(0.6, "#2f2208");
+    gradient.addColorStop(1, "#5f440d");
+  } else if (fill === "slate") {
+    gradient.addColorStop(0, "#111827");
+    gradient.addColorStop(1, "#334155");
+  } else if (fill === "ruby") {
+    gradient.addColorStop(0, "#2b0606");
+    gradient.addColorStop(1, "#7f1d1d");
+  } else if (fill === "cobalt") {
+    gradient.addColorStop(0, "#0f1d46");
+    gradient.addColorStop(1, "#1d4ed8");
+  } else {
+    gradient.addColorStop(0, "#090806");
+    gradient.addColorStop(1, "#231808");
+  }
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+}
+
+function replaceExtension(name: string, extension: "jpg" | "png") {
+  const base = name.replace(/\.[^.]+$/, "") || "camera-capture";
+  return `${base}.${extension}`;
+}

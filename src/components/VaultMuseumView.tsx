@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
+import { LockKeyhole } from "lucide-react";
 import { isNotable, notableReason } from "@/lib/itemIntelligence";
 import { itemCurrentValue, itemProfit, itemTotalCost } from "@/lib/portfolioMetrics";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
@@ -47,6 +49,21 @@ function itemGradeShort(i: ModelItem): string | null {
   const g = i.grade?.trim();
   if (!g) return null;
   return g.length > 10 ? g.slice(0, 10) : g;
+}
+
+function PrivateBadge({ compact = false }: { compact?: boolean }) {
+  return (
+    <div
+      className={[
+        "pointer-events-none inline-flex items-center gap-1 rounded-full bg-black/68 font-bold uppercase tracking-[0.1em] text-white/72 ring-1 ring-white/14 backdrop-blur",
+        compact ? "px-1.5 py-0.5 text-[8px]" : "px-2.5 py-1 text-[10px]",
+      ].join(" ")}
+      title="Private item"
+    >
+      <LockKeyhole size={compact ? 10 : 12} strokeWidth={2.2} aria-hidden="true" />
+      Private
+    </div>
+  );
 }
 
 function SpotlightCard({ item }: { item: ModelItem }) {
@@ -160,6 +177,12 @@ function SpotlightCard({ item }: { item: ModelItem }) {
             Key Item
           </div>
         )}
+
+        {!item.isPublic ? (
+          <div className="absolute left-3 top-12">
+            <PrivateBadge />
+          </div>
+        ) : null}
 
         {grade && (
           <div
@@ -325,7 +348,7 @@ function MuseumCard({
             : "var(--border)",
           boxShadow: isActive
             ? "0 0 0 2px rgba(245,181,72,0.75), 0 4px 28px rgba(245,181,72,0.45)"
-            : "0 0 0 1px rgba(245,181,72,0.28)",
+            : "none",
         }}
       >
         <div
@@ -371,6 +394,12 @@ function MuseumCard({
               Key
             </div>
           )}
+
+          {!item.isPublic ? (
+            <div className="absolute bottom-1.5 right-1.5">
+              <PrivateBadge compact />
+            </div>
+          ) : null}
 
           {grade && (
             <div
@@ -439,34 +468,28 @@ function UniverseSection({
 }) {
   const label = UNIVERSE_LABEL[universeKey] ?? universeKey;
   const totalValue = items.reduce((sum, i) => sum + itemCurrentValue(i), 0);
-  const canLoop = items.length > 1;
-  const loopItems = canLoop ? [...items, ...items, ...items] : items;
-  const loopBaseIndex = canLoop ? items.length : 0;
   const railRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const sectionRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(items.length > 3);
   const isDragging = useRef(false);
   const dragStartX = useRef(0);
   const dragStartScrollLeft = useRef(0);
-  const syncFrame = useRef<number | null>(null);
-  const recenterTimer = useRef<number | null>(null);
 
-  function logicalIndex(displayIndex: number): number {
-    if (items.length === 0) return 0;
-    return ((displayIndex % items.length) + items.length) % items.length;
+  function updateScrollControls(rail: HTMLDivElement) {
+    setCanScrollLeft(rail.scrollLeft > 4);
+    setCanScrollRight(rail.scrollLeft + rail.clientWidth < rail.scrollWidth - 4);
   }
 
-  function findCenterDisplayIndex(rail: HTMLDivElement): number {
-    const railRect = rail.getBoundingClientRect();
-    const railCenter = railRect.left + railRect.width / 2;
-    let bestIndex = loopBaseIndex;
+  function findCenterIndex(rail: HTMLDivElement): number {
+    const railCenter = rail.scrollLeft + rail.clientWidth / 2;
+    let bestIndex = 0;
     let bestDistance = Infinity;
 
     cardRefs.current.forEach((card, i) => {
       if (!card) return;
-      const cardRect = card.getBoundingClientRect();
-      const cardCenter = cardRect.left + cardRect.width / 2;
+      const cardCenter = card.offsetLeft + card.offsetWidth / 2;
       const distance = Math.abs(cardCenter - railCenter);
       if (distance < bestDistance) {
         bestDistance = distance;
@@ -477,77 +500,26 @@ function UniverseSection({
     return bestIndex;
   }
 
-  function syncCenteredCard(shouldFeature: boolean) {
+  function handleScroll() {
     const rail = railRef.current;
     if (!rail) return;
-    const centered = findCenterDisplayIndex(rail);
-    const logical = logicalIndex(centered);
-    setActiveIndex(logical);
-    if (shouldFeature) onFeaturedChange?.(items[logical]);
-  }
-
-  function scrollToDisplayIndex(index: number, behavior: ScrollBehavior = "smooth", shouldFeature = true) {
-    const rail = railRef.current;
-    const card = cardRefs.current[index];
-    if (!rail || !card) return;
-    const left = card.offsetLeft + card.offsetWidth / 2 - rail.clientWidth / 2;
-    rail.scrollTo({ left, behavior });
-
-    const logical = logicalIndex(index);
-    setActiveIndex(logical);
-    if (shouldFeature) onFeaturedChange?.(items[logical]);
-  }
-
-  function syncIfVisible() {
-    if (syncFrame.current !== null) window.cancelAnimationFrame(syncFrame.current);
-    syncFrame.current = window.requestAnimationFrame(() => {
-      const section = sectionRef.current;
-      if (!section) return;
-      const rect = section.getBoundingClientRect();
-      const isVisible = rect.bottom > 0 && rect.top < window.innerHeight;
-      syncCenteredCard(isVisible);
-      syncFrame.current = null;
-    });
-  }
-
-  function handleScroll() {
-    syncCenteredCard(true);
+    updateScrollControls(rail);
+    const centered = findCenterIndex(rail);
+    setActiveIndex(centered);
+    onFeaturedChange?.(items[centered]);
   }
 
   useEffect(() => {
     const rail = railRef.current;
     if (!rail) return;
-    const initFrame = window.requestAnimationFrame(() => {
-      scrollToDisplayIndex(loopBaseIndex, "auto", false);
-      syncIfVisible();
-    });
-    syncIfVisible();
-    window.addEventListener("scroll", syncIfVisible, { passive: true });
-    window.addEventListener("resize", syncIfVisible);
+    updateScrollControls(rail);
     return () => {
-      window.cancelAnimationFrame(initFrame);
-      window.removeEventListener("scroll", syncIfVisible);
-      window.removeEventListener("resize", syncIfVisible);
-      if (syncFrame.current !== null) window.cancelAnimationFrame(syncFrame.current);
-      if (recenterTimer.current !== null) window.clearTimeout(recenterTimer.current);
+      cardRefs.current = [];
     };
-    // Only rerun after the rendered rail item count changes; scroll events keep it synced after that.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items.length]);
 
-  function scrollStep(direction: -1 | 1) {
-    if (!canLoop) return;
-    const rail = railRef.current;
-    const currentDisplay = rail ? findCenterDisplayIndex(rail) : loopBaseIndex;
-    const targetDisplay = currentDisplay + direction;
-    scrollToDisplayIndex(targetDisplay);
-
-    if (recenterTimer.current !== null) window.clearTimeout(recenterTimer.current);
-    recenterTimer.current = window.setTimeout(() => {
-      const targetLogical = logicalIndex(targetDisplay);
-      scrollToDisplayIndex(loopBaseIndex + targetLogical, "auto", false);
-      recenterTimer.current = null;
-    }, 420);
+  function scrollRailBy(px: number) {
+    railRef.current?.scrollBy({ left: px, behavior: "smooth" });
   }
 
   function onMouseDown(event: MouseEvent<HTMLDivElement>) {
@@ -574,7 +546,7 @@ function UniverseSection({
   }
 
   return (
-    <div ref={sectionRef} style={{ overflowX: "visible", overflowY: "visible" }}>
+    <div style={{ overflowX: "visible", overflowY: "visible" }}>
       <div className="mb-3 flex items-center justify-between px-0.5">
         <div className="flex items-center gap-2">
           <div
@@ -604,35 +576,35 @@ function UniverseSection({
         <div className="flex items-center gap-1.5">
           <button
             type="button"
-            aria-label="Previous item"
-            onClick={() => scrollStep(-1)}
-            disabled={!canLoop}
+            aria-label="Scroll left"
+            onClick={() => scrollRailBy(-300)}
+            disabled={!canScrollLeft}
             className="flex h-7 w-7 items-center justify-center rounded-full text-sm ring-1 transition-opacity"
             style={{
               background: "var(--surface)",
               borderColor: "var(--border)",
-              color: canLoop ? "var(--fg)" : "var(--muted2)",
-              cursor: canLoop ? "pointer" : "default",
-              opacity: canLoop ? 1 : 0.35,
+              color: canScrollLeft ? "var(--fg)" : "var(--muted2)",
+              cursor: canScrollLeft ? "pointer" : "default",
+              opacity: canScrollLeft ? 1 : 0.35,
             }}
           >
-            {"<"}
+            <ChevronLeft size={15} strokeWidth={2.4} aria-hidden="true" />
           </button>
           <button
             type="button"
-            aria-label="Next item"
-            onClick={() => scrollStep(1)}
-            disabled={!canLoop}
+            aria-label="Scroll right"
+            onClick={() => scrollRailBy(300)}
+            disabled={!canScrollRight}
             className="flex h-7 w-7 items-center justify-center rounded-full text-sm ring-1 transition-opacity"
             style={{
               background: "var(--surface)",
               borderColor: "var(--border)",
-              color: canLoop ? "var(--fg)" : "var(--muted2)",
-              cursor: canLoop ? "pointer" : "default",
-              opacity: canLoop ? 1 : 0.35,
+              color: canScrollRight ? "var(--fg)" : "var(--muted2)",
+              cursor: canScrollRight ? "pointer" : "default",
+              opacity: canScrollRight ? 1 : 0.35,
             }}
           >
-            {">"}
+            <ChevronRight size={15} strokeWidth={2.4} aria-hidden="true" />
           </button>
           <button
             type="button"
@@ -652,7 +624,7 @@ function UniverseSection({
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUpOrLeave}
         onMouseLeave={onMouseUpOrLeave}
-        className="flex gap-3 overflow-x-auto pb-6 pt-8"
+        className="flex gap-3 overflow-x-auto pb-3 pt-2"
         style={{
           cursor: "grab",
           msOverflowStyle: "none",
@@ -661,15 +633,15 @@ function UniverseSection({
           scrollSnapType: "x mandatory",
         }}
       >
-        {loopItems.map((item, i) => (
+        {items.map((item, i) => (
           <div
-            key={`${item.id}-${i}`}
+            key={item.id}
             ref={(el) => {
               cardRefs.current[i] = el;
             }}
             style={{ flexShrink: 0, scrollSnapAlign: "center" }}
           >
-            <MuseumCard item={item} isActive={logicalIndex(i) === activeIndex} />
+            <MuseumCard item={item} isActive={i === activeIndex} />
           </div>
         ))}
       </div>

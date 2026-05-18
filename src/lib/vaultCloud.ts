@@ -119,6 +119,7 @@ function rowToItem(input: unknown): VaultItem {
     soldAt: row.sold_at ?? undefined,
     createdAt: row.created_at ?? Date.now(),
     isNew: typeof row.is_new === "boolean" ? row.is_new : true,
+    isPublic: typeof row.is_public === "boolean" ? row.is_public : false,
   };
 }
 
@@ -288,6 +289,7 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
     subcategory_label: item.subcategoryLabel ?? null,
     created_at: item.createdAt ?? Date.now(),
     is_new: item.isNew ?? true,
+    is_public: item.isPublic ?? false,
   } as Record<string, unknown>;
 
   // Do not let an older unsold local copy erase a sale made on another device.
@@ -323,8 +325,9 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
       message.toLowerCase().includes("status") ||
       message.toLowerCase().includes("sold_price") ||
       message.toLowerCase().includes("sold_at");
+    const missingVisibilityColumn = message.toLowerCase().includes("is_public");
 
-    if (!missingGalleryColumns && !missingSoldColumns) {
+    if (!missingGalleryColumns && !missingSoldColumns && !missingVisibilityColumn) {
       throw new Error(message || "Failed to save item.");
     }
 
@@ -339,6 +342,10 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
       delete fallbackRow.status;
       delete fallbackRow.sold_price;
       delete fallbackRow.sold_at;
+    }
+
+    if (missingVisibilityColumn) {
+      delete fallbackRow.is_public;
     }
 
     const { error: fallbackError } = await supabase.from(VAULT_ITEMS_TABLE).upsert(fallbackRow);

@@ -50,6 +50,7 @@ export default function ScanPanel({
   onUseCamera,
   onUploadImage,
   onScanAutofill,
+  onOpenImage,
   onCropImage = () => {},
   onBookLookup,
   onComicLookup,
@@ -74,6 +75,7 @@ export default function ScanPanel({
   onUseCamera: () => void;
   onUploadImage: () => void;
   onScanAutofill: () => void;
+  onOpenImage?: () => void;
   onCropImage?: () => void;
   onBookLookup: () => void;
   onComicLookup: () => void;
@@ -113,8 +115,8 @@ export default function ScanPanel({
         </div>
       </div>
 
-      <div className="mt-3 grid gap-2 lg:grid-cols-[108px_minmax(0,1fr)_168px]">
-        <div className="min-h-[104px] rounded-[16px] bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)] sm:min-h-[126px] lg:min-h-0">
+      <div className="mt-3 grid gap-2 md:grid-cols-[108px_minmax(0,1fr)_188px]">
+        <div className="min-h-[104px] rounded-[16px] bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)] sm:min-h-[126px] md:min-h-0">
           <div className="mb-2 flex items-center justify-between gap-2">
             <div className="text-[10px] tracking-[0.16em] text-[color:var(--muted2)]">PICTURES TAKEN</div>
             <div className="rounded-full bg-[color:var(--surface)] px-2 py-0.5 text-[10px] text-[color:var(--muted)]">
@@ -162,8 +164,9 @@ export default function ScanPanel({
 
         <button
           type="button"
-          onClick={previewUrl ? onCropImage : onUseCamera}
-          className="flex min-h-[104px] items-center justify-center overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-2 text-center ring-1 ring-[color:var(--border)] transition hover:bg-black/25 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)] sm:min-h-[126px] lg:min-h-0"
+          onClick={previewUrl ? onOpenImage ?? onCropImage : onUseCamera}
+          className="flex min-h-[104px] items-center justify-center overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-2 text-center ring-1 ring-[color:var(--border)] transition hover:bg-black/25 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)] sm:min-h-[126px] md:min-h-0"
+          title={previewUrl ? "Open photo options" : "Take a new picture"}
         >
           {previewUrl ? (
             <ProgressiveImage

@@ -179,10 +179,10 @@
   --safe-r: env(safe-area-inset-right, 0px);
 }
 
-/* Mobile: main bar (56px) + slim search row (46px) */
+/* Mobile: main bar only — search row removed */
 @media (max-width: 767px) {
   :root {
-    --topnav-h: 102px;
+    --topnav-h: 64px;
   }
 }
 

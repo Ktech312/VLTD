@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import CameraCapturePanel from "@/components/CameraCapturePanel";
 import ScanCropEditor from "@/components/ScanCropEditor";
+import ScanCapturePanel from "@/components/ScanCapturePanel";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { PillButton } from "@/components/ui/PillButton";
 import { AI_ASSIST_SETUP_MESSAGE, analyzeImageWithVision } from "@/lib/ai/openaiVision";
@@ -245,7 +245,7 @@ export default function QuickAddClient() {
   const [draftPreviewUrl, setDraftPreviewUrl] = useState<string | undefined>(undefined);
   const [rotation, setRotation] = useState(0);
   const [isCropEditorOpen, setIsCropEditorOpen] = useState(false);
-  const [isCameraPanelOpen, setIsCameraPanelOpen] = useState(false);
+  const [isScanPanelOpen, setIsScanPanelOpen] = useState(false);
   const [scanCrop, setScanCrop] = useState<ScanCropRect>(DEFAULT_SCAN_CROP);
   const [isApplyingCrop, setIsApplyingCrop] = useState(false);
   const [isAiAssisting, setIsAiAssisting] = useState(false);
@@ -312,14 +312,6 @@ export default function QuickAddClient() {
     setSelectedFile(file);
     setDraftPreviewUrl(URL.createObjectURL(file));
     setFrontImage(undefined);
-  }
-
-  function handleCameraCapture(file: File) {
-    replaceWorkingImage(file);
-    setRotation(0);
-    setScanCrop(DEFAULT_SCAN_CROP);
-    setIsCropEditorOpen(false);
-    setStatus("Photo ready. Add details, use AI Assist, or tap the photo to edit.");
   }
 
   async function handleImageSelection(fileList: FileList | null) {
@@ -406,7 +398,7 @@ export default function QuickAddClient() {
     setStatus("Take another photo.");
 
     if (cameraInputRef.current) cameraInputRef.current.value = "";
-    setIsCameraPanelOpen(true);
+    setIsScanPanelOpen(true);
   }
 
   function resetForm() {
@@ -598,42 +590,68 @@ export default function QuickAddClient() {
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col px-3 py-3 sm:px-5 sm:py-5">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
           <div>
             <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">
               VLTD Quick Add
             </div>
             <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">Image first. Save fast.</h1>
           </div>
-          <Link
-            href="/"
-            className="inline-flex h-11 items-center rounded-full px-4 text-sm font-medium ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
-          >
-            Home
-          </Link>
         </div>
 
-        <div className="mt-3 rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-4">
-          <button
-            type="button"
-            onClick={() => setIsCameraPanelOpen(true)}
-            className="flex w-full items-center justify-center gap-2.5 rounded-[18px] py-4 text-base font-bold transition active:scale-[0.98]"
-            style={{ background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B", boxShadow: "0 4px 20px rgba(245,181,72,0.30)" }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-              <circle cx="12" cy="13" r="4"/>
-            </svg>
-            Take Photo
-          </button>
-          <button
-            type="button"
-            onClick={() => uploadInputRef.current?.click()}
-            className="mt-2 w-full rounded-[14px] py-2.5 text-sm font-medium ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
-            style={{ color: "var(--muted)" }}
-          >
-            Upload from File
-          </button>
+        <div className="mt-3 flex flex-col gap-3">
+          {!activePreview && (
+            <button
+              type="button"
+              onClick={() => setIsScanPanelOpen(true)}
+              className="group relative flex w-full flex-col items-center justify-center gap-4 rounded-[18px] transition active:scale-[0.99]"
+              style={{
+                minHeight: 220,
+                background: "rgba(12,20,38,0.7)",
+                border: "1.5px dashed rgba(245,181,72,0.28)",
+                backdropFilter: "blur(8px)",
+              }}
+            >
+              <div
+                className="flex items-center justify-center rounded-full transition-transform group-hover:scale-105"
+                style={{
+                  width: 68,
+                  height: 68,
+                  background: "rgba(245,181,72,0.10)",
+                  border: "1.5px solid rgba(245,181,72,0.30)",
+                  boxShadow: "0 0 24px rgba(245,181,72,0.12)",
+                }}
+              >
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F5B548" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+              </div>
+
+              <div>
+                <div className="text-center text-base font-bold" style={{ color: "var(--theme-gold, #F5B548)" }}>
+                  Tap to scan
+                </div>
+                <div className="mt-1 text-center text-[12px]" style={{ color: "rgba(160,149,107,0.6)" }}>
+                  Auto-locks and snaps when ready
+                </div>
+                <div className="mt-2 text-center text-[12px]" style={{ color: "rgba(160,149,107,0.65)" }}>
+                  or{" "}
+                  <span
+                    className="underline underline-offset-2"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      uploadInputRef.current?.click();
+                    }}
+                    onPointerDown={(event) => event.stopPropagation()}
+                  >
+                    upload from file
+                  </span>
+                </div>
+              </div>
+            </button>
+          )}
 
           <input
             ref={cameraInputRef}
@@ -741,20 +759,8 @@ export default function QuickAddClient() {
             </div>
           ) : null}
 
-          {isCameraPanelOpen ? (
-            <CameraCapturePanel
-              title="Capture Item Picture"
-              description="Take an item picture."
-              onCapture={(file) => {
-                setIsCameraPanelOpen(false);
-                handleCameraCapture(file);
-              }}
-              onClose={() => setIsCameraPanelOpen(false)}
-              onUseFileInstead={() => {
-                setIsCameraPanelOpen(false);
-                uploadInputRef.current?.click();
-              }}
-            />
+          {isScanPanelOpen ? (
+            <ScanCapturePanel onClose={() => setIsScanPanelOpen(false)} />
           ) : null}
 
 

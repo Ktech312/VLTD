@@ -3,6 +3,20 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
+
+const FOCUS_LS_KEY = "vltd_primary_focus";
+
+function focusToVaultSlug(focus: string): string | null {
+  const t = focus.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  if (/tcg|pokemon|magic|yugioh|tradingcard/.test(t)) return "tcg";
+  if (/sports|memorabilia|jersey|baseball|basketball|football/.test(t)) return "sports";
+  if (/vinyl|music|record|album/.test(t)) return "music";
+  if (/jewelry|apparel|watch|streetwear|luxury/.test(t)) return "jewelry-apparel";
+  if (/game|console|nintendo|playstation|xbox/.test(t)) return "games";
+  if (/popculture|pop|comic|figure|funko|toy|manga|marvel|dc/.test(t)) return "pop-culture";
+  if (/misc|other/.test(t)) return "misc";
+  return null;
+}
 function IconPackagePlus({ size = 24, style }: { size?: number; style?: Record<string, string | number> }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
@@ -109,7 +123,9 @@ export default function HomeClient() {
         if (status.needsOnboarding) { router.replace("/onboarding"); return; }
         setDisplayName(status.activeProfile?.display_name ?? "");
         setProfileType(status.activeProfile?.profile_type ?? "");
-        setPrimaryFocus(status.activeProfile?.primary_focus ?? "");
+        const focus = status.activeProfile?.primary_focus ?? "";
+        setPrimaryFocus(focus);
+        try { window.localStorage.setItem(FOCUS_LS_KEY, focus); } catch { /* ignore */ }
         await syncVaultItemsFromSupabase();
         setItems(loadItems());
       } catch (err) {
@@ -190,16 +206,32 @@ export default function HomeClient() {
               <p className="mt-1 text-sm text-[#A0956B]">{summaryLine}</p>
             </div>
 
-            {/* Focus badge — hidden when no valid focus value */}
-            {primaryFocus && primaryFocus.toLowerCase() !== "null" && (
-              <div
-                className="shrink-0 rounded-2xl border px-3 py-1.5 text-right"
-                style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}
-              >
-                <p className="text-[10px] uppercase tracking-[0.18em] text-[#A0956B]">Focus</p>
-                <p className="text-sm font-bold text-[#F5B548]">{primaryFocus}</p>
-              </div>
-            )}
+            {/* Focus badge — links to the collector's focus universe */}
+            {primaryFocus && primaryFocus.toLowerCase() !== "null" && (() => {
+              const slug = focusToVaultSlug(primaryFocus);
+              const inner = (
+                <>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#A0956B]">Focus</p>
+                  <p className="text-sm font-bold text-[#F5B548]">{primaryFocus}</p>
+                </>
+              );
+              return slug ? (
+                <Link
+                  href={`/vault/${slug}`}
+                  className="shrink-0 rounded-2xl border px-3 py-1.5 text-right transition hover:brightness-110"
+                  style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}
+                >
+                  {inner}
+                </Link>
+              ) : (
+                <div
+                  className="shrink-0 rounded-2xl border px-3 py-1.5 text-right"
+                  style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}
+                >
+                  {inner}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Compact stats row */}

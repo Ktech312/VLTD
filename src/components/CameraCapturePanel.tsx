@@ -10,13 +10,49 @@ import {
   isOriginalCaptureTreatment,
   type CaptureAdjustments,
 } from "@/components/capture/captureFilters";
-import { getCaptureFrame, getCaptureUniverseLabel } from "@/components/capture/captureFrames";
-import { applyCssFilterToFile, assessCanvasBlur, type BlurAssessment } from "@/components/capture/captureUtils";
+import {
+  getCaptureFrame,
+  getCaptureUniverseLabel,
+  type CaptureFrame,
+} from "@/components/capture/captureFrames";
+import {
+  applyCssFilterToFile,
+  assessCanvasBlur,
+  CAPTURE_BACKGROUNDS,
+  compositeBackgroundToFile,
+  removeBackgroundFromFile,
+  type BlurAssessment,
+} from "@/components/capture/captureUtils";
 import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 
 type CameraPermissionState = "granted" | "prompt" | "denied" | "unknown";
+type DetectionState = "idle" | "loading" | "ready" | "unavailable";
+type DetectionBox = { x: number; y: number; width: number; height: number };
 
 const DEFAULT_CROP: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
+
+const FRAME_PRESETS: Array<{ id: string; label: string; frame: CaptureFrame }> = [
+  {
+    id: "card",
+    label: "Card",
+    frame: { label: "Card frame", aspectRatio: "2.5 / 3.5", inset: "10%", radius: "14px" },
+  },
+  {
+    id: "book",
+    label: "Book",
+    frame: { label: "Book frame", aspectRatio: "2 / 3", inset: "7%", radius: "16px" },
+  },
+  {
+    id: "jewelry",
+    label: "Jewelry",
+    frame: { label: "Jewelry frame", aspectRatio: "1 / 1", inset: "12%", radius: "999px" },
+  },
+  {
+    id: "art",
+    label: "Art",
+    frame: { label: "Art frame", aspectRatio: "4 / 5", inset: "8%", radius: "14px" },
+  },
+];
 
 function isDefaultCrop(crop: ScanCropRect) {
   return crop.left === 0 && crop.top === 0 && crop.right === 0 && crop.bottom === 0;
@@ -39,8 +75,11 @@ export default function CameraCapturePanel({
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const selectedDeviceIdRef = useRef("");
+  const preferredDeviceIdRef = useRef("");
   const [cameraError, setCameraError] = useState("");
   const [isStarting, setIsStarting] = useState(true);
+  const [cameraReady, setCameraReady] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [permissionState, setPermissionState] = useState<CameraPermissionState>("unknown");
@@ -54,13 +93,29 @@ export default function CameraCapturePanel({
   const [selectedFilterId, setSelectedFilterId] = useState("original");
   const [adjustments, setAdjustments] = useState<CaptureAdjustments>(DEFAULT_CAPTURE_ADJUSTMENTS);
   const [blurAssessment, setBlurAssessment] = useState<BlurAssessment | null>(null);
+  const [detectionState, setDetectionState] = useState<DetectionState>("idle");
+  const [detectionBox, setDetectionBox] = useState<DetectionBox | null>(null);
+  const [isRemovingBackground, setIsRemovingBackground] = useState(false);
+  const [backgroundError, setBackgroundError] = useState("");
+  const [isBackgroundRemoved, setIsBackgroundRemoved] = useState(false);
+  const [selectedBackgroundId, setSelectedBackgroundId] = useState("transparent");
+  const [selectedFrameId, setSelectedFrameId] = useState("");
+  const [showFineTune, setShowFineTune] = useState(false);
 
   const activeFilter =
     CAPTURE_FILTER_PRESETS.find((preset) => preset.id === selectedFilterId) ??
     CAPTURE_FILTER_PRESETS[0];
   const imageFilter = buildCaptureFilterCss(activeFilter, adjustments);
-  const frame = getCaptureFrame(universe);
+  const selectedFramePreset = FRAME_PRESETS.find((preset) => preset.id === selectedFrameId);
+  const frame = selectedFramePreset?.frame ?? getCaptureFrame(universe);
   const universeLabel = getCaptureUniverseLabel(universe);
+  const selectedBackground =
+    CAPTURE_BACKGROUNDS.find((background) => background.id === selectedBackgroundId) ??
+    CAPTURE_BACKGROUNDS[0];
+
+  useEffect(() => {
+    selectedDeviceIdRef.current = selectedDeviceId;
+  }, [selectedDeviceId]);
 
   function stopCameraStream() {
     const stream = streamRef.current;
@@ -85,7 +140,8 @@ export default function CameraCapturePanel({
         const cameras = devices.filter((device) => device.kind === "videoinput");
         setVideoDevices(cameras);
 
-        if (selectedDeviceId && cameras.some((camera) => camera.deviceId === selectedDeviceId)) {
+        const currentDeviceId = selectedDeviceIdRef.current;
+        if (currentDeviceId && cameras.some((camera) => camera.deviceId === currentDeviceId)) {
           return;
         }
 
@@ -140,6 +196,7 @@ export default function CameraCapturePanel({
 
       stopCameraStream();
       setCameraError("");
+      setCameraReady(false);
       setIsStarting(true);
 
       if (!navigator.mediaDevices?.getUserMedia) {
@@ -148,15 +205,21 @@ export default function CameraCapturePanel({
         return;
       }
 
+      // Flip isStarting to false immediately now that we know getUserMedia
+      // exists. The camera stream request can take 5–15 s (OS-level hardware
+      // negotiation) and there is nothing we can do to shorten it — but we
+      // should not hold the entire UI hostage while it happens. The Capture
+      // button is gated by cameraReady (set by the video element's onCanPlay
+      // event) so it only enables once the first frame arrives. handleCapture()
+      // also guards videoWidth===0 as a safety net.
+      setIsStarting(false);
+
       try {
         let stream: MediaStream;
-        const requestedDevice = selectedDeviceId
-          ? {
-              deviceId: { exact: selectedDeviceId },
-            }
-          : {
-              facingMode: { ideal: "environment" },
-            };
+        const preferredDeviceId = preferredDeviceIdRef.current;
+        const requestedDevice = preferredDeviceId
+          ? { deviceId: { exact: preferredDeviceId } }
+          : true;
 
         try {
           stream = await navigator.mediaDevices.getUserMedia({
@@ -180,9 +243,10 @@ export default function CameraCapturePanel({
 
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          await videoRef.current.play().catch(() => undefined);
+          void videoRef.current.play().catch(() => undefined);
         }
       } catch (error) {
+        if (!isActive) return;
         const message = error instanceof Error ? error.message : "Camera access failed.";
         const currentSecureContext =
           typeof window === "undefined" ? true : window.isSecureContext;
@@ -201,15 +265,12 @@ export default function CameraCapturePanel({
         } else {
           setCameraError(message || "Camera access failed. Use the file picker instead.");
         }
-      } finally {
-        if (isActive) {
-          setIsStarting(false);
-        }
       }
     }
 
-    void readPermissionState();
+    void refreshVideoDevices();
     void startCamera();
+    void readPermissionState();
 
     return () => {
       isActive = false;
@@ -218,7 +279,80 @@ export default function CameraCapturePanel({
       }
       stopCameraStream();
     };
-  }, [capturedFile, retryCount, selectedDeviceId]);
+  }, [capturedFile, retryCount]);
+
+  useEffect(() => {
+    if (capturedFile || cameraError || !cameraReady) {
+      setDetectionBox(null);
+      return;
+    }
+
+    let isActive = true;
+    let detectionTimer: number | null = null;
+    let model: {
+      detect: (input: HTMLVideoElement) => Promise<Array<{ bbox: [number, number, number, number] }>>;
+    } | null = null;
+
+    async function loadDetector() {
+      setDetectionState("loading");
+      try {
+        const tf = await import("@tensorflow/tfjs");
+        const cocoSsd = await import("@tensorflow-models/coco-ssd");
+        await tf.ready();
+        model = await cocoSsd.load();
+        if (!isActive) return;
+        setDetectionState("ready");
+        void detectNextFrame();
+      } catch {
+        if (isActive) {
+          setDetectionState("unavailable");
+          setDetectionBox(null);
+        }
+      }
+    }
+
+    async function detectNextFrame() {
+      const video = videoRef.current;
+      if (!isActive || !model || !video || !video.videoWidth || !video.videoHeight) {
+        if (isActive) {
+          detectionTimer = window.setTimeout(() => void detectNextFrame(), 900);
+        }
+        return;
+      }
+
+      try {
+        const predictions = await model.detect(video);
+        const primary = predictions[0];
+        if (primary) {
+          const [x, y, width, height] = primary.bbox;
+          setDetectionBox({
+            x: (x / video.videoWidth) * 100,
+            y: (y / video.videoHeight) * 100,
+            width: (width / video.videoWidth) * 100,
+            height: (height / video.videoHeight) * 100,
+          });
+        } else {
+          setDetectionBox(null);
+        }
+      } catch {
+        setDetectionBox(null);
+      }
+
+      if (isActive) {
+        detectionTimer = window.setTimeout(() => void detectNextFrame(), 900);
+      }
+    }
+
+    const loadTimer = window.setTimeout(() => void loadDetector(), 1400);
+
+    return () => {
+      isActive = false;
+      window.clearTimeout(loadTimer);
+      if (detectionTimer) {
+        window.clearTimeout(detectionTimer);
+      }
+    };
+  }, [cameraError, capturedFile, cameraReady, retryCount]);
 
   useEffect(() => {
     return () => {
@@ -283,6 +417,9 @@ export default function CameraCapturePanel({
       setCaptureCrop(DEFAULT_CROP);
       setSelectedFilterId("original");
       setAdjustments(DEFAULT_CAPTURE_ADJUSTMENTS);
+      setBackgroundError("");
+      setIsBackgroundRemoved(false);
+      setSelectedBackgroundId("transparent");
       stopCameraStream();
     } catch (error) {
       setCameraError(error instanceof Error ? error.message : "Failed to capture photo.");
@@ -305,7 +442,11 @@ export default function CameraCapturePanel({
         ? croppedFile
         : await applyCssFilterToFile(croppedFile, imageFilter);
 
-      onCapture(finalFile);
+      const finishedFile = isBackgroundRemoved
+        ? await compositeBackgroundToFile(finalFile, selectedBackground)
+        : finalFile;
+
+      onCapture(finishedFile);
     } catch (error) {
       setCameraError(error instanceof Error ? error.message : "Failed to crop photo.");
     } finally {
@@ -322,9 +463,13 @@ export default function CameraCapturePanel({
     setCapturedPreviewUrl("");
     setCaptureCrop(DEFAULT_CROP);
     setCameraError("");
+    setCameraReady(false);
     setBlurAssessment(null);
     setSelectedFilterId("original");
     setAdjustments(DEFAULT_CAPTURE_ADJUSTMENTS);
+    setBackgroundError("");
+    setIsBackgroundRemoved(false);
+    setSelectedBackgroundId("transparent");
     setRetryCount((count) => count + 1);
   }
 
@@ -332,29 +477,81 @@ export default function CameraCapturePanel({
     setAdjustments((current) => ({ ...current, [key]: value }));
   }
 
+  async function handleRemoveBackground() {
+    if (!capturedFile) return;
+
+    setIsRemovingBackground(true);
+    setBackgroundError("");
+
+    try {
+      const nextFile = await removeBackgroundFromFile(capturedFile);
+      if (capturedPreviewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(capturedPreviewUrl);
+      }
+      setCapturedFile(nextFile);
+      setCapturedPreviewUrl(URL.createObjectURL(nextFile));
+      setCaptureCrop(DEFAULT_CROP);
+      setIsBackgroundRemoved(true);
+      setSelectedBackgroundId("vault");
+    } catch {
+      setBackgroundError("Background removal could not finish in this browser. The photo is still usable.");
+    } finally {
+      setIsRemovingBackground(false);
+    }
+  }
+
   return (
-    <div className="fixed inset-0 z-[80] bg-black/75 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="mx-auto flex max-h-[calc(100dvh-1rem)] max-w-3xl flex-col overflow-hidden rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:max-h-[calc(100dvh-2rem)]">
-        <div className="flex items-start justify-between gap-3">
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 p-2 backdrop-blur-sm sm:items-center sm:p-3" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="flex max-h-[calc(100dvh-1rem)] w-full max-w-2xl flex-col overflow-y-auto overscroll-contain rounded-t-[18px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:max-h-[calc(100dvh-1.5rem)] sm:rounded-[18px]">
+        <div className="flex items-start justify-between gap-2">
           <div>
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               {capturedFile ? "ADJUST PHOTO" : "LIVE CAMERA"}
             </div>
-            <h2 className="mt-1 text-lg font-semibold text-[color:var(--fg)]">{capturedFile ? "Adjust Photo" : title}</h2>
-            <div className="mt-0.5 max-w-xl text-xs text-[color:var(--muted)]">{description}</div>
+            <h2 className="mt-0.5 text-base font-semibold text-[color:var(--fg)]">{capturedFile ? "Adjust Photo" : title}</h2>
+            <div className="mt-0.5 max-w-xl text-xs leading-snug text-[color:var(--muted)]">{description}</div>
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
+            className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-sm ring-1 ring-[color:var(--border)]"
           >
             Close
           </button>
         </div>
 
         {capturedFile && capturedPreviewUrl ? (
-          <div className="mt-2 min-h-0 overflow-hidden">
+          <div className="mt-2">
+            <div className="mb-2 flex flex-wrap gap-1.5">
+              {FRAME_PRESETS.map((preset) => {
+                const isSelected = selectedFrameId === preset.id;
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => setSelectedFrameId(preset.id)}
+                    className="rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition"
+                    style={
+                      isSelected
+                        ? {
+                            background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))",
+                            borderColor: "var(--theme-gold-border, rgba(245,181,72,0.38))",
+                            color: "var(--theme-gold, #F5B548)",
+                          }
+                        : {
+                            background: "var(--pill)",
+                            borderColor: "var(--border)",
+                            color: "var(--muted)",
+                          }
+                    }
+                  >
+                    {preset.label}
+                  </button>
+                );
+              })}
+            </div>
+
             {blurAssessment?.isBlurry ? (
               <div className="mb-2 rounded-2xl bg-[color:var(--pill)] px-3 py-2 text-xs ring-1 ring-[color:var(--theme-gold-border,rgba(245,181,72,0.32))]">
                 <div className="font-semibold text-[color:var(--theme-gold,#F5B548)]">
@@ -430,45 +627,126 @@ export default function CameraCapturePanel({
                 ))}
               </div>
 
-              <div className="mt-2 grid gap-1.5 sm:grid-cols-3">
-                {[
-                  { key: "brightness", label: "Brightness", min: 70, max: 130 },
-                  { key: "contrast", label: "Contrast", min: 70, max: 140 },
-                  { key: "saturation", label: "Saturation", min: 60, max: 150 },
-                  { key: "warmth", label: "Warmth", min: -40, max: 40 },
-                  { key: "sharpness", label: "Sharpness", min: 0, max: 30 },
-                ].map((control) => (
-                  <label key={control.key} className="rounded-xl bg-[color:var(--pill)] px-2.5 py-1.5 ring-1 ring-[color:var(--border)]">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
-                        {control.label}
-                      </span>
-                      <span className="text-[11px] font-semibold text-[color:var(--fg)]">
-                        {adjustments[control.key as keyof CaptureAdjustments]}
-                      </span>
+              <button
+                type="button"
+                onClick={() => setShowFineTune((value) => !value)}
+                className="mt-2 rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
+              >
+                Fine Tune {showFineTune ? "▴" : "▾"}
+              </button>
+
+              {showFineTune ? (
+                <div className="mt-2 grid gap-1.5 sm:grid-cols-3">
+                  {[
+                    { key: "brightness", label: "Brightness", min: 70, max: 130 },
+                    { key: "contrast", label: "Contrast", min: 70, max: 140 },
+                    { key: "saturation", label: "Saturation", min: 60, max: 150 },
+                    { key: "warmth", label: "Warmth", min: -40, max: 40 },
+                    { key: "sharpness", label: "Sharpness", min: 0, max: 30 },
+                  ].map((control) => (
+                    <label key={control.key} className="rounded-xl bg-[color:var(--pill)] px-2.5 py-1.5 ring-1 ring-[color:var(--border)]">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
+                          {control.label}
+                        </span>
+                        <span className="text-[11px] font-semibold text-[color:var(--fg)]">
+                          {adjustments[control.key as keyof CaptureAdjustments]}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={control.min}
+                        max={control.max}
+                        value={adjustments[control.key as keyof CaptureAdjustments]}
+                        onChange={(event) =>
+                          updateAdjustment(
+                            control.key as keyof CaptureAdjustments,
+                            Number(event.target.value)
+                          )
+                        }
+                        className="mt-1 w-full accent-[color:var(--theme-gold)]"
+                      />
+                    </label>
+                  ))}
+                </div>
+              ) : null}
+
+              <div className="mt-2 rounded-2xl bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)]">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">
+                      Background
                     </div>
-                    <input
-                      type="range"
-                      min={control.min}
-                      max={control.max}
-                      value={adjustments[control.key as keyof CaptureAdjustments]}
-                      onChange={(event) =>
-                        updateAdjustment(
-                          control.key as keyof CaptureAdjustments,
-                          Number(event.target.value)
-                        )
-                      }
-                      className="mt-1 w-full accent-[color:var(--theme-gold)]"
-                    />
-                  </label>
-                ))}
+                    <div className="mt-0.5 text-[11px] text-[color:var(--muted)]">
+                      Browser-only removal; no upload needed.
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void handleRemoveBackground()}
+                    disabled={isRemovingBackground || !capturedFile}
+                    className="rounded-full px-3 py-1.5 text-xs font-semibold ring-1 disabled:opacity-45"
+                    style={{
+                      background: isBackgroundRemoved
+                        ? "var(--theme-gold-subtle, rgba(245,181,72,0.12))"
+                        : "var(--surface)",
+                      borderColor: "var(--theme-gold-border, rgba(245,181,72,0.32))",
+                      color: "var(--theme-gold, #F5B548)",
+                    }}
+                  >
+                    {isRemovingBackground
+                      ? "Removing..."
+                      : isBackgroundRemoved
+                        ? "Remove Again"
+                        : "Remove BG"}
+                  </button>
+                </div>
+
+                {backgroundError ? (
+                  <div className="mt-2 rounded-xl bg-red-500/10 px-3 py-2 text-[11px] text-red-200 ring-1 ring-red-500/20">
+                    {backgroundError}
+                  </div>
+                ) : null}
+
+                {isBackgroundRemoved ? (
+                  <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                    {CAPTURE_BACKGROUNDS.map((background) => (
+                      <button
+                        key={background.id}
+                        type="button"
+                        onClick={() => setSelectedBackgroundId(background.id)}
+                        className="shrink-0 rounded-xl px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] ring-1"
+                        style={{
+                          background: selectedBackgroundId === background.id
+                            ? "var(--theme-gold-subtle, rgba(245,181,72,0.12))"
+                            : "var(--surface)",
+                          borderColor: selectedBackgroundId === background.id
+                            ? "var(--theme-gold-border, rgba(245,181,72,0.38))"
+                            : "var(--border)",
+                          color: selectedBackgroundId === background.id
+                            ? "var(--theme-gold, #F5B548)"
+                            : "var(--muted)",
+                        }}
+                      >
+                        <span
+                          className="mb-1 block h-8 w-12 rounded-lg ring-1 ring-white/10"
+                          style={{ background: background.swatch }}
+                        />
+                        {background.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
         ) : (
           <>
-            <div className="mt-3 overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]">
-              <div className="relative flex h-[58dvh] min-h-[260px] max-h-[560px] items-center justify-center overflow-hidden rounded-[14px] bg-[color:var(--surface)]">
+            <div className="mt-2 overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-1.5 ring-1 ring-[color:var(--border)]">
+              <div
+                  className="relative flex items-center justify-center overflow-hidden rounded-[12px] bg-[color:var(--surface)]"
+                  style={{ height: "min(30dvh, 240px)", minHeight: "160px" }}
+                >
                 {cameraError ? (
                   <div className="max-w-lg px-5 text-center text-sm text-red-200">
                     <div>{cameraError}</div>
@@ -482,6 +760,7 @@ export default function CameraCapturePanel({
                     autoPlay
                     muted
                     playsInline
+                    onCanPlay={() => setCameraReady(true)}
                     className="h-full w-full object-contain"
                   />
                 )}
@@ -508,14 +787,44 @@ export default function CameraCapturePanel({
                     </div>
                   </div>
                 ) : null}
+
+                {!cameraError && detectionBox ? (
+                  <div
+                    className="pointer-events-none absolute rounded-md border border-cyan-300/70 shadow-[0_0_18px_rgba(34,211,238,0.18)]"
+                    style={{
+                      left: `${detectionBox.x}%`,
+                      top: `${detectionBox.y}%`,
+                      width: `${detectionBox.width}%`,
+                      height: `${detectionBox.height}%`,
+                    }}
+                  />
+                ) : null}
+
+                {!cameraError && detectionState !== "idle" ? (
+                  <div className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-black/50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/55 ring-1 ring-white/10">
+                    {detectionState === "loading"
+                      ? "Loading guide"
+                      : detectionState === "ready"
+                        ? detectionBox
+                          ? "Object guide"
+                          : "Guide ready"
+                        : "Guide unavailable"}
+                  </div>
+                ) : null}
               </div>
             </div>
 
             {videoDevices.length > 1 ? (
               <select
                 value={selectedDeviceId}
-                onChange={(event) => setSelectedDeviceId(event.target.value)}
-                className="mt-2 h-9 rounded-xl bg-[color:var(--pill)] px-3 text-xs text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+                onChange={(event) => {
+                  const nextDeviceId = event.target.value;
+                  selectedDeviceIdRef.current = nextDeviceId;
+                  preferredDeviceIdRef.current = nextDeviceId;
+                  setSelectedDeviceId(nextDeviceId);
+                  setRetryCount((count) => count + 1);
+                }}
+                className="mt-2 h-8 rounded-xl bg-[color:var(--pill)] px-3 text-xs text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
                 aria-label="Select camera"
               >
                 {videoDevices.map((device, index) => (
@@ -526,39 +835,31 @@ export default function CameraCapturePanel({
               </select>
             ) : null}
 
-            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            <div className="mt-2 grid gap-2">
               <button
                 type="button"
                 onClick={() => void handleCapture()}
-                disabled={Boolean(cameraError) || isStarting || isCapturing}
-                className="min-h-12 rounded-2xl bg-[color:var(--pill-active-bg)] px-4 py-3 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)] disabled:opacity-40"
+                disabled={Boolean(cameraError) || !cameraReady || isCapturing}
+                className="vltd-primary-button min-h-11 rounded-xl px-3 py-2 text-sm font-black transition disabled:opacity-40"
               >
-                {isStarting ? "Starting Camera..." : isCapturing ? "Capturing..." : "Capture Photo"}
+                {!cameraReady && !cameraError ? "Starting Camera..." : isCapturing ? "Capturing..." : "Capture Photo"}
               </button>
-              <button
-                type="button"
-                onClick={() => setRetryCount((count) => count + 1)}
-                className="min-h-12 rounded-2xl bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]"
-              >
-                Retry Camera
-              </button>
-              <button
-                type="button"
-                onClick={onUseFileInstead}
-                className="min-h-12 rounded-2xl bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]"
-              >
-                Choose File Instead
-              </button>
-            </div>
-
-            <div className="mt-2 grid gap-2 sm:grid-cols-1">
-              <button
-                type="button"
-                onClick={onClose}
-                className="min-h-12 rounded-2xl bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]"
-              >
-                Cancel
-              </button>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => setRetryCount((count) => count + 1)}
+                  className="min-h-10 rounded-xl bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
+                >
+                  Retry Camera
+                </button>
+                <button
+                  type="button"
+                  onClick={onUseFileInstead}
+                  className="min-h-10 rounded-xl bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
+                >
+                  Choose File
+                </button>
+              </div>
             </div>
           </>
         )}

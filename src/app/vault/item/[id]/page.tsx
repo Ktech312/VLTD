@@ -7,6 +7,7 @@ import ConditionAssessmentPanel from "@/components/ConditionAssessmentPanel";
 import CostToSellPanel from "@/components/CostToSellPanel";
 import ExportListingButton from "@/components/ExportListingButton";
 import InsurancePdfButton from "@/components/InsurancePdfButton";
+import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
 import ItemMedia from "@/components/ItemMedia";
 import NotableBadge from "@/components/NotableBadge";
 import PricingMvpCard from "@/components/PricingMvpCard";
@@ -689,14 +690,15 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               </Link>
               <Link
                 href={`/vault/item/${encodeURIComponent(item.id)}/present`}
-                className="inline-flex h-10 items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]"
+                className="inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-[12px] font-semibold ring-1 transition"
+                style={{ background: "var(--surface)", color: "var(--muted)", borderColor: "var(--border)" }}
               >
                 Stream
               </Link>
               <InsurancePdfButton
                 items={[item]}
-                label="Insurance Doc"
-                className="inline-flex h-10 items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]"
+                label="Insurance PDF"
+                className="inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-[12px] font-semibold ring-1 transition"
               />
             </div>
 
@@ -775,6 +777,27 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                     { label: "Added", value: fmtDate(addedAt) },
                   ]}
                 />
+              </div>
+
+              <div className="mt-5 rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <div className="text-[13px] font-semibold">Visibility</div>
+                    <div className="mt-1 text-[11px] text-[color:var(--muted)]">
+                      Private items stay in your vault. Public items can be shown later in shared vault and museum links.
+                    </div>
+                  </div>
+                  <ItemVisibilityToggle
+                    item={item}
+                    size="md"
+                    showLabel
+                    onChange={(nextItem) =>
+                      setItems((prev) =>
+                        prev.map((entry) => (String(entry.id) === String(nextItem.id) ? nextItem : entry))
+                      )
+                    }
+                  />
+                </div>
               </div>
 
               <div className="mt-5 rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">

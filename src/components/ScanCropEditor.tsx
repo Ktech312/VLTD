@@ -211,16 +211,13 @@ export default function ScanCropEditor({
   useEffect(() => {
     const previousBodyOverflow = document.body.style.overflow;
     const previousHtmlOverflow = document.documentElement.style.overflow;
-    const previousBodyTouchAction = document.body.style.touchAction;
 
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
-    document.body.style.touchAction = "none";
 
     return () => {
       document.body.style.overflow = previousBodyOverflow;
       document.documentElement.style.overflow = previousHtmlOverflow;
-      document.body.style.touchAction = previousBodyTouchAction;
     };
   }, []);
 
@@ -438,13 +435,13 @@ export default function ScanCropEditor({
     ? "relative flex h-[min(54dvh,420px)] min-h-[220px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
     : compact
       ? compactViewport === "short"
-        ? "relative flex h-[min(31dvh,260px)] min-h-[150px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
+        ? "relative flex h-[min(24dvh,190px)] min-h-[132px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
         : "relative flex h-[min(58dvh,520px)] min-h-[260px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
       : "relative flex h-[min(62dvh,600px)] min-h-[300px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none";
   const imageClassName = viewportFixed
     ? "block max-h-[min(54dvh,420px)] max-w-full select-none object-contain"
     : compact && compactViewport === "short"
-      ? "block max-h-[min(31dvh,260px)] max-w-full select-none object-contain"
+      ? "block max-h-[min(24dvh,190px)] max-w-full select-none object-contain"
       : "block max-h-[min(58dvh,520px)] max-w-full select-none object-contain";
 
   return (
@@ -536,7 +533,7 @@ export default function ScanCropEditor({
           </button>
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-1.5 text-[10px] font-semibold text-[color:var(--muted)]">
+        <div className={compact && compactViewport === "short" ? "hidden sm:flex flex-wrap items-center justify-end gap-1.5 text-[10px] font-semibold text-[color:var(--muted)]" : "flex flex-wrap items-center justify-end gap-1.5 text-[10px] font-semibold text-[color:var(--muted)]"}>
           <span className="rounded-full bg-white/5 px-2 py-1 ring-1 ring-[color:var(--border)]">Pinch/scroll to zoom</span>
           <span className="rounded-full bg-white/5 px-2 py-1 ring-1 ring-[color:var(--border)]">Drag sides to crop</span>
           <span className="rounded-full bg-white/5 px-2 py-1 ring-1 ring-[color:var(--border)]">Drag photo area to move</span>

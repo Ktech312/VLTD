@@ -367,6 +367,14 @@ export default function AddPage() {
   }, []);
 
   useEffect(() => {
+    if (isCropEditorOpen || selectedMediaImageId || isCameraPanelOpen || showHaulReview) return;
+
+    document.body.style.overflow = "";
+    document.documentElement.style.overflow = "";
+    document.body.style.touchAction = "";
+  }, [isCameraPanelOpen, isCropEditorOpen, selectedMediaImageId, showHaulReview]);
+
+  useEffect(() => {
     return () => {
       mediaImagesRef.current.forEach((image) => {
         if (image.previewUrl.startsWith("blob:")) {
@@ -684,6 +692,14 @@ export default function AddPage() {
     setCropEditorTarget("scan");
     setCropMediaImageId("");
     setIsCropEditorOpen(true);
+  }
+
+  function openActivePhotoOptions() {
+    if (activeMediaImageId && draftMediaImages.some((image) => image.id === activeMediaImageId)) {
+      setSelectedMediaImageId(activeMediaImageId);
+      return;
+    }
+    openScanCropEditor();
   }
 
   function openMediaCropEditor(imageId: string) {
@@ -1592,6 +1608,7 @@ export default function AddPage() {
                 onUseCamera={() => openCameraFor("scan")}
                 onUploadImage={() => uploadInputRef.current?.click()}
                 onScanAutofill={() => void handleScanAutofill()}
+                onOpenImage={openActivePhotoOptions}
                 onCropImage={openScanCropEditor}
                 onBookLookup={() => void handleBookIsbnLookup()}
                 onComicLookup={() => void handleComicLookup()}

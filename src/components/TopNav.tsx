@@ -652,26 +652,6 @@ function TopNavInner() {
           </div>
         )}
 
-        {/* ── Mobile search row ── */}
-        <div className="px-4 pb-2.5 pt-2 md:hidden" style={{ borderTop: "1px solid rgba(245,181,72,0.08)" }}>
-          <form onSubmit={(e) => { e.preventDefault(); applySearch(input); }}>
-            <div
-              className="flex h-[38px] items-center rounded-full px-3"
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
-            >
-              <button type="submit" className="shrink-0" style={{ color: "#5A5040" }} aria-label="Search">
-                <IconSearch className="h-3.5 w-3.5" />
-              </button>
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Search vault, exhibitions, collectors…"
-                className="ml-2 min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
-                style={{ color: "var(--theme-text-primary, #F0EAD6)" }}
-              />
-            </div>
-          </form>
-        </div>
       </div>
 
       <CommandPalette
