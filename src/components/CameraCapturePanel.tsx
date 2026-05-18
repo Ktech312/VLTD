@@ -79,6 +79,7 @@ export default function CameraCapturePanel({
   const selectedDeviceIdRef = useRef("");
   const preferredDeviceIdRef = useRef("");
   const [cameraError, setCameraError] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
   const [isStarting, setIsStarting] = useState(true);
   const [cameraReady, setCameraReady] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -119,6 +120,11 @@ export default function CameraCapturePanel({
     selectedDeviceIdRef.current = selectedDeviceId;
   }, [selectedDeviceId]);
 
+  // Gate portal rendering on client-side mount so createPortal has document.body.
+  // isMounted is also added to the camera-start effect deps so that effect
+  // re-runs after the portal (and videoRef) exist in the DOM.
+  useEffect(() => { setIsMounted(true); }, []);
+
   function stopCameraStream() {
     const stream = streamRef.current;
     streamRef.current = null;
@@ -129,6 +135,8 @@ export default function CameraCapturePanel({
   }
 
   useEffect(() => {
+    if (!isMounted) return; // Portal not yet rendered; videoRef.current would be null
+
     let isActive = true;
     let permissionStatus: PermissionStatus | null = null;
 
@@ -281,7 +289,7 @@ export default function CameraCapturePanel({
       }
       stopCameraStream();
     };
-  }, [capturedFile, retryCount]);
+  }, [capturedFile, retryCount, isMounted]);
 
   useEffect(() => {
     if (capturedFile || cameraError || !cameraReady) {
@@ -501,6 +509,8 @@ export default function CameraCapturePanel({
       setIsRemovingBackground(false);
     }
   }
+
+  if (!isMounted) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 p-2 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={title}>
