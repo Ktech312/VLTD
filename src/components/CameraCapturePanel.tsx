@@ -79,7 +79,6 @@ export default function CameraCapturePanel({
   const selectedDeviceIdRef = useRef("");
   const preferredDeviceIdRef = useRef("");
   const [cameraError, setCameraError] = useState("");
-  const [mounted, setMounted] = useState(false);
   const [isStarting, setIsStarting] = useState(true);
   const [cameraReady, setCameraReady] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -115,7 +114,6 @@ export default function CameraCapturePanel({
     CAPTURE_BACKGROUNDS.find((background) => background.id === selectedBackgroundId) ??
     CAPTURE_BACKGROUNDS[0];
 
-  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     selectedDeviceIdRef.current = selectedDeviceId;
@@ -503,8 +501,6 @@ export default function CameraCapturePanel({
       setIsRemovingBackground(false);
     }
   }
-
-  if (!mounted) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 p-2 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={title}>
