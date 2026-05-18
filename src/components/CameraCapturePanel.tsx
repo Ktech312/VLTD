@@ -78,7 +78,6 @@ export default function CameraCapturePanel({
   const selectedDeviceIdRef = useRef("");
   const preferredDeviceIdRef = useRef("");
   const [cameraError, setCameraError] = useState("");
-  const [isStarting, setIsStarting] = useState(true);
   const [cameraReady, setCameraReady] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
@@ -190,29 +189,17 @@ export default function CameraCapturePanel({
 
     async function startCamera() {
       if (capturedFile) {
-        setIsStarting(false);
         return;
       }
 
       stopCameraStream();
       setCameraError("");
       setCameraReady(false);
-      setIsStarting(true);
 
       if (!navigator.mediaDevices?.getUserMedia) {
         setCameraError("Live camera is not available in this browser. Use the file picker instead.");
-        setIsStarting(false);
         return;
       }
-
-      // Flip isStarting to false immediately now that we know getUserMedia
-      // exists. The camera stream request can take 5–15 s (OS-level hardware
-      // negotiation) and there is nothing we can do to shorten it — but we
-      // should not hold the entire UI hostage while it happens. The Capture
-      // button is gated by cameraReady (set by the video element's onCanPlay
-      // event) so it only enables once the first frame arrives. handleCapture()
-      // also guards videoWidth===0 as a safety net.
-      setIsStarting(false);
 
       try {
         let stream: MediaStream;
