@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import Image from "next/image";
 import CommandPalette from "@/components/CommandPalette";
@@ -266,7 +267,11 @@ function TopNavInner() {
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [activeProfileId, setActiveProfileId] = useState("");
 
+  const [mounted, setMounted] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
+
   const userMenuRef = useRef<HTMLDivElement | null>(null);
+  const userDropdownRef = useRef<HTMLDivElement | null>(null);
   const guideRef = useRef<HTMLDivElement | null>(null);
   const loadingAuthRef = useRef(false);
   const initializedRef = useRef(false);
@@ -276,7 +281,20 @@ function TopNavInner() {
     [profiles, activeProfileId]
   );
 
+  useEffect(() => { setMounted(true); }, []);
+
   useEffect(() => { setInput(sp.get("q") ?? ""); }, [sp]);
+
+  // Calculate dropdown portal position when opening
+  useEffect(() => {
+    if (userOpen && userMenuRef.current) {
+      const rect = userMenuRef.current.getBoundingClientRect();
+      setDropdownPos({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
+  }, [userOpen]);
 
   useEffect(() => {
     let active = true;
@@ -324,7 +342,9 @@ function TopNavInner() {
   useEffect(() => {
     function handleOutside(event: MouseEvent) {
       const target = event.target as Node;
-      if (userMenuRef.current && !userMenuRef.current.contains(target)) setUserOpen(false);
+      const inMenu = userMenuRef.current?.contains(target);
+      const inDropdown = userDropdownRef.current?.contains(target);
+      if (!inMenu && !inDropdown) setUserOpen(false);
       if (guideRef.current && !guideRef.current.contains(target)) setGuideOpen(false);
     }
     document.addEventListener("mousedown", handleOutside);
@@ -496,10 +516,20 @@ function TopNavInner() {
                 <IconChevron size={12} />
               </button>
 
-              {/* User dropdown */}
-              {userOpen && (
-                <div className="absolute right-0 mt-2 w-[300px] overflow-hidden rounded-2xl shadow-[0_18px_50px_rgba(0,0,0,0.6)]"
-                  style={{ background: "var(--theme-nav-bg, #141414)", border: "1px solid var(--theme-nav-border, rgba(245,181,72,0.18))" }}>
+              {/* User dropdown — rendered via portal so it always paints above page content */}
+              {mounted && userOpen && typeof document !== "undefined" && createPortal(
+                <div
+                  ref={userDropdownRef}
+                  className="fixed w-[300px] overflow-hidden rounded-2xl shadow-[0_18px_50px_rgba(0,0,0,0.6)]"
+                  style={{
+                    top: dropdownPos.top,
+                    right: dropdownPos.right,
+                    zIndex: 9999,
+                    background: "var(--theme-nav-bg, rgba(11,19,32,0.99))",
+                    border: "1px solid var(--theme-nav-border, rgba(245,181,72,0.18))",
+                    backdropFilter: "blur(20px)",
+                  }}
+                >
                   <div className="px-4 py-3.5" style={{ borderBottom: "1px solid rgba(245,181,72,0.10)" }}>
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
@@ -564,7 +594,8 @@ function TopNavInner() {
                       </button>
                     </div>
                   )}
-                </div>
+                </div>,
+                document.body
               )}
             </div>
           </div>
