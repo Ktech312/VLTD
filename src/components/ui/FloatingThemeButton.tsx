@@ -17,7 +17,7 @@ export function FloatingThemeButton() {
   return (
     <div
       ref={ref}
-      className="fixed bottom-24 right-4 z-[9999] md:bottom-8 md:right-6"
+      className="fixed bottom-24 right-4 z-[90] md:bottom-8 md:right-6"
     >
       {open && (
         <div
