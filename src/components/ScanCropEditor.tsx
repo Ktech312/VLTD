@@ -123,6 +123,7 @@ export default function ScanCropEditor({
   compact = false,
   compactViewport = "default",
   viewportFixed = false,
+  hideActionButtons = false,
 }: {
   imageUrl: string;
   crop: ScanCropRect;
@@ -140,6 +141,7 @@ export default function ScanCropEditor({
   compact?: boolean;
   compactViewport?: "default" | "short";
   viewportFixed?: boolean;
+  hideActionButtons?: boolean;
 }) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const imageBaseRef = useRef<HTMLDivElement | null>(null);
@@ -545,17 +547,19 @@ export default function ScanCropEditor({
         </div>
       </div>
 
-      <div className={compact ? "mt-2 flex flex-wrap gap-2" : "mt-4 grid gap-2 sm:flex sm:flex-wrap"}>
-        <button type="button" onClick={onApply} disabled={isApplying} className={primaryButtonClass()}>
-          {isApplying ? "Saving..." : applyLabel}
-        </button>
-        <button type="button" onClick={handleReset} className={buttonClass()}>
-          Use Full Photo
-        </button>
-        <button type="button" onClick={requestCancel} className={buttonClass()}>
-          Cancel
-        </button>
-      </div>
+      {!hideActionButtons ? (
+        <div className={compact ? "mt-2 flex flex-wrap gap-2" : "mt-4 grid gap-2 sm:flex sm:flex-wrap"}>
+          <button type="button" onClick={onApply} disabled={isApplying} className={primaryButtonClass()}>
+            {isApplying ? "Saving..." : applyLabel}
+          </button>
+          <button type="button" onClick={handleReset} className={buttonClass()}>
+            Use Full Photo
+          </button>
+          <button type="button" onClick={requestCancel} className={buttonClass()}>
+            Cancel
+          </button>
+        </div>
+      ) : null}
     </section>
   );
 }

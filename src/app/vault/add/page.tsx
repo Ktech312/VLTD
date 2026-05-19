@@ -315,7 +315,7 @@ export default function AddPage() {
       saveHaulSession(session);
       setHaulSession(session);
       setHaulMode(true);
-      setStatus("Haul Mode started. Save items back-to-back, then review the batch.");
+      setStatus("Batch Mode started. Save items back-to-back, then review the batch.");
     }
   }, []);
 
@@ -514,7 +514,7 @@ export default function AddPage() {
     setHaulSession(session);
     setHaulMode(true);
     setShowHaulReview(false);
-    setStatus("Haul Mode started. Save items back-to-back, then review the batch.");
+    setStatus("Batch Mode started. Save items back-to-back, then review the batch.");
   }
 
   function endHaul() {
@@ -1495,7 +1495,7 @@ export default function AddPage() {
 
       setStatus(
         haulMode
-          ? "Saved to haul. Ready for the next item."
+          ? "Saved to batch. Ready for the next item."
           : saveAndNext
             ? "Saved. Ready for next item."
             : "Saved."
@@ -1563,8 +1563,8 @@ export default function AddPage() {
                 }
               >
                 {haulMode && haulSession
-                  ? `Haul Live · ${haulSessionStats(haulSession).count}`
-                  : "Haul Mode"}
+                  ? `Batch · ${haulSessionStats(haulSession).count}`
+                  : "Batch Mode"}
               </button>
               <Link
                 href="/vault/quick"

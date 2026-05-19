@@ -489,12 +489,7 @@ export default function CameraCapturePanel({
     <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 p-2 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={title}>
       <div className="flex max-h-[calc(100dvh-1rem)] w-full max-w-[520px] flex-col overflow-y-auto overscroll-contain rounded-t-[18px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:absolute sm:top-[68px] sm:left-1/2 sm:-translate-x-1/2 sm:w-[calc(100%-24px)] sm:max-h-[calc(100dvh-80px)] sm:rounded-[18px]">
         {capturedFile ? (
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ADJUST PHOTO</div>
-              <h2 className="mt-0.5 text-base font-semibold text-[color:var(--fg)]">Adjust Photo</h2>
-              <div className="mt-0.5 max-w-xl text-xs leading-snug text-[color:var(--muted)]">{description}</div>
-            </div>
+          <div className="flex justify-end">
             <button type="button" onClick={onClose} className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-sm ring-1 ring-[color:var(--border)]">Close</button>
           </div>
         ) : (
@@ -505,13 +500,32 @@ export default function CameraCapturePanel({
         )}
 
         {capturedFile && capturedPreviewUrl ? (
-          <div className="mt-2">
-            {blurAssessment?.isBlurry ? (
-              <div className="mb-1.5 flex items-center gap-2 rounded-xl bg-[color:var(--pill)] px-3 py-1.5 text-xs ring-1 ring-[color:var(--theme-gold-border,rgba(245,181,72,0.32))]">
-                <span className="font-semibold text-[color:var(--theme-gold,#F5B548)]">Soft focus</span>
-                <span className="text-[color:var(--muted)]">Score {blurAssessment.score.toFixed(1)} — retake for ID or insurance</span>
-              </div>
-            ) : null}
+          <div className="mt-1.5">
+            {/* Filter strip — moved above the image */}
+            <div className="mb-1.5 flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
+              {CAPTURE_FILTER_PRESETS.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => setSelectedFilterId(preset.id)}
+                  className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition"
+                  style={
+                    selectedFilterId === preset.id
+                      ? { background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))", borderColor: "var(--theme-gold-border, rgba(245,181,72,0.38))", color: "var(--theme-gold, #F5B548)" }
+                      : { background: "var(--pill)", borderColor: "var(--border)", color: "var(--muted)" }
+                  }
+                >
+                  {preset.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => { setSelectedFilterId("original"); setAdjustments(DEFAULT_CAPTURE_ADJUSTMENTS); }}
+                className="ml-auto shrink-0 rounded-full bg-[color:var(--pill)] px-2.5 py-1 text-[11px] ring-1 ring-[color:var(--border)]"
+              >
+                Reset
+              </button>
+            </div>
 
             <ScanCropEditor
               imageUrl={capturedPreviewUrl}
@@ -526,61 +540,26 @@ export default function CameraCapturePanel({
               imageFilter={imageFilter}
               isApplying={isApplyingCrop}
               compact
-              compactViewport="short"
+              hideActionButtons
             />
 
+            <div className="mt-2 flex justify-center">
+              <button
+                type="button"
+                onClick={() => void handleUseCapturedPhoto()}
+                disabled={isApplyingCrop}
+                className="rounded-full px-8 py-2.5 text-sm font-bold disabled:opacity-40"
+                style={{ background: "var(--pill-active-bg)", color: "var(--fg)" }}
+              >
+                {isApplyingCrop ? "Saving..." : "Use Photo"}
+              </button>
+            </div>
+
             <div className="mt-2 rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <div className="text-[10px] tracking-[0.2em] text-[color:var(--muted2)]">
-                    CAPTURE STUDIO
-                  </div>
-                  <div className="mt-0.5 text-[11px] text-[color:var(--muted)]">
-                    Filters and adjustments are applied when you use the photo.
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedFilterId("original");
-                    setAdjustments(DEFAULT_CAPTURE_ADJUSTMENTS);
-                  }}
-                  className="rounded-full bg-[color:var(--pill)] px-3 py-1 text-xs ring-1 ring-[color:var(--border)]"
-                >
-                  Reset
-                </button>
-              </div>
-
-              <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
-                {CAPTURE_FILTER_PRESETS.map((preset) => (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    onClick={() => setSelectedFilterId(preset.id)}
-                    className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition"
-                    style={
-                      selectedFilterId === preset.id
-                        ? {
-                            background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))",
-                            borderColor: "var(--theme-gold-border, rgba(245,181,72,0.38))",
-                            color: "var(--theme-gold, #F5B548)",
-                          }
-                        : {
-                            background: "var(--pill)",
-                            borderColor: "var(--border)",
-                            color: "var(--muted)",
-                          }
-                    }
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
-
               <button
                 type="button"
                 onClick={() => setShowFineTune((value) => !value)}
-                className="mt-2 rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
+                className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
               >
                 Fine Tune {showFineTune ? "▴" : "▾"}
               </button>

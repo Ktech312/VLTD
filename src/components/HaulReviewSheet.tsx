@@ -73,7 +73,7 @@ export default function HaulReviewSheet({ session, onClose, onFinish }: Props) {
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
         {saved.length === 0 ? (
           <div className="rounded-2xl bg-[color:var(--surface)] p-6 text-center text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
-            No saved items remain in this haul.
+            No saved items remain in this batch.
           </div>
         ) : (
           saved.map((item) => (
@@ -115,7 +115,7 @@ export default function HaulReviewSheet({ session, onClose, onFinish }: Props) {
 
         {skipped.length > 0 ? (
           <div className="text-center text-xs text-[color:var(--muted)]">
-            {skipped.length} removed from this haul.
+            {skipped.length} removed from this batch.
           </div>
         ) : null}
       </div>
@@ -127,7 +127,7 @@ export default function HaulReviewSheet({ session, onClose, onFinish }: Props) {
             onClick={shareHaul}
             className="w-full rounded-2xl bg-[color:var(--surface)] py-3 text-sm font-semibold ring-1 ring-[color:var(--border)]"
           >
-            Share your haul
+            Share your batch
           </button>
         ) : null}
         <button
