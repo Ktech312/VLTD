@@ -3,7 +3,6 @@
 import { usePathname } from "next/navigation";
 import TopNav from "@/components/TopNav";
 import BottomNav from "@/components/BottomNav";
-import { FloatingThemeButton } from "@/components/ui/FloatingThemeButton";
 
 export default function NavShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -20,7 +19,6 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
         {children}
       </div>
       <BottomNav />
-      <FloatingThemeButton />
     </>
   );
 }
