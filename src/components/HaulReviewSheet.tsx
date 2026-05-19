@@ -52,7 +52,7 @@ export default function HaulReviewSheet({ session, onClose, onFinish }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-[90] flex flex-col bg-[color:var(--bg)] text-[color:var(--fg)]">
+    <div className="fixed inset-0 z-[90] flex flex-col text-[color:var(--fg)]" style={{ background: "var(--bg, #0B1320)" }}>
       <div className="flex items-center justify-between border-b border-[color:var(--border)] px-5 py-4">
         <div>
           <div className="text-lg font-bold">{current.name}</div>
