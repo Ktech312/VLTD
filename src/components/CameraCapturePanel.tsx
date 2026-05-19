@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-
 import ScanCropEditor from "@/components/ScanCropEditor";
 import {
   buildCaptureFilterCss,
@@ -78,7 +76,6 @@ export default function CameraCapturePanel({
   const selectedDeviceIdRef = useRef("");
   const preferredDeviceIdRef = useRef("");
   const [cameraError, setCameraError] = useState("");
-  const [isMounted, setIsMounted] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
@@ -117,11 +114,6 @@ export default function CameraCapturePanel({
     selectedDeviceIdRef.current = selectedDeviceId;
   }, [selectedDeviceId]);
 
-  // Gate portal rendering on client-side mount so createPortal has document.body.
-  // isMounted is also added to the camera-start effect deps so that effect
-  // re-runs after the portal (and videoRef) exist in the DOM.
-  useEffect(() => { setIsMounted(true); }, []);
-
   function stopCameraStream() {
     const stream = streamRef.current;
     streamRef.current = null;
@@ -132,8 +124,6 @@ export default function CameraCapturePanel({
   }
 
   useEffect(() => {
-    if (!isMounted) return; // Portal not yet rendered; videoRef.current would be null
-
     let isActive = true;
     let permissionStatus: PermissionStatus | null = null;
 
@@ -274,7 +264,7 @@ export default function CameraCapturePanel({
       }
       stopCameraStream();
     };
-  }, [capturedFile, retryCount, isMounted]);
+  }, [capturedFile, retryCount]);
 
   useEffect(() => {
     if (capturedFile || cameraError || !cameraReady) {
@@ -495,9 +485,7 @@ export default function CameraCapturePanel({
     }
   }
 
-  if (!isMounted) return null;
-
-  return createPortal(
+  return (
     <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 p-2 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={title}>
       <div className="flex max-h-[calc(100dvh-1rem)] w-full max-w-[520px] flex-col overflow-y-auto overscroll-contain rounded-t-[18px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:absolute sm:top-[68px] sm:left-1/2 sm:-translate-x-1/2 sm:w-[calc(100%-24px)] sm:max-h-[calc(100dvh-80px)] sm:rounded-[18px]">
         {capturedFile ? (
@@ -842,7 +830,6 @@ export default function CameraCapturePanel({
           </>
         )}
       </div>
-    </div>,
-    document.body
+    </div>
   );
 }
