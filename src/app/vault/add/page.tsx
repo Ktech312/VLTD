@@ -2058,31 +2058,28 @@ export default function AddPage() {
           />
         ) : null}
 
-        {mounted && isCameraPanelOpen && typeof document !== "undefined"
-          ? createPortal(
-              <CameraCapturePanel
-                key={cameraPanelKey}
-                title={cameraTarget === "scan" ? "Capture Item Picture" : "Capture Item Photo"}
-                description={
-                  cameraTarget === "scan"
-                    ? "Take an item picture. It will be added to this item and used for identify/autofill."
-                    : "Capture a real item photo and add it to this item's saved photo list."
-                }
-                universe={values.universe}
-                onCapture={handleCapturedPhoto}
-                onClose={() => setIsCameraPanelOpen(false)}
-                onUseFileInstead={() => {
-                  setIsCameraPanelOpen(false);
-                  if (cameraTarget === "scan") {
-                    uploadInputRef.current?.click();
-                    return;
-                  }
-                  mediaInputRef.current?.click();
-                }}
-              />,
-              document.body
-            )
-          : null}
+        {isCameraPanelOpen ? (
+          <CameraCapturePanel
+            key={cameraPanelKey}
+            title={cameraTarget === "scan" ? "Capture Item Picture" : "Capture Item Photo"}
+            description={
+              cameraTarget === "scan"
+                ? "Take an item picture. It will be added to this item and used for identify/autofill."
+                : "Capture a real item photo and add it to this item's saved photo list."
+            }
+            universe={values.universe}
+            onCapture={handleCapturedPhoto}
+            onClose={() => setIsCameraPanelOpen(false)}
+            onUseFileInstead={() => {
+              setIsCameraPanelOpen(false);
+              if (cameraTarget === "scan") {
+                uploadInputRef.current?.click();
+                return;
+              }
+              mediaInputRef.current?.click();
+            }}
+          />
+        ) : null}
       </div>
     </main>
   );
