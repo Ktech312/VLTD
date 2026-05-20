@@ -1544,7 +1544,8 @@ export default function AddPage() {
         <div className="sticky top-0 z-20 mx-auto mb-3 w-full max-w-5xl rounded-[16px] border border-[color:var(--theme-border)] bg-[color:var(--surface)]/92 p-3 backdrop-blur">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h1 className="text-2xl font-semibold">Add</h1>
+              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">VAULT ADD</div>
+              <h1 className="mt-1 text-2xl font-semibold">Add</h1>
             </div>
 
             <div className="flex flex-wrap gap-2">

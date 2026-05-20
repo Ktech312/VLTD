@@ -115,77 +115,65 @@ export default function ScanPanel({
         </div>
       </div>
 
-      <div className="mt-3 grid gap-2 md:grid-cols-[108px_minmax(0,1fr)_188px]">
-        <div className="min-h-[104px] rounded-[16px] bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)] sm:min-h-[126px] md:min-h-0">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <div className="text-[10px] tracking-[0.16em] text-[color:var(--muted2)]">PICTURES TAKEN</div>
-            <div className="rounded-full bg-[color:var(--surface)] px-2 py-0.5 text-[10px] text-[color:var(--muted)]">
-              {capturedPhotos.length}
-            </div>
-          </div>
-
-          {capturedPhotos.length ? (
-            <div className="grid max-h-[112px] grid-cols-3 gap-1.5 overflow-auto pr-1">
-              {capturedPhotos.map((photo) => (
-                <button
-                  key={photo.id}
-                  type="button"
-                  onClick={() => onSelectCapturedPhoto?.(photo.id)}
-                  className={[
-                    "overflow-hidden rounded-xl bg-[color:var(--surface)] p-1 ring-1 transition",
-                    activeCapturedPhotoId === photo.id
-                      ? "ring-[color:var(--pill-active-bg)]"
-                      : "ring-[color:var(--border)]",
-                  ].join(" ")}
-                  title={`Use ${photo.role} photo for identify`}
-                >
-                  <span className="block aspect-square overflow-hidden rounded-md">
-                    <ProgressiveImage
-                      src={photo.previewUrl}
-                      alt={`${photo.role} item photo`}
-                      className="h-full w-full"
-                      imageClassName="object-cover"
-                      draggable={false}
-                    />
-                  </span>
-                </button>
-              ))}
-            </div>
-          ) : (
+      <div className="mt-3 grid gap-2 md:grid-cols-[minmax(0,1fr)_188px]">
+        {/* Photo carousel — replaces the old left thumbnail panel + center preview */}
+        {capturedPhotos.length > 0 ? (
+          <div className="flex min-h-[160px] gap-2 overflow-x-auto rounded-[20px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)] [scrollbar-width:none]">
+            {capturedPhotos.map((photo) => (
+              <button
+                key={photo.id}
+                type="button"
+                onClick={() => {
+                  if (activeCapturedPhotoId === photo.id) {
+                    (onOpenImage ?? onCropImage)?.();
+                  } else {
+                    onSelectCapturedPhoto?.(photo.id);
+                  }
+                }}
+                className={[
+                  "relative shrink-0 overflow-hidden rounded-[14px] ring-2 transition",
+                  activeCapturedPhotoId === photo.id
+                    ? "scale-[1.02] ring-[color:var(--pill-active-bg)]"
+                    : "ring-transparent hover:ring-[color:var(--border)]",
+                ].join(" ")}
+                style={{ width: 120, minHeight: 144 }}
+                title={activeCapturedPhotoId === photo.id ? "Click to edit photo" : `Select ${photo.role} photo`}
+              >
+                <ProgressiveImage
+                  src={photo.previewUrl}
+                  alt={`${photo.role} item photo`}
+                  className="h-full w-full"
+                  imageClassName="object-cover"
+                  draggable={false}
+                />
+                {activeCapturedPhotoId === photo.id ? (
+                  <div className="pointer-events-none absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/50 to-transparent pb-2">
+                    <span className="rounded-full bg-black/60 px-2 py-0.5 text-[9px] font-bold text-white/90 backdrop-blur-sm">
+                      Active
+                    </span>
+                  </div>
+                ) : null}
+              </button>
+            ))}
+            {/* Add another photo */}
             <button
               type="button"
               onClick={onUseCamera}
-              className="flex h-[44px] w-full items-center justify-center rounded-[14px] border border-dashed border-white/20 text-[color:var(--muted)]"
-              title="Take a picture"
+              className="flex shrink-0 items-center justify-center rounded-[14px] border border-dashed border-white/20 text-[color:var(--muted)] transition hover:border-white/40"
+              style={{ width: 60, minHeight: 144 }}
+              title="Take another picture"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                 <circle cx="12" cy="13" r="4"/>
               </svg>
             </button>
-          )}
-        </div>
-
-        {previewUrl ? (
-          <button
-            type="button"
-            onClick={onOpenImage ?? onCropImage}
-            className="flex min-h-[104px] items-center justify-center overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-2 text-center ring-1 ring-[color:var(--border)] transition hover:bg-black/25 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)] sm:min-h-[126px] md:min-h-0"
-            title="Open photo options"
-          >
-            <ProgressiveImage
-              src={previewUrl}
-              alt="Selected item photo for identify"
-              className="h-full max-h-[142px] w-full"
-              imageClassName="object-contain opacity-95"
-              draggable={false}
-            />
-          </button>
+          </div>
         ) : (
           <button
             type="button"
             onClick={onUseCamera}
-            className="flex min-h-[104px] items-center justify-center overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-2 text-center ring-1 ring-[color:var(--border)] transition hover:bg-black/25 focus:outline-none focus:ring-2 focus:ring-[color:var(--pill-active-bg)] sm:min-h-[126px] md:min-h-0"
+            className="flex min-h-[160px] items-center justify-center overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-2 text-center ring-1 ring-[color:var(--border)] transition hover:bg-black/25 focus:outline-none"
             title="Take a new picture"
           >
             <span
@@ -202,24 +190,22 @@ export default function ScanPanel({
 
         <div className="grid content-start gap-1.5 rounded-[16px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]">
           <div className="grid grid-cols-2 gap-2">
-            <button type="button" onClick={onUseCamera} className={actionButtonClass(true)}>
-              Camera
+            {/* Camera icon */}
+            <button type="button" onClick={onUseCamera} className={actionButtonClass(true)} title="Take a picture">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
             </button>
-            <button type="button" onClick={onUploadImage} className={actionButtonClass()}>
-              File
+            {/* Upload icon */}
+            <button type="button" onClick={onUploadImage} className={actionButtonClass()} title="Upload from file">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
             </button>
           </div>
-
-          {hasImage ? (
-            <div className="grid grid-cols-2 gap-2">
-              <button type="button" onClick={onCropImage} className={actionButtonClass()}>
-                Crop
-              </button>
-              <button type="button" onClick={onClearImage} className={actionButtonClass()}>
-                Clear
-              </button>
-            </div>
-          ) : null}
 
           <button
             type="button"
