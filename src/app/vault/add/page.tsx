@@ -25,7 +25,6 @@ import {
   type BulkAddValues,
 } from "@/lib/bulkAddState";
 import { lookupBookByIsbn, detectBookIsbnFromFile, extractIsbnFromText } from "@/lib/bookIsbn";
-import { buildDuplicateWarning } from "@/lib/duplicateDetector";
 import {
   addHaulItem,
   clearHaulSession,
@@ -386,17 +385,26 @@ export default function AddPage() {
   }, []);
 
   useEffect(() => {
+    const titleNorm = values.title.trim().toLowerCase();
+    const numberNorm = (values.number ?? "").trim().toLowerCase();
+    const subtitleNorm = (values.subtitle ?? "").trim().toLowerCase();
+    // Only flag a duplicate when title AND number are both non-empty and exactly match an existing item
+    if (!titleNorm || !numberNorm) {
+      setDuplicateWarning("");
+      return;
+    }
+    const exactMatch = existingItems.find((item) => {
+      const titleMatch = (item.title?.trim().toLowerCase() ?? "") === titleNorm;
+      const numberMatch = (item.number?.trim().toLowerCase() ?? "") === numberNorm;
+      const subtitleMatch = !subtitleNorm || (item.subtitle?.trim().toLowerCase() ?? "") === subtitleNorm;
+      return titleMatch && numberMatch && subtitleMatch;
+    });
     setDuplicateWarning(
-      buildDuplicateWarning(
-        {
-          title: values.title,
-          number: values.number,
-          certNumber: values.certNumber,
-        },
-        existingItems
-      )
+      exactMatch
+        ? `Possible duplicate: ${exactMatch.title}${exactMatch.subtitle ? ` · ${exactMatch.subtitle}` : ""}${exactMatch.number ? ` #${exactMatch.number}` : ""}`
+        : ""
     );
-  }, [existingItems, values.certNumber, values.number, values.title]);
+  }, [existingItems, values.title, values.subtitle, values.number]);
 
   const canSave = useMemo(() => values.title.trim().length > 0 && !isSaving, [values.title, isSaving]);
   useUnsavedChangesGuard(hasDraftChanges && !isSaving);
@@ -1536,57 +1544,25 @@ export default function AddPage() {
         <div className="sticky top-0 z-20 mx-auto mb-3 w-full max-w-5xl rounded-[16px] border border-[color:var(--theme-border)] bg-[color:var(--surface)]/92 p-3 backdrop-blur">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">VAULT ADD</div>
-              <h1 className="mt-1 text-2xl font-semibold">Fast Entry</h1>
-              <div className="mt-1 text-sm text-[color:var(--muted)]">
-                Capture item pictures, identify from the best one, then save the item.
-              </div>
+              <h1 className="text-2xl font-semibold">Add</h1>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-              <button
-                type="button"
-                onClick={haulMode ? endHaul : startHaul}
-                className="inline-flex h-10 items-center justify-center rounded-full px-4 text-sm font-semibold ring-1 transition"
-                style={
-                  haulMode
-                    ? {
-                        background: "rgba(74,222,128,0.12)",
-                        color: "#4ade80",
-                        borderColor: "rgba(74,222,128,0.35)",
-                      }
-                    : {
-                        background: "var(--pill)",
-                        color: "var(--fg)",
-                        borderColor: "var(--border)",
-                      }
-                }
-              >
-                {haulMode && haulSession
-                  ? `Batch · ${haulSessionStats(haulSession).count}`
-                  : "Batch Mode"}
-              </button>
+            <div className="flex flex-wrap gap-2">
               <Link
                 href="/vault/quick"
                 className="inline-flex h-10 items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]"
               >
-                Quick Add
+                Switch to Quick Add
               </Link>
               <button
                 type="button"
-                onClick={() => void saveForm(true)}
+                onClick={() => void saveForm(false)}
                 disabled={!canSave}
                 className="inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50 sm:h-10"
                 style={{ background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B", boxShadow: "0 4px 18px rgba(245,181,72,0.28)" }}
               >
-                {isSaving ? "Saving..." : "Save & Next"}
+                {isSaving ? "Saving..." : "Save"}
               </button>
-              <PillButton onClick={resetUnlockedFields} disabled={isSaving}>
-                Reset Unlocked
-              </PillButton>
-              <PillButton onClick={resetAll} disabled={isSaving}>
-                Reset All
-              </PillButton>
             </div>
           </div>
 
@@ -1633,8 +1609,18 @@ export default function AddPage() {
             </div>
 
               <div className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-                <div className="text-[11px] font-semibold tracking-[0.18em] text-[color:var(--muted2)]">
-                  BASIC ITEM RECORD
+                <div className="flex items-center justify-between">
+                  <div className="text-[11px] font-semibold tracking-[0.18em] text-[color:var(--muted2)]">
+                    BASIC ITEM RECORD
+                  </div>
+                  <button
+                    type="button"
+                    onClick={resetUnlockedFields}
+                    disabled={isSaving}
+                    className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 text-[10px] ring-1 ring-[color:var(--border)] disabled:opacity-40"
+                  >
+                    Unlock All
+                  </button>
                 </div>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
                   <Field label="Universe" locked={locks.universe} onToggleLock={() => handleToggleLock("universe")}>
@@ -1690,20 +1676,13 @@ export default function AddPage() {
                   </Field>
 
                   <Field label="Title" locked={locks.title} onToggleLock={() => handleToggleLock("title")}>
-                    <div className="grid gap-2">
-                      <input
-                        ref={titleInputRef}
-                        className={inputClass(aiFilledFields.has("title"))}
-                        value={values.title}
-                        onChange={(e) => { setAiFilledFields(prev => { const n = new Set(prev); n.delete("title"); return n; }); setField("title", e.target.value); }}
-                        placeholder="Batman"
-                      />
-                      {duplicateWarning ? (
-                        <div className="rounded-xl bg-amber-500/10 px-3 py-2 text-xs text-amber-200 ring-1 ring-amber-400/20">
-                          {duplicateWarning}
-                        </div>
-                      ) : null}
-                    </div>
+                    <input
+                      ref={titleInputRef}
+                      className={inputClass(aiFilledFields.has("title"))}
+                      value={values.title}
+                      onChange={(e) => { setAiFilledFields(prev => { const n = new Set(prev); n.delete("title"); return n; }); setField("title", e.target.value); }}
+                      placeholder="Batman"
+                    />
                   </Field>
                 </div>
               </div>
@@ -2023,6 +2002,12 @@ export default function AddPage() {
               document.body
             )
           : null}
+
+        {duplicateWarning ? (
+          <div className="mx-auto mt-4 w-full max-w-5xl rounded-xl bg-amber-500/10 px-4 py-3 text-sm text-amber-200 ring-1 ring-amber-400/20">
+            ⚠ {duplicateWarning}
+          </div>
+        ) : null}
 
         {haulMode && haulSession && !showHaulReview ? (
           <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-4 border-t border-[color:var(--border)] bg-[color:var(--surface)] px-5 py-3 shadow-[0_-8px_32px_rgba(0,0,0,0.35)]">
