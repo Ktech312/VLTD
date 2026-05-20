@@ -1,5 +1,5 @@
 "use client";
-
+// v2 carousel layout
 import { useState, type ChangeEvent } from "react";
 
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
@@ -22,20 +22,6 @@ function chipClass(active = false) {
     : "rounded-full bg-[color:var(--surface)] px-2.5 py-0.5 text-[10px] text-[color:var(--muted)] ring-1 ring-[color:var(--border)]";
 }
 
-function confidenceTone(confidence: "low" | "medium" | "high") {
-  if (confidence === "high") return "bg-emerald-500/15 text-emerald-200 ring-emerald-400/20";
-  if (confidence === "medium") return "bg-amber-500/15 text-amber-200 ring-amber-400/20";
-  return "bg-red-500/15 text-red-200 ring-red-400/20";
-}
-
-function prettyStatus(status: ScanSessionState["status"]) {
-  if (status === "image_attached") return "Photo ready";
-  if (status === "review_ready") return "Review ready";
-  if (status === "applied") return "Applied";
-  if (status === "failed") return "Needs attention";
-  if (status === "scanning") return "Working";
-  return "Waiting";
-}
 
 export default function ScanPanel({
   session,
@@ -189,20 +175,47 @@ export default function ScanPanel({
         )}
 
         <div className="grid content-start gap-1.5 rounded-[16px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]">
-          <div className="grid grid-cols-2 gap-2">
-            {/* Camera icon */}
-            <button type="button" onClick={onUseCamera} className={actionButtonClass(true)} title="Take a picture">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                <circle cx="12" cy="13" r="4"/>
-              </svg>
-            </button>
-            {/* Upload icon */}
-            <button type="button" onClick={onUploadImage} className={actionButtonClass()} title="Upload from file">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="17 8 12 3 7 8"/>
-                <line x1="12" y1="3" x2="12" y2="15"/>
+          {/* Gold folder-upload icon — centered */}
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={onUploadImage}
+              title="Upload from file"
+              className="flex items-center justify-center rounded-full p-0.5 transition hover:opacity-90 active:scale-95 focus:outline-none"
+            >
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <defs>
+                  <radialGradient id="spBg" cx="38%" cy="32%" r="62%">
+                    <stop offset="0%" stopColor="#1c1100" />
+                    <stop offset="100%" stopColor="#040200" />
+                  </radialGradient>
+                  <linearGradient id="spRing" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#5C3D08" />
+                    <stop offset="28%" stopColor="#F5D070" />
+                    <stop offset="62%" stopColor="#C89020" />
+                    <stop offset="100%" stopColor="#5C3D08" />
+                  </linearGradient>
+                  <linearGradient id="spFolder" x1="0.2" y1="0" x2="0.8" y2="1">
+                    <stop offset="0%" stopColor="#FFE080" />
+                    <stop offset="55%" stopColor="#F5B548" />
+                    <stop offset="100%" stopColor="#8B6010" />
+                  </linearGradient>
+                  <linearGradient id="spShine" x1="0" y1="0" x2="0.7" y2="0.7">
+                    <stop offset="0%" stopColor="white" stopOpacity="0.52" />
+                    <stop offset="100%" stopColor="white" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                {/* Dark glossy circle */}
+                <circle cx="24" cy="24" r="23" fill="url(#spBg)" />
+                {/* Gold ring */}
+                <circle cx="24" cy="24" r="22.2" fill="none" stroke="url(#spRing)" strokeWidth="2.4" />
+                {/* Folder body */}
+                <path d="M9 27a2 2 0 0 1 2-2h6.5l2 2.5H37a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2V27z" fill="url(#spFolder)" />
+                {/* Upload arrow pointing up out of folder */}
+                <path d="M24 14v14" stroke="#0B0700" strokeWidth="2.2" strokeLinecap="round" />
+                <path d="M20 18l4-4 4 4" stroke="#0B0700" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                {/* Shine arc upper-left */}
+                <ellipse cx="15" cy="12" rx="10" ry="5.5" fill="url(#spShine)" transform="rotate(-22 15 12)" />
               </svg>
             </button>
           </div>
@@ -225,7 +238,7 @@ export default function ScanPanel({
             onClick={() => setShowAdvanced((prev) => !prev)}
             className={actionButtonClass()}
           >
-            {showAdvanced ? "Hide Options" : "More Identify Options"}
+            More Identify Options
           </button>
 
           {onSaveItem ? (
@@ -245,13 +258,29 @@ export default function ScanPanel({
         Auto Identify reads the selected picture for barcode, text, and AI clues. Barcode/OCR can work without AI; Gemini needs `Gemini_API_Key` set in Vercel environment variables.
       </div>
 
+      {/* Identify Options overlay popup */}
       {showAdvanced ? (
-        <div className="mt-2 grid gap-3 rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] md:grid-cols-[220px_minmax(0,1fr)]">
-          <div className="grid gap-1.5">
-            <label className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">IDENTIFY MODE</label>
-            <div className="text-xs text-[color:var(--muted)]">
-              Optional. Leave this on Auto unless you already know the item type.
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ background: "rgba(0,0,0,0.72)", backdropFilter: "blur(6px)" }}
+          onClick={() => setShowAdvanced(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-[22px] bg-[color:var(--surface)] p-4 shadow-2xl ring-1 ring-[color:var(--border)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-[11px] font-semibold tracking-[0.18em] text-[color:var(--muted2)]">IDENTIFY OPTIONS</span>
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(false)}
+                className="rounded-full bg-[color:var(--pill)] px-3 py-1 text-xs ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]"
+              >
+                ✕
+              </button>
             </div>
+
+            <label className="mb-1 block text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">IDENTIFY MODE</label>
             <select
               className={selectClass()}
               value={scanType}
@@ -265,87 +294,36 @@ export default function ScanPanel({
               <option value="graded_card">Graded Card</option>
               <option value="book">Book</option>
             </select>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={onBookLookup}
+                disabled={!hasImage || isBookLookupRunning}
+                className={actionButtonClass()}
+              >
+                {isBookLookupRunning ? "Looking Up..." : "Book / ISBN"}
+              </button>
+              <button
+                type="button"
+                onClick={onComicLookup}
+                disabled={!hasImage || isComicLookupRunning}
+                className={actionButtonClass()}
+              >
+                {isComicLookupRunning ? "Scanning..." : "Comic Scan"}
+              </button>
+              <button
+                type="button"
+                onClick={onUpcLookup}
+                disabled={(!hasImage && !session.barcodeDigits) || isUpcLookupRunning}
+                className={actionButtonClass()}
+              >
+                {isUpcLookupRunning ? "Looking Up..." : "Product Barcode"}
+              </button>
+            </div>
           </div>
-
-          <div className="grid gap-2 sm:grid-cols-3">
-            <button
-              type="button"
-              onClick={onBookLookup}
-              disabled={!hasImage || isBookLookupRunning}
-              className={actionButtonClass()}
-            >
-              {isBookLookupRunning ? "Looking Up..." : "Book / ISBN"}
-            </button>
-
-            <button
-              type="button"
-              onClick={onComicLookup}
-              disabled={!hasImage || isComicLookupRunning}
-              className={actionButtonClass()}
-            >
-              {isComicLookupRunning ? "Scanning..." : "Comic Scan"}
-            </button>
-
-            <button
-              type="button"
-              onClick={onUpcLookup}
-              disabled={(!hasImage && !session.barcodeDigits) || isUpcLookupRunning}
-              className={actionButtonClass()}
-            >
-              {isUpcLookupRunning ? "Looking Up..." : "Product Barcode"}
-            </button>
-          </div>
-
-          <label className="flex items-start gap-3 rounded-2xl bg-red-500/10 p-3 text-sm ring-1 ring-red-500/20 md:col-span-2">
-            <input
-              type="checkbox"
-              checked={saveScanAsPhoto}
-              onChange={(e) => onToggleSaveScanAsPhoto(e.target.checked)}
-              className="mt-1"
-            />
-            <span>
-              Also mark the selected picture as a <strong>proof photo</strong>
-              <div className="mt-1 text-xs text-[color:var(--muted)]">
-                Optional. Normal captured pictures already save with the item.
-              </div>
-            </span>
-          </label>
         </div>
       ) : null}
-
-      {(session.status !== "idle" || review || session.errorMessage) && (
-        <div className="mt-2 rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">STATUS</span>
-            <span className="text-sm text-[color:var(--fg)]">{prettyStatus(session.status)}</span>
-
-            {review ? (
-              <span
-                className={[
-                  "rounded-full px-2.5 py-1 text-[11px] font-medium ring-1",
-                  confidenceTone(review.confidence),
-                ].join(" ")}
-              >
-                {review.confidence.toUpperCase()} / {review.score}/100
-              </span>
-            ) : null}
-          </div>
-
-          {session.barcodeDigits ? (
-            <div className="mt-2 text-xs text-[color:var(--fg)]">
-              Barcode: <span className="font-medium">{session.barcodeDigits}</span>
-            </div>
-          ) : null}
-
-          {session.errorMessage ? (
-            <div className="mt-2 text-sm text-red-200">{session.errorMessage}</div>
-          ) : null}
-
-          {!session.errorMessage && review?.warnings?.length ? (
-            <div className="mt-2 text-sm text-[color:var(--muted)]">{review.warnings.join(" ")}</div>
-          ) : null}
-        </div>
-      )}
     </section>
   );
 }
