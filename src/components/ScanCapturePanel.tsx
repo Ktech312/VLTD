@@ -542,13 +542,13 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
 
       {/* Action controls */}
       <div className="shrink-0 bg-[#0a0f1e] px-3 pb-2 pt-2.5">
-        {/* 3 action pills */}
-        <div className="grid grid-cols-3 gap-2">
+        {/* 3 compact action pills — centered, size-to-content */}
+        <div className="flex items-center justify-center gap-2">
           <button
             type="button"
             onClick={handleFrontSave}
             disabled={!awaitingChoice || effectiveQuickMode}
-            className="flex h-10 items-center justify-center rounded-xl text-xs font-semibold ring-1 transition disabled:opacity-25"
+            className="rounded-full px-4 py-2 text-xs font-semibold ring-1 transition disabled:opacity-25"
             style={{
               background: awaitingChoice && !effectiveQuickMode ? "rgba(245,181,72,0.14)" : "rgba(255,255,255,0.05)",
               borderColor: awaitingChoice && !effectiveQuickMode ? "rgba(245,181,72,0.55)" : "rgba(255,255,255,0.1)",
@@ -561,7 +561,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
             type="button"
             onClick={handleBackSave}
             disabled={!awaitingChoice || effectiveQuickMode}
-            className="flex h-10 items-center justify-center rounded-xl text-xs font-semibold ring-1 transition disabled:opacity-25"
+            className="rounded-full px-4 py-2 text-xs font-semibold ring-1 transition disabled:opacity-25"
             style={{
               background: awaitingChoice && !effectiveQuickMode ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.05)",
               borderColor: awaitingChoice && !effectiveQuickMode ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.1)",
@@ -574,7 +574,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
             type="button"
             onClick={handleNextCard}
             disabled={!awaitingChoice}
-            className="flex h-10 items-center justify-center rounded-xl text-xs font-semibold ring-1 transition disabled:opacity-25"
+            className="rounded-full px-4 py-2 text-xs font-semibold ring-1 transition disabled:opacity-25"
             style={{
               background: awaitingChoice ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.04)",
               borderColor: awaitingChoice ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.08)",

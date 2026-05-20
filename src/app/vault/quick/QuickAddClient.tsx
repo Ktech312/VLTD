@@ -604,9 +604,9 @@ export default function QuickAddClient() {
             <button
               type="button"
               onClick={() => setIsScanPanelOpen(true)}
-              className="group relative flex w-full flex-col items-center justify-center gap-3 rounded-[18px] transition active:scale-[0.99]"
+              className="group relative flex w-full flex-col items-center justify-center gap-2 rounded-[18px] transition active:scale-[0.99]"
               style={{
-                minHeight: 150,
+                minHeight: 170,
                 background: "rgba(12,20,38,0.7)",
                 border: "1.5px dashed rgba(245,181,72,0.28)",
                 backdropFilter: "blur(8px)",
@@ -615,14 +615,14 @@ export default function QuickAddClient() {
               <div
                 className="flex items-center justify-center rounded-full transition-transform group-hover:scale-105"
                 style={{
-                  width: 68,
-                  height: 68,
+                  width: 54,
+                  height: 54,
                   background: "rgba(245,181,72,0.10)",
                   border: "1.5px solid rgba(245,181,72,0.30)",
-                  boxShadow: "0 0 24px rgba(245,181,72,0.12)",
+                  boxShadow: "0 0 20px rgba(245,181,72,0.12)",
                 }}
               >
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F5B548" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5B548" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                   <circle cx="12" cy="13" r="4"/>
                 </svg>
