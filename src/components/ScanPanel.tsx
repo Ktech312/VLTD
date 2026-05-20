@@ -212,8 +212,8 @@ export default function ScanPanel({
                 {/* Folder body */}
                 <path d="M9 27a2 2 0 0 1 2-2h6.5l2 2.5H37a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2V27z" fill="url(#spFolder)" />
                 {/* Upload arrow pointing up out of folder */}
-                <path d="M24 14v14" stroke="#0B0700" strokeWidth="2.2" strokeLinecap="round" />
-                <path d="M20 18l4-4 4 4" stroke="#0B0700" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M24 14v14" stroke="#FFE080" strokeWidth="2.2" strokeLinecap="round" />
+                <path d="M20 18l4-4 4 4" stroke="#FFE080" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                 {/* Shine arc upper-left */}
                 <ellipse cx="15" cy="12" rx="10" ry="5.5" fill="url(#spShine)" transform="rotate(-22 15 12)" />
               </svg>

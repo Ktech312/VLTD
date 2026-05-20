@@ -589,24 +589,24 @@ export default function QuickAddClient() {
 
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
-      <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col px-3 py-3 sm:px-5 sm:py-5">
+      <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-3 py-2 sm:px-4">
         <div className="flex items-start gap-3">
           <div>
-            <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">
+            <div className="text-[10px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">
               VLTD Quick Add
             </div>
-            <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">Image first. Save fast.</h1>
+            <h1 className="mt-0.5 text-xl font-semibold">Image first. Save fast.</h1>
           </div>
         </div>
 
-        <div className="mt-3 flex flex-col gap-3">
+        <div className="mt-2 flex flex-col gap-2">
           {!activePreview && (
             <button
               type="button"
               onClick={() => setIsScanPanelOpen(true)}
-              className="group relative flex w-full flex-col items-center justify-center gap-4 rounded-[18px] transition active:scale-[0.99]"
+              className="group relative flex w-full flex-col items-center justify-center gap-3 rounded-[18px] transition active:scale-[0.99]"
               style={{
-                minHeight: 220,
+                minHeight: 150,
                 background: "rgba(12,20,38,0.7)",
                 border: "1.5px dashed rgba(245,181,72,0.28)",
                 backdropFilter: "blur(8px)",
@@ -764,27 +764,27 @@ export default function QuickAddClient() {
           ) : null}
 
 
-          <div className="mt-4 grid gap-3">
+          <div className="mt-2 grid gap-2">
             <input
               ref={titleInputRef}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Title *"
-              className="h-12 rounded-2xl bg-[color:var(--pill)] px-4 ring-1 ring-[color:var(--border)]"
+              className="h-11 rounded-2xl bg-[color:var(--pill)] px-4 ring-1 ring-[color:var(--border)]"
             />
             <input
               value={purchasePrice}
               onChange={(e) => setPurchasePrice(e.target.value)}
               placeholder="Purchase Price"
               inputMode="decimal"
-              className="h-12 rounded-2xl bg-[color:var(--pill)] px-4 ring-1 ring-[color:var(--border)]"
+              className="h-11 rounded-2xl bg-[color:var(--pill)] px-4 ring-1 ring-[color:var(--border)]"
             />
           </div>
 
           <button
             type="button"
             onClick={() => setShowMoreFields((v) => !v)}
-            className="mt-3 flex w-full items-center gap-2 rounded-2xl px-4 py-2.5 text-sm ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+            className="mt-2 flex w-full items-center gap-2 rounded-2xl px-4 py-2 text-sm ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
             style={{ color: "var(--muted)" }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ transform: showMoreFields ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>
@@ -812,12 +812,12 @@ export default function QuickAddClient() {
           ) : null}
 
           {status ? (
-            <div className="mt-4 rounded-[18px] bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]">
+            <div className="mt-2 rounded-[18px] bg-[color:var(--pill)] px-4 py-2.5 text-sm ring-1 ring-[color:var(--border)]">
               {status}
             </div>
           ) : null}
 
-          <div className="mt-4 grid gap-2">
+          <div className="mt-3 grid gap-2">
             <button
               type="button"
               onClick={() => void saveQuickAdd()}

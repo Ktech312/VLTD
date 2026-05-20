@@ -28,14 +28,15 @@ type CapturedItem = {
   backObjectUrl?: string;
 };
 
-const BLUR_THRESHOLD = 80; // Laplacian variance threshold; 120 was too strict for dark/simple backgrounds common in collectible photography
+const BLUR_THRESHOLD = 80;
 const LOCK_REQUIRED_MS = 700;
 
+// aspect = width / height  (< 1 = portrait, > 1 = landscape, 1 = square)
 const FRAME_ASPECT: Record<FrameType, number> = {
-  card: 3 / 4,
-  book: 2 / 3,
-  jewelry: 1,
-  art: 4 / 3,
+  card: 3 / 4,     // portrait
+  book: 2 / 3,     // portrait
+  jewelry: 1,       // square
+  art: 4 / 3,      // landscape
 };
 
 const FRAME_LABELS: Record<FrameType, string> = {
@@ -153,7 +154,8 @@ function FrameOverlay({
   frameType: FrameType;
   lockProgress: number;
 }) {
-  const aspect = FRAME_ASPECT[frameType];
+  const aspect = FRAME_ASPECT[frameType]; // width/height ratio
+  const isPortrait = aspect < 1;
   const color = `rgba(245,181,72,${0.2 + lockProgress * 0.8})`;
   const size = 18 + lockProgress * 8;
   const borderWidth = 2 + lockProgress;
@@ -181,17 +183,27 @@ function FrameOverlay({
     };
   }
 
+  // Portrait frames: height drives the frame, width follows the aspect ratio.
+  // Landscape/square frames: width drives, height follows.
+  const frameStyle: CSSProperties = isPortrait
+    ? {
+        aspectRatio: String(aspect),
+        height: "82%",
+        maxHeight: "88%",
+        maxWidth: "88%",
+        width: "auto",
+      }
+    : {
+        aspectRatio: String(aspect),
+        width: "82%",
+        maxWidth: "88%",
+        maxHeight: "88%",
+        height: "auto",
+      };
+
   return (
     <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-      <div
-        className="relative"
-        style={{
-          width: aspect >= 1 ? "78vw" : `min(${Math.round(aspect * 76)}vh, 78vw)`,
-          maxWidth: "84vw",
-          height: aspect >= 1 ? `min(${Math.round(78 / aspect)}vw, 62vh)` : "76vh",
-          maxHeight: "78%",
-        }}
-      >
+      <div className="relative" style={frameStyle}>
         <div style={cornerStyle("tl")} />
         <div style={cornerStyle("tr")} />
         <div style={cornerStyle("bl")} />
@@ -220,6 +232,9 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
   const [universe, setUniverse] = useState<UniverseKey>("TCG");
   const [categoryLabel, setCategoryLabel] = useState(getCategories("TCG")[0] ?? "Pokemon");
   const [quickMode, setQuickMode] = useState(false);
+  const [bulkMode, setBulkMode] = useState(false);
+  const [showBulkInfo, setShowBulkInfo] = useState(false);
+  const [flashVisible, setFlashVisible] = useState(false);
   const [lockProgress, setLockProgress] = useState(0);
   const [lockStatus, setLockStatus] = useState<LockStatus>("scanning");
   const [awaitingChoice, setAwaitingChoice] = useState(false);
@@ -234,10 +249,6 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
 
     async function startCamera() {
       try {
-        // { video: true } grabs the first available camera immediately.
-        // Specifying facingMode forces Chrome to probe all input sources for
-        // facing-mode metadata before settling — that's the 20-second stall on
-        // desktop. Mobile browsers default to the rear camera regardless.
         stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         if (!active) {
           stream.getTracks().forEach((track) => track.stop());
@@ -287,7 +298,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
 
     return () => window.clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [awaitingChoice, lockStatus, capturingBack, quickMode, activeItemId]);
+  }, [awaitingChoice, lockStatus, capturingBack, quickMode, bulkMode, activeItemId]);
 
   useEffect(() => {
     return () => {
@@ -297,6 +308,11 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       });
     };
   }, [capturedItems]);
+
+  function triggerFlash() {
+    setFlashVisible(true);
+    window.setTimeout(() => setFlashVisible(false), 350);
+  }
 
   function resetScanner() {
     lockStartRef.current = null;
@@ -332,6 +348,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       return;
     }
 
+    triggerFlash();
     setLockStatus("snapped");
     setLockProgress(1);
 
@@ -342,7 +359,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       return;
     }
 
-    if (quickMode) {
+    if (quickMode || bulkMode) {
       addCapturedItem(blob, null);
       resetScanner();
       return;
@@ -353,16 +370,26 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     setAwaitingChoice(true);
   }
 
-  function handleBack() {
+  // Save front only, move to next card
+  function handleFrontSave() {
+    if (frontBlobRef.current) {
+      addCapturedItem(frontBlobRef.current, null);
+    }
+    setCapturingBack(false);
+    resetScanner();
+  }
+
+  // Flip card and capture back too
+  function handleBackSave() {
     if (!frontBlobRef.current) return;
     setCapturingBack(true);
     resetScanner();
   }
 
-  function handleNext() {
-    if (frontBlobRef.current) {
-      addCapturedItem(frontBlobRef.current, null);
-    }
+  // Discard this snap and scan the next card without saving
+  function handleNextCard() {
+    frontBlobRef.current = null;
+    setActiveItemId(null);
     setCapturingBack(false);
     resetScanner();
   }
@@ -442,14 +469,15 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
   }
 
   const categories = getCategories(universe);
+  const effectiveQuickMode = quickMode || bulkMode;
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/60 backdrop-blur-sm">
-    <div className="flex w-full max-w-[540px] flex-col overflow-hidden rounded-t-[20px] bg-[#060c1a] text-white" style={{ maxHeight: "88dvh" }}>
+    <div className="fixed inset-0 z-[95] flex flex-col bg-[#060c1a] text-white">
       <canvas ref={analysisCanvasRef} className="hidden" />
       <canvas ref={captureCanvasRef} className="hidden" />
 
-      <div className="flex shrink-0 items-center gap-1.5 border-b border-white/5 bg-[#060c1a]/95 px-3 py-3">
+      {/* Header: frame type + close */}
+      <div className="flex shrink-0 items-center gap-1.5 border-b border-white/5 bg-[#060c1a]/95 px-3 py-2.5">
         {(Object.keys(FRAME_LABELS) as FrameType[]).map((key) => (
           <Pill
             key={key}
@@ -464,22 +492,27 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
           className="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/8 text-white/60"
           aria-label="Close scanner"
         >
-          x
+          ✕
         </button>
       </div>
 
-      {/* Inline style caps height reliably — Tailwind JIT can silently drop
-          CSS min() inside arbitrary-value brackets on some builds. */}
-      <div
-        className="relative w-full shrink-0 bg-[#040912]"
-        style={{ height: "min(36dvh, 320px)", overflow: "hidden" }}
-      >
+      {/* Camera — flex-1 fills all available height */}
+      <div className="relative flex-1 overflow-hidden bg-[#040912]">
         <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />
         <FrameOverlay frameType={frameType} lockProgress={lockProgress} />
 
+        {/* Capture flash */}
+        {flashVisible ? (
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{ background: "rgba(255,255,255,0.45)", animation: "none" }}
+          />
+        ) : null}
+
+        {/* Lock status */}
         <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/38 px-3 py-1.5 ring-1 ring-white/10 backdrop-blur">
           <span
-            className="h-2 w-2 rounded-full"
+            className="h-2 w-2 rounded-full transition-all"
             style={{
               background:
                 lockStatus === "snapped" || lockStatus === "locked"
@@ -499,55 +532,117 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
                   ? "Back shot"
                   : "Scanning"}
           </span>
+          {capturedItems.length > 0 ? (
+            <span className="ml-1 rounded-full bg-[#F5B548]/20 px-1.5 py-0.5 text-[10px] font-bold text-[#F5B548]">
+              {capturedItems.length}
+            </span>
+          ) : null}
         </div>
       </div>
 
-      <div className="shrink-0 bg-[#0a0f1e] px-3 pb-2 pt-3">
-        <div className="flex items-center gap-2">
+      {/* Action controls */}
+      <div className="shrink-0 bg-[#0a0f1e] px-3 pb-2 pt-2.5">
+        {/* 3 action pills */}
+        <div className="grid grid-cols-3 gap-2">
           <button
             type="button"
-            onClick={handleBack}
-            disabled={!awaitingChoice || quickMode}
-            className="flex h-10 flex-1 items-center justify-center rounded-xl text-xs font-semibold ring-1 transition disabled:opacity-25"
+            onClick={handleFrontSave}
+            disabled={!awaitingChoice || effectiveQuickMode}
+            className="flex h-10 items-center justify-center rounded-xl text-xs font-semibold ring-1 transition disabled:opacity-25"
             style={{
-              background: awaitingChoice && !quickMode ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.05)",
-              borderColor: awaitingChoice && !quickMode ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.1)",
-              color: awaitingChoice && !quickMode ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.45)",
+              background: awaitingChoice && !effectiveQuickMode ? "rgba(245,181,72,0.14)" : "rgba(255,255,255,0.05)",
+              borderColor: awaitingChoice && !effectiveQuickMode ? "rgba(245,181,72,0.55)" : "rgba(255,255,255,0.1)",
+              color: awaitingChoice && !effectiveQuickMode ? "#F5B548" : "rgba(255,255,255,0.4)",
             }}
           >
-            Back
+            Front Save
           </button>
-          <span className="text-[10px] font-bold text-white/24">OR</span>
           <button
             type="button"
-            onClick={handleNext}
+            onClick={handleBackSave}
+            disabled={!awaitingChoice || effectiveQuickMode}
+            className="flex h-10 items-center justify-center rounded-xl text-xs font-semibold ring-1 transition disabled:opacity-25"
+            style={{
+              background: awaitingChoice && !effectiveQuickMode ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.05)",
+              borderColor: awaitingChoice && !effectiveQuickMode ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.1)",
+              color: awaitingChoice && !effectiveQuickMode ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
+            }}
+          >
+            Back Save
+          </button>
+          <button
+            type="button"
+            onClick={handleNextCard}
             disabled={!awaitingChoice}
-            className="flex h-10 flex-1 items-center justify-center rounded-xl text-xs font-bold ring-1 transition disabled:opacity-30"
+            className="flex h-10 items-center justify-center rounded-xl text-xs font-semibold ring-1 transition disabled:opacity-25"
             style={{
-              background: awaitingChoice ? "rgba(245,181,72,0.2)" : "rgba(255,255,255,0.05)",
-              borderColor: awaitingChoice ? "rgba(245,181,72,0.65)" : "rgba(255,255,255,0.1)",
-              color: awaitingChoice ? "#F5B548" : "rgba(255,255,255,0.45)",
-              boxShadow: awaitingChoice ? "0 0 16px rgba(245,181,72,0.2)" : "none",
+              background: awaitingChoice ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.04)",
+              borderColor: awaitingChoice ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.08)",
+              color: awaitingChoice ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.35)",
             }}
           >
-            Next
+            Next Card
           </button>
         </div>
 
-        <label className="mt-2 flex cursor-pointer items-center gap-2 px-1 py-1 text-xs text-white/48">
-          <input
-            type="checkbox"
-            checked={quickMode}
-            onChange={(event) => setQuickMode(event.target.checked)}
-            className="h-4 w-4 rounded accent-[color:var(--theme-gold)]"
-          />
-          Quick scan only
-        </label>
+        {/* Quick scan + Bulk scan row */}
+        <div className="mt-2 flex items-center gap-3">
+          {/* Quick scan */}
+          <label className="flex cursor-pointer items-center gap-1.5 text-xs text-white/50">
+            <input
+              type="checkbox"
+              checked={effectiveQuickMode}
+              onChange={(event) => {
+                setQuickMode(event.target.checked);
+                if (!event.target.checked) setBulkMode(false);
+              }}
+              className="h-3.5 w-3.5 rounded accent-[color:var(--theme-gold)]"
+            />
+            Quick scan only
+          </label>
+
+          {/* Bulk scan */}
+          <div className="relative ml-auto flex items-center gap-1.5">
+            {showBulkInfo ? (
+              <div
+                className="absolute bottom-full right-0 mb-2 w-56 rounded-[14px] bg-[#0d1525] p-3 text-[11px] text-white/70 ring-1 ring-white/10 shadow-xl"
+                onClick={() => setShowBulkInfo(false)}
+              >
+                <div className="mb-1 font-semibold text-white/90">Bulk Scan</div>
+                Continuously scans and auto-captures each item as it locks. Each capture flashes the screen. Items queue up and save together when you tap Done.
+              </div>
+            ) : null}
+            <button
+              onClick={() => setShowBulkInfo((v) => !v)}
+              className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white/40 ring-1 ring-white/15 transition hover:ring-white/30"
+              aria-label="Bulk scan info"
+            >
+              i
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setBulkMode((v) => !v);
+                if (!bulkMode) setQuickMode(true);
+              }}
+              className="rounded-full px-3 py-1 text-[11px] font-semibold ring-1 transition"
+              style={{
+                background: bulkMode ? "rgba(34,197,94,0.18)" : "rgba(255,255,255,0.06)",
+                borderColor: bulkMode ? "rgba(34,197,94,0.55)" : "rgba(255,255,255,0.14)",
+                color: bulkMode ? "#4ade80" : "rgba(255,255,255,0.55)",
+                boxShadow: bulkMode ? "0 0 14px rgba(34,197,94,0.22)" : "none",
+              }}
+            >
+              {bulkMode ? "Bulk Active" : "Start Bulk Scan"}
+            </button>
+          </div>
+        </div>
       </div>
 
+      {/* Universe / Category / Done */}
       <div className="shrink-0 border-t border-white/5 bg-[#0a0f1e] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
         <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/36">Universe</div>
-        <div className="flex gap-1.5 overflow-x-auto pb-2 [scrollbar-width:none]">
+        <div className="flex gap-1.5 overflow-x-auto pb-1.5 [scrollbar-width:none]">
           {UNIVERSES.map((key) => (
             <Pill
               key={key}
@@ -564,7 +659,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         {categories.length ? (
           <>
             <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/36">Category</div>
-            <div className="flex gap-1.5 overflow-x-auto pb-2 [scrollbar-width:none]">
+            <div className="flex gap-1.5 overflow-x-auto pb-1.5 [scrollbar-width:none]">
               {categories.map((category) => (
                 <Pill
                   key={category}
@@ -580,7 +675,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         <button
           type="button"
           onClick={() => void handleDone()}
-          className="mt-1 flex h-11 w-full items-center justify-center rounded-xl text-sm font-bold ring-1 transition"
+          className="mt-1 flex h-10 w-full items-center justify-center rounded-xl text-sm font-bold ring-1 transition"
           style={{
             background: capturedItems.length ? "rgba(245,181,72,0.12)" : "rgba(255,255,255,0.06)",
             borderColor: capturedItems.length ? "rgba(245,181,72,0.34)" : "rgba(255,255,255,0.1)",
@@ -590,7 +685,6 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
           Done {capturedItems.length ? `(${capturedItems.length})` : ""}
         </button>
       </div>
-    </div>
     </div>
   );
 }
