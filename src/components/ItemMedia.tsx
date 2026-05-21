@@ -153,6 +153,7 @@ export default function ItemMedia({
 
   const [mounted, setMounted] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [draftFile, setDraftFile] = useState<File | null>(null);
   const [draftPreviewUrl, setDraftPreviewUrl] = useState<string>("");
   const [rotation, setRotation] = useState(0);
@@ -360,7 +361,6 @@ export default function ItemMedia({
                 type="button"
                 onClick={() => {
                   onSelect(entry.originalIndex);
-                  openViewerForEntry(entry);
                 }}
                 className={[
                   "relative block h-[96px] w-[96px] overflow-hidden rounded-2xl bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] ring-1 transition",
@@ -438,13 +438,7 @@ export default function ItemMedia({
             {activeImage && activeVisibleEntry ? (
               <button
                 type="button"
-                onClick={() => {
-                  const nextViewerIndex = viewerEntries.findIndex(
-                    (entry) => entry.originalIndex === activeVisibleEntry.originalIndex
-                  );
-                  setViewerIndex(Math.max(0, nextViewerIndex));
-                  setViewerOpen(true);
-                }}
+                onClick={() => setPreviewOpen(true)}
                 className="block h-full w-full"
               >
                 <img
@@ -544,7 +538,7 @@ export default function ItemMedia({
                       type="button"
                       onClick={() => {
                         onSelect(entry.originalIndex);
-                        openViewerForEntry(entry);
+                        setPreviewOpen(true);
                       }}
                       className="block h-[140px] w-full overflow-hidden rounded-xl"
                     >
@@ -617,27 +611,97 @@ export default function ItemMedia({
         }}
       />
 
-      {viewerOpen && viewerEntries.length > 0 ? (
-        <ImageViewer
-          images={viewerEntries.map((entry) => entry.url)}
-          index={Math.max(0, viewerIndex)}
-          onClose={() => setViewerOpen(false)}
-          onEdit={
-            onReplaceImage
-              ? (index) => {
-                  const entry = viewerEntries[index];
-                  if (entry) openEditorForEntry(entry);
-                }
-              : undefined
-          }
-          onDelete={(index) => {
-            const entry = viewerEntries[index];
-            if (!entry) return;
-            setViewerOpen(false);
-            onDeleteImage(entry.originalIndex);
-          }}
-        />
-      ) : null}
+      {/* Top-anchored image preview panel — no body scroll lock */}
+      {mounted && previewOpen && activeImage && activeVisibleEntry && typeof document !== "undefined"
+        ? createPortal(
+            <>
+              {/* Backdrop */}
+              <div
+                className="fixed inset-0 z-[89] bg-black/60 backdrop-blur-sm"
+                onClick={() => setPreviewOpen(false)}
+              />
+              {/* Top panel */}
+              <div className="fixed inset-x-0 top-0 z-[90] rounded-b-[32px] bg-[color:var(--surface)] shadow-[0_8px_48px_rgba(0,0,0,0.55)] ring-1 ring-[color:var(--border)]">
+                {/* Close */}
+                <button
+                  type="button"
+                  onClick={() => setPreviewOpen(false)}
+                  className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-xl leading-none text-white ring-1 ring-white/20 backdrop-blur"
+                >
+                  ×
+                </button>
+
+                {/* Image */}
+                <div className="flex items-center justify-center bg-black/20 p-3 pt-4" style={{ maxHeight: "62dvh" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={activeImage}
+                    alt=""
+                    draggable={false}
+                    className="rounded-[18px] object-contain"
+                    style={{ maxHeight: "58dvh", maxWidth: "100%" }}
+                  />
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex flex-wrap items-center justify-center gap-2 px-4 py-3">
+                  {onReplaceImage ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPreviewOpen(false);
+                        openEditorForEntry(activeVisibleEntry);
+                      }}
+                      className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]"
+                    >
+                      Edit Photo
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPreviewOpen(false);
+                      setTimeout(() => cameraRef.current?.click(), 0);
+                    }}
+                    className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]"
+                  >
+                    Camera
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPreviewOpen(false);
+                      setTimeout(() => fileRef.current?.click(), 0);
+                    }}
+                    className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]"
+                  >
+                    Add Image
+                  </button>
+                  {onRemoveBackground ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPreviewOpen(false);
+                        onRemoveBackground(activeVisibleEntry.originalIndex);
+                      }}
+                      className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]"
+                    >
+                      Remove BG
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => onDeleteImage(activeVisibleEntry.originalIndex)}
+                    className="inline-flex h-10 items-center gap-1.5 rounded-full bg-red-600/80 px-4 text-sm font-medium text-white ring-1 ring-red-500/40"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </>,
+            document.body
+          )
+        : null}
 
       {mounted && editTarget && typeof document !== "undefined"
         ? createPortal(
@@ -746,5 +810,5 @@ export default function ItemMedia({
         </div>
       ) : null}
     </>
-  );
+  )
 }

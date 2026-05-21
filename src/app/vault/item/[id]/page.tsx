@@ -696,6 +696,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 >
                   Stream
                 </Link>
+                <div className="ml-1 h-6 w-px bg-[color:var(--border)]" />
+                <ShareBar title={item.title} compact />
               </div>
             </div>
 
@@ -711,9 +713,6 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               </div>
             ) : null}
 
-            <div className="mt-4">
-              <ShareBar title={item.title} />
-            </div>
 
             {isSoldView && displayedSale && (
               <div className="mb-5 mt-4">

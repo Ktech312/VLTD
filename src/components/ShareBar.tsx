@@ -75,9 +75,11 @@ function EmailIcon() {
 type ShareBarProps = {
   title: string;
   shareUrl?: string;
+  /** When true, renders just the icon row with no container or heading */
+  compact?: boolean;
 };
 
-export default function ShareBar({ title, shareUrl }: ShareBarProps) {
+export default function ShareBar({ title, shareUrl, compact = false }: ShareBarProps) {
   const [copied, setCopied] = useState(false);
 
   const url = shareUrl || (typeof window !== "undefined" ? window.location.href : "");
@@ -108,7 +110,7 @@ export default function ShareBar({ title, shareUrl }: ShareBarProps) {
   const emailUrl = `mailto:?subject=${encodeURIComponent(`Check out: ${title}`)}&body=${encodeURIComponent(`${title}\n${url}`)}`;
 
   const iconBtn = [
-    "flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] ring-1 transition-all",
+    "flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] ring-1 transition-all",
     "hover:brightness-125 active:scale-90",
   ].join(" ");
 
@@ -118,47 +120,38 @@ export default function ShareBar({ title, shareUrl }: ShareBarProps) {
     color: "var(--theme-gold, #F5B548)",
   };
 
+  const icons = (
+    <div className="flex flex-wrap gap-2">
+      <button type="button" onClick={() => void handleCopy()} className={iconBtn} style={iconStyle} title="Copy link">
+        {copied ? <CheckIcon /> : <CopyIcon />}
+      </button>
+      <a href={tweetUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Post on X">
+        <XIcon />
+      </a>
+      <a href={fbUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on Facebook">
+        <FacebookIcon />
+      </a>
+      <a href={waUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on WhatsApp">
+        <WhatsAppIcon />
+      </a>
+      <a href={tgUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on Telegram">
+        <TelegramIcon />
+      </a>
+      <a href={smsUrl} className={iconBtn} style={iconStyle} title="Share via SMS">
+        <SmsIcon />
+      </a>
+      <a href={emailUrl} className={iconBtn} style={iconStyle} title="Share via Email">
+        <EmailIcon />
+      </a>
+    </div>
+  );
+
+  if (compact) return icons;
+
   return (
     <div className="rounded-[22px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
       <div className="mb-3 text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">SHARE THIS ITEM</div>
-      <div className="flex flex-wrap gap-2.5">
-
-        {/* Copy link */}
-        <button type="button" onClick={() => void handleCopy()} className={iconBtn} style={iconStyle} title="Copy link">
-          {copied ? <CheckIcon /> : <CopyIcon />}
-        </button>
-
-        {/* X / Twitter */}
-        <a href={tweetUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Post on X">
-          <XIcon />
-        </a>
-
-        {/* Facebook */}
-        <a href={fbUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on Facebook">
-          <FacebookIcon />
-        </a>
-
-        {/* WhatsApp */}
-        <a href={waUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on WhatsApp">
-          <WhatsAppIcon />
-        </a>
-
-        {/* Telegram */}
-        <a href={tgUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on Telegram">
-          <TelegramIcon />
-        </a>
-
-        {/* SMS */}
-        <a href={smsUrl} className={iconBtn} style={iconStyle} title="Share via SMS">
-          <SmsIcon />
-        </a>
-
-        {/* Email */}
-        <a href={emailUrl} className={iconBtn} style={iconStyle} title="Share via Email">
-          <EmailIcon />
-        </a>
-
-      </div>
+      {icons}
     </div>
   );
 }
