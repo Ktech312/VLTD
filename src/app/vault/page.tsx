@@ -442,6 +442,12 @@ function VaultCard({
       ].join(" ")}
       style={{ background: "var(--theme-card, rgba(15,25,45,0.85))" }}
     >
+      {/* Status badge — top LEFT to avoid colliding with hover action buttons */}
+      <span className={["absolute left-2 top-2 z-10 rounded-full px-1.5 py-0.5 text-[8px] font-semibold ring-1", statusClass].join(" ")}>
+        {statusLabel}
+      </span>
+
+      {/* Hover action buttons — top RIGHT, clear of status badge */}
       <div className="absolute right-1.5 top-1.5 z-20 hidden items-center gap-1 group-hover:flex">
         <Link
           href={detailHref}
@@ -458,10 +464,6 @@ function VaultCard({
           {isDeleting ? "..." : "Delete"}
         </button>
       </div>
-
-      <span className={["absolute right-2 top-2 z-10 rounded-full px-1.5 py-0.5 text-[8px] font-semibold ring-1", statusClass].join(" ")}>
-        {statusLabel}
-      </span>
 
       <div className="relative h-[78px] overflow-hidden rounded-[10px] bg-black/18">
         <Link href={detailHref} className="block h-full">

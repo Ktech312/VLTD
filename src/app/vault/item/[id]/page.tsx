@@ -673,33 +673,30 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-5 sm:py-6">
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_360px]">
           <div>
-            <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ITEM</div>
-            <div className="mt-2 flex flex-wrap items-center gap-3">
-              <h1 className="text-4xl font-semibold leading-tight">{item.title}</h1>
-              {notable ? <NotableBadge reason={notableReason(item)} /> : null}
-            </div>
-            <div className="mt-2 text-sm text-[color:var(--muted)]">
-              {UNIVERSE_LABEL[universe]} • {categoryLabel(item)}
-              {item.subcategoryLabel ? ` • ${item.subcategoryLabel}` : ""}
-              {" • "}Added {fmtDate(addedAt)}
-            </div>
+            <div className="rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ITEM</div>
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">{item.title}</h1>
+                {notable ? <NotableBadge reason={notableReason(item)} /> : null}
+              </div>
+              <div className="mt-2 text-sm text-[color:var(--muted)]">
+                {UNIVERSE_LABEL[universe]} • {categoryLabel(item)}
+                {item.subcategoryLabel ? ` • ${item.subcategoryLabel}` : ""}
+                {" • "}Added {fmtDate(addedAt)}
+              </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <Link href="/vault" className="inline-flex h-10 items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]">
-                ← Vault
-              </Link>
-              <Link
-                href={`/vault/item/${encodeURIComponent(item.id)}/present`}
-                className="inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-[12px] font-semibold ring-1 transition"
-                style={{ background: "var(--surface)", color: "var(--muted)", borderColor: "var(--border)" }}
-              >
-                Stream
-              </Link>
-              <InsurancePdfButton
-                items={[item]}
-                label="Insurance PDF"
-                className="inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-[12px] font-semibold ring-1 transition"
-              />
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <Link href="/vault" className="inline-flex h-10 items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]">
+                  ← Vault
+                </Link>
+                <Link
+                  href={`/vault/item/${encodeURIComponent(item.id)}/present`}
+                  className="inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-[12px] font-semibold ring-1 transition"
+                  style={{ background: "var(--surface)", color: "var(--muted)", borderColor: "var(--border)" }}
+                >
+                  Stream
+                </Link>
+              </div>
             </div>
 
             {displayedSale ? (
@@ -777,6 +774,13 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                     { label: "Added", value: fmtDate(addedAt) },
                   ]}
                 />
+                <div className="mt-4">
+                  <InsurancePdfButton
+                    items={[item]}
+                    label="Add to Insurance"
+                    className="inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-[12px] font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)] hover:text-[color:var(--theme-gold)]"
+                  />
+                </div>
               </div>
 
               <div className="mt-5 rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">

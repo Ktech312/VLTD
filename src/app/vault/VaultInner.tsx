@@ -557,7 +557,7 @@ function VaultCard({
                   loading="lazy"
                   draggable={false}
                 />
-                <div className="absolute right-2 top-2 z-20">
+                <div className={["absolute z-20", frame.rivets ? "right-4 top-4" : "right-2 top-2"].join(" ")}>
                   <ItemVisibilityToggle item={item} />
                 </div>
 
