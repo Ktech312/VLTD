@@ -84,11 +84,7 @@ export default function HaulReviewSheet({ session, onClose, onFinish }: Props) {
               >
                 {item.imageFrontUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={item.imageFrontUrl}
-                    alt={item.title}
-                    className="h-14 w-10 shrink-0 rounded-xl object-cover"
-                  />
+                  <img src={item.imageFrontUrl} alt={item.title} className="h-14 w-10 shrink-0 rounded-xl object-cover" />
                 ) : (
                   <div className="h-14 w-10 shrink-0 rounded-xl bg-[color:var(--surface)]" />
                 )}
@@ -103,18 +99,7 @@ export default function HaulReviewSheet({ session, onClose, onFinish }: Props) {
                     </div>
                   ) : null}
                 </div>
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="shrink-0 text-[color:var(--muted)]"
-                  aria-hidden="true"
-                >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-[color:var(--muted)]" aria-hidden="true">
                   <path d="M9 18l6-6-6-6" />
                 </svg>
               </button>
@@ -128,14 +113,25 @@ export default function HaulReviewSheet({ session, onClose, onFinish }: Props) {
         </div>
 
         <div className="shrink-0 border-t border-[color:var(--border)] px-4 pb-4 pt-3">
-          <button
-            type="button"
-            onClick={finish}
-            className="w-full rounded-2xl py-3 text-sm font-bold"
-            style={{ background: "var(--theme-gold, #F5B548)", color: "#0A0800" }}
-          >
-            Done
-          </button>
+          <div className="flex gap-2">
+            {saved.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => saved.forEach((item) => removeItem(item.id))}
+                className="rounded-2xl px-4 py-3 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-red-500/10 hover:text-red-400 hover:ring-red-400/30"
+              >
+                Remove All
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={finish}
+              className="flex-1 rounded-2xl py-3 text-sm font-bold"
+              style={{ background: "var(--theme-gold, #F5B548)", color: "#0A0800" }}
+            >
+              Done
+            </button>
+          </div>
         </div>
       </div>
     </div>
