@@ -472,7 +472,8 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
   const effectiveQuickMode = quickMode || bulkMode;
 
   return (
-    <div className="fixed inset-0 z-[95] flex flex-col bg-[#060c1a] text-white">
+    <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/60 backdrop-blur-sm">
+    <div className="flex w-full max-w-[540px] flex-col overflow-hidden rounded-t-[20px] bg-[#060c1a] text-white" style={{ maxHeight: "88dvh" }}>
       <canvas ref={analysisCanvasRef} className="hidden" />
       <canvas ref={captureCanvasRef} className="hidden" />
 
@@ -496,8 +497,8 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
-      {/* Camera — flex-1 fills all available height */}
-      <div className="relative flex-1 overflow-hidden bg-[#040912]">
+      {/* Camera viewport */}
+      <div className="relative w-full shrink-0 bg-[#040912]" style={{ height: "min(36dvh, 320px)", overflow: "hidden" }}>
         <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />
         <FrameOverlay frameType={frameType} lockProgress={lockProgress} />
 
@@ -685,6 +686,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
           Done {capturedItems.length ? `(${capturedItems.length})` : ""}
         </button>
       </div>
+    </div>
     </div>
   );
 }
