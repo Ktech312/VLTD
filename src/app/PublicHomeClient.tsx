@@ -55,7 +55,7 @@ const FEATURE_CARDS = [
   {
     icon: "⟳",
     title: "Stream Mode",
-    description: "Rapid-fire scanning for bulk hauls. Add 50 items in a single session without breaking flow.",
+    description: "Rapid-fire scanning for bulk drops. Add 50 items in a single session without breaking flow.",
   },
   {
     icon: "◎",
@@ -115,7 +115,7 @@ const COMPARISON_ROWS = [
   ["Museum-style gallery", "No", "Yes"],
   ["Insurance documentation", "No", "Yes"],
   ["AI identification & pricing", "Manual", "Auto on scan"],
-  ["Bulk haul / stream mode", "No", "Yes"],
+  ["Bulk drop / stream mode", "No", "Yes"],
   ["Auto-lock blur detection", "No", "Yes"],
   ["Public share link", "Partial", "One-tap share"],
   ["Team & multi-profile", "No", "Yes"],
@@ -434,7 +434,7 @@ export default function PublicHomeClient() {
         </div>
       </section>
 
-      {/* ── Scanner callout — Haul Mode ──────────────────────────── */}
+      {/* ── Scanner callout — Drop Mode ──────────────────────────── */}
       <section className="border-b" style={{ borderColor: 'var(--border)' }}>
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
           <div className="overflow-hidden rounded-3xl" style={{ background: 'linear-gradient(135deg, rgba(139,105,20,0.18) 0%, rgba(15,25,45,0.92) 50%, rgba(10,18,38,0.98) 100%)', border: '1px solid rgba(245,181,72,0.22)', boxShadow: '0 0 60px rgba(245,181,72,0.06)' }}>
@@ -442,13 +442,13 @@ export default function PublicHomeClient() {
               {/* Left — copy */}
               <div className="flex flex-col justify-center px-8 py-10 lg:py-14">
                 <div className="mb-3 inline-flex w-fit items-center gap-2 rounded-full border border-[rgba(245,181,72,0.28)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: '#F5B548', background: 'rgba(245,181,72,0.07)' }}>
-                  ⟳ Haul Mode
+                  ⟳ Drop Mode
                 </div>
                 <h2 className="text-3xl font-black tracking-[-0.04em] text-text-primary sm:text-4xl">
                   50 items in one sitting.
                 </h2>
                 <p className="mt-4 max-w-md text-base leading-7 text-[color:var(--muted)]">
-                  Stream Mode keeps the scanner live between items — point, lock, done. Auto-Lock detects the sharpest frame so you never tap the screen. Bulk hauls that used to take hours now take minutes.
+                  Stream Mode keeps the scanner live between items — point, lock, done. Auto-Lock detects the sharpest frame so you never tap the screen. Bulk drops that used to take hours now take minutes.
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
                   <Link href="/signup" className="vltd-primary-button inline-flex h-11 items-center justify-center rounded-full px-6 text-sm font-black transition">
@@ -463,7 +463,7 @@ export default function PublicHomeClient() {
               <div className="flex flex-col justify-center gap-4 border-t border-[rgba(245,181,72,0.12)] px-8 py-10 lg:border-l lg:border-t-0 lg:py-14">
                 {[
                   { icon: "◎", title: "Auto-Lock Scanner", desc: "Captures the sharpest frame automatically. No tapping, no blur, no retakes." },
-                  { icon: "⟳", title: "Stream Mode", desc: "Scanner stays live between items. Continuous flow for large hauls." },
+                  { icon: "⟳", title: "Stream Mode", desc: "Scanner stays live between items. Continuous flow for large drops." },
                   { icon: "▣", title: "AI Identification", desc: "Name, category, estimated value — filled in the moment it locks." },
                   { icon: "↗", title: "Instant Portfolio Update", desc: "Every scanned item updates your P&L in real time." },
                 ].map(({ icon, title, desc }) => (

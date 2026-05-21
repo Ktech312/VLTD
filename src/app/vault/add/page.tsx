@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import CameraCapturePanel from "@/components/CameraCapturePanel";
-import HaulReviewSheet from "@/components/HaulReviewSheet";
+import DropReviewSheet from "@/components/DropReviewSheet";
 import { type ImageRole } from "@/components/ImageRoleSelector";
 import ScanCropEditor from "@/components/ScanCropEditor";
 import ScanPanel from "@/components/ScanPanel";
@@ -26,15 +26,15 @@ import {
 } from "@/lib/bulkAddState";
 import { lookupBookByIsbn, detectBookIsbnFromFile, extractIsbnFromText } from "@/lib/bookIsbn";
 import {
-  addHaulItem,
-  clearHaulSession,
-  createHaulSession,
-  haulItemFromVaultItem,
-  haulSessionStats,
-  loadHaulSession,
-  saveHaulSession,
-  type HaulSession,
-} from "@/lib/haulSession";
+  addDropItem,
+  clearDropSession,
+  createDropSession,
+  dropItemFromVaultItem,
+  dropSessionStats,
+  loadDropSession,
+  saveDropSession,
+  type DropSession,
+} from "@/lib/dropSession";
 import { buildPricingPatch, type PricingMvpFields } from "@/lib/pricingMvp";
 import { parseComicScanResult, scanComicRegionsFromFile } from "@/lib/scanners/comicParser";
 import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
@@ -87,7 +87,7 @@ import {
 } from "@/lib/taxonomy";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
-const HAUL_AUTOSTART_KEY = "vltd_haul_autostart_v1";
+const HAUL_AUTOSTART_KEY = "vltd_drop_autostart_v1";
 
 type FormValues = BulkAddValues;
 
@@ -291,29 +291,29 @@ export default function AddPage() {
   const [scanType, setScanType] = useState<ScanItemType>("auto");
   const [existingItems, setExistingItems] = useState<VaultItem[]>([]);
   const [duplicateWarning, setDuplicateWarning] = useState("");
-  const [haulMode, setHaulMode] = useState(false);
-  const [haulSession, setHaulSession] = useState<HaulSession | null>(null);
-  const [showHaulReview, setShowHaulReview] = useState(false);
+  const [dropMode, setDropMode] = useState(false);
+  const [dropSession, setDropSession] = useState<DropSession | null>(null);
+  const [showDropReview, setShowDropReview] = useState(false);
 
   useEffect(() => {
     const state = readBulkAddState();
     setLocks(state.locks);
     setValues(applyBulkLockedValues(undefined, state.rememberedValues, state.locks));
 
-    const existingHaul = loadHaulSession();
+    const existingDrop = loadDropSession();
     const shouldAutostart = window.localStorage.getItem(HAUL_AUTOSTART_KEY) === "1";
     if (shouldAutostart) {
       window.localStorage.removeItem(HAUL_AUTOSTART_KEY);
     }
 
-    if (existingHaul && existingHaul.items.length > 0) {
-      setHaulSession(existingHaul);
-      setHaulMode(true);
+    if (existingDrop && existingDrop.items.length > 0) {
+      setDropSession(existingDrop);
+      setDropMode(true);
     } else if (shouldAutostart) {
-      const session = createHaulSession();
-      saveHaulSession(session);
-      setHaulSession(session);
-      setHaulMode(true);
+      const session = createDropSession();
+      saveDropSession(session);
+      setDropSession(session);
+      setDropMode(true);
       setStatus("Batch Mode started. Save items back-to-back, then review the batch.");
     }
   }, []);
@@ -367,12 +367,12 @@ export default function AddPage() {
   }, []);
 
   useEffect(() => {
-    if (isCropEditorOpen || selectedMediaImageId || isCameraPanelOpen || showHaulReview) return;
+    if (isCropEditorOpen || selectedMediaImageId || isCameraPanelOpen || showDropReview) return;
 
     document.body.style.overflow = "";
     document.documentElement.style.overflow = "";
     document.body.style.touchAction = "";
-  }, [isCameraPanelOpen, isCropEditorOpen, selectedMediaImageId, showHaulReview]);
+  }, [isCameraPanelOpen, isCropEditorOpen, selectedMediaImageId, showDropReview]);
 
   useEffect(() => {
     return () => {
@@ -516,25 +516,25 @@ export default function AddPage() {
     setLocks((prev) => toggleBulkAddLock(prev, key));
   }
 
-  function startHaul() {
-    const session = createHaulSession();
-    saveHaulSession(session);
-    setHaulSession(session);
-    setHaulMode(true);
-    setShowHaulReview(false);
+  function startDrop() {
+    const session = createDropSession();
+    saveDropSession(session);
+    setDropSession(session);
+    setDropMode(true);
+    setShowDropReview(false);
     setStatus("Batch Mode started. Save items back-to-back, then review the batch.");
   }
 
-  function endHaul() {
-    if (!haulSession) return;
-    setShowHaulReview(true);
+  function endDrop() {
+    if (!dropSession) return;
+    setShowDropReview(true);
   }
 
-  function finishHaul() {
-    clearHaulSession();
-    setHaulMode(false);
-    setHaulSession(null);
-    setShowHaulReview(false);
+  function finishDrop() {
+    clearDropSession();
+    setDropMode(false);
+    setDropSession(null);
+    setShowDropReview(false);
     router.push("/vault");
   }
 
@@ -1492,17 +1492,17 @@ export default function AddPage() {
       await processVaultSyncQueue();
       setExistingItems((prev) => [item, ...prev]);
 
-      if (haulMode && haulSession) {
-        const nextHaul = addHaulItem(
-          haulSession,
-          haulItemFromVaultItem(item, scanSession.review?.confidence)
+      if (dropMode && dropSession) {
+        const nextDrop = addDropItem(
+          dropSession,
+          dropItemFromVaultItem(item, scanSession.review?.confidence)
         );
-        saveHaulSession(nextHaul);
-        setHaulSession(nextHaul);
+        saveDropSession(nextDrop);
+        setDropSession(nextDrop);
       }
 
       setStatus(
-        haulMode
+        dropMode
           ? "Saved to batch. Ready for the next item."
           : saveAndNext
             ? "Saved. Ready for next item."
@@ -1521,7 +1521,7 @@ export default function AddPage() {
         window.setTimeout(() => numberInputRef.current?.focus(), 0);
       }
 
-      if (haulMode) {
+      if (dropMode) {
         window.setTimeout(() => {
           openCameraFor("scan");
         }, 350);
@@ -1540,7 +1540,7 @@ export default function AddPage() {
 
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
-      <div className={`w-full px-4 py-3 sm:px-6 sm:py-4 ${haulMode ? "pb-24" : ""}`}>
+      <div className={`w-full px-4 py-3 sm:px-6 sm:py-4 ${dropMode ? "pb-24" : ""}`}>
         <div className="sticky top-0 z-20 mx-auto mb-3 w-full max-w-5xl rounded-[16px] border border-[color:var(--theme-border)] bg-[color:var(--surface)]/92 p-3 backdrop-blur">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -2010,14 +2010,14 @@ export default function AddPage() {
           </div>
         ) : null}
 
-        {haulMode && haulSession && !showHaulReview ? (
+        {dropMode && dropSession && !showDropReview ? (
           <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-4 border-t border-[color:var(--border)] bg-[color:var(--surface)] px-5 py-3 shadow-[0_-8px_32px_rgba(0,0,0,0.35)]">
             <div>
-              <div className="text-sm font-bold">{haulSession.name}</div>
+              <div className="text-sm font-bold">{dropSession.name}</div>
               <div className="text-xs text-[color:var(--muted)]">
-                {haulSessionStats(haulSession).count} saved
-                {haulSessionStats(haulSession).totalValue > 0
-                  ? ` · ${haulSessionStats(haulSession).totalValue.toLocaleString(undefined, {
+                {dropSessionStats(dropSession).count} saved
+                {dropSessionStats(dropSession).totalValue > 0
+                  ? ` · ${dropSessionStats(dropSession).totalValue.toLocaleString(undefined, {
                       style: "currency",
                       currency: "USD",
                       maximumFractionDigits: 0,
@@ -2027,7 +2027,7 @@ export default function AddPage() {
             </div>
             <button
               type="button"
-              onClick={endHaul}
+              onClick={endDrop}
               className="rounded-full px-4 py-2 text-sm font-bold"
               style={{ background: "var(--theme-gold, #F5B548)", color: "#0A0800" }}
             >
@@ -2036,11 +2036,11 @@ export default function AddPage() {
           </div>
         ) : null}
 
-        {showHaulReview && haulSession ? (
-          <HaulReviewSheet
-            session={haulSession}
-            onClose={() => setShowHaulReview(false)}
-            onFinish={finishHaul}
+        {showDropReview && dropSession ? (
+          <DropReviewSheet
+            session={dropSession}
+            onClose={() => setShowDropReview(false)}
+            onFinish={finishDrop}
           />
         ) : null}
 

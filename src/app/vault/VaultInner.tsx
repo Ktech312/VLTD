@@ -1223,11 +1223,11 @@ export default function VaultInner() {
             <Link
               href="/vault/add"
               onClick={() => {
-                window.localStorage.setItem("vltd_haul_autostart_v1", "1");
+                window.localStorage.setItem("vltd_drop_autostart_v1", "1");
               }}
               className="inline-flex min-h-[44px] items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-semibold ring-1 ring-[color:var(--border)]"
             >
-              Haul Mode
+              Drop Mode
             </Link>
 
             <PillButton variant="primary" onClick={goQuickAdd}>

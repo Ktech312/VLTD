@@ -46,9 +46,9 @@ export default function ScanReviewSheet({ items, onClose, onFinish }: Props) {
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-[color:var(--border)] px-4 py-3">
           <div>
-            <div className="text-sm font-bold">Review your haul</div>
+            <div className="text-sm font-bold">Review your Drop</div>
             <div className="text-xs text-[color:var(--muted)]">
-              {remaining.length} of {items.length} items ready to add — remove any bad captures
+              {remaining.length} of {items.length} items ready to vault — remove any bad captures
             </div>
           </div>
           <button
