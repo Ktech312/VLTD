@@ -4,15 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
-  clearHaulSession,
-  haulSessionStats,
-  type HaulSession,
-  updateHaulItemStatus,
-} from "@/lib/haulSession";
+  clearDropSession,
+  dropSessionStats,
+  type DropSession,
+  updateDropItemStatus,
+} from "@/lib/dropSession";
 import { deleteItemAndNotify } from "@/lib/vaultActions";
 
 type Props = {
-  session: HaulSession;
+  session: DropSession;
   onClose: () => void;
   onFinish: () => void;
 };
@@ -28,17 +28,17 @@ function money(value: number) {
 export default function HaulReviewSheet({ session, onClose, onFinish }: Props) {
   const router = useRouter();
   const [current, setCurrent] = useState(session);
-  const stats = haulSessionStats(current);
+  const stats = dropSessionStats(current);
   const saved = current.items.filter((item) => item.status === "saved");
   const skipped = current.items.filter((item) => item.status === "skipped");
 
   function removeItem(id: string) {
     deleteItemAndNotify(id);
-    setCurrent((prev) => updateHaulItemStatus(prev, id, "skipped"));
+    setCurrent((prev) => updateDropItemStatus(prev, id, "skipped"));
   }
 
   function finish() {
-    clearHaulSession();
+    clearDropSession();
     onFinish();
   }
 
