@@ -227,6 +227,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
   const captureCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const lockStartRef = useRef<number | null>(null);
   const frontBlobRef = useRef<Blob | null>(null);
+  const cooldownUntilRef = useRef<number>(0);
 
   const [frameType, setFrameType] = useState<FrameType>("card");
   const [universe, setUniverse] = useState<UniverseKey>("TCG");
@@ -278,6 +279,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       const video = videoRef.current;
       const canvas = analysisCanvasRef.current;
       if (!video || !canvas || video.readyState < 2) return;
+      if (Date.now() < cooldownUntilRef.current) return;
 
       const score = computeBlurScore(video, canvas);
       if (score > BLUR_THRESHOLD) {
@@ -355,6 +357,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     if (capturingBack && frontBlobRef.current) {
       addCapturedItem(frontBlobRef.current, blob);
       setCapturingBack(false);
+      cooldownUntilRef.current = Date.now() + 1500; // pause after back capture
       resetScanner();
       return;
     }
@@ -375,11 +378,12 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     if (frontBlobRef.current) {
       addCapturedItem(frontBlobRef.current, null);
     }
+    cooldownUntilRef.current = Date.now() + 1500; // pause scan so card can be moved away
     setCapturingBack(false);
     resetScanner();
   }
 
-  // Flip card and capture back too
+  // Flip card and capture back too — no cooldown, we want quick back detection
   function handleBackSave() {
     if (!frontBlobRef.current) return;
     setCapturingBack(true);
@@ -391,6 +395,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     frontBlobRef.current = null;
     setActiveItemId(null);
     setCapturingBack(false);
+    cooldownUntilRef.current = Date.now() + 1500; // pause scan so card can be moved away
     resetScanner();
   }
 
