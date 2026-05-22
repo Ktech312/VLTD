@@ -59,10 +59,10 @@ export const metadata: Metadata = {
       "Organize private collector inventory and share polished public galleries for comics, cards, music, games, memorabilia, and more.",
     images: [
       {
-        url: "/themes/classic-shelf-wall.webp",
+        url: "/og-image.png",
         width: 1200,
-        height: 900,
-        alt: "VLTD collectible gallery wall",
+        height: 630,
+        alt: "VLTD — Collectible Vaults and Public Galleries",
       },
     ],
   },
@@ -71,7 +71,7 @@ export const metadata: Metadata = {
     title: "VLTD | Collectible Vaults and Public Galleries",
     description:
       "A private collector vault with polished public galleries for sharing your collection.",
-    images: ["/themes/classic-shelf-wall.webp"],
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,
