@@ -473,15 +473,24 @@ function TopNavInner() {
               </div>
             </form>
 
-            {/* Bell */}
-            <button
-              type="button"
-              className="hidden md:flex h-[36px] w-[36px] items-center justify-center rounded-full transition"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
-              aria-label="Notifications"
-            >
-              <IconBell />
-            </button>
+            {/* Bell — notifCount wired up here when notifications are built */}
+            <div className="group relative hidden md:flex">
+              <button
+                type="button"
+                className="h-[36px] w-[36px] flex items-center justify-center rounded-full transition"
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                aria-label="Notifications"
+              >
+                <IconBell />
+                {/* Zero badge: shown on hover only */}
+                <span
+                  className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold opacity-0 transition-opacity group-hover:opacity-100"
+                  style={{ background: "rgba(255,255,255,0.12)", color: "#A0956B", lineHeight: 1 }}
+                >
+                  0
+                </span>
+              </button>
+            </div>
 
             {/* User menu trigger only — dropdown rendered outside nav div below */}
             <div ref={userMenuRef} className="relative">
