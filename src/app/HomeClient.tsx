@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getOnboardingStatus } from "@/lib/auth";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
@@ -68,31 +68,12 @@ function StatChip({ label, value, sub, tone = "default" }: { label: string; valu
   );
 }
 
-/* ── Exhibition Carousel — hero card + item filmstrip ─────── */
-function ExhibitionCarousel({ galleries, items }: { galleries: Gallery[]; items: VaultItem[] }) {
-  const router = useRouter();
+/* ── Exhibition Carousel — cover card only, no item filmstrip ─ */
+function ExhibitionCarousel({ galleries }: { galleries: Gallery[] }) {
   const [idx, setIdx] = useState(0);
-  const filmRef = useRef<HTMLDivElement>(null);
-
-  // Reset filmstrip scroll when exhibition changes
-  useEffect(() => {
-    if (filmRef.current) filmRef.current.scrollLeft = 0;
-  }, [idx]);
-
-  function galleryThumb(g: Gallery): string | null {
-    if (g.coverImage) return g.coverImage;
-    const imgMap = new Map(items.map((it) => [it.id, it.imageFrontUrl ?? ""]));
-    return (g.itemIds ?? []).map((id) => imgMap.get(id)).find(Boolean) ?? null;
-  }
-
-  function galleryItemImages(g: Gallery): string[] {
-    const imgMap = new Map(items.map((it) => [it.id, it.imageFrontUrl ?? ""]));
-    return (g.itemIds ?? []).map((id) => imgMap.get(id) ?? "").filter(Boolean);
-  }
-
   const current = galleries[idx];
-  const cover = galleryThumb(current);
-  const filmImgs = galleryItemImages(current);
+  const cover = current.coverImage ?? null;
+  const itemCount = current.itemIds?.length ?? 0;
 
   return (
     <section className="relative overflow-hidden rounded-[24px] border p-5" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "rgba(245,181,72,0.16)" }}>
@@ -111,63 +92,41 @@ function ExhibitionCarousel({ galleries, items }: { galleries: Gallery[]; items:
         )}
       </div>
 
-      {/* Hero card + filmstrip row */}
-      <div className="mt-3 flex items-start gap-3">
+      {/* Cover card + info side by side */}
+      <div className="mt-3 flex items-start gap-4">
 
-        {/* Hero — large cover card, links to exhibition */}
-        <button
-          type="button"
-          onClick={() => router.push(`/gallery/${current.id}`)}
-          className="shrink-0 overflow-hidden rounded-[16px] border transition-transform duration-200 active:scale-95"
-          style={{ width: "120px", height: "158px", borderColor: "rgba(245,181,72,0.40)", background: "rgba(10,18,35,0.9)", boxShadow: "0 0 0 1px rgba(245,181,72,0.15), 0 8px 24px rgba(0,0,0,0.4)" }}
+        {/* Cover card — click goes to exhibition */}
+        <Link
+          href={`/gallery/${current.id}`}
+          className="shrink-0 overflow-hidden rounded-[18px] border transition-transform duration-200 hover:-translate-y-0.5 active:scale-95"
+          style={{ width: "140px", height: "186px", borderColor: "rgba(245,181,72,0.40)", background: "rgba(10,18,35,0.9)", boxShadow: "0 0 0 1px rgba(245,181,72,0.15), 0 12px 32px rgba(0,0,0,0.45)" }}
         >
           {cover ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img src={cover} alt={current.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-4xl opacity-20">🖼</div>
+            <div className="flex h-full w-full flex-col items-center justify-center gap-2 opacity-25">
+              <span className="text-4xl">🏛</span>
+            </div>
           )}
-        </button>
+        </Link>
 
-        {/* Filmstrip — item images, horizontally scrollable */}
-        <div
-          ref={filmRef}
-          className="flex gap-2 overflow-x-auto pb-1"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {filmImgs.length > 0 ? filmImgs.map((src, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => router.push(`/gallery/${current.id}`)}
-              className="shrink-0 overflow-hidden rounded-[12px] border transition-transform duration-150 hover:scale-105 active:scale-95"
-              style={{ width: "62px", height: "84px", borderColor: "rgba(245,181,72,0.18)", background: "rgba(10,18,35,0.8)" }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
-            </button>
-          )) : (
-            /* No items yet — show placeholder slots */
-            [0,1,2,3].map((i) => (
-              <div key={i} className="shrink-0 rounded-[12px] border" style={{ width: "62px", height: "84px", borderColor: "rgba(245,181,72,0.12)", background: "rgba(245,181,72,0.03)" }} />
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* Exhibition info below hero */}
-      <div className="mt-3">
-        <h2 className="text-base font-black tracking-[-0.02em] text-text-primary truncate">{current.title || "Untitled Exhibition"}</h2>
-        <p className="mt-0.5 text-xs text-[#A0956B] opacity-60">{current.itemIds?.length ?? 0} item{(current.itemIds?.length ?? 0) !== 1 ? "s" : ""}</p>
-        <div className="mt-3 flex items-center gap-2">
-          <Link href={`/gallery/${current.id}`} className="rounded-full px-4 py-1.5 text-sm font-black vltd-gold-btn">View Exhibition →</Link>
-          <Link href="/museum" className="rounded-full border border-[rgba(245,181,72,0.22)] px-4 py-1.5 text-sm font-semibold text-[#F5B548] transition hover:bg-[rgba(245,181,72,0.09)]">All exhibitions</Link>
+        {/* Info: title, count, actions */}
+        <div className="flex min-w-0 flex-1 flex-col justify-between" style={{ height: "186px" }}>
+          <div className="min-w-0">
+            <h2 className="truncate text-base font-black tracking-[-0.02em] text-text-primary leading-snug">{current.title || "Untitled Exhibition"}</h2>
+            <p className="mt-1 text-xs text-[#A0956B] opacity-60">{itemCount} item{itemCount !== 1 ? "s" : ""}</p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Link href={`/gallery/${current.id}`} className="rounded-full px-4 py-2 text-center text-sm font-black vltd-gold-btn">View Exhibition →</Link>
+            <Link href="/museum" className="rounded-full border border-[rgba(245,181,72,0.22)] px-4 py-2 text-center text-sm font-semibold text-[#F5B548] transition hover:bg-[rgba(245,181,72,0.09)]">All exhibitions</Link>
+          </div>
         </div>
       </div>
 
       {/* Dot indicators */}
       {galleries.length > 1 && (
-        <div className="mt-3 flex gap-1.5">
+        <div className="mt-4 flex gap-1.5">
           {galleries.map((_, dotIdx) => (
             <button key={dotIdx} type="button" onClick={() => setIdx(dotIdx)} className="h-1.5 rounded-full transition-all duration-300" style={{ width: dotIdx === idx ? "20px" : "6px", background: dotIdx === idx ? "#F5B548" : "rgba(245,181,72,0.25)" }} aria-label={`Exhibition ${dotIdx + 1}`} />
           ))}
@@ -279,7 +238,7 @@ export default function HomeClient() {
 
         {/* ── Exhibitions ───────────────────────────────── */}
         {galleries.length > 0 ? (
-          <ExhibitionCarousel galleries={galleries} items={items} />
+          <ExhibitionCarousel galleries={galleries} />
         ) : (
           <section className="relative overflow-hidden rounded-[24px] border p-5" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "rgba(245,181,72,0.16)" }}>
             <div className="flex items-start justify-between gap-4">
