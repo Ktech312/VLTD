@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import Image from "next/image";
 import CommandPalette from "@/components/CommandPalette";
@@ -267,9 +268,22 @@ function TopNavInner() {
   const [activeProfileId, setActiveProfileId] = useState("");
 
   const userMenuRef = useRef<HTMLDivElement | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
   const guideRef = useRef<HTMLDivElement | null>(null);
   const loadingAuthRef = useRef(false);
   const initializedRef = useRef(false);
+  const [mounted, setMounted] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; right: number } | null>(null);
+
+  useEffect(() => { setMounted(true); }, []);
+
+  // Close user dropdown on scroll (portal position won't track scroll)
+  useEffect(() => {
+    if (!userOpen) return;
+    function onScroll() { setUserOpen(false); }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [userOpen]);
 
   const activeProfile = useMemo(
     () => profiles.find((p) => p.id === activeProfileId) ?? null,
@@ -324,7 +338,10 @@ function TopNavInner() {
   useEffect(() => {
     function handleOutside(event: MouseEvent) {
       const target = event.target as Node;
-      if (userMenuRef.current && !userMenuRef.current.contains(target)) setUserOpen(false);
+      // For user menu: close only if click is outside BOTH the trigger and the portal dropdown
+      const inTrigger = userMenuRef.current?.contains(target);
+      const inDropdown = dropdownRef.current?.contains(target);
+      if (!inTrigger && !inDropdown) setUserOpen(false);
       if (guideRef.current && !guideRef.current.contains(target)) setGuideOpen(false);
     }
     document.addEventListener("mousedown", handleOutside);
@@ -483,7 +500,16 @@ function TopNavInner() {
             <div ref={userMenuRef} className="relative">
               <button
                 type="button"
-                onClick={() => setUserOpen((v) => !v)}
+                onClick={() => {
+                  setUserOpen((v) => {
+                    const next = !v;
+                    if (next && userMenuRef.current) {
+                      const rect = userMenuRef.current.getBoundingClientRect();
+                      setDropdownPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+                    }
+                    return next;
+                  });
+                }}
                 className="flex items-center gap-1 rounded-full p-1 transition"
                 style={{ background: "transparent", border: "none" }}
               >
@@ -495,77 +521,6 @@ function TopNavInner() {
                 </div>
                 <IconChevron size={12} />
               </button>
-
-              {/* User dropdown */}
-              {userOpen && (
-                <div className="absolute right-0 mt-2 w-[300px] overflow-hidden rounded-2xl shadow-[0_18px_50px_rgba(0,0,0,0.6)]"
-                  style={{ background: "var(--theme-nav-bg, rgba(11,19,32,0.99))", border: "1px solid var(--theme-nav-border, rgba(245,181,72,0.18))", backdropFilter: "blur(20px)" }}>
-                  <div className="px-4 py-3.5" style={{ borderBottom: "1px solid rgba(245,181,72,0.10)" }}>
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-semibold" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
-                          {activeProfile?.display_name || accountEmail || "Guest"}
-                        </div>
-                        <div className="mt-0.5 truncate text-xs" style={{ color: "#A0956B" }}>
-                          {accountEmail || "Not signed in"}
-                        </div>
-                      </div>
-                      <div className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.10em]"
-                        style={{ background: "rgba(245,181,72,0.12)", color: "#F5B548", border: "1px solid rgba(245,181,72,0.22)" }}>
-                        {accountTypeLabel}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="px-2 py-2">
-                    {signedIn ? (
-                      <>
-                        {[
-                          { href: "/dashboard", label: "Dashboard" },
-                          { href: "/collector", label: "Collector Profile" },
-                          { href: "/account", label: "Account Settings" },
-                        ].map(({ href, label }) => (
-                          <Link key={href} href={href} onClick={() => setUserOpen(false)}
-                            className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
-                            style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
-                            {label}
-                          </Link>
-                        ))}
-                        {profiles.length > 1 && (
-                          <button type="button"
-                            onClick={() => { setUserOpen(false); setCommandOpen(true); }}
-                            className="block w-full rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
-                            style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
-                            Switch Account
-                          </button>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <Link href="/login" onClick={() => setUserOpen(false)}
-                          className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
-                          style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>Log In</Link>
-                        <Link href="/signup" onClick={() => setUserOpen(false)}
-                          className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
-                          style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>Create Account</Link>
-                      </>
-                    )}
-                  </div>
-                  {/* Appearance / Theme picker */}
-                  <div style={{ borderTop: "1px solid rgba(245,181,72,0.10)" }}>
-                    <ThemePicker />
-                  </div>
-
-                  {signedIn && (
-                    <div className="px-2 py-2" style={{ borderTop: "1px solid rgba(245,181,72,0.10)" }}>
-                      <button type="button" onClick={handleSignOut}
-                        className="block w-full rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-[rgba(224,82,82,0.08)]"
-                        style={{ color: "#E05252" }}>
-                        Sign Out
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -653,6 +608,87 @@ function TopNavInner() {
         )}
 
       </div>
+
+      {/* User dropdown — rendered via portal so it escapes all stacking contexts */}
+      {mounted && userOpen && dropdownPos && createPortal(
+        <div
+          ref={dropdownRef}
+          className="fixed w-[300px] overflow-hidden rounded-2xl shadow-[0_18px_50px_rgba(0,0,0,0.6)]"
+          style={{
+            top: dropdownPos.top,
+            right: dropdownPos.right,
+            zIndex: 9999,
+            background: "var(--theme-nav-bg, rgba(11,19,32,0.99))",
+            border: "1px solid var(--theme-nav-border, rgba(245,181,72,0.18))",
+            backdropFilter: "blur(20px)",
+          }}
+        >
+          <div className="px-4 py-3.5" style={{ borderBottom: "1px solid rgba(245,181,72,0.10)" }}>
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
+                  {activeProfile?.display_name || accountEmail || "Guest"}
+                </div>
+                <div className="mt-0.5 truncate text-xs" style={{ color: "#A0956B" }}>
+                  {accountEmail || "Not signed in"}
+                </div>
+              </div>
+              <div className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.10em]"
+                style={{ background: "rgba(245,181,72,0.12)", color: "#F5B548", border: "1px solid rgba(245,181,72,0.22)" }}>
+                {accountTypeLabel}
+              </div>
+            </div>
+          </div>
+          <div className="px-2 py-2">
+            {signedIn ? (
+              <>
+                {[
+                  { href: "/dashboard", label: "Dashboard" },
+                  { href: "/collector", label: "Collector Profile" },
+                  { href: "/account", label: "Account Settings" },
+                ].map(({ href, label }) => (
+                  <Link key={href} href={href} onClick={() => setUserOpen(false)}
+                    className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
+                    style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
+                    {label}
+                  </Link>
+                ))}
+                {profiles.length > 1 && (
+                  <button type="button"
+                    onClick={() => { setUserOpen(false); setCommandOpen(true); }}
+                    className="block w-full rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
+                    style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
+                    Switch Account
+                  </button>
+                )}
+              </>
+            ) : (
+              <>
+                <Link href="/login" onClick={() => setUserOpen(false)}
+                  className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
+                  style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>Log In</Link>
+                <Link href="/signup" onClick={() => setUserOpen(false)}
+                  className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
+                  style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>Create Account</Link>
+              </>
+            )}
+          </div>
+          {/* Appearance / Theme picker */}
+          <div style={{ borderTop: "1px solid rgba(245,181,72,0.10)" }}>
+            <ThemePicker />
+          </div>
+          {signedIn && (
+            <div className="px-2 py-2" style={{ borderTop: "1px solid rgba(245,181,72,0.10)" }}>
+              <button type="button" onClick={handleSignOut}
+                className="block w-full rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-[rgba(224,82,82,0.08)]"
+                style={{ color: "#E05252" }}>
+                Sign Out
+              </button>
+            </div>
+          )}
+        </div>,
+        document.body
+      )}
 
       <CommandPalette
         open={commandOpen}
