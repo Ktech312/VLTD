@@ -27,6 +27,7 @@ function IconPackagePlus({ size = 24, style }: { size?: number; style?: Record<s
 import { useRouter } from "next/navigation";
 import { getOnboardingStatus } from "@/lib/auth";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
+import { loadGalleries, refreshGalleriesFromSupabase, type Gallery } from "@/lib/galleryModel";
 
 const BiggestMoversPanel = dynamic(() => import("@/components/BiggestMoversPanel"), {
   loading: () => (
@@ -112,6 +113,8 @@ export default function HomeClient() {
   const [profileType, setProfileType] = useState("");
   const [primaryFocus, setPrimaryFocus] = useState("");
   const [items, setItems] = useState<VaultItem[]>([]);
+  const [galleries, setGalleries] = useState<Gallery[]>([]);
+  const [exhibitIndex, setExhibitIndex] = useState(0);
 
   useEffect(() => {
     async function load() {
@@ -128,6 +131,14 @@ export default function HomeClient() {
         try { window.localStorage.setItem(FOCUS_LS_KEY, focus); } catch { /* ignore */ }
         await syncVaultItemsFromSupabase();
         setItems(loadItems());
+        void refreshGalleriesFromSupabase(true).then(() => {
+          setGalleries(
+            loadGalleries().filter((g) => g.state === "ACTIVE" && g.visibility === "PUBLIC")
+          );
+        });
+        setGalleries(
+          loadGalleries().filter((g) => g.state === "ACTIVE" && g.visibility === "PUBLIC")
+        );
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load dashboard.");
       } finally {
@@ -270,85 +281,109 @@ export default function HomeClient() {
             <span className="hidden shrink-0 text-sm font-semibold sm:inline">Scan →</span>
           </Link>
 
-          {/* Quick action pills */}
-          <div className="mt-3 flex gap-2">
-            <Link
-              href="/museum"
-              className="flex-1 rounded-[14px] border py-2.5 text-center text-sm font-semibold transition hover:brightness-110"
-              style={{
-                borderColor: "rgba(245,181,72,0.28)",
-                background: "rgba(245,181,72,0.09)",
-                color: "#F5B548",
-              }}
-            >
-              Explore Exhibitions
-            </Link>
-            <Link
-              href="/vault"
-              className="flex-1 rounded-[14px] border py-2.5 text-center text-sm font-semibold text-[#A0956B] transition hover:text-text-primary"
-              style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}
-            >
-              Go to Vault
-            </Link>
-          </div>
+
         </section>
 
-        {/* ── Featured Exhibition ───────────────────────── */}
+        {/* ── Exhibitions Carousel ─────────────────────── */}
         <section
           className="relative overflow-hidden rounded-[24px] border p-5"
-          style={{
-            background: "var(--theme-card, rgba(15,25,45,0.85))",
-            borderColor: "rgba(245,181,72,0.16)",
-          }}
+          style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "rgba(245,181,72,0.16)" }}
         >
-          {/* Warm glow in corner */}
-          <div
-            className="pointer-events-none absolute -right-8 -top-8 h-48 w-48 rounded-full"
-            style={{
-              background: "radial-gradient(circle, rgba(245,181,72,0.12) 0%, transparent 70%)",
-              filter: "blur(24px)",
-            }}
-          />
+          <div className="pointer-events-none absolute -right-8 -top-8 h-48 w-48 rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(245,181,72,0.12) 0%, transparent 70%)", filter: "blur(24px)" }} />
 
-          <div className="relative flex items-start justify-between gap-4">
-            <div className="min-w-0">
+          {galleries.length > 0 ? (
+            <div className="relative">
               <p className="text-[10px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">
-                Featured Exhibition
+                Active Exhibitions
+                <span className="ml-2 opacity-50">{exhibitIndex + 1} / {galleries.length}</span>
               </p>
-              <h2 className="mt-1.5 text-xl font-black tracking-[-0.03em] text-text-primary">
-                Your Museum Awaits
-              </h2>
-              <p className="mt-1 max-w-[340px] text-sm leading-relaxed text-[#A0956B]">
-                Curate and display your collection for the world. Create exhibitions that tell the story of what you collect.
-              </p>
-              <div className="mt-4 flex items-center gap-2.5">
-                <Link
-                  href="/museum/new"
-                  className="rounded-full px-4 py-2 text-sm font-black vltd-gold-btn"
-                >
-                  Create Exhibition
-                </Link>
-                <Link
-                  href="/museum"
-                  className="rounded-full border border-[rgba(245,181,72,0.22)] px-4 py-2 text-sm font-semibold text-[#F5B548] transition hover:bg-[rgba(245,181,72,0.09)]"
-                >
-                  View all →
-                </Link>
-              </div>
-            </div>
 
-            {/* Decorative vault icon */}
-            <div
-              className="hidden shrink-0 sm:flex h-20 w-20 items-center justify-center rounded-2xl border text-3xl"
-              style={{
-                borderColor: "rgba(245,181,72,0.22)",
-                background: "rgba(245,181,72,0.07)",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
-              }}
-            >
-              🏛
+              {(() => {
+                const g = galleries[exhibitIndex];
+                return (
+                  <div className="mt-2 flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <h2 className="mt-0.5 text-xl font-black tracking-[-0.03em] text-text-primary truncate">
+                        {g.title || "Untitled Exhibition"}
+                      </h2>
+                      {g.description ? (
+                        <p className="mt-1 max-w-[340px] text-sm leading-relaxed text-[#A0956B] line-clamp-2">
+                          {g.description}
+                        </p>
+                      ) : null}
+                      <div className="mt-4 flex items-center gap-2.5">
+                        <Link
+                          href={`/gallery/${g.id}`}
+                          className="rounded-full px-4 py-2 text-sm font-black vltd-gold-btn"
+                        >
+                          View Exhibition →
+                        </Link>
+                        <Link
+                          href="/museum"
+                          className="rounded-full border border-[rgba(245,181,72,0.22)] px-4 py-2 text-sm font-semibold text-[#F5B548] transition hover:bg-[rgba(245,181,72,0.09)]"
+                        >
+                          All exhibitions
+                        </Link>
+                      </div>
+                    </div>
+                    {/* Prev / Next */}
+                    <div className="hidden shrink-0 sm:flex flex-col items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setExhibitIndex((i) => (i - 1 + galleries.length) % galleries.length)}
+                        className="flex h-9 w-9 items-center justify-center rounded-full border text-lg transition hover:brightness-125"
+                        style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)", color: "#F5B548" }}
+                        aria-label="Previous"
+                      >‹</button>
+                      <button
+                        type="button"
+                        onClick={() => setExhibitIndex((i) => (i + 1) % galleries.length)}
+                        className="flex h-9 w-9 items-center justify-center rounded-full border text-lg transition hover:brightness-125"
+                        style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)", color: "#F5B548" }}
+                        aria-label="Next"
+                      >›</button>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Dot indicators */}
+              {galleries.length > 1 && (
+                <div className="mt-4 flex gap-1.5">
+                  {galleries.map((_, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setExhibitIndex(idx)}
+                      className="h-1.5 rounded-full transition-all"
+                      style={{
+                        width: idx === exhibitIndex ? "20px" : "6px",
+                        background: idx === exhibitIndex ? "#F5B548" : "rgba(245,181,72,0.25)",
+                      }}
+                      aria-label={`Exhibition ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
+          ) : (
+            <div className="relative flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">Exhibitions</p>
+                <h2 className="mt-1.5 text-xl font-black tracking-[-0.03em] text-text-primary">Your Museum Awaits</h2>
+                <p className="mt-1 max-w-[340px] text-sm leading-relaxed text-[#A0956B]">
+                  Curate and display your collection for the world. Create exhibitions that tell the story of what you collect.
+                </p>
+                <div className="mt-4 flex items-center gap-2.5">
+                  <Link href="/museum/new" className="rounded-full px-4 py-2 text-sm font-black vltd-gold-btn">Create Exhibition</Link>
+                  <Link href="/museum" className="rounded-full border border-[rgba(245,181,72,0.22)] px-4 py-2 text-sm font-semibold text-[#F5B548] transition hover:bg-[rgba(245,181,72,0.09)]">View all →</Link>
+                </div>
+              </div>
+              <div className="hidden shrink-0 sm:flex h-20 w-20 items-center justify-center rounded-2xl border text-3xl"
+                style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}>🏛</div>
+            </div>
+          )}
         </section>
 
         {/* ── Two-column: actions + recent / movers ─────── */}
