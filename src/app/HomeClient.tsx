@@ -3,6 +3,10 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { getOnboardingStatus } from "@/lib/auth";
+import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
+import { loadGalleries, refreshGalleriesFromSupabase, type Gallery } from "@/lib/galleryModel";
 
 const FOCUS_LS_KEY = "vltd_primary_focus";
 
@@ -29,16 +33,8 @@ function IconPackagePlus({ size = 24, style }: { size?: number; style?: Record<s
 function InfoTooltip({ text }: { text: string }) {
   return (
     <span className="group/tip relative inline-flex items-center justify-center">
-      <span
-        className="flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold leading-none cursor-default select-none"
-        style={{ background: "rgba(245,181,72,0.15)", color: "#A0956B", border: "1px solid rgba(245,181,72,0.25)" }}
-      >
-        i
-      </span>
-      <span
-        className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-52 -translate-x-1/2 rounded-xl px-3 py-2 text-left text-xs leading-snug opacity-0 shadow-xl transition-opacity duration-150 group-hover/tip:opacity-100"
-        style={{ background: "rgba(10,18,35,0.97)", border: "1px solid rgba(245,181,72,0.22)", color: "#D4C9A8" }}
-      >
+      <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold leading-none cursor-default select-none" style={{ background: "rgba(245,181,72,0.15)", color: "#A0956B", border: "1px solid rgba(245,181,72,0.25)" }}>i</span>
+      <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-52 -translate-x-1/2 rounded-xl px-3 py-2 text-left text-xs leading-snug opacity-0 shadow-xl transition-opacity duration-150 group-hover/tip:opacity-100" style={{ background: "rgba(10,18,35,0.97)", border: "1px solid rgba(245,181,72,0.22)", color: "#D4C9A8" }}>
         {text}
         <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent" style={{ borderTopColor: "rgba(245,181,72,0.22)" }} />
       </span>
@@ -46,52 +42,137 @@ function InfoTooltip({ text }: { text: string }) {
   );
 }
 
-import { useRouter } from "next/navigation";
-import { getOnboardingStatus } from "@/lib/auth";
-import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
-import { loadGalleries, refreshGalleriesFromSupabase, type Gallery } from "@/lib/galleryModel";
-
 const BiggestMoversPanel = dynamic(() => import("@/components/BiggestMoversPanel"), {
-  loading: () => (
-    <div className="rounded-[24px] border p-4 text-sm text-[#A0956B]" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
-      Loading movers…
-    </div>
-  ),
+  loading: () => <div className="rounded-[24px] border p-4 text-sm text-[#A0956B]" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>Loading movers…</div>,
 });
 
 function formatMoney(value?: number) {
   const num = Number(value ?? 0);
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(num);
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(num);
 }
-
 function totalCost(item: VaultItem) {
-  return (
-    Number(item.purchasePrice ?? 0) +
-    Number(item.purchaseTax ?? 0) +
-    Number(item.purchaseShipping ?? 0) +
-    Number(item.purchaseFees ?? 0)
-  );
+  return Number(item.purchasePrice ?? 0) + Number(item.purchaseTax ?? 0) + Number(item.purchaseShipping ?? 0) + Number(item.purchaseFees ?? 0);
 }
-
 function itemTimestamp(item: VaultItem) {
   return Number(item.createdAt ?? item.valueUpdatedAt ?? item.priceUpdatedAt ?? 0);
 }
 
-function StatChip({ label, value, sub, tone = "default" }: { label: string; value: string; sub?: string; tone?: "default" | "gold" | "gain" | "loss"; }) {
+function StatChip({ label, value, sub, tone = "default" }: { label: string; value: string; sub?: string; tone?: "default" | "gold" | "gain" | "loss" }) {
   const valueColor = tone === "gold" ? "#F5B548" : tone === "gain" ? "#4CAF82" : tone === "loss" ? "#E05252" : "#F0EAD6";
-  const borderColor = "var(--theme-border, rgba(245,181,72,0.12))";
-  const bgColor = "var(--theme-card, rgba(15,25,45,0.85))";
   const boxShadow = tone === "gold" ? "0 4px 20px rgba(245,181,72,0.10)" : tone === "gain" ? "0 4px 16px rgba(76,175,130,0.08)" : "none";
   return (
-    <div className="flex flex-col gap-0.5 rounded-[16px] border px-3.5 py-2.5 flex-1 min-w-0" style={{ background: bgColor, borderColor, boxShadow }}>
+    <div className="flex flex-col gap-0.5 rounded-[16px] border px-3.5 py-2.5 flex-1 min-w-0" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))", boxShadow }}>
       <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#A0956B]">{label}</span>
       <span className="text-lg font-black tracking-[-0.04em] leading-none" style={{ color: valueColor }}>{value}</span>
       {sub && <span className="text-[10px] text-[#A0956B]">{sub}</span>}
     </div>
+  );
+}
+
+/* Cover-flow exhibition carousel */  
+function ExhibitionCarousel({ galleries, items }: { galleries: Gallery[]; items: VaultItem[] }) {
+  const router = useRouter();
+  const [idx, setIdx] = useState(0);
+
+  // Get representative image for a gallery
+  function galleryThumb(g: Gallery): string | null {
+    if (g.coverImage) return g.coverImage;
+    const imgMap = new Map(items.map((it) => [it.id, it.imageFrontUrl ?? ""]));
+    const img = (g.itemIds ?? []).map((id) => imgMap.get(id)).find(Boolean);
+    if (img) return img;
+    const snap = (g.publicItemSnapshots ?? []).map((s) => s.imageFrontUrl).find(Boolean);
+    return snap ?? null;
+  }
+
+  const current = galleries[idx];
+  const prev = galleries[(idx - 1 + galleries.length) % galleries.length];
+  const next = galleries[(idx + 1) % galleries.length];
+
+  // Slots: [prev, current, next] — only show flanks if multiple galleries
+  const slots = galleries.length === 1
+    ? [{ g: current, pos: 0, i: idx }]
+    : [
+        { g: prev,    pos: -1, i: (idx - 1 + galleries.length) % galleries.length },
+        { g: current, pos:  0, i: idx },
+        { g: next,    pos:  1, i: (idx + 1) % galleries.length },
+      ];
+
+  return (
+    <section
+      className="relative overflow-hidden rounded-[24px] border p-5"
+      style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "rgba(245,181,72,0.16)" }}
+    >
+      <div className="pointer-events-none absolute -right-8 -top-8 h-48 w-48 rounded-full" style={{ background: "radial-gradient(circle, rgba(245,181,72,0.12) 0%, transparent 70%)", filter: "blur(24px)" }} />
+      <p className="text-[10px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">
+        Active Exhibitions <span className="ml-2 opacity-50">{idx + 1} / {galleries.length}</span>
+      </p>
+
+      <div className="mt-2 flex items-center gap-4">
+        {/* Left: text info about current exhibition */}
+        <div className="min-w-0 flex-1">
+          <h2 className="mt-0.5 text-xl font-black tracking-[-0.03em] text-text-primary truncate">{current.title || "Untitled Exhibition"}</h2>
+          {current.description ? <p className="mt-1 max-w-[280px] text-sm leading-relaxed text-[#A0956B] line-clamp-2">{current.description}</p> : null}
+          <p className="mt-1.5 text-xs text-[#A0956B] opacity-60">{current.itemIds?.length ?? 0} item{(current.itemIds?.length ?? 0) !== 1 ? "s" : ""}</p>
+          <div className="mt-4 flex items-center gap-2.5">
+            <Link href={`/gallery/${current.id}`} className="rounded-full px-4 py-2 text-sm font-black vltd-gold-btn">View Exhibition →</Link>
+            <Link href="/museum" className="rounded-full border border-[rgba(245,181,72,0.22)] px-4 py-2 text-sm font-semibold text-[#F5B548] transition hover:bg-[rgba(245,181,72,0.09)]">All exhibitions</Link>
+          </div>
+        </div>
+
+        {/* Right: cover-flow image strip */}
+        <div className="hidden shrink-0 sm:flex items-center gap-2">
+          {slots.map(({ g, pos, i }) => {
+            const thumb = galleryThumb(g);
+            const isActive = pos === 0;
+            const w = isActive ? 130 : 72;
+            const h = isActive ? 160 : 110;
+            const opacity = isActive ? 1 : 0.5;
+            const scale = isActive ? "scale-100" : "scale-95";
+            const ring = isActive ? "rgba(245,181,72,0.55)" : "rgba(245,181,72,0.15)";
+            return (
+              <button
+                key={g.id + pos}
+                type="button"
+                onClick={() => {
+                  if (isActive) {
+                    router.push(`/gallery/${g.id}`);
+                  } else {
+                    setIdx(i);
+                  }
+                }}
+                className={`overflow-hidden rounded-[14px] border transition-all duration-300 ${scale}`}
+                style={{ width: `${w}px`, height: `${h}px`, borderColor: ring, background: "rgba(10,18,35,0.8)", flexShrink: 0, opacity, cursor: "pointer" }}
+                title={isActive ? `Open ${g.title}` : g.title}
+              >
+                {thumb ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={thumb} alt={g.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-3xl opacity-30">🖼</div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Prev / Next arrows */}
+        {galleries.length > 1 && (
+          <div className="hidden shrink-0 sm:flex flex-col items-center gap-2">
+            <button type="button" onClick={() => setIdx((i) => (i - 1 + galleries.length) % galleries.length)} className="flex h-9 w-9 items-center justify-center rounded-full border text-lg transition hover:brightness-125" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)", color: "#F5B548" }} aria-label="Previous">‹</button>
+            <button type="button" onClick={() => setIdx((i) => (i + 1) % galleries.length)} className="flex h-9 w-9 items-center justify-center rounded-full border text-lg transition hover:brightness-125" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)", color: "#F5B548" }} aria-label="Next">›</button>
+          </div>
+        )}
+      </div>
+
+      {/* Dot indicators */}
+      {galleries.length > 1 && (
+        <div className="mt-4 flex gap-1.5">
+          {galleries.map((_, dotIdx) => (
+            <button key={dotIdx} type="button" onClick={() => setIdx(dotIdx)} className="h-1.5 rounded-full transition-all" style={{ width: dotIdx === idx ? "20px" : "6px", background: dotIdx === idx ? "#F5B548" : "rgba(245,181,72,0.25)" }} aria-label={`Exhibition ${dotIdx + 1}`} />
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -104,12 +185,10 @@ export default function HomeClient() {
   const [primaryFocus, setPrimaryFocus] = useState("");
   const [items, setItems] = useState<VaultItem[]>([]);
   const [galleries, setGalleries] = useState<Gallery[]>([]);
-  const [exhibitIndex, setExhibitIndex] = useState(0);
 
   useEffect(() => {
     async function load() {
-      setLoading(true);
-      setError("");
+      setLoading(true); setError("");
       try {
         const status = await getOnboardingStatus();
         if (!status.isAuthenticated) { router.replace("/login"); return; }
@@ -127,9 +206,7 @@ export default function HomeClient() {
         setGalleries(loadGalleries().filter((g) => g.state === "ACTIVE" && g.visibility === "PUBLIC"));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load dashboard.");
-      } finally {
-        setLoading(false);
-      }
+      } finally { setLoading(false); }
     }
     void load();
   }, [router]);
@@ -143,9 +220,7 @@ export default function HomeClient() {
     return { totalItems, totalCostValue, totalValue, totalGain, gainPct };
   }, [items]);
 
-  const recentItems = useMemo(() => {
-    return [...items].sort((a, b) => itemTimestamp(b) - itemTimestamp(a)).slice(0, 4);
-  }, [items]);
+  const recentItems = useMemo(() => [...items].sort((a, b) => itemTimestamp(b) - itemTimestamp(a)).slice(0, 4), [items]);
 
   const gainTone = stats.totalGain >= 0 ? "gain" : "loss";
   const gainPrefix = stats.totalGain >= 0 ? "+" : "";
@@ -153,39 +228,24 @@ export default function HomeClient() {
     ? `Your vault is up ${formatMoney(stats.totalGain)} overall.`
     : `Your vault is down ${formatMoney(Math.abs(stats.totalGain))} overall.`;
 
-  if (loading) {
-    return (
-      <main className="min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6">
-        <div className="mx-auto max-w-6xl rounded-[24px] border p-5 text-[#A0956B]" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
-          Loading dashboard…
-        </div>
-      </main>
-    );
-  }
+  if (loading) return (
+    <main className="min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6">
+      <div className="mx-auto max-w-6xl rounded-[24px] border p-5 text-[#A0956B]" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>Loading dashboard…</div>
+    </main>
+  );
 
-  if (error) {
-    return (
-      <main className="min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6">
-        <div className="mx-auto max-w-6xl rounded-[24px] border border-red-500/40 bg-red-500/10 p-5 text-red-100">
-          {error}
-        </div>
-      </main>
-    );
-  }
+  if (error) return (
+    <main className="min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6">
+      <div className="mx-auto max-w-6xl rounded-[24px] border border-red-500/40 bg-red-500/10 p-5 text-red-100">{error}</div>
+    </main>
+  );
 
   return (
     <main className="min-h-screen px-4 py-5 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-4">
 
-        {/* Hero section */}
-        <section
-          className="rounded-[28px] border p-4 sm:p-5"
-          style={{
-            background: "var(--theme-card, rgba(15,25,45,0.85))",
-            borderColor: "rgba(245,181,72,0.18)",
-            boxShadow: "0 0 0 1px rgba(245,181,72,0.08), 0 24px 80px rgba(0,0,0,0.55), 0 0 60px rgba(245,181,72,0.05)",
-          }}
-        >
+        {/* Hero */}
+        <section className="rounded-[28px] border p-4 sm:p-5" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "rgba(245,181,72,0.18)", boxShadow: "0 0 0 1px rgba(245,181,72,0.08), 0 24px 80px rgba(0,0,0,0.55), 0 0 60px rgba(245,181,72,0.05)" }}>
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">Welcome back,</p>
@@ -195,40 +255,22 @@ export default function HomeClient() {
             {primaryFocus && primaryFocus.toLowerCase() !== "null" && (() => {
               const slug = focusToVaultSlug(primaryFocus);
               const inner = (<><p className="text-[10px] uppercase tracking-[0.18em] text-[#A0956B]">Focus</p><p className="text-sm font-bold text-[#F5B548]">{primaryFocus}</p></>);
-              return slug ? (
-                <Link href={`/vault/${slug}`} className="shrink-0 rounded-2xl border px-3 py-1.5 text-right transition hover:brightness-110" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}>{inner}</Link>
-              ) : (
-                <div className="shrink-0 rounded-2xl border px-3 py-1.5 text-right" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}>{inner}</div>
-              );
+              return slug
+                ? <Link href={`/vault/${slug}`} className="shrink-0 rounded-2xl border px-3 py-1.5 text-right transition hover:brightness-110" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}>{inner}</Link>
+                : <div className="shrink-0 rounded-2xl border px-3 py-1.5 text-right" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}>{inner}</div>;
             })()}
           </div>
-
           <div className="mt-4 flex gap-2 overflow-x-auto pb-0.5 no-scrollbar">
             <StatChip label="Items"      value={String(stats.totalItems)} sub="in vault" />
             <StatChip label="Invested"   value={formatMoney(stats.totalCostValue)} sub="cost basis" />
             <StatChip label="Value"      value={formatMoney(stats.totalValue)} sub="current est." tone="gold" />
             <StatChip label="Gain / Loss" value={`${gainPrefix}${formatMoney(stats.totalGain)}`} sub={stats.totalCostValue > 0 ? `${gainPrefix}${stats.gainPct.toFixed(1)}% return` : "add costs"} tone={gainTone} />
           </div>
-
-          {/* Smart Scan CTA */}
           <div className="relative mt-4">
-            <div className="absolute -right-1 -top-1 z-10">
-              <InfoTooltip text="Uses the camera + AI to identify an item automatically. Point at a card, figure, or comic and it fills in the details for you." />
-            </div>
-            <Link
-              href="/capture"
-              className="flex min-h-[52px] items-center justify-between gap-3 rounded-[18px] px-4 py-3 font-semibold no-select transition hover:-translate-y-0.5"
-              style={{
-                background: "linear-gradient(135deg, rgba(139,105,20,0.25) 0%, rgba(200,148,31,0.15) 50%, rgba(139,105,20,0.25) 100%)",
-                border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.35))",
-                boxShadow: "0 0 20px rgba(245,181,72,0.15)",
-                color: "var(--theme-gold, #F5B548)",
-              }}
-            >
+            <div className="absolute -right-1 -top-1 z-10"><InfoTooltip text="Uses the camera + AI to identify an item automatically. Point at a card, figure, or comic and it fills in the details for you." /></div>
+            <Link href="/capture" className="flex min-h-[52px] items-center justify-between gap-3 rounded-[18px] px-4 py-3 font-semibold no-select transition hover:-translate-y-0.5" style={{ background: "linear-gradient(135deg, rgba(139,105,20,0.25) 0%, rgba(200,148,31,0.15) 50%, rgba(139,105,20,0.25) 100%)", border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.35))", boxShadow: "0 0 20px rgba(245,181,72,0.15)", color: "var(--theme-gold, #F5B548)" }}>
               <span className="flex items-center gap-3 text-sm font-semibold">
-                <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-xl" style={{ background: "var(--theme-gold-subtle, rgba(245,181,72,0.10))", border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.25))" }}>
-                  ▣
-                </span>
+                <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-xl" style={{ background: "var(--theme-gold-subtle, rgba(245,181,72,0.10))", border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.25))" }}>▣</span>
                 Smart Scan — add any item to your VLTD vault instantly
               </span>
               <span className="hidden shrink-0 text-sm font-semibold sm:inline">Scan →</span>
@@ -236,74 +278,12 @@ export default function HomeClient() {
           </div>
         </section>
 
-        {/* Exhibitions Carousel */}
-        <section
-          className="relative overflow-hidden rounded-[24px] border p-5"
-          style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "rgba(245,181,72,0.16)" }}
-        >
-          <div className="pointer-events-none absolute -right-8 -top-8 h-48 w-48 rounded-full"
-            style={{ background: "radial-gradient(circle, rgba(245,181,72,0.12) 0%, transparent 70%)", filter: "blur(24px)" }} />
-
-          {galleries.length > 0 ? (
-            <div className="relative">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">
-                Active Exhibitions
-                <span className="ml-2 opacity-50">{exhibitIndex + 1} / {galleries.length}</span>
-              </p>
-              {(() => {
-                const g = galleries[exhibitIndex];
-                const coverImg = g.coverImage || null;
-                const itemImgMap = new Map(items.map((it) => [it.id, it.imageFrontUrl ?? ""]));
-                const itemImgs = (g.itemIds ?? []).map((id) => itemImgMap.get(id)).filter((u): u is string => Boolean(u));
-                const snapImgs = (g.publicItemSnapshots ?? []).map((s) => s.imageFrontUrl).filter((u): u is string => Boolean(u));
-                const allImgs = [...new Set([...itemImgs, ...snapImgs])];
-                const previewImgs = coverImg ? [coverImg, ...allImgs.slice(0, 3)] : allImgs.slice(0, 4);
-                return (
-                  <div className="mt-2 flex items-start gap-4">
-                    <div className="min-w-0 flex-1">
-                      <h2 className="mt-0.5 text-xl font-black tracking-[-0.03em] text-text-primary truncate">{g.title || "Untitled Exhibition"}</h2>
-                      {g.description ? <p className="mt-1 max-w-[300px] text-sm leading-relaxed text-[#A0956B] line-clamp-2">{g.description}</p> : null}
-                      <p className="mt-1.5 text-xs text-[#A0956B] opacity-60">{g.itemIds?.length ?? 0} item{(g.itemIds?.length ?? 0) !== 1 ? "s" : ""}</p>
-                      <div className="mt-4 flex items-center gap-2.5">
-                        <Link href={`/gallery/${g.id}`} className="rounded-full px-4 py-2 text-sm font-black vltd-gold-btn">View Exhibition →</Link>
-                        <Link href="/museum" className="rounded-full border border-[rgba(245,181,72,0.22)] px-4 py-2 text-sm font-semibold text-[#F5B548] transition hover:bg-[rgba(245,181,72,0.09)]">All exhibitions</Link>
-                      </div>
-                    </div>
-                    <div className="hidden shrink-0 sm:flex items-center gap-3">
-                      {previewImgs.length > 0 ? (
-                        <div className="flex gap-2">
-                          {previewImgs.slice(0, 4).map((src, i) => (
-                            <div key={i} className="overflow-hidden rounded-[14px] border" style={{ width: previewImgs.length === 1 ? "160px" : "80px", height: "110px", borderColor: "rgba(245,181,72,0.20)", background: "rgba(10,18,35,0.8)", flexShrink: 0 }}>
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex gap-2">
-                          {[0, 1, 2].map((i) => (
-                            <div key={i} className="flex items-center justify-center rounded-[14px] border text-3xl" style={{ width: "80px", height: "110px", borderColor: "rgba(245,181,72,0.15)", background: "rgba(245,181,72,0.04)", flexShrink: 0 }}>🖼</div>
-                          ))}
-                        </div>
-                      )}
-                      <div className="flex flex-col items-center gap-2">
-                        <button type="button" onClick={() => setExhibitIndex((i) => (i - 1 + galleries.length) % galleries.length)} className="flex h-9 w-9 items-center justify-center rounded-full border text-lg transition hover:brightness-125" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)", color: "#F5B548" }} aria-label="Previous">‹</button>
-                        <button type="button" onClick={() => setExhibitIndex((i) => (i + 1) % galleries.length)} className="flex h-9 w-9 items-center justify-center rounded-full border text-lg transition hover:brightness-125" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)", color: "#F5B548" }} aria-label="Next">›</button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-              {galleries.length > 1 && (
-                <div className="mt-4 flex gap-1.5">
-                  {galleries.map((_, idx) => (
-                    <button key={idx} type="button" onClick={() => setExhibitIndex(idx)} className="h-1.5 rounded-full transition-all" style={{ width: idx === exhibitIndex ? "20px" : "6px", background: idx === exhibitIndex ? "#F5B548" : "rgba(245,181,72,0.25)" }} aria-label={`Exhibition ${idx + 1}`} />
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="relative flex items-start justify-between gap-4">
+        {/* Exhibitions */}
+        {galleries.length > 0 ? (
+          <ExhibitionCarousel galleries={galleries} items={items} />
+        ) : (
+          <section className="relative overflow-hidden rounded-[24px] border p-5" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "rgba(245,181,72,0.16)" }}>
+            <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">Exhibitions</p>
                 <h2 className="mt-1.5 text-xl font-black tracking-[-0.03em] text-text-primary">Your Museum Awaits</h2>
@@ -315,14 +295,12 @@ export default function HomeClient() {
               </div>
               <div className="hidden shrink-0 sm:flex h-20 w-20 items-center justify-center rounded-2xl border text-3xl" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}>🏛</div>
             </div>
-          )}
-        </section>
+          </section>
+        )}
 
-        {/* Two-column: actions + recent / movers */}
+        {/* Two-column */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div className="space-y-4">
-
-            {/* Quick Actions */}
             <section className="rounded-[24px] border p-4" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
               <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#A0956B]">Quick Actions</p>
               <div className="mt-3 grid grid-cols-3 gap-2">
@@ -336,14 +314,7 @@ export default function HomeClient() {
                 ] as { label: string; href: string; accent: boolean; tip: string }[]).map(({ label, href, accent, tip }) => (
                   <div key={href + label} className="relative">
                     {tip && <div className="absolute -right-1 -top-1 z-10"><InfoTooltip text={tip} /></div>}
-                    <Link
-                      href={href}
-                      className="block w-full rounded-2xl border px-3 py-3 text-center text-sm font-semibold transition"
-                      style={accent
-                        ? { borderColor: "rgba(245,181,72,0.28)", background: "rgba(245,181,72,0.09)", color: "#F5B548" }
-                        : { borderColor: "var(--theme-border, rgba(245,181,72,0.12))", background: "var(--theme-elevated, rgba(20,32,55,0.9))", color: "#A0956B" }
-                      }
-                    >
+                    <Link href={href} className="block w-full rounded-2xl border px-3 py-3 text-center text-sm font-semibold transition" style={accent ? { borderColor: "rgba(245,181,72,0.28)", background: "rgba(245,181,72,0.09)", color: "#F5B548" } : { borderColor: "var(--theme-border, rgba(245,181,72,0.12))", background: "var(--theme-elevated, rgba(20,32,55,0.9))", color: "#A0956B" }}>
                       {label}
                     </Link>
                   </div>
@@ -351,7 +322,6 @@ export default function HomeClient() {
               </div>
             </section>
 
-            {/* Recently Added */}
             <section className="rounded-[24px] border p-4" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
               <div className="flex items-center justify-between gap-3">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#A0956B]">Recently Added</p>
@@ -366,11 +336,7 @@ export default function HomeClient() {
               ) : (
                 <div className="mt-3 space-y-2">
                   {recentItems.map((item) => (
-                    <Link
-                      key={item.id}
-                      href={`/vault/item/${item.id}`}
-                      className="flex items-center justify-between gap-4 rounded-2xl border border-transparent px-3.5 py-2.5 transition"
-                      style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))" }}
+                    <Link key={item.id} href={`/vault/item/${item.id}`} className="flex items-center justify-between gap-4 rounded-2xl border border-transparent px-3.5 py-2.5 transition" style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))" }}
                       onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(245,181,72,0.18)"; (e.currentTarget as HTMLAnchorElement).style.background = "var(--theme-elevated, rgba(25,38,62,0.95))"; }}
                       onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = "transparent"; (e.currentTarget as HTMLAnchorElement).style.background = "var(--theme-elevated, rgba(20,32,55,0.9))"; }}
                     >
@@ -378,17 +344,13 @@ export default function HomeClient() {
                         <p className="truncate text-sm font-semibold text-text-primary">{item.title}</p>
                         <p className="mt-0.5 text-xs text-[#A0956B]">{item.universe || item.category || "Collectible"}</p>
                       </div>
-                      <p className="shrink-0 text-sm font-semibold tabular-nums" style={{ color: "#52D6F4" }}>
-                        {formatMoney(item.currentValue ?? item.estimatedValue ?? 0)}
-                      </p>
+                      <p className="shrink-0 text-sm font-semibold tabular-nums" style={{ color: "#52D6F4" }}>{formatMoney(item.currentValue ?? item.estimatedValue ?? 0)}</p>
                     </Link>
                   ))}
                 </div>
               )}
             </section>
           </div>
-
-          {/* Right column */}
           <BiggestMoversPanel items={items} />
         </div>
       </div>
