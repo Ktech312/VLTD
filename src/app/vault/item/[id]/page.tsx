@@ -760,30 +760,6 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               </Section>
             </div>
 
-            {/* Cost to Sell + Condition + Export — fills the space below media */}
-            <div className="mt-4 grid gap-4 lg:grid-cols-2">
-              <CostToSellPanel
-                price={effectiveMarketValue(item)}
-                costBasis={totalCost(item)}
-                shippingCost={clamp(item.purchaseShipping)}
-                category={categoryLabel(item)}
-              />
-              <div className="flex flex-col gap-4">
-                <ConditionAssessmentPanel
-                  item={item}
-                  onUpdate={(patch) => void handleUpdateCondition(patch)}
-                />
-                {item.status === "FOR_SALE" ? (
-                  <ExportListingButton item={item} />
-                ) : (
-                  <div className="rounded-[24px] bg-[color:var(--surface)] p-5 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-                    <div className="text-sm text-[color:var(--muted)]">
-                      Mark this item for sale to generate marketplace listing copy.
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
 
           <div>
@@ -897,6 +873,31 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               ) : null}
             </Section>
 
+          </div>
+        </div>
+
+        {/* Cost to Sell + Condition + Export — full-width horizontal row */}
+        <div className="mt-5 grid gap-4 md:grid-cols-[1fr_1fr] xl:grid-cols-[1fr_1fr_auto]">
+          <CostToSellPanel
+            price={effectiveMarketValue(item)}
+            costBasis={totalCost(item)}
+            shippingCost={clamp(item.purchaseShipping)}
+            category={categoryLabel(item)}
+          />
+          <ConditionAssessmentPanel
+            item={item}
+            onUpdate={(patch) => void handleUpdateCondition(patch)}
+          />
+          <div className="flex items-stretch">
+            {item.status === "FOR_SALE" ? (
+              <ExportListingButton item={item} />
+            ) : (
+              <div className="rounded-[24px] bg-[color:var(--surface)] p-5 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] flex items-center justify-center min-w-[200px]">
+                <div className="text-sm text-[color:var(--muted)]">
+                  Mark this item for sale to generate marketplace listing copy.
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
