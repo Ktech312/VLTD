@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getOnboardingStatus } from "@/lib/auth";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
@@ -46,9 +46,8 @@ const BiggestMoversPanel = dynamic(() => import("@/components/BiggestMoversPanel
   loading: () => <div className="rounded-[24px] border p-4 text-sm text-[#A0956B]" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>Loading movers…</div>,
 });
 
-function formatMoney(value?: number) {
-  const num = Number(value ?? 0);
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(num);
+function formatMoney(v?: number) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(Number(v ?? 0));
 }
 function totalCost(item: VaultItem) {
   return Number(item.purchasePrice ?? 0) + Number(item.purchaseTax ?? 0) + Number(item.purchaseShipping ?? 0) + Number(item.purchaseFees ?? 0);
@@ -69,106 +68,108 @@ function StatChip({ label, value, sub, tone = "default" }: { label: string; valu
   );
 }
 
-/* Cover-flow exhibition carousel */  
+/* ── Exhibition Carousel — hero card + item filmstrip ─────── */
 function ExhibitionCarousel({ galleries, items }: { galleries: Gallery[]; items: VaultItem[] }) {
   const router = useRouter();
   const [idx, setIdx] = useState(0);
+  const filmRef = useRef<HTMLDivElement>(null);
 
-  // Get representative image for a gallery
+  // Reset filmstrip scroll when exhibition changes
+  useEffect(() => {
+    if (filmRef.current) filmRef.current.scrollLeft = 0;
+  }, [idx]);
+
   function galleryThumb(g: Gallery): string | null {
     if (g.coverImage) return g.coverImage;
     const imgMap = new Map(items.map((it) => [it.id, it.imageFrontUrl ?? ""]));
-    const img = (g.itemIds ?? []).map((id) => imgMap.get(id)).find(Boolean);
-    if (img) return img;
-    const snap = (g.publicItemSnapshots ?? []).map((s) => s.imageFrontUrl).find(Boolean);
-    return snap ?? null;
+    return (g.itemIds ?? []).map((id) => imgMap.get(id)).find(Boolean) ?? null;
+  }
+
+  function galleryItemImages(g: Gallery): string[] {
+    const imgMap = new Map(items.map((it) => [it.id, it.imageFrontUrl ?? ""]));
+    return (g.itemIds ?? []).map((id) => imgMap.get(id) ?? "").filter(Boolean);
   }
 
   const current = galleries[idx];
-  const prev = galleries[(idx - 1 + galleries.length) % galleries.length];
-  const next = galleries[(idx + 1) % galleries.length];
-
-  // Slots: [prev, current, next] — only show flanks if multiple galleries
-  const slots = galleries.length === 1
-    ? [{ g: current, pos: 0, i: idx }]
-    : [
-        { g: prev,    pos: -1, i: (idx - 1 + galleries.length) % galleries.length },
-        { g: current, pos:  0, i: idx },
-        { g: next,    pos:  1, i: (idx + 1) % galleries.length },
-      ];
+  const cover = galleryThumb(current);
+  const filmImgs = galleryItemImages(current);
 
   return (
-    <section
-      className="relative overflow-hidden rounded-[24px] border p-5"
-      style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "rgba(245,181,72,0.16)" }}
-    >
+    <section className="relative overflow-hidden rounded-[24px] border p-5" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "rgba(245,181,72,0.16)" }}>
       <div className="pointer-events-none absolute -right-8 -top-8 h-48 w-48 rounded-full" style={{ background: "radial-gradient(circle, rgba(245,181,72,0.12) 0%, transparent 70%)", filter: "blur(24px)" }} />
-      <p className="text-[10px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">
-        Active Exhibitions <span className="ml-2 opacity-50">{idx + 1} / {galleries.length}</span>
-      </p>
 
-      <div className="mt-2 flex items-center gap-4">
-        {/* Left: text info about current exhibition */}
-        <div className="min-w-0 flex-1">
-          <h2 className="mt-0.5 text-xl font-black tracking-[-0.03em] text-text-primary truncate">{current.title || "Untitled Exhibition"}</h2>
-          {current.description ? <p className="mt-1 max-w-[280px] text-sm leading-relaxed text-[#A0956B] line-clamp-2">{current.description}</p> : null}
-          <p className="mt-1.5 text-xs text-[#A0956B] opacity-60">{current.itemIds?.length ?? 0} item{(current.itemIds?.length ?? 0) !== 1 ? "s" : ""}</p>
-          <div className="mt-4 flex items-center gap-2.5">
-            <Link href={`/gallery/${current.id}`} className="rounded-full px-4 py-2 text-sm font-black vltd-gold-btn">View Exhibition →</Link>
-            <Link href="/museum" className="rounded-full border border-[rgba(245,181,72,0.22)] px-4 py-2 text-sm font-semibold text-[#F5B548] transition hover:bg-[rgba(245,181,72,0.09)]">All exhibitions</Link>
-          </div>
-        </div>
-
-        {/* Right: cover-flow image strip */}
-        <div className="hidden shrink-0 sm:flex items-center gap-2">
-          {slots.map(({ g, pos, i }) => {
-            const thumb = galleryThumb(g);
-            const isActive = pos === 0;
-            const w = isActive ? 130 : 72;
-            const h = isActive ? 160 : 110;
-            const opacity = isActive ? 1 : 0.5;
-            const scale = isActive ? "scale-100" : "scale-95";
-            const ring = isActive ? "rgba(245,181,72,0.55)" : "rgba(245,181,72,0.15)";
-            return (
-              <button
-                key={g.id + pos}
-                type="button"
-                onClick={() => {
-                  if (isActive) {
-                    router.push(`/gallery/${g.id}`);
-                  } else {
-                    setIdx(i);
-                  }
-                }}
-                className={`overflow-hidden rounded-[14px] border transition-all duration-300 ${scale}`}
-                style={{ width: `${w}px`, height: `${h}px`, borderColor: ring, background: "rgba(10,18,35,0.8)", flexShrink: 0, opacity, cursor: "pointer" }}
-                title={isActive ? `Open ${g.title}` : g.title}
-              >
-                {thumb ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={thumb} alt={g.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-3xl opacity-30">🖼</div>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Prev / Next arrows */}
+      {/* Section header */}
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">
+          Active Exhibitions <span className="ml-2 opacity-50">{idx + 1} / {galleries.length}</span>
+        </p>
         {galleries.length > 1 && (
-          <div className="hidden shrink-0 sm:flex flex-col items-center gap-2">
-            <button type="button" onClick={() => setIdx((i) => (i - 1 + galleries.length) % galleries.length)} className="flex h-9 w-9 items-center justify-center rounded-full border text-lg transition hover:brightness-125" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)", color: "#F5B548" }} aria-label="Previous">‹</button>
-            <button type="button" onClick={() => setIdx((i) => (i + 1) % galleries.length)} className="flex h-9 w-9 items-center justify-center rounded-full border text-lg transition hover:brightness-125" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)", color: "#F5B548" }} aria-label="Next">›</button>
+          <div className="flex gap-1">
+            <button type="button" onClick={() => setIdx((i) => (i - 1 + galleries.length) % galleries.length)} className="flex h-7 w-7 items-center justify-center rounded-full border text-base transition hover:brightness-125" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)", color: "#F5B548" }} aria-label="Previous">‹</button>
+            <button type="button" onClick={() => setIdx((i) => (i + 1) % galleries.length)} className="flex h-7 w-7 items-center justify-center rounded-full border text-base transition hover:brightness-125" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)", color: "#F5B548" }} aria-label="Next">›</button>
           </div>
         )}
       </div>
 
+      {/* Hero card + filmstrip row */}
+      <div className="mt-3 flex items-start gap-3">
+
+        {/* Hero — large cover card, links to exhibition */}
+        <button
+          type="button"
+          onClick={() => router.push(`/gallery/${current.id}`)}
+          className="shrink-0 overflow-hidden rounded-[16px] border transition-transform duration-200 active:scale-95"
+          style={{ width: "120px", height: "158px", borderColor: "rgba(245,181,72,0.40)", background: "rgba(10,18,35,0.9)", boxShadow: "0 0 0 1px rgba(245,181,72,0.15), 0 8px 24px rgba(0,0,0,0.4)" }}
+        >
+          {cover ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={cover} alt={current.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-4xl opacity-20">🖼</div>
+          )}
+        </button>
+
+        {/* Filmstrip — item images, horizontally scrollable */}
+        <div
+          ref={filmRef}
+          className="flex gap-2 overflow-x-auto pb-1"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          {filmImgs.length > 0 ? filmImgs.map((src, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => router.push(`/gallery/${current.id}`)}
+              className="shrink-0 overflow-hidden rounded-[12px] border transition-transform duration-150 hover:scale-105 active:scale-95"
+              style={{ width: "62px", height: "84px", borderColor: "rgba(245,181,72,0.18)", background: "rgba(10,18,35,0.8)" }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
+            </button>
+          )) : (
+            /* No items yet — show placeholder slots */
+            [0,1,2,3].map((i) => (
+              <div key={i} className="shrink-0 rounded-[12px] border" style={{ width: "62px", height: "84px", borderColor: "rgba(245,181,72,0.12)", background: "rgba(245,181,72,0.03)" }} />
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Exhibition info below hero */}
+      <div className="mt-3">
+        <h2 className="text-base font-black tracking-[-0.02em] text-text-primary truncate">{current.title || "Untitled Exhibition"}</h2>
+        <p className="mt-0.5 text-xs text-[#A0956B] opacity-60">{current.itemIds?.length ?? 0} item{(current.itemIds?.length ?? 0) !== 1 ? "s" : ""}</p>
+        <div className="mt-3 flex items-center gap-2">
+          <Link href={`/gallery/${current.id}`} className="rounded-full px-4 py-1.5 text-sm font-black vltd-gold-btn">View Exhibition →</Link>
+          <Link href="/museum" className="rounded-full border border-[rgba(245,181,72,0.22)] px-4 py-1.5 text-sm font-semibold text-[#F5B548] transition hover:bg-[rgba(245,181,72,0.09)]">All exhibitions</Link>
+        </div>
+      </div>
+
       {/* Dot indicators */}
       {galleries.length > 1 && (
-        <div className="mt-4 flex gap-1.5">
+        <div className="mt-3 flex gap-1.5">
           {galleries.map((_, dotIdx) => (
-            <button key={dotIdx} type="button" onClick={() => setIdx(dotIdx)} className="h-1.5 rounded-full transition-all" style={{ width: dotIdx === idx ? "20px" : "6px", background: dotIdx === idx ? "#F5B548" : "rgba(245,181,72,0.25)" }} aria-label={`Exhibition ${dotIdx + 1}`} />
+            <button key={dotIdx} type="button" onClick={() => setIdx(dotIdx)} className="h-1.5 rounded-full transition-all duration-300" style={{ width: dotIdx === idx ? "20px" : "6px", background: dotIdx === idx ? "#F5B548" : "rgba(245,181,72,0.25)" }} aria-label={`Exhibition ${dotIdx + 1}`} />
           ))}
         </div>
       )}
@@ -221,7 +222,6 @@ export default function HomeClient() {
   }, [items]);
 
   const recentItems = useMemo(() => [...items].sort((a, b) => itemTimestamp(b) - itemTimestamp(a)).slice(0, 4), [items]);
-
   const gainTone = stats.totalGain >= 0 ? "gain" : "loss";
   const gainPrefix = stats.totalGain >= 0 ? "+" : "";
   const summaryLine = stats.totalGain >= 0
@@ -233,7 +233,6 @@ export default function HomeClient() {
       <div className="mx-auto max-w-6xl rounded-[24px] border p-5 text-[#A0956B]" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>Loading dashboard…</div>
     </main>
   );
-
   if (error) return (
     <main className="min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6">
       <div className="mx-auto max-w-6xl rounded-[24px] border border-red-500/40 bg-red-500/10 p-5 text-red-100">{error}</div>
@@ -244,7 +243,7 @@ export default function HomeClient() {
     <main className="min-h-screen px-4 py-5 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-4">
 
-        {/* Hero */}
+        {/* ── Hero ─────────────────────────────────────── */}
         <section className="rounded-[28px] border p-4 sm:p-5" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "rgba(245,181,72,0.18)", boxShadow: "0 0 0 1px rgba(245,181,72,0.08), 0 24px 80px rgba(0,0,0,0.55), 0 0 60px rgba(245,181,72,0.05)" }}>
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -261,9 +260,9 @@ export default function HomeClient() {
             })()}
           </div>
           <div className="mt-4 flex gap-2 overflow-x-auto pb-0.5 no-scrollbar">
-            <StatChip label="Items"      value={String(stats.totalItems)} sub="in vault" />
-            <StatChip label="Invested"   value={formatMoney(stats.totalCostValue)} sub="cost basis" />
-            <StatChip label="Value"      value={formatMoney(stats.totalValue)} sub="current est." tone="gold" />
+            <StatChip label="Items" value={String(stats.totalItems)} sub="in vault" />
+            <StatChip label="Invested" value={formatMoney(stats.totalCostValue)} sub="cost basis" />
+            <StatChip label="Value" value={formatMoney(stats.totalValue)} sub="current est." tone="gold" />
             <StatChip label="Gain / Loss" value={`${gainPrefix}${formatMoney(stats.totalGain)}`} sub={stats.totalCostValue > 0 ? `${gainPrefix}${stats.gainPct.toFixed(1)}% return` : "add costs"} tone={gainTone} />
           </div>
           <div className="relative mt-4">
@@ -278,7 +277,7 @@ export default function HomeClient() {
           </div>
         </section>
 
-        {/* Exhibitions */}
+        {/* ── Exhibitions ───────────────────────────────── */}
         {galleries.length > 0 ? (
           <ExhibitionCarousel galleries={galleries} items={items} />
         ) : (
@@ -287,7 +286,7 @@ export default function HomeClient() {
               <div className="min-w-0">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">Exhibitions</p>
                 <h2 className="mt-1.5 text-xl font-black tracking-[-0.03em] text-text-primary">Your Museum Awaits</h2>
-                <p className="mt-1 max-w-[340px] text-sm leading-relaxed text-[#A0956B]">Curate and display your collection for the world. Create exhibitions that tell the story of what you collect.</p>
+                <p className="mt-1 max-w-[340px] text-sm leading-relaxed text-[#A0956B]">Curate and display your collection for the world.</p>
                 <div className="mt-4 flex items-center gap-2.5">
                   <Link href="/museum/new" className="rounded-full px-4 py-2 text-sm font-black vltd-gold-btn">Create Exhibition</Link>
                   <Link href="/museum" className="rounded-full border border-[rgba(245,181,72,0.22)] px-4 py-2 text-sm font-semibold text-[#F5B548] transition hover:bg-[rgba(245,181,72,0.09)]">View all →</Link>
@@ -298,7 +297,7 @@ export default function HomeClient() {
           </section>
         )}
 
-        {/* Two-column */}
+        {/* ── Two-column ────────────────────────────────── */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div className="space-y-4">
             <section className="rounded-[24px] border p-4" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
@@ -314,14 +313,11 @@ export default function HomeClient() {
                 ] as { label: string; href: string; accent: boolean; tip: string }[]).map(({ label, href, accent, tip }) => (
                   <div key={href + label} className="relative">
                     {tip && <div className="absolute -right-1 -top-1 z-10"><InfoTooltip text={tip} /></div>}
-                    <Link href={href} className="block w-full rounded-2xl border px-3 py-3 text-center text-sm font-semibold transition" style={accent ? { borderColor: "rgba(245,181,72,0.28)", background: "rgba(245,181,72,0.09)", color: "#F5B548" } : { borderColor: "var(--theme-border, rgba(245,181,72,0.12))", background: "var(--theme-elevated, rgba(20,32,55,0.9))", color: "#A0956B" }}>
-                      {label}
-                    </Link>
+                    <Link href={href} className="block w-full rounded-2xl border px-3 py-3 text-center text-sm font-semibold transition" style={accent ? { borderColor: "rgba(245,181,72,0.28)", background: "rgba(245,181,72,0.09)", color: "#F5B548" } : { borderColor: "var(--theme-border, rgba(245,181,72,0.12))", background: "var(--theme-elevated, rgba(20,32,55,0.9))", color: "#A0956B" }}>{label}</Link>
                   </div>
                 ))}
               </div>
             </section>
-
             <section className="rounded-[24px] border p-4" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
               <div className="flex items-center justify-between gap-3">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#A0956B]">Recently Added</p>
