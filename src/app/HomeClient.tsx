@@ -17,6 +17,7 @@ function focusToVaultSlug(focus: string): string | null {
   if (/misc|other/.test(t)) return "misc";
   return null;
 }
+
 function IconPackagePlus({ size = 24, style }: { size?: number; style?: Record<string, string | number> }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
@@ -25,7 +26,6 @@ function IconPackagePlus({ size = 24, style }: { size?: number; style?: Record<s
   );
 }
 
-/* ── Info tooltip for Quick Actions ─────────────────────── */
 function InfoTooltip({ text }: { text: string }) {
   return (
     <span className="group/tip relative inline-flex items-center justify-center">
@@ -35,7 +35,6 @@ function InfoTooltip({ text }: { text: string }) {
       >
         i
       </span>
-      {/* Tooltip bubble */}
       <span
         className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-52 -translate-x-1/2 rounded-xl px-3 py-2 text-left text-xs leading-snug opacity-0 shadow-xl transition-opacity duration-150 group-hover/tip:opacity-100"
         style={{ background: "rgba(10,18,35,0.97)", border: "1px solid rgba(245,181,72,0.22)", color: "#D4C9A8" }}
@@ -46,6 +45,7 @@ function InfoTooltip({ text }: { text: string }) {
     </span>
   );
 }
+
 import { useRouter } from "next/navigation";
 import { getOnboardingStatus } from "@/lib/auth";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
@@ -81,47 +81,15 @@ function itemTimestamp(item: VaultItem) {
   return Number(item.createdAt ?? item.valueUpdatedAt ?? item.priceUpdatedAt ?? 0);
 }
 
-/* ── Stat chip — compact single-row format ─────────────── */
-function StatChip({
-  label,
-  value,
-  sub,
-  tone = "default",
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  tone?: "default" | "gold" | "gain" | "loss";
-}) {
-  const valueColor =
-    tone === "gold"
-      ? "#F5B548"
-      : tone === "gain"
-      ? "#4CAF82"
-      : tone === "loss"
-      ? "#E05252"
-      : "#F0EAD6";
-
+function StatChip({ label, value, sub, tone = "default" }: { label: string; value: string; sub?: string; tone?: "default" | "gold" | "gain" | "loss"; }) {
+  const valueColor = tone === "gold" ? "#F5B548" : tone === "gain" ? "#4CAF82" : tone === "loss" ? "#E05252" : "#F0EAD6";
   const borderColor = "var(--theme-border, rgba(245,181,72,0.12))";
-
   const bgColor = "var(--theme-card, rgba(15,25,45,0.85))";
-
-  const boxShadow =
-    tone === "gold"
-      ? "0 4px 20px rgba(245,181,72,0.10)"
-      : tone === "gain"
-      ? "0 4px 16px rgba(76,175,130,0.08)"
-      : "none";
-
+  const boxShadow = tone === "gold" ? "0 4px 20px rgba(245,181,72,0.10)" : tone === "gain" ? "0 4px 16px rgba(76,175,130,0.08)" : "none";
   return (
-    <div
-      className="flex flex-col gap-0.5 rounded-[16px] border px-3.5 py-2.5 flex-1 min-w-0"
-      style={{ background: bgColor, borderColor, boxShadow }}
-    >
+    <div className="flex flex-col gap-0.5 rounded-[16px] border px-3.5 py-2.5 flex-1 min-w-0" style={{ background: bgColor, borderColor, boxShadow }}>
       <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#A0956B]">{label}</span>
-      <span className="text-lg font-black tracking-[-0.04em] leading-none" style={{ color: valueColor }}>
-        {value}
-      </span>
+      <span className="text-lg font-black tracking-[-0.04em] leading-none" style={{ color: valueColor }}>{value}</span>
       {sub && <span className="text-[10px] text-[#A0956B]">{sub}</span>}
     </div>
   );
@@ -154,13 +122,9 @@ export default function HomeClient() {
         await syncVaultItemsFromSupabase();
         setItems(loadItems());
         void refreshGalleriesFromSupabase(true).then(() => {
-          setGalleries(
-            loadGalleries().filter((g) => g.state === "ACTIVE" && g.visibility === "PUBLIC")
-          );
+          setGalleries(loadGalleries().filter((g) => g.state === "ACTIVE" && g.visibility === "PUBLIC"));
         });
-        setGalleries(
-          loadGalleries().filter((g) => g.state === "ACTIVE" && g.visibility === "PUBLIC")
-        );
+        setGalleries(loadGalleries().filter((g) => g.state === "ACTIVE" && g.visibility === "PUBLIC"));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load dashboard.");
       } finally {
@@ -180,9 +144,7 @@ export default function HomeClient() {
   }, [items]);
 
   const recentItems = useMemo(() => {
-    return [...items]
-      .sort((a, b) => itemTimestamp(b) - itemTimestamp(a))
-      .slice(0, 4);
+    return [...items].sort((a, b) => itemTimestamp(b) - itemTimestamp(a)).slice(0, 4);
   }, [items]);
 
   const gainTone = stats.totalGain >= 0 ? "gain" : "loss";
@@ -191,7 +153,6 @@ export default function HomeClient() {
     ? `Your vault is up ${formatMoney(stats.totalGain)} overall.`
     : `Your vault is down ${formatMoney(Math.abs(stats.totalGain))} overall.`;
 
-  /* ── Loading ─────────────────────────────────────────── */
   if (loading) {
     return (
       <main className="min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6">
@@ -202,7 +163,6 @@ export default function HomeClient() {
     );
   }
 
-  /* ── Error ───────────────────────────────────────────── */
   if (error) {
     return (
       <main className="min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6">
@@ -213,12 +173,11 @@ export default function HomeClient() {
     );
   }
 
-  /* ── Render ──────────────────────────────────────────── */
   return (
     <main className="min-h-screen px-4 py-5 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-4">
 
-        {/* ── Hero section ─────────────────────────────── */}
+        {/* Hero section */}
         <section
           className="rounded-[28px] border p-4 sm:p-5"
           style={{
@@ -227,60 +186,31 @@ export default function HomeClient() {
             boxShadow: "0 0 0 1px rgba(245,181,72,0.08), 0 24px 80px rgba(0,0,0,0.55), 0 0 60px rgba(245,181,72,0.05)",
           }}
         >
-          {/* Greeting row */}
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">
-                Welcome back,
-              </p>
-              <h1 className="mt-0.5 text-2xl font-black tracking-[-0.04em] text-text-primary sm:text-3xl">
-                {displayName || "Collector"}
-              </h1>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">Welcome back,</p>
+              <h1 className="mt-0.5 text-2xl font-black tracking-[-0.04em] text-text-primary sm:text-3xl">{displayName || "Collector"}</h1>
               <p className="mt-1 text-sm text-[#A0956B]">{summaryLine}</p>
             </div>
-
-            {/* Focus badge — links to the collector's focus universe */}
             {primaryFocus && primaryFocus.toLowerCase() !== "null" && (() => {
               const slug = focusToVaultSlug(primaryFocus);
-              const inner = (
-                <>
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#A0956B]">Focus</p>
-                  <p className="text-sm font-bold text-[#F5B548]">{primaryFocus}</p>
-                </>
-              );
+              const inner = (<><p className="text-[10px] uppercase tracking-[0.18em] text-[#A0956B]">Focus</p><p className="text-sm font-bold text-[#F5B548]">{primaryFocus}</p></>);
               return slug ? (
-                <Link
-                  href={`/vault/${slug}`}
-                  className="shrink-0 rounded-2xl border px-3 py-1.5 text-right transition hover:brightness-110"
-                  style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}
-                >
-                  {inner}
-                </Link>
+                <Link href={`/vault/${slug}`} className="shrink-0 rounded-2xl border px-3 py-1.5 text-right transition hover:brightness-110" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}>{inner}</Link>
               ) : (
-                <div
-                  className="shrink-0 rounded-2xl border px-3 py-1.5 text-right"
-                  style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}
-                >
-                  {inner}
-                </div>
+                <div className="shrink-0 rounded-2xl border px-3 py-1.5 text-right" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}>{inner}</div>
               );
             })()}
           </div>
 
-          {/* Compact stats row */}
           <div className="mt-4 flex gap-2 overflow-x-auto pb-0.5 no-scrollbar">
-            <StatChip label="Items"    value={String(stats.totalItems)} sub="in vault" />
-            <StatChip label="Invested" value={formatMoney(stats.totalCostValue)} sub="cost basis" />
-            <StatChip label="Value"    value={formatMoney(stats.totalValue)} sub="current est." tone="gold" />
-            <StatChip
-              label="Gain / Loss"
-              value={`${gainPrefix}${formatMoney(stats.totalGain)}`}
-              sub={stats.totalCostValue > 0 ? `${gainPrefix}${stats.gainPct.toFixed(1)}% return` : "add costs"}
-              tone={gainTone}
-            />
+            <StatChip label="Items"      value={String(stats.totalItems)} sub="in vault" />
+            <StatChip label="Invested"   value={formatMoney(stats.totalCostValue)} sub="cost basis" />
+            <StatChip label="Value"      value={formatMoney(stats.totalValue)} sub="current est." tone="gold" />
+            <StatChip label="Gain / Loss" value={`${gainPrefix}${formatMoney(stats.totalGain)}`} sub={stats.totalCostValue > 0 ? `${gainPrefix}${stats.gainPct.toFixed(1)}% return` : "add costs"} tone={gainTone} />
           </div>
 
-          {/* Smart Scan CTA — dark gold glow bar */}
+          {/* Smart Scan CTA */}
           <div className="relative mt-4">
             <div className="absolute -right-1 -top-1 z-10">
               <InfoTooltip text="Uses the camera + AI to identify an item automatically. Point at a card, figure, or comic and it fills in the details for you." />
@@ -289,17 +219,14 @@ export default function HomeClient() {
               href="/capture"
               className="flex min-h-[52px] items-center justify-between gap-3 rounded-[18px] px-4 py-3 font-semibold no-select transition hover:-translate-y-0.5"
               style={{
-                background: 'linear-gradient(135deg, rgba(139,105,20,0.25) 0%, rgba(200,148,31,0.15) 50%, rgba(139,105,20,0.25) 100%)',
-                border: '1px solid var(--theme-gold-border, rgba(245,181,72,0.35))',
-                boxShadow: '0 0 20px rgba(245,181,72,0.15)',
-                color: 'var(--theme-gold, #F5B548)',
+                background: "linear-gradient(135deg, rgba(139,105,20,0.25) 0%, rgba(200,148,31,0.15) 50%, rgba(139,105,20,0.25) 100%)",
+                border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.35))",
+                boxShadow: "0 0 20px rgba(245,181,72,0.15)",
+                color: "var(--theme-gold, #F5B548)",
               }}
             >
               <span className="flex items-center gap-3 text-sm font-semibold">
-                <span
-                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-xl"
-                  style={{ background: 'var(--theme-gold-subtle, rgba(245,181,72,0.10))', border: '1px solid var(--theme-gold-border, rgba(245,181,72,0.25))' }}
-                >
+                <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-xl" style={{ background: "var(--theme-gold-subtle, rgba(245,181,72,0.10))", border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.25))" }}>
                   ▣
                 </span>
                 Smart Scan — add any item to your VLTD vault instantly
@@ -307,11 +234,9 @@ export default function HomeClient() {
               <span className="hidden shrink-0 text-sm font-semibold sm:inline">Scan →</span>
             </Link>
           </div>
-
-
         </section>
 
-        {/* ── Exhibitions Carousel ─────────────────────── */}
+        {/* Exhibitions Carousel */}
         <section
           className="relative overflow-hidden rounded-[24px] border p-5"
           style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "rgba(245,181,72,0.16)" }}
@@ -325,127 +250,54 @@ export default function HomeClient() {
                 Active Exhibitions
                 <span className="ml-2 opacity-50">{exhibitIndex + 1} / {galleries.length}</span>
               </p>
-
               {(() => {
                 const g = galleries[exhibitIndex];
-                // Build image list: cover first, then item snapshots
-                const snapImages = (g.publicItemSnapshots ?? [])
-                  .map((s) => s.imageFrontUrl)
-                  .filter(Boolean) as string[];
                 const coverImg = g.coverImage || null;
-                const previewImgs = coverImg
-                  ? [coverImg, ...snapImages.slice(0, 3)]
-                  : snapImages.slice(0, 4);
-
+                const itemImgMap = new Map(items.map((it) => [it.id, it.imageFrontUrl ?? ""]));
+                const itemImgs = (g.itemIds ?? []).map((id) => itemImgMap.get(id)).filter((u): u is string => Boolean(u));
+                const snapImgs = (g.publicItemSnapshots ?? []).map((s) => s.imageFrontUrl).filter((u): u is string => Boolean(u));
+                const allImgs = [...new Set([...itemImgs, ...snapImgs])];
+                const previewImgs = coverImg ? [coverImg, ...allImgs.slice(0, 3)] : allImgs.slice(0, 4);
                 return (
                   <div className="mt-2 flex items-start gap-4">
-                    {/* Text side */}
                     <div className="min-w-0 flex-1">
-                      <h2 className="mt-0.5 text-xl font-black tracking-[-0.03em] text-text-primary truncate">
-                        {g.title || "Untitled Exhibition"}
-                      </h2>
-                      {g.description ? (
-                        <p className="mt-1 max-w-[300px] text-sm leading-relaxed text-[#A0956B] line-clamp-2">
-                          {g.description}
-                        </p>
-                      ) : null}
-                      <p className="mt-1.5 text-xs text-[#A0956B] opacity-60">
-                        {g.itemIds?.length ?? 0} item{(g.itemIds?.length ?? 0) !== 1 ? "s" : ""}
-                      </p>
+                      <h2 className="mt-0.5 text-xl font-black tracking-[-0.03em] text-text-primary truncate">{g.title || "Untitled Exhibition"}</h2>
+                      {g.description ? <p className="mt-1 max-w-[300px] text-sm leading-relaxed text-[#A0956B] line-clamp-2">{g.description}</p> : null}
+                      <p className="mt-1.5 text-xs text-[#A0956B] opacity-60">{g.itemIds?.length ?? 0} item{(g.itemIds?.length ?? 0) !== 1 ? "s" : ""}</p>
                       <div className="mt-4 flex items-center gap-2.5">
-                        <Link
-                          href={`/gallery/${g.id}`}
-                          className="rounded-full px-4 py-2 text-sm font-black vltd-gold-btn"
-                        >
-                          View Exhibition →
-                        </Link>
-                        <Link
-                          href="/museum"
-                          className="rounded-full border border-[rgba(245,181,72,0.22)] px-4 py-2 text-sm font-semibold text-[#F5B548] transition hover:bg-[rgba(245,181,72,0.09)]"
-                        >
-                          All exhibitions
-                        </Link>
+                        <Link href={`/gallery/${g.id}`} className="rounded-full px-4 py-2 text-sm font-black vltd-gold-btn">View Exhibition →</Link>
+                        <Link href="/museum" className="rounded-full border border-[rgba(245,181,72,0.22)] px-4 py-2 text-sm font-semibold text-[#F5B548] transition hover:bg-[rgba(245,181,72,0.09)]">All exhibitions</Link>
                       </div>
                     </div>
-
-                    {/* Image preview + Prev/Next */}
                     <div className="hidden shrink-0 sm:flex items-center gap-3">
-                      {/* Cover / item image strip */}
                       {previewImgs.length > 0 ? (
                         <div className="flex gap-2">
                           {previewImgs.slice(0, 4).map((src, i) => (
-                            <div
-                              key={i}
-                              className="overflow-hidden rounded-[14px] border"
-                              style={{
-                                width: previewImgs.length === 1 ? "160px" : "80px",
-                                height: "110px",
-                                borderColor: "rgba(245,181,72,0.20)",
-                                background: "rgba(10,18,35,0.8)",
-                                flexShrink: 0,
-                              }}
-                            >
+                            <div key={i} className="overflow-hidden rounded-[14px] border" style={{ width: previewImgs.length === 1 ? "160px" : "80px", height: "110px", borderColor: "rgba(245,181,72,0.20)", background: "rgba(10,18,35,0.8)", flexShrink: 0 }}>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={src}
-                                alt=""
-                                style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
-                              />
+                              <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
                             </div>
                           ))}
                         </div>
                       ) : (
-                        /* Placeholder grid when no images */
                         <div className="flex gap-2">
                           {[0, 1, 2].map((i) => (
-                            <div
-                              key={i}
-                              className="flex items-center justify-center overflow-hidden rounded-[14px] border text-2xl"
-                              style={{ width: "80px", height: "110px", borderColor: "rgba(245,181,72,0.15)", background: "rgba(245,181,72,0.04)", flexShrink: 0 }}
-                            >
-                              🖼
-                            </div>
+                            <div key={i} className="flex items-center justify-center rounded-[14px] border text-3xl" style={{ width: "80px", height: "110px", borderColor: "rgba(245,181,72,0.15)", background: "rgba(245,181,72,0.04)", flexShrink: 0 }}>🖼</div>
                           ))}
                         </div>
                       )}
-
-                      {/* Prev / Next stacked */}
                       <div className="flex flex-col items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setExhibitIndex((i) => (i - 1 + galleries.length) % galleries.length)}
-                          className="flex h-9 w-9 items-center justify-center rounded-full border text-lg transition hover:brightness-125"
-                          style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)", color: "#F5B548" }}
-                          aria-label="Previous"
-                        >‹</button>
-                        <button
-                          type="button"
-                          onClick={() => setExhibitIndex((i) => (i + 1) % galleries.length)}
-                          className="flex h-9 w-9 items-center justify-center rounded-full border text-lg transition hover:brightness-125"
-                          style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)", color: "#F5B548" }}
-                          aria-label="Next"
-                        >›</button>
+                        <button type="button" onClick={() => setExhibitIndex((i) => (i - 1 + galleries.length) % galleries.length)} className="flex h-9 w-9 items-center justify-center rounded-full border text-lg transition hover:brightness-125" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)", color: "#F5B548" }} aria-label="Previous">‹</button>
+                        <button type="button" onClick={() => setExhibitIndex((i) => (i + 1) % galleries.length)} className="flex h-9 w-9 items-center justify-center rounded-full border text-lg transition hover:brightness-125" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)", color: "#F5B548" }} aria-label="Next">›</button>
                       </div>
                     </div>
                   </div>
                 );
               })()}
-
-              {/* Dot indicators */}
               {galleries.length > 1 && (
                 <div className="mt-4 flex gap-1.5">
                   {galleries.map((_, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setExhibitIndex(idx)}
-                      className="h-1.5 rounded-full transition-all"
-                      style={{
-                        width: idx === exhibitIndex ? "20px" : "6px",
-                        background: idx === exhibitIndex ? "#F5B548" : "rgba(245,181,72,0.25)",
-                      }}
-                      aria-label={`Exhibition ${idx + 1}`}
-                    />
+                    <button key={idx} type="button" onClick={() => setExhibitIndex(idx)} className="h-1.5 rounded-full transition-all" style={{ width: idx === exhibitIndex ? "20px" : "6px", background: idx === exhibitIndex ? "#F5B548" : "rgba(245,181,72,0.25)" }} aria-label={`Exhibition ${idx + 1}`} />
                   ))}
                 </div>
               )}
@@ -455,72 +307,41 @@ export default function HomeClient() {
               <div className="min-w-0">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">Exhibitions</p>
                 <h2 className="mt-1.5 text-xl font-black tracking-[-0.03em] text-text-primary">Your Museum Awaits</h2>
-                <p className="mt-1 max-w-[340px] text-sm leading-relaxed text-[#A0956B]">
-                  Curate and display your collection for the world. Create exhibitions that tell the story of what you collect.
-                </p>
+                <p className="mt-1 max-w-[340px] text-sm leading-relaxed text-[#A0956B]">Curate and display your collection for the world. Create exhibitions that tell the story of what you collect.</p>
                 <div className="mt-4 flex items-center gap-2.5">
                   <Link href="/museum/new" className="rounded-full px-4 py-2 text-sm font-black vltd-gold-btn">Create Exhibition</Link>
                   <Link href="/museum" className="rounded-full border border-[rgba(245,181,72,0.22)] px-4 py-2 text-sm font-semibold text-[#F5B548] transition hover:bg-[rgba(245,181,72,0.09)]">View all →</Link>
                 </div>
               </div>
-              <div className="hidden shrink-0 sm:flex h-20 w-20 items-center justify-center rounded-2xl border text-3xl"
-                style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}>🏛</div>
+              <div className="hidden shrink-0 sm:flex h-20 w-20 items-center justify-center rounded-2xl border text-3xl" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}>🏛</div>
             </div>
           )}
         </section>
 
-        {/* ── Two-column: actions + recent / movers ─────── */}
+        {/* Two-column: actions + recent / movers */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-
-          {/* Left column */}
           <div className="space-y-4">
 
             {/* Quick Actions */}
-            <section
-              className="rounded-[24px] border p-4"
-              style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}
-            >
-              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#A0956B]">
-                Quick Actions
-              </p>
+            <section className="rounded-[24px] border p-4" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#A0956B]">Quick Actions</p>
               <div className="mt-3 grid grid-cols-3 gap-2">
-                {[
-                  {
-                    label: "Quick Add",
-                    href: "/vault/quick",
-                    accent: true,
-                    tip: "Fast manual form — minimal fields, designed for speed when you already know what something is.",
-                  },
-                  { label: "Import",   href: "/vault/import" },
-                  { label: "Vault",    href: "/vault" },
-                  { label: "Gallery",  href: "/museum" },
-                  {
-                    label: "Add Item",
-                    href: "/vault/add",
-                    tip: "Full detail entry — all fields including grade, purchase price, edition, storage location, and more.",
-                  },
-                  { label: "Account",  href: "/account" },
-                ].map(({ label, href, accent, tip }) => (
+                {([
+                  { label: "Quick Add", href: "/vault/quick", accent: true,  tip: "Fast manual form — minimal fields, designed for speed when you already know what something is." },
+                  { label: "Import",    href: "/vault/import", accent: false, tip: "" },
+                  { label: "Vault",     href: "/vault",        accent: false, tip: "" },
+                  { label: "Gallery",   href: "/museum",       accent: false, tip: "" },
+                  { label: "Add Item",  href: "/vault/add",    accent: false, tip: "Full detail entry — all fields including grade, purchase price, edition, storage location, and more." },
+                  { label: "Account",   href: "/account",      accent: false, tip: "" },
+                ] as { label: string; href: string; accent: boolean; tip: string }[]).map(({ label, href, accent, tip }) => (
                   <div key={href + label} className="relative">
-                    {tip && (
-                      <div className="absolute -right-1 -top-1 z-10">
-                        <InfoTooltip text={tip} />
-                      </div>
-                    )}
+                    {tip && <div className="absolute -right-1 -top-1 z-10"><InfoTooltip text={tip} /></div>}
                     <Link
                       href={href}
-                      className="block rounded-2xl border px-3 py-3 text-center text-sm font-semibold transition w-full"
+                      className="block w-full rounded-2xl border px-3 py-3 text-center text-sm font-semibold transition"
                       style={accent
-                        ? {
-                            borderColor: "rgba(245,181,72,0.28)",
-                            background: "rgba(245,181,72,0.09)",
-                            color: "#F5B548",
-                          }
-                        : {
-                            borderColor: "var(--theme-border, rgba(245,181,72,0.12))",
-                            background: "var(--theme-elevated, rgba(20,32,55,0.9))",
-                            color: "#A0956B",
-                          }
+                        ? { borderColor: "rgba(245,181,72,0.28)", background: "rgba(245,181,72,0.09)", color: "#F5B548" }
+                        : { borderColor: "var(--theme-border, rgba(245,181,72,0.12))", background: "var(--theme-elevated, rgba(20,32,55,0.9))", color: "#A0956B" }
                       }
                     >
                       {label}
@@ -531,34 +352,16 @@ export default function HomeClient() {
             </section>
 
             {/* Recently Added */}
-            <section
-              className="rounded-[24px] border p-4"
-              style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}
-            >
+            <section className="rounded-[24px] border p-4" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
               <div className="flex items-center justify-between gap-3">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#A0956B]">
-                  Recently Added
-                </p>
-                <Link
-                  href="/vault"
-                  className="text-sm font-semibold text-[#A0956B] transition hover:text-[#F5B548]"
-                >
-                  View all →
-                </Link>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#A0956B]">Recently Added</p>
+                <Link href="/vault" className="text-sm font-semibold text-[#A0956B] transition hover:text-[#F5B548]">View all →</Link>
               </div>
-
               {recentItems.length === 0 ? (
-                <div
-                  className="mt-3 flex flex-col items-center rounded-2xl border border-dashed px-4 py-6 text-center"
-                  style={{ borderColor: "rgba(245,181,72,0.15)" }}
-                >
+                <div className="mt-3 flex flex-col items-center rounded-2xl border border-dashed px-4 py-6 text-center" style={{ borderColor: "rgba(245,181,72,0.15)" }}>
                   <IconPackagePlus size={28} style={{ color: "#A0956B", opacity: 0.6 }} />
-                  <p className="mt-2 text-sm font-semibold" style={{ color: "#A0956B" }}>
-                    Start building your collection
-                  </p>
-                  <p className="mt-0.5 text-xs" style={{ color: "#5A5040" }}>
-                    Use Smart Scan or Quick Add to catalog your first item.
-                  </p>
+                  <p className="mt-2 text-sm font-semibold" style={{ color: "#A0956B" }}>Start building your collection</p>
+                  <p className="mt-0.5 text-xs" style={{ color: "#5A5040" }}>Use Smart Scan or Quick Add to catalog your first item.</p>
                 </div>
               ) : (
                 <div className="mt-3 space-y-2">
@@ -568,20 +371,12 @@ export default function HomeClient() {
                       href={`/vault/item/${item.id}`}
                       className="flex items-center justify-between gap-4 rounded-2xl border border-transparent px-3.5 py-2.5 transition"
                       style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))" }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(245,181,72,0.18)";
-                        (e.currentTarget as HTMLAnchorElement).style.background = "var(--theme-elevated, rgba(25,38,62,0.95))";
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLAnchorElement).style.borderColor = "transparent";
-                        (e.currentTarget as HTMLAnchorElement).style.background = "var(--theme-elevated, rgba(20,32,55,0.9))";
-                      }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(245,181,72,0.18)"; (e.currentTarget as HTMLAnchorElement).style.background = "var(--theme-elevated, rgba(25,38,62,0.95))"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = "transparent"; (e.currentTarget as HTMLAnchorElement).style.background = "var(--theme-elevated, rgba(20,32,55,0.9))"; }}
                     >
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-text-primary">{item.title}</p>
-                        <p className="mt-0.5 text-xs text-[#A0956B]">
-                          {item.universe || item.category || "Collectible"}
-                        </p>
+                        <p className="mt-0.5 text-xs text-[#A0956B]">{item.universe || item.category || "Collectible"}</p>
                       </div>
                       <p className="shrink-0 text-sm font-semibold tabular-nums" style={{ color: "#52D6F4" }}>
                         {formatMoney(item.currentValue ?? item.estimatedValue ?? 0)}
@@ -593,7 +388,7 @@ export default function HomeClient() {
             </section>
           </div>
 
-          {/* Right column — biggest movers */}
+          {/* Right column */}
           <BiggestMoversPanel items={items} />
         </div>
       </div>
