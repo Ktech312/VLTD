@@ -501,14 +501,11 @@ function TopNavInner() {
               <button
                 type="button"
                 onClick={() => {
-                  setUserOpen((v) => {
-                    const next = !v;
-                    if (next && userMenuRef.current) {
-                      const rect = userMenuRef.current.getBoundingClientRect();
-                      setDropdownPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
-                    }
-                    return next;
-                  });
+                  if (!userOpen && userMenuRef.current) {
+                    const rect = userMenuRef.current.getBoundingClientRect();
+                    setDropdownPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+                  }
+                  setUserOpen((v) => !v);
                 }}
                 className="flex items-center gap-1 rounded-full p-1 transition"
                 style={{ background: "transparent", border: "none" }}
