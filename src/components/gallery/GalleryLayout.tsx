@@ -92,8 +92,11 @@ function ThingsbookGrid({ items, hrefPrefix }: { items: VaultItem[]; hrefPrefix:
 
         {/* Horizontal filmstrip */}
         <div
-          className="flex gap-3 overflow-x-auto pb-2 pt-1"
-          style={{ scrollbarWidth: "none" }}
+          className="no-scrollbar flex gap-3 overflow-x-auto pb-2 pt-1"
+          style={{
+            WebkitOverflowScrolling: "touch",
+            touchAction: "pan-x",
+          } as React.CSSProperties}
         >
           {items.map((item, idx) => {
             const img = itemImage(item);
@@ -246,6 +249,7 @@ export default function GalleryLayout({
     );
   }
 
+  // Default:
   // Default: Thingsbook-style hero + filmstrip
   return <ThingsbookGrid items={items} hrefPrefix={hrefPrefix} />;
 }
