@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { getCurrentUser, initAuthListener } from "@/lib/auth";
 import { useTheme } from "@/lib/ThemeContext";
 
 import {
@@ -274,7 +276,23 @@ function PublicGalleryTile({ gallery }: { gallery: PublicGalleryCard }) {
 export default function PublicHomeClient() {
   const { theme } = useTheme();
   const cardBg = theme.bgCard;
+  const router = useRouter();
   const [galleries, setGalleries] = useState<Gallery[]>([]);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
+
+  // Redirect logged-in users to dashboard
+  useEffect(() => {
+    initAuthListener();
+    getCurrentUser().then(({ data: { user } }) => {
+      if (user) {
+        setSignedIn(true);
+        router.replace("/dashboard");
+      } else {
+        setAuthChecked(true);
+      }
+    });
+  }, [router]);
 
   useEffect(() => {
     function loadPublicGalleries() {
@@ -300,6 +318,11 @@ export default function PublicHomeClient() {
     return live.length ? live : FALLBACK_GALLERIES;
   }, [galleries]);
 
+  // Show nothing while checking auth (prevents flash of marketing page for logged-in users)
+  if (!authChecked) {
+    return <div className="min-h-screen bg-[color:var(--bg)]" />;
+  }
+
   return (
     <main className="min-h-screen text-[color:var(--fg)]">
       <section className="border-b border-[color:var(--border)]">
@@ -312,19 +335,31 @@ export default function PublicHomeClient() {
             >
               Learn
             </Link>
-            <Link
-              href="/login"
-              className="rounded-full border border-[color:var(--border)] px-4 py-2 text-sm font-semibold whitespace-nowrap text-[color:var(--muted)] transition hover:text-text-primary"
-            >
-              Log in
-            </Link>
-            <Link
-              href="/signup"
-              className="vltd-primary-button rounded-full px-4 py-2 text-sm font-black whitespace-nowrap transition"
-            >
-              <span className="sm:hidden">Get started</span>
-              <span className="hidden sm:inline">Get started — free</span>
-            </Link>
+            {!signedIn && (
+              <>
+                <Link
+                  href="/login"
+                  className="rounded-full border border-[color:var(--border)] px-4 py-2 text-sm font-semibold whitespace-nowrap text-[color:var(--muted)] transition hover:text-text-primary"
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/signup"
+                  className="vltd-primary-button rounded-full px-4 py-2 text-sm font-black whitespace-nowrap transition"
+                >
+                  <span className="sm:hidden">Get started</span>
+                  <span className="hidden sm:inline">Get started — free</span>
+                </Link>
+              </>
+            )}
+            {signedIn && (
+              <Link
+                href="/dashboard"
+                className="vltd-primary-button rounded-full px-4 py-2 text-sm font-black whitespace-nowrap transition"
+              >
+                Go to Dashboard
+              </Link>
+            )}
           </div>
         </div>
 
