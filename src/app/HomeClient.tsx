@@ -24,6 +24,28 @@ function IconPackagePlus({ size = 24, style }: { size?: number; style?: Record<s
     </svg>
   );
 }
+
+/* ── Info tooltip for Quick Actions ─────────────────────── */
+function InfoTooltip({ text }: { text: string }) {
+  return (
+    <span className="group/tip relative inline-flex items-center justify-center">
+      <span
+        className="flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold leading-none cursor-default select-none"
+        style={{ background: "rgba(245,181,72,0.15)", color: "#A0956B", border: "1px solid rgba(245,181,72,0.25)" }}
+      >
+        i
+      </span>
+      {/* Tooltip bubble */}
+      <span
+        className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-52 -translate-x-1/2 rounded-xl px-3 py-2 text-left text-xs leading-snug opacity-0 shadow-xl transition-opacity duration-150 group-hover/tip:opacity-100"
+        style={{ background: "rgba(10,18,35,0.97)", border: "1px solid rgba(245,181,72,0.22)", color: "#D4C9A8" }}
+      >
+        {text}
+        <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent" style={{ borderTopColor: "rgba(245,181,72,0.22)" }} />
+      </span>
+    </span>
+  );
+}
 import { useRouter } from "next/navigation";
 import { getOnboardingStatus } from "@/lib/auth";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
@@ -259,27 +281,32 @@ export default function HomeClient() {
           </div>
 
           {/* Smart Scan CTA — dark gold glow bar */}
-          <Link
-            href="/capture"
-            className="mt-4 flex min-h-[52px] items-center justify-between gap-3 rounded-[18px] px-4 py-3 font-semibold no-select transition hover:-translate-y-0.5"
-            style={{
-              background: 'linear-gradient(135deg, rgba(139,105,20,0.25) 0%, rgba(200,148,31,0.15) 50%, rgba(139,105,20,0.25) 100%)',
-              border: '1px solid var(--theme-gold-border, rgba(245,181,72,0.35))',
-              boxShadow: '0 0 20px rgba(245,181,72,0.15)',
-              color: 'var(--theme-gold, #F5B548)',
-            }}
-          >
-            <span className="flex items-center gap-3 text-sm font-semibold">
-              <span
-                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-xl"
-                style={{ background: 'var(--theme-gold-subtle, rgba(245,181,72,0.10))', border: '1px solid var(--theme-gold-border, rgba(245,181,72,0.25))' }}
-              >
-                ▣
+          <div className="relative mt-4">
+            <div className="absolute -right-1 -top-1 z-10">
+              <InfoTooltip text="Uses the camera + AI to identify an item automatically. Point at a card, figure, or comic and it fills in the details for you." />
+            </div>
+            <Link
+              href="/capture"
+              className="flex min-h-[52px] items-center justify-between gap-3 rounded-[18px] px-4 py-3 font-semibold no-select transition hover:-translate-y-0.5"
+              style={{
+                background: 'linear-gradient(135deg, rgba(139,105,20,0.25) 0%, rgba(200,148,31,0.15) 50%, rgba(139,105,20,0.25) 100%)',
+                border: '1px solid var(--theme-gold-border, rgba(245,181,72,0.35))',
+                boxShadow: '0 0 20px rgba(245,181,72,0.15)',
+                color: 'var(--theme-gold, #F5B548)',
+              }}
+            >
+              <span className="flex items-center gap-3 text-sm font-semibold">
+                <span
+                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-xl"
+                  style={{ background: 'var(--theme-gold-subtle, rgba(245,181,72,0.10))', border: '1px solid var(--theme-gold-border, rgba(245,181,72,0.25))' }}
+                >
+                  ▣
+                </span>
+                Smart Scan — add any item to your VLTD vault instantly
               </span>
-              Smart Scan — add any item to your VLTD vault instantly
-            </span>
-            <span className="hidden shrink-0 text-sm font-semibold sm:inline">Scan →</span>
-          </Link>
+              <span className="hidden shrink-0 text-sm font-semibold sm:inline">Scan →</span>
+            </Link>
+          </div>
 
 
         </section>
@@ -301,17 +328,30 @@ export default function HomeClient() {
 
               {(() => {
                 const g = galleries[exhibitIndex];
+                // Build image list: cover first, then item snapshots
+                const snapImages = (g.publicItemSnapshots ?? [])
+                  .map((s) => s.imageFrontUrl)
+                  .filter(Boolean) as string[];
+                const coverImg = g.coverImage || null;
+                const previewImgs = coverImg
+                  ? [coverImg, ...snapImages.slice(0, 3)]
+                  : snapImages.slice(0, 4);
+
                 return (
-                  <div className="mt-2 flex items-start justify-between gap-4">
-                    <div className="min-w-0">
+                  <div className="mt-2 flex items-start gap-4">
+                    {/* Text side */}
+                    <div className="min-w-0 flex-1">
                       <h2 className="mt-0.5 text-xl font-black tracking-[-0.03em] text-text-primary truncate">
                         {g.title || "Untitled Exhibition"}
                       </h2>
                       {g.description ? (
-                        <p className="mt-1 max-w-[340px] text-sm leading-relaxed text-[#A0956B] line-clamp-2">
+                        <p className="mt-1 max-w-[300px] text-sm leading-relaxed text-[#A0956B] line-clamp-2">
                           {g.description}
                         </p>
                       ) : null}
+                      <p className="mt-1.5 text-xs text-[#A0956B] opacity-60">
+                        {g.itemIds?.length ?? 0} item{(g.itemIds?.length ?? 0) !== 1 ? "s" : ""}
+                      </p>
                       <div className="mt-4 flex items-center gap-2.5">
                         <Link
                           href={`/gallery/${g.id}`}
@@ -327,22 +367,65 @@ export default function HomeClient() {
                         </Link>
                       </div>
                     </div>
-                    {/* Prev / Next */}
-                    <div className="hidden shrink-0 sm:flex flex-col items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setExhibitIndex((i) => (i - 1 + galleries.length) % galleries.length)}
-                        className="flex h-9 w-9 items-center justify-center rounded-full border text-lg transition hover:brightness-125"
-                        style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)", color: "#F5B548" }}
-                        aria-label="Previous"
-                      >‹</button>
-                      <button
-                        type="button"
-                        onClick={() => setExhibitIndex((i) => (i + 1) % galleries.length)}
-                        className="flex h-9 w-9 items-center justify-center rounded-full border text-lg transition hover:brightness-125"
-                        style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)", color: "#F5B548" }}
-                        aria-label="Next"
-                      >›</button>
+
+                    {/* Image preview + Prev/Next */}
+                    <div className="hidden shrink-0 sm:flex items-center gap-3">
+                      {/* Cover / item image strip */}
+                      {previewImgs.length > 0 ? (
+                        <div className="flex gap-2">
+                          {previewImgs.slice(0, 4).map((src, i) => (
+                            <div
+                              key={i}
+                              className="overflow-hidden rounded-[14px] border"
+                              style={{
+                                width: previewImgs.length === 1 ? "160px" : "80px",
+                                height: "110px",
+                                borderColor: "rgba(245,181,72,0.20)",
+                                background: "rgba(10,18,35,0.8)",
+                                flexShrink: 0,
+                              }}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={src}
+                                alt=""
+                                style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        /* Placeholder grid when no images */
+                        <div className="flex gap-2">
+                          {[0, 1, 2].map((i) => (
+                            <div
+                              key={i}
+                              className="flex items-center justify-center overflow-hidden rounded-[14px] border text-2xl"
+                              style={{ width: "80px", height: "110px", borderColor: "rgba(245,181,72,0.15)", background: "rgba(245,181,72,0.04)", flexShrink: 0 }}
+                            >
+                              🖼
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Prev / Next stacked */}
+                      <div className="flex flex-col items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setExhibitIndex((i) => (i - 1 + galleries.length) % galleries.length)}
+                          className="flex h-9 w-9 items-center justify-center rounded-full border text-lg transition hover:brightness-125"
+                          style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)", color: "#F5B548" }}
+                          aria-label="Previous"
+                        >‹</button>
+                        <button
+                          type="button"
+                          onClick={() => setExhibitIndex((i) => (i + 1) % galleries.length)}
+                          className="flex h-9 w-9 items-center justify-center rounded-full border text-lg transition hover:brightness-125"
+                          style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)", color: "#F5B548" }}
+                          aria-label="Next"
+                        >›</button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -402,32 +485,47 @@ export default function HomeClient() {
               </p>
               <div className="mt-3 grid grid-cols-3 gap-2">
                 {[
-                  { label: "Quick Add", href: "/vault/quick", accent: true },
-                  { label: "Import",    href: "/vault/import" },
-                  { label: "Vault",     href: "/vault" },
-                  { label: "Gallery",   href: "/museum" },
-                  { label: "Add Item",  href: "/vault/add" },
-                  { label: "Account",   href: "/account" },
-                ].map(({ label, href, accent }) => (
-                  <Link
-                    key={href + label}
-                    href={href}
-                    className="rounded-2xl border px-3 py-3 text-center text-sm font-semibold transition"
-                    style={accent
-                      ? {
-                          borderColor: "rgba(245,181,72,0.28)",
-                          background: "rgba(245,181,72,0.09)",
-                          color: "#F5B548",
-                        }
-                      : {
-                          borderColor: "var(--theme-border, rgba(245,181,72,0.12))",
-                          background: "var(--theme-elevated, rgba(20,32,55,0.9))",
-                          color: "#A0956B",
-                        }
-                    }
-                  >
-                    {label}
-                  </Link>
+                  {
+                    label: "Quick Add",
+                    href: "/vault/quick",
+                    accent: true,
+                    tip: "Fast manual form — minimal fields, designed for speed when you already know what something is.",
+                  },
+                  { label: "Import",   href: "/vault/import" },
+                  { label: "Vault",    href: "/vault" },
+                  { label: "Gallery",  href: "/museum" },
+                  {
+                    label: "Add Item",
+                    href: "/vault/add",
+                    tip: "Full detail entry — all fields including grade, purchase price, edition, storage location, and more.",
+                  },
+                  { label: "Account",  href: "/account" },
+                ].map(({ label, href, accent, tip }) => (
+                  <div key={href + label} className="relative">
+                    {tip && (
+                      <div className="absolute -right-1 -top-1 z-10">
+                        <InfoTooltip text={tip} />
+                      </div>
+                    )}
+                    <Link
+                      href={href}
+                      className="block rounded-2xl border px-3 py-3 text-center text-sm font-semibold transition w-full"
+                      style={accent
+                        ? {
+                            borderColor: "rgba(245,181,72,0.28)",
+                            background: "rgba(245,181,72,0.09)",
+                            color: "#F5B548",
+                          }
+                        : {
+                            borderColor: "var(--theme-border, rgba(245,181,72,0.12))",
+                            background: "var(--theme-elevated, rgba(20,32,55,0.9))",
+                            color: "#A0956B",
+                          }
+                      }
+                    >
+                      {label}
+                    </Link>
+                  </div>
                 ))}
               </div>
             </section>
