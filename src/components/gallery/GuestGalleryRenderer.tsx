@@ -190,7 +190,7 @@ export default function GuestGalleryRenderer({
             </div>
           ) : null}
 
-          <section
+          {!embedded ? <section
             className={[
               "relative mx-auto overflow-hidden rounded-[30px] border border-white/12 bg-black/40 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.30)] backdrop-blur-sm sm:p-6",
               GALLERY_STAGE_WIDTH_CLASS,
@@ -254,10 +254,10 @@ export default function GuestGalleryRenderer({
                 </div>
               </div>
             </div>
-          </section>
+          </section> : null}
 
           {model.displayMode === "shelf" ? (
-            <div className="mt-3">
+            <div className={embedded ? "" : "mt-3"}>
               <GalleryShelfScene
                 items={model.galleryItems}
                 themePack={model.themePack}

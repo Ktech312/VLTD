@@ -6,7 +6,6 @@ import type { DragEvent } from "react";
 import { createPortal } from "react-dom";
 
 import { type VaultItem, getPrimaryImageUrl } from "@/lib/vaultModel";
-import GalleryShelfScene from "@/components/gallery/GalleryShelfScene";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import {
   type Gallery,
@@ -1401,14 +1400,12 @@ export default function GalleryBuilder({
             </button>
           </div>
 
-          {/* Real shelf/theme scene — exactly what guests see */}
-          <div className="flex-1 overflow-y-auto overscroll-contain">
-            <GalleryShelfScene
+          {/* Guest view — shelf/theme exactly as visitors see it, header skipped in embedded mode */}
+          <div className="flex-1 overflow-y-auto overscroll-contain" style={{ minHeight: 0, WebkitOverflowScrolling: "touch" }}>
+            <BuilderPreviewBridge
+              gallery={gallery}
               items={selectedItems}
-              themePack={gallery.themePack}
-              backgroundImageUrl={gallery.shelfBackground}
-              shelvesEnabled={true}
-              shelfOverlayStyle={gallery.shelfOverlayStyle}
+              onHeightChange={setPreviewNaturalHeight}
             />
           </div>
         </div>
