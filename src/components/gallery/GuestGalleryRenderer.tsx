@@ -63,11 +63,36 @@ function getThemeChipClass(themePack: string) {
 function ViewerItemCard({
   item,
   label,
+  compact = false,
 }: {
   item: VaultItem;
   label: string;
+  compact?: boolean;
 }) {
   const imageUrl = getPrimaryImageUrl(item);
+
+  if (compact) {
+    return (
+      <article className="relative overflow-hidden rounded-[14px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))] shadow-[0_6px_16px_rgba(0,0,0,0.22)]">
+        <div className="aspect-[2/3] overflow-hidden bg-black/20">
+          {imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={imageUrl}
+              alt={item.title}
+              className="h-full w-full object-cover"
+              draggable={false}
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-[10px] text-[color:var(--muted)]">—</div>
+          )}
+        </div>
+        <div className="px-1.5 pb-1.5 pt-1">
+          <div className="line-clamp-2 text-[10px] font-semibold leading-tight">{item.title}</div>
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article className="relative rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))] p-3 shadow-[0_12px_28px_rgba(0,0,0,0.18)] backdrop-blur-sm">
@@ -249,15 +274,29 @@ export default function GuestGalleryRenderer({
               ].join(" ")}
             >
               <div className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(20,24,30,0.96),rgba(10,12,16,0.94))] p-4">
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                  {model.galleryItems.map((item, index) => (
-                    <ViewerItemCard
-                      key={item.id}
-                      item={item}
-                      label={`GRID ITEM #${index + 1}`}
-                    />
-                  ))}
-                </div>
+                {embedded ? (
+                  /* Compact 4-col grid in preview — mirrors shelf card layout */
+                  <div className="grid grid-cols-4 gap-2">
+                    {model.galleryItems.map((item) => (
+                      <ViewerItemCard
+                        key={item.id}
+                        item={item}
+                        label=""
+                        compact
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+                    {model.galleryItems.map((item, index) => (
+                      <ViewerItemCard
+                        key={item.id}
+                        item={item}
+                        label={`GRID ITEM #${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </section>
           )}
@@ -288,12 +327,13 @@ export default function GuestGalleryRenderer({
                       <DetailPill className={chipClass}>{sectionItems.length} items</DetailPill>
                     </div>
 
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <div className={embedded ? "mt-4 grid grid-cols-4 gap-2" : "mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"}>
                       {sectionItems.map((item, itemIndex) => (
                         <ViewerItemCard
                           key={`${section.id}_${item.id}`}
                           item={item}
                           label={section.featuredItemId === item.id ? "FEATURED" : `SECTION ITEM #${itemIndex + 1}`}
+                          compact={embedded}
                         />
                       ))}
                     </div>
