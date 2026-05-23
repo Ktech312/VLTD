@@ -553,202 +553,200 @@ export default function GalleryBuilder({
           </div>
         </div>
 
-        <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)]">
-          <div className="grid gap-4">
-              <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
-                <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">EXHIBIT VIEW</div>
-                <div className="mt-3 flex flex-col gap-3">
-                  <div className="min-w-0 flex-1">
-                    <PillSelect<GalleryViewOption>
-                      value={selectedGalleryView}
-                      onChange={setGalleryView}
-                      options={GALLERY_VIEW_OPTIONS}
-                      ariaLabel="Exhibit view"
-                      align="left"
-                      minWidthPx={280}
-                      extraWidthPx={10}
-                      showSelectedSubtitle
-                    />
-                  </div>
+        {/* ── LIVE PREVIEW PANEL (merged with Exhibit View controls) ── */}
+        <div className="mt-5 rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
 
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">SHELF</div>
-                    <PillSelect<ShelfOverlayOption>
-                      value={shelfOverlayStyle}
-                      onChange={(nextStyle) =>
-                        onGalleryChange((current) => ({
-                          ...current,
-                          shelfOverlayStyle: nextStyle,
-                          glassShelfOverlay: nextStyle !== "none",
-                        }))
-                      }
-                      options={SHELF_OVERLAY_OPTIONS}
-                      ariaLabel="Shelf style"
-                      align="left"
-                      minWidthPx={124}
-                      extraWidthPx={6}
-                    />
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    <input
-                      id={`shelf-upload-${gallery.id}`}
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0] ?? null;
-                        if (file) void handleShelfBackgroundUpload(file);
-                        e.currentTarget.value = "";
-                      }}
-                      className="hidden"
-                    />
-                    <label
-                      htmlFor={`shelf-upload-${gallery.id}`}
-                      className="vltd-selectable inline-flex min-h-[38px] cursor-pointer items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
-                    >
-                      Upload Background
-                    </label>
-                    {shelfBackground ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShelfFileName("");
-                          setBackgroundUploadError("");
-                          onGalleryChange((current) => ({ ...current, shelfBackground: "" }));
-                        }}
-                        className="vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
-                      >
-                        Remove Background
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={() => onQuickSave?.()}
-                      className="vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
-                    >
-                      Save
-                    </button>
-                  </div>
-
-                  <div className="text-xs text-[color:var(--muted)]">
-                    {shelfFileName ? `Selected file: ${shelfFileName}` : shelfBackground ? "Background applied" : "No background selected"}
-                  </div>
-
-                  {backgroundUploadError ? (
-                    <div className="text-xs text-red-300">
-                      {backgroundUploadError}
-                    </div>
-                  ) : null}
-                </div>
+          {/* Header row: label left, Expand right */}
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">LIVE PREVIEW PANEL</div>
+              <div className="mt-0.5 text-sm text-[color:var(--muted)]">
+                Theme, view mode, background, and guest feel in one place.
               </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setPreviewExpanded(true)}
+              className="shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold transition hover:opacity-90"
+              style={{
+                background: "rgba(245,181,72,0.12)",
+                color: "#F5B548",
+                border: "1px solid rgba(245,181,72,0.3)",
+              }}
+            >
+              Expand ↗
+            </button>
+          </div>
 
-            <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">LIVE PREVIEW PANEL</div>
-                <div className="mt-1 text-sm text-[color:var(--muted)]">
-                  Theme, view mode, background, and guest feel in one place.
-                </div>
-              </div>
-                <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                  <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">
-                    Theme: {displayMode === "grid" ? "Grid View" : getGalleryThemeLabel(themePack)}
-                  </span>
-                  <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">Display: {displayMode}</span>
-                  <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">Guest: {guestViewMode}</span>
-                  <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">Layout: {layoutType}</span>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewExpanded(true)}
-                    className="rounded-full px-3 py-1 font-semibold transition hover:opacity-90"
-                    style={{
-                      background: "rgba(245,181,72,0.12)",
-                      color: "#F5B548",
-                      border: "1px solid rgba(245,181,72,0.3)",
-                    }}
-                  >
-                    Expand ↗
-                  </button>
-                </div>
-              </div>
-              {/* Mini grid preview - shows items as they appear to visitors, no hero */}
-              <div
-                className={[
-                  "mt-4 overflow-hidden rounded-[24px] ring-1 relative",
-                  previewPanelClass,
-                ].join(" ")}
+          {/* Controls row: interactive dropdowns + action pills */}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <PillSelect<GalleryViewOption>
+              value={selectedGalleryView}
+              onChange={setGalleryView}
+              options={GALLERY_VIEW_OPTIONS}
+              ariaLabel="Exhibit view"
+              align="left"
+              minWidthPx={160}
+              extraWidthPx={6}
+            />
+            <PillSelect<ShelfOverlayOption>
+              value={shelfOverlayStyle}
+              onChange={(nextStyle) =>
+                onGalleryChange((current) => ({
+                  ...current,
+                  shelfOverlayStyle: nextStyle,
+                  glassShelfOverlay: nextStyle !== "none",
+                }))
+              }
+              options={SHELF_OVERLAY_OPTIONS}
+              ariaLabel="Shelf style"
+              align="left"
+              minWidthPx={100}
+              extraWidthPx={6}
+            />
+            <input
+              id={`shelf-upload-${gallery.id}`}
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0] ?? null;
+                if (file) void handleShelfBackgroundUpload(file);
+                e.currentTarget.value = "";
+              }}
+              className="hidden"
+            />
+            <label
+              htmlFor={`shelf-upload-${gallery.id}`}
+              className="vltd-selectable inline-flex min-h-[34px] cursor-pointer items-center justify-center rounded-full bg-[color:var(--pill)] px-3 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+            >
+              Upload Background
+            </label>
+            {shelfBackground ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setShelfFileName("");
+                  setBackgroundUploadError("");
+                  onGalleryChange((current) => ({ ...current, shelfBackground: "" }));
+                }}
+                className="vltd-selectable inline-flex min-h-[34px] items-center justify-center rounded-full bg-[color:var(--pill)] px-3 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
               >
-                {selectedItems.length === 0 ? (
-                  <div className="flex h-40 items-center justify-center text-sm" style={{ color: "var(--muted)" }}>
-                    No items selected yet
-                  </div>
-                ) : (
-                  <div className="p-3">
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(4, 1fr)",
-                        gap: 4,
-                      }}
-                    >
-                      {selectedItems.map((item) => {
-                        const img = itemImage(item);
-                        return (
+                Remove BG
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => onOpenPicker?.()}
+              className="vltd-selectable inline-flex min-h-[34px] items-center justify-center rounded-full px-3 text-xs font-semibold ring-1"
+              style={{
+                background: "rgba(245,181,72,0.10)",
+                color: "#F5B548",
+                border: "1px solid rgba(245,181,72,0.35)",
+              }}
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={() => onQuickSave?.()}
+              className="vltd-selectable inline-flex min-h-[34px] items-center justify-center rounded-full px-3 text-xs font-semibold ring-1"
+              style={{
+                background: "rgba(245,181,72,0.18)",
+                color: "#F5B548",
+                border: "1px solid rgba(245,181,72,0.45)",
+              }}
+            >
+              Save
+            </button>
+          </div>
+
+          {/* Background status */}
+          {(shelfFileName || shelfBackground || backgroundUploadError) ? (
+            <div className="mt-1.5 text-xs" style={{ color: backgroundUploadError ? "rgb(252,165,165)" : "var(--muted)" }}>
+              {backgroundUploadError
+                ? backgroundUploadError
+                : shelfFileName
+                  ? ("Selected: " + shelfFileName)
+                  : "Background applied"}
+            </div>
+          ) : null}
+
+          {/* Mini grid preview */}
+          <div
+            className={[
+              "mt-3 overflow-hidden rounded-[24px] ring-1 relative",
+              previewPanelClass,
+            ].join(" ")}
+          >
+            {selectedItems.length === 0 ? (
+              <div className="flex h-40 items-center justify-center text-sm" style={{ color: "var(--muted)" }}>
+                No items selected yet
+              </div>
+            ) : (
+              <div className="p-3">
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(4, 1fr)",
+                    gap: 4,
+                  }}
+                >
+                  {selectedItems.map((item) => {
+                    const img = itemImage(item);
+                    return (
+                      <div
+                        key={item.id}
+                        style={{
+                          aspectRatio: "3 / 4",
+                          borderRadius: 8,
+                          overflow: "hidden",
+                          background: "rgba(255,255,255,0.06)",
+                        }}
+                      >
+                        {img ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={img}
+                            alt={item.title}
+                            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                            draggable={false}
+                          />
+                        ) : (
                           <div
-                            key={item.id}
                             style={{
-                              aspectRatio: "3 / 4",
-                              borderRadius: 8,
-                              overflow: "hidden",
-                              background: "rgba(255,255,255,0.06)",
+                              width: "100%",
+                              height: "100%",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: 10,
+                              color: "var(--muted)",
                             }}
                           >
-                            {img ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={img}
-                                alt={item.title}
-                                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                                draggable={false}
-                              />
-                            ) : (
-                              <div
-                                style={{
-                                  width: "100%",
-                                  height: "100%",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  fontSize: 10,
-                                  color: "var(--muted)",
-                                }}
-                              >
-                                {"--"}
-                              </div>
-                            )}
+                            {"--"}
                           </div>
-                        );
-                      })}
-                    </div>
-                    <div
-                      style={{
-                        marginTop: 8,
-                        textAlign: "center",
-                        fontSize: 10,
-                        fontWeight: 600,
-                        letterSpacing: "0.12em",
-                        color: "rgba(255,255,255,0.28)",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      {selectedItems.length + " items"}{" · "}{displayMode === "grid" ? "Grid View" : getGalleryThemeLabel(themePack)}
-                    </div>
-                  </div>
-                )}
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div
+                  style={{
+                    marginTop: 8,
+                    textAlign: "center",
+                    fontSize: 10,
+                    fontWeight: 600,
+                    letterSpacing: "0.12em",
+                    color: "rgba(255,255,255,0.28)",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {selectedItems.length + " items"}{" · "}{displayMode === "grid" ? "Grid View" : getGalleryThemeLabel(themePack)}
+                </div>
               </div>
-            </div>
+            )}
           </div>
+        </div>
 
         {sections.length ? (
           <div className="mt-5 grid gap-4">

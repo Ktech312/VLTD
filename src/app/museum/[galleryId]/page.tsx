@@ -527,8 +527,9 @@ export default function GalleryPage() {
     });
   }
 
-  async function saveDraft() {
+  async function saveDraft(overrideIds?: string[]) {
     if (!draft) return;
+    const effectiveIds = overrideIds ?? draft.itemIds;
 
     const preservedPublicToken =
       draft.share?.publicToken ||
@@ -547,7 +548,7 @@ export default function GalleryPage() {
     }
 
     const selectedItemById = new Map(items.map((item) => [item.id, item]));
-    const publicItemSnapshots = draft.itemIds
+    const publicItemSnapshots = effectiveIds
       .map((itemId) => {
         const localItem = selectedItemById.get(itemId);
         if (localItem) return toGalleryPublicItemSnapshot(localItem);
@@ -557,6 +558,7 @@ export default function GalleryPage() {
 
     const nextDraft = cloneGallery({
       ...draft,
+      itemIds: effectiveIds,
       publicItemSnapshots,
       share: {
         publicToken: preservedPublicToken,
@@ -1022,56 +1024,36 @@ export default function GalleryPage() {
             <div className="text-[11px] tracking-[0.24em] text-[color:var(--muted2)]">
               EXHIBIT NOTES
             </div>
-            <h2 className="mt-2 text-2xl font-semibold">Visible Items</h2>
+            <h2 className="mt-2 text-2xl font-semibold">Description</h2>
+            <p className="mt-1 text-sm text-[color:var(--muted)]">
+              Shown to visitors on the public exhibit page.
+            </p>
 
-            {galleryItems.length === 0 ? (
-              <div className="mt-4 rounded-2xl bg-[color:var(--input)] p-4 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
-                Add items to this gallery in the builder, then save changes.
+            <textarea
+              value={draft.description ?? ""}
+              onChange={(e) =>
+                patchDraft((current) => ({ ...current, description: e.target.value }))
+              }
+              placeholder="Describe this exhibit for visitors — theme, story, what makes it special..."
+              className="mt-4 min-h-[160px] w-full rounded-2xl bg-[color:var(--input)] p-4 text-sm ring-1 ring-[color:var(--border)] focus:outline-none resize-none leading-relaxed"
+            />
+
+            {galleryItems.length > 0 ? (
+              <div className="mt-4">
+                <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">ITEMS IN THIS EXHIBIT</div>
+                <div className="mt-2 flex flex-col gap-1">
+                  {galleryItems.map((item, index) => (
+                    <div key={item.id} className="flex items-center gap-3 rounded-xl bg-[color:var(--input)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]">
+                      <span className="text-[10px] tracking-[0.14em] text-[color:var(--muted2)] shrink-0">#{index + 1}</span>
+                      <span className="font-medium truncate">{item.title}</span>
+                      <span className="ml-auto text-[11px] text-[color:var(--muted)] shrink-0">{itemSubtitle(item) || ""}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : (
-              <div className="mt-5 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {galleryItems.map((item, index) => {
-                  const existingNote =
-                    draft.itemNotes?.find((n) => n.itemId === item.id)?.note ?? "";
-
-                  return (
-                    <article
-                      key={`${item.id}_${index}`}
-                      className="rounded-[26px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.20)]"
-                    >
-                      <div className="mb-2 text-xs tracking-[0.16em] text-[color:var(--muted2)]">
-                        EXHIBIT #{index + 1}
-                      </div>
-
-                      <div className="mb-4 aspect-[4/5] overflow-hidden rounded-xl bg-[color:var(--input)]">
-                        {itemImage(item) ? (
-                          <img
-                            src={itemImage(item)}
-                            alt={item.title}
-                            className="h-full w-full object-cover"
-                            draggable={false}
-                          />
-                        ) : (
-                          <div className="flex h-full items-center justify-center text-sm text-[color:var(--muted)]">
-                            No image
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="text-lg font-semibold">{item.title}</div>
-                      <div className="mt-1 text-sm text-[color:var(--muted)]">
-                        {itemSubtitle(item) || "-"}
-                      </div>
-
-                      <textarea
-                        defaultValue={existingNote}
-                        placeholder="Curator note..."
-                        onBlur={(e) => updateNote(item.id, e.target.value)}
-                        className="mt-4 min-h-[110px] w-full rounded-2xl bg-[color:var(--input)] p-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
-                      />
-                    </article>
-                  );
-                })}
+              <div className="mt-4 rounded-2xl bg-[color:var(--input)] p-4 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+                Add items in the builder above, then save.
               </div>
             )}
           </div>
@@ -1190,6 +1172,7 @@ export default function GalleryPage() {
           onConfirm={(ids, _title) => {
             update(ids);
             setPickerOpen(false);
+            void saveDraft(ids);
           }}
           onClose={() => setPickerOpen(false)}
         />
