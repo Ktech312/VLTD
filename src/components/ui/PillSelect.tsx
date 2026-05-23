@@ -88,6 +88,7 @@ export function PillSelect<T extends string>({
 
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
+  const [btnRect, setBtnRect] = useState<DOMRect | null>(null);
 
   const selectedIdx = useMemo(
     () => options.findIndex((o) => o.value === value),
@@ -178,6 +179,7 @@ export function PillSelect<T extends string>({
       const t = e.target as Node | null;
       if (!t) return;
       if (wrapRef.current?.contains(t)) return;
+      if (menuRef.current?.contains(t)) return;
       setOpen(false);
     }
 
@@ -269,7 +271,7 @@ export function PillSelect<T extends string>({
   const popW = Math.max(btnW, 220);
 
   return (
-    <div ref={wrapRef} className={["relative inline-flex", open ? "z-[60]" : ""].join(" ")}>
+    <div ref={wrapRef} className="relative inline-flex">
       <button
         ref={btnRef}
         type="button"
@@ -277,15 +279,13 @@ export function PillSelect<T extends string>({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={`pillselect-${id}`}
-        onClick={() =>
-          setOpen((v) => {
-            const nextOpen = !v;
-            if (nextOpen) {
-              setActiveIdx(selectedIdx >= 0 ? selectedIdx : 0);
-            }
-            return nextOpen;
-          })
-        }
+        onClick={() => {
+          if (!open) {
+            setBtnRect(btnRef.current?.getBoundingClientRect() ?? null);
+            setActiveIdx(selectedIdx >= 0 ? selectedIdx : 0);
+          }
+          setOpen((v) => !v);
+        }}
         style={{ width: btnW }}
         className={[
           "relative inline-flex justify-between rounded-full",
@@ -318,19 +318,23 @@ export function PillSelect<T extends string>({
         </span>
       </button>
 
-      {open && (
+      {open && typeof document !== "undefined" && createPortal(
         <>
           <div className="fixed inset-0 z-[50]" onClick={() => setOpen(false)} aria-hidden="true" />
           <div
             ref={menuRef}
             id={`pillselect-${id}`}
             role="menu"
-            className={[
-              "absolute z-[61] mt-2 overflow-hidden rounded-2xl",
-              "bg-[color:var(--surface-strong)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-pill)]",
-              align === "right" ? "right-0" : "left-0",
-            ].join(" ")}
-            style={{ width: popW }}
+            className="overflow-hidden rounded-2xl bg-[color:var(--surface-strong)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-pill)]"
+            style={{
+              position: "fixed",
+              top: (btnRect?.bottom ?? 0) + 8,
+              ...(align === "left"
+                ? { left: btnRect?.left ?? 0 }
+                : { right: (typeof window !== "undefined" ? window.innerWidth : 0) - (btnRect?.right ?? 0) }),
+              width: popW,
+              zIndex: 61,
+            }}
           >
             <div className="p-1">
               {options.map((o, idx) => {
@@ -384,7 +388,8 @@ export function PillSelect<T extends string>({
               })}
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );

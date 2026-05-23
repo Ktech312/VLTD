@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { DragEvent } from "react";
+import { createPortal } from "react-dom";
 
 import { type VaultItem } from "@/lib/vaultModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -276,6 +277,10 @@ export default function GalleryBuilder({
   const [shelfFileName, setShelfFileName] = useState("");
   const [backgroundUploadError, setBackgroundUploadError] = useState("");
   const [previewNaturalHeight, setPreviewNaturalHeight] = useState(1120);
+  const [sectionDropdownOpen, setSectionDropdownOpen] = useState(false);
+  const [sectionBtnRect, setSectionBtnRect] = useState<DOMRect | null>(null);
+  const [activeSectionIdx, setActiveSectionIdx] = useState(0);
+  const sectionBtnRef = useRef<HTMLButtonElement | null>(null);
 
   const selectedSet = useMemo(() => new Set(gallery.itemIds), [gallery.itemIds]);
 
@@ -624,9 +629,10 @@ export default function GalleryBuilder({
               }}
               className="hidden"
             />
+            {/* Upload Background — uniform pill */}
             <label
               htmlFor={`shelf-upload-${gallery.id}`}
-              className="vltd-selectable inline-flex min-h-[34px] cursor-pointer items-center justify-center rounded-full bg-[color:var(--pill)] px-3 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+              className="vltd-selectable inline-flex min-h-[44px] cursor-pointer items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all select-none"
             >
               Upload Background
             </label>
@@ -638,68 +644,133 @@ export default function GalleryBuilder({
                   setBackgroundUploadError("");
                   onGalleryChange((current) => ({ ...current, shelfBackground: "" }));
                 }}
-                className="vltd-selectable inline-flex min-h-[34px] items-center justify-center rounded-full bg-[color:var(--pill)] px-3 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                className="vltd-selectable inline-flex min-h-[44px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all"
               >
                 Remove BG
               </button>
             ) : null}
           </div>
 
-          {/* ── Row 2: Section pill | Name input | Edit | Save ── */}
+          {/* ── Row 2: Section dropdown | Name input | Edit | Save ── */}
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            {/* Section indicator pill */}
-            <span
-              className="inline-flex min-h-[34px] items-center rounded-full px-3 text-xs font-semibold ring-1"
-              style={{
-                background: "rgba(255,255,255,0.07)",
-                color: "var(--muted)",
-                border: "1px solid rgba(255,255,255,0.12)",
-              }}
-            >
-              {sections.length > 0 ? ("Section #" + (sections.length)) : "Section #1"}
-              {" ×"}
-            </span>
-            {/* Section name input */}
+            {/* Section selector — dropdown pill */}
+            <div className="relative">
+              <button
+                ref={sectionBtnRef}
+                type="button"
+                onClick={() => {
+                  if (!sectionDropdownOpen) {
+                    setSectionBtnRect(sectionBtnRef.current?.getBoundingClientRect() ?? null);
+                  }
+                  setSectionDropdownOpen((v) => !v);
+                }}
+                className="inline-flex min-h-[44px] items-center justify-between gap-2 rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all select-none"
+              >
+                <span>
+                  {"Section #" + (activeSectionIdx + 1)}
+                </span>
+                <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className="h-4 w-4 opacity-60 shrink-0">
+                  <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
+                </svg>
+              </button>
+              {sectionDropdownOpen && typeof document !== "undefined" && createPortal(
+                <>
+                  <div
+                    className="fixed inset-0 z-[50]"
+                    onClick={() => setSectionDropdownOpen(false)}
+                    aria-hidden="true"
+                  />
+                  <div
+                    className="overflow-hidden rounded-2xl bg-[color:var(--surface-strong)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-pill)] p-1"
+                    style={{
+                      position: "fixed",
+                      top: (sectionBtnRect?.bottom ?? 0) + 8,
+                      left: sectionBtnRect?.left ?? 0,
+                      minWidth: 180,
+                      zIndex: 61,
+                    }}
+                  >
+                    {sections.length === 0 ? (
+                      <div className="px-3 py-2 text-sm text-[color:var(--muted)]">No sections yet</div>
+                    ) : (
+                      sections.map((s, i) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveSectionIdx(i);
+                            setSectionDropdownOpen(false);
+                          }}
+                          className={[
+                            "w-full rounded-xl px-3 py-2 text-left text-sm transition",
+                            i === activeSectionIdx
+                              ? "bg-[color:var(--pill)] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]"
+                              : "text-[color:var(--fg)] hover:bg-[color:var(--pill)]",
+                          ].join(" ")}
+                        >
+                          {"Section #" + (i + 1)}{s.title ? (" — " + s.title) : ""}
+                        </button>
+                      ))
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onGalleryChange((current) => {
+                          const nextSections = [
+                            ...getGallerySections(current),
+                            {
+                              id: makeLocalSectionId(),
+                              title: "Section " + ((sections.length + 1).toString()),
+                              description: "",
+                              itemIds: [],
+                              featuredItemId: undefined,
+                            },
+                          ];
+                          return syncSectionsAndLayout(current, nextSections);
+                        });
+                        setActiveSectionIdx(sections.length);
+                        setSectionDropdownOpen(false);
+                      }}
+                      className="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm text-[color:var(--muted)] hover:bg-[color:var(--pill)] transition"
+                    >
+                      + Add Section
+                    </button>
+                  </div>
+                </>,
+                document.body
+              )}
+            </div>
+
+            {/* Section name input — uniform pill style */}
             <input
               type="text"
-              value={sections.length > 0 ? (sections[0]?.title ?? "Section 1") : "Section 1"}
+              value={sections[activeSectionIdx]?.title ?? ""}
               onChange={(e) => {
-                if (sections.length > 0) {
-                  const updated = sections.map((s, i) => i === 0 ? { ...s, title: e.target.value } : s);
-                  onGalleryChange((current) => syncSectionsAndLayout(current, updated));
-                }
+                const updated = sections.map((s, i) =>
+                  i === activeSectionIdx ? { ...s, title: e.target.value } : s
+                );
+                onGalleryChange((current) => syncSectionsAndLayout(current, updated));
               }}
               placeholder="Name of Section goes here"
-              className="inline-flex min-h-[34px] flex-1 min-w-[160px] items-center rounded-full px-3 text-xs font-semibold ring-1 focus:outline-none"
-              style={{
-                background: "rgba(255,255,255,0.05)",
-                color: "var(--fg)",
-                border: "1px solid rgba(255,255,255,0.12)",
-              }}
+              className="inline-flex min-h-[44px] flex-1 min-w-[140px] items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
             />
-            {/* Edit — opens vault picker */}
+
+            {/* Edit — gold pill, uniform height */}
             <button
               type="button"
               onClick={() => onOpenPicker?.()}
-              className="inline-flex min-h-[34px] items-center justify-center rounded-full px-4 text-xs font-bold ring-1"
-              style={{
-                background: "rgba(245,181,72,0.10)",
-                color: "#F5B548",
-                border: "1px solid rgba(245,181,72,0.4)",
-              }}
+              className="inline-flex min-h-[44px] items-center justify-center rounded-full px-4 text-sm font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
+              style={{ background: "rgba(245,181,72,0.12)", color: "#F5B548", borderColor: "rgba(245,181,72,0.45)" }}
             >
               Edit
             </button>
-            {/* Save */}
+
+            {/* Save — gold pill, uniform height */}
             <button
               type="button"
               onClick={() => onQuickSave?.()}
-              className="inline-flex min-h-[34px] items-center justify-center rounded-full px-4 text-xs font-bold ring-1"
-              style={{
-                background: "rgba(245,181,72,0.18)",
-                color: "#F5B548",
-                border: "1px solid rgba(245,181,72,0.5)",
-              }}
+              className="inline-flex min-h-[44px] items-center justify-center rounded-full px-4 text-sm font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
+              style={{ background: "rgba(245,181,72,0.22)", color: "#F5B548", borderColor: "rgba(245,181,72,0.55)" }}
             >
               Save
             </button>
