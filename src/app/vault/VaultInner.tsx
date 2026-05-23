@@ -1604,7 +1604,7 @@ export default function VaultInner() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-xs tracking-widest text-[color:var(--muted2)]">NEW ITEM</div>
-                  <div className="mt-1 text-lg font-semibold">Add to Museum</div>
+                  <div className="mt-1 text-lg font-semibold">Add to Exhibition</div>
                   <div className="mt-1 text-xs text-[color:var(--muted)]">
                     {tier === "FREE" ? "Free tier uploads save optimized images." : "Paid tier saves full-quality images."}{" "}
                     <span className="text-[color:var(--muted2)]">ESC closes • Drag down to dismiss</span>
@@ -1757,5 +1757,4 @@ export default function VaultInner() {
         </div>
       )}
     </main>
-  );
-}
+  )
