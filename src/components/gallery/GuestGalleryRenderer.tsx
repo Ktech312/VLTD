@@ -159,7 +159,7 @@ export default function GuestGalleryRenderer({
                   href={model.navigation.homeHref}
                   className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
                 >
-                  Museum Home
+                  Exhibitions
                 </Link>
               ) : null}
             </div>

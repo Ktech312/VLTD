@@ -63,7 +63,7 @@ export default function InsuranceReportPage() {
               href="/vault"
               className="inline-flex h-10 items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]"
             >
-              Open Museum
+              Open Exhibitions
             </Link>
           </div>
 
@@ -118,7 +118,7 @@ export default function InsuranceReportPage() {
                 {items.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="py-6 text-sm text-[color:var(--muted)]">
-                      No items found. Add items in the Museum first.
+                      No items found. Add items in Exhibitions first.
                     </td>
                   </tr>
                 ) : (

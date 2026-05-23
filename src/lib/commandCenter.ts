@@ -119,7 +119,7 @@ export function getBaseCommands(): CommandItem[] {
     },
     {
       id: "nav_museum",
-      label: "Open Museum",
+      label: "Open Exhibitions",
       subtitle: "View and manage curated galleries",
       href: "/museum",
       section: "museum",

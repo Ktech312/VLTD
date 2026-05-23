@@ -24,7 +24,7 @@ type Props = {
 const SECTION_LABELS: Record<CommandSection, string> = {
   navigation: "Navigation",
   vault: "Vault",
-  museum: "Museum",
+  museum: "Exhibitions",
   portfolio: "Portfolio",
   account: "Account",
   action: "Actions",
@@ -258,5 +258,4 @@ export default function CommandPalette({
         </div>
       </div>
     </div>
-  );
-}
+ 

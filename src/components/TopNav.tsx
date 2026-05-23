@@ -583,7 +583,7 @@ function TopNavInner() {
                   </div>
                   <div>
                     <p className="text-[10px] font-black leading-tight" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
-                      Your Collection.<br />Your Museum.<br />Your Legacy.
+                      Your Collection.<br />Your Exhibitions.<br />Your Legacy.
                     </p>
                     <Link
                       href="/about"

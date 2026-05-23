@@ -287,7 +287,7 @@ export default function PortfolioClient() {
 
           <div className="flex flex-wrap items-center gap-2">
             <PillLink href="/">Home</PillLink>
-            <PillLink href="/vault">Open Museum</PillLink>
+            <PillLink href="/vault">Open Exhibitions</PillLink>
             <PillLink href="/user">User Settings</PillLink>
             <PillLink href="/user/profile">Profile</PillLink>
           </div>

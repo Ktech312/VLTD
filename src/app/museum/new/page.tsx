@@ -82,7 +82,7 @@ export default function NewMuseumGalleryPage() {
             href="/museum"
             className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
           >
-            ← Back to Museum
+            ← Back to Exhibitions
           </Link>
 
           <Link

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import PublicHomeClient from "./PublicHomeClient";
 
 export const metadata: Metadata = {
-  title: "VLTD — Your Digital Vault & Museum",
+  title: "VLTD — Your Digital Vault & Exhibitions",
   description:
     "Build a private inventory for collectibles, track item records, and publish clean public galleries for comics, cards, music, games, memorabilia, and more.",
   alternates: {

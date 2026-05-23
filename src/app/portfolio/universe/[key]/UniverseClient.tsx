@@ -324,7 +324,7 @@ export default function UniverseClient({ uKey }: { uKey: string }) {
               href="/vault"
               className="inline-flex h-10 items-center rounded-full px-5 text-sm font-medium ring-1 transition no-underline bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]"
             >
-              Open Museum
+              Open Exhibitions
             </Link>
           </div>
         </div>

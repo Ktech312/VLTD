@@ -218,7 +218,7 @@ export default function MuseumFlowGallery({
                       )}
                     </div>
                     <div className="mt-3 line-clamp-2 text-sm font-black leading-tight">{item.title}</div>
-                    <div className="mt-1 line-clamp-1 text-xs text-slate-500">{itemMeta(item) || "Museum exhibit"}</div>
+                    <div className="mt-1 line-clamp-1 text-xs text-slate-500">{itemMeta(item) || "Exhibit"}</div>
                     <div className="mt-3 flex items-center gap-3 text-slate-500">
                       <ActionIcon type="heart" filled={likedIds.has(item.id)} />
                       <ActionIcon type="comment" />
@@ -241,7 +241,7 @@ export default function MuseumFlowGallery({
 
             <div className="mt-4">
               <div className="line-clamp-2 text-xl font-semibold text-white">{selectedItem.title}</div>
-              <div className="mt-1 min-h-5 text-sm text-[color:var(--muted)]">{selectedMeta || "Museum exhibit"}</div>
+              <div className="mt-1 min-h-5 text-sm text-[color:var(--muted)]">{selectedMeta || "Exhibit"}</div>
             </div>
 
             <div className="mt-5 flex items-center justify-between gap-3">

@@ -683,7 +683,7 @@ export default function GalleryPage() {
             </p>
             <div className="mt-6">
               <Link href="/museum" className={neutralPillClass()}>
-                Back to Museum
+                Back to Exhibitions
               </Link>
             </div>
           </div>
@@ -697,7 +697,7 @@ export default function GalleryPage() {
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <Link href="/museum" className={neutralPillClass()}>
-            Back to Museum
+            Back to Exhibitions
           </Link>
         </div>
 
@@ -1162,24 +1162,4 @@ export default function GalleryPage() {
                           className="mt-3 min-h-[42px] w-full rounded-2xl bg-[color:var(--surface)] px-3 py-2 text-xs ring-1 ring-[color:var(--border)] focus:outline-none"
                         />
 
-                        <button
-                          type="button"
-                          onClick={() => copyInviteLink(entry.token)}
-                          className="vltd-pill-main-glow mt-3 inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-xs font-semibold text-[color:var(--fg)]"
-                        >
-                          {inviteCopiedToken === entry.token ? "Copied" : "Copy Invite Link"}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </aside>
-        </section>
-      </div>
-    </main>
-  );
-}
-
-
+        

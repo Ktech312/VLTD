@@ -301,7 +301,7 @@ export default function HomeClient() {
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">Exhibitions</p>
-                <h2 className="mt-1.5 text-xl font-black tracking-[-0.03em] text-text-primary">Your Museum Awaits</h2>
+                <h2 className="mt-1.5 text-xl font-black tracking-[-0.03em] text-text-primary">Your Exhibitions Await</h2>
                 <p className="mt-1 max-w-[340px] text-sm leading-relaxed text-[#A0956B]">Curate and display your collection for the world.</p>
                 <div className="mt-4 flex items-center gap-2.5">
                   <Link href="/museum/new" className="rounded-full px-4 py-2 text-sm font-black vltd-gold-btn">Create Exhibition</Link>

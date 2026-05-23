@@ -121,7 +121,7 @@ export default function ApplyStyleGalleryClient() {
               href="/vault"
               className="inline-flex h-10 items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)] transition"
             >
-              Museum
+              Exhibitions
             </Link>
           </div>
         </div>
@@ -236,5 +236,4 @@ export default function ApplyStyleGalleryClient() {
         </div>
       </div>
     </main>
-  );
-}
+  

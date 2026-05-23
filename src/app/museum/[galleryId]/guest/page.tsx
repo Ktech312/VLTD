@@ -141,7 +141,7 @@ export default function GuestGalleryPage() {
                 href="/museum"
                 className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-5 py-2 text-sm font-semibold text-slate-950 transition hover:opacity-95"
               >
-                Open Museum
+                Open Exhibitions
               </Link>
             </div>
           </div>

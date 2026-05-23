@@ -522,7 +522,7 @@ export default function SharedGalleryPage() {
                 href="/museum"
                 className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)]"
               >
-                Open Museum
+                Open Exhibitions
               </Link>
             </div>
           </div>

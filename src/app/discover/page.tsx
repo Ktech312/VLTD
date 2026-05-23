@@ -160,7 +160,7 @@ export default function DiscoverPage() {
               DISCOVER
             </div>
             <h1 className="mt-1 text-3xl font-black tracking-[-0.04em]" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
-              Explore Museums
+              Explore Exhibitions
             </h1>
             <p className="mt-1 max-w-xl text-sm leading-6" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
               Browse public exhibitions from collectors across every universe. Filter by category or search by name.
@@ -311,7 +311,7 @@ export default function DiscoverPage() {
                       className="rounded-full px-4 py-2 text-xs font-bold"
                       style={{ background: "var(--theme-gold, #F5B548)", color: "#0B0B0B" }}
                     >
-                      View Museum
+                      View Exhibition
                     </span>
                   </div>
                 </Link>
