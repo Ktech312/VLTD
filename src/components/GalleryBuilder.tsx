@@ -583,8 +583,8 @@ export default function GalleryBuilder({
             </button>
           </div>
 
-          {/* ── Row 1: Theme | Shelf | Upload Background ── */}
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+          {/* ── Row 1a: Theme | Shelf ── */}
+          <div className="mt-3 flex items-center gap-2 flex-wrap">
             {/* Theme dropdown — shows "Theme: X" label */}
             <div className="relative">
               <PillSelect<GalleryViewOption>
@@ -619,7 +619,10 @@ export default function GalleryBuilder({
                 compact
               />
             </div>
-            {/* Upload Background */}
+          </div>
+
+          {/* ── Row 1b: Upload Background ── */}
+          <div className="mt-2 flex items-center gap-2">
             <input
               id={`shelf-upload-${gallery.id}`}
               type="file"
@@ -807,6 +810,8 @@ export default function GalleryBuilder({
                       display: "grid",
                       gridTemplateColumns: "repeat(4, 1fr)",
                       gap: 4,
+                      width: "100%",
+                      minWidth: 0,
                       marginBottom: rowIdx < 3 ? 6 : 0,
                       paddingBottom: rowIdx < 3 ? 6 : 0,
                       borderBottom: rowIdx < 3 ? "1px solid rgba(255,255,255,0.06)" : "none",
@@ -817,7 +822,7 @@ export default function GalleryBuilder({
                       return (
                         <div
                           key={item.id}
-                          style={{ aspectRatio: "3 / 4", borderRadius: 7, overflow: "hidden", background: "rgba(255,255,255,0.07)" }}
+                          style={{ aspectRatio: "3 / 4", borderRadius: 7, overflow: "hidden", background: "rgba(255,255,255,0.07)", minWidth: 0 }}
                         >
                           {img ? (
                             // eslint-disable-next-line @next/next/no-img-element
