@@ -143,7 +143,6 @@ export default function PublicGalleryPage() {
             <GalleryLayout
               layout={gallery.layout}
               items={galleryItems}
-              title={gallery.title}
             />
           )}
         </div>

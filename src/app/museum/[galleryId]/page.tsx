@@ -1162,4 +1162,24 @@ export default function GalleryPage() {
                           className="mt-3 min-h-[42px] w-full rounded-2xl bg-[color:var(--surface)] px-3 py-2 text-xs ring-1 ring-[color:var(--border)] focus:outline-none"
                         />
 
-        
+                        <button
+                          type="button"
+                          onClick={() => copyInviteLink(entry.token)}
+                          className="vltd-pill-main-glow mt-3 inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-xs font-semibold text-[color:var(--fg)]"
+                        >
+                          {inviteCopiedToken === entry.token ? "Copied" : "Copy Invite Link"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </aside>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+
