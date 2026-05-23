@@ -672,33 +672,81 @@ export default function GalleryBuilder({
                   </button>
                 </div>
               </div>
+              {/* Mini grid preview - shows items as they appear to visitors, no hero */}
               <div
                 className={[
                   "mt-4 overflow-hidden rounded-[24px] ring-1 relative",
                   previewPanelClass,
                 ].join(" ")}
-                >
+              >
+                {selectedItems.length === 0 ? (
+                  <div className="flex h-40 items-center justify-center text-sm" style={{ color: "var(--muted)" }}>
+                    No items selected yet
+                  </div>
+                ) : (
+                  <div className="p-3">
                     <div
-                      className="overflow-y-auto overflow-x-hidden overscroll-contain"
-                      style={{ height: `${previewViewportHeight}px` }}
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(4, 1fr)",
+                        gap: 4,
+                      }}
                     >
-                      <div
-                        className="origin-top-left pointer-events-none"
-                        style={{
-                          transform: `scale(${previewScale})`,
-                          transformOrigin: "top left",
-                          width: `${previewWidthPercent}%`,
-                          height: `${previewNaturalHeight}px`,
-                        }}
-                      >
-                        <BuilderPreviewBridge
-                          gallery={gallery}
-                          items={selectedItems}
-                          onHeightChange={setPreviewNaturalHeight}
-                        />
-                      </div>
+                      {selectedItems.map((item) => {
+                        const img = itemImage(item);
+                        return (
+                          <div
+                            key={item.id}
+                            style={{
+                              aspectRatio: "3 / 4",
+                              borderRadius: 8,
+                              overflow: "hidden",
+                              background: "rgba(255,255,255,0.06)",
+                            }}
+                          >
+                            {img ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={img}
+                                alt={item.title}
+                                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                                draggable={false}
+                              />
+                            ) : (
+                              <div
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  fontSize: 10,
+                                  color: "var(--muted)",
+                                }}
+                              >
+                                {"--"}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div
+                      style={{
+                        marginTop: 8,
+                        textAlign: "center",
+                        fontSize: 10,
+                        fontWeight: 600,
+                        letterSpacing: "0.12em",
+                        color: "rgba(255,255,255,0.28)",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {selectedItems.length + " items"}{" · "}{displayMode === "grid" ? "Grid View" : getGalleryThemeLabel(themePack)}
                     </div>
                   </div>
+                )}
+              </div>
             </div>
           </div>
 
