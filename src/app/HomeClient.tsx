@@ -125,14 +125,10 @@ function ExhibitionCarousel({ galleries }: { galleries: Gallery[] }) {
       <div className="pointer-events-none absolute -right-8 -top-8 h-48 w-48 rounded-full" style={{ background: "radial-gradient(circle, rgba(245,181,72,0.12) 0%, transparent 70%)", filter: "blur(24px)" }} />
 
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">
-            Active Exhibitions <span className="ml-2 opacity-50">{idx + 1} / {n}</span>
-          </p>
-          <h2 className="mt-0.5 text-base font-black tracking-[-0.02em]" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>{current.title || "Untitled Exhibition"}</h2>
-          <p className="text-xs" style={{ color: "#A0956B", opacity: 0.7 }}>{itemCount} item{itemCount !== 1 ? "s" : ""}</p>
-        </div>
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">
+          Active Exhibitions <span className="ml-2 opacity-50">{idx + 1} / {n}</span>
+        </p>
         {n > 1 && (
           <div className="flex gap-1">
             <button type="button" onClick={goPrev} className="flex h-7 w-7 items-center justify-center rounded-full border text-base transition hover:brightness-125" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)", color: "#F5B548" }} aria-label="Previous">&#8249;</button>
@@ -182,11 +178,24 @@ function ExhibitionCarousel({ galleries }: { galleries: Gallery[] }) {
         })}
       </div>
 
-      {/* Action buttons */}
-      <div className="mt-4 flex items-center gap-2">
-        <Link href={"/gallery/" + current.id} className="rounded-full px-4 py-1.5 text-sm font-black vltd-gold-btn">View Exhibition &#8594;</Link>
-        <Link href="/museum" className="rounded-full border border-[rgba(245,181,72,0.22)] px-4 py-1.5 text-sm font-semibold text-[#F5B548] transition hover:bg-[rgba(245,181,72,0.09)]">All exhibitions</Link>
+      {/* Active exhibition info */}
+      <div className="mt-4">
+        <h2 className="text-base font-black tracking-[-0.02em] text-text-primary">{current.title || "Untitled Exhibition"}</h2>
+        <p className="mt-0.5 text-xs text-[#A0956B] opacity-60">{itemCount} item{itemCount !== 1 ? "s" : ""}</p>
+        <div className="mt-3 flex items-center gap-2">
+          <Link href={"/gallery/" + current.id} className="rounded-full px-4 py-1.5 text-sm font-black vltd-gold-btn">View Exhibition &#8594;</Link>
+          <Link href="/museum" className="rounded-full border border-[rgba(245,181,72,0.22)] px-4 py-1.5 text-sm font-semibold text-[#F5B548] transition hover:bg-[rgba(245,181,72,0.09)]">All exhibitions</Link>
+        </div>
       </div>
+
+      {/* Dot indicators */}
+      {n > 1 && (
+        <div className="mt-3 flex gap-1.5">
+          {galleries.map((_, dotIdx) => (
+            <button key={dotIdx} type="button" onClick={() => setIdx(dotIdx)} className="h-1.5 rounded-full transition-all duration-300" style={{ width: dotIdx === idx ? "20px" : "6px", background: dotIdx === idx ? "#F5B548" : "rgba(245,181,72,0.25)" }} aria-label={"Exhibition " + String(dotIdx + 1)} />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
