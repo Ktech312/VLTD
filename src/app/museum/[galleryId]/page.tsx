@@ -732,22 +732,6 @@ export default function GalleryPage() {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.10),rgba(255,255,255,0)_28%),radial-gradient(circle_at_80%_0%,rgba(255,225,170,0.10),rgba(255,225,170,0)_24%)]" />
 
           <div className="relative">
-            {/* Cover image portrait preview — floats right inside the hero card */}
-            {draft.coverImage && (
-              <div
-                className="float-right mb-3 ml-3 overflow-hidden rounded-[18px] shadow-[0_8px_28px_rgba(0,0,0,0.5)]"
-                style={{ width: 88, aspectRatio: "3/4", flexShrink: 0 }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={draft.coverImage}
-                  alt="Cover art"
-                  className="h-full w-full object-cover"
-                  draggable={false}
-                />
-              </div>
-            )}
-
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <button
                 type="button"
@@ -778,37 +762,55 @@ export default function GalleryPage() {
             </div>
 
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-3xl">
-                <div className="text-[11px] tracking-[0.28em] text-[color:var(--muted2)]">
-                  CURATED GALLERY
-                </div>
+              <div className="flex items-start gap-3 max-w-3xl">
+                {/* Cover image portrait card */}
+                {draft.coverImage ? (
+                  <div
+                    className="shrink-0 overflow-hidden rounded-[14px] shadow-[0_8px_24px_rgba(0,0,0,0.5)]"
+                    style={{ width: 72, aspectRatio: "3/4" }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={draft.coverImage}
+                      alt="Cover art"
+                      className="h-full w-full object-cover"
+                      draggable={false}
+                    />
+                  </div>
+                ) : null}
 
-                <h1 className="mt-2 text-2xl font-semibold sm:text-3xl">
-                  {draft.title}
-                </h1>
+                <div className="min-w-0">
+                  <div className="text-[11px] tracking-[0.28em] text-[color:var(--muted2)]">
+                    CURATED GALLERY
+                  </div>
 
-                <p className="mt-1 max-w-2xl text-sm leading-5 text-[color:var(--muted)]">
-                  {draft.description?.trim()
-                    ? draft.description
-                    : "Curated collection presentation"}
-                </p>
+                  <h1 className="mt-2 text-2xl font-semibold sm:text-3xl">
+                    {draft.title}
+                  </h1>
 
-                <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                  <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]">
-                    {visibilityLabel(draft.visibility)}
-                  </span>
+                  <p className="mt-1 max-w-2xl text-sm leading-5 text-[color:var(--muted)]">
+                    {draft.description?.trim()
+                      ? draft.description
+                      : "Curated collection presentation"}
+                  </p>
 
-                  <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]">
-                    {metrics.totalItems} ITEMS
-                  </span>
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]">
+                      {visibilityLabel(draft.visibility)}
+                    </span>
 
-                  <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]">
-                    {metrics.views} VIEWS
-                  </span>
+                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]">
+                      {metrics.totalItems} ITEMS
+                    </span>
 
-                  <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]">
-                    {draft.exhibitionLayout?.type ?? "GRID"} LAYOUT
-                  </span>
+                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]">
+                      {metrics.views} VIEWS
+                    </span>
+
+                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]">
+                      {draft.exhibitionLayout?.type ?? "GRID"} LAYOUT
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -1160,6 +1162,4 @@ export default function GalleryPage() {
                           className="mt-3 min-h-[42px] w-full rounded-2xl bg-[color:var(--surface)] px-3 py-2 text-xs ring-1 ring-[color:var(--border)] focus:outline-none"
                         />
 
-                        <button
-                          type="button"
-                          onClick={() => copyInviteLink(entry.token)}
+        
