@@ -46,7 +46,9 @@ function useIsMobile() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const mq = window.matchMedia("(max-width: 768px)");
+    // Use pointer:coarse (touch devices) instead of viewport width — works correctly
+    // on large phones, iPads, and any touch-primary device regardless of screen size
+    const mq = window.matchMedia("(pointer: coarse)");
     const apply = () => setIsMobile(!!mq.matches);
 
     apply();
@@ -411,15 +413,21 @@ function MobileSheet<T extends string>({
 
     lastActiveRef.current = document.activeElement as HTMLElement | null;
 
-    const prevOverflow = document.body.style.overflow;
-    const prevOverscroll = document.body.style.overscrollBehaviorY;
-
-    document.body.style.overflow = "hidden";
+    // iOS-safe scroll lock: position:fixed preserves visual position on Safari
+    // whereas overflow:hidden alone doesn't reliably prevent rubber-band scrolling
+    const scrollY = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
     document.body.style.overscrollBehaviorY = "contain";
 
     return () => {
-      document.body.style.overflow = prevOverflow;
-      document.body.style.overscrollBehaviorY = prevOverscroll;
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      document.body.style.overscrollBehaviorY = "";
+      // Restore exact scroll position Safari jumps to top without this
+      window.scrollTo(0, scrollY);
     };
   }, [canUseDom]);
 
@@ -490,23 +498,4 @@ function MobileSheet<T extends string>({
                         <div className="truncate text-[15px] font-semibold text-[color:var(--fg)]">{o.label}</div>
                         {o.subtitle ? (
                           <div className="mt-0.5 text-xs text-[color:var(--muted)]">{o.subtitle}</div>
-                        ) : null}
-                      </div>
-                    </div>
-                    {isSelected ? (
-                      <span className="text-[color:var(--fg)]" aria-hidden="true">
-                        <CheckIcon className="h-5 w-5" />
-                      </span>
-                    ) : null}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
-}
-
+            
