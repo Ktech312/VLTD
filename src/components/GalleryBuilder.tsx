@@ -20,8 +20,9 @@ import {
   getGalleryThemeLabel,
 } from "@/lib/galleryModel";
 import BuilderPreviewBridge from "@/components/gallery/BuilderPreviewBridge";
+import { ItemPickerSheet, MAX_EXHIBIT_ITEMS } from "@/components/gallery/ItemPickerSheet";
 import { PillSelect, type PillSelectOption } from "@/components/ui/PillSelect";
-import { getUniverses, isUniverseKey, UNIVERSE_LABEL } from "@/lib/taxonomy";
+import { isUniverseKey, UNIVERSE_LABEL } from "@/lib/taxonomy";
 
 type Props = {
   gallery: Gallery;
@@ -132,20 +133,6 @@ function DragHandle() {
 
 function itemImage(i: VaultItem) {
   return i.imageFrontUrl || i.imageBackUrl || "";
-}
-
-function sortSelectedFirst(items: VaultItem[], selectedIds: string[]) {
-  const selected = new Set(selectedIds);
-
-  return [...items].sort((a, b) => {
-    const aSelected = selected.has(a.id);
-    const bSelected = selected.has(b.id);
-
-    if (aSelected && !bSelected) return -1;
-    if (!aSelected && bSelected) return 1;
-
-    return a.title.localeCompare(b.title);
-  });
 }
 
 function reorderIds(ids: string[], sourceId: string, targetId: string) {
@@ -281,8 +268,8 @@ export default function GalleryBuilder({
 }: Props) {
   const previewScale = 0.36;
   const previewWidthPercent = 100 / previewScale;
-  const [query, setQuery] = useState("");
-  const [visibleUniverses, setVisibleUniverses] = useState<string[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [previewExpanded, setPreviewExpanded] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
   const [shelfFileName, setShelfFileName] = useState("");
@@ -296,18 +283,6 @@ export default function GalleryBuilder({
     return gallery.itemIds.map((id) => map.get(id)).filter(Boolean) as VaultItem[];
   }, [items, gallery.itemIds]);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const selectedUniverses = new Set(visibleUniverses);
-    const availableItems = items.filter((item) => !selectedSet.has(item.id));
-    const universeFiltered =
-      selectedUniverses.size === 0
-        ? availableItems
-        : availableItems.filter((item) => selectedUniverses.has(String(item.universe ?? "").toUpperCase()));
-    const pool = !q ? universeFiltered : universeFiltered.filter((item) => searchText(item).includes(q));
-    return sortSelectedFirst(pool, []);
-  }, [items, query, selectedSet, visibleUniverses]);
-
   const selectedCount = gallery.itemIds.length;
 
   const layoutType = getGalleryLayoutType(gallery);
@@ -320,8 +295,6 @@ export default function GalleryBuilder({
   const selectedCost = useMemo(() => {
     return selectedItems.reduce((sum, item) => sum + totalCost(item), 0);
   }, [selectedItems]);
-
-  const universeFilters = useMemo(() => getUniverses(), []);
 
   const themePack = getGalleryThemePack(gallery);
   const displayMode = getGalleryDisplayMode(gallery);
@@ -367,14 +340,6 @@ export default function GalleryBuilder({
     }
 
     onChange([...gallery.itemIds, id]);
-  }
-
-  function toggleUniverseFilter(universe: string) {
-    setVisibleUniverses((current) =>
-      current.includes(universe)
-        ? current.filter((value) => value !== universe)
-        : [...current, universe]
-    );
   }
 
   function removeItem(id: string) {
@@ -429,16 +394,6 @@ export default function GalleryBuilder({
     const droppedId = getDroppedItemId(event);
     if (droppedId && !selectedSet.has(droppedId)) {
       onChange([...gallery.itemIds, droppedId]);
-    }
-
-    setDraggingId(null);
-    setDropTargetId(null);
-  }
-
-  function onDropIntoVaultSearch(event: DragEvent<HTMLElement>) {
-    const droppedId = getDroppedItemId(event);
-    if (droppedId && selectedSet.has(droppedId)) {
-      removeItem(droppedId);
     }
 
     setDraggingId(null);
@@ -695,13 +650,25 @@ export default function GalleryBuilder({
                   Theme, view mode, background, and guest feel in one place.
                 </div>
               </div>
-                <div className="flex flex-wrap gap-2 text-[11px]">
+                <div className="flex flex-wrap items-center gap-2 text-[11px]">
                   <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">
                     Theme: {displayMode === "grid" ? "Grid View" : getGalleryThemeLabel(themePack)}
                   </span>
                   <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">Display: {displayMode}</span>
                   <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">Guest: {guestViewMode}</span>
                   <span className="rounded-full bg-black/20 px-3 py-1 ring-1 ring-white/10">Layout: {layoutType}</span>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewExpanded(true)}
+                    className="rounded-full px-3 py-1 font-semibold transition hover:opacity-90"
+                    style={{
+                      background: "rgba(245,181,72,0.12)",
+                      color: "#F5B548",
+                      border: "1px solid rgba(245,181,72,0.3)",
+                    }}
+                  >
+                    Expand ↗
+                  </button>
                 </div>
               </div>
               <div
@@ -1139,188 +1106,158 @@ export default function GalleryBuilder({
         </section>
 
         <section>
-          <div className="rounded-[20px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)] transition">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="max-w-2xl">
-                <div className="text-sm font-semibold">Search the Vault</div>
-                <div className="mt-1 text-sm text-[color:var(--muted)]">
-                  Find items by title, subtitle, notes, number, grade, category, cert number, storage location, or purchase details.
+          {/* ── Compact Vault Picker Pill ── */}
+          <div
+            className="rounded-[20px] p-4 ring-1"
+            style={{
+              background: "rgba(8,12,20,0.85)",
+              border: "1px solid rgba(255,255,255,0.07)",
+            }}
+          >
+            {/* Header row */}
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold">Vault Pieces</div>
+                <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
+                  Pick up to {MAX_EXHIBIT_ITEMS} pieces for this exhibit.
                 </div>
               </div>
-
-              <div className="text-sm text-[color:var(--muted)]">
-                Selected: <span className="font-semibold text-[color:var(--fg)]">{selectedCount}</span>
+              <div
+                className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold tabular-nums"
+                style={{
+                  background:
+                    selectedCount >= MAX_EXHIBIT_ITEMS
+                      ? "rgba(245,181,72,0.15)"
+                      : "rgba(255,255,255,0.07)",
+                  color:
+                    selectedCount >= MAX_EXHIBIT_ITEMS ? "#F5B548" : "var(--muted)",
+                  border: `1px solid ${
+                    selectedCount >= MAX_EXHIBIT_ITEMS
+                      ? "rgba(245,181,72,0.3)"
+                      : "rgba(255,255,255,0.09)"
+                  }`,
+                }}
+              >
+                {selectedCount}/{MAX_EXHIBIT_ITEMS}
               </div>
             </div>
 
-            <div className="mt-4 flex h-[42px] items-center rounded-full bg-[color:var(--input)] px-3 ring-1 ring-[color:var(--border)]">
-              <span className="shrink-0 text-[color:var(--muted)]" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4">
-                  <path
-                    d="m21 21-4.35-4.35m1.35-5.15a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search vault..."
-                className="ml-2 min-w-0 flex-1 bg-transparent text-sm text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] focus:outline-none"
-              />
-            </div>
-
-            <div className="mt-3">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">
-                Only show selected
-              </div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {universeFilters.map((universe) => {
-                  const checked = visibleUniverses.includes(universe);
-
+            {/* Selected thumbnail strip */}
+            {selectedItems.length > 0 && (
+              <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1">
+                {selectedItems.map((item) => {
+                  const img = itemImage(item);
                   return (
-                    <label
-                      key={universe}
-                      className={[
-                        "inline-flex min-h-[30px] cursor-pointer items-center gap-2 rounded-full px-3 py-1 text-xs ring-1 transition",
-                        checked
-                          ? "bg-gold/14 text-cyan-100 ring-cyan-300/30"
-                          : "bg-black/12 text-[color:var(--muted)] ring-white/10 hover:text-[color:var(--fg)]",
-                      ].join(" ")}
+                    <div
+                      key={item.id}
+                      className="relative shrink-0 overflow-hidden rounded-lg"
+                      style={{
+                        width: 44,
+                        aspectRatio: "3/4",
+                        boxShadow: "0 0 0 1.5px rgba(245,181,72,0.55), 0 0 8px rgba(245,181,72,0.25)",
+                      }}
                     >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => toggleUniverseFilter(universe)}
-                        className="h-3.5 w-3.5 accent-cyan-300"
-                      />
-                      {UNIVERSE_LABEL[universe]}
-                    </label>
+                      {img ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={img}
+                          alt={item.title}
+                          className="h-full w-full object-cover"
+                          draggable={false}
+                        />
+                      ) : (
+                        <div className="h-full w-full" style={{ background: "rgba(255,255,255,0.05)" }} />
+                      )}
+                    </div>
                   );
                 })}
               </div>
-            </div>
+            )}
 
-            {draggingId && selectedSet.has(draggingId) ? (
-              <div
-                className="mt-3 rounded-2xl bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-100 shadow-[0_0_18px_rgba(248,113,113,0.22)] ring-1 ring-red-400/30"
-                onDragOver={(event) => {
-                  event.preventDefault();
-                  event.dataTransfer.dropEffect = "move";
-                }}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  onDropIntoVaultSearch(event);
-                }}
-              >
-                Drop here to remove from selected
-              </div>
-            ) : null}
+            {/* Open picker button */}
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              className="mt-4 w-full rounded-full py-[15px] text-[15px] font-black tracking-wide transition active:opacity-80"
+              style={{
+                background:
+                  selectedCount > 0
+                    ? "linear-gradient(135deg, #FFE08A 0%, #F5B548 40%, #C8941F 100%)"
+                    : "rgba(255,255,255,0.07)",
+                color: selectedCount > 0 ? "#1A0F00" : "var(--muted)",
+                boxShadow:
+                  selectedCount > 0
+                    ? "0 0 0 1px rgba(245,181,72,0.35), 0 8px 28px rgba(245,181,72,0.3)"
+                    : "none",
+                border: selectedCount === 0 ? "1px solid rgba(255,255,255,0.09)" : "none",
+              }}
+            >
+              {selectedCount === 0
+                ? "Open Vault Picker"
+                : `Edit Selection  (${selectedCount})`}
+            </button>
           </div>
-
-          {filtered.length === 0 ? (
-            <div className="mt-5 rounded-[20px] bg-[color:var(--surface)] p-6 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
-              No Vault items matched that search.
-            </div>
-          ) : (
-            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
-              {filtered.map((item) => {
-                const active = selectedSet.has(item.id);
-                const toggleLabel = active ? `Remove ${item.title} from gallery` : `Add ${item.title} to gallery`;
-
-                return (
-                  <article
-                    key={item.id}
-                    draggable
-                    onDragStart={(event) => onDragStart(item.id, event)}
-                    onDragEnd={onDragEnd}
-                    className={[
-                      "vltd-selectable group cursor-grab overflow-hidden rounded-[22px] border text-left transition duration-300 active:cursor-grabbing",
-                      active
-                        ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] shadow-[0_16px_42px_rgba(0,0,0,0.2)]"
-                        : "border-[color:var(--border)] bg-[color:var(--surface)] hover:-translate-y-0.5 hover:shadow-[0_16px_42px_rgba(0,0,0,0.12)]",
-                    ].join(" ")}
-                  >
-                    <div className="relative">
-                      <Link
-                        href={`/vault/item/${item.id}#media`}
-                        className="block"
-                        aria-label={`Open image editor for ${item.title}`}
-                      >
-                        <div className="relative aspect-[16/10] w-full overflow-hidden bg-[radial-gradient(circle_at_35%_20%,rgba(255,255,255,0.12),rgba(82,214,244,0.06)_34%,rgba(0,0,0,0.22)_100%)] p-3">
-                        {itemImage(item) ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={itemImage(item)}
-                            alt={item.title}
-                            className="h-full w-full object-contain transition duration-500 group-hover:scale-[1.025]"
-                            draggable={false}
-                          />
-                        ) : (
-                          <div className="grid h-full w-full place-items-center">
-                            <div className="text-xs opacity-60">No image</div>
-                          </div>
-                        )}
-
-                        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.16)_0%,rgba(255,255,255,0.04)_22%,rgba(255,255,255,0)_52%)] mix-blend-screen" />
-                        </div>
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => toggle(item.id)}
-                        aria-label={toggleLabel}
-                        aria-pressed={active}
-                        className="absolute right-3 top-3 grid h-11 w-11 place-items-center overflow-visible rounded-full border-[3px] border-emerald-500 bg-transparent text-transparent ring-1 ring-emerald-100/70 transition hover:scale-105"
-                        style={{
-                          boxShadow:
-                            "0 0 16px rgba(74,222,128,0.96), 0 0 34px rgba(74,222,128,0.54), inset 0 0 10px rgba(74,222,128,0.24)",
-                        }}
-                      >
-                        <span className="pointer-events-none absolute -inset-2 rounded-full bg-emerald-400/35 blur-md" aria-hidden="true" />
-                        <span className="relative z-10 grid h-full w-full place-items-center" aria-hidden="true">
-                          <span
-                            className="absolute h-[5px] w-5 rounded-full bg-emerald-500"
-                            style={{
-                              boxShadow:
-                                "0 0 7px rgba(255,255,255,0.95), 0 0 12px rgba(74,222,128,0.98), 0 0 22px rgba(74,222,128,0.82)",
-                            }}
-                          />
-                          <span
-                            className="absolute h-5 w-[5px] rounded-full bg-emerald-500"
-                            style={{
-                              boxShadow:
-                                "0 0 7px rgba(255,255,255,0.95), 0 0 12px rgba(74,222,128,0.98), 0 0 22px rgba(74,222,128,0.82)",
-                            }}
-                          />
-                        </span>
-                      </button>
-                    </div>
-
-                    <Link
-                      href={`/vault/item/${item.id}`}
-                      className="block border-t border-white/8 p-4 transition hover:bg-black/10"
-                    >
-                      <div className="line-clamp-2 text-lg font-semibold leading-tight">{item.title}</div>
-                      <div className="mt-2 line-clamp-1 text-sm opacity-75">{itemMeta(item) || "-"}</div>
-
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        {typeof item.currentValue === "number" ? (
-                          <span className="rounded-full bg-black/15 px-3 py-1 text-xs ring-1 ring-black/10">
-                            Value {formatMoney(item.currentValue)}
-                          </span>
-                        ) : null}
-                      </div>
-                    </Link>
-                  </article>
-                );
-              })}
-            </div>
-          )}
         </section>
       </div>
+
+      {/* ── Vault Picker Sheet (Google Photos style) ── */}
+      {pickerOpen && (
+        <ItemPickerSheet
+          allItems={items}
+          confirmedIds={gallery.itemIds}
+          onConfirm={(ids) => {
+            onChange(ids);
+            setPickerOpen(false);
+          }}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
+
+      {/* ── Expanded Live Preview Overlay ── */}
+      {previewExpanded && (
+        <div
+          className="fixed inset-0 z-[75] flex flex-col"
+          style={{ background: "#080C14" }}
+        >
+          {/* Header */}
+          <div
+            className="flex shrink-0 items-center justify-between px-4 pb-3"
+            style={{
+              paddingTop: "max(env(safe-area-inset-top, 0px), 14px)",
+              borderBottom: "1px solid rgba(255,255,255,0.07)",
+            }}
+          >
+            <div>
+              <div className="text-[11px] tracking-[0.2em]" style={{ color: "var(--muted2)" }}>
+                LIVE PREVIEW
+              </div>
+              <div className="mt-0.5 text-sm font-semibold">
+                {gallery.title || "Exhibition"}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPreviewExpanded(false)}
+              className="flex h-9 w-9 items-center justify-center rounded-full transition active:opacity-70"
+              style={{ background: "rgba(255,255,255,0.07)" }}
+              aria-label="Close preview"
+            >
+              <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" style={{ color: "var(--muted)" }}>
+                <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Full-size interactive preview */}
+          <div className="flex-1 overflow-y-auto overscroll-contain">
+            <BuilderPreviewBridge
+              gallery={gallery}
+              items={selectedItems}
+              onHeightChange={setPreviewNaturalHeight}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
