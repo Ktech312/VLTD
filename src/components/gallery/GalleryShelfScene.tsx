@@ -220,14 +220,21 @@ function AnchoredRow({
         ) : null}
 
         <div className="relative z-10 grid grid-cols-2 items-end gap-2 sm:grid-cols-4 sm:gap-[0.8rem]">
-        {row.map((item) => (
-          <DisplayCard
-            key={item.id}
-            item={item}
-            theme={theme}
-            galleryHrefPrefix={galleryHrefPrefix}
-          />
-        ))}
+          {row.map((item) => (
+            <DisplayCard
+              key={item.id}
+              item={item}
+              theme={theme}
+              galleryHrefPrefix={galleryHrefPrefix}
+            />
+          ))}
+          {Array.from({ length: Math.max(0, 4 - row.length) }).map((_, i) => (
+            <div
+              key={"empty-" + i}
+              className="aspect-[3/4] rounded-[10px] opacity-20"
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px dashed rgba(255,255,255,0.18)" }}
+            />
+          ))}
         </div>
       </div>
     </div>
@@ -276,18 +283,16 @@ export default function GalleryShelfScene({
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,10,16,0.08),rgba(6,10,16,0.12))]" />
 
           {shelvesEnabled
-            ? rows.map((row, index) =>
-                row.length > 0 ? (
-                  <AnchoredRow
-                    key={index}
-                    row={row}
-                    anchor={ROW_ANCHORS[index]}
-                    theme={theme}
-                    galleryHrefPrefix={galleryHrefPrefix}
-                    shelfOverlayStyle={shelfOverlayStyle}
-                  />
-                ) : null
-              )
+            ? rows.map((row, index) => (
+                <AnchoredRow
+                  key={index}
+                  row={row}
+                  anchor={ROW_ANCHORS[index]}
+                  theme={theme}
+                  galleryHrefPrefix={galleryHrefPrefix}
+                  shelfOverlayStyle={shelfOverlayStyle}
+                />
+              ))
             : null}
         </div>
       </div>
