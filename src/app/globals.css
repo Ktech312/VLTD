@@ -313,6 +313,10 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   scroll-behavior: smooth;
+
+  /* Lock horizontal scroll at the html level — iOS Safari scrolls html, not body */
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 /* Better tap behavior on mobile */
@@ -333,7 +337,8 @@ body {
   overscroll-behavior-y: contain;
 
   /* fast taps; prevent 300ms delay on old browsers */
-  touch-action: manipulation;
+  /* pan-y: vertical scroll allowed globally; horizontal locked to prevent accidental page drift */
+  touch-action: pan-y;
 }
 
 /* Noise/grain texture overlay — subtle film grain over all backgrounds */
@@ -1952,8 +1957,4 @@ main {
 /* Scrollbar styling */
 /* scrollbar base — overridden by theme-override.css below */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: #141414; }
-::-webkit-scrollbar-thumb { background: #2A2418; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(245,181,72,0.4); }
-
-@import './theme-override.css';
+::-
