@@ -789,80 +789,73 @@ export default function GalleryBuilder({
             </div>
           ) : null}
 
-          {/* Mini grid preview */}
+          {/* Mini shelf preview — 4 rows × 4 slots, always visible, ghosts for empty */}
           <div
             className={[
               "mt-3 overflow-hidden rounded-[24px] ring-1 relative",
               previewPanelClass,
             ].join(" ")}
           >
-            {selectedItems.length === 0 ? (
-              <div className="flex h-40 items-center justify-center text-sm" style={{ color: "var(--muted)" }}>
-                No items selected yet
-              </div>
-            ) : (
-              <div className="p-3">
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(4, 1fr)",
-                    gap: 4,
-                  }}
-                >
-                  {selectedItems.map((item) => {
-                    const img = itemImage(item);
-                    return (
+            <div className="p-3">
+              {[0, 1, 2, 3].map((rowIdx) => {
+                const rowItems = selectedItems.slice(rowIdx * 4, rowIdx * 4 + 4);
+                const ghostCount = 4 - rowItems.length;
+                return (
+                  <div
+                    key={rowIdx}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(4, 1fr)",
+                      gap: 4,
+                      marginBottom: rowIdx < 3 ? 6 : 0,
+                      paddingBottom: rowIdx < 3 ? 6 : 0,
+                      borderBottom: rowIdx < 3 ? "1px solid rgba(255,255,255,0.06)" : "none",
+                    }}
+                  >
+                    {rowItems.map((item) => {
+                      const img = itemImage(item);
+                      return (
+                        <div
+                          key={item.id}
+                          style={{ aspectRatio: "3 / 4", borderRadius: 7, overflow: "hidden", background: "rgba(255,255,255,0.07)" }}
+                        >
+                          {img ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={img} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} draggable={false} />
+                          ) : (
+                            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, color: "var(--muted)" }}>—</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {Array.from({ length: ghostCount }).map((_, i) => (
                       <div
-                        key={item.id}
+                        key={"ghost-" + i}
                         style={{
                           aspectRatio: "3 / 4",
-                          borderRadius: 8,
-                          overflow: "hidden",
-                          background: "rgba(255,255,255,0.06)",
+                          borderRadius: 7,
+                          background: "rgba(255,255,255,0.025)",
+                          border: "1px dashed rgba(255,255,255,0.12)",
                         }}
-                      >
-                        {img ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={img}
-                            alt={item.title}
-                            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                            draggable={false}
-                          />
-                        ) : (
-                          <div
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: 10,
-                              color: "var(--muted)",
-                            }}
-                          >
-                            {"--"}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-                <div
-                  style={{
-                    marginTop: 8,
-                    textAlign: "center",
-                    fontSize: 10,
-                    fontWeight: 600,
-                    letterSpacing: "0.12em",
-                    color: "rgba(255,255,255,0.28)",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {selectedItems.length + " items"}{" · "}{displayMode === "grid" ? "Grid View" : getGalleryThemeLabel(themePack)}
-                </div>
+                      />
+                    ))}
+                  </div>
+                );
+              })}
+              <div
+                style={{
+                  marginTop: 8,
+                  textAlign: "center",
+                  fontSize: 10,
+                  fontWeight: 600,
+                  letterSpacing: "0.12em",
+                  color: "rgba(255,255,255,0.28)",
+                  textTransform: "uppercase",
+                }}
+              >
+                {selectedItems.length + " / 16 items"}{" · "}{displayMode === "grid" ? "Grid View" : getGalleryThemeLabel(themePack)}
               </div>
-            )}
+            </div>
           </div>
         </div>
 
