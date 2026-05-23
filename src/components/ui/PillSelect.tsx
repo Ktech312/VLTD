@@ -68,6 +68,7 @@ export function PillSelect<T extends string>({
   extraWidthPx = 10,
   minWidthPx = 112,
   showSelectedSubtitle = false,
+  labelPrefix = "",
 }: {
   value: T;
   onChange: (next: T) => void;
@@ -77,6 +78,7 @@ export function PillSelect<T extends string>({
   extraWidthPx?: number;
   minWidthPx?: number;
   showSelectedSubtitle?: boolean;
+  labelPrefix?: string;
 }) {
   const id = useId();
   const btnRef = useRef<HTMLButtonElement | null>(null);
@@ -109,7 +111,7 @@ export function PillSelect<T extends string>({
         )
       : 0;
     const estimatedTextWidth =
-      Math.max(longestLabelLength * 8.2, longestSubtitleLength * 6.1) +
+      Math.max((longestLabelLength + labelPrefix.length) * 8.2, longestSubtitleLength * 6.1) +
       78 +
       extraWidthPx;
 
@@ -225,7 +227,7 @@ export function PillSelect<T extends string>({
           <span className="flex min-w-0 items-start gap-2 text-[color:var(--fg)]">
             {current?.icon ? <span className="mt-0.5 shrink-0 text-[color:var(--fg)]">{current.icon}</span> : null}
             <span className="min-w-0">
-              <span className="block truncate">{current?.label ?? "Select"}</span>
+              <span className="block truncate">{labelPrefix}{current?.label ?? "Select"}</span>
               {showSelectedSubtitle && current?.subtitle ? (
                 <span className="mt-0.5 block truncate text-[11px] font-normal leading-4 text-[color:var(--muted)]">
                   {current.subtitle}
@@ -296,7 +298,7 @@ export function PillSelect<T extends string>({
         <span className="flex min-w-0 items-start gap-2 text-[color:var(--fg)]">
           {current?.icon ? <span className="mt-0.5 shrink-0 text-[color:var(--fg)]">{current.icon}</span> : null}
           <span className="min-w-0">
-            <span className="block truncate">{current?.label ?? "Select"}</span>
+            <span className="block truncate">{labelPrefix}{current?.label ?? "Select"}</span>
             {showSelectedSubtitle && current?.subtitle ? (
               <span className="mt-0.5 block truncate text-[11px] font-normal leading-4 text-[color:var(--muted)]">
                 {current.subtitle}

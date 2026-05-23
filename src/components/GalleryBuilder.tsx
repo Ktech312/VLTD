@@ -578,32 +578,41 @@ export default function GalleryBuilder({
             </button>
           </div>
 
-          {/* Controls row: interactive dropdowns + action pills */}
+          {/* ── Row 1: Theme | Shelf | Upload Background ── */}
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <PillSelect<GalleryViewOption>
-              value={selectedGalleryView}
-              onChange={setGalleryView}
-              options={GALLERY_VIEW_OPTIONS}
-              ariaLabel="Exhibit view"
-              align="left"
-              minWidthPx={160}
-              extraWidthPx={6}
-            />
-            <PillSelect<ShelfOverlayOption>
-              value={shelfOverlayStyle}
-              onChange={(nextStyle) =>
-                onGalleryChange((current) => ({
-                  ...current,
-                  shelfOverlayStyle: nextStyle,
-                  glassShelfOverlay: nextStyle !== "none",
-                }))
-              }
-              options={SHELF_OVERLAY_OPTIONS}
-              ariaLabel="Shelf style"
-              align="left"
-              minWidthPx={100}
-              extraWidthPx={6}
-            />
+            {/* Theme dropdown — shows "Theme: X" label */}
+            <div className="relative">
+              <PillSelect<GalleryViewOption>
+                value={selectedGalleryView}
+                onChange={setGalleryView}
+                options={GALLERY_VIEW_OPTIONS}
+                ariaLabel="Exhibit view"
+                align="left"
+                minWidthPx={140}
+                extraWidthPx={6}
+                labelPrefix="Theme: "
+              />
+            </div>
+            {/* Shelf dropdown — shows "Shelf: X" label */}
+            <div className="relative">
+              <PillSelect<ShelfOverlayOption>
+                value={shelfOverlayStyle}
+                onChange={(nextStyle) =>
+                  onGalleryChange((current) => ({
+                    ...current,
+                    shelfOverlayStyle: nextStyle,
+                    glassShelfOverlay: nextStyle !== "none",
+                  }))
+                }
+                options={SHELF_OVERLAY_OPTIONS}
+                ariaLabel="Shelf style"
+                align="left"
+                minWidthPx={100}
+                extraWidthPx={6}
+                labelPrefix="Shelf: "
+              />
+            </div>
+            {/* Upload Background */}
             <input
               id={`shelf-upload-${gallery.id}`}
               type="file"
@@ -634,35 +643,71 @@ export default function GalleryBuilder({
                 Remove BG
               </button>
             ) : null}
+          </div>
+
+          {/* ── Row 2: Section pill | Name input | Edit | Save ── */}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {/* Section indicator pill */}
+            <span
+              className="inline-flex min-h-[34px] items-center rounded-full px-3 text-xs font-semibold ring-1"
+              style={{
+                background: "rgba(255,255,255,0.07)",
+                color: "var(--muted)",
+                border: "1px solid rgba(255,255,255,0.12)",
+              }}
+            >
+              {sections.length > 0 ? ("Section #" + (sections.length)) : "Section #1"}
+              {" ×"}
+            </span>
+            {/* Section name input */}
+            <input
+              type="text"
+              value={sections.length > 0 ? (sections[0]?.title ?? "Section 1") : "Section 1"}
+              onChange={(e) => {
+                if (sections.length > 0) {
+                  const updated = sections.map((s, i) => i === 0 ? { ...s, title: e.target.value } : s);
+                  onGalleryChange((current) => syncSectionsAndLayout(current, updated));
+                }
+              }}
+              placeholder="Name of Section goes here"
+              className="inline-flex min-h-[34px] flex-1 min-w-[160px] items-center rounded-full px-3 text-xs font-semibold ring-1 focus:outline-none"
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                color: "var(--fg)",
+                border: "1px solid rgba(255,255,255,0.12)",
+              }}
+            />
+            {/* Edit — opens vault picker */}
             <button
               type="button"
               onClick={() => onOpenPicker?.()}
-              className="vltd-selectable inline-flex min-h-[34px] items-center justify-center rounded-full px-3 text-xs font-semibold ring-1"
+              className="inline-flex min-h-[34px] items-center justify-center rounded-full px-4 text-xs font-bold ring-1"
               style={{
                 background: "rgba(245,181,72,0.10)",
                 color: "#F5B548",
-                border: "1px solid rgba(245,181,72,0.35)",
+                border: "1px solid rgba(245,181,72,0.4)",
               }}
             >
               Edit
             </button>
+            {/* Save */}
             <button
               type="button"
               onClick={() => onQuickSave?.()}
-              className="vltd-selectable inline-flex min-h-[34px] items-center justify-center rounded-full px-3 text-xs font-semibold ring-1"
+              className="inline-flex min-h-[34px] items-center justify-center rounded-full px-4 text-xs font-bold ring-1"
               style={{
                 background: "rgba(245,181,72,0.18)",
                 color: "#F5B548",
-                border: "1px solid rgba(245,181,72,0.45)",
+                border: "1px solid rgba(245,181,72,0.5)",
               }}
             >
               Save
             </button>
           </div>
 
-          {/* Background status */}
+          {/* Background / error status */}
           {(shelfFileName || shelfBackground || backgroundUploadError) ? (
-            <div className="mt-1.5 text-xs" style={{ color: backgroundUploadError ? "rgb(252,165,165)" : "var(--muted)" }}>
+            <div className="mt-1 text-xs" style={{ color: backgroundUploadError ? "rgb(252,165,165)" : "var(--muted)" }}>
               {backgroundUploadError
                 ? backgroundUploadError
                 : shelfFileName
