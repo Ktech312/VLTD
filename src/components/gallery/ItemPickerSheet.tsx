@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { type VaultItem } from "@/lib/vaultModel";
 
@@ -38,18 +38,13 @@ export function ItemPickerSheet({
     return allItems.filter((item) => searchText(item).includes(q));
   }, [allItems, query]);
 
-  // iOS-safe scroll lock
+  // Scroll lock: overflow:hidden avoids the iOS position:fixed jump + broken inner scroll
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const scrollY = window.scrollY;
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = "100%";
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      window.scrollTo(0, scrollY);
+      document.body.style.overflow = prev;
     };
   }, []);
 
@@ -68,10 +63,16 @@ export function ItemPickerSheet({
 
   if (typeof document === "undefined") return null;
 
-  return createPortal(
-    <div className="fixed inset-0 z-[80] flex flex-col" style={{ background: "#080C14" }}>
+  const addLabel = pickedCount > 0 ? ("Add to Exhibition  (" + pickedCount + ")") : "Select items to add";
+  const slotLabel = slotsLeft === 0 ? "Exhibition is full (16 items max)" : (slotsLeft + " slot" + (slotsLeft === 1 ? "" : "s") + " remaining");
 
-      {/* ── Header ── */}
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[80] flex flex-col"
+      style={{ background: "#080C14", height: "100dvh" }}
+    >
+
+      {/* Header */}
       <div
         className="flex shrink-0 items-center gap-2.5 px-4 pb-3"
         style={{
@@ -79,7 +80,6 @@ export function ItemPickerSheet({
           borderBottom: "1px solid rgba(255,255,255,0.07)",
         }}
       >
-        {/* Close */}
         <button
           type="button"
           onClick={onClose}
@@ -92,7 +92,6 @@ export function ItemPickerSheet({
           </svg>
         </button>
 
-        {/* Search */}
         <div className="relative flex-1">
           <svg viewBox="0 0 24 24" fill="none" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 pointer-events-none" style={{ color: "var(--muted)" }}>
             <path d="m21 21-4.35-4.35m1.35-5.15a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
@@ -110,21 +109,23 @@ export function ItemPickerSheet({
           />
         </div>
 
-        {/* Counter */}
         <div
           className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold tabular-nums"
           style={{
             background: pickedCount >= MAX_EXHIBIT_ITEMS ? "rgba(245,181,72,0.15)" : "rgba(255,255,255,0.07)",
             color: pickedCount >= MAX_EXHIBIT_ITEMS ? "#F5B548" : "var(--muted)",
-            border: `1px solid ${pickedCount >= MAX_EXHIBIT_ITEMS ? "rgba(245,181,72,0.3)" : "rgba(255,255,255,0.09)"}`,
+            border: "1px solid " + (pickedCount >= MAX_EXHIBIT_ITEMS ? "rgba(245,181,72,0.3)" : "rgba(255,255,255,0.09)"),
           }}
         >
           {pickedCount}/{MAX_EXHIBIT_ITEMS}
         </div>
       </div>
 
-      {/* ── Photo grid ── */}
-      <div className="flex-1 overflow-y-auto overscroll-contain">
+      {/* Photo grid — min-h-0 forces flex child to honour overflow-y-auto on mobile */}
+      <div
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+        style={{ WebkitOverflowScrolling: "touch" } as React.CSSProperties}
+      >
         {filtered.length === 0 ? (
           <div className="flex h-48 items-center justify-center text-sm" style={{ color: "var(--muted)" }}>
             No items matched your search.
@@ -146,30 +147,25 @@ export function ItemPickerSheet({
                   aria-pressed={isSelected}
                   aria-label={item.title}
                 >
-                  {/* Image */}
                   {img ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img src={img} alt={item.title} className="h-full w-full object-cover" draggable={false} />
                   ) : (
                     <div
                       className="flex h-full w-full items-center justify-center text-[10px]"
                       style={{ background: "rgba(255,255,255,0.05)", color: "var(--muted)" }}
                     >
-                      —
+                      {"—"}
                     </div>
                   )}
 
-                  {/* Gold border glow when selected */}
                   {isSelected && (
                     <div
                       className="pointer-events-none absolute inset-0"
-                      style={{
-                        boxShadow: "inset 0 0 0 3px #F5B548, inset 0 0 18px rgba(245,181,72,0.22)",
-                      }}
+                      style={{ boxShadow: "inset 0 0 0 3px #F5B548, inset 0 0 18px rgba(245,181,72,0.22)" }}
                     />
                   )}
 
-                  {/* Selection circle — top right */}
                   <div
                     className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full transition"
                     style={{
@@ -192,7 +188,7 @@ export function ItemPickerSheet({
         )}
       </div>
 
-      {/* ── Footer ── */}
+      {/* Footer */}
       <div
         className="shrink-0 px-4 pt-3"
         style={{
@@ -203,7 +199,7 @@ export function ItemPickerSheet({
       >
         {slotsLeft < MAX_EXHIBIT_ITEMS && (
           <div className="mb-2 text-center text-xs" style={{ color: slotsLeft === 0 ? "#F5B548" : "var(--muted)" }}>
-            {slotsLeft === 0 ? "Exhibition is full (16 items max)" : `${slotsLeft} slot${slotsLeft === 1 ? "" : "s"} remaining`}
+            {slotLabel}
           </div>
         )}
         <button
@@ -221,7 +217,7 @@ export function ItemPickerSheet({
               : "none",
           }}
         >
-          {pickedCount > 0 ? `Add to Exhibition  (${pickedCount})` : "Select items to add"}
+          {addLabel}
         </button>
       </div>
     </div>,
