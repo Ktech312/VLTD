@@ -498,4 +498,23 @@ function MobileSheet<T extends string>({
                         <div className="truncate text-[15px] font-semibold text-[color:var(--fg)]">{o.label}</div>
                         {o.subtitle ? (
                           <div className="mt-0.5 text-xs text-[color:var(--muted)]">{o.subtitle}</div>
-            
+                        ) : null}
+                      </div>
+                    </div>
+                    {isSelected ? (
+                      <span className="text-[color:var(--fg)]" aria-hidden="true">
+                        <CheckIcon className="h-5 w-5" />
+                      </span>
+                    ) : null}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
