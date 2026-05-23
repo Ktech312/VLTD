@@ -69,6 +69,7 @@ export function PillSelect<T extends string>({
   minWidthPx = 112,
   showSelectedSubtitle = false,
   labelPrefix = "",
+  compact = false,
 }: {
   value: T;
   onChange: (next: T) => void;
@@ -79,12 +80,12 @@ export function PillSelect<T extends string>({
   minWidthPx?: number;
   showSelectedSubtitle?: boolean;
   labelPrefix?: string;
+  compact?: boolean;
 }) {
   const id = useId();
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
-  const isMobile = useIsMobile();
 
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
@@ -143,7 +144,7 @@ export function PillSelect<T extends string>({
   }, [open]);
 
   useEffect(() => {
-    if (!open || isMobile) return;
+    if (!open) return;
 
     function onKey(e: KeyboardEvent) {
       if (e.key === "ArrowDown") {
@@ -170,7 +171,7 @@ export function PillSelect<T extends string>({
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, activeIdx, options, onChange, isMobile]);
+  }, [open, activeIdx, options, onChange]);
 
   useEffect(() => {
     if (!open) return;
@@ -204,71 +205,10 @@ export function PillSelect<T extends string>({
     };
   }, [open]);
 
-  if (isMobile) {
-    return (
-      <>
-        <button
-          ref={btnRef}
-          type="button"
-          aria-label={ariaLabel}
-          aria-haspopup="dialog"
-          aria-expanded={open}
-          aria-controls={`pillselect-${id}`}
-          onClick={() => {
-            setActiveIdx(selectedIdx >= 0 ? selectedIdx : 0);
-            setOpen(true);
-          }}
-          className={[
-            "relative inline-flex justify-between rounded-full",
-            showSelectedSubtitle ? "min-h-[58px] items-start py-2.5" : "min-h-[44px] items-center",
-            "px-4 pr-10 text-[15px] font-medium select-none text-left",
-            "bg-[color:var(--pill)] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm",
-            "hover:bg-[color:var(--pill-hover)] transition-all active:scale-[0.98]",
-          ].join(" ")}
-        >
-          <span className="flex min-w-0 items-start gap-2 text-[color:var(--fg)]">
-            {current?.icon ? <span className="mt-0.5 shrink-0 text-[color:var(--fg)]">{current.icon}</span> : null}
-            <span className="min-w-0">
-              <span className="block truncate">{labelPrefix}{current?.label ?? "Select"}</span>
-              {showSelectedSubtitle && current?.subtitle ? (
-                <span className="mt-0.5 block truncate text-[11px] font-normal leading-4 text-[color:var(--muted)]">
-                  {current.subtitle}
-                </span>
-              ) : null}
-            </span>
-          </span>
-
-          <span className="pointer-events-none absolute right-3 grid h-6 w-6 place-items-center opacity-70 text-[color:var(--fg)]">
-            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className="h-4 w-4">
-              <path
-                fillRule="evenodd"
-                d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </span>
-        </button>
-
-        {open && (
-          <MobileSheet
-            id={`pillselect-${id}`}
-            title={ariaLabel ?? "Select"}
-            value={value}
-            options={options}
-            onClose={() => setOpen(false)}
-            onPick={(v) => {
-              onChange(v);
-              setOpen(false);
-              btnRef.current?.focus();
-            }}
-            safeBottomStyle={safeBottomStyle}
-          />
-        )}
-      </>
-    );
-  }
-
   const popW = Math.max(btnW, 220);
+  const btnH = compact ? "min-h-[34px]" : "min-h-[44px]";
+  const btnPx = compact ? "px-3 pr-8" : "px-4 pr-10";
+  const btnText = compact ? "text-xs" : "text-sm";
 
   return (
     <div ref={wrapRef} className="relative inline-flex">
@@ -289,8 +229,10 @@ export function PillSelect<T extends string>({
         style={{ width: btnW }}
         className={[
           "relative inline-flex justify-between rounded-full",
-          showSelectedSubtitle ? "min-h-[58px] items-start py-2.5" : "min-h-[44px] items-center",
-          "px-4 pr-10 text-sm font-medium select-none text-left",
+          showSelectedSubtitle ? "min-h-[58px] items-start py-2.5" : (btnH + " items-center"),
+          btnPx,
+          btnText,
+          "font-medium select-none text-left",
           "bg-[color:var(--pill)] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm",
           "hover:bg-[color:var(--pill-hover)] transition-all active:scale-[0.98]",
         ].join(" ")}
@@ -307,8 +249,8 @@ export function PillSelect<T extends string>({
           </span>
         </span>
 
-        <span className="pointer-events-none absolute right-3 grid h-6 w-6 place-items-center opacity-70 text-[color:var(--fg)]">
-          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className="h-4 w-4">
+        <span className={["pointer-events-none absolute grid place-items-center opacity-70 text-[color:var(--fg)]", compact ? "right-2.5 h-5 w-5" : "right-3 h-6 w-6"].join(" ")}>
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className="h-3.5 w-3.5">
             <path
               fillRule="evenodd"
               d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
@@ -354,7 +296,7 @@ export function PillSelect<T extends string>({
                       btnRef.current?.focus();
                     }}
                     className={[
-                      "w-full rounded-xl px-3 py-2 text-left transition",
+                      "w-full rounded-xl px-3 py-2.5 text-left transition",
                       isSelected
                         ? "bg-[color:var(--pill)] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] font-semibold"
                         : isActive

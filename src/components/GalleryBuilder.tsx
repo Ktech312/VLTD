@@ -596,6 +596,7 @@ export default function GalleryBuilder({
                 minWidthPx={140}
                 extraWidthPx={6}
                 labelPrefix="Theme: "
+                compact
               />
             </div>
             {/* Shelf dropdown — shows "Shelf: X" label */}
@@ -615,6 +616,7 @@ export default function GalleryBuilder({
                 minWidthPx={100}
                 extraWidthPx={6}
                 labelPrefix="Shelf: "
+                compact
               />
             </div>
             {/* Upload Background */}
@@ -632,7 +634,7 @@ export default function GalleryBuilder({
             {/* Upload Background — uniform pill */}
             <label
               htmlFor={`shelf-upload-${gallery.id}`}
-              className="vltd-selectable inline-flex min-h-[44px] cursor-pointer items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all select-none"
+              className="vltd-selectable inline-flex min-h-[34px] cursor-pointer items-center justify-center rounded-full bg-[color:var(--pill)] px-3 text-xs font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all select-none"
             >
               Upload Background
             </label>
@@ -644,7 +646,7 @@ export default function GalleryBuilder({
                   setBackgroundUploadError("");
                   onGalleryChange((current) => ({ ...current, shelfBackground: "" }));
                 }}
-                className="vltd-selectable inline-flex min-h-[44px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all"
+                className="vltd-selectable inline-flex min-h-[34px] items-center justify-center rounded-full bg-[color:var(--pill)] px-3 text-xs font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all"
               >
                 Remove BG
               </button>
@@ -664,7 +666,7 @@ export default function GalleryBuilder({
                   }
                   setSectionDropdownOpen((v) => !v);
                 }}
-                className="inline-flex min-h-[44px] items-center justify-between gap-2 rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all select-none"
+                className="inline-flex min-h-[34px] items-center justify-between gap-1.5 rounded-full bg-[color:var(--pill)] px-3 text-xs font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all select-none"
               >
                 <span>
                   {"Section #" + (activeSectionIdx + 1)}
@@ -752,14 +754,14 @@ export default function GalleryBuilder({
                 onGalleryChange((current) => syncSectionsAndLayout(current, updated));
               }}
               placeholder="Name of Section goes here"
-              className="inline-flex min-h-[44px] flex-1 min-w-[140px] items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
+              className="inline-flex min-h-[34px] flex-1 min-w-[120px] items-center rounded-full bg-[color:var(--pill)] px-3 text-xs font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
             />
 
             {/* Edit — gold pill, uniform height */}
             <button
               type="button"
               onClick={() => onOpenPicker?.()}
-              className="inline-flex min-h-[44px] items-center justify-center rounded-full px-4 text-sm font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
+              className="inline-flex min-h-[34px] items-center justify-center rounded-full px-3 text-xs font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
               style={{ background: "rgba(245,181,72,0.12)", color: "#F5B548", borderColor: "rgba(245,181,72,0.45)" }}
             >
               Edit
@@ -769,7 +771,7 @@ export default function GalleryBuilder({
             <button
               type="button"
               onClick={() => onQuickSave?.()}
-              className="inline-flex min-h-[44px] items-center justify-center rounded-full px-4 text-sm font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
+              className="inline-flex min-h-[34px] items-center justify-center rounded-full px-3 text-xs font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
               style={{ background: "rgba(245,181,72,0.22)", color: "#F5B548", borderColor: "rgba(245,181,72,0.55)" }}
             >
               Save
