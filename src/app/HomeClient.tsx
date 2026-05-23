@@ -43,7 +43,7 @@ function InfoTooltip({ text }: { text: string }) {
 }
 
 const BiggestMoversPanel = dynamic(() => import("@/components/BiggestMoversPanel"), {
-  loading: () => <div className="rounded-[24px] border p-4 text-sm text-[#A0956B]" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>Loading movers…</div>,
+  loading: () => <div className="rounded-[24px] border p-4 text-sm text-[#A0956B]" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>Loading movers...</div>,
 });
 
 function formatMoney(v?: number) {
@@ -68,28 +68,46 @@ function StatChip({ label, value, sub, tone = "default" }: { label: string; valu
   );
 }
 
-/* ── Exhibition Carousel — coverflow + swipe ─────────────── */
+/* ── Exhibition Carousel — coverflow + native swipe (no page scroll) ── */
 function ExhibitionCarousel({ galleries }: { galleries: Gallery[] }) {
   const [idx, setIdx] = useState(0);
-  const touchStartX = useRef<number>(0);
-  const dragX = useRef<number>(0);
+  const sectionRef = useRef<HTMLElement>(null);
   const n = galleries.length;
 
   function goNext() { setIdx((i) => (i + 1) % n); }
   function goPrev() { setIdx((i) => (i - 1 + n) % n); }
 
-  function onTouchStart(e: React.TouchEvent) {
-    touchStartX.current = e.touches[0].clientX;
-    dragX.current = 0;
-  }
-  function onTouchMove(e: React.TouchEvent) {
-    dragX.current = e.touches[0].clientX - touchStartX.current;
-  }
-  function onTouchEnd() {
-    if (dragX.current < -40) goNext();
-    else if (dragX.current > 40) goPrev();
-    dragX.current = 0;
-  }
+  // Native touch listeners with passive:false so preventDefault stops page scroll
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    let startX = 0;
+    let deltaX = 0;
+
+    function onStart(e: TouchEvent) {
+      startX = e.touches[0].clientX;
+      deltaX = 0;
+    }
+    function onMove(e: TouchEvent) {
+      deltaX = e.touches[0].clientX - startX;
+      // Only lock horizontal scrolling once we know it's a horizontal swipe
+      if (Math.abs(deltaX) > 8) e.preventDefault();
+    }
+    function onEnd() {
+      if (deltaX < -40) setIdx((i) => (i + 1) % n);
+      else if (deltaX > 40) setIdx((i) => (i - 1 + n) % n);
+      deltaX = 0;
+    }
+
+    el.addEventListener("touchstart", onStart, { passive: true });
+    el.addEventListener("touchmove", onMove, { passive: false });
+    el.addEventListener("touchend", onEnd, { passive: true });
+    return () => {
+      el.removeEventListener("touchstart", onStart);
+      el.removeEventListener("touchmove", onMove);
+      el.removeEventListener("touchend", onEnd);
+    };
+  }, [n]);
 
   const current = galleries[idx];
   const itemCount = current.itemIds?.length ?? 0;
@@ -100,11 +118,9 @@ function ExhibitionCarousel({ galleries }: { galleries: Gallery[] }) {
 
   return (
     <section
+      ref={sectionRef}
       className="relative select-none overflow-hidden rounded-[24px] border p-5"
       style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "rgba(245,181,72,0.16)" }}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
     >
       <div className="pointer-events-none absolute -right-8 -top-8 h-48 w-48 rounded-full" style={{ background: "radial-gradient(circle, rgba(245,181,72,0.12) 0%, transparent 70%)", filter: "blur(24px)" }} />
 
