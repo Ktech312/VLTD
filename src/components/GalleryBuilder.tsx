@@ -5,7 +5,7 @@ import { useMemo, useRef, useState } from "react";
 import type { DragEvent } from "react";
 import { createPortal } from "react-dom";
 
-import { type VaultItem } from "@/lib/vaultModel";
+import { type VaultItem, getPrimaryImageUrl } from "@/lib/vaultModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import {
   type Gallery,
@@ -1400,13 +1400,51 @@ export default function GalleryBuilder({
             </button>
           </div>
 
-          {/* Full-size interactive preview */}
-          <div className="flex-1 overflow-y-auto overscroll-contain">
-            <BuilderPreviewBridge
-              gallery={gallery}
-              items={selectedItems}
-              onHeightChange={setPreviewNaturalHeight}
-            />
+          {/* Scrollable item grid — 4 columns, all items */}
+          <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4">
+            {selectedItems.length === 0 ? (
+              <div className="flex h-full items-center justify-center text-sm" style={{ color: "var(--muted)" }}>
+                No items in this exhibit yet.
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(4, 1fr)",
+                  gap: 8,
+                }}
+              >
+                {selectedItems.map((item) => {
+                  const imgUrl = getPrimaryImageUrl(item);
+                  return (
+                    <div
+                      key={item.id}
+                      style={{
+                        borderRadius: 10,
+                        overflow: "hidden",
+                        background: "rgba(255,255,255,0.05)",
+                        border: "1px solid rgba(255,255,255,0.10)",
+                        aspectRatio: "2/3",
+                      }}
+                    >
+                      {imgUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={imgUrl}
+                          alt={item.title}
+                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                          draggable={false}
+                        />
+                      ) : (
+                        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "var(--muted)" }}>
+                          —
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}
