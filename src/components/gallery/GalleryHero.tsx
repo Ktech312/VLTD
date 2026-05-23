@@ -84,7 +84,7 @@ export default function GalleryHero({
       </div>
 
       {/* ── Hero text content ── */}
-      <div className="relative mx-auto max-w-7xl px-6 pb-16 pt-14 sm:px-8 sm:pt-18">
+      <div className="relative mx-auto max-w-7xl px-6 pb-16 pt-5 sm:px-8 sm:pt-6">
         <div className="max-w-3xl">
           <div className="flex flex-wrap items-center gap-3">
             <div className="text-[11px] tracking-[0.26em] text-[color:var(--muted2)]">
@@ -155,7 +155,7 @@ export default function GalleryHero({
                   }
             }
           >
-            Gallery View
+            Exhibit View
           </button>
         </div>
 

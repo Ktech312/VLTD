@@ -87,7 +87,7 @@ export default function PublicGalleryPage() {
           galleryMode={galleryMode}
           onSwipe={() => setGalleryMode("swipe")}
           onGridView={() => setGalleryMode("grid")}
-          onAdd={() => router.push(`/vault/add?galleryId=${gallery.id}`)}
+          onAdd={() => router.push(`/museum/${gallery.id}`)}
           onDelete={handleDelete}
           onReport={handleReport}
         />
@@ -100,7 +100,28 @@ export default function PublicGalleryPage() {
 
         {/* Content */}
         <div className="mt-6">
-          {galleryMode === "swipe" ? (
+          {/* Blank "add first item" card — shown in both modes when empty */}
+          {galleryItems.length === 0 ? (
+            <button
+              type="button"
+              onClick={() => router.push(`/museum/${gallery.id}`)}
+              className="mx-auto flex w-full max-w-[200px] flex-col items-center justify-center gap-3 rounded-[24px] transition hover:scale-[1.02] active:scale-[0.98]"
+              style={{
+                aspectRatio: "2/3",
+                background: "rgba(15,25,45,0.6)",
+                border: "1.5px dashed rgba(245,181,72,0.35)",
+                color: "#F5B548",
+              }}
+            >
+              <span
+                className="flex h-12 w-12 items-center justify-center rounded-full"
+                style={{ background: "rgba(245,181,72,0.12)", border: "1px solid rgba(245,181,72,0.3)", fontSize: "24px", fontWeight: 300 }}
+              >
+                +
+              </span>
+              <span className="text-sm font-semibold" style={{ color: "#A0956B" }}>Add first item</span>
+            </button>
+          ) : galleryMode === "swipe" ? (
             <div className="mx-auto max-w-sm px-4 pt-4">
               <SwipeStack
                 items={galleryItems}
@@ -118,27 +139,6 @@ export default function PublicGalleryPage() {
                 onEnd={() => setGalleryMode("grid")}
               />
             </div>
-          ) : galleryItems.length === 0 ? (
-            /* ── Blank "add first item" card ── */
-            <button
-              type="button"
-              onClick={() => router.push(`/vault/add?galleryId=${gallery.id}`)}
-              className="mx-auto flex w-full max-w-[200px] flex-col items-center justify-center gap-3 rounded-[24px] transition hover:scale-[1.02] active:scale-[0.98]"
-              style={{
-                aspectRatio: "2/3",
-                background: "rgba(15,25,45,0.6)",
-                border: "1.5px dashed rgba(245,181,72,0.35)",
-                color: "#F5B548",
-              }}
-            >
-              <span
-                className="flex h-12 w-12 items-center justify-center rounded-full"
-                style={{ background: "rgba(245,181,72,0.12)", border: "1px solid rgba(245,181,72,0.3)", fontSize: "24px", fontWeight: 300 }}
-              >
-                +
-              </span>
-              <span className="text-sm font-semibold" style={{ color: "#A0956B" }}>Add first item</span>
-            </button>
           ) : (
             <GalleryLayout
               layout={gallery.layout}
