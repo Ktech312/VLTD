@@ -1186,7 +1186,8 @@ export default function GalleryPage() {
         <ItemPickerSheet
           allItems={items}
           confirmedIds={draft.itemIds}
-          onConfirm={(ids) => {
+          sectionTitle="Section 1"
+          onConfirm={(ids, _title) => {
             update(ids);
             setPickerOpen(false);
           }}

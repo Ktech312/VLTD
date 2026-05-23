@@ -3,9 +3,20 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { type VaultItem } from "@/lib/vaultModel";
-import { UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
+import { UNIVERSE_KEYS } from "@/lib/taxonomy";
 
 export const MAX_EXHIBIT_ITEMS = 16;
+
+// Shortened labels so all 7 chips fit on one line
+const CHIP_LABEL: Record<string, string> = {
+  POP_CULTURE: "Pop Culture",
+  SPORTS: "Sports",
+  TCG: "TCG",
+  MUSIC: "Music",
+  JEWELRY_APPAREL: "Jewelry",
+  GAMES: "Games",
+  MISC: "Misc",
+};
 
 function searchText(i: VaultItem) {
   return [i.title, i.subtitle, i.number, i.grade, i.notes, i.category, i.universe]
@@ -19,17 +30,20 @@ function itemImage(i: VaultItem) {
 export function ItemPickerSheet({
   allItems,
   confirmedIds,
+  sectionTitle: initialTitle,
   onConfirm,
   onClose,
 }: {
   allItems: VaultItem[];
   confirmedIds: string[];
-  onConfirm: (ids: string[]) => void;
+  sectionTitle?: string;
+  onConfirm: (ids: string[], title: string) => void;
   onClose: () => void;
 }) {
   const [query, setQuery] = useState("");
   const [activeUniverses, setActiveUniverses] = useState<string[]>([]);
   const [picked, setPicked] = useState<Set<string>>(new Set(confirmedIds));
+  const [sectionName, setSectionName] = useState(initialTitle || "Section 1");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
@@ -47,7 +61,7 @@ export function ItemPickerSheet({
     });
   }, [allItems, query, activeUniverses]);
 
-  // Scroll lock — overflow:hidden on both html and body avoids iOS bounce + broken inner scroll
+  // Scroll lock on both html and body — prevents iOS bounce breaking inner scroll
   useEffect(() => {
     const html = document.documentElement;
     const body = document.body;
@@ -83,11 +97,13 @@ export function ItemPickerSheet({
   const addLabel = pickedCount > 0
     ? ("Add to Exhibition  (" + pickedCount + ")")
     : "Select items to add";
+
   const slotLabel = slotsLeft === 0
     ? "Exhibition is full (16 items max)"
     : (slotsLeft + " slot" + (slotsLeft === 1 ? "" : "s") + " remaining");
 
-  // Overlay uses explicit inline styles — avoids any Tailwind class resolution issues
+  const isAtMax = pickedCount >= MAX_EXHIBIT_ITEMS;
+
   const overlay = (
     <div
       style={{
@@ -103,15 +119,15 @@ export function ItemPickerSheet({
         overflowY: "hidden",
       }}
     >
-      {/* ── Header ── */}
+      {/* ── Row 1: Close + Search + Counter ── */}
       <div
         style={{
           flexShrink: 0,
           display: "flex",
           alignItems: "center",
-          gap: 10,
-          padding: "max(env(safe-area-inset-top, 0px), 14px) 16px 12px",
-          borderBottom: "1px solid rgba(255,255,255,0.07)",
+          gap: 8,
+          padding: "max(env(safe-area-inset-top, 0px), 12px) 14px 10px",
+          borderBottom: "none",
         }}
       >
         {/* Close */}
@@ -120,8 +136,8 @@ export function ItemPickerSheet({
           onClick={onClose}
           style={{
             flexShrink: 0,
-            width: 36,
-            height: 36,
+            width: 34,
+            height: 34,
             borderRadius: "50%",
             background: "rgba(255,255,255,0.07)",
             border: "none",
@@ -132,7 +148,7 @@ export function ItemPickerSheet({
           }}
           aria-label="Close picker"
         >
-          <svg viewBox="0 0 20 20" fill="none" style={{ width: 16, height: 16, color: "var(--muted)" }}>
+          <svg viewBox="0 0 20 20" fill="none" style={{ width: 15, height: 15, color: "var(--muted)" }}>
             <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
           </svg>
         </button>
@@ -144,11 +160,11 @@ export function ItemPickerSheet({
             fill="none"
             style={{
               position: "absolute",
-              left: 12,
+              left: 10,
               top: "50%",
               transform: "translateY(-50%)",
-              width: 16,
-              height: 16,
+              width: 14,
+              height: 14,
               color: "var(--muted)",
               pointerEvents: "none",
             }}
@@ -162,8 +178,8 @@ export function ItemPickerSheet({
             style={{
               width: "100%",
               borderRadius: 999,
-              padding: "8px 16px 8px 38px",
-              fontSize: 14,
+              padding: "7px 14px 7px 32px",
+              fontSize: 13,
               background: "rgba(255,255,255,0.07)",
               border: "1px solid rgba(255,255,255,0.09)",
               color: "var(--fg)",
@@ -173,38 +189,108 @@ export function ItemPickerSheet({
           />
         </div>
 
-        {/* Counter */}
+        {/* Counter badge */}
         <div
           style={{
             flexShrink: 0,
             borderRadius: 999,
-            padding: "6px 12px",
-            fontSize: 12,
-            fontWeight: 600,
+            padding: "5px 10px",
+            fontSize: 11,
+            fontWeight: 700,
             fontVariantNumeric: "tabular-nums",
-            background: pickedCount >= MAX_EXHIBIT_ITEMS ? "rgba(245,181,72,0.15)" : "rgba(255,255,255,0.07)",
-            color: pickedCount >= MAX_EXHIBIT_ITEMS ? "#F5B548" : "var(--muted)",
-            border: "1px solid " + (pickedCount >= MAX_EXHIBIT_ITEMS ? "rgba(245,181,72,0.3)" : "rgba(255,255,255,0.09)"),
+            background: isAtMax ? "rgba(245,181,72,0.15)" : "rgba(255,255,255,0.07)",
+            color: isAtMax ? "#F5B548" : "var(--muted)",
+            border: "1px solid " + (isAtMax ? "rgba(245,181,72,0.3)" : "rgba(255,255,255,0.09)"),
+            whiteSpace: "nowrap",
           }}
         >
           {pickedCount}/{MAX_EXHIBIT_ITEMS}
         </div>
       </div>
 
-      {/* ── Category filter chips ── */}
+      {/* ── Row 2: Section Name + Save ── */}
       <div
         style={{
           flexShrink: 0,
           display: "flex",
+          alignItems: "center",
           gap: 8,
-          overflowX: "auto",
-          padding: "10px 16px",
+          padding: "0 14px 10px",
+          borderBottom: "1px solid rgba(255,255,255,0.07)",
+        }}
+      >
+        {/* Section label */}
+        <div
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.14em",
+            color: "var(--muted)",
+            textTransform: "uppercase",
+            flexShrink: 0,
+          }}
+        >
+          SECTION
+        </div>
+
+        {/* Section name input */}
+        <input
+          value={sectionName}
+          onChange={(e) => setSectionName(e.target.value)}
+          placeholder="Section 1"
+          maxLength={40}
+          style={{
+            flex: 1,
+            background: "transparent",
+            border: "none",
+            borderBottom: "1px solid rgba(255,255,255,0.15)",
+            borderRadius: 0,
+            padding: "3px 2px",
+            fontSize: 13,
+            fontWeight: 600,
+            color: "var(--fg)",
+            outline: "none",
+          }}
+        />
+
+        {/* Small Save button */}
+        <button
+          type="button"
+          onClick={() => pickedCount > 0 && onConfirm(Array.from(picked), sectionName)}
+          disabled={pickedCount === 0}
+          style={{
+            flexShrink: 0,
+            borderRadius: 999,
+            padding: "5px 14px",
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.04em",
+            border: "1px solid " + (pickedCount > 0 ? "rgba(245,181,72,0.5)" : "rgba(255,255,255,0.09)"),
+            cursor: pickedCount > 0 ? "pointer" : "default",
+            opacity: pickedCount === 0 ? 0.4 : 1,
+            background: pickedCount > 0 ? "rgba(245,181,72,0.12)" : "transparent",
+            color: pickedCount > 0 ? "#F5B548" : "var(--muted)",
+          }}
+        >
+          Save
+        </button>
+      </div>
+
+      {/* ── Row 3: Universe filter chips — compact, single line ── */}
+      <div
+        style={{
+          flexShrink: 0,
+          display: "flex",
+          gap: 6,
+          padding: "8px 14px",
           borderBottom: "1px solid rgba(255,255,255,0.05)",
+          overflowX: "auto",
           WebkitOverflowScrolling: "touch",
         } as React.CSSProperties}
       >
         {UNIVERSE_KEYS.map((u) => {
           const active = activeUniverses.includes(u);
+          const label = CHIP_LABEL[u] || u;
           return (
             <button
               key={u}
@@ -213,24 +299,24 @@ export function ItemPickerSheet({
               style={{
                 flexShrink: 0,
                 borderRadius: 999,
-                padding: "5px 14px",
-                fontSize: 12,
-                fontWeight: 600,
+                padding: "3px 8px",
+                fontSize: 10,
+                fontWeight: 700,
                 border: "none",
                 cursor: "pointer",
-                transition: "all 0.15s",
                 background: active ? "rgba(245,181,72,0.18)" : "rgba(255,255,255,0.07)",
                 color: active ? "#F5B548" : "var(--muted)",
                 outline: active ? "1px solid rgba(245,181,72,0.4)" : "1px solid rgba(255,255,255,0.09)",
+                letterSpacing: "0.02em",
               }}
             >
-              {UNIVERSE_LABEL[u]}
+              {label}
             </button>
           );
         })}
       </div>
 
-      {/* ── Photo grid — flex-1 + explicit min-height so overflow-y actually scrolls ── */}
+      {/* ── Photo grid ── */}
       <div
         style={{
           flex: 1,
@@ -244,10 +330,10 @@ export function ItemPickerSheet({
           <div
             style={{
               display: "flex",
-              height: 192,
+              height: 160,
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 14,
+              fontSize: 13,
               color: "var(--muted)",
             }}
           >
@@ -326,10 +412,10 @@ export function ItemPickerSheet({
                   <div
                     style={{
                       position: "absolute",
-                      right: 6,
-                      top: 6,
-                      width: 24,
-                      height: 24,
+                      right: 5,
+                      top: 5,
+                      width: 22,
+                      height: 22,
                       borderRadius: "50%",
                       display: "flex",
                       alignItems: "center",
@@ -341,7 +427,7 @@ export function ItemPickerSheet({
                     }}
                   >
                     {isSelected && (
-                      <svg viewBox="0 0 20 20" fill="none" style={{ width: 14, height: 14 }}>
+                      <svg viewBox="0 0 20 20" fill="none" style={{ width: 13, height: 13 }}>
                         <path d="m4.5 10 3.5 3.5 7.5-7.5" stroke="#1A0F00" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     )}
@@ -357,7 +443,7 @@ export function ItemPickerSheet({
       <div
         style={{
           flexShrink: 0,
-          padding: "12px 16px max(env(safe-area-inset-bottom, 0px), 16px)",
+          padding: "10px 14px max(env(safe-area-inset-bottom, 0px), 14px)",
           borderTop: "1px solid rgba(255,255,255,0.07)",
           background: "rgba(8,12,20,0.97)",
         }}
@@ -367,7 +453,7 @@ export function ItemPickerSheet({
             style={{
               marginBottom: 8,
               textAlign: "center",
-              fontSize: 12,
+              fontSize: 11,
               color: slotsLeft === 0 ? "#F5B548" : "var(--muted)",
             }}
           >
@@ -376,13 +462,13 @@ export function ItemPickerSheet({
         )}
         <button
           type="button"
-          onClick={() => onConfirm(Array.from(picked))}
+          onClick={() => onConfirm(Array.from(picked), sectionName)}
           disabled={pickedCount === 0}
           style={{
             width: "100%",
             borderRadius: 999,
-            padding: "15px 0",
-            fontSize: 15,
+            padding: "14px 0",
+            fontSize: 14,
             fontWeight: 900,
             letterSpacing: "0.05em",
             border: "none",
