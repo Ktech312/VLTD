@@ -699,10 +699,6 @@ export default function GalleryPage() {
           <Link href="/museum" className={neutralPillClass()}>
             Back to Museum
           </Link>
-
-          <Link href="/collector" className={neutralPillClass()}>
-            Collector Profile
-          </Link>
         </div>
 
         {status ? (
@@ -736,6 +732,22 @@ export default function GalleryPage() {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.10),rgba(255,255,255,0)_28%),radial-gradient(circle_at_80%_0%,rgba(255,225,170,0.10),rgba(255,225,170,0)_24%)]" />
 
           <div className="relative">
+            {/* Cover image portrait preview — floats right inside the hero card */}
+            {draft.coverImage && (
+              <div
+                className="float-right mb-3 ml-3 overflow-hidden rounded-[18px] shadow-[0_8px_28px_rgba(0,0,0,0.5)]"
+                style={{ width: 88, aspectRatio: "3/4", flexShrink: 0 }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={draft.coverImage}
+                  alt="Cover art"
+                  className="h-full w-full object-cover"
+                  draggable={false}
+                />
+              </div>
+            )}
+
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <button
                 type="button"
@@ -1151,21 +1163,3 @@ export default function GalleryPage() {
                         <button
                           type="button"
                           onClick={() => copyInviteLink(entry.token)}
-                          className="vltd-pill-main-glow mt-3 inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-xs font-semibold text-[color:var(--fg)]"
-                        >
-                          {inviteCopiedToken === entry.token ? "Copied" : "Copy Invite Link"}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </aside>
-        </section>
-      </div>
-    </main>
-  );
-}
-
-
