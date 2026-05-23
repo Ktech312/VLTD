@@ -1,64 +1,75 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-import { loadGalleries } from "@/lib/galleryModel";
+import { loadGalleries, deleteGallery } from "@/lib/galleryModel";
 import { loadItems } from "@/lib/vaultModel";
 import { canViewPublicGallery, isAdultOnlyGallery } from "@/lib/galleryPublic";
 import { addWishlistItem } from "@/lib/wishlistModel";
-import FavoriteButton from "@/components/FavoriteButton";
-import { AdultContentGate, ReportContentButton, useAdultGate } from "@/components/PublicSafetyControls";
+import { AdultContentGate, useAdultGate } from "@/components/PublicSafetyControls";
 import SwipeStack from "@/components/SwipeStack";
 
 import GalleryHero from "@/components/gallery/GalleryHero";
 import GalleryLayout from "@/components/gallery/GalleryLayout";
 
 export default function PublicGalleryPage() {
-
   const params = useParams();
   const router = useRouter();
   const id = params.galleryId as string;
 
   const [galleryMode, setGalleryMode] = useState<"grid" | "swipe">("grid");
+  const [reportSent, setReportSent] = useState(false);
 
   const gallery = useMemo(() => {
     const galleries = loadGalleries();
     return galleries.find((entry) => entry.id === id) ?? null;
   }, [id]);
+
   const items = useMemo(() => loadItems(), []);
 
-  const galleryItems = useMemo(()=>{
+  const galleryItems = useMemo(() => {
+    if (!gallery) return [];
+    return items.filter((i) => gallery.itemIds.includes(i.id));
+  }, [gallery, items]);
 
-    if(!gallery) return [];
-
-    return items.filter(i => gallery.itemIds.includes(i.id));
-
-  },[gallery,items])
+  // If found via loadGalleries() (local storage), the viewer is the owner
+  const isOwner = gallery !== null;
 
   const adultGate = useAdultGate(isAdultOnlyGallery(gallery));
 
-  if(!gallery) return null;
+  function handleDelete() {
+    if (!gallery) return;
+    if (!confirm("Delete this exhibit? This cannot be undone.")) return;
+    deleteGallery(gallery.id);
+    router.push("/museum");
+  }
 
-  if(!canViewPublicGallery(gallery)){
+  function handleReport() {
+    setReportSent(true);
+    setTimeout(() => setReportSent(false), 3000);
+  }
 
+  if (!gallery) {
     return (
       <main className="min-h-screen text-[color:var(--fg)]">
-
         <div className="mx-auto max-w-4xl px-6 py-16">
-
-          <div className="text-2xl font-semibold">
-            This gallery is private
-          </div>
-
-          <div className="mt-2 text-sm opacity-70">
-            The owner has restricted public access.
-          </div>
-
+          <div className="text-2xl font-semibold">This exhibit is private</div>
+          <div className="mt-2 text-sm opacity-70">The owner has restricted public access.</div>
         </div>
-
       </main>
-    )
+    );
+  }
+
+  if (!canViewPublicGallery(gallery)) {
+    return (
+      <main className="min-h-screen text-[color:var(--fg)]">
+        <div className="mx-auto max-w-4xl px-6 py-16">
+          <div className="text-2xl font-semibold">This exhibit is private</div>
+          <div className="mt-2 text-sm opacity-70">The owner has restricted public access.</div>
+        </div>
+      </main>
+    );
   }
 
   if (adultGate.shouldGate) {
@@ -66,75 +77,77 @@ export default function PublicGalleryPage() {
   }
 
   return (
-
     <main className="min-h-screen text-[color:var(--fg)]">
+      <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
 
-      <div className="fixed right-4 top-4 z-40 flex flex-col items-end gap-2">
-        <FavoriteButton
-          contentType="gallery"
-          contentId={gallery.id}
-          metadata={{ title: gallery.title, itemCount: gallery.itemIds.length }}
-          label="Favorite gallery"
-          compact
+        {/* Hero with all controls embedded */}
+        <GalleryHero
+          gallery={gallery}
+          isOwner={isOwner}
+          galleryMode={galleryMode}
+          onSwipe={() => setGalleryMode("swipe")}
+          onGridView={() => setGalleryMode("grid")}
+          onAdd={() => router.push(`/vault/add?galleryId=${gallery.id}`)}
+          onDelete={handleDelete}
+          onReport={handleReport}
         />
-        <ReportContentButton contentType="gallery" contentId={gallery.id} />
-      </div>
 
-      <GalleryHero gallery={gallery} />
-
-      <div className="mx-auto max-w-7xl px-6 py-10">
-        <div className="mb-5 flex justify-end">
-          <button
-            type="button"
-            onClick={() => setGalleryMode((current) => (current === "grid" ? "swipe" : "grid"))}
-            className="rounded-full px-3 py-1.5 text-[12px] font-semibold ring-1 transition"
-            style={
-              galleryMode === "swipe"
-                ? {
-                    background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))",
-                    borderColor: "var(--theme-gold-border, rgba(245,181,72,0.4))",
-                    color: "var(--theme-gold, #F5B548)",
-                  }
-                : {
-                    background: "var(--surface)",
-                    borderColor: "var(--border)",
-                    color: "var(--muted)",
-                  }
-            }
-          >
-            {galleryMode === "swipe" ? "Swipe Mode" : "Swipe"}
-          </button>
-        </div>
-
-        {galleryMode === "swipe" ? (
-          <div className="mx-auto max-w-sm px-4 pt-4">
-            <SwipeStack
-              items={galleryItems}
-              mode="gallery"
-              onWant={(item) => {
-                addWishlistItem({
-                  title: item.title,
-                  targetPrice: item.currentValue ?? undefined,
-                  notes: `Spotted in ${gallery.title}'s gallery`,
-                  universe: item.universe,
-                  category: item.category,
-                });
-              }}
-              onOpen={(item) => {
-                router.push(`/vault/item/${item.id}`);
-              }}
-              onEnd={() => setGalleryMode("grid")}
-            />
+        {reportSent && (
+          <div className="mt-3 rounded-2xl px-4 py-3 text-sm text-center" style={{ background: "rgba(245,181,72,0.08)", border: "1px solid rgba(245,181,72,0.2)", color: "#F5B548" }}>
+            Report submitted — thank you.
           </div>
-        ) : (
-          <GalleryLayout
-            layout={gallery.layout}
-            items={galleryItems}
-          />
         )}
 
-      </div>
+        {/* Content */}
+        <div className="mt-6">
+          {galleryMode === "swipe" ? (
+            <div className="mx-auto max-w-sm px-4 pt-4">
+              <SwipeStack
+                items={galleryItems}
+                mode="gallery"
+                onWant={(item) => {
+                  addWishlistItem({
+                    title: item.title,
+                    targetPrice: item.currentValue ?? undefined,
+                    notes: `Spotted in ${gallery.title}'s exhibit`,
+                    universe: item.universe,
+                    category: item.category,
+                  });
+                }}
+                onOpen={(item) => router.push(`/vault/item/${item.id}`)}
+                onEnd={() => setGalleryMode("grid")}
+              />
+            </div>
+          ) : galleryItems.length === 0 ? (
+            /* ── Blank "add first item" card ── */
+            <button
+              type="button"
+              onClick={() => router.push(`/vault/add?galleryId=${gallery.id}`)}
+              className="mx-auto flex w-full max-w-[200px] flex-col items-center justify-center gap-3 rounded-[24px] transition hover:scale-[1.02] active:scale-[0.98]"
+              style={{
+                aspectRatio: "2/3",
+                background: "rgba(15,25,45,0.6)",
+                border: "1.5px dashed rgba(245,181,72,0.35)",
+                color: "#F5B548",
+              }}
+            >
+              <span
+                className="flex h-12 w-12 items-center justify-center rounded-full"
+                style={{ background: "rgba(245,181,72,0.12)", border: "1px solid rgba(245,181,72,0.3)", fontSize: "24px", fontWeight: 300 }}
+              >
+                +
+              </span>
+              <span className="text-sm font-semibold" style={{ color: "#A0956B" }}>Add first item</span>
+            </button>
+          ) : (
+            <GalleryLayout
+              layout={gallery.layout}
+              items={galleryItems}
+            />
+          )}
+        </div>
 
+      </div>
     </main>
-  )
+  );
 }
