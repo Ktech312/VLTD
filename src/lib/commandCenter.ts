@@ -120,18 +120,18 @@ export function getBaseCommands(): CommandItem[] {
     {
       id: "nav_museum",
       label: "Open Exhibitions",
-      subtitle: "View and manage curated galleries",
+      subtitle: "View and manage curated exhibits",
       href: "/museum",
       section: "museum",
-      keywords: ["museum", "galleries", "gallery", "exhibitions"],
+      keywords: ["museum", "galleries", "gallery", "exhibitions", "exhibits"],
     },
     {
       id: "nav_new_gallery",
-      label: "Create Gallery",
-      subtitle: "Start a new curated museum gallery",
+      label: "Create Exhibit",
+      subtitle: "Start a new curated exhibit",
       href: "/museum/new",
       section: "action",
-      keywords: ["new gallery", "add gallery", "museum create", "exhibition"],
+      keywords: ["new exhibit", "add exhibit", "new gallery", "add gallery", "museum create", "exhibition"],
     },
     {
       id: "nav_portfolio",
@@ -220,33 +220,33 @@ function getProductivityCommands(
   if (topGalleryByViews) {
     commands.push({
       id: "action_top_gallery_views",
-      label: "Open Top Gallery by Views",
+      label: "Open Top Exhibit by Views",
       subtitle: `${topGalleryByViews.title} • ${safeNumber(topGalleryByViews.analytics?.views)} views`,
       href: `/museum/${topGalleryByViews.id}`,
       section: "action",
-      keywords: ["top gallery", "most viewed gallery", "views", "popular gallery"],
+      keywords: ["top exhibit", "most viewed exhibit", "views", "popular exhibit"],
     });
   }
 
   if (largestGallery) {
     commands.push({
       id: "action_largest_gallery",
-      label: "Open Largest Gallery",
+      label: "Open Largest Exhibit",
       subtitle: `${largestGallery.title} • ${largestGallery.itemIds.length} items`,
       href: `/museum/${largestGallery.id}`,
       section: "action",
-      keywords: ["largest gallery", "most items", "biggest exhibition"],
+      keywords: ["largest exhibit", "most items", "biggest exhibition"],
     });
   }
 
   if (mostValuableGallery) {
     commands.push({
       id: "action_most_valuable_gallery",
-      label: "Open Most Valuable Gallery",
+      label: "Open Most Valuable Exhibit",
       subtitle: `${mostValuableGallery.title} • ${formatMoney(getGalleryItemsValue(mostValuableGallery, itemsById))}`,
       href: `/museum/${mostValuableGallery.id}`,
       section: "action",
-      keywords: ["most valuable gallery", "top value gallery", "best gallery value"],
+      keywords: ["most valuable exhibit", "top value exhibit", "best exhibit value"],
     });
   }
 
@@ -256,7 +256,7 @@ function getProductivityCommands(
 function getGalleryCommands(galleries: Gallery[]): CommandItem[] {
   return galleries.map((gallery) => ({
     id: `gallery_${gallery.id}`,
-    label: gallery.title?.trim() || "Untitled Gallery",
+    label: gallery.title?.trim() || "Untitled Exhibit",
     subtitle: `${gallery.itemIds.length} items • ${gallery.visibility} gallery`,
     href: `/museum/${gallery.id}`,
     section: "museum",

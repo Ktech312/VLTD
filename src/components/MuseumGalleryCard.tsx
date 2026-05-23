@@ -85,7 +85,7 @@ export default function MuseumGalleryCard({
       <div className="relative flex min-h-0 flex-1 flex-col">
         <div className="flex items-start justify-between gap-3">
           <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-            CURATED GALLERY
+            CURATED EXHIBIT
           </div>
 
           <div className="flex flex-wrap items-center gap-2">

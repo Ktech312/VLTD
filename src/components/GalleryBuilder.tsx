@@ -600,14 +600,14 @@ export default function GalleryBuilder({
         <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)]">
           <div className="grid gap-4">
               <div className="rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
-                <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">GALLERY VIEW</div>
+                <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">EXHIBIT VIEW</div>
                 <div className="mt-3 flex flex-col gap-3">
                   <div className="min-w-0 flex-1">
                     <PillSelect<GalleryViewOption>
                       value={selectedGalleryView}
                       onChange={setGalleryView}
                       options={GALLERY_VIEW_OPTIONS}
-                      ariaLabel="Gallery view"
+                      ariaLabel="Exhibit view"
                       align="left"
                       minWidthPx={280}
                       extraWidthPx={10}

@@ -112,7 +112,7 @@ export default function GuestGalleryPage() {
       resolveGuestGalleryViewModel(gallery, resolvedItems, {
         navigation: {
           show: !!gallery,
-          primaryLabel: "Gallery as Guest",
+          primaryLabel: "Exhibit as Guest",
           backHref: gallery ? `/museum/${gallery.id}` : null,
           homeHref: "/museum",
         },
@@ -132,9 +132,9 @@ export default function GuestGalleryPage() {
         <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
           <div className="rounded-[28px] border border-white/10 bg-black/25 p-8 text-center ring-1 ring-white/10 backdrop-blur-sm">
             <div className="text-[11px] tracking-[0.22em] text-white/55">GUEST PREVIEW</div>
-            <h1 className="mt-3 text-2xl font-semibold">Gallery not available</h1>
+            <h1 className="mt-3 text-2xl font-semibold">Exhibit not available</h1>
             <p className="mt-3 text-sm text-white/70">
-              This gallery could not be loaded for guest preview.
+              This exhibit could not be loaded for guest preview.
             </p>
             <div className="mt-6">
               <Link

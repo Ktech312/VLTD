@@ -24,7 +24,7 @@ export default function GallerySettings({
     <div className="mt-6">
 
       <div className="text-sm font-semibold">
-        Gallery Layout
+        Exhibit Layout
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">

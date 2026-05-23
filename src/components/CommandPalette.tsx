@@ -185,7 +185,7 @@ export default function CommandPalette({
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder='Try "vault", "museum", "create gallery", a profile name, or an item title...'
+            placeholder='Try "vault", "museum", "create exhibit", a profile name, or an item title...'
             className="mt-3 min-h-[48px] w-full rounded-2xl bg-[color:var(--input)] px-4 py-3 text-base text-[color:var(--fg)] ring-1 ring-[color:var(--border)] placeholder:text-[color:var(--muted2)] focus:outline-none"
           />
         </div>

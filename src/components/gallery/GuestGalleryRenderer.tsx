@@ -150,7 +150,7 @@ export default function GuestGalleryRenderer({
                   href={model.navigation.backHref}
                   className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
                 >
-                  Back to Gallery
+                  Back to Exhibit
                 </Link>
               ) : null}
 
@@ -220,7 +220,7 @@ export default function GuestGalleryRenderer({
                     contentType="gallery"
                     contentId={String(model.gallery?.id || model.galleryTitle)}
                     metadata={{ title: model.galleryTitle, itemCount: model.galleryItems.length }}
-                    label="Favorite gallery"
+                    label="Favorite exhibit"
                     showMessage={false}
                   />
                   <div className="rounded-full bg-black/15 px-4 py-2 text-sm font-semibold ring-1 ring-white/10">
@@ -307,7 +307,7 @@ export default function GuestGalleryRenderer({
             <section className={["mt-6 mx-auto", GALLERY_STAGE_WIDTH_CLASS].join(" ")}>
               <div className="rounded-[28px] bg-[color:var(--surface)] p-8 ring-1 ring-[color:var(--border)]">
                 <div className="text-sm text-[color:var(--muted)]">
-                  This gallery does not currently contain any visible items.
+                  This exhibit does not currently contain any visible items.
                 </div>
               </div>
             </section>

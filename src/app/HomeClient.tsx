@@ -323,7 +323,7 @@ export default function HomeClient() {
                   { label: "Quick Add", href: "/vault/quick", accent: true,  tip: "Fast manual form -- minimal fields, designed for speed when you already know what something is." },
                   { label: "Import",    href: "/vault/import", accent: false, tip: "" },
                   { label: "Vault",     href: "/vault",        accent: false, tip: "" },
-                  { label: "Gallery",   href: "/museum",       accent: false, tip: "" },
+                  { label: "Exhibit",   href: "/museum",       accent: false, tip: "" },
                   { label: "Add Item",  href: "/vault/add",    accent: false, tip: "Full detail entry -- all fields including grade, purchase price, edition, storage location, and more." },
                   { label: "Account",   href: "/account",      accent: false, tip: "" },
                 ] as { label: string; href: string; accent: boolean; tip: string }[]).map(({ label, href, accent, tip }) => (

@@ -293,7 +293,7 @@ export default function MuseumPage() {
     updateGallery(gallerySettings);
     refresh();
     setGallerySettings(null);
-    setStatusMessage("Gallery settings updated.");
+    setStatusMessage("Exhibit settings updated.");
   }
 
   return (
@@ -319,7 +319,7 @@ export default function MuseumPage() {
                 </div>
 
                 <h1 className="mt-2 text-3xl font-semibold sm:text-[2.2rem]">
-                  Curated Galleries
+                  Curated Exhibitions
                 </h1>
 
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
@@ -333,7 +333,7 @@ export default function MuseumPage() {
                   href="/museum/new"
                   className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-ring)] vltd-pill-main-glow transition hover:bg-[color:var(--pill-hover)]"
                 >
-                  Add Gallery
+                  Add Exhibit
                 </Link>
               </div>
             </div>
@@ -345,7 +345,7 @@ export default function MuseumPage() {
                 </div>
                 <div className="mt-2 text-2xl font-semibold">{stats.total}</div>
                 <div className="mt-1 text-sm text-[color:var(--muted)]">
-                  All galleries
+                  All exhibits
                 </div>
               </div>
 
@@ -365,7 +365,7 @@ export default function MuseumPage() {
                 </div>
                 <div className="mt-2 text-2xl font-semibold">{stats.publicCount}</div>
                 <div className="mt-1 text-sm text-[color:var(--muted)]">
-                  Share-ready galleries
+                  Share-ready exhibits
                 </div>
               </div>
 
@@ -398,7 +398,7 @@ export default function MuseumPage() {
           <section className="mt-6 grid gap-5 xl:grid-cols-3">
             <div className="vltd-panel-soft rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
-                STRONGEST GALLERY
+                STRONGEST EXHIBIT
               </div>
               <h2 className="mt-2 text-xl font-semibold">
                 {strongestGallery?.gallery.title || "—"}
@@ -406,7 +406,7 @@ export default function MuseumPage() {
               <div className="mt-3 text-sm text-[color:var(--muted)]">
                 {strongestGallery
                   ? `${strongestGallery.score.score}/100 • ${scoreBandTone(strongestGallery.score.band)}`
-                  : "No gallery signal yet."}
+                  : "No exhibit signal yet."}
               </div>
               {strongestGallery ? (
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -581,7 +581,7 @@ export default function MuseumPage() {
                     <div className="relative flex min-h-0 flex-1 flex-col">
                       <div className="flex items-start justify-between gap-3">
                         <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                          CURATED GALLERY
+                          CURATED EXHIBIT
                         </div>
 
                         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -668,7 +668,7 @@ export default function MuseumPage() {
                               handleAskDelete(gallery);
                             }}
                             className="order-first inline-flex min-h-[28px] items-center justify-center rounded-full bg-red-500/10 px-3 py-1 text-[11px] font-semibold text-red-100 ring-1 ring-red-400/20 transition hover:bg-red-500/18"
-                            aria-label={`Delete gallery ${gallery.title}`}
+                            aria-label={`Delete exhibit ${gallery.title}`}
                           >
                             Delete
                           </button>
@@ -687,19 +687,19 @@ export default function MuseumPage() {
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
           <div className="w-full max-w-lg rounded-[28px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
-              DELETE GALLERY
+              DELETE EXHIBIT
             </div>
 
             <h2 className="mt-3 text-2xl font-semibold">
-              Delete Gallery: {galleryPendingDelete.title}?
+              Delete Exhibit: {galleryPendingDelete.title}?
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
-              This will delete gallery {galleryPendingDelete.title}. Are you sure you want to continue?
+              This will delete exhibit {galleryPendingDelete.title}. Are you sure you want to continue?
             </p>
 
             <p className="mt-4 text-sm text-[color:var(--muted)]">
-              Deleting this Gallery will not delete items in your Vault.
+              Deleting this Exhibit will not delete items in your Vault.
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -718,7 +718,7 @@ export default function MuseumPage() {
                 disabled={isDeleting}
                 className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Cancel, save My Gallery
+                Cancel, keep My Exhibit
               </button>
             </div>
           </div>
@@ -729,7 +729,7 @@ export default function MuseumPage() {
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-[26px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
-              GALLERY STATUS
+              EXHIBIT STATUS
             </div>
             <h2 className="mt-2 text-xl font-semibold">{gallerySettings.title}</h2>
 

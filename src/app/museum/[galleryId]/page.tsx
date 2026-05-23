@@ -252,14 +252,14 @@ function applyAccessMode(current: Gallery, mode: GalleryAccessPillMode): Gallery
 function accessDescription(mode: GalleryAccessPillMode) {
   switch (mode) {
     case "public_gallery":
-      return "Public Gallery - Available to registered or unregistered users, searchable on Home page.";
+      return "Public Exhibit - Available to registered or unregistered users, searchable on Home page.";
     case "guest_view":
-      return "Guest View - Anyone with access to the shared link can view your gallery.";
+      return "Guest View - Anyone with access to the shared link can view your exhibit.";
     case "registered_users":
-      return "Registered Users - Any registered user with access to the shared link can view your gallery, allows analytics on views.";
+      return "Registered Users - Any registered user with access to the shared link can view your exhibit, allows analytics on views.";
     case "private":
     default:
-      return "Private Gallery - This only for yourself, good for gallery test beds before sharing with anyone.";
+      return "Private Exhibit - This only for yourself, good for exhibit test beds before sharing with anyone.";
   }
 }
 
@@ -593,13 +593,13 @@ export default function GalleryPage() {
       setStatusTone(vaultSyncError ? "neutral" : "good");
       setStatus(
         vaultSyncError
-          ? "Gallery saved. Some vault sync tasks still need retrying."
-          : "Gallery saved."
+          ? "Exhibit saved. Some vault sync tasks still need retrying."
+          : "Exhibit saved."
       );
     } catch (error) {
       console.error("Direct gallery sync failed:", error);
       setStatusTone("neutral");
-      setStatus("Gallery saved locally. Cloud gallery sync failed.");
+      setStatus("Exhibit saved locally. Cloud sync failed.");
     }
   }
 
@@ -677,9 +677,9 @@ export default function GalleryPage() {
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               MUSEUM
             </div>
-            <h1 className="mt-3 text-2xl font-semibold">Gallery not found</h1>
+            <h1 className="mt-3 text-2xl font-semibold">Exhibit not found</h1>
             <p className="mt-3 text-sm text-[color:var(--muted)]">
-              This gallery could not be loaded from local storage.
+              This exhibit could not be loaded from local storage.
             </p>
             <div className="mt-6">
               <Link href="/museum" className={neutralPillClass()}>
@@ -781,7 +781,7 @@ export default function GalleryPage() {
 
                 <div className="min-w-0">
                   <div className="text-[11px] tracking-[0.28em] text-[color:var(--muted2)]">
-                    CURATED GALLERY
+                    CURATED EXHIBIT
                   </div>
 
                   <h1 className="mt-2 text-2xl font-semibold sm:text-3xl">
@@ -904,10 +904,10 @@ export default function GalleryPage() {
                           X
                         </button>
                       </div>
-                      <div className="mt-3"><strong>Public Gallery</strong> - Available to registered or unregistered users, searchable on Home page.</div>
-                      <div className="mt-2"><strong>Guest View</strong> - Anyone with access to the shared link can view your gallery.</div>
-                      <div className="mt-2"><strong>Registered Users</strong> - Any registered user with access to the shared link can view your gallery and analytics track signed-in views.</div>
-                      <div className="mt-2"><strong>Private Gallery</strong> - For your own testing before sharing with anyone.</div>
+                      <div className="mt-3"><strong>Public Exhibit</strong> - Available to registered or unregistered users, searchable on Home page.</div>
+                      <div className="mt-2"><strong>Guest View</strong> - Anyone with access to the shared link can view your exhibit.</div>
+                      <div className="mt-2"><strong>Registered Users</strong> - Any registered user with access to the shared link can view your exhibit and analytics track signed-in views.</div>
+                      <div className="mt-2"><strong>Private Exhibit</strong> - For your own testing before sharing with anyone.</div>
                       <div className="mt-3 rounded-xl bg-[color:var(--input)] px-3 py-2 text-xs text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">Current mode: {accessDescription(selectedAccessMode)}</div>
                     </div>
                   ) : null}
@@ -925,7 +925,7 @@ export default function GalleryPage() {
                       onClick={() => updateAccessMode("public_gallery")}
                       className={accessPillClass(selectedAccessMode === "public_gallery")}
                     >
-                      Public Gallery
+                      Public Exhibit
                     </button>
                     <button
                       type="button"
@@ -947,9 +947,9 @@ export default function GalleryPage() {
 
                   <label className="mt-4 flex items-start justify-between gap-4 rounded-2xl bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)]">
                     <span>
-                      <span className="block text-sm font-semibold">18+ gallery</span>
+                      <span className="block text-sm font-semibold">18+ exhibit</span>
                       <span className="mt-1 block text-xs leading-5 text-[color:var(--muted)]">
-                        Public viewers must confirm they are 18 or older before entering this gallery.
+                        Public viewers must confirm they are 18 or older before entering this exhibit.
                       </span>
                     </span>
                     <input
