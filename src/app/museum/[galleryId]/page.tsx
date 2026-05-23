@@ -27,6 +27,7 @@ import { getVaultImagePublicUrl } from "@/lib/vaultCloud";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import GalleryBuilder from "@/components/GalleryBuilder";
+import { ItemPickerSheet } from "@/components/gallery/ItemPickerSheet";
 import { formatMoney, getGalleryMetrics } from "@/lib/portfolioMetrics";
 
 type GalleryAccessPillMode = "private" | "public_gallery" | "guest_view" | "registered_users";
@@ -283,6 +284,7 @@ export default function GalleryPage() {
   const [gallery, setGallery] = useState<Gallery | null>(null);
   const [draft, setDraft] = useState<Gallery | null>(null);
   const [items, setItems] = useState<VaultItem[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [accessInfoOpen, setAccessInfoOpen] = useState(false);
   const [inviteLabel, setInviteLabel] = useState("");
@@ -1011,6 +1013,7 @@ export default function GalleryPage() {
             onChange={update}
             onGalleryChange={patchDraft}
             onQuickSave={saveDraft}
+            onOpenPicker={() => setPickerOpen(true)}
           />
         </section>
 
@@ -1178,6 +1181,18 @@ export default function GalleryPage() {
           </aside>
         </section>
       </div>
+
+      {pickerOpen && (
+        <ItemPickerSheet
+          allItems={items}
+          confirmedIds={draft.itemIds}
+          onConfirm={(ids) => {
+            update(ids);
+            setPickerOpen(false);
+          }}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
     </main>
   );
 }

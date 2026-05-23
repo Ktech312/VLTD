@@ -20,7 +20,7 @@ import {
   getGalleryThemeLabel,
 } from "@/lib/galleryModel";
 import BuilderPreviewBridge from "@/components/gallery/BuilderPreviewBridge";
-import { ItemPickerSheet, MAX_EXHIBIT_ITEMS } from "@/components/gallery/ItemPickerSheet";
+import { MAX_EXHIBIT_ITEMS } from "@/components/gallery/ItemPickerSheet";
 import { PillSelect, type PillSelectOption } from "@/components/ui/PillSelect";
 import { isUniverseKey, UNIVERSE_LABEL } from "@/lib/taxonomy";
 
@@ -30,6 +30,7 @@ type Props = {
   onChange: (ids: string[]) => void;
   onGalleryChange: (updater: (current: Gallery) => Gallery) => void;
   onQuickSave?: () => void;
+  onOpenPicker?: () => void;
 };
 
 const GALLERY_BACKGROUND_BUCKET = "gallery-backgrounds";
@@ -265,10 +266,10 @@ export default function GalleryBuilder({
   onChange,
   onGalleryChange,
   onQuickSave,
+  onOpenPicker,
 }: Props) {
   const previewScale = 0.36;
   const previewWidthPercent = 100 / previewScale;
-  const [pickerOpen, setPickerOpen] = useState(false);
   const [previewExpanded, setPreviewExpanded] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
@@ -1177,7 +1178,7 @@ export default function GalleryBuilder({
             {/* Open picker button */}
             <button
               type="button"
-              onClick={() => setPickerOpen(true)}
+              onClick={() => onOpenPicker?.()}
               className="mt-4 w-full rounded-full py-[15px] text-[15px] font-black tracking-wide transition active:opacity-80"
               style={{
                 background:
@@ -1199,19 +1200,6 @@ export default function GalleryBuilder({
           </div>
         </section>
       </div>
-
-      {/* ── Vault Picker Sheet (Google Photos style) ── */}
-      {pickerOpen && (
-        <ItemPickerSheet
-          allItems={items}
-          confirmedIds={gallery.itemIds}
-          onConfirm={(ids) => {
-            onChange(ids);
-            setPickerOpen(false);
-          }}
-          onClose={() => setPickerOpen(false)}
-        />
-      )}
 
       {/* ── Expanded Live Preview Overlay ── */}
       {previewExpanded && (
