@@ -477,7 +477,7 @@ export default function GalleryBuilder({
   return (
     <div className="mt-6 grid gap-5">
       <section className="rounded-[24px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
-        <div className="flex flex-col items-start gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
             <div className="text-sm font-semibold">Exhibition Layout</div>
             <div className="mt-1 text-sm text-[color:var(--muted)]">
@@ -916,14 +916,14 @@ export default function GalleryBuilder({
                       />
                     </div>
 
-                    <div className="flex shrink-0 flex-col gap-2 sm:min-w-[220px]">
+                    <div className="flex shrink-0 flex-wrap items-center gap-2">
                       <select
                         value=""
                         onChange={(event) => {
                           assignItemToSection(section.id, event.target.value);
                           event.currentTarget.value = "";
                         }}
-                        className="min-h-[36px] rounded-full bg-[color:var(--input)] px-3 py-1 text-xs ring-1 ring-[color:var(--border)]"
+                        className="w-auto min-h-[36px] rounded-full bg-[color:var(--input)] px-3 py-1 text-xs ring-1 ring-[color:var(--border)]"
                       >
                         <option value="">+ Assign selected item</option>
                         {selectedItems.map((item) => (
@@ -941,7 +941,7 @@ export default function GalleryBuilder({
                       <button
                         type="button"
                         onClick={() => onGalleryChange((current) => syncSectionsAndLayout(current, getGallerySections(current).filter((entry) => entry.id !== section.id)))}
-                        className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                        className="inline-flex items-center rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
                       >
                         Remove Section
                       </button>
@@ -1010,7 +1010,7 @@ export default function GalleryBuilder({
                                     })
                                   }
                                     className={[
-                                      "vltd-selectable rounded-full px-3 py-1 text-[11px] font-semibold ring-1",
+                                      "vltd-selectable inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold ring-1",
                                       featured
                                         ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
                                         : "bg-[color:var(--surface)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
@@ -1055,7 +1055,7 @@ export default function GalleryBuilder({
                                           return syncSectionsAndLayout(current, nextSections);
                                         })
                                       }
-                                      className="rounded-full bg-[color:var(--surface)] px-3 py-1 text-[11px] ring-1 ring-[color:var(--border)]"
+                                      className="w-auto rounded-full bg-[color:var(--surface)] px-3 py-1 text-[11px] ring-1 ring-[color:var(--border)]"
                                     >
                                       {sections.map((target) => (
                                         <option key={target.id} value={target.id}>
@@ -1067,7 +1067,7 @@ export default function GalleryBuilder({
                                   <button
                                     type="button"
                                     onClick={() => removeItemFromSection(section.id, item.id)}
-                                    className="rounded-full bg-red-500/10 px-2.5 py-1 text-[11px] font-semibold text-red-100 ring-1 ring-red-400/20"
+                                    className="inline-flex items-center rounded-full bg-red-500/10 px-2.5 py-1 text-[11px] font-semibold text-red-100 ring-1 ring-red-400/20"
                                   >
                                     Remove
                                   </button>
