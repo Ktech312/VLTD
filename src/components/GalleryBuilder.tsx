@@ -798,6 +798,7 @@ export default function GalleryBuilder({
               "mt-3 overflow-hidden rounded-[24px] ring-1",
               previewPanelClass,
             ].join(" ")}
+            style={{ maxWidth: "calc(100vw - 4rem)", width: "100%" }}
           >
             <div className="p-2">
               <div className="flex flex-wrap">
