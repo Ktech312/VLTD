@@ -476,7 +476,7 @@ export default function GalleryBuilder({
 
   return (
     <div className="mt-6 grid gap-5">
-      <section className="rounded-[24px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
+      <section className="overflow-hidden rounded-[24px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
             <div className="text-sm font-semibold">Exhibition Layout</div>
@@ -808,7 +808,7 @@ export default function GalleryBuilder({
                     key={rowIdx}
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(4, 1fr)",
+                      gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
                       gap: 4,
                       width: "100%",
                       minWidth: 0,
