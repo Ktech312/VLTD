@@ -325,7 +325,7 @@ export default function GalleryBuilder({
   const previewItems = useMemo(() => {
     if (sections.length === 0) return selectedItems;
     const activeSection = sections[activeSectionIdx];
-    if (!activeSection || activeSection.itemIds.length === 0) return selectedItems;
+    if (!activeSection || activeSection.itemIds.length === 0) return [];
     const sectionSet = new Set(activeSection.itemIds);
     return selectedItems.filter((item) => sectionSet.has(item.id));
   }, [selectedItems, sections, activeSectionIdx]);
