@@ -274,6 +274,8 @@ export default function GalleryBuilder({
   const [previewExpanded, setPreviewExpanded] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const [gridDragId, setGridDragId] = useState<string | null>(null);
+  const [gridDragOverId, setGridDragOverId] = useState<string | null>(null);
   const [shelfFileName, setShelfFileName] = useState("");
   const [backgroundUploadError, setBackgroundUploadError] = useState("");
   const [previewNaturalHeight, setPreviewNaturalHeight] = useState(1120);
@@ -329,13 +331,6 @@ export default function GalleryBuilder({
     const sectionSet = new Set(activeSection.itemIds);
     return selectedItems.filter((item) => sectionSet.has(item.id));
   }, [selectedItems, sections, activeSectionIdx]);
-
-  // Stripped gallery for the embedded preview — no sections (avoids duplicate card rendering),
-  // forced to grid mode so the compact 4-col card grid always shows with interactive features.
-  const previewGallery = useMemo(
-    (): Gallery => ({ ...gallery, sections: [], displayMode: "grid" }),
-    [gallery]
-  );
 
   const themePack = getGalleryThemePack(gallery);
   const displayMode = getGalleryDisplayMode(gallery);
@@ -865,17 +860,110 @@ export default function GalleryBuilder({
             </div>
           ) : null}
 
-          {/* Live section preview — remove button · ghost overlay · drag-to-reorder */}
-          <div className="mt-3" style={{ maxWidth: "calc(100vw - 4rem)", width: "100%" }}>
-            <BuilderPreviewBridge
-              gallery={previewGallery}
-              items={previewItems}
-              onHeightChange={setPreviewNaturalHeight}
-              onRemoveItem={sections.length > 0 ? handlePreviewRemoveItem : undefined}
-              onReorder={sections.length > 0 ? handlePreviewReorder : undefined}
-            />
-            <div className="mt-1.5 text-center text-[10px] font-semibold uppercase tracking-widest text-white/25">
-              {previewItems.length} / 16 items · {displayMode === "grid" ? "Grid View" : getGalleryThemeLabel(themePack)}
+          {/* Mini shelf preview — 16 slots, ghosts for empty, remove · ghost overlay · drag-to-reorder */}
+          <div
+            className={["mt-3 overflow-hidden rounded-[24px] ring-1", previewPanelClass].join(" ")}
+            style={{ maxWidth: "calc(100vw - 4rem)", width: "100%" }}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              const toId = (e.target as HTMLElement).closest("[data-grid-id]")?.getAttribute("data-grid-id");
+              const fromId = gridDragId || e.dataTransfer.getData("text/plain");
+              if (fromId && toId && fromId !== toId && sections.length > 0) {
+                const section = sections[activeSectionIdx];
+                if (section) {
+                  handlePreviewReorder(
+                    (() => {
+                      const ids = [...section.itemIds];
+                      const fi = ids.indexOf(fromId), ti = ids.indexOf(toId);
+                      if (fi < 0 || ti < 0) return ids;
+                      const [m] = ids.splice(fi, 1);
+                      ids.splice(ti, 0, m);
+                      return ids;
+                    })()
+                  );
+                }
+              }
+              setGridDragId(null); setGridDragOverId(null);
+            }}
+            onDragEnd={() => { setGridDragId(null); setGridDragOverId(null); }}
+          >
+            <div className="p-2">
+              <div className="flex flex-wrap">
+                {Array.from({ length: 16 }).map((_, i) => {
+                  const item = previewItems[i];
+                  const img = item ? itemImage(item) : null;
+                  const subtitle = item ? [item.subtitle, item.number, item.grade].filter(Boolean).join(" • ") : null;
+                  const isDragOver = item ? gridDragOverId === item.id && gridDragId !== item.id : false;
+                  return (
+                    <div
+                      key={item?.id ?? "ghost-" + i}
+                      data-grid-id={item?.id}
+                      style={{ width: "25%", padding: 2 }}
+                      draggable={!!item && sections.length > 0}
+                      onDragStart={item && sections.length > 0 ? (e) => {
+                        e.dataTransfer.setData("text/plain", item.id);
+                        e.dataTransfer.effectAllowed = "move";
+                        setGridDragId(item.id);
+                      } : undefined}
+                      onDragOver={item ? (e) => {
+                        e.preventDefault();
+                        if (item.id !== gridDragId) setGridDragOverId(item.id);
+                      } : undefined}
+                    >
+                      {item ? (
+                        <div
+                          className="relative overflow-hidden rounded-lg"
+                          style={{
+                            aspectRatio: "3/4",
+                            background: "rgba(255,255,255,0.05)",
+                            boxShadow: isDragOver
+                              ? "0 0 0 2px rgba(245,181,72,0.8), 0 0 12px rgba(245,181,72,0.4)"
+                              : "0 0 0 1.5px rgba(245,181,72,0.55), 0 0 8px rgba(245,181,72,0.25)",
+                            cursor: sections.length > 0 ? "grab" : "default",
+                            transform: isDragOver ? "scale(1.04)" : "scale(1)",
+                            transition: "transform 0.1s, box-shadow 0.1s",
+                          }}
+                        >
+                          {/* Remove button */}
+                          {sections.length > 0 ? (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); handlePreviewRemoveItem(item.id); }}
+                              className="absolute right-1 top-1 z-20 grid h-[18px] w-[18px] place-items-center rounded-full border border-red-400/70 bg-black/75"
+                              style={{ boxShadow: "0 0 8px rgba(248,113,113,0.75), 0 0 18px rgba(248,113,113,0.35)" }}
+                              aria-label={`Remove ${item.title}`}
+                            >
+                              <span className="h-[2px] w-[8px] rounded-full bg-red-400" style={{ boxShadow: "0 0 4px rgba(248,113,113,0.9)" }} aria-hidden="true" />
+                            </button>
+                          ) : null}
+
+                          {/* Image */}
+                          {img ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={img} alt={item.title} className="h-full w-full object-cover" draggable={false} />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-[9px] text-[color:var(--muted)]">—</div>
+                          )}
+
+                          {/* Ghost title overlay */}
+                          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-1.5 pb-1.5 pt-5">
+                            <div className="line-clamp-2 text-[8px] font-semibold leading-tight text-white/90">{item.title}</div>
+                            {subtitle ? (
+                              <div className="mt-0.5 line-clamp-1 text-[7px] leading-tight text-white/55">{subtitle}</div>
+                            ) : null}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="aspect-[3/4] rounded-lg border border-dashed border-white/10 bg-white/[0.02]" />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-2 text-center text-[10px] font-semibold uppercase tracking-widest text-white/25">
+                {previewItems.length} / 16 items · {displayMode === "grid" ? "Grid View" : getGalleryThemeLabel(themePack)}
+              </div>
             </div>
           </div>
         </div>
@@ -1285,7 +1373,6 @@ export default function GalleryBuilder({
         </section>
 
         <section>
-          {/* ── Compact Vault Picker Pill ── */}
           <div
             className="rounded-[20px] p-4 ring-1"
             style={{
@@ -1293,7 +1380,6 @@ export default function GalleryBuilder({
               border: "1px solid rgba(255,255,255,0.07)",
             }}
           >
-            {/* Header row */}
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold">Vault Pieces</div>
@@ -1304,25 +1390,14 @@ export default function GalleryBuilder({
               <div
                 className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold tabular-nums"
                 style={{
-                  background:
-                    selectedCount >= MAX_EXHIBIT_ITEMS
-                      ? "rgba(245,181,72,0.15)"
-                      : "rgba(255,255,255,0.07)",
-                  color:
-                    selectedCount >= MAX_EXHIBIT_ITEMS ? "#F5B548" : "var(--muted)",
-                  border: `1px solid ${
-                    selectedCount >= MAX_EXHIBIT_ITEMS
-                      ? "rgba(245,181,72,0.3)"
-                      : "rgba(255,255,255,0.09)"
-                  }`,
+                  background: selectedCount >= MAX_EXHIBIT_ITEMS ? "rgba(245,181,72,0.15)" : "rgba(255,255,255,0.07)",
+                  color: selectedCount >= MAX_EXHIBIT_ITEMS ? "#F5B548" : "var(--muted)",
+                  border: `1px solid ${selectedCount >= MAX_EXHIBIT_ITEMS ? "rgba(245,181,72,0.3)" : "rgba(255,255,255,0.09)"}`,
                 }}
               >
                 {selectedCount}/{MAX_EXHIBIT_ITEMS}
               </div>
             </div>
-
-
-            {/* Open picker button */}
             <button
               type="button"
               onClick={() => {
@@ -1335,33 +1410,20 @@ export default function GalleryBuilder({
               }}
               className="mt-4 w-full rounded-full py-[15px] text-[15px] font-black tracking-wide transition active:opacity-80"
               style={{
-                background:
-                  selectedCount > 0
-                    ? "linear-gradient(135deg, #FFE08A 0%, #F5B548 40%, #C8941F 100%)"
-                    : "rgba(255,255,255,0.07)",
+                background: selectedCount > 0 ? "linear-gradient(135deg, #FFE08A 0%, #F5B548 40%, #C8941F 100%)" : "rgba(255,255,255,0.07)",
                 color: selectedCount > 0 ? "#1A0F00" : "var(--muted)",
-                boxShadow:
-                  selectedCount > 0
-                    ? "0 0 0 1px rgba(245,181,72,0.35), 0 8px 28px rgba(245,181,72,0.3)"
-                    : "none",
+                boxShadow: selectedCount > 0 ? "0 0 0 1px rgba(245,181,72,0.35), 0 8px 28px rgba(245,181,72,0.3)" : "none",
                 border: selectedCount === 0 ? "1px solid rgba(255,255,255,0.09)" : "none",
               }}
             >
-              {selectedCount === 0
-                ? "Open Vault Picker"
-                : `Edit Selection  (${selectedCount})`}
+              {selectedCount === 0 ? "Open Vault Picker" : `Edit Selection  (${selectedCount})`}
             </button>
           </div>
         </section>
       </div>
 
-      {/* ── Expanded Live Preview Overlay ── */}
       {previewExpanded && (
-        <div
-          className="fixed inset-0 z-[75] flex flex-col"
-          style={{ background: "#080C14" }}
-        >
-          {/* Header */}
+        <div className="fixed inset-0 z-[75] flex flex-col" style={{ background: "#080C14" }}>
           <div
             className="flex shrink-0 items-center justify-between px-4 pb-3"
             style={{
@@ -1370,9 +1432,7 @@ export default function GalleryBuilder({
             }}
           >
             <div>
-              <div className="text-[11px] tracking-[0.2em]" style={{ color: "var(--muted2)" }}>
-                LIVE PREVIEW
-              </div>
+              <div className="text-[11px] tracking-[0.2em]" style={{ color: "var(--muted2)" }}>LIVE PREVIEW</div>
               <div className="mt-0.5 flex items-baseline gap-1.5 text-sm font-semibold">
                 {gallery.title || "Exhibition"}
                 {sections.length > 0 && sections[activeSectionIdx] && (
@@ -1394,14 +1454,8 @@ export default function GalleryBuilder({
               </svg>
             </button>
           </div>
-
-          {/* Guest view — shelf/theme exactly as visitors see it, header skipped in embedded mode */}
           <div className="flex-1 overflow-y-auto overscroll-contain" style={{ minHeight: 0, WebkitOverflowScrolling: "touch" }}>
-            <BuilderPreviewBridge
-              gallery={gallery}
-              items={previewItems}
-              onHeightChange={setPreviewNaturalHeight}
-            />
+            <BuilderPreviewBridge gallery={gallery} items={previewItems} onHeightChange={setPreviewNaturalHeight} />
           </div>
         </div>
       )}

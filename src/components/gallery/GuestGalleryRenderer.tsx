@@ -146,9 +146,6 @@ function ViewerItemCard({
           ) : null}
         </div>
 
-        <div className="px-1.5 pb-1.5 pt-1">
-          <div className="line-clamp-1 text-[10px] font-semibold leading-tight">{item.title}</div>
-        </div>
       </article>
     );
   }
