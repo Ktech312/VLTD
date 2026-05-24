@@ -559,7 +559,7 @@ export default function GalleryBuilder({
         </div>
 
         {/* ── LIVE PREVIEW PANEL (merged with Exhibit View controls) ── */}
-        <div className="mt-5 rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+        <div className="mt-5 overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
 
           {/* Header row: label left, Expand right */}
           <div className="flex items-center justify-between gap-3">
@@ -799,7 +799,7 @@ export default function GalleryBuilder({
               previewPanelClass,
             ].join(" ")}
           >
-            <div className="p-3">
+            <div className="p-3 min-w-0 w-full">
               {[0, 1, 2, 3].map((rowIdx) => {
                 const rowItems = selectedItems.slice(rowIdx * 4, rowIdx * 4 + 4);
                 const ghostCount = 4 - rowItems.length;
