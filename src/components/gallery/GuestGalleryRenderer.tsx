@@ -129,7 +129,7 @@ function ViewerItemCard({
         {itemSubtitle(item) || "—"}
       </div>
       <div className="mt-3 rounded-full bg-black/10 px-3 py-1 text-[11px] text-[color:var(--muted)] ring-1 ring-black/10">
-        Estimated market value {formatMoney(item.currentValue)}
+        EMV {formatMoney(item.currentValue)}
       </div>
     </article>
   );
@@ -249,7 +249,7 @@ export default function GuestGalleryRenderer({
                     showMessage={false}
                   />
                   <div className="rounded-full bg-black/15 px-4 py-2 text-sm font-semibold ring-1 ring-white/10">
-                    Estimated market value {formatMoney(model.totalValue)}
+                    EMV {formatMoney(model.totalValue)}
                   </div>
                 </div>
               </div>
