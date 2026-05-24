@@ -18,6 +18,7 @@ export default function BuilderPreviewBridge({ gallery, items, onHeightChange }:
   const model = resolveGuestGalleryViewModel(gallery, items, {
     navigation: { show: false },
     access: { modeLabel: "Preview", isPublic: true },
+    itemsAreResolvedGalleryItems: true,
   });
 
   useEffect(() => {

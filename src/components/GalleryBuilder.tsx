@@ -302,6 +302,22 @@ export default function GalleryBuilder({
     return selectedItems.reduce((sum, item) => sum + totalCost(item), 0);
   }, [selectedItems]);
 
+  // Preview items for the active section:
+  // • No sections → show all gallery items
+  // • Active section has assigned items → show only those
+  // • Active section is empty → show items not yet claimed by any section
+  const previewItems = useMemo(() => {
+    if (sections.length === 0) return selectedItems;
+    const activeSection = sections[activeSectionIdx];
+    if (!activeSection) return selectedItems;
+    if (activeSection.itemIds.length > 0) {
+      const sectionSet = new Set(activeSection.itemIds);
+      return selectedItems.filter((item) => sectionSet.has(item.id));
+    }
+    const claimedByAnySection = new Set(sections.flatMap((s) => s.itemIds));
+    return selectedItems.filter((item) => !claimedByAnySection.has(item.id));
+  }, [selectedItems, sections, activeSectionIdx]);
+
   const themePack = getGalleryThemePack(gallery);
   const displayMode = getGalleryDisplayMode(gallery);
   const guestViewMode = getGalleryGuestViewMode(gallery);
@@ -812,7 +828,7 @@ export default function GalleryBuilder({
             <div className="p-2">
               <div className="flex flex-wrap">
                 {Array.from({ length: 16 }).map((_, i) => {
-                  const item = selectedItems[i];
+                  const item = previewItems[i];
                   const img = item ? itemImage(item) : null;
                   return (
                     <div key={item?.id ?? "ghost-" + i} style={{ width: "25%", padding: 2 }}>
@@ -836,7 +852,7 @@ export default function GalleryBuilder({
                 })}
               </div>
               <div className="mt-2 text-center text-[10px] font-semibold uppercase tracking-widest text-white/25">
-                {selectedItems.length} / 16 items · {displayMode === "grid" ? "Grid View" : getGalleryThemeLabel(themePack)}
+                {previewItems.length} / 16 items · {displayMode === "grid" ? "Grid View" : getGalleryThemeLabel(themePack)}
               </div>
             </div>
           </div>
@@ -1349,7 +1365,7 @@ export default function GalleryBuilder({
           <div className="flex-1 overflow-y-auto overscroll-contain" style={{ minHeight: 0, WebkitOverflowScrolling: "touch" }}>
             <BuilderPreviewBridge
               gallery={gallery}
-              items={selectedItems}
+              items={previewItems}
               onHeightChange={setPreviewNaturalHeight}
             />
           </div>
