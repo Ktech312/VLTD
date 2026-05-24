@@ -285,6 +285,7 @@ export default function GalleryPage() {
   const [draft, setDraft] = useState<Gallery | null>(null);
   const [items, setItems] = useState<VaultItem[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerSectionTitle, setPickerSectionTitle] = useState("Section 1");
   const [copied, setCopied] = useState(false);
   const [accessInfoOpen, setAccessInfoOpen] = useState(false);
   const [inviteLabel, setInviteLabel] = useState("");
@@ -1015,7 +1016,7 @@ export default function GalleryPage() {
             onChange={update}
             onGalleryChange={patchDraft}
             onQuickSave={saveDraft}
-            onOpenPicker={() => setPickerOpen(true)}
+            onOpenPicker={(sectionTitle) => { setPickerSectionTitle(sectionTitle ?? "Section 1"); setPickerOpen(true); }}
           />
         </section>
 
@@ -1168,7 +1169,7 @@ export default function GalleryPage() {
         <ItemPickerSheet
           allItems={items}
           confirmedIds={draft.itemIds}
-          sectionTitle="Section 1"
+          sectionTitle={pickerSectionTitle}
           onConfirm={(ids, _title) => {
             update(ids);
             setPickerOpen(false);

@@ -31,7 +31,7 @@ type Props = {
   onChange: (ids: string[]) => void;
   onGalleryChange: (updater: (current: Gallery) => Gallery) => void;
   onQuickSave?: () => void;
-  onOpenPicker?: () => void;
+  onOpenPicker?: (sectionTitle?: string) => void;
 };
 
 const GALLERY_BACKGROUND_BUCKET = "gallery-backgrounds";
@@ -353,11 +353,11 @@ export default function GalleryBuilder({
     return selectedItems.reduce((sum, item) => sum + totalCost(item), 0);
   }, [selectedItems]);
 
-  // Preview items: active section's items, or all items if no sections
+  // Preview items: active section's items, fallback to all items if section is empty/missing
   const previewItems = useMemo(() => {
     if (sections.length === 0) return selectedItems;
     const activeSection = sections[activeSectionIdx];
-    if (!activeSection) return selectedItems;
+    if (!activeSection || activeSection.itemIds.length === 0) return selectedItems;
     const sectionSet = new Set(activeSection.itemIds);
     return selectedItems.filter((item) => sectionSet.has(item.id));
   }, [selectedItems, sections, activeSectionIdx]);
@@ -809,7 +809,7 @@ export default function GalleryBuilder({
             {/* Edit — full gold gradient button */}
             <button
               type="button"
-              onClick={() => onOpenPicker?.()}
+              onClick={() => onOpenPicker?.(sections[activeSectionIdx]?.title ?? `Section ${activeSectionIdx + 1}`)}
               className="inline-flex min-h-[34px] items-center justify-center rounded-full px-4 text-xs font-black tracking-wide transition-all hover:opacity-90 active:scale-[0.98]"
               style={{
                 background: selectedCount > 0
@@ -1347,7 +1347,7 @@ export default function GalleryBuilder({
             {/* Open picker button */}
             <button
               type="button"
-              onClick={() => onOpenPicker?.()}
+              onClick={() => onOpenPicker?.(sections[activeSectionIdx]?.title ?? `Section ${activeSectionIdx + 1}`)}
               className="mt-4 w-full rounded-full py-[15px] text-[15px] font-black tracking-wide transition active:opacity-80"
               style={{
                 background:
