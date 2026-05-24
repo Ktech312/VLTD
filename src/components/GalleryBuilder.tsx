@@ -281,6 +281,49 @@ export default function GalleryBuilder({
   const [sectionBtnRect, setSectionBtnRect] = useState<DOMRect | null>(null);
   const [activeSectionIdx, setActiveSectionIdx] = useState(0);
   const sectionBtnRef = useRef<HTMLButtonElement | null>(null);
+  const prevItemIdsRef = useRef<string[]>(gallery.itemIds);
+
+  // Auto-assign newly added items to the active section; purge removed items from all sections.
+  // On first run, also seeds any unassigned gallery items into section 0 (backfills existing items).
+  useEffect(() => {
+    const prev = new Set(prevItemIdsRef.current);
+    const next = new Set(gallery.itemIds);
+    const added = gallery.itemIds.filter((id) => !prev.has(id));
+    const removed = prevItemIdsRef.current.filter((id) => !next.has(id));
+    prevItemIdsRef.current = gallery.itemIds;
+
+    const currentSections = getGallerySections(gallery);
+    if ((added.length === 0 && removed.length === 0) || currentSections.length === 0) return;
+
+    const removedSet = new Set(removed);
+    const assignedAnywhere = new Set(currentSections.flatMap((s) => s.itemIds));
+    // Items in the gallery but not yet in any section (legacy items added before auto-assign)
+    const unassigned = gallery.itemIds.filter((id) => !assignedAnywhere.has(id) && !removedSet.has(id));
+    const toSeedIntoSection0 = unassigned.filter((id) => !removed.includes(id));
+
+    let changed = false;
+    const nextSections = currentSections.map((s, i) => {
+      let ids = s.itemIds.filter((id) => !removedSet.has(id));
+      // Seed unassigned items into section 0 (backfill)
+      if (i === 0 && toSeedIntoSection0.length > 0) {
+        const existing = new Set(ids);
+        ids = [...ids, ...toSeedIntoSection0.filter((id) => !existing.has(id))];
+      }
+      // Add newly picked items to the active section
+      if (i === activeSectionIdx && added.length > 0) {
+        const existing = new Set(ids);
+        const toAdd = added.filter((id) => !existing.has(id));
+        ids = [...ids, ...toAdd];
+      }
+      if (ids.length === s.itemIds.length && ids.every((id, j) => id === s.itemIds[j])) return s;
+      changed = true;
+      return { ...s, itemIds: ids };
+    });
+
+    if (!changed) return;
+    onGalleryChange((current) => syncSectionsAndLayout(current, nextSections));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gallery.itemIds]);
 
   const selectedSet = useMemo(() => new Set(gallery.itemIds), [gallery.itemIds]);
 
@@ -302,20 +345,13 @@ export default function GalleryBuilder({
     return selectedItems.reduce((sum, item) => sum + totalCost(item), 0);
   }, [selectedItems]);
 
-  // Preview items for the active section:
-  // • No sections → show all gallery items
-  // • Active section has assigned items → show only those
-  // • Active section is empty → show items not yet claimed by any section
+  // Preview items: active section's items, or all items if no sections
   const previewItems = useMemo(() => {
     if (sections.length === 0) return selectedItems;
     const activeSection = sections[activeSectionIdx];
     if (!activeSection) return selectedItems;
-    if (activeSection.itemIds.length > 0) {
-      const sectionSet = new Set(activeSection.itemIds);
-      return selectedItems.filter((item) => sectionSet.has(item.id));
-    }
-    const claimedByAnySection = new Set(sections.flatMap((s) => s.itemIds));
-    return selectedItems.filter((item) => !claimedByAnySection.has(item.id));
+    const sectionSet = new Set(activeSection.itemIds);
+    return selectedItems.filter((item) => sectionSet.has(item.id));
   }, [selectedItems, sections, activeSectionIdx]);
 
   const themePack = getGalleryThemePack(gallery);
