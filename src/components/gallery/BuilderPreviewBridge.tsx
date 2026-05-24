@@ -11,9 +11,11 @@ type Props = {
   gallery: Gallery;
   items: VaultItem[];
   onHeightChange?: (height: number) => void;
+  onRemoveItem?: (itemId: string) => void;
+  onReorder?: (orderedIds: string[]) => void;
 };
 
-export default function BuilderPreviewBridge({ gallery, items, onHeightChange }: Props) {
+export default function BuilderPreviewBridge({ gallery, items, onHeightChange, onRemoveItem, onReorder }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const model = resolveGuestGalleryViewModel(gallery, items, {
     navigation: { show: false },
@@ -46,7 +48,7 @@ export default function BuilderPreviewBridge({ gallery, items, onHeightChange }:
     <div ref={containerRef}>
       {/* Gallery shelf is a virtual room — always dark regardless of app theme */}
       <div style={{ isolation: "isolate", background: "#0B1320", borderRadius: "16px", overflow: "hidden" }}>
-        <GuestGalleryRenderer model={model} embedded />
+        <GuestGalleryRenderer model={model} embedded onRemoveItem={onRemoveItem} onReorder={onReorder} />
       </div>
     </div>
   );

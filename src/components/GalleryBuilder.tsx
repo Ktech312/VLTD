@@ -330,6 +330,13 @@ export default function GalleryBuilder({
     return selectedItems.filter((item) => sectionSet.has(item.id));
   }, [selectedItems, sections, activeSectionIdx]);
 
+  // Stripped gallery for the embedded preview — no sections (avoids duplicate card rendering),
+  // forced to grid mode so the compact 4-col card grid always shows with interactive features.
+  const previewGallery = useMemo(
+    (): Gallery => ({ ...gallery, sections: [], displayMode: "grid" }),
+    [gallery]
+  );
+
   const themePack = getGalleryThemePack(gallery);
   const displayMode = getGalleryDisplayMode(gallery);
   const guestViewMode = getGalleryGuestViewMode(gallery);
@@ -481,6 +488,24 @@ export default function GalleryBuilder({
         };
       });
 
+      return syncSectionsAndLayout(current, nextSections);
+    });
+  }
+
+  function handlePreviewRemoveItem(itemId: string) {
+    const section = sections[activeSectionIdx];
+    if (section) {
+      removeItemFromSection(section.id, itemId);
+    }
+  }
+
+  function handlePreviewReorder(orderedIds: string[]) {
+    const section = sections[activeSectionIdx];
+    if (!section) return;
+    onGalleryChange((current) => {
+      const nextSections = getGallerySections(current).map((s, i) =>
+        i === activeSectionIdx ? { ...s, itemIds: orderedIds } : s
+      );
       return syncSectionsAndLayout(current, nextSections);
     });
   }
@@ -840,43 +865,17 @@ export default function GalleryBuilder({
             </div>
           ) : null}
 
-          {/* Mini shelf preview — flat 4-col grid, 16 slots, ghosts for empty */}
-          <div
-            className={[
-              "mt-3 overflow-hidden rounded-[24px] ring-1",
-              previewPanelClass,
-            ].join(" ")}
-            style={{ maxWidth: "calc(100vw - 4rem)", width: "100%" }}
-          >
-            <div className="p-2">
-              <div className="flex flex-wrap">
-                {Array.from({ length: 16 }).map((_, i) => {
-                  const item = previewItems[i];
-                  const img = item ? itemImage(item) : null;
-                  return (
-                    <div key={item?.id ?? "ghost-" + i} style={{ width: "25%", padding: 2 }}>
-                      {item ? (
-                        <div
-                          className="aspect-[3/4] overflow-hidden rounded-lg bg-white/5"
-                          style={{ boxShadow: "0 0 0 1.5px rgba(245,181,72,0.55), 0 0 8px rgba(245,181,72,0.25)" }}
-                        >
-                          {img ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={img} alt={item.title} className="h-full w-full object-cover" draggable={false} />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-[9px] text-[color:var(--muted)]">—</div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="aspect-[3/4] rounded-lg border border-dashed border-white/10 bg-white/[0.02]" />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="mt-2 text-center text-[10px] font-semibold uppercase tracking-widest text-white/25">
-                {previewItems.length} / 16 items · {displayMode === "grid" ? "Grid View" : getGalleryThemeLabel(themePack)}
-              </div>
+          {/* Live section preview — remove button · ghost overlay · drag-to-reorder */}
+          <div className="mt-3" style={{ maxWidth: "calc(100vw - 4rem)", width: "100%" }}>
+            <BuilderPreviewBridge
+              gallery={previewGallery}
+              items={previewItems}
+              onHeightChange={setPreviewNaturalHeight}
+              onRemoveItem={sections.length > 0 ? handlePreviewRemoveItem : undefined}
+              onReorder={sections.length > 0 ? handlePreviewReorder : undefined}
+            />
+            <div className="mt-1.5 text-center text-[10px] font-semibold uppercase tracking-widest text-white/25">
+              {previewItems.length} / 16 items · {displayMode === "grid" ? "Grid View" : getGalleryThemeLabel(themePack)}
             </div>
           </div>
         </div>
