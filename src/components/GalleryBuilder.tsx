@@ -1090,7 +1090,7 @@ export default function GalleryBuilder({
         )}
       </section>
 
-      <div className="grid gap-5 xl:grid-cols-[520px_minmax(0,1fr)]">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,520px)_minmax(0,1fr)]">
         <section className="rounded-[24px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between gap-3">
