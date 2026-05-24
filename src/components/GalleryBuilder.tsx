@@ -800,27 +800,25 @@ export default function GalleryBuilder({
             ].join(" ")}
           >
             <div className="p-2">
-              <div className="grid w-full grid-cols-4 gap-1">
+              <div className="flex flex-wrap">
                 {Array.from({ length: 16 }).map((_, i) => {
                   const item = selectedItems[i];
                   const img = item ? itemImage(item) : null;
-                  return item ? (
-                    <div
-                      key={item.id}
-                      className="aspect-[3/4] overflow-hidden rounded-lg bg-white/5"
-                    >
-                      {img ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={img} alt={item.title} className="h-full w-full object-cover" draggable={false} />
+                  return (
+                    <div key={item?.id ?? "ghost-" + i} style={{ width: "25%", padding: 2 }}>
+                      {item ? (
+                        <div className="aspect-[3/4] overflow-hidden rounded-lg bg-white/5">
+                          {img ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={img} alt={item.title} className="h-full w-full object-cover" draggable={false} />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-[9px] text-[color:var(--muted)]">—</div>
+                          )}
+                        </div>
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[9px] text-[color:var(--muted)]">—</div>
+                        <div className="aspect-[3/4] rounded-lg border border-dashed border-white/10 bg-white/[0.02]" />
                       )}
                     </div>
-                  ) : (
-                    <div
-                      key={"ghost-" + i}
-                      className="aspect-[3/4] rounded-lg border border-dashed border-white/10 bg-white/[0.02]"
-                    />
                   );
                 })}
               </div>
