@@ -286,6 +286,8 @@ export default function GalleryPage() {
   const [items, setItems] = useState<VaultItem[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerSectionTitle, setPickerSectionTitle] = useState("Section 1");
+  const [pickerSectionIds, setPickerSectionIds] = useState<string[] | null>(null);
+  const [pickerSectionIdx, setPickerSectionIdx] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
   const [accessInfoOpen, setAccessInfoOpen] = useState(false);
   const [inviteLabel, setInviteLabel] = useState("");
@@ -1016,7 +1018,12 @@ export default function GalleryPage() {
             onChange={update}
             onGalleryChange={patchDraft}
             onQuickSave={saveDraft}
-            onOpenPicker={(sectionTitle) => { setPickerSectionTitle(sectionTitle ?? "Section 1"); setPickerOpen(true); }}
+            onOpenPicker={(sectionTitle, sectionItemIds, sectionIdx) => {
+              setPickerSectionTitle(sectionTitle ?? "Section 1");
+              setPickerSectionIds(sectionItemIds ?? null);
+              setPickerSectionIdx(sectionIdx ?? null);
+              setPickerOpen(true);
+            }}
           />
         </section>
 
@@ -1168,12 +1175,42 @@ export default function GalleryPage() {
       {pickerOpen && (
         <ItemPickerSheet
           allItems={items}
-          confirmedIds={draft.itemIds}
+          confirmedIds={pickerSectionIds !== null ? pickerSectionIds : draft.itemIds}
           sectionTitle={pickerSectionTitle}
-          onConfirm={(ids, _title) => {
-            update(ids);
+          onConfirm={(ids) => {
+            if (pickerSectionIds !== null && pickerSectionIdx !== null) {
+              // Section-specific update: add/remove items for this section only
+              patchDraft((current) => {
+                const oldSet = new Set(pickerSectionIds);
+                const removedFromSection = pickerSectionIds.filter((id) => !ids.includes(id));
+                const addedToSection = ids.filter((id) => !oldSet.has(id));
+                const removedSet = new Set(removedFromSection);
+                // Sync gallery.itemIds: remove deselected, add newly picked
+                let nextGalleryIds = current.itemIds.filter((id) => !removedSet.has(id));
+                const gallerySet = new Set(nextGalleryIds);
+                nextGalleryIds = [...nextGalleryIds, ...addedToSection.filter((id) => !gallerySet.has(id))];
+                // Update the section's itemIds
+                const currentSections = Array.isArray(current.sections) ? current.sections : [];
+                const nextSections = currentSections.map((s, i) =>
+                  i === pickerSectionIdx ? { ...s, itemIds: ids } : s
+                );
+                return {
+                  ...current,
+                  itemIds: nextGalleryIds,
+                  sections: nextSections,
+                  exhibitionLayout: {
+                    ...(current.exhibitionLayout as object ?? {}),
+                    sections: nextSections,
+                  } as Gallery["exhibitionLayout"],
+                };
+              });
+              void saveDraft();
+            } else {
+              // No sections — old behavior
+              update(ids);
+              void saveDraft(ids);
+            }
             setPickerOpen(false);
-            void saveDraft(ids);
           }}
           onClose={() => setPickerOpen(false)}
         />

@@ -31,7 +31,7 @@ type Props = {
   onChange: (ids: string[]) => void;
   onGalleryChange: (updater: (current: Gallery) => Gallery) => void;
   onQuickSave?: () => void;
-  onOpenPicker?: (sectionTitle?: string) => void;
+  onOpenPicker?: (sectionTitle?: string, sectionItemIds?: string[], sectionIdx?: number) => void;
 };
 
 const GALLERY_BACKGROUND_BUCKET = "gallery-backgrounds";
@@ -281,9 +281,8 @@ export default function GalleryBuilder({
   const [sectionBtnRect, setSectionBtnRect] = useState<DOMRect | null>(null);
   const [activeSectionIdx, setActiveSectionIdx] = useState(0);
   const sectionBtnRef = useRef<HTMLButtonElement | null>(null);
-  const prevItemIdsRef = useRef<string[]>(gallery.itemIds);
 
-  // One-time on mount: seed any gallery items not yet in any section into section 0
+  // One-time backfill: if gallery has sections but unassigned items, seed them into section 0
   useEffect(() => {
     const currentSections = getGallerySections(gallery);
     if (currentSections.length === 0) return;
@@ -295,43 +294,12 @@ export default function GalleryBuilder({
         if (i !== 0) return s;
         const existing = new Set(s.itemIds);
         const toAdd = unassigned.filter((id) => !existing.has(id));
-        if (toAdd.length === 0) return s;
-        return { ...s, itemIds: [...s.itemIds, ...toAdd] };
+        return toAdd.length > 0 ? { ...s, itemIds: [...s.itemIds, ...toAdd] } : s;
       });
       return syncSectionsAndLayout(current, nextSections);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Ongoing: when items are added to the gallery, assign to active section; when removed, purge from all sections
-  useEffect(() => {
-    const prev = new Set(prevItemIdsRef.current);
-    const next = new Set(gallery.itemIds);
-    const added = gallery.itemIds.filter((id) => !prev.has(id));
-    const removed = prevItemIdsRef.current.filter((id) => !next.has(id));
-    prevItemIdsRef.current = gallery.itemIds;
-    if (added.length === 0 && removed.length === 0) return;
-    const removedSet = new Set(removed);
-    onGalleryChange((current) => {
-      const currentSections = getGallerySections(current);
-      if (currentSections.length === 0) return current;
-      let changed = false;
-      const nextSections = currentSections.map((s, i) => {
-        let ids = s.itemIds.filter((id) => !removedSet.has(id));
-        if (i === activeSectionIdx && added.length > 0) {
-          const existing = new Set(ids);
-          const toAdd = added.filter((id) => !existing.has(id));
-          ids = [...ids, ...toAdd];
-        }
-        if (ids.length === s.itemIds.length && ids.every((id, j) => id === s.itemIds[j])) return s;
-        changed = true;
-        return { ...s, itemIds: ids };
-      });
-      if (!changed) return current;
-      return syncSectionsAndLayout(current, nextSections);
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gallery.itemIds]);
 
   const selectedSet = useMemo(() => new Set(gallery.itemIds), [gallery.itemIds]);
 
@@ -809,7 +777,14 @@ export default function GalleryBuilder({
             {/* Edit — full gold gradient button */}
             <button
               type="button"
-              onClick={() => onOpenPicker?.(sections[activeSectionIdx]?.title ?? `Section ${activeSectionIdx + 1}`)}
+              onClick={() => {
+                const activeSection = sections[activeSectionIdx];
+                if (activeSection) {
+                  onOpenPicker?.(activeSection.title, activeSection.itemIds, activeSectionIdx);
+                } else {
+                  onOpenPicker?.();
+                }
+              }}
               className="inline-flex min-h-[34px] items-center justify-center rounded-full px-4 text-xs font-black tracking-wide transition-all hover:opacity-90 active:scale-[0.98]"
               style={{
                 background: selectedCount > 0
@@ -822,7 +797,11 @@ export default function GalleryBuilder({
                 border: selectedCount === 0 ? "1px solid rgba(245,181,72,0.45)" : "none",
               }}
             >
-              {selectedCount === 0 ? "Edit" : `Edit Selection (${selectedCount})`}
+              {(() => {
+                const activeSection = sections[activeSectionIdx];
+                const count = activeSection ? activeSection.itemIds.length : selectedCount;
+                return count === 0 ? "Edit Selection" : `Edit Selection (${count})`;
+              })()}
             </button>
 
             {/* Save — gold pill */}
@@ -1347,7 +1326,14 @@ export default function GalleryBuilder({
             {/* Open picker button */}
             <button
               type="button"
-              onClick={() => onOpenPicker?.(sections[activeSectionIdx]?.title ?? `Section ${activeSectionIdx + 1}`)}
+              onClick={() => {
+                const activeSection = sections[activeSectionIdx];
+                if (activeSection) {
+                  onOpenPicker?.(activeSection.title, activeSection.itemIds, activeSectionIdx);
+                } else {
+                  onOpenPicker?.();
+                }
+              }}
               className="mt-4 w-full rounded-full py-[15px] text-[15px] font-black tracking-wide transition active:opacity-80"
               style={{
                 background:
