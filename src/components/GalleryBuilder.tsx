@@ -477,7 +477,7 @@ export default function GalleryBuilder({
   return (
     <div className="mt-6 grid gap-5">
       <section className="rounded-[24px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-col items-start gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
             <div className="text-sm font-semibold">Exhibition Layout</div>
             <div className="mt-1 text-sm text-[color:var(--muted)]">
@@ -622,7 +622,7 @@ export default function GalleryBuilder({
           </div>
 
           {/* ── Row 1b: Upload Background ── */}
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             <input
               id={`shelf-upload-${gallery.id}`}
               type="file"
@@ -656,7 +656,7 @@ export default function GalleryBuilder({
             ) : null}
           </div>
 
-          {/* ── Row 2: Section dropdown | Name input | Edit | Save ── */}
+          {/* ── Row 2a: Section selector | Edit | Save (compact pills — never stretches) ── */}
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {/* Section selector — dropdown pill */}
             <div className="relative">
@@ -746,21 +746,7 @@ export default function GalleryBuilder({
               )}
             </div>
 
-            {/* Section name input — uniform pill style */}
-            <input
-              type="text"
-              value={sections[activeSectionIdx]?.title ?? ""}
-              onChange={(e) => {
-                const updated = sections.map((s, i) =>
-                  i === activeSectionIdx ? { ...s, title: e.target.value } : s
-                );
-                onGalleryChange((current) => syncSectionsAndLayout(current, updated));
-              }}
-              placeholder="Name of Section goes here"
-              className="inline-flex min-h-[34px] flex-1 min-w-[120px] items-center rounded-full bg-[color:var(--pill)] px-3 text-xs font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
-            />
-
-            {/* Edit — gold pill, uniform height */}
+            {/* Edit — gold pill */}
             <button
               type="button"
               onClick={() => onOpenPicker?.()}
@@ -770,7 +756,7 @@ export default function GalleryBuilder({
               Edit
             </button>
 
-            {/* Save — gold pill, uniform height */}
+            {/* Save — gold pill */}
             <button
               type="button"
               onClick={() => onQuickSave?.()}
@@ -780,6 +766,20 @@ export default function GalleryBuilder({
               Save
             </button>
           </div>
+
+          {/* ── Row 2b: Section name — full-width input, intentionally its own row ── */}
+          <input
+            type="text"
+            value={sections[activeSectionIdx]?.title ?? ""}
+            onChange={(e) => {
+              const updated = sections.map((s, i) =>
+                i === activeSectionIdx ? { ...s, title: e.target.value } : s
+              );
+              onGalleryChange((current) => syncSectionsAndLayout(current, updated));
+            }}
+            placeholder="Section name…"
+            className="mt-2 block min-h-[34px] w-full rounded-2xl bg-[color:var(--pill)] px-3 text-xs font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
+          />
 
           {/* Background / error status */}
           {(shelfFileName || shelfBackground || backgroundUploadError) ? (
