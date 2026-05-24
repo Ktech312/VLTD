@@ -475,7 +475,7 @@ export default function GalleryBuilder({
   }
 
   return (
-    <div className="mt-6 grid gap-5">
+    <div className="mt-6 grid gap-5" style={{ maxWidth: "calc(100vw - 2rem)", overflow: "hidden" }}>
       <section className="overflow-hidden rounded-[24px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
