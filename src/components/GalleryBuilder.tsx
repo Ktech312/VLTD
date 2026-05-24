@@ -746,14 +746,23 @@ export default function GalleryBuilder({
               )}
             </div>
 
-            {/* Edit — gold pill */}
+            {/* Edit — full gold gradient button */}
             <button
               type="button"
               onClick={() => onOpenPicker?.()}
-              className="inline-flex min-h-[34px] items-center justify-center rounded-full px-3 text-xs font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
-              style={{ background: "rgba(245,181,72,0.12)", color: "#F5B548", borderColor: "rgba(245,181,72,0.45)" }}
+              className="inline-flex min-h-[34px] items-center justify-center rounded-full px-4 text-xs font-black tracking-wide transition-all hover:opacity-90 active:scale-[0.98]"
+              style={{
+                background: selectedCount > 0
+                  ? "linear-gradient(135deg, #FFE08A 0%, #F5B548 40%, #C8941F 100%)"
+                  : "rgba(245,181,72,0.12)",
+                color: selectedCount > 0 ? "#1A0F00" : "#F5B548",
+                boxShadow: selectedCount > 0
+                  ? "0 0 0 1px rgba(245,181,72,0.35), 0 4px 14px rgba(245,181,72,0.3)"
+                  : "none",
+                border: selectedCount === 0 ? "1px solid rgba(245,181,72,0.45)" : "none",
+              }}
             >
-              Edit
+              {selectedCount === 0 ? "Edit" : `Edit Selection (${selectedCount})`}
             </button>
 
             {/* Save — gold pill */}
@@ -808,7 +817,10 @@ export default function GalleryBuilder({
                   return (
                     <div key={item?.id ?? "ghost-" + i} style={{ width: "25%", padding: 2 }}>
                       {item ? (
-                        <div className="aspect-[3/4] overflow-hidden rounded-lg bg-white/5">
+                        <div
+                          className="aspect-[3/4] overflow-hidden rounded-lg bg-white/5"
+                          style={{ boxShadow: "0 0 0 1.5px rgba(245,181,72,0.55), 0 0 8px rgba(245,181,72,0.25)" }}
+                        >
                           {img ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={img} alt={item.title} className="h-full w-full object-cover" draggable={false} />
@@ -1271,37 +1283,6 @@ export default function GalleryBuilder({
               </div>
             </div>
 
-            {/* Selected thumbnail strip */}
-            {selectedItems.length > 0 && (
-              <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1">
-                {selectedItems.map((item) => {
-                  const img = itemImage(item);
-                  return (
-                    <div
-                      key={item.id}
-                      className="relative shrink-0 overflow-hidden rounded-lg"
-                      style={{
-                        width: 44,
-                        aspectRatio: "3/4",
-                        boxShadow: "0 0 0 1.5px rgba(245,181,72,0.55), 0 0 8px rgba(245,181,72,0.25)",
-                      }}
-                    >
-                      {img ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={img}
-                          alt={item.title}
-                          className="h-full w-full object-cover"
-                          draggable={false}
-                        />
-                      ) : (
-                        <div className="h-full w-full" style={{ background: "rgba(255,255,255,0.05)" }} />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
 
             {/* Open picker button */}
             <button
