@@ -792,73 +792,40 @@ export default function GalleryBuilder({
             </div>
           ) : null}
 
-          {/* Mini shelf preview — 4 rows × 4 slots, always visible, ghosts for empty */}
+          {/* Mini shelf preview — flat 4-col grid, 16 slots, ghosts for empty */}
           <div
             className={[
-              "mt-3 overflow-hidden rounded-[24px] ring-1 relative",
+              "mt-3 overflow-hidden rounded-[24px] ring-1",
               previewPanelClass,
             ].join(" ")}
           >
-            <div className="p-3 min-w-0 w-full">
-              {[0, 1, 2, 3].map((rowIdx) => {
-                const rowItems = selectedItems.slice(rowIdx * 4, rowIdx * 4 + 4);
-                const ghostCount = 4 - rowItems.length;
-                return (
-                  <div
-                    key={rowIdx}
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-                      gap: 4,
-                      width: "100%",
-                      minWidth: 0,
-                      marginBottom: rowIdx < 3 ? 6 : 0,
-                      paddingBottom: rowIdx < 3 ? 6 : 0,
-                      borderBottom: rowIdx < 3 ? "1px solid rgba(255,255,255,0.06)" : "none",
-                    }}
-                  >
-                    {rowItems.map((item) => {
-                      const img = itemImage(item);
-                      return (
-                        <div
-                          key={item.id}
-                          style={{ aspectRatio: "3 / 4", borderRadius: 7, overflow: "hidden", background: "rgba(255,255,255,0.07)", minWidth: 0 }}
-                        >
-                          {img ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={img} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} draggable={false} />
-                          ) : (
-                            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, color: "var(--muted)" }}>—</div>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {Array.from({ length: ghostCount }).map((_, i) => (
-                      <div
-                        key={"ghost-" + i}
-                        style={{
-                          aspectRatio: "3 / 4",
-                          borderRadius: 7,
-                          background: "rgba(255,255,255,0.025)",
-                          border: "1px dashed rgba(255,255,255,0.12)",
-                        }}
-                      />
-                    ))}
-                  </div>
-                );
-              })}
-              <div
-                style={{
-                  marginTop: 8,
-                  textAlign: "center",
-                  fontSize: 10,
-                  fontWeight: 600,
-                  letterSpacing: "0.12em",
-                  color: "rgba(255,255,255,0.28)",
-                  textTransform: "uppercase",
-                }}
-              >
-                {selectedItems.length + " / 16 items"}{" · "}{displayMode === "grid" ? "Grid View" : getGalleryThemeLabel(themePack)}
+            <div className="p-2">
+              <div className="grid w-full grid-cols-4 gap-1">
+                {Array.from({ length: 16 }).map((_, i) => {
+                  const item = selectedItems[i];
+                  const img = item ? itemImage(item) : null;
+                  return item ? (
+                    <div
+                      key={item.id}
+                      className="aspect-[3/4] overflow-hidden rounded-lg bg-white/5"
+                    >
+                      {img ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={img} alt={item.title} className="h-full w-full object-cover" draggable={false} />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[9px] text-[color:var(--muted)]">—</div>
+                      )}
+                    </div>
+                  ) : (
+                    <div
+                      key={"ghost-" + i}
+                      className="aspect-[3/4] rounded-lg border border-dashed border-white/10 bg-white/[0.02]"
+                    />
+                  );
+                })}
+              </div>
+              <div className="mt-2 text-center text-[10px] font-semibold uppercase tracking-widest text-white/25">
+                {selectedItems.length} / 16 items · {displayMode === "grid" ? "Grid View" : getGalleryThemeLabel(themePack)}
               </div>
             </div>
           </div>
