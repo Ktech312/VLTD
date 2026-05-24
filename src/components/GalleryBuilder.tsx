@@ -532,7 +532,7 @@ export default function GalleryBuilder({
           </div>
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-3 xl:grid-cols-4">
           <div className="rounded-[18px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
             <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">LAYOUT</div>
             <div className="mt-2 text-xl font-semibold">{layoutType}</div>

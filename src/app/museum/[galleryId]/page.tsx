@@ -266,7 +266,7 @@ function accessDescription(mode: GalleryAccessPillMode) {
 
 function accessPillClass(active: boolean) {
   return [
-    "vltd-selectable inline-flex min-h-[44px] items-center justify-center rounded-full px-4 py-2 text-sm font-semibold ring-1 transition",
+    "vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full px-4 py-1.5 text-xs font-semibold ring-1 transition",
     active
       ? "vltd-pill-main-glow bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)]"
       : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]",
@@ -274,7 +274,7 @@ function accessPillClass(active: boolean) {
 }
 
 function neutralPillClass() {
-  return "vltd-selectable inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]";
+  return "vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-1.5 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]";
 }
 
 export default function GalleryPage() {
@@ -916,7 +916,7 @@ export default function GalleryPage() {
                     </div>
                   ) : null}
 
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
                     <button
                       type="button"
                       onClick={() => updateAccessMode("private")}
