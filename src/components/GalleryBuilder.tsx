@@ -1374,8 +1374,13 @@ export default function GalleryBuilder({
               <div className="text-[11px] tracking-[0.2em]" style={{ color: "var(--muted2)" }}>
                 LIVE PREVIEW
               </div>
-              <div className="mt-0.5 text-sm font-semibold">
+              <div className="mt-0.5 flex items-baseline gap-1.5 text-sm font-semibold">
                 {gallery.title || "Exhibition"}
+                {sections.length > 0 && sections[activeSectionIdx] && (
+                  <span className="text-xs font-normal" style={{ color: "var(--muted)" }}>
+                    · S{activeSectionIdx + 1} {sections[activeSectionIdx].title}
+                  </span>
+                )}
               </div>
             </div>
             <button
