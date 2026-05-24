@@ -276,6 +276,8 @@ export default function GalleryBuilder({
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
   const [gridDragId, setGridDragId] = useState<string | null>(null);
   const [gridDragOverId, setGridDragOverId] = useState<string | null>(null);
+  const [isOrganizing, setIsOrganizing] = useState(false);
+  const touchDragRef = useRef<{ fromId: string } | null>(null);
   const [shelfFileName, setShelfFileName] = useState("");
   const [backgroundUploadError, setBackgroundUploadError] = useState("");
   const [previewNaturalHeight, setPreviewNaturalHeight] = useState(1120);
@@ -824,6 +826,20 @@ export default function GalleryBuilder({
               })()}
             </button>
 
+            {/* Organize pill — toggles wiggle/touch-drag mode */}
+            {sections.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setIsOrganizing((v) => !v)}
+                className="inline-flex min-h-[34px] items-center justify-center rounded-full px-3 text-xs font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
+                style={isOrganizing
+                  ? { background: "rgba(74,222,128,0.22)", color: "#4ADE80", borderColor: "rgba(74,222,128,0.55)" }
+                  : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", borderColor: "rgba(255,255,255,0.15)" }}
+              >
+                {isOrganizing ? "Done" : "Organize"}
+              </button>
+            ) : null}
+
             {/* Save — gold pill */}
             <button
               type="button"
@@ -861,6 +877,15 @@ export default function GalleryBuilder({
           ) : null}
 
           {/* Mini shelf preview — 16 slots, ghosts for empty, remove · ghost overlay · drag-to-reorder */}
+          <style>{`
+            @keyframes vltd-wiggle {
+              0%   { transform: rotate(-1.5deg) scale(1); }
+              50%  { transform: rotate(1.5deg) scale(1.02); }
+              100% { transform: rotate(-1.5deg) scale(1); }
+            }
+            .vltd-wiggle { animation: vltd-wiggle 0.35s ease-in-out infinite; }
+            .vltd-wiggle-over { animation: none !important; transform: scale(1.06) !important; box-shadow: 0 0 0 2px rgba(74,222,128,0.8), 0 0 14px rgba(74,222,128,0.4) !important; }
+          `}</style>
           <div
             className={["mt-3 overflow-hidden rounded-[24px] ring-1", previewPanelClass].join(" ")}
             style={{ maxWidth: "calc(100vw - 4rem)", width: "100%" }}
@@ -895,6 +920,7 @@ export default function GalleryBuilder({
                   const img = item ? itemImage(item) : null;
                   const subtitle = item ? [item.subtitle, item.number, item.grade].filter(Boolean).join(" • ") : null;
                   const isDragOver = item ? gridDragOverId === item.id && gridDragId !== item.id : false;
+                  const canOrganize = isOrganizing && sections.length > 0;
                   return (
                     <div
                       key={item?.id ?? "ghost-" + i}
@@ -910,23 +936,52 @@ export default function GalleryBuilder({
                         e.preventDefault();
                         if (item.id !== gridDragId) setGridDragOverId(item.id);
                       } : undefined}
+                      onTouchStart={canOrganize && item ? () => {
+                        touchDragRef.current = { fromId: item.id };
+                        setGridDragId(item.id);
+                      } : undefined}
+                      onTouchMove={canOrganize && item ? (e) => {
+                        if (!touchDragRef.current) return;
+                        const touch = e.touches[0];
+                        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                        const toId = el?.closest("[data-grid-id]")?.getAttribute("data-grid-id");
+                        if (toId && toId !== touchDragRef.current.fromId) setGridDragOverId(toId);
+                      } : undefined}
+                      onTouchEnd={canOrganize && item ? () => {
+                        const fromId = touchDragRef.current?.fromId;
+                        const toId = gridDragOverId;
+                        touchDragRef.current = null;
+                        if (fromId && toId && fromId !== toId) {
+                          const section = sections[activeSectionIdx];
+                          if (section) {
+                            const ids = [...section.itemIds];
+                            const fi = ids.indexOf(fromId), ti = ids.indexOf(toId);
+                            if (fi >= 0 && ti >= 0) {
+                              const [m] = ids.splice(fi, 1);
+                              ids.splice(ti, 0, m);
+                              handlePreviewReorder(ids);
+                            }
+                          }
+                        }
+                        setGridDragId(null); setGridDragOverId(null);
+                      } : undefined}
                     >
                       {item ? (
                         <div
-                          className="relative overflow-hidden rounded-lg"
+                          className={["relative overflow-hidden rounded-lg", canOrganize ? (isDragOver ? "vltd-wiggle-over" : "vltd-wiggle") : ""].join(" ")}
                           style={{
                             aspectRatio: "3/4",
                             background: "rgba(255,255,255,0.05)",
                             boxShadow: isDragOver
                               ? "0 0 0 2px rgba(245,181,72,0.8), 0 0 12px rgba(245,181,72,0.4)"
                               : "0 0 0 1.5px rgba(245,181,72,0.55), 0 0 8px rgba(245,181,72,0.25)",
-                            cursor: sections.length > 0 ? "grab" : "default",
-                            transform: isDragOver ? "scale(1.04)" : "scale(1)",
-                            transition: "transform 0.1s, box-shadow 0.1s",
+                            cursor: sections.length > 0 ? (canOrganize ? "grab" : "default") : "default",
+                            transform: (!canOrganize && isDragOver) ? "scale(1.04)" : "scale(1)",
+                            transition: canOrganize ? "none" : "transform 0.1s, box-shadow 0.1s",
                           }}
                         >
-                          {/* Remove button */}
-                          {sections.length > 0 ? (
+                          {/* Remove button — hidden while organizing */}
+                          {sections.length > 0 && !isOrganizing ? (
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); handlePreviewRemoveItem(item.id); }}
@@ -936,6 +991,13 @@ export default function GalleryBuilder({
                             >
                               <span className="h-[2px] w-[8px] rounded-full bg-red-400" style={{ boxShadow: "0 0 4px rgba(248,113,113,0.9)" }} aria-hidden="true" />
                             </button>
+                          ) : null}
+
+                          {/* Drag handle hint while organizing */}
+                          {canOrganize ? (
+                            <div className="absolute left-1 top-1 z-20 grid h-[18px] w-[18px] place-items-center rounded-full bg-black/60 pointer-events-none">
+                              <svg width="9" height="9" viewBox="0 0 9 9" fill="none"><circle cx="2.5" cy="2.5" r="1" fill="white" opacity="0.7"/><circle cx="6.5" cy="2.5" r="1" fill="white" opacity="0.7"/><circle cx="2.5" cy="6.5" r="1" fill="white" opacity="0.7"/><circle cx="6.5" cy="6.5" r="1" fill="white" opacity="0.7"/></svg>
+                            </div>
                           ) : null}
 
                           {/* Image */}
@@ -955,7 +1017,26 @@ export default function GalleryBuilder({
                           </div>
                         </div>
                       ) : (
-                        <div className="aspect-[3/4] rounded-lg border border-dashed border-white/10 bg-white/[0.02]" />
+                        /* Ghost placeholder with green + — builder only, not visible to viewers */
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const activeSection = sections[activeSectionIdx];
+                            if (activeSection) {
+                              onOpenPicker?.(activeSection.title, activeSection.itemIds, activeSectionIdx);
+                            } else {
+                              onOpenPicker?.();
+                            }
+                          }}
+                          className="flex w-full flex-col items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/[0.02] transition active:opacity-60"
+                          style={{ aspectRatio: "3/4" }}
+                          aria-label="Add item to this slot"
+                        >
+                          <span
+                            className="grid h-[22px] w-[22px] place-items-center rounded-full text-base font-light leading-none text-green-400"
+                            style={{ background: "rgba(74,222,128,0.15)", boxShadow: "0 0 8px rgba(74,222,128,0.3)" }}
+                          >+</span>
+                        </button>
                       )}
                     </div>
                   );
