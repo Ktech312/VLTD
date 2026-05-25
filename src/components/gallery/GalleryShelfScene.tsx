@@ -174,3 +174,127 @@ function DisplayCard({
     </div>
   );
 }
+
+function AnchoredRow({
+  row,
+  anchor,
+  theme,
+  galleryHrefPrefix,
+  shelfOverlayStyle,
+}: {
+  row: VaultItem[];
+  anchor: string;
+  theme: ReturnType<typeof getShelfThemeClasses>;
+  galleryHrefPrefix: string;
+  shelfOverlayStyle?: GalleryShelfOverlayStyle;
+}) {
+  const showGlassShelf = shelfOverlayStyle === "glass";
+  const showMetalShelf = shelfOverlayStyle === "metal";
+
+  return (
+    <div
+      className="absolute left-[4%] right-[4%]"
+      style={{ top: anchor, transform: "translateY(-150%)" }}
+    >
+      <div className="relative pb-5">
+        {showGlassShelf ? (
+          <div aria-hidden="true" className="pointer-events-none absolute inset-x-[1.5%] bottom-1 z-0">
+            <div className="relative h-6">
+              <div className="absolute inset-x-0 bottom-[10px] h-[2px] rounded-full bg-white/72 shadow-[0_0_22px_rgba(255,255,255,0.42)]" />
+              <div className="absolute inset-x-2 bottom-[5px] h-[12px] rounded-[999px] bg-[linear-gradient(180deg,rgba(255,255,255,0.40),rgba(255,255,255,0.18)_28%,rgba(155,210,255,0.20)_66%,rgba(78,122,165,0.30)_100%)] opacity-90 shadow-[0_12px_30px_rgba(0,0,0,0.24)]" />
+              <div className="absolute inset-x-5 bottom-[2px] h-[2px] rounded-full bg-white/30" />
+            </div>
+          </div>
+        ) : null}
+
+        {showMetalShelf ? (
+          <div aria-hidden="true" className="pointer-events-none absolute inset-x-[1.5%] bottom-1 z-0">
+            <div className="relative h-6">
+              <div className="absolute inset-x-0 bottom-[10px] h-[2px] rounded-full bg-white/45 shadow-[0_0_14px_rgba(255,255,255,0.18)]" />
+              <div className="absolute inset-x-2 bottom-[4px] h-[13px] rounded-[999px] bg-[linear-gradient(180deg,#f6f7f9_0%,#cfd6dd_18%,#818b97_48%,#d6dde5_72%,#5b6571_100%)] opacity-95 shadow-[0_10px_24px_rgba(0,0,0,0.30)]" />
+              <div className="absolute inset-x-4 bottom-[7px] h-[2px] rounded-full bg-white/55" />
+              <div className="absolute inset-x-6 bottom-[1px] h-[2px] rounded-full bg-black/18" />
+            </div>
+          </div>
+        ) : null}
+
+        <div className="relative z-10 grid grid-cols-2 items-end gap-2 sm:grid-cols-4 sm:gap-[0.8rem]">
+          {row.map((item) => (
+            <DisplayCard
+              key={item.id}
+              item={item}
+              theme={theme}
+              galleryHrefPrefix={galleryHrefPrefix}
+            />
+          ))}
+          {Array.from({ length: Math.max(0, 4 - row.length) }).map((_, i) => (
+            <div
+              key={"empty-" + i}
+              className="aspect-[3/4] rounded-[10px] opacity-20"
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px dashed rgba(255,255,255,0.18)" }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function GalleryShelfScene({
+  items,
+  galleryHrefPrefix = "/vault/item",
+  themePack,
+  backgroundImageUrl,
+  shelvesEnabled = true,
+  shelfOverlayStyle = "none",
+}: Props) {
+  const theme = getShelfThemeClasses(themePack);
+  const sceneBackground = backgroundImageUrl?.trim() || "";
+
+  const itemsPerRow = 4;
+  const shelfCount = 4;
+  const visibleItems = items.slice(0, itemsPerRow * shelfCount);
+  const rows = Array.from({ length: shelfCount }, (_, i) =>
+    visibleItems.slice(i * itemsPerRow, (i + 1) * itemsPerRow)
+  );
+
+  const backgroundStyle: CSSProperties | undefined = sceneBackground
+    ? {
+        backgroundImage: `url(${sceneBackground})`,
+        backgroundSize: "auto 114%",
+        backgroundPosition: "center top",
+        backgroundRepeat: "no-repeat",
+      }
+    : undefined;
+
+  return (
+    <section className="mt-0">
+      <div
+        className={[
+          "relative mx-auto overflow-hidden rounded-[30px] ring-1 shadow-[0_30px_90px_rgba(0,0,0,0.34)]",
+          GALLERY_STAGE_MAX_WIDTH_CLASS,
+          theme.stageShell,
+        ].join(" ")}
+      >
+        <div className={["relative", GALLERY_STAGE_HEIGHT_CLASS].join(" ")}>
+          <div className="absolute inset-0" style={backgroundStyle} />
+          <div className={["absolute inset-0", theme.vignette].join(" ")} />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,10,16,0.08),rgba(6,10,16,0.12))]" />
+
+          {shelvesEnabled
+            ? rows.map((row, index) => (
+                <AnchoredRow
+                  key={index}
+                  row={row}
+                  anchor={ROW_ANCHORS[index]}
+                  theme={theme}
+                  galleryHrefPrefix={galleryHrefPrefix}
+                  shelfOverlayStyle={shelfOverlayStyle}
+                />
+              ))
+            : null}
+        </div>
+      </div>
+    </section>
+  );
+}
