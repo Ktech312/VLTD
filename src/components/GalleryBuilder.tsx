@@ -925,7 +925,7 @@ export default function GalleryBuilder({
                     <div
                       key={item?.id ?? "ghost-" + i}
                       data-grid-id={item?.id}
-                      style={{ width: "25%", padding: 2 }}
+                      style={{ width: "25%", padding: 2, touchAction: canOrganize && item ? "none" : "auto" }}
                       draggable={!!item && sections.length > 0}
                       onDragStart={item && sections.length > 0 ? (e) => {
                         e.dataTransfer.setData("text/plain", item.id);
@@ -1028,8 +1028,8 @@ export default function GalleryBuilder({
                               onOpenPicker?.();
                             }
                           }}
-                          className="flex w-full flex-col items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/[0.02] transition active:opacity-60"
-                          style={{ aspectRatio: "3/4" }}
+                          className="flex w-full flex-col items-center justify-center rounded-lg bg-white/[0.02] transition active:opacity-60"
+                          style={{ aspectRatio: "3/4", boxShadow: "0 0 0 1.5px rgba(245,181,72,0.4), 0 0 8px rgba(245,181,72,0.12)" }}
                           aria-label="Add item to this slot"
                         >
                           <span
