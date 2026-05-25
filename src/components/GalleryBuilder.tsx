@@ -280,10 +280,8 @@ export default function GalleryBuilder({
   const touchSlotFromRef = useRef<number | null>(null);
   const touchSlotOverRef = useRef<number | null>(null);
   const touchCloneRef = useRef<HTMLElement | null>(null);
-  // 16-slot positional grid (null = empty slot)
-  const [previewSlots, setPreviewSlots] = useState<(string | null)[]>(() =>
-    Array.from({ length: 16 }, (_, i) => previewItems[i]?.id ?? null)
-  );
+  // 16-slot positional grid (null = empty slot) — populated by sync effect below
+  const [previewSlots, setPreviewSlots] = useState<(string | null)[]>(Array.from({ length: 16 }, () => null));
   const [shelfFileName, setShelfFileName] = useState("");
   const [backgroundUploadError, setBackgroundUploadError] = useState("");
   const [previewNaturalHeight, setPreviewNaturalHeight] = useState(1120);
@@ -313,27 +311,6 @@ export default function GalleryBuilder({
 
   const selectedSet = useMemo(() => new Set(gallery.itemIds), [gallery.itemIds]);
 
-  // Sync previewSlots when section changes (full reset) or items added/removed (incremental)
-  const prevSlotSectionRef = useRef(-1);
-  useEffect(() => {
-    const sectionChanged = prevSlotSectionRef.current !== activeSectionIdx;
-    prevSlotSectionRef.current = activeSectionIdx;
-    if (sectionChanged) {
-      setPreviewSlots(Array.from({ length: 16 }, (_, i) => previewItems[i]?.id ?? null));
-      return;
-    }
-    const validIds = new Set(previewItems.map((item) => item.id));
-    setPreviewSlots((prev) => {
-      const cleaned = prev.map((id) => (id && validIds.has(id) ? id : null));
-      const inSlots = new Set(cleaned.filter((id): id is string => id !== null));
-      const toAdd = previewItems.filter((item) => !inSlots.has(item.id));
-      if (toAdd.length === 0 && cleaned.every((id, i) => id === prev[i])) return prev;
-      let addIdx = 0;
-      return cleaned.map((slot) => (slot !== null ? slot : addIdx < toAdd.length ? toAdd[addIdx++].id : null));
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSectionIdx, previewItems]);
-
   const selectedItems = useMemo(() => {
     const map = new Map(items.map((item) => [item.id, item]));
     return gallery.itemIds.map((id) => map.get(id)).filter(Boolean) as VaultItem[];
@@ -361,6 +338,28 @@ export default function GalleryBuilder({
     // Use section order directly so drag-reorder is immediately visible
     return activeSection.itemIds.map((id) => itemMap.get(id)).filter(Boolean) as VaultItem[];
   }, [items, selectedItems, sections, activeSectionIdx]);
+
+  // Sync previewSlots when section changes (full reset) or items added/removed (incremental)
+  // Must be declared AFTER previewItems
+  const prevSlotSectionRef = useRef(-1);
+  useEffect(() => {
+    const sectionChanged = prevSlotSectionRef.current !== activeSectionIdx;
+    prevSlotSectionRef.current = activeSectionIdx;
+    if (sectionChanged) {
+      setPreviewSlots(Array.from({ length: 16 }, (_, i) => previewItems[i]?.id ?? null));
+      return;
+    }
+    const validIds = new Set(previewItems.map((item) => item.id));
+    setPreviewSlots((prev) => {
+      const cleaned = prev.map((id) => (id && validIds.has(id) ? id : null));
+      const inSlots = new Set(cleaned.filter((id): id is string => id !== null));
+      const toAdd = previewItems.filter((item) => !inSlots.has(item.id));
+      if (toAdd.length === 0 && cleaned.every((id, i) => id === prev[i])) return prev;
+      let addIdx = 0;
+      return cleaned.map((slot) => (slot !== null ? slot : addIdx < toAdd.length ? toAdd[addIdx++].id : null));
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSectionIdx, previewItems]);
 
   const themePack = getGalleryThemePack(gallery);
   const displayMode = getGalleryDisplayMode(gallery);
