@@ -425,7 +425,7 @@ export default function GuestGalleryRenderer({
             </section>
           )}
 
-          {sectionViews.length ? (
+          {!embedded && sectionViews.length ? (
             <section className={["mt-3 mx-auto rounded-[30px] border border-white/12 bg-black/18 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.28)] backdrop-blur-sm", GALLERY_STAGE_WIDTH_CLASS].join(" ")}>
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
                 CURATED SECTIONS
