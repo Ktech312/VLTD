@@ -326,14 +326,15 @@ export default function GalleryBuilder({
     return selectedItems.reduce((sum, item) => sum + totalCost(item), 0);
   }, [selectedItems]);
 
-  // Preview items: active section's items, fallback to all items if section is empty/missing
+  // Preview items: follow section.itemIds ORDER (not gallery.itemIds order)
   const previewItems = useMemo(() => {
+    const itemMap = new Map(items.map((item) => [item.id, item]));
     if (sections.length === 0) return selectedItems;
     const activeSection = sections[activeSectionIdx];
     if (!activeSection || activeSection.itemIds.length === 0) return [];
-    const sectionSet = new Set(activeSection.itemIds);
-    return selectedItems.filter((item) => sectionSet.has(item.id));
-  }, [selectedItems, sections, activeSectionIdx]);
+    // Use section order directly so drag-reorder is immediately visible
+    return activeSection.itemIds.map((id) => itemMap.get(id)).filter(Boolean) as VaultItem[];
+  }, [items, selectedItems, sections, activeSectionIdx]);
 
   const themePack = getGalleryThemePack(gallery);
   const displayMode = getGalleryDisplayMode(gallery);
@@ -500,6 +501,13 @@ export default function GalleryBuilder({
   function handlePreviewReorder(orderedIds: string[]) {
     const section = sections[activeSectionIdx];
     if (!section) return;
+
+    // Sync gallery.itemIds order to match the new section order so shelf display updates too
+    const orderedSet = new Set(orderedIds);
+    const otherIds = gallery.itemIds.filter((id) => !orderedSet.has(id));
+    const nextGalleryIds = [...orderedIds, ...otherIds];
+    onChange(nextGalleryIds);
+
     onGalleryChange((current) => {
       const nextSections = getGallerySections(current).map((s, i) =>
         i === activeSectionIdx ? { ...s, itemIds: orderedIds } : s
