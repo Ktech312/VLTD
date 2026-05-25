@@ -1354,37 +1354,268 @@ export default function GalleryBuilder({
       </section>
 
 
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,520px)_minmax(0,1fr)]">
+        <section className="rounded-[24px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold">Selected Items</div>
+                <div className="mt-1 text-sm text-[color:var(--muted)]">
+                  Tap + to add, or drag cards here. Drag selected items to reorder.
+                </div>
+              </div>
+
+              <div className="text-sm text-[color:var(--muted)]">
+                <span className="font-semibold text-[color:var(--fg)]">{selectedItems.length}</span>{" "}
+                selected
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
+                <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">EXHIBITS</div>
+                <div className="mt-2 text-xl font-semibold">{selectedCount}</div>
+              </div>
+
+              <div className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
+                <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">CURATED VALUE</div>
+                <div className="mt-2 text-xl font-semibold">{formatMoney(selectedValue) ?? "-"}</div>
+              </div>
+
+              <div className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
+                <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">CURATED COST</div>
+                <div className="mt-2 text-xl font-semibold">{formatMoney(selectedCost) ?? "-"}</div>
+              </div>
+            </div>
+          </div>
+
+          {selectedItems.length === 0 ? (
+            <div
+              className={[
+                "mt-4 rounded-[18px] bg-[color:var(--surface)] p-5 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition",
+                draggingId && !selectedSet.has(draggingId) ? "bg-gold/6 ring-cyan-300/30" : "",
+              ].join(" ")}
+              onDragOver={(event) => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "copy";
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                onDropIntoSelectedList(event);
+              }}
+            >
+              No items selected yet. Tap + or drag pieces from the Vault search panel.
+            </div>
+          ) : (
+            <div
+              className={[
+                "mt-4 grid gap-2 rounded-[18px] transition",
+                draggingId && !selectedSet.has(draggingId) ? "bg-gold/6 p-2 ring-1 ring-cyan-300/25" : "",
+              ].join(" ")}
+              onDragOver={(event) => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = selectedSet.has(draggingId ?? "") ? "move" : "copy";
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                onDropIntoSelectedList(event);
+              }}
+            >
+              {selectedItems.map((item, index) => {
+                const isDragging = draggingId === item.id;
+                const isDropTarget = dropTargetId === item.id && draggingId !== item.id;
+                const sectionId = getItemSectionId(item.id);
+                const assignedSection = sections.find((section) => section.id === sectionId) ?? null;
+
+                return (
+                  <div
+                    key={item.id}
+                    draggable
+                    onDragStart={(event) => onDragStart(item.id, event)}
+                    onDragEnd={onDragEnd}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      if (dropTargetId !== item.id) setDropTargetId(item.id);
+                    }}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      onDropOn(item.id, event);
+                    }}
+                    className={[
+                      "relative rounded-[14px] bg-[color:var(--surface)] p-2 pr-9 ring-1 transition",
+                      isDragging
+                        ? "scale-[0.99] opacity-60 ring-[color:var(--border)]"
+                        : isDropTarget
+                          ? "ring-[color:var(--fg)] shadow-[0_0_0_1px_rgba(255,255,255,0.18)]"
+                          : "ring-[color:var(--border)]",
+                    ].join(" ")}
+                  >
+                    <div className="flex gap-2">
+                      <div className="flex w-4 shrink-0 cursor-grab items-center justify-center active:cursor-grabbing">
+                        <DragHandle />
+                      </div>
+
+                      <div className="h-10 w-9 shrink-0 overflow-hidden rounded-lg bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.24))] p-1 ring-1 ring-white/10">
+                        {itemImage(item) ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={itemImage(item)}
+                            alt={item.title}
+                            className="h-full w-full object-contain"
+                            draggable={false}
+                          />
+                        ) : (
+                          <div className="grid h-full w-full place-items-center text-[10px] text-white/55">
+                            No image
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="text-[9px] tracking-[0.15em] text-[color:var(--muted2)]">
+                            EXHIBIT #{index + 1}
+                          </div>
+
+                          {assignedSection ? (
+                            <span className="rounded-full bg-black/10 px-2 py-0.5 text-[9px] ring-1 ring-black/10">
+                              {assignedSection.title}
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <div className="line-clamp-1 text-[13px] font-semibold leading-tight">{item.title}</div>
+
+                        <div className="line-clamp-1 text-[11px] leading-tight text-[color:var(--muted)]">
+                          {itemUniverseLabel(item)}
+                        </div>
+
+                        <div className="mt-0.5 flex flex-wrap gap-3 text-[10px] leading-tight text-[color:var(--muted)]">
+                          {typeof item.currentValue === "number" ? (
+                            <span>
+                              Value {formatMoney(item.currentValue)}
+                            </span>
+                          ) : null}
+
+                          <span>
+                            Cost {formatMoney(totalCost(item))}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeItem(item.id)}
+                      className="absolute bottom-2 right-2 grid h-9 w-9 place-items-center overflow-visible rounded-full border-[3px] border-red-500 bg-transparent text-[0px] text-transparent ring-1 ring-red-100/70 transition hover:scale-105"
+                      style={{
+                        boxShadow:
+                          "0 0 14px rgba(248,113,113,0.92), 0 0 30px rgba(248,113,113,0.48), inset 0 0 8px rgba(248,113,113,0.24)",
+                      }}
+                      aria-label={`Remove ${item.title} from selected items`}
+                    >
+                      <span className="pointer-events-none absolute -inset-2 rounded-full bg-red-500/30 blur-md" aria-hidden="true" />
+                      <span
+                        className="absolute left-1/2 top-1/2 z-10 h-[5px] w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500"
+                        style={{
+                          boxShadow:
+                            "0 0 7px rgba(255,255,255,0.95), 0 0 12px rgba(248,113,113,0.95), 0 0 20px rgba(248,113,113,0.78)",
+                        }}
+                        aria-hidden="true"
+                      />
+                      ×
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        <section>
+          <div
+            className="rounded-[20px] p-4 ring-1"
+            style={{
+              background: "rgba(8,12,20,0.85)",
+              border: "1px solid rgba(255,255,255,0.07)",
+            }}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold">Vault Pieces</div>
+                <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
+                  Pick up to {MAX_EXHIBIT_ITEMS} pieces for this exhibit.
+                </div>
+              </div>
+              <div
+                className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold tabular-nums"
+                style={{
+                  background: selectedCount >= MAX_EXHIBIT_ITEMS ? "rgba(245,181,72,0.15)" : "rgba(255,255,255,0.07)",
+                  color: selectedCount >= MAX_EXHIBIT_ITEMS ? "#F5B548" : "var(--muted)",
+                  border: `1px solid ${selectedCount >= MAX_EXHIBIT_ITEMS ? "rgba(245,181,72,0.3)" : "rgba(255,255,255,0.09)"}`,
+                }}
+              >
+                {selectedCount}/{MAX_EXHIBIT_ITEMS}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const activeSection = sections[activeSectionIdx];
+                if (activeSection) {
+                  onOpenPicker?.(activeSection.title, activeSection.itemIds, activeSectionIdx);
+                } else {
+                  onOpenPicker?.();
+                }
+              }}
+              className="mt-4 w-full rounded-full py-[15px] text-[15px] font-black tracking-wide transition active:opacity-80"
+              style={{
+                background: selectedCount > 0 ? "linear-gradient(135deg, #FFE08A 0%, #F5B548 40%, #C8941F 100%)" : "rgba(255,255,255,0.07)",
+                color: selectedCount > 0 ? "#1A0F00" : "var(--muted)",
+                boxShadow: selectedCount > 0 ? "0 0 0 1px rgba(245,181,72,0.35), 0 8px 28px rgba(245,181,72,0.3)" : "none",
+                border: selectedCount === 0 ? "1px solid rgba(255,255,255,0.09)" : "none",
+              }}
+            >
+              {selectedCount === 0 ? "Open Vault Picker" : `Edit Selection  (${selectedCount})`}
+            </button>
+          </div>
+        </section>
+      </div>
+
+
       {previewExpanded && (
         <div className="fixed inset-0 z-[75] flex flex-col" style={{ background: "#080C14" }}>
           <div
-            className="flex shrink-0 items-center justify-between px-4 pb-3"
+            className="shrink-0"
             style={{
               paddingTop: "max(env(safe-area-inset-top, 0px), 14px)",
               borderBottom: "1px solid rgba(255,255,255,0.07)",
             }}
           >
-            <div>
-              <div className="text-[11px] tracking-[0.2em]" style={{ color: "var(--muted2)" }}>LIVE PREVIEW</div>
-              <div className="mt-0.5 flex items-baseline gap-1.5 text-sm font-semibold">
-                {gallery.title || "Exhibition"}
-                {sections.length > 0 && sections[activeSectionIdx] && (
-                  <span className="text-xs font-normal" style={{ color: "var(--muted)" }}>
-                    · S{activeSectionIdx + 1} {sections[activeSectionIdx].title}
-                  </span>
-                )}
+            <div className="mx-auto flex w-full max-w-[1120px] items-center justify-between px-4 pb-3">
+              <div>
+                <div className="text-[11px] tracking-[0.2em]" style={{ color: "var(--muted2)" }}>LIVE PREVIEW</div>
+                <div className="mt-0.5 flex items-baseline gap-1.5 text-sm font-semibold">
+                  {gallery.title || "Exhibition"}
+                  {sections.length > 0 && sections[activeSectionIdx] && (
+                    <span className="text-xs font-normal" style={{ color: "var(--muted)" }}>
+                      · S{activeSectionIdx + 1} {sections[activeSectionIdx].title}
+                    </span>
+                  )}
+                </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setPreviewExpanded(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full transition active:opacity-70"
+                style={{ background: "rgba(255,255,255,0.07)" }}
+                aria-label="Close preview"
+              >
+                <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" style={{ color: "var(--muted)" }}>
+                  <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setPreviewExpanded(false)}
-              className="flex h-9 w-9 items-center justify-center rounded-full transition active:opacity-70"
-              style={{ background: "rgba(255,255,255,0.07)" }}
-              aria-label="Close preview"
-            >
-              <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" style={{ color: "var(--muted)" }}>
-                <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-            </button>
           </div>
           <div className="flex-1 overflow-y-auto overscroll-contain" style={{ minHeight: 0, WebkitOverflowScrolling: "touch" }}>
             <BuilderPreviewBridge gallery={gallery} items={previewItems} onHeightChange={setPreviewNaturalHeight} />
