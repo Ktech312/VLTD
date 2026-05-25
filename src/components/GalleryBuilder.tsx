@@ -278,6 +278,7 @@ export default function GalleryBuilder({
   const [gridDragOverId, setGridDragOverId] = useState<string | null>(null);
   const [isOrganizing, setIsOrganizing] = useState(false);
   const touchDragRef = useRef<{ fromId: string } | null>(null);
+  const touchDragOverRef = useRef<string | null>(null);
   const [shelfFileName, setShelfFileName] = useState("");
   const [backgroundUploadError, setBackgroundUploadError] = useState("");
   const [previewNaturalHeight, setPreviewNaturalHeight] = useState(1120);
@@ -936,21 +937,33 @@ export default function GalleryBuilder({
                         e.preventDefault();
                         if (item.id !== gridDragId) setGridDragOverId(item.id);
                       } : undefined}
-                      onTouchStart={canOrganize && item ? () => {
+                      onTouchStart={canOrganize && item ? (e) => {
+                        e.stopPropagation();
                         touchDragRef.current = { fromId: item.id };
+                        touchDragOverRef.current = null;
                         setGridDragId(item.id);
                       } : undefined}
                       onTouchMove={canOrganize && item ? (e) => {
                         if (!touchDragRef.current) return;
                         const touch = e.touches[0];
-                        const el = document.elementFromPoint(touch.clientX, touch.clientY);
-                        const toId = el?.closest("[data-grid-id]")?.getAttribute("data-grid-id");
-                        if (toId && toId !== touchDragRef.current.fromId) setGridDragOverId(toId);
+                        // Walk up from every element at this point to find data-grid-id
+                        let el: Element | null = document.elementFromPoint(touch.clientX, touch.clientY);
+                        let toId: string | null = null;
+                        while (el && !toId) {
+                          toId = el.getAttribute("data-grid-id");
+                          el = el.parentElement;
+                        }
+                        if (toId && toId !== touchDragRef.current.fromId) {
+                          touchDragOverRef.current = toId;
+                          setGridDragOverId(toId);
+                        }
                       } : undefined}
                       onTouchEnd={canOrganize && item ? () => {
                         const fromId = touchDragRef.current?.fromId;
-                        const toId = gridDragOverId;
+                        // Read from ref — always current, never stale
+                        const toId = touchDragOverRef.current;
                         touchDragRef.current = null;
+                        touchDragOverRef.current = null;
                         if (fromId && toId && fromId !== toId) {
                           const section = sections[activeSectionIdx];
                           if (section) {
@@ -995,8 +1008,8 @@ export default function GalleryBuilder({
 
                           {/* Drag handle hint while organizing */}
                           {canOrganize ? (
-                            <div className="absolute left-1 top-1 z-20 grid h-[18px] w-[18px] place-items-center rounded-full bg-black/60 pointer-events-none">
-                              <svg width="9" height="9" viewBox="0 0 9 9" fill="none"><circle cx="2.5" cy="2.5" r="1" fill="white" opacity="0.7"/><circle cx="6.5" cy="2.5" r="1" fill="white" opacity="0.7"/><circle cx="2.5" cy="6.5" r="1" fill="white" opacity="0.7"/><circle cx="6.5" cy="6.5" r="1" fill="white" opacity="0.7"/></svg>
+                            <div className="absolute left-1 top-1 z-20 grid h-[26px] w-[26px] place-items-center rounded-full pointer-events-none" style={{ background: "rgba(0,0,0,0.72)", boxShadow: "0 0 0 1px rgba(255,255,255,0.12)" }}>
+                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="4" cy="4" r="1.5" fill="white" opacity="0.85"/><circle cx="10" cy="4" r="1.5" fill="white" opacity="0.85"/><circle cx="4" cy="10" r="1.5" fill="white" opacity="0.85"/><circle cx="10" cy="10" r="1.5" fill="white" opacity="0.85"/></svg>
                             </div>
                           ) : null}
 
