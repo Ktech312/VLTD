@@ -622,29 +622,34 @@ export default function GalleryBuilder({
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3 xl:grid-cols-4">
-          <div className="rounded-[18px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
-            <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">LAYOUT</div>
-            <div className="mt-2 text-xl font-semibold">{layoutType}</div>
-          </div>
-
-          <div className="rounded-[18px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
-            <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">SECTIONS</div>
-            <div className="mt-2 text-xl font-semibold">{sections.length}</div>
-          </div>
-
-          <div className="rounded-[18px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
-            <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">EXHIBITS</div>
-            <div className="mt-2 text-xl font-semibold">{selectedCount}</div>
-          </div>
-
-          <div className="rounded-[18px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
-            <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">
-              FEATURED WORKS
+        {/* ── Exhibition stat chips — compact row ── */}
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {[
+            { label: "LAYOUT", value: layoutType },
+            { label: "SECTIONS", value: sections.length },
+            { label: "EXHIBITS", value: selectedCount },
+            { label: "FEATURED", value: sections.filter((s) => !!s.featuredItemId).length },
+          ].map(({ label, value }) => (
+            <div key={label} className="rounded-[14px] bg-[color:var(--surface)] px-3 py-2.5 ring-1 ring-[color:var(--border)]">
+              <div className="text-[10px] tracking-[0.14em] text-[color:var(--muted2)]">{label}</div>
+              <div className="mt-1 text-base font-semibold leading-none">{value}</div>
             </div>
-            <div className="mt-2 text-xl font-semibold">
-              {sections.filter((section) => !!section.featuredItemId).length}
-            </div>
+          ))}
+        </div>
+
+        {/* ── Selected Items stats ── */}
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          <div className="rounded-[14px] bg-[color:var(--surface)] px-3 py-2.5 ring-1 ring-[color:var(--border)]">
+            <div className="text-[10px] tracking-[0.14em] text-[color:var(--muted2)]">EXHIBITS</div>
+            <div className="mt-1 text-base font-semibold leading-none">{selectedCount}</div>
+          </div>
+          <div className="rounded-[14px] bg-[color:var(--surface)] px-3 py-2.5 ring-1 ring-[color:var(--border)]">
+            <div className="text-[10px] tracking-[0.14em] text-[color:var(--muted2)]">CURATED VALUE</div>
+            <div className="mt-1 text-base font-semibold leading-none">{formatMoney(selectedValue) ?? "—"}</div>
+          </div>
+          <div className="rounded-[14px] bg-[color:var(--surface)] px-3 py-2.5 ring-1 ring-[color:var(--border)]">
+            <div className="text-[10px] tracking-[0.14em] text-[color:var(--muted2)]">CURATED COST</div>
+            <div className="mt-1 text-base font-semibold leading-none">{formatMoney(selectedCost) ?? "—"}</div>
           </div>
         </div>
 
