@@ -274,11 +274,16 @@ export default function GalleryBuilder({
   const [previewExpanded, setPreviewExpanded] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
-  const [gridDragId, setGridDragId] = useState<string | null>(null);
-  const [gridDragOverId, setGridDragOverId] = useState<string | null>(null);
+  const [slotDragIdx, setSlotDragIdx] = useState<number | null>(null);
+  const [slotDragOverIdx, setSlotDragOverIdx] = useState<number | null>(null);
   const [isOrganizing, setIsOrganizing] = useState(false);
-  const touchDragRef = useRef<{ fromId: string } | null>(null);
-  const touchDragOverRef = useRef<string | null>(null);
+  const touchSlotFromRef = useRef<number | null>(null);
+  const touchSlotOverRef = useRef<number | null>(null);
+  const touchCloneRef = useRef<HTMLElement | null>(null);
+  // 16-slot positional grid (null = empty slot)
+  const [previewSlots, setPreviewSlots] = useState<(string | null)[]>(() =>
+    Array.from({ length: 16 }, (_, i) => previewItems[i]?.id ?? null)
+  );
   const [shelfFileName, setShelfFileName] = useState("");
   const [backgroundUploadError, setBackgroundUploadError] = useState("");
   const [previewNaturalHeight, setPreviewNaturalHeight] = useState(1120);
@@ -307,6 +312,27 @@ export default function GalleryBuilder({
   }, []);
 
   const selectedSet = useMemo(() => new Set(gallery.itemIds), [gallery.itemIds]);
+
+  // Sync previewSlots when section changes (full reset) or items added/removed (incremental)
+  const prevSlotSectionRef = useRef(-1);
+  useEffect(() => {
+    const sectionChanged = prevSlotSectionRef.current !== activeSectionIdx;
+    prevSlotSectionRef.current = activeSectionIdx;
+    if (sectionChanged) {
+      setPreviewSlots(Array.from({ length: 16 }, (_, i) => previewItems[i]?.id ?? null));
+      return;
+    }
+    const validIds = new Set(previewItems.map((item) => item.id));
+    setPreviewSlots((prev) => {
+      const cleaned = prev.map((id) => (id && validIds.has(id) ? id : null));
+      const inSlots = new Set(cleaned.filter((id): id is string => id !== null));
+      const toAdd = previewItems.filter((item) => !inSlots.has(item.id));
+      if (toAdd.length === 0 && cleaned.every((id, i) => id === prev[i])) return prev;
+      let addIdx = 0;
+      return cleaned.map((slot) => (slot !== null ? slot : addIdx < toAdd.length ? toAdd[addIdx++].id : null));
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSectionIdx, previewItems]);
 
   const selectedItems = useMemo(() => {
     const map = new Map(items.map((item) => [item.id, item]));
@@ -514,6 +540,12 @@ export default function GalleryBuilder({
       );
       return syncSectionsAndLayout(current, nextSections);
     });
+  }
+
+  function commitSlots(slots: (string | null)[]) {
+    setPreviewSlots(slots);
+    const orderedIds = slots.filter((id): id is string => id !== null);
+    handlePreviewReorder(orderedIds);
   }
 
   async function handleShelfBackgroundUpload(file: File) {
@@ -901,90 +933,103 @@ export default function GalleryBuilder({
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
               e.preventDefault();
-              const toId = (e.target as HTMLElement).closest("[data-grid-id]")?.getAttribute("data-grid-id");
-              const fromId = gridDragId || e.dataTransfer.getData("text/plain");
-              if (fromId && toId && fromId !== toId && sections.length > 0) {
-                const section = sections[activeSectionIdx];
-                if (section) {
-                  handlePreviewReorder(
-                    (() => {
-                      const ids = [...section.itemIds];
-                      const fi = ids.indexOf(fromId), ti = ids.indexOf(toId);
-                      if (fi < 0 || ti < 0) return ids;
-                      const [m] = ids.splice(fi, 1);
-                      ids.splice(ti, 0, m);
-                      return ids;
-                    })()
-                  );
-                }
+              const toEl = (e.target as HTMLElement).closest("[data-slot-idx]");
+              const toIdx = toEl ? parseInt(toEl.getAttribute("data-slot-idx") ?? "", 10) : -1;
+              const fromIdx = slotDragIdx ?? parseInt(e.dataTransfer.getData("text/plain"), 10);
+              if (!isNaN(fromIdx) && !isNaN(toIdx) && fromIdx !== toIdx && fromIdx >= 0 && toIdx >= 0) {
+                const next = [...previewSlots];
+                [next[fromIdx], next[toIdx]] = [next[toIdx], next[fromIdx]];
+                commitSlots(next);
               }
-              setGridDragId(null); setGridDragOverId(null);
+              setSlotDragIdx(null); setSlotDragOverIdx(null);
             }}
-            onDragEnd={() => { setGridDragId(null); setGridDragOverId(null); }}
+            onDragEnd={() => { setSlotDragIdx(null); setSlotDragOverIdx(null); }}
           >
             <div className="p-2">
               <div className="flex flex-wrap">
                 {Array.from({ length: 16 }).map((_, i) => {
-                  const item = previewItems[i];
+                  const itemId = previewSlots[i];
+                  const itemMap = new Map(items.map((it) => [it.id, it]));
+                  const item = itemId ? itemMap.get(itemId) ?? null : null;
                   const img = item ? itemImage(item) : null;
                   const subtitle = item ? [item.subtitle, item.number, item.grade].filter(Boolean).join(" • ") : null;
-                  const isDragOver = item ? gridDragOverId === item.id && gridDragId !== item.id : false;
+                  const isBeingDragged = slotDragIdx === i;
+                  const isDragOver = slotDragOverIdx === i && slotDragIdx !== i;
                   const canOrganize = isOrganizing && sections.length > 0;
                   return (
                     <div
-                      key={item?.id ?? "ghost-" + i}
-                      data-grid-id={item?.id}
+                      key={"slot-" + i}
+                      data-slot-idx={i}
                       style={{ width: "25%", padding: 2, touchAction: canOrganize && item ? "none" : "auto" }}
                       draggable={!!item && sections.length > 0}
                       onDragStart={item && sections.length > 0 ? (e) => {
-                        e.dataTransfer.setData("text/plain", item.id);
+                        e.dataTransfer.setData("text/plain", String(i));
                         e.dataTransfer.effectAllowed = "move";
-                        setGridDragId(item.id);
+                        setSlotDragIdx(i);
+                        // Use actual card image as drag ghost
+                        const imgEl = e.currentTarget.querySelector("img");
+                        if (imgEl) e.dataTransfer.setDragImage(imgEl, imgEl.offsetWidth / 2, imgEl.offsetHeight / 2);
                       } : undefined}
-                      onDragOver={item ? (e) => {
+                      onDragOver={(e) => {
                         e.preventDefault();
-                        if (item.id !== gridDragId) setGridDragOverId(item.id);
-                      } : undefined}
+                        if (slotDragIdx !== null && slotDragIdx !== i) setSlotDragOverIdx(i);
+                      }}
                       onTouchStart={canOrganize && item ? (e) => {
                         e.stopPropagation();
-                        touchDragRef.current = { fromId: item.id };
-                        touchDragOverRef.current = null;
-                        setGridDragId(item.id);
+                        touchSlotFromRef.current = i;
+                        touchSlotOverRef.current = null;
+                        setSlotDragIdx(i);
+                        // Create floating clone that follows finger
+                        const imgEl = e.currentTarget.querySelector("img");
+                        if (imgEl) {
+                          const clone = imgEl.cloneNode(true) as HTMLImageElement;
+                          Object.assign(clone.style, {
+                            position: "fixed", width: "72px", height: "96px",
+                            objectFit: "cover", borderRadius: "8px", opacity: "0.88",
+                            pointerEvents: "none", zIndex: "9999", transform: "scale(1.1)",
+                            boxShadow: "0 0 0 2px rgba(245,181,72,0.8), 0 8px 24px rgba(0,0,0,0.5)",
+                          });
+                          const touch = e.touches[0];
+                          clone.style.left = `${touch.clientX - 36}px`;
+                          clone.style.top = `${touch.clientY - 60}px`;
+                          document.body.appendChild(clone);
+                          touchCloneRef.current = clone;
+                        }
                       } : undefined}
                       onTouchMove={canOrganize && item ? (e) => {
-                        if (!touchDragRef.current) return;
+                        if (touchSlotFromRef.current === null) return;
                         const touch = e.touches[0];
-                        // Walk up from every element at this point to find data-grid-id
+                        // Move floating clone
+                        if (touchCloneRef.current) {
+                          touchCloneRef.current.style.left = `${touch.clientX - 36}px`;
+                          touchCloneRef.current.style.top = `${touch.clientY - 60}px`;
+                        }
+                        // Find target slot under finger
                         let el: Element | null = document.elementFromPoint(touch.clientX, touch.clientY);
-                        let toId: string | null = null;
-                        while (el && !toId) {
-                          toId = el.getAttribute("data-grid-id");
+                        let toIdx: number | null = null;
+                        while (el && toIdx === null) {
+                          const attr = el.getAttribute("data-slot-idx");
+                          if (attr !== null) toIdx = parseInt(attr, 10);
                           el = el.parentElement;
                         }
-                        if (toId && toId !== touchDragRef.current.fromId) {
-                          touchDragOverRef.current = toId;
-                          setGridDragOverId(toId);
+                        if (toIdx !== null && toIdx !== touchSlotFromRef.current) {
+                          touchSlotOverRef.current = toIdx;
+                          setSlotDragOverIdx(toIdx);
                         }
                       } : undefined}
                       onTouchEnd={canOrganize && item ? () => {
-                        const fromId = touchDragRef.current?.fromId;
-                        // Read from ref — always current, never stale
-                        const toId = touchDragOverRef.current;
-                        touchDragRef.current = null;
-                        touchDragOverRef.current = null;
-                        if (fromId && toId && fromId !== toId) {
-                          const section = sections[activeSectionIdx];
-                          if (section) {
-                            const ids = [...section.itemIds];
-                            const fi = ids.indexOf(fromId), ti = ids.indexOf(toId);
-                            if (fi >= 0 && ti >= 0) {
-                              const [m] = ids.splice(fi, 1);
-                              ids.splice(ti, 0, m);
-                              handlePreviewReorder(ids);
-                            }
-                          }
+                        const fromIdx = touchSlotFromRef.current;
+                        const toIdx = touchSlotOverRef.current;
+                        touchSlotFromRef.current = null;
+                        touchSlotOverRef.current = null;
+                        touchCloneRef.current?.remove();
+                        touchCloneRef.current = null;
+                        if (fromIdx !== null && toIdx !== null && fromIdx !== toIdx) {
+                          const next = [...previewSlots];
+                          [next[fromIdx], next[toIdx]] = [next[toIdx], next[fromIdx]];
+                          commitSlots(next);
                         }
-                        setGridDragId(null); setGridDragOverId(null);
+                        setSlotDragIdx(null); setSlotDragOverIdx(null);
                       } : undefined}
                     >
                       {item ? (
@@ -994,10 +1039,12 @@ export default function GalleryBuilder({
                             aspectRatio: "3/4",
                             background: "rgba(255,255,255,0.05)",
                             boxShadow: isDragOver
-                              ? "0 0 0 2px rgba(245,181,72,0.8), 0 0 12px rgba(245,181,72,0.4)"
-                              : "0 0 0 1.5px rgba(245,181,72,0.55), 0 0 8px rgba(245,181,72,0.25)",
+                              ? "0 0 0 2px rgba(245,181,72,0.9), 0 0 16px rgba(245,181,72,0.5)"
+                              : isBeingDragged
+                                ? "0 0 0 2px rgba(255,255,255,0.2)"
+                                : "0 0 0 1.5px rgba(245,181,72,0.55), 0 0 8px rgba(245,181,72,0.25)",
+                            opacity: isBeingDragged ? 0.35 : 1,
                             cursor: sections.length > 0 ? (canOrganize ? "grab" : "default") : "default",
-                            transform: (!canOrganize && isDragOver) ? "scale(1.04)" : "scale(1)",
                             transition: canOrganize ? "none" : "transform 0.1s, box-shadow 0.1s",
                           }}
                         >
@@ -1038,26 +1085,32 @@ export default function GalleryBuilder({
                           </div>
                         </div>
                       ) : (
-                        /* Ghost placeholder with green + — builder only, not visible to viewers */
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const activeSection = sections[activeSectionIdx];
-                            if (activeSection) {
-                              onOpenPicker?.(activeSection.title, activeSection.itemIds, activeSectionIdx);
-                            } else {
-                              onOpenPicker?.();
-                            }
+                        /* Empty slot — droppable + tappable to open picker */
+                        <div
+                          className="flex w-full flex-col items-center justify-center rounded-lg bg-white/[0.02] transition-all"
+                          style={{
+                            aspectRatio: "3/4",
+                            boxShadow: isDragOver
+                              ? "0 0 0 2px rgba(245,181,72,0.9), 0 0 16px rgba(245,181,72,0.5)"
+                              : "0 0 0 1.5px rgba(245,181,72,0.4), 0 0 8px rgba(245,181,72,0.12)",
+                            cursor: canOrganize ? "copy" : "pointer",
                           }}
-                          className="flex w-full flex-col items-center justify-center rounded-lg bg-white/[0.02] transition active:opacity-60"
-                          style={{ aspectRatio: "3/4", boxShadow: "0 0 0 1.5px rgba(245,181,72,0.4), 0 0 8px rgba(245,181,72,0.12)" }}
-                          aria-label="Add item to this slot"
+                          onClick={!canOrganize ? () => {
+                            const activeSection = sections[activeSectionIdx];
+                            if (activeSection) onOpenPicker?.(activeSection.title, activeSection.itemIds, activeSectionIdx);
+                            else onOpenPicker?.();
+                          } : undefined}
+                          aria-label="Empty slot"
                         >
-                          <span
-                            className="grid h-[22px] w-[22px] place-items-center rounded-full text-base font-light leading-none text-green-400"
-                            style={{ background: "rgba(74,222,128,0.15)", boxShadow: "0 0 8px rgba(74,222,128,0.3)" }}
-                          >+</span>
-                        </button>
+                          {!canOrganize ? (
+                            <span
+                              className="grid h-[22px] w-[22px] place-items-center rounded-full text-base font-light leading-none text-green-400"
+                              style={{ background: "rgba(74,222,128,0.15)", boxShadow: "0 0 8px rgba(74,222,128,0.3)" }}
+                            >+</span>
+                          ) : (
+                            <span className="text-[8px] text-white/20">drop</span>
+                          )}
+                        </div>
                       )}
                     </div>
                   );
