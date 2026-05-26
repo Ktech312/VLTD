@@ -841,7 +841,7 @@ export default function GalleryBuilder({
               )}
             </div>
 
-            {/* Edit — full gold gradient button */}
+            {/* Edit Selection — gold pill, thinner */}
             <button
               type="button"
               onClick={() => {
@@ -852,7 +852,7 @@ export default function GalleryBuilder({
                   onOpenPicker?.();
                 }
               }}
-              className="inline-flex min-h-[34px] items-center justify-center rounded-full px-4 text-xs font-black tracking-wide transition-all hover:opacity-90 active:scale-[0.98]"
+              className="inline-flex min-h-[28px] items-center justify-center rounded-full px-3 text-[11px] font-black tracking-wide transition-all hover:opacity-90 active:scale-[0.98]"
               style={{
                 background: selectedCount > 0
                   ? "linear-gradient(135deg, #FFE08A 0%, #F5B548 40%, #C8941F 100%)"
@@ -867,16 +867,16 @@ export default function GalleryBuilder({
               {(() => {
                 const activeSection = sections[activeSectionIdx];
                 const count = activeSection ? activeSection.itemIds.length : selectedCount;
-                return count === 0 ? "Edit Selection" : `Edit Selection (${count})`;
+                return count === 0 ? "Edit Selection" : `Edit (${count})`;
               })()}
             </button>
 
-            {/* Organize pill — toggles wiggle/touch-drag mode */}
+            {/* Organize pill — thinner */}
             {sections.length > 0 ? (
               <button
                 type="button"
                 onClick={() => setIsOrganizing((v) => !v)}
-                className="inline-flex min-h-[34px] items-center justify-center rounded-full px-3 text-xs font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
+                className="inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
                 style={isOrganizing
                   ? { background: "rgba(74,222,128,0.22)", color: "#4ADE80", borderColor: "rgba(74,222,128,0.55)" }
                   : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", borderColor: "rgba(255,255,255,0.15)" }}
@@ -885,18 +885,18 @@ export default function GalleryBuilder({
               </button>
             ) : null}
 
-            {/* Save — gold pill */}
+            {/* Save — gold pill, thinner */}
             <button
               type="button"
               onClick={() => onQuickSave?.()}
-              className="inline-flex min-h-[34px] items-center justify-center rounded-full px-3 text-xs font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
+              className="inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
               style={{ background: "rgba(245,181,72,0.22)", color: "#F5B548", borderColor: "rgba(245,181,72,0.55)" }}
             >
               Save
             </button>
           </div>
 
-          {/* ── Row 2b: Section name — full-width input, intentionally its own row ── */}
+          {/* ── Section name + description — both linked to activeSectionIdx ── */}
           <input
             type="text"
             value={sections[activeSectionIdx]?.title ?? ""}
@@ -907,7 +907,32 @@ export default function GalleryBuilder({
               onGalleryChange((current) => syncSectionsAndLayout(current, updated));
             }}
             placeholder="Section name…"
-            className="mt-2 block min-h-[34px] w-full rounded-2xl bg-[color:var(--pill)] px-3 text-xs font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
+            className="mt-2 block min-h-[32px] w-full rounded-2xl bg-[color:var(--pill)] px-3 text-xs font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
+          />
+
+          {/* Section description — one line, auto-expands on type, shrinks on blur */}
+          <textarea
+            key={activeSectionIdx}
+            rows={1}
+            value={sections[activeSectionIdx]?.description ?? ""}
+            onChange={(e) => {
+              const updated = sections.map((s, i) =>
+                i === activeSectionIdx ? { ...s, description: e.target.value } : s
+              );
+              onGalleryChange((current) => syncSectionsAndLayout(current, updated));
+            }}
+            onInput={(e) => {
+              const el = e.currentTarget;
+              el.style.height = "auto";
+              el.style.height = el.scrollHeight + "px";
+            }}
+            onBlur={(e) => {
+              if (!e.currentTarget.value) {
+                e.currentTarget.style.height = "auto";
+              }
+            }}
+            placeholder="Section description…"
+            className="mt-1 block w-full resize-none overflow-hidden rounded-2xl bg-[color:var(--pill)] px-3 py-2 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
           />
 
           {/* Background / error status */}
