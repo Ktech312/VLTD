@@ -732,7 +732,7 @@ export default function GalleryBuilder({
             {/* Upload Background — uniform pill */}
             <label
               htmlFor={`shelf-upload-${gallery.id}`}
-              className="vltd-selectable inline-flex min-h-[34px] cursor-pointer items-center justify-center rounded-full bg-[color:var(--pill)] px-3 text-xs font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all select-none"
+              className="vltd-selectable inline-flex min-h-[28px] cursor-pointer items-center justify-center rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all select-none"
             >
               Upload Background
             </label>
@@ -744,7 +744,7 @@ export default function GalleryBuilder({
                   setBackgroundUploadError("");
                   onGalleryChange((current) => ({ ...current, shelfBackground: "" }));
                 }}
-                className="vltd-selectable inline-flex min-h-[34px] items-center justify-center rounded-full bg-[color:var(--pill)] px-3 text-xs font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all"
+                className="vltd-selectable inline-flex min-h-[28px] items-center justify-center rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all"
               >
                 Remove BG
               </button>
@@ -764,7 +764,7 @@ export default function GalleryBuilder({
                   }
                   setSectionDropdownOpen((v) => !v);
                 }}
-                className="inline-flex min-h-[34px] items-center justify-between gap-1.5 rounded-full bg-[color:var(--pill)] px-3 text-xs font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all select-none"
+                className="inline-flex min-h-[28px] items-center justify-between gap-1.5 rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all select-none"
               >
                 <span>
                   {"Section #" + (activeSectionIdx + 1)}

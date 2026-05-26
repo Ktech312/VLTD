@@ -206,7 +206,7 @@ export function PillSelect<T extends string>({
   }, [open]);
 
   const popW = Math.max(btnW, 220);
-  const btnH = compact ? "min-h-[34px]" : "min-h-[44px]";
+  const btnH = compact ? "min-h-[28px]" : "min-h-[44px]";
   const btnPx = compact ? "px-3 pr-8" : "px-4 pr-10";
   const btnText = compact ? "text-xs" : "text-sm";
 
