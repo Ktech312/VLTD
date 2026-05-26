@@ -749,9 +749,63 @@ export default function GalleryBuilder({
                 Remove BG
               </button>
             ) : null}
+
+            {/* Edit Selection — gold pill, thinner */}
+            <button
+              type="button"
+              onClick={() => {
+                const activeSection = sections[activeSectionIdx];
+                if (activeSection) {
+                  onOpenPicker?.(activeSection.title, activeSection.itemIds, activeSectionIdx);
+                } else {
+                  onOpenPicker?.();
+                }
+              }}
+              className="inline-flex min-h-[28px] items-center justify-center rounded-full px-3 text-[11px] font-black tracking-wide transition-all hover:opacity-90 active:scale-[0.98]"
+              style={{
+                background: selectedCount > 0
+                  ? "linear-gradient(135deg, #FFE08A 0%, #F5B548 40%, #C8941F 100%)"
+                  : "rgba(245,181,72,0.12)",
+                color: selectedCount > 0 ? "#1A0F00" : "#F5B548",
+                boxShadow: selectedCount > 0
+                  ? "0 0 0 1px rgba(245,181,72,0.35), 0 4px 14px rgba(245,181,72,0.3)"
+                  : "none",
+                border: selectedCount === 0 ? "1px solid rgba(245,181,72,0.45)" : "none",
+              }}
+            >
+              {(() => {
+                const activeSection = sections[activeSectionIdx];
+                const count = activeSection ? activeSection.itemIds.length : selectedCount;
+                return count === 0 ? "Edit Selection" : `Edit (${count})`;
+              })()}
+            </button>
+
+            {/* Organize pill — thinner */}
+            {sections.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setIsOrganizing((v) => !v)}
+                className="inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
+                style={isOrganizing
+                  ? { background: "rgba(74,222,128,0.22)", color: "#4ADE80", borderColor: "rgba(74,222,128,0.55)" }
+                  : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", borderColor: "rgba(255,255,255,0.15)" }}
+              >
+                {isOrganizing ? "Done" : "Organize"}
+              </button>
+            ) : null}
+
+            {/* Save — gold pill, thinner */}
+            <button
+              type="button"
+              onClick={() => onQuickSave?.()}
+              className="inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
+              style={{ background: "rgba(245,181,72,0.22)", color: "#F5B548", borderColor: "rgba(245,181,72,0.55)" }}
+            >
+              Save
+            </button>
           </div>
 
-          {/* ── Row 2a: Section selector | Edit | Save (compact pills — never stretches) ── */}
+          {/* ── Row 2a: Section selector ── */}
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {/* Section selector — dropdown pill */}
             <div className="relative">
@@ -840,61 +894,6 @@ export default function GalleryBuilder({
                 document.body
               )}
             </div>
-
-            {/* Edit Selection — gold pill, thinner */}
-            <button
-              type="button"
-              onClick={() => {
-                const activeSection = sections[activeSectionIdx];
-                if (activeSection) {
-                  onOpenPicker?.(activeSection.title, activeSection.itemIds, activeSectionIdx);
-                } else {
-                  onOpenPicker?.();
-                }
-              }}
-              className="inline-flex min-h-[28px] items-center justify-center rounded-full px-3 text-[11px] font-black tracking-wide transition-all hover:opacity-90 active:scale-[0.98]"
-              style={{
-                background: selectedCount > 0
-                  ? "linear-gradient(135deg, #FFE08A 0%, #F5B548 40%, #C8941F 100%)"
-                  : "rgba(245,181,72,0.12)",
-                color: selectedCount > 0 ? "#1A0F00" : "#F5B548",
-                boxShadow: selectedCount > 0
-                  ? "0 0 0 1px rgba(245,181,72,0.35), 0 4px 14px rgba(245,181,72,0.3)"
-                  : "none",
-                border: selectedCount === 0 ? "1px solid rgba(245,181,72,0.45)" : "none",
-              }}
-            >
-              {(() => {
-                const activeSection = sections[activeSectionIdx];
-                const count = activeSection ? activeSection.itemIds.length : selectedCount;
-                return count === 0 ? "Edit Selection" : `Edit (${count})`;
-              })()}
-            </button>
-
-            {/* Organize pill — thinner */}
-            {sections.length > 0 ? (
-              <button
-                type="button"
-                onClick={() => setIsOrganizing((v) => !v)}
-                className="inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
-                style={isOrganizing
-                  ? { background: "rgba(74,222,128,0.22)", color: "#4ADE80", borderColor: "rgba(74,222,128,0.55)" }
-                  : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", borderColor: "rgba(255,255,255,0.15)" }}
-              >
-                {isOrganizing ? "Done" : "Organize"}
-              </button>
-            ) : null}
-
-            {/* Save — gold pill, thinner */}
-            <button
-              type="button"
-              onClick={() => onQuickSave?.()}
-              className="inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
-              style={{ background: "rgba(245,181,72,0.22)", color: "#F5B548", borderColor: "rgba(245,181,72,0.55)" }}
-            >
-              Save
-            </button>
-          </div>
 
           {/* ── Section name + description — both linked to activeSectionIdx ── */}
           <input
