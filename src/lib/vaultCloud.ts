@@ -309,14 +309,6 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
     const errorRecord = asRecord(error);
     const message = String(errorRecord.message ?? "");
 
-    console.error("vault_items upsert blocked", {
-      message,
-      activeProfileId,
-      rowProfileId: baseRow.profile_id,
-      itemId: baseRow.id,
-      title: baseRow.title,
-    });
-
     const missingGalleryColumns =
       message.toLowerCase().includes("images_json") ||
       message.toLowerCase().includes("primary_image_key");
@@ -327,10 +319,21 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
       message.toLowerCase().includes("sold_at");
     const missingVisibilityColumn = message.toLowerCase().includes("is_public");
 
-    if (!missingGalleryColumns && !missingSoldColumns && !missingVisibilityColumn) {
+    const isRecoverable = missingGalleryColumns || missingSoldColumns || missingVisibilityColumn;
+
+    if (!isRecoverable) {
+      // Unrecognised error — log and surface it
+      console.error("vault_items upsert failed", {
+        message,
+        activeProfileId,
+        rowProfileId: baseRow.profile_id,
+        itemId: baseRow.id,
+        title: baseRow.title,
+      });
       throw new Error(message || "Failed to save item.");
     }
 
+    // Known schema-mismatch — retry without the unsupported column(s)
     const fallbackRow = { ...baseRow } as Record<string, unknown>;
 
     if (missingGalleryColumns) {
@@ -350,6 +353,11 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
 
     const { error: fallbackError } = await supabase.from(VAULT_ITEMS_TABLE).upsert(fallbackRow);
     if (fallbackError) {
+      console.error("vault_items fallback upsert failed", {
+        message: fallbackError.message,
+        itemId: baseRow.id,
+        title: baseRow.title,
+      });
       throw new Error(String(fallbackError.message || "Failed to save item."));
     }
   }
