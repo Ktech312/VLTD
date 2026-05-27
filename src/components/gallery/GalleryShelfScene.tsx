@@ -254,6 +254,11 @@ function buildShelfSlots(items: VaultItem[], slotLayout?: (string | null)[]) {
     const itemId = slotLayout[index];
     return itemId ? itemById.get(itemId) ?? null : null;
   });
+
+  if (slotLayout.length >= maxSlots) {
+    return slots;
+  }
+
   const placedIds = new Set(
     slots
       .filter((item): item is VaultItem => item !== null)

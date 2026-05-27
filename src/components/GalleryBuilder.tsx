@@ -282,6 +282,7 @@ export default function GalleryBuilder({
   const touchCloneRef = useRef<HTMLElement | null>(null);
   // 16-slot positional grid (null = empty slot) — populated by sync effect below
   const [previewSlots, setPreviewSlots] = useState<(string | null)[]>(Array.from({ length: 16 }, () => null));
+  const latestPreviewSlotsRef = useRef<(string | null)[]>(previewSlots);
   const [shelfFileName, setShelfFileName] = useState("");
   const [backgroundUploadError, setBackgroundUploadError] = useState("");
   const [previewNaturalHeight, setPreviewNaturalHeight] = useState(1120);
@@ -351,9 +352,13 @@ export default function GalleryBuilder({
       if (activeSection?.slotLayout && activeSection.slotLayout.length === 16) {
         // Filter out any stale IDs (items removed since last save)
         const validIds = new Set(previewItems.map((item) => item.id));
-        setPreviewSlots(activeSection.slotLayout.map((id) => (id && validIds.has(id) ? id : null)));
+        const nextSlots = activeSection.slotLayout.map((id) => (id && validIds.has(id) ? id : null));
+        latestPreviewSlotsRef.current = nextSlots;
+        setPreviewSlots(nextSlots);
       } else {
-        setPreviewSlots(Array.from({ length: 16 }, (_, i) => previewItems[i]?.id ?? null));
+        const nextSlots = Array.from({ length: 16 }, (_, i) => previewItems[i]?.id ?? null);
+        latestPreviewSlotsRef.current = nextSlots;
+        setPreviewSlots(nextSlots);
       }
       return;
     }
@@ -364,7 +369,9 @@ export default function GalleryBuilder({
       const toAdd = previewItems.filter((item) => !inSlots.has(item.id));
       if (toAdd.length === 0 && cleaned.every((id, i) => id === prev[i])) return prev;
       let addIdx = 0;
-      return cleaned.map((slot) => (slot !== null ? slot : addIdx < toAdd.length ? toAdd[addIdx++].id : null));
+      const nextSlots = cleaned.map((slot) => (slot !== null ? slot : addIdx < toAdd.length ? toAdd[addIdx++].id : null));
+      latestPreviewSlotsRef.current = nextSlots;
+      return nextSlots;
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSectionIdx, previewItems]);
@@ -532,6 +539,7 @@ export default function GalleryBuilder({
   }
 
   function commitSlots(slots: (string | null)[]) {
+    latestPreviewSlotsRef.current = slots;
     setPreviewSlots(slots);
     const orderedIds = slots.filter((id): id is string => id !== null);
 
@@ -806,7 +814,7 @@ export default function GalleryBuilder({
                   setIsOrganizing(next);
                   if (!next) {
                     // Re-save current slot layout on Done — belt+suspenders over per-drag saves
-                    commitSlots([...previewSlots]);
+                    commitSlots([...latestPreviewSlotsRef.current]);
                   }
                 }}
                 className="inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"

@@ -560,11 +560,17 @@ export default function GalleryPage() {
         return snapshotFallbackById.get(itemId);
       })
       .filter(Boolean) as GalleryPublicItemSnapshot[];
+    const effectiveExhibitionLayout = effectiveSections
+      ? (Object.assign({}, draft.exhibitionLayout ?? {}, {
+          sections: effectiveSections,
+        }) as Gallery["exhibitionLayout"])
+      : draft.exhibitionLayout;
 
     const nextDraft = cloneGallery({
       ...draft,
       itemIds: effectiveIds,
       sections: effectiveSections,
+      exhibitionLayout: effectiveExhibitionLayout,
       publicItemSnapshots,
       updatedAt: Date.now(), // bump so local always beats Supabase in hydration merge
       share: {
