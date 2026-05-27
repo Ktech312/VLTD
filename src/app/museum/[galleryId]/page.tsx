@@ -422,7 +422,7 @@ export default function GalleryPage() {
   useEffect(() => {
     if (!id) return;
 
-    if (!draft || normalizeDraftForCompare(draft) === originalSnapshot) {
+    if (!draft) {
       persistCachedGalleryDraft(id, null);
       return;
     }
@@ -531,18 +531,19 @@ export default function GalleryPage() {
   }
 
   async function saveDraft(overrideIds?: string[], overrideSections?: Gallery["sections"]) {
-    if (!draft) return;
-    const effectiveIds = overrideIds ?? draft.itemIds;
-    const effectiveSections = overrideSections ?? draft.sections;
+    const baseDraft = latestDraftRef.current ?? draft;
+    if (!baseDraft) return;
+    const effectiveIds = overrideIds ?? baseDraft.itemIds;
+    const effectiveSections = overrideSections ?? baseDraft.sections;
 
     const preservedPublicToken =
-      draft.share?.publicToken ||
+      baseDraft.share?.publicToken ||
       gallery?.share?.publicToken ||
-      ensureGalleryPublicToken(draft.id) ||
+      ensureGalleryPublicToken(baseDraft.id) ||
       undefined;
 
     const snapshotFallbackById = new Map<string, GalleryPublicItemSnapshot>();
-    for (const snapshot of draft.publicItemSnapshots ?? []) {
+    for (const snapshot of baseDraft.publicItemSnapshots ?? []) {
       snapshotFallbackById.set(snapshot.id, snapshot);
     }
     for (const snapshot of gallery?.publicItemSnapshots ?? []) {
@@ -560,13 +561,13 @@ export default function GalleryPage() {
       })
       .filter(Boolean) as GalleryPublicItemSnapshot[];
     const effectiveExhibitionLayout = effectiveSections
-      ? (Object.assign({}, draft.exhibitionLayout ?? {}, {
+      ? (Object.assign({}, baseDraft.exhibitionLayout ?? {}, {
           sections: effectiveSections,
         }) as Gallery["exhibitionLayout"])
-      : draft.exhibitionLayout;
+      : baseDraft.exhibitionLayout;
 
     const nextDraft = cloneGallery({
-      ...draft,
+      ...baseDraft,
       itemIds: effectiveIds,
       sections: effectiveSections,
       exhibitionLayout: effectiveExhibitionLayout,
@@ -575,16 +576,24 @@ export default function GalleryPage() {
       share: {
         publicToken: preservedPublicToken,
         inviteTokens:
-          draft.share?.inviteTokens ??
+          baseDraft.share?.inviteTokens ??
           gallery?.share?.inviteTokens ??
           [],
       },
     });
 
     const all = loadGalleries({ includeAllProfiles: true });
-    const next = all.map((entry) => (entry.id === draft.id ? nextDraft : entry));
+    let found = false;
+    const next = all.map((entry) => {
+      if (entry.id !== baseDraft.id) return entry;
+      found = true;
+      return nextDraft;
+    });
+    if (!found) {
+      next.push(nextDraft);
+    }
     saveGalleriesLocally(next);
-    persistCachedGalleryDraft(nextDraft.id, null);
+    persistCachedGalleryDraft(nextDraft.id, nextDraft);
 
     setGallery(cloneGallery(nextDraft));
     setDraft(cloneGallery(nextDraft));
