@@ -438,7 +438,7 @@ function normalizeSupabaseItemIds(raw: any) {
     return direct;
   }
 
-  const sectionSource = chooseSectionSource(raw?.sections, raw?.exhibition_layout?.sections);
+  const sectionSource = chooseSectionSource(raw?.exhibition_layout?.sections, raw?.sections);
   const sectionItemIds = normalizeSections(sectionSource, []).flatMap((section) => section.itemIds);
   return normalizeItemIds(sectionItemIds);
 }
@@ -728,7 +728,7 @@ function normalizeSupabaseGallery(raw: any): Gallery | null {
       raw.layout?.templateId ??
       raw.exhibition_layout?.templateId ??
       raw.template_id,
-    sections: chooseSectionSource(raw.sections, raw.exhibition_layout?.sections) ?? [],
+    sections: chooseSectionSource(raw.exhibition_layout?.sections, raw.sections) ?? [],
     themePack:
       raw.layout?.themePack ??
       raw.exhibition_layout?.themePack ??
