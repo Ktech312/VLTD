@@ -280,9 +280,6 @@ export default function GalleryBuilder({
   const touchSlotFromRef = useRef<number | null>(null);
   const touchSlotOverRef = useRef<number | null>(null);
   const touchCloneRef = useRef<HTMLElement | null>(null);
-  // Always holds the latest committed state so Done can save it even if React state hasn't flushed
-  const pendingGalleryIdsRef = useRef<string[]>(gallery.itemIds);
-  const pendingSectionsRef = useRef<NonNullable<Gallery["sections"]>>([]);
   // 16-slot positional grid (null = empty slot) — populated by sync effect below
   const [previewSlots, setPreviewSlots] = useState<(string | null)[]>(Array.from({ length: 16 }, () => null));
   const [shelfFileName, setShelfFileName] = useState("");
@@ -538,20 +535,22 @@ export default function GalleryBuilder({
     setPreviewSlots(slots);
     const orderedIds = slots.filter((id): id is string => id !== null);
 
-    // Build the next sections with both updated itemIds AND slotLayout synchronously
+    // Build the next sections with updated itemIds AND slotLayout
     const nextSections = sections.map((s, i) =>
       i === activeSectionIdx ? { ...s, itemIds: orderedIds, slotLayout: slots } : s
     );
 
-    // Update refs immediately — Done will read these regardless of React flush timing
+    // Compute full gallery id order
     const orderedSet = new Set(orderedIds);
     const otherIds = gallery.itemIds.filter((id) => !orderedSet.has(id));
-    pendingGalleryIdsRef.current = [...orderedIds, ...otherIds];
-    pendingSectionsRef.current = nextSections;
+    const nextGalleryIds = [...orderedIds, ...otherIds];
 
-    // Push into React state (for live preview + shelf display)
-    onChange(pendingGalleryIdsRef.current);
+    // Push into React state (live preview + shelf)
+    onChange(nextGalleryIds);
     onGalleryChange((current) => syncSectionsAndLayout(current, nextSections));
+
+    // Save immediately — don't wait for Done; this eliminates all async-state races
+    onQuickSave?.(nextGalleryIds, nextSections);
   }
 
   async function handleShelfBackgroundUpload(file: File) {
@@ -804,7 +803,7 @@ export default function GalleryBuilder({
                 onClick={() => {
                   const next = !isOrganizing;
                   setIsOrganizing(next);
-                  if (!next) onQuickSave?.(pendingGalleryIdsRef.current, pendingSectionsRef.current);
+                  if (!next) onQuickSave?.(); // positions already saved on each drag via commitSlots
                 }}
                 className="inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
                 style={isOrganizing
