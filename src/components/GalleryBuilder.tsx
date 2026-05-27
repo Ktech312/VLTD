@@ -794,7 +794,11 @@ export default function GalleryBuilder({
             {sections.length > 0 ? (
               <button
                 type="button"
-                onClick={() => setIsOrganizing((v) => !v)}
+                onClick={() => {
+                  const next = !isOrganizing;
+                  setIsOrganizing(next);
+                  if (!next) onQuickSave?.();
+                }}
                 className="inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
                 style={isOrganizing
                   ? { background: "rgba(74,222,128,0.22)", color: "#4ADE80", borderColor: "rgba(74,222,128,0.55)" }
