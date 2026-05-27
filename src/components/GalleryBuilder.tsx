@@ -708,12 +708,22 @@ export default function GalleryBuilder({
                 options={SHELF_OVERLAY_OPTIONS}
                 ariaLabel="Shelf style"
                 align="left"
-                minWidthPx={100}
+                minWidthPx={50}
                 extraWidthPx={6}
                 labelPrefix="Shelf: "
                 compact
               />
             </div>
+
+            {/* Save — gold pill, thinner */}
+            <button
+              type="button"
+              onClick={() => onQuickSave?.()}
+              className="inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
+              style={{ background: "rgba(245,181,72,0.22)", color: "#F5B548", borderColor: "rgba(245,181,72,0.55)" }}
+            >
+              Save
+            </button>
           </div>
 
           {/* ── Row 1b: Upload Background ── */}
@@ -794,15 +804,6 @@ export default function GalleryBuilder({
               </button>
             ) : null}
 
-            {/* Save — gold pill, thinner */}
-            <button
-              type="button"
-              onClick={() => onQuickSave?.()}
-              className="inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
-              style={{ background: "rgba(245,181,72,0.22)", color: "#F5B548", borderColor: "rgba(245,181,72,0.55)" }}
-            >
-              Save
-            </button>
           </div>
 
           {/* ── Row 2a: Section selector ── */}
