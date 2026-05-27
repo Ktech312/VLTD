@@ -530,9 +530,10 @@ export default function GalleryPage() {
     });
   }
 
-  async function saveDraft(overrideIds?: string[]) {
+  async function saveDraft(overrideIds?: string[], overrideSections?: Gallery["sections"]) {
     if (!draft) return;
     const effectiveIds = overrideIds ?? draft.itemIds;
+    const effectiveSections = overrideSections ?? draft.sections;
 
     const preservedPublicToken =
       draft.share?.publicToken ||
@@ -562,6 +563,7 @@ export default function GalleryPage() {
     const nextDraft = cloneGallery({
       ...draft,
       itemIds: effectiveIds,
+      sections: effectiveSections,
       publicItemSnapshots,
       share: {
         publicToken: preservedPublicToken,

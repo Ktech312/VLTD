@@ -30,7 +30,7 @@ type Props = {
   items: VaultItem[];
   onChange: (ids: string[]) => void;
   onGalleryChange: (updater: (current: Gallery) => Gallery) => void;
-  onQuickSave?: (overrideIds?: string[]) => void;
+  onQuickSave?: (overrideIds?: string[], overrideSections?: NonNullable<Gallery["sections"]>) => void;
   onOpenPicker?: (sectionTitle?: string, sectionItemIds?: string[], sectionIdx?: number) => void;
 };
 
@@ -280,8 +280,9 @@ export default function GalleryBuilder({
   const touchSlotFromRef = useRef<number | null>(null);
   const touchSlotOverRef = useRef<number | null>(null);
   const touchCloneRef = useRef<HTMLElement | null>(null);
-  // Always holds the latest committed gallery order so Done can save it even if React state hasn't flushed
+  // Always holds the latest committed state so Done can save it even if React state hasn't flushed
   const pendingGalleryIdsRef = useRef<string[]>(gallery.itemIds);
+  const pendingSectionsRef = useRef<NonNullable<Gallery["sections"]>>([]);
   // 16-slot positional grid (null = empty slot) — populated by sync effect below
   const [previewSlots, setPreviewSlots] = useState<(string | null)[]>(Array.from({ length: 16 }, () => null));
   const [shelfFileName, setShelfFileName] = useState("");
@@ -533,40 +534,24 @@ export default function GalleryBuilder({
     }
   }
 
-  function handlePreviewReorder(orderedIds: string[]) {
-    const section = sections[activeSectionIdx];
-    if (!section) return;
-
-    // Sync gallery.itemIds order to match the new section order so shelf display updates too
-    const orderedSet = new Set(orderedIds);
-    const otherIds = gallery.itemIds.filter((id) => !orderedSet.has(id));
-    const nextGalleryIds = [...orderedIds, ...otherIds];
-    // Persist in ref immediately so Done button can pass it to onQuickSave even before React flushes setDraft
-    pendingGalleryIdsRef.current = nextGalleryIds;
-    onChange(nextGalleryIds);
-
-    onGalleryChange((current) => {
-      const nextSections = getGallerySections(current).map((s, i) =>
-        i === activeSectionIdx ? { ...s, itemIds: orderedIds } : s
-      );
-      return syncSectionsAndLayout(current, nextSections);
-    });
-  }
-
   function commitSlots(slots: (string | null)[]) {
     setPreviewSlots(slots);
     const orderedIds = slots.filter((id): id is string => id !== null);
-    handlePreviewReorder(orderedIds);
-    // Persist slot positions (with nulls) directly on the section so reload restores locations
-    const section = sections[activeSectionIdx];
-    if (section) {
-      onGalleryChange((current) => {
-        const nextSections = getGallerySections(current).map((s, i) =>
-          i === activeSectionIdx ? { ...s, slotLayout: slots } : s
-        );
-        return syncSectionsAndLayout(current, nextSections);
-      });
-    }
+
+    // Build the next sections with both updated itemIds AND slotLayout synchronously
+    const nextSections = sections.map((s, i) =>
+      i === activeSectionIdx ? { ...s, itemIds: orderedIds, slotLayout: slots } : s
+    );
+
+    // Update refs immediately — Done will read these regardless of React flush timing
+    const orderedSet = new Set(orderedIds);
+    const otherIds = gallery.itemIds.filter((id) => !orderedSet.has(id));
+    pendingGalleryIdsRef.current = [...orderedIds, ...otherIds];
+    pendingSectionsRef.current = nextSections;
+
+    // Push into React state (for live preview + shelf display)
+    onChange(pendingGalleryIdsRef.current);
+    onGalleryChange((current) => syncSectionsAndLayout(current, nextSections));
   }
 
   async function handleShelfBackgroundUpload(file: File) {
@@ -819,7 +804,7 @@ export default function GalleryBuilder({
                 onClick={() => {
                   const next = !isOrganizing;
                   setIsOrganizing(next);
-                  if (!next) onQuickSave?.(pendingGalleryIdsRef.current);
+                  if (!next) onQuickSave?.(pendingGalleryIdsRef.current, pendingSectionsRef.current);
                 }}
                 className="inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
                 style={isOrganizing
