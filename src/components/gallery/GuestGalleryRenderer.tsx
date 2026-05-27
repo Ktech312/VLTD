@@ -202,6 +202,16 @@ function reorderByDrag(ids: string[], fromId: string, toId: string): string[] {
   return next;
 }
 
+function getShelfSlotLayout(model: GuestGalleryViewModel) {
+  const visibleIds = new Set(model.galleryItems.map((item) => item.id));
+  const sections = getGallerySections(model.gallery);
+
+  return sections.find((section) =>
+    Array.isArray(section.slotLayout) &&
+    section.slotLayout.some((itemId) => typeof itemId === "string" && visibleIds.has(itemId))
+  )?.slotLayout;
+}
+
 export default function GuestGalleryRenderer({
   model,
   embedded = false,
@@ -260,6 +270,7 @@ export default function GuestGalleryRenderer({
   const gridDropMain = makeGridDrop(model.galleryItems.map((gi) => gi.id)) ?? undefined;
   const backgroundImageUrl = model.background.url;
   const coverImageUrl = typeof model.gallery?.coverImage === "string" ? model.gallery.coverImage.trim() : "";
+  const shelfSlotLayout = getShelfSlotLayout(model);
   const sectionViews = getGallerySections(model.gallery)
     .map((section) => ({
       section,
@@ -379,6 +390,7 @@ export default function GuestGalleryRenderer({
                 backgroundImageUrl={backgroundImageUrl}
                 shelvesEnabled={model.shelvesEnabled}
                 shelfOverlayStyle={model.shelfOverlayStyle}
+                slotLayout={shelfSlotLayout}
               />
             </div>
           ) : (

@@ -40,6 +40,7 @@ type Props = {
   backgroundImageUrl?: string | null;
   shelvesEnabled?: boolean;
   shelfOverlayStyle?: GalleryShelfOverlayStyle;
+  slotLayout?: (string | null)[];
 };
 
 function getShelfThemeClasses(themePack?: string | null) {
@@ -182,7 +183,7 @@ function AnchoredRow({
   galleryHrefPrefix,
   shelfOverlayStyle,
 }: {
-  row: VaultItem[];
+  row: Array<VaultItem | null>;
   anchor: string;
   theme: ReturnType<typeof getShelfThemeClasses>;
   galleryHrefPrefix: string;
@@ -219,25 +220,53 @@ function AnchoredRow({
         ) : null}
 
         <div className="relative z-10 grid grid-cols-2 items-end gap-2 sm:grid-cols-4 sm:gap-[0.8rem]">
-          {row.map((item) => (
-            <DisplayCard
-              key={item.id}
-              item={item}
-              theme={theme}
-              galleryHrefPrefix={galleryHrefPrefix}
-            />
-          ))}
-          {Array.from({ length: Math.max(0, 4 - row.length) }).map((_, i) => (
-            <div
-              key={"empty-" + i}
-              className="aspect-[3/4] rounded-[10px] opacity-20"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px dashed rgba(255,255,255,0.18)" }}
-            />
-          ))}
+          {row.map((item, index) =>
+            item ? (
+              <DisplayCard
+                key={item.id}
+                item={item}
+                theme={theme}
+                galleryHrefPrefix={galleryHrefPrefix}
+              />
+            ) : (
+              <div
+                key={"empty-" + index}
+                className="aspect-[3/4] rounded-[10px] opacity-20"
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px dashed rgba(255,255,255,0.18)" }}
+              />
+            )
+          )}
         </div>
       </div>
     </div>
   );
+}
+
+function buildShelfSlots(items: VaultItem[], slotLayout?: (string | null)[]) {
+  const maxSlots = 16;
+  const itemById = new Map(items.map((item) => [item.id, item]));
+
+  if (!slotLayout?.length) {
+    return Array.from({ length: maxSlots }, (_, index) => items[index] ?? null);
+  }
+
+  const slots = Array.from({ length: maxSlots }, (_, index) => {
+    const itemId = slotLayout[index];
+    return itemId ? itemById.get(itemId) ?? null : null;
+  });
+  const placedIds = new Set(
+    slots
+      .filter((item): item is VaultItem => item !== null)
+      .map((item) => item.id)
+  );
+  const unplaced = items.filter((item) => !placedIds.has(item.id));
+  let nextUnplacedIndex = 0;
+
+  return slots.map((slot) => {
+    if (slot) return slot;
+    if (nextUnplacedIndex >= unplaced.length) return null;
+    return unplaced[nextUnplacedIndex++];
+  });
 }
 
 export default function GalleryShelfScene({
@@ -247,13 +276,14 @@ export default function GalleryShelfScene({
   backgroundImageUrl,
   shelvesEnabled = true,
   shelfOverlayStyle = "none",
+  slotLayout,
 }: Props) {
   const theme = getShelfThemeClasses(themePack);
   const sceneBackground = backgroundImageUrl?.trim() || "";
 
   const itemsPerRow = 4;
   const shelfCount = 4;
-  const visibleItems = items.slice(0, itemsPerRow * shelfCount);
+  const visibleItems = buildShelfSlots(items, slotLayout);
   const rows = Array.from({ length: shelfCount }, (_, i) =>
     visibleItems.slice(i * itemsPerRow, (i + 1) * itemsPerRow)
   );
