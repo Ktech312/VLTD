@@ -1037,8 +1037,12 @@ export default function GalleryBuilder({
                           touchCloneRef.current.style.left = `${touch.clientX - 36}px`;
                           touchCloneRef.current.style.top = `${touch.clientY - 60}px`;
                         }
-                        // Find target slot under finger
+                        // Find target slot under finger — hide clone first so elementFromPoint
+                        // looks through it (clone has pointer-events:none but still occludes hit-test)
+                        const clone = touchCloneRef.current;
+                        if (clone) clone.style.visibility = "hidden";
                         let el: Element | null = document.elementFromPoint(touch.clientX, touch.clientY);
+                        if (clone) clone.style.visibility = "";
                         let toIdx: number | null = null;
                         while (el && toIdx === null) {
                           const attr = el.getAttribute("data-slot-idx");
