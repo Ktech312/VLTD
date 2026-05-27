@@ -427,10 +427,10 @@ function normalizePublicItemSnapshots(value: unknown): GalleryPublicItemSnapshot
 
 function normalizeSupabaseItemIds(raw: any) {
   const direct = normalizeItemIds(
-    raw?.item_ids ??
-      raw?.itemIds ??
-      raw?.layout?.itemIds ??
+    raw?.layout?.itemIds ??
       raw?.exhibition_layout?.itemIds ??
+      raw?.item_ids ??
+      raw?.itemIds ??
       []
   );
 
