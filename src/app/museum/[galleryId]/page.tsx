@@ -266,7 +266,7 @@ function accessDescription(mode: GalleryAccessPillMode) {
 
 function accessPillClass(active: boolean) {
   return [
-    "vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full px-4 py-1.5 text-xs font-semibold ring-1 transition",
+    "vltd-selectable inline-flex min-h-[32px] items-center justify-center rounded-full px-3 py-1 text-[11px] font-semibold ring-1 transition",
     active
       ? "vltd-pill-main-glow bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)]"
       : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]",
@@ -875,13 +875,13 @@ export default function GalleryPage() {
             </div>
 
             <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
-              <div className="rounded-[28px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)]">
-                <div className="flex items-start justify-between gap-4">
+              <div className="rounded-[22px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+                <div className="flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
+                    <div className="text-[10px] tracking-[0.18em] text-[color:var(--muted2)]">
                       PUBLIC SHARE LINK
                     </div>
-                    <div className="mt-1 text-sm text-[color:var(--muted)]">
+                    <div className="mt-0.5 text-xs text-[color:var(--muted)]">
                       Uses a dedicated public route for clean sharing.
                     </div>
                   </div>
@@ -889,36 +889,36 @@ export default function GalleryPage() {
                   <button
                     type="button"
                     onClick={handleRegeneratePublicLink}
-                    className="vltd-selectable inline-flex min-h-[40px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
+                    className="vltd-selectable inline-flex min-h-[34px] items-center justify-center rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-[11px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
                   >
                     Regenerate
                   </button>
                 </div>
 
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_120px]">
                   <input
                     value={shareUrl}
                     readOnly
-                    className="min-h-[48px] w-full rounded-2xl bg-[color:var(--input)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                    className="min-h-[40px] w-full rounded-xl bg-[color:var(--input)] px-3 py-2 text-xs font-semibold ring-1 ring-[color:var(--border)] focus:outline-none"
                   />
                   <button
                     type="button"
                     onClick={copyShareLink}
-                    className="vltd-pill-main-glow inline-flex min-h-[48px] shrink-0 items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-5 py-3 text-sm font-semibold text-[color:var(--fg)] transition hover:opacity-95"
+                    className="vltd-pill-main-glow inline-flex min-h-[40px] shrink-0 items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-xs font-semibold text-[color:var(--fg)] transition hover:opacity-95"
                   >
                     {copied ? "Copied" : "Copy Link"}
                   </button>
                 </div>
 
-                <div className="relative mt-6">
+                <div className="relative mt-4">
                   <div className="flex items-center gap-2">
-                    <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
+                    <div className="text-[10px] tracking-[0.18em] text-[color:var(--muted2)]">
                       USER ACCESS MODE
                     </div>
                     <button
                       type="button"
                       onClick={() => setAccessInfoOpen((current) => !current)}
-                      className="vltd-selectable inline-flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--pill)] text-[11px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                      className="vltd-selectable inline-flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--pill)] text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
                       aria-label="Access mode help"
                       aria-expanded={accessInfoOpen}
                     >
@@ -947,7 +947,7 @@ export default function GalleryPage() {
                     </div>
                   ) : null}
 
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => updateAccessMode("private")}
@@ -978,12 +978,12 @@ export default function GalleryPage() {
                     </button>
                   </div>
 
-                  <div className="mt-3 text-xs text-[color:var(--muted2)]">Current mode: {accessDescription(selectedAccessMode)}</div>
+                  <div className="mt-2 text-[11px] leading-4 text-[color:var(--muted2)]">Current mode: {accessDescription(selectedAccessMode)}</div>
 
-                  <label className="mt-4 flex items-start justify-between gap-4 rounded-2xl bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)]">
+                  <label className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-[color:var(--surface)] px-3 py-2.5 ring-1 ring-[color:var(--border)]">
                     <span>
-                      <span className="block text-sm font-semibold">18+ exhibit</span>
-                      <span className="mt-1 block text-xs leading-5 text-[color:var(--muted)]">
+                      <span className="block text-xs font-semibold">18+ exhibit</span>
+                      <span className="mt-0.5 block text-[11px] leading-4 text-[color:var(--muted)]">
                         Public viewers must confirm they are 18 or older before entering this exhibit.
                       </span>
                     </span>
