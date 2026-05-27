@@ -550,7 +550,7 @@ export default function GalleryBuilder({
     onGalleryChange((current) => syncSectionsAndLayout(current, nextSections));
 
     // Save immediately — don't wait for Done; this eliminates all async-state races
-    console.log("[VLTD] commitSlots saving:", { nextGalleryIds, nextSections });
+    console.warn("[VLTD] commitSlots saving:", { nextGalleryIds, slotLayout: slots });
     onQuickSave?.(nextGalleryIds, nextSections);
   }
 
@@ -804,7 +804,10 @@ export default function GalleryBuilder({
                 onClick={() => {
                   const next = !isOrganizing;
                   setIsOrganizing(next);
-                  if (!next) onQuickSave?.(); // positions already saved on each drag via commitSlots
+                  if (!next) {
+                    // Re-save current slot layout on Done — belt+suspenders over per-drag saves
+                    commitSlots([...previewSlots]);
+                  }
                 }}
                 className="inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
                 style={isOrganizing

@@ -534,7 +534,7 @@ export default function GalleryPage() {
     if (!draft) return;
     const effectiveIds = overrideIds ?? draft.itemIds;
     const effectiveSections = overrideSections ?? draft.sections;
-    console.log("[VLTD] saveDraft called:", { effectiveIds: effectiveIds.slice(0,4), hasSections: !!effectiveSections?.length, slotLayout: effectiveSections?.[0]?.slotLayout?.slice(0,6) });
+    console.warn("[VLTD] saveDraft called:", { effectiveIds: effectiveIds.slice(0,4), hasSections: !!effectiveSections?.length, slotLayout: effectiveSections?.[0]?.slotLayout?.slice(0,6) });
 
     const preservedPublicToken =
       draft.share?.publicToken ||
@@ -566,6 +566,7 @@ export default function GalleryPage() {
       itemIds: effectiveIds,
       sections: effectiveSections,
       publicItemSnapshots,
+      updatedAt: Date.now(), // bump so local always beats Supabase in hydration merge
       share: {
         publicToken: preservedPublicToken,
         inviteTokens:
