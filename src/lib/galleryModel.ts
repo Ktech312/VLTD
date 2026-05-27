@@ -438,9 +438,28 @@ function normalizeSupabaseItemIds(raw: any) {
     return direct;
   }
 
-  const sectionSource = raw?.sections ?? raw?.exhibition_layout?.sections ?? [];
+  const sectionSource = chooseSectionSource(raw?.sections, raw?.exhibition_layout?.sections);
   const sectionItemIds = normalizeSections(sectionSource, []).flatMap((section) => section.itemIds);
   return normalizeItemIds(sectionItemIds);
+}
+
+function hasSlotLayoutSections(value: unknown) {
+  return Array.isArray(value) && value.some((section) => {
+    if (!section || typeof section !== "object") return false;
+    return Array.isArray((section as { slotLayout?: unknown }).slotLayout);
+  });
+}
+
+function chooseSectionSource(primary: unknown, fallback: unknown) {
+  if (hasSlotLayoutSections(fallback) && !hasSlotLayoutSections(primary)) {
+    return fallback;
+  }
+
+  if (Array.isArray(primary) && primary.length > 0) {
+    return primary;
+  }
+
+  return fallback;
 }
 
 function normalizeInviteTokens(value: unknown): GalleryInviteToken[] {
@@ -555,10 +574,12 @@ function normalizeSections(value: unknown, galleryItemIds?: string[]): GallerySe
 }
 
 function normalizeSectionsFromGalleryRaw(raw: any, itemIds: string[]) {
-  const directSections = normalizeSections(raw?.sections, itemIds);
-  if (directSections.length > 0) return directSections;
+  const directSource = raw?.sections;
+  const legacySource = raw?.exhibitionLayout?.sections;
+  const preferredSections = normalizeSections(chooseSectionSource(directSource, legacySource), itemIds);
+  if (preferredSections.length > 0) return preferredSections;
 
-  const legacySections = normalizeSections(raw?.exhibitionLayout?.sections, itemIds);
+  const legacySections = normalizeSections(legacySource, itemIds);
   if (legacySections.length > 0) return legacySections;
 
   return [];
@@ -707,10 +728,7 @@ function normalizeSupabaseGallery(raw: any): Gallery | null {
       raw.layout?.templateId ??
       raw.exhibition_layout?.templateId ??
       raw.template_id,
-    sections:
-      raw.sections ??
-      raw.exhibition_layout?.sections ??
-      [],
+    sections: chooseSectionSource(raw.sections, raw.exhibition_layout?.sections) ?? [],
     themePack:
       raw.layout?.themePack ??
       raw.exhibition_layout?.themePack ??
@@ -1391,7 +1409,13 @@ export function getGalleryLayoutType(gallery: Gallery | null | undefined) {
 }
 
 export function getGallerySections(gallery: Gallery | null | undefined): GallerySection[] {
-  if (Array.isArray(gallery?.sections) && gallery!.sections.length > 0) return gallery!.sections;
+  const preferredSections = chooseSectionSource(
+    gallery?.sections,
+    gallery?.exhibitionLayout?.sections
+  );
+  if (Array.isArray(preferredSections) && preferredSections.length > 0) {
+    return normalizeSections(preferredSections, gallery?.itemIds ?? []);
+  }
   return normalizeSections(gallery?.exhibitionLayout?.sections, gallery?.itemIds ?? []);
 }
 
