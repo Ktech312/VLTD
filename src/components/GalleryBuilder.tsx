@@ -1151,6 +1151,7 @@ export default function GalleryBuilder({
             </div>
           </div>
         </div>
+      </div>
 
         {sections.length ? (
           <div className="mt-5 grid gap-4">
