@@ -586,21 +586,31 @@ export default function GalleryPage() {
     setOriginalSnapshot(normalizeDraftForCompare(nextDraft));
 
     try {
+      // Sync gallery to Supabase FIRST so slotLayout/sections land in cloud immediately.
+      // Vault item syncs are secondary — they run concurrently but don't block gallery save.
       let vaultSyncError: unknown = null;
 
-      try {
-      for (const itemId of nextDraft.itemIds) {
-        enqueueVaultItemSync(itemId);
-      }
-      await processVaultSyncQueue();
-      await syncVaultItemsFromSupabase();
-      setItems(loadItems());
-      } catch (error) {
-        vaultSyncError = error;
-        console.error("Vault sync failed during gallery save:", error);
+      const [galleryResult] = await Promise.allSettled([
+        syncGalleryToSupabaseNow(nextDraft),
+        (async () => {
+          try {
+            for (const itemId of nextDraft.itemIds) {
+              enqueueVaultItemSync(itemId);
+            }
+            await processVaultSyncQueue();
+            await syncVaultItemsFromSupabase();
+            setItems(loadItems());
+          } catch (error) {
+            vaultSyncError = error;
+            console.error("Vault sync failed during gallery save:", error);
+          }
+        })(),
+      ]);
+
+      if (galleryResult.status === "rejected") {
+        throw galleryResult.reason;
       }
 
-      await syncGalleryToSupabaseNow(nextDraft);
       setStatusTone(vaultSyncError ? "neutral" : "good");
       setStatus(
         vaultSyncError
