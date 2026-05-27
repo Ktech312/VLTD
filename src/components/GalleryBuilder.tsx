@@ -30,7 +30,7 @@ type Props = {
   items: VaultItem[];
   onChange: (ids: string[]) => void;
   onGalleryChange: (updater: (current: Gallery) => Gallery) => void;
-  onQuickSave?: () => void;
+  onQuickSave?: (overrideIds?: string[]) => void;
   onOpenPicker?: (sectionTitle?: string, sectionItemIds?: string[], sectionIdx?: number) => void;
 };
 
@@ -280,6 +280,8 @@ export default function GalleryBuilder({
   const touchSlotFromRef = useRef<number | null>(null);
   const touchSlotOverRef = useRef<number | null>(null);
   const touchCloneRef = useRef<HTMLElement | null>(null);
+  // Always holds the latest committed gallery order so Done can save it even if React state hasn't flushed
+  const pendingGalleryIdsRef = useRef<string[]>(gallery.itemIds);
   // 16-slot positional grid (null = empty slot) — populated by sync effect below
   const [previewSlots, setPreviewSlots] = useState<(string | null)[]>(Array.from({ length: 16 }, () => null));
   const [shelfFileName, setShelfFileName] = useState("");
@@ -531,6 +533,8 @@ export default function GalleryBuilder({
     const orderedSet = new Set(orderedIds);
     const otherIds = gallery.itemIds.filter((id) => !orderedSet.has(id));
     const nextGalleryIds = [...orderedIds, ...otherIds];
+    // Persist in ref immediately so Done button can pass it to onQuickSave even before React flushes setDraft
+    pendingGalleryIdsRef.current = nextGalleryIds;
     onChange(nextGalleryIds);
 
     onGalleryChange((current) => {
@@ -797,7 +801,7 @@ export default function GalleryBuilder({
                 onClick={() => {
                   const next = !isOrganizing;
                   setIsOrganizing(next);
-                  if (!next) onQuickSave?.();
+                  if (!next) onQuickSave?.(pendingGalleryIdsRef.current);
                 }}
                 className="inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
                 style={isOrganizing
