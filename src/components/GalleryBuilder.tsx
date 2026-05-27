@@ -550,6 +550,7 @@ export default function GalleryBuilder({
     onGalleryChange((current) => syncSectionsAndLayout(current, nextSections));
 
     // Save immediately — don't wait for Done; this eliminates all async-state races
+    console.log("[VLTD] commitSlots saving:", { nextGalleryIds, nextSections });
     onQuickSave?.(nextGalleryIds, nextSections);
   }
 
