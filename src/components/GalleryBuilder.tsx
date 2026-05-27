@@ -553,12 +553,12 @@ export default function GalleryBuilder({
     const otherIds = gallery.itemIds.filter((id) => !orderedSet.has(id));
     const nextGalleryIds = [...orderedIds, ...otherIds];
 
-    // Push into React state (live preview + shelf)
-    onChange(nextGalleryIds);
-    onGalleryChange((current) => syncSectionsAndLayout(current, nextSections));
+    // Push item order and slot layout in one draft update.
+    onGalleryChange((current) =>
+      syncSectionsAndLayout({ ...current, itemIds: nextGalleryIds }, nextSections)
+    );
 
-    // Save immediately — don't wait for Done; this eliminates all async-state races
-    console.warn("[VLTD] commitSlots saving:", { nextGalleryIds, slotLayout: slots });
+    // Save immediately; Done re-saves the latest ref as a final confirmation.
     onQuickSave?.(nextGalleryIds, nextSections);
   }
 
@@ -981,14 +981,18 @@ export default function GalleryBuilder({
           <div
             className={["mt-3 overflow-hidden rounded-[24px] ring-1", previewPanelClass].join(" ")}
             style={{ maxWidth: "calc(100vw - 4rem)", width: "100%" }}
-            onDragOver={(e) => e.preventDefault()}
+            onDragOver={(e) => {
+              if (!isOrganizing) return;
+              e.preventDefault();
+            }}
             onDrop={(e) => {
+              if (!isOrganizing) return;
               e.preventDefault();
               const toEl = (e.target as HTMLElement).closest("[data-slot-idx]");
               const toIdx = toEl ? parseInt(toEl.getAttribute("data-slot-idx") ?? "", 10) : -1;
               const fromIdx = slotDragIdx ?? parseInt(e.dataTransfer.getData("text/plain"), 10);
               if (!isNaN(fromIdx) && !isNaN(toIdx) && fromIdx !== toIdx && fromIdx >= 0 && toIdx >= 0) {
-                const next = [...previewSlots];
+                const next = [...latestPreviewSlotsRef.current];
                 [next[fromIdx], next[toIdx]] = [next[toIdx], next[fromIdx]];
                 commitSlots(next);
               }
@@ -1012,8 +1016,8 @@ export default function GalleryBuilder({
                       key={"slot-" + i}
                       data-slot-idx={i}
                       style={{ width: "25%", padding: 2, touchAction: canOrganize && item ? "none" : "auto" }}
-                      draggable={!!item && sections.length > 0}
-                      onDragStart={item && sections.length > 0 ? (e) => {
+                      draggable={canOrganize && !!item}
+                      onDragStart={canOrganize && item ? (e) => {
                         e.dataTransfer.setData("text/plain", String(i));
                         e.dataTransfer.effectAllowed = "move";
                         setSlotDragIdx(i);
@@ -1022,6 +1026,7 @@ export default function GalleryBuilder({
                         if (imgEl) e.dataTransfer.setDragImage(imgEl, imgEl.offsetWidth / 2, imgEl.offsetHeight / 2);
                       } : undefined}
                       onDragOver={(e) => {
+                        if (!canOrganize) return;
                         e.preventDefault();
                         if (slotDragIdx !== null && slotDragIdx !== i) setSlotDragOverIdx(i);
                       }}
@@ -1080,7 +1085,7 @@ export default function GalleryBuilder({
                         touchCloneRef.current?.remove();
                         touchCloneRef.current = null;
                         if (fromIdx !== null && toIdx !== null && fromIdx !== toIdx) {
-                          const next = [...previewSlots];
+                          const next = [...latestPreviewSlotsRef.current];
                           [next[fromIdx], next[toIdx]] = [next[toIdx], next[fromIdx]];
                           commitSlots(next);
                         }

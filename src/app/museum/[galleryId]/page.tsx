@@ -534,7 +534,6 @@ export default function GalleryPage() {
     if (!draft) return;
     const effectiveIds = overrideIds ?? draft.itemIds;
     const effectiveSections = overrideSections ?? draft.sections;
-    console.warn("[VLTD] saveDraft called:", { effectiveIds: effectiveIds.slice(0,4), hasSections: !!effectiveSections?.length, slotLayout: effectiveSections?.[0]?.slotLayout?.slice(0,6) });
 
     const preservedPublicToken =
       draft.share?.publicToken ||
