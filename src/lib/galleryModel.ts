@@ -36,6 +36,8 @@ export type GallerySection = {
   description?: string;
   itemIds: string[];
   featuredItemId?: string;
+  /** Preserved 16-slot positional grid (null = empty). Saved by the builder's Organize mode. */
+  slotLayout?: (string | null)[];
 };
 
 export type GalleryPublicItemSnapshot = {
@@ -531,6 +533,11 @@ function normalizeSections(value: unknown, galleryItemIds?: string[]): GallerySe
       allowedItemIds.size > 0 ? allowedItemIds.has(itemId) : true
     );
     const featuredItemId = safeString((raw as any)?.featuredItemId) || undefined;
+    const rawSlotLayout = (raw as any)?.slotLayout;
+    const slotLayout: (string | null)[] | undefined =
+      Array.isArray(rawSlotLayout)
+        ? rawSlotLayout.map((v: unknown) => (typeof v === "string" ? v : null))
+        : undefined;
 
     seen.add(id);
     out.push({
@@ -540,6 +547,7 @@ function normalizeSections(value: unknown, galleryItemIds?: string[]): GallerySe
       itemIds,
       featuredItemId:
         featuredItemId && itemIds.includes(featuredItemId) ? featuredItemId : itemIds[0],
+      ...(slotLayout ? { slotLayout } : {}),
     });
   }
 

@@ -348,7 +348,15 @@ export default function GalleryBuilder({
     const sectionChanged = prevSlotSectionRef.current !== activeSectionIdx;
     prevSlotSectionRef.current = activeSectionIdx;
     if (sectionChanged) {
-      setPreviewSlots(Array.from({ length: 16 }, (_, i) => previewItems[i]?.id ?? null));
+      const activeSection = sections[activeSectionIdx];
+      // Restore saved slot layout if present, otherwise pack from slot 0
+      if (activeSection?.slotLayout && activeSection.slotLayout.length === 16) {
+        // Filter out any stale IDs (items removed since last save)
+        const validIds = new Set(previewItems.map((item) => item.id));
+        setPreviewSlots(activeSection.slotLayout.map((id) => (id && validIds.has(id) ? id : null)));
+      } else {
+        setPreviewSlots(Array.from({ length: 16 }, (_, i) => previewItems[i]?.id ?? null));
+      }
       return;
     }
     const validIds = new Set(previewItems.map((item) => item.id));
@@ -549,6 +557,16 @@ export default function GalleryBuilder({
     setPreviewSlots(slots);
     const orderedIds = slots.filter((id): id is string => id !== null);
     handlePreviewReorder(orderedIds);
+    // Persist slot positions (with nulls) directly on the section so reload restores locations
+    const section = sections[activeSectionIdx];
+    if (section) {
+      onGalleryChange((current) => {
+        const nextSections = getGallerySections(current).map((s, i) =>
+          i === activeSectionIdx ? { ...s, slotLayout: slots } : s
+        );
+        return syncSectionsAndLayout(current, nextSections);
+      });
+    }
   }
 
   async function handleShelfBackgroundUpload(file: File) {
