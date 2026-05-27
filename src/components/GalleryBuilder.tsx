@@ -806,7 +806,7 @@ export default function GalleryBuilder({
 
           </div>
 
-          {/* ── Row 2a: Section selector ── */}
+          {/* ── Row 2a: Section selector + inline title ── */}
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {/* Section selector — dropdown pill */}
             <div className="relative">
@@ -896,19 +896,19 @@ export default function GalleryBuilder({
               )}
             </div>
 
-          {/* ── Section name + description — both linked to activeSectionIdx ── */}
-          <input
-            type="text"
-            value={sections[activeSectionIdx]?.title ?? ""}
-            onChange={(e) => {
-              const updated = sections.map((s, i) =>
-                i === activeSectionIdx ? { ...s, title: e.target.value } : s
-              );
-              onGalleryChange((current) => syncSectionsAndLayout(current, updated));
-            }}
-            placeholder="Section name…"
-            className="mt-2 block min-h-[32px] w-full rounded-2xl bg-[color:var(--pill)] px-3 text-xs font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
-          />
+            {/* Section title — inline, shrinks to fill remaining space */}
+            <input
+              type="text"
+              value={sections[activeSectionIdx]?.title ?? ""}
+              onChange={(e) => {
+                const updated = sections.map((s, i) =>
+                  i === activeSectionIdx ? { ...s, title: e.target.value } : s
+                );
+                onGalleryChange((current) => syncSectionsAndLayout(current, updated));
+              }}
+              placeholder="Section name…"
+              className="min-w-0 flex-1 min-h-[28px] rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
+            />
 
           {/* Section description — one line, auto-expands on type, shrinks on blur */}
           <textarea
