@@ -829,24 +829,8 @@ export default function GalleryBuilder({
 
           </div>
 
-          {/* ── Advanced drawer toggle ── */}
-          <button
-            type="button"
-            onClick={() => setIsAdvancedOpen((v) => !v)}
-            className="mt-2 inline-flex min-h-[28px] items-center gap-1.5 rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all select-none"
-          >
-            <span>Advanced</span>
-            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={["h-3.5 w-3.5 opacity-60 transition-transform duration-200", isAdvancedOpen ? "rotate-180" : ""].join(" ")}>
-              <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
-            </svg>
-          </button>
-
-          {/* ── Advanced content ── */}
-          {isAdvancedOpen && (
-          <div className="mt-2">
-
           {/* ── Row 2a: Section selector + inline title ── */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             {/* Section selector — dropdown pill */}
             <div className="relative">
               <button
@@ -985,9 +969,6 @@ export default function GalleryBuilder({
                   : "Background applied"}
             </div>
           ) : null}
-
-          </div>
-          )}
 
           {/* Mini shelf preview — 16 slots, ghosts for empty, remove · ghost overlay · drag-to-reorder */}
           <style>{`
@@ -1423,14 +1404,22 @@ export default function GalleryBuilder({
               );
             })}
           </div>
-        ) : (
-          <div className="mt-5 rounded-[20px] bg-[color:var(--surface)] p-5 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
-            No sections yet. Add a section to start building a curated exhibition structure.
-          </div>
-        )}
+        ) : null}
       </section>
 
+      {/* ── Advanced toggle ── */}
+      <button
+        type="button"
+        onClick={() => setIsAdvancedOpen((v) => !v)}
+        className="inline-flex min-h-[32px] items-center gap-1.5 rounded-full bg-[color:var(--surface)] px-4 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill)] transition-all select-none"
+      >
+        <span>Advanced</span>
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={["h-3.5 w-3.5 opacity-60 transition-transform duration-200", isAdvancedOpen ? "rotate-180" : ""].join(" ")}>
+          <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
+        </svg>
+      </button>
 
+      {isAdvancedOpen && (
       <div className="grid gap-5 xl:grid-cols-[minmax(0,520px)_minmax(0,1fr)]">
         <section className="rounded-[24px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
           <div className="flex flex-col gap-4">
@@ -1698,6 +1687,7 @@ export default function GalleryBuilder({
             <BuilderPreviewBridge gallery={gallery} items={previewItems} onHeightChange={setPreviewNaturalHeight} />
           </div>
         </div>
+      )}
       )}
     </div>
   );
