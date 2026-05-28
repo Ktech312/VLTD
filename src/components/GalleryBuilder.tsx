@@ -1688,7 +1688,6 @@ export default function GalleryBuilder({
           </div>
         </div>
       )}
-      )}
     </div>
   );
 }
