@@ -469,6 +469,38 @@ function chooseSectionSource(primary: unknown, fallback: unknown) {
   return fallback;
 }
 
+function withPreservedSlotLayout(preferred: Gallery, fallback?: Gallery | null): Gallery {
+  if (!fallback) return preferred;
+
+  const preferredSections = chooseSectionSource(
+    preferred.sections,
+    preferred.exhibitionLayout?.sections
+  );
+  const fallbackSections = chooseSectionSource(
+    fallback.sections,
+    fallback.exhibitionLayout?.sections
+  );
+
+  if (hasSlotLayoutSections(preferredSections) || !hasSlotLayoutSections(fallbackSections)) {
+    return preferred;
+  }
+
+  const sections = normalizeSections(fallbackSections, fallback.itemIds);
+
+  return {
+    ...preferred,
+    itemIds: fallback.itemIds,
+    sections,
+    exhibitionLayout: Object.assign(
+      {} as ExhibitionLayout,
+      preferred.exhibitionLayout ?? {},
+      {
+        sections,
+      }
+    ),
+  };
+}
+
 function normalizeInviteTokens(value: unknown): GalleryInviteToken[] {
   if (!Array.isArray(value)) return [];
 
@@ -1206,7 +1238,9 @@ async function hydrateLocalGalleriesFromSupabase(force = false) {
     for (const gallery of local) {
       const existing = merged.get(gallery.id);
       if (!existing || gallery.updatedAt >= existing.updatedAt) {
-        merged.set(gallery.id, gallery);
+        merged.set(gallery.id, withPreservedSlotLayout(gallery, existing));
+      } else {
+        merged.set(gallery.id, withPreservedSlotLayout(existing, gallery));
       }
     }
 
@@ -2128,26 +2162,41 @@ export function recordGalleryView(galleryId: string) {
   if (typeof window === "undefined") return;
 
   const viewerKey = getViewerKey();
+  const galleries = loadRawGalleries();
+  const target = galleries.find((gallery) => gallery.id === galleryId);
+  if (!target) return;
 
-  mutateGallery(
-    galleryId,
-    (gallery) => {
-      const analytics = normalizeAnalytics(gallery.analytics);
-      const alreadySeen = analytics.uniqueViewKeys.includes(viewerKey);
+  const analytics = normalizeAnalytics(target.analytics);
+  const alreadySeen = analytics.uniqueViewKeys.includes(viewerKey);
+  const nextAnalytics = {
+    views: alreadySeen ? analytics.views : analytics.views + 1,
+    uniqueViewKeys: alreadySeen
+      ? analytics.uniqueViewKeys
+      : [...analytics.uniqueViewKeys, viewerKey].slice(-500),
+    lastViewedAt: Date.now(),
+  };
 
-      return {
-        ...gallery,
-        analytics: {
-          views: alreadySeen ? analytics.views : analytics.views + 1,
-          uniqueViewKeys: alreadySeen
-            ? analytics.uniqueViewKeys
-            : [...analytics.uniqueViewKeys, viewerKey].slice(-500),
-          lastViewedAt: Date.now(),
-        },
-      };
-    },
-    { includeAllProfiles: true }
+  const next = galleries.map((gallery) =>
+    gallery.id === galleryId
+      ? {
+          ...gallery,
+          analytics: nextAnalytics,
+        }
+      : gallery
   );
+
+  saveGalleriesLocally(next);
+
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return;
+
+  void supabase
+    .from("galleries")
+    .update({
+      analytics_views: nextAnalytics.views,
+      analytics_last_viewed_at: new Date(nextAnalytics.lastViewedAt).toISOString(),
+    })
+    .eq("id", galleryId);
 }
 
 export function getGalleryShareUrl(gallery: Gallery, origin?: string) {
