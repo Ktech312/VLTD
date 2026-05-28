@@ -457,7 +457,28 @@ function hasSlotLayoutSections(value: unknown) {
   });
 }
 
+function isManualSlotLayout(section: GallerySection) {
+  if (!Array.isArray(section.slotLayout) || section.slotLayout.length === 0) return false;
+
+  const maxSlots = Math.max(section.slotLayout.length, section.itemIds.length);
+  for (let index = 0; index < maxSlots; index += 1) {
+    const expected = section.itemIds[index] ?? null;
+    const actual = section.slotLayout[index] ?? null;
+    if (actual !== expected) return true;
+  }
+
+  return false;
+}
+
+function hasManualSlotLayoutSections(value: unknown, itemIds?: string[]) {
+  return normalizeSections(value, itemIds).some(isManualSlotLayout);
+}
+
 function chooseSectionSource(primary: unknown, fallback: unknown) {
+  if (hasManualSlotLayoutSections(fallback) && !hasManualSlotLayoutSections(primary)) {
+    return fallback;
+  }
+
   if (hasSlotLayoutSections(fallback) && !hasSlotLayoutSections(primary)) {
     return fallback;
   }
@@ -472,24 +493,46 @@ function chooseSectionSource(primary: unknown, fallback: unknown) {
 function withPreservedSlotLayout(preferred: Gallery, fallback?: Gallery | null): Gallery {
   if (!fallback) return preferred;
 
-  const preferredSections = chooseSectionSource(
+  const preferredSections = normalizeSections(chooseSectionSource(
     preferred.sections,
     preferred.exhibitionLayout?.sections
-  );
-  const fallbackSections = chooseSectionSource(
+  ), preferred.itemIds);
+  const fallbackSections = normalizeSections(chooseSectionSource(
     fallback.sections,
     fallback.exhibitionLayout?.sections
-  );
+  ), fallback.itemIds);
 
-  if (hasSlotLayoutSections(preferredSections) || !hasSlotLayoutSections(fallbackSections)) {
+  if (!fallbackSections.some(isManualSlotLayout)) {
     return preferred;
   }
 
-  const sections = normalizeSections(fallbackSections, fallback.itemIds);
+  const fallbackById = new Map(fallbackSections.map((section) => [section.id, section]));
+  let changed = false;
+
+  const sections = preferredSections.map((section) => {
+    if (isManualSlotLayout(section)) return section;
+
+    const fallbackSection = fallbackById.get(section.id);
+    if (!fallbackSection || !isManualSlotLayout(fallbackSection)) return section;
+
+    const allowed = new Set(section.itemIds);
+    const slotLayout = fallbackSection.slotLayout?.map((itemId) =>
+      itemId && allowed.has(itemId) ? itemId : null
+    );
+    changed = true;
+
+    return {
+      ...section,
+      slotLayout,
+    };
+  });
+
+  if (!changed) {
+    return preferred;
+  }
 
   return {
     ...preferred,
-    itemIds: fallback.itemIds,
     sections,
     exhibitionLayout: Object.assign(
       {} as ExhibitionLayout,
@@ -1322,7 +1365,11 @@ function saveNormalized(
   if (typeof window === "undefined") return;
 
   const previous = readStoredGallerySnapshot();
-  const { galleries: normalized } = normalizeAll(galleries);
+  const { galleries: normalizedGalleries } = normalizeAll(galleries);
+  const previousById = new Map(previous.map((gallery) => [gallery.id, gallery]));
+  const normalized = normalizedGalleries.map((gallery) =>
+    withPreservedSlotLayout(gallery, previousById.get(gallery.id))
+  );
 
   try {
     writeLocalCache(normalized, emit);
@@ -2018,24 +2065,27 @@ export function markGalleryInviteTokenUsed(galleryId: string, token: string) {
   const cleanToken = safeString(token);
   if (!cleanToken) return;
 
-  mutateGallery(
-    galleryId,
-    (gallery) => ({
-      ...gallery,
-      share: {
-        publicToken: gallery.share?.publicToken,
-        inviteTokens: normalizeInviteTokens(gallery.share?.inviteTokens).map((entry) =>
-          entry.token === cleanToken
-            ? {
-                ...entry,
-                lastUsedAt: Date.now(),
-              }
-            : entry
-        ),
-      },
-    }),
-    { includeAllProfiles: true }
+  const galleries = loadRawGalleries();
+  const next = galleries.map((gallery) =>
+    gallery.id === galleryId
+      ? {
+          ...gallery,
+          share: {
+            publicToken: gallery.share?.publicToken,
+            inviteTokens: normalizeInviteTokens(gallery.share?.inviteTokens).map((entry) =>
+              entry.token === cleanToken
+                ? {
+                    ...entry,
+                    lastUsedAt: Date.now(),
+                  }
+                : entry
+            ),
+          },
+        }
+      : gallery
   );
+
+  saveGalleriesLocally(next);
 }
 
 export function getActiveInviteTokens(gallery: Gallery) {
