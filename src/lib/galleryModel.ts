@@ -2060,6 +2060,16 @@ export async function getGalleryByInviteToken(
             const normalizedGallery = normalizeSupabaseGallery(galleryRow);
 
             if (normalizedGallery) {
+              const rawPerms = inviteRow.permissions;
+              const permissions: GalleryInvitePermissions | undefined =
+                rawPerms && typeof rawPerms === "object"
+                  ? {
+                      images: !!rawPerms.images,
+                      descriptionPage: !!rawPerms.descriptionPage,
+                      financialHistory: !!rawPerms.financialHistory,
+                    }
+                  : undefined;
+
               return {
                 gallery: normalizedGallery,
                 inviteToken: {
@@ -2073,6 +2083,7 @@ export async function getGalleryByInviteToken(
                     : undefined,
                   expiresAt,
                   disabled,
+                  permissions,
                 },
               };
             }
