@@ -277,6 +277,7 @@ export default function GalleryBuilder({
   const [slotDragIdx, setSlotDragIdx] = useState<number | null>(null);
   const [slotDragOverIdx, setSlotDragOverIdx] = useState<number | null>(null);
   const [isOrganizing, setIsOrganizing] = useState(false);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const touchSlotFromRef = useRef<number | null>(null);
   const touchSlotOverRef = useRef<number | null>(null);
   const touchCloneRef = useRef<HTMLElement | null>(null);
@@ -668,13 +669,13 @@ export default function GalleryBuilder({
           </div>
         </div>
 
-        {/* ── LIVE PREVIEW PANEL (merged with Exhibit View controls) ── */}
+        {/* ── CURATE PANEL (merged with Exhibit View controls) ── */}
         <div className="mt-5 overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
 
           {/* Header row: label left, Expand right */}
           <div className="flex items-center justify-between gap-3">
             <div>
-              <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">LIVE PREVIEW PANEL</div>
+              <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">CURATE</div>
               <div className="mt-0.5 text-sm text-[color:var(--muted)]">
                 Theme, view mode, background, and guest feel in one place.
               </div>
@@ -828,8 +829,24 @@ export default function GalleryBuilder({
 
           </div>
 
+          {/* ── Advanced drawer toggle ── */}
+          <button
+            type="button"
+            onClick={() => setIsAdvancedOpen((v) => !v)}
+            className="mt-2 inline-flex min-h-[28px] items-center gap-1.5 rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all select-none"
+          >
+            <span>Advanced</span>
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={["h-3.5 w-3.5 opacity-60 transition-transform duration-200", isAdvancedOpen ? "rotate-180" : ""].join(" ")}>
+              <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
+            </svg>
+          </button>
+
+          {/* ── Advanced content ── */}
+          {isAdvancedOpen && (
+          <div className="mt-2">
+
           {/* ── Row 2a: Section selector + inline title ── */}
-          <div className="mt-2 flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Section selector — dropdown pill */}
             <div className="relative">
               <button
@@ -967,6 +984,9 @@ export default function GalleryBuilder({
                   : "Background applied"}
             </div>
           ) : null}
+
+          </div>
+          )}
 
           {/* Mini shelf preview — 16 slots, ghosts for empty, remove · ghost overlay · drag-to-reorder */}
           <style>{`
