@@ -948,6 +948,7 @@ export default function GalleryBuilder({
               placeholder="Section name…"
               className="min-w-0 flex-1 min-h-[28px] rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
             />
+          </div>
 
           {/* Section description — one line, auto-expands on type, shrinks on blur */}
           <textarea
@@ -1202,7 +1203,6 @@ export default function GalleryBuilder({
             </div>
           </div>
         </div>
-      </div>
 
         {sections.length ? (
           <div className="mt-5 grid gap-4">
