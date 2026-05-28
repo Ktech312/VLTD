@@ -10,6 +10,12 @@ export type GalleryItemNote = {
   updatedAt: number;
 };
 
+export type GalleryInvitePermissions = {
+  images?: boolean;
+  descriptionPage?: boolean;
+  financialHistory?: boolean;
+};
+
 export type GalleryInviteToken = {
   token: string;
   label?: string;
@@ -17,6 +23,7 @@ export type GalleryInviteToken = {
   lastUsedAt?: number;
   expiresAt?: number;
   disabled?: boolean;
+  permissions?: GalleryInvitePermissions;
 };
 
 export type GalleryShareSettings = {
@@ -475,6 +482,16 @@ function normalizeInviteTokens(value: unknown): GalleryInviteToken[] {
 
     seen.add(token);
 
+    const rawPerms = (raw as any)?.permissions;
+    const permissions: GalleryInvitePermissions | undefined =
+      rawPerms && typeof rawPerms === "object"
+        ? {
+            images: !!rawPerms.images,
+            descriptionPage: !!rawPerms.descriptionPage,
+            financialHistory: !!rawPerms.financialHistory,
+          }
+        : undefined;
+
     out.push({
       token,
       label: typeof (raw as any)?.label === "string" ? (raw as any).label : undefined,
@@ -488,6 +505,7 @@ function normalizeInviteTokens(value: unknown): GalleryInviteToken[] {
           ? (raw as any).expiresAt
           : undefined,
       disabled: !!(raw as any)?.disabled,
+      permissions,
     });
   }
 
@@ -837,6 +855,7 @@ function serializeInviteTokenForSupabase(galleryId: string, invite: GalleryInvit
     expires_at:
       typeof invite.expiresAt === "number" ? new Date(invite.expiresAt).toISOString() : null,
     disabled: !!invite.disabled,
+    permissions: invite.permissions ?? null,
   };
 }
 
@@ -1902,6 +1921,42 @@ export function disableGalleryInviteToken(galleryId: string, token: string) {
             ? {
                 ...entry,
                 disabled: true,
+              }
+            : entry
+        ),
+      },
+    }),
+    { includeAllProfiles: true }
+  );
+}
+
+export function updateGalleryInviteToken(
+  galleryId: string,
+  token: string,
+  updates: {
+    permissions?: GalleryInvitePermissions;
+    expiresAt?: number | null;
+  }
+) {
+  const cleanToken = safeString(token);
+  if (!cleanToken) return;
+
+  mutateGallery(
+    galleryId,
+    (gallery) => ({
+      ...gallery,
+      share: {
+        publicToken: gallery.share?.publicToken,
+        inviteTokens: normalizeInviteTokens(gallery.share?.inviteTokens).map((entry) =>
+          entry.token === cleanToken
+            ? {
+                ...entry,
+                ...(updates.permissions !== undefined
+                  ? { permissions: updates.permissions }
+                  : {}),
+                ...(updates.expiresAt !== undefined
+                  ? { expiresAt: updates.expiresAt ?? undefined }
+                  : {}),
               }
             : entry
         ),

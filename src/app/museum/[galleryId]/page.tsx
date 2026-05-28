@@ -10,6 +10,7 @@ import {
   saveGalleriesLocally,
   type Gallery,
   type GalleryPublicItemSnapshot,
+  type GalleryInvitePermissions,
   GALLERY_EVENT,
   recordGalleryView,
   ensureGalleryPublicToken,
@@ -17,6 +18,7 @@ import {
   getGalleryShareUrl,
   createGalleryInviteToken,
   disableGalleryInviteToken,
+  updateGalleryInviteToken,
   getGalleryInviteUrl,
   getActiveInviteTokens,
   syncGalleryToSupabaseNow,
@@ -292,6 +294,8 @@ export default function GalleryPage() {
   const [accessInfoOpen, setAccessInfoOpen] = useState(false);
   const [inviteLabel, setInviteLabel] = useState("");
   const [inviteCopiedToken, setInviteCopiedToken] = useState<string>("");
+  const [openPermissionsToken, setOpenPermissionsToken] = useState<string | null>(null);
+  const [openExpiryToken, setOpenExpiryToken] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [statusTone, setStatusTone] = useState<"neutral" | "good">("neutral");
   const [isUploadingCover, setIsUploadingCover] = useState(false);
@@ -691,6 +695,29 @@ export default function GalleryPage() {
       setDraft(cloneGallery(refreshed));
         setOriginalSnapshot(normalizeDraftForCompare(refreshed));
     }
+  }
+
+  function handleUpdateTokenPermissions(token: string, permissions: GalleryInvitePermissions) {
+    if (!draft) return;
+    updateGalleryInviteToken(draft.id, token, { permissions });
+    const refreshed = loadGalleries({ includeAllProfiles: true }).find((x) => x.id === draft.id) ?? null;
+    if (refreshed) {
+      setGallery(cloneGallery(refreshed));
+      setDraft(cloneGallery(refreshed));
+      setOriginalSnapshot(normalizeDraftForCompare(refreshed));
+    }
+  }
+
+  function handleUpdateTokenExpiry(token: string, expiresAt: number | null) {
+    if (!draft) return;
+    updateGalleryInviteToken(draft.id, token, { expiresAt });
+    const refreshed = loadGalleries({ includeAllProfiles: true }).find((x) => x.id === draft.id) ?? null;
+    if (refreshed) {
+      setGallery(cloneGallery(refreshed));
+      setDraft(cloneGallery(refreshed));
+      setOriginalSnapshot(normalizeDraftForCompare(refreshed));
+    }
+    setOpenExpiryToken(null);
   }
 
   function handleRegeneratePublicLink() {
@@ -1094,102 +1121,214 @@ export default function GalleryPage() {
             )}
           </div>
 
-          <aside className="rounded-[30px] vltd-panel-main bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-            <div className="text-[11px] tracking-[0.24em] text-[color:var(--muted2)]">
+          <aside className="rounded-[22px] vltd-panel-main bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+            <div className="text-[10px] tracking-[0.24em] text-[color:var(--muted2)]">
               AUDIENCE + ACCESS
             </div>
 
-            <h2 className="mt-3 text-2xl font-semibold">Invite Tokens</h2>
+            <h2 className="mt-2 text-xl font-semibold">Invite Tokens</h2>
 
-            <div className="mt-5 grid gap-4">
-              <div className="rounded-2xl vltd-panel-soft bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
-                <div className="text-xs text-[color:var(--muted2)]">TOTAL VIEWS</div>
-                <div className="mt-2 text-2xl font-semibold">{metrics.views}</div>
+            {/* Compact stats row */}
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <div className="rounded-xl bg-[color:var(--input)] px-2.5 py-2 ring-1 ring-[color:var(--border)]">
+                <div className="text-[9px] tracking-[0.16em] text-[color:var(--muted2)]">VIEWS</div>
+                <div className="mt-0.5 text-lg font-semibold leading-tight">{metrics.views}</div>
               </div>
-
-              <div className="rounded-2xl vltd-panel-soft bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
-                <div className="text-xs text-[color:var(--muted2)]">UNIQUE VIEWERS</div>
-                <div className="mt-2 text-2xl font-semibold">{metrics.uniqueViewers}</div>
+              <div className="rounded-xl bg-[color:var(--input)] px-2.5 py-2 ring-1 ring-[color:var(--border)]">
+                <div className="text-[9px] tracking-[0.16em] text-[color:var(--muted2)]">UNIQUE</div>
+                <div className="mt-0.5 text-lg font-semibold leading-tight">{metrics.uniqueViewers}</div>
               </div>
-
-              <div className="rounded-2xl vltd-panel-soft bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
-                <div className="text-xs text-[color:var(--muted2)]">INVITE TOKENS</div>
-                <div className="mt-2 text-2xl font-semibold">{metrics.inviteCount}</div>
+              <div className="rounded-xl bg-[color:var(--input)] px-2.5 py-2 ring-1 ring-[color:var(--border)]">
+                <div className="text-[9px] tracking-[0.16em] text-[color:var(--muted2)]">TOKENS</div>
+                <div className="mt-0.5 text-lg font-semibold leading-tight">{metrics.inviteCount}</div>
               </div>
             </div>
 
-            <p className="mt-5 text-sm leading-6 text-[color:var(--muted)]">
-              Generate labeled invite links for controlled sharing. Links use a dedicated invite route.
-            </p>
-
-            <div className="mt-5 rounded-[24px] vltd-panel-soft bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
-              <div className="text-sm font-semibold">Create Invite Token</div>
-
-              <input
-                value={inviteLabel}
-                onChange={(e) => setInviteLabel(e.target.value)}
-                placeholder="Optional label, e.g. VIP preview"
-                className="mt-3 min-h-[46px] w-full rounded-2xl bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)] focus:outline-none"
-              />
-
-              <button
-                type="button"
-                onClick={handleCreateInviteToken}
-                className="vltd-pill-main-glow mt-3 inline-flex min-h-[46px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)]"
-              >
-                Create Invite Link
-              </button>
+            {/* Create token form */}
+            <div className="mt-3 rounded-[18px] bg-[color:var(--input)] p-3 ring-1 ring-[color:var(--border)]">
+              <div className="text-[10px] font-semibold tracking-[0.14em] text-[color:var(--muted2)]">CREATE INVITE TOKEN</div>
+              <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                <input
+                  value={inviteLabel}
+                  onChange={(e) => setInviteLabel(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleCreateInviteToken(); }}
+                  placeholder="Optional label, e.g. VIP preview"
+                  className="min-h-[36px] w-full rounded-xl bg-[color:var(--surface)] px-3 py-1.5 text-xs ring-1 ring-[color:var(--border)] focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleCreateInviteToken}
+                  className="vltd-pill-main-glow inline-flex min-h-[36px] shrink-0 items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-1.5 text-xs font-semibold text-[color:var(--fg)] whitespace-nowrap"
+                >
+                  Create Link
+                </button>
+              </div>
             </div>
 
-            <div className="mt-5">
-              <div className="text-sm font-semibold">Active Invite Links</div>
+            {/* Active invite links */}
+            <div className="mt-3">
+              <div className="text-[10px] font-semibold tracking-[0.14em] text-[color:var(--muted2)]">ACTIVE INVITE LINKS</div>
 
               {activeInviteTokens.length === 0 ? (
-                <div className="mt-3 rounded-[24px] bg-[color:var(--input)] p-4 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+                <div className="mt-2 rounded-[18px] bg-[color:var(--input)] px-3 py-3 text-xs text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
                   No active invite tokens yet.
                 </div>
               ) : (
-                <div className="mt-3 grid gap-3">
+                <div className="mt-2 grid gap-2">
                   {activeInviteTokens.map((entry) => {
                     const inviteUrl = getGalleryInviteUrl(draft, entry.token);
+                    const perms = entry.permissions ?? {};
+                    const isPermsOpen = openPermissionsToken === entry.token;
+                    const isExpiryOpen = openExpiryToken === entry.token;
+
+                    const expiryLabel = (() => {
+                      if (!entry.expiresAt) return "Never";
+                      const diff = entry.expiresAt - Date.now();
+                      if (diff <= 0) return "Expired";
+                      const days = Math.ceil(diff / 86400000);
+                      return days === 1 ? "1 day" : `${days}d`;
+                    })();
 
                     return (
                       <div
                         key={entry.token}
-                        className="rounded-[24px] vltd-panel-soft bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]"
+                        className="rounded-[18px] bg-[color:var(--input)] p-3 ring-1 ring-[color:var(--border)]"
                       >
-                        <div className="flex items-start justify-between gap-3">
+                        {/* Header row */}
+                        <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <div className="truncate text-sm font-semibold">
+                            <div className="truncate text-xs font-semibold">
                               {entry.label?.trim() || "Untitled invite"}
                             </div>
-                            <div className="mt-1 text-xs text-[color:var(--muted)]">
+                            <div className="mt-0.5 text-[10px] text-[color:var(--muted)]">
                               Created {formatDateTime(entry.createdAt)}
                             </div>
                           </div>
-
                           <button
                             type="button"
                             onClick={() => handleDisableInviteToken(entry.token)}
-                            className="inline-flex min-h-[34px] items-center justify-center rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                            className="inline-flex min-h-[28px] shrink-0 items-center justify-center rounded-full bg-[color:var(--pill)] px-2.5 py-1 text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
                           >
                             Disable
                           </button>
                         </div>
 
+                        {/* URL input — selectable */}
                         <input
                           value={inviteUrl}
                           readOnly
-                          className="mt-3 min-h-[42px] w-full rounded-2xl bg-[color:var(--surface)] px-3 py-2 text-xs ring-1 ring-[color:var(--border)] focus:outline-none"
+                          onFocus={(e) => e.target.select()}
+                          className="mt-2 min-h-[34px] w-full rounded-xl bg-[color:var(--surface)] px-3 py-1.5 text-[11px] ring-1 ring-[color:var(--border)] focus:outline-none cursor-text select-all"
                         />
 
-                        <button
-                          type="button"
-                          onClick={() => copyInviteLink(entry.token)}
-                          className="vltd-pill-main-glow mt-3 inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-xs font-semibold text-[color:var(--fg)]"
-                        >
-                          {inviteCopiedToken === entry.token ? "Copied" : "Copy Invite Link"}
-                        </button>
+                        {/* Action pills row */}
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => copyInviteLink(entry.token)}
+                            className="vltd-pill-main-glow inline-flex min-h-[30px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-3 py-1 text-[10px] font-semibold text-[color:var(--fg)]"
+                          >
+                            {inviteCopiedToken === entry.token ? "Copied!" : "Copy Link"}
+                          </button>
+
+                          {/* Expiry pill */}
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOpenExpiryToken(isExpiryOpen ? null : entry.token);
+                                setOpenPermissionsToken(null);
+                              }}
+                              className={[
+                                "inline-flex min-h-[30px] items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold ring-1 transition",
+                                isExpiryOpen
+                                  ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[color:var(--pill-active-ring)]"
+                                  : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
+                              ].join(" ")}
+                            >
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+                                <path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                              </svg>
+                              Expires: {expiryLabel}
+                            </button>
+
+                            {isExpiryOpen && (
+                              <div className="absolute left-0 top-full z-20 mt-1.5 w-40 rounded-[14px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)] shadow-[0_12px_36px_rgba(0,0,0,0.42)]">
+                                {[
+                                  { label: "Never", value: null },
+                                  { label: "24 hours", value: Date.now() + 86400000 },
+                                  { label: "7 days", value: Date.now() + 7 * 86400000 },
+                                  { label: "30 days", value: Date.now() + 30 * 86400000 },
+                                ].map(({ label, value }) => (
+                                  <button
+                                    key={label}
+                                    type="button"
+                                    onClick={() => handleUpdateTokenExpiry(entry.token, value)}
+                                    className="flex w-full items-center rounded-xl px-2.5 py-1.5 text-left text-[11px] transition hover:bg-[color:var(--input)]"
+                                  >
+                                    {label}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Permissions pill */}
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOpenPermissionsToken(isPermsOpen ? null : entry.token);
+                                setOpenExpiryToken(null);
+                              }}
+                              className={[
+                                "inline-flex min-h-[30px] items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold ring-1 transition",
+                                isPermsOpen
+                                  ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[color:var(--pill-active-ring)]"
+                                  : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
+                              ].join(" ")}
+                            >
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M12 2a5 5 0 0 1 5 5v1h1a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2h1V7a5 5 0 0 1 5-5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                                <circle cx="12" cy="15" r="1.5" fill="currentColor" />
+                              </svg>
+                              Permissions
+                            </button>
+
+                            {isPermsOpen && (
+                              <div className="absolute left-0 top-full z-20 mt-1.5 w-52 rounded-[14px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[0_12px_36px_rgba(0,0,0,0.42)]">
+                                <div className="mb-2 text-[9px] font-bold tracking-[0.18em] text-[color:var(--muted2)]">VIEWER PERMISSIONS</div>
+                                {(
+                                  [
+                                    { key: "images" as const, label: "Images", desc: "Enlarge gallery images" },
+                                    { key: "descriptionPage" as const, label: "Description Page", desc: "Full item info, no prices" },
+                                    { key: "financialHistory" as const, label: "Financial History", desc: "Reveal purchase & value data" },
+                                  ] as const
+                                ).map(({ key, label, desc }) => (
+                                  <label
+                                    key={key}
+                                    className="flex cursor-pointer items-start gap-2.5 rounded-xl px-2 py-1.5 transition hover:bg-[color:var(--input)]"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={!!perms[key]}
+                                      onChange={(e) => {
+                                        const next = { ...perms, [key]: e.target.checked };
+                                        handleUpdateTokenPermissions(entry.token, next);
+                                      }}
+                                      className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-[color:var(--accent)]"
+                                    />
+                                    <div>
+                                      <div className="text-[11px] font-semibold leading-tight">{label}</div>
+                                      <div className="mt-0.5 text-[10px] leading-tight text-[color:var(--muted)]">{desc}</div>
+                                    </div>
+                                  </label>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     );
                   })}
