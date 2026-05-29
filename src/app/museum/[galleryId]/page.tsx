@@ -819,9 +819,6 @@ export default function GalleryPage() {
                 Cancel Changes
               </button>
 
-              <span className="text-sm text-[color:var(--muted)]">
-                {isDirty ? "Unsaved changes" : "All changes saved"}
-              </span>
             </div>
 
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between xl:justify-start xl:gap-5">
@@ -1033,7 +1030,7 @@ export default function GalleryPage() {
 
                   <div className="mt-2 text-[11px] leading-4 text-[color:var(--muted2)] xl:text-[9px] xl:leading-3">Current mode: {accessDescription(selectedAccessMode)}</div>
 
-                  <div className="relative mt-3 flex min-h-[38px] items-center justify-between gap-3 rounded-xl bg-[color:var(--surface)] px-3 py-2 ring-1 ring-[color:var(--border)] xl:mt-2 xl:min-h-[32px] xl:px-2.5 xl:py-1.5">
+                  <div className="relative mt-3 inline-flex min-h-[34px] w-fit items-center gap-2 rounded-full bg-[color:var(--surface)] px-3 py-1.5 ring-1 ring-[color:var(--border)] xl:mt-2 xl:min-h-[28px] xl:px-2.5 xl:py-1">
                     <span className="flex items-center gap-1.5">
                       <span className="block text-xs font-semibold">18+ exhibit</span>
                       <button
@@ -1063,13 +1060,13 @@ export default function GalleryPage() {
                       className="h-4 w-4 accent-cyan-400"
                     />
                     {adultInfoOpen ? (
-                      <span className="absolute left-3 bottom-full z-20 mb-2 max-w-[380px] rounded-xl bg-[color:var(--surface)] px-3 py-2 text-[11px] leading-4 text-[color:var(--muted)] ring-1 ring-[color:var(--border)] shadow-[0_18px_44px_rgba(0,0,0,0.38)]">
+                      <span className="absolute left-0 bottom-full z-20 mb-2 w-[min(360px,calc(100vw-48px))] rounded-xl bg-[color:var(--surface)] px-3 py-2 text-[11px] leading-4 text-[color:var(--muted)] ring-1 ring-[color:var(--border)] shadow-[0_18px_44px_rgba(0,0,0,0.38)]">
                         Public viewers must confirm they are 18 or older before entering this exhibit.
                       </span>
                     ) : null}
                   </div>
 
-                  <div className="mt-2 hidden flex-wrap items-center gap-1.5 border-t border-[color:var(--border)] pt-2 xl:flex">
+                  <div className="mt-3 hidden flex-wrap items-center gap-1.5 border-t border-[color:var(--border)] pt-2 xl:flex">
                     <button
                       type="button"
                       onClick={() => void saveDraft()}
@@ -1091,9 +1088,6 @@ export default function GalleryPage() {
                     >
                       Cancel Changes
                     </button>
-                    <span className="text-[9px] text-[color:var(--muted)]">
-                      {isDirty ? "Unsaved changes" : "All changes saved"}
-                    </span>
                   </div>
                 </div>
               </div>
