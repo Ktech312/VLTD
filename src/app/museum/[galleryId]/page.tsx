@@ -292,6 +292,7 @@ export default function GalleryPage() {
   const [pickerSectionIdx, setPickerSectionIdx] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
   const [accessInfoOpen, setAccessInfoOpen] = useState(false);
+  const [adultInfoOpen, setAdultInfoOpen] = useState(false);
   const [inviteLabel, setInviteLabel] = useState("");
   const [inviteCopiedToken, setInviteCopiedToken] = useState<string>("");
   const [openPermissionsToken, setOpenPermissionsToken] = useState<string | null>(null);
@@ -823,7 +824,7 @@ export default function GalleryPage() {
               </span>
             </div>
 
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between xl:justify-start xl:gap-5">
               <div className="flex items-start gap-2.5 max-w-3xl">
                 {/* Cover image portrait card */}
                 <div className="shrink-0">
@@ -894,7 +895,7 @@ export default function GalleryPage() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2 lg:justify-end xl:gap-1.5">
+              <div className="flex flex-wrap gap-2 lg:justify-end xl:justify-start xl:gap-1.5">
                 <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)] xl:rounded-xl xl:px-2.5 xl:py-2">
                   <div className="text-[9px] tracking-[0.18em] text-[color:var(--muted2)]">VALUE</div>
                   <div className="mt-0.5 text-lg font-semibold leading-tight xl:text-base">{formatMoney(metrics.totalValue)}</div>
@@ -1032,15 +1033,26 @@ export default function GalleryPage() {
 
                   <div className="mt-2 text-[11px] leading-4 text-[color:var(--muted2)] xl:text-[9px] xl:leading-3">Current mode: {accessDescription(selectedAccessMode)}</div>
 
-                  <label className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-[color:var(--surface)] px-3 py-2.5 ring-1 ring-[color:var(--border)] xl:mt-2 xl:px-2.5 xl:py-2">
-                    <span>
+                  <div className="relative mt-3 flex min-h-[38px] items-center justify-between gap-3 rounded-xl bg-[color:var(--surface)] px-3 py-2 ring-1 ring-[color:var(--border)] xl:mt-2 xl:min-h-[32px] xl:px-2.5 xl:py-1.5">
+                    <span className="flex items-center gap-1.5">
                       <span className="block text-xs font-semibold">18+ exhibit</span>
-                      <span className="mt-0.5 block text-[11px] leading-4 text-[color:var(--muted)]">
-                        Public viewers must confirm they are 18 or older before entering this exhibit.
-                      </span>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          setAdultInfoOpen((current) => !current);
+                        }}
+                        className="vltd-selectable inline-flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--pill)] text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                        aria-label="18+ exhibit help"
+                        aria-expanded={adultInfoOpen}
+                      >
+                        i
+                      </button>
                     </span>
                     <input
                       type="checkbox"
+                      aria-label="Require 18+ confirmation"
                       checked={draft.adultOnly === true}
                       onChange={(event) =>
                         patchDraft((current) => ({
@@ -1048,9 +1060,14 @@ export default function GalleryPage() {
                           adultOnly: event.target.checked,
                         }))
                       }
-                      className="mt-1 h-4 w-4 accent-cyan-400"
+                      className="h-4 w-4 accent-cyan-400"
                     />
-                  </label>
+                    {adultInfoOpen ? (
+                      <span className="absolute left-3 bottom-full z-20 mb-2 max-w-[380px] rounded-xl bg-[color:var(--surface)] px-3 py-2 text-[11px] leading-4 text-[color:var(--muted)] ring-1 ring-[color:var(--border)] shadow-[0_18px_44px_rgba(0,0,0,0.38)]">
+                        Public viewers must confirm they are 18 or older before entering this exhibit.
+                      </span>
+                    ) : null}
+                  </div>
 
                   <div className="mt-2 hidden flex-wrap items-center gap-1.5 border-t border-[color:var(--border)] pt-2 xl:flex">
                     <button
