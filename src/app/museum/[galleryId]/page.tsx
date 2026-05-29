@@ -772,8 +772,8 @@ export default function GalleryPage() {
 
   return (
     <main className="min-h-screen overflow-x-hidden text-[color:var(--fg)]">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10 xl:py-5">
-        <div className="mb-4 flex flex-wrap items-center gap-3">
+      <div className="mx-auto w-full max-w-[1000px] px-4 py-4 sm:px-5 sm:py-6 xl:py-3">
+        <div className="mb-3 flex flex-wrap items-center gap-3">
           <Link href="/museum" className={neutralPillClass()}>
             Back to Exhibitions
           </Link>
@@ -782,7 +782,7 @@ export default function GalleryPage() {
         {status ? (
           <div
             className={[
-              "mb-5 rounded-2xl px-4 py-3 text-sm ring-1",
+              "mb-3 rounded-2xl px-4 py-3 text-sm ring-1",
               statusTone === "good"
                 ? "bg-emerald-500/10 text-emerald-200 ring-emerald-500/30"
                 : "bg-[color:var(--surface)] text-[color:var(--muted)] ring-[color:var(--border)]",
@@ -792,7 +792,7 @@ export default function GalleryPage() {
           </div>
         ) : null}
 
-        <section className="relative max-w-[1120px] overflow-hidden rounded-[24px] border border-[color:var(--border)] bg-[color:var(--surface)] p-3 shadow-[0_20px_60px_rgba(0,0,0,0.38)] sm:p-4 xl:p-3.5">
+        <section className="relative w-full overflow-hidden rounded-[22px] border border-[color:var(--border)] bg-[color:var(--surface)] p-3 shadow-[0_20px_60px_rgba(0,0,0,0.38)] sm:p-3.5">
           {draft.coverImage ? (
             <>
               <div
@@ -810,7 +810,7 @@ export default function GalleryPage() {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.10),rgba(255,255,255,0)_28%),radial-gradient(circle_at_80%_0%,rgba(255,225,170,0.10),rgba(255,225,170,0)_24%)]" />
 
           <div className="relative">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between xl:justify-start xl:gap-5">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-start lg:gap-4 xl:gap-5">
               <div className="flex items-start gap-2.5 max-w-3xl">
                 {/* Cover image portrait card */}
                 <div className="shrink-0">
@@ -906,7 +906,7 @@ export default function GalleryPage() {
               </div>
             </div>
 
-            <div className="mt-4 xl:mt-2 xl:max-w-[760px]">
+            <div className="mt-3 max-w-[760px] xl:mt-2">
               <div className="rounded-[22px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] xl:rounded-[18px] xl:p-3">
                 <div className="flex items-center justify-between gap-3 xl:items-start">
                   <div>
@@ -1076,12 +1076,12 @@ export default function GalleryPage() {
           </div>
         </section>
 
-        <section className="mt-12">
-          <div className="mb-4">
+        <section className="mt-6">
+          <div className="mb-3">
             <div className="text-[11px] tracking-[0.24em] text-[color:var(--muted2)]">
               BUILDER
             </div>
-            <h2 className="mt-2 text-2xl font-semibold">Curate the Layout</h2>
+            <h2 className="mt-1 text-xl font-semibold">Curate the Layout</h2>
           </div>
 
           <GalleryBuilder
