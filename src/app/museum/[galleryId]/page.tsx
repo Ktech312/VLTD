@@ -268,7 +268,7 @@ function accessDescription(mode: GalleryAccessPillMode) {
 
 function accessPillClass(active: boolean) {
   return [
-    "vltd-selectable inline-flex min-h-[32px] items-center justify-center rounded-full px-3 py-1 text-[11px] font-semibold ring-1 transition",
+    "vltd-selectable inline-flex min-h-[32px] items-center justify-center rounded-full px-3 py-1 text-[11px] font-semibold ring-1 transition xl:min-h-[26px] xl:px-2.5 xl:text-[10px]",
     active
       ? "vltd-pill-main-glow bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)]"
       : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]",
@@ -756,7 +756,7 @@ export default function GalleryPage() {
 
   return (
     <main className="min-h-screen overflow-x-hidden text-[color:var(--fg)]">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10 xl:py-5">
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <Link href="/museum" className={neutralPillClass()}>
             Back to Exhibitions
@@ -776,7 +776,7 @@ export default function GalleryPage() {
           </div>
         ) : null}
 
-        <section className="relative overflow-hidden rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4 shadow-[0_20px_60px_rgba(0,0,0,0.38)] sm:p-5">
+        <section className="relative max-w-[1120px] overflow-hidden rounded-[24px] border border-[color:var(--border)] bg-[color:var(--surface)] p-3 shadow-[0_20px_60px_rgba(0,0,0,0.38)] sm:p-4 xl:p-3.5">
           {draft.coverImage ? (
             <>
               <div
@@ -794,7 +794,7 @@ export default function GalleryPage() {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.10),rgba(255,255,255,0)_28%),radial-gradient(circle_at_80%_0%,rgba(255,225,170,0.10),rgba(255,225,170,0)_24%)]" />
 
           <div className="relative">
-            <div className="mb-3 flex flex-wrap items-center gap-2">
+            <div className="mb-3 flex flex-wrap items-center gap-2 xl:hidden">
               <button
                 type="button"
                 onClick={() => void saveDraft()}
@@ -823,87 +823,105 @@ export default function GalleryPage() {
               </span>
             </div>
 
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="flex items-start gap-3 max-w-3xl">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div className="flex items-start gap-2.5 max-w-3xl">
                 {/* Cover image portrait card */}
-                {draft.coverImage ? (
-                  <div
-                    className="shrink-0 overflow-hidden rounded-[14px] shadow-[0_8px_24px_rgba(0,0,0,0.5)]"
-                    style={{ width: 72, aspectRatio: "3/4" }}
-                  >
+                <div className="shrink-0">
+                  {draft.coverImage ? (
+                    <div
+                      className="w-[72px] overflow-hidden rounded-[14px] shadow-[0_8px_24px_rgba(0,0,0,0.5)] xl:w-14"
+                      style={{ aspectRatio: "3/4" }}
+                    >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={draft.coverImage}
-                      alt="Cover art"
-                      className="h-full w-full object-cover"
-                      draggable={false}
-                    />
-                  </div>
-                ) : null}
+                      <img
+                        src={draft.coverImage}
+                        alt="Cover art"
+                        className="h-full w-full object-cover"
+                        draggable={false}
+                      />
+                    </div>
+                  ) : null}
+                  <input
+                    id="gallery-cover-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={updateCover}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="gallery-cover-upload"
+                    className={[
+                      "mt-1 block cursor-pointer text-center text-[8px] font-semibold text-[color:var(--fg)]",
+                      isUploadingCover ? "cursor-wait opacity-70" : "",
+                    ].join(" ")}
+                  >
+                    {isUploadingCover ? "Uploading..." : "Cover Artwork"}
+                  </label>
+                </div>
 
                 <div className="min-w-0">
-                  <div className="text-[11px] tracking-[0.28em] text-[color:var(--muted2)]">
+                  <div className="text-[11px] tracking-[0.28em] text-[color:var(--muted2)] xl:text-[10px]">
                     CURATED EXHIBIT
                   </div>
 
-                  <h1 className="mt-2 text-2xl font-semibold sm:text-3xl">
+                  <h1 className="mt-2 text-2xl font-semibold xl:mt-1 xl:text-2xl">
                     {draft.title}
                   </h1>
 
-                  <p className="mt-1 max-w-2xl text-sm leading-5 text-[color:var(--muted)]">
+                  <p className="mt-1 max-w-2xl text-sm leading-5 text-[color:var(--muted)] xl:text-xs xl:leading-4">
                     {draft.description?.trim()
                       ? draft.description
                       : "Curated collection presentation"}
                   </p>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]">
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5 xl:mt-2 xl:gap-1">
+                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
                       {visibilityLabel(draft.visibility)}
                     </span>
 
-                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]">
+                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
                       {metrics.totalItems} ITEMS
                     </span>
 
-                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]">
+                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
                       {metrics.views} VIEWS
                     </span>
 
-                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]">
+                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
                       {draft.exhibitionLayout?.type ?? "GRID"} LAYOUT
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2 lg:justify-end">
-                <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)]">
+              <div className="flex flex-wrap gap-2 lg:justify-end xl:gap-1.5">
+                <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)] xl:rounded-xl xl:px-2.5 xl:py-2">
                   <div className="text-[9px] tracking-[0.18em] text-[color:var(--muted2)]">VALUE</div>
-                  <div className="mt-0.5 text-lg font-semibold leading-tight">{formatMoney(metrics.totalValue)}</div>
+                  <div className="mt-0.5 text-lg font-semibold leading-tight xl:text-base">{formatMoney(metrics.totalValue)}</div>
                 </div>
 
-                <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)]">
+                <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)] xl:rounded-xl xl:px-2.5 xl:py-2">
                   <div className="text-[9px] tracking-[0.18em] text-[color:var(--muted2)]">ROI</div>
-                  <div className="mt-0.5 text-lg font-semibold leading-tight">
+                  <div className="mt-0.5 text-lg font-semibold leading-tight xl:text-base">
                     {metrics.roi >= 0 ? "+" : ""}{metrics.roi.toFixed(1)}%
                   </div>
                 </div>
 
-                <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)]">
+                <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)] xl:rounded-xl xl:px-2.5 xl:py-2">
                   <div className="text-[9px] tracking-[0.18em] text-[color:var(--muted2)]">NOTES</div>
-                  <div className="mt-0.5 text-lg font-semibold leading-tight">{metrics.notesCoverage.toFixed(0)}%</div>
+                  <div className="mt-0.5 text-lg font-semibold leading-tight xl:text-base">{metrics.notesCoverage.toFixed(0)}%</div>
                 </div>
 
-                <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)]">
+                <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)] xl:rounded-xl xl:px-2.5 xl:py-2">
                   <div className="text-[9px] tracking-[0.18em] text-[color:var(--muted2)]">VIEWS</div>
-                  <div className="mt-0.5 text-lg font-semibold leading-tight">{metrics.views}</div>
+                  <div className="mt-0.5 text-lg font-semibold leading-tight xl:text-base">{metrics.views}</div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
-              <div className="rounded-[22px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
-                <div className="flex items-center justify-between gap-3">
+            <div className="mt-4 xl:mt-2 xl:max-w-[760px]">
+              <div className="rounded-[22px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] xl:rounded-[18px] xl:p-3">
+                <div className="flex items-center justify-between gap-3 xl:items-start">
                   <div>
                     <div className="text-[10px] tracking-[0.18em] text-[color:var(--muted2)]">
                       PUBLIC SHARE LINK
@@ -916,28 +934,35 @@ export default function GalleryPage() {
                   <button
                     type="button"
                     onClick={handleRegeneratePublicLink}
-                    className="vltd-selectable inline-flex min-h-[34px] items-center justify-center rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-[11px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
+                    className="vltd-selectable inline-flex min-h-[34px] items-center justify-center rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-[11px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] xl:hidden"
                   >
                     Regenerate
                   </button>
                 </div>
 
-                <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_120px]">
+                <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_120px] xl:mt-2 xl:grid-cols-[92px_minmax(0,1fr)_84px] xl:gap-1.5">
                   <input
                     value={shareUrl}
                     readOnly
-                    className="min-h-[40px] w-full rounded-xl bg-[color:var(--input)] px-3 py-2 text-xs font-semibold ring-1 ring-[color:var(--border)] focus:outline-none"
+                    className="min-h-[40px] w-full rounded-xl bg-[color:var(--input)] px-3 py-2 text-xs font-semibold ring-1 ring-[color:var(--border)] focus:outline-none xl:order-2 xl:min-h-[28px] xl:px-2 xl:py-1 xl:text-[10px]"
                   />
                   <button
                     type="button"
                     onClick={copyShareLink}
-                    className="vltd-pill-main-glow inline-flex min-h-[40px] shrink-0 items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-xs font-semibold text-[color:var(--fg)] transition hover:opacity-95"
+                    className="vltd-pill-main-glow inline-flex min-h-[40px] shrink-0 items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-xs font-semibold text-[color:var(--fg)] transition hover:opacity-95 xl:order-1 xl:min-h-[28px] xl:px-2 xl:py-1 xl:text-[10px]"
                   >
                     {copied ? "Copied" : "Copy Link"}
                   </button>
+                  <button
+                    type="button"
+                    onClick={handleRegeneratePublicLink}
+                    className="vltd-selectable hidden min-h-[28px] items-center justify-center rounded-full bg-[color:var(--pill)] px-2 py-1 text-[9px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] xl:order-3 xl:inline-flex"
+                  >
+                    Regenerate
+                  </button>
                 </div>
 
-                <div className="relative mt-4">
+                <div className="relative mt-4 xl:mt-2">
                   <div className="flex items-center gap-2">
                     <div className="text-[10px] tracking-[0.18em] text-[color:var(--muted2)]">
                       USER ACCESS MODE
@@ -974,7 +999,7 @@ export default function GalleryPage() {
                     </div>
                   ) : null}
 
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5 xl:gap-1">
                     <button
                       type="button"
                       onClick={() => updateAccessMode("private")}
@@ -1005,9 +1030,9 @@ export default function GalleryPage() {
                     </button>
                   </div>
 
-                  <div className="mt-2 text-[11px] leading-4 text-[color:var(--muted2)]">Current mode: {accessDescription(selectedAccessMode)}</div>
+                  <div className="mt-2 text-[11px] leading-4 text-[color:var(--muted2)] xl:text-[9px] xl:leading-3">Current mode: {accessDescription(selectedAccessMode)}</div>
 
-                  <label className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-[color:var(--surface)] px-3 py-2.5 ring-1 ring-[color:var(--border)]">
+                  <label className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-[color:var(--surface)] px-3 py-2.5 ring-1 ring-[color:var(--border)] xl:mt-2 xl:px-2.5 xl:py-2">
                     <span>
                       <span className="block text-xs font-semibold">18+ exhibit</span>
                       <span className="mt-0.5 block text-[11px] leading-4 text-[color:var(--muted)]">
@@ -1026,35 +1051,36 @@ export default function GalleryPage() {
                       className="mt-1 h-4 w-4 accent-cyan-400"
                     />
                   </label>
-                </div>
-              </div>
 
-              <div className="rounded-[28px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)]">
-                <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                  COVER IMAGE
-                </div>
-                <div className="mt-3 flex flex-col items-start gap-3">
-                  <input
-                    id="gallery-cover-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={updateCover}
-                    className="hidden"
-                  />
-                  <label
-                    htmlFor="gallery-cover-upload"
-                    className={[
-                      "vltd-selectable inline-flex min-h-[40px] cursor-pointer items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]",
-                      isUploadingCover ? "cursor-wait opacity-70" : "",
-                    ].join(" ")}
-                  >
-                    {isUploadingCover ? "Uploading..." : "Upload Cover Artwork"}
-                  </label>
-                  <div className="text-sm text-[color:var(--muted)]">
-                    Refresh the hero panel artwork.
+                  <div className="mt-2 hidden flex-wrap items-center gap-1.5 border-t border-[color:var(--border)] pt-2 xl:flex">
+                    <button
+                      type="button"
+                      onClick={() => void saveDraft()}
+                      disabled={!isDirty}
+                      className={[
+                        "inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-semibold ring-1 transition disabled:opacity-40",
+                        isDirty
+                          ? "vltd-pill-main-glow bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
+                          : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
+                      ].join(" ")}
+                    >
+                      Save Changes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelChanges}
+                      disabled={!isDirty}
+                      className="inline-flex min-h-[28px] items-center justify-center rounded-full bg-[color:var(--pill)] px-2.5 py-1 text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-40"
+                    >
+                      Cancel Changes
+                    </button>
+                    <span className="text-[9px] text-[color:var(--muted)]">
+                      {isDirty ? "Unsaved changes" : "All changes saved"}
+                    </span>
                   </div>
                 </div>
               </div>
+
             </div>
           </div>
         </section>
