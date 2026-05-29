@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { DragEvent } from "react";
+import type { DragEvent, ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 import { type VaultItem, getPrimaryImageUrl } from "@/lib/vaultModel";
@@ -32,6 +32,7 @@ type Props = {
   onGalleryChange: (updater: (current: Gallery) => Gallery) => void;
   onQuickSave?: (overrideIds?: string[], overrideSections?: NonNullable<Gallery["sections"]>) => void;
   onOpenPicker?: (sectionTitle?: string, sectionItemIds?: string[], sectionIdx?: number) => void;
+  advancedContent?: ReactNode;
 };
 
 const GALLERY_BACKGROUND_BUCKET = "gallery-backgrounds";
@@ -268,6 +269,7 @@ export default function GalleryBuilder({
   onGalleryChange,
   onQuickSave,
   onOpenPicker,
+  advancedContent,
 }: Props) {
   const previewScale = 0.36;
   const previewWidthPercent = 100 / previewScale;
@@ -1185,7 +1187,18 @@ export default function GalleryBuilder({
           </div>
         </div>
 
-        {sections.length ? (
+        <button
+          type="button"
+          onClick={() => setIsAdvancedOpen((v) => !v)}
+          className="mt-4 inline-flex min-h-[32px] items-center gap-1.5 rounded-full bg-[color:var(--surface)] px-4 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm transition-all hover:bg-[color:var(--pill)]"
+        >
+          <span>Advanced</span>
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={["h-3.5 w-3.5 opacity-60 transition-transform duration-200", isAdvancedOpen ? "rotate-180" : ""].join(" ")}>
+            <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
+          </svg>
+        </button>
+
+        {isAdvancedOpen && sections.length ? (
           <div className="mt-5 grid gap-4">
             {sections.map((section, sectionIndex) => {
               const sectionItems = section.itemIds
@@ -1407,20 +1420,9 @@ export default function GalleryBuilder({
         ) : null}
       </section>
 
-      {/* ── Advanced toggle ── */}
-      <button
-        type="button"
-        onClick={() => setIsAdvancedOpen((v) => !v)}
-        className="inline-flex min-h-[32px] items-center gap-1.5 rounded-full bg-[color:var(--surface)] px-4 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill)] transition-all select-none"
-      >
-        <span>Advanced</span>
-        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={["h-3.5 w-3.5 opacity-60 transition-transform duration-200", isAdvancedOpen ? "rotate-180" : ""].join(" ")}>
-          <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
-        </svg>
-      </button>
-
       {isAdvancedOpen && (
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,520px)_minmax(0,1fr)]">
+      <div className="grid gap-5">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,520px)_minmax(0,1fr)]">
         <section className="rounded-[24px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between gap-3">
@@ -1646,6 +1648,8 @@ export default function GalleryBuilder({
             </button>
           </div>
         </section>
+        </div>
+        {advancedContent ? <div>{advancedContent}</div> : null}
       </div>
       )}
 

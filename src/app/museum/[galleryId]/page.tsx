@@ -1079,10 +1079,8 @@ export default function GalleryPage() {
               setPickerSectionIdx(sectionIdx ?? null);
               setPickerOpen(true);
             }}
-          />
-        </section>
-
-        <section className="mt-10 grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]" style={{ maxWidth: "calc(100vw - 2rem)" }}>
+            advancedContent={
+        <section className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]" style={{ maxWidth: "calc(100vw - 2rem)" }}>
           <div className="rounded-[30px] vltd-panel-main bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
             <div className="text-[11px] tracking-[0.24em] text-[color:var(--muted2)]">
               EXHIBIT NOTES
@@ -1337,6 +1335,12 @@ export default function GalleryPage() {
             </div>
           </aside>
         </section>
+            }
+          />
+        </section>
+
+
+
       </div>
 
       {pickerOpen && (
