@@ -21,7 +21,6 @@ import {
   getGalleryThemeLabel,
 } from "@/lib/galleryModel";
 import BuilderPreviewBridge from "@/components/gallery/BuilderPreviewBridge";
-import { MAX_EXHIBIT_ITEMS } from "@/components/gallery/ItemPickerSheet";
 import { PillSelect, type PillSelectOption } from "@/components/ui/PillSelect";
 import { isUniverseKey, UNIVERSE_LABEL } from "@/lib/taxonomy";
 
@@ -1422,7 +1421,7 @@ export default function GalleryBuilder({
 
       {isAdvancedOpen && (
       <div className="grid gap-5">
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,520px)_minmax(0,1fr)]">
+        <div className="grid gap-5">
         <section className="rounded-[24px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between gap-3">
@@ -1600,54 +1599,6 @@ export default function GalleryBuilder({
           )}
         </section>
 
-        <section>
-          <div
-            className="rounded-[20px] p-4 ring-1"
-            style={{
-              background: "rgba(8,12,20,0.85)",
-              border: "1px solid rgba(255,255,255,0.07)",
-            }}
-          >
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="text-sm font-semibold">Vault Pieces</div>
-                <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
-                  Pick up to {MAX_EXHIBIT_ITEMS} pieces for this exhibit.
-                </div>
-              </div>
-              <div
-                className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold tabular-nums"
-                style={{
-                  background: selectedCount >= MAX_EXHIBIT_ITEMS ? "rgba(245,181,72,0.15)" : "rgba(255,255,255,0.07)",
-                  color: selectedCount >= MAX_EXHIBIT_ITEMS ? "#F5B548" : "var(--muted)",
-                  border: `1px solid ${selectedCount >= MAX_EXHIBIT_ITEMS ? "rgba(245,181,72,0.3)" : "rgba(255,255,255,0.09)"}`,
-                }}
-              >
-                {selectedCount}/{MAX_EXHIBIT_ITEMS}
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                const activeSection = sections[activeSectionIdx];
-                if (activeSection) {
-                  onOpenPicker?.(activeSection.title, activeSection.itemIds, activeSectionIdx);
-                } else {
-                  onOpenPicker?.();
-                }
-              }}
-              className="mt-4 w-full rounded-full py-[15px] text-[15px] font-black tracking-wide transition active:opacity-80"
-              style={{
-                background: selectedCount > 0 ? "linear-gradient(135deg, #FFE08A 0%, #F5B548 40%, #C8941F 100%)" : "rgba(255,255,255,0.07)",
-                color: selectedCount > 0 ? "#1A0F00" : "var(--muted)",
-                boxShadow: selectedCount > 0 ? "0 0 0 1px rgba(245,181,72,0.35), 0 8px 28px rgba(245,181,72,0.3)" : "none",
-                border: selectedCount === 0 ? "1px solid rgba(255,255,255,0.09)" : "none",
-              }}
-            >
-              {selectedCount === 0 ? "Open Vault Picker" : `Edit Selection  (${selectedCount})`}
-            </button>
-          </div>
-        </section>
         </div>
         {advancedContent ? <div>{advancedContent}</div> : null}
       </div>
