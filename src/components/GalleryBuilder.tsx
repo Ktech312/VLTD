@@ -998,8 +998,8 @@ export default function GalleryBuilder({
             .vltd-wiggle-over { animation: none !important; transform: scale(1.06) !important; box-shadow: 0 0 0 2px rgba(74,222,128,0.8), 0 0 14px rgba(74,222,128,0.4) !important; }
           `}</style>
           <div
-            className={["mt-3 overflow-hidden rounded-[24px] ring-1", previewPanelClass].join(" ")}
-            style={{ maxWidth: "calc(100vw - 4rem)", width: "100%" }}
+            className={["mt-3 overflow-hidden rounded-[24px] ring-1 lg:mx-auto lg:max-w-[780px]", previewPanelClass].join(" ")}
+            style={{ width: "100%" }}
             onDragOver={(e) => {
               if (!isOrganizing) return;
               e.preventDefault();

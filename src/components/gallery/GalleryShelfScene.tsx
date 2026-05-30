@@ -11,7 +11,14 @@ export const GALLERY_STAGE_HEIGHT_CLASS = "h-[1500px] sm:h-[2200px] lg:h-[2700px
 
 const ROW_ANCHORS = ["39%", "59%", "79%", "99%"] as const;
 
-function getRowAnchors(count: number) {
+function getRowAnchors(count: number, compact = false) {
+  if (compact) {
+    const first = 25;
+    const last = 94;
+    const step = (last - first) / Math.max(1, count - 1);
+    return Array.from({ length: count }, (_, index) => `${first + step * index}%`);
+  }
+
   if (count <= 4) return ROW_ANCHORS;
   const first = 26;
   const last = 98;
@@ -210,7 +217,7 @@ function AnchoredRow({
 
   return (
     <div
-      className="absolute left-[4%] right-[4%]"
+      className={embeddedPreview ? "absolute left-[8%] right-[8%]" : "absolute left-[4%] right-[4%]"}
       style={{ top: anchor, transform: "translateY(-150%)" }}
     >
       <div className="relative pb-5">
@@ -238,7 +245,9 @@ function AnchoredRow({
         <div
           className={[
             "relative z-10 grid items-end gap-2",
-            embeddedPreview ? "grid-cols-3 gap-3 sm:gap-[1rem]" : "grid-cols-2 sm:grid-cols-4 sm:gap-[0.8rem]",
+            embeddedPreview
+              ? "mx-auto max-w-[720px] grid-cols-3 gap-3 sm:gap-[1rem]"
+              : "grid-cols-2 sm:grid-cols-4 sm:gap-[0.8rem]",
           ].join(" ")}
         >
           {row.map((item, index) =>
@@ -308,7 +317,7 @@ export default function GalleryShelfScene({
   const sceneBackground = backgroundImageUrl?.trim() || "";
 
   const itemsPerRow = embeddedPreview ? 3 : 4;
-  const visibleItems = buildShelfSlots(items, slotLayout);
+  const visibleItems = embeddedPreview ? items : buildShelfSlots(items, slotLayout);
   const lastOccupiedIndex = visibleItems.reduce(
     (latest, item, index) => (item ? index : latest),
     -1
@@ -316,7 +325,7 @@ export default function GalleryShelfScene({
   const shelfCount = embeddedPreview
     ? Math.max(4, Math.ceil((lastOccupiedIndex + 1) / itemsPerRow))
     : 4;
-  const rowAnchors = getRowAnchors(shelfCount);
+  const rowAnchors = getRowAnchors(shelfCount, embeddedPreview);
   const rows = Array.from({ length: shelfCount }, (_, i) =>
     visibleItems.slice(i * itemsPerRow, (i + 1) * itemsPerRow)
   );
@@ -324,22 +333,26 @@ export default function GalleryShelfScene({
   const backgroundStyle: CSSProperties | undefined = sceneBackground
     ? {
         backgroundImage: `url(${sceneBackground})`,
-        backgroundSize: "auto 114%",
-        backgroundPosition: "center top",
+        backgroundSize: embeddedPreview ? "cover" : "auto 114%",
+        backgroundPosition: embeddedPreview ? "center center" : "center top",
         backgroundRepeat: "no-repeat",
       }
     : undefined;
+  const embeddedStageHeight = `${Math.max(1040, shelfCount * 310)}px`;
 
   return (
     <section className="mt-0">
       <div
         className={[
           "relative mx-auto overflow-hidden rounded-[30px] ring-1 shadow-[0_30px_90px_rgba(0,0,0,0.34)]",
-          GALLERY_STAGE_MAX_WIDTH_CLASS,
+          embeddedPreview ? "max-w-[940px]" : GALLERY_STAGE_MAX_WIDTH_CLASS,
           theme.stageShell,
         ].join(" ")}
       >
-        <div className={["relative", GALLERY_STAGE_HEIGHT_CLASS].join(" ")}>
+        <div
+          className={["relative", embeddedPreview ? "" : GALLERY_STAGE_HEIGHT_CLASS].join(" ")}
+          style={embeddedPreview ? { height: embeddedStageHeight } : undefined}
+        >
           <div className="absolute inset-0" style={backgroundStyle} />
           <div className={["absolute inset-0", theme.vignette].join(" ")} />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,10,16,0.08),rgba(6,10,16,0.12))]" />
