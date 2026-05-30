@@ -137,6 +137,22 @@ function itemImage(i: VaultItem) {
   return i.imageFrontUrl || i.imageBackUrl || "";
 }
 
+function itemCategoryBadge(item: VaultItem) {
+  const source =
+    item.categoryLabel ||
+    item.category ||
+    item.universe ||
+    "Item";
+
+  return String(source)
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
 function reorderIds(ids: string[], sourceId: string, targetId: string) {
   if (!sourceId || !targetId || sourceId === targetId) return ids;
 
@@ -1097,26 +1113,31 @@ export default function GalleryBuilder({
                     >
                       {item ? (
                         <div
-                          className={["relative overflow-hidden rounded-lg", canOrganize ? (isDragOver ? "vltd-wiggle-over" : "vltd-wiggle") : ""].join(" ")}
+                          className={[
+                            "relative overflow-hidden rounded-[14px] bg-[#0b1018] p-[2px]",
+                            canOrganize ? (isDragOver ? "vltd-wiggle-over" : "vltd-wiggle") : "",
+                          ].join(" ")}
                           style={{
                             aspectRatio: "3/4",
-                            background: "rgba(255,255,255,0.05)",
+                            background:
+                              "linear-gradient(135deg, rgba(255,236,170,0.84), rgba(245,181,72,0.38) 34%, rgba(116,74,16,0.62) 62%, rgba(255,238,174,0.76))",
                             boxShadow: isDragOver
                               ? "0 0 0 2px rgba(245,181,72,0.9), 0 0 16px rgba(245,181,72,0.5)"
                               : isBeingDragged
                                 ? "0 0 0 2px rgba(255,255,255,0.2)"
-                                : "0 0 0 1.5px rgba(245,181,72,0.55), 0 0 8px rgba(245,181,72,0.25)",
+                                : "0 0 0 1.5px rgba(245,181,72,0.65), 0 10px 22px rgba(0,0,0,0.32), 0 0 10px rgba(245,181,72,0.18), inset 0 1px 0 rgba(255,255,255,0.20)",
                             opacity: isBeingDragged ? 0.35 : 1,
                             cursor: sections.length > 0 ? (canOrganize ? "grab" : "default") : "default",
                             transition: canOrganize ? "none" : "transform 0.1s, box-shadow 0.1s",
                           }}
                         >
+                          <div className="relative h-full overflow-hidden rounded-[12px] bg-[#090d14]">
                           {/* Remove button — hidden while organizing */}
                           {sections.length > 0 && !isOrganizing ? (
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); handlePreviewRemoveItem(item.id); }}
-                              className="absolute right-1 top-1 z-20 grid h-[18px] w-[18px] place-items-center rounded-full border border-red-400/70 bg-black/75"
+                              className="absolute left-1 top-1 z-30 grid h-[18px] w-[18px] place-items-center rounded-full border border-red-400/70 bg-black/75"
                               style={{ boxShadow: "0 0 8px rgba(248,113,113,0.75), 0 0 18px rgba(248,113,113,0.35)" }}
                               aria-label={`Remove ${item.title}`}
                             >
@@ -1132,19 +1153,24 @@ export default function GalleryBuilder({
                           ) : null}
 
                           {/* Image */}
+                          <div className="absolute right-1 top-1 z-20 grid h-[19px] w-[19px] place-items-center rounded-full bg-black/70 text-[7px] font-black tracking-[0.04em] text-[#f7d979] ring-1 ring-[#F5B548]/70 shadow-[0_0_10px_rgba(245,181,72,0.28)]">
+                            {itemCategoryBadge(item)}
+                          </div>
+
                           {img ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={img} alt={item.title} className="h-full w-full object-cover" draggable={false} />
+                            <img src={img} alt={item.title} className="absolute inset-x-0 top-0 h-[76%] w-full bg-black/20 object-contain object-center" draggable={false} />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center text-[9px] text-[color:var(--muted)]">—</div>
                           )}
 
-                          {/* Ghost title overlay */}
-                          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-1.5 pb-1.5 pt-5">
-                            <div className="line-clamp-2 text-[8px] font-semibold leading-tight text-white/90">{item.title}</div>
-                            {subtitle ? (
-                              <div className="mt-0.5 line-clamp-1 text-[7px] leading-tight text-white/55">{subtitle}</div>
-                            ) : null}
+                          <div className="absolute inset-x-0 bottom-0 flex h-[24%] flex-col justify-center border-t border-[#F5B548]/45 bg-[linear-gradient(180deg,rgba(20,25,35,0.98),rgba(7,10,16,0.98))] px-1.5 text-center">
+                            <div className="pointer-events-none absolute inset-x-2 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,234,174,0.85),transparent)]" />
+                            <div className="truncate text-[7px] font-semibold leading-tight text-[#f5df9f] sm:text-[8px]">{item.title}</div>
+                            <div className="mt-0.5 truncate text-[6px] leading-tight text-white/62 sm:text-[7px]">
+                              {subtitle || "Collection piece"} - EMV {formatMoney(item.currentValue) ?? "$0"}
+                            </div>
+                          </div>
                           </div>
                         </div>
                       ) : (
