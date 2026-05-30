@@ -3,7 +3,6 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
-import FavoriteButton from "@/components/FavoriteButton";
 import type { GalleryShelfOverlayStyle } from "@/lib/galleryModel";
 import type { VaultItem } from "@/lib/vaultModel";
 
@@ -11,6 +10,14 @@ export const GALLERY_STAGE_MAX_WIDTH_CLASS = "max-w-[1120px]";
 export const GALLERY_STAGE_HEIGHT_CLASS = "h-[1500px] sm:h-[2200px] lg:h-[2700px]";
 
 const ROW_ANCHORS = ["39%", "59%", "79%", "99%"] as const;
+
+function getRowAnchors(count: number) {
+  if (count <= 4) return ROW_ANCHORS;
+  const first = 26;
+  const last = 98;
+  const step = (last - first) / Math.max(1, count - 1);
+  return Array.from({ length: count }, (_, index) => `${first + step * index}%`);
+}
 
 function itemImage(item: VaultItem) {
   return item.imageFrontUrl || item.imageBackUrl || "";
@@ -105,74 +112,78 @@ function getShelfThemeClasses(themePack?: string | null) {
   }
 }
 
-function favoriteMetadata(item: VaultItem) {
-  return {
-    title: item.title,
-    subtitle: itemSubtitle(item),
-    image: itemImage(item),
-  };
+function itemCategoryBadge(item: VaultItem) {
+  const source =
+    item.categoryLabel ||
+    item.category ||
+    item.universe ||
+    "Item";
+
+  return String(source)
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 }
 
-function DisplayCard({
+function PremiumDisplayCard({
   item,
-  theme,
   galleryHrefPrefix,
 }: {
   item: VaultItem;
-  theme: ReturnType<typeof getShelfThemeClasses>;
   galleryHrefPrefix: string;
 }) {
+  const subtitle = itemSubtitle(item);
+  const value = formatMoney(item.currentValue);
+
   return (
     <div className="min-w-0 self-end">
-      <div
-        className={[
-          "mb-1.5 rounded-xl px-2 py-1.5 text-center text-[11px] ring-1 backdrop-blur-sm sm:mb-2 sm:rounded-2xl sm:px-2.5 sm:text-[10px]",
-          theme.plaque,
-        ].join(" ")}
-      >
-        <div className="line-clamp-2 font-semibold leading-tight">{item.title}</div>
-        <div className="mt-1 line-clamp-1 opacity-80">{itemSubtitle(item) || "—"}</div>
-        <div className="mt-1 font-medium">EMV {formatMoney(item.currentValue)}</div>
-      </div>
-
-      <div className="relative w-full">
-        <Link href={`${galleryHrefPrefix}/${item.id}`} className="group block w-full">
-          <div
-            className={[
-              "relative w-full overflow-hidden rounded-[12px] sm:rounded-[14px]",
-              theme.frame,
-            ].join(" ")}
-          >
-            <div className="aspect-[4/5] w-full p-1.5 sm:p-2">
+      <Link href={`${galleryHrefPrefix}/${item.id}`} className="group block w-full">
+        <div
+          className={[
+            "relative w-full overflow-hidden rounded-[16px] bg-[#0b1018] p-[3px]",
+            "shadow-[0_16px_34px_rgba(0,0,0,0.48),0_0_0_1px_rgba(255,234,174,0.20),inset_0_1px_0_rgba(255,255,255,0.24)]",
+            "before:pointer-events-none before:absolute before:inset-0 before:rounded-[16px] before:bg-[linear-gradient(135deg,rgba(255,236,170,0.86),rgba(245,181,72,0.38)_34%,rgba(116,74,16,0.62)_62%,rgba(255,238,174,0.76))]",
+            "after:pointer-events-none after:absolute after:inset-[3px] after:rounded-[13px] after:ring-1 after:ring-black/45",
+          ].join(" ")}
+        >
+          <div className="relative z-10 overflow-hidden rounded-[13px] bg-[linear-gradient(180deg,rgba(255,255,255,0.10),rgba(0,0,0,0.30))]">
+            <div className="relative aspect-[4/5] w-full overflow-hidden bg-black/18">
               {itemImage(item) ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={itemImage(item)}
                   alt={item.title}
-                  className="h-full w-full object-contain object-bottom transition duration-300 group-hover:scale-[1.02]"
+                  className="h-full w-full object-contain object-center transition duration-300 group-hover:scale-[1.025]"
                   draggable={false}
                   loading="lazy"
                 />
               ) : (
-                <div className="flex h-full items-end justify-center pb-4 text-sm text-white/65">
+                <div className="flex h-full items-center justify-center text-sm text-white/65">
                   No image
                 </div>
               )}
+
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_6%,rgba(255,255,255,0.20),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.08),transparent_42%,rgba(0,0,0,0.18))]" />
+              <div className="absolute right-1.5 top-1.5 z-20 grid h-6 w-6 place-items-center rounded-full bg-[rgba(7,12,20,0.78)] text-[8px] font-bold tracking-[0.04em] text-[#f7d979] ring-1 ring-[#F5B548]/70 shadow-[0_0_14px_rgba(245,181,72,0.30)]">
+                {itemCategoryBadge(item)}
+              </div>
+            </div>
+
+            <div className="relative border-t border-[#F5B548]/50 bg-[linear-gradient(180deg,rgba(20,25,35,0.98),rgba(7,10,16,0.98))] px-2 py-1.5 text-center">
+              <div className="pointer-events-none absolute inset-x-2 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,234,174,0.85),transparent)]" />
+              <div className="truncate text-[9px] font-semibold leading-tight text-[#f5df9f] sm:text-[10px]">
+                {item.title}
+              </div>
+              <div className="mt-0.5 truncate text-[7px] leading-tight text-white/62 sm:text-[8px]">
+                {subtitle || "Collection piece"} - EMV {value}
+              </div>
             </div>
           </div>
-        </Link>
-
-        <div className="pointer-events-auto absolute right-2 top-2 z-30">
-          <FavoriteButton
-            contentType="item"
-            contentId={String(item.id)}
-            metadata={favoriteMetadata(item)}
-            label="Favorite item"
-            compact
-            showMessage={false}
-          />
         </div>
-      </div>
+      </Link>
     </div>
   );
 }
@@ -180,14 +191,12 @@ function DisplayCard({
 function AnchoredRow({
   row,
   anchor,
-  theme,
   galleryHrefPrefix,
   shelfOverlayStyle,
   embeddedPreview = false,
 }: {
   row: Array<VaultItem | null>;
   anchor: string;
-  theme: ReturnType<typeof getShelfThemeClasses>;
   galleryHrefPrefix: string;
   shelfOverlayStyle?: GalleryShelfOverlayStyle;
   embeddedPreview?: boolean;
@@ -225,15 +234,14 @@ function AnchoredRow({
         <div
           className={[
             "relative z-10 grid items-end gap-2",
-            embeddedPreview ? "grid-cols-4 sm:gap-[0.8rem]" : "grid-cols-2 sm:grid-cols-4 sm:gap-[0.8rem]",
+            embeddedPreview ? "grid-cols-3 gap-3 sm:gap-[1rem]" : "grid-cols-2 sm:grid-cols-4 sm:gap-[0.8rem]",
           ].join(" ")}
         >
           {row.map((item, index) =>
             item ? (
-              <DisplayCard
+              <PremiumDisplayCard
                 key={item.id}
                 item={item}
-                theme={theme}
                 galleryHrefPrefix={galleryHrefPrefix}
               />
             ) : (
@@ -295,9 +303,16 @@ export default function GalleryShelfScene({
   const theme = getShelfThemeClasses(themePack);
   const sceneBackground = backgroundImageUrl?.trim() || "";
 
-  const itemsPerRow = 4;
-  const shelfCount = 4;
+  const itemsPerRow = embeddedPreview ? 3 : 4;
   const visibleItems = buildShelfSlots(items, slotLayout);
+  const lastOccupiedIndex = visibleItems.reduce(
+    (latest, item, index) => (item ? index : latest),
+    -1
+  );
+  const shelfCount = embeddedPreview
+    ? Math.max(4, Math.ceil((lastOccupiedIndex + 1) / itemsPerRow))
+    : 4;
+  const rowAnchors = getRowAnchors(shelfCount);
   const rows = Array.from({ length: shelfCount }, (_, i) =>
     visibleItems.slice(i * itemsPerRow, (i + 1) * itemsPerRow)
   );
@@ -330,8 +345,7 @@ export default function GalleryShelfScene({
                 <AnchoredRow
                   key={index}
                   row={row}
-                  anchor={ROW_ANCHORS[index]}
-                  theme={theme}
+                  anchor={rowAnchors[index]}
                   galleryHrefPrefix={galleryHrefPrefix}
                   shelfOverlayStyle={shelfOverlayStyle}
                   embeddedPreview={embeddedPreview}
