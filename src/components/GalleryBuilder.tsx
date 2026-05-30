@@ -1019,8 +1019,9 @@ export default function GalleryBuilder({
             }}
             onDragEnd={() => { setSlotDragIdx(null); setSlotDragOverIdx(null); }}
           >
-            <div className="p-2">
-              <div className="flex flex-wrap">
+            <div className="relative overflow-hidden p-3 sm:p-4">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_9%,rgba(255,245,204,0.18),transparent_22%),radial-gradient(circle_at_50%_9%,rgba(255,245,204,0.16),transparent_22%),radial-gradient(circle_at_78%_9%,rgba(255,245,204,0.18),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.08),transparent_18%,rgba(0,0,0,0.18))]" />
+              <div className="relative mx-auto grid max-w-[760px] grid-cols-3 gap-x-3 gap-y-7 sm:gap-x-4 sm:gap-y-8">
                 {Array.from({ length: 16 }).map((_, i) => {
                   const itemId = previewSlots[i];
                   const itemMap = new Map(items.map((it) => [it.id, it]));
@@ -1034,7 +1035,8 @@ export default function GalleryBuilder({
                     <div
                       key={"slot-" + i}
                       data-slot-idx={i}
-                      style={{ width: "25%", padding: 2, touchAction: canOrganize && item ? "none" : "auto" }}
+                      className="min-w-0"
+                      style={{ touchAction: canOrganize && item ? "none" : "auto" }}
                       draggable={canOrganize && !!item}
                       onDragStart={canOrganize && item ? (e) => {
                         e.dataTransfer.setData("text/plain", String(i));
@@ -1161,7 +1163,7 @@ export default function GalleryBuilder({
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={img} alt={item.title} className="absolute inset-x-0 top-0 h-[76%] w-full bg-black/20 object-contain object-center" draggable={false} />
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center text-[9px] text-[color:var(--muted)]">—</div>
+                            <div className="absolute inset-x-0 top-0 flex h-[76%] w-full items-center justify-center bg-black/20 text-[9px] text-[color:var(--muted)]">—</div>
                           )}
 
                           <div className="absolute inset-x-0 bottom-0 flex h-[24%] flex-col justify-center border-t border-[#F5B548]/45 bg-[linear-gradient(180deg,rgba(20,25,35,0.98),rgba(7,10,16,0.98))] px-1.5 text-center">
