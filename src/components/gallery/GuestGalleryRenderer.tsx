@@ -391,6 +391,7 @@ export default function GuestGalleryRenderer({
                 shelvesEnabled={model.shelvesEnabled}
                 shelfOverlayStyle={model.shelfOverlayStyle}
                 slotLayout={shelfSlotLayout}
+                embeddedPreview={embedded}
               />
             </div>
           ) : (

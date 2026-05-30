@@ -41,6 +41,7 @@ type Props = {
   shelvesEnabled?: boolean;
   shelfOverlayStyle?: GalleryShelfOverlayStyle;
   slotLayout?: (string | null)[];
+  embeddedPreview?: boolean;
 };
 
 function getShelfThemeClasses(themePack?: string | null) {
@@ -182,12 +183,14 @@ function AnchoredRow({
   theme,
   galleryHrefPrefix,
   shelfOverlayStyle,
+  embeddedPreview = false,
 }: {
   row: Array<VaultItem | null>;
   anchor: string;
   theme: ReturnType<typeof getShelfThemeClasses>;
   galleryHrefPrefix: string;
   shelfOverlayStyle?: GalleryShelfOverlayStyle;
+  embeddedPreview?: boolean;
 }) {
   const showGlassShelf = shelfOverlayStyle === "glass";
   const showMetalShelf = shelfOverlayStyle === "metal";
@@ -219,7 +222,12 @@ function AnchoredRow({
           </div>
         ) : null}
 
-        <div className="relative z-10 grid grid-cols-2 items-end gap-2 sm:grid-cols-4 sm:gap-[0.8rem]">
+        <div
+          className={[
+            "relative z-10 grid items-end gap-2",
+            embeddedPreview ? "grid-cols-4 sm:gap-[0.8rem]" : "grid-cols-2 sm:grid-cols-4 sm:gap-[0.8rem]",
+          ].join(" ")}
+        >
           {row.map((item, index) =>
             item ? (
               <DisplayCard
@@ -282,6 +290,7 @@ export default function GalleryShelfScene({
   shelvesEnabled = true,
   shelfOverlayStyle = "none",
   slotLayout,
+  embeddedPreview = false,
 }: Props) {
   const theme = getShelfThemeClasses(themePack);
   const sceneBackground = backgroundImageUrl?.trim() || "";
@@ -325,6 +334,7 @@ export default function GalleryShelfScene({
                   theme={theme}
                   galleryHrefPrefix={galleryHrefPrefix}
                   shelfOverlayStyle={shelfOverlayStyle}
+                  embeddedPreview={embeddedPreview}
                 />
               ))
             : null}

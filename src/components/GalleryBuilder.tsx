@@ -1605,7 +1605,7 @@ export default function GalleryBuilder({
       )}
 
       {previewExpanded && (
-        <div className="fixed inset-0 z-[75] flex flex-col" style={{ background: "#080C14" }}>
+        <div className="fixed inset-0 z-[10000] flex flex-col" style={{ background: "#080C14" }}>
           <div
             className="shrink-0"
             style={{
