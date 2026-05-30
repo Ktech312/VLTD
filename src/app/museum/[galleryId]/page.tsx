@@ -906,7 +906,7 @@ export default function GalleryPage() {
               </div>
             </div>
 
-            <div className="mt-4 xl:mt-2 xl:max-w-[760px]">
+            <div className="mt-4 md:max-w-[690px] xl:mt-2">
               <div className="rounded-[22px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] xl:rounded-[18px] xl:p-3">
                 <div>
                   <div>
