@@ -1010,9 +1010,7 @@ export default function GalleryPage() {
                     </button>
                   </div>
 
-                  <div className="mt-2 text-[11px] leading-4 text-[color:var(--muted2)] xl:text-[9px] xl:leading-3">Current mode: {accessDescription(selectedAccessMode)}</div>
-
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[color:var(--border)] pt-2">
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[color:var(--border)] pt-2 md:flex-nowrap">
                     <div className="relative inline-flex min-h-[34px] w-fit items-center gap-2 rounded-full bg-[color:var(--surface)] px-3 py-1.5 ring-1 ring-[color:var(--border)] xl:min-h-[28px] xl:px-2.5 xl:py-1">
                       <span className="flex items-center gap-1.5">
                         <span className="block text-xs font-semibold">18+ exhibit</span>
@@ -1049,7 +1047,7 @@ export default function GalleryPage() {
                       ) : null}
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-1.5">
+                    <div className="flex flex-wrap items-center gap-1.5 md:ml-auto md:flex-nowrap">
                       <button
                         type="button"
                         onClick={() => void saveDraft()}
