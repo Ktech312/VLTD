@@ -809,7 +809,7 @@ export default function GalleryPage() {
 
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.10),rgba(255,255,255,0)_28%),radial-gradient(circle_at_80%_0%,rgba(255,225,170,0.10),rgba(255,225,170,0)_24%)]" />
 
-          <div className="relative">
+          <div className="relative md:mx-auto md:w-[690px] md:max-w-full">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between xl:justify-start xl:gap-5">
               <div className="flex items-start gap-2.5 max-w-3xl">
                 {/* Cover image portrait card */}
@@ -907,8 +907,8 @@ export default function GalleryPage() {
             </div>
 
             <div className="mt-4 md:max-w-[690px] xl:mt-2">
-              <div className="rounded-[22px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] md:text-center xl:rounded-[18px] xl:p-3">
-                <div className="md:flex md:justify-center">
+              <div className="rounded-[22px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] xl:rounded-[18px] xl:p-3">
+                <div>
                   <div>
                     <div className="text-[10px] tracking-[0.18em] text-[color:var(--muted2)]">
                       PUBLIC SHARE LINK
@@ -919,7 +919,7 @@ export default function GalleryPage() {
                   </div>
                 </div>
 
-                <div className="mt-3 grid grid-cols-[auto_auto_auto] items-center justify-start gap-1.5 md:justify-center xl:mt-2">
+                <div className="mt-3 grid grid-cols-[auto_auto_auto] items-center justify-start gap-1.5 xl:mt-2">
                   <button
                     type="button"
                     onClick={copyShareLink}
@@ -943,7 +943,7 @@ export default function GalleryPage() {
                 </div>
 
                 <div className="relative mt-4 xl:mt-2">
-                  <div className="flex items-center gap-2 md:justify-center">
+                  <div className="flex items-center gap-2">
                     <div className="text-[10px] tracking-[0.18em] text-[color:var(--muted2)]">
                       USER ACCESS MODE
                     </div>
@@ -979,7 +979,7 @@ export default function GalleryPage() {
                     </div>
                   ) : null}
 
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5 md:justify-center xl:gap-1">
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5 xl:gap-1">
                     <button
                       type="button"
                       onClick={() => updateAccessMode("private")}
@@ -1010,7 +1010,7 @@ export default function GalleryPage() {
                     </button>
                   </div>
 
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[color:var(--border)] pt-2 md:flex-nowrap md:justify-center">
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[color:var(--border)] pt-2 md:flex-nowrap">
                     <div className="relative inline-flex min-h-[34px] w-fit items-center gap-2 rounded-full bg-[color:var(--surface)] px-3 py-1.5 ring-1 ring-[color:var(--border)] xl:min-h-[28px] xl:px-2.5 xl:py-1">
                       <span className="flex items-center gap-1.5">
                         <span className="block text-xs font-semibold">18+ exhibit</span>
@@ -1047,7 +1047,7 @@ export default function GalleryPage() {
                       ) : null}
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-1.5 md:flex-nowrap">
+                    <div className="flex flex-wrap items-center gap-1.5 md:ml-auto md:flex-nowrap">
                       <button
                         type="button"
                         onClick={() => void saveDraft()}
