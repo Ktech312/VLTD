@@ -143,14 +143,18 @@ function PremiumDisplayCard({
       <Link href={`${galleryHrefPrefix}/${item.id}`} className="group block w-full">
         <div
           className={[
-            "relative w-full overflow-hidden rounded-[16px] bg-[#0b1018] p-[3px]",
-            "shadow-[0_16px_34px_rgba(0,0,0,0.48),0_0_0_1px_rgba(255,234,174,0.20),inset_0_1px_0_rgba(255,255,255,0.24)]",
-            "before:pointer-events-none before:absolute before:inset-0 before:rounded-[16px] before:bg-[linear-gradient(135deg,rgba(255,236,170,0.86),rgba(245,181,72,0.38)_34%,rgba(116,74,16,0.62)_62%,rgba(255,238,174,0.76))]",
-            "after:pointer-events-none after:absolute after:inset-[3px] after:rounded-[13px] after:ring-1 after:ring-black/45",
+            "relative w-full overflow-hidden rounded-[20px] bg-[#0b1018] p-[5px]",
+            "shadow-[0_18px_38px_rgba(0,0,0,0.52),0_0_0_1px_rgba(255,234,174,0.32),0_0_22px_rgba(245,181,72,0.18),inset_0_1px_0_rgba(255,255,255,0.36),inset_0_-12px_18px_rgba(54,32,8,0.55)]",
+            "before:pointer-events-none before:absolute before:inset-0 before:rounded-[20px] before:bg-[linear-gradient(135deg,#fff0a8_0%,#d99a2b_18%,#6f4514_37%,#f7cf72_54%,#3a250d_72%,#ffe7a0_100%)]",
+            "after:pointer-events-none after:absolute after:inset-[5px] after:rounded-[15px] after:ring-1 after:ring-black/70",
           ].join(" ")}
         >
-          <div className="relative z-10 overflow-hidden rounded-[13px] bg-[linear-gradient(180deg,rgba(255,255,255,0.10),rgba(0,0,0,0.30))]">
-            <div className="relative aspect-[4/5] w-full overflow-hidden bg-black/18">
+          <div className="relative z-10 overflow-hidden rounded-[15px] bg-[linear-gradient(180deg,rgba(255,255,255,0.10),rgba(0,0,0,0.30))] ring-1 ring-black/70">
+            <div className="pointer-events-none absolute inset-[3px] z-10 rounded-[12px] ring-1 ring-[#ffe8a3]/35" />
+            <div className="pointer-events-none absolute left-1.5 top-1.5 z-20 h-5 w-5 rounded-full border border-[#ffd978]/80 bg-[#131018] shadow-[inset_0_0_0_2px_rgba(0,0,0,0.55),0_0_12px_rgba(245,181,72,0.35)]" />
+            <div className="pointer-events-none absolute right-1.5 top-1.5 z-10 h-5 w-5 rounded-full border border-[#ffd978]/80 bg-[#131018] shadow-[inset_0_0_0_2px_rgba(0,0,0,0.55),0_0_12px_rgba(245,181,72,0.35)]" />
+            <div className="pointer-events-none absolute inset-x-7 top-3 z-10 h-px bg-[linear-gradient(90deg,transparent,#ffdf87,transparent)]" />
+            <div className="relative aspect-[4/5] w-full overflow-hidden bg-[radial-gradient(circle_at_50%_0%,rgba(255,230,160,0.16),rgba(0,0,0,0.18)_45%,rgba(0,0,0,0.40))]">
               {itemImage(item) ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -167,17 +171,17 @@ function PremiumDisplayCard({
               )}
 
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_6%,rgba(255,255,255,0.20),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.08),transparent_42%,rgba(0,0,0,0.18))]" />
-              <div className="absolute right-1.5 top-1.5 z-20 grid h-6 w-6 place-items-center rounded-full bg-[rgba(7,12,20,0.78)] text-[8px] font-bold tracking-[0.04em] text-[#f7d979] ring-1 ring-[#F5B548]/70 shadow-[0_0_14px_rgba(245,181,72,0.30)]">
+              <div className="absolute right-1.5 top-1.5 z-30 grid h-6 w-6 place-items-center rounded-full bg-[#111018] text-[8px] font-bold tracking-[0.04em] text-[#f7d979] ring-1 ring-[#F5B548]/80 shadow-[inset_0_0_0_2px_rgba(0,0,0,0.55),0_0_14px_rgba(245,181,72,0.34)]">
                 {itemCategoryBadge(item)}
               </div>
             </div>
 
-            <div className="relative border-t border-[#F5B548]/50 bg-[linear-gradient(180deg,rgba(20,25,35,0.98),rgba(7,10,16,0.98))] px-2 py-1.5 text-center">
-              <div className="pointer-events-none absolute inset-x-2 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,234,174,0.85),transparent)]" />
-              <div className="truncate text-[9px] font-semibold leading-tight text-[#f5df9f] sm:text-[10px]">
+            <div className="relative border-t border-[#F5B548]/65 bg-[linear-gradient(180deg,rgba(22,20,27,0.99),rgba(8,8,12,0.99))] px-2 py-1.5 text-center shadow-[inset_0_1px_0_rgba(255,233,169,0.22)]">
+              <div className="pointer-events-none absolute inset-x-2 top-1 h-px bg-[linear-gradient(90deg,transparent,rgba(255,234,174,0.85),transparent)]" />
+              <div className="truncate font-serif text-[10px] font-semibold leading-tight text-[#f5d16d] sm:text-[11px]">
                 {item.title}
               </div>
-              <div className="mt-0.5 truncate text-[7px] leading-tight text-white/62 sm:text-[8px]">
+              <div className="mt-0.5 truncate text-[7px] uppercase tracking-[0.06em] text-white/62 sm:text-[8px]">
                 {subtitle || "Collection piece"} - EMV {value}
               </div>
             </div>
