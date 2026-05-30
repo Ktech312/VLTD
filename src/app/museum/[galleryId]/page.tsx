@@ -78,6 +78,19 @@ function getGalleryDraftCacheKey(galleryId: string) {
   return `${GALLERY_DRAFT_CACHE_PREFIX}:${galleryId}`;
 }
 
+function compactShareUrl(value: string) {
+  if (!value) return "";
+
+  try {
+    const url = new URL(value);
+    const token = url.pathname.split("/").filter(Boolean).at(-1) ?? "";
+    const shortToken = token.length > 18 ? `${token.slice(0, 12)}...${token.slice(-5)}` : token;
+    return `${url.hostname}/.../${shortToken}`;
+  } catch {
+    return value.length > 34 ? `${value.slice(0, 24)}...${value.slice(-6)}` : value;
+  }
+}
+
 function loadCachedGalleryDraft(galleryId: string): Gallery | null {
   if (typeof window === "undefined") return null;
 
@@ -397,6 +410,7 @@ export default function GalleryPage() {
   }, [id]);
 
   const shareUrl = useMemo(() => (draft ? getGalleryShareUrl(draft) : ""), [draft]);
+  const shareUrlPreview = useMemo(() => compactShareUrl(shareUrl), [shareUrl]);
 
   useEffect(() => {
     if (!copied) return;
@@ -893,7 +907,7 @@ export default function GalleryPage() {
 
             <div className="mt-4 xl:mt-2 xl:max-w-[760px]">
               <div className="rounded-[22px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] xl:rounded-[18px] xl:p-3">
-                <div className="flex items-center justify-between gap-3 xl:items-start">
+                <div>
                   <div>
                     <div className="text-[10px] tracking-[0.18em] text-[color:var(--muted2)]">
                       PUBLIC SHARE LINK
@@ -902,33 +916,26 @@ export default function GalleryPage() {
                       Uses a dedicated public route for clean sharing.
                     </div>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={handleRegeneratePublicLink}
-                    className="vltd-selectable inline-flex min-h-[34px] items-center justify-center rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-[11px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] xl:hidden"
-                  >
-                    Regenerate
-                  </button>
                 </div>
 
-                <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_120px] xl:mt-2 xl:grid-cols-[92px_minmax(0,1fr)_84px] xl:gap-1.5">
-                  <input
-                    value={shareUrl}
-                    readOnly
-                    className="min-h-[40px] w-full rounded-xl bg-[color:var(--input)] px-3 py-2 text-xs font-semibold ring-1 ring-[color:var(--border)] focus:outline-none xl:order-2 xl:min-h-[28px] xl:px-2 xl:py-1 xl:text-[10px]"
-                  />
+                <div className="mt-3 grid grid-cols-[86px_minmax(0,1fr)_82px] items-center gap-1.5 xl:mt-2 xl:grid-cols-[92px_minmax(0,1fr)_84px]">
                   <button
                     type="button"
                     onClick={copyShareLink}
-                    className="vltd-pill-main-glow inline-flex min-h-[40px] shrink-0 items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-xs font-semibold text-[color:var(--fg)] transition hover:opacity-95 xl:order-1 xl:min-h-[28px] xl:px-2 xl:py-1 xl:text-[10px]"
+                    className="vltd-pill-main-glow inline-flex min-h-[30px] shrink-0 items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-2 py-1 text-[10px] font-semibold text-[color:var(--fg)] transition hover:opacity-95 xl:min-h-[28px]"
                   >
                     {copied ? "Copied" : "Copy Link"}
                   </button>
+                  <div
+                    title={shareUrl}
+                    className="min-h-[30px] min-w-0 truncate rounded-full bg-[color:var(--input)] px-2 py-1.5 text-[10px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] xl:min-h-[28px]"
+                  >
+                    {shareUrlPreview}
+                  </div>
                   <button
                     type="button"
                     onClick={handleRegeneratePublicLink}
-                    className="vltd-selectable hidden min-h-[28px] items-center justify-center rounded-full bg-[color:var(--pill)] px-2 py-1 text-[9px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] xl:order-3 xl:inline-flex"
+                    className="vltd-selectable inline-flex min-h-[30px] items-center justify-center rounded-full bg-[color:var(--pill)] px-2 py-1 text-[9px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] xl:min-h-[28px]"
                   >
                     Regenerate
                   </button>
