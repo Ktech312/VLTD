@@ -792,7 +792,7 @@ export default function GalleryPage() {
           </div>
         ) : null}
 
-        <section className="relative w-full max-w-[840px] overflow-hidden rounded-[22px] border border-[color:var(--border)] bg-[color:var(--surface)] p-3 shadow-[0_20px_60px_rgba(0,0,0,0.38)] sm:p-3.5">
+        <section className="relative w-full overflow-hidden rounded-[22px] border border-[color:var(--border)] bg-[color:var(--surface)] p-3 shadow-[0_20px_60px_rgba(0,0,0,0.38)] sm:p-3.5">
           {draft.coverImage ? (
             <>
               <div
@@ -809,7 +809,7 @@ export default function GalleryPage() {
 
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.10),rgba(255,255,255,0)_28%),radial-gradient(circle_at_80%_0%,rgba(255,225,170,0.10),rgba(255,225,170,0)_24%)]" />
 
-          <div className="relative">
+          <div className="relative mx-auto max-w-[760px]">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-start lg:gap-4 xl:gap-5">
               <div className="flex items-start gap-2.5 max-w-3xl">
                 {/* Cover image portrait card */}
@@ -906,7 +906,7 @@ export default function GalleryPage() {
               </div>
             </div>
 
-            <div className="mt-3 max-w-[640px] xl:mt-2">
+            <div className="mt-3 xl:mt-2">
               <div className="rounded-[22px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] xl:rounded-[18px] xl:p-3">
                 <div className="flex items-center justify-between gap-3 xl:items-start">
                   <div>
