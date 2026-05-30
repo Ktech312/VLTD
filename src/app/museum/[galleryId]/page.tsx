@@ -918,7 +918,7 @@ export default function GalleryPage() {
                   </div>
                 </div>
 
-                <div className="mt-3 grid grid-cols-[86px_minmax(0,1fr)_82px] items-center gap-1.5 xl:mt-2 xl:grid-cols-[92px_minmax(0,1fr)_84px]">
+                <div className="mt-3 grid grid-cols-[86px_minmax(0,1fr)_82px] items-center gap-1.5 md:grid-cols-[86px_minmax(0,380px)_82px] xl:mt-2 xl:grid-cols-[92px_minmax(0,380px)_84px]">
                   <button
                     type="button"
                     onClick={copyShareLink}
