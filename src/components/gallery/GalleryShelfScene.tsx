@@ -13,8 +13,8 @@ const ROW_ANCHORS = ["39%", "59%", "79%", "99%"] as const;
 
 function getRowAnchors(count: number, compact = false) {
   if (compact) {
-    const first = 25;
-    const last = 94;
+    const first = 32;
+    const last = 88;
     const step = (last - first) / Math.max(1, count - 1);
     return Array.from({ length: count }, (_, index) => `${first + step * index}%`);
   }
@@ -218,7 +218,7 @@ function AnchoredRow({
   return (
     <div
       className={embeddedPreview ? "absolute left-[8%] right-[8%]" : "absolute left-[4%] right-[4%]"}
-      style={{ top: anchor, transform: "translateY(-150%)" }}
+      style={{ top: anchor, transform: embeddedPreview ? "translateY(-104%)" : "translateY(-150%)" }}
     >
       <div className="relative pb-5">
         {showGlassShelf ? (
@@ -246,7 +246,7 @@ function AnchoredRow({
           className={[
             "relative z-10 grid items-end gap-2",
             embeddedPreview
-              ? "mx-auto max-w-[720px] grid-cols-3 gap-3 sm:gap-[1rem]"
+              ? "mx-auto max-w-[620px] grid-cols-3 gap-x-7 gap-y-10 sm:gap-x-9"
               : "grid-cols-2 sm:grid-cols-4 sm:gap-[0.8rem]",
           ].join(" ")}
         >
@@ -338,7 +338,7 @@ export default function GalleryShelfScene({
         backgroundRepeat: "no-repeat",
       }
     : undefined;
-  const embeddedStageHeight = `${Math.max(1040, shelfCount * 310)}px`;
+  const embeddedStageHeight = `${Math.max(1500, shelfCount * 380)}px`;
 
   return (
     <section className="mt-0">
