@@ -84,10 +84,11 @@ function compactShareUrl(value: string) {
   try {
     const url = new URL(value);
     const token = url.pathname.split("/").filter(Boolean).at(-1) ?? "";
-    const shortToken = token.length > 18 ? `${token.slice(0, 12)}...${token.slice(-5)}` : token;
-    return `${url.hostname}/.../${shortToken}`;
+    const shortToken = token.length > 14 ? `${token.slice(0, 8)}...${token.slice(-4)}` : token;
+    const host = url.hostname.replace(/^www\./, "").replace(/\.vercel\.app$/, "");
+    return `${host}/.../${shortToken}`;
   } catch {
-    return value.length > 34 ? `${value.slice(0, 24)}...${value.slice(-6)}` : value;
+    return value.length > 24 ? `${value.slice(0, 14)}...${value.slice(-5)}` : value;
   }
 }
 
@@ -918,7 +919,7 @@ export default function GalleryPage() {
                   </div>
                 </div>
 
-                <div className="mt-3 grid grid-cols-[86px_minmax(0,1fr)_82px] items-center gap-1.5 md:grid-cols-[86px_minmax(0,380px)_82px] xl:mt-2 xl:grid-cols-[92px_minmax(0,380px)_84px]">
+                <div className="mt-3 grid grid-cols-[auto_auto_auto] items-center justify-start gap-1.5 xl:mt-2">
                   <button
                     type="button"
                     onClick={copyShareLink}
