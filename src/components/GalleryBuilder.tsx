@@ -582,18 +582,18 @@ export default function GalleryBuilder({
   }
 
   return (
-    <div className="mt-4 grid w-full gap-4 overflow-hidden">
-      <section className="overflow-hidden rounded-[20px] bg-[color:var(--input)] p-3 ring-1 ring-[color:var(--border)] sm:p-3.5">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+    <div className="mt-6 grid gap-5" style={{ maxWidth: "calc(100vw - 2rem)", overflow: "hidden" }}>
+      <section className="overflow-hidden rounded-[24px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
             <div className="text-sm font-semibold">Exhibition Layout</div>
-            <div className="mt-0.5 text-xs leading-5 text-[color:var(--muted)]">
+            <div className="mt-1 text-sm text-[color:var(--muted)]">
               Turn this gallery into a structured exhibition with sections, featured works,
               shelf styling, guest preview, and curatorial flow.
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-2">
             {(["GRID", "CURATED", "TIMELINE"] as const).map((type) => {
               const active = layoutType === type;
 
@@ -603,7 +603,7 @@ export default function GalleryBuilder({
                   type="button"
                   onClick={() => onGalleryChange((current) => syncSectionsAndLayout(current, getGallerySections(current), type))}
                   className={[
-                    "vltd-selectable rounded-full px-3 py-1.5 text-[11px] font-semibold ring-1 transition",
+                    "vltd-selectable rounded-full px-4 py-2 text-xs font-semibold ring-1 transition",
                     active
                       ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
                       : "bg-[color:var(--surface)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
@@ -632,7 +632,7 @@ export default function GalleryBuilder({
                   return syncSectionsAndLayout(current, nextSections);
                 })
               }
-              className="vltd-selectable rounded-full bg-[color:var(--surface)] px-3 py-1.5 text-[11px] font-semibold ring-1 ring-[color:var(--border)]"
+              className="vltd-selectable rounded-full bg-[color:var(--surface)] px-4 py-2 text-xs font-semibold ring-1 ring-[color:var(--border)]"
             >
               Add Section
             </button>
@@ -640,38 +640,38 @@ export default function GalleryBuilder({
         </div>
 
         {/* ── Exhibition stat chips — compact row ── */}
-        <div className="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {[
             { label: "LAYOUT", value: layoutType },
             { label: "SECTIONS", value: sections.length },
             { label: "EXHIBITS", value: selectedCount },
             { label: "FEATURED", value: sections.filter((s) => !!s.featuredItemId).length },
           ].map(({ label, value }) => (
-            <div key={label} className="rounded-[12px] bg-[color:var(--surface)] px-2.5 py-2 ring-1 ring-[color:var(--border)]">
-              <div className="text-[9px] tracking-[0.14em] text-[color:var(--muted2)]">{label}</div>
-              <div className="mt-0.5 text-sm font-semibold leading-none">{value}</div>
+            <div key={label} className="rounded-[14px] bg-[color:var(--surface)] px-3 py-2.5 ring-1 ring-[color:var(--border)]">
+              <div className="text-[10px] tracking-[0.14em] text-[color:var(--muted2)]">{label}</div>
+              <div className="mt-1 text-base font-semibold leading-none">{value}</div>
             </div>
           ))}
         </div>
 
         {/* ── Selected Items stats ── */}
-        <div className="mt-1.5 grid grid-cols-3 gap-1.5">
-          <div className="rounded-[12px] bg-[color:var(--surface)] px-2.5 py-2 ring-1 ring-[color:var(--border)]">
-            <div className="text-[9px] tracking-[0.14em] text-[color:var(--muted2)]">EXHIBITS</div>
-            <div className="mt-0.5 text-sm font-semibold leading-none">{selectedCount}</div>
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          <div className="rounded-[14px] bg-[color:var(--surface)] px-3 py-2.5 ring-1 ring-[color:var(--border)]">
+            <div className="text-[10px] tracking-[0.14em] text-[color:var(--muted2)]">EXHIBITS</div>
+            <div className="mt-1 text-base font-semibold leading-none">{selectedCount}</div>
           </div>
-          <div className="rounded-[12px] bg-[color:var(--surface)] px-2.5 py-2 ring-1 ring-[color:var(--border)]">
-            <div className="text-[9px] tracking-[0.14em] text-[color:var(--muted2)]">CURATED VALUE</div>
-            <div className="mt-0.5 text-sm font-semibold leading-none">{formatMoney(selectedValue) ?? "—"}</div>
+          <div className="rounded-[14px] bg-[color:var(--surface)] px-3 py-2.5 ring-1 ring-[color:var(--border)]">
+            <div className="text-[10px] tracking-[0.14em] text-[color:var(--muted2)]">CURATED VALUE</div>
+            <div className="mt-1 text-base font-semibold leading-none">{formatMoney(selectedValue) ?? "—"}</div>
           </div>
-          <div className="rounded-[12px] bg-[color:var(--surface)] px-2.5 py-2 ring-1 ring-[color:var(--border)]">
-            <div className="text-[9px] tracking-[0.14em] text-[color:var(--muted2)]">CURATED COST</div>
-            <div className="mt-0.5 text-sm font-semibold leading-none">{formatMoney(selectedCost) ?? "—"}</div>
+          <div className="rounded-[14px] bg-[color:var(--surface)] px-3 py-2.5 ring-1 ring-[color:var(--border)]">
+            <div className="text-[10px] tracking-[0.14em] text-[color:var(--muted2)]">CURATED COST</div>
+            <div className="mt-1 text-base font-semibold leading-none">{formatMoney(selectedCost) ?? "—"}</div>
           </div>
         </div>
 
         {/* ── CURATE PANEL (merged with Exhibit View controls) ── */}
-        <div className="mt-3 overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
+        <div className="mt-5 overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
 
           {/* Header row: label left, Expand right */}
           <div className="flex items-center justify-between gap-3">
