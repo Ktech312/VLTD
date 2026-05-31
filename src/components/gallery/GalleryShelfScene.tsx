@@ -260,8 +260,15 @@ function AnchoredRow({
             ) : (
               <div
                 key={"empty-" + index}
-                className="aspect-[3/4] rounded-[10px] opacity-20"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px dashed rgba(255,255,255,0.18)" }}
+                className={[
+                  "aspect-[3/4] rounded-[10px]",
+                  embeddedPreview ? "invisible" : "opacity-20",
+                ].join(" ")}
+                style={
+                  embeddedPreview
+                    ? undefined
+                    : { background: "rgba(255,255,255,0.04)", border: "1px dashed rgba(255,255,255,0.18)" }
+                }
               />
             )
           )}
@@ -317,13 +324,9 @@ export default function GalleryShelfScene({
   const sceneBackground = backgroundImageUrl?.trim() || "";
 
   const itemsPerRow = embeddedPreview ? 3 : 4;
-  const visibleItems = embeddedPreview ? items : buildShelfSlots(items, slotLayout);
-  const lastOccupiedIndex = visibleItems.reduce(
-    (latest, item, index) => (item ? index : latest),
-    -1
-  );
+  const visibleItems = buildShelfSlots(items, slotLayout);
   const shelfCount = embeddedPreview
-    ? Math.max(4, Math.ceil((lastOccupiedIndex + 1) / itemsPerRow))
+    ? Math.max(6, Math.ceil(visibleItems.length / itemsPerRow))
     : 4;
   const rowAnchors = getRowAnchors(shelfCount, embeddedPreview);
   const rows = Array.from({ length: shelfCount }, (_, i) =>
