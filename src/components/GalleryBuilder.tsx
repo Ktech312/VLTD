@@ -35,6 +35,7 @@ type Props = {
 };
 
 const GALLERY_BACKGROUND_BUCKET = "gallery-backgrounds";
+const SHELF_SLOT_COUNT = 18;
 
 type GalleryViewOption = GalleryThemePack | "grid";
 type ShelfOverlayOption = GalleryShelfOverlayStyle;
@@ -298,8 +299,8 @@ export default function GalleryBuilder({
   const touchSlotFromRef = useRef<number | null>(null);
   const touchSlotOverRef = useRef<number | null>(null);
   const touchCloneRef = useRef<HTMLElement | null>(null);
-  // 16-slot positional grid (null = empty slot) — populated by sync effect below
-  const [previewSlots, setPreviewSlots] = useState<(string | null)[]>(Array.from({ length: 16 }, () => null));
+  // 18-slot positional grid (null = empty slot) — populated by sync effect below
+  const [previewSlots, setPreviewSlots] = useState<(string | null)[]>(Array.from({ length: SHELF_SLOT_COUNT }, () => null));
   const latestPreviewSlotsRef = useRef<(string | null)[]>(previewSlots);
   const [shelfFileName, setShelfFileName] = useState("");
   const [backgroundUploadError, setBackgroundUploadError] = useState("");
@@ -367,14 +368,20 @@ export default function GalleryBuilder({
     if (sectionChanged) {
       const activeSection = sections[activeSectionIdx];
       // Restore saved slot layout if present, otherwise pack from slot 0
-      if (activeSection?.slotLayout && activeSection.slotLayout.length === 16) {
+      if (activeSection?.slotLayout && activeSection.slotLayout.length > 0) {
         // Filter out any stale IDs (items removed since last save)
         const validIds = new Set(previewItems.map((item) => item.id));
-        const nextSlots = activeSection.slotLayout.map((id) => (id && validIds.has(id) ? id : null));
+        const nextSlots = Array.from(
+          { length: SHELF_SLOT_COUNT },
+          (_, index) => {
+            const id = activeSection.slotLayout?.[index] ?? null;
+            return id && validIds.has(id) ? id : null;
+          }
+        );
         latestPreviewSlotsRef.current = nextSlots;
         setPreviewSlots(nextSlots);
       } else {
-        const nextSlots = Array.from({ length: 16 }, (_, i) => previewItems[i]?.id ?? null);
+        const nextSlots = Array.from({ length: SHELF_SLOT_COUNT }, (_, i) => previewItems[i]?.id ?? null);
         latestPreviewSlotsRef.current = nextSlots;
         setPreviewSlots(nextSlots);
       }
@@ -382,7 +389,13 @@ export default function GalleryBuilder({
     }
     const validIds = new Set(previewItems.map((item) => item.id));
     setPreviewSlots((prev) => {
-      const cleaned = prev.map((id) => (id && validIds.has(id) ? id : null));
+      const cleaned = Array.from(
+        { length: SHELF_SLOT_COUNT },
+        (_, index) => {
+          const id = prev[index] ?? null;
+          return id && validIds.has(id) ? id : null;
+        }
+      );
       const inSlots = new Set(cleaned.filter((id): id is string => id !== null));
       const toAdd = previewItems.filter((item) => !inSlots.has(item.id));
       if (toAdd.length === 0 && cleaned.every((id, i) => id === prev[i])) return prev;
@@ -987,7 +1000,7 @@ export default function GalleryBuilder({
             </div>
           ) : null}
 
-          {/* Mini shelf preview — 16 slots, ghosts for empty, remove · ghost overlay · drag-to-reorder */}
+          {/* Mini shelf preview — 18 slots, ghosts for empty, remove · ghost overlay · drag-to-reorder */}
           <style>{`
             @keyframes vltd-wiggle {
               0%   { transform: rotate(-1.5deg) scale(1); }
@@ -1022,7 +1035,7 @@ export default function GalleryBuilder({
             <div className="relative overflow-hidden p-3 sm:p-4">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_9%,rgba(255,245,204,0.18),transparent_22%),radial-gradient(circle_at_50%_9%,rgba(255,245,204,0.16),transparent_22%),radial-gradient(circle_at_78%_9%,rgba(255,245,204,0.18),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.08),transparent_18%,rgba(0,0,0,0.18))]" />
               <div className="relative mx-auto grid max-w-[760px] grid-cols-3 gap-x-3 gap-y-7 sm:gap-x-4 sm:gap-y-8">
-                {Array.from({ length: 16 }).map((_, i) => {
+                {Array.from({ length: SHELF_SLOT_COUNT }).map((_, i) => {
                   const itemId = previewSlots[i];
                   const itemMap = new Map(items.map((it) => [it.id, it]));
                   const item = itemId ? itemMap.get(itemId) ?? null : null;
@@ -1213,7 +1226,7 @@ export default function GalleryBuilder({
                 })}
               </div>
               <div className="mt-2 text-center text-[10px] font-semibold uppercase tracking-widest text-white/25">
-                {previewItems.length} / 16 items · {displayMode === "grid" ? "Grid View" : getGalleryThemeLabel(themePack)}
+                {previewItems.length} / {SHELF_SLOT_COUNT} items · {displayMode === "grid" ? "Grid View" : getGalleryThemeLabel(themePack)}
               </div>
             </div>
           </div>

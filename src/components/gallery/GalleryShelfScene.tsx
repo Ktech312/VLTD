@@ -10,6 +10,7 @@ export const GALLERY_STAGE_MAX_WIDTH_CLASS = "max-w-[1120px]";
 export const GALLERY_STAGE_HEIGHT_CLASS = "h-[1500px] sm:h-[2200px] lg:h-[2700px]";
 
 const ROW_ANCHORS = ["39%", "59%", "79%", "99%"] as const;
+const SHELF_SLOT_COUNT = 18;
 
 function getRowAnchors(count: number, compact = false) {
   if (compact) {
@@ -24,6 +25,18 @@ function getRowAnchors(count: number, compact = false) {
   const last = 98;
   const step = (last - first) / Math.max(1, count - 1);
   return Array.from({ length: count }, (_, index) => `${first + step * index}%`);
+}
+
+function getEmbeddedFloorFill(themePack?: string | null) {
+  if (themePack === "marble") {
+    return "linear-gradient(180deg,rgba(218,213,201,0)_0%,rgba(218,213,201,0.82)_42%,rgba(196,188,174,0.96)_100%)";
+  }
+
+  if (themePack === "cold-blue" || themePack === "midnight") {
+    return "linear-gradient(180deg,rgba(9,13,20,0)_0%,rgba(14,20,30,0.92)_46%,rgba(6,10,16,0.98)_100%)";
+  }
+
+  return "linear-gradient(180deg,rgba(92,58,30,0)_0%,rgba(92,58,30,0.88)_38%,rgba(53,30,14,0.98)_100%)";
 }
 
 function itemImage(item: VaultItem) {
@@ -279,7 +292,7 @@ function AnchoredRow({
 }
 
 function buildShelfSlots(items: VaultItem[], slotLayout?: (string | null)[]) {
-  const maxSlots = 16;
+  const maxSlots = SHELF_SLOT_COUNT;
   const itemById = new Map(items.map((item) => [item.id, item]));
 
   if (!slotLayout?.length) {
@@ -327,7 +340,7 @@ export default function GalleryShelfScene({
   const visibleItems = buildShelfSlots(items, slotLayout);
   const shelfCount = embeddedPreview
     ? Math.max(6, Math.ceil(visibleItems.length / itemsPerRow))
-    : 4;
+    : Math.max(4, Math.ceil(visibleItems.length / itemsPerRow));
   const rowAnchors = getRowAnchors(shelfCount, embeddedPreview);
   const rows = Array.from({ length: shelfCount }, (_, i) =>
     visibleItems.slice(i * itemsPerRow, (i + 1) * itemsPerRow)
@@ -341,6 +354,9 @@ export default function GalleryShelfScene({
         backgroundRepeat: "no-repeat",
       }
     : undefined;
+  const floorFillStyle: CSSProperties = {
+    background: getEmbeddedFloorFill(themePack),
+  };
   const embeddedStageHeight = `${Math.max(1500, shelfCount * 380)}px`;
 
   return (
@@ -356,19 +372,16 @@ export default function GalleryShelfScene({
           className={["relative", embeddedPreview ? "" : GALLERY_STAGE_HEIGHT_CLASS].join(" ")}
           style={embeddedPreview ? { height: embeddedStageHeight } : undefined}
         >
-          {embeddedPreview ? (
-            <style>{`
-              @media (max-width: 640px) {
-                .vltd-embedded-shelf-bg {
-                  background-size: 100% 100% !important;
-                }
-              }
-            `}</style>
-          ) : null}
           <div
             className={embeddedPreview ? "absolute inset-0 vltd-embedded-shelf-bg" : "absolute inset-0"}
             style={backgroundStyle}
           />
+          {embeddedPreview ? (
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-[52%]"
+              style={floorFillStyle}
+            />
+          ) : null}
           <div className={["absolute inset-0", theme.vignette].join(" ")} />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,10,16,0.08),rgba(6,10,16,0.12))]" />
 
