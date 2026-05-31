@@ -14,8 +14,8 @@ const SHELF_SLOT_COUNT = 18;
 
 function getRowAnchors(count: number, compact = false) {
   if (compact) {
-    const first = 32;
-    const last = 88;
+    const first = 22;
+    const last = 90;
     const step = (last - first) / Math.max(1, count - 1);
     return Array.from({ length: count }, (_, index) => `${first + step * index}%`);
   }
@@ -357,7 +357,7 @@ export default function GalleryShelfScene({
   const floorFillStyle: CSSProperties = {
     background: getEmbeddedFloorFill(themePack),
   };
-  const embeddedStageHeight = `${Math.max(1500, shelfCount * 380)}px`;
+  const embeddedStageHeight = `${Math.max(1420, shelfCount * 245)}px`;
 
   return (
     <section className="mt-0">
