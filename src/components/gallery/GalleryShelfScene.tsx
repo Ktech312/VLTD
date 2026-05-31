@@ -14,8 +14,8 @@ const SHELF_SLOT_COUNT = 18;
 
 function getRowAnchors(count: number, compact = false) {
   if (compact) {
-    const first = 22;
-    const last = 90;
+    const first = 32;
+    const last = 88;
     const step = (last - first) / Math.max(1, count - 1);
     return Array.from({ length: count }, (_, index) => `${first + step * index}%`);
   }
@@ -25,35 +25,6 @@ function getRowAnchors(count: number, compact = false) {
   const last = 98;
   const step = (last - first) / Math.max(1, count - 1);
   return Array.from({ length: count }, (_, index) => `${first + step * index}%`);
-}
-
-function getEmbeddedBackdropExtension(themePack?: string | null) {
-  if (themePack === "marble") {
-    return [
-      "linear-gradient(180deg,rgba(232,228,217,0.94)_0%,rgba(224,219,207,0.98)_58%,rgba(196,188,174,1)_100%)",
-      "radial-gradient(circle_at_24%_18%,rgba(255,255,255,0.38),transparent_20%)",
-      "radial-gradient(circle_at_50%_18%,rgba(255,255,255,0.32),transparent_22%)",
-      "radial-gradient(circle_at_76%_18%,rgba(255,255,255,0.38),transparent_20%)",
-      "repeating-linear-gradient(115deg,rgba(120,116,108,0.08)_0_1px,transparent_1px_26px)",
-    ].join(",");
-  }
-
-  if (themePack === "cold-blue" || themePack === "midnight") {
-    return [
-      "linear-gradient(180deg,rgba(18,26,39,0.96)_0%,rgba(12,18,29,0.99)_64%,rgba(6,10,16,1)_100%)",
-      "radial-gradient(circle_at_24%_18%,rgba(130,180,220,0.20),transparent_22%)",
-      "radial-gradient(circle_at_50%_18%,rgba(130,180,220,0.17),transparent_24%)",
-      "radial-gradient(circle_at_76%_18%,rgba(130,180,220,0.20),transparent_22%)",
-    ].join(",");
-  }
-
-  return [
-    "linear-gradient(180deg,rgba(151,109,68,0.96)_0%,rgba(111,75,43,0.99)_62%,rgba(56,32,16,1)_100%)",
-    "radial-gradient(circle_at_24%_18%,rgba(255,221,164,0.28),transparent_22%)",
-    "radial-gradient(circle_at_50%_18%,rgba(255,221,164,0.24),transparent_24%)",
-    "radial-gradient(circle_at_76%_18%,rgba(255,221,164,0.28),transparent_22%)",
-    "repeating-linear-gradient(90deg,rgba(255,238,194,0.05)_0_1px,transparent_1px_34px)",
-  ].join(",");
 }
 
 function itemImage(item: VaultItem) {
@@ -371,10 +342,7 @@ export default function GalleryShelfScene({
         backgroundRepeat: "no-repeat",
       }
     : undefined;
-  const backdropExtensionStyle: CSSProperties = {
-    background: getEmbeddedBackdropExtension(themePack),
-  };
-  const embeddedStageHeight = `${Math.max(1420, shelfCount * 245)}px`;
+  const embeddedStageHeight = `${Math.max(1500, shelfCount * 380)}px`;
 
   return (
     <section className="mt-0">
@@ -393,16 +361,6 @@ export default function GalleryShelfScene({
             className={embeddedPreview ? "absolute inset-0 vltd-embedded-shelf-bg" : "absolute inset-0"}
             style={backgroundStyle}
           />
-          {embeddedPreview ? (
-            <>
-              <div
-                className="pointer-events-none absolute inset-x-0 top-[28%] bottom-0"
-                style={backdropExtensionStyle}
-              />
-              <div className="pointer-events-none absolute inset-x-[7%] top-[31%] bottom-[13%] rounded-[18px] border border-white/10 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.14),inset_0_22px_70px_rgba(255,255,255,0.08)]" />
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[18%] bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.22))]" />
-            </>
-          ) : null}
           <div className={["absolute inset-0", theme.vignette].join(" ")} />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,10,16,0.08),rgba(6,10,16,0.12))]" />
 
