@@ -353,7 +353,19 @@ export default function GalleryShelfScene({
           className={["relative", embeddedPreview ? "" : GALLERY_STAGE_HEIGHT_CLASS].join(" ")}
           style={embeddedPreview ? { height: embeddedStageHeight } : undefined}
         >
-          <div className="absolute inset-0" style={backgroundStyle} />
+          {embeddedPreview ? (
+            <style>{`
+              @media (max-width: 640px) {
+                .vltd-embedded-shelf-bg {
+                  background-size: 100% 100% !important;
+                }
+              }
+            `}</style>
+          ) : null}
+          <div
+            className={embeddedPreview ? "absolute inset-0 vltd-embedded-shelf-bg" : "absolute inset-0"}
+            style={backgroundStyle}
+          />
           <div className={["absolute inset-0", theme.vignette].join(" ")} />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,10,16,0.08),rgba(6,10,16,0.12))]" />
 
