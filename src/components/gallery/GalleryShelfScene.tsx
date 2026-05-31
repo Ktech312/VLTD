@@ -342,7 +342,7 @@ export default function GalleryShelfScene({
         backgroundRepeat: "no-repeat",
       }
     : undefined;
-  const embeddedStageHeight = `${Math.max(1500, shelfCount * 380)}px`;
+  const embeddedStageHeight = `${Math.max(1220, shelfCount * 300)}px`;
 
   return (
     <section className="mt-0">
