@@ -14,8 +14,8 @@ const SHELF_SLOT_COUNT = 18;
 
 function getRowAnchors(count: number, compact = false) {
   if (compact) {
-    const first = 21;
-    const last = 77;
+    const first = 16;
+    const last = 72;
     const step = (last - first) / Math.max(1, count - 1);
     return Array.from({ length: count }, (_, index) => `${first + step * index}%`);
   }
