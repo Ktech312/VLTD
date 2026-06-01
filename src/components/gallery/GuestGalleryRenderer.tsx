@@ -438,61 +438,6 @@ export default function GuestGalleryRenderer({
             </section>
           )}
 
-          {!embedded && sectionViews.length ? (
-            <section className={["mt-3 mx-auto rounded-[30px] border border-white/12 bg-black/18 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.28)] backdrop-blur-sm", GALLERY_STAGE_WIDTH_CLASS].join(" ")}>
-              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
-                CURATED SECTIONS
-              </div>
-              <div className="mt-4 grid gap-4">
-                {sectionViews.map(({ section, items: sectionItems }, sectionIndex) => {
-                  const sectionDrop = embedded
-                    ? makeGridDrop(sectionItems.map((si) => si.id)) ?? undefined
-                    : undefined;
-                  return (
-                    <div
-                      key={section.id}
-                      className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(20,24,30,0.78),rgba(10,12,16,0.64))] p-4"
-                    >
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                        <div>
-                          <div className="text-[10px] tracking-[0.18em] text-[color:var(--muted2)]">
-                            SECTION #{sectionIndex + 1}
-                          </div>
-                          <h2 className="mt-1 text-xl font-semibold">{section.title}</h2>
-                          {section.description ? (
-                            <p className="mt-1 max-w-2xl text-sm text-[color:var(--muted)]">
-                              {section.description}
-                            </p>
-                          ) : null}
-                        </div>
-                        <DetailPill className={chipClass}>{sectionItems.length} items</DetailPill>
-                      </div>
-
-                      <div
-                        className={embedded ? "mt-4 grid grid-cols-3 gap-2" : "mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"}
-                        onDragStart={embedded ? (gridDragStart ?? undefined) : undefined}
-                        onDragOver={embedded ? (gridDragOver ?? undefined) : undefined}
-                        onDrop={sectionDrop}
-                        onDragEnd={embedded ? (gridDragEnd ?? undefined) : undefined}
-                      >
-                        {sectionItems.map((item, itemIndex) => (
-                          <ViewerItemCard
-                            key={`${section.id}_${item.id}`}
-                            item={item}
-                            label={section.featuredItemId === item.id ? "FEATURED" : `SECTION ITEM #${itemIndex + 1}`}
-                            compact={embedded}
-                            onRemove={embedded && onRemoveItem ? () => onRemoveItem(item.id) : undefined}
-                            isDragOver={embedded && dragOverId === item.id && dragId !== item.id}
-                            isDraggable={embedded && !!onReorder}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          ) : null}
 
           {model.galleryItems.length === 0 ? (
             <section className={["mt-6 mx-auto", GALLERY_STAGE_WIDTH_CLASS].join(" ")}>
