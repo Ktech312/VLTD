@@ -403,9 +403,9 @@ export default function GuestGalleryRenderer({
             >
               <div className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(20,24,30,0.96),rgba(10,12,16,0.94))] p-4">
                 {embedded ? (
-                  /* Compact 4-col grid in preview — event delegation for drag */
+                  /* Compact 3-col grid in preview — event delegation for drag */
                   <div
-                    className="grid grid-cols-4 gap-2"
+                    className="grid grid-cols-3 gap-2"
                     onDragStart={gridDragStart ?? undefined}
                     onDragOver={gridDragOver ?? undefined}
                     onDrop={gridDropMain}
@@ -469,7 +469,7 @@ export default function GuestGalleryRenderer({
                       </div>
 
                       <div
-                        className={embedded ? "mt-4 grid grid-cols-4 gap-2" : "mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"}
+                        className={embedded ? "mt-4 grid grid-cols-3 gap-2" : "mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"}
                         onDragStart={embedded ? (gridDragStart ?? undefined) : undefined}
                         onDragOver={embedded ? (gridDragOver ?? undefined) : undefined}
                         onDrop={sectionDrop}
