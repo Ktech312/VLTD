@@ -27,6 +27,13 @@ function getRowAnchors(count: number, compact = false) {
   return Array.from({ length: count }, (_, index) => `${first + step * index}%`);
 }
 
+function getDesktopEmbeddedRowAnchors(count: number) {
+  const first = 14;
+  const last = 58;
+  const step = (last - first) / Math.max(1, count - 1);
+  return Array.from({ length: count }, (_, index) => `${first + step * index}%`);
+}
+
 function itemImage(item: VaultItem) {
   return item.imageFrontUrl || item.imageBackUrl || "";
 }
@@ -203,12 +210,14 @@ function PremiumDisplayCard({
 function AnchoredRow({
   row,
   anchor,
+  desktopAnchor,
   galleryHrefPrefix,
   shelfOverlayStyle,
   embeddedPreview = false,
 }: {
   row: Array<VaultItem | null>;
   anchor: string;
+  desktopAnchor?: string;
   galleryHrefPrefix: string;
   shelfOverlayStyle?: GalleryShelfOverlayStyle;
   embeddedPreview?: boolean;
@@ -218,8 +227,20 @@ function AnchoredRow({
 
   return (
     <div
-      className={embeddedPreview ? "absolute left-[3%] right-[3%] sm:left-[8%] sm:right-[8%]" : "absolute left-[4%] right-[4%]"}
-      style={{ top: anchor, transform: embeddedPreview ? "translateY(-104%)" : "translateY(-150%)" }}
+      className={
+        embeddedPreview
+          ? "absolute left-[3%] right-[3%] [top:var(--mobile-row-anchor)] md:[top:var(--desktop-row-anchor)] sm:left-[8%] sm:right-[8%]"
+          : "absolute left-[4%] right-[4%]"
+      }
+      style={
+        embeddedPreview
+          ? ({
+              "--mobile-row-anchor": anchor,
+              "--desktop-row-anchor": desktopAnchor ?? anchor,
+              transform: "translateY(-104%)",
+            } as CSSProperties)
+          : { top: anchor, transform: "translateY(-150%)" }
+      }
     >
       <div className="relative pb-5">
         {showGlassShelf ? (
@@ -330,6 +351,9 @@ export default function GalleryShelfScene({
     ? Math.max(6, Math.ceil(visibleItems.length / itemsPerRow))
     : Math.max(4, Math.ceil(visibleItems.length / itemsPerRow));
   const rowAnchors = getRowAnchors(shelfCount, embeddedPreview);
+  const desktopRowAnchors = embeddedPreview
+    ? getDesktopEmbeddedRowAnchors(shelfCount)
+    : rowAnchors;
   const rows = Array.from({ length: shelfCount }, (_, i) =>
     visibleItems.slice(i * itemsPerRow, (i + 1) * itemsPerRow)
   );
@@ -372,6 +396,7 @@ export default function GalleryShelfScene({
                   key={index}
                   row={row}
                   anchor={rowAnchors[index]}
+                  desktopAnchor={desktopRowAnchors[index]}
                   galleryHrefPrefix={galleryHrefPrefix}
                   shelfOverlayStyle={shelfOverlayStyle}
                   embeddedPreview={embeddedPreview}
