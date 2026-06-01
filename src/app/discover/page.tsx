@@ -32,10 +32,11 @@ type PublicGallery = {
   title: string;
   description: string | null;
   cover_image: string | null;
-  theme_pack: string | null;
   profile_id: string;
   analytics_views: number;
   item_count: number;
+  theme_pack: string | null;
+  layout: Record<string, unknown> | null;
 };
 
 // ── Category inference ────────────────────────────────────────────────────────
@@ -68,6 +69,26 @@ function inferGalleryCategory(gallery: PublicGallery): GalleryCategory {
   return "Misc";
 }
 
+function rowToGallery(row: Record<string, unknown>): PublicGallery {
+  const layout = row.layout && typeof row.layout === "object"
+    ? (row.layout as Record<string, unknown>)
+    : null;
+  const itemIds = Array.isArray(layout?.itemIds) ? layout!.itemIds : [];
+  const themePack = typeof layout?.themePack === "string" ? layout.themePack : null;
+
+  return {
+    id: String(row.id),
+    title: String(row.title ?? ""),
+    description: typeof row.description === "string" ? row.description : null,
+    cover_image: typeof row.cover_image === "string" && row.cover_image ? row.cover_image : null,
+    profile_id: String(row.profile_id ?? ""),
+    analytics_views: typeof row.analytics_views === "number" ? row.analytics_views : 0,
+    item_count: itemIds.length,
+    theme_pack: themePack,
+    layout,
+  };
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function DiscoverPage() {
@@ -75,6 +96,7 @@ export default function DiscoverPage() {
   const [activeTab, setActiveTab] = useState<GalleryCategory>("All");
   const [galleries, setGalleries] = useState<PublicGallery[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -82,17 +104,21 @@ export default function DiscoverPage() {
       if (!supabase) { setLoading(false); return; }
 
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("galleries")
-          .select("id, title, description, cover_image, theme_pack, profile_id, analytics_views, item_count")
+          .select("id, title, description, cover_image, profile_id, analytics_views, layout")
           .eq("visibility", "PUBLIC")
           .eq("state", "ACTIVE")
           .order("analytics_views", { ascending: false })
-          .limit(24);
+          .limit(60);
 
-        setGalleries((data ?? []) as PublicGallery[]);
-      } catch {
-        // fail silently
+        if (error) {
+          setFetchError(error.message);
+        } else {
+          setGalleries((data ?? []).map(rowToGallery));
+        }
+      } catch (e) {
+        setFetchError(e instanceof Error ? e.message : "Unknown error");
       } finally {
         setLoading(false);
       }
@@ -100,7 +126,6 @@ export default function DiscoverPage() {
     void fetchData();
   }, []);
 
-  // Apply tab + search to the full list
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return galleries.filter((g) => {
@@ -115,13 +140,11 @@ export default function DiscoverPage() {
     });
   }, [galleries, activeTab, query]);
 
-  // Featured: top 6 by views
   const featured = useMemo(
     () => [...filtered].sort((a, b) => (b.analytics_views ?? 0) - (a.analytics_views ?? 0)).slice(0, 6),
     [filtered],
   );
 
-  // Trending: top 6 by item_count
   const trending = useMemo(
     () => [...filtered].sort((a, b) => (b.item_count ?? 0) - (a.item_count ?? 0)).slice(0, 6),
     [filtered],
@@ -146,7 +169,7 @@ export default function DiscoverPage() {
     <main className="min-h-screen text-[color:var(--fg)]">
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
 
-        {/* ── Header ────────────────────────────────────────────── */}
+        {/* Header */}
         <section
           className="relative overflow-hidden rounded-[20px] px-5 py-4"
           style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", border: "1px solid var(--theme-border, rgba(245,181,72,0.12))" }}
@@ -166,7 +189,6 @@ export default function DiscoverPage() {
               Browse public exhibitions from collectors across every universe. Filter by category or search by name.
             </p>
 
-            {/* Search */}
             <div
               className="mt-4 flex max-w-md items-center gap-2 rounded-2xl px-4"
               style={{
@@ -192,10 +214,16 @@ export default function DiscoverPage() {
                 </button>
               )}
             </div>
+
+            {fetchError && (
+              <div className="mt-3 rounded-xl bg-red-500/10 border border-red-500/30 px-3 py-2 text-xs text-red-300">
+                Query error: {fetchError}
+              </div>
+            )}
           </div>
         </section>
 
-        {/* ── Tab bar ───────────────────────────────────────────── */}
+        {/* Tab bar */}
         <div className="mt-4 flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           {TABS.map((tab) => (
             <button
@@ -205,16 +233,8 @@ export default function DiscoverPage() {
               className="shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition"
               style={
                 activeTab === tab
-                  ? {
-                      background: "linear-gradient(135deg, #8B6914, #F5B548)",
-                      color: "#0B0B0B",
-                      border: "1px solid transparent",
-                    }
-                  : {
-                      background: "var(--theme-elevated, rgba(20,32,55,0.9))",
-                      color: "var(--theme-text-muted, #A0956B)",
-                      border: "1px solid var(--theme-border, rgba(245,181,72,0.12))",
-                    }
+                  ? { background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B", border: "1px solid transparent" }
+                  : { background: "var(--theme-elevated, rgba(20,32,55,0.9))", color: "var(--theme-text-muted, #A0956B)", border: "1px solid var(--theme-border, rgba(245,181,72,0.12))" }
               }
             >
               {tab}
@@ -222,7 +242,7 @@ export default function DiscoverPage() {
           ))}
         </div>
 
-        {/* ── Loading skeletons ─────────────────────────────────── */}
+        {/* Loading */}
         {loading && (
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -231,7 +251,7 @@ export default function DiscoverPage() {
           </div>
         )}
 
-        {/* ── Empty state ───────────────────────────────────────── */}
+        {/* Empty state */}
         {isEmpty && (
           <section
             className="mt-6 rounded-[20px] p-10 text-center"
@@ -251,10 +271,7 @@ export default function DiscoverPage() {
                 type="button"
                 onClick={resetFilters}
                 className="mt-4 rounded-full px-4 py-2 text-sm font-semibold transition hover:brightness-110"
-                style={{
-                  background: "linear-gradient(135deg, #8B6914, #F5B548)",
-                  color: "#0B0B0B",
-                }}
+                style={{ background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B" }}
               >
                 Show All
               </button>
@@ -262,12 +279,12 @@ export default function DiscoverPage() {
           </section>
         )}
 
-        {/* ── Featured Museums ─────────────────────────────────── */}
+        {/* Featured */}
         {!loading && featured.length > 0 && (
           <section className="mt-6">
             <div className="mb-3 flex items-baseline justify-between gap-3">
               <div className="text-[11px] tracking-[0.22em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
-                FEATURED MUSEUMS
+                FEATURED EXHIBITIONS
               </div>
               <span className="text-xs" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
                 {featured.length} shown
@@ -300,17 +317,14 @@ export default function DiscoverPage() {
                       </div>
                     )}
                     <div className="mt-2 text-[10px] uppercase tracking-[0.16em]" style={{ color: "var(--muted2)" }}>
-                      {gallery.analytics_views > 0 ? `${gallery.analytics_views} views` : "New exhibition"}
+                      {gallery.item_count > 0 ? `${gallery.item_count} items` : "New exhibition"}
                     </div>
                   </div>
                   <div
                     className="absolute inset-0 flex items-center justify-center rounded-[18px] opacity-0 transition group-hover:opacity-100"
                     style={{ background: "rgba(0,0,0,0.55)" }}
                   >
-                    <span
-                      className="rounded-full px-4 py-2 text-xs font-bold"
-                      style={{ background: "var(--theme-gold, #F5B548)", color: "#0B0B0B" }}
-                    >
+                    <span className="rounded-full px-4 py-2 text-xs font-bold" style={{ background: "var(--theme-gold, #F5B548)", color: "#0B0B0B" }}>
                       View Exhibition
                     </span>
                   </div>
@@ -320,7 +334,7 @@ export default function DiscoverPage() {
           </section>
         )}
 
-        {/* ── Trending Exhibitions ─────────────────────────────── */}
+        {/* Trending */}
         {!loading && trending.length > 0 && (
           <section className="mt-8">
             <div className="mb-3 flex items-baseline justify-between gap-3">
@@ -352,8 +366,7 @@ export default function DiscoverPage() {
                       {gallery.title}
                     </div>
                     <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
-                      {gallery.analytics_views > 0 ? `${gallery.analytics_views} views` : "New"}
-                      {gallery.item_count > 0 ? ` · ${gallery.item_count} items` : ""}
+                      {gallery.item_count > 0 ? `${gallery.item_count} items` : "New"}
                     </div>
                   </div>
                 </Link>
@@ -362,7 +375,7 @@ export default function DiscoverPage() {
           </section>
         )}
 
-        {/* ── Start collecting CTA ────────────────────────────── */}
+        {/* CTA */}
         {!loading && (
           <section
             className="mt-10 flex flex-col items-center gap-3 rounded-[20px] px-6 py-8 text-center"
@@ -381,10 +394,7 @@ export default function DiscoverPage() {
               <Link
                 href="/museum/new"
                 className="rounded-full px-5 py-2 text-sm font-black transition hover:brightness-105"
-                style={{
-                  background: "linear-gradient(135deg, #8B6914 0%, #C8941F 30%, #F5B548 60%, #C8941F 100%)",
-                  color: "#0B0B0B",
-                }}
+                style={{ background: "linear-gradient(135deg, #8B6914 0%, #C8941F 30%, #F5B548 60%, #C8941F 100%)", color: "#0B0B0B" }}
               >
                 Create Exhibition
               </Link>

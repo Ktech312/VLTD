@@ -12,6 +12,7 @@ export type PublicProfile = {
   profileId: string;
   displayName: string;
   avatarEmoji: string;
+  bio?: string;
 };
 
 function asRecord(value: unknown): UnknownRecord {
@@ -98,13 +99,30 @@ export async function syncPublicProfile(profileId = getStoredActiveProfileId()) 
   const cleanProfileId = String(profileId ?? "").trim();
   if (!supabase || !cleanProfileId) return null;
 
+  // Fetch full profile row to check is_public and get bio
+  const { data: profileRow } = await supabase
+    .from("profiles")
+    .select("is_public, bio, display_name, username, avatar_url")
+    .eq("id", cleanProfileId)
+    .maybeSingle();
+
+  // If the user has gone incognito, remove from public_profiles
+  if (profileRow && profileRow.is_public === false) {
+    await supabase.from("public_profiles").delete().eq("profile_id", cleanProfileId);
+    return null;
+  }
+
   const profile = getProfileSafe();
-  const payload = {
+  const payload: Record<string, unknown> = {
     profile_id: cleanProfileId,
     display_name: profile.displayName?.trim() || profile.username?.trim() || "Collector",
     avatar_emoji: profile.avatarEmoji?.trim() || "🗝️",
     updated_at: new Date().toISOString(),
   };
+
+  if (profileRow?.bio) {
+    payload.bio = profileRow.bio;
+  }
 
   const { data, error } = await supabase
     .from("public_profiles")
@@ -123,7 +141,7 @@ export async function fetchPublicProfile(profileId: string): Promise<PublicProfi
 
   const { data, error } = await supabase
     .from("public_profiles")
-    .select("profile_id, display_name, avatar_emoji")
+    .select("profile_id, display_name, avatar_emoji, bio")
     .eq("profile_id", cleanProfileId)
     .maybeSingle();
 
@@ -134,6 +152,7 @@ export async function fetchPublicProfile(profileId: string): Promise<PublicProfi
     profileId: String(data.profile_id),
     displayName: String(data.display_name || "Collector"),
     avatarEmoji: String(data.avatar_emoji || "🗝️"),
+    bio: typeof data.bio === "string" && data.bio ? data.bio : undefined,
   };
 }
 

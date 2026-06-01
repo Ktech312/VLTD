@@ -46,155 +46,155 @@ DECLARE
   u RECORD;
 BEGIN
   -- J.P. Morgan
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000001', 'jpmorgan@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000001', 'authenticated', 'jpmorgan@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', 'jpmorgan', 'J.P. Morgan', 'personal', 'Fine Art', now())
   ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, primary_focus=EXCLUDED.primary_focus;
   -- William Randolph Hearst
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000002', 'wrhearst@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000002', 'authenticated', 'wrhearst@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000002', 'wrhearst', 'William Randolph Hearst', 'personal', 'Film & Entertainment', now())
   ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, primary_focus=EXCLUDED.primary_focus;
   -- Cornelius Vanderbilt
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000003', 'thecommodore@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000003', 'authenticated', 'thecommodore@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000003', 'thecommodore', 'Cornelius Vanderbilt', 'personal', 'Coins & Currency', now())
   ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, primary_focus=EXCLUDED.primary_focus;
   -- King Henry VIII
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000004', 'kinghenry8@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000004', 'authenticated', 'kinghenry8@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000004', 'kinghenry8', 'King Henry VIII', 'personal', 'Historical Artifacts', now())
   ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, primary_focus=EXCLUDED.primary_focus;
   -- Howard Hughes
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000005', 'howardhughes@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000005', 'authenticated', 'howardhughes@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000005', 'howardhughes', 'Howard Hughes', 'personal', 'Historical Artifacts', now())
   ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, primary_focus=EXCLUDED.primary_focus;
   -- Nikola Tesla
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000006', 'nikolatesla@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000006', 'authenticated', 'nikolatesla@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000006', 'nikolatesla', 'Nikola Tesla', 'personal', 'Science & Technology', now())
   ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, primary_focus=EXCLUDED.primary_focus;
   -- Emperor Nero
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000007', 'emperornero@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000007', 'authenticated', 'emperornero@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000007', 'emperornero', 'Emperor Nero', 'personal', 'Antiquities', now())
   ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, primary_focus=EXCLUDED.primary_focus;
   -- John D. Rockefeller
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000008', 'jdrockefeller@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000008', 'authenticated', 'jdrockefeller@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000008', 'jdrockefeller', 'John D. Rockefeller', 'personal', 'Coins & Currency', now())
   ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, primary_focus=EXCLUDED.primary_focus;
   -- Emperor Qianlong
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000009', 'emperorqianlong@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000009', 'authenticated', 'emperorqianlong@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000009', '00000000-0000-0000-0000-000000000009', 'emperorqianlong', 'Emperor Qianlong', 'personal', 'Antiquities', now())
   ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, primary_focus=EXCLUDED.primary_focus;
   -- King Louis XIV
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000010', 'sunking@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000010', 'authenticated', 'sunking@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000010', '00000000-0000-0000-0000-000000000010', 'sunking', 'King Louis XIV', 'personal', 'Decorative Arts', now())
   ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, primary_focus=EXCLUDED.primary_focus;
   -- Ludwig van Beethoven
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000011', 'beethoven@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000011', 'authenticated', 'beethoven@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000011', 'beethoven', 'Ludwig van Beethoven', 'personal', 'Music & Instruments', now())
   ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, primary_focus=EXCLUDED.primary_focus;
   -- Leonardo da Vinci
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000012', 'leonardodavinci@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000012', 'authenticated', 'leonardodavinci@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000012', 'leonardodavinci', 'Leonardo da Vinci', 'personal', 'Fine Art', now())
   ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, primary_focus=EXCLUDED.primary_focus;
   -- Blackbeard
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000013', 'blackbeard@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000013', 'authenticated', 'blackbeard@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000013', '00000000-0000-0000-0000-000000000013', 'blackbeard', 'Blackbeard', 'personal', 'Historical Artifacts', now())
   ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, primary_focus=EXCLUDED.primary_focus;
   -- P.T. Barnum
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000014', 'ptbarnum@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000014', 'authenticated', 'ptbarnum@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000014', '00000000-0000-0000-0000-000000000014', 'ptbarnum', 'P.T. Barnum', 'personal', 'Historical Artifacts', now())
   ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, primary_focus=EXCLUDED.primary_focus;
   -- Giacomo Casanova
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000015', 'casanova@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000015', 'authenticated', 'casanova@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000015', '00000000-0000-0000-0000-000000000015', 'casanova', 'Giacomo Casanova', 'personal', 'Books & Manuscripts', now())
   ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, primary_focus=EXCLUDED.primary_focus;
   -- Marie Antoinette
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000016', 'marieantoinette@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000016', 'authenticated', 'marieantoinette@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000016', '00000000-0000-0000-0000-000000000016', 'marieantoinette', 'Marie Antoinette', 'personal', 'Jewelry & Accessories', now())
   ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, primary_focus=EXCLUDED.primary_focus;
   -- Orpheus
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000017', 'orpheus@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000017', 'authenticated', 'orpheus@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000017', '00000000-0000-0000-0000-000000000017', 'orpheus', 'Orpheus', 'personal', 'Music & Instruments', now())
   ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, primary_focus=EXCLUDED.primary_focus;
   -- Rumplestiltskin
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000018', 'rumplestiltskin@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000018', 'authenticated', 'rumplestiltskin@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000018', '00000000-0000-0000-0000-000000000018', 'rumplestiltskin', 'Rumplestiltskin', 'personal', 'Historical Artifacts', now())
   ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, primary_focus=EXCLUDED.primary_focus;
   -- Walton J. Jr.
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000019', 'waltonjjr@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000019', 'authenticated', 'waltonjjr@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000019', '00000000-0000-0000-0000-000000000019', 'waltonjjr', 'Walton J. Jr.', 'personal', 'Antiquities', now())
   ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, primary_focus=EXCLUDED.primary_focus;
   -- Erik — The Phantom
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000020', 'phantomoftheopera@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000020', 'authenticated', 'phantomoftheopera@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000020', '00000000-0000-0000-0000-000000000020', 'phantomoftheopera', 'Erik — The Phantom', 'personal', 'Music & Instruments', now())
   ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, primary_focus=EXCLUDED.primary_focus;
   -- Solomon King
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000021', 'solomonking@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000021', 'authenticated', 'solomonking@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000021', '00000000-0000-0000-0000-000000000021', 'solomonking', 'Solomon King', 'personal', 'Music & Instruments', now())
   ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, primary_focus=EXCLUDED.primary_focus;
   -- Kai Sterling
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-  VALUES ('00000000-0000-0000-0000-000000000022', 'kaisterling@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
+  INSERT INTO auth.users (id, aud, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+  VALUES ('00000000-0000-0000-0000-000000000022', 'authenticated', 'kaisterling@vltd-seed.internal', '', now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated')
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO profiles (id, user_id, username, display_name, profile_type, primary_focus, created_at)
   VALUES ('00000000-0000-0000-0000-000000000022', '00000000-0000-0000-0000-000000000022', 'kaisterling', 'Kai Sterling', 'personal', 'Sports Cards', now())

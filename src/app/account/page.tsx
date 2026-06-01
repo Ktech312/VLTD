@@ -20,6 +20,8 @@ export default function AccountPage() {
   const [username, setUsername] = useState("");
   const [profileType, setProfileType] = useState<"personal" | "business">("personal");
   const [primaryFocus, setPrimaryFocus] = useState("");
+  const [bio, setBio] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
   const [syncStatus, setSyncStatus] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
@@ -43,6 +45,8 @@ export default function AccountPage() {
         setUsername(status.activeProfile.username ?? "");
         setProfileType(status.activeProfile.profile_type ?? "personal");
         setPrimaryFocus(String(status.activeProfile.primary_focus ?? ""));
+        setBio(String(status.activeProfile.bio ?? ""));
+        setIsPublic(status.activeProfile.is_public !== false);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load account.");
       } finally {
@@ -92,6 +96,8 @@ export default function AccountPage() {
         username,
         profile_type: profileType,
         primary_focus: primaryFocus,
+        bio: bio || null,
+        is_public: isPublic,
       });
       setSuccess("Account updated.");
       router.refresh();
@@ -213,6 +219,20 @@ export default function AccountPage() {
                     style={{ background: "var(--theme-card)" }}
                   />
                 </label>
+
+                <label className="block">
+                  <span className="text-sm font-semibold text-text-primary">Bio</span>
+                  <textarea
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    placeholder="Tell collectors who you are and what you collect…"
+                    rows={3}
+                    maxLength={300}
+                    className="mt-2 w-full resize-none rounded-2xl border border-[color:var(--border)] px-4 py-3 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
+                    style={{ background: "var(--theme-card)" }}
+                  />
+                  <span className="mt-1 block text-right text-[11px] text-[color:var(--muted2)]">{bio.length}/300</span>
+                </label>
               </div>
 
               <div className="mt-6">
@@ -259,6 +279,37 @@ export default function AccountPage() {
             Appearance
           </div>
           <ThemePicker />
+        </section>
+
+        {/* Privacy */}
+        <section className="mt-6 rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
+          <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-4">
+            Privacy
+          </div>
+          <div className="flex items-start justify-between gap-4 rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
+            <div className="flex-1">
+              <div className="text-sm font-black text-text-primary">Public profile</div>
+              <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">
+                Your vault and galleries are visible to other collectors. Turn this off to go incognito — your profile disappears from search and the Discover feed.
+              </div>
+              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[rgba(245,181,72,0.35)] bg-[rgba(245,181,72,0.08)] px-3 py-1 text-[11px] font-semibold text-[rgba(245,181,72,0.85)]">
+                ✦ Paid feature — coming soon
+              </div>
+            </div>
+            <button
+              type="button"
+              disabled={true}
+              title="Going incognito is a paid feature"
+              aria-pressed={isPublic}
+              className="relative mt-0.5 h-6 w-11 shrink-0 cursor-not-allowed rounded-full transition-colors opacity-50"
+              style={{ background: isPublic ? "var(--theme-gold-gradient, #f5b548)" : "rgba(255,255,255,0.12)" }}
+            >
+              <span
+                className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
+                style={{ transform: isPublic ? "translateX(20px)" : "translateX(0)" }}
+              />
+            </button>
+          </div>
         </section>
 
         <section className="mt-6 rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
