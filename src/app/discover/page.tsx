@@ -141,7 +141,7 @@ export default function DiscoverPage() {
   }, [galleries, activeTab, query]);
 
   const featured = useMemo(
-    () => [...filtered].sort((a, b) => (b.analytics_views ?? 0) - (a.analytics_views ?? 0)).slice(0, 6),
+    () => [...filtered].sort((a, b) => (b.analytics_views ?? 0) - (a.analytics_views ?? 0)).slice(0, 24),
     [filtered],
   );
 
@@ -294,7 +294,7 @@ export default function DiscoverPage() {
               {featured.map((gallery) => (
                 <Link
                   key={gallery.id}
-                  href={`/museum`}
+                  href={`/museum/${gallery.id}`}
                   className="group relative overflow-hidden rounded-[18px] transition hover:-translate-y-0.5"
                   style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
                 >
@@ -349,7 +349,7 @@ export default function DiscoverPage() {
               {trending.map((gallery) => (
                 <Link
                   key={gallery.id}
-                  href={`/museum`}
+                  href={`/museum/${gallery.id}`}
                   className="group w-[220px] flex-none overflow-hidden rounded-[16px] transition hover:-translate-y-0.5"
                   style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
                 >
