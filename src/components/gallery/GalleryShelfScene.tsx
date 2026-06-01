@@ -28,8 +28,8 @@ function getRowAnchors(count: number, compact = false) {
 }
 
 function getDesktopEmbeddedRowAnchors(count: number) {
-  const first = 16;
-  const last = 88;
+  const first = 25;
+  const last = 97;
   const step = (last - first) / Math.max(1, count - 1);
   return Array.from({ length: count }, (_, index) => `${first + step * index}%`);
 }
