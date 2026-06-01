@@ -294,7 +294,7 @@ export default function DiscoverPage() {
               {featured.map((gallery) => (
                 <Link
                   key={gallery.id}
-                  href={`/museum/${gallery.id}`}
+                  href={`/museum/${gallery.id}/guest`}
                   className="group relative overflow-hidden rounded-[18px] transition hover:-translate-y-0.5"
                   style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
                 >
@@ -349,7 +349,7 @@ export default function DiscoverPage() {
               {trending.map((gallery) => (
                 <Link
                   key={gallery.id}
-                  href={`/museum/${gallery.id}`}
+                  href={`/museum/${gallery.id}/guest`}
                   className="group w-[220px] flex-none overflow-hidden rounded-[16px] transition hover:-translate-y-0.5"
                   style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
                 >

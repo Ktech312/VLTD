@@ -7,12 +7,14 @@ import { useParams } from "next/navigation";
 import GuestGalleryRenderer from "@/components/gallery/GuestGalleryRenderer";
 import {
   getGalleryById,
+  normalizeSupabaseGallery,
   recordGalleryView,
   type Gallery,
   type GalleryPublicItemSnapshot,
 } from "@/lib/galleryModel";
 import { resolveGuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { AdultContentGate, ReportContentButton, useAdultGate } from "@/components/PublicSafetyControls";
 
 function vaultItemFromGallerySnapshot(snapshot: GalleryPublicItemSnapshot): VaultItem {
@@ -40,6 +42,28 @@ function vaultItemFromGallerySnapshot(snapshot: GalleryPublicItemSnapshot): Vaul
   };
 }
 
+function rowToVaultItem(row: Record<string, unknown>): VaultItem {
+  return {
+    id: String(row.id ?? ""),
+    profile_id: typeof row.profile_id === "string" ? row.profile_id : undefined,
+    title: typeof row.title === "string" ? row.title : "Untitled Item",
+    subtitle: typeof row.subtitle === "string" ? row.subtitle : undefined,
+    universe: typeof row.universe === "string" ? row.universe : undefined,
+    category: typeof row.category === "string" ? row.category : undefined,
+    grade: typeof row.grade === "string" ? row.grade : undefined,
+    notes: typeof row.notes === "string" ? row.notes : undefined,
+    currentValue: typeof row.current_value === "number" ? row.current_value : undefined,
+    purchasePrice: typeof row.purchase_price === "number" ? row.purchase_price : undefined,
+    imageFrontUrl: typeof row.image_front_url === "string" && row.image_front_url ? row.image_front_url : undefined,
+    imageFrontStoragePath: typeof row.image_front_storage_path === "string" ? row.image_front_storage_path : undefined,
+    status: (row.status === "COLLECTION" || row.status === "FOR_SALE" || row.status === "SOLD" || row.status === "WISHLIST")
+      ? row.status : undefined,
+    isPublic: true,
+    createdAt: typeof row.created_at === "number" ? row.created_at : Date.now(),
+    isNew: false,
+  };
+}
+
 export default function GuestGalleryPage() {
   const params = useParams<{ galleryId: string }>();
   const galleryId = String(params?.galleryId ?? "");
@@ -54,20 +78,58 @@ export default function GuestGalleryPage() {
     let cancelled = false;
 
     async function resolveGuestPage() {
-      const found = getGalleryById(galleryId);
-      if (cancelled) return;
+      // 1. Try local storage first (own galleries load instantly)
+      let found = getGalleryById(galleryId);
 
+      // 2. If not found locally, fetch directly from Supabase (seed/other user galleries)
+      if (!found) {
+        const supabase = getSupabaseBrowserClient();
+        if (supabase) {
+          const { data } = await supabase
+            .from("galleries")
+            .select("*")
+            .eq("id", galleryId)
+            .eq("visibility", "PUBLIC")
+            .eq("state", "ACTIVE")
+            .maybeSingle();
+
+          if (data) {
+            found = normalizeSupabaseGallery(data);
+          }
+        }
+      }
+
+      if (cancelled) return;
       setGallery(found);
-
-      await syncVaultItemsFromSupabase();
-      if (cancelled) return;
-
-      setItems(loadItems());
-      setIsResolved(true);
 
       if (found) {
         recordGalleryView(found.id);
+
+        // 3. If this gallery belongs to another profile, fetch their public vault items
+        if (found.profile_id) {
+          const supabase = getSupabaseBrowserClient();
+          if (supabase) {
+            const { data: publicItems } = await supabase
+              .from("vault_items")
+              .select("*")
+              .eq("profile_id", found.profile_id)
+              .eq("is_public", true)
+              .order("created_at", { ascending: false });
+
+            if (!cancelled && publicItems && publicItems.length > 0) {
+              setItems(publicItems.map((row) => rowToVaultItem(row as Record<string, unknown>)));
+              setIsResolved(true);
+              return;
+            }
+          }
+        }
       }
+
+      // 4. Fall back to own vault items
+      await syncVaultItemsFromSupabase();
+      if (cancelled) return;
+      setItems(loadItems());
+      setIsResolved(true);
     }
 
     void resolveGuestPage();
@@ -104,7 +166,7 @@ export default function GuestGalleryPage() {
       ? ordered
       : Array.isArray(gallery.publicItemSnapshots)
         ? gallery.publicItemSnapshots.map(vaultItemFromGallerySnapshot)
-        : [];
+        : items;
   }, [gallery, items]);
 
   const model = useMemo(
@@ -113,8 +175,8 @@ export default function GuestGalleryPage() {
         navigation: {
           show: !!gallery,
           primaryLabel: "Exhibit as Guest",
-          backHref: gallery ? `/museum/${gallery.id}` : null,
-          homeHref: "/museum",
+          backHref: gallery ? `/museum/${gallery.id}/guest` : null,
+          homeHref: "/discover",
         },
         access: {
           modeLabel: "Guest Preview",
@@ -131,17 +193,17 @@ export default function GuestGalleryPage() {
       <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(30,36,46,0.96),rgba(8,10,14,1)_62%)] text-text-primary">
         <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
           <div className="rounded-[28px] border border-white/10 bg-black/25 p-8 text-center ring-1 ring-white/10 backdrop-blur-sm">
-            <div className="text-[11px] tracking-[0.22em] text-white/55">GUEST PREVIEW</div>
-            <h1 className="mt-3 text-2xl font-semibold">Exhibit not available</h1>
+            <div className="text-[11px] tracking-[0.22em] text-white/55">MUSEUM</div>
+            <h1 className="mt-3 text-2xl font-semibold">Exhibit not found</h1>
             <p className="mt-3 text-sm text-white/70">
-              This exhibit could not be loaded for guest preview.
+              This exhibit could not be loaded from local storage.
             </p>
             <div className="mt-6">
               <Link
-                href="/museum"
+                href="/discover"
                 className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-5 py-2 text-sm font-semibold text-slate-950 transition hover:opacity-95"
               >
-                Open Exhibitions
+                Back to Discover
               </Link>
             </div>
           </div>

@@ -761,7 +761,7 @@ function normalizeGallery(raw: any): Gallery | null {
   }
 
 
-function normalizeSupabaseGallery(raw: any): Gallery | null {
+export function normalizeSupabaseGallery(raw: any): Gallery | null {
   if (!raw) return null;
 
   const createdAt =
