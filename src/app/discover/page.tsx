@@ -33,6 +33,8 @@ type PublicGallery = {
   description: string | null;
   cover_image: string | null;
   profile_id: string;
+  collector_name: string;
+  collector_avatar: string;
   analytics_views: number;
   item_count: number;
   theme_pack: string | null;
@@ -82,6 +84,8 @@ function rowToGallery(row: Record<string, unknown>): PublicGallery {
     description: typeof row.description === "string" ? row.description : null,
     cover_image: typeof row.cover_image === "string" && row.cover_image ? row.cover_image : null,
     profile_id: String(row.profile_id ?? ""),
+    collector_name: "",
+    collector_avatar: "",
     analytics_views: typeof row.analytics_views === "number" ? row.analytics_views : 0,
     item_count: itemIds.length,
     theme_pack: themePack,
@@ -115,7 +119,25 @@ export default function DiscoverPage() {
         if (error) {
           setFetchError(error.message);
         } else {
-          setGalleries((data ?? []).map(rowToGallery));
+          const mapped = (data ?? []).map(rowToGallery);
+          const profileIds = [...new Set(mapped.map((g) => g.profile_id).filter(Boolean))];
+          if (profileIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from("public_profiles")
+              .select("profile_id, display_name, avatar_emoji")
+              .in("profile_id", profileIds);
+            const profileMap = new Map((profiles ?? []).map((p) => [
+              String(p.profile_id),
+              { name: String(p.display_name || "Collector"), avatar: String(p.avatar_emoji || "🗝️") },
+            ]));
+            setGalleries(mapped.map((g) => ({
+              ...g,
+              collector_name: profileMap.get(g.profile_id)?.name ?? "Collector",
+              collector_avatar: profileMap.get(g.profile_id)?.avatar ?? "🗝️",
+            })));
+          } else {
+            setGalleries(mapped);
+          }
         }
       } catch (e) {
         setFetchError(e instanceof Error ? e.message : "Unknown error");
@@ -316,8 +338,21 @@ export default function DiscoverPage() {
                         {gallery.description}
                       </div>
                     )}
-                    <div className="mt-2 text-[10px] uppercase tracking-[0.16em]" style={{ color: "var(--muted2)" }}>
-                      {gallery.item_count > 0 ? `${gallery.item_count} items` : "New exhibition"}
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <div className="text-[10px] uppercase tracking-[0.16em]" style={{ color: "var(--muted2)" }}>
+                        {gallery.item_count > 0 ? `${gallery.item_count} items` : "New exhibition"}
+                      </div>
+                      {gallery.collector_name ? (
+                        <Link
+                          href={`/v/${gallery.profile_id}`}
+                          className="flex items-center gap-1 text-[10px] hover:underline"
+                          style={{ color: "var(--theme-gold, #F5B548)" }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <span>{gallery.collector_avatar}</span>
+                          <span className="max-w-[80px] truncate">{gallery.collector_name}</span>
+                        </Link>
+                      ) : null}
                     </div>
                   </div>
                   <div
@@ -368,6 +403,17 @@ export default function DiscoverPage() {
                     <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
                       {gallery.item_count > 0 ? `${gallery.item_count} items` : "New"}
                     </div>
+                    {gallery.collector_name ? (
+                      <Link
+                        href={`/v/${gallery.profile_id}`}
+                        className="mt-1 flex items-center gap-1 text-[10px] hover:underline"
+                        style={{ color: "var(--theme-gold, #F5B548)" }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <span>{gallery.collector_avatar}</span>
+                        <span className="max-w-[60px] truncate">{gallery.collector_name}</span>
+                      </Link>
+                    ) : null}
                   </div>
                 </Link>
               ))}

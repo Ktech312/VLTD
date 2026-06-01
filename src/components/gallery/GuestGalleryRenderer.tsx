@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { DragEvent, ReactNode } from "react";
 
 import FavoriteButton from "@/components/FavoriteButton";
@@ -202,6 +202,92 @@ function reorderByDrag(ids: string[], fromId: string, toId: string): string[] {
   return next;
 }
 
+function GuestItemModal({ item, onClose }: { item: VaultItem; onClose: () => void }) {
+  const imageUrl = getPrimaryImageUrl(item);
+  const subtitle = itemSubtitle(item);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-end justify-center sm:items-center"
+      onClick={onClose}
+    >
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+      <div
+        className="relative z-10 w-full max-w-lg overflow-hidden rounded-t-[28px] sm:rounded-[28px] border border-white/10"
+        style={{ background: "linear-gradient(180deg,rgba(20,24,30,0.98),rgba(10,12,16,0.99))" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Image */}
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-black/40">
+          {imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={imageUrl} alt={item.title} className="h-full w-full object-contain" draggable={false} />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-white/40">No image</div>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full bg-black/60 text-white/80 ring-1 ring-white/15 hover:bg-black/80"
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Info */}
+        <div className="p-5">
+          <div className="text-lg font-semibold leading-snug text-white">{item.title}</div>
+          {subtitle ? <div className="mt-1 text-sm text-white/60">{subtitle}</div> : null}
+
+          <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+            {item.categoryLabel || item.category ? (
+              <div className="rounded-[10px] bg-white/5 px-3 py-2 ring-1 ring-white/8">
+                <div className="text-[10px] uppercase tracking-[0.14em] text-white/40">Category</div>
+                <div className="mt-0.5 font-medium text-white/80">{item.categoryLabel || item.category}</div>
+              </div>
+            ) : null}
+            {item.universe ? (
+              <div className="rounded-[10px] bg-white/5 px-3 py-2 ring-1 ring-white/8">
+                <div className="text-[10px] uppercase tracking-[0.14em] text-white/40">Universe</div>
+                <div className="mt-0.5 font-medium text-white/80">{item.universe}</div>
+              </div>
+            ) : null}
+            {item.grade ? (
+              <div className="rounded-[10px] bg-white/5 px-3 py-2 ring-1 ring-white/8">
+                <div className="text-[10px] uppercase tracking-[0.14em] text-white/40">Grade</div>
+                <div className="mt-0.5 font-medium text-white/80">{item.grade}</div>
+              </div>
+            ) : null}
+            {item.certNumber ? (
+              <div className="rounded-[10px] bg-white/5 px-3 py-2 ring-1 ring-white/8">
+                <div className="text-[10px] uppercase tracking-[0.14em] text-white/40">Cert #</div>
+                <div className="mt-0.5 font-medium text-white/80">{item.certNumber}</div>
+              </div>
+            ) : null}
+          </div>
+
+          {item.notes ? (
+            <div className="mt-3 rounded-[12px] bg-white/4 px-3 py-2.5 text-[12px] leading-relaxed text-white/60 ring-1 ring-white/8">
+              {item.notes}
+            </div>
+          ) : null}
+
+          <div className="mt-4 text-center text-[10px] uppercase tracking-[0.14em] text-white/25">
+            GUEST VIEW · Financial details not shown
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function getShelfSlotLayout(model: GuestGalleryViewModel) {
   const visibleIds = new Set(model.galleryItems.map((item) => item.id));
   const sections = getGallerySections(model.gallery);
@@ -225,6 +311,7 @@ export default function GuestGalleryRenderer({
 }) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<VaultItem | null>(null);
 
   // ── Drag delegation handlers (defined here, outside JSX, to avoid TSX parser ambiguity) ──
   const gridDragStart: CardDragHandler | null = onReorder
@@ -392,6 +479,7 @@ export default function GuestGalleryRenderer({
                 shelfOverlayStyle={model.shelfOverlayStyle}
                 slotLayout={shelfSlotLayout}
                 embeddedPreview={embedded}
+                onItemClick={embedded ? undefined : (item) => setSelectedItem(item)}
               />
             </div>
           ) : (
@@ -426,11 +514,17 @@ export default function GuestGalleryRenderer({
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                     {model.galleryItems.map((item, index) => (
-                      <ViewerItemCard
+                      <button
                         key={item.id}
-                        item={item}
-                        label={`GRID ITEM #${index + 1}`}
-                      />
+                        type="button"
+                        className="block w-full text-left"
+                        onClick={() => setSelectedItem(item)}
+                      >
+                        <ViewerItemCard
+                          item={item}
+                          label={`GRID ITEM #${index + 1}`}
+                        />
+                      </button>
                     ))}
                   </div>
                 )}
@@ -450,6 +544,10 @@ export default function GuestGalleryRenderer({
           ) : null}
         </div>
       </div>
+
+      {selectedItem && !embedded ? (
+        <GuestItemModal item={selectedItem} onClose={() => setSelectedItem(null)} />
+      ) : null}
     </main>
   );
 }

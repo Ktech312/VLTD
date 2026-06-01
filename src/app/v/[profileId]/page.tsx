@@ -60,6 +60,7 @@ export default function PublicVaultPage({
 
   const displayName = profile?.displayName || "Collector";
   const avatarEmoji = profile?.avatarEmoji || "🗝️";
+  const bio = profile?.bio;
 
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
@@ -84,6 +85,20 @@ export default function PublicVaultPage({
       </header>
 
       <div className="mx-auto max-w-6xl px-4 py-5">
+        {/* Collector bio */}
+        {!loading && bio ? (
+          <div className="mb-5 rounded-[20px] bg-[color:var(--surface)] px-5 py-4 ring-1 ring-[color:var(--border)]">
+            <div className="flex items-start gap-4">
+              <div className="shrink-0 flex h-14 w-14 items-center justify-center rounded-full bg-[color:var(--pill)] text-3xl ring-1 ring-[color:var(--border)]">
+                {avatarEmoji}
+              </div>
+              <div>
+                <div className="text-base font-semibold">{displayName}</div>
+                <p className="mt-1 text-sm leading-relaxed text-[color:var(--muted)]">{bio}</p>
+              </div>
+            </div>
+          </div>
+        ) : null}
         {message ? (
           <div className="rounded-[20px] bg-[color:var(--surface)] p-6 text-sm text-red-200 ring-1 ring-red-400/20">
             {message}
