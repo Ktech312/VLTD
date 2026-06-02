@@ -13,6 +13,8 @@ const SHELF_COLUMNS = 3;
 const SHELF_ROWS = 6;
 const SHELF_SLOT_COUNT = SHELF_COLUMNS * SHELF_ROWS;
 const ROW_ANCHORS = ["27%", "41%", "55%", "69%", "83%", "97%"] as const;
+const EMBEDDED_STAGE_HEIGHT = 2700;
+const EMBEDDED_ROW_ANCHORS = ["616px", "1016px", "1416px", "1816px", "2216px", "2616px"] as const;
 
 function itemImage(item: VaultItem) {
   return item.imageFrontUrl || item.imageBackUrl || "";
@@ -338,7 +340,7 @@ export default function GalleryShelfScene({
   const itemsPerRow = SHELF_COLUMNS;
   const visibleItems = buildShelfSlots(items, slotLayout);
   const shelfCount = SHELF_ROWS;
-  const rowAnchors = ROW_ANCHORS;
+  const rowAnchors = embeddedPreview ? EMBEDDED_ROW_ANCHORS : ROW_ANCHORS;
   const rows = Array.from({ length: shelfCount }, (_, i) =>
     visibleItems.slice(i * itemsPerRow, (i + 1) * itemsPerRow)
   );
@@ -351,7 +353,7 @@ export default function GalleryShelfScene({
         backgroundRepeat: "no-repeat",
       }
     : undefined;
-  const embeddedStageHeight = `${Math.max(1500, shelfCount * 380)}px`;
+  const embeddedStageHeight = `${EMBEDDED_STAGE_HEIGHT}px`;
 
   return (
     <section className="mt-0">
