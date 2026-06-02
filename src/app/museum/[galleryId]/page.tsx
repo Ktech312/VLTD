@@ -773,7 +773,7 @@ export default function GalleryPage() {
   return (
     <main className="min-h-screen overflow-x-hidden text-[color:var(--fg)]">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10 xl:py-5">
-        <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="mx-auto mb-4 flex max-w-[780px] flex-wrap items-center gap-3">
           <Link href="/museum" className={neutralPillClass()}>
             Back to Exhibitions
           </Link>
@@ -782,7 +782,7 @@ export default function GalleryPage() {
         {status ? (
           <div
             className={[
-              "mb-5 rounded-2xl px-4 py-3 text-sm ring-1",
+              "mx-auto mb-5 max-w-[780px] rounded-2xl px-4 py-3 text-sm ring-1",
               statusTone === "good"
                 ? "bg-emerald-500/10 text-emerald-200 ring-emerald-500/30"
                 : "bg-[color:var(--surface)] text-[color:var(--muted)] ring-[color:var(--border)]",
@@ -792,7 +792,7 @@ export default function GalleryPage() {
           </div>
         ) : null}
 
-        <section className="relative max-w-[1120px] overflow-hidden rounded-[24px] border border-[color:var(--border)] bg-[color:var(--surface)] p-3 shadow-[0_20px_60px_rgba(0,0,0,0.38)] sm:p-4 xl:p-3.5">
+        <section className="relative mx-auto max-w-[780px] overflow-hidden rounded-[24px] border border-[color:var(--border)] bg-[color:var(--surface)] p-3 shadow-[0_20px_60px_rgba(0,0,0,0.38)] sm:p-4 xl:p-3.5">
           {draft.coverImage ? (
             <>
               <div
@@ -1073,7 +1073,7 @@ export default function GalleryPage() {
           </div>
         </section>
 
-        <section className="mt-12">
+        <section className="mx-auto mt-12 max-w-[780px]">
           <div className="mb-4">
             <div className="text-[11px] tracking-[0.24em] text-[color:var(--muted2)]">
               BUILDER
