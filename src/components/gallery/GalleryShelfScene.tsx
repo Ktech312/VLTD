@@ -354,7 +354,7 @@ export default function GalleryShelfScene({
   const backgroundStyle: CSSProperties | undefined = sceneBackground
     ? {
         backgroundImage: `url(${sceneBackground})`,
-        backgroundSize: embeddedPreview ? "100% auto" : "auto 114%",
+        backgroundSize: "100% auto",
         backgroundPosition: "center top",
         backgroundRepeat: "no-repeat",
       }
