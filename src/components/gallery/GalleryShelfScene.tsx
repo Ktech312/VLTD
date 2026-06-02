@@ -9,30 +9,10 @@ import type { VaultItem } from "@/lib/vaultModel";
 export const GALLERY_STAGE_MAX_WIDTH_CLASS = "max-w-[1120px]";
 export const GALLERY_STAGE_HEIGHT_CLASS = "h-[1500px] sm:h-[2200px] lg:h-[2700px]";
 
-const ROW_ANCHORS = ["39%", "59%", "79%", "99%"] as const;
-const SHELF_SLOT_COUNT = 18;
-
-function getRowAnchors(count: number, compact = false) {
-  if (compact) {
-    const first = 16;
-    const last = 72;
-    const step = (last - first) / Math.max(1, count - 1);
-    return Array.from({ length: count }, (_, index) => `${first + step * index}%`);
-  }
-
-  if (count <= 4) return ROW_ANCHORS;
-  const first = 26;
-  const last = 98;
-  const step = (last - first) / Math.max(1, count - 1);
-  return Array.from({ length: count }, (_, index) => `${first + step * index}%`);
-}
-
-function getDesktopEmbeddedRowAnchors(count: number) {
-  const first = 25;
-  const last = 97;
-  const step = (last - first) / Math.max(1, count - 1);
-  return Array.from({ length: count }, (_, index) => `${first + step * index}%`);
-}
+const SHELF_COLUMNS = 3;
+const SHELF_ROWS = 6;
+const SHELF_SLOT_COUNT = SHELF_COLUMNS * SHELF_ROWS;
+const ROW_ANCHORS = ["18%", "32%", "46%", "60%", "74%", "88%"] as const;
 
 function itemImage(item: VaultItem) {
   return item.imageFrontUrl || item.imageBackUrl || "";
@@ -159,18 +139,18 @@ function PremiumDisplayCard({
   const cardInner = (
     <div
       className={[
-        "relative w-full overflow-hidden rounded-[16px] bg-[#0b1018] p-[2px] sm:rounded-[20px] sm:p-[5px]",
+        "relative aspect-[3/4] w-full overflow-hidden rounded-[16px] bg-[#0b1018] p-[2px] sm:rounded-[18px] sm:p-[5px]",
         "shadow-[0_18px_38px_rgba(0,0,0,0.52),0_0_0_1px_rgba(255,234,174,0.32),0_0_22px_rgba(245,181,72,0.18),inset_0_1px_0_rgba(255,255,255,0.36),inset_0_-12px_18px_rgba(54,32,8,0.55)]",
-        "before:pointer-events-none before:absolute before:inset-0 before:rounded-[16px] before:bg-[linear-gradient(135deg,#fff0a8_0%,#d99a2b_18%,#6f4514_37%,#f7cf72_54%,#3a250d_72%,#ffe7a0_100%)] sm:before:rounded-[20px]",
-        "after:pointer-events-none after:absolute after:inset-[2px] after:rounded-[13px] after:ring-1 after:ring-black/70 sm:after:inset-[5px] sm:after:rounded-[15px]",
+        "before:pointer-events-none before:absolute before:inset-0 before:rounded-[16px] before:bg-[linear-gradient(135deg,#fff0a8_0%,#d99a2b_18%,#6f4514_37%,#f7cf72_54%,#3a250d_72%,#ffe7a0_100%)] sm:before:rounded-[18px]",
+        "after:pointer-events-none after:absolute after:inset-[2px] after:rounded-[13px] after:ring-1 after:ring-black/70 sm:after:inset-[5px] sm:after:rounded-[13px]",
       ].join(" ")}
     >
-      <div className="relative z-10 overflow-hidden rounded-[13px] bg-[linear-gradient(180deg,rgba(255,255,255,0.10),rgba(0,0,0,0.30))] ring-1 ring-black/70 sm:rounded-[15px]">
+      <div className="relative z-10 h-full overflow-hidden rounded-[13px] bg-[linear-gradient(180deg,rgba(255,255,255,0.10),rgba(0,0,0,0.30))] ring-1 ring-black/70">
         <div className="pointer-events-none absolute inset-[2px] z-10 rounded-[10px] ring-1 ring-[#ffe8a3]/35 sm:inset-[3px] sm:rounded-[12px]" />
         <div className="pointer-events-none absolute left-1 top-1 z-20 h-4 w-4 rounded-full border border-[#ffd978]/80 bg-[#131018] shadow-[inset_0_0_0_2px_rgba(0,0,0,0.55),0_0_12px_rgba(245,181,72,0.35)] sm:left-1.5 sm:top-1.5 sm:h-5 sm:w-5" />
         <div className="pointer-events-none absolute right-1 top-1 z-10 h-4 w-4 rounded-full border border-[#ffd978]/80 bg-[#131018] shadow-[inset_0_0_0_2px_rgba(0,0,0,0.55),0_0_12px_rgba(245,181,72,0.35)] sm:right-1.5 sm:top-1.5 sm:h-5 sm:w-5" />
         <div className="pointer-events-none absolute inset-x-5 top-2 z-10 h-px bg-[linear-gradient(90deg,transparent,#ffdf87,transparent)] sm:inset-x-7 sm:top-3" />
-        <div className="relative aspect-[4/5] w-full overflow-hidden bg-[radial-gradient(circle_at_50%_0%,rgba(255,230,160,0.16),rgba(0,0,0,0.18)_45%,rgba(0,0,0,0.40))]">
+        <div className="absolute inset-x-0 top-0 h-[76%] overflow-hidden bg-[radial-gradient(circle_at_50%_0%,rgba(255,230,160,0.16),rgba(0,0,0,0.18)_45%,rgba(0,0,0,0.40))]">
           {itemImage(item) ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -190,12 +170,12 @@ function PremiumDisplayCard({
             {itemCategoryBadge(item)}
           </div>
         </div>
-        <div className="relative border-t border-[#F5B548]/65 bg-[linear-gradient(180deg,rgba(22,20,27,0.99),rgba(8,8,12,0.99))] px-1 py-1 text-center shadow-[inset_0_1px_0_rgba(255,233,169,0.22)] sm:px-2 sm:py-1.5">
+        <div className="absolute inset-x-0 bottom-0 flex h-[24%] flex-col justify-center border-t border-[#F5B548]/65 bg-[linear-gradient(180deg,rgba(22,20,27,0.99),rgba(8,8,12,0.99))] px-1 text-center shadow-[inset_0_1px_0_rgba(255,233,169,0.22)] sm:px-2">
           <div className="pointer-events-none absolute inset-x-2 top-1 h-px bg-[linear-gradient(90deg,transparent,rgba(255,234,174,0.85),transparent)]" />
-          <div className="truncate font-serif text-[9px] font-semibold leading-tight text-[#f5d16d] sm:text-[11px]">
+          <div className="truncate font-serif text-[8px] font-semibold leading-tight text-[#f5d16d] sm:text-[9px]">
             {item.title}
           </div>
-          <div className="mt-0.5 truncate text-[6px] uppercase tracking-[0.04em] text-white/62 sm:text-[8px] sm:tracking-[0.06em]">
+          <div className="mt-0.5 truncate text-[6px] uppercase tracking-[0.06em] text-white/62 sm:text-[7px]">
             {subtitle || "Collection piece"} - EMV {value}
           </div>
         </div>
@@ -221,7 +201,6 @@ function PremiumDisplayCard({
 function AnchoredRow({
   row,
   anchor,
-  desktopAnchor,
   galleryHrefPrefix,
   onItemClick,
   shelfOverlayStyle,
@@ -229,7 +208,6 @@ function AnchoredRow({
 }: {
   row: Array<VaultItem | null>;
   anchor: string;
-  desktopAnchor?: string;
   galleryHrefPrefix: string;
   onItemClick?: (item: VaultItem) => void;
   shelfOverlayStyle?: GalleryShelfOverlayStyle;
@@ -242,17 +220,16 @@ function AnchoredRow({
     <div
       className={
         embeddedPreview
-          ? "absolute left-[3%] right-[3%] [top:var(--mobile-row-anchor)] md:[top:var(--desktop-row-anchor)] sm:left-[8%] sm:right-[8%]"
+          ? "absolute left-[3%] right-[3%] sm:left-[8%] sm:right-[8%]"
           : "absolute left-[4%] right-[4%]"
       }
       style={
         embeddedPreview
           ? ({
-              "--mobile-row-anchor": anchor,
-              "--desktop-row-anchor": desktopAnchor ?? anchor,
+              top: anchor,
               transform: "translateY(-104%)",
             } as CSSProperties)
-          : { top: anchor, transform: "translateY(-150%)" }
+          : { top: anchor, transform: "translateY(-104%)" }
       }
     >
       <div className="relative pb-5">
@@ -280,9 +257,7 @@ function AnchoredRow({
         <div
           className={[
             "relative z-10 grid items-end gap-2",
-            embeddedPreview
-              ? "mx-auto max-w-[700px] grid-cols-3 gap-x-3 gap-y-10 sm:max-w-[620px] sm:gap-x-9"
-              : "grid-cols-2 sm:grid-cols-4 sm:gap-[0.8rem]",
+            "mx-auto max-w-[760px] grid-cols-3 gap-x-3 gap-y-7 sm:gap-x-4 sm:gap-y-8",
           ].join(" ")}
         >
           {row.map((item, index) =>
@@ -360,15 +335,10 @@ export default function GalleryShelfScene({
   const theme = getShelfThemeClasses(themePack);
   const sceneBackground = backgroundImageUrl?.trim() || "";
 
-  const itemsPerRow = embeddedPreview ? 3 : 4;
+  const itemsPerRow = SHELF_COLUMNS;
   const visibleItems = buildShelfSlots(items, slotLayout);
-  const shelfCount = embeddedPreview
-    ? Math.max(6, Math.ceil(visibleItems.length / itemsPerRow))
-    : Math.max(4, Math.ceil(visibleItems.length / itemsPerRow));
-  const rowAnchors = getRowAnchors(shelfCount, embeddedPreview);
-  const desktopRowAnchors = embeddedPreview
-    ? getDesktopEmbeddedRowAnchors(shelfCount)
-    : rowAnchors;
+  const shelfCount = SHELF_ROWS;
+  const rowAnchors = ROW_ANCHORS;
   const rows = Array.from({ length: shelfCount }, (_, i) =>
     visibleItems.slice(i * itemsPerRow, (i + 1) * itemsPerRow)
   );
@@ -411,7 +381,6 @@ export default function GalleryShelfScene({
                   key={index}
                   row={row}
                   anchor={rowAnchors[index]}
-                  desktopAnchor={desktopRowAnchors[index]}
                   galleryHrefPrefix={galleryHrefPrefix}
                   onItemClick={onItemClick}
                   shelfOverlayStyle={shelfOverlayStyle}
