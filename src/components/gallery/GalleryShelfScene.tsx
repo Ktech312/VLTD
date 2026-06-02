@@ -13,8 +13,9 @@ const SHELF_COLUMNS = 3;
 const SHELF_ROWS = 6;
 const SHELF_SLOT_COUNT = SHELF_COLUMNS * SHELF_ROWS;
 const ROW_ANCHORS = ["27%", "41%", "55%", "69%", "83%", "97%"] as const;
-const EMBEDDED_STAGE_HEIGHT = 2700;
-const EMBEDDED_MOBILE_ROW_ANCHORS = ["16%", "27%", "38%", "49%", "60%", "71%"] as const;
+const EMBEDDED_MOBILE_STAGE_HEIGHT = 2200;
+const EMBEDDED_DESKTOP_STAGE_HEIGHT = 2700;
+const EMBEDDED_MOBILE_ROW_ANCHORS = ["432px", "729px", "1026px", "1323px", "1620px", "1917px"] as const;
 const EMBEDDED_DESKTOP_ROW_ANCHORS = ["616px", "1016px", "1416px", "1816px", "2216px", "2616px"] as const;
 
 function itemImage(item: VaultItem) {
@@ -358,7 +359,12 @@ export default function GalleryShelfScene({
         backgroundRepeat: "no-repeat",
       }
     : undefined;
-  const embeddedStageHeight = `${EMBEDDED_STAGE_HEIGHT}px`;
+  const embeddedStageStyle = embeddedPreview
+    ? ({
+        "--embedded-mobile-stage-height": `${EMBEDDED_MOBILE_STAGE_HEIGHT}px`,
+        "--embedded-desktop-stage-height": `${EMBEDDED_DESKTOP_STAGE_HEIGHT}px`,
+      } as CSSProperties)
+    : undefined;
 
   return (
     <section className="mt-0">
@@ -370,8 +376,13 @@ export default function GalleryShelfScene({
         ].join(" ")}
       >
         <div
-          className={["relative", embeddedPreview ? "" : GALLERY_STAGE_HEIGHT_CLASS].join(" ")}
-          style={embeddedPreview ? { height: embeddedStageHeight } : undefined}
+          className={[
+            "relative",
+            embeddedPreview
+              ? "h-[var(--embedded-mobile-stage-height)] md:h-[var(--embedded-desktop-stage-height)]"
+              : GALLERY_STAGE_HEIGHT_CLASS,
+          ].join(" ")}
+          style={embeddedStageStyle}
         >
           <div
             className={embeddedPreview ? "absolute inset-0 vltd-embedded-shelf-bg" : "absolute inset-0"}
