@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
@@ -30,7 +31,7 @@ function inferGalleryCategory(gallery: PublicGallery): GalleryCategory {
   const text = normalizeText([gallery.title, gallery.description, gallery.theme_pack].filter(Boolean).join(" "));
   if (/pokemon|magic|yugioh|yu gi oh|tcg|trading card|card game|slab|foil|single/.test(text)) return "TCG";
   if (/sports|rookie|jersey|autograph|memorabilia|baseball|basketball|football|soccer|hockey/.test(text)) return "Sports";
-  if (/vinyl|album|music|record|instrument|signed lp|turntable|blues|delta|jazz|78rpm|78 rpm|crossroads|harmonica|guitar|piano|symphony|composer|beethoven|orpheus|solomon/.test(text)) return "Music";
+  if (/vinyl|album|music|record|instrument|signed lp|turntable|blues|delta|jazz|78rpm|78 rpm|crossroads|harmonica|guitar|piano|symphony|composer|beethoven|orpheus|solomon|lyre|aulos|lute|fiddle|resonator|ragtime|gospel|spiritual|78 rpm|juke joint|juke|harp|pipe organ|fortepiano|broadwood/.test(text)) return "Music";
   if (/watch|jewelry|apparel|streetwear|luxury|handbag|limited drop|jewel|necklace|diamond|antoinette/.test(text)) return "Jewelry";
   if (/game|console|nintendo|playstation|xbox|sega|atari|cartridge|arcade|controller/.test(text)) return "Games";
   if (/comic|marvel| dc |figure|toy|manga|funko|prop|statue|pop culture/.test(text)) return "Pop Culture";
@@ -55,6 +56,7 @@ function rowToGallery(row: Record<string, unknown>): PublicGallery {
 }
 
 export default function DiscoverPage() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState<GalleryCategory>("All");
   const [galleries, setGalleries] = useState<PublicGallery[]>([]);
@@ -207,9 +209,10 @@ export default function DiscoverPage() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((gallery) => (
-                <Link key={gallery.id} href={`/museum/${gallery.id}/guest`}
-                  className="group relative overflow-hidden rounded-[18px] transition hover:-translate-y-0.5"
-                  style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                <div key={gallery.id}
+                  className="group relative overflow-hidden rounded-[18px] transition hover:-translate-y-0.5 cursor-pointer"
+                  style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+                  onClick={() => router.push(`/museum/${gallery.id}/guest`)}>
                   <div className="relative h-[130px] overflow-hidden rounded-t-[18px]" style={coverStyle(gallery)}>
                     <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-transparent to-transparent" />
                     <span className="absolute left-3 top-3 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]"
@@ -228,7 +231,7 @@ export default function DiscoverPage() {
                       </div>
                       {gallery.collector_name && (
                         <Link href={`/v/${gallery.profile_id}`}
-                          className="flex items-center gap-1 text-[10px] hover:underline"
+                          className="flex items-center gap-1 text-[10px] hover:underline z-10 relative"
                           style={{ color: "var(--theme-gold, #F5B548)" }}
                           onClick={(e) => e.stopPropagation()}>
                           <span>{gallery.collector_avatar}</span>
@@ -237,10 +240,10 @@ export default function DiscoverPage() {
                       )}
                     </div>
                   </div>
-                  <div className="absolute inset-0 flex items-center justify-center rounded-[18px] opacity-0 transition group-hover:opacity-100" style={{ background: "rgba(0,0,0,0.55)" }}>
+                  <div className="absolute inset-0 flex items-center justify-center rounded-[18px] opacity-0 transition group-hover:opacity-100 pointer-events-none" style={{ background: "rgba(0,0,0,0.55)" }}>
                     <span className="rounded-full px-4 py-2 text-xs font-bold" style={{ background: "var(--theme-gold, #F5B548)", color: "#0B0B0B" }}>View Exhibition</span>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           </section>
