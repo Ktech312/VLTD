@@ -352,7 +352,6 @@ export default function GalleryShelfScene({
       }
     : undefined;
   const embeddedStageHeight = `${Math.max(1500, shelfCount * 380)}px`;
-  const embeddedCropHeight = `${Math.max(1280, shelfCount * 285)}px`;
 
   return (
     <section className="mt-0">
@@ -362,7 +361,6 @@ export default function GalleryShelfScene({
           embeddedPreview ? "max-w-[940px]" : GALLERY_STAGE_MAX_WIDTH_CLASS,
           theme.stageShell,
         ].join(" ")}
-        style={embeddedPreview ? { maxHeight: embeddedCropHeight } : undefined}
       >
         <div
           className={["relative", embeddedPreview ? "" : GALLERY_STAGE_HEIGHT_CLASS].join(" ")}
