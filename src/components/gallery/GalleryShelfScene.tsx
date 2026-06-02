@@ -14,7 +14,7 @@ const SHELF_ROWS = 6;
 const SHELF_SLOT_COUNT = SHELF_COLUMNS * SHELF_ROWS;
 const ROW_ANCHORS = ["27%", "41%", "55%", "69%", "83%", "97%"] as const;
 const EMBEDDED_STAGE_HEIGHT = 2700;
-const EMBEDDED_MOBILE_ROW_ANCHORS = ["28%", "42%", "56%", "70%", "84%", "98%"] as const;
+const EMBEDDED_MOBILE_ROW_ANCHORS = ["16%", "30%", "44%", "58%", "72%", "86%"] as const;
 const EMBEDDED_DESKTOP_ROW_ANCHORS = ["616px", "1016px", "1416px", "1816px", "2216px", "2616px"] as const;
 
 function itemImage(item: VaultItem) {
