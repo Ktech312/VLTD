@@ -12,7 +12,7 @@ export const GALLERY_STAGE_HEIGHT_CLASS = "h-[1500px] sm:h-[2200px] lg:h-[2700px
 const SHELF_COLUMNS = 3;
 const SHELF_ROWS = 6;
 const SHELF_SLOT_COUNT = SHELF_COLUMNS * SHELF_ROWS;
-const ROW_ANCHORS = ["18%", "32%", "46%", "60%", "74%", "88%"] as const;
+const ROW_ANCHORS = ["27%", "41%", "55%", "69%", "83%", "97%"] as const;
 
 function itemImage(item: VaultItem) {
   return item.imageFrontUrl || item.imageBackUrl || "";
