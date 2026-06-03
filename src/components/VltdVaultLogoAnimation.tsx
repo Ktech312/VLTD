@@ -5,6 +5,7 @@ import { useState } from "react";
 
 type Props = {
   className?: string;
+  defaultOpen?: boolean;
 };
 
 const INTAKE_ITEMS = [
@@ -16,8 +17,8 @@ const INTAKE_ITEMS = [
   { className: "poster", src: "/collectibles/movie-poster.png", alt: "Movie poster tube", width: 131, height: 584 },
 ];
 
-export default function VltdVaultLogoAnimation({ className = "" }: Props) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function VltdVaultLogoAnimation({ className = "", defaultOpen = false }: Props) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
     <button
