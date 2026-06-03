@@ -1146,4 +1146,129 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
                     </div>
                   </div>
 
-                  {/* 3�
+                  {/* 3×6 Grid (when open) */}
+                  {isOpen && (
+                    <ExhibitGrid
+                      galleryId={g.id}
+                      slots={slots ?? Array(MAX_SLOTS).fill(null)}
+                      allItems={char.items}
+                      liveData={liveData}
+                      saving={savingExhibit === g.id}
+                      onRemove={handleRemoveSlot}
+                      onPlace={handlePlaceItem}
+                      onSave={saveExhibitItems}
+                      onClose={() => setOpenExhibitId(null)}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ── Modals ── */}
+      {editingItem && (
+        <ItemEditModal
+          item={editingItem}
+          live={liveData.get(editingItem.id)}
+          onSave={handleSaveItem}
+          onClose={() => setEditingItem(null)}
+        />
+      )}
+      {editingBio && (
+        <BioEditModal
+          char={char}
+          currentBio={bio}
+          onSave={handleSaveBio}
+          onClose={() => setEditingBio(false)}
+        />
+      )}
+      {editingExhibit && (
+        <ExhibitEditModal
+          exhibit={editingExhibit}
+          profileId={char.profileId}
+          onSave={handleSaveExhibit}
+          onClose={() => setEditingExhibit(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Main Page ─────────────────────────────────────────────────
+export default function AdminCharactersPage() {
+  const [unlocked, setUnlocked] = useState(false);
+  const [selectedHandle, setSelectedHandle] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+
+  if (!unlocked) return <AuthGate onUnlock={() => setUnlocked(true)} />;
+
+  const filtered = ALL_CHARACTERS.filter((c) => {
+    const q = search.toLowerCase();
+    return (
+      c.displayName.toLowerCase().includes(q) ||
+      c.handle.toLowerCase().includes(q) ||
+      c.primaryFocus.toLowerCase().includes(q)
+    );
+  });
+
+  const selected = ALL_CHARACTERS.find((c) => c.handle === selectedHandle) ?? null;
+
+  const totalItems = ALL_CHARACTERS.reduce((s, c) => s + c.items.length, 0);
+  const totalValue = ALL_CHARACTERS.reduce(
+    (s, c) => s + c.items.reduce((ss, i) => ss + (i.currentValue ?? 0), 0),
+    0
+  );
+
+  return (
+    <div className="flex h-screen bg-[#0a0c12] text-white overflow-hidden">
+      {/* Sidebar */}
+      <div className="w-72 shrink-0 flex flex-col border-r border-white/8">
+        <div className="shrink-0 p-4 border-b border-white/8">
+          <div className="text-sm font-bold text-white">Character Admin</div>
+          <div className="mt-0.5 text-[10px] text-white/40">
+            {ALL_CHARACTERS.length} characters · {totalItems} items · {formatMoney(totalValue)}
+          </div>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search characters..."
+            className="mt-3 w-full rounded-xl bg-white/5 px-3 py-1.5 text-xs text-white ring-1 ring-white/10 focus:outline-none placeholder:text-white/30"
+          />
+        </div>
+        <div className="flex-1 overflow-y-auto p-3 grid gap-2">
+          {filtered.map((char) => (
+            <CharacterCard
+              key={char.handle}
+              char={char}
+              isSelected={selectedHandle === char.handle}
+              onClick={() => setSelectedHandle(char.handle)}
+            />
+          ))}
+          {filtered.length === 0 && (
+            <div className="text-center text-xs text-white/30 py-8">No characters found</div>
+          )}
+        </div>
+        <div className="shrink-0 p-3 border-t border-white/8 text-[10px] text-white/25 text-center">
+          Edit seedCharacters*.ts → run generateCharacterSeed.ts → paste SQL in Supabase
+        </div>
+      </div>
+
+      {/* Detail */}
+      <div className="flex-1 overflow-hidden bg-[#111318]">
+        {selected ? (
+          <CharacterDetail char={selected} />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <div className="text-center">
+              <div className="text-4xl opacity-20">👤</div>
+              <div className="mt-2 text-sm text-white/30">Select a character</div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
