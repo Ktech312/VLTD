@@ -528,16 +528,40 @@ function ItemRow({
       </div>
 
       {expanded && (
-        <div className="px-4 pb-3 pt-1 bg-white/[0.02] border-t border-white/5">
-          <div className="grid gap-1 text-[11px] text-white/60">
-            {item.universe && <div><span className="text-white/30">Universe: </span>{item.universe}</div>}
-            {item.category && <div><span className="text-white/30">Category: </span>{item.category}</div>}
-            {item.grade && <div><span className="text-white/30">Grade: </span>{item.grade}</div>}
-            {item.notes && <div><span className="text-white/30">Notes: </span>{item.notes}</div>}
-            <div className="flex flex-wrap gap-4 mt-1">
-              <div><span className="text-white/30">Value: </span><span className="text-amber-400">{formatMoney(item.currentValue)}</span></div>
-              {item.purchasePrice != null && <div><span className="text-white/30">Cost: </span>{formatMoney(item.purchasePrice)}</div>}
-              <div><span className="text-white/30">ID: </span><span className="font-mono text-[10px] text-white/25">{item.id}</span></div>
+        <div className="px-4 pb-3 pt-2 bg-white/[0.02] border-t border-white/5">
+          <div className="flex gap-4">
+            {/* Image preview */}
+            <div className="shrink-0">
+              <div className="h-28 w-24 overflow-hidden rounded-xl bg-white/5 ring-1 ring-white/10">
+                {imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={imageUrl} alt={item.title} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full flex-col items-center justify-center gap-1">
+                    <span className="text-2xl opacity-20">🖼️</span>
+                    <span className="text-[9px] text-white/20">No image</span>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => onEdit(item)}
+                className="mt-1.5 w-full rounded-lg bg-amber-500/15 py-1 text-[10px] font-semibold text-amber-400 hover:bg-amber-500/25 transition"
+              >
+                Change image
+              </button>
+            </div>
+
+            {/* Metadata */}
+            <div className="flex-1 grid gap-1 text-[11px] text-white/60">
+              {item.universe && <div><span className="text-white/30">Universe: </span>{item.universe}</div>}
+              {item.category && <div><span className="text-white/30">Category: </span>{item.category}</div>}
+              {item.grade && <div><span className="text-white/30">Grade: </span>{item.grade}</div>}
+              {item.notes && <div><span className="text-white/30">Notes: </span>{item.notes}</div>}
+              <div className="flex flex-wrap gap-4 mt-1">
+                <div><span className="text-white/30">Value: </span><span className="text-amber-400">{formatMoney(item.currentValue)}</span></div>
+                {item.purchasePrice != null && <div><span className="text-white/30">Cost: </span>{formatMoney(item.purchasePrice)}</div>}
+              </div>
+              <div className="mt-1"><span className="text-white/20">ID: </span><span className="font-mono text-[9px] text-white/20">{item.id}</span></div>
             </div>
           </div>
         </div>
@@ -948,36 +972,4 @@ export default function AdminCharactersPage() {
           />
         </div>
         <div className="flex-1 overflow-y-auto p-3 grid gap-2">
-          {filtered.map((char) => (
-            <CharacterCard
-              key={char.handle}
-              char={char}
-              isSelected={selectedHandle === char.handle}
-              onClick={() => setSelectedHandle(char.handle)}
-            />
-          ))}
-          {filtered.length === 0 && (
-            <div className="text-center text-xs text-white/30 py-8">No characters found</div>
-          )}
-        </div>
-        <div className="shrink-0 p-3 border-t border-white/8 text-[10px] text-white/25 text-center">
-          Edit seedCharacters*.ts → run generateCharacterSeed.ts → paste SQL in Supabase
-        </div>
-      </div>
-
-      {/* Detail */}
-      <div className="flex-1 overflow-hidden bg-[#111318]">
-        {selected ? (
-          <CharacterDetail char={selected} />
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <div className="text-center">
-              <div className="text-4xl opacity-20">👤</div>
-              <div className="mt-2 text-sm text-white/30">Select a character</div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+          {fi
