@@ -608,6 +608,178 @@ function CharacterCard({
   );
 }
 
+// ── Exhibit Grid (3×6 slot layout) ───────────────────────────
+const MAX_SLOTS = 18;
+
+function ExhibitGrid({
+  galleryId,
+  slots,
+  allItems,
+  liveData,
+  saving,
+  onRemove,
+  onPlace,
+  onSave,
+  onClose,
+}: {
+  galleryId: string;
+  slots: (string | null)[];
+  allItems: SeedItem[];
+  liveData: Map<string, LiveItem>;
+  saving: boolean;
+  onRemove: (galleryId: string, slotIdx: number) => void;
+  onPlace: (galleryId: string, slotIdx: number, itemId: string) => void;
+  onSave: (galleryId: string) => Promise<void>;
+  onClose: () => void;
+}) {
+  const [pickingSlot, setPickingSlot] = useState<number | null>(null);
+  const [pickSearch, setPickSearch] = useState("");
+
+  const itemById = new Map(allItems.map((i) => [i.id, i]));
+  const occupied = new Set(slots.filter(Boolean) as string[]);
+  const available = allItems.filter((i) => !occupied.has(i.id));
+  const filtered = pickSearch
+    ? available.filter((i) => i.title.toLowerCase().includes(pickSearch.toLowerCase()))
+    : available;
+
+  const filledCount = slots.filter(Boolean).length;
+
+  return (
+    <div className="border-t border-white/8">
+      {/* 3-col × 6-row slot grid */}
+      <div className="grid grid-cols-3 gap-2.5 p-4">
+        {Array.from({ length: MAX_SLOTS }).map((_, idx) => {
+          const itemId = slots[idx] ?? null;
+          const item = itemId ? itemById.get(itemId) : null;
+          const imgUrl = itemId ? (liveData.get(itemId)?.imageUrl ?? "") : "";
+          const disabled = itemId ? (liveData.get(itemId)?.disabled ?? false) : false;
+
+          if (item) {
+            return (
+              <div
+                key={idx}
+                className="flex flex-col overflow-hidden rounded-2xl ring-1 ring-white/10"
+                style={{ background: "rgba(255,255,255,0.04)" }}
+              >
+                {/* Thumbnail */}
+                <div className="relative h-24 shrink-0 bg-white/5">
+                  {imgUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={imgUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-3xl opacity-15">🖼️</div>
+                  )}
+                  <span className="absolute left-1.5 top-1.5 rounded-full bg-black/50 px-1.5 py-0.5 text-[10px] font-bold text-white/50">
+                    {idx + 1}
+                  </span>
+                </div>
+                {/* Info */}
+                <div className="flex-1 px-2.5 py-2">
+                  <div className={["text-sm font-semibold leading-snug line-clamp-2", disabled ? "line-through text-white/30" : "text-white"].join(" ")}>
+                    {item.title}
+                  </div>
+                  <div className="mt-0.5 text-xs text-white/40 truncate">{item.universe}</div>
+                </div>
+                {/* Actions */}
+                <div className="flex shrink-0 border-t border-white/8">
+                  <button
+                    onClick={() => onRemove(galleryId, idx)}
+                    className="flex flex-1 items-center justify-center gap-1 py-2 text-xs font-bold text-red-400 transition hover:bg-red-500/10"
+                  >
+                    <span className="text-base leading-none">−</span> Remove
+                  </button>
+                  <div className="w-px bg-white/8" />
+                  <button
+                    onClick={() => { setPickingSlot(idx); setPickSearch(""); }}
+                    className="flex flex-1 items-center justify-center py-2 text-xs font-semibold text-white/50 transition hover:bg-white/5 hover:text-white"
+                  >
+                    Replace
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          // Empty slot
+          return (
+            <button
+              key={idx}
+              onClick={() => { setPickingSlot(idx); setPickSearch(""); }}
+              className="group relative flex h-[168px] flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-white/10 transition hover:border-green-400/50 hover:bg-green-400/5"
+            >
+              <span className="absolute left-1.5 top-1.5 rounded-full bg-white/5 px-1.5 py-0.5 text-[10px] text-white/25">{idx + 1}</span>
+              <span className="text-3xl font-bold text-green-400/40 transition group-hover:text-green-400">+</span>
+              <span className="text-xs text-white/25 transition group-hover:text-white/50">Add item</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Item picker panel */}
+      {pickingSlot !== null && (
+        <div className="border-t border-white/8 bg-black/25 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="text-sm font-semibold text-white">
+              {slots[pickingSlot] ? "Replace" : "Add item"} — Slot {pickingSlot + 1}
+            </div>
+            <button onClick={() => setPickingSlot(null)} className="text-white/40 hover:text-white">✕</button>
+          </div>
+          <input
+            autoFocus
+            type="text"
+            value={pickSearch}
+            onChange={(e) => setPickSearch(e.target.value)}
+            placeholder="Search items…"
+            className="mb-3 w-full rounded-xl bg-white/5 px-3 py-2 text-sm text-white ring-1 ring-white/10 focus:outline-none placeholder:text-white/25"
+          />
+          <div className="grid grid-cols-2 gap-2 max-h-52 overflow-y-auto">
+            {filtered.map((item) => {
+              const img = liveData.get(item.id)?.imageUrl ?? "";
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => { onPlace(galleryId, pickingSlot, item.id); setPickingSlot(null); }}
+                  className="flex items-center gap-2 rounded-xl bg-white/5 p-2.5 text-left transition hover:bg-amber-500/10 hover:ring-1 hover:ring-amber-400/30"
+                >
+                  <div className="h-10 w-8 shrink-0 overflow-hidden rounded-lg bg-white/5">
+                    {img && <img src={img} alt="" className="h-full w-full object-cover" />}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-medium text-white/80 line-clamp-2 leading-snug">{item.title}</div>
+                    <div className="text-[10px] text-white/35">{item.universe}</div>
+                  </div>
+                </button>
+              );
+            })}
+            {filtered.length === 0 && (
+              <div className="col-span-2 py-6 text-center text-sm text-white/30">
+                {available.length === 0 ? "All items are in this exhibit" : "No items match"}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Save bar */}
+      <div className="flex items-center justify-between border-t border-white/8 px-4 py-3">
+        <div className="text-sm text-white/40">{filledCount} of {MAX_SLOTS} slots filled</div>
+        <div className="flex gap-2">
+          <button onClick={onClose} className="rounded-xl px-4 py-2 text-sm text-white/40 hover:text-white transition">
+            Close
+          </button>
+          <button
+            onClick={() => onSave(galleryId)}
+            disabled={saving}
+            className="rounded-xl bg-amber-500 px-5 py-2 text-sm font-bold text-black transition hover:bg-amber-400 disabled:opacity-50"
+          >
+            {saving ? "Saving…" : "Save Exhibit"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Character Detail Panel ────────────────────────────────────
 function CharacterDetail({ char }: { char: SeedCharacter }) {
   const [tab, setTab] = useState<"bio" | "items" | "exhibits">("bio");
@@ -616,10 +788,10 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
   const [bio, setBio] = useState(char.bio);
   const [loadingLive, setLoadingLive] = useState(false);
 
-  // Exhibit item management
+  // Exhibit item management — ordered slot array (18 slots = 3 cols × 6 rows)
+  const MAX_SLOTS = 18;
   const [openExhibitId, setOpenExhibitId] = useState<string | null>(null);
-  // Map of galleryId → Set of itemIds currently in that exhibit (loaded from Supabase)
-  const [exhibitItemIds, setExhibitItemIds] = useState<Map<string, Set<string>>>(new Map());
+  const [exhibitSlots, setExhibitSlots] = useState<Map<string, (string | null)[]>>(new Map());
   const [savingExhibit, setSavingExhibit] = useState<string | null>(null);
 
   // Modals
@@ -746,37 +918,50 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
     if (error) throw new Error(error.message);
   }, []);
 
-  // Load exhibit items from Supabase (layout.itemIds)
+  // Load exhibit items from Supabase → fill ordered slot array
   const loadExhibitItems = useCallback(async (galleryId: string) => {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return;
-    const { data } = await supabase
-      .from("galleries")
-      .select("layout")
-      .eq("id", galleryId)
-      .single();
+    const { data } = await supabase.from("galleries").select("layout").eq("id", galleryId).single();
     const ids: string[] = data?.layout?.itemIds ?? [];
-    setExhibitItemIds((prev) => new Map(prev).set(galleryId, new Set(ids)));
-  }, []);
+    const slots: (string | null)[] = Array(MAX_SLOTS).fill(null);
+    ids.forEach((id, i) => { if (i < MAX_SLOTS) slots[i] = id; });
+    setExhibitSlots((prev) => new Map(prev).set(galleryId, [...slots]));
+  }, [MAX_SLOTS]);
 
-  // Toggle an item in/out of an exhibit (local state only until Save)
-  const toggleExhibitItem = useCallback((galleryId: string, itemId: string) => {
-    setExhibitItemIds((prev) => {
+  // Remove item from a slot
+  const handleRemoveSlot = useCallback((galleryId: string, slotIdx: number) => {
+    setExhibitSlots((prev) => {
       const next = new Map(prev);
-      const ids = new Set(next.get(galleryId) ?? []);
-      if (ids.has(itemId)) ids.delete(itemId); else ids.add(itemId);
-      next.set(galleryId, ids);
+      const slots = [...(next.get(galleryId) ?? Array(MAX_SLOTS).fill(null))];
+      slots[slotIdx] = null;
+      next.set(galleryId, slots);
       return next;
     });
-  }, []);
+  }, [MAX_SLOTS]);
 
-  // Persist exhibit item changes to Supabase
+  // Place item into a slot
+  const handlePlaceItem = useCallback((galleryId: string, slotIdx: number, itemId: string) => {
+    setExhibitSlots((prev) => {
+      const next = new Map(prev);
+      const slots = [...(next.get(galleryId) ?? Array(MAX_SLOTS).fill(null))];
+      // Remove from any other slot first
+      const existing = slots.indexOf(itemId);
+      if (existing !== -1) slots[existing] = null;
+      slots[slotIdx] = itemId;
+      next.set(galleryId, slots);
+      return next;
+    });
+  }, [MAX_SLOTS]);
+
+  // Persist exhibit slot changes to Supabase
   const saveExhibitItems = useCallback(async (galleryId: string) => {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return;
     setSavingExhibit(galleryId);
     try {
-      const ids = [...(exhibitItemIds.get(galleryId) ?? [])];
+      const slots = exhibitSlots.get(galleryId) ?? [];
+      const ids = slots.filter(Boolean) as string[];
       // Fetch current layout so we don't clobber other fields
       const { data } = await supabase.from("galleries").select("layout").eq("id", galleryId).single();
       const layout = { ...(data?.layout ?? {}), itemIds: ids };
@@ -784,7 +969,7 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
     } finally {
       setSavingExhibit(null);
     }
-  }, [exhibitItemIds]);
+  }, [exhibitSlots]);
 
   const filteredItems = useMemo(() => {
     if (!search.trim()) return char.items;
@@ -920,15 +1105,15 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
           <div className="p-4 grid gap-4">
             {char.galleries.map((g) => {
               const isOpen = openExhibitId === g.id;
-              const liveIds = exhibitItemIds.get(g.id);
-              const itemCount = liveIds ? liveIds.size : g.itemIds.length;
+              const slots = exhibitSlots.get(g.id);
+              const filledCount = slots ? slots.filter(Boolean).length : g.itemIds.length;
 
               return (
-                <div key={g.id} className="rounded-2xl ring-1 ring-white/8 overflow-hidden"
-                  style={{ background: isOpen ? "rgba(245,181,72,0.04)" : "rgba(255,255,255,0.03)" }}>
+                <div key={g.id} className="overflow-hidden rounded-2xl ring-1 ring-white/8"
+                  style={{ background: isOpen ? "rgba(245,181,72,0.03)" : "rgba(255,255,255,0.03)" }}>
 
-                  {/* Exhibit header */}
-                  <div className="flex items-start gap-3 p-4">
+                  {/* Header */}
+                  <div className="flex items-center gap-3 p-4">
                     <button
                       className="flex-1 min-w-0 text-left"
                       onClick={async () => {
@@ -936,215 +1121,29 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
                           setOpenExhibitId(null);
                         } else {
                           setOpenExhibitId(g.id);
-                          if (!exhibitItemIds.has(g.id)) await loadExhibitItems(g.id);
+                          if (!exhibitSlots.has(g.id)) await loadExhibitItems(g.id);
                         }
                       }}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="text-base">{isOpen ? "▼" : "▶"}</span>
+                        <span className="text-sm text-white/40">{isOpen ? "▼" : "▶"}</span>
                         <div>
-                          <div className="font-semibold text-sm text-white">{g.title}</div>
-                          <div className="mt-0.5 text-xs text-white/45 leading-relaxed">{g.description}</div>
+                          <div className="text-base font-bold text-white">{g.title}</div>
+                          <div className="mt-0.5 text-sm text-white/45">{g.description}</div>
                         </div>
                       </div>
                     </button>
                     <div className="shrink-0 flex items-center gap-2">
-                      <span className="rounded-full bg-white/5 px-2.5 py-1 text-[10px] text-white/50">
-                        {itemCount} items
+                      <span className="rounded-full bg-white/8 px-3 py-1 text-sm text-white/50">
+                        {filledCount} items
                       </span>
                       <button
                         onClick={() => setEditingExhibit(g)}
-                        className="rounded-full bg-amber-500/15 px-3 py-1 text-[11px] font-semibold text-amber-400 hover:bg-amber-500/25 transition"
+                        className="rounded-full bg-amber-500/15 px-3 py-1.5 text-sm font-semibold text-amber-400 hover:bg-amber-500/25 transition"
                       >
                         Edit Info
                       </button>
                     </div>
                   </div>
 
-                  {/* Expanded item picker */}
-                  {isOpen && (
-                    <div className="border-t border-white/8">
-                      {/* Search within exhibit picker */}
-                      <div className="px-4 pt-3 pb-2">
-                        <div className="text-[10px] uppercase tracking-widest text-white/30 mb-2">
-                          Click items to add or remove from this exhibit
-                        </div>
-                      </div>
-
-                      {/* Item grid — all character items, highlighted if in exhibit */}
-                      <div className="px-4 pb-2 grid grid-cols-2 gap-2 max-h-[420px] overflow-y-auto">
-                        {char.items.map((item) => {
-                          const inExhibit = liveIds ? liveIds.has(item.id) : g.itemIds.includes(item.id);
-                          const imgUrl = liveData.get(item.id)?.imageUrl ?? "";
-                          const isDisabled = liveData.get(item.id)?.disabled ?? false;
-
-                          return (
-                            <button
-                              key={item.id}
-                              onClick={() => toggleExhibitItem(g.id, item.id)}
-                              className="flex items-center gap-2 rounded-xl p-2 text-left transition"
-                              style={{
-                                background: inExhibit ? "rgba(245,181,72,0.12)" : "rgba(255,255,255,0.03)",
-                                border: inExhibit ? "1px solid rgba(245,181,72,0.35)" : "1px solid rgba(255,255,255,0.06)",
-                              }}
-                            >
-                              {/* Thumbnail */}
-                              <div className="h-10 w-8 shrink-0 overflow-hidden rounded-lg bg-white/5">
-                                {imgUrl ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img src={imgUrl} alt="" className="h-full w-full object-cover" />
-                                ) : (
-                                  <div className="flex h-full items-center justify-center text-[7px] text-white/20">—</div>
-                                )}
-                              </div>
-                              {/* Info */}
-                              <div className="min-w-0 flex-1">
-                                <div className={["text-[10px] font-medium leading-tight truncate", isDisabled ? "line-through text-white/25" : inExhibit ? "text-amber-300" : "text-white/70"].join(" ")}>
-                                  {item.title}
-                                </div>
-                                <div className="text-[9px] text-white/30 truncate">{item.universe}</div>
-                              </div>
-                              {/* In/out indicator */}
-                              <div className="shrink-0 text-[10px]">
-                                {inExhibit ? "✓" : "+"}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* Save bar */}
-                      <div className="flex items-center justify-between gap-3 border-t border-white/8 px-4 py-3">
-                        <div className="text-[10px] text-white/30">
-                          {liveIds ? liveIds.size : g.itemIds.length} items selected
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setOpenExhibitId(null)}
-                            className="rounded-xl px-3 py-1.5 text-[11px] text-white/40 hover:text-white transition"
-                          >
-                            Close
-                          </button>
-                          <button
-                            onClick={() => saveExhibitItems(g.id)}
-                            disabled={savingExhibit === g.id}
-                            className="rounded-xl bg-amber-500 px-4 py-1.5 text-[11px] font-semibold text-black hover:bg-amber-400 transition disabled:opacity-50"
-                          >
-                            {savingExhibit === g.id ? "Saving…" : "Save Exhibit"}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* ── Modals ── */}
-      {editingItem && (
-        <ItemEditModal
-          item={editingItem}
-          live={liveData.get(editingItem.id)}
-          onSave={handleSaveItem}
-          onClose={() => setEditingItem(null)}
-        />
-      )}
-      {editingBio && (
-        <BioEditModal
-          char={char}
-          currentBio={bio}
-          onSave={handleSaveBio}
-          onClose={() => setEditingBio(false)}
-        />
-      )}
-      {editingExhibit && (
-        <ExhibitEditModal
-          exhibit={editingExhibit}
-          profileId={char.profileId}
-          onSave={handleSaveExhibit}
-          onClose={() => setEditingExhibit(null)}
-        />
-      )}
-    </div>
-  );
-}
-
-// ── Main Page ─────────────────────────────────────────────────
-export default function AdminCharactersPage() {
-  const [unlocked, setUnlocked] = useState(false);
-  const [selectedHandle, setSelectedHandle] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-
-  if (!unlocked) return <AuthGate onUnlock={() => setUnlocked(true)} />;
-
-  const filtered = ALL_CHARACTERS.filter((c) => {
-    const q = search.toLowerCase();
-    return (
-      c.displayName.toLowerCase().includes(q) ||
-      c.handle.toLowerCase().includes(q) ||
-      c.primaryFocus.toLowerCase().includes(q)
-    );
-  });
-
-  const selected = ALL_CHARACTERS.find((c) => c.handle === selectedHandle) ?? null;
-
-  const totalItems = ALL_CHARACTERS.reduce((s, c) => s + c.items.length, 0);
-  const totalValue = ALL_CHARACTERS.reduce(
-    (s, c) => s + c.items.reduce((ss, i) => ss + (i.currentValue ?? 0), 0),
-    0
-  );
-
-  return (
-    <div className="flex h-screen bg-[#0a0c12] text-white overflow-hidden">
-      {/* Sidebar */}
-      <div className="w-72 shrink-0 flex flex-col border-r border-white/8">
-        <div className="shrink-0 p-4 border-b border-white/8">
-          <div className="text-sm font-bold text-white">Character Admin</div>
-          <div className="mt-0.5 text-[10px] text-white/40">
-            {ALL_CHARACTERS.length} characters · {totalItems} items · {formatMoney(totalValue)}
-          </div>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search characters..."
-            className="mt-3 w-full rounded-xl bg-white/5 px-3 py-1.5 text-xs text-white ring-1 ring-white/10 focus:outline-none placeholder:text-white/30"
-          />
-        </div>
-        <div className="flex-1 overflow-y-auto p-3 grid gap-2">
-          {filtered.map((char) => (
-            <CharacterCard
-              key={char.handle}
-              char={char}
-              isSelected={selectedHandle === char.handle}
-              onClick={() => setSelectedHandle(char.handle)}
-            />
-          ))}
-          {filtered.length === 0 && (
-            <div className="text-center text-xs text-white/30 py-8">No characters found</div>
-          )}
-        </div>
-        <div className="shrink-0 p-3 border-t border-white/8 text-[10px] text-white/25 text-center">
-          Edit seedCharacters*.ts → run generateCharacterSeed.ts → paste SQL in Supabase
-        </div>
-      </div>
-
-      {/* Detail */}
-      <div className="flex-1 overflow-hidden bg-[#111318]">
-        {selected ? (
-          <CharacterDetail char={selected} />
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <div className="text-center">
-              <div className="text-4xl opacity-20">👤</div>
-              <div className="mt-2 text-sm text-white/30">Select a character</div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+                  {/* 3�
