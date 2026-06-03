@@ -616,6 +616,12 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
   const [bio, setBio] = useState(char.bio);
   const [loadingLive, setLoadingLive] = useState(false);
 
+  // Exhibit item management
+  const [openExhibitId, setOpenExhibitId] = useState<string | null>(null);
+  // Map of galleryId → Set of itemIds currently in that exhibit (loaded from Supabase)
+  const [exhibitItemIds, setExhibitItemIds] = useState<Map<string, Set<string>>>(new Map());
+  const [savingExhibit, setSavingExhibit] = useState<string | null>(null);
+
   // Modals
   const [editingItem, setEditingItem] = useState<SeedItem | null>(null);
   const [editingBio, setEditingBio] = useState(false);
@@ -729,18 +735,56 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
     setBio(newBio);
   }, [char.profileId]);
 
-  // Save exhibit to Supabase
+  // Save exhibit title/description to Supabase
   const handleSaveExhibit = useCallback(async (id: string, data: { title: string; description: string }) => {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) throw new Error("No Supabase client");
-
     const { error } = await supabase
       .from("galleries")
       .update({ title: data.title, description: data.description })
       .eq("id", id);
-
     if (error) throw new Error(error.message);
   }, []);
+
+  // Load exhibit items from Supabase (layout.itemIds)
+  const loadExhibitItems = useCallback(async (galleryId: string) => {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    const { data } = await supabase
+      .from("galleries")
+      .select("layout")
+      .eq("id", galleryId)
+      .single();
+    const ids: string[] = data?.layout?.itemIds ?? [];
+    setExhibitItemIds((prev) => new Map(prev).set(galleryId, new Set(ids)));
+  }, []);
+
+  // Toggle an item in/out of an exhibit (local state only until Save)
+  const toggleExhibitItem = useCallback((galleryId: string, itemId: string) => {
+    setExhibitItemIds((prev) => {
+      const next = new Map(prev);
+      const ids = new Set(next.get(galleryId) ?? []);
+      if (ids.has(itemId)) ids.delete(itemId); else ids.add(itemId);
+      next.set(galleryId, ids);
+      return next;
+    });
+  }, []);
+
+  // Persist exhibit item changes to Supabase
+  const saveExhibitItems = useCallback(async (galleryId: string) => {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    setSavingExhibit(galleryId);
+    try {
+      const ids = [...(exhibitItemIds.get(galleryId) ?? [])];
+      // Fetch current layout so we don't clobber other fields
+      const { data } = await supabase.from("galleries").select("layout").eq("id", galleryId).single();
+      const layout = { ...(data?.layout ?? {}), itemIds: ids };
+      await supabase.from("galleries").update({ layout }).eq("id", galleryId);
+    } finally {
+      setSavingExhibit(null);
+    }
+  }, [exhibitItemIds]);
 
   const filteredItems = useMemo(() => {
     if (!search.trim()) return char.items;
@@ -873,29 +917,128 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
 
         {/* ── Exhibits Tab ── */}
         {tab === "exhibits" && (
-          <div className="p-4 grid gap-3">
-            {char.galleries.map((g) => (
-              <div key={g.id} className="rounded-2xl bg-white/[0.03] p-4 ring-1 ring-white/8">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm text-white">{g.title}</div>
-                    <div className="mt-1 text-xs text-white/50 leading-relaxed">{g.description}</div>
+          <div className="p-4 grid gap-4">
+            {char.galleries.map((g) => {
+              const isOpen = openExhibitId === g.id;
+              const liveIds = exhibitItemIds.get(g.id);
+              const itemCount = liveIds ? liveIds.size : g.itemIds.length;
+
+              return (
+                <div key={g.id} className="rounded-2xl ring-1 ring-white/8 overflow-hidden"
+                  style={{ background: isOpen ? "rgba(245,181,72,0.04)" : "rgba(255,255,255,0.03)" }}>
+
+                  {/* Exhibit header */}
+                  <div className="flex items-start gap-3 p-4">
+                    <button
+                      className="flex-1 min-w-0 text-left"
+                      onClick={async () => {
+                        if (isOpen) {
+                          setOpenExhibitId(null);
+                        } else {
+                          setOpenExhibitId(g.id);
+                          if (!exhibitItemIds.has(g.id)) await loadExhibitItems(g.id);
+                        }
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{isOpen ? "▼" : "▶"}</span>
+                        <div>
+                          <div className="font-semibold text-sm text-white">{g.title}</div>
+                          <div className="mt-0.5 text-xs text-white/45 leading-relaxed">{g.description}</div>
+                        </div>
+                      </div>
+                    </button>
+                    <div className="shrink-0 flex items-center gap-2">
+                      <span className="rounded-full bg-white/5 px-2.5 py-1 text-[10px] text-white/50">
+                        {itemCount} items
+                      </span>
+                      <button
+                        onClick={() => setEditingExhibit(g)}
+                        className="rounded-full bg-amber-500/15 px-3 py-1 text-[11px] font-semibold text-amber-400 hover:bg-amber-500/25 transition"
+                      >
+                        Edit Info
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => setEditingExhibit(g)}
-                    className="shrink-0 rounded-full bg-amber-500/15 px-3 py-1 text-[11px] font-semibold text-amber-400 hover:bg-amber-500/25 transition"
-                  >
-                    Edit
-                  </button>
+
+                  {/* Expanded item picker */}
+                  {isOpen && (
+                    <div className="border-t border-white/8">
+                      {/* Search within exhibit picker */}
+                      <div className="px-4 pt-3 pb-2">
+                        <div className="text-[10px] uppercase tracking-widest text-white/30 mb-2">
+                          Click items to add or remove from this exhibit
+                        </div>
+                      </div>
+
+                      {/* Item grid — all character items, highlighted if in exhibit */}
+                      <div className="px-4 pb-2 grid grid-cols-2 gap-2 max-h-[420px] overflow-y-auto">
+                        {char.items.map((item) => {
+                          const inExhibit = liveIds ? liveIds.has(item.id) : g.itemIds.includes(item.id);
+                          const imgUrl = liveData.get(item.id)?.imageUrl ?? "";
+                          const isDisabled = liveData.get(item.id)?.disabled ?? false;
+
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={() => toggleExhibitItem(g.id, item.id)}
+                              className="flex items-center gap-2 rounded-xl p-2 text-left transition"
+                              style={{
+                                background: inExhibit ? "rgba(245,181,72,0.12)" : "rgba(255,255,255,0.03)",
+                                border: inExhibit ? "1px solid rgba(245,181,72,0.35)" : "1px solid rgba(255,255,255,0.06)",
+                              }}
+                            >
+                              {/* Thumbnail */}
+                              <div className="h-10 w-8 shrink-0 overflow-hidden rounded-lg bg-white/5">
+                                {imgUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={imgUrl} alt="" className="h-full w-full object-cover" />
+                                ) : (
+                                  <div className="flex h-full items-center justify-center text-[7px] text-white/20">—</div>
+                                )}
+                              </div>
+                              {/* Info */}
+                              <div className="min-w-0 flex-1">
+                                <div className={["text-[10px] font-medium leading-tight truncate", isDisabled ? "line-through text-white/25" : inExhibit ? "text-amber-300" : "text-white/70"].join(" ")}>
+                                  {item.title}
+                                </div>
+                                <div className="text-[9px] text-white/30 truncate">{item.universe}</div>
+                              </div>
+                              {/* In/out indicator */}
+                              <div className="shrink-0 text-[10px]">
+                                {inExhibit ? "✓" : "+"}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Save bar */}
+                      <div className="flex items-center justify-between gap-3 border-t border-white/8 px-4 py-3">
+                        <div className="text-[10px] text-white/30">
+                          {liveIds ? liveIds.size : g.itemIds.length} items selected
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setOpenExhibitId(null)}
+                            className="rounded-xl px-3 py-1.5 text-[11px] text-white/40 hover:text-white transition"
+                          >
+                            Close
+                          </button>
+                          <button
+                            onClick={() => saveExhibitItems(g.id)}
+                            disabled={savingExhibit === g.id}
+                            className="rounded-xl bg-amber-500 px-4 py-1.5 text-[11px] font-semibold text-black hover:bg-amber-400 transition disabled:opacity-50"
+                          >
+                            {savingExhibit === g.id ? "Saving…" : "Save Exhibit"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-white/40">
-                  <span className="rounded-full bg-white/5 px-2 py-0.5">{g.themePack}</span>
-                  <span className="rounded-full bg-white/5 px-2 py-0.5">{g.visibility}</span>
-                  <span className="rounded-full bg-white/5 px-2 py-0.5">{g.itemIds.length} items</span>
-                </div>
-                <div className="mt-2 font-mono text-[10px] text-white/25">{g.id}</div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -972,4 +1115,36 @@ export default function AdminCharactersPage() {
           />
         </div>
         <div className="flex-1 overflow-y-auto p-3 grid gap-2">
-          {fi
+          {filtered.map((char) => (
+            <CharacterCard
+              key={char.handle}
+              char={char}
+              isSelected={selectedHandle === char.handle}
+              onClick={() => setSelectedHandle(char.handle)}
+            />
+          ))}
+          {filtered.length === 0 && (
+            <div className="text-center text-xs text-white/30 py-8">No characters found</div>
+          )}
+        </div>
+        <div className="shrink-0 p-3 border-t border-white/8 text-[10px] text-white/25 text-center">
+          Edit seedCharacters*.ts → run generateCharacterSeed.ts → paste SQL in Supabase
+        </div>
+      </div>
+
+      {/* Detail */}
+      <div className="flex-1 overflow-hidden bg-[#111318]">
+        {selected ? (
+          <CharacterDetail char={selected} />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <div className="text-center">
+              <div className="text-4xl opacity-20">👤</div>
+              <div className="mt-2 text-sm text-white/30">Select a character</div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
