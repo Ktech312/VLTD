@@ -207,9 +207,9 @@ export default function CollectorProfilePage() {
 
               <div className="mt-5 flex flex-wrap gap-2">
                 <TinyBadge>{collection.totalItems} items</TinyBadge>
-                <TinyBadge>{galleries.length} galleries</TinyBadge>
+                <TinyBadge>{galleries.length} exhibits</TinyBadge>
                 <TinyBadge>{stats.activeGalleries} active</TinyBadge>
-                <TinyBadge>{stats.totalViews} gallery views</TinyBadge>
+                <TinyBadge>{stats.totalViews} exhibit views</TinyBadge>
                 <TinyBadge>{stats.curatorNotes} curator notes</TinyBadge>
               </div>
             </div>
@@ -230,7 +230,7 @@ export default function CollectorProfilePage() {
 
           <div className="relative mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
             <StatCard label="ITEMS" value={collection.totalItems} hint="Vault pieces tracked" />
-            <StatCard label="GALLERIES" value={galleries.length} hint="Exhibition presentations" />
+            <StatCard label="EXHIBITS" value={galleries.length} hint="Exhibition presentations" />
             <StatCard label="ACTIVE" value={stats.activeGalleries} hint="Currently active" />
             <StatCard
               label="TOTAL VALUE"
@@ -326,7 +326,7 @@ export default function CollectorProfilePage() {
 
               <QuietCard title="Exhibition Footprint">
                 <div className="font-semibold text-[color:var(--fg)]">
-                  {galleries.length} galleries • {stats.totalViews} views
+                  {galleries.length} exhibits • {stats.totalViews} views
                 </div>
                 <div className="mt-1">
                   Public exhibition output and audience engagement for the active profile.
@@ -339,13 +339,13 @@ export default function CollectorProfilePage() {
         <section className="vltd-panel-main mt-6 rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <SectionHeader
             eyebrow="FEATURED GALLERIES"
-            title="Most viewed galleries"
+            title="Most viewed exhibits"
             description="Your strongest public museum presentations, sorted by attention."
           />
 
           {featuredGalleries.length === 0 ? (
             <div className="mt-4 text-sm text-[color:var(--muted)]">
-              No galleries available yet.
+              No exhibits yet.
             </div>
           ) : (
             <div className="mt-5 grid gap-3">
