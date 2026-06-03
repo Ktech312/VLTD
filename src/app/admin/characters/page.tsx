@@ -4,8 +4,9 @@
 // /admin/characters — Seed Character Admin
 // ─────────────────────────────────────────────────────────────
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { VAULT_IMAGES_BUCKET } from "@/lib/vaultCloud";
 import { SEED_CHARACTERS } from "@/lib/seedCharacters";
 import { SEED_CHARACTERS_PART2 } from "@/lib/seedCharacters_part2";
 import { SEED_CHARACTERS_PART3 } from "@/lib/seedCharacters_part3";
@@ -94,7 +95,32 @@ function ItemEditModal({
   const [value, setValue] = useState(String(item.currentValue ?? ""));
   const [cost, setCost] = useState(String(item.purchasePrice ?? ""));
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function handleUpload(file: File) {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) { setError("No Supabase client"); return; }
+    setUploading(true);
+    setError("");
+    try {
+      const ext = file.name.split(".").pop() ?? "jpg";
+      const path = `admin/${item.id}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from(VAULT_IMAGES_BUCKET)
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) throw new Error(upErr.message);
+      const { data: { publicUrl } } = supabase.storage
+        .from(VAULT_IMAGES_BUCKET)
+        .getPublicUrl(path);
+      setImageUrl(publicUrl);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
@@ -136,27 +162,66 @@ function ItemEditModal({
           <button onClick={onClose} className="text-white/40 hover:text-white text-lg leading-none">✕</button>
         </div>
 
-        {/* Image preview + URL */}
+        {/* Image preview + URL + Upload */}
         <div className="px-5 pt-4">
           <div className="flex gap-3">
-            <div className="h-20 w-16 shrink-0 overflow-hidden rounded-xl bg-white/5 ring-1 ring-white/10">
+            {/* Thumbnail — click to upload */}
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="relative h-24 w-20 shrink-0 overflow-hidden rounded-xl bg-white/5 ring-1 ring-white/10 group hover:ring-amber-400/40 transition"
+              title="Click to upload image"
+            >
               {imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={imageUrl} alt="" className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full items-center justify-center text-[10px] text-white/25">No img</div>
+                <div className="flex h-full flex-col items-center justify-center gap-1">
+                  <span className="text-lg opacity-30">📷</span>
+                  <span className="text-[8px] text-white/25">Upload</span>
+                </div>
               )}
-            </div>
-            <div className="flex-1">
-              <label className="text-[10px] uppercase tracking-widest text-white/30">Image URL</label>
-              <input
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://..."
-                className="mt-1 w-full rounded-xl bg-white/5 px-3 py-2 text-xs text-white ring-1 ring-white/10 focus:outline-none focus:ring-amber-400/40 placeholder:text-white/25"
-              />
+              {/* Hover overlay */}
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition rounded-xl">
+                <span className="text-[9px] font-semibold text-white">
+                  {uploading ? "Uploading…" : "Replace"}
+                </span>
+              </div>
+            </button>
+
+            {/* URL field + upload button */}
+            <div className="flex-1 flex flex-col gap-2">
+              <div>
+                <label className="text-[10px] uppercase tracking-widest text-white/30">Image URL</label>
+                <input
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="Paste URL or upload a file →"
+                  className="mt-1 w-full rounded-xl bg-white/5 px-3 py-2 text-xs text-white ring-1 ring-white/10 focus:outline-none focus:ring-amber-400/40 placeholder:text-white/20"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-semibold text-white/60 hover:bg-white/10 hover:text-white transition disabled:opacity-40"
+              >
+                {uploading ? "Uploading…" : "📁 Upload from computer"}
+              </button>
             </div>
           </div>
+          {/* Hidden file input */}
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void handleUpload(file);
+              e.target.value = "";
+            }}
+          />
         </div>
 
         {/* Fields */}
@@ -548,7 +613,7 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
         const { data } = await supabase
           .from("vault_items")
           .select("id, image_front_url, is_public")
-          .eq("user_id", char.profileId);
+          .eq("profile_id", char.profileId);
         if (data) {
           const map = new Map<string, LiveItem>();
           for (const row of data) {
