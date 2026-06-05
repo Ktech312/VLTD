@@ -165,9 +165,30 @@ export default function PricingMvpCard({
         saleDate: String(comp.saleDate ?? "").trim() || undefined,
         condition: String(comp.condition ?? "").trim() || undefined,
         url: String(comp.url ?? "").trim() || undefined,
+        thumbnailUrl: String(comp.thumbnailUrl ?? "").trim() || undefined,
         notes: String(comp.notes ?? "").trim() || undefined,
       }))
       .filter((comp) => comp.source && Number.isFinite(comp.salePrice) && comp.salePrice > 0);
+  }
+
+  function applyCompAsValue(comp: PriceComparable) {
+    const salePrice = Number(comp.salePrice);
+    if (!Number.isFinite(salePrice) || salePrice <= 0) return;
+
+    setValueMedianInput(String(salePrice));
+    setLastCompValueInput(String(salePrice));
+    setPriceSourceInput(comp.source);
+    setPriceConfidenceInput((current) => current || "medium");
+    setPriceNotesInput((current) => {
+      const line = [
+        `Value set from ${comp.source} comparable`,
+        comp.saleDate ? `sold ${comp.saleDate}` : "",
+        comp.condition ? `condition ${comp.condition}` : "",
+        comp.url ? comp.url : "",
+      ].filter(Boolean).join(" - ");
+      const trimmed = current.trim();
+      return trimmed ? `${trimmed}\n${line}` : line;
+    });
   }
 
   async function handleSave() {
@@ -316,35 +337,73 @@ export default function PricingMvpCard({
                 + Add Comp
               </button>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {comparableDraft.map((comp, index) => (
-                <div key={index} className="grid gap-2 sm:grid-cols-[1fr_100px_100px_32px]">
-                  <input
-                    className={inputClass()}
-                    placeholder="Source"
-                    value={comp.source}
-                    onChange={(e) => updateComp(index, "source", e.target.value)}
-                  />
-                  <input
-                    className={inputClass()}
-                    placeholder="Price"
-                    type="number"
-                    value={comp.salePrice || ""}
-                    onChange={(e) => updateComp(index, "salePrice", Number(e.target.value))}
-                  />
-                  <input
-                    className={inputClass()}
-                    placeholder="Date"
-                    value={comp.saleDate ?? ""}
-                    onChange={(e) => updateComp(index, "saleDate", e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeComp(index)}
-                    className="h-10 rounded-xl text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
-                  >
-                    x
-                  </button>
+                <div key={index} className="rounded-2xl bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)]">
+                  <div className="grid gap-2 sm:grid-cols-[1fr_110px_120px_32px]">
+                    <input
+                      className={inputClass()}
+                      placeholder="Source"
+                      value={comp.source}
+                      onChange={(e) => updateComp(index, "source", e.target.value)}
+                    />
+                    <input
+                      className={inputClass()}
+                      placeholder="Price"
+                      type="number"
+                      value={comp.salePrice || ""}
+                      onChange={(e) => updateComp(index, "salePrice", Number(e.target.value))}
+                    />
+                    <input
+                      className={inputClass()}
+                      placeholder="Sale date"
+                      value={comp.saleDate ?? ""}
+                      onChange={(e) => updateComp(index, "saleDate", e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeComp(index)}
+                      className="h-10 rounded-xl text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
+                      title="Remove comparable"
+                    >
+                      x
+                    </button>
+                  </div>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    <input
+                      className={inputClass()}
+                      placeholder="Thumbnail URL"
+                      value={comp.thumbnailUrl ?? ""}
+                      onChange={(e) => updateComp(index, "thumbnailUrl", e.target.value)}
+                    />
+                    <input
+                      className={inputClass()}
+                      placeholder="Listing / sold URL"
+                      value={comp.url ?? ""}
+                      onChange={(e) => updateComp(index, "url", e.target.value)}
+                    />
+                    <input
+                      className={inputClass()}
+                      placeholder="Condition / grade"
+                      value={comp.condition ?? ""}
+                      onChange={(e) => updateComp(index, "condition", e.target.value)}
+                    />
+                    <input
+                      className={inputClass()}
+                      placeholder="Notes"
+                      value={comp.notes ?? ""}
+                      onChange={(e) => updateComp(index, "notes", e.target.value)}
+                    />
+                  </div>
+                  <div className="mt-2 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => applyCompAsValue(comp)}
+                      className="rounded-full bg-[color:var(--surface)] px-3 py-1.5 text-[11px] font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)]"
+                    >
+                      Use as current value
+                    </button>
+                  </div>
                 </div>
               ))}
               {comparableDraft.length === 0 ? (
@@ -400,21 +459,49 @@ export default function PricingMvpCard({
             <div>
               <div className="mb-2 text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">COMPARABLE SALES</div>
               <div className="space-y-1.5">
-                {comparables.map((comp, index) => (
-                  <div
+                {comparables.map((comp, index) => {
+                  const body = (
+                    <>
+                      {comp.thumbnailUrl ? (
+                        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-[color:var(--surface)] ring-1 ring-[color:var(--border)]">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={comp.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+                        </div>
+                      ) : null}
+                      <div className="min-w-0 flex-1">
+                        <div>
+                          <span className="text-[13px] font-semibold text-[color:var(--fg)]">{formatPrice(comp.salePrice)}</span>
+                          {comp.condition ? <span className="ml-2 text-[11px] text-[color:var(--muted)]">{comp.condition}</span> : null}
+                        </div>
+                        {comp.notes ? <div className="mt-1 truncate text-[11px] text-[color:var(--muted)]">{comp.notes}</div> : null}
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <div className="text-[12px] font-semibold text-[color:var(--muted)]">{comp.source}</div>
+                        {comp.saleDate ? <div className="text-[11px] text-[color:var(--muted2)]">{comp.saleDate}</div> : null}
+                      </div>
+                    </>
+                  );
+
+                  const className = "flex items-center justify-between gap-3 rounded-xl bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]";
+                  return comp.url ? (
+                    <a
+                      key={`${comp.source}-${index}`}
+                      href={comp.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`${className} transition hover:brightness-110`}
+                    >
+                      {body}
+                    </a>
+                  ) : (
+                    <div
                     key={`${comp.source}-${index}`}
-                    className="flex items-center justify-between gap-3 rounded-xl bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]"
+                      className={className}
                   >
-                    <div>
-                      <span className="text-[13px] font-semibold text-[color:var(--fg)]">{formatPrice(comp.salePrice)}</span>
-                      {comp.condition ? <span className="ml-2 text-[11px] text-[color:var(--muted)]">{comp.condition}</span> : null}
+                      {body}
                     </div>
-                    <div className="text-right">
-                      <div className="text-[12px] font-semibold text-[color:var(--muted)]">{comp.source}</div>
-                      {comp.saleDate ? <div className="text-[11px] text-[color:var(--muted2)]">{comp.saleDate}</div> : null}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ) : null}

@@ -6,6 +6,7 @@ export type PriceComparable = {
   saleDate?: string;
   condition?: string;
   url?: string;
+  thumbnailUrl?: string;
   notes?: string;
 };
 
@@ -268,16 +269,22 @@ export function normalizePriceSources(value: unknown): PricingSource[] | undefin
 
 export function normalizeComparables(value: unknown): PriceComparable[] | undefined {
   if (!Array.isArray(value)) return undefined;
-  const comparables = value.filter((comp): comp is PriceComparable => {
-    if (!comp || typeof comp !== "object") return false;
+  const comparables = value.flatMap((comp) => {
+    if (!comp || typeof comp !== "object") return [];
     const record = comp as Record<string, unknown>;
-    return (
-      typeof record.source === "string" &&
-      record.source.trim().length > 0 &&
-      typeof record.salePrice === "number" &&
-      Number.isFinite(record.salePrice) &&
-      record.salePrice > 0
-    );
+    const source = String(record.source ?? "").trim();
+    const salePrice = Number(record.salePrice);
+    if (!source || !Number.isFinite(salePrice) || salePrice <= 0) return [];
+
+    return [{
+      source,
+      salePrice,
+      saleDate: String(record.saleDate ?? "").trim() || undefined,
+      condition: String(record.condition ?? "").trim() || undefined,
+      url: String(record.url ?? "").trim() || undefined,
+      thumbnailUrl: String(record.thumbnailUrl ?? "").trim() || undefined,
+      notes: String(record.notes ?? "").trim() || undefined,
+    }];
   });
   return comparables.length ? comparables : undefined;
 }
