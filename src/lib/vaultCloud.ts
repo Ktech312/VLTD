@@ -218,6 +218,7 @@ function sanitizeRemoteImages(images?: VaultImage[]) {
   return (images ?? [])
     .filter((image) => {
       if (!image) return false;
+      if (image.localOnly) return false;
       if (!image.storageKey && !image.url) return false;
       if (image.url && isLocalOnlyImageUrl(image.url)) return false;
       if (image.storageKey && isLocalOnlyImageUrl(image.storageKey)) return false;

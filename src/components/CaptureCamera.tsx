@@ -23,9 +23,10 @@ function UploadIcon() {
 
 type CaptureCameraProps = {
   onCapture?: (file: File) => void;
+  onOpenCamera?: () => void;
 };
 
-export default function CaptureCamera({ onCapture }: CaptureCameraProps = {}) {
+export default function CaptureCamera({ onCapture, onOpenCamera }: CaptureCameraProps = {}) {
   // Separate refs: one for camera-only, one for file picker
   const cameraRef = useRef<HTMLInputElement>(null);
   const uploadRef = useRef<HTMLInputElement>(null);
@@ -60,7 +61,13 @@ export default function CaptureCamera({ onCapture }: CaptureCameraProps = {}) {
       {/* Camera hero button */}
       <button
         type="button"
-        onClick={() => cameraRef.current?.click()}
+        onClick={() => {
+          if (onOpenCamera) {
+            onOpenCamera();
+            return;
+          }
+          cameraRef.current?.click();
+        }}
         className="group relative flex min-h-[260px] w-full flex-col items-center justify-center overflow-hidden rounded-[24px] border border-dashed px-5 text-center transition hover:-translate-y-0.5"
         style={{
           borderColor: "var(--theme-gold-border, rgba(245,181,72,0.35))",

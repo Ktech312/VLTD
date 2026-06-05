@@ -2,15 +2,22 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
+import CameraCapturePanel from "@/components/CameraCapturePanel";
 import CaptureCamera from "@/components/CaptureCamera";
 import { analyzeImageWithVision, type VisionAnalysisResult } from "@/lib/ai/openaiVision";
 import { scanBarcodeFromFile } from "@/lib/scanners/barcodeScanner";
 import { lookupUpcItem } from "@/lib/upcLookup";
 import { newId } from "@/lib/id";
-import { appendItems } from "@/lib/vaultModel";
+import { appendItems, type VaultImage } from "@/lib/vaultModel";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
+import { hasSupabaseEnv, uploadVaultImageToSupabase } from "@/lib/vaultCloud";
+import {
+  generateVaultImageKey,
+  prepareImageBlob,
+  saveImageBlobToIndexedDb,
+} from "@/lib/vaultImageStore";
 
 /* ── Types ─────────────────────────────────────────────────────── */
 
@@ -74,17 +81,72 @@ function mergeResults(
   };
 }
 
+async function persistCapturedImage(itemId: string, file: File) {
+  const durableBlob = await prepareImageBlob(file);
+  const fileName = file.name || "capture.jpg";
+
+  if (navigator.onLine && hasSupabaseEnv()) {
+    try {
+      const uploaded = await uploadVaultImageToSupabase({
+        itemId,
+        file: durableBlob,
+        fileName,
+      });
+
+      const image: VaultImage = {
+        id: `${itemId}_img_0`,
+        storageKey: uploaded.path,
+        url: uploaded.publicUrl,
+        order: 0,
+        localOnly: false,
+        role: "primary",
+      };
+
+      return {
+        images: [image],
+        primaryImageKey: image.storageKey,
+        imageFrontUrl: image.url,
+        imageFrontStoragePath: image.storageKey,
+      };
+    } catch (error) {
+      console.error("[Capture] Supabase image upload failed, using local fallback:", error);
+    }
+  }
+
+  const storageKey = generateVaultImageKey(itemId, 0);
+  await saveImageBlobToIndexedDb(durableBlob, storageKey);
+
+  const image: VaultImage = {
+    id: `${itemId}_img_0`,
+    storageKey,
+    order: 0,
+    localOnly: true,
+    role: "primary",
+  };
+
+  return {
+    images: [image],
+    primaryImageKey: image.storageKey,
+    imageFrontStoragePath: image.storageKey,
+  };
+}
+
 /* ── Page ───────────────────────────────────────────────────────── */
 
 export default function CapturePage() {
   const router = useRouter();
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [fields, setFields] = useState<ReviewFields>(EMPTY_FIELDS);
+  const [capturedImageFile, setCapturedImageFile] = useState<File | null>(null);
+  const [isCameraPanelOpen, setIsCameraPanelOpen] = useState(false);
 
   /* ── AI flow triggered by photo capture ── */
   const handleCapture = useCallback(async (file: File) => {
+    setCapturedImageFile(file);
+    setIsCameraPanelOpen(false);
     setPhase("loading");
     setErrorMsg("");
 
@@ -139,8 +201,13 @@ export default function CapturePage() {
   /* ── Save to vault ── */
   const handleSave = useCallback(async () => {
     try {
+      const id = newId();
+      const imagePatch = capturedImageFile
+        ? await persistCapturedImage(id, capturedImageFile)
+        : {};
+
       const item = {
-        id: newId(),
+        id,
         title: fields.title.trim() || "Untitled Item",
         subtitle: fields.subtitle || undefined,
         category: fields.category || undefined,
@@ -153,6 +220,7 @@ export default function CapturePage() {
         subcategoryLabel: fields.subcategoryLabel || undefined,
         status: "COLLECTION" as const,
         createdAt: Date.now(),
+        ...imagePatch,
       };
       await appendItems([item]);
       emitVaultUpdate();
@@ -160,7 +228,7 @@ export default function CapturePage() {
     } catch (err) {
       console.error("[Capture] Save error:", err);
     }
-  }, [fields, router]);
+  }, [capturedImageFile, fields, router]);
 
   /* ── Go to full add page with pre-filled fields ── */
   const handleEditMore = useCallback(() => {
@@ -316,7 +384,10 @@ export default function CapturePage() {
             {/* Right: camera — visible in idle and loading phases */}
             {(phase === "idle" || phase === "loading") && (
               <div className="order-first lg:order-none">
-                <CaptureCamera onCapture={handleCapture} />
+                <CaptureCamera
+                  onCapture={handleCapture}
+                  onOpenCamera={() => setIsCameraPanelOpen(true)}
+                />
               </div>
             )}
           </div>
@@ -427,6 +498,32 @@ export default function CapturePage() {
             </div>
           )}
         </section>
+
+        <input
+          ref={uploadInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(event) => {
+            const file = event.currentTarget.files?.[0];
+            event.currentTarget.value = "";
+            if (file) void handleCapture(file);
+          }}
+        />
+
+        {isCameraPanelOpen ? (
+          <CameraCapturePanel
+            title="Capture Item Photo"
+            description="Use the guided camera to frame, crop, and improve this item before Smart Scan identifies it."
+            universe={fields.universe}
+            onCapture={handleCapture}
+            onClose={() => setIsCameraPanelOpen(false)}
+            onUseFileInstead={() => {
+              setIsCameraPanelOpen(false);
+              uploadInputRef.current?.click();
+            }}
+          />
+        ) : null}
       </div>
     </main>
   );

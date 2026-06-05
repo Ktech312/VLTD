@@ -334,12 +334,26 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     const frontBlob = await prepareImageBlob(item.frontBlob as File).catch(() => item.frontBlob);
     const frontKey = generateVaultImageKey(item.id, 0);
     await saveImageBlobToIndexedDb(frontBlob, frontKey);
-    images.push({ id: `${item.id}_img_0`, storageKey: frontKey, url: item.frontObjectUrl, order: 0, role: "primary" });
+    images.push({
+      id: `${item.id}_img_0`,
+      storageKey: frontKey,
+      url: item.frontObjectUrl,
+      order: 0,
+      localOnly: true,
+      role: "primary",
+    });
     if (item.backBlob) {
       const backBlob = await prepareImageBlob(item.backBlob as File).catch(() => item.backBlob as Blob);
       const backKey = generateVaultImageKey(item.id, 1);
       await saveImageBlobToIndexedDb(backBlob, backKey);
-      images.push({ id: `${item.id}_img_1`, storageKey: backKey, url: item.backObjectUrl, order: 1, role: "detail" });
+      images.push({
+        id: `${item.id}_img_1`,
+        storageKey: backKey,
+        url: item.backObjectUrl,
+        order: 1,
+        localOnly: true,
+        role: "detail",
+      });
     }
     return {
       id: item.id,

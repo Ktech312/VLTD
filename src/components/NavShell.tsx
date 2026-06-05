@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import TopNav from "@/components/TopNav";
 import BottomNav from "@/components/BottomNav";
+import VaultSyncStatusChip from "@/components/VaultSyncStatusChip";
 
 export default function NavShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -18,6 +19,7 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
       <div style={{ paddingTop: "var(--topnav-h)" }} className="vltd-content-wrap">
         {children}
       </div>
+      <VaultSyncStatusChip />
       <BottomNav />
     </>
   );

@@ -12,6 +12,7 @@ import {
   buildDefaultMappingProfile,
   buildImportSummary,
   buildItemsFromSource,
+  detectExistingDuplicateGroups,
   detectDuplicateGroups,
   downloadBlankSpreadsheetTemplate,
   type IgnoredImportRow,
@@ -24,6 +25,7 @@ import {
   type ParsedImportItem,
   type ParsedImportSource,
 } from "@/lib/spreadsheetImport";
+import { processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 
 const PREVIEW_LIMIT = 150;
 const IGNORE_LIMIT = 50;
@@ -126,20 +128,27 @@ export default function SpreadsheetImportClient() {
   const [ignoredRows, setIgnoredRows] = useState<IgnoredImportRow[]>([]);
   const [sourceLabel, setSourceLabel] = useState("No source loaded");
   const [recentVault, setRecentVault] = useState<ParsedImportItem[]>([]);
+  const [existingVault, setExistingVault] = useState<ParsedImportItem[]>([]);
   const [hasMounted, setHasMounted] = useState(false);
-  const [importMode, setImportMode] = useState<"all" | "skip-duplicates">("all");
+  const [importMode, setImportMode] = useState<"all" | "skip-batch-duplicates" | "skip-existing-duplicates">("all");
   const [hasConfirmed, setHasConfirmed] = useState(false);
   const [importPreset, setImportPreset] = useState<ImportPreset>("generic");
 
   const previewItems = useMemo(() => parsedItems.slice(0, PREVIEW_LIMIT), [parsedItems]);
   const duplicateGroups = useMemo(() => detectDuplicateGroups(parsedItems), [parsedItems]);
+  const existingDuplicateGroups = useMemo(
+    () => detectExistingDuplicateGroups(parsedItems, existingVault),
+    [parsedItems, existingVault]
+  );
   const summary = useMemo(() => buildImportSummary(parsedItems, ignoredRows), [parsedItems, ignoredRows]);
 
   function refreshRecentVault() {
-    const items = [...readVaultForActiveProfile()]
+    const items = [...readVaultForActiveProfile()];
+    setExistingVault(items as ParsedImportItem[]);
+    const recentItems = [...items]
       .sort((a, b) => Number(b.createdAt ?? 0) - Number(a.createdAt ?? 0))
       .slice(0, 8) as ParsedImportItem[];
-    setRecentVault(items);
+    setRecentVault(recentItems);
   }
 
   useEffect(() => {
@@ -237,9 +246,19 @@ export default function SpreadsheetImportClient() {
     if (importMode === "all") return parsedItems;
 
     const seen = new Set<string>();
+    const existingKeys =
+      importMode === "skip-existing-duplicates"
+        ? new Set(
+            existingVault.map((item) =>
+              (item.title || "").toLowerCase().replace(/\s+/g, " ").trim()
+            )
+          )
+        : new Set<string>();
+
     return parsedItems.filter((item) => {
       const key = (item.title || "").toLowerCase().replace(/\s+/g, " ").trim();
       if (!key) return true;
+      if (existingKeys.has(key)) return false;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
@@ -263,6 +282,7 @@ export default function SpreadsheetImportClient() {
       const finalItems = getItemsToImport();
       appendImportedItems(finalItems);
       emitVaultUpdate();
+      void processVaultSyncQueue();
 
       const refreshed = readVaultForActiveProfile();
       const foundCount = finalItems.filter((item) => refreshed.some((saved) => String(saved.id) === String(item.id))).length;
@@ -277,7 +297,7 @@ export default function SpreadsheetImportClient() {
       setStatus(
         `Imported ${finalItems.length} items from ${sourceLabel}. ` +
           (summary.missingCostCount > 0 ? `${summary.missingCostCount} items had missing cost and were set to $0. ` : "") +
-          (skippedDupCount > 0 ? `Skipped ${skippedDupCount} exact duplicate titles in this batch. ` : "") +
+          (skippedDupCount > 0 ? `Skipped ${skippedDupCount} exact duplicate titles. ` : "") +
           (summary.totalEstimatedValue > 0 ? `Estimated value added: ${toMoney(summary.totalEstimatedValue)}.` : "")
       );
 
@@ -406,8 +426,12 @@ export default function SpreadsheetImportClient() {
                 Import all parsed rows
               </label>
               <label className="inline-flex items-center gap-2 text-sm text-[color:var(--muted)]">
-                <input type="radio" checked={importMode === "skip-duplicates"} onChange={() => setImportMode("skip-duplicates")} />
+                <input type="radio" checked={importMode === "skip-batch-duplicates"} onChange={() => setImportMode("skip-batch-duplicates")} />
                 Skip exact duplicate titles within this batch
+              </label>
+              <label className="inline-flex items-center gap-2 text-sm text-[color:var(--muted)]">
+                <input type="radio" checked={importMode === "skip-existing-duplicates"} onChange={() => setImportMode("skip-existing-duplicates")} />
+                Skip exact titles already in vault
               </label>
             </div>
 
@@ -419,7 +443,7 @@ export default function SpreadsheetImportClient() {
                     ? "Review & Confirm Import"
                     : parsedItems.length === 1
                       ? "Confirm Import 1 Item"
-                      : `Confirm Import ${importMode === "skip-duplicates" ? getItemsToImport().length : parsedItems.length} Items`}
+                      : `Confirm Import ${importMode === "all" ? parsedItems.length : getItemsToImport().length} Items`}
               </PillButton>
               <PillButton
                 onClick={() => {
@@ -451,7 +475,8 @@ export default function SpreadsheetImportClient() {
                 <RowCard><div className="text-xs text-[color:var(--muted)]">Total Cost</div><div className="mt-1 text-lg font-semibold">{toMoney(summary.totalCost)}</div></RowCard>
                 <RowCard><div className="text-xs text-[color:var(--muted)]">Total Estimated Value</div><div className="mt-1 text-lg font-semibold">{toMoney(summary.totalEstimatedValue)}</div></RowCard>
                 <RowCard><div className="text-xs text-[color:var(--muted)]">Missing Cost</div><div className="mt-1 text-lg font-semibold">{summary.missingCostCount}</div></RowCard>
-                <RowCard><div className="text-xs text-[color:var(--muted)]">Duplicates</div><div className="mt-1 text-lg font-semibold">{duplicateGroups.length}</div></RowCard>
+                <RowCard><div className="text-xs text-[color:var(--muted)]">Batch Duplicates</div><div className="mt-1 text-lg font-semibold">{duplicateGroups.length}</div></RowCard>
+                <RowCard><div className="text-xs text-[color:var(--muted)]">Vault Matches</div><div className="mt-1 text-lg font-semibold">{existingDuplicateGroups.length}</div></RowCard>
               </div>
 
               <div className="mt-4">
@@ -476,18 +501,28 @@ export default function SpreadsheetImportClient() {
             <SurfaceCard className="p-4 sm:p-5">
               <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Duplicate Detection</div>
               <div className="mt-3 text-sm text-[color:var(--muted)]">
-                Exact title matching only for now. This is a safety layer, not final duplicate intelligence.
+                Exact title matching only for now. This catches obvious batch duplicates and existing vault matches before import.
               </div>
               <div className="mt-4 space-y-3">
-                {duplicateGroups.length === 0 ? (
-                  <RowCard><div className="text-sm text-[color:var(--muted)]">No exact duplicate titles detected in this batch.</div></RowCard>
+                {duplicateGroups.length === 0 && existingDuplicateGroups.length === 0 ? (
+                  <RowCard><div className="text-sm text-[color:var(--muted)]">No exact duplicate titles detected.</div></RowCard>
                 ) : (
-                  duplicateGroups.slice(0, DUP_LIMIT).map((group) => (
-                    <RowCard key={group.key}>
-                      <div className="text-sm font-medium text-[color:var(--fg)]">{group.items[0]?.title}</div>
-                      <div className="mt-1 text-xs text-[color:var(--muted)]">{group.items.length} rows share this exact title.</div>
-                    </RowCard>
-                  ))
+                  <>
+                    {existingDuplicateGroups.slice(0, DUP_LIMIT).map((group) => (
+                      <RowCard key={`existing-${group.key}`}>
+                        <div className="text-sm font-medium text-[color:var(--fg)]">{group.importItems[0]?.title}</div>
+                        <div className="mt-1 text-xs text-amber-300">
+                          {group.importItems.length} import row(s) match {group.existingItems.length} existing vault item(s).
+                        </div>
+                      </RowCard>
+                    ))}
+                    {duplicateGroups.slice(0, Math.max(0, DUP_LIMIT - existingDuplicateGroups.length)).map((group) => (
+                      <RowCard key={`batch-${group.key}`}>
+                        <div className="text-sm font-medium text-[color:var(--fg)]">{group.items[0]?.title}</div>
+                        <div className="mt-1 text-xs text-[color:var(--muted)]">{group.items.length} rows share this exact title in the batch.</div>
+                      </RowCard>
+                    ))}
+                  </>
                 )}
               </div>
             </SurfaceCard>

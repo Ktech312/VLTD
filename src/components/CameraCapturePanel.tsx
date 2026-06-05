@@ -493,14 +493,54 @@ export default function CameraCapturePanel({
             <button type="button" onClick={onClose} className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-sm ring-1 ring-[color:var(--border)]">Close</button>
           </div>
         ) : (
-          <div className="flex items-center justify-between">
-            <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">LIVE CAMERA</div>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">LIVE CAMERA</div>
+              <div className="mt-1 text-sm font-semibold text-[color:var(--fg)]">{title}</div>
+              {description ? (
+                <div className="mt-0.5 text-xs leading-5 text-[color:var(--muted)]">
+                  {description}
+                </div>
+              ) : null}
+            </div>
             <button type="button" onClick={onClose} className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-sm ring-1 ring-[color:var(--border)]">Close</button>
           </div>
         )}
 
         {capturedFile && capturedPreviewUrl ? (
           <div className="mt-1.5">
+            <div className="mb-1.5 flex items-start justify-between gap-3 rounded-[14px] bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]">
+              <div>
+                <div className="text-[11px] font-semibold tracking-[0.18em] text-[color:var(--muted2)]">
+                  PHOTO REVIEW
+                </div>
+                <div className="mt-0.5 text-xs leading-5 text-[color:var(--muted)]">
+                  {blurAssessment?.isBlurry
+                    ? "This shot may be soft. Retake if the label or serial details matter."
+                    : "Crop, tune, or use this photo for Smart Scan."}
+                </div>
+              </div>
+              {blurAssessment ? (
+                <div
+                  className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1"
+                  style={
+                    blurAssessment.isBlurry
+                      ? {
+                          background: "rgba(239,68,68,0.12)",
+                          borderColor: "rgba(239,68,68,0.28)",
+                          color: "#FCA5A5",
+                        }
+                      : {
+                          background: "rgba(34,197,94,0.12)",
+                          borderColor: "rgba(34,197,94,0.28)",
+                          color: "#86EFAC",
+                        }
+                  }
+                >
+                  {blurAssessment.isBlurry ? "Soft" : "Sharp"} {Math.round(blurAssessment.score)}
+                </div>
+              ) : null}
+            </div>
             {/* Filter strip — moved above the image */}
             <div className="mb-1.5 flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
               {CAPTURE_FILTER_PRESETS.map((preset) => (

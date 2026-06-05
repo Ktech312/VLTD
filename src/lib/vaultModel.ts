@@ -441,15 +441,16 @@ function stripEphemeralForPersistence(item: VaultItem): VaultItem {
   const cleanImages = getOrderedImages(item)
     .filter((image) => {
       if (!image) return false;
-      if (image.localOnly) return false;
-      if (isEphemeralImageUrl(image.url)) return false;
+      if (!image.storageKey && !image.url) return false;
       if (isEphemeralImageUrl(image.storageKey)) return false;
+      if (!image.storageKey && isEphemeralImageUrl(image.url)) return false;
       return true;
     })
     .map((image, index) => ({
       ...image,
+      url: image.url && !isEphemeralImageUrl(image.url) ? image.url : undefined,
       order: index,
-      localOnly: false,
+      localOnly: Boolean(image.localOnly),
       role: inferImageRole(index, sanitizeVaultImageRole(image.role)),
     }));
 
@@ -540,14 +541,19 @@ export function getOrderedImageUrls(item: VaultItem) {
 
 export function getPrimaryImageUrl(item: VaultItem) {
   const ordered = getOrderedImages(item);
+  let primaryIsLocalOnly = false;
+
   if (ordered.length > 0) {
     const primary =
       ordered.find((image) => image.storageKey === item.primaryImageKey) ?? ordered[0];
+    primaryIsLocalOnly = Boolean(primary.localOnly);
     const resolved = resolveVaultImageUrl(primary);
     if (resolved) return resolved;
   }
 
-  if (item.imageFrontStoragePath) return getVaultImagePublicUrl(item.imageFrontStoragePath);
+  if (!primaryIsLocalOnly && item.imageFrontStoragePath) {
+    return getVaultImagePublicUrl(item.imageFrontStoragePath);
+  }
   if (item.imageFrontUrl && isDirectBrowserImageUrl(item.imageFrontUrl)) return item.imageFrontUrl;
   if (item.imageBackUrl && isDirectBrowserImageUrl(item.imageBackUrl)) return item.imageBackUrl;
   return "";
@@ -573,7 +579,7 @@ function syncPrimaryFields(item: VaultItem) {
     images: ordered,
     primaryImageKey: primary.storageKey,
     imageFrontUrl: resolveVaultImageUrl(primary) || item.imageFrontUrl,
-    imageFrontStoragePath: primary.localOnly ? undefined : primary.storageKey,
+    imageFrontStoragePath: isEphemeralImageUrl(primary.storageKey) ? undefined : primary.storageKey,
   };
 }
 

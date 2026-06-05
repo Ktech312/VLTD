@@ -1,7 +1,8 @@
  "use client";
 
 import { newId } from "@/lib/id";
-import type { VaultItem } from "@/lib/vaultModel";
+import { appendItems, type VaultItem } from "@/lib/vaultModel";
+import { enqueueVaultItemSync } from "@/lib/vaultSyncQueue";
 
 export const LS_KEY = "vltd_vault_items_v1";
 export const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
@@ -22,6 +23,12 @@ export type IgnoredImportRow = {
 export type DuplicateGroup = {
   key: string;
   items: ParsedImportItem[];
+};
+
+export type ExistingDuplicateGroup = {
+  key: string;
+  importItems: ParsedImportItem[];
+  existingItems: VaultItem[];
 };
 
 export type MappingField =
@@ -409,6 +416,49 @@ function parseSimpleLines(input: string): ParsedImportSource {
   };
 }
 
+function parseDelimitedRows(input: string, delimiter: "," | "\t") {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = "";
+  let inQuotes = false;
+
+  for (let index = 0; index < input.length; index += 1) {
+    const char = input[index];
+    const nextChar = input[index + 1];
+
+    if (char === "\"") {
+      if (inQuotes && nextChar === "\"") {
+        cell += "\"";
+        index += 1;
+        continue;
+      }
+      inQuotes = !inQuotes;
+      continue;
+    }
+
+    if (char === delimiter && !inQuotes) {
+      row.push(cell);
+      cell = "";
+      continue;
+    }
+
+    if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && nextChar === "\n") index += 1;
+      row.push(cell);
+      if (row.some((value) => value.trim())) rows.push(row);
+      row = [];
+      cell = "";
+      continue;
+    }
+
+    cell += char;
+  }
+
+  row.push(cell);
+  if (row.some((value) => value.trim())) rows.push(row);
+  return rows;
+}
+
 export function parsePastedSource(input: string): ParsedImportSource {
   const cleaned = input.replace(/\r/g, "").trim();
   if (!cleaned) return { sourceLabel: "Paste", sheets: [] };
@@ -420,7 +470,7 @@ export function parsePastedSource(input: string): ParsedImportSource {
   if (!hasTabs && !hasCommas) return parseSimpleLines(cleaned);
 
   const delimiter = hasTabs ? "\t" : ",";
-  const rows = lines.map((line) => line.split(delimiter));
+  const rows = parseDelimitedRows(cleaned, delimiter);
   const sheet = parseRowsToSheet("Paste", rows);
 
   return { sourceLabel: "Paste", sheets: sheet ? [sheet] : [] };
@@ -468,30 +518,31 @@ export function getActiveProfileId() {
   }
 }
 
-function normalizeItem(raw: any): VaultItem | null {
+function normalizeItem(raw: unknown): VaultItem | null {
   if (!raw || typeof raw !== "object") return null;
-  const title = String(raw.title ?? "").trim();
+  const record = raw as Record<string, unknown>;
+  const title = String(record.title ?? "").trim();
   if (!title) return null;
 
   return {
-    id: String(raw.id ?? "").trim() || newId(),
-    profile_id: String(raw.profile_id ?? raw.profileId ?? "").trim() || undefined,
+    id: String(record.id ?? "").trim() || newId(),
+    profile_id: String(record.profile_id ?? record.profileId ?? "").trim() || undefined,
     title,
-    subtitle: typeof raw.subtitle === "string" ? raw.subtitle : undefined,
-    number: typeof raw.number === "string" ? raw.number : undefined,
-    grade: typeof raw.grade === "string" ? raw.grade : undefined,
-    purchasePrice: Number.isFinite(Number(raw.purchasePrice)) ? Number(raw.purchasePrice) : undefined,
-    currentValue: Number.isFinite(Number(raw.currentValue)) ? Number(raw.currentValue) : undefined,
-    purchaseSource: typeof raw.purchaseSource === "string" ? raw.purchaseSource : undefined,
-    orderNumber: typeof raw.orderNumber === "string" ? raw.orderNumber : undefined,
-    certNumber: typeof raw.certNumber === "string" ? raw.certNumber : undefined,
-    notes: typeof raw.notes === "string" ? raw.notes : undefined,
-    universe: typeof raw.universe === "string" ? raw.universe : undefined,
-    category: typeof raw.category === "string" ? raw.category : undefined,
-    customCategoryLabel: typeof raw.customCategoryLabel === "string" ? raw.customCategoryLabel : undefined,
-    categoryLabel: typeof raw.categoryLabel === "string" ? raw.categoryLabel : undefined,
-    subcategoryLabel: typeof raw.subcategoryLabel === "string" ? raw.subcategoryLabel : undefined,
-    createdAt: Number.isFinite(Number(raw.createdAt)) ? Number(raw.createdAt) : undefined,
+    subtitle: typeof record.subtitle === "string" ? record.subtitle : undefined,
+    number: typeof record.number === "string" ? record.number : undefined,
+    grade: typeof record.grade === "string" ? record.grade : undefined,
+    purchasePrice: Number.isFinite(Number(record.purchasePrice)) ? Number(record.purchasePrice) : undefined,
+    currentValue: Number.isFinite(Number(record.currentValue)) ? Number(record.currentValue) : undefined,
+    purchaseSource: typeof record.purchaseSource === "string" ? record.purchaseSource : undefined,
+    orderNumber: typeof record.orderNumber === "string" ? record.orderNumber : undefined,
+    certNumber: typeof record.certNumber === "string" ? record.certNumber : undefined,
+    notes: typeof record.notes === "string" ? record.notes : undefined,
+    universe: typeof record.universe === "string" ? record.universe : undefined,
+    category: typeof record.category === "string" ? record.category : undefined,
+    customCategoryLabel: typeof record.customCategoryLabel === "string" ? record.customCategoryLabel : undefined,
+    categoryLabel: typeof record.categoryLabel === "string" ? record.categoryLabel : undefined,
+    subcategoryLabel: typeof record.subcategoryLabel === "string" ? record.subcategoryLabel : undefined,
+    createdAt: Number.isFinite(Number(record.createdAt)) ? Number(record.createdAt) : undefined,
   };
 }
 
@@ -517,11 +568,23 @@ export function readVaultForActiveProfile(): VaultItem[] {
   return filtered.length > 0 ? filtered : all;
 }
 
+function toVaultItem(item: ParsedImportItem): VaultItem {
+  const { sourceSheet, structuredData, missingCost, ...vaultItem } = item;
+  void sourceSheet;
+  void structuredData;
+  void missingCost;
+  return vaultItem;
+}
+
 export function appendImportedItems(items: ParsedImportItem[]) {
   const activeProfileId = getActiveProfileId();
-  const existing = readRawVault();
-  const prepared = items.map((item) => ({ ...item, profile_id: item.profile_id || activeProfileId || undefined }));
-  window.localStorage.setItem(LS_KEY, JSON.stringify([...existing, ...prepared]));
+  const prepared = items.map((item) => ({
+    ...toVaultItem(item),
+    profile_id: item.profile_id || activeProfileId || undefined,
+  }));
+
+  appendItems(prepared);
+  prepared.forEach((item) => enqueueVaultItemSync(item.id));
 }
 
 export async function downloadBlankSpreadsheetTemplate(filename = "vltd-blank-import-template.xlsx") {
@@ -562,4 +625,31 @@ export function detectDuplicateGroups(items: ParsedImportItem[]) {
   return Array.from(map.entries())
     .filter(([, group]) => group.length > 1)
     .map(([key, group]) => ({ key, items: group }));
+}
+
+export function detectExistingDuplicateGroups(items: ParsedImportItem[], existingItems: VaultItem[]) {
+  const existingByKey = new Map<string, VaultItem[]>();
+
+  existingItems.forEach((item) => {
+    const key = (item.title || "").toLowerCase().replace(/\s+/g, " ").trim();
+    if (!key) return;
+    const group = existingByKey.get(key) ?? [];
+    group.push(item);
+    existingByKey.set(key, group);
+  });
+
+  const importByKey = new Map<string, ParsedImportItem[]>();
+  items.forEach((item) => {
+    const key = (item.title || "").toLowerCase().replace(/\s+/g, " ").trim();
+    if (!key || !existingByKey.has(key)) return;
+    const group = importByKey.get(key) ?? [];
+    group.push(item);
+    importByKey.set(key, group);
+  });
+
+  return Array.from(importByKey.entries()).map(([key, importItems]) => ({
+    key,
+    importItems,
+    existingItems: existingByKey.get(key) ?? [],
+  }));
 }

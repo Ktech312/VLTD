@@ -34,6 +34,11 @@ import {
   type VaultItem,
 } from "@/lib/vaultModel";
 import {
+  generateVaultImageKey,
+  prepareImageBlob,
+  saveImageBlobToIndexedDb,
+} from "@/lib/vaultImageStore";
+import {
   getCategories,
   getDefaultCategory,
   getSubcategories,
@@ -307,6 +312,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
     try {
       let nextItem = { ...item };
+      let imageIndex = getOrderedImages(nextItem).length;
 
       for (const file of files) {
         try {
@@ -318,18 +324,25 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
             });
             nextItem = appendImage(nextItem, uploaded.publicUrl, uploaded.path, { localOnly: false });
           } else {
-            const localUrl = URL.createObjectURL(file);
-            nextItem = appendImage(nextItem, localUrl, localUrl, { localOnly: true });
+            const durableBlob = await prepareImageBlob(file);
+            const storageKey = generateVaultImageKey(item.id, imageIndex);
+            await saveImageBlobToIndexedDb(durableBlob, storageKey);
+            const localUrl = URL.createObjectURL(durableBlob);
+            nextItem = appendImage(nextItem, localUrl, storageKey, { localOnly: true });
           }
         } catch (uploadError) {
-          const localUrl = URL.createObjectURL(file);
-          nextItem = appendImage(nextItem, localUrl, localUrl, { localOnly: true });
+          const durableBlob = await prepareImageBlob(file).catch(() => file);
+          const storageKey = generateVaultImageKey(item.id, imageIndex);
+          await saveImageBlobToIndexedDb(durableBlob, storageKey);
+          const localUrl = URL.createObjectURL(durableBlob);
+          nextItem = appendImage(nextItem, localUrl, storageKey, { localOnly: true });
           setMediaMessage(
             uploadError instanceof Error
               ? `${uploadError.message} Saved locally on this device.`
               : "Cloud upload failed. Saved locally on this device."
           );
         }
+        imageIndex += 1;
       }
 
       try {
@@ -435,21 +448,27 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
             localOnly: false,
           };
         } else {
-          const localUrl = URL.createObjectURL(file);
+          const durableBlob = await prepareImageBlob(file);
+          const storageKey = generateVaultImageKey(item.id, index);
+          await saveImageBlobToIndexedDb(durableBlob, storageKey);
+          const localUrl = URL.createObjectURL(durableBlob);
           replacement = {
             ...target,
-            id: localUrl,
-            storageKey: localUrl,
+            id: storageKey,
+            storageKey,
             url: localUrl,
             localOnly: true,
           };
         }
       } catch (uploadError) {
-        const localUrl = URL.createObjectURL(file);
+        const durableBlob = await prepareImageBlob(file).catch(() => file);
+        const storageKey = generateVaultImageKey(item.id, index);
+        await saveImageBlobToIndexedDb(durableBlob, storageKey);
+        const localUrl = URL.createObjectURL(durableBlob);
         replacement = {
           ...target,
-          id: localUrl,
-          storageKey: localUrl,
+          id: storageKey,
+          storageKey,
           url: localUrl,
           localOnly: true,
         };
@@ -470,12 +489,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
         images: nextImages,
         primaryImageKey: replacingPrimary ? replacement.storageKey : item.primaryImageKey,
         imageFrontUrl: replacingPrimary ? replacement.url : item.imageFrontUrl,
-        imageFrontStoragePath:
-          replacingPrimary && !replacement.localOnly
-            ? replacement.storageKey
-            : replacingPrimary
-              ? undefined
-              : item.imageFrontStoragePath,
+        imageFrontStoragePath: replacingPrimary ? replacement.storageKey : item.imageFrontStoragePath,
       };
 
       await persist(nextItem);
@@ -632,16 +646,6 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     const askingPrice = trimmed && Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
     await persist({ ...item, askingPrice });
     setMediaMessage(askingPrice ? "Asking price saved." : "Asking price cleared.");
-  }
-
-  async function handleUpdateCondition(patch: {
-    grade?: string;
-    conditionReason?: string;
-    conditionSource?: "ai" | "manual";
-  }) {
-    if (!item) return;
-    await persist({ ...item, ...patch });
-    setMediaMessage("Condition updated.");
   }
 
   const universe = normUniverse(item.universe);
