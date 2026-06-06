@@ -12,6 +12,16 @@ import { SEED_CHARACTERS_PART2 } from "@/lib/seedCharacters_part2";
 import { SEED_CHARACTERS_PART3 } from "@/lib/seedCharacters_part3";
 import { SEED_CHARACTERS_PART4 } from "@/lib/seedCharacters_part4";
 import type { SeedCharacter, SeedItem, SeedGallery } from "@/lib/seedCharacters";
+import {
+  getMyAdminRole,
+  listAdmins,
+  grantAdmin,
+  revokeAdmin,
+  signInWithEmail,
+  signOut,
+  type AdminRole,
+  type AdminEntry,
+} from "@/lib/adminAuth";
 
 const ALL_CHARACTERS: SeedCharacter[] = [
   ...SEED_CHARACTERS,
@@ -19,8 +29,6 @@ const ALL_CHARACTERS: SeedCharacter[] = [
   ...SEED_CHARACTERS_PART3,
   ...SEED_CHARACTERS_PART4,
 ];
-
-const ADMIN_KEY = process.env.NEXT_PUBLIC_ADMIN_KEY ?? "vltd-admin-2024";
 
 // ── Live item data from Supabase ───────────────────────────────
 type LiveItem = { imageUrl: string; disabled: boolean };
@@ -34,16 +42,22 @@ function formatMoney(n?: number) {
 }
 
 // ── Auth Gate ───────────────────────────────────────────────
-function AuthGate({ onUnlock }: { onUnlock: () => void }) {
-  const [input, setInput] = useState("");
-  const [error, setError] = useState(false);
+// ── Admin Login Gate ─────────────────────────────────────────
+function AdminLoginGate({ onSignedIn }: { onSignedIn: () => void }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function attempt() {
-    if (input === ADMIN_KEY) {
-      onUnlock();
+  async function handleSubmit() {
+    setLoading(true);
+    setError(null);
+    const err = await signInWithEmail(email.trim(), password);
+    if (err) {
+      setError(err);
+      setLoading(false);
     } else {
-      setError(true);
-      setInput("");
+      onSignedIn();
     }
   }
 
@@ -52,25 +66,138 @@ function AuthGate({ onUnlock }: { onUnlock: () => void }) {
       <div className="w-full max-w-sm rounded-[24px] bg-[#111318] p-8 ring-1 ring-white/10">
         <div className="text-center">
           <div className="text-2xl">🔐</div>
-          <div className="mt-2 text-sm font-semibold text-white">Admin Access</div>
-          <div className="mt-1 text-xs text-white/40">Character Management</div>
+          <div className="mt-2 text-sm font-semibold text-white">Admin Login</div>
+          <div className="mt-1 text-xs text-white/40">Sign in with your VLTD account</div>
         </div>
-        <input
-          type="password"
-          value={input}
-          onChange={(e) => { setInput(e.target.value); setError(false); }}
-          onKeyDown={(e) => e.key === "Enter" && attempt()}
-          placeholder="Admin key"
-          className="mt-6 w-full rounded-xl bg-white/5 px-4 py-2.5 text-sm text-white ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-amber-400/40 placeholder:text-white/30"
-        />
-        {error && <div className="mt-2 text-center text-xs text-red-400">Incorrect key</div>}
+        <div className="mt-6 space-y-3">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => { setEmail(e.target.value); setError(null); }}
+            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+            placeholder="Email"
+            className="w-full rounded-xl bg-white/5 px-4 py-2.5 text-sm text-white ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-amber-400/40 placeholder:text-white/30"
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => { setPassword(e.target.value); setError(null); }}
+            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+            placeholder="Password"
+            className="w-full rounded-xl bg-white/5 px-4 py-2.5 text-sm text-white ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-amber-400/40 placeholder:text-white/30"
+          />
+        </div>
+        {error && <div className="mt-2 text-center text-xs text-red-400">{error}</div>}
         <button
-          onClick={attempt}
-          className="mt-4 w-full rounded-xl bg-amber-500 py-2.5 text-sm font-semibold text-black transition hover:bg-amber-400"
+          onClick={handleSubmit}
+          disabled={loading || !email || !password}
+          className="mt-4 w-full rounded-xl bg-amber-500 py-2.5 text-sm font-semibold text-black transition hover:bg-amber-400 disabled:opacity-50"
         >
-          Enter
+          {loading ? "Signing in..." : "Sign In"}
         </button>
       </div>
+    </div>
+  );
+}
+
+// ── Not Authorized Screen ────────────────────────────────────
+function NotAuthorized({ userEmail }: { userEmail: string }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#0a0c12]">
+      <div className="w-full max-w-sm rounded-[24px] bg-[#111318] p-8 ring-1 ring-white/10 text-center">
+        <div className="text-2xl">🚫</div>
+        <div className="mt-2 text-sm font-semibold text-white">Not Authorized</div>
+        <div className="mt-1 text-xs text-white/40">{userEmail} does not have admin access.</div>
+        <button
+          onClick={() => signOut().then(() => window.location.reload())}
+          className="mt-6 w-full rounded-xl bg-white/10 py-2.5 text-sm text-white/60 transition hover:bg-white/20"
+        >
+          Sign Out
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Manage Admins Panel (Owner only) ─────────────────────────
+function ManageAdminsPanel({ ownerEmail }: { ownerEmail: string }) {
+  const [admins, setAdmins] = useState<AdminEntry[]>([]);
+  const [newEmail, setNewEmail] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    listAdmins().then((data) => { setAdmins(data); setLoading(false); });
+  }, []);
+
+  async function handleGrant() {
+    if (!newEmail.trim()) return;
+    setSaving(true);
+    setError(null);
+    const err = await grantAdmin(newEmail, ownerEmail);
+    if (err) {
+      setError(err);
+    } else {
+      setNewEmail("");
+      const updated = await listAdmins();
+      setAdmins(updated);
+    }
+    setSaving(false);
+  }
+
+  async function handleRevoke(id: string) {
+    const err = await revokeAdmin(id);
+    if (err) { setError(err); return; }
+    setAdmins((prev) => prev.filter((a) => a.id !== id));
+  }
+
+  return (
+    <div className="p-4 border-t border-white/8">
+      <div className="text-[10px] uppercase tracking-widest text-white/30 mb-3">Manage Admins</div>
+      {loading ? (
+        <div className="text-xs text-white/30">Loading...</div>
+      ) : (
+        <div className="space-y-2">
+          {admins.map((admin) => (
+            <div key={admin.id} className="flex items-center justify-between gap-2 rounded-xl bg-white/5 px-3 py-2">
+              <div>
+                <div className="text-xs text-white font-medium">{admin.email}</div>
+                <div className="text-[10px] text-white/30">
+                  Added by {admin.granted_by ?? "owner"} &middot; {new Date(admin.granted_at).toLocaleDateString()}
+                </div>
+              </div>
+              <button
+                onClick={() => handleRevoke(admin.id)}
+                className="text-[10px] text-red-400 hover:text-red-300 transition"
+              >
+                Revoke
+              </button>
+            </div>
+          ))}
+          {admins.length === 0 && (
+            <div className="text-xs text-white/30">No admins assigned yet.</div>
+          )}
+        </div>
+      )}
+      <div className="mt-3 flex gap-2">
+        <input
+          type="email"
+          value={newEmail}
+          onChange={(e) => { setNewEmail(e.target.value); setError(null); }}
+          onKeyDown={(e) => e.key === "Enter" && handleGrant()}
+          placeholder="user@email.com"
+          className="flex-1 min-w-0 rounded-xl bg-white/5 px-3 py-1.5 text-xs text-white ring-1 ring-white/10 focus:outline-none placeholder:text-white/25"
+        />
+        <button
+          onClick={handleGrant}
+          disabled={saving || !newEmail.trim()}
+          className="rounded-xl bg-amber-500 px-3 py-1.5 text-xs font-semibold text-black transition hover:bg-amber-400 disabled:opacity-50"
+        >
+          {saving ? "..." : "Add"}
+        </button>
+      </div>
+      {error && <div className="mt-1 text-[10px] text-red-400">{error}</div>}
     </div>
   );
 }
@@ -1198,11 +1325,36 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
 
 // ── Main Page ─────────────────────────────────────────────────
 export default function AdminCharactersPage() {
-  const [unlocked, setUnlocked] = useState(false);
+  const [authState, setAuthState] = useState<"loading" | "signed-out" | "unauthorized" | "authorized">("loading");
+  const [role, setRole] = useState<AdminRole>(null);
+  const [userEmail, setUserEmail] = useState("");
   const [selectedHandle, setSelectedHandle] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
-  if (!unlocked) return <AuthGate onUnlock={() => setUnlocked(true)} />;
+  async function checkAuth() {
+    setAuthState("loading");
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) { setAuthState("signed-out"); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.email) { setAuthState("signed-out"); return; }
+    setUserEmail(user.email);
+    const r = await getMyAdminRole();
+    if (!r) { setAuthState("unauthorized"); return; }
+    setRole(r);
+    setAuthState("authorized");
+  }
+
+  useEffect(() => { checkAuth(); }, []);
+
+  if (authState === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#0a0c12]">
+        <div className="text-sm text-white/30">Checking access...</div>
+      </div>
+    );
+  }
+  if (authState === "signed-out") return <AdminLoginGate onSignedIn={checkAuth} />;
+  if (authState === "unauthorized") return <NotAuthorized userEmail={userEmail} />;
 
   const filtered = ALL_CHARACTERS.filter((c) => {
     const q = search.toLowerCase();
@@ -1251,8 +1403,20 @@ export default function AdminCharactersPage() {
             <div className="text-center text-xs text-white/30 py-8">No characters found</div>
           )}
         </div>
-        <div className="shrink-0 p-3 border-t border-white/8 text-[10px] text-white/25 text-center">
-          Edit seedCharacters*.ts → run generateCharacterSeed.ts → paste SQL in Supabase
+        {role === "owner" && <ManageAdminsPanel ownerEmail={userEmail} />}
+        <div className="shrink-0 p-3 border-t border-white/8 space-y-2">
+          <div className="text-[10px] text-white/25 text-center">
+            Edit seedCharacters*.ts → run generateCharacterSeed.ts → paste SQL in Supabase
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-white/30 truncate">{userEmail}</span>
+            <button
+              onClick={() => signOut().then(() => setAuthState("signed-out"))}
+              className="text-[10px] text-white/30 hover:text-white/60 transition ml-2 shrink-0"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
       </div>
 
