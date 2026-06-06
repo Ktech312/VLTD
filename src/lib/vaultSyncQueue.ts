@@ -19,6 +19,20 @@ export type VaultSyncQueueItem = {
   createdAt: number;
 };
 
+export type VaultSyncQueueSnapshotItem = VaultSyncQueueItem & {
+  item?: VaultItem;
+  missingLocalItem: boolean;
+  pendingImageCount: number;
+};
+
+export type VaultSyncQueueSnapshot = {
+  online: boolean;
+  hasCloudSync: boolean;
+  pendingCount: number;
+  pendingImageCount: number;
+  items: VaultSyncQueueSnapshotItem[];
+};
+
 const LS_QUEUE_KEY = "vltd_sync_queue_v1";
 let isProcessing = false;
 
@@ -61,6 +75,44 @@ function dedupeQueue(queue: VaultSyncQueueItem[]) {
 
 export function getPendingVaultSyncCount() {
   return readQueue().length;
+}
+
+export function getVaultSyncQueueSnapshot(): VaultSyncQueueSnapshot {
+  if (typeof window === "undefined") {
+    return {
+      online: true,
+      hasCloudSync: false,
+      pendingCount: 0,
+      pendingImageCount: 0,
+      items: [],
+    };
+  }
+
+  const allItems = getAllLocalItems();
+  const itemById = new Map(allItems.map((item) => [String(item.id), item]));
+  const queue = dedupeQueue(readQueue());
+  const items = queue.map((entry) => {
+    const item = itemById.get(String(entry.itemId));
+    const pendingImageCount = (item?.images ?? []).filter((image) => image?.localOnly).length;
+
+    return {
+      ...entry,
+      item,
+      missingLocalItem: !item,
+      pendingImageCount,
+    };
+  });
+
+  return {
+    online: navigator.onLine,
+    hasCloudSync: hasSupabaseEnv(),
+    pendingCount: queue.length,
+    pendingImageCount: allItems.reduce(
+      (count, item) => count + (item.images ?? []).filter((image) => image?.localOnly).length,
+      0
+    ),
+    items,
+  };
 }
 
 export function enqueueVaultItemSync(itemId: string) {
@@ -168,7 +220,7 @@ export async function processVaultSyncQueue() {
   isProcessing = true;
 
   try {
-    let queue = dedupeQueue(readQueue());
+    const queue = dedupeQueue(readQueue());
     writeQueue(queue);
 
     let processed = 0;

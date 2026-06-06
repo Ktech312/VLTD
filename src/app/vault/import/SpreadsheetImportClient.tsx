@@ -15,15 +15,20 @@ import {
   detectExistingDuplicateGroups,
   detectDuplicateGroups,
   downloadBlankSpreadsheetTemplate,
+  findLikelyDuplicateCandidates,
   type IgnoredImportRow,
+  type ImportHistoryEntry,
   MAPPING_OPTIONS,
   parsePastedSource,
   parseSpreadsheetSource,
+  readImportHistory,
   readVaultForActiveProfile,
+  recordImportHistory,
   type MappingField,
   type MappingProfile,
   type ParsedImportItem,
   type ParsedImportSource,
+  undoLastImport,
 } from "@/lib/spreadsheetImport";
 import { processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 
@@ -73,6 +78,15 @@ function toMoney(value: number) {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function toDateTime(value: number) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
   }).format(value);
 }
 
@@ -133,11 +147,16 @@ export default function SpreadsheetImportClient() {
   const [importMode, setImportMode] = useState<"all" | "skip-batch-duplicates" | "skip-existing-duplicates">("all");
   const [hasConfirmed, setHasConfirmed] = useState(false);
   const [importPreset, setImportPreset] = useState<ImportPreset>("generic");
+  const [importHistory, setImportHistory] = useState<ImportHistoryEntry[]>([]);
 
   const previewItems = useMemo(() => parsedItems.slice(0, PREVIEW_LIMIT), [parsedItems]);
   const duplicateGroups = useMemo(() => detectDuplicateGroups(parsedItems), [parsedItems]);
   const existingDuplicateGroups = useMemo(
     () => detectExistingDuplicateGroups(parsedItems, existingVault),
+    [parsedItems, existingVault]
+  );
+  const likelyDuplicateCandidates = useMemo(
+    () => findLikelyDuplicateCandidates(parsedItems, existingVault),
     [parsedItems, existingVault]
   );
   const summary = useMemo(() => buildImportSummary(parsedItems, ignoredRows), [parsedItems, ignoredRows]);
@@ -149,6 +168,7 @@ export default function SpreadsheetImportClient() {
       .sort((a, b) => Number(b.createdAt ?? 0) - Number(a.createdAt ?? 0))
       .slice(0, 8) as ParsedImportItem[];
     setRecentVault(recentItems);
+    setImportHistory(readImportHistory());
   }
 
   useEffect(() => {
@@ -280,13 +300,12 @@ export default function SpreadsheetImportClient() {
     setIsImporting(true);
     try {
       const finalItems = getItemsToImport();
-      appendImportedItems(finalItems);
+      const savedItems = appendImportedItems(finalItems);
       emitVaultUpdate();
       void processVaultSyncQueue();
 
       const refreshed = readVaultForActiveProfile();
       const foundCount = finalItems.filter((item) => refreshed.some((saved) => String(saved.id) === String(item.id))).length;
-      refreshRecentVault();
 
       if (foundCount !== finalItems.length) {
         setStatus(`Import verification failed. ${foundCount} of ${finalItems.length} items were found after write.`);
@@ -294,6 +313,12 @@ export default function SpreadsheetImportClient() {
       }
 
       const skippedDupCount = parsedItems.length - finalItems.length;
+      recordImportHistory({
+        sourceLabel,
+        itemIds: savedItems.map((item) => item.id),
+        skippedCount: skippedDupCount,
+      });
+      refreshRecentVault();
       setStatus(
         `Imported ${finalItems.length} items from ${sourceLabel}. ` +
           (summary.missingCostCount > 0 ? `${summary.missingCostCount} items had missing cost and were set to $0. ` : "") +
@@ -317,6 +342,17 @@ export default function SpreadsheetImportClient() {
     } finally {
       setIsImporting(false);
     }
+  }
+
+  function handleUndoLastImport() {
+    const result = undoLastImport();
+    refreshRecentVault();
+    emitVaultUpdate();
+    setStatus(
+      result.entry
+        ? `Undid ${result.removed} item${result.removed === 1 ? "" : "s"} from ${result.entry.sourceLabel}.`
+        : "No import history to undo."
+    );
   }
 
   async function handleDownloadTemplate() {
@@ -477,6 +513,7 @@ export default function SpreadsheetImportClient() {
                 <RowCard><div className="text-xs text-[color:var(--muted)]">Missing Cost</div><div className="mt-1 text-lg font-semibold">{summary.missingCostCount}</div></RowCard>
                 <RowCard><div className="text-xs text-[color:var(--muted)]">Batch Duplicates</div><div className="mt-1 text-lg font-semibold">{duplicateGroups.length}</div></RowCard>
                 <RowCard><div className="text-xs text-[color:var(--muted)]">Vault Matches</div><div className="mt-1 text-lg font-semibold">{existingDuplicateGroups.length}</div></RowCard>
+                <RowCard><div className="text-xs text-[color:var(--muted)]">Likely Matches</div><div className="mt-1 text-lg font-semibold">{likelyDuplicateCandidates.length}</div></RowCard>
               </div>
 
               <div className="mt-4">
@@ -501,13 +538,22 @@ export default function SpreadsheetImportClient() {
             <SurfaceCard className="p-4 sm:p-5">
               <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Duplicate Detection</div>
               <div className="mt-3 text-sm text-[color:var(--muted)]">
-                Exact title matching only for now. This catches obvious batch duplicates and existing vault matches before import.
+                Checks exact duplicates plus likely matches using title tokens, card or issue number, cert, grade, and category.
               </div>
               <div className="mt-4 space-y-3">
-                {duplicateGroups.length === 0 && existingDuplicateGroups.length === 0 ? (
-                  <RowCard><div className="text-sm text-[color:var(--muted)]">No exact duplicate titles detected.</div></RowCard>
+                {duplicateGroups.length === 0 && existingDuplicateGroups.length === 0 && likelyDuplicateCandidates.length === 0 ? (
+                  <RowCard><div className="text-sm text-[color:var(--muted)]">No duplicate candidates detected.</div></RowCard>
                 ) : (
                   <>
+                    {likelyDuplicateCandidates.slice(0, DUP_LIMIT).map((candidate) => (
+                      <RowCard key={`likely-${candidate.importItem.id}-${candidate.existingItem.id}`}>
+                        <div className="text-sm font-medium text-[color:var(--fg)]">{candidate.importItem.title}</div>
+                        <div className="mt-1 text-xs text-amber-300">
+                          {candidate.score}% likely match with {candidate.existingItem.title}
+                        </div>
+                        <div className="mt-1 text-xs text-[color:var(--muted)]">{candidate.reasons.join(", ")}</div>
+                      </RowCard>
+                    ))}
                     {existingDuplicateGroups.slice(0, DUP_LIMIT).map((group) => (
                       <RowCard key={`existing-${group.key}`}>
                         <div className="text-sm font-medium text-[color:var(--fg)]">{group.importItems[0]?.title}</div>
@@ -523,6 +569,44 @@ export default function SpreadsheetImportClient() {
                       </RowCard>
                     ))}
                   </>
+                )}
+              </div>
+            </SurfaceCard>
+
+            <SurfaceCard className="p-4 sm:p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Import History</div>
+                  <div className="mt-2 text-sm text-[color:var(--muted)]">Undo removes the most recent imported batch from the local vault and pending sync queue.</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleUndoLastImport}
+                  disabled={importHistory.length === 0 || isImporting}
+                  className="shrink-0 rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] disabled:opacity-50"
+                >
+                  Undo last
+                </button>
+              </div>
+
+              <div className="mt-4 space-y-3">
+                {importHistory.length === 0 ? (
+                  <RowCard><div className="text-sm text-[color:var(--muted)]">No import history yet.</div></RowCard>
+                ) : (
+                  importHistory.slice(0, 3).map((entry) => (
+                    <RowCard key={entry.id}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-medium text-[color:var(--fg)]">{entry.sourceLabel}</div>
+                          <div className="mt-1 text-xs text-[color:var(--muted)]">{toDateTime(entry.importedAt)}</div>
+                        </div>
+                        <div className="shrink-0 text-right text-xs text-[color:var(--muted)]">
+                          <div>{entry.itemCount} imported</div>
+                          {entry.skippedCount > 0 ? <div className="mt-1">{entry.skippedCount} skipped</div> : null}
+                        </div>
+                      </div>
+                    </RowCard>
+                  ))
                 )}
               </div>
             </SurfaceCard>

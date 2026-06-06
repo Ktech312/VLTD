@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { hasSupabaseEnv } from "@/lib/vaultCloud";
@@ -135,16 +136,24 @@ export default function VaultSyncStatusChip() {
           <div className="mt-0.5 text-xs opacity-75">{detail}</div>
         </div>
 
-        {snapshot.online && (snapshot.pendingCount > 0 || snapshot.pendingImageCount > 0 || message) ? (
-          <button
-            type="button"
-            onClick={() => void handleRetrySync()}
-            disabled={isSyncing}
-            className="shrink-0 rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] disabled:opacity-50"
+        <div className="flex shrink-0 items-center gap-2">
+          <Link
+            href="/vault/sync"
+            className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]"
           >
-            {isSyncing ? "Syncing" : "Retry sync"}
-          </button>
-        ) : null}
+            Details
+          </Link>
+          {snapshot.online && (snapshot.pendingCount > 0 || snapshot.pendingImageCount > 0 || message) ? (
+            <button
+              type="button"
+              onClick={() => void handleRetrySync()}
+              disabled={isSyncing}
+              className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] disabled:opacity-50"
+            >
+              {isSyncing ? "Syncing" : "Retry sync"}
+            </button>
+          ) : null}
+        </div>
       </div>
     </div>
   );
