@@ -37,13 +37,13 @@ type UniverseCard = {
 const FEATURE_CARDS = [
   {
     icon: "▣",
-    title: "AI Scanning",
-    description: "Point at any item. AI identifies it, prices it, and adds it to your vault instantly.",
+    title: "Enhanced Smart Scan",
+    description: "Capture a clean item photo, crop it, tune it, and let AI identify the record before it lands in your vault.",
   },
   {
     icon: "▤",
-    title: "Public Gallery",
-    description: "Build a museum-style showcase with one link. Your private vault stays completely private.",
+    title: "Public Vault Control",
+    description: "Share a public link that only shows items you unlock. Your private vault stays private by default.",
   },
   {
     icon: "↗",
@@ -57,13 +57,13 @@ const FEATURE_CARDS = [
   },
   {
     icon: "⟳",
-    title: "Stream Mode",
-    description: "Rapid-fire scanning for bulk drops. Add 50 items in a single session without breaking flow.",
+    title: "Offline Queue",
+    description: "Capture at shows, storage units, or conventions. Local records and images wait safely until sync is available.",
   },
   {
     icon: "◎",
-    title: "Auto-Lock Scanner",
-    description: "Captures the sharpest frame automatically. No tapping, no blur, no retakes needed.",
+    title: "Marketplace Prep",
+    description: "Mark an item for sale and generate listing drafts for eBay, Mercari, Facebook, Whatnot, Discogs, PWCC, and more.",
   },
 ];
 
@@ -115,12 +115,13 @@ const VAULT_UNIVERSES: UniverseCard[] = [
 const COMPARISON_ROWS = [
   ["Multi-category vault", "One category", "All 7 universes"],
   ["Portfolio analytics", "Basic", "Full P&L tracking"],
-  ["Exhibition-style gallery", "No", "Yes"],
-  ["Insurance documentation", "No", "Yes"],
-  ["AI identification & pricing", "Manual", "Auto on scan"],
-  ["Bulk drop / stream mode", "No", "Yes"],
-  ["Auto-lock blur detection", "No", "Yes"],
-  ["Public share link", "Partial", "One-tap share"],
+  ["Exhibition-style gallery", "No", "Museum view"],
+  ["Insurance documentation", "No", "Printable packet"],
+  ["AI identification & pricing", "Manual", "Smart Scan"],
+  ["Offline capture queue", "No", "Built in"],
+  ["Spreadsheet imports", "Limited", "CSV, Excel, eBay, Whatnot"],
+  ["Public share link", "Partial", "Private by default"],
+  ["Marketplace listing prep", "Manual", "Multi-channel drafts"],
   ["Team & multi-profile", "No", "Yes"],
 ];
 

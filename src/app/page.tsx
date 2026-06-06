@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import PublicHomeClient from "./PublicHomeClient";
 
 export const metadata: Metadata = {
-  title: "VLTD — Your Digital Vault & Exhibitions",
+  title: "VLTD - Private Collector Vault, Museum, Insurance & Sales Prep",
   description:
-    "Build a private inventory for collectibles, track item records, and publish clean public galleries for comics, cards, music, games, memorabilia, and more.",
+    "Scan, document, value, insure, share, and prepare listings for every collectible category in one private, exportable vault.",
   alternates: {
     canonical: "/",
   },
@@ -18,7 +18,7 @@ const homeJsonLd = {
   applicationCategory: "LifestyleApplication",
   operatingSystem: "Web",
   description:
-    "VLTD helps collectors organize private inventory and share polished public galleries for collectibles.",
+    "VLTD helps collectors scan, document, value, insure, share, and prepare listings for collectibles across every category.",
   offers: {
     "@type": "Offer",
     category: "Collector inventory management",
