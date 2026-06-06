@@ -633,7 +633,7 @@ export default function CameraCapturePanel({
                 onClick={() => setShowFineTune((value) => !value)}
                 className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
               >
-                Fine Tune {showFineTune ? "▴" : "▾"}
+                {showFineTune ? "Hide Fine Tune" : "Show Fine Tune"}
               </button>
 
               {showFineTune ? (
@@ -743,6 +743,38 @@ export default function CameraCapturePanel({
           </div>
         ) : (
           <>
+            <div className="mt-2 flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
+              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
+                Frame
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedFrameId("auto")}
+                className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition"
+                style={
+                  selectedFrameId === "auto"
+                    ? { background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))", borderColor: "var(--theme-gold-border, rgba(245,181,72,0.38))", color: "var(--theme-gold, #F5B548)" }
+                    : { background: "var(--pill)", borderColor: "var(--border)", color: "var(--muted)" }
+                }
+              >
+                Auto
+              </button>
+              {FRAME_PRESETS.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => setSelectedFrameId(preset.id)}
+                  className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition"
+                  style={
+                    selectedFrameId === preset.id
+                      ? { background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))", borderColor: "var(--theme-gold-border, rgba(245,181,72,0.38))", color: "var(--theme-gold, #F5B548)" }
+                      : { background: "var(--pill)", borderColor: "var(--border)", color: "var(--muted)" }
+                  }
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
             <div className="mt-2 overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-1.5 ring-1 ring-[color:var(--border)]">
               <div
                   className="relative flex items-center justify-center overflow-hidden rounded-[12px] bg-[color:var(--surface)]"
@@ -785,6 +817,9 @@ export default function CameraCapturePanel({
                       }}
                     >
                       {selectedFrameId === "auto" ? frame.label : selectedFramePreset?.label}
+                    </div>
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-black/45 px-2 py-0.5 text-[10px] font-semibold text-white/70 ring-1 ring-white/10">
+                      Fill the guide, then tap capture
                     </div>
                   </div>
                 ) : null}

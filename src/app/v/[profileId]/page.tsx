@@ -9,7 +9,6 @@ import {
   fetchPublicVaultItems,
   type PublicProfile,
 } from "@/lib/publicProfile";
-import type { UniverseKey } from "@/lib/taxonomy";
 import type { VaultItem } from "@/lib/vaultModel";
 
 export default function PublicVaultPage({
@@ -54,13 +53,14 @@ export default function PublicVaultPage({
     };
   }, [profileId]);
 
-  function handleFilterToUniverse(_universe: UniverseKey) {
+  function handleFilterToUniverse() {
     // Public vault shares are already intentionally filtered to public items.
   }
 
   const displayName = profile?.displayName || "Collector";
   const avatarEmoji = profile?.avatarEmoji || "🗝️";
   const bio = profile?.bio;
+  const itemLabel = items.length === 1 ? "item" : "items";
 
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
@@ -72,7 +72,7 @@ export default function PublicVaultPage({
           <div className="min-w-0">
             <div className="truncate text-base font-semibold">{displayName}</div>
             <div className="text-xs text-[color:var(--muted)]">
-              {loading ? "Loading public vault..." : `${items.length} public ${items.length === 1 ? "item" : "items"}`}
+              {loading ? "Loading public vault..." : `${items.length} public ${itemLabel} - private by default`}
             </div>
           </div>
           <Link
@@ -108,16 +108,34 @@ export default function PublicVaultPage({
             Loading public vault...
           </div>
         ) : items.length ? (
-          <VaultMuseumView items={items} onFilterToUniverse={handleFilterToUniverse} />
+          <>
+            <div className="mb-5 rounded-[20px] bg-[color:var(--surface)] px-5 py-4 ring-1 ring-[color:var(--border)]">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted2)]">
+                Public Share
+              </div>
+              <div className="mt-1 text-sm leading-6 text-[color:var(--muted)]">
+                Showing only items this collector made public. Private vault records, values, purchase details, and notes stay hidden.
+              </div>
+            </div>
+            <VaultMuseumView items={items} onFilterToUniverse={handleFilterToUniverse} />
+          </>
         ) : (
           <div className="rounded-[24px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)]">
             <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted2)]">
               Public Vault
             </div>
-            <h1 className="mt-2 text-2xl font-semibold">No public items yet</h1>
+            <h1 className="mt-2 text-2xl font-semibold">This public vault is empty</h1>
             <p className="mx-auto mt-2 max-w-md text-sm text-[color:var(--muted)]">
-              This collector has not shared any vault items publicly.
+              {displayName} has not unlocked any items for public viewing yet. Public links only show intentionally shared records.
             </p>
+            <div className="mt-5 flex flex-wrap justify-center gap-2">
+              <Link href="/" className="rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--pill-active-bg)]">
+                Visit VLTD
+              </Link>
+              <Link href="/vault" className="rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)]">
+                Open your vault
+              </Link>
+            </div>
           </div>
         )}
       </div>

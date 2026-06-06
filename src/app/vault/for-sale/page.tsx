@@ -8,7 +8,16 @@ import {
   itemToListingInput,
   type ListingOutput,
 } from "@/lib/listingGenerator";
-import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
+import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
+import { getPrimaryImageUrl, loadItems, saveItem, type VaultItem } from "@/lib/vaultModel";
+
+const SALES_KEY = "vltd_sales_history";
+
+type SaleRecord = VaultItem & {
+  soldPrice: number;
+  soldAt: number;
+  salePlatform?: string;
+};
 
 function money(value: number) {
   return new Intl.NumberFormat("en-US", {
@@ -20,6 +29,24 @@ function money(value: number) {
 
 function itemPrice(item: VaultItem) {
   return Number(item.askingPrice ?? item.currentValue ?? item.valueMedian ?? item.estimatedValue ?? 0);
+}
+
+function readSales(): SaleRecord[] {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(SALES_KEY) || "[]");
+    return Array.isArray(parsed) ? (parsed as SaleRecord[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSales(data: SaleRecord[]) {
+  localStorage.setItem(SALES_KEY, JSON.stringify(data));
+}
+
+function parseMoney(input: string) {
+  const value = Number(input.replace(/[^0-9.-]/g, "").trim());
+  return Number.isFinite(value) ? value : undefined;
 }
 
 function listingText(listing: ListingOutput) {
@@ -62,16 +89,13 @@ function StatCard({ label, value, helper }: { label: string; value: string; help
   );
 }
 
-function ListingRow({ item }: { item: VaultItem }) {
+function ListingRow({ item, onMarkSold }: { item: VaultItem; onMarkSold: (item: VaultItem) => void }) {
   const listing = generateEbayListing(itemToListingInput(item));
   const imageUrl = getPrimaryImageUrl(item);
   const issueCount = listing.checklist.length + listing.warnings.length;
 
   return (
-    <Link
-      href={`/vault/item/${encodeURIComponent(item.id)}`}
-      className="block rounded-2xl bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
-    >
+    <article className="rounded-2xl bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]">
       <div className="flex gap-3">
         <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-black/20">
           {imageUrl ? (
@@ -103,14 +127,29 @@ function ListingRow({ item }: { item: VaultItem }) {
               ))}
             </div>
           ) : null}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link
+              href={`/vault/item/${encodeURIComponent(item.id)}`}
+              className="inline-flex min-h-8 items-center justify-center rounded-full bg-[color:var(--surface)] px-3 text-xs font-semibold ring-1 ring-[color:var(--border)]"
+            >
+              Open
+            </Link>
+            <button
+              type="button"
+              onClick={() => onMarkSold(item)}
+              className="inline-flex min-h-8 items-center justify-center rounded-full bg-emerald-500/15 px-3 text-xs font-semibold text-emerald-200 ring-1 ring-emerald-400/25 transition hover:bg-emerald-500/25"
+            >
+              Mark sold
+            </button>
+          </div>
         </div>
       </div>
-    </Link>
+    </article>
   );
 }
 
 export default function ForSalePage() {
-  const [items] = useState<VaultItem[]>(() => loadItems().filter((item) => item.status === "FOR_SALE"));
+  const [items, setItems] = useState<VaultItem[]>(() => loadItems().filter((item) => item.status === "FOR_SALE"));
   const [status, setStatus] = useState("");
 
   const report = useMemo(() => {
@@ -144,6 +183,50 @@ export default function ForSalePage() {
     }
   }
 
+  async function handleMarkSold(item: VaultItem) {
+    const defaultPrice = itemPrice(item);
+    const priceInput = window.prompt("Enter sale price:", defaultPrice > 0 ? String(defaultPrice) : "");
+    if (!priceInput) return;
+
+    const soldPrice = parseMoney(priceInput);
+    if (soldPrice === undefined) {
+      setStatus("Sale price was not valid.");
+      return;
+    }
+
+    const platformInput = window.prompt("Where did it sell? Example: eBay, Whatnot, in person", "eBay");
+    const salePlatform = platformInput?.trim() || undefined;
+    const soldAt = Date.now();
+    const soldItem: VaultItem = {
+      ...item,
+      status: "SOLD",
+      soldPrice,
+      soldAt,
+    };
+    const saleRecord: SaleRecord = {
+      ...soldItem,
+      soldPrice,
+      soldAt,
+      salePlatform,
+    };
+
+    try {
+      writeSales([
+        saleRecord,
+        ...readSales().filter((sale) => String(sale.id) !== String(item.id)),
+      ]);
+      saveItem(soldItem);
+      enqueueVaultItemSync(soldItem.id);
+      setItems((current) => current.filter((entry) => String(entry.id) !== String(item.id)));
+      await processVaultSyncQueue();
+      window.dispatchEvent(new Event("vltd:vault-updated"));
+      setStatus(`Marked ${item.title} sold for ${money(soldPrice)}${salePlatform ? ` on ${salePlatform}` : ""}.`);
+    } catch (error) {
+      console.error(error);
+      setStatus("Failed to mark item sold. Try opening the item and selling it from the detail page.");
+    }
+  }
+
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -166,6 +249,9 @@ export default function ForSalePage() {
             <Link href="/vault" className="rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)]">
               Vault
             </Link>
+            <Link href="/vault/sold" className="rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)]">
+              Sold
+            </Link>
           </div>
         </div>
 
@@ -186,12 +272,12 @@ export default function ForSalePage() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Items</div>
-              <div className="mt-1 text-sm text-[color:var(--muted)]">Open an item to edit asking price, condition, photos, or listing copy.</div>
+              <div className="mt-1 text-sm text-[color:var(--muted)]">Open an item to edit listing details, or close out a completed sale from this list.</div>
             </div>
           </div>
           <div className="mt-4 grid gap-3 lg:grid-cols-2">
             {items.map((item) => (
-              <ListingRow key={item.id} item={item} />
+              <ListingRow key={item.id} item={item} onMarkSold={(nextItem) => void handleMarkSold(nextItem)} />
             ))}
             {items.length === 0 ? (
               <div className="rounded-2xl bg-[color:var(--pill)] p-4 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">

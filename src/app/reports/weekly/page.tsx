@@ -95,6 +95,18 @@ function ItemRow({ item, detail }: { item: VaultItem; detail: string }) {
   );
 }
 
+function ActionShortcut({ href, label, helper }: { href: string; label: string; helper: string }) {
+  return (
+    <Link
+      href={href}
+      className="rounded-2xl bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
+    >
+      <div className="text-sm font-semibold">{label}</div>
+      <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">{helper}</div>
+    </Link>
+  );
+}
+
 export default function WeeklyVaultReportPage() {
   const [items] = useState<VaultItem[]>(() => loadItems());
   const [now] = useState(() => Date.now());
@@ -174,8 +186,14 @@ export default function WeeklyVaultReportPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Link href="/capture" className="rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--pill-active-bg)]">
+              Capture
+            </Link>
             <Link href="/vault" className="rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)]">
               Vault
+            </Link>
+            <Link href="/vault/import" className="rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)]">
+              Import
             </Link>
             <Link href="/reports/insurance" className="rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)]">
               Insurance Report
@@ -253,7 +271,7 @@ export default function WeeklyVaultReportPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Sale & Sharing</div>
-              <div className="mt-1 text-sm text-[color:var(--muted)]">Items that are public or marked for sale this week&apos;s review.</div>
+              <div className="mt-1 text-sm text-[color:var(--muted)]">Items that are public or marked for sale in this week&apos;s review.</div>
             </div>
             <Link href="/vault/for-sale" className="rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)]">
               For Sale Prep
@@ -300,6 +318,29 @@ export default function WeeklyVaultReportPage() {
             <div className="text-xs text-[color:var(--muted)]">
               Photos {report.missingPhoto.length} / Cost {report.missingCost.length} / Value {report.missingValue.length} / Condition {report.missingCondition.length}
             </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 lg:grid-cols-3">
+            <ActionShortcut
+              href="/capture"
+              label={`Add photos (${report.missingPhoto.length})`}
+              helper="Use camera capture for items that weaken insurance or public sharing."
+            />
+            <ActionShortcut
+              href="/vault/import"
+              label={`Import records (${report.missingCost.length + report.missingValue.length})`}
+              helper="Fill cost basis and valuation fields from a spreadsheet batch."
+            />
+            <ActionShortcut
+              href="/vault/for-sale"
+              label={`Close listings (${report.forSaleItems.length})`}
+              helper="Review listing readiness or mark completed marketplace sales as sold."
+            />
+            <ActionShortcut
+              href="/reports/insurance"
+              label={`Insurance report (${report.insuranceGaps.length})`}
+              helper="Generate the documentation view for photos, values, proof fields, and gaps."
+            />
           </div>
 
           <div className="mt-4 grid gap-3 lg:grid-cols-3">

@@ -37,6 +37,11 @@ const IGNORE_LIMIT = 50;
 const DUP_LIMIT = 20;
 
 type ImportPreset = "generic" | "ebay" | "whatnot";
+type LastImportResult = {
+  count: number;
+  firstItemId?: string;
+  sourceLabel: string;
+};
 
 const IMPORT_PRESET_OPTIONS: Array<{ value: ImportPreset; label: string; helper: string }> = [
   {
@@ -148,6 +153,7 @@ export default function SpreadsheetImportClient() {
   const [hasConfirmed, setHasConfirmed] = useState(false);
   const [importPreset, setImportPreset] = useState<ImportPreset>("generic");
   const [importHistory, setImportHistory] = useState<ImportHistoryEntry[]>([]);
+  const [lastImportResult, setLastImportResult] = useState<LastImportResult | null>(null);
 
   const previewItems = useMemo(() => parsedItems.slice(0, PREVIEW_LIMIT), [parsedItems]);
   const duplicateGroups = useMemo(() => detectDuplicateGroups(parsedItems), [parsedItems]);
@@ -193,6 +199,7 @@ export default function SpreadsheetImportClient() {
       setIgnoredRows(nextResult.ignoredRows);
       setSourceLabel(nextResult.sourceLabel);
       setHasConfirmed(false);
+      setLastImportResult(null);
       setStatus(
         nextResult.items.length > 0
           ? `Parsed ${nextResult.items.length} items from ${nextResult.sourceLabel}.`
@@ -210,6 +217,7 @@ export default function SpreadsheetImportClient() {
     setIgnoredRows(nextResult.ignoredRows);
     setSourceLabel(nextSource.sourceLabel);
     setHasConfirmed(false);
+    setLastImportResult(null);
     setStatus(
       nextResult.items.length > 0
         ? `Parsed ${nextResult.items.length} items from ${nextSource.sourceLabel}. Review mappings before import.`
@@ -317,6 +325,11 @@ export default function SpreadsheetImportClient() {
         sourceLabel,
         itemIds: savedItems.map((item) => item.id),
         skippedCount: skippedDupCount,
+      });
+      setLastImportResult({
+        count: savedItems.length,
+        firstItemId: savedItems[0]?.id,
+        sourceLabel,
       });
       refreshRecentVault();
       setStatus(
@@ -456,6 +469,30 @@ export default function SpreadsheetImportClient() {
               </div>
             ) : null}
 
+            {lastImportResult ? (
+              <div className="mt-3 rounded-[20px] bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)]">
+                <div className="text-sm font-semibold">
+                  Imported {lastImportResult.count} item{lastImportResult.count === 1 ? "" : "s"} from {lastImportResult.sourceLabel}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {lastImportResult.firstItemId ? (
+                    <Link
+                      href={`/vault/item/${encodeURIComponent(lastImportResult.firstItemId)}`}
+                      className="rounded-full bg-[color:var(--pill-active-bg)] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--pill-active-bg)]"
+                    >
+                      Review newest item
+                    </Link>
+                  ) : null}
+                  <Link href="/vault" className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs ring-1 ring-[color:var(--border)]">
+                    Open vault
+                  </Link>
+                  <Link href="/vault/sync" className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs ring-1 ring-[color:var(--border)]">
+                    Check sync
+                  </Link>
+                </div>
+              </div>
+            ) : null}
+
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <label className="inline-flex items-center gap-2 text-sm text-[color:var(--muted)]">
                 <input type="radio" checked={importMode === "all"} onChange={() => setImportMode("all")} />
@@ -491,6 +528,7 @@ export default function SpreadsheetImportClient() {
                   setSourceLabel("No source loaded");
                   setStatus("");
                   setHasConfirmed(false);
+                  setLastImportResult(null);
                 }}
                 disabled={isImporting || isParsing}
               >
