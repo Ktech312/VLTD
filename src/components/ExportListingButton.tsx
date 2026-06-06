@@ -6,21 +6,27 @@ import {
   generateDiscogsListing,
   generateEbayListing,
   generateEtsyListing,
+  generateFacebookListing,
   generateIconaListing,
+  generateMercariListing,
+  generatePwccListing,
   generateWhatnotListing,
   itemToListingInput,
   type ListingOutput,
 } from "@/lib/listingGenerator";
 import type { VaultItem } from "@/lib/vaultModel";
 
-type Platform = "ebay" | "etsy" | "icona" | "whatnot" | "discogs";
+type Platform = "ebay" | "mercari" | "facebook" | "etsy" | "whatnot" | "discogs" | "pwcc" | "icona";
 
 const PLATFORM_LABEL: Record<Platform, string> = {
   ebay: "eBay",
+  mercari: "Mercari",
+  facebook: "Facebook",
   etsy: "Etsy",
-  icona: "Icona",
   whatnot: "Whatnot",
   discogs: "Discogs",
+  pwcc: "PWCC",
+  icona: "Icona",
 };
 
 function buildCopyText(listing: ListingOutput) {
@@ -59,10 +65,13 @@ export default function ExportListingButton({ item }: { item: VaultItem }) {
 
   const input = useMemo(() => itemToListingInput(item), [item]);
   const listing = useMemo(() => {
+    if (platform === "mercari") return generateMercariListing(input);
+    if (platform === "facebook") return generateFacebookListing(input);
     if (platform === "etsy") return generateEtsyListing(input);
-    if (platform === "icona") return generateIconaListing(input);
     if (platform === "whatnot") return generateWhatnotListing(input);
     if (platform === "discogs") return generateDiscogsListing(input);
+    if (platform === "pwcc") return generatePwccListing(input);
+    if (platform === "icona") return generateIconaListing(input);
     return generateEbayListing(input);
   }, [input, platform]);
 
@@ -111,6 +120,25 @@ export default function ExportListingButton({ item }: { item: VaultItem }) {
       </div>
 
       <div className="mt-4 grid gap-3">
+        {listing.checklist.length > 0 || listing.warnings.length > 0 ? (
+          <div className="rounded-2xl bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
+            <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Listing Readiness</div>
+            <div className="mt-2 grid gap-2 text-sm text-[color:var(--muted)]">
+              {listing.checklist.length > 0 ? (
+                <div>
+                  Missing: <span className="text-amber-300">{listing.checklist.join(", ")}</span>
+                </div>
+              ) : null}
+              {listing.warnings.length > 0 ? (
+                <div>{listing.warnings.join(" ")}</div>
+              ) : null}
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-2xl bg-emerald-950/40 p-4 text-sm text-emerald-100 ring-1 ring-emerald-400/20">
+            Listing has the core fields needed for copy export.
+          </div>
+        )}
         <div className="rounded-2xl bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
           <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Title</div>
           <div className="mt-2 text-sm font-semibold">{listing.title}</div>

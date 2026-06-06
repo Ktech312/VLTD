@@ -4,6 +4,7 @@ import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
 
 import CostToSellPanel from "@/components/CostToSellPanel";
+import ExportListingButton from "@/components/ExportListingButton";
 import InsurancePdfButton from "@/components/InsurancePdfButton";
 import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
 import ItemMedia from "@/components/ItemMedia";
@@ -886,6 +887,21 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
             shippingCost={clamp(item.purchaseShipping)}
             category={categoryLabel(item)}
           />
+        </div>
+
+        <div className="mt-5">
+          {item.status === "FOR_SALE" ? (
+            <ExportListingButton item={item} />
+          ) : (
+            <div className="rounded-[24px] bg-[color:var(--surface)] p-5 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+              <div className="text-[11px] uppercase tracking-[0.24em] text-[color:var(--muted2)]">
+                Listing Copy
+              </div>
+              <div className="mt-2 text-sm text-[color:var(--muted)]">
+                Mark this item for sale to unlock multi-channel listing copy.
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="mt-5">

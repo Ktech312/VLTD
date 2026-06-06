@@ -1,19 +1,9 @@
 
 "use client";
 
-export default function ListingGeneratorPanel({ item }: { item: any }) {
+import ExportListingButton from "@/components/ExportListingButton";
+import type { VaultItem } from "@/lib/vaultModel";
 
-  function generate() {
-    alert("Future: Generate full marketplace listing");
-  }
-
-  return (
-    <div className="p-4 rounded-xl bg-[color:var(--surface)] ring-1 ring-[color:var(--border)]">
-      <div className="font-semibold mb-2">Generate Marketplace Listing</div>
-
-      <button onClick={generate} className="px-4 py-2 rounded ring-1 ring-white/20">
-        Generate Listing
-      </button>
-    </div>
-  );
+export default function ListingGeneratorPanel({ item }: { item: VaultItem }) {
+  return <ExportListingButton item={item} />;
 }

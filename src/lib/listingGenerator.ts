@@ -30,8 +30,10 @@ export type ListingOutput = {
   description: string;
   price: number;
   category: string;
-  platform: "EBAY" | "ETSY" | "ICONA" | "WHATNOT" | "DISCOGS";
+  platform: "EBAY" | "ETSY" | "ICONA" | "WHATNOT" | "DISCOGS" | "MERCARI" | "FACEBOOK" | "PWCC";
   socialCaption: string;
+  checklist: string[];
+  warnings: string[];
 };
 
 function money(value?: number) {
@@ -116,6 +118,39 @@ function shippingNote(input: ListingInput) {
   return "Ships securely packaged. Shipping cost varies by destination.";
 }
 
+function platformGuidance(input: ListingInput, platform: ListingOutput["platform"]) {
+  const category = categoryLabel(input).toLowerCase();
+  const price = askingPrice(input);
+
+  if (platform === "PWCC") {
+    if (price >= 500 || /psa|bgs|cgc|beckett|slab/i.test(input.grade ?? "")) {
+      return "Best for higher-end graded cards and premium collectibles. Confirm consignment requirements before submitting.";
+    }
+    return "PWCC is usually strongest for graded or higher-value pieces; eBay may be better for broader demand.";
+  }
+
+  if (platform === "DISCOGS") return "Confirm exact pressing, catalog number, media condition, and sleeve condition before publishing.";
+  if (platform === "WHATNOT") return "Use as a show note or auction description. Keep title short and condition clear for live buyers.";
+  if (platform === "MERCARI") return "Good for simple fixed-price listings. Lead with condition, included accessories, and shipping clarity.";
+  if (platform === "FACEBOOK") return "Best for local or group sales. Include pickup/shipping preference and payment terms.";
+  if (platform === "ETSY" && (category.includes("vintage") || category.includes("handmade"))) return "Confirm the item fits Etsy category rules before listing.";
+  return "Use marketplace-specific category and condition fields before publishing.";
+}
+
+export function buildListingReadiness(input: ListingInput) {
+  const missing: string[] = [];
+  const warnings: string[] = [];
+
+  if (!input.title?.trim()) missing.push("Title");
+  if (!askingPrice(input)) missing.push("Asking price or current value");
+  if (!input.grade?.trim()) warnings.push("Condition or grade is blank.");
+  if (!input.notes?.trim() && !input.description?.trim()) warnings.push("Description notes are blank.");
+  if (!input.categoryLabel && !input.category) warnings.push("Category is blank.");
+  if (!input.certNumber && /psa|bgs|cgc|beckett|slab/i.test(input.grade ?? "")) warnings.push("Graded item has no cert number.");
+
+  return { missing, warnings };
+}
+
 function ebayItemSpecifics(input: ListingInput) {
   const lines: string[] = [];
 
@@ -139,6 +174,7 @@ function listingDescription(input: ListingInput, platform: ListingOutput["platfo
   const conditionNote = conditionLanguage(input);
   const shipping = shippingNote(input);
   const specifics = platform === "EBAY" ? ebayItemSpecifics(input) : "";
+  const guidance = platformGuidance(input, platform);
 
   const lines = [
     `${input.title}${input.subtitle ? ` - ${input.subtitle}` : ""}`,
@@ -157,6 +193,7 @@ function listingDescription(input: ListingInput, platform: ListingOutput["platfo
     cost ? `Recorded cost basis: ${cost}` : "",
     "",
     shipping,
+    guidance,
     "",
     input.notes || input.description || "Collector-owned item from a cataloged VLTD vault. Please review all photos carefully.",
     specifics,
@@ -185,6 +222,7 @@ function buildListing(
   defaultCategory: string,
   maxTitleLength = 80
 ): ListingOutput {
+  const readiness = buildListingReadiness(input);
   return {
     title: listingTitle(input, maxTitleLength),
     description: listingDescription(input, platform),
@@ -192,6 +230,8 @@ function buildListing(
     category: categoryLabel(input) || defaultCategory,
     platform,
     socialCaption: socialCaption(input),
+    checklist: readiness.missing,
+    warnings: readiness.warnings,
   };
 }
 
@@ -238,4 +278,16 @@ export function generateWhatnotListing(input: ListingInput): ListingOutput {
 
 export function generateDiscogsListing(input: ListingInput): ListingOutput {
   return buildListing(input, "DISCOGS", "Vinyl & Music", 100);
+}
+
+export function generateMercariListing(input: ListingInput): ListingOutput {
+  return buildListing(input, "MERCARI", "Collectibles", 80);
+}
+
+export function generateFacebookListing(input: ListingInput): ListingOutput {
+  return buildListing(input, "FACEBOOK", "Marketplace", 90);
+}
+
+export function generatePwccListing(input: ListingInput): ListingOutput {
+  return buildListing(input, "PWCC", "Auction", 80);
 }
