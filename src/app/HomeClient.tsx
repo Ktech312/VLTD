@@ -22,14 +22,6 @@ function focusToVaultSlug(focus: string): string | null {
   return null;
 }
 
-function IconPackagePlus({ size = 24, style }: { size?: number; style?: Record<string, string | number> }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
-      <path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" y1="22" x2="12" y2="12"/><line x1="19" y1="3" x2="19" y2="9"/><line x1="22" y1="6" x2="16" y2="6"/>
-    </svg>
-  );
-}
-
 function InfoTooltip({ text }: { text: string }) {
   return (
     <span className="group/tip relative inline-flex items-center justify-center">
@@ -263,9 +255,15 @@ export default function HomeClient() {
         <section className="rounded-[28px] border p-4 sm:p-5" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "rgba(245,181,72,0.18)", boxShadow: "0 0 0 1px rgba(245,181,72,0.08), 0 24px 80px rgba(0,0,0,0.55), 0 0 60px rgba(245,181,72,0.05)" }}>
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">Welcome back,</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">
+                {stats.totalItems === 0 ? "Your vault is ready," : "Welcome back,"}
+              </p>
               <h1 className="mt-0.5 text-2xl font-black tracking-[-0.04em] text-text-primary sm:text-3xl">{displayName || "Collector"}</h1>
-              <p className="mt-1 text-sm text-[#A0956B]">{summaryLine}</p>
+              <p className="mt-1 text-sm text-[#A0956B]">
+                {stats.totalItems === 0
+                  ? "Scan your first item to start building a real collection record."
+                  : summaryLine}
+              </p>
             </div>
             {primaryFocus && primaryFocus.toLowerCase() !== "null" && (() => {
               const slug = focusToVaultSlug(primaryFocus);
@@ -275,12 +273,14 @@ export default function HomeClient() {
                 : <div className="shrink-0 rounded-2xl border px-3 py-1.5 text-right" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}>{inner}</div>;
             })()}
           </div>
-          <div className="mt-4 flex gap-2 overflow-x-auto pb-0.5 no-scrollbar">
-            <StatChip label="Items" value={String(stats.totalItems)} sub="in vault" />
-            <StatChip label="Invested" value={formatMoney(stats.totalCostValue)} sub="cost basis" />
-            <StatChip label="Value" value={formatMoney(stats.totalValue)} sub="current est." tone="gold" />
-            <StatChip label="Gain / Loss" value={gainPrefix + formatMoney(stats.totalGain)} sub={stats.totalCostValue > 0 ? gainPrefix + stats.gainPct.toFixed(1) + "% return" : "add costs"} tone={gainTone} />
-          </div>
+          {stats.totalItems > 0 ? (
+            <div className="mt-4 flex gap-2 overflow-x-auto pb-0.5 no-scrollbar">
+              <StatChip label="Items" value={String(stats.totalItems)} sub="in vault" />
+              <StatChip label="Invested" value={formatMoney(stats.totalCostValue)} sub="cost basis" />
+              <StatChip label="Value" value={formatMoney(stats.totalValue)} sub="current est." tone="gold" />
+              <StatChip label="Gain / Loss" value={gainPrefix + formatMoney(stats.totalGain)} sub={stats.totalCostValue > 0 ? gainPrefix + stats.gainPct.toFixed(1) + "% return" : "add costs"} tone={gainTone} />
+            </div>
+          ) : null}
           <div className="relative mt-4">
             <div className="absolute -right-1 -top-1 z-10"><InfoTooltip text="Uses the camera + AI to identify an item automatically. Point at a card, figure, or comic and it fills in the details for you." /></div>
             <Link href="/capture" className="flex min-h-[52px] items-center justify-between gap-3 rounded-[18px] px-4 py-3 font-semibold no-select transition hover:-translate-y-0.5" style={{ background: "linear-gradient(135deg, rgba(139,105,20,0.25) 0%, rgba(200,148,31,0.15) 50%, rgba(139,105,20,0.25) 100%)", border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.35))", boxShadow: "0 0 20px rgba(245,181,72,0.15)", color: "var(--theme-gold, #F5B548)" }}>
@@ -340,10 +340,47 @@ export default function HomeClient() {
                 <Link href="/vault" className="text-sm font-semibold text-[#A0956B] transition hover:text-[#F5B548]">View all &#8594;</Link>
               </div>
               {recentItems.length === 0 ? (
-                <div className="mt-3 flex flex-col items-center rounded-2xl border border-dashed px-4 py-6 text-center" style={{ borderColor: "rgba(245,181,72,0.15)" }}>
-                  <IconPackagePlus size={28} style={{ color: "#A0956B", opacity: 0.6 }} />
-                  <p className="mt-2 text-sm font-semibold" style={{ color: "#A0956B" }}>Start building your collection</p>
-                  <p className="mt-0.5 text-xs" style={{ color: "#5A5040" }}>Use Smart Scan or Quick Add to catalog your first item.</p>
+                <div className="mt-3 space-y-2">
+                  {[
+                    { step: "1", title: "Scan your first item", detail: "Open Smart Scan and save a camera-backed record.", href: "/capture", primary: true },
+                    { step: "2", title: "Import a spreadsheet", detail: "Bring in existing rows from eBay, Whatnot, CSV, or Excel.", href: "/vault/import", primary: false },
+                    { step: "3", title: "Review your vault", detail: "Browse universes, set visibility, and build insurance docs.", href: "/vault", primary: false },
+                  ].map((entry) => (
+                    <Link
+                      key={entry.step}
+                      href={entry.href}
+                      className="flex items-center gap-3 rounded-[16px] px-4 py-3.5 transition hover:-translate-y-0.5"
+                      style={{
+                        background: entry.primary
+                          ? "linear-gradient(135deg, rgba(245,181,72,0.14), rgba(245,181,72,0.06))"
+                          : "var(--theme-elevated, rgba(20,32,55,0.9))",
+                        border: entry.primary
+                          ? "1px solid rgba(245,181,72,0.28)"
+                          : "1px solid var(--theme-border, rgba(245,181,72,0.10))",
+                      }}
+                    >
+                      <div
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-black"
+                        style={{
+                          background: entry.primary ? "rgba(245,181,72,0.18)" : "rgba(255,255,255,0.06)",
+                          color: entry.primary ? "#F5B548" : "#A0956B",
+                        }}
+                      >
+                        {entry.step}
+                      </div>
+                      <div className="min-w-0 text-left">
+                        <p className="text-sm font-bold" style={{ color: entry.primary ? "#F5B548" : "var(--fg)" }}>
+                          {entry.title}
+                        </p>
+                        <p className="text-xs" style={{ color: "#A0956B" }}>
+                          {entry.detail}
+                        </p>
+                      </div>
+                      <span className="ml-auto shrink-0 text-sm" style={{ color: entry.primary ? "#F5B548" : "#A0956B" }}>
+                        &#8594;
+                      </span>
+                    </Link>
+                  ))}
                 </div>
               ) : (
                 <div className="mt-3 space-y-2">

@@ -576,30 +576,50 @@ function VaultEmptyState({
     <section className="mt-3 rounded-[18px] bg-[color:var(--surface)] p-8 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
       <div className="mx-auto max-w-2xl text-center">
         <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">EMPTY VAULT</div>
-        <h2 className="mt-2 text-2xl font-semibold">You have no items yet</h2>
-        <div className="mt-2 text-sm text-[color:var(--muted)]">
-          Start with Quick Add for the fastest path, or use Add for scan-assisted entry with pricing and images.
+        <h2 className="mt-2 text-2xl font-semibold">Your vault is empty. Let&apos;s fix that.</h2>
+        <div className="mt-2 text-sm leading-relaxed text-[color:var(--muted)]">
+          Scan an item with the camera, add it manually, or import an existing spreadsheet. VLTD keeps everything local-first and syncs when cloud storage is available.
+        </div>
+        <div
+          className="mt-3 inline-flex flex-wrap items-center justify-center gap-1.5 rounded-full px-3 py-1 text-xs"
+          style={{ background: "rgba(245,181,72,0.08)", border: "1px solid rgba(245,181,72,0.15)", color: "#A0956B" }}
+        >
+          <span>Universes:</span>
+          <span style={{ color: "#F5B548" }}>TCG - Sports - Comics - Music - Games - Jewelry - Misc</span>
         </div>
 
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+        <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <Link
-            href="/vault/quick"
-            className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]"
+            href="/capture"
+            className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full px-6 text-[15px] font-bold transition hover:opacity-90 sm:w-auto"
+            style={{ background: "#F5B548", color: "#0B0B0B" }}
           >
-            Quick Add
+            <CameraIcon className="h-5 w-5" />
+            Scan your first item
           </Link>
-          <Link
-            href="/vault/add"
-            className="vltd-selectable inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] transition"
-          >
-            Add Item
-          </Link>
-          <Link
-            href="/vault/import"
-            className="vltd-selectable inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] transition"
-          >
-            Import
-          </Link>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Link
+              href="/vault/quick"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-full px-5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+              style={{ color: "var(--fg)" }}
+            >
+              Quick Add
+            </Link>
+            <Link
+              href="/vault/add"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-full px-5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+              style={{ color: "var(--fg)" }}
+            >
+              Add manually
+            </Link>
+            <Link
+              href="/vault/import"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-full px-5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+              style={{ color: "var(--fg)" }}
+            >
+              Import
+            </Link>
+          </div>
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -871,6 +891,14 @@ export default function VaultPage() {
     () => items.filter((item) => saleInfoForItem(item, saleMap)).length,
     [items, saleMap]
   );
+  const publicCount = useMemo(
+    () => items.filter((item) => item.isPublic === true && !saleInfoForItem(item, saleMap)).length,
+    [items, saleMap]
+  );
+  const privateCount = useMemo(
+    () => items.filter((item) => item.isPublic !== true && !saleInfoForItem(item, saleMap)).length,
+    [items, saleMap]
+  );
 
   const universeGroups = useMemo(() => {
     const groups = VAULT_UNIVERSES.reduce(
@@ -984,7 +1012,7 @@ export default function VaultPage() {
     try {
       await syncPublicProfile();
       await navigator.clipboard.writeText(url);
-      setShareMessage("Copied!");
+      setShareMessage(publicCount > 0 ? "Copied!" : "Copied - no public items yet");
     } catch (error) {
       setShareMessage(error instanceof Error ? error.message : "Could not copy link");
     }
@@ -1009,6 +1037,19 @@ export default function VaultPage() {
                 <div className="mt-1.5 text-sm text-[color:var(--muted)]">
                   Universe-first inventory management. Open a Universe to browse, edit, sell, and reassign items.
                 </div>
+                {items.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap gap-2 text-xs text-[color:var(--muted)]">
+                    <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">
+                      {privateCount} private
+                    </span>
+                    <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">
+                      {publicCount} public
+                    </span>
+                    <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">
+                      Public links only show items you unlock
+                    </span>
+                  </div>
+                ) : null}
               </div>
               <div className="shrink-0 flex flex-wrap gap-2">
                 <button
@@ -1042,6 +1083,12 @@ export default function VaultPage() {
                   className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
                 >
                   Sold
+                </Link>
+                <Link
+                  href="/vault/for-sale"
+                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                >
+                  For Sale
                 </Link>
               </div>
             </div>

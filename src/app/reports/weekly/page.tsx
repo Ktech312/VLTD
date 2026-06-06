@@ -6,9 +6,10 @@ import { useMemo, useState } from "react";
 import { formatPrice } from "@/lib/pricingMvp";
 import { getOrderedImages, loadItems, type VaultItem } from "@/lib/vaultModel";
 
-type GapKind = "photo" | "cost" | "value" | "insurance";
+type GapKind = "photo" | "cost" | "value" | "condition" | "insurance";
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const VALUE_STALE_MS = 30 * 24 * 60 * 60 * 1000;
 
 function clampMoney(value: unknown) {
   const n = Number(value ?? 0);
@@ -41,6 +42,15 @@ function hasInsuranceBasics(item: VaultItem) {
   return hasPhoto(item) && itemValue(item) > 0 && Boolean(item.notes || item.certNumber || item.serialNumber || item.storageLocation);
 }
 
+function hasCondition(item: VaultItem) {
+  return Boolean(item.grade || item.conditionReason || item.conditionSource);
+}
+
+function valueUpdatedAt(item: VaultItem) {
+  const updatedAt = Number(item.valueUpdatedAt ?? item.priceUpdatedAt ?? 0);
+  return Number.isFinite(updatedAt) ? updatedAt : 0;
+}
+
 function universeLabel(value?: string) {
   return String(value || "MISC").replace(/_/g, " ");
 }
@@ -50,6 +60,7 @@ function getGapKinds(item: VaultItem): GapKind[] {
   if (!hasPhoto(item)) gaps.push("photo");
   if (itemCost(item) <= 0) gaps.push("cost");
   if (itemValue(item) <= 0) gaps.push("value");
+  if (!hasCondition(item)) gaps.push("condition");
   if (!hasInsuranceBasics(item)) gaps.push("insurance");
   return gaps;
 }
@@ -100,7 +111,11 @@ export default function WeeklyVaultReportPage() {
     const missingPhoto = collectionItems.filter((item) => !hasPhoto(item));
     const missingCost = collectionItems.filter((item) => itemCost(item) <= 0);
     const missingValue = collectionItems.filter((item) => itemValue(item) <= 0);
+    const missingCondition = collectionItems.filter((item) => !hasCondition(item));
     const insuranceGaps = collectionItems.filter((item) => !hasInsuranceBasics(item));
+    const forSaleItems = collectionItems.filter((item) => item.status === "FOR_SALE");
+    const publicItems = collectionItems.filter((item) => item.isPublic === true);
+    const staleValuations = collectionItems.filter((item) => itemValue(item) > 0 && valueUpdatedAt(item) > 0 && now - valueUpdatedAt(item) > VALUE_STALE_MS);
 
     const byUniverse = new Map<string, { count: number; value: number }>();
     collectionItems.forEach((item) => {
@@ -125,7 +140,11 @@ export default function WeeklyVaultReportPage() {
       missingPhoto,
       missingCost,
       missingValue,
+      missingCondition,
       insuranceGaps,
+      forSaleItems,
+      publicItems,
+      staleValuations,
       totalValue,
       totalCost,
       valueAdded,
@@ -135,7 +154,7 @@ export default function WeeklyVaultReportPage() {
         .sort((a, b) => b[1].value - a[1].value)
         .slice(0, 6),
     };
-  }, [items, weekStart]);
+  }, [items, now, weekStart]);
 
   const generatedLabel = new Date(now).toLocaleDateString(undefined, {
     month: "short",
@@ -169,6 +188,10 @@ export default function WeeklyVaultReportPage() {
           <StatCard label="New This Week" value={String(report.newItems.length)} helper={`${formatPrice(report.valueAdded)} value added`} />
           <StatCard label="Sold Recorded" value={String(report.soldItems.length)} helper={`${formatPrice(report.soldValue)} sold proceeds`} />
           <StatCard label="Insurance Gaps" value={String(report.insuranceGaps.length)} helper="Missing photo, value, or proof fields" />
+          <StatCard label="For Sale" value={String(report.forSaleItems.length)} helper="Ready for listing review" />
+          <StatCard label="Public Items" value={String(report.publicItems.length)} helper={`${report.collectionItems.length - report.publicItems.length} private`} />
+          <StatCard label="Missing Condition" value={String(report.missingCondition.length)} helper="Grade or condition note needed" />
+          <StatCard label="Stale Values" value={String(report.staleValuations.length)} helper="Value source older than 30 days" />
         </section>
 
         <div className="mt-6 grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
@@ -229,11 +252,53 @@ export default function WeeklyVaultReportPage() {
         <section className="mt-5 rounded-[24px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
+              <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Sale & Sharing</div>
+              <div className="mt-1 text-sm text-[color:var(--muted)]">Items that are public or marked for sale this week&apos;s review.</div>
+            </div>
+            <Link href="/vault/for-sale" className="rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)]">
+              For Sale Prep
+            </Link>
+          </div>
+
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            <div>
+              <div className="mb-2 text-sm font-semibold">For sale</div>
+              <div className="space-y-2">
+                {report.forSaleItems.slice(0, 6).map((item) => (
+                  <ItemRow key={item.id} item={item} detail={`Asking ${formatPrice(Number(item.askingPrice ?? itemValue(item)))}`} />
+                ))}
+                {report.forSaleItems.length === 0 ? (
+                  <div className="rounded-2xl bg-[color:var(--pill)] p-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+                    No items are marked for sale.
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-2 text-sm font-semibold">Public vault</div>
+              <div className="space-y-2">
+                {report.publicItems.slice(0, 6).map((item) => (
+                  <ItemRow key={item.id} item={item} detail="Visible through public vault links" />
+                ))}
+                {report.publicItems.length === 0 ? (
+                  <div className="rounded-2xl bg-[color:var(--pill)] p-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+                    No items are public. Shared vault links will be empty until you unlock items.
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-5 rounded-[24px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
               <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Action List</div>
               <div className="mt-1 text-sm text-[color:var(--muted)]">The items most likely to weaken sharing, valuation, or insurance readiness.</div>
             </div>
             <div className="text-xs text-[color:var(--muted)]">
-              Photos {report.missingPhoto.length} / Cost {report.missingCost.length} / Value {report.missingValue.length}
+              Photos {report.missingPhoto.length} / Cost {report.missingCost.length} / Value {report.missingValue.length} / Condition {report.missingCondition.length}
             </div>
           </div>
 
