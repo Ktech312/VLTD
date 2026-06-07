@@ -128,6 +128,18 @@ export default function DiscoverPage() {
   const isEmpty = !loading && filtered.length === 0;
   const hasActiveFilter = activeTab !== "All" || query.trim() !== "";
 
+  // Trending = top 3 by views (only when on "All" tab, no search query)
+  const trendingGalleries = useMemo(() =>
+    activeTab === "All" && !query.trim()
+      ? [...galleries].sort((a, b) => b.analytics_views - a.analytics_views).slice(0, 3)
+      : [],
+    [galleries, activeTab, query]
+  );
+
+  // Stats
+  const totalViews = useMemo(() => galleries.reduce((sum, g) => sum + g.analytics_views, 0), [galleries]);
+  const uniqueCollectors = useMemo(() => new Set(galleries.map((g) => g.profile_id)).size, [galleries]);
+
   function coverStyle(gallery: PublicGallery) {
     if (gallery.cover_image) return { background: `url(${gallery.cover_image}) center/cover no-repeat` };
     return { background: "linear-gradient(135deg, rgba(245,181,72,0.15), rgba(20,32,55,0.9))" };
@@ -159,6 +171,18 @@ export default function DiscoverPage() {
             )}
           </div>
         </section>
+
+        {/* Stats bar */}
+        {!loading && galleries.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 px-1 text-[11px]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
+            <span><span className="font-bold" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>{galleries.length}</span> exhibitions</span>
+            <span><span className="font-bold" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>{uniqueCollectors}</span> collectors</span>
+            {totalViews > 0 && <span><span className="font-bold" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>{totalViews.toLocaleString()}</span> total views</span>}
+            <Link href="/registry" className="ml-auto font-semibold hover:underline" style={{ color: "var(--theme-gold, #F5B548)" }}>
+              Registry rankings →
+            </Link>
+          </div>
+        )}
 
         {/* Tab bar */}
         <div className="mt-4 flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
@@ -198,6 +222,52 @@ export default function DiscoverPage() {
           </section>
         )}
 
+        {/* Trending row — top 3 by views */}
+        {!loading && trendingGalleries.length > 0 && (
+          <section className="mt-6">
+            <div className="mb-3 flex items-center gap-2">
+              <div className="text-[11px] tracking-[0.22em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>🔥 TRENDING</div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {trendingGalleries.map((gallery, rank) => (
+                <div key={gallery.id}
+                  className="group relative overflow-hidden rounded-[18px] cursor-pointer transition hover:-translate-y-0.5"
+                  style={{ background: "var(--surface)", border: "1px solid rgba(245,181,72,0.22)" }}
+                  onClick={() => router.push(`/museum/${gallery.id}/guest`)}>
+                  <div className="relative h-[140px] overflow-hidden rounded-t-[18px]" style={coverStyle(gallery)}>
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-transparent to-transparent" />
+                    <div className="absolute left-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-sm font-black"
+                      style={{ background: rank === 0 ? "#F5B548" : rank === 1 ? "rgba(192,192,192,0.9)" : "rgba(150,100,50,0.9)", color: "#0B0B0B" }}>
+                      {rank + 1}
+                    </div>
+                    {gallery.analytics_views > 0 && (
+                      <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                        style={{ background: "rgba(0,0,0,0.55)", color: "rgba(255,255,255,0.75)" }}>
+                        👁 {gallery.analytics_views.toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <div className="truncate text-sm font-black" style={{ color: "var(--theme-gold, #F5B548)" }}>{gallery.title}</div>
+                    <div className="mt-1 flex items-center justify-between gap-2">
+                      <span className="text-[10px]" style={{ color: "var(--muted2)" }}>{gallery.item_count > 0 ? `${gallery.item_count} items` : inferGalleryCategory(gallery)}</span>
+                      {gallery.collector_name && (
+                        <Link href={`/v/${gallery.profile_id}`}
+                          className="flex items-center gap-1 text-[10px] hover:underline z-10 relative"
+                          style={{ color: "rgba(255,255,255,0.5)" }}
+                          onClick={(e) => e.stopPropagation()}>
+                          <span>{gallery.collector_avatar}</span>
+                          <span className="max-w-[80px] truncate">{gallery.collector_name}</span>
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* All Exhibitions grid — no cap */}
         {!loading && filtered.length > 0 && (
           <section className="mt-6">
@@ -226,8 +296,14 @@ export default function DiscoverPage() {
                       <div className="mt-1 line-clamp-2 text-xs leading-5" style={{ color: "var(--muted)" }}>{gallery.description}</div>
                     )}
                     <div className="mt-2 flex items-center justify-between gap-2">
-                      <div className="text-[10px] uppercase tracking-[0.16em]" style={{ color: "var(--muted2)" }}>
-                        {gallery.item_count > 0 ? `${gallery.item_count} items` : "New exhibition"}
+                      <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.16em]" style={{ color: "var(--muted2)" }}>
+                        <span>{gallery.item_count > 0 ? `${gallery.item_count} items` : "New"}</span>
+                        {gallery.analytics_views > 0 && (
+                          <span className="flex items-center gap-0.5 normal-case tracking-normal">
+                            <span>👁</span>
+                            <span>{gallery.analytics_views.toLocaleString()}</span>
+                          </span>
+                        )}
                       </div>
                       {gallery.collector_name && (
                         <Link href={`/v/${gallery.profile_id}`}

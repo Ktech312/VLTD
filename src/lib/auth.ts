@@ -384,6 +384,7 @@ export async function createProfile(input: {
   display_name: string;
   profile_type: AuthProfileType;
   primary_focus?: string;
+  avatar_emoji?: string;
 }) {
   const supabase = getSupabase();
   if (!supabase) throw new Error("Supabase not ready");
@@ -398,6 +399,7 @@ export async function createProfile(input: {
     display_name: input.display_name.trim(),
     profile_type: input.profile_type,
     primary_focus: input.primary_focus?.trim() || null,
+    avatar_emoji: input.avatar_emoji?.trim() || "🗝️",
   };
 
   const result = await withTimeout(

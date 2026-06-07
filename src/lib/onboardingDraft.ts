@@ -3,15 +3,17 @@ export type OnboardingDraft = {
   display_name: string;
   profile_type: "personal" | "business";
   primary_focus: string;
+  avatar_emoji: string;
 };
 
-const LS_KEY = "vltd_onboarding_draft_v1";
+const LS_KEY = "vltd_onboarding_draft_v2";
 
 const EMPTY_DRAFT: OnboardingDraft = {
   username: "",
   display_name: "",
   profile_type: "personal",
   primary_focus: "",
+  avatar_emoji: "",
 };
 
 export function loadOnboardingDraft(): OnboardingDraft {
@@ -25,6 +27,7 @@ export function loadOnboardingDraft(): OnboardingDraft {
       display_name: String(parsed?.display_name ?? ""),
       profile_type: parsed?.profile_type === "business" ? "business" : "personal",
       primary_focus: String(parsed?.primary_focus ?? ""),
+      avatar_emoji: String(parsed?.avatar_emoji ?? ""),
     };
   } catch {
     return EMPTY_DRAFT;

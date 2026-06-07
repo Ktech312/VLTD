@@ -107,6 +107,31 @@ function ActionShortcut({ href, label, helper }: { href: string; label: string; 
   );
 }
 
+function HealthBar({ score }: { score: number }) {
+  const color = score >= 80 ? "#4CAF50" : score >= 50 ? "#F5B548" : "#ef4444";
+  const label = score >= 80 ? "Great shape" : score >= 50 ? "Needs work" : "Attention required";
+  return (
+    <div className="rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+      <div className="flex items-baseline justify-between gap-2">
+        <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Collection Health</div>
+        <div className="text-xs text-[color:var(--muted)]">{label}</div>
+      </div>
+      <div className="mt-3 flex items-center gap-3">
+        <div className="text-3xl font-black tabular-nums" style={{ color }}>{score}%</div>
+        <div className="flex-1">
+          <div className="h-2.5 overflow-hidden rounded-full bg-[color:var(--pill)]">
+            <div
+              className="h-full rounded-full transition-all duration-700"
+              style={{ width: `${score}%`, background: color }}
+            />
+          </div>
+          <div className="mt-1.5 text-[10px] text-[color:var(--muted2)]">photo · cost · value · condition</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function WeeklyVaultReportPage() {
   const [items] = useState<VaultItem[]>(() => loadItems());
   const [now] = useState(() => Date.now());
@@ -145,6 +170,23 @@ export default function WeeklyVaultReportPage() {
     const costAdded = newItems.reduce((sum, item) => sum + itemCost(item), 0);
     const soldValue = soldItems.reduce((sum, item) => sum + clampMoney(item.soldPrice), 0);
 
+    // Health score: % of items that have photo + cost + value + condition
+    const total = collectionItems.length;
+    const healthScoreRaw = total === 0 ? 100 : Math.round(
+      ((total - missingPhoto.length) * 25 +
+       (total - missingCost.length) * 25 +
+       (total - missingValue.length) * 25 +
+       (total - missingCondition.length) * 25) / total
+    );
+
+    // P&L
+    const unrealizedGain = totalValue - totalCost;
+    const realizedGain = soldItems.reduce((sum, item) => {
+      const sold = clampMoney(item.soldPrice);
+      const cost = itemCost(item);
+      return sum + (sold - cost);
+    }, 0);
+
     return {
       collectionItems,
       newItems,
@@ -162,6 +204,9 @@ export default function WeeklyVaultReportPage() {
       valueAdded,
       costAdded,
       soldValue,
+      healthScore: healthScoreRaw,
+      unrealizedGain,
+      realizedGain,
       byUniverse: Array.from(byUniverse.entries())
         .sort((a, b) => b[1].value - a[1].value)
         .slice(0, 6),
@@ -203,14 +248,22 @@ export default function WeeklyVaultReportPage() {
 
         <section className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard label="Vault Value" value={formatPrice(report.totalValue)} helper={`Cost basis ${formatPrice(report.totalCost)}`} />
+          <StatCard
+            label="Unrealized P&L"
+            value={(report.unrealizedGain >= 0 ? "+" : "") + formatPrice(report.unrealizedGain)}
+            helper={report.realizedGain !== 0 ? `Realized ${report.realizedGain >= 0 ? "+" : ""}${formatPrice(report.realizedGain)}` : "No sales recorded"}
+          />
           <StatCard label="New This Week" value={String(report.newItems.length)} helper={`${formatPrice(report.valueAdded)} value added`} />
           <StatCard label="Sold Recorded" value={String(report.soldItems.length)} helper={`${formatPrice(report.soldValue)} sold proceeds`} />
-          <StatCard label="Insurance Gaps" value={String(report.insuranceGaps.length)} helper="Missing photo, value, or proof fields" />
           <StatCard label="For Sale" value={String(report.forSaleItems.length)} helper="Ready for listing review" />
           <StatCard label="Public Items" value={String(report.publicItems.length)} helper={`${report.collectionItems.length - report.publicItems.length} private`} />
           <StatCard label="Missing Condition" value={String(report.missingCondition.length)} helper="Grade or condition note needed" />
           <StatCard label="Stale Values" value={String(report.staleValuations.length)} helper="Value source older than 30 days" />
         </section>
+
+        <div className="mt-3">
+          <HealthBar score={report.healthScore} />
+        </div>
 
         <div className="mt-6 grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
           <section className="rounded-[24px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
@@ -266,6 +319,26 @@ export default function WeeklyVaultReportPage() {
             </div>
           </section>
         </div>
+
+        {report.staleValuations.length > 0 && (
+          <section className="mt-5 rounded-[24px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <div>
+                <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Stale Valuations</div>
+                <div className="mt-1 text-sm text-[color:var(--muted)]">{report.staleValuations.length} item{report.staleValuations.length === 1 ? "" : "s"} with values older than 30 days.</div>
+              </div>
+            </div>
+            <div className="grid gap-3 lg:grid-cols-3">
+              {report.staleValuations.slice(0, 9).map((item) => (
+                <ItemRow
+                  key={item.id}
+                  item={item}
+                  detail={`Last updated ${valueUpdatedAt(item) > 0 ? Math.floor((Date.now() - valueUpdatedAt(item)) / (24 * 60 * 60 * 1000)) + "d ago" : "unknown"}`}
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
         <section className="mt-5 rounded-[24px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
