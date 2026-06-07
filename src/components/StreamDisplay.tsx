@@ -40,7 +40,9 @@ function buildMetaChips(item: VaultItem): string[] {
   if (item.universe) chips.push(universeLabel(item));
   if (item.categoryLabel && item.categoryLabel !== item.universe) chips.push(item.categoryLabel);
   if (item.number) chips.push(`#${item.number}`);
+  if (item.year) chips.push(String(item.year));
   if (item.edition) chips.push(item.edition);
+  if (item.condition) chips.push(item.condition);
   if (item.grade) chips.push(`Grade ${item.grade}`);
   return chips;
 }

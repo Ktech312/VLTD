@@ -36,7 +36,9 @@ export type VaultItem = {
   title: string;
   subtitle?: string;
   number?: string;
+  year?: string;
   grade?: string;
+  condition?: string;
   conditionReason?: string;
   conditionSource?: "ai" | "manual";
   purchasePrice?: number;
@@ -341,7 +343,9 @@ function normalizeOne(input: unknown): VaultItem | null {
     title,
     subtitle: raw.subtitle ?? undefined,
     number: raw.number ?? undefined,
+    year: raw.year ?? undefined,
     grade: raw.grade ?? undefined,
+    condition: raw.condition ?? undefined,
     conditionReason:
       typeof raw.conditionReason === "string" && raw.conditionReason.trim()
         ? raw.conditionReason.trim()
