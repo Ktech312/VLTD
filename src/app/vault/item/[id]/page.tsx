@@ -11,6 +11,8 @@ import ItemMedia from "@/components/ItemMedia";
 import NotableBadge from "@/components/NotableBadge";
 import PricingMvpCard from "@/components/PricingMvpCard";
 import ShareBar from "@/components/ShareBar";
+import SocialExportSheet from "@/components/SocialExportSheet";
+import AuctionSetupSheet, { AuctionCountdownChip } from "@/components/AuctionSetupSheet";
 import { removeBackgroundStub } from "@/lib/imageAI";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { isNotable, notableReason } from "@/lib/itemIntelligence";
@@ -192,6 +194,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [sale, setSale] = useState<SaleRecord | null>(null);
   const [isSoldView, setIsSoldView] = useState(false);
+  const [socialExportOpen, setSocialExportOpen] = useState(false);
+  const [auctionOpen, setAuctionOpen] = useState(false);
 
   useEffect(() => {
     const next = loadItems({ includeAllProfiles: true });
@@ -701,7 +705,37 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 </Link>
                 <div className="ml-1 h-6 w-px bg-[color:var(--border)]" />
                 <ShareBar title={item.title} compact />
+                <button
+                  type="button"
+                  onClick={() => setSocialExportOpen(true)}
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
+                  style={{ background: "var(--pill)", color: "var(--fg)" }}
+                >
+                  <span>📲</span> Export for Social
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAuctionOpen(true)}
+                  className="mt-1 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
+                  style={{ background: "var(--pill)", color: "var(--fg)" }}
+                >
+                  <span>🔨</span>
+                  {item.auctionStatus === "ACTIVE" ? "Manage Auction" : "Start Auction"}
+                  {item.auctionStatus === "ACTIVE" && <AuctionCountdownChip item={item} />}
+                </button>
               </div>
+              {socialExportOpen && (
+                <SocialExportSheet item={item} onClose={() => setSocialExportOpen(false)} />
+              )}
+              {auctionOpen && (
+                <AuctionSetupSheet
+                  item={item}
+                  onClose={() => setAuctionOpen(false)}
+                  onSaved={(updated) => {
+                    setItems((prev) => prev.map((i) => i.id === updated.id ? updated : i));
+                  }}
+                />
+              )}
             </div>
 
             {displayedSale ? (

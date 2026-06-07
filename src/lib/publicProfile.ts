@@ -178,3 +178,37 @@ export function getPublicVaultUrl(profileId = getStoredActiveProfileId()) {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   return `${origin}/v/${encodeURIComponent(cleanProfileId)}`;
 }
+
+export type MarketItem = VaultItem & {
+  sellerProfileId: string;
+  sellerDisplayName?: string;
+  sellerAvatarEmoji?: string;
+};
+
+export async function fetchMarketItems(opts?: {
+  universe?: string;
+  limit?: number;
+}): Promise<MarketItem[]> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return [];
+
+  let query = supabase
+    .from(VAULT_ITEMS_TABLE)
+    .select("*, images_json, primary_image_key")
+    .eq("status", "FOR_SALE")
+    .eq("is_public", true)
+    .order("created_at", { ascending: false })
+    .limit(opts?.limit ?? 120);
+
+  if (opts?.universe) query = query.eq("universe", opts.universe);
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message || "Failed to load market.");
+
+  return (data ?? []).map((row) => ({
+    ...publicRowToItem(row),
+    sellerProfileId: String(row.profile_id ?? ""),
+    sellerDisplayName: typeof row.display_name === "string" ? row.display_name : undefined,
+    sellerAvatarEmoji: typeof row.avatar_emoji === "string" ? row.avatar_emoji : undefined,
+  }));
+}

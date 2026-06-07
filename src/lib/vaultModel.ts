@@ -47,6 +47,11 @@ export type VaultItem = {
   purchaseFees?: number;
   currentValue?: number;
   askingPrice?: number;
+  // Auction
+  auctionStatus?: "ACTIVE" | "ENDED" | "CANCELLED";
+  reservePrice?: number;
+  buyItNowPrice?: number;
+  auctionEndsAt?: number; // unix ms
   purchaseSource?: string;
   purchaseLocation?: string;
   orderNumber?: string;
@@ -363,6 +368,13 @@ function normalizeOne(input: unknown): VaultItem | null {
       typeof raw.askingPrice === "number" && Number.isFinite(raw.askingPrice) && raw.askingPrice > 0
         ? raw.askingPrice
         : undefined,
+    auctionStatus:
+      raw.auctionStatus === "ACTIVE" || raw.auctionStatus === "ENDED" || raw.auctionStatus === "CANCELLED"
+        ? (raw.auctionStatus as "ACTIVE" | "ENDED" | "CANCELLED")
+        : undefined,
+    reservePrice: typeof raw.reservePrice === "number" && Number.isFinite(raw.reservePrice) ? raw.reservePrice : undefined,
+    buyItNowPrice: typeof raw.buyItNowPrice === "number" && Number.isFinite(raw.buyItNowPrice) ? raw.buyItNowPrice : undefined,
+    auctionEndsAt: typeof raw.auctionEndsAt === "number" ? raw.auctionEndsAt : undefined,
     purchaseSource: raw.purchaseSource ?? undefined,
     purchaseLocation: raw.purchaseLocation ?? undefined,
     orderNumber: raw.orderNumber ?? undefined,

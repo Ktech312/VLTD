@@ -201,6 +201,209 @@ function soldStats(items: SoldItem[]): SoldStats {
   );
 }
 
+
+// ─── Analytics helpers ────────────────────────────────────────────────────────
+
+function groupByMonth(items: SoldItem[]) {
+  const map = new Map<string, { revenue: number; profit: number; count: number }>();
+  for (const item of items) {
+    const d = new Date(Number(item.soldAt));
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const prev = map.get(key) ?? { revenue: 0, profit: 0, count: 0 };
+    prev.revenue += Number(item.soldPrice ?? 0);
+    prev.profit += Number(item.soldPrice ?? 0) - cost(item);
+    prev.count += 1;
+    map.set(key, prev);
+  }
+  return Array.from(map.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .slice(-12); // last 12 months
+}
+
+function groupByUniverse(items: SoldItem[]) {
+  const map = new Map<string, { revenue: number; profit: number; count: number }>();
+  for (const item of items) {
+    const u = UNIVERSE_LABEL[inferSoldUniverse(item)] ?? "Other";
+    const prev = map.get(u) ?? { revenue: 0, profit: 0, count: 0 };
+    prev.revenue += Number(item.soldPrice ?? 0);
+    prev.profit += Number(item.soldPrice ?? 0) - cost(item);
+    prev.count += 1;
+    map.set(u, prev);
+  }
+  return Array.from(map.entries()).sort((a, b) => b[1].revenue - a[1].revenue);
+}
+
+function avgDaysToSell(items: SoldItem[]) {
+  // Approximate: use soldAt vs createdAt if available — fallback to 0
+  const withDays = items.filter((i) => i.soldAt);
+  if (withDays.length === 0) return null;
+  // We don't have purchaseDate in SoldItem so just show median hold time
+  return null;
+}
+
+// ─── Sparkline bar chart (pure SVG, no deps) ──────────────────────────────────
+
+function MiniBarChart({
+  data,
+  color = "var(--theme-gold)",
+  height = 48,
+}: {
+  data: number[];
+  color?: string;
+  height?: number;
+}) {
+  if (data.length === 0) return null;
+  const max = Math.max(...data, 1);
+  const w = 100 / data.length;
+  return (
+    <svg viewBox={`0 0 100 ${height}`} className="w-full" preserveAspectRatio="none">
+      {data.map((v, i) => {
+        const barH = Math.max(2, (v / max) * height);
+        return (
+          <rect
+            key={i}
+            x={i * w + 0.5}
+            y={height - barH}
+            width={w - 1}
+            height={barH}
+            fill={color}
+            opacity={v > 0 ? 0.85 : 0.15}
+            rx="2"
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
+// ─── Analytics panel ──────────────────────────────────────────────────────────
+
+function AnalyticsPanel({ items }: { items: SoldItem[] }) {
+  const monthly = groupByMonth(items);
+  const byUniverse = groupByUniverse(items);
+  const roiPct = items.length > 0
+    ? (() => {
+        const rev = items.reduce((s, i) => s + Number(i.soldPrice ?? 0), 0);
+        const c = items.reduce((s, i) => s + cost(i), 0);
+        return c > 0 ? ((rev - c) / c) * 100 : null;
+      })()
+    : null;
+  const bestItem = [...items].sort((a, b) => (b.soldPrice - cost(b)) - (a.soldPrice - cost(a)))[0];
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {/* Monthly revenue chart */}
+      {monthly.length > 1 && (
+        <div
+          className="rounded-[14px] p-4 ring-1 ring-[color:var(--theme-border)]"
+          style={{ background: "var(--theme-elevated)" }}
+        >
+          <div className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--muted2)" }}>
+            Monthly Revenue
+          </div>
+          <MiniBarChart data={monthly.map((m) => m[1].revenue)} height={48} />
+          <div className="mt-2 flex justify-between text-[9px]" style={{ color: "var(--muted)" }}>
+            <span>{monthly[0]?.[0]}</span>
+            <span>{monthly[monthly.length - 1]?.[0]}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Monthly profit chart */}
+      {monthly.length > 1 && (
+        <div
+          className="rounded-[14px] p-4 ring-1 ring-[color:var(--theme-border)]"
+          style={{ background: "var(--theme-elevated)" }}
+        >
+          <div className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--muted2)" }}>
+            Monthly Profit/Loss
+          </div>
+          <MiniBarChart
+            data={monthly.map((m) => Math.max(0, m[1].profit))}
+            color="var(--theme-gold)"
+            height={48}
+          />
+          <div className="mt-2 flex gap-3 flex-wrap text-[10px]" style={{ color: "var(--muted)" }}>
+            {monthly.slice(-3).map(([k, v]) => (
+              <span key={k}>
+                <span className="font-semibold" style={{ color: v.profit >= 0 ? "rgb(52,211,153)" : "rgb(252,165,165)" }}>
+                  {v.profit >= 0 ? "+" : ""}{money(v.profit)}
+                </span>
+                {" "}{k}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* By universe */}
+      {byUniverse.length > 0 && (
+        <div
+          className="rounded-[14px] p-4 ring-1 ring-[color:var(--theme-border)]"
+          style={{ background: "var(--theme-elevated)" }}
+        >
+          <div className="text-[10px] font-semibold uppercase tracking-[0.18em] mb-2" style={{ color: "var(--muted2)" }}>
+            Sales by Category
+          </div>
+          <div className="flex flex-col gap-2">
+            {byUniverse.slice(0, 5).map(([u, v]) => {
+              const maxRev = byUniverse[0]?.[1].revenue ?? 1;
+              const pct = maxRev > 0 ? (v.revenue / maxRev) * 100 : 0;
+              return (
+                <div key={u}>
+                  <div className="flex justify-between text-[11px] mb-0.5" style={{ color: "var(--fg)" }}>
+                    <span>{u}</span>
+                    <span className="font-semibold">{money(v.revenue)}</span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: "var(--pill)" }}>
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{ width: `${pct}%`, background: "var(--theme-gold)" }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ROI + best item */}
+      <div
+        className="rounded-[14px] p-4 ring-1 ring-[color:var(--theme-border)] flex flex-col gap-3"
+        style={{ background: "var(--theme-elevated)" }}
+      >
+        <div>
+          <div className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--muted2)" }}>
+            Overall ROI
+          </div>
+          <div
+            className="mt-1 text-2xl font-extrabold"
+            style={{ color: roiPct !== null && roiPct >= 0 ? "rgb(52,211,153)" : "rgb(252,165,165)" }}
+          >
+            {roiPct !== null ? `${roiPct >= 0 ? "+" : ""}${roiPct.toFixed(1)}%` : "—"}
+          </div>
+        </div>
+        {bestItem && (
+          <div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--muted2)" }}>
+              Best Sale
+            </div>
+            <div className="mt-0.5 text-[12px] font-semibold line-clamp-1" style={{ color: "var(--fg)" }}>
+              {bestItem.title}
+            </div>
+            <div className="text-[11px]" style={{ color: "rgb(52,211,153)" }}>
+              +{money(bestItem.soldPrice - cost(bestItem))} profit
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function SoldCard({
   item,
   onReturnToVault,
@@ -406,6 +609,8 @@ export default function SoldPage() {
                 </div>
               </div>
             </div>
+
+            <AnalyticsPanel items={items} />
 
             {status ? (
               <div className="rounded-[14px] bg-gold/10 px-3 py-2 text-sm text-cyan-100 ring-1 ring-cyan-300/20">

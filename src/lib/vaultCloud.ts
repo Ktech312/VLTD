@@ -120,6 +120,7 @@ function rowToItem(input: unknown): VaultItem {
     createdAt: row.created_at ?? Date.now(),
     isNew: typeof row.is_new === "boolean" ? row.is_new : true,
     isPublic: typeof row.is_public === "boolean" ? row.is_public : false,
+    askingPrice: typeof row.asking_price === "number" ? row.asking_price : undefined,
   };
 }
 
@@ -291,6 +292,7 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
     created_at: item.createdAt ?? Date.now(),
     is_new: item.isNew ?? true,
     is_public: item.isPublic ?? false,
+    asking_price: item.askingPrice ?? null,
   } as Record<string, unknown>;
 
   // Do not let an older unsold local copy erase a sale made on another device.
