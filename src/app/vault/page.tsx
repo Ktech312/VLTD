@@ -1090,6 +1090,18 @@ export default function VaultPage() {
                 >
                   For Sale
                 </Link>
+                <Link
+                  href="/wishlist"
+                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                >
+                  Want List
+                </Link>
+                <Link
+                  href="/goals"
+                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                >
+                  Goals
+                </Link>
               </div>
             </div>
 

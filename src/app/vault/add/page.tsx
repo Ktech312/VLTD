@@ -1471,6 +1471,26 @@ export default function AddPage() {
         variant: normalizedValues.variant.trim() || undefined,
         printRun: normalizedValues.printRun.trim() || undefined,
         isFirstEdition: normalizedValues.isFirstEdition === "true" || undefined,
+        // TCG
+        tcgParallelType: (normalizedValues.tcgParallelType ?? "").trim() || undefined,
+        tcgSetCode: (normalizedValues.tcgSetCode ?? "").trim() || undefined,
+        tcgHoloType: (normalizedValues.tcgHoloType ?? "").trim() || undefined,
+        // Sports
+        sportsParallelType: (normalizedValues.sportsParallelType ?? "").trim() || undefined,
+        sportsIsRelic: normalizedValues.sportsIsRelic === "true" ? true : undefined,
+        sportsRelicDescription: (normalizedValues.sportsRelicDescription ?? "").trim() || undefined,
+        sportsIsAuto: normalizedValues.sportsIsAuto === "true" ? true : undefined,
+        sportsSerialNumber: (normalizedValues.sportsSerialNumber ?? "").trim() || undefined,
+        // Vinyl
+        vinylPressing: (normalizedValues.vinylPressing ?? "").trim() || undefined,
+        vinylLabel: (normalizedValues.vinylLabel ?? "").trim() || undefined,
+        vinylMatrix: (normalizedValues.vinylMatrix ?? "").trim() || undefined,
+        vinylSpeedRpm: (normalizedValues.vinylSpeedRpm ?? "") || undefined,
+        vinylColor: (normalizedValues.vinylColor ?? "").trim() || undefined,
+        // Comics
+        comicIssueNumber: (normalizedValues.comicIssueNumber ?? "").trim() || undefined,
+        comicCoverVariant: (normalizedValues.comicCoverVariant ?? "").trim() || undefined,
+        comicArcTitle: (normalizedValues.comicArcTitle ?? "").trim() || undefined,
         notes: normalizedValues.notes.trim() || undefined,
         primaryImageKey,
         images,
@@ -1848,6 +1868,160 @@ export default function AddPage() {
                 </span>
               </label>
 
+              {/* TCG-specific fields */}
+              {values.universe === "TCG" && (<>
+                <Field label="Parallel Type" locked={false} onToggleLock={() => {}}>
+                  <input
+                    className={inputClass()}
+                    value={values.tcgParallelType ?? ""}
+                    onChange={(e) => setField("tcgParallelType", e.target.value)}
+                    placeholder="Holo Rare, Rainbow Rare, Gold, Secret Rare…"
+                  />
+                </Field>
+                <Field label="Holo / Foil Type" locked={false} onToggleLock={() => {}}>
+                  <input
+                    className={inputClass()}
+                    value={values.tcgHoloType ?? ""}
+                    onChange={(e) => setField("tcgHoloType", e.target.value)}
+                    placeholder="Cosmos Holo, Reverse Holo, Cracked Ice…"
+                  />
+                </Field>
+                <Field label="Set Code" locked={false} onToggleLock={() => {}}>
+                  <input
+                    className={inputClass()}
+                    value={values.tcgSetCode ?? ""}
+                    onChange={(e) => setField("tcgSetCode", e.target.value)}
+                    placeholder="SV3pt5, BW1, EX Dragon…"
+                  />
+                </Field>
+              </>)}
+
+              {/* Sports-specific fields */}
+              {values.universe === "SPORTS" && (<>
+                <Field label="Parallel Type" locked={false} onToggleLock={() => {}}>
+                  <input
+                    className={inputClass()}
+                    value={values.sportsParallelType ?? ""}
+                    onChange={(e) => setField("sportsParallelType", e.target.value)}
+                    placeholder="Prizm Silver, Mosaic Reactive Blue, Refractor…"
+                  />
+                </Field>
+                <Field label="Serial Number" locked={false} onToggleLock={() => {}}>
+                  <input
+                    className={inputClass()}
+                    value={values.sportsSerialNumber ?? ""}
+                    onChange={(e) => setField("sportsSerialNumber", e.target.value)}
+                    placeholder="/25, /10, 1/1…"
+                  />
+                </Field>
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input
+                    type="checkbox"
+                    checked={values.sportsIsRelic === "true"}
+                    onChange={(e) => setField("sportsIsRelic", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]"
+                  />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>Relic / Patch Card</span>
+                </label>
+                {values.sportsIsRelic === "true" && (
+                  <Field label="Relic Description" locked={false} onToggleLock={() => {}}>
+                    <input
+                      className={inputClass()}
+                      value={values.sportsRelicDescription ?? ""}
+                      onChange={(e) => setField("sportsRelicDescription", e.target.value)}
+                      placeholder="Game-used jersey, 3-color patch…"
+                    />
+                  </Field>
+                )}
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input
+                    type="checkbox"
+                    checked={values.sportsIsAuto === "true"}
+                    onChange={(e) => setField("sportsIsAuto", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]"
+                  />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>Autograph</span>
+                </label>
+              </>)}
+
+              {/* Vinyl / Music-specific fields */}
+              {values.universe === "MUSIC" && (<>
+                <Field label="Pressing" locked={false} onToggleLock={() => {}}>
+                  <input
+                    className={inputClass()}
+                    value={values.vinylPressing ?? ""}
+                    onChange={(e) => setField("vinylPressing", e.target.value)}
+                    placeholder="Original Press, Reissue, 180g, Limited…"
+                  />
+                </Field>
+                <Field label="Label" locked={false} onToggleLock={() => {}}>
+                  <input
+                    className={inputClass()}
+                    value={values.vinylLabel ?? ""}
+                    onChange={(e) => setField("vinylLabel", e.target.value)}
+                    placeholder="Blue Note, Impulse!, Motown, Columbia…"
+                  />
+                </Field>
+                <Field label="Speed (RPM)" locked={false} onToggleLock={() => {}}>
+                  <select
+                    className={inputClass()}
+                    value={values.vinylSpeedRpm ?? ""}
+                    onChange={(e) => setField("vinylSpeedRpm", e.target.value)}
+                  >
+                    <option value="">—</option>
+                    <option value="33">33 RPM</option>
+                    <option value="45">45 RPM</option>
+                    <option value="78">78 RPM</option>
+                  </select>
+                </Field>
+                <Field label="Vinyl Color" locked={false} onToggleLock={() => {}}>
+                  <input
+                    className={inputClass()}
+                    value={values.vinylColor ?? ""}
+                    onChange={(e) => setField("vinylColor", e.target.value)}
+                    placeholder="Black, Clear, Red, Picture Disc…"
+                  />
+                </Field>
+                <div className="sm:col-span-2">
+                  <Field label="Matrix / Runout" locked={false} onToggleLock={() => {}}>
+                    <input
+                      className={inputClass()}
+                      value={values.vinylMatrix ?? ""}
+                      onChange={(e) => setField("vinylMatrix", e.target.value)}
+                      placeholder="Etched matrix info from the dead wax"
+                    />
+                  </Field>
+                </div>
+              </>)}
+
+              {/* Comics-specific fields */}
+              {values.universe === "POP_CULTURE" && (<>
+                <Field label="Issue Number" locked={false} onToggleLock={() => {}}>
+                  <input
+                    className={inputClass()}
+                    value={values.comicIssueNumber ?? ""}
+                    onChange={(e) => setField("comicIssueNumber", e.target.value)}
+                    placeholder="#1, Vol 2 #4, Annual #1…"
+                  />
+                </Field>
+                <Field label="Cover Variant" locked={false} onToggleLock={() => {}}>
+                  <input
+                    className={inputClass()}
+                    value={values.comicCoverVariant ?? ""}
+                    onChange={(e) => setField("comicCoverVariant", e.target.value)}
+                    placeholder="Variant A, Incentive, Sketch, Foil…"
+                  />
+                </Field>
+                <Field label="Arc / Story Title" locked={false} onToggleLock={() => {}}>
+                  <input
+                    className={inputClass()}
+                    value={values.comicArcTitle ?? ""}
+                    onChange={(e) => setField("comicArcTitle", e.target.value)}
+                    placeholder="The Dark Phoenix Saga, Knightfall…"
+                  />
+                </Field>
+              </>)}
+
               <div className="sm:col-span-2 lg:col-span-3">
                 <Field label="Notes" locked={locks.notes} onToggleLock={() => handleToggleLock("notes")}>
                   <textarea
@@ -1873,15 +2047,6 @@ export default function AddPage() {
           ref={mediaCameraInputRef}
           type="file"
           accept="image/*"
-          capture="environment"
-          className="fixed left-[-9999px] top-0 h-px w-px opacity-0"
-          onChange={(e) => void handleMediaImageSelection(e.target.files)}
-        />
-        <input
-          ref={cameraInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
           className="fixed left-[-9999px] top-0 h-px w-px opacity-0"
           onChange={(e) => void handleScanImageSelection(e.target.files)}
         />

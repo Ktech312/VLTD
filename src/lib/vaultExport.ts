@@ -18,6 +18,26 @@ const CSV_COLUMNS: (keyof VaultItem)[] = [
   "variant",
   "printRun",
   "isFirstEdition",
+  // TCG
+  "tcgParallelType",
+  "tcgHoloType",
+  "tcgSetCode",
+  // Sports
+  "sportsParallelType",
+  "sportsSerialNumber",
+  "sportsIsRelic",
+  "sportsRelicDescription",
+  "sportsIsAuto",
+  // Vinyl
+  "vinylPressing",
+  "vinylLabel",
+  "vinylSpeedRpm",
+  "vinylColor",
+  "vinylMatrix",
+  // Comics
+  "comicIssueNumber",
+  "comicCoverVariant",
+  "comicArcTitle",
   "purchasePrice",
   "purchaseTax",
   "purchaseShipping",

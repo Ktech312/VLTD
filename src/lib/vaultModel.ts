@@ -82,6 +82,26 @@ export type VaultItem = {
   createdAt?: number;
   isNew?: boolean;
   isPublic?: boolean;
+  // TCG-specific
+  tcgParallelType?: string;
+  tcgSetCode?: string;
+  tcgHoloType?: string;
+  // Sports-specific
+  sportsParallelType?: string;
+  sportsIsRelic?: boolean;
+  sportsRelicDescription?: string;
+  sportsIsAuto?: boolean;
+  sportsSerialNumber?: string;
+  // Vinyl / Music-specific
+  vinylPressing?: string;
+  vinylLabel?: string;
+  vinylMatrix?: string;
+  vinylSpeedRpm?: string;
+  vinylColor?: string;
+  // Comics-specific
+  comicIssueNumber?: string;
+  comicCoverVariant?: string;
+  comicArcTitle?: string;
 };
 
 type LoadItemsOptions = {
@@ -426,6 +446,26 @@ function normalizeOne(input: unknown): VaultItem | null {
         : typeof raw.is_public === "boolean"
           ? raw.is_public
           : false,
+    // TCG
+    tcgParallelType: raw.tcgParallelType ?? undefined,
+    tcgSetCode: raw.tcgSetCode ?? undefined,
+    tcgHoloType: raw.tcgHoloType ?? undefined,
+    // Sports
+    sportsParallelType: raw.sportsParallelType ?? undefined,
+    sportsIsRelic: raw.sportsIsRelic === true ? true : undefined,
+    sportsRelicDescription: raw.sportsRelicDescription ?? undefined,
+    sportsIsAuto: raw.sportsIsAuto === true ? true : undefined,
+    sportsSerialNumber: raw.sportsSerialNumber ?? undefined,
+    // Vinyl
+    vinylPressing: raw.vinylPressing ?? undefined,
+    vinylLabel: raw.vinylLabel ?? undefined,
+    vinylMatrix: raw.vinylMatrix ?? undefined,
+    vinylSpeedRpm: raw.vinylSpeedRpm ?? undefined,
+    vinylColor: raw.vinylColor ?? undefined,
+    // Comics
+    comicIssueNumber: raw.comicIssueNumber ?? undefined,
+    comicCoverVariant: raw.comicCoverVariant ?? undefined,
+    comicArcTitle: raw.comicArcTitle ?? undefined,
   };
 }
 
