@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getCurrentUser, listMyProfiles } from "@/lib/auth";
 import { placeholderMembers, toWorkspaceSummary, type WorkspaceMember } from "@/lib/workspaces";
+import { PillButton } from "@/components/ui/PillButton";
 
 const ROLES = ["INVENTORY_MANAGER", "VIEWER", "FINANCE_VIEWER", "MUSEUM_CURATOR"] as const;
 

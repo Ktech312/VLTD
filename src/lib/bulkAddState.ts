@@ -21,7 +21,23 @@ export type BulkAddFieldKey =
   | "variant"
   | "printRun"
   | "isFirstEdition"
-  | "notes";
+  | "notes"
+  | "tcgParallelType"
+  | "tcgSetCode"
+  | "tcgHoloType"
+  | "sportsParallelType"
+  | "sportsIsRelic"
+  | "sportsRelicDescription"
+  | "sportsIsAuto"
+  | "sportsSerialNumber"
+  | "vinylPressing"
+  | "vinylLabel"
+  | "vinylMatrix"
+  | "vinylSpeedRpm"
+  | "vinylColor"
+  | "comicIssueNumber"
+  | "comicCoverVariant"
+  | "comicArcTitle";
 
 export type BulkAddValues = Record<BulkAddFieldKey, string>;
 export type BulkAddLocks = Record<BulkAddFieldKey, boolean>;
@@ -52,6 +68,22 @@ export const EMPTY_BULK_ADD_VALUES: BulkAddValues = {
   printRun: "",
   isFirstEdition: "",
   notes: "",
+  tcgParallelType: "",
+  tcgSetCode: "",
+  tcgHoloType: "",
+  sportsParallelType: "",
+  sportsIsRelic: "",
+  sportsRelicDescription: "",
+  sportsIsAuto: "",
+  sportsSerialNumber: "",
+  vinylPressing: "",
+  vinylLabel: "",
+  vinylMatrix: "",
+  vinylSpeedRpm: "",
+  vinylColor: "",
+  comicIssueNumber: "",
+  comicCoverVariant: "",
+  comicArcTitle: "",
 };
 
 export const DEFAULT_BULK_ADD_LOCKS: BulkAddLocks = {
@@ -78,6 +110,22 @@ export const DEFAULT_BULK_ADD_LOCKS: BulkAddLocks = {
   printRun: false,
   isFirstEdition: false,
   notes: false,
+  tcgParallelType: false,
+  tcgSetCode: false,
+  tcgHoloType: false,
+  sportsParallelType: false,
+  sportsIsRelic: false,
+  sportsRelicDescription: false,
+  sportsIsAuto: false,
+  sportsSerialNumber: false,
+  vinylPressing: false,
+  vinylLabel: false,
+  vinylMatrix: false,
+  vinylSpeedRpm: false,
+  vinylColor: false,
+  comicIssueNumber: false,
+  comicCoverVariant: false,
+  comicArcTitle: false,
 };
 
 export type BulkAddState = {
