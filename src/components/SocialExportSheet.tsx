@@ -262,11 +262,7 @@ export default function SocialExportSheet({ item, onClose }: Props) {
                   type="button"
                   onClick={() => { setBg(b.value); setPreview(null); }}
                   className="h-8 w-8 rounded-full ring-2 ring-offset-2 transition"
-                  style={{
-                    background: b.value,
-                    ringColor: bg === b.value ? "var(--theme-gold)" : "transparent",
-                    ringOffsetColor: "var(--surface)",
-                  }}
+                  style={{ background: b.value }}
                   title={b.label}
                 />
               ))}
