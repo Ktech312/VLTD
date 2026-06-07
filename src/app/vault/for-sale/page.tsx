@@ -76,7 +76,7 @@ function readinessScore(item: VaultItem): number {
   if (item.grade?.trim())        score += 20;
   const hasPhoto = !!getPrimaryImageUrl(item);
   if (hasPhoto)                  score += 20;
-  if (item.notes?.trim() || item.description?.trim?.()) score += 20;
+  if (item.notes?.trim()) score += 20;
   return score;
 }
 
