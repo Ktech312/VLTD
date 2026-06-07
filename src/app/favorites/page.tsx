@@ -7,137 +7,307 @@ import { listViewerFavorites, type FavoriteRecord } from "@/lib/favorites";
 import { loadGalleries, type Gallery } from "@/lib/galleryModel";
 import { loadItems, getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 
-function favoriteTitle(record: FavoriteRecord, items: VaultItem[], galleries: Gallery[]) {
-  if (record.content_type === "item") {
-    const item = items.find((entry) => String(entry.id) === String(record.content_id));
-    return item?.title || String(record.metadata?.title || "Favorite item");
+// ─── helpers ──────────────────────────────────────────────────────────────────
+
+function favoriteTitle(r: FavoriteRecord, items: VaultItem[], galleries: Gallery[]) {
+  if (r.content_type === "item") {
+    const it = items.find((x) => String(x.id) === String(r.content_id));
+    return it?.title || String(r.metadata?.title || "Saved item");
   }
-
-  const gallery = galleries.find((entry) => String(entry.id) === String(record.content_id));
-  return gallery?.title || String(record.metadata?.title || "Favorite gallery");
+  const g = galleries.find((x) => String(x.id) === String(r.content_id));
+  return g?.title || String(r.metadata?.title || "Saved gallery");
 }
 
-function favoriteSubtitle(record: FavoriteRecord, items: VaultItem[], galleries: Gallery[]) {
-  if (record.content_type === "item") {
-    const item = items.find((entry) => String(entry.id) === String(record.content_id));
-    return [item?.subtitle, item?.number, item?.grade].filter(Boolean).join(" • ") || "Saved item";
+function favoriteSubtitle(r: FavoriteRecord, items: VaultItem[], galleries: Gallery[]) {
+  if (r.content_type === "item") {
+    const it = items.find((x) => String(x.id) === String(r.content_id));
+    return [it?.universe, it?.number && `#${it.number}`, it?.grade].filter(Boolean).join(" · ") || "Saved item";
   }
-
-  const gallery = galleries.find((entry) => String(entry.id) === String(record.content_id));
-  const count = gallery?.itemIds?.length ?? record.metadata?.itemCount;
-  return `${Number(count ?? 0)} item${Number(count ?? 0) === 1 ? "" : "s"} saved gallery`;
+  const g = galleries.find((x) => String(x.id) === String(r.content_id));
+  const n = g?.itemIds?.length ?? r.metadata?.itemCount ?? 0;
+  return `${n} item${n === 1 ? "" : "s"} · Exhibition`;
 }
 
-function favoriteImage(record: FavoriteRecord, items: VaultItem[], galleries: Gallery[]) {
-  if (record.content_type === "item") {
-    const item = items.find((entry) => String(entry.id) === String(record.content_id));
-    return item ? getPrimaryImageUrl(item) : String(record.metadata?.image || "");
+function favoriteImage(r: FavoriteRecord, items: VaultItem[], galleries: Gallery[]) {
+  if (r.content_type === "item") {
+    const it = items.find((x) => String(x.id) === String(r.content_id));
+    return it ? getPrimaryImageUrl(it) : String(r.metadata?.image || "");
   }
-
-  const gallery = galleries.find((entry) => String(entry.id) === String(record.content_id));
-  return gallery?.coverImage || "";
+  const g = galleries.find((x) => String(x.id) === String(r.content_id));
+  return g?.coverImage || "";
 }
 
-function favoriteHref(record: FavoriteRecord) {
-  if (record.content_type === "item") return `/vault/item/${record.content_id}`;
-  return `/gallery/${record.content_id}`;
+function favoriteHref(r: FavoriteRecord) {
+  if (r.content_type === "item") return `/vault/item/${r.content_id}`;
+  return `/gallery/${r.content_id}`;
 }
+
+function timeAgo(iso: string) {
+  const ms = Date.now() - new Date(iso).getTime();
+  const d = Math.floor(ms / 86400000);
+  if (d === 0) return "Today";
+  if (d === 1) return "Yesterday";
+  if (d < 7) return `${d}d ago`;
+  if (d < 30) return `${Math.floor(d / 7)}w ago`;
+  return `${Math.floor(d / 30)}mo ago`;
+}
+
+// ─── FavoriteCard ─────────────────────────────────────────────────────────────
+
+function FavoriteCard({
+  record,
+  items,
+  galleries,
+}: {
+  record: FavoriteRecord;
+  items: VaultItem[];
+  galleries: Gallery[];
+}) {
+  const image = favoriteImage(record, items, galleries);
+  const title = favoriteTitle(record, items, galleries);
+  const subtitle = favoriteSubtitle(record, items, galleries);
+  const href = favoriteHref(record);
+  const isItem = record.content_type === "item";
+
+  return (
+    <Link
+      href={href}
+      className="group flex items-center gap-4 rounded-2xl p-3 ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)] hover:brightness-110"
+      style={{ background: "var(--surface)" }}
+    >
+      {/* Thumbnail */}
+      <div
+        className="relative shrink-0 overflow-hidden rounded-xl"
+        style={{ width: 68, height: 68, background: "var(--pill)" }}
+      >
+        {image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={image} alt="" className="h-full w-full object-cover" draggable={false} />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-xl">
+            {isItem ? "🗝️" : "🏛️"}
+          </div>
+        )}
+        {/* type pill */}
+        <div
+          className="absolute bottom-1 left-1 rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide"
+          style={{ background: "rgba(0,0,0,0.72)", color: isItem ? "var(--theme-gold)" : "#a78bfa" }}
+        >
+          {isItem ? "Item" : "Gallery"}
+        </div>
+      </div>
+
+      {/* Text */}
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-sm font-semibold" style={{ color: "var(--fg)" }}>
+          {title}
+        </div>
+        <div className="mt-0.5 truncate text-xs" style={{ color: "var(--muted)" }}>
+          {subtitle}
+        </div>
+        {record.created_at && (
+          <div className="mt-1.5 text-[10px]" style={{ color: "var(--muted2, var(--muted))" }}>
+            Saved {timeAgo(record.created_at)}
+          </div>
+        )}
+      </div>
+
+      {/* Arrow */}
+      <div className="shrink-0 text-lg opacity-30 transition group-hover:opacity-80" style={{ color: "var(--theme-gold)" }}>
+        →
+      </div>
+    </Link>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+type Filter = "all" | "item" | "gallery";
+type Sort = "saved" | "alpha";
 
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState<FavoriteRecord[]>([]);
   const [items, setItems] = useState<VaultItem[]>([]);
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<Filter>("all");
+  const [sort, setSort] = useState<Sort>("saved");
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     let active = true;
-
-    async function load() {
-      setLoading(true);
+    (async () => {
       const [records] = await Promise.all([listViewerFavorites()]);
       if (!active) return;
       setFavorites(records);
       setItems(loadItems({ includeAllProfiles: true }));
       setGalleries(loadGalleries({ includeAllProfiles: true }));
       setLoading(false);
-    }
-
-    void load();
-
-    return () => {
-      active = false;
-    };
+    })();
+    return () => { active = false; };
   }, []);
 
-  const grouped = useMemo(() => {
-    return {
-      galleries: favorites.filter((favorite) => favorite.content_type === "gallery"),
-      items: favorites.filter((favorite) => favorite.content_type === "item"),
-    };
-  }, [favorites]);
+  const itemCount = favorites.filter((f) => f.content_type === "item").length;
+  const galleryCount = favorites.filter((f) => f.content_type === "gallery").length;
 
-  function renderFavorite(record: FavoriteRecord) {
-    const image = favoriteImage(record, items, galleries);
-    return (
-      <Link
-        key={record.id}
-        href={favoriteHref(record)}
-        className="grid grid-cols-[76px_minmax(0,1fr)] gap-3 rounded-[18px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(0,0,0,0.16)]"
-      >
-        <div className="h-[76px] overflow-hidden rounded-[14px] bg-[color:var(--input)]">
-          {image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={image} alt="" className="h-full w-full object-cover" draggable={false} />
-          ) : (
-            <div className="flex h-full items-center justify-center text-[10px] text-[color:var(--muted)]">No image</div>
-          )}
-        </div>
-        <div className="min-w-0 self-center">
-          <div className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">{record.content_type}</div>
-          <div className="mt-1 line-clamp-1 font-semibold text-cyan-200">{favoriteTitle(record, items, galleries)}</div>
-          <div className="mt-1 line-clamp-1 text-sm text-[color:var(--muted)]">{favoriteSubtitle(record, items, galleries)}</div>
-        </div>
-      </Link>
-    );
-  }
+  const displayed = useMemo(() => {
+    let list = favorites;
+    if (filter !== "all") list = list.filter((f) => f.content_type === filter);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter((f) =>
+        favoriteTitle(f, items, galleries).toLowerCase().includes(q)
+      );
+    }
+    if (sort === "alpha") {
+      list = [...list].sort((a, b) =>
+        favoriteTitle(a, items, galleries).localeCompare(favoriteTitle(b, items, galleries))
+      );
+    } else {
+      list = [...list].sort((a, b) =>
+        new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime()
+      );
+    }
+    return list;
+  }, [favorites, filter, sort, search, items, galleries]);
+
+  const TABS: { key: Filter; label: string; count: number }[] = [
+    { key: "all", label: "All", count: favorites.length },
+    { key: "item", label: "Items", count: itemCount },
+    { key: "gallery", label: "Galleries", count: galleryCount },
+  ];
 
   return (
-    <main className="min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6">
-      <div className="mx-auto max-w-6xl">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <div className="text-[11px] uppercase tracking-[0.24em] text-[color:var(--muted2)]">Favorites</div>
-            <h1 className="mt-2 text-3xl font-semibold">Saved items and galleries</h1>
-            <p className="mt-2 max-w-2xl text-sm text-[color:var(--muted)]">
-              Your saved public items and galleries. These favorites are database-backed and feed future engagement analytics.
-            </p>
+    <div className="min-h-screen" style={{ background: "var(--bg)" }}>
+      {/* Header */}
+      <div className="border-b border-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+        <div className="mx-auto max-w-2xl px-4 py-6">
+          <div className="flex items-center gap-3">
+            <Link href="/vault" className="text-sm" style={{ color: "var(--muted)" }}>Vault</Link>
+            <span style={{ color: "var(--muted)" }}>/</span>
+            <span className="text-sm font-semibold" style={{ color: "var(--fg)" }}>Favorites</span>
           </div>
-          <Link href="/" className="inline-flex min-h-[40px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-sm ring-1 ring-[color:var(--border)]">
-            Back Home
-          </Link>
-        </div>
+          <h1 className="mt-3 text-2xl font-bold" style={{ color: "var(--fg)" }}>Favorites</h1>
+          <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
+            Items and exhibitions you've saved from across VLTD.
+          </p>
 
+          {/* Stats bar */}
+          {!loading && favorites.length > 0 && (
+            <div className="mt-4 flex items-center gap-6">
+              <div>
+                <span className="text-lg font-bold" style={{ color: "var(--theme-gold)" }}>{favorites.length}</span>
+                <span className="ml-1.5 text-xs" style={{ color: "var(--muted)" }}>saved</span>
+              </div>
+              <div>
+                <span className="text-lg font-bold" style={{ color: "var(--fg)" }}>{itemCount}</span>
+                <span className="ml-1.5 text-xs" style={{ color: "var(--muted)" }}>items</span>
+              </div>
+              <div>
+                <span className="text-lg font-bold" style={{ color: "var(--fg)" }}>{galleryCount}</span>
+                <span className="ml-1.5 text-xs" style={{ color: "var(--muted)" }}>galleries</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-2xl px-4 py-6">
         {loading ? (
-          <div className="mt-8 rounded-[22px] bg-[color:var(--surface)] p-6 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
-            Loading favorites...
+          <div className="py-16 text-center text-sm" style={{ color: "var(--muted)" }}>
+            Loading favorites…
           </div>
         ) : favorites.length === 0 ? (
-          <div className="mt-8 rounded-[22px] bg-[color:var(--surface)] p-6 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
-            No favorites yet. Favorite public items or galleries to build your saved list.
+          /* Empty state */
+          <div
+            className="rounded-2xl px-6 py-14 text-center ring-1 ring-[color:var(--border)]"
+            style={{ background: "var(--surface)" }}
+          >
+            <div className="text-4xl">🤍</div>
+            <div className="mt-4 text-base font-semibold" style={{ color: "var(--fg)" }}>
+              No favorites yet
+            </div>
+            <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
+              Browse the Discover page and tap the heart on any item or gallery to save it here.
+            </p>
+            <Link
+              href="/discover"
+              className="mt-6 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold"
+              style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}
+            >
+              Explore Discover →
+            </Link>
           </div>
         ) : (
-          <div className="mt-8 grid gap-8 lg:grid-cols-2">
-            <section>
-              <h2 className="text-lg font-semibold">Favorite Galleries</h2>
-              <div className="mt-3 grid gap-3">{grouped.galleries.map(renderFavorite)}</div>
-            </section>
-            <section>
-              <h2 className="text-lg font-semibold">Favorite Items</h2>
-              <div className="mt-3 grid gap-3">{grouped.items.map(renderFavorite)}</div>
-            </section>
-          </div>
+          <>
+            {/* Filter + Sort bar */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              {/* Tabs */}
+              <div
+                className="flex gap-1 rounded-xl p-1"
+                style={{ background: "var(--pill)" }}
+              >
+                {TABS.map((t) => (
+                  <button
+                    key={t.key}
+                    onClick={() => setFilter(t.key)}
+                    className="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
+                    style={
+                      filter === t.key
+                        ? { background: "var(--theme-gold)", color: "#0B0B0B" }
+                        : { color: "var(--muted)" }
+                    }
+                  >
+                    {t.label}
+                    {t.count > 0 && (
+                      <span className="ml-1.5 opacity-70">{t.count}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Sort + Search */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search…"
+                  className="h-8 rounded-xl px-3 text-xs ring-1 ring-[color:var(--border)] focus:outline-none"
+                  style={{ background: "var(--pill)", color: "var(--fg)", width: 140 }}
+                />
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value as Sort)}
+                  className="h-8 rounded-xl px-2 text-xs ring-1 ring-[color:var(--border)] focus:outline-none"
+                  style={{ background: "var(--pill)", color: "var(--muted)" }}
+                >
+                  <option value="saved">Recently saved</option>
+                  <option value="alpha">A → Z</option>
+                </select>
+              </div>
+            </div>
+
+            {/* List */}
+            {displayed.length === 0 ? (
+              <div className="mt-8 text-center text-sm" style={{ color: "var(--muted)" }}>
+                No results for "{search}"
+              </div>
+            ) : (
+              <div className="mt-4 flex flex-col gap-2">
+                {displayed.map((rec) => (
+                  <FavoriteCard
+                    key={rec.id}
+                    record={rec}
+                    items={items}
+                    galleries={galleries}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
-    </main>
+    </div>
   );
 }

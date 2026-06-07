@@ -407,6 +407,21 @@ export default function AddPage() {
   }, [existingItems, values.title, values.subtitle, values.number]);
 
   const canSave = useMemo(() => values.title.trim().length > 0 && !isSaving, [values.title, isSaving]);
+
+  // Completeness score for nudge bar
+  const completeness = useMemo(() => {
+    const hasTitle     = values.title.trim().length > 0;
+    const hasPhoto     = draftMediaImages.length > 0;
+    const hasGrade     = values.grade.trim().length > 0;
+    const hasPrice     = values.purchasePrice.trim().length > 0 || values.currentValue.trim().length > 0;
+    const hasSubject   = values.subject.trim().length > 0;
+    const hasNotes     = values.notes.trim().length > 0;
+    const hasNumber    = values.number.trim().length > 0;
+    const hasCert      = values.certNumber.trim().length > 0;
+    const fields = [hasTitle, hasPhoto, hasGrade, hasPrice, hasSubject, hasNotes, hasNumber, hasCert];
+    const filled = fields.filter(Boolean).length;
+    return { pct: Math.round((filled / fields.length) * 100), filled, total: fields.length, hasPhoto, hasGrade, hasPrice };
+  }, [values, draftMediaImages]);
   useUnsavedChangesGuard(hasDraftChanges && !isSaving);
 
   const selectedUniverse = safeUniverse(values.universe);
@@ -1592,6 +1607,30 @@ export default function AddPage() {
               {status}
             </div>
           ) : null}
+
+          {/* Completeness nudge */}
+          {hasDraftChanges && completeness.pct < 100 && (
+            <div className="mt-2 flex items-center gap-3">
+              <div className="relative h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: "var(--pill)" }}>
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${completeness.pct}%`,
+                    background: completeness.pct >= 75 ? "#4ade80" : completeness.pct >= 50 ? "var(--theme-gold)" : "rgba(245,181,72,0.5)",
+                  }}
+                />
+              </div>
+              <span className="shrink-0 text-[10px] font-semibold" style={{ color: "var(--muted)" }}>
+                {completeness.filled}/{completeness.total} fields
+              </span>
+              {!completeness.hasPhoto && (
+                <span className="shrink-0 text-[10px]" style={{ color: "#f87171" }}>+ add photo</span>
+              )}
+              {!completeness.hasGrade && (
+                <span className="shrink-0 text-[10px]" style={{ color: "#f87171" }}>+ grade</span>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="mb-3 w-full max-w-5xl mx-auto grid gap-3">

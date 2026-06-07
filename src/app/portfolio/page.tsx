@@ -451,6 +451,15 @@ export default function PortfolioPage() {
     return { points, values };
   }, [mounted, range, historyTick]);
 
+  const topItems = useMemo(() => {
+    const sorted = [...itemsInRange].sort((a, b) =>
+      rankMode === "value"
+        ? clamp(Number(b.currentValue ?? 0)) - clamp(Number(a.currentValue ?? 0))
+        : gain(b) - gain(a)
+    );
+    return sorted.slice(0, 5);
+  }, [itemsInRange, rankMode]);
+
   function exportRangeCsv() {
     const header = [
       "id",
@@ -797,6 +806,53 @@ export default function PortfolioPage() {
             )}
           </div>
         </div>
+
+        {/* Top performers */}
+        {topItems.length > 0 && (
+          <div className="vltd-panel-main mt-6 rounded-3xl p-6 shadow-[0_8px_32px_rgba(0,0,0,0.22)]" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
+            <div className="text-xs tracking-widest text-[color:var(--muted2)]">TOP PERFORMERS</div>
+            <div className="mt-2 text-xl font-semibold">
+              Highest {rankMode === "value" ? "value" : "gain"} items
+            </div>
+            <div className="mt-4 flex flex-col gap-2">
+              {topItems.map((item, idx) => {
+                const metric = rankMode === "value" ? clamp(Number(item.currentValue ?? 0)) : gain(item);
+                const isPositive = metric >= 0;
+                return (
+                  <Link
+                    key={item.id}
+                    href={`/vault/item/${encodeURIComponent(item.id)}`}
+                    className="flex items-center gap-4 rounded-2xl px-4 py-3 ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
+                    style={{ background: 'var(--theme-elevated, rgba(20,32,55,0.9))' }}
+                  >
+                    <div
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black"
+                      style={{ background: idx === 0 ? 'var(--theme-gold)' : 'var(--pill)', color: idx === 0 ? '#0B0B0B' : 'var(--muted)' }}
+                    >
+                      {idx + 1}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold">{item.title}</div>
+                      <div className="mt-0.5 text-xs text-[color:var(--muted)]">
+                        {[item.universe ? UNIVERSE_LABEL[item.universe as UniverseKey] : null, item.grade].filter(Boolean).join(' · ')}
+                      </div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <div className="text-sm font-bold" style={{ color: isPositive ? '#4ade80' : '#f87171' }}>
+                        {fmtMoney(metric)}
+                      </div>
+                      {rankMode === "gain" && item.purchasePrice && (
+                        <div className="text-[10px] text-[color:var(--muted)]">
+                          {fmtPct(clamp(Number(item.purchasePrice)) > 0 ? (metric / clamp(Number(item.purchasePrice))) * 100 : 0)} ROI
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="mt-6 text-sm text-[color:var(--muted)]">
           Drill-down:

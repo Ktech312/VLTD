@@ -8,7 +8,7 @@ function fmt(n: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
 }
 
-function SubjectCard({ s }: { s: RegistrySubject }) {
+function SubjectCard({ s, rank }: { s: RegistrySubject; rank: number }) {
   const href = `/registry/${encodeURIComponent(s.subject)}`;
   return (
     <Link
@@ -25,9 +25,12 @@ function SubjectCard({ s }: { s: RegistrySubject }) {
         </div>
         <div
           className="shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full"
-          style={{ background: "var(--theme-elevated)", color: "var(--theme-gold)" }}
+          style={{
+            background: rank === 1 ? "var(--theme-gold, #F5B548)" : rank === 2 ? "rgba(192,192,192,0.2)" : rank === 3 ? "rgba(150,100,50,0.2)" : "var(--theme-elevated)",
+            color: rank === 1 ? "#0B0B0B" : "var(--theme-gold)",
+          }}
         >
-          #{1}
+          #{rank}
         </div>
       </div>
       {s.topDisplayName && (
@@ -91,7 +94,7 @@ export default function RegistryPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((s) => <SubjectCard key={s.subject} s={s} />)}
+            {filtered.map((s, i) => <SubjectCard key={s.subject} s={s} rank={i + 1} />)}
           </div>
         )}
       </div>

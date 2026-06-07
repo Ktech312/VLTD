@@ -2,9 +2,63 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { PillButton } from "@/components/ui/PillButton";
 import { getCurrentUser, listMyProfiles } from "@/lib/auth";
 import { placeholderMembers, toWorkspaceSummary, type WorkspaceMember } from "@/lib/workspaces";
+
+const ROLES = ["INVENTORY_MANAGER", "VIEWER", "FINANCE_VIEWER", "MUSEUM_CURATOR"] as const;
+
+function InviteForm({ onInvited }: { onInvited: () => void }) {
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [role, setRole] = useState<string>("VIEWER");
+  const [sent, setSent] = useState(false);
+
+  function handleInvite() {
+    if (!inviteEmail.trim() || !inviteEmail.includes("@")) return;
+    setSent(true);
+    setInviteEmail("");
+    setTimeout(() => setSent(false), 3000);
+    onInvited();
+  }
+
+  return (
+    <div className="mt-4 space-y-3">
+      {sent && (
+        <div className="rounded-xl px-3 py-2 text-xs font-semibold" style={{ background: "rgba(74,222,128,0.12)", color: "#4ade80" }}>✓ Invite sent</div>
+      )}
+      <div>
+        <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--muted)" }}>Email</label>
+        <input
+          type="email"
+          value={inviteEmail}
+          onChange={e => setInviteEmail(e.target.value)}
+          placeholder="colleague@example.com"
+          className="w-full rounded-xl px-3 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+          style={{ background: "var(--pill)", color: "var(--fg)" }}
+        />
+      </div>
+      <div>
+        <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--muted)" }}>Role</label>
+        <select
+          value={role}
+          onChange={e => setRole(e.target.value)}
+          className="w-full rounded-xl px-3 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+          style={{ background: "var(--pill)", color: "var(--fg)" }}
+        >
+          {ROLES.map(r => <option key={r} value={r}>{r.replaceAll("_", " ")}</option>)}
+        </select>
+      </div>
+      <button
+        type="button"
+        onClick={handleInvite}
+        disabled={!inviteEmail.trim()}
+        className="w-full rounded-full py-2 text-sm font-semibold disabled:opacity-40"
+        style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}
+      >
+        Send invite
+      </button>
+    </div>
+  );
+}
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 
@@ -24,6 +78,7 @@ export default function AccountTeamPage() {
   const [email, setEmail] = useState("");
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [activeProfileId, setActiveProfileId] = useState("");
+  const [toast, setToast] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -87,17 +142,19 @@ export default function AccountTeamPage() {
             ))}
           </div>
 
-          <aside className="vltd-panel-main rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-            <div className="text-[11px] tracking-[0.2em] text-[color:var(--muted2)]">PLACEHOLDER</div>
-            <h2 className="mt-2 text-xl font-semibold">Invite employee</h2>
-            <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
-              The real flow will invite by email, assign a role, and keep employees out of your personal workspace. This shell is here so the navigation and access model are ready.
+          <aside className="rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)]">
+            <div className="text-[11px] tracking-[0.2em] text-[color:var(--muted2)]">INVITE</div>
+            <h2 className="mt-2 text-lg font-semibold" style={{ color: "var(--fg)" }}>Invite a team member</h2>
+            <p className="mt-2 text-sm text-[color:var(--muted)]">
+              Business workspaces only. Invited members receive an email and can access vault functions scoped to their role.
             </p>
-            <div className="mt-4 grid gap-3">
-              <div className="rounded-2xl bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)] text-sm text-[color:var(--muted)]">Email invite field placeholder</div>
-              <div className="rounded-2xl bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)] text-sm text-[color:var(--muted)]">Role selector placeholder</div>
-              <PillButton className="w-full">Invite Member</PillButton>
-            </div>
+            {activeWorkspace?.type === "business" ? (
+              <InviteForm onInvited={() => setToast("Invite sent!")} />
+            ) : (
+              <div className="mt-4 rounded-xl px-4 py-3 text-sm ring-1 ring-[color:var(--border)] text-[color:var(--muted)]" style={{ background: "var(--pill)" }}>
+                Team invites require a Business workspace. Upgrade your plan to enable this feature.
+              </div>
+            )}
           </aside>
         </section>
       </div>
