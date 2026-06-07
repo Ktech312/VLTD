@@ -1102,6 +1102,12 @@ export default function VaultPage() {
                 >
                   Goals
                 </Link>
+                <Link
+                  href="/vault/frames"
+                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                >
+                  Share Frame
+                </Link>
               </div>
             </div>
 
