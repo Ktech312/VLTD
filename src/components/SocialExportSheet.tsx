@@ -241,7 +241,6 @@ export default function SocialExportSheet({ item, onClose }: Props) {
                   style={{
                     background: ratio === o.ratio ? "var(--theme-gold)" : "var(--pill)",
                     color: ratio === o.ratio ? "#0B0B0B" : "var(--fg)",
-                    ringColor: ratio === o.ratio ? "var(--theme-gold)" : "var(--border)",
                   }}
                 >
                   <span className="text-sm font-bold">{o.label}</span>
