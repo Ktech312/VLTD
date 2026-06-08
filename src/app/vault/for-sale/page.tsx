@@ -136,9 +136,24 @@ function ItemCard({
   onMarkSold: (item: VaultItem) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [askingInput, setAskingInput] = useState(
+    item.askingPrice != null ? String(item.askingPrice) : ""
+  );
+  const [priceSaved, setPriceSaved] = useState(false);
   const imageUrl = getPrimaryImageUrl(item);
   const score = readinessScore(item);
   const price = Number(item.askingPrice ?? item.currentValue ?? item.estimatedValue ?? 0);
+
+  function handlePriceSet() {
+    const parsed = parseMoney(askingInput);
+    const updated = { ...item, askingPrice: parsed };
+    saveItem(updated);
+    enqueueVaultItemSync(updated.id);
+    void processVaultSyncQueue();
+    window.dispatchEvent(new Event("vltd:vault-updated"));
+    setPriceSaved(true);
+    setTimeout(() => setPriceSaved(false), 2000);
+  }
 
   const platformsToShow = platform === "ALL" ? (["EBAY", "WHATNOT", "MERCARI"] as Platform[]) : [platform];
   const activePlatformGaps = platform === "ALL"
@@ -236,7 +251,30 @@ function ItemCard({
       )}
 
       {/* Actions */}
-      <div className="flex items-center gap-2 border-t border-[color:var(--border)] px-3 py-2">
+      <div className="flex flex-wrap items-center gap-2 border-t border-[color:var(--border)] px-3 py-2">
+        {/* Asking price quick-set */}
+        <div className="flex items-center gap-1 rounded-xl ring-1 ring-[color:var(--border)] overflow-hidden" style={{ background: "var(--pill)" }}>
+          <span className="pl-2 text-xs" style={{ color: "var(--muted)" }}>$</span>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            value={askingInput}
+            onChange={(e) => setAskingInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handlePriceSet()}
+            placeholder="Ask price"
+            className="w-20 bg-transparent py-1.5 pr-1 text-xs focus:outline-none"
+            style={{ color: "var(--fg)" }}
+          />
+          <button
+            type="button"
+            onClick={handlePriceSet}
+            className="px-2 py-1.5 text-xs font-semibold transition"
+            style={{ background: priceSaved ? "rgba(74,222,128,0.2)" : "var(--theme-gold)", color: priceSaved ? "#4ade80" : "#0B0B0B" }}
+          >
+            {priceSaved ? "✓" : "Set"}
+          </button>
+        </div>
         <Link
           href={`/vault/item/${encodeURIComponent(item.id)}`}
           className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]"

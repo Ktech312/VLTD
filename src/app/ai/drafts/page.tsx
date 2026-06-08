@@ -61,7 +61,15 @@ function DraftCard({
       className="rounded-2xl p-4 ring-1 ring-[color:var(--border)] transition"
       style={{ background: "var(--surface)" }}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start gap-3">
+        {/* Thumbnail */}
+        {draft.frontImageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={draft.frontImageUrl} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
+        ) : (
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-2xl"
+            style={{ background: "var(--pill)" }}>🤖</div>
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span

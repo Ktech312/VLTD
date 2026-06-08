@@ -37,6 +37,14 @@ function favoriteImage(r: FavoriteRecord, items: VaultItem[], galleries: Gallery
   return g?.coverImage || "";
 }
 
+function favoriteValue(r: FavoriteRecord, items: VaultItem[]) {
+  if (r.content_type !== "item") return null;
+  const it = items.find((x) => String(x.id) === String(r.content_id));
+  const v = Number(it?.currentValue ?? it?.estimatedValue ?? it?.askingPrice ?? 0);
+  if (!Number.isFinite(v) || v <= 0) return null;
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v);
+}
+
 function favoriteHref(r: FavoriteRecord) {
   if (r.content_type === "item") return `/vault/item/${r.content_id}`;
   return `/gallery/${r.content_id}`;
@@ -68,6 +76,7 @@ function FavoriteCard({
   const subtitle = favoriteSubtitle(record, items, galleries);
   const href = favoriteHref(record);
   const isItem = record.content_type === "item";
+  const value = favoriteValue(record, items);
 
   return (
     <Link
@@ -105,11 +114,16 @@ function FavoriteCard({
         <div className="mt-0.5 truncate text-xs" style={{ color: "var(--muted)" }}>
           {subtitle}
         </div>
-        {record.created_at && (
-          <div className="mt-1.5 text-[10px]" style={{ color: "var(--muted2, var(--muted))" }}>
-            Saved {timeAgo(record.created_at)}
-          </div>
-        )}
+        <div className="mt-1.5 flex items-center gap-2">
+          {value && (
+            <span className="text-xs font-bold" style={{ color: "var(--theme-gold)" }}>{value}</span>
+          )}
+          {record.created_at && (
+            <span className="text-[10px]" style={{ color: "var(--muted2, var(--muted))" }}>
+              Saved {timeAgo(record.created_at)}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Arrow */}
