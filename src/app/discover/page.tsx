@@ -55,6 +55,107 @@ function rowToGallery(row: Record<string, unknown>): PublicGallery {
   };
 }
 
+
+// ─── Market Pulse: category risers/droppers based on gallery view momentum ───
+
+const CATEGORY_ICONS: Record<string, string> = {
+  TCG: "🃏", Sports: "🏆", Music: "🎵", Jewelry: "💎",
+  Games: "🎮", "Pop Culture": "🌟", Misc: "📦",
+};
+
+type CategoryPulse = {
+  category: string;
+  icon: string;
+  totalViews: number;
+  galleryCount: number;
+  topTitle: string;
+  trend: "up" | "neutral";
+};
+
+function MarketPulse({ galleries }: { galleries: PublicGallery[] }) {
+  const pulseData = useMemo((): CategoryPulse[] => {
+    const map = new Map<string, { views: number; count: number; topViews: number; topTitle: string }>();
+    for (const g of galleries) {
+      const cat = inferGalleryCategory(g);
+      const existing = map.get(cat) ?? { views: 0, count: 0, topViews: 0, topTitle: "" };
+      map.set(cat, {
+        views: existing.views + g.analytics_views,
+        count: existing.count + 1,
+        topViews: g.analytics_views > existing.topViews ? g.analytics_views : existing.topViews,
+        topTitle: g.analytics_views > existing.topViews ? g.title : existing.topTitle,
+      });
+    }
+    return Array.from(map.entries())
+      .map(([category, data]) => ({
+        category,
+        icon: CATEGORY_ICONS[category] ?? "📦",
+        totalViews: data.views,
+        galleryCount: data.count,
+        topTitle: data.topTitle,
+        trend: data.views > 100 ? "up" as const : "neutral" as const,
+      }))
+      .sort((a, b) => b.totalViews - a.totalViews)
+      .slice(0, 6);
+  }, [galleries]);
+
+  if (pulseData.length < 2) return null;
+
+  const maxViews = pulseData[0]?.totalViews ?? 1;
+
+  return (
+    <section className="mt-6">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="text-[11px] tracking-[0.22em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
+          📈 MARKET PULSE
+        </div>
+        <span className="text-[10px]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
+          by gallery activity
+        </span>
+      </div>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+        {pulseData.map((item, i) => {
+          const barPct = Math.max(8, Math.round((item.totalViews / maxViews) * 100));
+          const isTop = i === 0;
+          return (
+            <div key={item.category}
+              className="flex flex-col gap-2 rounded-[14px] px-3 py-3 ring-1 transition hover:ring-[color:var(--theme-gold)]"
+              style={{
+                background: isTop ? "rgba(245,181,72,0.08)" : "var(--theme-elevated, rgba(20,32,55,0.9))",
+                borderColor: isTop ? "rgba(245,181,72,0.35)" : "var(--theme-border, rgba(245,181,72,0.12))",
+              }}>
+              <div className="flex items-start justify-between gap-1">
+                <span className="text-xl leading-none">{item.icon}</span>
+                {isTop && (
+                  <span className="rounded-full px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.15em]"
+                    style={{ background: "rgba(245,181,72,0.2)", color: "#F5B548" }}>
+                    HOT
+                  </span>
+                )}
+              </div>
+              <div>
+                <div className="text-xs font-bold" style={{ color: isTop ? "#F5B548" : "var(--theme-text-primary, #F0EAD6)" }}>
+                  {item.category}
+                </div>
+                <div className="mt-0.5 text-[10px]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
+                  {item.galleryCount} exhibition{item.galleryCount !== 1 ? "s" : ""}
+                </div>
+              </div>
+              {/* Bar */}
+              <div className="relative h-1 w-full overflow-hidden rounded-full" style={{ background: "rgba(255,255,255,0.08)" }}>
+                <div className="absolute left-0 top-0 h-full rounded-full transition-all"
+                  style={{ width: `${barPct}%`, background: isTop ? "#F5B548" : "rgba(245,181,72,0.35)" }} />
+              </div>
+              <div className="text-[10px] tabular-nums" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
+                {item.totalViews.toLocaleString()} views
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 export default function DiscoverPage() {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -266,6 +367,11 @@ export default function DiscoverPage() {
               ))}
             </div>
           </section>
+        )}
+
+        {/* Market Pulse widget — category activity heatmap */}
+        {!loading && galleries.length > 3 && activeTab === "All" && !query.trim() && (
+          <MarketPulse galleries={galleries} />
         )}
 
         {/* All Exhibitions grid — no cap */}
