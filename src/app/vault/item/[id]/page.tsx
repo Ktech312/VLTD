@@ -50,6 +50,7 @@ import {
   UNIVERSE_LABEL,
   type UniverseKey,
 } from "@/lib/taxonomy";
+import { fetchRegistrySubjects, type RegistrySubject } from "@/lib/registryModel";
 
 const SALES_KEY = "vltd_sales_history";
 
@@ -196,6 +197,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   const [isSoldView, setIsSoldView] = useState(false);
   const [socialExportOpen, setSocialExportOpen] = useState(false);
   const [auctionOpen, setAuctionOpen] = useState(false);
+  const [registryEntry, setRegistryEntry] = useState<import("@/lib/registryModel").RegistrySubject | null>(null);
 
   useEffect(() => {
     const next = loadItems({ includeAllProfiles: true });
@@ -216,6 +218,16 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
   const item = useMemo(() => items.find((entry) => String(entry.id) === String(id)) ?? sale ?? null, [items, id, sale]);
   const images = useMemo(() => (item ? getOrderedImageUrls(item) : []), [item]);
+
+  useEffect(() => {
+    if (!item?.subject) { setRegistryEntry(null); return; }
+    import("@/lib/registryModel").then(({ fetchRegistrySubjects }) => {
+      fetchRegistrySubjects().then((subjects) => {
+        const match = subjects.find((s) => s.subject === item.subject);
+        setRegistryEntry(match ?? null);
+      }).catch(() => {});
+    });
+  }, [item?.subject]);
 
   useEffect(() => {
     if (!item) return;
@@ -1110,20 +1122,34 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               </div>
             )}
             {item.subject ? (
-              <div className="mt-3 flex items-center gap-2">
-                <span className="text-[11px] uppercase tracking-[0.14em]" style={{ color: "var(--muted2)" }}>
-                  Subject
-                </span>
-                <span
-                  className="rounded-full px-2.5 py-0.5 text-[12px] font-semibold ring-1"
-                  style={{
-                    background: "var(--theme-gold-subtle)",
-                    borderColor: "var(--theme-gold-border)",
-                    color: "var(--theme-gold)",
-                  }}
-                >
-                  {item.subject}
-                </span>
+              <div className="mt-3 space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] uppercase tracking-[0.14em]" style={{ color: "var(--muted2)" }}>
+                    Subject
+                  </span>
+                  <Link
+                    href={`/registry/${encodeURIComponent(item.subject)}`}
+                    className="rounded-full px-2.5 py-0.5 text-[12px] font-semibold ring-1 hover:brightness-110 transition"
+                    style={{
+                      background: "var(--theme-gold-subtle)",
+                      borderColor: "var(--theme-gold-border)",
+                      color: "var(--theme-gold)",
+                    }}
+                  >
+                    {item.subject}
+                  </Link>
+                </div>
+                {registryEntry && (
+                  <Link
+                    href={`/registry/${encodeURIComponent(item.subject)}`}
+                    className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold ring-1 hover:ring-[color:var(--theme-gold)] transition"
+                    style={{ background: "var(--pill)", borderColor: "var(--border)", color: "var(--muted)" }}
+                  >
+                    <span>👥 {registryEntry.collectorCount} collector{registryEntry.collectorCount !== 1 ? "s" : ""} tracking</span>
+                    <span style={{ color: "var(--border)" }}>·</span>
+                    <span style={{ color: "var(--theme-gold)" }}>View registry →</span>
+                  </Link>
+                )}
               </div>
             ) : null}
           </Section>

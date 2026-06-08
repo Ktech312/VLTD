@@ -34,6 +34,30 @@ function fmt(n: number) {
   }).format(n);
 }
 
+
+// ── Grading company chip ──────────────────────────────────────────────────────
+function parseGradingService(grade?: string): { service: string; color: string; bg: string } | null {
+  if (!grade) return null;
+  const g = grade.toUpperCase();
+  if (g.startsWith("PSA"))  return { service: "PSA",  color: "#60a5fa", bg: "rgba(96,165,250,0.12)" };
+  if (g.startsWith("BGS") || g.startsWith("BECKETT")) return { service: "BGS", color: "#34d399", bg: "rgba(52,211,153,0.12)" };
+  if (g.startsWith("SGC"))  return { service: "SGC",  color: "#fb923c", bg: "rgba(251,146,60,0.12)" };
+  if (g.startsWith("CGC"))  return { service: "CGC",  color: "#c084fc", bg: "rgba(192,132,252,0.12)" };
+  if (g.startsWith("CSG"))  return { service: "CSG",  color: "#f472b6", bg: "rgba(244,114,182,0.12)" };
+  if (/RAW|UNGRADED|NONE/i.test(g)) return { service: "Raw", color: "#94a3b8", bg: "rgba(148,163,184,0.10)" };
+  return null;
+}
+
+function listingAge(createdAt?: number): string | null {
+  if (!createdAt) return null;
+  const days = Math.floor((Date.now() - createdAt) / 86_400_000);
+  if (days <= 0) return "Today";
+  if (days === 1) return "1d ago";
+  if (days < 7)  return `${days}d ago`;
+  if (days < 30) return `${Math.floor(days / 7)}w ago`;
+  return `${Math.floor(days / 30)}mo ago`;
+}
+
 function MarketCard({ item }: { item: MarketItem }) {
   const imageUrl = getPrimaryImageUrl(item);
   const universeLabel = UNIVERSE_LABEL[item.universe as UniverseKey] ?? item.universe ?? "";
@@ -59,12 +83,18 @@ function MarketCard({ item }: { item: MarketItem }) {
             🗝️
           </div>
         )}
-        <span
-          className="absolute top-2 left-2 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide"
-          style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}
-        >
-          FOR SALE
-        </span>
+        <div className="absolute top-2 left-2 flex items-center gap-1.5">
+          <span className="rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide"
+            style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}>
+            FOR SALE
+          </span>
+          {listingAge(item.createdAt) && (
+            <span className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
+              style={{ background: "rgba(0,0,0,0.55)", color: "rgba(255,255,255,0.75)" }}>
+              {listingAge(item.createdAt)}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Info */}
@@ -80,19 +110,36 @@ function MarketCard({ item }: { item: MarketItem }) {
 
         <div className="mt-1 flex flex-wrap items-center gap-1.5">
           {universeLabel && (
-            <span
-              className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
-              style={{ background: "var(--pill)", color: "var(--muted)" }}
-            >
+            <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+              style={{ background: "var(--pill)", color: "var(--muted)" }}>
               {universeLabel}
             </span>
           )}
-          {item.grade && (
-            <span
-              className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
-              style={{ background: "var(--pill)", color: "var(--theme-gold)" }}
-            >
-              {item.grade}
+          {(() => {
+            const svc = parseGradingService(item.grade);
+            return svc ? (
+              <span className="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                style={{ background: svc.bg, color: svc.color }}>
+                {svc.service}{item.grade && !item.grade.toUpperCase().startsWith(svc.service) ? "" : ` ${item.grade?.replace(new RegExp("^" + svc.service + "\s*", "i"), "")}`}
+              </span>
+            ) : item.grade ? (
+              <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                style={{ background: "var(--pill)", color: "var(--theme-gold)" }}>
+                {item.grade}
+              </span>
+            ) : null;
+          })()}
+          {item.condition && !item.grade && (
+            <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+              style={{ background: "var(--pill)", color: "var(--muted)" }}>
+              {item.condition}
+            </span>
+          )}
+          {item.certNumber && (
+            <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+              style={{ background: "rgba(245,181,72,0.08)", color: "var(--theme-gold)" }}
+              title={`Cert #${item.certNumber}`}>
+              ✓ Certified
             </span>
           )}
         </div>
