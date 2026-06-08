@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PillButton } from "@/components/ui/PillButton";
 
 type Plan = "free" | "pro" | "business";
 
@@ -35,16 +36,18 @@ export default function BillingPage() {
   const currentPlan: Plan = "pro";
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--bg)" }}>
+    <main className="min-h-screen" style={{ background: "var(--bg)", color: "var(--fg)" }}>
       <div className="border-b border-[color:var(--border)]" style={{ background: "var(--surface)" }}>
-        <div className="mx-auto max-w-2xl px-4 py-6">
-          <div className="flex items-center gap-3">
-            <Link href="/account" className="text-sm" style={{ color: "var(--muted)" }}>Account</Link>
-            <span style={{ color: "var(--muted)" }}>/</span>
-            <span className="text-sm font-semibold" style={{ color: "var(--fg)" }}>Billing</span>
+        <div className="mx-auto max-w-2xl px-4 py-4">
+          <div className="flex flex-wrap gap-2">
+            <Link href="/account"><PillButton>Account</PillButton></Link>
+            <Link href="/account/workspace"><PillButton>Workspace</PillButton></Link>
+            <Link href="/account/team"><PillButton>Team</PillButton></Link>
+            <Link href="/account/security"><PillButton>Security</PillButton></Link>
+            <Link href="/account/billing"><PillButton variant="active">Billing</PillButton></Link>
           </div>
-          <h1 className="mt-3 text-2xl font-bold" style={{ color: "var(--fg)" }}>Billing & Plans</h1>
-          <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>Manage your subscription and view invoice history.</p>
+          <h1 className="mt-4 text-2xl font-bold" style={{ color: "var(--fg)" }}>Billing & Plans</h1>
+          <p className="mt-0.5 text-sm" style={{ color: "var(--muted)" }}>Manage your subscription and view invoice history.</p>
         </div>
       </div>
 
@@ -156,6 +159,6 @@ export default function BillingPage() {
           </button>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

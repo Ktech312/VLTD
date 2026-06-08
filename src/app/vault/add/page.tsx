@@ -124,7 +124,7 @@ function parseMoney(input: string) {
 
 function inputClass(isAiFilled?: boolean) {
   return [
-    "h-10 rounded-xl px-3 text-sm focus:outline-none transition-all placeholder:text-[color:var(--muted)] placeholder:italic placeholder:text-xs",
+    "h-11 rounded-xl px-3 text-sm focus:outline-none transition-all placeholder:text-[color:var(--muted)] placeholder:italic placeholder:text-xs",
     isAiFilled
       ? "bg-[rgba(245,181,72,0.18)] ring-2 ring-[rgba(245,181,72,0.7)] text-[#FFE08A] font-semibold"
       : "bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]",
@@ -133,7 +133,7 @@ function inputClass(isAiFilled?: boolean) {
 
 function selectClass(isAiFilled?: boolean) {
   return [
-    "h-10 rounded-xl px-3 text-sm focus:outline-none transition-all",
+    "h-11 rounded-xl px-3 text-sm focus:outline-none transition-all",
     isAiFilled
       ? "bg-[rgba(245,181,72,0.18)] ring-2 ring-[rgba(245,181,72,0.7)] text-[#FFE08A] font-semibold"
       : "bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]",
@@ -1575,7 +1575,7 @@ export default function AddPage() {
 
   return (
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
-      <div className={`w-full px-4 py-3 sm:px-6 sm:py-4 ${dropMode ? "pb-24" : ""}`}>
+      <div className={`w-full px-4 py-3 sm:px-6 sm:py-4 ${dropMode ? "pb-24" : "pb-20 sm:pb-4"}`}>
         <div className="sticky top-0 z-20 mx-auto mb-3 w-full max-w-5xl rounded-[16px] border border-[color:var(--theme-border)] bg-[color:var(--surface)]/92 p-3 backdrop-blur">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -1610,24 +1610,30 @@ export default function AddPage() {
 
           {/* Completeness nudge */}
           {hasDraftChanges && completeness.pct < 100 && (
-            <div className="mt-2 flex items-center gap-3">
-              <div className="relative h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: "var(--pill)" }}>
-                <div
-                  className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
-                  style={{
-                    width: `${completeness.pct}%`,
-                    background: completeness.pct >= 75 ? "#4ade80" : completeness.pct >= 50 ? "var(--theme-gold)" : "rgba(245,181,72,0.5)",
-                  }}
-                />
+            <div className="mt-2 space-y-1.5">
+              <div className="flex items-center gap-2">
+                <div className="relative h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: "var(--pill)" }}>
+                  <div
+                    className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${completeness.pct}%`,
+                      background: completeness.pct >= 75 ? "#4ade80" : completeness.pct >= 50 ? "var(--theme-gold)" : "rgba(245,181,72,0.5)",
+                    }}
+                  />
+                </div>
+                <span className="shrink-0 text-[10px] font-semibold tabular-nums" style={{ color: "var(--muted)" }}>
+                  {completeness.pct}%
+                </span>
               </div>
-              <span className="shrink-0 text-[10px] font-semibold" style={{ color: "var(--muted)" }}>
-                {completeness.filled}/{completeness.total} fields
-              </span>
-              {!completeness.hasPhoto && (
-                <span className="shrink-0 text-[10px]" style={{ color: "#f87171" }}>+ add photo</span>
-              )}
-              {!completeness.hasGrade && (
-                <span className="shrink-0 text-[10px]" style={{ color: "#f87171" }}>+ grade</span>
+              {(!completeness.hasPhoto || !completeness.hasGrade) && (
+                <div className="flex flex-wrap gap-1.5">
+                  {!completeness.hasPhoto && (
+                    <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "rgba(248,113,113,0.12)", color: "#f87171" }}>📷 add photo</span>
+                  )}
+                  {!completeness.hasGrade && (
+                    <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "rgba(248,113,113,0.12)", color: "#f87171" }}>🏅 add grade</span>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -1751,7 +1757,7 @@ export default function AddPage() {
 
         </div>
 
-        <section className="w-full max-w-5xl mx-auto rounded-[16px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <section className="w-full max-w-5xl mx-auto rounded-[16px] bg-[color:var(--surface)] p-3 sm:p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               <Field label="Subtitle / Set" locked={locks.subtitle} onToggleLock={() => handleToggleLock("subtitle")}>
                 <input
@@ -2213,6 +2219,29 @@ export default function AddPage() {
             ⚠ {duplicateWarning}
           </div>
         ) : null}
+
+        {/* Mobile bottom save bar — only when not in drop mode */}
+        {!dropMode && (
+          <div
+            className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between gap-3 border-t border-[color:var(--border)] px-4 py-3 sm:hidden"
+            style={{ background: "var(--surface)", paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+          >
+            <div className="min-w-0 text-xs truncate" style={{ color: "var(--muted)" }}>
+              {values.title
+                ? <span className="font-semibold" style={{ color: "var(--fg)" }}>{values.title}</span>
+                : <span>No title yet</span>}
+            </div>
+            <button
+              type="button"
+              onClick={() => void saveForm(false)}
+              disabled={!canSave}
+              className="shrink-0 rounded-full px-5 py-2.5 text-sm font-bold disabled:opacity-40"
+              style={{ background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B" }}
+            >
+              {isSaving ? "Saving…" : "Save"}
+            </button>
+          </div>
+        )}
 
         {dropMode && dropSession && !showDropReview ? (
           <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-4 border-t border-[color:var(--border)] bg-[color:var(--surface)] px-5 py-3 shadow-[0_-8px_32px_rgba(0,0,0,0.35)]">

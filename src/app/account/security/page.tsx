@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { PillButton } from "@/components/ui/PillButton";
 import { getCurrentUser, signOut } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
@@ -62,16 +63,18 @@ export default function SecurityPage() {
   const sessions = mockSessions(email);
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--bg)" }}>
+    <main className="min-h-screen" style={{ background: "var(--bg)", color: "var(--fg)" }}>
       <div className="border-b border-[color:var(--border)]" style={{ background: "var(--surface)" }}>
-        <div className="mx-auto max-w-2xl px-4 py-6">
-          <div className="flex items-center gap-3">
-            <Link href="/account" className="text-sm" style={{ color: "var(--muted)" }}>Account</Link>
-            <span style={{ color: "var(--muted)" }}>/</span>
-            <span className="text-sm font-semibold" style={{ color: "var(--fg)" }}>Security</span>
+        <div className="mx-auto max-w-2xl px-4 py-4">
+          <div className="flex flex-wrap gap-2">
+            <Link href="/account"><PillButton>Account</PillButton></Link>
+            <Link href="/account/workspace"><PillButton>Workspace</PillButton></Link>
+            <Link href="/account/team"><PillButton>Team</PillButton></Link>
+            <Link href="/account/security"><PillButton variant="active">Security</PillButton></Link>
+            <Link href="/account/billing"><PillButton>Billing</PillButton></Link>
           </div>
-          <h1 className="mt-3 text-2xl font-bold" style={{ color: "var(--fg)" }}>Security</h1>
-          <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>Manage your login credentials and active sessions.</p>
+          <h1 className="mt-4 text-2xl font-bold" style={{ color: "var(--fg)" }}>Security</h1>
+          <p className="mt-0.5 text-sm" style={{ color: "var(--muted)" }}>Manage your login credentials and active sessions.</p>
         </div>
       </div>
 
@@ -158,6 +161,6 @@ export default function SecurityPage() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
