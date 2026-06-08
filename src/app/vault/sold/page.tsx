@@ -502,6 +502,8 @@ export default function SoldPage() {
   const [items, setItems] = useState<SoldItem[]>(() => buildSoldItems());
   const [status, setStatus] = useState("");
   const [imagePreview, setImagePreview] = useState<{ title: string; imageUrl: string } | null>(null);
+  const [search, setSearch] = useState("");
+  const [universeFilter, setUniverseFilter] = useState("All");
 
   function load() {
     setItems(buildSoldItems());
@@ -519,6 +521,26 @@ export default function SoldPage() {
   }, []);
 
   const stats = useMemo(() => soldStats(items), [items]);
+
+  const universeOptions = useMemo(() => {
+    const seen = new Set<string>();
+    for (const item of items) {
+      const u = inferSoldUniverse(item);
+      if (u) seen.add(UNIVERSE_LABEL[u] ?? u);
+    }
+    return ["All", ...Array.from(seen).sort()];
+  }, [items]);
+
+  const filteredItems = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return items.filter((item) => {
+      const u = inferSoldUniverse(item);
+      const uLabel = UNIVERSE_LABEL[u] ?? u;
+      if (universeFilter !== "All" && uLabel !== universeFilter) return false;
+      if (q && !item.title.toLowerCase().includes(q) && !uLabel.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [items, search, universeFilter]);
 
   async function handleReturnToVault(item: SoldItem) {
     const confirmed = window.confirm(`Return "${item.title}" to the Vault and remove its sold status?`);
@@ -580,6 +602,12 @@ export default function SoldPage() {
               </div>
               <div className="shrink-0 flex flex-wrap gap-2">
                 <Link
+                  href="/sales"
+                  className="inline-flex h-9 items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-sm ring-1 ring-[color:var(--border)] hover:bg-[color:var(--surface-hover)]"
+                >
+                  Sales History
+                </Link>
+                <Link
                   href="/vault"
                   className="inline-flex h-9 items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-sm ring-1 ring-[color:var(--border)] hover:bg-[color:var(--surface-hover)]"
                 >
@@ -621,13 +649,48 @@ export default function SoldPage() {
         </section>
 
         <section className="mt-3">
+          {/* Search + filter bar */}
+          {items.length > 0 && (
+            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search sold items…"
+                className="h-9 flex-1 rounded-full px-4 text-sm ring-1 ring-[color:var(--border)] focus:outline-none min-w-[140px]"
+                style={{ background: "var(--pill)", color: "var(--fg)" }}
+              />
+              {universeOptions.length > 2 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {universeOptions.map((u) => (
+                    <button
+                      key={u}
+                      type="button"
+                      onClick={() => setUniverseFilter(u)}
+                      className="h-9 rounded-full px-3 text-xs font-semibold ring-1 transition"
+                      style={universeFilter === u
+                        ? { background: "var(--theme-gold)", color: "#0B0B0B", borderColor: "transparent" }
+                        : { background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }
+                      }
+                    >
+                      {u}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           {items.length === 0 ? (
             <div className="rounded-[18px] bg-[color:var(--surface)] p-8 text-center text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
               No sold items yet.
             </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="rounded-[18px] bg-[color:var(--surface)] p-8 text-center text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+              No items match your filter.
+            </div>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-              {items.map((item) => (
+              {filteredItems.map((item) => (
                 <SoldCard
                   key={item.id}
                   item={item}

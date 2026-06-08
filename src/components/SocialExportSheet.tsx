@@ -184,6 +184,19 @@ export default function SocialExportSheet({ item, onClose }: Props) {
     linkRef.current.click();
   }
 
+  async function handleShare() {
+    if (!preview) return;
+    try {
+      const res = await fetch(preview);
+      const blob = await res.blob();
+      const slug = item.title.replace(/[^a-z0-9]/gi, "-").toLowerCase().slice(0, 40);
+      const file = new File([blob], `vltd-${slug}.png`, { type: "image/png" });
+      await navigator.share({ files: [file], title: item.title });
+    } catch (e) {
+      // User cancelled or share failed — fall through silently
+    }
+  }
+
   const specLabel = ASPECT_OPTIONS.find((o) => o.ratio === ratio);
 
   return (
@@ -261,8 +274,8 @@ export default function SocialExportSheet({ item, onClose }: Props) {
                   key={b.id}
                   type="button"
                   onClick={() => { setBg(b.value); setPreview(null); }}
-                  className="h-8 w-8 rounded-full ring-2 ring-offset-2 transition"
-                  style={{ background: b.value }}
+                  className={`h-8 w-8 rounded-full transition ${bg === b.value ? "ring-2 ring-[color:var(--theme-gold)] ring-offset-2 scale-110" : "ring-1 ring-[color:var(--border)] opacity-70 hover:opacity-100"}`}
+                  style={{ background: b.value, "--tw-ring-offset-color": "var(--surface)" } as React.CSSProperties}
                   title={b.label}
                 />
               ))}
@@ -314,9 +327,10 @@ export default function SocialExportSheet({ item, onClose }: Props) {
 
           {/* Preview */}
           {preview && (
-            <div className="rounded-2xl overflow-hidden ring-1 ring-[color:var(--border)]">
+            <div className="rounded-2xl overflow-hidden ring-1 ring-[color:var(--border)]"
+              style={{ aspectRatio: ratio.replace(":", "/") }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={preview} alt="Export preview" className="w-full" />
+              <img src={preview} alt="Export preview" className="h-full w-full object-cover" />
             </div>
           )}
 
@@ -342,6 +356,16 @@ export default function SocialExportSheet({ item, onClose }: Props) {
                 >
                   Edit
                 </button>
+                {typeof navigator !== "undefined" && "share" in navigator && (
+                  <button
+                    type="button"
+                    onClick={() => void handleShare()}
+                    className="rounded-2xl px-4 py-3 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                    style={{ background: "var(--pill)", color: "var(--fg)" }}
+                  >
+                    Share
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={handleDownload}
