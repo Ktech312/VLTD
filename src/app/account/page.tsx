@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ThemePicker } from "@/components/ui/ThemePicker";
+import { PillButton } from "@/components/ui/PillButton";
 
 import { getOnboardingStatus, updateProfile } from "@/lib/auth";
 import { processVaultSyncQueue } from "@/lib/vaultSyncQueue";
@@ -121,6 +123,15 @@ export default function AccountPage() {
   return (
     <main className="min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
+        <div className="mb-6 flex flex-wrap gap-2">
+          <PillButton variant="active">Account</PillButton>
+          <Link href="/account/workspace"><PillButton>Workspace</PillButton></Link>
+          <Link href="/account/team"><PillButton>Team</PillButton></Link>
+          <Link href="/account/roles"><PillButton>Roles</PillButton></Link>
+          <Link href="/account/security"><PillButton>Security</PillButton></Link>
+          <Link href="/account/billing"><PillButton>Billing</PillButton></Link>
+        </div>
+
         <section
           className="relative overflow-hidden rounded-[34px] p-5 sm:p-7"
           style={{
