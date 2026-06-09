@@ -8,17 +8,11 @@ import type { VaultImage, VaultItem } from "@/lib/vaultModel";
 
 type UnknownRecord = Record<string, unknown>;
 
-export type SocialLinks = Partial<Record<
-  "instagram" | "twitter" | "tiktok" | "youtube" | "facebook" | "whatnot" | "ebay" | "website" | "linktree",
-  string
->>;
-
 export type PublicProfile = {
   profileId: string;
   displayName: string;
   avatarEmoji: string;
   bio?: string;
-  socialLinks?: SocialLinks;
 };
 
 function asRecord(value: unknown): UnknownRecord {
@@ -145,32 +139,20 @@ export async function fetchPublicProfile(profileId: string): Promise<PublicProfi
   const cleanProfileId = String(profileId ?? "").trim();
   if (!supabase || !cleanProfileId) return null;
 
-  const [{ data, error }, { data: profileRow }] = await Promise.all([
-    supabase
-      .from("public_profiles")
-      .select("profile_id, display_name, avatar_emoji, bio")
-      .eq("profile_id", cleanProfileId)
-      .maybeSingle(),
-    supabase
-      .from("profiles")
-      .select("social_links, bio")
-      .eq("id", cleanProfileId)
-      .maybeSingle(),
-  ]);
+  const { data, error } = await supabase
+    .from("public_profiles")
+    .select("profile_id, display_name, avatar_emoji, bio")
+    .eq("profile_id", cleanProfileId)
+    .maybeSingle();
 
   if (error) throw new Error(error.message || "Failed to load public profile.");
   if (!data) return null;
-
-  const bio = typeof profileRow?.bio === "string" && profileRow.bio
-    ? profileRow.bio
-    : (typeof data.bio === "string" && data.bio ? data.bio : undefined);
 
   return {
     profileId: String(data.profile_id),
     displayName: String(data.display_name || "Collector"),
     avatarEmoji: String(data.avatar_emoji || "🗝️"),
-    bio,
-    socialLinks: (profileRow?.social_links as SocialLinks) ?? undefined,
+    bio: typeof data.bio === "string" && data.bio ? data.bio : undefined,
   };
 }
 

@@ -293,9 +293,9 @@ function RecentSidebarItems({ items }: { items: VaultItem[] }) {
           style={{ borderColor: "rgba(255,255,255,0.04)" }}>
           <div className="w-8 h-8 rounded-lg border overflow-hidden flex-shrink-0 flex items-center justify-center text-sm"
             style={{ borderColor: "rgba(245,181,72,0.14)", background: "rgba(10,18,35,0.9)" }}>
-            {item.imageFront ? (
+            {item.imageFrontUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={item.imageFront} alt="" className="w-full h-full object-cover" />
+              <img src={item.imageFrontUrl} alt="" className="w-full h-full object-cover" />
             ) : "📦"}
           </div>
           <div className="min-w-0 flex-1">
