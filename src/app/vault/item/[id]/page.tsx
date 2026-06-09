@@ -14,7 +14,9 @@ import ShareBar from "@/components/ShareBar";
 import SocialExportSheet from "@/components/SocialExportSheet";
 import AuctionSetupSheet, { AuctionCountdownChip } from "@/components/AuctionSetupSheet";
 import { removeBackgroundStub } from "@/lib/imageAI";
-import { getStoredActiveProfileId } from "@/lib/auth";
+import { getStoredActiveProfileId, getCurrentUser } from "@/lib/auth";
+import VideoClipSection from "@/components/VideoClipSection";
+import { type VideoClip } from "@/lib/videoFeature";
 import { isNotable, notableReason } from "@/lib/itemIntelligence";
 import { buildPricingPatch, displayPrimaryValue, type PricingMvpFields } from "@/lib/pricingMvp";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -199,7 +201,15 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   const [isSoldView, setIsSoldView] = useState(false);
   const [socialExportOpen, setSocialExportOpen] = useState(false);
   const [auctionOpen, setAuctionOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [registryEntry, setRegistryEntry] = useState<import("@/lib/registryModel").RegistrySubject | null>(null);
+
+  // Fetch current user email for feature gating
+  useEffect(() => {
+    void getCurrentUser().then((result) => {
+      setUserEmail(result.data.user?.email ?? null);
+    });
+  }, []);
 
   useEffect(() => {
     const next = loadItems({ includeAllProfiles: true });
@@ -808,6 +818,12 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                     {uploading ? "Uploading..." : mediaMessage}
                   </div>
                 )}
+
+                <VideoClipSection
+                  item={item}
+                  userEmail={userEmail}
+                  onSave={(clip: VideoClip | null) => void persist({ ...item, videoClip: clip ?? undefined })}
+                />
               </Section>
             </div>
 

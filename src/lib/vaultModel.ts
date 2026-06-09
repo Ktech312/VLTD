@@ -109,6 +109,11 @@ export type VaultItem = {
   comicIssueNumber?: string;
   comicCoverVariant?: string;
   comicArcTitle?: string;
+  // Video clip (beta, paid feature)
+  videoClip?: {
+    url: string;
+    durationSeconds: number;
+  };
 };
 
 type LoadItemsOptions = {
