@@ -52,6 +52,7 @@ import {
 } from "@/lib/taxonomy";
 import { fetchRegistrySubjects, type RegistrySubject } from "@/lib/registryModel";
 import ListingReadinessPanel from "@/components/ListingReadinessPanel";
+import GenerateCopyPanel from "@/components/GenerateCopyPanel";
 
 const SALES_KEY = "vltd_sales_history";
 
@@ -938,8 +939,14 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
         <div className="mt-5">
           {item.status === "FOR_SALE" && (
-            <div className="mb-4">
+            <div className="mb-4 space-y-3">
               <ListingReadinessPanel item={item} />
+              <GenerateCopyPanel
+                item={item}
+                mode="listing"
+                onAccept={(text) => void persist({ ...item, notes: text })}
+                triggerLabel="✦ Generate listing copy"
+              />
             </div>
           )}
           {item.status === "FOR_SALE" ? (
@@ -1180,7 +1187,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 { label: "Storage location", value: detailValue(item.storageLocation) },
                 { label: "Value source", value: detailValue(item.valueSource) },
                 { label: "Value updated", value: detailValue(item.valueUpdatedAt ? fmtDate(item.valueUpdatedAt) : "—") },
-                { label: "Confidence", value: typeof item.valueConfidence === "number" ? `${item.valueConfidence}%` : "—" },
+                { label: "Confidence", value: typeof item.valueConfidence === "number" ? `${item.valueConfidence}%` : "\u2014" },
               ]}
             />
           </Section>
@@ -1188,9 +1195,17 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
         <div className="mt-5">
           <Section title="NOTES">
-            <div className="whitespace-pre-wrap text-sm leading-6">
-              {item.notes?.trim() ? item.notes : "No notes yet."}
+            <div className="whitespace-pre-wrap text-sm leading-6 mb-3">
+              {item.notes?.trim() ? item.notes : (
+                <span style={{ color: "var(--muted2)" }}>No notes yet.</span>
+              )}
             </div>
+            <GenerateCopyPanel
+              item={item}
+              mode="description"
+              onAccept={(text) => void persist({ ...item, notes: text })}
+              triggerLabel={item.notes?.trim() ? "\u2728 Regenerate description" : "\u2728 Generate description"}
+            />
           </Section>
         </div>
       </div>

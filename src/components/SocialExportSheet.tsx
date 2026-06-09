@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
+import GenerateCopyPanel from "@/components/GenerateCopyPanel";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -376,6 +377,16 @@ export default function SocialExportSheet({ item, onClose }: Props) {
                 </button>
               </>
             )}
+          </div>
+
+          {/* Caption generator */}
+          <div className="mt-4">
+            <GenerateCopyPanel
+              item={item}
+              mode="social"
+              onAccept={(text) => void navigator.clipboard?.writeText(text)}
+              triggerLabel="✦ Generate caption"
+            />
           </div>
 
           {/* Hidden download link */}
