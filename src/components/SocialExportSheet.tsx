@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import GenerateCopyPanel from "@/components/GenerateCopyPanel";
 
@@ -388,6 +389,17 @@ export default function SocialExportSheet({ item, onClose }: Props) {
               triggerLabel="✦ Generate caption"
             />
           </div>
+
+          {/* Frame Studio link */}
+          <Link
+            href={`/vault/frames?id=${item.id}`}
+            className="flex items-center justify-center gap-1.5 rounded-2xl py-2.5 text-xs font-semibold ring-1 transition hover:ring-[color:var(--theme-gold)] hover:text-[color:var(--theme-gold)]"
+            style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
+          >
+            <span>🖼</span>
+            <span>Open in Frame Studio</span>
+            <span style={{ opacity: 0.4 }}>→</span>
+          </Link>
 
           {/* Hidden download link */}
           {/* eslint-disable-next-line jsx-a11y/anchor-has-content */}
