@@ -31,7 +31,11 @@ const ALL_CHARACTERS: SeedCharacter[] = [
 ];
 
 // ── Live item data from Supabase ───────────────────────────────
-type LiveItem = { imageUrl: string; disabled: boolean };
+// dbId = actual Supabase UUID (seed TS files use string IDs that don't match DB UUIDs)
+type LiveItem = { imageUrl: string; disabled: boolean; dbId: string };
+
+// Key live data by normalized title so seed string IDs and DB UUIDs both resolve correctly
+function titleKey(t: string) { return t.toLowerCase().trim(); }
 
 // ── Formatters ──────────────────────────────────────────────
 function formatMoney(n?: number) {
@@ -259,7 +263,7 @@ function ItemEditModal({
     setSaving(true);
     setError("");
     try {
-      await onSave(item.id, {
+      await onSave(item.title, {
         imageUrl: imageUrl.trim(),
         title: title.trim(),
         subtitle: subtitle.trim(),
@@ -778,8 +782,9 @@ function ExhibitGrid({
         {Array.from({ length: MAX_SLOTS }).map((_, idx) => {
           const itemId = slots[idx] ?? null;
           const item = itemId ? itemById.get(itemId) : null;
-          const imgUrl = itemId ? (liveData.get(itemId)?.imageUrl ?? "") : "";
-          const disabled = itemId ? (liveData.get(itemId)?.disabled ?? false) : false;
+          const liveKey = item ? titleKey(item.title) : "";
+          const imgUrl = liveKey ? (liveData.get(liveKey)?.imageUrl ?? "") : "";
+          const disabled = liveKey ? (liveData.get(liveKey)?.disabled ?? false) : false;
 
           if (item) {
             return (
@@ -861,7 +866,7 @@ function ExhibitGrid({
           />
           <div className="grid grid-cols-2 gap-2 max-h-52 overflow-y-auto">
             {filtered.map((item) => {
-              const img = liveData.get(item.id)?.imageUrl ?? "";
+              const img = liveData.get(titleKey(item.title))?.imageUrl ?? "";
               return (
                 <button
                   key={item.id}
@@ -941,12 +946,13 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
       try {
         const { data } = await supabase
           .from("vault_items")
-          .select("id, image_front_url, is_public")
+          .select("id, title, image_front_url, is_public")
           .eq("profile_id", char.profileId);
         if (data) {
           const map = new Map<string, LiveItem>();
           for (const row of data) {
-            map.set(String(row.id), {
+            map.set(titleKey(String(row.title ?? "")), {
+              dbId: String(row.id),
               imageUrl: String(row.image_front_url ?? ""),
               disabled: row.is_public === false,
             });
@@ -970,9 +976,14 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
   }, [char.profileId, char.bio]);
 
   // Save item edits to Supabase
-  const handleSaveItem = useCallback(async (id: string, data: Partial<LiveItem & { title: string; subtitle: string; notes: string; grade: string; currentValue: number; purchasePrice: number }>) => {
+  // `itemTitle` is the seed item's title (used as the liveData map key)
+  const handleSaveItem = useCallback(async (itemTitle: string, data: Partial<LiveItem & { title: string; subtitle: string; notes: string; grade: string; currentValue: number; purchasePrice: number }>) => {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) throw new Error("No Supabase client");
+
+    const key = titleKey(itemTitle);
+    const dbId = liveData.get(key)?.dbId;
+    if (!dbId) throw new Error("Item not found in database — check that seed data is synced");
 
     const { error } = await supabase
       .from("vault_items")
@@ -985,36 +996,39 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
         current_value: data.currentValue,
         purchase_price: data.purchasePrice,
       })
-      .eq("id", id);
+      .eq("id", dbId);
 
     if (error) throw new Error(error.message);
 
     setLiveData((prev) => {
       const next = new Map(prev);
-      const existing = next.get(id) ?? { imageUrl: "", disabled: false };
-      next.set(id, { ...existing, imageUrl: data.imageUrl ?? existing.imageUrl });
+      const existing = next.get(key) ?? { imageUrl: "", disabled: false, dbId: "" };
+      next.set(key, { ...existing, imageUrl: data.imageUrl ?? existing.imageUrl });
       return next;
     });
-  }, []);
+  }, [liveData]);
 
   // Toggle disable/enable in Supabase
   const handleToggleDisable = useCallback(async (item: SeedItem) => {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return;
 
-    const current = liveData.get(item.id);
+    const key = titleKey(item.title);
+    const current = liveData.get(key);
+    const dbId = current?.dbId;
+    if (!dbId) return;
     const nowDisabled = !(current?.disabled ?? false);
 
     const { error } = await supabase
       .from("vault_items")
       .update({ is_public: !nowDisabled })
-      .eq("id", item.id);
+      .eq("id", dbId);
 
     if (!error) {
       setLiveData((prev) => {
         const next = new Map(prev);
-        const existing = next.get(item.id) ?? { imageUrl: "", disabled: false };
-        next.set(item.id, { ...existing, disabled: nowDisabled });
+        const existing = next.get(key) ?? { imageUrl: "", disabled: false, dbId: "" };
+        next.set(key, { ...existing, disabled: nowDisabled });
         return next;
       });
     }
@@ -1218,7 +1232,7 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
                   key={item.id}
                   item={item}
                   index={i}
-                  live={liveData.get(item.id)}
+                  live={liveData.get(titleKey(item.title))}
                   onEdit={setEditingItem}
                   onToggleDisable={handleToggleDisable}
                 />
@@ -1298,7 +1312,7 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
       {editingItem && (
         <ItemEditModal
           item={editingItem}
-          live={liveData.get(editingItem.id)}
+          live={liveData.get(titleKey(editingItem.title))}
           onSave={handleSaveItem}
           onClose={() => setEditingItem(null)}
         />
