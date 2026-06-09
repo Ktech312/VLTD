@@ -329,7 +329,7 @@ function CollectionsStrip({ galleries }: { galleries: Gallery[] }) {
   const stripRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const el = stripRef.current;
+    const el: HTMLDivElement = stripRef.current!;
     if (!el) return;
     let startX = 0; let scrollStart = 0; let isDragging = false;
     function onStart(e: TouchEvent) {
