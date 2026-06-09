@@ -507,9 +507,17 @@ export default function PortfolioPage() {
           ? "Last 90 days"
           : "All time";
 
+  const noValueCount = items.filter(i => !i.currentValue || Number(i.currentValue) <= 0).length;
+
   return (
     <main className="min-h-screen text-[color:var(--fg)]">
       <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-7">
+        {/* Breadcrumb */}
+        <div className="mb-4 flex items-center gap-2 text-sm">
+          <Link href="/vault" style={{ color: "var(--muted)" }}>Vault</Link>
+          <span style={{ color: "var(--muted)" }}>/</span>
+          <span className="font-semibold" style={{ color: "var(--fg)" }}>Portfolio</span>
+        </div>
         <section
           className="relative overflow-hidden rounded-[18px] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)]"
           style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}
@@ -577,6 +585,31 @@ export default function PortfolioPage() {
         <div className="mt-6">
           <PortfolioIntelligencePanel metrics={collectionMetrics} />
         </div>
+
+        {/* Data quality callout */}
+        {noValueCount > 0 && (
+          <div
+            className="mt-4 flex items-start gap-3 rounded-2xl px-4 py-3 ring-1"
+            style={{ background: "rgba(245,181,72,0.07)", borderColor: "rgba(245,181,72,0.25)" }}
+          >
+            <span className="text-base leading-none mt-0.5">⚠️</span>
+            <div>
+              <span className="text-sm font-semibold" style={{ color: "var(--theme-gold)" }}>
+                {noValueCount} item{noValueCount !== 1 ? "s" : ""} missing a current value
+              </span>
+              <span className="text-sm ml-1.5" style={{ color: "var(--muted)" }}>
+                — portfolio totals may be understated.
+              </span>
+              <Link
+                href="/vault"
+                className="ml-2 text-xs font-semibold underline underline-offset-2"
+                style={{ color: "var(--theme-gold)" }}
+              >
+                Fix in vault →
+              </Link>
+            </div>
+          </div>
+        )}
 
         <div className="vltd-panel-main mt-6 flex flex-col gap-3 rounded-3xl p-5 shadow-[0_8px_32px_rgba(0,0,0,0.22)]" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">

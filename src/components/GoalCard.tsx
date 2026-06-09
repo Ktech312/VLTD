@@ -1,7 +1,24 @@
 "use client";
 
+import Link from "next/link";
 import type { GoalProgress } from "@/lib/collectionGoals";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+
+function NextMilestoneHint({ goal }: { goal: GoalProgress }) {
+  if (goal.isComplete || goal.missing <= 0) return null;
+  const milestones = [25, 50, 75, 100];
+  const next = milestones.find((m) => (m / 100) * goal.targetCount > goal.ownedCount);
+  const itemsToNext = next ? Math.ceil((next / 100) * goal.targetCount) - goal.ownedCount : null;
+  const label =
+    itemsToNext !== null && next !== 100
+      ? `${itemsToNext} more to ${next}%`
+      : `${goal.missing} to go`;
+  return (
+    <span className="text-[11px]" style={{ color: "var(--muted)" }}>
+      {label}
+    </span>
+  );
+}
 
 export default function GoalCard({
   goal,
@@ -16,24 +33,34 @@ export default function GoalCard({
     ? UNIVERSE_LABEL[goal.universe as UniverseKey] ?? goal.universe
     : null;
 
+  const vaultBrowseHref = (() => {
+    const params = new URLSearchParams();
+    if (goal.universe) params.set("universe", goal.universe);
+    if (goal.subject) params.set("q", goal.subject);
+    const qs = params.toString();
+    return qs ? `/vault?${qs}` : "/vault";
+  })();
+
   return (
     <div
       className="overflow-hidden rounded-2xl ring-1"
       style={{ background: "var(--surface)", borderColor: "var(--border)" }}
     >
+      {/* Body */}
       <div className="px-4 pb-3 pt-4">
+        {/* Header row */}
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              {universeLabel ? (
+              {universeLabel && (
                 <span
                   className="text-[10px] font-semibold uppercase tracking-[0.14em]"
                   style={{ color: "var(--muted2)" }}
                 >
                   {universeLabel}
                 </span>
-              ) : null}
-              {goal.isAlmostThere ? (
+              )}
+              {goal.isAlmostThere && !goal.isComplete && (
                 <span
                   className="rounded-full px-2 py-0.5 text-[10px] font-bold ring-1"
                   style={{
@@ -44,8 +71,8 @@ export default function GoalCard({
                 >
                   Almost there
                 </span>
-              ) : null}
-              {goal.isComplete ? (
+              )}
+              {goal.isComplete && (
                 <span
                   className="rounded-full px-2 py-0.5 text-[10px] font-bold ring-1"
                   style={{
@@ -54,20 +81,24 @@ export default function GoalCard({
                     color: "var(--theme-gold)",
                   }}
                 >
-                  Complete
+                  🏆 Complete
                 </span>
-              ) : null}
+              )}
             </div>
-            <div className="mt-0.5 truncate text-[16px] font-bold" style={{ color: "var(--fg)" }}>
+            <div
+              className="mt-0.5 truncate text-[16px] font-bold"
+              style={{ color: "var(--fg)" }}
+            >
               {goal.name}
             </div>
-            {goal.subject ? (
+            {goal.subject && (
               <div className="mt-0.5 text-[12px]" style={{ color: "var(--muted)" }}>
                 Subject: {goal.subject}
               </div>
-            ) : null}
+            )}
           </div>
 
+          {/* % badge */}
           <div
             className="shrink-0 rounded-xl px-3 py-1.5 text-center ring-1"
             style={{
@@ -87,31 +118,45 @@ export default function GoalCard({
           </div>
         </div>
 
+        {/* Notes */}
+        {goal.notes && (
+          <div
+            className="mt-2 rounded-xl px-3 py-2 text-[11px] italic leading-relaxed"
+            style={{ background: "var(--pill)", color: "var(--muted)" }}
+          >
+            {goal.notes}
+          </div>
+        )}
+
+        {/* Progress bar */}
         <div className="mt-3">
-          {/* Progress bar with milestone ticks */}
           <div className="relative">
-            <div className="h-2 overflow-hidden rounded-full" style={{ background: "var(--pill)" }}>
+            <div
+              className="h-2 overflow-hidden rounded-full"
+              style={{ background: "var(--pill)" }}
+            >
               <div
                 className="h-full rounded-full transition-all duration-700"
                 style={{
-                  width: `${goal.pct}%`,
+                  width: `${Math.min(100, goal.pct)}%`,
                   background: goal.isComplete
                     ? "var(--theme-gold)"
                     : goal.isAlmostThere
-                      ? "var(--success, #4ade80)"
-                      : "var(--theme-gold)",
-                  opacity: goal.isComplete ? 1 : 0.75,
+                    ? "var(--success, #4ade80)"
+                    : "var(--theme-gold)",
+                  opacity: goal.isComplete ? 1 : 0.85,
                 }}
               />
             </div>
-            {/* Milestone ticks at 25 / 50 / 75 % */}
+            {/* Milestone ticks at 25 / 50 / 75 */}
             {[25, 50, 75].map((m) => (
               <div
                 key={m}
                 className="absolute top-0 h-2 w-px"
                 style={{
                   left: `${m}%`,
-                  background: m <= goal.pct ? "rgba(0,0,0,0.25)" : "rgba(255,255,255,0.2)",
+                  background:
+                    m <= goal.pct ? "rgba(0,0,0,0.25)" : "rgba(255,255,255,0.18)",
                 }}
               />
             ))}
@@ -121,29 +166,21 @@ export default function GoalCard({
             <span className="text-[12px]" style={{ color: "var(--muted)" }}>
               {goal.ownedCount} / {goal.targetCount} items
             </span>
-            {goal.missing > 0 && !goal.isComplete ? (() => {
-              const nextMilestone = [25, 50, 75, 100].find(m => (m / 100) * goal.targetCount > goal.ownedCount);
-              const itemsToNext = nextMilestone
-                ? Math.ceil((nextMilestone / 100) * goal.targetCount) - goal.ownedCount
-                : null;
-              return (
-                <span className="text-[11px]" style={{ color: "var(--muted)" }}>
-                  {itemsToNext !== null && nextMilestone !== 100
-                    ? `${itemsToNext} to ${nextMilestone}%`
-                    : `${goal.missing} to go`}
-                </span>
-              );
-            })() : null}
+            <NextMilestoneHint goal={goal} />
           </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 px-4 py-3" style={{ borderTop: "1px solid var(--border)" }}>
-        {goal.missing > 0 ? (
+      {/* Footer actions */}
+      <div
+        className="flex flex-wrap items-center gap-2 px-4 py-3"
+        style={{ borderTop: "1px solid var(--border)" }}
+      >
+        {goal.missing > 0 && !goal.isComplete && (
           <button
             type="button"
             onClick={onAddToWishlist}
-            className="flex-1 rounded-full py-2 text-[12px] font-semibold ring-1 transition"
+            className="flex-1 rounded-full py-2 text-[12px] font-semibold ring-1 transition hover:brightness-110"
             style={{
               background: "var(--surface)",
               borderColor: "var(--border)",
@@ -152,7 +189,18 @@ export default function GoalCard({
           >
             Add {goal.missing} to Want List
           </button>
-        ) : null}
+        )}
+        <Link
+          href={vaultBrowseHref}
+          className="rounded-full px-3 py-2 text-[12px] font-semibold ring-1 transition hover:brightness-110"
+          style={{
+            background: "var(--surface)",
+            borderColor: "var(--border)",
+            color: "var(--muted)",
+          }}
+        >
+          Browse vault
+        </Link>
         <button
           type="button"
           onClick={onDelete}

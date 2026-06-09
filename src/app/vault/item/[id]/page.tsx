@@ -51,6 +51,7 @@ import {
   type UniverseKey,
 } from "@/lib/taxonomy";
 import { fetchRegistrySubjects, type RegistrySubject } from "@/lib/registryModel";
+import ListingReadinessPanel from "@/components/ListingReadinessPanel";
 
 const SALES_KEY = "vltd_sales_history";
 
@@ -936,6 +937,11 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
         </div>
 
         <div className="mt-5">
+          {item.status === "FOR_SALE" && (
+            <div className="mb-4">
+              <ListingReadinessPanel item={item} />
+            </div>
+          )}
           {item.status === "FOR_SALE" ? (
             <ExportListingButton item={item} />
           ) : (
