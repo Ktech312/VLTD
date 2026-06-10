@@ -540,9 +540,7 @@ export default function SwipeStack({
       const currentItem = items[index];
       if (!currentItem) return;
 
-      // The visually displayed top card is at index + STACK_DEPTH (clamped).
-      // This is what the user sees and swipes — we need it for the leaving animation.
-      const visualTopItem = items[Math.min(index + STACK_DEPTH, items.length - 1)];
+      // items[index] is both the semantic current item AND the visual top card (stack is now correct).
 
       // Capture the current drag offset so the leaving card starts from exactly where the finger released
       const captureDx = drag?.x ?? 0;
@@ -575,7 +573,7 @@ export default function SwipeStack({
       setFlying(direction);
 
       // ── Animate the correct (visual) leaving card as an overlay ──
-      setLeavingItem({ item: visualTopItem, direction, dx: captureDx, dy: captureDy });
+      setLeavingItem({ item: currentItem, direction, dx: captureDx, dy: captureDy });
 
       setTimeout(() => {
         setFlying(null);
@@ -681,19 +679,12 @@ export default function SwipeStack({
   const isEmpty = items.length === 0;
   const isExhausted = mode === "gallery" && index >= items.length;
 
-  // Which items to render (top + STACK_DEPTH behind)
-  const visibleItems =
-    mode === "gallery"
-      ? items.slice(index, index + STACK_DEPTH + 1)
-      : (() => {
-          // Vault: show current ± ahead for depth illusion
-          const out: ModelItem[] = [];
-          for (let d = STACK_DEPTH; d >= 0; d--) {
-            const i = index + d;
-            if (i < items.length) out.unshift(items[i]);
-          }
-          return out;
-        })();
+  // Which items to render (top + STACK_DEPTH behind).
+  // Array is ordered back-to-front: visibleItems[last] = top card = items[index].
+  // Depth cards behind show upcoming items (index+1, index+2, ...).
+  const visibleItems = items
+    .slice(index, index + STACK_DEPTH + 1)
+    .reverse(); // [items[N+3], items[N+2], items[N+1], items[N]] — last = top
 
   const totalCount = items.length;
   const currentNumber = index + 1;
@@ -713,7 +704,7 @@ export default function SwipeStack({
               .slice(0, -1) // all except top
               .reverse()
               .map((item, depthReversed) => {
-                const depth = visibleItems.length - 1 - depthReversed; // 1 = immediately behind top
+                const depth = depthReversed + 1; // 1 = immediately behind top, STACK_DEPTH = furthest back
                 const scale = 1 - depth * STACK_SCALE_STEP;
                 const translateY = depth * STACK_OFFSET_Y;
                 return (
