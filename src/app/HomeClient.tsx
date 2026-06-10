@@ -269,57 +269,90 @@ function HeroAvatarPanel({ avatarUrl, onClick }: { avatarUrl: string; onClick: (
   );
 }
 
-// ── Featured Gallery card (compact) ─────────────────────────────
-function FeaturedGalleryCard({ galleries, compact = false }: { galleries: Gallery[]; compact?: boolean }) {
+// ── Featured Gallery carousel (coverflow, compact) ──────────────
+function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
   const [idx, setIdx] = useState(0);
-  const sectionRef = useRef<HTMLDivElement>(null);
+  const startX = useRef<number>(0);
+  const dragX = useRef<number>(0);
+  const dragging = useRef(false);
   const n = galleries.length;
+
   function goNext() { setIdx((i) => (i + 1) % n); }
   function goPrev() { setIdx((i) => (i - 1 + n) % n); }
 
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    let startX = 0; let deltaX = 0;
-    function onStart(e: TouchEvent) { startX = e.touches[0].clientX; deltaX = 0; }
-    function onMove(e: TouchEvent) { deltaX = e.touches[0].clientX - startX; if (Math.abs(deltaX) > 8) e.preventDefault(); }
-    function onEnd() { if (deltaX < -40) goNext(); else if (deltaX > 40) goPrev(); deltaX = 0; }
-    el.addEventListener("touchstart", onStart, { passive: true });
-    el.addEventListener("touchmove", onMove, { passive: false });
-    el.addEventListener("touchend", onEnd, { passive: true });
-    return () => { el.removeEventListener("touchstart", onStart); el.removeEventListener("touchmove", onMove); el.removeEventListener("touchend", onEnd); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [n]);
+  function onTouchStart(e: React.TouchEvent) { startX.current = e.touches[0].clientX; dragX.current = 0; }
+  function onTouchMove(e: React.TouchEvent) { dragX.current = e.touches[0].clientX - startX.current; }
+  function onTouchEnd() { if (dragX.current < -40) goNext(); else if (dragX.current > 40) goPrev(); dragX.current = 0; }
+  function onMouseDown(e: React.MouseEvent) { dragging.current = true; startX.current = e.clientX; dragX.current = 0; }
+  function onMouseMove(e: React.MouseEvent) { if (!dragging.current) return; dragX.current = e.clientX - startX.current; }
+  function onMouseUp() { if (!dragging.current) return; dragging.current = false; if (dragX.current < -40) goNext(); else if (dragX.current > 40) goPrev(); dragX.current = 0; }
+  function onMouseLeave() { if (dragging.current) { dragging.current = false; if (dragX.current < -40) goNext(); else if (dragX.current > 40) goPrev(); dragX.current = 0; } }
 
   const current = galleries[idx];
   const itemCount = current.itemIds?.length ?? 0;
+  const slots = [-1, 0, 1, 2].map((offset) => ({ g: galleries[(idx + offset + n) % n], offset }));
 
   return (
-    <div ref={sectionRef} style={{ touchAction: "pan-y", userSelect: "none" }}>
-      <Link href={"/gallery/" + current.id} style={{ display: "block", width: "100%", height: compact ? "60px" : "90px", overflow: "hidden", borderRadius: "7px", border: `1px solid ${C.bd}`, background: "rgba(10,18,35,0.9)" }}>
-        {current.coverImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={current.coverImage} alt={current.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} draggable={false} />
-        ) : (
-          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", opacity: 0.2 }}>🖼️</div>
+    <div className="relative select-none" style={{ cursor: "grab", padding: "12px" }}
+      onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
+      onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseLeave}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+        <div>
+          <p style={{ fontSize: "9px", fontWeight: 600, letterSpacing: "0.28em", textTransform: "uppercase", color: C.muted }}>
+            Featured Gallery <span style={{ opacity: 0.5, marginLeft: "6px" }}>{idx + 1} / {n}</span>
+          </p>
+          <h2 style={{ fontSize: "13px", fontWeight: 700, color: C.text, marginTop: "2px" }}>{current.title || "Untitled"}</h2>
+          <p style={{ fontSize: "11px", color: C.muted, marginTop: "1px" }}>{itemCount} piece{itemCount !== 1 ? "s" : ""}</p>
+        </div>
+        {n > 1 && (
+          <div style={{ display: "flex", gap: "4px" }}>
+            <button type="button" onClick={goPrev} style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "14px", cursor: "pointer" }}>‹</button>
+            <button type="button" onClick={goNext} style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "14px", cursor: "pointer" }}>›</button>
+          </div>
         )}
-      </Link>
-      <div style={{ marginTop: "9px" }}>
-        <div style={{ fontFamily: C.r, fontSize: compact ? "13px" : "15px", fontWeight: 600, lineHeight: 1.2, color: C.text }}>{current.title || "Untitled"}</div>
-        <div style={{ fontSize: "11px", color: C.muted, marginTop: "2px" }}>
-          {itemCount} piece{itemCount !== 1 ? "s" : ""}
-          {n > 1 && <span style={{ marginLeft: "8px", opacity: 0.5 }}>{idx + 1}/{n}</span>}
-        </div>
-        <div style={{ display: "flex", alignItems: "center", marginTop: "7px", gap: "8px" }}>
-          <Link href={"/gallery/" + current.id} style={{ fontSize: "11px", color: C.gold, textDecoration: "none" }}>View Gallery →</Link>
-          {n > 1 && (
-            <div style={{ display: "flex", gap: "4px", marginLeft: "auto" }}>
-              <button onClick={goPrev} style={{ width: "26px", height: "26px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "5px", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "14px", cursor: "pointer" }}>‹</button>
-              <button onClick={goNext} style={{ width: "26px", height: "26px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "5px", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "14px", cursor: "pointer" }}>›</button>
-            </div>
-          )}
-        </div>
       </div>
+      {/* Coverflow */}
+      <div style={{ position: "relative", height: "120px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {slots.map(({ g, offset }) => {
+          const isActive = offset === 0;
+          const tx = offset === -1 ? "-80px" : offset === 0 ? "0px" : offset === 1 ? "72px" : "110px";
+          const scale = isActive ? 1 : Math.abs(offset) === 1 ? 0.70 : 0.52;
+          const opacity = isActive ? 1 : Math.abs(offset) === 1 ? 0.55 : 0.25;
+          const zIndex = isActive ? 10 : Math.abs(offset) === 1 ? 5 : 1;
+          return (
+            <button key={g.id + String(offset)} type="button"
+              onClick={offset < 0 ? goPrev : offset > 0 ? goNext : undefined}
+              className="absolute overflow-hidden transition-all duration-300"
+              style={{ width: "86px", height: "114px", borderRadius: "10px",
+                transform: `translateX(${tx}) scale(${scale})`, opacity, zIndex,
+                border: isActive ? `2px solid rgba(245,181,72,0.55)` : `1px solid rgba(245,181,72,0.14)`,
+                background: "rgba(10,18,35,0.9)",
+                boxShadow: isActive ? "0 8px 28px rgba(0,0,0,0.55)" : "none",
+                cursor: isActive ? "default" : "pointer" }}>
+              {g.coverImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={g.coverImage} alt={g.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} draggable={false} />
+              ) : (
+                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", opacity: 0.2 }}>🖼️</div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      {/* Buttons */}
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "10px" }}>
+        <Link href={"/gallery/" + current.id} style={{ borderRadius: "6px", padding: "6px 14px", fontSize: "11px", fontWeight: 700, background: `linear-gradient(135deg,#8B6914,#F5B548)`, color: "#0B0B0B", textDecoration: "none" }}>View Gallery →</Link>
+        <Link href="/museum" style={{ borderRadius: "6px", border: `1px solid ${C.goldBd}`, padding: "5px 12px", fontSize: "11px", fontWeight: 600, color: C.gold, textDecoration: "none" }}>All Galleries</Link>
+      </div>
+      {/* Dots */}
+      {n > 1 && (
+        <div style={{ display: "flex", gap: "4px", marginTop: "8px" }}>
+          {galleries.map((_, di) => (
+            <button key={di} type="button" onClick={() => setIdx(di)} style={{ height: "3px", borderRadius: "2px", border: "none", transition: "all 0.3s", width: di === idx ? "14px" : "4px", background: di === idx ? C.gold : "rgba(245,181,72,0.22)", cursor: "pointer" }} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -617,31 +650,25 @@ export default function HomeClient() {
             <HeroAvatarPanel avatarUrl={avatarUrl} onClick={() => setShowAvatarPicker(true)} />
           </div>
 
-          {/* Featured Gallery + Collections side by side */}
+          {/* Featured Gallery carousel + Collections strip side by side */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }} className="max-sm:grid-cols-1">
             <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
-              <CardHd label="Featured Gallery" />
-              <div style={{ padding: "13px 15px" }}>
-                {galleries.length > 0 ? (
-                  <FeaturedGalleryCard galleries={galleries} />
-                ) : (
-                  <div>
-                    <div style={{ width: "100%", height: "90px", borderRadius: "7px", border: `1px solid ${C.bd}`, background: "rgba(10,18,35,0.9)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", opacity: 0.2 }}>🖼️</div>
-                    <div style={{ fontFamily: C.r, fontSize: "15px", fontWeight: 600, color: C.text, marginTop: "9px" }}>No galleries yet</div>
-                    <Link href="/museum/new" style={{ display: "inline-flex", alignItems: "center", marginTop: "7px", fontSize: "11px", color: C.gold, textDecoration: "none" }}>Create Gallery →</Link>
-                  </div>
-                )}
-              </div>
+              {galleries.length > 0 ? (
+                <FeaturedGalleryCarousel galleries={galleries} />
+              ) : (
+                <div style={{ padding: "16px" }}>
+                  <div style={{ fontFamily: C.r, fontSize: "15px", fontWeight: 600, color: C.text }}>No galleries yet</div>
+                  <Link href="/museum/new" style={{ display: "inline-flex", marginTop: "8px", fontSize: "11px", color: C.gold, textDecoration: "none" }}>Create Gallery →</Link>
+                </div>
+              )}
             </div>
             <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
               <CardHd label="Your Collections" href="/museum" linkText="View all" />
-              <div style={{ padding: "10px 12px" }}>
-                {galleries.length > 0 ? (
-                  <FeaturedGalleryCard galleries={galleries} compact />
-                ) : (
-                  <div style={{ fontSize: "11px", color: C.muted, opacity: 0.6 }}>Your galleries will appear here.</div>
-                )}
-              </div>
+              {galleries.length > 0 ? (
+                <CollectionsStrip galleries={galleries} />
+              ) : (
+                <div style={{ padding: "12px 15px", fontSize: "11px", color: C.muted, opacity: 0.6 }}>Your galleries will appear here.</div>
+              )}
             </div>
           </div>
 
