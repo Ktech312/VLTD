@@ -275,7 +275,7 @@ function FeaturedGalleryCard({ galleries }: { galleries: Gallery[] }) {
   const itemCount = g.itemIds?.length ?? 0;
   return (
     <div style={{ padding: "12px 14px" }}>
-      <Link href={"/gallery/" + g.id} style={{ display: "block", width: "100%", height: "88px", borderRadius: "7px", border: `1px solid ${C.bd}`, background: "rgba(10,18,35,0.9)", overflow: "hidden" }}>
+      <Link href={"/gallery/" + g.id} style={{ display: "block", width: "100%", height: "200px", borderRadius: "10px", border: `2px solid rgba(245,181,72,0.65)`, boxShadow: "0 0 0 1px rgba(245,181,72,0.18), 0 8px 32px rgba(0,0,0,0.45)", background: "rgba(10,18,35,0.9)", overflow: "hidden" }}>
         {g.coverImage
           ? <img src={g.coverImage} alt={g.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px", opacity: 0.2 }}>🖼️</div>}
