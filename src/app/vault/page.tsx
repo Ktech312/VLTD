@@ -1028,15 +1028,12 @@ export default function VaultPage() {
           style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", border: "1px solid var(--theme-border, rgba(245,181,72,0.12))" }}
         >
           <div className="relative flex flex-col gap-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div className="max-w-2xl">
+            <div className="flex flex-col gap-3">
+              <div>
                 <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">VAULT</div>
                 <h1 className="mt-2 text-[1.7rem] font-semibold leading-tight sm:text-[1.9rem]">
                   Vault Universes
                 </h1>
-                <div className="mt-1.5 text-sm text-[color:var(--muted)]">
-                  Universe-first inventory management. Open a Universe to browse, edit, sell, and reassign items.
-                </div>
                 {items.length > 0 ? (
                   <div className="mt-2 flex flex-wrap gap-2 text-xs text-[color:var(--muted)]">
                     <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">
@@ -1051,42 +1048,42 @@ export default function VaultPage() {
                   </div>
                 ) : null}
               </div>
-              <div className="shrink-0 flex flex-wrap gap-2">
+              <div className="flex gap-2 overflow-x-auto pb-0.5" style={{ scrollbarWidth: "none" }}>
                 <button
                   type="button"
                   onClick={() => void handleShareVault()}
-                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                  className="inline-flex shrink-0 min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
                 >
                   {shareMessage || "Share vault"}
                 </button>
                 <VaultExportButton />
                 <Link
                   href="/vault/add"
-                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                  className="inline-flex shrink-0 min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
                 >
                   Add
                 </Link>
                 <Link
                   href="/vault/quick"
-                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]"
+                  className="inline-flex shrink-0 min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]"
                 >
                   Quick Add
                 </Link>
                 <Link
                   href="/vault/import"
-                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                  className="inline-flex shrink-0 min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
                 >
                   Import
                 </Link>
                 <Link
                   href="/vault/sold"
-                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                  className="inline-flex shrink-0 min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
                 >
                   Sold
                 </Link>
                 <Link
                   href="/vault/for-sale"
-                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                  className="inline-flex shrink-0 min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
                 >
                   For Sale
                 </Link>
