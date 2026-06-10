@@ -8,26 +8,23 @@ import {
   fetchPublicProfile,
   fetchPublicVaultItems,
   type PublicProfile,
-  type SocialLinks,
 } from "@/lib/publicProfile";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 
-// ── Social link definitions ──────────────────────────────────────
-const SOCIAL_DEFS = [
-  { key: "instagram" as const,  label: "Instagram",   icon: "📸", prefix: "https://instagram.com/" },
-  { key: "twitter" as const,    label: "X / Twitter", icon: "𝕏",  prefix: "https://x.com/" },
-  { key: "tiktok" as const,     label: "TikTok",      icon: "🎵", prefix: "https://tiktok.com/@" },
-  { key: "youtube" as const,    label: "YouTube",     icon: "▶️", prefix: "https://youtube.com/@" },
-  { key: "facebook" as const,   label: "Facebook",    icon: "👥", prefix: "https://facebook.com/" },
-  { key: "whatnot" as const,    label: "Whatnot",     icon: "🔨", prefix: "https://whatnot.com/user/" },
-  { key: "ebay" as const,       label: "eBay",        icon: "🛒", prefix: "https://ebay.com/usr/" },
-  { key: "website" as const,    label: "Website",     icon: "🌐", prefix: "" },
-  { key: "linktree" as const,   label: "Linktree",    icon: "🌿", prefix: "https://linktr.ee/" },
-];
+// ─── helpers ──────────────────────────────────────────────────────────────────
+function plural(n: number, word: string) {
+  return `${n} ${word}${n === 1 ? "" : "s"}`;
+}
 
-// ── helpers ──────────────────────────────────────────────────────
-function plural(n: number, word: string) { return `${n} ${word}${n === 1 ? "" : "s"}`; }
-function copyToClipboard(text: string) { void navigator.clipboard.writeText(text); }
+function copyToClipboard(text: string) {
+  void navigator.clipboard.writeText(text);
+}
+
+function getUniqueUniverses(items: VaultItem[]) {
+  const seen = new Set<string>();
+  for (const item of items) if (item.universe) seen.add(item.universe);
+  return [...seen].sort();
+}
 
 function getTopSubjects(items: VaultItem[], limit = 5) {
   const counts: Record<string, number> = {};
@@ -35,71 +32,95 @@ function getTopSubjects(items: VaultItem[], limit = 5) {
     const s = item.subject ?? item.category ?? item.universe;
     if (s) counts[s] = (counts[s] ?? 0) + 1;
   }
-  return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, limit).map(([subject, count]) => ({ subject, count }));
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([subject, count]) => ({ subject, count }));
 }
 
-function getGradedCount(items: VaultItem[]) { return items.filter((i) => i.grade).length; }
+function getGradedCount(items: VaultItem[]) {
+  return items.filter((i) => i.grade).length;
+}
+
 function getTopGrade(items: VaultItem[]) {
-  const numeric = items.filter((i) => i.grade).map((i) => parseFloat(i.grade ?? "0")).filter((n) => !isNaN(n));
-  return numeric.length ? Math.max(...numeric) : null;
+  const graded = items.filter((i) => i.grade);
+  if (!graded.length) return null;
+  const numeric = graded
+    .map((i) => parseFloat(i.grade ?? "0"))
+    .filter((n) => !isNaN(n));
+  if (!numeric.length) return null;
+  return Math.max(...numeric);
 }
 
-// ── Sub-components ───────────────────────────────────────────────
-function StatChip({ value, label }: { value: string | number; label: string }) {
+// ─── Stat pill ────────────────────────────────────────────────────────────────
+function Stat({ value, label }: { value: string | number; label: string }) {
   return (
-    <div className="flex flex-col items-center gap-0.5 px-4 py-2">
-      <span className="text-lg font-black tabular-nums" style={{ color: "#F5B548" }}>{value}</span>
-      <span className="text-[9px] uppercase tracking-[0.18em] text-[#A0956B]">{label}</span>
+    <div className="flex flex-col items-center gap-0.5 px-4">
+      <span className="text-xl font-bold tabular-nums">{value}</span>
+      <span className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--muted)]">{label}</span>
     </div>
   );
 }
 
-function SocialChips({ links }: { links: SocialLinks }) {
-  const active = SOCIAL_DEFS.filter((d) => links[d.key]);
-  if (!active.length) return null;
+// ─── Universe chip ────────────────────────────────────────────────────────────
+const UNIVERSE_EMOJI: Record<string, string> = {
+  TCG: "🃏", Sports: "⚾", Vinyl: "💿", Comics: "📚", Art: "🎨",
+  Toys: "🧸", Books: "📖", Coins: "🪙", Stamps: "📮", Film: "🎬",
+  Games: "🎮", Fashion: "👟", Watches: "⌚", Jewelry: "💎",
+};
+function UniverseChip({ universe, count }: { universe: string; count: number }) {
+  const emoji = UNIVERSE_EMOJI[universe] ?? "📦";
   return (
-    <div className="flex flex-wrap gap-2">
-      {active.map((def) => {
-        const val = links[def.key]!;
-        const url = def.key === "website" ? val : def.prefix + val.replace(/^@/, "");
-        return (
-          <a key={def.key} href={url} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition hover:brightness-125"
-            style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.06)", color: "#C8BFA8" }}>
-            <span>{def.icon}</span>
-            <span>{def.label}</span>
-          </a>
-        );
-      })}
-    </div>
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]">
+      <span>{emoji}</span>
+      <span>{universe}</span>
+      <span className="opacity-50">·</span>
+      <span className="opacity-70">{count}</span>
+    </span>
   );
 }
 
+// ─── Featured item card ────────────────────────────────────────────────────────
 function FeaturedCard({ item }: { item: VaultItem }) {
   const imageUrl = getPrimaryImageUrl(item);
   return (
-    <div className="overflow-hidden rounded-2xl border" style={{ background: "rgba(10,18,35,0.9)", borderColor: "rgba(245,181,72,0.12)" }}>
-      <div className="aspect-[3/4] w-full overflow-hidden" style={{ background: "rgba(15,25,45,0.85)" }}>
+    <div className="relative overflow-hidden rounded-2xl bg-[color:var(--surface)] ring-1 ring-[color:var(--border)]">
+      <div className="aspect-[3/4] w-full overflow-hidden bg-[color:var(--pill)]">
         {imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt={item.title ?? ""} className="h-full w-full object-contain" />
+          <img
+            src={imageUrl}
+            alt={item.title ?? ""}
+            className="h-full w-full object-contain"
+          />
         ) : (
-          <div className="flex h-full items-center justify-center text-3xl opacity-20">🖼</div>
+          <div className="flex h-full items-center justify-center text-4xl opacity-20">🖼</div>
         )}
       </div>
       <div className="p-3">
-        <div className="truncate text-xs font-semibold text-text-primary">{item.title ?? "Untitled"}</div>
-        <div className="mt-0.5 text-[10px] text-[#A0956B]">
-          {item.universe ?? item.category ?? ""}
-          {item.grade && <span className="ml-2 font-semibold" style={{ color: "#F5B548" }}>Grade {item.grade}</span>}
+        <div className="truncate text-sm font-semibold">{item.title ?? "Untitled"}</div>
+        <div className="mt-0.5 flex items-center gap-2 text-[11px] text-[color:var(--muted)]">
+          <span>{item.universe ?? item.category ?? ""}</span>
+          {item.grade && (
+            <>
+              <span>·</span>
+              <span className="font-semibold text-[color:var(--theme-gold,#F5B548)]">
+                Grade {item.grade}
+              </span>
+            </>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-// ── Main page ────────────────────────────────────────────────────
-export default function PublicVaultPage({ params }: { params: Promise<{ profileId: string }> }) {
+// ─── Main page ────────────────────────────────────────────────────────────────
+export default function PublicVaultPage({
+  params,
+}: {
+  params: Promise<{ profileId: string }>;
+}) {
   const { profileId } = use(params);
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [items, setItems] = useState<VaultItem[]>([]);
@@ -110,7 +131,8 @@ export default function PublicVaultPage({ params }: { params: Promise<{ profileI
   useEffect(() => {
     let active = true;
     async function load() {
-      setLoading(true); setError("");
+      setLoading(true);
+      setError("");
       try {
         const [nextProfile, nextItems] = await Promise.all([
           fetchPublicProfile(profileId),
@@ -122,7 +144,9 @@ export default function PublicVaultPage({ params }: { params: Promise<{ profileI
       } catch (err) {
         if (!active) return;
         setError(err instanceof Error ? err.message : "Could not load public vault.");
-      } finally { if (active) setLoading(false); }
+      } finally {
+        if (active) setLoading(false);
+      }
     }
     void load();
     return () => { active = false; };
@@ -131,19 +155,29 @@ export default function PublicVaultPage({ params }: { params: Promise<{ profileI
   const displayName = profile?.displayName ?? "Collector";
   const avatarEmoji = profile?.avatarEmoji ?? "🗝️";
   const bio = profile?.bio ?? "";
-  const socialLinks = profile?.socialLinks ?? {};
 
+  const universes = useMemo(() => getUniqueUniverses(items), [items]);
+  const universeCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const item of items) if (item.universe) counts[item.universe] = (counts[item.universe] ?? 0) + 1;
+    return counts;
+  }, [items]);
   const topSubjects = useMemo(() => getTopSubjects(items), [items]);
   const gradedCount = useMemo(() => getGradedCount(items), [items]);
   const topGrade = useMemo(() => getTopGrade(items), [items]);
 
+  // Featured = graded items first, then by createdAt desc, take up to 4
   const featuredItems = useMemo(() =>
-    [...items].sort((a, b) => {
-      const ag = a.grade ? 1 : 0; const bg = b.grade ? 1 : 0;
-      if (bg !== ag) return bg - ag;
-      return Number(b.createdAt ?? 0) - Number(a.createdAt ?? 0);
-    }).slice(0, 4),
-  [items]);
+    [...items]
+      .sort((a, b) => {
+        const aGrade = a.grade ? 1 : 0;
+        const bGrade = b.grade ? 1 : 0;
+        if (bGrade !== aGrade) return bGrade - aGrade;
+        return Number(b.createdAt ?? 0) - Number(a.createdAt ?? 0);
+      })
+      .slice(0, 4),
+    [items]
+  );
 
   function handleCopyLink() {
     copyToClipboard(window.location.href);
@@ -151,86 +185,103 @@ export default function PublicVaultPage({ params }: { params: Promise<{ profileI
     setTimeout(() => setCopied(false), 2000);
   }
 
-  if (loading) return (
-    <main className="min-h-screen" style={{ background: "var(--bg, #090E1A)" }}>
-      <div className="flex min-h-screen items-center justify-center text-sm text-[#A0956B]">Loading vault…</div>
-    </main>
-  );
+  // ── Loading ──
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-sm text-[color:var(--muted)]">Loading vault…</div>
+        </div>
+      </main>
+    );
+  }
 
-  if (error) return (
-    <main className="min-h-screen" style={{ background: "var(--bg, #090E1A)" }}>
-      <div className="mx-auto max-w-lg px-4 py-20 text-center">
-        <div className="text-4xl mb-4">🔒</div>
-        <h1 className="text-xl font-semibold mb-2 text-white">Vault not found</h1>
-        <p className="text-sm text-[#A0956B] mb-6">{error}</p>
-        <Link href="/" className="rounded-full px-5 py-2 text-sm font-semibold" style={{ background: "rgba(245,181,72,0.10)", border: "1px solid rgba(245,181,72,0.25)", color: "#F5B548" }}>Back to VLTD</Link>
-      </div>
-    </main>
-  );
+  // ── Error ──
+  if (error) {
+    return (
+      <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+        <div className="mx-auto max-w-lg px-4 py-20 text-center">
+          <div className="text-4xl mb-4">🔒</div>
+          <h1 className="text-xl font-semibold mb-2">Vault not found</h1>
+          <p className="text-sm text-[color:var(--muted)] mb-6">{error}</p>
+          <Link href="/" className="rounded-full bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">
+            Back to VLTD
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <main className="min-h-screen text-[color:var(--fg,#EDEBE3)]" style={{ background: "var(--bg, #090E1A)" }}>
+    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
 
-      {/* ── Top nav ── */}
-      <header className="sticky top-0 z-30 border-b backdrop-blur px-4 py-3" style={{ background: "rgba(9,14,26,0.92)", borderColor: "rgba(245,181,72,0.10)" }}>
+      {/* ── Top nav bar ── */}
+      <header className="sticky top-0 z-30 border-b border-[color:var(--border)] bg-[color:var(--surface)]/90 px-4 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full border text-lg shrink-0" style={{ background: "rgba(245,181,72,0.06)", borderColor: "rgba(245,181,72,0.22)" }}>
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[color:var(--pill)] text-xl ring-1 ring-[color:var(--border)] shrink-0">
             {avatarEmoji}
           </div>
           <span className="font-semibold text-sm truncate">{displayName}&apos;s Vault</span>
           <div className="ml-auto flex items-center gap-2">
-            <button onClick={handleCopyLink} className="inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold border" style={{ background: "rgba(245,181,72,0.06)", borderColor: "rgba(245,181,72,0.18)", color: "#A0956B" }}>
+            <button
+              onClick={handleCopyLink}
+              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[color:var(--pill)] px-3 text-xs font-semibold ring-1 ring-[color:var(--border)]"
+            >
               {copied ? "✓ Copied" : "Share"}
             </button>
-            <Link href="/" className="inline-flex h-8 items-center rounded-full px-3 text-[11px] font-bold tracking-[0.16em]" style={{ background: "rgba(245,181,72,0.08)", borderColor: "rgba(245,181,72,0.22)", border: "1px solid rgba(245,181,72,0.22)", color: "#F5B548" }}>VLTD</Link>
+            <Link
+              href="/"
+              className="inline-flex h-8 items-center rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-bold tracking-[0.16em] text-[color:var(--theme-gold,#F5B548)] ring-1 ring-[color:var(--border)]"
+            >
+              VLTD
+            </Link>
           </div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-5xl px-4 pb-16">
+      <div className="mx-auto max-w-5xl px-4">
 
-        {/* ── Profile Hero ── */}
-        <div className="py-8">
-          <div className="rounded-[24px] border p-5 sm:p-6" style={{ background: "rgba(15,25,45,0.85)", borderColor: "rgba(245,181,72,0.16)" }}>
-            <div className="flex flex-col sm:flex-row items-start gap-5">
-              {/* Avatar */}
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border text-3xl" style={{ background: "rgba(245,181,72,0.06)", borderColor: "rgba(245,181,72,0.28)" }}>
-                {avatarEmoji}
-              </div>
-
-              {/* Name + bio */}
-              <div className="flex-1 min-w-0">
-                <h1 className="text-2xl font-black tracking-[-0.03em] text-white">{displayName}</h1>
-                {bio && <p className="mt-2 text-sm leading-relaxed text-[#C8BFA8] max-w-lg">{bio}</p>}
-
-                {/* Social links */}
-                {Object.values(socialLinks).some(Boolean) && (
-                  <div className="mt-3">
-                    <SocialChips links={socialLinks} />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Stats */}
-            {items.length > 0 && (
-              <div className="mt-5 flex flex-wrap divide-x rounded-xl overflow-hidden border" style={{ borderColor: "rgba(245,181,72,0.12)", background: "rgba(10,18,35,0.6)" }}>
-                <StatChip value={items.length} label={items.length === 1 ? "Item" : "Items"} />
-                {gradedCount > 0 && <StatChip value={gradedCount} label="Graded" />}
-                {topGrade !== null && <StatChip value={topGrade} label="Top Grade" />}
-                {topSubjects.length > 0 && <StatChip value={topSubjects.length} label="Subjects" />}
-              </div>
-            )}
+        {/* ── Hero ── */}
+        <div className="py-8 flex flex-col items-center text-center gap-4">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[color:var(--pill)] text-5xl ring-2 ring-[color:var(--border)] shadow-lg">
+            {avatarEmoji}
           </div>
+          <div>
+            <h1 className="text-2xl font-bold">{displayName}</h1>
+            {bio && <p className="mt-2 max-w-md text-sm leading-relaxed text-[color:var(--muted)]">{bio}</p>}
+          </div>
+
+          {/* Stats bar */}
+          {items.length > 0 && (
+            <div className="flex flex-wrap justify-center divide-x divide-[color:var(--border)] rounded-2xl bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] overflow-hidden">
+              <Stat value={items.length} label={items.length === 1 ? "Item" : "Items"} />
+              {universes.length > 0 && <Stat value={universes.length} label={universes.length === 1 ? "Universe" : "Universes"} />}
+              {gradedCount > 0 && <Stat value={gradedCount} label="Graded" />}
+              {topGrade !== null && <Stat value={topGrade} label="Top Grade" />}
+            </div>
+          )}
+
+          {/* Universe chips */}
+          {universes.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-2">
+              {universes.map((u) => (
+                <UniverseChip key={u} universe={u} count={universeCounts[u] ?? 0} />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ── Empty state ── */}
         {items.length === 0 && (
-          <div className="rounded-2xl border p-10 text-center mb-10" style={{ background: "rgba(15,25,45,0.85)", borderColor: "rgba(245,181,72,0.12)" }}>
+          <div className="rounded-2xl bg-[color:var(--surface)] p-10 text-center ring-1 ring-[color:var(--border)] mb-10">
             <div className="text-4xl mb-3">📦</div>
-            <h2 className="text-lg font-semibold mb-1 text-white">Nothing public yet</h2>
-            <p className="text-sm text-[#A0956B] mb-5">{displayName} hasn&apos;t made any items public.</p>
-            <Link href="/" className="rounded-full px-5 py-2 text-sm font-semibold" style={{ background: "rgba(245,181,72,0.10)", border: "1px solid rgba(245,181,72,0.25)", color: "#F5B548" }}>Explore VLTD</Link>
+            <h2 className="text-lg font-semibold mb-1">Nothing public yet</h2>
+            <p className="text-sm text-[color:var(--muted)] mb-5">
+              {displayName} hasn&apos;t made any items public. Items are private by default.
+            </p>
+            <Link href="/" className="rounded-full bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">
+              Explore VLTD
+            </Link>
           </div>
         )}
 
@@ -238,11 +289,13 @@ export default function PublicVaultPage({ params }: { params: Promise<{ profileI
         {featuredItems.length > 0 && (
           <section className="mb-8">
             <div className="mb-3 flex items-baseline gap-2">
-              <h2 className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#A0956B]">Featured</h2>
-              <span className="text-[10px] text-[#635F59]">{plural(items.length, "public item")}</span>
+              <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">Featured</h2>
+              <span className="text-[10px] text-[color:var(--muted2)]">{plural(items.length, "public item")}</span>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {featuredItems.map((item) => <FeaturedCard key={item.id} item={item} />)}
+              {featuredItems.map((item) => (
+                <FeaturedCard key={item.id} item={item} />
+              ))}
             </div>
           </section>
         )}
@@ -250,14 +303,16 @@ export default function PublicVaultPage({ params }: { params: Promise<{ profileI
         {/* ── Top subjects ── */}
         {topSubjects.length > 0 && (
           <section className="mb-8">
-            <h2 className="mb-3 text-[10px] font-semibold uppercase tracking-[0.28em] text-[#A0956B]">Collects most</h2>
+            <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">Collects most</h2>
             <div className="flex flex-wrap gap-2">
               {topSubjects.map(({ subject, count }) => (
-                <Link key={subject} href={`/registry/${encodeURIComponent(subject)}`}
-                  className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium border transition hover:brightness-110"
-                  style={{ background: "rgba(15,25,45,0.85)", borderColor: "rgba(245,181,72,0.14)", color: "#C8BFA8" }}>
+                <Link
+                  key={subject}
+                  href={`/registry/${encodeURIComponent(subject)}`}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--surface)] px-4 py-2 text-sm font-medium ring-1 ring-[color:var(--border)] hover:ring-[color:var(--border-strong)]"
+                >
                   {subject}
-                  <span className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold" style={{ background: "rgba(245,181,72,0.10)", color: "#A0956B" }}>{count}</span>
+                  <span className="rounded-full bg-[color:var(--pill)] px-1.5 py-0.5 text-[10px] font-semibold">{count}</span>
                 </Link>
               ))}
             </div>
@@ -267,17 +322,20 @@ export default function PublicVaultPage({ params }: { params: Promise<{ profileI
         {/* ── Full grid ── */}
         {items.length > 0 && (
           <section className="mb-12">
-            <h2 className="mb-3 text-[10px] font-semibold uppercase tracking-[0.28em] text-[#A0956B]">Full collection</h2>
+            <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">Full collection</h2>
             <VaultMuseumView items={items} onFilterToUniverse={() => {}} />
           </section>
         )}
 
         {/* ── Footer CTA ── */}
-        <div className="rounded-2xl border p-6 text-center" style={{ background: "rgba(15,25,45,0.85)", borderColor: "rgba(245,181,72,0.12)" }}>
-          <div className="text-[11px] font-bold uppercase tracking-[0.2em] mb-1" style={{ color: "#F5B548" }}>VLTD</div>
-          <h3 className="font-semibold mb-1 text-white">Track your collection</h3>
-          <p className="text-sm text-[#A0956B] mb-4">Vault, grade, value, and share your collectibles.</p>
-          <Link href="/signup" className="inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-bold text-black" style={{ background: "#F5B548" }}>
+        <div className="mb-12 rounded-2xl bg-[color:var(--surface)] p-6 text-center ring-1 ring-[color:var(--border)]">
+          <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-[color:var(--theme-gold,#F5B548)] mb-1">VLTD</div>
+          <h3 className="font-semibold mb-1">Track your collection</h3>
+          <p className="text-sm text-[color:var(--muted)] mb-4">Vault, grade, value, and share your collectibles.</p>
+          <Link
+            href="/signup"
+            className="inline-flex items-center gap-2 rounded-full bg-[color:var(--theme-gold,#F5B548)] px-5 py-2 text-sm font-bold text-black"
+          >
             Start your vault →
           </Link>
         </div>
