@@ -269,109 +269,58 @@ function HeroAvatarPanel({ avatarUrl, onClick }: { avatarUrl: string; onClick: (
   );
 }
 
-// ── Gallery Carousel (swipe-enabled) ─────────────────────────────
-function ExhibitionCarousel({ galleries }: { galleries: Gallery[] }) {
+// ── Featured Gallery card (compact) ─────────────────────────────
+function FeaturedGalleryCard({ galleries }: { galleries: Gallery[] }) {
   const [idx, setIdx] = useState(0);
-  const startX = useRef<number>(0);
-  const dragX = useRef<number>(0);
-  const dragging = useRef(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
   const n = galleries.length;
-
   function goNext() { setIdx((i) => (i + 1) % n); }
   function goPrev() { setIdx((i) => (i - 1 + n) % n); }
 
-  // Touch
-  function onTouchStart(e: React.TouchEvent) { startX.current = e.touches[0].clientX; dragX.current = 0; }
-  function onTouchMove(e: React.TouchEvent) { dragX.current = e.touches[0].clientX - startX.current; }
-  function onTouchEnd() { if (dragX.current < -40) goNext(); else if (dragX.current > 40) goPrev(); dragX.current = 0; }
-
-  // Mouse drag
-  function onMouseDown(e: React.MouseEvent) { dragging.current = true; startX.current = e.clientX; dragX.current = 0; }
-  function onMouseMove(e: React.MouseEvent) { if (!dragging.current) return; dragX.current = e.clientX - startX.current; }
-  function onMouseUp() { if (!dragging.current) return; dragging.current = false; if (dragX.current < -40) goNext(); else if (dragX.current > 40) goPrev(); dragX.current = 0; }
-  function onMouseLeave() { if (dragging.current) { dragging.current = false; if (dragX.current < -40) goNext(); else if (dragX.current > 40) goPrev(); dragX.current = 0; } }
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    let startX = 0; let deltaX = 0;
+    function onStart(e: TouchEvent) { startX = e.touches[0].clientX; deltaX = 0; }
+    function onMove(e: TouchEvent) { deltaX = e.touches[0].clientX - startX; if (Math.abs(deltaX) > 8) e.preventDefault(); }
+    function onEnd() { if (deltaX < -40) goNext(); else if (deltaX > 40) goPrev(); deltaX = 0; }
+    el.addEventListener("touchstart", onStart, { passive: true });
+    el.addEventListener("touchmove", onMove, { passive: false });
+    el.addEventListener("touchend", onEnd, { passive: true });
+    return () => { el.removeEventListener("touchstart", onStart); el.removeEventListener("touchmove", onMove); el.removeEventListener("touchend", onEnd); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [n]);
 
   const current = galleries[idx];
   const itemCount = current.itemIds?.length ?? 0;
-  const slots = [-1, 0, 1, 2].map((offset) => ({ g: galleries[(idx + offset + n) % n], offset }));
 
   return (
-    <section
-      className="relative select-none overflow-hidden rounded-[18px] border p-4"
-      style={{ background: C.card, borderColor: "rgba(245,181,72,0.16)", cursor: "grab" }}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseLeave}
-    >
-      <div className="pointer-events-none absolute -right-6 -top-6 h-36 w-36 rounded-full" style={{ background: "radial-gradient(circle, rgba(245,181,72,0.10) 0%, transparent 70%)", filter: "blur(20px)" }} />
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: C.muted }}>
-          Active Exhibitions <span className="ml-2 opacity-50">{idx + 1} / {n}</span>
-        </p>
-        {n > 1 && (
-          <div className="flex gap-1">
-            <button type="button" onClick={goPrev} className="flex h-6 w-6 items-center justify-center rounded-full border text-sm transition hover:brightness-125" style={{ borderColor: C.goldBd, background: C.goldDim, color: C.gold }}>&#8249;</button>
-            <button type="button" onClick={goNext} className="flex h-6 w-6 items-center justify-center rounded-full border text-sm transition hover:brightness-125" style={{ borderColor: C.goldBd, background: C.goldDim, color: C.gold }}>&#8250;</button>
-          </div>
+    <div ref={sectionRef} style={{ touchAction: "pan-y", userSelect: "none" }}>
+      <Link href={"/gallery/" + current.id} style={{ display: "block", width: "100%", height: "90px", overflow: "hidden", borderRadius: "7px", border: `1px solid ${C.bd}`, background: "rgba(10,18,35,0.9)" }}>
+        {current.coverImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={current.coverImage} alt={current.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} draggable={false} />
+        ) : (
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", opacity: 0.2 }}>🖼️</div>
         )}
-      </div>
-      {/* Coverflow stage */}
-      <div className="relative mt-3 flex items-center justify-center" style={{ height: "160px" }}>
-        {slots.map(({ g, offset }) => {
-          const isActive = offset === 0;
-          const translateX = offset === -1 ? "-110px" : offset === 0 ? "0px" : offset === 1 ? "95px" : "145px";
-          const scale = isActive ? 1 : Math.abs(offset) === 1 ? 0.70 : 0.52;
-          const opacity = isActive ? 1 : Math.abs(offset) === 1 ? 0.55 : 0.25;
-          const zIndex = isActive ? 10 : Math.abs(offset) === 1 ? 5 : 1;
-          return (
-            <button
-              key={g.id + String(offset)}
-              type="button"
-              onClick={offset < 0 ? goPrev : offset > 0 ? goNext : undefined}
-              className="absolute overflow-hidden transition-all duration-300"
-              style={{
-                width: "116px", height: "154px", borderRadius: "14px",
-                transform: `translateX(${translateX}) scale(${scale})`,
-                opacity, zIndex,
-                border: isActive ? `2px solid rgba(245,181,72,0.55)` : `1px solid rgba(245,181,72,0.14)`,
-                background: "rgba(10,18,35,0.9)",
-                boxShadow: isActive ? "0 0 0 1px rgba(245,181,72,0.18), 0 12px 36px rgba(0,0,0,0.55)" : "none",
-                cursor: isActive ? "default" : "pointer",
-              }}
-            >
-              {g.coverImage ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={g.coverImage} alt={g.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} draggable={false} />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-2xl opacity-20">🏛️</div>
-              )}
-            </button>
-          );
-        })}
-      </div>
-      {/* Info + buttons */}
-      <div className="mt-3">
-        <h2 className="text-sm font-black tracking-[-0.02em]" style={{ color: C.text }}>{current.title || "Untitled Exhibition"}</h2>
-        <p className="mt-0.5 text-[11px]" style={{ color: C.muted }}>{itemCount} item{itemCount !== 1 ? "s" : ""}</p>
-        <div className="mt-2.5 flex items-center gap-2">
-          <Link href={"/gallery/" + current.id} className="rounded-full px-3.5 py-1.5 text-xs font-black" style={{ background: `linear-gradient(135deg, #8B6914, #F5B548)`, color: "#0B0B0B" }}>View Exhibition →</Link>
-          <Link href="/museum" className="rounded-full border px-3.5 py-1.5 text-xs font-semibold transition" style={{ borderColor: C.goldBd, color: C.gold }}>All exhibitions</Link>
+      </Link>
+      <div style={{ marginTop: "9px" }}>
+        <div style={{ fontFamily: C.r, fontSize: "15px", fontWeight: 600, lineHeight: 1.2, color: C.text }}>{current.title || "Untitled"}</div>
+        <div style={{ fontSize: "11px", color: C.muted, marginTop: "2px" }}>
+          {itemCount} piece{itemCount !== 1 ? "s" : ""}
+          {n > 1 && <span style={{ marginLeft: "8px", opacity: 0.5 }}>{idx + 1}/{n}</span>}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", marginTop: "7px", gap: "8px" }}>
+          <Link href={"/gallery/" + current.id} style={{ fontSize: "11px", color: C.gold, textDecoration: "none" }}>View Gallery →</Link>
+          {n > 1 && (
+            <div style={{ display: "flex", gap: "4px", marginLeft: "auto" }}>
+              <button onClick={goPrev} style={{ width: "26px", height: "26px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "5px", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "14px", cursor: "pointer" }}>‹</button>
+              <button onClick={goNext} style={{ width: "26px", height: "26px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "5px", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "14px", cursor: "pointer" }}>›</button>
+            </div>
+          )}
         </div>
       </div>
-      {/* Dot indicators */}
-      {n > 1 && (
-        <div className="mt-2.5 flex gap-1">
-          {galleries.map((_, dotIdx) => (
-            <button key={dotIdx} type="button" onClick={() => setIdx(dotIdx)} className="h-1 rounded-full transition-all duration-300" style={{ width: dotIdx === idx ? "16px" : "5px", background: dotIdx === idx ? C.gold : "rgba(245,181,72,0.22)" }} />
-          ))}
-        </div>
-      )}
-    </section>
+    </div>
   );
 }
 
@@ -668,16 +617,31 @@ export default function HomeClient() {
             <HeroAvatarPanel avatarUrl={avatarUrl} onClick={() => setShowAvatarPicker(true)} />
           </div>
 
-          {/* Exhibitions carousel */}
-          {galleries.length > 0 ? (
-            <ExhibitionCarousel galleries={galleries} />
-          ) : (
-            <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", padding: "16px" }}>
-              <div style={{ fontFamily: C.r, fontSize: "15px", fontWeight: 600, color: C.text }}>No exhibitions yet</div>
-              <div style={{ fontSize: "11px", color: C.muted, marginTop: "3px" }}>Curate and share your collection.</div>
-              <Link href="/museum/new" style={{ display: "inline-flex", alignItems: "center", marginTop: "9px", fontSize: "11px", color: C.gold, textDecoration: "none" }}>Create Exhibition →</Link>
+          {/* Featured Gallery + Collections side by side */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }} className="max-sm:grid-cols-1">
+            <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
+              <CardHd label="Featured Gallery" />
+              <div style={{ padding: "13px 15px" }}>
+                {galleries.length > 0 ? (
+                  <FeaturedGalleryCard galleries={galleries} />
+                ) : (
+                  <div>
+                    <div style={{ width: "100%", height: "90px", borderRadius: "7px", border: `1px solid ${C.bd}`, background: "rgba(10,18,35,0.9)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", opacity: 0.2 }}>🖼️</div>
+                    <div style={{ fontFamily: C.r, fontSize: "15px", fontWeight: 600, color: C.text, marginTop: "9px" }}>No galleries yet</div>
+                    <Link href="/museum/new" style={{ display: "inline-flex", alignItems: "center", marginTop: "7px", fontSize: "11px", color: C.gold, textDecoration: "none" }}>Create Gallery →</Link>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
+            <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
+              <CardHd label="Your Collections" href="/museum" linkText="View all" />
+              {galleries.length > 0 ? (
+                <CollectionsStrip galleries={galleries} />
+              ) : (
+                <div style={{ padding: "12px 15px", fontSize: "11px", color: C.muted, opacity: 0.6 }}>Your galleries will appear here.</div>
+              )}
+            </div>
+          </div>
 
 
           {/* Your Profile */}
@@ -748,7 +712,8 @@ export default function HomeClient() {
             </svg>
             <Link href="/vault/sold" style={{ display: "block", textAlign: "center", marginTop: "8px", fontSize: "11px", color: C.muted, textDecoration: "none" }}>View analytics →</Link>
           </div>
-        </div>
+
+        </div>{/* end RIGHT SIDEBAR */}
 
       </div>
     </main>
