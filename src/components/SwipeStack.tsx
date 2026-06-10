@@ -257,6 +257,47 @@ function SwipeHint({
   );
 }
 
+// ─── Leaving card (fly-off overlay) ──────────────────────────────────────────
+// Two-frame pattern: mount at drag position (no transition), then one RAF later
+// apply the fly-out transform with transition. This lets CSS animate the full arc.
+
+interface LeavingCardProps {
+  item: ModelItem;
+  startDx: number;
+  startDy: number;
+  flyX: number;
+  flyRotation: number;
+  mode: SwipeMode;
+}
+
+function LeavingCard({ item, startDx, startDy, flyX, flyRotation, mode }: LeavingCardProps) {
+  const [active, setActive] = useState(false);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setActive(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const tx = active ? flyX : startDx;
+  const ty = active ? 0 : startDy;
+  const rot = active ? flyRotation : (startDx / 360) * ROTATION_MAX;
+
+  return (
+    <div
+      className="absolute inset-0 rounded-[22px] overflow-hidden pointer-events-none"
+      style={{
+        transform: `translate(${tx}px, ${ty}px) rotate(${rot}deg)`,
+        transition: active ? `transform ${FLY_DURATION} cubic-bezier(0.4, 0, 0.2, 1)` : "none",
+        zIndex: STACK_DEPTH + 2,
+        willChange: "transform",
+      }}
+    >
+      <CardFace item={item} isTop />
+      <SwipeHint dx={active ? flyX : startDx} mode={mode} />
+    </div>
+  );
+}
+
 // ─── Action button bar ────────────────────────────────────────────────────────
 
 function ActionBar({
@@ -460,19 +501,15 @@ export default function SwipeStack({
   const [drag, setDrag] = useState<{ x: number; y: number } | null>(null);
   // Flying state: which direction card is flying off + animating
   const [flying, setFlying] = useState<"left" | "right" | null>(null);
-  // Leaving card: the card that is flying off (rendered as overlay while new card is already shown)
-  const [leavingItem, setLeavingItem] = useState<{ item: ModelItem; direction: "left" | "right"; dx: number; dy: number } | null>(null);
+  // Leaving card: the visual top card that just flew off (rendered as overlay while new card is shown)
+  const [leavingItem, setLeavingItem] = useState<{
+    item: ModelItem;
+    direction: "left" | "right";
+    dx: number;
+    dy: number;
+  } | null>(null);
   // Undo stack for gallery mode
   const [history, setHistory] = useState<Array<{ item: ModelItem; action: "want" | "skip" }>>([]);
-
-  // Suppress all card transitions for one frame when a swipe commits (prevents depth-card "fling back")
-  const [suppressTransition, setSuppressTransition] = useState(false);
-
-  useEffect(() => {
-    if (!suppressTransition) return;
-    const id = requestAnimationFrame(() => setSuppressTransition(false));
-    return () => cancelAnimationFrame(id);
-  }, [suppressTransition]);
 
   const cardRef = useRef<HTMLDivElement>(null);
   const pointerStart = useRef<{ x: number; y: number; pointerId: number } | null>(null);
@@ -503,6 +540,10 @@ export default function SwipeStack({
       const currentItem = items[index];
       if (!currentItem) return;
 
+      // The visually displayed top card is at index + STACK_DEPTH (clamped).
+      // This is what the user sees and swipes — we need it for the leaving animation.
+      const visualTopItem = items[Math.min(index + STACK_DEPTH, items.length - 1)];
+
       // Capture the current drag offset so the leaving card starts from exactly where the finger released
       const captureDx = drag?.x ?? 0;
       const captureDy = drag?.y ?? 0;
@@ -528,11 +569,13 @@ export default function SwipeStack({
         setIndex(nextIndex);
       }
 
-      // ── Animate the leaving card as an overlay ──
+      // ── Clear drag + set flying simultaneously so the new top card renders
+      //    with transition:"none" before any paint (no fling-back animation). ──
       setDrag(null);
-      setSuppressTransition(true); // kill depth-card transition for one frame so new top card snaps in
-      setLeavingItem({ item: currentItem, direction, dx: captureDx, dy: captureDy });
       setFlying(direction);
+
+      // ── Animate the correct (visual) leaving card as an overlay ──
+      setLeavingItem({ item: visualTopItem, direction, dx: captureDx, dy: captureDy });
 
       setTimeout(() => {
         setFlying(null);
@@ -568,6 +611,9 @@ export default function SwipeStack({
   );
 
   const onPointerCancel = useCallback(() => {
+    // Guard: if pointerStart is already null, onPointerUp already handled this
+    // gesture (successful swipe). Don't interfere with the new card's state.
+    if (!pointerStart.current) return;
     pointerStart.current = null;
     setDrag({ x: 0, y: 0 });
     setTimeout(() => setDrag(null), parseInt(SNAP_DURATION));
@@ -613,13 +659,22 @@ export default function SwipeStack({
 
   const isDragging = drag !== null && !flying;
   const flyDistance = typeof window === "undefined" ? 1200 : window.innerWidth + 200;
-  // For dragging/leaving, dx/dy always come from drag state (leaving card handled separately)
+  // For dragging, dx/dy come from drag state
   const dx = drag?.x ?? 0;
   const dy = drag?.y ?? 0;
   const rotation = (dx / 360) * ROTATION_MAX;
-  // Leaving card overlay transform
+  // Leaving card fly target
   const leavingFlyX = leavingItem ? (leavingItem.direction === "right" ? flyDistance : -flyDistance) : 0;
-  const leavingRotation = leavingItem ? ((leavingFlyX / 360) * ROTATION_MAX) : 0;
+  const leavingFlyRotation = leavingItem ? ((leavingFlyX / 360) * ROTATION_MAX) : 0;
+
+  // Top card transition:
+  // - "none" while dragging (no snap during gesture)
+  // - "none" while flying (prevents fling-back: new card just appeared at 0,0 after drag cleared)
+  // - ease-out otherwise (snap-back on failed swipe)
+  const transition =
+    isDragging || flying
+      ? "none"
+      : `transform ${SNAP_DURATION} cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -631,7 +686,7 @@ export default function SwipeStack({
     mode === "gallery"
       ? items.slice(index, index + STACK_DEPTH + 1)
       : (() => {
-          // Vault: show current ± 1 on each side for depth illusion
+          // Vault: show current ± ahead for depth illusion
           const out: ModelItem[] = [];
           for (let d = STACK_DEPTH; d >= 0; d--) {
             const i = index + d;
@@ -641,13 +696,7 @@ export default function SwipeStack({
         })();
 
   const totalCount = items.length;
-  const currentNumber =
-    mode === "gallery" ? index + 1 : index + 1;
-
-  const transition =
-    isDragging || suppressTransition
-      ? "none"
-      : `transform ${SNAP_DURATION} cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+  const currentNumber = index + 1;
 
   return (
     <div className={`flex flex-col ${className}`}>
@@ -674,7 +723,9 @@ export default function SwipeStack({
                     style={{
                       transform: `scale(${scale}) translateY(${translateY}px)`,
                       transformOrigin: "bottom center",
-                      transition: suppressTransition ? "none" : `transform ${SNAP_DURATION} ease`,
+                      // No transition while flying — depth cards snap to new positions instantly,
+                      // preventing the "card grows up from behind" artifact.
+                      transition: flying ? "none" : `transform ${SNAP_DURATION} ease`,
                       zIndex: STACK_DEPTH - depth,
                       pointerEvents: "none",
                     }}
@@ -706,20 +757,16 @@ export default function SwipeStack({
               </div>
             )}
 
-            {/* Leaving card overlay — flies off while new card is already shown at full size */}
+            {/* Leaving card overlay — uses two-frame animation to fly off from drag position */}
             {leavingItem && (
-              <div
-                className="absolute inset-0 rounded-[22px] overflow-hidden pointer-events-none"
-                style={{
-                  transform: `translate(${leavingFlyX}px, ${leavingItem.dy}px) rotate(${leavingRotation}deg)`,
-                  transition: `transform ${FLY_DURATION} cubic-bezier(0.4, 0, 0.2, 1)`,
-                  zIndex: STACK_DEPTH + 2,
-                  willChange: "transform",
-                }}
-              >
-                              <CardFace item={leavingItem.item} isTop={true} />
-                <SwipeHint dx={leavingFlyX} mode={mode} />
-              </div>
+              <LeavingCard
+                item={leavingItem.item}
+                startDx={leavingItem.dx}
+                startDy={leavingItem.dy}
+                flyX={leavingFlyX}
+                flyRotation={leavingFlyRotation}
+                mode={mode}
+                 />
             )}
 
             {/* Counter */}
