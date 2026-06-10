@@ -2,14 +2,63 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getOnboardingStatus } from "@/lib/auth";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { loadGalleries, refreshGalleriesFromSupabase, type Gallery } from "@/lib/galleryModel";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 const FOCUS_LS_KEY = "vltd_primary_focus";
 
+// ── Design tokens (home-only, no site-wide leakage) ─────────────
+const C = {
+  card:   "var(--theme-card, rgba(15,25,45,0.90))",
+  bd:     "rgba(255,255,255,0.06)",
+  bd2:    "rgba(255,255,255,0.03)",
+  gold:   "#F5B548",
+  goldDim:"rgba(245,181,72,0.08)",
+  goldBd: "rgba(245,181,72,0.20)",
+  muted:  "#A0956B",
+  muted2: "#635F59",
+  text:   "#EDEBE3",
+  green:  "#52C27A",
+  red:    "#E05252",
+  r:      "var(--font-serif, 'Cormorant Garamond', Georgia, serif)",
+} as const;
+
+// ── Social platforms ─────────────────────────────────────────────
+const SOCIAL_DEFS = [
+  { key: "instagram",  label: "Instagram",  icon: "📸", prefix: "https://instagram.com/" },
+  { key: "twitter",    label: "X / Twitter",icon: "𝕏",  prefix: "https://x.com/" },
+  { key: "tiktok",     label: "TikTok",     icon: "🎵", prefix: "https://tiktok.com/@" },
+  { key: "youtube",    label: "YouTube",    icon: "▶️", prefix: "https://youtube.com/@" },
+  { key: "facebook",   label: "Facebook",   icon: "👥", prefix: "https://facebook.com/" },
+  { key: "whatnot",    label: "Whatnot",    icon: "🔨", prefix: "https://whatnot.com/user/" },
+  { key: "ebay",       label: "eBay Store", icon: "🛒", prefix: "https://ebay.com/usr/" },
+  { key: "website",    label: "Website",    icon: "🌐", prefix: "" },
+  { key: "linktree",   label: "Linktree",   icon: "🌿", prefix: "https://linktr.ee/" },
+] as const;
+type SocialKey = typeof SOCIAL_DEFS[number]["key"];
+type SocialLinks = Partial<Record<SocialKey, string>>;
+
+// ── Avatar presets ────────────────────────────────────────────────
+const AVATAR_PRESETS = [
+  { id: "key",     emoji: "🗝️", bg: "linear-gradient(145deg,#2C1E08,#5E3E0E)" },
+  { id: "lion",    emoji: "🦁", bg: "linear-gradient(145deg,#3E2800,#7A5000)" },
+  { id: "dragon",  emoji: "🐉", bg: "linear-gradient(145deg,#0A2E1A,#1A5E32)" },
+  { id: "fox",     emoji: "🦊", bg: "linear-gradient(145deg,#3E1A00,#7A3800)" },
+  { id: "eagle",   emoji: "🦅", bg: "linear-gradient(145deg,#0A1A2E,#1A3A5E)" },
+  { id: "gem",     emoji: "💎", bg: "linear-gradient(145deg,#0A1E3E,#1A3A7A)" },
+  { id: "orb",     emoji: "🔮", bg: "linear-gradient(145deg,#1A0A3E,#3A1A7A)" },
+  { id: "sword",   emoji: "⚔️", bg: "linear-gradient(145deg,#1E1E1E,#3A3A3A)" },
+  { id: "cards",   emoji: "🃏", bg: "linear-gradient(145deg,#2E0A0A,#5E1A1A)" },
+  { id: "crown",   emoji: "👑", bg: "linear-gradient(145deg,#2E2200,#5E4400)" },
+  { id: "vault",   emoji: "🏛️", bg: "linear-gradient(145deg,#1A1A2E,#2E2E4E)" },
+  { id: "fire",    emoji: "🔥", bg: "linear-gradient(145deg,#3E0A00,#7A1A00)" },
+];
+
+// ── Helpers ───────────────────────────────────────────────────────
 function focusToVaultSlug(focus: string): string | null {
   const t = focus.toLowerCase().replace(/[^a-z0-9]+/g, "");
   if (/tcg|pokemon|magic|yugioh|tradingcard/.test(t)) return "tcg";
@@ -18,26 +67,8 @@ function focusToVaultSlug(focus: string): string | null {
   if (/jewelry|apparel|watch|streetwear|luxury/.test(t)) return "jewelry-apparel";
   if (/game|console|nintendo|playstation|xbox/.test(t)) return "games";
   if (/popculture|pop|comic|figure|funko|toy|manga|marvel|dc/.test(t)) return "pop-culture";
-  if (/misc|other/.test(t)) return "misc";
   return null;
 }
-
-function InfoTooltip({ text }: { text: string }) {
-  return (
-    <span className="group/tip relative inline-flex items-center justify-center">
-      <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold leading-none cursor-default select-none" style={{ background: "rgba(245,181,72,0.15)", color: "#A0956B", border: "1px solid rgba(245,181,72,0.25)" }}>i</span>
-      <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-52 -translate-x-1/2 rounded-xl px-3 py-2 text-left text-xs leading-snug opacity-0 shadow-xl transition-opacity duration-150 group-hover/tip:opacity-100" style={{ background: "rgba(10,18,35,0.97)", border: "1px solid rgba(245,181,72,0.22)", color: "#D4C9A8" }}>
-        {text}
-        <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent" style={{ borderTopColor: "rgba(245,181,72,0.22)" }} />
-      </span>
-    </span>
-  );
-}
-
-const BiggestMoversPanel = dynamic(() => import("@/components/BiggestMoversPanel"), {
-  loading: () => <div className="rounded-[24px] border p-4 text-sm text-[#A0956B]" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>Loading movers...</div>,
-});
-
 function formatMoney(v?: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(Number(v ?? 0));
 }
@@ -48,101 +79,243 @@ function itemTimestamp(item: VaultItem) {
   return Number(item.createdAt ?? item.valueUpdatedAt ?? item.priceUpdatedAt ?? 0);
 }
 
-function StatChip({ label, value, sub, tone = "default" }: { label: string; value: string; sub?: string; tone?: "default" | "gold" | "gain" | "loss" }) {
-  const valueColor = tone === "gold" ? "#F5B548" : tone === "gain" ? "#4CAF82" : tone === "loss" ? "#E05252" : "#F0EAD6";
-  const boxShadow = tone === "gold" ? "0 4px 20px rgba(245,181,72,0.10)" : tone === "gain" ? "0 4px 16px rgba(76,175,130,0.08)" : "none";
+const BiggestMoversPanel = dynamic(() => import("@/components/BiggestMoversPanel"), {
+  loading: () => <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", padding: "16px", fontSize: "13px", color: C.muted }}>Loading movers…</div>,
+});
+
+// ── Tooltip ───────────────────────────────────────────────────────
+function InfoTooltip({ text }: { text: string }) {
   return (
-    <div className="flex flex-col gap-0.5 rounded-[16px] border px-3.5 py-2.5 flex-1 min-w-0" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))", boxShadow }}>
-      <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#A0956B]">{label}</span>
-      <span className="text-lg font-black tracking-[-0.04em] leading-none" style={{ color: valueColor }}>{value}</span>
-      {sub && <span className="text-[10px] text-[#A0956B]">{sub}</span>}
+    <span className="group/tip relative inline-flex items-center justify-center">
+      <span className="flex h-3.5 w-3.5 items-center justify-center text-[8px] font-bold leading-none cursor-default select-none" style={{ background: "rgba(245,181,72,0.12)", color: C.muted, border: "1px solid rgba(245,181,72,0.20)", borderRadius: "50%" }}>i</span>
+      <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-52 -translate-x-1/2 px-3 py-2 text-left text-xs leading-snug opacity-0 shadow-xl transition-opacity duration-150 group-hover/tip:opacity-100" style={{ background: "rgba(10,18,35,0.97)", border: "1px solid rgba(245,181,72,0.22)", color: "#D4C9A8", borderRadius: "6px" }}>
+        {text}
+        <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent" style={{ borderTopColor: "rgba(245,181,72,0.22)" }} />
+      </span>
+    </span>
+  );
+}
+
+// ── Bare stat: serif number + tiny label ──────────────────────────
+function Stat({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "gold" | "gain" | "loss" }) {
+  const color = tone === "gold" ? C.gold : tone === "gain" ? C.green : tone === "loss" ? C.red : C.text;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+      <span style={{ fontFamily: C.r, fontSize: "22px", fontWeight: 700, lineHeight: 1, color }}>{value}</span>
+      <span style={{ fontSize: "10px", color: C.muted2, letterSpacing: "0.1px" }}>{label}</span>
     </div>
   );
 }
 
-/* ── Exhibition Carousel — coverflow + native swipe (no page scroll) ── */
+// ── Card header ───────────────────────────────────────────────────
+function CardHd({ label, href, linkText }: { label: string; href?: string; linkText?: string }) {
+  return (
+    <div style={{ padding: "11px 15px", borderBottom: `1px solid ${C.bd}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <span style={{ fontSize: "10px", letterSpacing: "1.4px", textTransform: "uppercase", color: C.muted2, fontWeight: 600 }}>{label}</span>
+      {href && linkText && <Link href={href} style={{ fontSize: "11px", color: C.gold, textDecoration: "none" }}>{linkText}</Link>}
+    </div>
+  );
+}
+
+// ── Avatar Picker Modal ───────────────────────────────────────────
+function AvatarPickerModal({
+  profileId, currentUrl, onClose, onSaved,
+}: {
+  profileId: string;
+  currentUrl: string;
+  onClose: () => void;
+  onSaved: (url: string) => void;
+}) {
+  const [selected, setSelected] = useState<string>(currentUrl);
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const presetUrl = (id: string) => `__preset:${id}`;
+  const isPreset = (url: string) => url.startsWith("__preset:");
+  const presetIdFromUrl = (url: string) => url.replace("__preset:", "");
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) return;
+      const ext = file.name.split(".").pop() ?? "jpg";
+      const path = `${profileId}/avatar.${ext}`;
+      const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+      setSelected(data.publicUrl + "?t=" + Date.now());
+    } catch (err) {
+      console.error("Upload failed", err);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) return;
+      const urlToSave = isPreset(selected) ? selected : selected;
+      await supabase.from("profiles").update({ avatar_url: urlToSave }).eq("id", profileId);
+      onSaved(urlToSave);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // Render current avatar preview
+  const currentPreset = isPreset(selected) ? AVATAR_PRESETS.find(p => p.id === presetIdFromUrl(selected)) : null;
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }} onClick={onClose}>
+      <div style={{ background: "#131313", border: `1px solid ${C.goldBd}`, borderRadius: "10px", width: "100%", maxWidth: "400px", overflow: "hidden" }} onClick={e => e.stopPropagation()}>
+        
+        {/* Header */}
+        <div style={{ padding: "14px 16px", borderBottom: `1px solid ${C.bd}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontSize: "13px", fontWeight: 600, color: C.text }}>Change Avatar</span>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: C.muted, fontSize: "18px", cursor: "pointer", lineHeight: 1 }}>×</button>
+        </div>
+
+        <div style={{ padding: "16px" }}>
+          {/* Current preview */}
+          <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "16px" }}>
+            <div style={{ width: "64px", height: "64px", borderRadius: "50%", border: `2px solid ${C.goldBd}`, overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: currentPreset?.bg ?? "#1A1A1A", fontSize: "28px" }}>
+              {!isPreset(selected) && selected ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={selected} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                currentPreset?.emoji ?? "🗝️"
+              )}
+            </div>
+            <div>
+              <div style={{ fontSize: "12px", color: C.text, fontWeight: 500 }}>Your avatar</div>
+              <div style={{ fontSize: "11px", color: C.muted, marginTop: "2px" }}>Pick a preset or upload your own photo</div>
+            </div>
+          </div>
+
+          {/* Preset grid */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "8px", marginBottom: "14px" }}>
+            {AVATAR_PRESETS.map((p) => {
+              const isActive = selected === presetUrl(p.id);
+              return (
+                <button key={p.id} onClick={() => setSelected(presetUrl(p.id))}
+                  style={{ width: "100%", aspectRatio: "1", borderRadius: "50%", border: isActive ? `2px solid ${C.gold}` : `1px solid ${C.bd}`, background: p.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", cursor: "pointer", outline: "none", position: "relative" }}>
+                  {p.emoji}
+                  {isActive && <span style={{ position: "absolute", bottom: 0, right: 0, width: "14px", height: "14px", background: C.gold, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "8px", color: "#000", fontWeight: 700 }}>✓</span>}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Upload */}
+          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleUpload} />
+          <button onClick={() => fileInputRef.current?.click()}
+            style={{ width: "100%", padding: "9px", borderRadius: "6px", border: `1px dashed ${C.goldBd}`, background: "none", color: C.muted, fontSize: "12px", cursor: "pointer", marginBottom: "14px" }}>
+            {uploading ? "Uploading…" : "📷  Upload your own photo"}
+          </button>
+
+          {/* Save / Cancel */}
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button onClick={onClose} style={{ flex: 1, padding: "9px", borderRadius: "6px", border: `1px solid ${C.bd}`, background: "none", color: C.muted, fontSize: "12px", cursor: "pointer" }}>Cancel</button>
+            <button onClick={handleSave} disabled={saving}
+              style={{ flex: 2, padding: "9px", borderRadius: "6px", border: "none", background: C.gold, color: "#000", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>
+              {saving ? "Saving…" : "Save Avatar"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Hero Avatar Panel (clickable) ─────────────────────────────────
+function HeroAvatarPanel({ avatarUrl, onClick }: { avatarUrl: string; onClick: () => void }) {
+  const preset = avatarUrl.startsWith("__preset:")
+    ? AVATAR_PRESETS.find(p => p.id === avatarUrl.replace("__preset:", ""))
+    : null;
+  const hasCustom = avatarUrl && !avatarUrl.startsWith("__preset:");
+
+  return (
+    <button onClick={onClick} style={{ position: "relative", width: "100%", height: "100%", background: preset?.bg ?? "linear-gradient(155deg,#100D06,#0C0A04)", border: "none", cursor: "pointer", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }} className="max-sm:hidden">
+      {/* Ambient glow */}
+      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 10%, rgba(245,181,72,0.18) 0%, transparent 60%)", pointerEvents: "none" }} />
+      {/* Decorative wall frames behind */}
+      {!hasCustom && (
+        <div style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0, display: "flex", alignItems: "center", gap: "6px", padding: "10px", opacity: 0.18, pointerEvents: "none" }}>
+          {[1,2,3].map((i) => <div key={i} style={{ flex: 1, height: "100%", borderRadius: "4px", background: "linear-gradient(160deg,#1A1610,#241C0C)", border: "1px solid rgba(245,181,72,0.15)" }} />)}
+        </div>
+      )}
+      {/* Avatar display */}
+      {hasCustom ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
+      ) : (
+        <span style={{ fontSize: "64px", position: "relative", zIndex: 1, filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.8))" }}>
+          {preset?.emoji ?? "🗝️"}
+        </span>
+      )}
+      {/* Edit hint overlay */}
+      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0)", display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: "12px", opacity: 0, transition: "all 0.2s" }}
+        className="hover:!opacity-100 hover:!bg-[rgba(0,0,0,0.4)]">
+        <span style={{ fontSize: "11px", color: C.gold, fontWeight: 600, background: "rgba(0,0,0,0.6)", borderRadius: "4px", padding: "3px 8px" }}>Change avatar</span>
+      </div>
+    </button>
+  );
+}
+
+// ── Gallery Carousel (swipe-enabled) ─────────────────────────────
 function ExhibitionCarousel({ galleries }: { galleries: Gallery[] }) {
   const [idx, setIdx] = useState(0);
-  const sectionRef = useRef<HTMLElement>(null);
+  const touchStartX = useRef<number>(0);
+  const dragX = useRef<number>(0);
   const n = galleries.length;
 
   function goNext() { setIdx((i) => (i + 1) % n); }
   function goPrev() { setIdx((i) => (i - 1 + n) % n); }
 
-  // Native touch listeners with passive:false so preventDefault stops page scroll
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    let startX = 0;
-    let deltaX = 0;
-
-    function onStart(e: TouchEvent) {
-      startX = e.touches[0].clientX;
-      deltaX = 0;
-    }
-    function onMove(e: TouchEvent) {
-      deltaX = e.touches[0].clientX - startX;
-      // Only lock horizontal scrolling once we know it's a horizontal swipe
-      if (Math.abs(deltaX) > 8) e.preventDefault();
-    }
-    function onEnd() {
-      if (deltaX < -40) setIdx((i) => (i + 1) % n);
-      else if (deltaX > 40) setIdx((i) => (i - 1 + n) % n);
-      deltaX = 0;
-    }
-
-    el.addEventListener("touchstart", onStart, { passive: true });
-    el.addEventListener("touchmove", onMove, { passive: false });
-    el.addEventListener("touchend", onEnd, { passive: true });
-    return () => {
-      el.removeEventListener("touchstart", onStart);
-      el.removeEventListener("touchmove", onMove);
-      el.removeEventListener("touchend", onEnd);
-    };
-  }, [n]);
+  function onTouchStart(e: React.TouchEvent) { touchStartX.current = e.touches[0].clientX; dragX.current = 0; }
+  function onTouchMove(e: React.TouchEvent) { dragX.current = e.touches[0].clientX - touchStartX.current; }
+  function onTouchEnd() { if (dragX.current < -40) goNext(); else if (dragX.current > 40) goPrev(); dragX.current = 0; }
 
   const current = galleries[idx];
   const itemCount = current.itemIds?.length ?? 0;
-  const slots = [-1, 0, 1, 2].map((offset) => ({
-    g: galleries[(idx + offset + n) % n],
-    offset,
-  }));
+  const slots = [-1, 0, 1, 2].map((offset) => ({ g: galleries[(idx + offset + n) % n], offset }));
 
   return (
     <section
-      ref={sectionRef}
-      className="relative select-none overflow-hidden rounded-[24px] border p-5"
-      style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "rgba(245,181,72,0.16)" }}
+      className="relative select-none overflow-hidden rounded-[18px] border p-4"
+      style={{ background: C.card, borderColor: "rgba(245,181,72,0.16)" }}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
     >
-      <div className="pointer-events-none absolute -right-8 -top-8 h-48 w-48 rounded-full" style={{ background: "radial-gradient(circle, rgba(245,181,72,0.12) 0%, transparent 70%)", filter: "blur(24px)" }} />
-
+      <div className="pointer-events-none absolute -right-6 -top-6 h-36 w-36 rounded-full" style={{ background: "radial-gradient(circle, rgba(245,181,72,0.10) 0%, transparent 70%)", filter: "blur(20px)" }} />
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">
-            Active Exhibitions <span className="ml-2 opacity-50">{idx + 1} / {n}</span>
-          </p>
-          <h2 className="mt-0.5 text-base font-black tracking-[-0.02em] text-text-primary">{current.title || "Untitled Exhibition"}</h2>
-          <p className="mt-0.5 text-xs text-[#A0956B] opacity-60">{itemCount} item{itemCount !== 1 ? "s" : ""}</p>
-        </div>
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: C.muted }}>
+          Active Exhibitions <span className="ml-2 opacity-50">{idx + 1} / {n}</span>
+        </p>
         {n > 1 && (
           <div className="flex gap-1">
-            <button type="button" onClick={goPrev} className="flex h-7 w-7 items-center justify-center rounded-full border text-base transition hover:brightness-125" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)", color: "#F5B548" }} aria-label="Previous">&#8249;</button>
-            <button type="button" onClick={goNext} className="flex h-7 w-7 items-center justify-center rounded-full border text-base transition hover:brightness-125" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)", color: "#F5B548" }} aria-label="Next">&#8250;</button>
+            <button type="button" onClick={goPrev} className="flex h-6 w-6 items-center justify-center rounded-full border text-sm transition hover:brightness-125" style={{ borderColor: C.goldBd, background: C.goldDim, color: C.gold }}>&#8249;</button>
+            <button type="button" onClick={goNext} className="flex h-6 w-6 items-center justify-center rounded-full border text-sm transition hover:brightness-125" style={{ borderColor: C.goldBd, background: C.goldDim, color: C.gold }}>&#8250;</button>
           </div>
         )}
       </div>
-
       {/* Coverflow stage */}
-      <div className="relative mt-4 flex items-center justify-center" style={{ height: "200px" }}>
+      <div className="relative mt-3 flex items-center justify-center" style={{ height: "160px" }}>
         {slots.map(({ g, offset }) => {
           const isActive = offset === 0;
-          const src = g.coverImage ?? null;
-          const translateX = offset === -1 ? "-128px" : offset === 0 ? "0px" : offset === 1 ? "110px" : "170px";
-          const scale = isActive ? 1 : Math.abs(offset) === 1 ? 0.72 : 0.55;
-          const opacity = isActive ? 1 : Math.abs(offset) === 1 ? 0.6 : 0.3;
+          const translateX = offset === -1 ? "-110px" : offset === 0 ? "0px" : offset === 1 ? "95px" : "145px";
+          const scale = isActive ? 1 : Math.abs(offset) === 1 ? 0.70 : 0.52;
+          const opacity = isActive ? 1 : Math.abs(offset) === 1 ? 0.55 : 0.25;
           const zIndex = isActive ? 10 : Math.abs(offset) === 1 ? 5 : 1;
-
           return (
             <button
               key={g.id + String(offset)}
@@ -150,39 +323,209 @@ function ExhibitionCarousel({ galleries }: { galleries: Gallery[] }) {
               onClick={offset < 0 ? goPrev : offset > 0 ? goNext : undefined}
               className="absolute overflow-hidden transition-all duration-300"
               style={{
-                width: "140px",
-                height: "186px",
-                borderRadius: "18px",
-                transform: "translateX(" + translateX + ") scale(" + scale + ")",
-                opacity,
-                zIndex,
-                border: isActive ? "2px solid rgba(245,181,72,0.55)" : "1px solid rgba(245,181,72,0.14)",
+                width: "116px", height: "154px", borderRadius: "14px",
+                transform: `translateX(${translateX}) scale(${scale})`,
+                opacity, zIndex,
+                border: isActive ? `2px solid rgba(245,181,72,0.55)` : `1px solid rgba(245,181,72,0.14)`,
                 background: "rgba(10,18,35,0.9)",
-                boxShadow: isActive ? "0 0 0 1px rgba(245,181,72,0.18), 0 16px 48px rgba(0,0,0,0.55)" : "none",
+                boxShadow: isActive ? "0 0 0 1px rgba(245,181,72,0.18), 0 12px 36px rgba(0,0,0,0.55)" : "none",
                 cursor: isActive ? "default" : "pointer",
               }}
-              aria-label={isActive ? g.title : offset < 0 ? "Previous exhibition" : "Next exhibition"}
             >
-              {src ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={src} alt={g.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} draggable={false} />
+              {g.coverImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={g.coverImage} alt={g.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} draggable={false} />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-3xl opacity-20">&#127963;</div>
+                <div className="flex h-full w-full items-center justify-center text-2xl opacity-20">🏛️</div>
               )}
             </button>
           );
         })}
       </div>
-
-      {/* Action buttons */}
-      <div className="mt-4 flex items-center gap-2">
-        <Link href={"/gallery/" + current.id} className="rounded-full px-4 py-1.5 text-sm font-black vltd-gold-btn">View Exhibition &#8594;</Link>
-        <Link href="/museum" className="rounded-full border border-[rgba(245,181,72,0.22)] px-4 py-1.5 text-sm font-semibold text-[#F5B548] transition hover:bg-[rgba(245,181,72,0.09)]">All exhibitions</Link>
+      {/* Info + buttons */}
+      <div className="mt-3">
+        <h2 className="text-sm font-black tracking-[-0.02em]" style={{ color: C.text }}>{current.title || "Untitled Exhibition"}</h2>
+        <p className="mt-0.5 text-[11px]" style={{ color: C.muted }}>{itemCount} item{itemCount !== 1 ? "s" : ""}</p>
+        <div className="mt-2.5 flex items-center gap-2">
+          <Link href={"/gallery/" + current.id} className="rounded-full px-3.5 py-1.5 text-xs font-black" style={{ background: `linear-gradient(135deg, #8B6914, #F5B548)`, color: "#0B0B0B" }}>View Exhibition →</Link>
+          <Link href="/museum" className="rounded-full border px-3.5 py-1.5 text-xs font-semibold transition" style={{ borderColor: C.goldBd, color: C.gold }}>All exhibitions</Link>
+        </div>
       </div>
+      {/* Dot indicators */}
+      {n > 1 && (
+        <div className="mt-2.5 flex gap-1">
+          {galleries.map((_, dotIdx) => (
+            <button key={dotIdx} type="button" onClick={() => setIdx(dotIdx)} className="h-1 rounded-full transition-all duration-300" style={{ width: dotIdx === idx ? "16px" : "5px", background: dotIdx === idx ? C.gold : "rgba(245,181,72,0.22)" }} />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
 
+// ── Collections strip (swipe carousel) ───────────────────────────
+function CollectionsStrip({ galleries }: { galleries: Gallery[] }) {
+  const stripRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el: HTMLDivElement = stripRef.current!;
+    if (!el) return;
+    let startX = 0; let scrollStart = 0; let isDragging = false;
+    function onStart(e: TouchEvent) {
+      startX = e.touches[0].clientX;
+      scrollStart = el.scrollLeft;
+      isDragging = true;
+    }
+    function onMove(e: TouchEvent) {
+      if (!isDragging) return;
+      const delta = startX - e.touches[0].clientX;
+      el.scrollLeft = scrollStart + delta;
+      if (Math.abs(delta) > 6) e.preventDefault();
+    }
+    function onEnd() { isDragging = false; }
+    el.addEventListener("touchstart", onStart, { passive: true });
+    el.addEventListener("touchmove", onMove, { passive: false });
+    el.addEventListener("touchend", onEnd, { passive: true });
+    return () => { el.removeEventListener("touchstart", onStart); el.removeEventListener("touchmove", onMove); el.removeEventListener("touchend", onEnd); };
+  }, []);
+
+  return (
+    <div ref={stripRef} style={{ display: "flex", gap: "9px", padding: "12px 15px", overflowX: "auto", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}
+      className="no-scrollbar">
+      {galleries.slice(0, 6).map((g) => (
+        <Link key={g.id} href={"/gallery/" + g.id}
+          style={{ flexShrink: 0, width: "86px", cursor: "pointer", textDecoration: "none", scrollSnapAlign: "start" }}>
+          <div style={{ width: "86px", height: "65px", borderRadius: "6px", border: `1px solid ${C.bd}`, background: "rgba(10,18,35,0.9)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {g.coverImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={g.coverImage} alt={g.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              <span style={{ fontSize: "20px", opacity: 0.2 }}>🖼️</span>
+            )}
+          </div>
+          <div style={{ fontSize: "11px", fontWeight: 500, marginTop: "5px", color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.title}</div>
+          <div style={{ fontSize: "10px", color: C.muted }}>{g.itemIds?.length ?? 0} pieces</div>
+        </Link>
+      ))}
+      <Link href="/museum" style={{ flexShrink: 0, width: "86px", textDecoration: "none", scrollSnapAlign: "start" }}>
+        <div style={{ width: "86px", height: "65px", borderRadius: "6px", border: `1px solid ${C.goldBd}`, background: C.goldDim, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", color: C.gold, fontWeight: 600 }}>All →</div>
+      </Link>
+    </div>
+  );
+}
+
+// ── Social Links Card ─────────────────────────────────────────────
+function SocialLinksCard({ profileId, bio: initialBio, socialLinks: initialLinks, displayName, editable }: {
+  profileId: string; bio: string; socialLinks: SocialLinks; displayName: string; editable: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [bio, setBio] = useState(initialBio);
+  const [links, setLinks] = useState<SocialLinks>(initialLinks);
+  const [saving, setSaving] = useState(false);
+  const hasAny = bio.trim() || Object.values(links).some(Boolean);
+
+  const save = useCallback(async () => {
+    setSaving(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) return;
+      await supabase.from("profiles").update({ bio: bio.trim(), social_links: links }).eq("id", profileId);
+      setEditing(false);
+    } finally { setSaving(false); }
+  }, [bio, links, profileId]);
+
+  if (!editable && !hasAny) return null;
+
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
+      <div style={{ padding: "11px 15px", borderBottom: `1px solid ${C.bd}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ fontSize: "10px", letterSpacing: "1.4px", textTransform: "uppercase", color: C.muted2, fontWeight: 600 }}>
+          {editable ? "Your Profile" : displayName}
+        </span>
+        {editable && !editing && (
+          <button onClick={() => setEditing(true)} style={{ fontSize: "11px", color: C.muted, cursor: "pointer", background: "none", border: "none" }}>Edit</button>
+        )}
+        {editing && (
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button onClick={() => { setEditing(false); setBio(initialBio); setLinks(initialLinks); }} style={{ fontSize: "11px", color: C.muted, cursor: "pointer", background: "none", border: "none" }}>Cancel</button>
+            <button onClick={save} disabled={saving} style={{ fontSize: "11px", fontWeight: 600, color: C.gold, cursor: "pointer", background: "none", border: "none" }}>{saving ? "Saving…" : "Save"}</button>
+          </div>
+        )}
+      </div>
+      <div style={{ padding: "12px 15px" }}>
+        {editing ? (
+          <textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell collectors about yourself…" rows={2}
+            style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: `1px solid ${C.goldBd}`, borderRadius: "6px", padding: "8px 10px", fontSize: "12px", color: C.text, resize: "none", outline: "none", fontFamily: "inherit", marginBottom: "12px" }} maxLength={300} />
+        ) : bio ? (
+          <p style={{ fontSize: "12px", lineHeight: 1.5, color: "#C8BFA8", marginBottom: "10px" }}>{bio}</p>
+        ) : editable ? (
+          <p style={{ fontSize: "11px", color: C.muted, opacity: 0.6, marginBottom: "10px", fontStyle: "italic" }}>Add a bio to let other collectors know who you are…</p>
+        ) : null}
+        {editing ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
+            {SOCIAL_DEFS.map((def) => (
+              <div key={def.key} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "13px", width: "18px", textAlign: "center", flexShrink: 0 }}>{def.icon}</span>
+                <span style={{ fontSize: "11px", color: C.muted, width: "72px", flexShrink: 0 }}>{def.label}</span>
+                <input value={links[def.key] ?? ""} onChange={(e) => setLinks((prev) => ({ ...prev, [def.key]: e.target.value }))}
+                  placeholder={def.key === "website" ? "https://yoursite.com" : "username"}
+                  style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: `1px solid ${C.bd}`, borderRadius: "5px", padding: "5px 8px", fontSize: "11px", color: C.text, outline: "none", fontFamily: "inherit" }} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
+            {SOCIAL_DEFS.filter((d) => links[d.key]).map((def) => {
+              const val = links[def.key]!;
+              const url = def.key === "website" ? val : def.prefix + val.replace(/^@/, "");
+              return (
+                <a key={def.key} href={url} target="_blank" rel="noopener noreferrer"
+                  style={{ display: "inline-flex", alignItems: "center", gap: "5px", borderRadius: "4px", border: `1px solid ${C.goldBd}`, background: C.goldDim, padding: "4px 8px", fontSize: "11px", color: "#C8BFA8", textDecoration: "none" }}>
+                  <span style={{ fontSize: "12px" }}>{def.icon}</span><span>{def.label}</span>
+                </a>
+              );
+            })}
+            {editable && !Object.values(links).some(Boolean) && (
+              <button onClick={() => setEditing(true)} style={{ display: "inline-flex", alignItems: "center", gap: "4px", borderRadius: "4px", border: `1px dashed ${C.goldBd}`, background: "none", padding: "4px 8px", fontSize: "11px", color: C.muted, cursor: "pointer" }}>
+                + Add social links
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Recently Added sidebar ────────────────────────────────────────
+function RecentSidebarItems({ items }: { items: VaultItem[] }) {
+  const recent = useMemo(() => [...items].sort((a, b) => itemTimestamp(b) - itemTimestamp(a)).slice(0, 6), [items]);
+  if (recent.length === 0) return (
+    <div style={{ padding: "12px 15px", fontSize: "11px", color: C.muted, opacity: 0.6 }}>No items yet — scan your first collectible.</div>
+  );
+  return (
+    <div style={{ flex: 1, overflowY: "auto" }}>
+      {recent.map((item) => (
+        <Link key={item.id} href={"/vault/item/" + item.id}
+          style={{ display: "flex", gap: "9px", padding: "10px 15px", borderBottom: `1px solid ${C.bd2}`, alignItems: "center", textDecoration: "none" }}>
+          <div style={{ width: "32px", height: "32px", flexShrink: 0, borderRadius: "5px", border: `1px solid ${C.bd}`, background: "rgba(10,18,35,0.9)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px" }}>
+            {item.imageFrontUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={item.imageFrontUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : "📦"}
+          </div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: "12px", fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</div>
+            <div style={{ fontSize: "11px", color: C.muted }}>{item.universe || item.category || "Collectible"}</div>
+          </div>
+          <div style={{ fontSize: "12px", fontWeight: 600, flexShrink: 0, color: "#52D6F4", fontVariantNumeric: "tabular-nums" }}>{formatMoney(item.currentValue ?? item.estimatedValue ?? 0)}</div>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+// ── Main HomeClient ───────────────────────────────────────────────
 export default function HomeClient() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -190,6 +533,11 @@ export default function HomeClient() {
   const [displayName, setDisplayName] = useState("");
   const [profileType, setProfileType] = useState("");
   const [primaryFocus, setPrimaryFocus] = useState("");
+  const [profileId, setProfileId] = useState("");
+  const [bio, setBio] = useState("");
+  const [socialLinks, setSocialLinks] = useState<SocialLinks>({});
+  const [avatarUrl, setAvatarUrl] = useState("__preset:key");
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [items, setItems] = useState<VaultItem[]>([]);
   const [galleries, setGalleries] = useState<Gallery[]>([]);
 
@@ -200,9 +548,15 @@ export default function HomeClient() {
         const status = await getOnboardingStatus();
         if (!status.isAuthenticated) { router.replace("/login"); return; }
         if (status.needsOnboarding) { router.replace("/onboarding"); return; }
-        setDisplayName(status.activeProfile?.display_name ?? "");
-        setProfileType(status.activeProfile?.profile_type ?? "");
-        const focus = status.activeProfile?.primary_focus ?? "";
+        const profile = status.activeProfile;
+        setDisplayName(profile?.display_name ?? "");
+        setProfileType(profile?.profile_type ?? "");
+        setProfileId(profile?.id ?? "");
+        setBio((profile as Record<string, unknown>)?.bio as string ?? "");
+        setSocialLinks(((profile as Record<string, unknown>)?.social_links as SocialLinks) ?? {});
+        const savedAvatar = (profile as Record<string, unknown>)?.avatar_url as string | null;
+        setAvatarUrl(savedAvatar || "__preset:key");
+        const focus = profile?.primary_focus ?? "";
         setPrimaryFocus(focus);
         try { window.localStorage.setItem(FOCUS_LS_KEY, focus); } catch { /* ignore */ }
         await syncVaultItemsFromSupabase();
@@ -227,181 +581,170 @@ export default function HomeClient() {
     return { totalItems, totalCostValue, totalValue, totalGain, gainPct };
   }, [items]);
 
-  const recentItems = useMemo(() => [...items].sort((a, b) => itemTimestamp(b) - itemTimestamp(a)).slice(0, 4), [items]);
-  const gainTone = stats.totalGain >= 0 ? "gain" : "loss";
+  const gainTone = stats.totalGain >= 0 ? "gain" as const : "loss" as const;
   const gainPrefix = stats.totalGain >= 0 ? "+" : "";
   const summaryLine = stats.totalGain >= 0
     ? "Your vault is up " + formatMoney(stats.totalGain) + " overall."
     : "Your vault is down " + formatMoney(Math.abs(stats.totalGain)) + " overall.";
 
+  void profileType;
+
   if (loading) return (
-    <main className="min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6">
-      <div className="mx-auto max-w-6xl rounded-[24px] border p-5 text-[#A0956B]" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>Loading dashboard...</div>
+    <main style={{ minHeight: "100vh", padding: "32px 22px" }}>
+      <div style={{ maxWidth: "1200px", margin: "0 auto", background: C.card, border: `1px solid ${C.bd}`, borderRadius: "10px", padding: "16px", fontSize: "13px", color: C.muted }}>Loading dashboard…</div>
     </main>
   );
   if (error) return (
-    <main className="min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6">
-      <div className="mx-auto max-w-6xl rounded-[24px] border border-red-500/40 bg-red-500/10 p-5 text-red-100">{error}</div>
+    <main style={{ minHeight: "100vh", padding: "32px 22px" }}>
+      <div style={{ maxWidth: "1200px", margin: "0 auto", background: "rgba(224,82,82,0.08)", border: "1px solid rgba(224,82,82,0.30)", borderRadius: "10px", padding: "16px", color: "#f8c0c0" }}>{error}</div>
     </main>
   );
 
-  void profileType;
-
   return (
-    <main className="min-h-screen px-4 py-5 text-[color:var(--fg)] sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-4">
+    <main style={{ minHeight: "100vh", color: C.text }}>
 
-        {/* Hero */}
-        <section className="rounded-[28px] border p-4 sm:p-5" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "rgba(245,181,72,0.18)", boxShadow: "0 0 0 1px rgba(245,181,72,0.08), 0 24px 80px rgba(0,0,0,0.55), 0 0 60px rgba(245,181,72,0.05)" }}>
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">
-                {stats.totalItems === 0 ? "Your vault is ready," : "Welcome back,"}
-              </p>
-              <h1 className="mt-0.5 text-2xl font-black tracking-[-0.04em] text-text-primary sm:text-3xl">{displayName || "Collector"}</h1>
-              <p className="mt-1 text-sm text-[#A0956B]">
-                {stats.totalItems === 0
-                  ? "Scan your first item to start building a real collection record."
-                  : summaryLine}
-              </p>
-            </div>
-            {primaryFocus && primaryFocus.toLowerCase() !== "null" && (() => {
-              const slug = focusToVaultSlug(primaryFocus);
-              const inner = (<><p className="text-[10px] uppercase tracking-[0.18em] text-[#A0956B]">Focus</p><p className="text-sm font-bold text-[#F5B548]">{primaryFocus}</p></>);
-              return slug
-                ? <Link href={"/vault/" + slug} className="shrink-0 rounded-2xl border px-3 py-1.5 text-right transition hover:brightness-110" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}>{inner}</Link>
-                : <div className="shrink-0 rounded-2xl border px-3 py-1.5 text-right" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}>{inner}</div>;
-            })()}
-          </div>
-          {stats.totalItems > 0 ? (
-            <div className="mt-4 flex gap-2 overflow-x-auto pb-0.5 no-scrollbar">
-              <StatChip label="Items" value={String(stats.totalItems)} sub="in vault" />
-              <StatChip label="Invested" value={formatMoney(stats.totalCostValue)} sub="cost basis" />
-              <StatChip label="Value" value={formatMoney(stats.totalValue)} sub="current est." tone="gold" />
-              <StatChip label="Gain / Loss" value={gainPrefix + formatMoney(stats.totalGain)} sub={stats.totalCostValue > 0 ? gainPrefix + stats.gainPct.toFixed(1) + "% return" : "add costs"} tone={gainTone} />
-            </div>
-          ) : null}
-          <div className="relative mt-4">
-            <div className="absolute -right-1 -top-1 z-10"><InfoTooltip text="Uses the camera + AI to identify an item automatically. Point at a card, figure, or comic and it fills in the details for you." /></div>
-            <Link href="/capture" className="flex min-h-[52px] items-center justify-between gap-3 rounded-[18px] px-4 py-3 font-semibold no-select transition hover:-translate-y-0.5" style={{ background: "linear-gradient(135deg, rgba(139,105,20,0.25) 0%, rgba(200,148,31,0.15) 50%, rgba(139,105,20,0.25) 100%)", border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.35))", boxShadow: "0 0 20px rgba(245,181,72,0.15)", color: "var(--theme-gold, #F5B548)" }}>
-              <span className="flex items-center gap-3 text-sm font-semibold">
-                <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-xl" style={{ background: "var(--theme-gold-subtle, rgba(245,181,72,0.10))", border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.25))" }}>&#9635;</span>
-                Smart Scan -- add any item to your VLTD vault instantly
-              </span>
-              <span className="hidden shrink-0 text-sm font-semibold sm:inline">Scan &#8594;</span>
-            </Link>
-          </div>
-        </section>
+      {/* Avatar picker modal */}
+      {showAvatarPicker && profileId && (
+        <AvatarPickerModal
+          profileId={profileId}
+          currentUrl={avatarUrl}
+          onClose={() => setShowAvatarPicker(false)}
+          onSaved={(url) => setAvatarUrl(url)}
+        />
+      )}
 
-        {/* Exhibitions */}
-        {galleries.length > 0 ? (
-          <ExhibitionCarousel galleries={galleries} />
-        ) : (
-          <section className="relative overflow-hidden rounded-[24px] border p-5" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "rgba(245,181,72,0.16)" }}>
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.30em] text-[#A0956B]">Exhibitions</p>
-                <h2 className="mt-1.5 text-xl font-black tracking-[-0.03em] text-text-primary">Your Exhibitions Await</h2>
-                <p className="mt-1 max-w-[340px] text-sm leading-relaxed text-[#A0956B]">Curate and display your collection for the world.</p>
-                <div className="mt-4 flex items-center gap-2.5">
-                  <Link href="/museum/new" className="rounded-full px-4 py-2 text-sm font-black vltd-gold-btn">Create Exhibition</Link>
-                  <Link href="/museum" className="rounded-full border border-[rgba(245,181,72,0.22)] px-4 py-2 text-sm font-semibold text-[#F5B548] transition hover:bg-[rgba(245,181,72,0.09)]">View all &#8594;</Link>
+      <div style={{ maxWidth: "1200px", margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 265px", alignItems: "start" }}
+        className="px-4 sm:px-5 lg:px-6 py-4 max-lg:grid-cols-1">
+
+        {/* ── LEFT COLUMN ── */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "15px", paddingRight: "20px" }} className="max-lg:pr-0">
+
+          {/* Hero card */}
+          <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "10px", overflow: "hidden", display: "grid", gridTemplateColumns: "1fr 180px", minHeight: "190px", position: "relative" }}
+            className="max-sm:grid-cols-1">
+            <div style={{ position: "absolute", top: "-60px", left: "-60px", width: "300px", height: "300px", background: "radial-gradient(circle, rgba(245,181,72,0.08) 0%, transparent 65%)", pointerEvents: "none" }} />
+
+            <div style={{ padding: "22px 24px", display: "flex", flexDirection: "column", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
+              <div>
+                <div style={{ fontSize: "11px", color: C.muted, marginBottom: "2px" }}>
+                  {stats.totalItems === 0 ? "Your vault is ready," : "Welcome back,"}
                 </div>
+                <h1 style={{ fontFamily: C.r, fontSize: "34px", fontWeight: 600, lineHeight: 1.04, color: C.text }}>{displayName || "Collector"}</h1>
+                <div style={{ fontSize: "11.5px", color: C.muted2, marginTop: "4px" }}>
+                  {stats.totalItems === 0 ? "Scan your first item to start building a real collection record." : summaryLine}
+                </div>
+                {stats.totalItems > 0 && (
+                  <div style={{ display: "flex", gap: "22px", marginTop: "16px", flexWrap: "wrap" }}>
+                    <Stat label="Items" value={String(stats.totalItems)} />
+                    <Stat label="Invested" value={formatMoney(stats.totalCostValue)} />
+                    <Stat label="Value" value={formatMoney(stats.totalValue)} tone="gold" />
+                    {stats.totalCostValue > 0 && <Stat label="Return" value={gainPrefix + stats.gainPct.toFixed(1) + "%"} tone={gainTone} />}
+                    {primaryFocus && primaryFocus.toLowerCase() !== "null" && <Stat label="Focus" value={primaryFocus} tone="gold" />}
+                  </div>
+                )}
               </div>
-              <div className="hidden shrink-0 sm:flex h-20 w-20 items-center justify-center rounded-2xl border text-3xl" style={{ borderColor: "rgba(245,181,72,0.22)", background: "rgba(245,181,72,0.07)" }}>&#127963;</div>
+              <div style={{ display: "flex", gap: "9px", marginTop: "16px" }}>
+                <div className="relative">
+                  <div className="absolute -right-1 -top-1 z-10"><InfoTooltip text="AI-powered item identification — point camera at any collectible." /></div>
+                  <Link href="/capture" style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: C.gold, color: "#080808", borderRadius: "6px", padding: "9px 16px", fontSize: "12px", fontWeight: 600, textDecoration: "none" }}>Smart Scan</Link>
+                </div>
+                <Link href="/vault" style={{ display: "inline-flex", alignItems: "center", background: "transparent", color: C.text, border: `1px solid ${C.bd}`, borderRadius: "6px", padding: "8px 14px", fontSize: "12px", fontWeight: 500, textDecoration: "none" }}>Go to Vault</Link>
+              </div>
             </div>
-          </section>
-        )}
 
-        {/* Two-column */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <div className="space-y-4">
-            <section className="rounded-[24px] border p-4" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#A0956B]">Quick Actions</p>
-              <div className="mt-3 grid grid-cols-3 gap-2">
+            {/* Avatar panel — clickable */}
+            <HeroAvatarPanel avatarUrl={avatarUrl} onClick={() => setShowAvatarPicker(true)} />
+          </div>
+
+          {/* Exhibitions carousel */}
+          {galleries.length > 0 ? (
+            <ExhibitionCarousel galleries={galleries} />
+          ) : (
+            <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", padding: "16px" }}>
+              <div style={{ fontFamily: C.r, fontSize: "15px", fontWeight: 600, color: C.text }}>No exhibitions yet</div>
+              <div style={{ fontSize: "11px", color: C.muted, marginTop: "3px" }}>Curate and share your collection.</div>
+              <Link href="/museum/new" style={{ display: "inline-flex", alignItems: "center", marginTop: "9px", fontSize: "11px", color: C.gold, textDecoration: "none" }}>Create Exhibition →</Link>
+            </div>
+          )}
+
+          {/* Collections strip */}
+          {galleries.length > 0 && (
+            <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
+              <CardHd label="Your Collections" href="/museum" linkText="View all" />
+              <CollectionsStrip galleries={galleries} />
+            </div>
+          )}
+
+          {/* Your Profile */}
+          {profileId && (
+            <SocialLinksCard profileId={profileId} bio={bio} socialLinks={socialLinks} displayName={displayName} editable={true} />
+          )}
+
+          {/* Quick Actions + Movers */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }} className="max-sm:grid-cols-1">
+            <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
+              <CardHd label="Quick Actions" />
+              <div style={{ padding: "12px 15px", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "7px" }}>
                 {([
-                  { label: "Quick Add", href: "/vault/quick", accent: true,  tip: "Fast manual form -- minimal fields, designed for speed when you already know what something is." },
-                  { label: "Import",    href: "/vault/import", accent: false, tip: "" },
-                  { label: "Vault",     href: "/vault",        accent: false, tip: "" },
-                  { label: "Exhibit",   href: "/museum",       accent: false, tip: "" },
-                  { label: "Add Item",  href: "/vault/add",    accent: false, tip: "Full detail entry -- all fields including grade, purchase price, edition, storage location, and more." },
-                  { label: "Account",   href: "/account",      accent: false, tip: "" },
+                  { label: "Smart Scan", href: "/capture",     accent: true,  tip: "AI-powered item identification." },
+                  { label: "Quick Add",  href: "/vault/quick", accent: false, tip: "Fast manual form — minimal fields." },
+                  { label: "Add Item",   href: "/vault/add",   accent: false, tip: "Full detail entry with all fields." },
+                  { label: "Vault",      href: "/vault",       accent: false, tip: "" },
+                  { label: "Galleries",  href: "/museum",      accent: false, tip: "" },
+                  { label: "Account",    href: "/account",     accent: false, tip: "" },
                 ] as { label: string; href: string; accent: boolean; tip: string }[]).map(({ label, href, accent, tip }) => (
                   <div key={href + label} className="relative">
                     {tip && <div className="absolute -right-1 -top-1 z-10"><InfoTooltip text={tip} /></div>}
-                    <Link href={href} className="block w-full rounded-2xl border px-3 py-3 text-center text-sm font-semibold transition" style={accent ? { borderColor: "rgba(245,181,72,0.28)", background: "rgba(245,181,72,0.09)", color: "#F5B548" } : { borderColor: "var(--theme-border, rgba(245,181,72,0.12))", background: "var(--theme-elevated, rgba(20,32,55,0.9))", color: "#A0956B" }}>{label}</Link>
+                    <Link href={href} style={{
+                      display: "block", width: "100%", borderRadius: "6px",
+                      border: accent ? "1px solid rgba(245,181,72,0.28)" : `1px solid ${C.bd}`,
+                      background: accent ? "rgba(245,181,72,0.09)" : "rgba(255,255,255,0.03)",
+                      color: accent ? C.gold : C.muted,
+                      padding: "9px 6px", textAlign: "center", fontSize: "11px", fontWeight: accent ? 600 : 500, textDecoration: "none"
+                    }}>{label}</Link>
                   </div>
                 ))}
               </div>
-            </section>
-            <section className="rounded-[24px] border p-4" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#A0956B]">Recently Added</p>
-                <Link href="/vault" className="text-sm font-semibold text-[#A0956B] transition hover:text-[#F5B548]">View all &#8594;</Link>
-              </div>
-              {recentItems.length === 0 ? (
-                <div className="mt-3 space-y-2">
-                  {[
-                    { step: "1", title: "Scan your first item", detail: "Open Smart Scan and save a camera-backed record.", href: "/capture", primary: true },
-                    { step: "2", title: "Import a spreadsheet", detail: "Bring in existing rows from eBay, Whatnot, CSV, or Excel.", href: "/vault/import", primary: false },
-                    { step: "3", title: "Review your vault", detail: "Browse universes, set visibility, and build insurance docs.", href: "/vault", primary: false },
-                  ].map((entry) => (
-                    <Link
-                      key={entry.step}
-                      href={entry.href}
-                      className="flex items-center gap-3 rounded-[16px] px-4 py-3.5 transition hover:-translate-y-0.5"
-                      style={{
-                        background: entry.primary
-                          ? "linear-gradient(135deg, rgba(245,181,72,0.14), rgba(245,181,72,0.06))"
-                          : "var(--theme-elevated, rgba(20,32,55,0.9))",
-                        border: entry.primary
-                          ? "1px solid rgba(245,181,72,0.28)"
-                          : "1px solid var(--theme-border, rgba(245,181,72,0.10))",
-                      }}
-                    >
-                      <div
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-black"
-                        style={{
-                          background: entry.primary ? "rgba(245,181,72,0.18)" : "rgba(255,255,255,0.06)",
-                          color: entry.primary ? "#F5B548" : "#A0956B",
-                        }}
-                      >
-                        {entry.step}
-                      </div>
-                      <div className="min-w-0 text-left">
-                        <p className="text-sm font-bold" style={{ color: entry.primary ? "#F5B548" : "var(--fg)" }}>
-                          {entry.title}
-                        </p>
-                        <p className="text-xs" style={{ color: "#A0956B" }}>
-                          {entry.detail}
-                        </p>
-                      </div>
-                      <span className="ml-auto shrink-0 text-sm" style={{ color: entry.primary ? "#F5B548" : "#A0956B" }}>
-                        &#8594;
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <div className="mt-3 space-y-2">
-                  {recentItems.map((item) => (
-                    <Link key={item.id} href={"/vault/item/" + item.id} className="flex items-center justify-between gap-4 rounded-2xl border border-transparent px-3.5 py-2.5 transition" style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))" }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(245,181,72,0.18)"; (e.currentTarget as HTMLAnchorElement).style.background = "var(--theme-elevated, rgba(25,38,62,0.95))"; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = "transparent"; (e.currentTarget as HTMLAnchorElement).style.background = "var(--theme-elevated, rgba(20,32,55,0.9))"; }}
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-text-primary">{item.title}</p>
-                        <p className="mt-0.5 text-xs text-[#A0956B]">{item.universe || item.category || "Collectible"}</p>
-                      </div>
-                      <p className="shrink-0 text-sm font-semibold tabular-nums" style={{ color: "#52D6F4" }}>{formatMoney(item.currentValue ?? item.estimatedValue ?? 0)}</p>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </section>
+            </div>
+            <BiggestMoversPanel items={items} />
           </div>
-          <BiggestMoversPanel items={items} />
+
+        </div>{/* end LEFT */}
+
+        {/* ── RIGHT SIDEBAR ── */}
+        <div style={{ display: "flex", flexDirection: "column", borderLeft: `1px solid ${C.bd}` }} className="max-lg:border-l-0 max-lg:border-t max-lg:mt-4">
+          <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+            <div style={{ padding: "13px 15px", borderBottom: `1px solid ${C.bd}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: "10px", letterSpacing: "1.4px", textTransform: "uppercase", color: C.muted2, fontWeight: 600 }}>Recently Added</span>
+              <Link href="/vault" style={{ fontSize: "11px", color: C.gold, textDecoration: "none" }}>View all</Link>
+            </div>
+            <RecentSidebarItems items={items} />
+          </div>
+
+          <div style={{ padding: "14px 15px", borderTop: `1px solid ${C.bd}` }}>
+            <div style={{ fontSize: "10px", letterSpacing: "1.4px", textTransform: "uppercase", color: C.muted2, fontWeight: 600 }}>Collection Value</div>
+            <div style={{ fontFamily: C.r, fontSize: "28px", fontWeight: 700, lineHeight: 1, marginTop: "9px", color: C.gold }}>{formatMoney(stats.totalValue)}</div>
+            {stats.totalCostValue > 0 && (
+              <div style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "5px" }}>
+                <span style={{ fontSize: "12px", fontWeight: 600, color: gainTone === "gain" ? C.green : C.red }}>{gainTone === "gain" ? "▲" : "▼"} {gainPrefix}{stats.gainPct.toFixed(1)}%</span>
+                <span style={{ fontSize: "11px", color: C.muted }}>overall return</span>
+              </div>
+            )}
+            <svg viewBox="0 0 230 52" width="100%" height="44" style={{ marginTop: "12px" }}>
+              <defs>
+                <linearGradient id="vg3" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={C.gold} stopOpacity=".28"/>
+                  <stop offset="100%" stopColor={C.gold} stopOpacity=".02"/>
+                </linearGradient>
+              </defs>
+              <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2 L230 52 L0 52Z" fill="url(#vg3)"/>
+              <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2" fill="none" stroke={C.gold} strokeWidth="1.8"/>
+              <circle cx="230" cy="2" r="2.5" fill={C.gold}/>
+            </svg>
+            <Link href="/vault/sold" style={{ display: "block", textAlign: "center", marginTop: "8px", fontSize: "11px", color: C.muted, textDecoration: "none" }}>View analytics →</Link>
+          </div>
         </div>
+
       </div>
     </main>
   );
