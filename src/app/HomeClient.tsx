@@ -272,16 +272,24 @@ function HeroAvatarPanel({ avatarUrl, onClick }: { avatarUrl: string; onClick: (
 // ── Gallery Carousel (swipe-enabled) ─────────────────────────────
 function ExhibitionCarousel({ galleries }: { galleries: Gallery[] }) {
   const [idx, setIdx] = useState(0);
-  const touchStartX = useRef<number>(0);
+  const startX = useRef<number>(0);
   const dragX = useRef<number>(0);
+  const dragging = useRef(false);
   const n = galleries.length;
 
   function goNext() { setIdx((i) => (i + 1) % n); }
   function goPrev() { setIdx((i) => (i - 1 + n) % n); }
 
-  function onTouchStart(e: React.TouchEvent) { touchStartX.current = e.touches[0].clientX; dragX.current = 0; }
-  function onTouchMove(e: React.TouchEvent) { dragX.current = e.touches[0].clientX - touchStartX.current; }
+  // Touch
+  function onTouchStart(e: React.TouchEvent) { startX.current = e.touches[0].clientX; dragX.current = 0; }
+  function onTouchMove(e: React.TouchEvent) { dragX.current = e.touches[0].clientX - startX.current; }
   function onTouchEnd() { if (dragX.current < -40) goNext(); else if (dragX.current > 40) goPrev(); dragX.current = 0; }
+
+  // Mouse drag
+  function onMouseDown(e: React.MouseEvent) { dragging.current = true; startX.current = e.clientX; dragX.current = 0; }
+  function onMouseMove(e: React.MouseEvent) { if (!dragging.current) return; dragX.current = e.clientX - startX.current; }
+  function onMouseUp() { if (!dragging.current) return; dragging.current = false; if (dragX.current < -40) goNext(); else if (dragX.current > 40) goPrev(); dragX.current = 0; }
+  function onMouseLeave() { if (dragging.current) { dragging.current = false; if (dragX.current < -40) goNext(); else if (dragX.current > 40) goPrev(); dragX.current = 0; } }
 
   const current = galleries[idx];
   const itemCount = current.itemIds?.length ?? 0;
@@ -290,10 +298,14 @@ function ExhibitionCarousel({ galleries }: { galleries: Gallery[] }) {
   return (
     <section
       className="relative select-none overflow-hidden rounded-[18px] border p-4"
-      style={{ background: C.card, borderColor: "rgba(245,181,72,0.16)" }}
+      style={{ background: C.card, borderColor: "rgba(245,181,72,0.16)", cursor: "grab" }}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseLeave}
     >
       <div className="pointer-events-none absolute -right-6 -top-6 h-36 w-36 rounded-full" style={{ background: "radial-gradient(circle, rgba(245,181,72,0.10) 0%, transparent 70%)", filter: "blur(20px)" }} />
       {/* Header */}
@@ -667,13 +679,6 @@ export default function HomeClient() {
             </div>
           )}
 
-          {/* Collections strip */}
-          {galleries.length > 0 && (
-            <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
-              <CardHd label="Your Collections" href="/museum" linkText="View all" />
-              <CollectionsStrip galleries={galleries} />
-            </div>
-          )}
 
           {/* Your Profile */}
           {profileId && (
