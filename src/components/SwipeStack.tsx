@@ -13,7 +13,7 @@
 // Rendering: CSS transform + transition. Top card is draggable, cards below are
 // scaled/offset to give a stacked-depth effect.
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import type { VaultItem as ModelItem } from "@/lib/vaultModel";
 import { itemCurrentValue } from "@/lib/portfolioMetrics";
 import { isNotable } from "@/lib/itemIntelligence";
@@ -465,6 +465,15 @@ export default function SwipeStack({
   // Undo stack for gallery mode
   const [history, setHistory] = useState<Array<{ item: ModelItem; action: "want" | "skip" }>>([]);
 
+  // Suppress all card transitions for one frame when a swipe commits (prevents depth-card "fling back")
+  const [suppressTransition, setSuppressTransition] = useState(false);
+
+  useEffect(() => {
+    if (!suppressTransition) return;
+    const id = requestAnimationFrame(() => setSuppressTransition(false));
+    return () => cancelAnimationFrame(id);
+  }, [suppressTransition]);
+
   const cardRef = useRef<HTMLDivElement>(null);
   const pointerStart = useRef<{ x: number; y: number; pointerId: number } | null>(null);
   const didMove = useRef(false);
@@ -521,6 +530,7 @@ export default function SwipeStack({
 
       // ── Animate the leaving card as an overlay ──
       setDrag(null);
+      setSuppressTransition(true); // kill depth-card transition for one frame so new top card snaps in
       setLeavingItem({ item: currentItem, direction, dx: captureDx, dy: captureDy });
       setFlying(direction);
 
@@ -635,7 +645,7 @@ export default function SwipeStack({
     mode === "gallery" ? index + 1 : index + 1;
 
   const transition =
-    isDragging
+    isDragging || suppressTransition
       ? "none"
       : `transform ${SNAP_DURATION} cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
 
@@ -664,7 +674,7 @@ export default function SwipeStack({
                     style={{
                       transform: `scale(${scale}) translateY(${translateY}px)`,
                       transformOrigin: "bottom center",
-                      transition: `transform ${SNAP_DURATION} ease`,
+                      transition: suppressTransition ? "none" : `transform ${SNAP_DURATION} ease`,
                       zIndex: STACK_DEPTH - depth,
                       pointerEvents: "none",
                     }}
@@ -751,10 +761,7 @@ export default function SwipeStack({
       {/* Hint text */}
       {!isEmpty && !isExhausted && (
         <div className="mt-2 text-center">
-          <span
-            className="text-[11px]"
-            style={{ color: "rgba(255,255,255,0.35)" }}
-          >
+          <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>
             {mode === "gallery"
               ? "Swipe right to want · left to skip · tap for details"
               : "Swipe or use buttons to browse · tap to view"}
