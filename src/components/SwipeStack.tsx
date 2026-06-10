@@ -460,6 +460,8 @@ export default function SwipeStack({
   const [drag, setDrag] = useState<{ x: number; y: number } | null>(null);
   // Flying state: which direction card is flying off + animating
   const [flying, setFlying] = useState<"left" | "right" | null>(null);
+  // Leaving card: the card that is flying off (rendered as overlay while new card is already shown)
+  const [leavingItem, setLeavingItem] = useState<{ item: ModelItem; direction: "left" | "right"; dx: number; dy: number } | null>(null);
   // Undo stack for gallery mode
   const [history, setHistory] = useState<Array<{ item: ModelItem; action: "want" | "skip" }>>([]);
 
@@ -489,39 +491,45 @@ export default function SwipeStack({
 
   const triggerAction = useCallback(
     (direction: "left" | "right") => {
-      const currentItem =
-        mode === "gallery" ? items[index] : items[index];
+      const currentItem = items[index];
       if (!currentItem) return;
 
+      // Capture the current drag offset so the leaving card starts from exactly where the finger released
+      const captureDx = drag?.x ?? 0;
+      const captureDy = drag?.y ?? 0;
+
+      // ── Advance the index immediately so the new card is already at full size ──
+      if (mode === "gallery") {
+        const action = direction === "right" ? "want" : "skip";
+        setHistory((h) => [...h, { item: currentItem, action }]);
+        if (direction === "right") onWant?.(currentItem);
+        else onSkip?.(currentItem);
+
+        const nextIndex = index + 1;
+        if (nextIndex >= items.length) {
+          onEnd?.();
+        } else {
+          setIndex(nextIndex);
+        }
+      } else {
+        const nextIndex =
+          direction === "right"
+            ? Math.min(index + 1, items.length - 1)
+            : Math.max(index - 1, 0);
+        setIndex(nextIndex);
+      }
+
+      // ── Animate the leaving card as an overlay ──
+      setDrag(null);
+      setLeavingItem({ item: currentItem, direction, dx: captureDx, dy: captureDy });
       setFlying(direction);
 
       setTimeout(() => {
         setFlying(null);
-        setDrag(null);
-
-        if (mode === "gallery") {
-          const action = direction === "right" ? "want" : "skip";
-          setHistory((h) => [...h, { item: currentItem, action }]);
-          if (direction === "right") onWant?.(currentItem);
-          else onSkip?.(currentItem);
-
-          const nextIndex = index + 1;
-          if (nextIndex >= items.length) {
-            onEnd?.();
-          } else {
-            setIndex(nextIndex);
-          }
-        } else {
-          // vault mode: navigate
-          const nextIndex =
-            direction === "right"
-              ? Math.min(index + 1, items.length - 1)
-              : Math.max(index - 1, 0);
-          setIndex(nextIndex);
-        }
+        setLeavingItem(null);
       }, parseInt(FLY_DURATION));
     },
-    [index, items, mode, onWant, onSkip, onEnd]
+    [index, items, mode, drag, onWant, onSkip, onEnd]
   );
 
   const onPointerUp = useCallback(
@@ -595,9 +603,13 @@ export default function SwipeStack({
 
   const isDragging = drag !== null && !flying;
   const flyDistance = typeof window === "undefined" ? 1200 : window.innerWidth + 200;
-  const dx = flying === "right" ? flyDistance : flying === "left" ? -flyDistance : (drag?.x ?? 0);
+  // For dragging/leaving, dx/dy always come from drag state (leaving card handled separately)
+  const dx = drag?.x ?? 0;
   const dy = drag?.y ?? 0;
   const rotation = (dx / 360) * ROTATION_MAX;
+  // Leaving card overlay transform
+  const leavingFlyX = leavingItem ? (leavingItem.direction === "right" ? flyDistance : -flyDistance) : 0;
+  const leavingRotation = leavingItem ? ((leavingFlyX / 360) * ROTATION_MAX) : 0;
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -623,9 +635,7 @@ export default function SwipeStack({
     mode === "gallery" ? index + 1 : index + 1;
 
   const transition =
-    flying
-      ? `transform ${FLY_DURATION} cubic-bezier(0.4, 0, 0.2, 1)`
-      : isDragging
+    isDragging
       ? "none"
       : `transform ${SNAP_DURATION} cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
 
@@ -686,6 +696,22 @@ export default function SwipeStack({
               </div>
             )}
 
+            {/* Leaving card overlay — flies off while new card is already shown at full size */}
+            {leavingItem && (
+              <div
+                className="absolute inset-0 rounded-[22px] overflow-hidden pointer-events-none"
+                style={{
+                  transform: `translate(${leavingFlyX}px, ${leavingItem.dy}px) rotate(${leavingRotation}deg)`,
+                  transition: `transform ${FLY_DURATION} cubic-bezier(0.4, 0, 0.2, 1)`,
+                  zIndex: STACK_DEPTH + 2,
+                  willChange: "transform",
+                }}
+              >
+                              <CardFace item={leavingItem.item} isTop={true} />
+                <SwipeHint dx={leavingFlyX} mode={mode} />
+              </div>
+            )}
+
             {/* Counter */}
             {totalCount > 1 && (
               <CounterPill current={currentNumber} total={totalCount} />
@@ -706,22 +732,29 @@ export default function SwipeStack({
 
       {/* Undo row — gallery only */}
       {mode === "gallery" && history.length > 0 && (
-        <div className="flex justify-center pt-3">
+        <div className="mt-2 flex justify-center">
           <button
-            type="button"
             onClick={handleUndo}
-            className="text-[12px] transition-opacity hover:opacity-80"
-            style={{ color: "var(--muted)" }}
+            className="flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold border"
+            style={{
+              background: "rgba(0,0,0,0.55)",
+              color: "rgba(255,255,255,0.75)",
+              borderColor: "rgba(255,255,255,0.15)",
+              backdropFilter: "blur(6px)",
+            }}
           >
-            ↩ Undo last swipe
+            ↩ Undo
           </button>
         </div>
       )}
 
-      {/* Swipe hint text — shown when stack is fresh */}
-      {!isEmpty && !isExhausted && !drag && !flying && (
-        <div className="text-center pt-2">
-          <span className="text-[11px]" style={{ color: "var(--muted2)" }}>
+      {/* Hint text */}
+      {!isEmpty && !isExhausted && (
+        <div className="mt-2 text-center">
+          <span
+            className="text-[11px]"
+            style={{ color: "rgba(255,255,255,0.35)" }}
+          >
             {mode === "gallery"
               ? "Swipe right to want · left to skip · tap for details"
               : "Swipe or use buttons to browse · tap to view"}
@@ -729,4 +762,5 @@ export default function SwipeStack({
         </div>
       )}
     </div>
-  );}
+  );
+}
