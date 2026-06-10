@@ -49,8 +49,8 @@ const STACK_DEPTH = 3;            // how many cards to render behind the top
 const STACK_OFFSET_Y = 10;        // px per depth level
 const STACK_SCALE_STEP = 0.05;    // scale reduction per depth level
 const TAP_MOVE_THRESHOLD = 8;     // px — below this, treat as tap not drag
-const SNAP_DURATION = "320ms";
-const FLY_DURATION = "380ms";
+const SNAP_DURATION = "260ms";
+const FLY_DURATION = "340ms";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -627,7 +627,7 @@ export default function SwipeStack({
       ? `transform ${FLY_DURATION} cubic-bezier(0.4, 0, 0.2, 1)`
       : isDragging
       ? "none"
-      : `transform ${SNAP_DURATION} cubic-bezier(0.34, 1.56, 0.64, 1)`;
+      : `transform ${SNAP_DURATION} cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
 
   return (
     <div className={`flex flex-col ${className}`}>
@@ -730,4 +730,3 @@ export default function SwipeStack({
       )}
     </div>
   );
-}
