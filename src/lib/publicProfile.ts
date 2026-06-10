@@ -8,11 +8,19 @@ import type { VaultImage, VaultItem } from "@/lib/vaultModel";
 
 type UnknownRecord = Record<string, unknown>;
 
+export type SocialLinks = Partial<Record<
+  "instagram" | "twitter" | "tiktok" | "youtube" | "facebook" | "whatnot" | "ebay" | "website" | "linktree",
+  string
+>>;
+
 export type PublicProfile = {
   profileId: string;
   displayName: string;
   avatarEmoji: string;
+  avatarUrl?: string;
+  bannerUrl?: string;
   bio?: string;
+  socialLinks?: SocialLinks;
 };
 
 function asRecord(value: unknown): UnknownRecord {
@@ -139,20 +147,34 @@ export async function fetchPublicProfile(profileId: string): Promise<PublicProfi
   const cleanProfileId = String(profileId ?? "").trim();
   if (!supabase || !cleanProfileId) return null;
 
-  const { data, error } = await supabase
-    .from("public_profiles")
-    .select("profile_id, display_name, avatar_emoji, bio")
-    .eq("profile_id", cleanProfileId)
-    .maybeSingle();
+  const [{ data, error }, { data: profileRow }] = await Promise.all([
+    supabase
+      .from("public_profiles")
+      .select("profile_id, display_name, avatar_emoji, bio")
+      .eq("profile_id", cleanProfileId)
+      .maybeSingle(),
+    supabase
+      .from("profiles")
+      .select("social_links, bio, avatar_url, banner_url")
+      .eq("id", cleanProfileId)
+      .maybeSingle(),
+  ]);
 
   if (error) throw new Error(error.message || "Failed to load public profile.");
   if (!data) return null;
+
+  const bio = typeof profileRow?.bio === "string" && profileRow.bio
+    ? profileRow.bio
+    : (typeof data.bio === "string" && data.bio ? data.bio : undefined);
 
   return {
     profileId: String(data.profile_id),
     displayName: String(data.display_name || "Collector"),
     avatarEmoji: String(data.avatar_emoji || "🗝️"),
-    bio: typeof data.bio === "string" && data.bio ? data.bio : undefined,
+    avatarUrl: typeof profileRow?.avatar_url === "string" && profileRow.avatar_url ? profileRow.avatar_url : undefined,
+    bannerUrl: typeof profileRow?.banner_url === "string" && profileRow.banner_url ? profileRow.banner_url : undefined,
+    bio,
+    socialLinks: (profileRow?.social_links as SocialLinks) ?? undefined,
   };
 }
 
@@ -169,7 +191,7 @@ export async function fetchPublicVaultItems(profileId: string): Promise<VaultIte
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message || "Failed to load public vault.");
-  return (data ?? []).map(publicRowToItem);
+  return (data ?? []).map(r => publicRowToItem(r) as MarketItem);
 }
 
 export function getPublicVaultUrl(profileId = getStoredActiveProfileId()) {
@@ -205,10 +227,5 @@ export async function fetchMarketItems(opts?: {
   const { data, error } = await query;
   if (error) throw new Error(error.message || "Failed to load market.");
 
-  return (data ?? []).map((row) => ({
-    ...publicRowToItem(row),
-    sellerProfileId: String(row.profile_id ?? ""),
-    sellerDisplayName: typeof row.display_name === "string" ? row.display_name : undefined,
-    sellerAvatarEmoji: typeof row.avatar_emoji === "string" ? row.avatar_emoji : undefined,
-  }));
+  return (data ?? []).map(r => publicRowToItem(r) as MarketItem);
 }
