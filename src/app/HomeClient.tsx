@@ -270,7 +270,7 @@ function HeroAvatarPanel({ avatarUrl, onClick }: { avatarUrl: string; onClick: (
 }
 
 // ── Featured Gallery card (compact) ─────────────────────────────
-function FeaturedGalleryCard({ galleries }: { galleries: Gallery[] }) {
+function FeaturedGalleryCard({ galleries, compact = false }: { galleries: Gallery[]; compact?: boolean }) {
   const [idx, setIdx] = useState(0);
   const sectionRef = useRef<HTMLDivElement>(null);
   const n = galleries.length;
@@ -296,7 +296,7 @@ function FeaturedGalleryCard({ galleries }: { galleries: Gallery[] }) {
 
   return (
     <div ref={sectionRef} style={{ touchAction: "pan-y", userSelect: "none" }}>
-      <Link href={"/gallery/" + current.id} style={{ display: "block", width: "100%", height: "90px", overflow: "hidden", borderRadius: "7px", border: `1px solid ${C.bd}`, background: "rgba(10,18,35,0.9)" }}>
+      <Link href={"/gallery/" + current.id} style={{ display: "block", width: "100%", height: compact ? "60px" : "90px", overflow: "hidden", borderRadius: "7px", border: `1px solid ${C.bd}`, background: "rgba(10,18,35,0.9)" }}>
         {current.coverImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={current.coverImage} alt={current.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} draggable={false} />
@@ -305,7 +305,7 @@ function FeaturedGalleryCard({ galleries }: { galleries: Gallery[] }) {
         )}
       </Link>
       <div style={{ marginTop: "9px" }}>
-        <div style={{ fontFamily: C.r, fontSize: "15px", fontWeight: 600, lineHeight: 1.2, color: C.text }}>{current.title || "Untitled"}</div>
+        <div style={{ fontFamily: C.r, fontSize: compact ? "13px" : "15px", fontWeight: 600, lineHeight: 1.2, color: C.text }}>{current.title || "Untitled"}</div>
         <div style={{ fontSize: "11px", color: C.muted, marginTop: "2px" }}>
           {itemCount} piece{itemCount !== 1 ? "s" : ""}
           {n > 1 && <span style={{ marginLeft: "8px", opacity: 0.5 }}>{idx + 1}/{n}</span>}
@@ -635,11 +635,13 @@ export default function HomeClient() {
             </div>
             <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
               <CardHd label="Your Collections" href="/museum" linkText="View all" />
-              {galleries.length > 0 ? (
-                <CollectionsStrip galleries={galleries} />
-              ) : (
-                <div style={{ padding: "12px 15px", fontSize: "11px", color: C.muted, opacity: 0.6 }}>Your galleries will appear here.</div>
-              )}
+              <div style={{ padding: "10px 12px" }}>
+                {galleries.length > 0 ? (
+                  <FeaturedGalleryCard galleries={galleries} compact />
+                ) : (
+                  <div style={{ fontSize: "11px", color: C.muted, opacity: 0.6 }}>Your galleries will appear here.</div>
+                )}
+              </div>
             </div>
           </div>
 
