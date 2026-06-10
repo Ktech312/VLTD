@@ -269,6 +269,36 @@ function HeroAvatarPanel({ avatarUrl, onClick }: { avatarUrl: string; onClick: (
   );
 }
 
+// ── Featured Gallery card (left, compact) ────────────────────────
+function FeaturedGalleryCard({ galleries }: { galleries: Gallery[] }) {
+  const [idx, setIdx] = useState(0);
+  const n = galleries.length;
+  const current = galleries[idx];
+  const itemCount = current.itemIds?.length ?? 0;
+  return (
+    <div style={{ padding: "12px 14px" }}>
+      <Link href={"/gallery/" + current.id} style={{ display: "block", width: "100%", height: "88px", borderRadius: "7px", border: `1px solid ${C.bd}`, background: "rgba(10,18,35,0.9)", overflow: "hidden" }}>
+        {current.coverImage
+          ? <img src={current.coverImage} alt={current.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px", opacity: 0.2 }}>🖼️</div>}
+      </Link>
+      <div style={{ marginTop: "9px" }}>
+        <div style={{ fontFamily: C.r, fontSize: "15px", fontWeight: 600, color: C.text }}>{current.title || "Untitled"}</div>
+        <div style={{ fontSize: "11px", color: C.muted, marginTop: "2px" }}>{itemCount} piece{itemCount !== 1 ? "s" : ""}{n > 1 ? ` · ${idx + 1}/${n}` : ""}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "7px" }}>
+          <Link href={"/gallery/" + current.id} style={{ fontSize: "11px", color: C.gold, textDecoration: "none" }}>View Gallery →</Link>
+          {n > 1 && (
+            <div style={{ display: "flex", gap: "4px", marginLeft: "auto" }}>
+              <button onClick={() => setIdx((i) => (i - 1 + n) % n)} style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "5px", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "13px", cursor: "pointer" }}>‹</button>
+              <button onClick={() => setIdx((i) => (i + 1) % n)} style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "5px", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "13px", cursor: "pointer" }}>›</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Featured Gallery carousel (coverflow, compact) ──────────────
 function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
   const [idx, setIdx] = useState(0);
@@ -650,11 +680,12 @@ export default function HomeClient() {
             <HeroAvatarPanel avatarUrl={avatarUrl} onClick={() => setShowAvatarPicker(true)} />
           </div>
 
-          {/* Featured Gallery carousel + Collections strip side by side */}
+          {/* Featured Gallery card (left) + coverflow carousel (right) */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }} className="max-sm:grid-cols-1">
             <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
+              <CardHd label="Featured Gallery" />
               {galleries.length > 0 ? (
-                <FeaturedGalleryCarousel galleries={galleries} />
+                <FeaturedGalleryCard galleries={galleries} />
               ) : (
                 <div style={{ padding: "16px" }}>
                   <div style={{ fontFamily: C.r, fontSize: "15px", fontWeight: 600, color: C.text }}>No galleries yet</div>
@@ -663,9 +694,9 @@ export default function HomeClient() {
               )}
             </div>
             <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
-              <CardHd label="Your Collections" href="/museum" linkText="View all" />
+              <CardHd label="Active Exhibitions" href="/museum" linkText="All" />
               {galleries.length > 0 ? (
-                <CollectionsStrip galleries={galleries} />
+                <FeaturedGalleryCarousel galleries={galleries} />
               ) : (
                 <div style={{ padding: "12px 15px", fontSize: "11px", color: C.muted, opacity: 0.6 }}>Your galleries will appear here.</div>
               )}
