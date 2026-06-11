@@ -706,7 +706,7 @@ export default function ItemMedia({
       {mounted && editTarget && typeof document !== "undefined"
         ? createPortal(
             <div
-              className="fixed inset-0 z-[95] bg-black/90 backdrop-blur-sm"
+              className="fixed inset-0 z-[95] flex items-start justify-center bg-black/90 backdrop-blur-sm"
               role="dialog"
               aria-modal="true"
               aria-label="Edit saved photo"
@@ -714,19 +714,21 @@ export default function ItemMedia({
                 if (event.target === event.currentTarget) requestCloseImageEdit();
               }}
             >
-              <ScanCropEditor
-                imageUrl={editTarget.url}
-                crop={editTarget.crop}
-                onChange={(crop) => setEditTarget((prev) => (prev ? { ...prev, crop } : prev))}
-                onApply={() => void applyImageEdit()}
-                onReset={() => setEditTarget((prev) => (prev ? { ...prev, crop: FULL_CROP } : prev))}
-                onCancel={requestCloseImageEdit}
-                isApplying={isEditingImage}
-                title="EDIT PHOTO"
-                description="Crop and zoom this saved item photo. The edited version replaces the current photo."
-                applyLabel="Save Photo"
-                viewportFixed
-              />
+              <div className="w-full max-w-3xl px-3 pt-4">
+                <ScanCropEditor
+                  imageUrl={editTarget.url}
+                  crop={editTarget.crop}
+                  onChange={(crop) => setEditTarget((prev) => (prev ? { ...prev, crop } : prev))}
+                  onApply={() => void applyImageEdit()}
+                  onReset={() => setEditTarget((prev) => (prev ? { ...prev, crop: FULL_CROP } : prev))}
+                  onCancel={requestCloseImageEdit}
+                  isApplying={isEditingImage}
+                  title="EDIT PHOTO"
+                  description="Crop and zoom this saved item photo. The edited version replaces the current photo."
+                  applyLabel="Save Photo"
+                  compact
+                />
+              </div>
             </div>,
             document.body
           )
