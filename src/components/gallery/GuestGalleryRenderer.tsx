@@ -266,7 +266,7 @@ function getShelfSlotLayout(model: GuestGalleryViewModel) {
   )?.slotLayout;
 }
 
-type OwnerProfile = { displayName: string; username: string | null; avatar: string };
+type OwnerProfile = { displayName: string; profileId: string; avatar: string };
 
 export default function GuestGalleryRenderer({
   model,
@@ -291,14 +291,14 @@ export default function GuestGalleryRenderer({
     if (!supabase) return;
     void supabase
       .from("public_profiles")
-      .select("display_name, username, avatar_emoji")
+      .select("display_name, avatar_emoji")
       .eq("profile_id", profileId)
       .maybeSingle()
       .then(({ data }) => {
         if (data) {
           setOwner({
             displayName: String(data.display_name || "Collector"),
-            username: typeof data.username === "string" && data.username ? data.username : null,
+            profileId,
             avatar: String(data.avatar_emoji || "🗝️"),
           });
         }
@@ -427,32 +427,33 @@ export default function GuestGalleryRenderer({
                     {model.galleryDescription}
                   </p>
 
-                  {/* Owner byline */}
-                  {owner ? (
-                    <div className="mt-4 flex items-center gap-2">
-                      <span className="text-lg leading-none">{owner.avatar}</span>
-                      {owner.username ? (
+                  {/* Owner byline + stats */}
+                  <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    {owner ? (
+                      <>
+                        <span className="text-lg leading-none">{owner.avatar}</span>
                         <Link
-                          href={`/v/${owner.username}`}
+                          href={`/v/${owner.profileId}`}
                           className="text-sm font-semibold transition-opacity hover:opacity-80"
                           style={{ color: "var(--gold, #F5B548)" }}
                         >
                           {owner.displayName}
                         </Link>
-                      ) : (
-                        <span className="text-sm font-semibold" style={{ color: "var(--gold, #F5B548)" }}>
-                          {owner.displayName}
-                        </span>
-                      )}
-                      <span className="text-xs text-[color:var(--muted2)]">
-                        · {model.galleryItems.length} {model.galleryItems.length === 1 ? "item" : "items"}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="mt-4 text-sm" style={{ color: "var(--gold, #F5B548)" }}>
+                        <span className="text-[color:var(--muted2)]" aria-hidden="true">·</span>
+                      </>
+                    ) : null}
+                    <span className="text-sm font-medium" style={{ color: "var(--gold, #F5B548)" }}>
                       {model.galleryItems.length} {model.galleryItems.length === 1 ? "item" : "items"}
-                    </div>
-                  )}
+                    </span>
+                    {sectionViews.length > 0 ? (
+                      <>
+                        <span className="text-[color:var(--muted2)]" aria-hidden="true">·</span>
+                        <span className="text-sm font-medium" style={{ color: "var(--gold, #F5B548)" }}>
+                          {sectionViews.length} {sectionViews.length === 1 ? "section" : "sections"}
+                        </span>
+                      </>
+                    ) : null}
+                  </div>
                 </div>
 
                 <div className="flex flex-col items-start gap-2 lg:items-end">
