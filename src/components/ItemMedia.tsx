@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import ImageViewer from "@/components/ImageViewer";
+import CameraCapturePanel from "@/components/CameraCapturePanel";
 import ScanCropEditor from "@/components/ScanCropEditor";
 import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 
@@ -162,8 +163,6 @@ export default function ItemMedia({
   const [editTarget, setEditTarget] = useState<{ index: number; url: string; crop: ScanCropRect } | null>(null);
   const [isEditingImage, setIsEditingImage] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
 
   const imageMeta = useMemo(() => {
     return Array.isArray(item?.images) ? item!.images! : [];
@@ -223,58 +222,11 @@ export default function ItemMedia({
   }
 
   function openRetakeCamera() {
-    openCamera();
-  }
-
-  function openCamera() {
-    if (!navigator.mediaDevices?.getUserMedia) {
-      // Fallback for browsers without getUserMedia
-      cameraRef.current?.click();
-      return;
-    }
     setCameraOpen(true);
   }
 
-  async function startCameraStream() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } },
-        audio: false,
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    } catch {
-      // Permission denied or no camera — fall back to file picker
-      setCameraOpen(false);
-      cameraRef.current?.click();
-    }
-  }
-
-  function stopCameraStream() {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
-  }
-
-  function captureFromCamera() {
-    const video = videoRef.current;
-    if (!video) return;
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.drawImage(video, 0, 0);
-    canvas.toBlob((blob) => {
-      if (!blob) return;
-      const file = new File([blob], `camera-${Date.now()}.jpg`, { type: "image/jpeg" });
-      stopCameraStream();
-      setCameraOpen(false);
-      startDraftFromFile(file);
-    }, "image/jpeg", 0.92);
+  function openCamera() {
+    setCameraOpen(true);
   }
 
   function startDraftFromFile(file: File) {
@@ -662,54 +614,16 @@ export default function ItemMedia({
         }}
       />
 
-      {/* Camera capture overlay */}
+      {/* Camera capture — reuses the same CameraCapturePanel as vault/add */}
       {mounted && cameraOpen && typeof document !== "undefined"
         ? createPortal(
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-label="Take photo"
-              style={{ position: "fixed", inset: 0, zIndex: 96, background: "rgba(0,0,0,0.96)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", paddingTop: 16 }}
-            >
-              <div style={{ width: "100%", maxWidth: 640, padding: "0 12px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", color: "var(--muted)" }}>CAMERA</span>
-                  <button
-                    type="button"
-                    onClick={() => { stopCameraStream(); setCameraOpen(false); }}
-                    style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "50%", width: 36, height: 36, fontSize: 18, color: "white", cursor: "pointer" }}
-                  >
-                    ×
-                  </button>
-                </div>
-                <video
-                  ref={(el) => {
-                    videoRef.current = el;
-                    if (el && cameraOpen) void startCameraStream();
-                  }}
-                  autoPlay
-                  playsInline
-                  muted
-                  style={{ width: "100%", borderRadius: 16, background: "#111", display: "block", maxHeight: "60dvh", objectFit: "cover" }}
-                />
-                <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
-                  <button
-                    type="button"
-                    onClick={captureFromCamera}
-                    style={{ flex: 1, padding: "14px 0", borderRadius: 16, background: "var(--theme-gold, #f5b548)", color: "#0B0B0B", fontWeight: 700, fontSize: 15, border: "none", cursor: "pointer" }}
-                  >
-                    Take Photo
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { stopCameraStream(); setCameraOpen(false); cameraRef.current?.click(); }}
-                    style={{ padding: "14px 18px", borderRadius: 16, background: "rgba(255,255,255,0.08)", color: "white", fontWeight: 600, fontSize: 13, border: "1px solid rgba(255,255,255,0.15)", cursor: "pointer" }}
-                  >
-                    Browse Files
-                  </button>
-                </div>
-              </div>
-            </div>,
+            <CameraCapturePanel
+              title="Capture Item Photo"
+              description="Use the guided camera to frame, crop, and improve this item before Smart Scan identifies it."
+              onCapture={(file) => { setCameraOpen(false); startDraftFromFile(file); }}
+              onClose={() => setCameraOpen(false)}
+              onUseFileInstead={() => { setCameraOpen(false); cameraRef.current?.click(); }}
+            />,
             document.body
           )
         : null}
