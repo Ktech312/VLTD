@@ -1041,15 +1041,6 @@ export default function VaultUniversePage() {
           </div>
         </section>
 
-
-        {featuredItem ? (
-          <div className="mt-3">
-            <ItemIntelligencePanel
-              item={featuredItem}
-              intelligence={intelligenceMap[featuredItem.id] ?? null}
-            />
-          </div>
-        ) : null}
         <section className="mt-3 rounded-[18px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="grid gap-2 lg:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,0.7fr))]">
             <input
@@ -1144,6 +1135,15 @@ export default function VaultUniversePage() {
             </PillButton>
           </div>
         </section>
+
+        {featuredItem ? (
+          <div className="mt-3">
+            <ItemIntelligencePanel
+              item={featuredItem}
+              intelligence={intelligenceMap[featuredItem.id] ?? null}
+            />
+          </div>
+        ) : null}
 
         {filteredItems.length === 0 ? (
           <VaultEmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearFilters} />

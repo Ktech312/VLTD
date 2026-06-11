@@ -333,10 +333,10 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
         )}
       </div>
       {/* Coverflow */}
-      <div style={{ position: "relative", height: "120px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ position: "relative", height: "160px", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {slots.map(({ g, offset }) => {
           const isActive = offset === 0;
-          const tx = offset === -1 ? "-80px" : offset === 0 ? "0px" : offset === 1 ? "72px" : "110px";
+          const tx = offset === -1 ? "-100px" : offset === 0 ? "0px" : offset === 1 ? "92px" : "138px";
           const scale = isActive ? 1 : Math.abs(offset) === 1 ? 0.70 : 0.52;
           const opacity = isActive ? 1 : Math.abs(offset) === 1 ? 0.55 : 0.25;
           const zIndex = isActive ? 10 : Math.abs(offset) === 1 ? 5 : 1;
@@ -344,7 +344,7 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
             <button key={g.id + String(offset)} type="button"
               onClick={offset < 0 ? goPrev : offset > 0 ? goNext : undefined}
               className="absolute overflow-hidden transition-all duration-300"
-              style={{ width: "86px", height: "114px", borderRadius: "10px",
+              style={{ width: "112px", height: "150px", borderRadius: "10px",
                 transform: `translateX(${tx}) scale(${scale})`, opacity, zIndex,
                 border: isActive ? `2px solid rgba(245,181,72,0.55)` : `1px solid rgba(245,181,72,0.14)`,
                 background: "rgba(10,18,35,0.9)",
@@ -360,19 +360,11 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
           );
         })}
       </div>
-      {/* Buttons */}
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "10px" }}>
-        <Link href={"/gallery/" + current.id} style={{ borderRadius: "6px", padding: "6px 14px", fontSize: "11px", fontWeight: 700, background: `linear-gradient(135deg,#8B6914,#F5B548)`, color: "#0B0B0B", textDecoration: "none" }}>View Gallery →</Link>
-        <Link href="/museum" style={{ borderRadius: "6px", border: `1px solid ${C.goldBd}`, padding: "5px 12px", fontSize: "11px", fontWeight: 600, color: C.gold, textDecoration: "none" }}>All Galleries</Link>
+      {/* Bottom row: View Gallery centered, All Galleries right */}
+      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", marginTop: "12px" }}>
+        <Link href={"/gallery/" + current.id} style={{ borderRadius: "6px", padding: "6px 14px", fontSize: "11px", fontWeight: 700, background: `linear-gradient(135deg,#8B6914,#F5B548)`, color: "#0B0B0B", textDecoration: "none" }}>View Gallery ↑</Link>
+        <Link href="/museum" style={{ position: "absolute", right: 0, fontSize: "11px", fontWeight: 600, color: C.gold, textDecoration: "none", opacity: 0.75 }}>All Galleries</Link>
       </div>
-      {/* Dots */}
-      {n > 1 && (
-        <div style={{ display: "flex", gap: "4px", marginTop: "8px" }}>
-          {galleries.map((_, di) => (
-            <button key={di} type="button" onClick={() => setIdx(di)} style={{ height: "3px", borderRadius: "2px", border: "none", transition: "all 0.3s", width: di === idx ? "14px" : "4px", background: di === idx ? C.gold : "rgba(245,181,72,0.22)", cursor: "pointer" }} />
-          ))}
-        </div>
-      )}
     </div>
   );
 }

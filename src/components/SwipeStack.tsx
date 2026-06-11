@@ -13,7 +13,7 @@
 // Rendering: CSS transform + transition. Top card is draggable, cards below are
 // scaled/offset to give a stacked-depth effect.
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import type { VaultItem as ModelItem } from "@/lib/vaultModel";
 import { itemCurrentValue } from "@/lib/portfolioMetrics";
 import { isNotable } from "@/lib/itemIntelligence";
@@ -49,8 +49,8 @@ const STACK_DEPTH = 3;            // how many cards to render behind the top
 const STACK_OFFSET_Y = 10;        // px per depth level
 const STACK_SCALE_STEP = 0.05;    // scale reduction per depth level
 const TAP_MOVE_THRESHOLD = 8;     // px — below this, treat as tap not drag
-const SNAP_DURATION = "260ms";
-const FLY_DURATION = "340ms";
+const SNAP_DURATION = "320ms";
+const FLY_DURATION = "380ms";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -253,47 +253,6 @@ function SwipeHint({
       >
         {label}
       </div>
-    </div>
-  );
-}
-
-// ─── Leaving card (fly-off overlay) ──────────────────────────────────────────
-// Two-frame pattern: mount at drag position (no transition), then one RAF later
-// apply the fly-out transform with transition. This lets CSS animate the full arc.
-
-interface LeavingCardProps {
-  item: ModelItem;
-  startDx: number;
-  startDy: number;
-  flyX: number;
-  flyRotation: number;
-  mode: SwipeMode;
-}
-
-function LeavingCard({ item, startDx, startDy, flyX, flyRotation, mode }: LeavingCardProps) {
-  const [active, setActive] = useState(false);
-
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setActive(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
-
-  const tx = active ? flyX : startDx;
-  const ty = active ? 0 : startDy;
-  const rot = active ? flyRotation : (startDx / 360) * ROTATION_MAX;
-
-  return (
-    <div
-      className="absolute inset-0 rounded-[22px] overflow-hidden pointer-events-none"
-      style={{
-        transform: `translate(${tx}px, ${ty}px) rotate(${rot}deg)`,
-        transition: active ? `transform ${FLY_DURATION} cubic-bezier(0.4, 0, 0.2, 1)` : "none",
-        zIndex: STACK_DEPTH + 2,
-        willChange: "transform",
-      }}
-    >
-      <CardFace item={item} isTop />
-      <SwipeHint dx={active ? flyX : startDx} mode={mode} />
     </div>
   );
 }
@@ -501,13 +460,6 @@ export default function SwipeStack({
   const [drag, setDrag] = useState<{ x: number; y: number } | null>(null);
   // Flying state: which direction card is flying off + animating
   const [flying, setFlying] = useState<"left" | "right" | null>(null);
-  // Leaving card: the visual top card that just flew off (rendered as overlay while new card is shown)
-  const [leavingItem, setLeavingItem] = useState<{
-    item: ModelItem;
-    direction: "left" | "right";
-    dx: number;
-    dy: number;
-  } | null>(null);
   // Undo stack for gallery mode
   const [history, setHistory] = useState<Array<{ item: ModelItem; action: "want" | "skip" }>>([]);
 
@@ -537,50 +489,39 @@ export default function SwipeStack({
 
   const triggerAction = useCallback(
     (direction: "left" | "right") => {
-      const currentItem = items[index];
+      const currentItem =
+        mode === "gallery" ? items[index] : items[index];
       if (!currentItem) return;
 
-      // items[index] is both the semantic current item AND the visual top card (stack is now correct).
-
-      // Capture the current drag offset so the leaving card starts from exactly where the finger released
-      const captureDx = drag?.x ?? 0;
-      const captureDy = drag?.y ?? 0;
-
-      // ── Advance the index immediately so the new card is already at full size ──
-      if (mode === "gallery") {
-        const action = direction === "right" ? "want" : "skip";
-        setHistory((h) => [...h, { item: currentItem, action }]);
-        if (direction === "right") onWant?.(currentItem);
-        else onSkip?.(currentItem);
-
-        const nextIndex = index + 1;
-        if (nextIndex >= items.length) {
-          onEnd?.();
-        } else {
-          setIndex(nextIndex);
-        }
-      } else {
-        const nextIndex =
-          direction === "right"
-            ? Math.min(index + 1, items.length - 1)
-            : Math.max(index - 1, 0);
-        setIndex(nextIndex);
-      }
-
-      // ── Clear drag + set flying simultaneously so the new top card renders
-      //    with transition:"none" before any paint (no fling-back animation). ──
-      setDrag(null);
       setFlying(direction);
-
-      // ── Animate the correct (visual) leaving card as an overlay ──
-      setLeavingItem({ item: currentItem, direction, dx: captureDx, dy: captureDy });
 
       setTimeout(() => {
         setFlying(null);
-        setLeavingItem(null);
+        setDrag(null);
+
+        if (mode === "gallery") {
+          const action = direction === "right" ? "want" : "skip";
+          setHistory((h) => [...h, { item: currentItem, action }]);
+          if (direction === "right") onWant?.(currentItem);
+          else onSkip?.(currentItem);
+
+          const nextIndex = index + 1;
+          if (nextIndex >= items.length) {
+            onEnd?.();
+          } else {
+            setIndex(nextIndex);
+          }
+        } else {
+          // vault mode: navigate
+          const nextIndex =
+            direction === "right"
+              ? Math.min(index + 1, items.length - 1)
+              : Math.max(index - 1, 0);
+          setIndex(nextIndex);
+        }
       }, parseInt(FLY_DURATION));
     },
-    [index, items, mode, drag, onWant, onSkip, onEnd]
+    [index, items, mode, onWant, onSkip, onEnd]
   );
 
   const onPointerUp = useCallback(
@@ -609,9 +550,6 @@ export default function SwipeStack({
   );
 
   const onPointerCancel = useCallback(() => {
-    // Guard: if pointerStart is already null, onPointerUp already handled this
-    // gesture (successful swipe). Don't interfere with the new card's state.
-    if (!pointerStart.current) return;
     pointerStart.current = null;
     setDrag({ x: 0, y: 0 });
     setTimeout(() => setDrag(null), parseInt(SNAP_DURATION));
@@ -657,37 +595,39 @@ export default function SwipeStack({
 
   const isDragging = drag !== null && !flying;
   const flyDistance = typeof window === "undefined" ? 1200 : window.innerWidth + 200;
-  // For dragging, dx/dy come from drag state
-  const dx = drag?.x ?? 0;
+  const dx = flying === "right" ? flyDistance : flying === "left" ? -flyDistance : (drag?.x ?? 0);
   const dy = drag?.y ?? 0;
   const rotation = (dx / 360) * ROTATION_MAX;
-  // Leaving card fly target
-  const leavingFlyX = leavingItem ? (leavingItem.direction === "right" ? flyDistance : -flyDistance) : 0;
-  const leavingFlyRotation = leavingItem ? ((leavingFlyX / 360) * ROTATION_MAX) : 0;
-
-  // Top card transition:
-  // - "none" while dragging (no snap during gesture)
-  // - "none" while flying (prevents fling-back: new card just appeared at 0,0 after drag cleared)
-  // - ease-out otherwise (snap-back on failed swipe)
-  const transition =
-    isDragging || flying
-      ? "none"
-      : `transform ${SNAP_DURATION} cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
 
   // ── Render ────────────────────────────────────────────────────────────────
 
   const isEmpty = items.length === 0;
   const isExhausted = mode === "gallery" && index >= items.length;
 
-  // Which items to render (top + STACK_DEPTH behind).
-  // Array is ordered back-to-front: visibleItems[last] = top card = items[index].
-  // Depth cards behind show upcoming items (index+1, index+2, ...).
-  const visibleItems = items
-    .slice(index, index + STACK_DEPTH + 1)
-    .reverse(); // [items[N+3], items[N+2], items[N+1], items[N]] — last = top
+  // Which items to render (top + STACK_DEPTH behind)
+  const visibleItems =
+    mode === "gallery"
+      ? items.slice(index, index + STACK_DEPTH + 1)
+      : (() => {
+          // Vault: show current ± 1 on each side for depth illusion
+          const out: ModelItem[] = [];
+          for (let d = STACK_DEPTH; d >= 0; d--) {
+            const i = index + d;
+            if (i < items.length) out.unshift(items[i]);
+          }
+          return out;
+        })();
 
   const totalCount = items.length;
-  const currentNumber = index + 1;
+  const currentNumber =
+    mode === "gallery" ? index + 1 : index + 1;
+
+  const transition =
+    flying
+      ? `transform ${FLY_DURATION} cubic-bezier(0.4, 0, 0.2, 1)`
+      : isDragging
+      ? "none"
+      : `transform ${SNAP_DURATION} cubic-bezier(0.34, 1.56, 0.64, 1)`;
 
   return (
     <div className={`flex flex-col ${className}`}>
@@ -704,7 +644,7 @@ export default function SwipeStack({
               .slice(0, -1) // all except top
               .reverse()
               .map((item, depthReversed) => {
-                const depth = depthReversed + 1; // 1 = immediately behind top, STACK_DEPTH = furthest back
+                const depth = visibleItems.length - 1 - depthReversed; // 1 = immediately behind top
                 const scale = 1 - depth * STACK_SCALE_STEP;
                 const translateY = depth * STACK_OFFSET_Y;
                 return (
@@ -714,9 +654,7 @@ export default function SwipeStack({
                     style={{
                       transform: `scale(${scale}) translateY(${translateY}px)`,
                       transformOrigin: "bottom center",
-                      // No transition while flying — depth cards snap to new positions instantly,
-                      // preventing the "card grows up from behind" artifact.
-                      transition: flying ? "none" : `transform ${SNAP_DURATION} ease`,
+                      transition: `transform ${SNAP_DURATION} ease`,
                       zIndex: STACK_DEPTH - depth,
                       pointerEvents: "none",
                     }}
@@ -748,18 +686,6 @@ export default function SwipeStack({
               </div>
             )}
 
-            {/* Leaving card overlay — uses two-frame animation to fly off from drag position */}
-            {leavingItem && (
-              <LeavingCard
-                item={leavingItem.item}
-                startDx={leavingItem.dx}
-                startDy={leavingItem.dy}
-                flyX={leavingFlyX}
-                flyRotation={leavingFlyRotation}
-                mode={mode}
-                 />
-            )}
-
             {/* Counter */}
             {totalCount > 1 && (
               <CounterPill current={currentNumber} total={totalCount} />
@@ -780,26 +706,22 @@ export default function SwipeStack({
 
       {/* Undo row — gallery only */}
       {mode === "gallery" && history.length > 0 && (
-        <div className="mt-2 flex justify-center">
+        <div className="flex justify-center pt-3">
           <button
+            type="button"
             onClick={handleUndo}
-            className="flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold border"
-            style={{
-              background: "rgba(0,0,0,0.55)",
-              color: "rgba(255,255,255,0.75)",
-              borderColor: "rgba(255,255,255,0.15)",
-              backdropFilter: "blur(6px)",
-            }}
+            className="text-[12px] transition-opacity hover:opacity-80"
+            style={{ color: "var(--muted)" }}
           >
-            ↩ Undo
+            ↩ Undo last swipe
           </button>
         </div>
       )}
 
-      {/* Hint text */}
-      {!isEmpty && !isExhausted && (
-        <div className="mt-2 text-center">
-          <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>
+      {/* Swipe hint text — shown when stack is fresh */}
+      {!isEmpty && !isExhausted && !drag && !flying && (
+        <div className="text-center pt-2">
+          <span className="text-[11px]" style={{ color: "var(--muted2)" }}>
             {mode === "gallery"
               ? "Swipe right to want · left to skip · tap for details"
               : "Swipe or use buttons to browse · tap to view"}

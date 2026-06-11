@@ -496,17 +496,12 @@ export default function CameraCapturePanel({
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">LIVE CAMERA</div>
-              <div className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-[color:var(--fg)]">
-                {title}
-                {description ? (
-                  <span className="group relative inline-flex">
-                    <span className="inline-flex h-4 w-4 cursor-default items-center justify-center rounded-full bg-[color:var(--pill)] text-[9px] font-bold ring-1 ring-[color:var(--border)]" style={{ color: "var(--muted)" }}>i</span>
-                    <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1.5 w-56 -translate-x-1/2 rounded-xl bg-[color:var(--surface)] px-3 py-2 text-[11px] leading-4 text-[color:var(--muted)] opacity-0 ring-1 ring-[color:var(--border)] shadow-lg transition-opacity group-hover:opacity-100">
-                      {description}
-                    </span>
-                  </span>
-                ) : null}
-              </div>
+              <div className="mt-1 text-sm font-semibold text-[color:var(--fg)]">{title}</div>
+              {description ? (
+                <div className="mt-0.5 text-xs leading-5 text-[color:var(--muted)]">
+                  {description}
+                </div>
+              ) : null}
             </div>
             <button type="button" onClick={onClose} className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-sm ring-1 ring-[color:var(--border)]">Close</button>
           </div>
@@ -546,7 +541,7 @@ export default function CameraCapturePanel({
                 </div>
               ) : null}
             </div>
-            <div className="mb-1.5 flex items-center gap-1.5 overflow-x-auto py-1 [scrollbar-width:none]">
+            <div className="mb-1.5 flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
               <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
                 Frame
               </span>
@@ -579,7 +574,7 @@ export default function CameraCapturePanel({
               ))}
             </div>
             {/* Filter strip — moved above the image */}
-            <div className="mb-1.5 flex items-center gap-1.5 overflow-x-auto py-1 [scrollbar-width:none]">
+            <div className="mb-1.5 flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
               {CAPTURE_FILTER_PRESETS.map((preset) => (
                 <button
                   key={preset.id}
@@ -748,7 +743,7 @@ export default function CameraCapturePanel({
           </div>
         ) : (
           <>
-            <div className="mt-2 flex items-center gap-1.5 overflow-x-auto py-1 [scrollbar-width:none]">
+            <div className="mt-2 flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
               <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
                 Frame
               </span>
