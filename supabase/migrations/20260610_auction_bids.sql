@@ -21,9 +21,9 @@ CREATE INDEX IF NOT EXISTS idx_vault_items_auction_active
 -- ─── 2. Create bids table ────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS bids (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  item_id     UUID NOT NULL REFERENCES vault_items(id) ON DELETE CASCADE,
-  bidder_id   UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  id          UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
+  item_id     TEXT    NOT NULL REFERENCES vault_items(id) ON DELETE CASCADE,
+  bidder_id   UUID    NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   amount      NUMERIC(12,2) NOT NULL CHECK (amount > 0),
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -34,7 +34,7 @@ CREATE INDEX IF NOT EXISTS idx_bids_bidder_id   ON bids (bidder_id);
 -- ─── 3. Function: place a bid (atomic; enforces min-increment) ───────────────
 
 CREATE OR REPLACE FUNCTION place_bid(
-  p_item_id  UUID,
+  p_item_id  TEXT,
   p_bidder   UUID,
   p_amount   NUMERIC
 ) RETURNS bids
@@ -118,5 +118,3 @@ BEGIN
   ) THEN
     ALTER PUBLICATION supabase_realtime ADD TABLE bids;
   END IF;
-END
-$$;
