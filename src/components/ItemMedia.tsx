@@ -706,28 +706,30 @@ export default function ItemMedia({
       {mounted && editTarget && typeof document !== "undefined"
         ? createPortal(
             <div
-              className="fixed inset-0 z-[95] flex items-start justify-center bg-black/90 backdrop-blur-sm"
               role="dialog"
               aria-modal="true"
               aria-label="Edit saved photo"
+              style={{ position: "fixed", inset: 0, zIndex: 95, background: "rgba(0,0,0,0.92)", backdropFilter: "blur(6px)" }}
               onClick={(event) => {
                 if (event.target === event.currentTarget) requestCloseImageEdit();
               }}
             >
-              <div className="w-full max-w-3xl px-3 pt-4">
-                <ScanCropEditor
-                  imageUrl={editTarget.url}
-                  crop={editTarget.crop}
-                  onChange={(crop) => setEditTarget((prev) => (prev ? { ...prev, crop } : prev))}
-                  onApply={() => void applyImageEdit()}
-                  onReset={() => setEditTarget((prev) => (prev ? { ...prev, crop: FULL_CROP } : prev))}
-                  onCancel={requestCloseImageEdit}
-                  isApplying={isEditingImage}
-                  title="EDIT PHOTO"
-                  description="Crop and zoom this saved item photo. The edited version replaces the current photo."
-                  applyLabel="Save Photo"
-                  compact
-                />
+              <div style={{ position: "absolute", top: 16, left: 0, right: 0, padding: "0 12px" }}>
+                <div style={{ maxWidth: 768, margin: "0 auto" }}>
+                  <ScanCropEditor
+                    imageUrl={editTarget.url}
+                    crop={editTarget.crop}
+                    onChange={(crop) => setEditTarget((prev) => (prev ? { ...prev, crop } : prev))}
+                    onApply={() => void applyImageEdit()}
+                    onReset={() => setEditTarget((prev) => (prev ? { ...prev, crop: FULL_CROP } : prev))}
+                    onCancel={requestCloseImageEdit}
+                    isApplying={isEditingImage}
+                    title="EDIT PHOTO"
+                    description="Crop and zoom this saved item photo. The edited version replaces the current photo."
+                    applyLabel="Save Photo"
+                    compact
+                  />
+                </div>
               </div>
             </div>,
             document.body
