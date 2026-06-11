@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import type { DragEvent, ReactNode } from "react";
+import type { DragEvent } from "react";
 
 import FavoriteButton from "@/components/FavoriteButton";
 import GalleryShelfScene from "@/components/gallery/GalleryShelfScene";
 import { PillButton } from "@/components/ui/PillButton";
-import { getGallerySections, getGalleryThemeLabel } from "@/lib/galleryModel";
+import { getGallerySections } from "@/lib/galleryModel";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import type { GuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
 
@@ -30,39 +31,6 @@ function formatMoney(value?: number) {
   }).format(value);
 }
 
-function DetailPill({
-  children,
-  className = "",
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <span
-      className={[
-        "rounded-full px-3 py-1.5 text-[11px] tracking-[0.08em] ring-1",
-        className,
-      ].join(" ")}
-    >
-      {children}
-    </span>
-  );
-}
-
-function getThemeChipClass(themePack: string) {
-  switch (themePack) {
-    case "walnut":
-      return "bg-[rgba(64,38,23,0.78)] text-[#f1dcc3] ring-[#c4966d]/35";
-    case "midnight":
-      return "bg-vault-card text-cyan-100 ring-cyan-300/22";
-    case "cold-blue":
-      return "bg-vault-card text-stone-100 ring-white/12";
-    case "marble":
-      return "bg-[rgba(255,255,255,0.82)] text-slate-900 ring-slate-300/55";
-    default:
-      return "bg-[rgba(30,24,18,0.78)] text-amber-100 ring-amber-100/14";
-  }
-}
 
 function ViewerItemCard({
   item,
@@ -298,6 +266,8 @@ function getShelfSlotLayout(model: GuestGalleryViewModel) {
   )?.slotLayout;
 }
 
+type OwnerProfile = { displayName: string; username: string | null; avatar: string };
+
 export default function GuestGalleryRenderer({
   model,
   embedded = false,
@@ -312,6 +282,28 @@ export default function GuestGalleryRenderer({
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<VaultItem | null>(null);
+  const [owner, setOwner] = useState<OwnerProfile | null>(null);
+
+  useEffect(() => {
+    const profileId = model.gallery?.profile_id;
+    if (!profileId || embedded) return;
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    void supabase
+      .from("public_profiles")
+      .select("display_name, username, avatar_emoji")
+      .eq("profile_id", profileId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setOwner({
+            displayName: String(data.display_name || "Collector"),
+            username: typeof data.username === "string" && data.username ? data.username : null,
+            avatar: String(data.avatar_emoji || "🗝️"),
+          });
+        }
+      });
+  }, [model.gallery?.profile_id, embedded]);
 
   // ── Drag delegation handlers (defined here, outside JSX, to avoid TSX parser ambiguity) ──
   const gridDragStart: CardDragHandler | null = onReorder
@@ -350,8 +342,6 @@ export default function GuestGalleryRenderer({
       setDragOverId(null);
     };
   }
-
-  const chipClass = getThemeChipClass(model.themePack);
 
   // Precompute drop handlers to keep arrow functions out of JSX attribute expressions
   const gridDropMain = makeGridDrop(model.galleryItems.map((gi) => gi.id)) ?? undefined;
@@ -437,20 +427,32 @@ export default function GuestGalleryRenderer({
                     {model.galleryDescription}
                   </p>
 
-                  <div className="mt-5 flex flex-wrap items-center gap-2">
-                    <DetailPill className={chipClass}>{model.galleryItems.length} items</DetailPill>
-                    <DetailPill className={chipClass}>
-                      {model.displayMode === "grid"
-                        ? "Grid view"
-                        : getGalleryThemeLabel(model.themePack)}
-                    </DetailPill>
-                    <DetailPill className={chipClass}>{model.layoutType} layout</DetailPill>
-                    <DetailPill className={chipClass}>{model.displayMode} mode</DetailPill>
-                    {sectionViews.length ? (
-                      <DetailPill className={chipClass}>{sectionViews.length} sections</DetailPill>
-                    ) : null}
-                    <DetailPill className={chipClass}>Background {model.background.type}</DetailPill>
-                  </div>
+                  {/* Owner byline */}
+                  {owner ? (
+                    <div className="mt-4 flex items-center gap-2">
+                      <span className="text-lg leading-none">{owner.avatar}</span>
+                      {owner.username ? (
+                        <Link
+                          href={`/v/${owner.username}`}
+                          className="text-sm font-semibold transition-opacity hover:opacity-80"
+                          style={{ color: "var(--gold, #F5B548)" }}
+                        >
+                          {owner.displayName}
+                        </Link>
+                      ) : (
+                        <span className="text-sm font-semibold" style={{ color: "var(--gold, #F5B548)" }}>
+                          {owner.displayName}
+                        </span>
+                      )}
+                      <span className="text-xs text-[color:var(--muted2)]">
+                        · {model.galleryItems.length} {model.galleryItems.length === 1 ? "item" : "items"}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="mt-4 text-sm" style={{ color: "var(--gold, #F5B548)" }}>
+                      {model.galleryItems.length} {model.galleryItems.length === 1 ? "item" : "items"}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col items-start gap-2 lg:items-end">
