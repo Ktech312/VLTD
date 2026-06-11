@@ -714,8 +714,7 @@ export default function ItemMedia({
                 if (event.target === event.currentTarget) requestCloseImageEdit();
               }}
             >
-              <div className="w-full max-w-[min(94dvw,980px)]">
-                <ScanCropEditor
+              <ScanCropEditor
                   imageUrl={editTarget.url}
                   crop={editTarget.crop}
                   onChange={(crop) => setEditTarget((prev) => (prev ? { ...prev, crop } : prev))}
@@ -726,9 +725,8 @@ export default function ItemMedia({
                   title="EDIT PHOTO"
                   description="Crop and zoom this saved item photo. The edited version replaces the current photo."
                   applyLabel="Save Photo"
-                  compact
+                  viewportFixed
                 />
-              </div>
             </div>,
             document.body
           )
