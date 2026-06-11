@@ -334,7 +334,18 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
       message.toLowerCase().includes("video_clip_url") ||
       message.toLowerCase().includes("video_clip_duration");
 
-    const isRecoverable = missingGalleryColumns || missingSoldColumns || missingVisibilityColumn || missingVideoColumns;
+    const missingMarketColumns =
+      message.toLowerCase().includes("asking_price") ||
+      message.toLowerCase().includes("auction_status") ||
+      message.toLowerCase().includes("auction_ends_at") ||
+      message.toLowerCase().includes("auction_starting_bid") ||
+      message.toLowerCase().includes("auction_current_bid") ||
+      message.toLowerCase().includes("auction_bid_count") ||
+      message.toLowerCase().includes("auction_winner_id") ||
+      message.toLowerCase().includes("reserve_price") ||
+      message.toLowerCase().includes("buy_it_now_price");
+
+    const isRecoverable = missingGalleryColumns || missingSoldColumns || missingVisibilityColumn || missingVideoColumns || missingMarketColumns;
 
     if (!isRecoverable) {
       // Unrecognised error — log and surface it
@@ -369,6 +380,19 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
     if (missingVideoColumns) {
       delete fallbackRow.video_clip_url;
       delete fallbackRow.video_clip_duration;
+    }
+
+    if (missingMarketColumns) {
+      delete fallbackRow.asking_price;
+      delete fallbackRow.auction_status;
+      delete fallbackRow.auction_ends_at;
+      delete fallbackRow.auction_starting_bid;
+      delete fallbackRow.auction_current_bid;
+      delete fallbackRow.auction_bid_count;
+      delete fallbackRow.auction_winner_id;
+      delete fallbackRow.reserve_price;
+      delete fallbackRow.buy_it_now_price;
+      delete fallbackRow.sold_at;
     }
 
     const { error: fallbackError } = await supabase.from(VAULT_ITEMS_TABLE).upsert(fallbackRow);
