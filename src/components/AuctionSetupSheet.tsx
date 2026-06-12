@@ -19,8 +19,8 @@ export function useAuctionCountdown(endsAt?: number) {
 }
 
 export function AuctionCountdownChip({ item }: { item: VaultItem }) {
-  if (item.auctionStatus !== "ACTIVE" || !item.auctionEndsAt) return null;
   const label = useAuctionCountdown(item.auctionEndsAt);
+  if (item.auctionStatus !== "ACTIVE" || !item.auctionEndsAt) return null;
   if (!label) return (
     <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ring-1 ring-red-400/40"
       style={{ background: "rgba(239,68,68,0.15)", color: "rgb(252,165,165)" }}>
@@ -112,6 +112,11 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
     onSaved?.(updated);
     onClose();
   }
+
+  // eslint-disable-next-line react-hooks/purity
+  const endLabel = new Date(Date.now() + durationHours * 3600000).toLocaleString(undefined, {
+    month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+  });
 
   const endsAtLabel = isActive && item.auctionEndsAt
     ? new Date(item.auctionEndsAt).toLocaleString(undefined, {
@@ -282,9 +287,7 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
                 </div>
                 <div className="mt-2 text-[11px]" style={{ color: "var(--muted)" }}>
                   Ends:{" "}
-                  {new Date(Date.now() + durationHours * 3600000).toLocaleString(undefined, {
-                    month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
-                  })}
+                  {endLabel}
                 </div>
               </div>
             </>
