@@ -83,7 +83,7 @@ export type VaultItem = {
   priceConfidence?: PriceConfidence;
   priceUpdatedAt?: number;
   priceNotes?: string;
-  status?: "COLLECTION" | "FOR_SALE" | "SOLD" | "WISHLIST";
+  status?: "COLLECTION" | "FOR_SALE" | "SOLD" | "WISHLIST" | "AUCTION";
   soldPrice?: number;
   soldAt?: number;
   createdAt?: number;
@@ -184,7 +184,7 @@ function sanitizePriceConfidence(value: unknown): PriceConfidence | undefined {
 }
 
 function sanitizeVaultStatus(value: unknown): VaultItem["status"] {
-  if (value === "COLLECTION" || value === "FOR_SALE" || value === "SOLD" || value === "WISHLIST") return value;
+  if (value === "COLLECTION" || value === "FOR_SALE" || value === "SOLD" || value === "WISHLIST" || value === "AUCTION") return value;
   return undefined;
 }
 
