@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
@@ -308,7 +308,6 @@ export default function AuctionItemPage() {
   // Initial load
   useEffect(() => {
     if (!id) return;
-    setLoading(true);
     Promise.all([fetchAuctionItem(id), fetchBids(id)])
       .then(([auctionItem, bidList]) => {
         if (!auctionItem) { setNotFound(true); setLoading(false); return; }
@@ -376,8 +375,6 @@ export default function AuctionItemPage() {
   const gradingSvc = parseGradingService(item.grade);
   const currentBid = item.auctionCurrentBid ?? item.auctionStartingBid;
   const bidCount = item.auctionBidCount ?? 0;
-  const highestBid = bids[0];
-
   return (
     <div className="min-h-screen" style={{ background: "var(--bg)" }}>
       {/* Breadcrumb */}

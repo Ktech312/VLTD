@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   fetchActiveAuctions,
@@ -255,7 +255,6 @@ export default function AuctionBrowsePage() {
   const countdowns = useCountdowns(items);
 
   useEffect(() => {
-    setLoading(true);
     fetchActiveAuctions({ limit: 200 })
       .then((data) => { setItems(data); setLoading(false); })
       .catch((e) => { setError(String(e?.message ?? "Failed to load auctions")); setLoading(false); });
