@@ -14,7 +14,7 @@ import type { VaultItem } from "./vaultModel";
 // Types
 // ---------------------------------------------------------------------------
 
-export type AuctionItem = VaultItem & {
+export type AuctionItem = Omit<VaultItem, "status" | "auctionStatus" | "auctionEndsAt" | "auctionStartingBid"> & {
   status: "AUCTION";
   auctionStatus: "ACTIVE" | "ENDED" | "CANCELLED";
   auctionEndsAt: number;           // unix ms
