@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { saveItem, type VaultItem } from "@/lib/vaultModel";
+import { upsertVaultItemToSupabase } from "@/lib/vaultCloud";
 
 // ─── Countdown helper ─────────────────────────────────────────────────────────
 
@@ -37,9 +38,9 @@ export function AuctionCountdownChip({ item }: { item: VaultItem }) {
 // ─── Duration options ─────────────────────────────────────────────────────────
 
 const DURATIONS = [
-  { label: "1 day",  hours: 24 },
-  { label: "3 days", hours: 72 },
-  { label: "7 days", hours: 168 },
+  { label: "1 day",   hours: 24 },
+  { label: "3 days",  hours: 72 },
+  { label: "7 days",  hours: 168 },
   { label: "14 days", hours: 336 },
 ];
 
@@ -58,6 +59,9 @@ type Props = {
 export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
   const isActive = item.auctionStatus === "ACTIVE";
 
+  const [startingBid, setStartingBid] = useState(
+    item.auctionStartingBid ? String(item.auctionStartingBid) : ""
+  );
   const [reservePrice, setReservePrice] = useState(
     item.reservePrice ? String(item.reservePrice) : ""
   );
@@ -67,32 +71,44 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
   const [durationHours, setDurationHours] = useState(168);
   const [saving, setSaving] = useState(false);
 
-  function handleStart() {
+  async function handleStart() {
+    const parsedStartingBid = startingBid ? Number(startingBid) : 1;
     setSaving(true);
     const endsAt = Date.now() + durationHours * 3600000;
     const updated: VaultItem = {
       ...item,
+      status: "AUCTION",
       auctionStatus: "ACTIVE",
+      auctionStartingBid: parsedStartingBid,
+      auctionCurrentBid: undefined,
+      auctionBidCount: 0,
+      auctionWinnerId: undefined,
       reservePrice: reservePrice ? Number(reservePrice) : undefined,
       buyItNowPrice: buyItNow ? Number(buyItNow) : undefined,
       auctionEndsAt: endsAt,
-      status: "FOR_SALE",
+      isPublic: true,
     };
     saveItem(updated);
     window.dispatchEvent(new Event("vltd:vault-updated"));
+    void upsertVaultItemToSupabase(updated).catch(() => {});
     setSaving(false);
     onSaved?.(updated);
     onClose();
   }
 
-  function handleCancel() {
+  async function handleCancel() {
     const updated: VaultItem = {
       ...item,
+      status: "COLLECTION",
       auctionStatus: "CANCELLED",
       auctionEndsAt: undefined,
+      auctionCurrentBid: undefined,
+      auctionBidCount: 0,
+      auctionWinnerId: undefined,
     };
     saveItem(updated);
     window.dispatchEvent(new Event("vltd:vault-updated"));
+    void upsertVaultItemToSupabase(updated).catch(() => {});
     onSaved?.(updated);
     onClose();
   }
@@ -150,6 +166,17 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
               <div className="text-xs font-semibold" style={{ color: "var(--theme-gold)" }}>
                 🔴 LIVE — Ends {endsAtLabel}
               </div>
+              {item.auctionStartingBid != null && (
+                <div className="mt-1 text-xs" style={{ color: "var(--muted)" }}>
+                  Starting bid: <strong style={{ color: "var(--fg)" }}>{fmt(item.auctionStartingBid)}</strong>
+                </div>
+              )}
+              {item.auctionCurrentBid != null && (
+                <div className="text-xs" style={{ color: "var(--muted)" }}>
+                  Current bid: <strong style={{ color: "var(--theme-gold)" }}>{fmt(item.auctionCurrentBid)}</strong>
+                  {item.auctionBidCount ? ` (${item.auctionBidCount} bid${item.auctionBidCount !== 1 ? "s" : ""})` : ""}
+                </div>
+              )}
               {item.reservePrice && (
                 <div className="mt-1 text-xs" style={{ color: "var(--muted)" }}>
                   Reserve: <strong style={{ color: "var(--fg)" }}>{fmt(item.reservePrice)}</strong>
@@ -166,6 +193,29 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
           {/* Setup form (only shown when not active) */}
           {!isActive && (
             <>
+              {/* Starting bid */}
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>
+                  Starting Bid
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: "var(--muted)" }}>$</span>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={startingBid}
+                    onChange={(e) => setStartingBid(e.target.value)}
+                    placeholder="e.g. 25"
+                    className="w-full rounded-xl py-2.5 pl-7 pr-4 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                    style={{ background: "var(--pill)", color: "var(--fg)" }}
+                  />
+                </div>
+                <div className="mt-1 text-[10px]" style={{ color: "var(--muted)" }}>
+                  Minimum opening bid — defaults to $1 if left blank
+                </div>
+              </div>
+
               {/* Reserve price */}
               <div>
                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>
@@ -185,7 +235,7 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
                   />
                 </div>
                 <div className="mt-1 text-[10px]" style={{ color: "var(--muted)" }}>
-                  Auction won&apos;t complete unless bidding exceeds this amount
+                  {"Auction won't complete unless bidding exceeds this amount"}
                 </div>
               </div>
 
@@ -245,7 +295,7 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
             className="rounded-xl px-3 py-2.5 text-[11px] ring-1 ring-[color:var(--border)]"
             style={{ background: "var(--pill)", color: "var(--muted)" }}
           >
-            <strong style={{ color: "var(--fg)" }}>Contact-only auction.</strong> Interested buyers will reach out via your public vault. No bids or payments are processed through VLTD.
+            <strong style={{ color: "var(--fg)" }}>Live auction.</strong> Your item will appear on the VLTD Auctions page. Bidders must be signed in. Payments are arranged directly between buyer and seller.
           </div>
 
           {/* Actions */}
@@ -286,7 +336,7 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
                   className="flex-1 rounded-2xl py-3 text-sm font-bold transition"
                   style={{ background: "var(--theme-gold)", color: "#0B0B0B", opacity: saving ? 0.6 : 1 }}
                 >
-                  {saving ? "Starting…" : "Start Auction"}
+                  {saving ? "Starting\u2026" : "Start Auction"}
                 </button>
               </>
             )}
