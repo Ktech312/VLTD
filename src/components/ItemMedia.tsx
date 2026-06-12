@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import ImageViewer from "@/components/ImageViewer";
+import CameraCapturePanel from "@/components/CameraCapturePanel";
 import ScanCropEditor from "@/components/ScanCropEditor";
 import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 
@@ -161,6 +162,7 @@ export default function ItemMedia({
   const [viewerIndex, setViewerIndex] = useState(0);
   const [editTarget, setEditTarget] = useState<{ index: number; url: string; crop: ScanCropRect } | null>(null);
   const [isEditingImage, setIsEditingImage] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
 
   const imageMeta = useMemo(() => {
     return Array.isArray(item?.images) ? item!.images! : [];
@@ -220,10 +222,11 @@ export default function ItemMedia({
   }
 
   function openRetakeCamera() {
-    if (cameraRef.current) {
-      cameraRef.current.value = "";
-      cameraRef.current.click();
-    }
+    setCameraOpen(true);
+  }
+
+  function openCamera() {
+    setCameraOpen(true);
   }
 
   function startDraftFromFile(file: File) {
@@ -493,7 +496,7 @@ export default function ItemMedia({
               </button>
               <button
                 type="button"
-                onClick={() => cameraRef.current?.click()}
+                onClick={() => openCamera()}
                 className="rounded-full bg-black/45 px-3 py-2 text-xs text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
               >
                 Camera
@@ -611,6 +614,20 @@ export default function ItemMedia({
         }}
       />
 
+      {/* Camera capture — reuses the same CameraCapturePanel as vault/add */}
+      {mounted && cameraOpen && typeof document !== "undefined"
+        ? createPortal(
+            <CameraCapturePanel
+              title="Capture Item Photo"
+              description="Use the guided camera to frame, crop, and improve this item before Smart Scan identifies it."
+              onCapture={(file) => { setCameraOpen(false); startDraftFromFile(file); }}
+              onClose={() => setCameraOpen(false)}
+              onUseFileInstead={() => { setCameraOpen(false); cameraRef.current?.click(); }}
+            />,
+            document.body
+          )
+        : null}
+
       {/* Top-anchored image preview panel — no body scroll lock */}
       {mounted && previewOpen && activeImage && activeVisibleEntry && typeof document !== "undefined"
         ? createPortal(
@@ -661,7 +678,7 @@ export default function ItemMedia({
                     type="button"
                     onClick={() => {
                       setPreviewOpen(false);
-                      setTimeout(() => cameraRef.current?.click(), 0);
+                      setTimeout(() => openCamera(), 0);
                     }}
                     className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]"
                   >
@@ -706,28 +723,30 @@ export default function ItemMedia({
       {mounted && editTarget && typeof document !== "undefined"
         ? createPortal(
             <div
-              className="fixed inset-0 z-[95] flex h-[100dvh] w-[100dvw] items-center justify-center overflow-y-auto bg-black/90 px-3 py-4 backdrop-blur-sm sm:px-4"
               role="dialog"
               aria-modal="true"
               aria-label="Edit saved photo"
-              onMouseDown={(event) => {
+              style={{ position: "fixed", inset: 0, zIndex: 95, background: "rgba(0,0,0,0.92)", backdropFilter: "blur(6px)" }}
+              onClick={(event) => {
                 if (event.target === event.currentTarget) requestCloseImageEdit();
               }}
             >
-              <div className="w-full max-w-[min(94dvw,980px)]">
-                <ScanCropEditor
-                  imageUrl={editTarget.url}
-                  crop={editTarget.crop}
-                  onChange={(crop) => setEditTarget((prev) => (prev ? { ...prev, crop } : prev))}
-                  onApply={() => void applyImageEdit()}
-                  onReset={() => setEditTarget((prev) => (prev ? { ...prev, crop: FULL_CROP } : prev))}
-                  onCancel={requestCloseImageEdit}
-                  isApplying={isEditingImage}
-                  title="EDIT PHOTO"
-                  description="Crop and zoom this saved item photo. The edited version replaces the current photo."
-                  applyLabel="Save Photo"
-                  compact
-                />
+              <div style={{ position: "absolute", top: 16, left: 0, right: 0, padding: "0 12px" }}>
+                <div style={{ maxWidth: 768, margin: "0 auto" }}>
+                  <ScanCropEditor
+                    imageUrl={editTarget.url}
+                    crop={editTarget.crop}
+                    onChange={(crop) => setEditTarget((prev) => (prev ? { ...prev, crop } : prev))}
+                    onApply={() => void applyImageEdit()}
+                    onReset={() => setEditTarget((prev) => (prev ? { ...prev, crop: FULL_CROP } : prev))}
+                    onCancel={requestCloseImageEdit}
+                    isApplying={isEditingImage}
+                    title="EDIT PHOTO"
+                    description="Crop and zoom this saved item photo. The edited version replaces the current photo."
+                    applyLabel="Save Photo"
+                    compact
+                  />
+                </div>
               </div>
             </div>,
             document.body

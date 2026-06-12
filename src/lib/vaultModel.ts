@@ -52,6 +52,10 @@ export type VaultItem = {
   reservePrice?: number;
   buyItNowPrice?: number;
   auctionEndsAt?: number; // unix ms
+  auctionStartingBid?: number;
+  auctionCurrentBid?: number;
+  auctionBidCount?: number;
+  auctionWinnerId?: string;
   purchaseSource?: string;
   purchaseLocation?: string;
   orderNumber?: string;
@@ -83,7 +87,7 @@ export type VaultItem = {
   priceConfidence?: PriceConfidence;
   priceUpdatedAt?: number;
   priceNotes?: string;
-  status?: "COLLECTION" | "FOR_SALE" | "SOLD" | "WISHLIST";
+  status?: "COLLECTION" | "FOR_SALE" | "SOLD" | "WISHLIST" | "AUCTION";
   soldPrice?: number;
   soldAt?: number;
   createdAt?: number;
@@ -184,7 +188,13 @@ function sanitizePriceConfidence(value: unknown): PriceConfidence | undefined {
 }
 
 function sanitizeVaultStatus(value: unknown): VaultItem["status"] {
-  if (value === "COLLECTION" || value === "FOR_SALE" || value === "SOLD" || value === "WISHLIST") return value;
+  if (
+    value === "COLLECTION" ||
+    value === "FOR_SALE" ||
+    value === "SOLD" ||
+    value === "WISHLIST" ||
+    value === "AUCTION"
+  ) return value;
   return undefined;
 }
 
@@ -380,6 +390,10 @@ function normalizeOne(input: unknown): VaultItem | null {
     reservePrice: typeof raw.reservePrice === "number" && Number.isFinite(raw.reservePrice) ? raw.reservePrice : undefined,
     buyItNowPrice: typeof raw.buyItNowPrice === "number" && Number.isFinite(raw.buyItNowPrice) ? raw.buyItNowPrice : undefined,
     auctionEndsAt: typeof raw.auctionEndsAt === "number" ? raw.auctionEndsAt : undefined,
+    auctionStartingBid: typeof raw.auctionStartingBid === "number" && Number.isFinite(raw.auctionStartingBid) ? raw.auctionStartingBid : undefined,
+    auctionCurrentBid: typeof raw.auctionCurrentBid === "number" && Number.isFinite(raw.auctionCurrentBid) ? raw.auctionCurrentBid : undefined,
+    auctionBidCount: typeof raw.auctionBidCount === "number" ? Math.max(0, Math.floor(raw.auctionBidCount)) : undefined,
+    auctionWinnerId: typeof raw.auctionWinnerId === "string" && raw.auctionWinnerId.trim() ? raw.auctionWinnerId.trim() : undefined,
     purchaseSource: raw.purchaseSource ?? undefined,
     purchaseLocation: raw.purchaseLocation ?? undefined,
     orderNumber: raw.orderNumber ?? undefined,

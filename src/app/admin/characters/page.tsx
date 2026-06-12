@@ -300,7 +300,7 @@ function ItemEditModal({
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="relative h-24 w-20 shrink-0 overflow-hidden rounded-xl bg-white/5 ring-1 ring-white/10 group hover:ring-amber-400/40 transition"
+              className="relative h-48 w-40 shrink-0 overflow-hidden rounded-xl bg-white/5 ring-1 ring-white/10 group hover:ring-amber-400/40 transition"
               title="Click to upload image"
             >
               {imageUrl ? (
@@ -308,7 +308,7 @@ function ItemEditModal({
                 <img src={imageUrl} alt="" className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center gap-1">
-                  <span className="text-lg opacity-30">📷</span>
+                  <span className="text-2xl opacity-30">📷</span>
                   <span className="text-[8px] text-white/25">Upload</span>
                 </div>
               )}
@@ -321,21 +321,21 @@ function ItemEditModal({
             </button>
 
             {/* URL field + upload button */}
-            <div className="flex-1 flex flex-col gap-2">
+            <div className="flex-1 flex flex-col gap-1.5">
               <div>
-                <label className="text-[10px] uppercase tracking-widest text-white/30">Image URL</label>
+                <label className="text-[9px] uppercase tracking-widest text-white/30">Image URL</label>
                 <input
                   value={imageUrl}
                   onChange={(e) => setImageUrl(e.target.value)}
                   placeholder="Paste URL or upload a file →"
-                  className="mt-1 w-full rounded-xl bg-white/5 px-3 py-2 text-xs text-white ring-1 ring-white/10 focus:outline-none focus:ring-amber-400/40 placeholder:text-white/20"
+                  className="mt-0.5 w-full rounded-lg bg-white/5 px-2 py-1.5 text-[11px] text-white ring-1 ring-white/10 focus:outline-none focus:ring-amber-400/40 placeholder:text-white/20"
                 />
               </div>
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading}
-                className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-semibold text-white/60 hover:bg-white/10 hover:text-white transition disabled:opacity-40"
+                className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-semibold text-white/60 hover:bg-white/10 hover:text-white transition disabled:opacity-40"
               >
                 {uploading ? "Uploading…" : "📁 Upload from computer"}
               </button>
@@ -356,7 +356,7 @@ function ItemEditModal({
         </div>
 
         {/* Fields */}
-        <div className="grid grid-cols-2 gap-3 px-5 pt-4">
+        <div className="grid grid-cols-2 gap-2 px-5 pt-3">
           {[
             { label: "Title", value: title, set: setTitle, full: true },
             { label: "Subtitle", value: subtitle, set: setSubtitle, full: true },
@@ -366,19 +366,19 @@ function ItemEditModal({
             { label: "Purchase Cost ($)", value: cost, set: setCost },
           ].map(({ label, value: v, set, full, area }) => (
             <div key={label} className={full ? "col-span-2" : ""}>
-              <label className="text-[10px] uppercase tracking-widest text-white/30">{label}</label>
+              <label className="text-[9px] uppercase tracking-widest text-white/30">{label}</label>
               {area ? (
                 <textarea
                   value={v}
                   onChange={(e) => set(e.target.value)}
-                  rows={3}
-                  className="mt-1 w-full rounded-xl bg-white/5 px-3 py-2 text-xs text-white ring-1 ring-white/10 focus:outline-none focus:ring-amber-400/40 resize-none placeholder:text-white/25"
+                  rows={2}
+                  className="mt-0.5 w-full rounded-lg bg-white/5 px-2 py-1.5 text-[11px] text-white ring-1 ring-white/10 focus:outline-none focus:ring-amber-400/40 resize-none placeholder:text-white/25"
                 />
               ) : (
                 <input
                   value={v}
                   onChange={(e) => set(e.target.value)}
-                  className="mt-1 w-full rounded-xl bg-white/5 px-3 py-2 text-xs text-white ring-1 ring-white/10 focus:outline-none focus:ring-amber-400/40 placeholder:text-white/25"
+                  className="mt-0.5 w-full rounded-lg bg-white/5 px-2 py-1.5 text-[11px] text-white ring-1 ring-white/10 focus:outline-none focus:ring-amber-400/40 placeholder:text-white/25"
                 />
               )}
             </div>
