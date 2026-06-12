@@ -14,11 +14,16 @@ import type { VaultItem } from "./vaultModel";
 // Types
 // ---------------------------------------------------------------------------
 
-export type AuctionItem = Omit<VaultItem, "status" | "auctionStatus" | "auctionEndsAt" | "auctionStartingBid"> & {
+export type AuctionItem = Omit<VaultItem, "status" | "auctionStatus" | "auctionEndsAt" | "auctionStartingBid" | "auctionCurrentBid" | "auctionBidCount" | "auctionWinnerId" | "reservePrice" | "buyItNowPrice"> & {
   status: "AUCTION";
   auctionStatus: "ACTIVE" | "ENDED" | "CANCELLED";
   auctionEndsAt: number;           // unix ms
   auctionStartingBid: number;
+    auctionCurrentBid?: number;
+    auctionBidCount?: number;
+    auctionWinnerId?: string;
+    reservePrice?: number;
+    buyItNowPrice?: number;
 };
 
 export type Bid = {
@@ -129,7 +134,7 @@ export async function fetchBids(itemId: string, limit = 50): Promise<Bid[]> {
     .limit(limit);
 
   if (error || !data) return [];
-  return (data as Record<string, unknown>[]).map(rowToBid);
+  return (data as Record<string, unknown>[]).map(rowToBid);h
 }
 
 /** Place a bid. Enforces minimum increment server-side via RLS + DB function. */
