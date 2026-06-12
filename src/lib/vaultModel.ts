@@ -52,6 +52,10 @@ export type VaultItem = {
   reservePrice?: number;
   buyItNowPrice?: number;
   auctionEndsAt?: number; // unix ms
+  auctionStartingBid?: number;
+  auctionCurrentBid?: number;
+  auctionBidCount?: number;
+  auctionWinnerId?: string;
   purchaseSource?: string;
   purchaseLocation?: string;
   orderNumber?: string;
@@ -380,6 +384,10 @@ function normalizeOne(input: unknown): VaultItem | null {
     reservePrice: typeof raw.reservePrice === "number" && Number.isFinite(raw.reservePrice) ? raw.reservePrice : undefined,
     buyItNowPrice: typeof raw.buyItNowPrice === "number" && Number.isFinite(raw.buyItNowPrice) ? raw.buyItNowPrice : undefined,
     auctionEndsAt: typeof raw.auctionEndsAt === "number" ? raw.auctionEndsAt : undefined,
+    auctionStartingBid: typeof raw.auctionStartingBid === "number" && Number.isFinite(raw.auctionStartingBid) ? raw.auctionStartingBid : undefined,
+    auctionCurrentBid: typeof raw.auctionCurrentBid === "number" && Number.isFinite(raw.auctionCurrentBid) ? raw.auctionCurrentBid : undefined,
+    auctionBidCount: typeof raw.auctionBidCount === "number" && Number.isFinite(raw.auctionBidCount) ? raw.auctionBidCount : undefined,
+    auctionWinnerId: typeof raw.auctionWinnerId === "string" && raw.auctionWinnerId.trim() ? raw.auctionWinnerId.trim() : undefined,
     purchaseSource: raw.purchaseSource ?? undefined,
     purchaseLocation: raw.purchaseLocation ?? undefined,
     orderNumber: raw.orderNumber ?? undefined,
