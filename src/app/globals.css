@@ -1448,6 +1448,48 @@ main {
   --w: clamp(40px, 5vw, 62px);
 }
 
+/* Larger centered variant for the public home hero */
+.vltd-hero-vault-center {
+  width: min(100%, 680px);
+  border-radius: clamp(22px, 3.5vw, 38px);
+}
+
+.vltd-hero-vault-center .vltd-vault-card-animation__item--comic {
+  --x: 54%;
+  --y: 35%;
+  --w: clamp(70px, 8vw, 110px);
+}
+
+.vltd-hero-vault-center .vltd-vault-card-animation__item--sports {
+  --x: 66%;
+  --y: 39%;
+  --w: clamp(60px, 7vw, 96px);
+}
+
+.vltd-hero-vault-center .vltd-vault-card-animation__item--figure {
+  --x: 76%;
+  --y: 55%;
+  --w: clamp(68px, 7.8vw, 108px);
+}
+
+.vltd-hero-vault-center .vltd-vault-card-animation__item--vinyl {
+  --x: 63%;
+  --y: 62%;
+  --w: clamp(100px, 12vw, 158px);
+}
+
+.vltd-hero-vault-center .vltd-vault-card-animation__item--guitar {
+  --x: 84%;
+  --y: 53%;
+  --w: clamp(64px, 7vw, 100px);
+}
+
+.vltd-hero-vault-center .vltd-vault-card-animation__item--poster {
+  --x: 91%;
+  --y: 48%;
+  --w: clamp(50px, 6vw, 80px);
+}
+
 .vltd-portal-preview {
   display: grid;
   grid-template-columns: minmax(128px, 0.38fr) minmax(0, 1fr);

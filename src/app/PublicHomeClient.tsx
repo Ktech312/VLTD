@@ -328,6 +328,7 @@ export default function PublicHomeClient() {
   return (
     <main className="min-h-screen text-[color:var(--fg)]">
       <section className="border-b border-[color:var(--border)]">
+        {/* ── Top nav ───────────────────────────────────────────── */}
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <BrandMark />
           <div className="flex items-center gap-2 sm:gap-3">
@@ -340,6 +341,13 @@ export default function PublicHomeClient() {
             {!signedIn && (
               <>
                 <Link
+                  href="#public-galleries"
+                  className="hidden md:inline-flex rounded-full border border-[color:var(--border)] px-4 py-2 text-sm font-semibold whitespace-nowrap text-[color:var(--muted)] transition hover:text-text-primary"
+                  style={{ background: cardBg }}
+                >
+                  View galleries
+                </Link>
+                <Link
                   href="/login"
                   className="rounded-full border border-[color:var(--border)] px-4 py-2 text-sm font-semibold whitespace-nowrap text-[color:var(--muted)] transition hover:text-text-primary"
                 >
@@ -349,8 +357,8 @@ export default function PublicHomeClient() {
                   href="/signup"
                   className="vltd-primary-button rounded-full px-4 py-2 text-sm font-black whitespace-nowrap transition"
                 >
-                  <span className="sm:hidden">Get started</span>
-                  <span className="hidden sm:inline">Get started — free</span>
+                  <span className="md:hidden">Start free</span>
+                  <span className="hidden md:inline">Start your vault</span>
                 </Link>
               </>
             )}
@@ -365,42 +373,29 @@ export default function PublicHomeClient() {
           </div>
         </div>
 
-        <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 pb-14 pt-10 sm:px-6 sm:pb-18 sm:pt-16 lg:grid-cols-[1fr_1fr] lg:px-8">
-          <div className="text-center lg:text-left">
-
-          <h1 className="mx-auto max-w-xl text-5xl font-black leading-[0.96] tracking-[-0.06em] text-text-primary sm:text-6xl lg:mx-0 lg:text-7xl">
+        {/* ── Hero — centered, stacked ───────────────────────────── */}
+        <div className="mx-auto flex max-w-4xl flex-col items-center px-4 pb-10 pt-8 text-center sm:px-6 sm:pb-14 sm:pt-12 lg:px-8">
+          <h1 className="max-w-2xl text-4xl font-black leading-[0.96] tracking-[-0.06em] text-text-primary sm:text-5xl lg:text-6xl">
             Your collection deserves a <span className="text-[color:var(--accent)]">real home.</span>
           </h1>
-          <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-[color:var(--muted)] lg:mx-0">
-            Private vault. Museum display. Portfolio intelligence. Insurance
-            records. One home for every card, comic, record, slab, game, and
-            piece you collect.
+          <p className="mt-4 max-w-lg text-base leading-7 text-[color:var(--muted)]">
+            Private vault. Portfolio intelligence. Insurance records. One home
+            for every card, comic, record, slab, game, and piece you collect.
           </p>
 
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
-            <Link
-              href="/signup"
-              className="vltd-primary-button inline-flex h-14 items-center justify-center rounded-full px-8 text-base font-black transition"
-            >
-              Start your vault - it&apos;s free
-            </Link>
-            <Link
-              href="#public-galleries"
-              className="inline-flex h-14 items-center justify-center rounded-full border border-[color:var(--border)] px-8 text-base font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
-              style={{ background: cardBg }}
-            >
-              View public galleries
-            </Link>
+          {/* Label above animation */}
+          <div className="mt-8 text-[11px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted2)]">
+            Your Digital Vault
           </div>
+
+          {/* Centered, larger animation */}
+          <div className="mt-3 flex w-full justify-center">
+            <VltdVaultLogoAnimation className="vltd-hero-vault-center" defaultOpen />
+          </div>
+
           <p className="mt-5 text-xs text-[color:var(--muted2)]">
-            No credit card. No ads. No lock-in.
+            No credit card · No ads · No lock-in
           </p>
-          </div>
-
-          <div className="flex justify-center">
-            <VltdVaultLogoAnimation className="vltd-hero-vault-key" defaultOpen />
-          </div>
-
         </div>
       </section>
 
