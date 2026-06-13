@@ -2,6 +2,10 @@
 
 Generated for the first Instagram launch push, with reuse notes for Reddit and Kickstarter.
 
+## Product Screen Rule
+
+Any image showing a laptop, tablet, or phone screen must use a screenshot captured from the actual VLTD app. Do not use generated dashboard UI, old marketing mockups, or cropped homepage art as product screens.
+
 ## Folder Map
 
 - `source/`: master generated visuals
@@ -17,7 +21,8 @@ Generated for the first Instagram launch push, with reuse notes for Reddit and K
 
 Asset:
 
-- `source/01-mixed-collector-vault-real-app.png`
+- Hold for replacement. The current tablet versions are not approved because the tablet screen is not from the live VLTD app.
+- Use a newly captured live-app screenshot before publishing this asset.
 
 Instagram caption:
 
@@ -29,7 +34,7 @@ I am building a digital vault for collectors with mixed collections: cards, comi
 
 Kickstarter use:
 
-Lead hero or first campaign section visual.
+Lead hero or first campaign section visual after the tablet screen is replaced with a live VLTD app screenshot.
 
 ### Post 2: Sports Cards
 
@@ -197,8 +202,8 @@ Community and feedback section.
 
 Day 1:
 
-- Post `01-mixed-collector-vault`
-- Story using `01-mixed-collector-vault` vertical crop
+- Hold the tablet hero until the real app screenshot is composited correctly.
+- Use `10-community-vault-prompt` as the first post if a real app screenshot is not ready yet.
 
 Day 2:
 
@@ -244,17 +249,4 @@ Avoid:
 
 - Big sales claims
 - Over-polished launch language
-- Asking people to sign up before asking for feedback
-
-## Kickstarter Guidance
-
-Use the images as section visuals:
-
-- Hero: `01-mixed-collector-vault-real-app`
-- Problem: `08-before-after-vault`
-- Features: `07-public-gallery-showcase`
-- Categories: `02-sports-card-vault`, `03-music-collector-vault`, `04-comic-art-vault`
-- Trust: `06-collection-records-vault`
-- Story: `09-kickstarter-vault-workbench`
-
-Kickstarter should explain what VLTD is, who it is for, what the first version includes, what backers help unlock, and why collectors need a better home for mixed collections.
+- Asking people to sign up before asking fo

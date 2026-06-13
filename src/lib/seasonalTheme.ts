@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabaseClient";
+import { getSupabaseBrowserClient as createClient } from "@/lib/supabaseClient";
 
 export type AccentStyle = "none" | "snowflakes" | "confetti" | "stars" | "leaves";
 
