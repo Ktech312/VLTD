@@ -10,6 +10,7 @@ export type ProfileRow = {
   profile_type: AuthProfileType;
   primary_focus?: string | null;
   bio?: string | null;
+  avatar_emoji?: string | null;
   avatar_url?: string | null;
   is_public?: boolean | null;
   created_at?: string;
