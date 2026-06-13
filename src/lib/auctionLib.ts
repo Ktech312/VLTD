@@ -162,17 +162,17 @@ export async function placeBid(
     return { ok: false, error: `Minimum bid is $${minBid.toFixed(2)}` };
   }
 
-  const { data, error } = await sb
-    .from("bids")
-    .insert({ item_id: itemId, bidder_id: userId, amount })
-    .select()
-    .single();
+  // Use the place_bid() RPC so vault_items.auction_current_bid and
+    // auction_bid_count are updated atomically in the same transaction.
+    const { data, error } = await sb
+      .rpc("place_bid", { p_item_id: itemId, p_bidder: userId, p_amount: amount });
 
-  if (error || !data) {
-    return { ok: false, error: error?.message ?? "Bid failed" };
-  }
+    if (error || !data) {
+          // RPC raises exceptions with human-readable messages (e.g. "Minimum bid is 25")
+          return { ok: false, error: error?.message ?? "Bid failed" };
+    }
 
-  return { ok: true, bid: rowToBid(data as Record<string, unknown>) };
+    return { ok: true, bid: rowToBid(data as Record<string, unknown>) };
 }
 
 // ---------------------------------------------------------------------------
