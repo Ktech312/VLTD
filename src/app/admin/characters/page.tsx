@@ -47,6 +47,22 @@ function formatMoney(n?: number) {
 
 // ── Auth Gate ───────────────────────────────────────────────
 // ── Admin Login Gate ─────────────────────────────────────────
+function seedAvatarUrl(char: SeedCharacter) {
+  return `/avatars/realistic/${char.handle}.png`;
+}
+
+function SeedAvatar({ char, size = 32 }: { char: SeedCharacter; size?: number }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={seedAvatarUrl(char)}
+      alt=""
+      className="shrink-0 rounded-full object-cover ring-1 ring-amber-400/25"
+      style={{ width: size, height: size }}
+    />
+  );
+}
+
 function AdminLoginGate({ onSignedIn }: { onSignedIn: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -449,7 +465,7 @@ function BioEditModal({
       >
         <div className="flex items-center justify-between border-b border-white/8 px-5 py-4">
           <div className="flex items-center gap-2">
-            <span className="text-xl">{char.avatarEmoji}</span>
+            <SeedAvatar char={char} size={28} />
             <div className="text-sm font-semibold text-white">Edit Bio — {char.displayName}</div>
           </div>
           <button onClick={onClose} className="text-white/40 hover:text-white text-lg leading-none">✕</button>
@@ -723,7 +739,7 @@ function CharacterCard({
       ].join(" ")}
     >
       <div className="flex items-center gap-2">
-        <span className="text-2xl">{char.avatarEmoji}</span>
+        <SeedAvatar char={char} size={36} />
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold text-white">{char.displayName}</div>
           <div className="text-[10px] text-white/40">@{char.handle}</div>
@@ -1129,7 +1145,7 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
       {/* Header */}
       <div className="shrink-0 border-b border-white/8 p-5">
         <div className="flex items-center gap-3">
-          <span className="text-4xl">{char.avatarEmoji}</span>
+          <SeedAvatar char={char} size={56} />
           <div>
             <div className="text-xl font-bold text-white">{char.displayName}</div>
             <div className="text-sm text-white/40">@{char.handle}</div>

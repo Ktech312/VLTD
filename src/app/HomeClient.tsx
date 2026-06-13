@@ -43,7 +43,7 @@ type SocialKey = typeof SOCIAL_DEFS[number]["key"];
 type SocialLinks = Partial<Record<SocialKey, string>>;
 
 // ── Avatar presets ────────────────────────────────────────────────
-const AVATAR_PRESETS = [
+const LEGACY_AVATAR_PRESETS = [
   { id: "key",     emoji: "🗝️", bg: "linear-gradient(145deg,#2C1E08,#5E3E0E)" },
   { id: "lion",    emoji: "🦁", bg: "linear-gradient(145deg,#3E2800,#7A5000)" },
   { id: "dragon",  emoji: "🐉", bg: "linear-gradient(145deg,#0A2E1A,#1A5E32)" },
@@ -59,6 +59,45 @@ const AVATAR_PRESETS = [
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────
+void LEGACY_AVATAR_PRESETS;
+
+const AVATAR_PRESETS = [
+  { id: "key", label: "Vault Key", src: "/avatars/presets/key.png", bg: "linear-gradient(145deg,#2C1E08,#5E3E0E)" },
+  { id: "lion", label: "Lion Collector", src: "/avatars/presets/lion.png", bg: "linear-gradient(145deg,#3E2800,#7A5000)" },
+  { id: "dragon", label: "Jade Dragon", src: "/avatars/presets/dragon.png", bg: "linear-gradient(145deg,#0A2E1A,#1A5E32)" },
+  { id: "fox", label: "Fox Collector", src: "/avatars/presets/fox.png", bg: "linear-gradient(145deg,#3E1A00,#7A3800)" },
+  { id: "eagle", label: "Eagle Aviator", src: "/avatars/presets/eagle.png", bg: "linear-gradient(145deg,#0A1A2E,#1A3A5E)" },
+  { id: "gem", label: "Blue Gem", src: "/avatars/presets/gem.png", bg: "linear-gradient(145deg,#0A1E3E,#1A3A7A)" },
+  { id: "orb", label: "Crystal Orb", src: "/avatars/presets/orb.png", bg: "linear-gradient(145deg,#1A0A3E,#3A1A7A)" },
+  { id: "sword", label: "Crossed Swords", src: "/avatars/presets/sword.png", bg: "linear-gradient(145deg,#1E1E1E,#3A3A3A)" },
+  { id: "cards", label: "Card Vault", src: "/avatars/presets/cards.png", bg: "linear-gradient(145deg,#2E0A0A,#5E1A1A)" },
+  { id: "crown", label: "Crown Vault", src: "/avatars/presets/crown.png", bg: "linear-gradient(145deg,#2E2200,#5E4400)" },
+  { id: "vault", label: "Museum Vault", src: "/avatars/presets/vault.png", bg: "linear-gradient(145deg,#1A1A2E,#2E2E4E)" },
+  { id: "fire", label: "Fire Relic", src: "/avatars/presets/fire.png", bg: "linear-gradient(145deg,#3E0A00,#7A1A00)" },
+] as const;
+
+function avatarPresetSrc(url: string) {
+  if (!url.startsWith("__preset:")) return "";
+  return AVATAR_PRESETS.find((preset) => preset.id === url.replace("__preset:", ""))?.src ?? "";
+}
+
+function emojiToPresetUrl(emoji?: string | null) {
+  switch (emoji) {
+    case "🦁": return "__preset:lion";
+    case "🐉": return "__preset:dragon";
+    case "🦊": return "__preset:fox";
+    case "🦅": return "__preset:eagle";
+    case "💎": return "__preset:gem";
+    case "🔮": return "__preset:orb";
+    case "⚔️": return "__preset:sword";
+    case "🃏": return "__preset:cards";
+    case "👑": return "__preset:crown";
+    case "🏛️": return "__preset:vault";
+    case "🔥": return "__preset:fire";
+    default: return "__preset:key";
+  }
+}
+
 function focusToVaultSlug(focus: string): string | null {
   const t = focus.toLowerCase().replace(/[^a-z0-9]+/g, "");
   if (/tcg|pokemon|magic|yugioh|tradingcard/.test(t)) return "tcg";
@@ -162,6 +201,7 @@ function AvatarPickerModal({
       if (!supabase) return;
       const urlToSave = isPreset(selected) ? selected : selected;
       await supabase.from("profiles").update({ avatar_url: urlToSave }).eq("id", profileId);
+      if (typeof window !== "undefined") window.dispatchEvent(new Event("vltd:active-profile"));
       onSaved(urlToSave);
       onClose();
     } finally {
@@ -190,7 +230,12 @@ function AvatarPickerModal({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={selected} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               ) : (
-                currentPreset?.emoji ?? "🗝️"
+                currentPreset?.src ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={currentPreset.src} alt={currentPreset.label} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <span style={{ fontSize: "18px", color: C.gold }}>VLTD</span>
+                )
               )}
             </div>
             <div>
@@ -205,8 +250,11 @@ function AvatarPickerModal({
               const isActive = selected === presetUrl(p.id);
               return (
                 <button key={p.id} onClick={() => setSelected(presetUrl(p.id))}
-                  style={{ width: "100%", aspectRatio: "1", borderRadius: "50%", border: isActive ? `2px solid ${C.gold}` : `1px solid ${C.bd}`, background: p.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", cursor: "pointer", outline: "none", position: "relative" }}>
-                  {p.emoji}
+                  aria-label={p.label}
+                  title={p.label}
+                  style={{ width: "100%", aspectRatio: "1", borderRadius: "50%", border: isActive ? `2px solid ${C.gold}` : `1px solid ${C.bd}`, background: p.bg, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", outline: "none", position: "relative", overflow: "hidden", padding: 0 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={p.src} alt="" aria-hidden="true" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                   {isActive && <span style={{ position: "absolute", bottom: 0, right: 0, width: "14px", height: "14px", background: C.gold, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "8px", color: "#000", fontWeight: 700 }}>✓</span>}
                 </button>
               );
@@ -240,6 +288,7 @@ function HeroAvatarPanel({ avatarUrl, onClick }: { avatarUrl: string; onClick: (
     ? AVATAR_PRESETS.find(p => p.id === avatarUrl.replace("__preset:", ""))
     : null;
   const hasCustom = avatarUrl && !avatarUrl.startsWith("__preset:");
+  const presetImage = avatarPresetSrc(avatarUrl);
 
   return (
     <button onClick={onClick} style={{ position: "relative", width: "100%", height: "100%", background: preset?.bg ?? "linear-gradient(155deg,#100D06,#0C0A04)", border: "none", cursor: "pointer", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }} className="max-sm:hidden">
@@ -255,10 +304,11 @@ function HeroAvatarPanel({ avatarUrl, onClick }: { avatarUrl: string; onClick: (
       {hasCustom ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
+      ) : presetImage ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={presetImage} alt={preset?.label ?? "avatar"} style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
       ) : (
-        <span style={{ fontSize: "64px", position: "relative", zIndex: 1, filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.8))" }}>
-          {preset?.emoji ?? "🗝️"}
-        </span>
+        <span style={{ fontSize: "18px", color: C.gold, position: "relative", zIndex: 1 }}>VLTD</span>
       )}
       {/* Edit hint overlay */}
       <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0)", display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: "12px", opacity: 0, transition: "all 0.2s" }}
@@ -561,7 +611,8 @@ export default function HomeClient() {
         setBio((profile as Record<string, unknown>)?.bio as string ?? "");
         setSocialLinks(((profile as Record<string, unknown>)?.social_links as SocialLinks) ?? {});
         const savedAvatar = (profile as Record<string, unknown>)?.avatar_url as string | null;
-        setAvatarUrl(savedAvatar || "__preset:key");
+        const savedAvatarEmoji = (profile as Record<string, unknown>)?.avatar_emoji as string | null;
+        setAvatarUrl(savedAvatar || emojiToPresetUrl(savedAvatarEmoji));
         const focus = profile?.primary_focus ?? "";
         setPrimaryFocus(focus);
         try { window.localStorage.setItem(FOCUS_LS_KEY, focus); } catch { /* ignore */ }
