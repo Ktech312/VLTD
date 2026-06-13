@@ -1,4 +1,4 @@
-import { getSupabaseBrowserClient as createClient } from "@/lib/supabaseClient";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 export type AccentStyle = "none" | "snowflakes" | "confetti" | "stars" | "leaves";
 
@@ -29,7 +29,6 @@ const CACHE_KEY = "vltd_active_theme";
 const CACHE_TTL = 5 * 60 * 1000;
 
 export async function fetchActiveTheme(): Promise<SeasonalTheme | null> {
-  // Check memory cache
   try {
     const cached = sessionStorage.getItem(CACHE_KEY);
     if (cached) {
@@ -38,7 +37,9 @@ export async function fetchActiveTheme(): Promise<SeasonalTheme | null> {
     }
   } catch {}
 
-  const supabase = createClient();
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return null;
+
   const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("seasonal_themes")
@@ -65,7 +66,8 @@ export function clearThemeCache() {
 
 /** All themes — admin only */
 export async function fetchAllThemes(): Promise<SeasonalTheme[]> {
-  const supabase = createClient();
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return [];
   const { data, error } = await supabase
     .from("seasonal_themes")
     .select("*")
@@ -75,7 +77,8 @@ export async function fetchAllThemes(): Promise<SeasonalTheme[]> {
 }
 
 export async function upsertTheme(theme: Partial<SeasonalTheme> & { slug: string }): Promise<{ error: string | null }> {
-  const supabase = createClient();
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return { error: "No Supabase client" };
   const { error } = await supabase
     .from("seasonal_themes")
     .upsert({ ...theme, updated_at: new Date().toISOString() }, { onConflict: "slug" });
@@ -85,7 +88,8 @@ export async function upsertTheme(theme: Partial<SeasonalTheme> & { slug: string
 }
 
 export async function deleteTheme(id: string): Promise<{ error: string | null }> {
-  const supabase = createClient();
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return { error: "No Supabase client" };
   const { error } = await supabase.from("seasonal_themes").delete().eq("id", id);
   if (error) return { error: error.message };
   clearThemeCache();
