@@ -74,6 +74,10 @@ const AVATAR_PRESETS = [
   { id: "crown", label: "Crown Vault", src: "/avatars/presets/crown.png", bg: "linear-gradient(145deg,#2E2200,#5E4400)" },
   { id: "vault", label: "Museum Vault", src: "/avatars/presets/vault.png", bg: "linear-gradient(145deg,#1A1A2E,#2E2E4E)" },
   { id: "fire", label: "Fire Relic", src: "/avatars/presets/fire.png", bg: "linear-gradient(145deg,#3E0A00,#7A1A00)" },
+  { id: "keysmith", label: "Keysmith", src: "/avatars/presets/keysmith.png", bg: "linear-gradient(145deg,#111827,#3F2F12)" },
+  { id: "guitar", label: "Guitar", src: "/avatars/presets/guitar.png", bg: "linear-gradient(145deg,#0F172A,#4A3412)" },
+  { id: "vinyl", label: "Vinyl Record", src: "/avatars/presets/vinyl.png", bg: "linear-gradient(145deg,#111111,#3F2F12)" },
+  { id: "harp", label: "Harp", src: "/avatars/presets/harp.png", bg: "linear-gradient(145deg,#1A1208,#5E4400)" },
 ] as const;
 
 function avatarPresetSrc(url: string) {

@@ -30,6 +30,10 @@ const AVATAR_PRESET_SRCS: Record<string, string> = {
   crown: "/avatars/presets/crown.png",
   vault: "/avatars/presets/vault.png",
   fire: "/avatars/presets/fire.png",
+  keysmith: "/avatars/presets/keysmith.png",
+  guitar: "/avatars/presets/guitar.png",
+  vinyl: "/avatars/presets/vinyl.png",
+  harp: "/avatars/presets/harp.png",
 };
 
 function resolveAvatarImageSrc(avatarUrl?: string | null) {
