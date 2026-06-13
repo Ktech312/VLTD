@@ -1060,7 +1060,6 @@ export default function AddPage() {
 
       const safeToAutofill =
         vision.confidence >= 0.45 && Boolean(String(vision.title ?? "").trim());
-      const visionCategoryLabel = vision.categoryLabel || vision.category || "";
       const fields = {
         title: vision.title,
         subtitle: vision.subtitle,
@@ -1070,8 +1069,7 @@ export default function AddPage() {
         conditionSource: vision.grade || vision.conditionReason || vision.condition ? "ai" : "",
         certNumber: vision.certNumber,
         universe: vision.universe,
-        category: visionCategoryLabel ? categoryCode(visionCategoryLabel) : undefined,
-        categoryLabel: visionCategoryLabel,
+        categoryLabel: vision.categoryLabel || vision.category,
         subcategoryLabel: vision.subcategoryLabel,
         notes: vision.description,
       };
@@ -1093,17 +1091,6 @@ export default function AddPage() {
 
       if (safeToAutofill) {
         applyScanFieldsToEmpty(fields);
-        // Always override taxonomy from AI — the vision result is more specific than any prior selection
-        setValues((prev) => {
-          const next = { ...prev };
-          let changed = false;
-          if (fields.universe?.trim()) { next.universe = fields.universe; changed = true; }
-          if (fields.category?.trim()) { next.category = fields.category; changed = true; }
-          if (fields.categoryLabel?.trim()) { next.categoryLabel = fields.categoryLabel; changed = true; }
-          if (fields.subcategoryLabel?.trim()) { next.subcategoryLabel = fields.subcategoryLabel; changed = true; }
-          if (changed) setHasDraftChanges(true);
-          return changed ? next : prev;
-        });
         setScanSession((prev) => markScanSessionApplied(prev));
       }
 

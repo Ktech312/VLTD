@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { PillButton } from "@/components/ui/PillButton";
+import { showToast } from "@/lib/toast";
 import {
   getCurrentUser,
   listMyProfiles,
@@ -85,7 +86,7 @@ export default function WorkspaceSettingsPage() {
       const active = rows.find((r) => r.id === aid) ?? rows[0];
       if (active) {
         setEditDisplay(active.display_name ?? "");
-        setEditEmoji((active as ProfileRow & { avatar_emoji?: string }).avatar_emoji ?? "🗝️");
+        setEditEmoji((active as ProfileRow & { avatar_emoji?: string }).avatar_emoji ?? "🗹");
       }
     }
     load();
@@ -129,7 +130,7 @@ export default function WorkspaceSettingsPage() {
     const p = profiles.find((r) => r.id === id);
     if (p) {
       setEditDisplay(p.display_name ?? "");
-      setEditEmoji((p as ProfileRow & { avatar_emoji?: string }).avatar_emoji ?? "🗝️");
+      setEditEmoji((p as ProfileRow & { avatar_emoji?: string }).avatar_emoji ?? "🗹");
     }
   }
 
@@ -246,7 +247,7 @@ export default function WorkspaceSettingsPage() {
 
         <Section title="Integrations">
           <Row label="Google Sheets sync" sub="Export vault data to a connected spreadsheet">
-            <button type="button" onClick={() => alert("Coming soon.")} className="rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)", color: "var(--muted)" }}>
+            <button type="button" onClick={() => showToast("Google Sheets sync coming soon.")} className="rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)", color: "var(--muted)" }}>
               Connect
             </button>
           </Row>
@@ -264,7 +265,7 @@ export default function WorkspaceSettingsPage() {
           <Section title="Switch workspace">
             <div className="space-y-2">
               {profiles.map((p) => {
-                const emoji = (p as ProfileRow & { avatar_emoji?: string }).avatar_emoji ?? "🗝️";
+                const emoji = (p as ProfileRow & { avatar_emoji?: string }).avatar_emoji ?? "🗹";
                 return (
                   <button
                     key={p.id}

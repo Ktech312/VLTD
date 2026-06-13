@@ -4,6 +4,7 @@ import { useState } from "react";
 import { runRecognitionPipeline } from "@/lib/ai/recognitionPipeline";
 import { buildVaultItemFromAI } from "@/lib/ai/aiVaultFlow";
 import { loadItems, saveItems } from "@/lib/vaultModel";
+import { showToast } from "@/lib/toast";
 
 export default function AICaptureToVault() {
   const [result, setResult] = useState<any>(null);
@@ -26,7 +27,7 @@ export default function AICaptureToVault() {
 
     window.dispatchEvent(new Event("vltd:vault-updated"));
 
-    alert("Item added to vault");
+    showToast("Item added to vault");
   }
 
   return (

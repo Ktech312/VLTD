@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { saveItem, type VaultItem } from "@/lib/vaultModel";
+import { showToast } from "@/lib/toast";
 
 const SALES_KEY = "vltd_sales_history";
 
@@ -39,7 +40,7 @@ export default function SellItemButton({ item }: { item: VaultItem }) {
 
     const salePrice = parseMoney(priceInput);
     if (salePrice === undefined) {
-      window.alert("Invalid price.");
+      showToast("Invalid price.");
       return;
     }
 
@@ -73,7 +74,7 @@ export default function SellItemButton({ item }: { item: VaultItem }) {
       window.dispatchEvent(new Event("vltd:vault-updated"));
     } catch (error) {
       console.error(error);
-      window.alert("Failed to mark item sold.");
+      showToast("Failed to mark item sold.");
     } finally {
       setLoading(false);
     }

@@ -1,3 +1,5 @@
+import { showToast } from "@/lib/toast";
+
 export function backupVault() {
   try {
     const raw = localStorage.getItem("vltd_vault_items_v1");
@@ -11,12 +13,12 @@ export function restoreVaultBackup() {
   try {
     const backup = localStorage.getItem("vltd_vault_backup");
     if (!backup) {
-      alert("No backup found");
+      showToast("No backup found");
       return;
     }
 
     localStorage.setItem("vltd_vault_items_v1", backup);
-    alert("Vault restored from backup");
+    showToast("Vault restored from backup");
     location.reload();
   } catch {}
 }

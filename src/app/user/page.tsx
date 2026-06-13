@@ -1,10 +1,10 @@
-// Path: src/app/user/page.tsx
 "use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { PillButton } from "@/components/ui/PillButton";
+import { showToast } from "@/lib/toast";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
@@ -62,7 +62,7 @@ function gain(i: ModelItem) {
 
 function csvEscape(value: any) {
   const s = String(value ?? "");
-  if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`; 
   return s;
 }
 
@@ -146,7 +146,7 @@ function buildInsuranceCsv(items: ModelItem[]) {
       i.grade ?? "",
       UNIVERSE_LABEL[u] ?? String(u),
       (i as any).categoryLabel ??
-        (i.category === "CUSTOM" ? i.customCategoryLabel ?? "Collector’s Choice" : "Collector’s Choice"),
+        (i.category === "CUSTOM" ? i.customCategoryLabel ?? "Collector's Choice" : "Collector's Choice"),
       (i as any).subcategoryLabel ?? "",
       clamp(Number(i.purchasePrice ?? 0)),
       clamp(Number(i.currentValue ?? 0)),
@@ -333,15 +333,15 @@ export default function UserSettingsPage() {
 
       const nextItems = Array.isArray(parsed?.items) ? (parsed.items as ModelItem[]) : null;
       if (!nextItems) {
-        alert("That file doesn’t look like a VLTD backup.");
+        showToast("That file doesn't look like a VLTD backup.");
         return;
       }
 
       saveItems(nextItems);
       setItems(nextItems);
-      alert("Backup restored.");
+      showToast("Backup restored.");
     } catch {
-      alert("Could not read that file.");
+      showToast("Could not read that file.");
     } finally {
       if (fileRef.current) fileRef.current.value = "";
     }
@@ -358,7 +358,7 @@ export default function UserSettingsPage() {
       setMuseumBackgroundMode(draftMuseumBackgroundMode);
       setMuseumModeDirty(false);
     } catch {
-      alert("Could not read that image.");
+      showToast("Could not read that image.");
     } finally {
       if (museumBgRef.current) museumBgRef.current.value = "";
     }

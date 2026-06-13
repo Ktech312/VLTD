@@ -2,7 +2,6 @@ create table if not exists public_profiles (
   profile_id uuid primary key,
   display_name text not null default 'Collector',
   avatar_emoji text not null default '🗝️',
-  avatar_url text not null default '',
   updated_at timestamptz not null default now()
 );
 

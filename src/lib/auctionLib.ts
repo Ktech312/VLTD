@@ -14,16 +14,11 @@ import type { VaultItem } from "./vaultModel";
 // Types
 // ---------------------------------------------------------------------------
 
-export type AuctionItem = Omit<VaultItem, "status" | "auctionStatus" | "auctionEndsAt" | "auctionStartingBhid" | "auctionCurrentBid" | "auctionBidCount" | "auctionWinnerId" | "reservePrice" | "buyItNowPrice"> & {
+export type AuctionItem = VaultItem & {
   status: "AUCTION";
   auctionStatus: "ACTIVE" | "ENDED" | "CANCELLED";
   auctionEndsAt: number;           // unix ms
   auctionStartingBid: number;
-    auctionCurrentBid?: number;
-    auctionBidCount?: number;
-    auctionWinnerId?: string;
-    reservePrice?: number;
-    buyItNowPrice?: number;
 };
 
 export type Bid = {
@@ -162,17 +157,17 @@ export async function placeBid(
     return { ok: false, error: `Minimum bid is $${minBid.toFixed(2)}` };
   }
 
-  // Use the place_bid() RPC so vault_items.auction_current_bid and
-    // auction_bid_count are updated atomically in the same transaction.
-    const { data, error } = await sb
-      .rpc("place_bid", { p_item_id: itemId, p_bidder: userId, p_amount: amount });
+  const { data, error } = await sb
+    .from("bids")
+    .insert({ item_id: itemId, bidder_id: userId, amount })
+    .select()
+    .single();
 
-    if (error || !data) {
-          // RPC raises exceptions with human-readable messages (e.g. "Minimum bid is 25")
-          return { ok: false, error: error?.message ?? "Bid failed" };
-    }
+  if (error || !data) {
+    return { ok: false, error: error?.message ?? "Bid failed" };
+  }
 
-    return { ok: true, bid: rowToBid(data as Record<string, unknown>) };
+  return { ok: true, bid: rowToBid(data as Record<string, unknown>) };
 }
 
 // ---------------------------------------------------------------------------

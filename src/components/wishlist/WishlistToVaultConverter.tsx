@@ -1,11 +1,12 @@
 "use client";
 
 import { moveWishlistItemToVault } from "@/lib/integrations/wishlistVaultBridge";
+import { showToast } from "@/lib/toast";
 
 export default function WishlistToVaultConverter({ item }: { item: any }) {
   function convert() {
     moveWishlistItemToVault(item);
-    alert("Moved to vault");
+    showToast("Moved to vault");
   }
 
   return (

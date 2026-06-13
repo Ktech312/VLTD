@@ -1,11 +1,12 @@
 "use client";
 
 import { addWishlistItem } from "@/lib/wishlistModel";
+import { showToast } from "@/lib/toast";
 
 export default function AddToWishlistButton({ title }: { title: string }) {
   function add() {
     addWishlistItem({ title });
-    alert("Added to wishlist");
+    showToast("Added to wishlist");
   }
 
   return (

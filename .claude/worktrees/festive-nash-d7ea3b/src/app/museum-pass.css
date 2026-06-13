@@ -1,0 +1,99 @@
+/* Path: src/app/museum-pass.css */
+/* Pass 6: Museum page visual alignment. Scoped by the Add Gallery action. */
+
+body:has(a[href="/museum/new"]) main {
+  background:
+    radial-gradient(circle at 48% 8%, rgba(245, 181, 72, 0.07), transparent 34%),
+    radial-gradient(circle at 82% 22%, rgba(245, 181, 72, 0.04), transparent 26%),
+    linear-gradient(180deg, #0B0B0B 0%, #080808 100%) !important;
+}
+
+body:has(a[href="/museum/new"]) main > div {
+  max-width: 1180px !important;
+}
+
+body:has(a[href="/museum/new"]) section:first-of-type {
+  border-color: rgba(245, 181, 72, 0.25) !important;
+  background:
+    linear-gradient(180deg, rgba(20, 16, 8, 0.92), rgba(12, 10, 4, 0.96)) !important;
+  box-shadow:
+    0 0 0 1px rgba(245, 181, 72, 0.06),
+    0 26px 86px rgba(245, 181, 72, 0.06),
+    0 24px 88px rgba(0, 0, 0, 0.50) !important;
+}
+
+body:has(a[href="/museum/new"]) section:first-of-type h1 {
+  font-weight: 900 !important;
+  letter-spacing: -0.045em !important;
+}
+
+body:has(a[href="/museum/new"]) a[href="/museum/new"] {
+  background: linear-gradient(135deg, #8B6914 0%, #C8941F 25%, #F5B548 50%, #FFE08A 70%, #C8941F 100%) !important;
+  color: #0B0B0B !important;
+  border-color: rgba(245, 181, 72, 0.50) !important;
+  box-shadow: 0 8px 28px rgba(245, 181, 72, 0.35) !important;
+}
+
+body:has(a[href="/museum/new"]) section:first-of-type .rounded-\[20px\],
+body:has(a[href="/museum/new"]) section:first-of-type [class*="rounded-[20px]"] {
+  background: rgba(20, 16, 8, 0.50) !important;
+  border: 1px solid rgba(245, 181, 72, 0.16) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+}
+
+body:has(a[href="/museum/new"]) article {
+  border-color: rgba(245, 181, 72, 0.14) !important;
+  background:
+    linear-gradient(180deg, rgba(20, 16, 8, 0.88), rgba(12, 10, 4, 0.92)) !important;
+  box-shadow:
+    0 0 0 1px rgba(245, 181, 72, 0.04),
+    0 18px 56px rgba(0, 0, 0, 0.40) !important;
+}
+
+body:has(a[href="/museum/new"]) article:hover {
+  border-color: rgba(245, 181, 72, 0.35) !important;
+  box-shadow:
+    0 0 0 1px rgba(245, 181, 72, 0.08),
+    0 18px 52px rgba(245, 181, 72, 0.07),
+    0 22px 70px rgba(0, 0, 0, 0.40) !important;
+}
+
+body:has(a[href="/museum/new"]) article h2 {
+  letter-spacing: -0.035em !important;
+}
+
+body:has(a[href="/museum/new"]) article span,
+body:has(a[href="/museum/new"]) section span {
+  border-color: rgba(245, 181, 72, 0.14) !important;
+}
+
+@media (max-width: 700px) {
+  body:has(a[href="/museum/new"]) main {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  body:has(a[href="/museum/new"]) main > div {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  body:has(a[href="/museum/new"]) section:first-of-type {
+    border-radius: 24px !important;
+    padding: 16px !important;
+  }
+
+  body:has(a[href="/museum/new"]) section:first-of-type h1 {
+    font-size: 2rem !important;
+    line-height: 1 !important;
+  }
+
+  body:has(a[href="/museum/new"]) section:first-of-type [class*="grid"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  body:has(a[href="/museum/new"]) article {
+    border-radius: 24px !important;
+    padding: 16px !important;
+  }
+}

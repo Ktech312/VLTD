@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import ImageViewer from "@/components/ImageViewer";
 import ScanCropEditor from "@/components/ScanCropEditor";
 import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
+import { showToast } from "@/lib/toast";
 
 type ImageRole = "primary" | "detail" | "proof";
 
@@ -289,7 +290,7 @@ export default function ItemMedia({
       setEditTarget(null);
     } catch (error) {
       console.error(error);
-      window.alert(error instanceof Error ? error.message : "Could not edit this image.");
+      showToast(error instanceof Error ? error.message : "Could not edit this image.");
     } finally {
       setIsEditingImage(false);
     }
@@ -810,5 +811,6 @@ export default function ItemMedia({
         </div>
       ) : null}
     </>
-  )
+
+  );
 }

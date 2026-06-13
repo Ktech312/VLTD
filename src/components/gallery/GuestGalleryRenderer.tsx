@@ -266,7 +266,7 @@ function getShelfSlotLayout(model: GuestGalleryViewModel) {
   )?.slotLayout;
 }
 
-type OwnerProfile = { displayName: string; profileId: string; avatar: string; avatarUrl?: string };
+type OwnerProfile = { displayName: string; profileId: string; avatar: string };
 
 export default function GuestGalleryRenderer({
   model,
@@ -291,7 +291,7 @@ export default function GuestGalleryRenderer({
     if (!supabase) return;
     void supabase
       .from("public_profiles")
-      .select("display_name, avatar_emoji, avatar_url")
+      .select("display_name, avatar_emoji")
       .eq("profile_id", profileId)
       .maybeSingle()
       .then(({ data }) => {
@@ -299,7 +299,6 @@ export default function GuestGalleryRenderer({
           setOwner({
             displayName: String(data.display_name || "Collector"),
             profileId,
-            avatarUrl: typeof data.avatar_url === "string" ? data.avatar_url : "",
             avatar: String(data.avatar_emoji || "🗝️"),
           });
         }
@@ -432,12 +431,7 @@ export default function GuestGalleryRenderer({
                   <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1">
                     {owner ? (
                       <>
-                        {owner.avatarUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={owner.avatarUrl} alt="" className="h-7 w-7 rounded-full object-cover ring-1 ring-white/15" />
-                        ) : (
-                          <span className="text-lg leading-none">{owner.avatar}</span>
-                        )}
+                        <span className="text-lg leading-none">{owner.avatar}</span>
                         <Link
                           href={`/v/${owner.profileId}`}
                           className="text-sm font-semibold transition-opacity hover:opacity-80"

@@ -1,11 +1,13 @@
 "use client";
 
+import { showToast } from "@/lib/toast";
+
 export default function RestoreVaultButton() {
   function handleRestore() {
     const backup = localStorage.getItem("vltd_vault_backup");
 
     if (!backup) {
-      alert("No backup found.");
+      showToast("No backup found.");
       return;
     }
 
@@ -15,7 +17,7 @@ export default function RestoreVaultButton() {
 
     localStorage.setItem("vltd_vault_items_v1", backup);
 
-    alert("Vault restored.");
+    showToast("Vault restored.");
     location.reload();
   }
 

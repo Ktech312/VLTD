@@ -1,9 +1,9 @@
-// Path: src/app/user/profile/page.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { PillButton } from "@/components/ui/PillButton";
+import { showToast } from "@/lib/toast";
 import {
   DEFAULT_PROFILE,
   UserProfile,
@@ -185,7 +185,7 @@ export default function UserProfilePage() {
     const email = profile.email.trim();
 
     if (!isValidEmail(email)) {
-      alert("Please enter a valid email address.");
+      showToast("Please enter a valid email address.");
       return;
     }
 
@@ -198,7 +198,7 @@ export default function UserProfilePage() {
     };
 
     saveProfile(next);
-    alert("Saved profile.");
+    showToast("Saved profile.");
   }
 
   function onResetToDefaults() {
@@ -226,9 +226,9 @@ export default function UserProfilePage() {
         const parsed = JSON.parse(text) as Partial<UserProfile>;
         const merged = { ...DEFAULT_PROFILE, ...parsed } as UserProfile;
         saveProfile(merged);
-        alert("Imported profile.");
+        showToast("Imported profile.");
       } catch {
-        alert("Import failed: invalid JSON.");
+        showToast("Import failed: invalid JSON.");
       }
     });
   }
@@ -247,7 +247,7 @@ export default function UserProfilePage() {
     window.localStorage.removeItem(SHEET_ID_KEY);
 
     broadcastProfileChange();
-    alert("Cleared local demo data. Refresh the page.");
+    showToast("Cleared local demo data. Refresh the page.");
   }
 
   const avatarNode =
@@ -457,7 +457,7 @@ export default function UserProfilePage() {
                         update("avatarImageDataUrl", dataUrl);
                         update("avatarMode", "IMAGE");
                       } catch (err: any) {
-                        alert(err?.message ?? "Failed to process image.");
+                        showToast(err?.message ?? "Failed to process image.");
                       } finally {
                         if (avatarUploadRef.current) avatarUploadRef.current.value = "";
                       }
@@ -519,7 +519,7 @@ export default function UserProfilePage() {
                     variant={canVerify ? "active" : "default"}
                     onClick={() => {
                       if (!canVerify) {
-                        alert("Must be 18+ with a valid DOB to verify.");
+                        showToast("Must be 18+ with a valid DOB to verify.");
                         return;
                       }
                       update("ageVerified", true);

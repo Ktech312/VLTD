@@ -1,10 +1,10 @@
-
 "use client";
 
-export default function MoveWishlistToVaultButton({ item }: { item: any }) {
+import { showToast } from "@/lib/toast";
 
+export default function MoveWishlistToVaultButton({ item }: { item: any }) {
   function move() {
-    alert("Move to vault flow will be implemented here.");
+    showToast("Move to vault coming soon.");
   }
 
   return (

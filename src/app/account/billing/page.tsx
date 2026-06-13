@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { PillButton } from "@/components/ui/PillButton";
+import { showToast } from "@/lib/toast";
 
 type Plan = "free" | "pro" | "business";
 
@@ -34,6 +36,13 @@ const MOCK_INVOICES = [
 
 export default function BillingPage() {
   const currentPlan: Plan = "pro";
+  const [toast, setToast] = useState("");
+
+  function toast_(msg: string) {
+    showToast(msg);
+    setToast(msg);
+    setTimeout(() => setToast(""), 3000);
+  }
 
   return (
     <main className="min-h-screen" style={{ background: "var(--bg)", color: "var(--fg)" }}>
@@ -96,7 +105,7 @@ export default function BillingPage() {
                   {!isCurrent && (
                     <button
                       type="button"
-                      onClick={() => alert("Upgrade flow coming soon.")}
+                      onClick={() => toast_("Upgrade flow coming soon.")}
                       className="mt-4 w-full rounded-full py-2 text-xs font-semibold ring-1"
                       style={{
                         background: plan.key === "business" ? "var(--theme-gold)" : "var(--pill)",
@@ -124,7 +133,7 @@ export default function BillingPage() {
                 <div className="text-xs" style={{ color: "var(--muted)" }}>Expires 12/27</div>
               </div>
             </div>
-            <button type="button" onClick={() => alert("Card update coming soon.")} className="rounded-full px-3 py-1.5 text-xs ring-1" style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}>
+            <button type="button" onClick={() => toast_("Card update coming soon.")} className="rounded-full px-3 py-1.5 text-xs ring-1" style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}>
               Update
             </button>
           </div>
@@ -154,7 +163,7 @@ export default function BillingPage() {
         <div className="rounded-2xl p-5 ring-1 ring-[color:rgba(248,113,113,0.3)]" style={{ background: "rgba(248,113,113,0.04)" }}>
           <div className="text-[11px] font-semibold uppercase tracking-widest mb-1" style={{ color: "#f87171" }}>Cancel subscription</div>
           <p className="text-xs mb-3" style={{ color: "var(--muted)" }}>Your vault data is always yours. Canceling downgrades to Free at the end of the billing period.</p>
-          <button type="button" onClick={() => alert("Cancel flow coming soon.")} className="rounded-full px-4 py-1.5 text-xs font-semibold ring-1" style={{ background: "rgba(248,113,113,0.08)", color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}>
+          <button type="button" onClick={() => toast_("Cancel flow coming soon.")} className="rounded-full px-4 py-1.5 text-xs font-semibold ring-1" style={{ background: "rgba(248,113,113,0.08)", color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}>
             Cancel plan
           </button>
         </div>

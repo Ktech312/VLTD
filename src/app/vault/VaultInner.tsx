@@ -21,6 +21,7 @@ import {
 
 import { PillButton } from "@/components/ui/PillButton";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { showToast } from "@/lib/toast";
 
 type FrameStyle = "gallery" | "shadowbox" | "slab" | "minimal" | "vault";
 
@@ -1183,7 +1184,7 @@ export default function VaultInner() {
   }
 
   function onScan() {
-    alert("Scan is coming next: camera → detect barcode vs cover → auto-fill.");
+    showToast("Barcode scan coming soon...");
   }
 
   const isTrulyEmpty = items.length === 0;

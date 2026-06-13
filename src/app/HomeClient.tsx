@@ -806,15 +806,4 @@ export default function HomeClient() {
                 </linearGradient>
               </defs>
               <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2 L230 52 L0 52Z" fill="url(#vg3)"/>
-              <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2" fill="none" stroke={C.gold} strokeWidth="1.8"/>
-              <circle cx="230" cy="2" r="2.5" fill={C.gold}/>
-            </svg>
-            <Link href="/vault/sold" style={{ display: "block", textAlign: "center", marginTop: "8px", fontSize: "11px", color: C.muted, textDecoration: "none" }}>View analytics →</Link>
-          </div>
-
-        </div>{/* end RIGHT SIDEBAR */}
-
-      </div>
-    </main>
-  );
-}
+              <path d="M0 46 C20 4

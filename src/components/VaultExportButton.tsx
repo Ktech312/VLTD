@@ -6,6 +6,7 @@ import InsurancePdfButton from "@/components/InsurancePdfButton";
 import { exportVaultCsv, exportVaultJson } from "@/lib/vaultExport";
 import { loadItems } from "@/lib/vaultModel";
 import { getVaultImagePublicUrl } from "@/lib/vaultCloud";
+import { showToast } from "@/lib/toast";
 import type { VaultItem } from "@/lib/vaultModel";
 
 declare global {
@@ -49,7 +50,7 @@ async function downloadPhotosZip(
 
   const withImages = items.filter((item) => getPrimaryImageUrl(item));
   if (withImages.length === 0) {
-    alert("No items with photos found.");
+    showToast("No items with photos found.");
     return;
   }
 
@@ -171,6 +172,7 @@ export default function VaultExportButton() {
               Download Photos (ZIP)
             </button>
           </div>
+
         </>
       ) : null}
     </div>

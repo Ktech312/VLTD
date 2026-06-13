@@ -47,7 +47,7 @@ export function isTokenValid(token?: StoredToken | null): boolean {
  */
 export function startGoogleConnect() {
   if (typeof window === "undefined") return;
-  alert("Demo build: Google connect not wired. Provide a token in localStorage if needed.");
+  import("@/lib/toast").then(({ showToast }) => showToast("Google Sheets sync coming soon."));
 }
 
 /**
