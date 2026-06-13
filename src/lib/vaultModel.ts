@@ -188,13 +188,7 @@ function sanitizePriceConfidence(value: unknown): PriceConfidence | undefined {
 }
 
 function sanitizeVaultStatus(value: unknown): VaultItem["status"] {
-  if (
-    value === "COLLECTION" ||
-    value === "FOR_SALE" ||
-    value === "SOLD" ||
-    value === "WISHLIST" ||
-    value === "AUCTION"
-  ) return value;
+  if (value === "COLLECTION" || value === "FOR_SALE" || value === "SOLD" || value === "WISHLIST" || value === "AUCTION") return value;
   return undefined;
 }
 
@@ -392,7 +386,7 @@ function normalizeOne(input: unknown): VaultItem | null {
     auctionEndsAt: typeof raw.auctionEndsAt === "number" ? raw.auctionEndsAt : undefined,
     auctionStartingBid: typeof raw.auctionStartingBid === "number" && Number.isFinite(raw.auctionStartingBid) ? raw.auctionStartingBid : undefined,
     auctionCurrentBid: typeof raw.auctionCurrentBid === "number" && Number.isFinite(raw.auctionCurrentBid) ? raw.auctionCurrentBid : undefined,
-    auctionBidCount: typeof raw.auctionBidCount === "number" ? Math.max(0, Math.floor(raw.auctionBidCount)) : undefined,
+    auctionBidCount: typeof raw.auctionBidCount === "number" && Number.isFinite(raw.auctionBidCount) ? raw.auctionBidCount : undefined,
     auctionWinnerId: typeof raw.auctionWinnerId === "string" && raw.auctionWinnerId.trim() ? raw.auctionWinnerId.trim() : undefined,
     purchaseSource: raw.purchaseSource ?? undefined,
     purchaseLocation: raw.purchaseLocation ?? undefined,

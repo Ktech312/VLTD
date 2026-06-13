@@ -132,6 +132,10 @@ export async function syncPublicProfile(profileId = getStoredActiveProfileId()) 
     payload.bio = profileRow.bio;
   }
 
+  if (typeof profileRow?.avatar_url === "string" && profileRow.avatar_url) {
+    payload.avatar_url = profileRow.avatar_url;
+  }
+
   const { data, error } = await supabase
     .from("public_profiles")
     .upsert(payload, { onConflict: "profile_id" })
@@ -150,7 +154,7 @@ export async function fetchPublicProfile(profileId: string): Promise<PublicProfi
   const [{ data, error }, { data: profileRow }] = await Promise.all([
     supabase
       .from("public_profiles")
-      .select("profile_id, display_name, avatar_emoji, bio")
+      .select("profile_id, display_name, avatar_emoji, avatar_url, bio")
       .eq("profile_id", cleanProfileId)
       .maybeSingle(),
     supabase
@@ -171,7 +175,9 @@ export async function fetchPublicProfile(profileId: string): Promise<PublicProfi
     profileId: String(data.profile_id),
     displayName: String(data.display_name || "Collector"),
     avatarEmoji: String(data.avatar_emoji || "🗝️"),
-    avatarUrl: typeof profileRow?.avatar_url === "string" && profileRow.avatar_url ? profileRow.avatar_url : undefined,
+    avatarUrl: typeof profileRow?.avatar_url === "string" && profileRow.avatar_url
+      ? profileRow.avatar_url
+      : (typeof data.avatar_url === "string" && data.avatar_url ? data.avatar_url : undefined),
     bannerUrl: typeof profileRow?.banner_url === "string" && profileRow.banner_url ? profileRow.banner_url : undefined,
     bio,
     socialLinks: (profileRow?.social_links as SocialLinks) ?? undefined,

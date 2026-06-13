@@ -17,12 +17,55 @@ import {
 import { getMyAdminRole, type AdminRole } from "@/lib/adminAuth";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
+const AVATAR_PRESET_SRCS: Record<string, string> = {
+  key: "/avatars/presets/key.png",
+  lion: "/avatars/presets/lion.png",
+  dragon: "/avatars/presets/dragon.png",
+  fox: "/avatars/presets/fox.png",
+  eagle: "/avatars/presets/eagle.png",
+  gem: "/avatars/presets/gem.png",
+  orb: "/avatars/presets/orb.png",
+  sword: "/avatars/presets/sword.png",
+  cards: "/avatars/presets/cards.png",
+  crown: "/avatars/presets/crown.png",
+  vault: "/avatars/presets/vault.png",
+  fire: "/avatars/presets/fire.png",
+  keysmith: "/avatars/presets/keysmith.png",
+  guitar: "/avatars/presets/guitar.png",
+  vinyl: "/avatars/presets/vinyl.png",
+  harp: "/avatars/presets/harp.png",
+};
+
+function resolveAvatarImageSrc(avatarUrl?: string | null) {
+  if (!avatarUrl) return "";
+  if (avatarUrl.startsWith("__preset:")) return AVATAR_PRESET_SRCS[avatarUrl.replace("__preset:", "")] ?? "";
+  return avatarUrl;
+}
+
+function emojiToPresetUrl(emoji?: string | null) {
+  switch (emoji) {
+    case "🦁": return "__preset:lion";
+    case "🐉": return "__preset:dragon";
+    case "🦊": return "__preset:fox";
+    case "🦅": return "__preset:eagle";
+    case "💎": return "__preset:gem";
+    case "🔮": return "__preset:orb";
+    case "⚔️": return "__preset:sword";
+    case "🃏": return "__preset:cards";
+    case "👑": return "__preset:crown";
+    case "🏛️": return "__preset:vault";
+    case "🔥": return "__preset:fire";
+    default: return "";
+  }
+}
 
 type ProfileRow = {
   id: string;
   username: string;
   display_name: string;
   profile_type: "personal" | "business";
+  avatar_emoji?: string | null;
+  avatar_url?: string | null;
 };
 
 type Parsed = {
@@ -171,29 +214,6 @@ function IconChevron({ size = 14 }: { size?: number }) {
   );
 }
 
-function IconMarket({ active }: { active: boolean }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
-      <path d="M3 6h18l-2 9H5L3 6Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
-        fill={active ? "rgba(245,181,72,0.10)" : "none"} />
-      <path d="M3 6l-1-3H1" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-      <circle cx="9" cy="20" r="1.25" fill="currentColor" />
-      <circle cx="17" cy="20" r="1.25" fill="currentColor" />
-    </svg>
-  );
-}
-
-function IconShop({ active }: { active: boolean }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
-      <path d="M4 4h16l1 5H3L4 4Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
-        fill={active ? "rgba(245,181,72,0.10)" : "none"} />
-      <path d="M3 9v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V9" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-      <path d="M9 9v3a3 3 0 0 0 6 0V9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 /* ── Nav items ──────────────────────────────────────────── */
 
 const NAV_ITEMS = [
@@ -232,18 +252,6 @@ const NAV_ITEMS = [
   {
     label: "Activity",    href: "/activity",   icon: IconActivity,    exact: false, subpathOnly: false,
     desc: "See updates, comments, appreciations and follows.",
-  },
-  {
-    label: "Market",      href: "/market",     icon: IconMarket,      exact: false, subpathOnly: false,
-    desc: "Browse items for sale from collectors worldwide.",
-  },
-  {
-    label: "Auctions",    href: "/auction",    icon: IconMarket,      exact: false, subpathOnly: false,
-    desc: "Live auctions — bid on rare collectibles in real time.",
-  },
-  {
-    label: "Shop",        href: "/shop",       icon: IconShop,        exact: false, subpathOnly: false,
-    desc: "Essential supplies: sleeves, slabs, display cases, grading tools.",
   },
 ];
 
@@ -358,7 +366,13 @@ function TopNavInner() {
       if (!initializedRef.current) return;
       void loadAuthState("auth-change");
     });
-    return () => { active = false; subscription.subscription.unsubscribe(); };
+    const reloadActiveProfile = () => void loadAuthState("auth-change");
+    window.addEventListener("vltd:active-profile", reloadActiveProfile);
+    return () => {
+      active = false;
+      window.removeEventListener("vltd:active-profile", reloadActiveProfile);
+      subscription.subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -397,6 +411,7 @@ function TopNavInner() {
   const avatarText = signedIn
     ? (activeProfile?.display_name || accountEmail || "U").slice(0, 1).toUpperCase()
     : "G";
+  const avatarImageSrc = resolveAvatarImageSrc(activeProfile?.avatar_url || emojiToPresetUrl(activeProfile?.avatar_emoji));
   const accountTypeLabel = activeProfile?.profile_type === "business" ? "Business" : "Collector";
 
   return (
@@ -545,10 +560,15 @@ function TopNavInner() {
                 style={{ background: "transparent", border: "none" }}
               >
                 <div
-                  className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full text-[13px] font-bold"
+                  className="flex h-[32px] w-[32px] shrink-0 items-center justify-center overflow-hidden rounded-full text-[13px] font-bold"
                   style={{ background: 'var(--theme-gold-gradient, linear-gradient(135deg,#8B6914,#F5B548))', color: "#0B0B0B" }}
                 >
-                  {avatarText}
+                  {avatarImageSrc ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={avatarImageSrc} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    avatarText
+                  )}
                 </div>
                 <IconChevron size={12} />
               </button>

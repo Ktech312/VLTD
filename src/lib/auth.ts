@@ -10,6 +10,7 @@ export type ProfileRow = {
   profile_type: AuthProfileType;
   primary_focus?: string | null;
   bio?: string | null;
+  avatar_emoji?: string | null;
   avatar_url?: string | null;
   is_public?: boolean | null;
   created_at?: string;
@@ -315,6 +316,23 @@ export async function signInWithGoogle() {
   return data;
 }
 
+export async function resetPasswordForEmail(email: string) {
+  const supabase = getSupabase();
+  if (!supabase) throw new Error("Supabase not ready");
+
+  const redirectTo =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/reset-password`
+      : undefined;
+
+  const { error } = await withTimeout(
+    supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo }),
+    "Password reset"
+  );
+
+  if (error) throw error;
+}
+
 export async function signOut() {
   const supabase = getSupabase();
   if (!supabase) return;
@@ -488,17 +506,6 @@ export async function getOnboardingStatus() {
 
   const userResult = await getCurrentUser();
   if (userResult.error) {
-    return {
-      isAuthenticated: false,
-      needsOnboarding: false,
-      profiles: [] as ProfileRow[],
-      activeProfile: null as ProfileRow | null,
-      error: userResult.error.message,
-    };
-  }
-
-  const user = userResult.data.user;
-  if (!user) {
     return {
       isAuthenticated: false,
       needsOnboarding: false,

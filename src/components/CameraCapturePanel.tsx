@@ -905,4 +905,28 @@ export default function CameraCapturePanel({
                 ) : (
                   <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
                     <path
-                      d="M23 19a2 2 0
+                      d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+                      stroke="#1A0F00"
+                      strokeWidth="1.6"
+                      strokeLinejoin="round"
+                      fill="rgba(26,15,0,0.12)"
+                    />
+                    <circle cx="12" cy="13" r="4" stroke="#1A0F00" strokeWidth="1.6" />
+                  </svg>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={onUseFileInstead}
+                className="text-xs font-medium text-[color:var(--muted)] transition hover:text-[color:var(--fg)]"
+              >
+                File
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
