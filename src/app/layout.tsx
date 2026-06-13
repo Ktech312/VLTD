@@ -19,6 +19,7 @@ import "./insurance-pass.css";
 import "./theme-override.css";
 import NavShell from "@/components/NavShell";
 import Providers from "@/components/Providers";
+import PWAInstallBanner from "@/components/PWAInstallBanner";
 import RouteTransition from "@/components/RouteTransition";
 import { ThemeBoot } from "@/components/ThemeBoot";
 import ThemeScript from "@/components/ThemeScript";
@@ -62,7 +63,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "VLTD — Collectible Vaults and Public Galleries",
+        alt: "VLTD \u2014 Collectible Vaults and Public Galleries",
       },
     ],
   },
@@ -84,6 +85,7 @@ export const metadata: Metadata = {
       "max-video-preview": -1,
     },
   },
+  manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {
@@ -99,6 +101,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning className={inter.variable}>
       <head>
         <ThemeScript />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="VLTD" />
+        <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className={`${inter.className} bg-vault-base min-h-screen`}>
         <ThemeBoot />
@@ -108,6 +115,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <NavShell>
               <RouteTransition>{children}</RouteTransition>
             </NavShell>
+            <PWAInstallBanner />
           </Providers>
         </ThemeProvider>
       </body>
