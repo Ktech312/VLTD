@@ -1435,6 +1435,13 @@ export default function AdminCharactersPage() {
         </div>
         {role === "owner" && <ManageAdminsPanel ownerEmail={userEmail} />}
         <div className="shrink-0 p-3 border-t border-white/8 space-y-2">
+          {/* Admin section links */}
+          <a
+            href="/admin/themes"
+            className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-white/50 hover:bg-white/5 hover:text-white transition"
+          >
+            <span>🎨</span> Seasonal Themes
+          </a>
           <div className="text-[10px] text-white/25 text-center">
             Edit seedCharacters*.ts → run generateCharacterSeed.ts → paste SQL in Supabase
           </div>

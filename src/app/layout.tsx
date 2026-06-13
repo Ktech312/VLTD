@@ -20,6 +20,7 @@ import "./theme-override.css";
 import NavShell from "@/components/NavShell";
 import Providers from "@/components/Providers";
 import PWAInstallBanner from "@/components/PWAInstallBanner";
+import SeasonalThemeProvider from "@/components/SeasonalThemeProvider";
 import RouteTransition from "@/components/RouteTransition";
 import { ThemeBoot } from "@/components/ThemeBoot";
 import ThemeScript from "@/components/ThemeScript";
@@ -112,10 +113,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <ThemeProvider>
           <Providers>
-            <NavShell>
-              <RouteTransition>{children}</RouteTransition>
-            </NavShell>
-            <PWAInstallBanner />
+            <SeasonalThemeProvider>
+              <NavShell>
+                <RouteTransition>{children}</RouteTransition>
+              </NavShell>
+              <PWAInstallBanner />
+            </SeasonalThemeProvider>
           </Providers>
         </ThemeProvider>
       </body>
