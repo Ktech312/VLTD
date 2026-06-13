@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getCurrentUser, initAuthListener } from "@/lib/auth";
@@ -275,175 +274,6 @@ function PublicGalleryTile({ gallery }: { gallery: PublicGalleryCard }) {
   );
 }
 
-function LandingPortalPreview() {
-  const navItems = [
-    "Vault",
-    "Inventory",
-    "Portfolio",
-    "Analytics",
-    "Galleries",
-    "Insurance",
-    "Activity",
-  ];
-
-  const thumbnails = [
-    { src: "/collectibles/comic-slab.png", alt: "Graded comic slab", width: 260, height: 431 },
-    { src: "/collectibles/sports-slab.png", alt: "Slabbed sports card", width: 208, height: 383 },
-    { src: "/collectibles/vinyl-record.png", alt: "Vinyl record", width: 394, height: 283 },
-    { src: "/collectibles/vinyl-figure.png", alt: "Collectible figure", width: 229, height: 309 },
-  ];
-
-  return (
-    <div className="vltd-portal-preview" aria-label="VLTD vault item preview">
-      <aside className="vltd-portal-preview__sidebar">
-        <BrandMark />
-        <nav className="mt-8 flex flex-col gap-1">
-          {navItems.map((item) => (
-            <div
-              key={item}
-              className={[
-                "vltd-portal-preview__nav-item",
-                item === "Inventory" ? "vltd-portal-preview__nav-item--active" : "",
-              ].join(" ")}
-            >
-              <span className="vltd-portal-preview__nav-dot" />
-              {item}
-            </div>
-          ))}
-        </nav>
-        <div className="mt-auto rounded-2xl border border-[rgba(245,181,72,0.16)] bg-black/20 p-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(245,181,72,0.28)] bg-[rgba(245,181,72,0.08)] text-xs font-black text-[color:var(--accent)]">
-              C
-            </div>
-            <div>
-              <div className="text-xs font-black text-text-primary">Collector</div>
-              <div className="text-[10px] text-[color:var(--muted2)]">Pro Member</div>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      <div className="vltd-portal-preview__content">
-        <div className="flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">
-              Inventory / Showcase Item
-            </div>
-            <h3 className="mt-2 truncate text-xl font-black tracking-[-0.03em] text-text-primary">
-              1974 Silver Age Comic #129
-            </h3>
-          </div>
-          <div className="hidden gap-2 sm:flex">
-            <button className="vltd-portal-preview__icon-button" aria-label="Previous item">
-              &lt;
-            </button>
-            <button className="vltd-portal-preview__icon-button" aria-label="Next item">
-              &gt;
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)]">
-          <div className="vltd-portal-preview__media">
-            <Image
-              src="/collectibles/comic-slab.png"
-              alt="Graded comic slab"
-              width={260}
-              height={431}
-            />
-          </div>
-
-          <div className="min-w-0">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted2)]">
-              Estimated Value
-            </div>
-            <div className="mt-1 text-4xl font-black tracking-[-0.04em] text-[color:var(--data-color)]">
-              $24,750
-            </div>
-            <div className="mt-1 text-sm font-semibold text-[color:var(--vltd-green)]">
-              +12.6% this year
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-[rgba(245,181,72,0.13)] bg-black/20 p-4">
-              <div className="text-xs font-black uppercase tracking-[0.18em] text-[color:var(--muted2)]">
-                Condition Notes
-              </div>
-              <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">
-                White pages. Sharp corners and clean edges. Scanner notes are
-                saved with the item record.
-              </p>
-            </div>
-
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {[
-                ["Privacy", "Private", true],
-                ["Share to", "Public Gallery", false],
-              ].map(([label, value, active]) => (
-                <div
-                  key={String(label)}
-                  className="rounded-2xl border border-[rgba(245,181,72,0.13)] bg-black/20 p-3"
-                >
-                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--muted2)]">
-                    {label}
-                  </div>
-                  <div className="mt-2 flex items-center justify-between gap-3 text-xs font-black text-text-primary">
-                    {value}
-                    <span
-                      className={[
-                        "vltd-portal-preview__toggle",
-                        active ? "vltd-portal-preview__toggle--on" : "",
-                      ].join(" ")}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_170px]">
-          <div>
-            <div className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[color:var(--muted2)]">
-              Similar Items In Your Vault
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              {thumbnails.map((item) => (
-                <div key={item.src} className="vltd-portal-preview__thumb">
-                  <Image
-                    src={item.src}
-                    alt={item.alt}
-                    width={item.width}
-                    height={item.height}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="rounded-2xl border border-[rgba(245,181,72,0.13)] bg-black/20 p-3">
-            <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--muted2)]">
-              Value History
-            </div>
-            <svg viewBox="0 0 150 70" className="mt-3 h-20 w-full text-[color:var(--data-color)]" aria-hidden="true">
-              <path
-                d="M4 56 C18 49, 28 52, 39 43 S60 42, 72 33 S94 26, 106 28 S128 18, 146 9"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-              <path
-                d="M4 56 C18 49, 28 52, 39 43 S60 42, 72 33 S94 26, 106 28 S128 18, 146 9 L146 68 L4 68 Z"
-                fill="currentColor"
-                opacity="0.12"
-              />
-            </svg>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function PublicHomeClient() {
   const { theme } = useTheme();
@@ -535,7 +365,7 @@ export default function PublicHomeClient() {
           </div>
         </div>
 
-        <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 pb-14 pt-10 sm:px-6 sm:pb-18 sm:pt-16 lg:grid-cols-[0.82fr_0.9fr_1.18fr] lg:px-8">
+        <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 pb-14 pt-10 sm:px-6 sm:pb-18 sm:pt-16 lg:grid-cols-[1fr_1fr] lg:px-8">
           <div className="text-center lg:text-left">
 
           <h1 className="mx-auto max-w-xl text-5xl font-black leading-[0.96] tracking-[-0.06em] text-text-primary sm:text-6xl lg:mx-0 lg:text-7xl">
@@ -571,7 +401,6 @@ export default function PublicHomeClient() {
             <VltdVaultLogoAnimation className="vltd-hero-vault-key" defaultOpen />
           </div>
 
-          <LandingPortalPreview />
         </div>
       </section>
 
