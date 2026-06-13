@@ -811,4 +811,65 @@ export default function HomeClient() {
       </div>
     </main>
   );
+}add",   accent: false, tip: "Full detail entry with all fields." },
+                  { label: "Vault",      href: "/vault",       accent: false, tip: "" },
+                  { label: "Galleries",  href: "/museum",      accent: false, tip: "" },
+                  { label: "Account",    href: "/account",     accent: false, tip: "" },
+                ] as { label: string; href: string; accent: boolean; tip: string }[]).map(({ label, href, accent, tip }) => (
+                  <div key={href + label} className="relative">
+                    {tip && <div className="absolute -right-1 -top-1 z-10"><InfoTooltip text={tip} /></div>}
+                    <Link href={href} style={{
+                      display: "block", width: "100%", borderRadius: "6px",
+                      border: accent ? "1px solid rgba(245,181,72,0.28)" : `1px solid ${C.bd}`,
+                      background: accent ? "rgba(245,181,72,0.09)" : "rgba(255,255,255,0.03)",
+                      color: accent ? C.gold : C.muted,
+                      padding: "9px 6px", textAlign: "center", fontSize: "11px", fontWeight: accent ? 600 : 500, textDecoration: "none"
+                    }}>{label}</Link>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <BiggestMoversPanel items={items} />
+          </div>
+
+        </div>{/* end LEFT */}
+
+        {/* ── RIGHT SIDEBAR ── */}
+        <div style={{ display: "flex", flexDirection: "column", borderLeft: `1px solid ${C.bd}` }} className="max-lg:border-l-0 max-lg:border-t max-lg:mt-4">
+          <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+            <div style={{ padding: "13px 15px", borderBottom: `1px solid ${C.bd}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: "10px", letterSpacing: "1.4px", textTransform: "uppercase", color: C.muted2, fontWeight: 600 }}>Recently Added</span>
+              <Link href="/vault" style={{ fontSize: "11px", color: C.gold, textDecoration: "none" }}>View all</Link>
+            </div>
+            <RecentSidebarItems items={items} />
+          </div>
+
+          <div style={{ padding: "14px 15px", borderTop: `1px solid ${C.bd}` }}>
+            <div style={{ fontSize: "10px", letterSpacing: "1.4px", textTransform: "uppercase", color: C.muted2, fontWeight: 600 }}>Collection Value</div>
+            <div style={{ fontFamily: C.r, fontSize: "28px", fontWeight: 700, lineHeight: 1, marginTop: "9px", color: C.gold }}>{formatMoney(stats.totalValue)}</div>
+            {stats.totalCostValue > 0 && (
+              <div style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "5px" }}>
+                <span style={{ fontSize: "12px", fontWeight: 600, color: gainTone === "gain" ? C.green : C.red }}>{gainTone === "gain" ? "▲" : "▼"} {gainPrefix}{stats.gainPct.toFixed(1)}%</span>
+                <span style={{ fontSize: "11px", color: C.muted }}>overall return</span>
+              </div>
+            )}
+            <svg viewBox="0 0 230 52" width="100%" height="44" style={{ marginTop: "12px" }}>
+              <defs>
+                <linearGradient id="vg3" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={C.gold} stopOpacity=".28"/>
+                  <stop offset="100%" stopColor={C.gold} stopOpacity=".02"/>
+                </linearGradient>
+              </defs>
+              <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2 L230 52 L0 52Z" fill="url(#vg3)"/>
+              <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2" fill="none" stroke={C.gold} strokeWidth="1.8"/>
+              <circle cx="230" cy="2" r="2.5" fill={C.gold}/>
+            </svg>
+            <Link href="/vault/sold" style={{ display: "block", textAlign: "center", marginTop: "8px", fontSize: "11px", color: C.muted, textDecoration: "none" }}>View analytics →</Link>
+          </div>
+
+        </div>{/* end RIGHT SIDEBAR */}
+
+      </div>
+    </main>
+  );
 }

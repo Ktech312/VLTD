@@ -316,6 +316,23 @@ export async function signInWithGoogle() {
   return data;
 }
 
+export async function resetPasswordForEmail(email: string) {
+  const supabase = getSupabase();
+  if (!supabase) throw new Error("Supabase not ready");
+
+  const redirectTo =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/reset-password`
+      : undefined;
+
+  const { error } = await withTimeout(
+    supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo }),
+    "Password reset"
+  );
+
+  if (error) throw error;
+}
+
 export async function signOut() {
   const supabase = getSupabase();
   if (!supabase) return;

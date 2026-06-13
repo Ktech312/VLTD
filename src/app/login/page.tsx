@@ -72,7 +72,10 @@ function LoginInner() {
               </label>
 
               <label className="block">
-                <span className="text-base font-medium text-[color:var(--muted)]">Password</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-base font-medium text-[color:var(--muted)]">Password</span>
+                  <Link href="/forgot-password" className="text-sm font-medium text-[color:var(--muted2)] transition hover:text-[color:var(--fg)]">Forgot password?</Link>
+                </div>
                 <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" autoComplete="current-password" placeholder="••••••••" className="vltd-input mt-3 h-16 w-full rounded-[22px] px-6 text-lg" />
               </label>
             </div>
