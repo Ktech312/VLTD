@@ -128,6 +128,15 @@ function rowToItem(input: unknown): VaultItem {
             durationSeconds: typeof row.video_clip_duration === "number" ? row.video_clip_duration : 0,
           }
         : undefined,
+    // Auction fields
+    auctionStatus: row.auction_status ?? undefined,
+    auctionEndsAt: typeof row.auction_ends_at === "number" ? row.auction_ends_at : undefined,
+    auctionStartingBid: typeof row.auction_starting_bid === "number" ? row.auction_starting_bid : undefined,
+    auctionCurrentBid: typeof row.auction_current_bid === "number" ? row.auction_current_bid : undefined,
+    auctionBidCount: typeof row.auction_bid_count === "number" ? row.auction_bid_count : undefined,
+    auctionWinnerId: typeof row.auction_winner_id === "string" ? row.auction_winner_id : undefined,
+    reservePrice: typeof row.reserve_price === "number" ? row.reserve_price : undefined,
+    buyItNowPrice: typeof row.buy_it_now_price === "number" ? row.buy_it_now_price : undefined,
   };
 }
 
@@ -309,6 +318,16 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
   if (item.status) baseRow.status = item.status;
   if (item.soldPrice !== undefined) baseRow.sold_price = item.soldPrice;
   if (item.soldAt !== undefined) baseRow.sold_at = item.soldAt;
+
+  // Auction fields — only written when present so non-auction upserts stay clean.
+  if (item.auctionStatus !== undefined) baseRow.auction_status = item.auctionStatus;
+  if (item.auctionEndsAt !== undefined) baseRow.auction_ends_at = item.auctionEndsAt;
+  if (item.auctionStartingBid !== undefined) baseRow.auction_starting_bid = item.auctionStartingBid;
+  if (item.auctionCurrentBid !== undefined) baseRow.auction_current_bid = item.auctionCurrentBid;
+  if (item.auctionBidCount !== undefined) baseRow.auction_bid_count = item.auctionBidCount;
+  if (item.auctionWinnerId !== undefined) baseRow.auction_winner_id = item.auctionWinnerId;
+  if (item.reservePrice !== undefined) baseRow.reserve_price = item.reservePrice;
+  if (item.buyItNowPrice !== undefined) baseRow.buy_it_now_price = item.buyItNowPrice;
 
   try {
     const { error } = await supabase.from(VAULT_ITEMS_TABLE).upsert({
