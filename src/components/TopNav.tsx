@@ -17,12 +17,51 @@ import {
 import { getMyAdminRole, type AdminRole } from "@/lib/adminAuth";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
+const AVATAR_PRESET_SRCS: Record<string, string> = {
+  key: "/avatars/presets/key.png",
+  lion: "/avatars/presets/lion.png",
+  dragon: "/avatars/presets/dragon.png",
+  fox: "/avatars/presets/fox.png",
+  eagle: "/avatars/presets/eagle.png",
+  gem: "/avatars/presets/gem.png",
+  orb: "/avatars/presets/orb.png",
+  sword: "/avatars/presets/sword.png",
+  cards: "/avatars/presets/cards.png",
+  crown: "/avatars/presets/crown.png",
+  vault: "/avatars/presets/vault.png",
+  fire: "/avatars/presets/fire.png",
+};
+
+function resolveAvatarImageSrc(avatarUrl?: string | null) {
+  if (!avatarUrl) return "";
+  if (avatarUrl.startsWith("__preset:")) return AVATAR_PRESET_SRCS[avatarUrl.replace("__preset:", "")] ?? "";
+  return avatarUrl;
+}
+
+function emojiToPresetUrl(emoji?: string | null) {
+  switch (emoji) {
+    case "🦁": return "__preset:lion";
+    case "🐉": return "__preset:dragon";
+    case "🦊": return "__preset:fox";
+    case "🦅": return "__preset:eagle";
+    case "💎": return "__preset:gem";
+    case "🔮": return "__preset:orb";
+    case "⚔️": return "__preset:sword";
+    case "🃏": return "__preset:cards";
+    case "👑": return "__preset:crown";
+    case "🏛️": return "__preset:vault";
+    case "🔥": return "__preset:fire";
+    default: return "";
+  }
+}
 
 type ProfileRow = {
   id: string;
   username: string;
   display_name: string;
   profile_type: "personal" | "business";
+  avatar_emoji?: string | null;
+  avatar_url?: string | null;
 };
 
 type Parsed = {
@@ -323,7 +362,13 @@ function TopNavInner() {
       if (!initializedRef.current) return;
       void loadAuthState("auth-change");
     });
-    return () => { active = false; subscription.subscription.unsubscribe(); };
+    const reloadActiveProfile = () => void loadAuthState("auth-change");
+    window.addEventListener("vltd:active-profile", reloadActiveProfile);
+    return () => {
+      active = false;
+      window.removeEventListener("vltd:active-profile", reloadActiveProfile);
+      subscription.subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -362,6 +407,7 @@ function TopNavInner() {
   const avatarText = signedIn
     ? (activeProfile?.display_name || accountEmail || "U").slice(0, 1).toUpperCase()
     : "G";
+  const avatarImageSrc = resolveAvatarImageSrc(activeProfile?.avatar_url || emojiToPresetUrl(activeProfile?.avatar_emoji));
   const accountTypeLabel = activeProfile?.profile_type === "business" ? "Business" : "Collector";
 
   return (
@@ -510,10 +556,15 @@ function TopNavInner() {
                 style={{ background: "transparent", border: "none" }}
               >
                 <div
-                  className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full text-[13px] font-bold"
+                  className="flex h-[32px] w-[32px] shrink-0 items-center justify-center overflow-hidden rounded-full text-[13px] font-bold"
                   style={{ background: 'var(--theme-gold-gradient, linear-gradient(135deg,#8B6914,#F5B548))', color: "#0B0B0B" }}
                 >
-                  {avatarText}
+                  {avatarImageSrc ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={avatarImageSrc} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    avatarText
+                  )}
                 </div>
                 <IconChevron size={12} />
               </button>

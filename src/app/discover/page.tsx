@@ -21,6 +21,7 @@ type PublicGallery = {
   layout: Record<string, unknown> | null;
   collector_name?: string;
   collector_avatar?: string;
+  collector_avatar_url?: string;
 };
 
 function normalizeText(value: unknown) {
@@ -189,15 +190,20 @@ export default function DiscoverPage() {
         if (profileIds.length > 0) {
           const { data: profiles } = await supabase
             .from("public_profiles")
-            .select("profile_id, display_name, avatar_emoji")
+            .select("profile_id, display_name, avatar_emoji, avatar_url")
             .in("profile_id", profileIds);
           const profileMap = new Map((profiles ?? []).map((p) => [
             String(p.profile_id),
             { name: String(p.display_name || "Collector"), avatar: String(p.avatar_emoji || "🗝️") },
           ]));
+          const profileAvatarUrlMap = new Map((profiles ?? []).map((p) => [
+            String(p.profile_id),
+            typeof p.avatar_url === "string" ? p.avatar_url : "",
+          ]));
           setGalleries(mapped.map((g) => ({
             ...g,
             collector_name: profileMap.get(g.profile_id)?.name ?? "Collector",
+            collector_avatar_url: profileAvatarUrlMap.get(g.profile_id) ?? "",
             collector_avatar: profileMap.get(g.profile_id)?.avatar ?? "🗝️",
           })));
         } else {
@@ -357,7 +363,12 @@ export default function DiscoverPage() {
                           className="flex items-center gap-1 text-[10px] hover:underline z-10 relative"
                           style={{ color: "rgba(255,255,255,0.5)" }}
                           onClick={(e) => e.stopPropagation()}>
-                          <span>{gallery.collector_avatar}</span>
+                          {gallery.collector_avatar_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={gallery.collector_avatar_url} alt="" className="h-5 w-5 rounded-full object-cover ring-1 ring-white/15" />
+                          ) : (
+                            <span>{gallery.collector_avatar}</span>
+                          )}
                           <span className="max-w-[80px] truncate">{gallery.collector_name}</span>
                         </Link>
                       )}
@@ -416,7 +427,12 @@ export default function DiscoverPage() {
                           className="flex items-center gap-1 text-[10px] hover:underline z-10 relative"
                           style={{ color: "var(--theme-gold, #F5B548)" }}
                           onClick={(e) => e.stopPropagation()}>
-                          <span>{gallery.collector_avatar}</span>
+                          {gallery.collector_avatar_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={gallery.collector_avatar_url} alt="" className="h-5 w-5 rounded-full object-cover ring-1 ring-white/15" />
+                          ) : (
+                            <span>{gallery.collector_avatar}</span>
+                          )}
                           <span className="max-w-[90px] truncate">{gallery.collector_name}</span>
                         </Link>
                       )}

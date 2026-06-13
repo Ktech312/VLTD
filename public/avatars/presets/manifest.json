@@ -1,0 +1,62 @@
+[
+  {
+    "id": "key",
+    "label": "Vault Key",
+    "src": "/avatars/presets/key.png"
+  },
+  {
+    "id": "lion",
+    "label": "Lion Collector",
+    "src": "/avatars/presets/lion.png"
+  },
+  {
+    "id": "dragon",
+    "label": "Jade Dragon",
+    "src": "/avatars/presets/dragon.png"
+  },
+  {
+    "id": "fox",
+    "label": "Fox Collector",
+    "src": "/avatars/presets/fox.png"
+  },
+  {
+    "id": "eagle",
+    "label": "Eagle Aviator",
+    "src": "/avatars/presets/eagle.png"
+  },
+  {
+    "id": "gem",
+    "label": "Blue Gem",
+    "src": "/avatars/presets/gem.png"
+  },
+  {
+    "id": "orb",
+    "label": "Crystal Orb",
+    "src": "/avatars/presets/orb.png"
+  },
+  {
+    "id": "sword",
+    "label": "Crossed Swords",
+    "src": "/avatars/presets/sword.png"
+  },
+  {
+    "id": "cards",
+    "label": "Card Vault",
+    "src": "/avatars/presets/cards.png"
+  },
+  {
+    "id": "crown",
+    "label": "Crown Vault",
+    "src": "/avatars/presets/crown.png"
+  },
+  {
+    "id": "vault",
+    "label": "Museum Vault",
+    "src": "/avatars/presets/vault.png"
+  },
+  {
+    "id": "fire",
+    "label": "Fire Relic",
+    "src": "/avatars/presets/fire.png"
+  }
+]
