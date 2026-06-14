@@ -541,7 +541,7 @@ export default function CameraCapturePanel({
                 </div>
               ) : null}
             </div>
-            <div className="mb-1.5 flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
+            <div className="mb-1.5 flex items-center gap-1.5 overflow-x-auto py-1 [scrollbar-width:none]">
               <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
                 Frame
               </span>
@@ -574,7 +574,7 @@ export default function CameraCapturePanel({
               ))}
             </div>
             {/* Filter strip — moved above the image */}
-            <div className="mb-1.5 flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
+            <div className="mb-1.5 flex items-center gap-1.5 overflow-x-auto py-1 [scrollbar-width:none]">
               {CAPTURE_FILTER_PRESETS.map((preset) => (
                 <button
                   key={preset.id}
@@ -743,7 +743,7 @@ export default function CameraCapturePanel({
           </div>
         ) : (
           <>
-            <div className="mt-2 flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
+            <div className="mt-2 flex items-center gap-1.5 overflow-x-auto py-1 [scrollbar-width:none]">
               <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
                 Frame
               </span>
