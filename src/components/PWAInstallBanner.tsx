@@ -63,7 +63,7 @@ export default function PWAInstallBanner() {
   // Android/Chrome — native prompt available
   if (deferredPrompt) {
     return (
-      <div className="fixed bottom-20 left-4 right-4 z-50 flex items-center gap-3 rounded-2xl border border-white/10 bg-[#12101C]/95 px-4 py-3 shadow-2xl backdrop-blur-xl sm:left-auto sm:right-4 sm:w-80">
+      <div className="fixed bottom-[100px] left-3 right-3 z-50 flex items-center gap-3 rounded-2xl border border-white/10 bg-[#12101C]/95 px-4 py-3 shadow-2xl backdrop-blur-xl overflow-hidden sm:left-auto sm:right-4 sm:w-80">
         <img src="/icons/icon-96x96.png" alt="VLTD" className="h-11 w-11 rounded-xl flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-white leading-tight">Add VLTD to Home Screen</p>
@@ -90,7 +90,7 @@ export default function PWAInstallBanner() {
   // iOS Safari — manual instructions
   if (isIOS) {
     return (
-      <div className="fixed bottom-20 left-4 right-4 z-50 rounded-2xl border border-white/10 bg-[#12101C]/95 px-4 py-3 shadow-2xl backdrop-blur-xl">
+      <div className="fixed bottom-[100px] left-3 right-3 z-50 rounded-2xl border border-white/10 bg-[#12101C]/95 px-4 py-3 shadow-2xl backdrop-blur-xl overflow-hidden">
         <div className="flex items-start gap-3">
           <img src="/icons/icon-96x96.png" alt="VLTD" className="h-11 w-11 rounded-xl flex-shrink-0 mt-0.5" />
           <div className="flex-1">

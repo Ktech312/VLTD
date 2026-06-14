@@ -295,7 +295,7 @@ export default function DiscoverPage() {
         <div className="mt-4 flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           {TABS.map((tab) => (
             <button key={tab} type="button" onClick={() => setActiveTab(tab)}
-              className="shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition"
+              className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold transition"
               style={activeTab === tab
                 ? { background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B", border: "1px solid transparent" }
                 : { background: "var(--theme-elevated, rgba(20,32,55,0.9))", color: "var(--theme-text-muted, #A0956B)", border: "1px solid var(--theme-border, rgba(245,181,72,0.12))" }
