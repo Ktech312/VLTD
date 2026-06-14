@@ -337,8 +337,9 @@ body {
   overscroll-behavior-y: contain;
 
   /* fast taps; prevent 300ms delay on old browsers */
-  /* pan-y: vertical scroll allowed globally; horizontal locked to prevent accidental page drift */
-  touch-action: pan-y;
+  /* pan-x pan-y: allow both axes so overflow-x-auto carousels can be swiped horizontally.
+     Horizontal page drift is prevented by overflow-x:hidden + overscroll-behavior-x:none above. */
+  touch-action: pan-x pan-y pinch-zoom;
 }
 
 /* Noise/grain texture overlay — subtle film grain over all backgrounds */

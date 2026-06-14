@@ -26,7 +26,7 @@ export default function SellItemModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
-      <div className="bg-black p-6 rounded-xl ring-1 ring-[color:var(--border)] w-[400px]">
+      <div className="bg-black p-6 rounded-xl ring-1 ring-[color:var(--border)] w-full max-w-[400px] mx-3">
         <h2 className="text-lg font-semibold mb-4">Sell Item</h2>
 
         <div className="mb-2">Purchase: ${purchase}</div>
