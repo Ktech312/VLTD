@@ -681,14 +681,14 @@ export default function HomeClient() {
         className="grid items-start px-4 sm:px-5 lg:px-6 py-4 grid-cols-1 lg:[grid-template-columns:1fr_265px]">
 
         {/* ── LEFT COLUMN ── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "15px", paddingRight: "20px" }} className="max-lg:pr-0">
+        <div style={{ display: "flex", flexDirection: "column", gap: "15px" }} className="lg:pr-5">
 
           {/* Seasonal event banner */}
           <SeasonalBanner />
 
           {/* Hero card */}
-          <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "10px", overflow: "hidden", display: "grid", gridTemplateColumns: "1fr 180px", minHeight: "190px", position: "relative" }}
-            className="max-sm:grid-cols-1">
+          <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "10px", overflow: "hidden", minHeight: "190px", position: "relative" }}
+            className="grid grid-cols-1 sm:[grid-template-columns:1fr_180px]">
             <div style={{ position: "absolute", top: "-60px", left: "-60px", width: "300px", height: "300px", background: "radial-gradient(circle, rgba(245,181,72,0.08) 0%, transparent 65%)", pointerEvents: "none" }} />
 
             <div style={{ padding: "22px 24px", display: "flex", flexDirection: "column", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
@@ -724,7 +724,7 @@ export default function HomeClient() {
           </div>
 
           {/* Featured Gallery card (left) + coverflow carousel (right) */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }} className="max-sm:grid-cols-1">
+          <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2">
             <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
               <CardHd label="Featured Gallery" />
               {galleries.length > 0 ? (
@@ -753,10 +753,10 @@ export default function HomeClient() {
           )}
 
           {/* Quick Actions + Movers */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }} className="max-sm:grid-cols-1">
+          <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2">
             <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
               <CardHd label="Quick Actions" />
-              <div style={{ padding: "12px 15px", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "7px" }}>
+              <div className="grid grid-cols-2 gap-[7px] sm:grid-cols-3" style={{ padding: "12px 15px" }}>
                 {([
                   { label: "Smart Scan", href: "/capture",     accent: true,  tip: "AI-powered item identification." },
                   { label: "Quick Add",  href: "/vault/quick", accent: false, tip: "Fast manual form — minimal fields." },

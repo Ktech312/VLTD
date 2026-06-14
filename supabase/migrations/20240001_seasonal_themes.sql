@@ -43,9 +43,19 @@ create policy "Admin full access"
   using (
     exists (
       select 1 from public.user_roles
-      where email = (select email from auth.users where id = auth.uid())
+      where email = auth.email()
+    )
+  )
+  with check (
+    exists (
+      select 1 from public.user_roles
+      where email = auth.email()
     )
   );
+
+-- Grant explicit table access to roles (RLS alone is not enough)
+grant select on public.seasonal_themes to anon;
+grant all on public.seasonal_themes to authenticated;
 
 -- Seed: a few example events
 insert into public.seasonal_themes
@@ -69,4 +79,4 @@ values
    '2026-10-01 00:00:00+00', '2026-11-01 23:59:59+00',
    '#FF6B00', '#1A0A2E', true,
    'Trick or Treat', 'Horror, comics, and dark collectibles await',
-   '🎃', 'Explore Spooky 
+   '🎃', 'Explore Spooky Vaults', '/discover', null, 'leaves');
