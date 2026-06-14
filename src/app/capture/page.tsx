@@ -141,7 +141,7 @@ export default function CapturePage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [fields, setFields] = useState<ReviewFields>(EMPTY_FIELDS);
   const [capturedImageFile, setCapturedImageFile] = useState<File | null>(null);
-  const [isCameraPanelOpen, setIsCameraPanelOpen] = useState(false);
+  const [isCameraPanelOpen, setIsCameraPanelOpen] = useState(true);
 
   /* ── AI flow triggered by photo capture ── */
   const handleCapture = useCallback(async (file: File) => {
