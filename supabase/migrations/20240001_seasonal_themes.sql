@@ -42,8 +42,8 @@ create policy "Admin full access"
   on public.seasonal_themes for all
   using (
     exists (
-      select 1 from public.admin_users
-      where user_id = auth.uid()
+      select 1 from public.user_roles
+      where email = (select email from auth.users where id = auth.uid())
     )
   );
 
@@ -69,4 +69,4 @@ values
    '2026-10-01 00:00:00+00', '2026-11-01 23:59:59+00',
    '#FF6B00', '#1A0A2E', true,
    'Trick or Treat', 'Horror, comics, and dark collectibles await',
-   '🎃', 'Explore Spooky Vaults', '/discover', null, 'leaves');
+   '🎃', 'Explore Spooky 
