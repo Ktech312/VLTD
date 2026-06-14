@@ -6,8 +6,10 @@ create table if not exists public_profiles (
   profile_id uuid primary key,
   display_name text not null default 'Collector',
   avatar_emoji text not null default '🗝️',
+  avatar_url text not null default '',
   updated_at timestamptz not null default now()
 );
+alter table public_profiles add column if not exists avatar_url text not null default '';
 alter table public_profiles enable row level security;
 drop policy if exists "Public profiles are readable" on public_profiles;
 create policy "Public profiles are readable" on public_profiles for select using (true);
@@ -39,6 +41,33 @@ INSERT INTO public_profiles (profile_id, display_name, avatar_emoji, updated_at)
   ('00000000-0000-0000-0000-000000000021','Solomon King','🎸',now()),
   ('00000000-0000-0000-0000-000000000022','Kai Sterling','💎',now())
 ON CONFLICT (profile_id) DO UPDATE SET display_name=EXCLUDED.display_name,avatar_emoji=EXCLUDED.avatar_emoji,updated_at=now();
+
+UPDATE public_profiles SET avatar_url = CASE profile_id
+  WHEN '00000000-0000-0000-0000-000000000001' THEN '/avatars/realistic/jpmorgan.png'
+  WHEN '00000000-0000-0000-0000-000000000002' THEN '/avatars/realistic/wrhearst.png'
+  WHEN '00000000-0000-0000-0000-000000000003' THEN '/avatars/realistic/thecommodore.png'
+  WHEN '00000000-0000-0000-0000-000000000004' THEN '/avatars/realistic/kinghenry8.png'
+  WHEN '00000000-0000-0000-0000-000000000005' THEN '/avatars/realistic/howardhughes.png'
+  WHEN '00000000-0000-0000-0000-000000000006' THEN '/avatars/realistic/nikolatesla.png'
+  WHEN '00000000-0000-0000-0000-000000000007' THEN '/avatars/realistic/emperornero.png'
+  WHEN '00000000-0000-0000-0000-000000000008' THEN '/avatars/realistic/jdrockefeller.png'
+  WHEN '00000000-0000-0000-0000-000000000009' THEN '/avatars/realistic/emperorqianlong.png'
+  WHEN '00000000-0000-0000-0000-000000000010' THEN '/avatars/realistic/sunking.png'
+  WHEN '00000000-0000-0000-0000-000000000011' THEN '/avatars/realistic/beethoven.png'
+  WHEN '00000000-0000-0000-0000-000000000012' THEN '/avatars/realistic/leonardodavinci.png'
+  WHEN '00000000-0000-0000-0000-000000000013' THEN '/avatars/realistic/blackbeard.png'
+  WHEN '00000000-0000-0000-0000-000000000014' THEN '/avatars/realistic/ptbarnum.png'
+  WHEN '00000000-0000-0000-0000-000000000015' THEN '/avatars/realistic/casanova.png'
+  WHEN '00000000-0000-0000-0000-000000000016' THEN '/avatars/realistic/marieantoinette.png'
+  WHEN '00000000-0000-0000-0000-000000000017' THEN '/avatars/realistic/orpheus.png'
+  WHEN '00000000-0000-0000-0000-000000000018' THEN '/avatars/realistic/rumplestiltskin.png'
+  WHEN '00000000-0000-0000-0000-000000000019' THEN '/avatars/realistic/waltonjjr.png'
+  WHEN '00000000-0000-0000-0000-000000000020' THEN '/avatars/realistic/phantomoftheopera.png'
+  WHEN '00000000-0000-0000-0000-000000000021' THEN '/avatars/realistic/solomonking.png'
+  WHEN '00000000-0000-0000-0000-000000000022' THEN '/avatars/realistic/kaisterling.png'
+  ELSE avatar_url
+END
+WHERE profile_id between '00000000-0000-0000-0000-000000000001' and '00000000-0000-0000-0000-000000000022';
 
 -- ═══ AUTH USERS + PROFILES (seed users) ═══
 DO $$

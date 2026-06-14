@@ -27,6 +27,9 @@ function num(n: number | undefined | null): string {
 function bool(b: boolean | undefined): string {
   return b ? "true" : "false";
 }
+function avatarUrl(handle: string): string {
+  return `/avatars/realistic/${handle}.png`;
+}
 
 const now = Date.now();
 const lines: string[] = [];
@@ -40,15 +43,16 @@ lines.push("");
 lines.push("-- ══════════════════════════════════════");
 lines.push("-- PROFILES");
 lines.push("-- ══════════════════════════════════════");
-lines.push("INSERT INTO public_profiles (profile_id, display_name, avatar_emoji, updated_at)");
+lines.push("INSERT INTO public_profiles (profile_id, display_name, avatar_emoji, avatar_url, updated_at)");
 lines.push("VALUES");
 const profileRows = ALL_CHARACTERS.map((c) =>
-  `  (${sq(c.profileId)}, ${sq(c.displayName)}, ${sq(c.avatarEmoji)}, now())`
+  `  (${sq(c.profileId)}, ${sq(c.displayName)}, ${sq(c.avatarEmoji)}, ${sq(avatarUrl(c.handle))}, now())`
 );
 lines.push(profileRows.join(",\n"));
 lines.push("ON CONFLICT (profile_id) DO UPDATE");
 lines.push("  SET display_name = EXCLUDED.display_name,");
 lines.push("      avatar_emoji = EXCLUDED.avatar_emoji,");
+lines.push("      avatar_url = EXCLUDED.avatar_url,");
 lines.push("      updated_at = now();");
 lines.push("");
 

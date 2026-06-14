@@ -60,4 +60,23 @@
     "src": "/avatars/presets/fire.png"
   },
   {
-   
+    "id": "keysmith",
+    "label": "Keysmith",
+    "src": "/avatars/presets/keysmith.png"
+  },
+  {
+    "id": "guitar",
+    "label": "Guitar",
+    "src": "/avatars/presets/guitar.png"
+  },
+  {
+    "id": "vinyl",
+    "label": "Vinyl Record",
+    "src": "/avatars/presets/vinyl.png"
+  },
+  {
+    "id": "harp",
+    "label": "Harp",
+    "src": "/avatars/presets/harp.png"
+  }
+]

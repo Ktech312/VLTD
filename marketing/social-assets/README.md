@@ -249,4 +249,17 @@ Avoid:
 
 - Big sales claims
 - Over-polished launch language
-- Asking people to sign up before asking fo
+- Asking people to sign up before asking for feedback
+
+## Kickstarter Guidance
+
+Use the images as section visuals:
+
+- Hero: hold until a real live-app screenshot is composited into the tablet.
+- Problem: `08-before-after-vault`
+- Features: `07-public-gallery-showcase`
+- Categories: `02-sports-card-vault`, `03-music-collector-vault`, `04-comic-art-vault`
+- Trust: `06-collection-records-vault`
+- Story: `09-kickstarter-vault-workbench`
+
+Kickstarter should explain what VLTD is, who it is for, what the first version includes, what backers help unlock, and why collectors need a better home for mixed collections.
