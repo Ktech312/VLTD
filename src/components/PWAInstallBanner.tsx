@@ -7,29 +7,27 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+const DISMISSED_KEY = "vltd_pwa_dismissed_until";
+const COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
 export default function PWAInstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
-  const [installed, setInstalled] = useState(false);
+  const [show, setShow] = useState(false);
 
   useEffect(() => {
     // Already installed as PWA
-    if (window.matchMedia("(display-mode: standalone)").matches) {
-      setInstalled(true);
-      return;
-    }
+    if (window.matchMedia("(display-mode: standalone)").matches) return;
 
-    // Previously dismissed
-    if (localStorage.getItem("vltd_pwa_dismissed")) {
-      setDismissed(true);
-      return;
-    }
+    // Within cooldown window
+    const until = localStorage.getItem(DISMISSED_KEY);
+    if (until && Date.now() < Number(until)) return;
 
     // iOS detection (no beforeinstallprompt support)
     const ua = navigator.userAgent;
     if (/iphone|ipad|ipod/i.test(ua) && !/crios/i.test(ua)) {
       setIsIOS(true);
+      setShow(true);
       return;
     }
 
@@ -37,16 +35,16 @@ export default function PWAInstallBanner() {
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
+      setShow(true);
     };
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
   function dismiss() {
-    localStorage.setItem("vltd_pwa_dismissed", "1");
-    setDismissed(true);
+    localStorage.setItem(DISMISSED_KEY, String(Date.now() + COOLDOWN_MS));
+    setShow(false);
     setDeferredPrompt(null);
-    setIsIOS(false);
   }
 
   async function install() {
@@ -54,22 +52,22 @@ export default function PWAInstallBanner() {
     await deferredPrompt.prompt();
     const result = await deferredPrompt.userChoice;
     if (result.outcome === "accepted") {
-      setInstalled(true);
+      localStorage.removeItem(DISMISSED_KEY);
     }
-    dismiss();
+    setShow(false);
+    setDeferredPrompt(null);
   }
 
-  if (installed || dismissed) return null;
+  if (!show) return null;
 
   // Android/Chrome — native prompt available
   if (deferredPrompt) {
     return (
       <div className="fixed bottom-20 left-4 right-4 z-50 flex items-center gap-3 rounded-2xl border border-white/10 bg-[#12101C]/95 px-4 py-3 shadow-2xl backdrop-blur-xl sm:left-auto sm:right-4 sm:w-80">
-        {/* Vault icon */}
         <img src="/icons/icon-96x96.png" alt="VLTD" className="h-11 w-11 rounded-xl flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-white leading-tight">Add VLTD to Home Screen</p>
-          <p className="text-xs text-white/50 mt-0.5">Launch like a native app — no browser needed</p>
+          <p className="text-xs text-white/50 mt-0.5">Instant access — no App Store needed</p>
         </div>
         <div className="flex flex-col gap-1.5 flex-shrink-0">
           <button
@@ -100,7 +98,6 @@ export default function PWAInstallBanner() {
             <p className="text-xs text-white/50 mt-1 leading-relaxed">
               Tap the{" "}
               <span className="inline-block align-middle">
-                {/* Share icon */}
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline text-white/70">
                   <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
                   <polyline points="16 6 12 2 8 6"/>
