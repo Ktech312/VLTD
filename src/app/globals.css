@@ -84,7 +84,7 @@
   --topnav-h: 72px;
 
   /* Reserve BottomNav height so content clears it on mobile */
-  --bottomnav-h: 68px;
+  --bottomnav-h: 90px;
 
   /* ---------------------------------------------------------
      NAV / SHELL VARS
@@ -2089,7 +2089,7 @@ main {
 /* Bottom nav clearance — applied to main content wrapper on mobile */
 @media (max-width: 767px) {
   .vltd-content-wrap {
-    padding-bottom: calc(var(--bottomnav-h) + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(var(--bottomnav-h) + max(env(safe-area-inset-bottom, 0px), 8px));
   }
 }
 
