@@ -722,7 +722,7 @@ function UniverseOverviewCard({
 
       {/* Bottom value strip — full width, left to right */}
       <div
-        className="mt-2 flex items-center justify-between gap-2 rounded-[10px] px-2.5 py-1.5"
+        className="mt-2 flex items-end justify-between gap-2 rounded-[10px] px-2.5 py-1.5"
         style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))", border: "1px solid var(--theme-border, rgba(245,181,72,0.08))" }}
       >
         <div>
