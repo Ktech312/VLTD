@@ -722,20 +722,20 @@ function UniverseOverviewCard({
 
       {/* Bottom value strip — full width, left to right */}
       <div
-        className="mt-2 flex items-end justify-between gap-2 rounded-[10px] px-2.5 py-1.5"
+        className="mt-2 rounded-[10px] px-2.5 py-1.5"
         style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))", border: "1px solid var(--theme-border, rgba(245,181,72,0.08))" }}
       >
-        <div>
-          <div className="text-[9px] uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>Value</div>
+        <div className="text-[9px] uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>Value</div>
+        <div className="flex items-baseline justify-between gap-2">
           <div className="text-[13px] font-extrabold leading-none" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
             {hasItems ? formatMoney(totalValue) : "—"}
           </div>
-        </div>
-        <div
-          className="text-right text-[12px] font-bold"
-          style={{ color: showGain ? (totalGain >= 0 ? "var(--color-gain, #4CAF82)" : "var(--color-loss, #E05252)") : "var(--theme-text-muted, #A0956B)" }}
-        >
-          {showGain ? `${totalGain >= 0 ? "+" : ""}${formatMoney(totalGain)}` : "—"}
+          <div
+            className="text-right text-[12px] font-bold leading-none"
+            style={{ color: showGain ? (totalGain >= 0 ? "var(--color-gain, #4CAF82)" : "var(--color-loss, #E05252)") : "var(--theme-text-muted, #A0956B)" }}
+          >
+            {showGain ? `${totalGain >= 0 ? "+" : ""}${formatMoney(totalGain)}` : "—"}
+          </div>
         </div>
       </div>
     </Link>
