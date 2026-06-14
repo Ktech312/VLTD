@@ -677,8 +677,8 @@ export default function HomeClient() {
         />
       )}
 
-      <div style={{ maxWidth: "1200px", margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 265px", alignItems: "start" }}
-        className="px-4 sm:px-5 lg:px-6 py-4 max-lg:grid-cols-1">
+      <div style={{ maxWidth: "1200px", margin: "0 auto" }}
+        className="grid items-start px-4 sm:px-5 lg:px-6 py-4 grid-cols-1 lg:[grid-template-columns:1fr_265px]">
 
         {/* ── LEFT COLUMN ── */}
         <div style={{ display: "flex", flexDirection: "column", gap: "15px", paddingRight: "20px" }} className="max-lg:pr-0">
