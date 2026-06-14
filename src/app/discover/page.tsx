@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
 
 type GalleryCategory = "All" | "TCG" | "Sports" | "Music" | "Jewelry" | "Games" | "Pop Culture" | "Misc";
 
@@ -198,7 +199,12 @@ export default function DiscoverPage() {
           ]));
           const profileAvatarUrlMap = new Map((profiles ?? []).map((p) => [
             String(p.profile_id),
-            typeof p.avatar_url === "string" ? p.avatar_url : "",
+            typeof p.avatar_url === "string" && isRenderableAvatarUrl(p.avatar_url)
+              ? p.avatar_url
+              : getSeedAvatarUrlForProfile({
+                profileId: String(p.profile_id),
+                displayName: String(p.display_name || ""),
+              }),
           ]));
           setGalleries(mapped.map((g) => ({
             ...g,

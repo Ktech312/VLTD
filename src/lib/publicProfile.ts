@@ -3,6 +3,7 @@
 import { getProfileSafe } from "@/lib/userProfile";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
 import { getVaultImagePublicUrl, isDirectBrowserImageUrl, VAULT_ITEMS_TABLE } from "@/lib/vaultCloud";
 import type { VaultImage, VaultItem } from "@/lib/vaultModel";
 
@@ -171,13 +172,23 @@ export async function fetchPublicProfile(profileId: string): Promise<PublicProfi
     ? profileRow.bio
     : (typeof data.bio === "string" && data.bio ? data.bio : undefined);
 
+  const profileAvatarUrl = typeof profileRow?.avatar_url === "string" && isRenderableAvatarUrl(profileRow.avatar_url)
+    ? profileRow.avatar_url
+    : "";
+  const publicAvatarUrl = typeof data.avatar_url === "string" && isRenderableAvatarUrl(data.avatar_url)
+    ? data.avatar_url
+    : "";
+  const seedAvatarUrl = getSeedAvatarUrlForProfile({
+    profileId: String(data.profile_id),
+    displayName: String(data.display_name || ""),
+  });
+  const avatarUrl = profileAvatarUrl || publicAvatarUrl || seedAvatarUrl;
+
   return {
     profileId: String(data.profile_id),
     displayName: String(data.display_name || "Collector"),
     avatarEmoji: String(data.avatar_emoji || "🗝️"),
-    avatarUrl: typeof profileRow?.avatar_url === "string" && profileRow.avatar_url
-      ? profileRow.avatar_url
-      : (typeof data.avatar_url === "string" && data.avatar_url ? data.avatar_url : undefined),
+    avatarUrl: avatarUrl || undefined,
     bannerUrl: typeof profileRow?.banner_url === "string" && profileRow.banner_url ? profileRow.banner_url : undefined,
     bio,
     socialLinks: (profileRow?.social_links as SocialLinks) ?? undefined,

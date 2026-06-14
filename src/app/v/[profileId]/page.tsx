@@ -154,6 +154,7 @@ export default function PublicVaultPage({
 
   const displayName = profile?.displayName ?? "Collector";
   const avatarEmoji = profile?.avatarEmoji ?? "🗝️";
+  const avatarUrl = profile?.avatarUrl ?? "";
   const bio = profile?.bio ?? "";
 
   const universes = useMemo(() => getUniqueUniverses(items), [items]);
@@ -218,8 +219,13 @@ export default function PublicVaultPage({
       {/* ── Top nav bar ── */}
       <header className="sticky top-0 z-30 border-b border-[color:var(--border)] bg-[color:var(--surface)]/90 px-4 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[color:var(--pill)] text-xl ring-1 ring-[color:var(--border)] shrink-0">
-            {avatarEmoji}
+          <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-[color:var(--pill)] text-xl ring-1 ring-[color:var(--border)] shrink-0">
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              avatarEmoji
+            )}
           </div>
           <span className="font-semibold text-sm truncate">{displayName}&apos;s Vault</span>
           <div className="ml-auto flex items-center gap-2">
@@ -243,8 +249,13 @@ export default function PublicVaultPage({
 
         {/* ── Hero ── */}
         <div className="py-8 flex flex-col items-center text-center gap-4">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[color:var(--pill)] text-5xl ring-2 ring-[color:var(--border)] shadow-lg">
-            {avatarEmoji}
+          <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[color:var(--pill)] text-5xl ring-2 ring-[color:var(--border)] shadow-lg">
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              avatarEmoji
+            )}
           </div>
           <div>
             <h1 className="text-2xl font-bold">{displayName}</h1>

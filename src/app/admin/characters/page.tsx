@@ -12,6 +12,7 @@ import { SEED_CHARACTERS_PART2 } from "@/lib/seedCharacters_part2";
 import { SEED_CHARACTERS_PART3 } from "@/lib/seedCharacters_part3";
 import { SEED_CHARACTERS_PART4 } from "@/lib/seedCharacters_part4";
 import type { SeedCharacter, SeedItem, SeedGallery } from "@/lib/seedCharacters";
+import { getSeedAvatarUrl } from "@/lib/seedAvatar";
 import {
   getMyAdminRole,
   listAdmins,
@@ -48,14 +49,26 @@ function formatMoney(n?: number) {
 // ── Auth Gate ───────────────────────────────────────────────
 // ── Admin Login Gate ─────────────────────────────────────────
 function seedAvatarUrl(char: SeedCharacter) {
-  return `/avatars/realistic/${char.handle}.png`;
+  return getSeedAvatarUrl(char.handle);
 }
 
 function SeedAvatar({ char, size = 32 }: { char: SeedCharacter; size?: number }) {
+  const src = seedAvatarUrl(char);
+  if (!src) {
+    return (
+      <span
+        className="flex shrink-0 items-center justify-center rounded-full bg-white/5 ring-1 ring-amber-400/25"
+        style={{ width: size, height: size, fontSize: Math.max(12, Math.floor(size * 0.5)) }}
+      >
+        {char.avatarEmoji}
+      </span>
+    );
+  }
+
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={seedAvatarUrl(char)}
+      src={src}
       alt=""
       className="shrink-0 rounded-full object-cover ring-1 ring-amber-400/25"
       style={{ width: size, height: size }}
