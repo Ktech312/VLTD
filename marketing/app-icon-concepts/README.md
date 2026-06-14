@@ -32,6 +32,18 @@ These are concept-only. Nothing here has been wired into `public/manifest.json` 
    - Baseline V kept upfront with a blue-black obsidian glass background.
    - Most digital/app-like of the background variants.
 
+8. `08-logo-v-wheel-obsidian.png`
+   - Obsidian V direction with the logo's vault-wheel/key-head geometry brought forward.
+   - Richest and most obviously connected to the original VLTD logo.
+
+9. `09-logo-v-compact-key-obsidian.png`
+   - Obsidian V direction with a compact vertical key silhouette behind the V.
+   - Strong logo reference, but the lower key detail may be too small at app-icon sizes.
+
+10. `10-logo-v-wheel-clean-obsidian.png`
+   - Cleaner obsidian V direction with simplified wheel dots/spokes from the logo.
+   - Best balance of app-icon readability and VLTD logo theme.
+
 ## Recommendation
 
 Use `02-vault-v-seal.png` as the main app icon if the priority is brand recognition.
@@ -40,12 +52,16 @@ Use `03-slab-vault.png` if the priority is instantly communicating that VLTD is 
 
 Use `04-keyhole-vault.png` if the priority is maximum small-size readability.
 
+Selected for the active app icon set: `09-logo-v-compact-key-obsidian.png`.
+
 ## Preview Files
 
 - `app-icon-concepts-contact-sheet.png`
 - `app-icon-home-screen-preview.png`
 - `v-seal-background-options-contact-sheet.png`
 - `v-seal-background-options-home-screen.png`
+- `logo-based-obsidian-options-contact-sheet.png`
+- `logo-based-obsidian-options-home-screen.png`
 
 ## Next Step
 
