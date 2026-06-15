@@ -16,7 +16,13 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <TopNav />
-      <div style={{ paddingTop: "var(--topnav-h)" }} className="vltd-content-wrap">
+      <div
+        className="vltd-content-wrap"
+        style={{
+          paddingTop: "var(--topnav-h)",
+          paddingBottom: "calc(var(--bottomnav-h) + max(env(safe-area-inset-bottom, 0px), 16px))",
+        }}
+      >
         {children}
       </div>
       <VaultSyncStatusChip />
