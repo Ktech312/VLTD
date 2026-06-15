@@ -1136,15 +1136,6 @@ export default function VaultUniversePage() {
           </div>
         </section>
 
-        {featuredItem ? (
-          <div className="mt-3">
-            <ItemIntelligencePanel
-              item={featuredItem}
-              intelligence={intelligenceMap[featuredItem.id] ?? null}
-            />
-          </div>
-        ) : null}
-
         {filteredItems.length === 0 ? (
           <VaultEmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearFilters} />
         ) : (
@@ -1188,6 +1179,15 @@ export default function VaultUniversePage() {
             )}
           </section>
         )}
+
+        {featuredItem ? (
+          <div className="mt-4">
+            <ItemIntelligencePanel
+              item={featuredItem}
+              intelligence={intelligenceMap[featuredItem.id] ?? null}
+            />
+          </div>
+        ) : null}
       </div>
     </main>
   );
