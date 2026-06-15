@@ -122,6 +122,12 @@ const VAULT_UNIVERSES: VaultUniverseEntry[] = [
     href: "/vault/games",
   },
   {
+    key: "BUILT_BOTANY",
+    slug: "built-botany",
+    description: "Handmade items, crafts, plants, terrariums, garden tools, and living collectibles.",
+    href: "/vault/built-botany",
+  },
+  {
     key: "MISC",
     slug: "misc",
     description: "Everything that cannot be confidently assigned to another Universe yet.",
@@ -166,6 +172,7 @@ function directUniverseMatch(value: unknown): UniverseKey | "" {
   if (["music", "vinyl", "vinyl records", "record", "records", "album", "albums", "lp", "cd", "cds", "instruments"].includes(text)) return "MUSIC";
   if (["jewelry apparel", "jewelry and apparel", "jewelry", "apparel", "watches", "watch", "bags", "bag", "streetwear", "luxury"].includes(text)) return "JEWELRY_APPAREL";
   if (["games", "game", "video games", "video game", "console", "consoles", "cartridge", "cartridges", "arcade", "handhelds"].includes(text)) return "GAMES";
+  if (["built botany", "built and botany", "handmade", "plants", "crafts", "botany", "garden"].includes(text)) return "BUILT_BOTANY";
   if (["misc", "miscellaneous", "other", "uncategorized", "unknown", "collectors choice"].includes(text)) return "MISC";
 
   return "";
@@ -215,6 +222,7 @@ function inferVaultUniverse(item: VaultItem): UniverseKey {
   if (hasAny(["vinyl", "record", "records", "album", "albums", " lp ", "signed lp", "cd ", "guitar", "instrument", "turntable"])) return "MUSIC";
   if (hasAny(["watch", "watches", "jewelry", "apparel", "bag", "bags", "streetwear", "vintage clothing", "limited drop", "luxury"])) return "JEWELRY_APPAREL";
   if (hasAny(["video game", "game cartridge", "sealed game", "console", "nintendo", "playstation", "xbox", "sega", "atari", "cartridge", "disc only", "controller", "arcade"])) return "GAMES";
+  if (hasAny(["handmade", "handcrafted", "ceramic", "pottery", "woodwork", "plant", "succulent", "cactus", "terrarium", "bonsai", "tropical", "air plant", "resin", "craft"])) return "BUILT_BOTANY";
 
   return "MISC";
 }

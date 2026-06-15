@@ -8,6 +8,7 @@ export type UniverseKey =
   | "MUSIC"
   | "JEWELRY_APPAREL"
   | "GAMES"
+  | "BUILT_BOTANY"
   | "MISC";
 
 export type Taxonomy = Record<UniverseKey, Record<string, string[]>>;
@@ -57,6 +58,12 @@ export const TAXONOMY: Taxonomy = {
     "Trading/Arcade": ["Arcade Boards", "Pinball", "Handhelds"],
   },
 
+  BUILT_BOTANY: {
+    "Handmade": ["Ceramics", "Woodwork", "Metalwork", "Textiles", "Jewelry", "Resin", "Leatherwork", "Glass", "Paper & Origami", "Other"],
+    "Plants": ["Succulents", "Tropicals", "Cacti", "Rare & Exotic", "Air Plants", "Bonsai", "Seeds & Bulbs", "Terrariums", "Other"],
+    "Garden & Tools": ["Tools", "Pots & Planters", "Soil & Amendments", "Other"],
+  },
+
   MISC: {
     "Collectors Choice": ["Art", "Albums", "Books", "Props", "Other"],
     "Art & Prints": ["Original Art", "Limited Prints", "Posters", "Sketches"],
@@ -75,6 +82,7 @@ export const UNIVERSE_LABEL: Record<UniverseKey, string> = {
   MUSIC: "Music",
   JEWELRY_APPAREL: "Jewelry & Apparel",
   GAMES: "Games",
+  BUILT_BOTANY: "Built & Botany",
   MISC: "Misc",
 };
 
@@ -88,6 +96,7 @@ export const UNIVERSE_ICON: Record<UniverseKey, string> = {
   MUSIC: "🎵",
   JEWELRY_APPAREL: "⌚",
   GAMES: "🎮",
+  BUILT_BOTANY: "🌿",
   MISC: "🧩",
 };
 
@@ -105,6 +114,7 @@ export function isUniverseKey(v: unknown): v is UniverseKey {
     v === "MUSIC" ||
     v === "JEWELRY_APPAREL" ||
     v === "GAMES" ||
+    v === "BUILT_BOTANY" ||
     v === "MISC"
   );
 }
@@ -112,7 +122,7 @@ export function isUniverseKey(v: unknown): v is UniverseKey {
 /** Returns all universe keys as a typed array. */
 export function getUniverses(): UniverseKey[] {
   // Stronger than Object.keys(TAXONOMY) because it preserves intended ordering.
-  return ["POP_CULTURE", "SPORTS", "TCG", "MUSIC", "JEWELRY_APPAREL", "GAMES", "MISC"];
+  return ["POP_CULTURE", "SPORTS", "TCG", "MUSIC", "JEWELRY_APPAREL", "GAMES", "BUILT_BOTANY", "MISC"];
 }
 
 /** Normalize a label for stability (quotes, accents). */
