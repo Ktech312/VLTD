@@ -44,6 +44,12 @@ const FRAMES: Record<UniverseKey, CaptureFrame> = {
     inset: "8%",
     radius: "16px",
   },
+  BUILT_BOTANY: {
+    label: "Nature frame",
+    aspectRatio: "4 / 5",
+    inset: "9%",
+    radius: "18px",
+  },
   MISC: {
     label: "Collector frame",
     aspectRatio: "4 / 5",
@@ -60,6 +66,7 @@ function isUniverseKey(value: unknown): value is UniverseKey {
     value === "MUSIC" ||
     value === "JEWELRY_APPAREL" ||
     value === "GAMES" ||
+    value === "BUILT_BOTANY" ||
     value === "MISC"
   );
 }
