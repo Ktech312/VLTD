@@ -15,10 +15,8 @@ import VaultMuseumView from "@/components/VaultMuseumView";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
-import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
 import {
   enqueueVaultItemSync,
-  getPendingVaultSyncCount,
   processVaultSyncQueue,
 } from "@/lib/vaultSyncQueue";
 import { useResolvedVaultImage } from "@/lib/useResolvedVaultImages";
@@ -720,15 +718,9 @@ export default function VaultUniversePage() {
   const [viewMode, setViewMode] = useState<ViewMode>("museum");
   const [showSoldItems, setShowSoldItems] = useState(false);
   const [sales, setSales] = useState<SaleInfo[]>([]);
-  const [pendingSyncCount, setPendingSyncCount] = useState(0);
-  const [syncStatus, setSyncStatus] = useState("");
-  const [isMigrating, setIsMigrating] = useState(false);
-  const [isOnline, setIsOnline] = useState<boolean | null>(null);
-
   function refresh() {
     setItems(loadItems());
     setSales(readSales());
-    setPendingSyncCount(getPendingVaultSyncCount());
   }
 
   async function hydrateAll() {
@@ -756,14 +748,7 @@ export default function VaultUniversePage() {
     }
 
     function onOnline() {
-      setSyncStatus("Back online. Syncing queued changes...");
-      void hydrateAll().then(() => {
-        setSyncStatus(
-          getPendingVaultSyncCount() > 0
-            ? "Some changes still waiting to sync."
-            : "Cloud sync is up to date."
-        );
-      });
+      void hydrateAll();
     }
 
     window.addEventListener(ACTIVE_PROFILE_EVENT, onActiveProfileChange);
@@ -787,22 +772,6 @@ export default function VaultUniversePage() {
   useEffect(() => {
     window.localStorage.setItem(VIEW_MODE_KEY, viewMode);
   }, [viewMode]);
-
-  useEffect(() => {
-    setIsOnline(window.navigator.onLine);
-    function handleOnlineState() {
-      setIsOnline(true);
-    }
-    function handleOfflineState() {
-      setIsOnline(false);
-    }
-    window.addEventListener("online", handleOnlineState);
-    window.addEventListener("offline", handleOfflineState);
-    return () => {
-      window.removeEventListener("online", handleOnlineState);
-      window.removeEventListener("offline", handleOfflineState);
-    };
-  }, []);
 
   const intelligenceMap = useMemo(() => {
     if (!items.length) return {};
@@ -912,20 +881,6 @@ export default function VaultUniversePage() {
     gradedOnly ||
     showSoldItems ||
     sortMode !== "newest";
-
-  async function runMigration() {
-    setIsMigrating(true);
-    setSyncStatus("Migrating local-only images from this device to Supabase...");
-    try {
-      const result = await migrateExistingVaultImagesToSupabase();
-      await hydrateAll();
-      setSyncStatus(
-        `Migration finished. ${result.migrated} image(s) migrated from this device, ${result.skipped} skipped.`
-      );
-    } finally {
-      setIsMigrating(false);
-    }
-  }
 
   async function handleSaveItem(nextItem: VaultItem) {
     saveItem(nextItem);

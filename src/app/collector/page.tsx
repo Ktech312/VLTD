@@ -230,7 +230,7 @@ export default function CollectorProfilePage() {
 
           <div className="relative mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
             <StatCard label="ITEMS" value={collection.totalItems} hint="Vault pieces tracked" />
-            <StatCard label="EXHIBITS" value={galleries.length} hint="Exhibition presentations" />
+            <StatCard label="GALLERIES" value={galleries.length} hint="Gallery presentations" />
             <StatCard label="ACTIVE" value={stats.activeGalleries} hint="Currently active" />
             <StatCard
               label="TOTAL VALUE"
@@ -324,12 +324,12 @@ export default function CollectorProfilePage() {
                 </div>
               </QuietCard>
 
-              <QuietCard title="Exhibition Footprint">
+              <QuietCard title="Gallery Footprint">
                 <div className="font-semibold text-[color:var(--fg)]">
-                  {galleries.length} exhibits • {stats.totalViews} views
+                  {galleries.length} galleries • {stats.totalViews} views
                 </div>
                 <div className="mt-1">
-                  Public exhibition output and audience engagement for the active profile.
+                  Public gallery output and audience engagement for the active profile.
                 </div>
               </QuietCard>
             </div>
@@ -364,7 +364,7 @@ export default function CollectorProfilePage() {
                       <div className="mt-3 text-sm text-[color:var(--muted)]">
                         {gallery.description?.trim()
                           ? gallery.description
-                          : "Exhibition-style presentation from the vault."}
+                          : "Gallery presentation from the vault."}
                       </div>
                     </div>
 

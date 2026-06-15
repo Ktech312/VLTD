@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getOnboardingStatus } from "@/lib/auth";
+import { syncPublicProfile } from "@/lib/publicProfile";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { loadGalleries, refreshGalleriesFromSupabase, type Gallery } from "@/lib/galleryModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -622,6 +623,7 @@ export default function HomeClient() {
         setPrimaryFocus(focus);
         try { window.localStorage.setItem(FOCUS_LS_KEY, focus); } catch { /* ignore */ }
         await syncVaultItemsFromSupabase();
+        void syncPublicProfile(profile?.id ?? undefined);
         setItems(loadItems());
         void refreshGalleriesFromSupabase(true).then(() => {
           setGalleries(loadGalleries().filter((g) => g.state === "ACTIVE" && g.visibility === "PUBLIC"));

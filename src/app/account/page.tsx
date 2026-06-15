@@ -7,6 +7,7 @@ import { ThemePicker } from "@/components/ui/ThemePicker";
 import { PillButton } from "@/components/ui/PillButton";
 
 import { getOnboardingStatus, updateProfile } from "@/lib/auth";
+import { syncPublicProfile } from "@/lib/publicProfile";
 import { processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { syncVaultItemsFromSupabase } from "@/lib/vaultModel";
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
@@ -101,6 +102,7 @@ export default function AccountPage() {
         bio: bio || null,
         is_public: isPublic,
       });
+      void syncPublicProfile(profileId);
       setSuccess("Account updated.");
       router.refresh();
     } catch (err) {

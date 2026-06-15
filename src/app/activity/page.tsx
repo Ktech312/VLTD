@@ -312,7 +312,7 @@ export default function ActivityPage() {
                   Vault
                 </Link>
                 <Link href="/museum" className="rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">
-                  Exhibitions
+                  Collections
                 </Link>
                 <Link href="/portfolio" className="rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">
                   Insights
