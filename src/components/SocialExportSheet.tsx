@@ -560,6 +560,7 @@ async function exportAnimatedVideo(item: VaultItem, bg: string): Promise<Blob> {
   canvas.height = S;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas not available");
+  const c = ctx;
 
   const GOLD = "#F5B548";
   const isLight = bg === "#F5F0E8" || bg === "#F5B548";
@@ -602,18 +603,18 @@ async function exportAnimatedVideo(item: VaultItem, bg: string): Promise<Blob> {
     function frame() {
       const elapsed = performance.now() - startTime;
       const t = Math.min(elapsed / DURATION, 1);
-    ctx.clearRect(0, 0, S, S);
+    c.clearRect(0, 0, S, S);
 
     // Background
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, S, S);
+    c.fillStyle = bg;
+    c.fillRect(0, 0, S, S);
 
     // Radial overlay
-    const bg2 = ctx.createRadialGradient(S / 2, 0, 0, S / 2, 0, S * 0.9);
+    const bg2 = c.createRadialGradient(S / 2, 0, 0, S / 2, 0, S * 0.9);
     bg2.addColorStop(0, "rgba(245,181,72,0.07)");
     bg2.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = bg2;
-    ctx.fillRect(0, 0, S, S);
+    c.fillStyle = bg2;
+    c.fillRect(0, 0, S, S);
 
     // Phase 0-0.35: image slides in from bottom + fades
     if (t > 0.05 && itemImg) {
@@ -628,13 +629,13 @@ async function exportAnimatedVideo(item: VaultItem, bg: string): Promise<Blob> {
       const baseY = pad + (imgH - sh) / 2;
       const sy = baseY + (1 - slideT) * 60;
 
-      ctx.save();
-      ctx.globalAlpha = imgAlpha;
-      ctx.shadowColor = "rgba(0,0,0,0.4)";
-      ctx.shadowBlur = 36;
-      ctx.shadowOffsetY = 8;
-      ctx.drawImage(itemImg, sx, sy, sw, sh);
-      ctx.restore();
+      c.save();
+      c.globalAlpha = imgAlpha;
+      c.shadowColor = "rgba(0,0,0,0.4)";
+      c.shadowBlur = 36;
+      c.shadowOffsetY = 8;
+      c.drawImage(itemImg, sx, sy, sw, sh);
+      c.restore();
     }
 
     // Phase 0.35-0.55: gold line sweeps in
@@ -643,80 +644,80 @@ async function exportAnimatedVideo(item: VaultItem, bg: string): Promise<Blob> {
       const lineY = Math.round(S * 0.74);
       const lineStart = 80;
       const lineEnd = 80 + (S - 160) * lineT;
-      const lg = ctx.createLinearGradient(lineStart, 0, S - 80, 0);
+      const lg = c.createLinearGradient(lineStart, 0, S - 80, 0);
       lg.addColorStop(0, "rgba(245,181,72,0)");
       lg.addColorStop(0.1, GOLD);
       lg.addColorStop(0.9, GOLD);
       lg.addColorStop(1, "rgba(245,181,72,0)");
-      ctx.save();
-      ctx.globalAlpha = lineT;
-      ctx.strokeStyle = lg;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(lineStart, lineY);
-      ctx.lineTo(lineEnd, lineY);
-      ctx.stroke();
-      ctx.restore();
+      c.save();
+      c.globalAlpha = lineT;
+      c.strokeStyle = lg;
+      c.lineWidth = 2;
+      c.beginPath();
+      c.moveTo(lineStart, lineY);
+      c.lineTo(lineEnd, lineY);
+      c.stroke();
+      c.restore();
     }
 
     // Phase 0.50-0.75: title fades up
     if (t > 0.50) {
       const textT = easeOut(Math.min(1, (t - 0.50) / 0.25));
       const lineY = Math.round(S * 0.74);
-      ctx.save();
-      ctx.globalAlpha = textT;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "top";
-      ctx.fillStyle = textColor;
-      ctx.font = `700 46px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+      c.save();
+      c.globalAlpha = textT;
+      c.textAlign = "center";
+      c.textBaseline = "top";
+      c.fillStyle = textColor;
+      c.font = `700 46px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
       const words = item.title.split(" ");
       let tl = "";
       let ty = lineY + 28 - (1 - textT) * 20;
       for (const w of words) {
         const test = tl ? `${tl} ${w}` : w;
-        if (ctx.measureText(test).width > S * 0.80 && tl) {
-          ctx.fillText(tl, S / 2, ty);
+        if (c.measureText(test).width > S * 0.80 && tl) {
+          c.fillText(tl, S / 2, ty);
           tl = w;
           ty += 58;
         } else {
           tl = test;
         }
       }
-      if (tl) ctx.fillText(tl, S / 2, ty);
+      if (tl) c.fillText(tl, S / 2, ty);
 
       if (item.grade) {
-        ctx.font = `500 28px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-        ctx.fillStyle = GOLD;
-        ctx.fillText(`Grade ${item.grade}`, S / 2, ty + 62);
+        c.font = `500 28px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+        c.fillStyle = GOLD;
+        c.fillText(`Grade ${item.grade}`, S / 2, ty + 62);
       }
-      ctx.restore();
+      c.restore();
     }
 
     // Phase 0.70-0.90: value fades in with scale
     if (t > 0.70 && value && value > 0) {
       const valT = easeInOut(Math.min(1, (t - 0.70) / 0.20));
       const lineY = Math.round(S * 0.74);
-      ctx.save();
-      ctx.globalAlpha = valT;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "bottom";
-      ctx.font = `800 62px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-      ctx.fillStyle = GOLD;
-      ctx.fillText(fmt(value), S / 2, lineY - 16);
-      ctx.restore();
+      c.save();
+      c.globalAlpha = valT;
+      c.textAlign = "center";
+      c.textBaseline = "bottom";
+      c.font = `800 62px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+      c.fillStyle = GOLD;
+      c.fillText(fmt(value), S / 2, lineY - 16);
+      c.restore();
     }
 
     // Phase 0.85+: watermark
     if (t > 0.85) {
       const wmT = Math.min(1, (t - 0.85) / 0.15);
-      ctx.save();
-      ctx.globalAlpha = wmT * 0.55;
-      ctx.font = `700 24px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-      ctx.fillStyle = GOLD;
-      ctx.textAlign = "right";
-      ctx.textBaseline = "bottom";
-      ctx.fillText("VLTD", S - 36, S - 28);
-      ctx.restore();
+      c.save();
+      c.globalAlpha = wmT * 0.55;
+      c.font = `700 24px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+      c.fillStyle = GOLD;
+      c.textAlign = "right";
+      c.textBaseline = "bottom";
+      c.fillText("VLTD", S - 36, S - 28);
+      c.restore();
     }
 
       if (t < 1) {
