@@ -30,7 +30,7 @@ export default function NewMuseumGalleryPage() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [visibility, setVisibility] = useState<Gallery["visibility"]>("PUBLIC");
+  const [visibility, setVisibility] = useState<Gallery["visibility"]>("LOCKED");
   const [state, setState] = useState<Gallery["state"]>("ACTIVE");
   const [themePack, setThemePack] = useState<GalleryThemePack>("classic");
   const [displayMode, setDisplayMode] = useState<"grid" | "shelf">("grid");

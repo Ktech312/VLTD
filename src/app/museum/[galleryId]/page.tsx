@@ -12,7 +12,6 @@ import {
   type GalleryPublicItemSnapshot,
   type GalleryInvitePermissions,
   GALLERY_EVENT,
-  recordGalleryView,
   ensureGalleryPublicToken,
   regenerateGalleryPublicToken,
   getGalleryShareUrl,
@@ -347,7 +346,6 @@ export default function GalleryPage() {
     ensureGalleryPublicToken(id);
     loadState();
     void refreshGalleriesFromSupabase(true);
-    recordGalleryView(id);
 
     function onGalleryChange() {
       loadState();
