@@ -4,6 +4,32 @@ import { getProfileSafe } from "@/lib/userProfile";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
+
+const AVATAR_PRESET_SRCS: Record<string, string> = {
+  key: "/avatars/presets/key.png",
+  lion: "/avatars/presets/lion.png",
+  dragon: "/avatars/presets/dragon.png",
+  fox: "/avatars/presets/fox.png",
+  eagle: "/avatars/presets/eagle.png",
+  gem: "/avatars/presets/gem.png",
+  orb: "/avatars/presets/orb.png",
+  sword: "/avatars/presets/sword.png",
+  cards: "/avatars/presets/cards.png",
+  crown: "/avatars/presets/crown.png",
+  vault: "/avatars/presets/vault.png",
+  fire: "/avatars/presets/fire.png",
+  keysmith: "/avatars/presets/keysmith.png",
+  guitar: "/avatars/presets/guitar.png",
+  vinyl: "/avatars/presets/vinyl.png",
+  harp: "/avatars/presets/harp.png",
+};
+
+function resolveAvatarUrl(url?: string | null): string {
+  if (!url) return "";
+  if (url.startsWith("__preset:")) return AVATAR_PRESET_SRCS[url.replace("__preset:", "")] ?? "";
+  if (isRenderableAvatarUrl(url)) return url;
+  return "";
+}
 import { getVaultImagePublicUrl, isDirectBrowserImageUrl, VAULT_ITEMS_TABLE } from "@/lib/vaultCloud";
 import type { VaultImage, VaultItem } from "@/lib/vaultModel";
 
@@ -133,8 +159,9 @@ export async function syncPublicProfile(profileId = getStoredActiveProfileId()) 
     payload.bio = profileRow.bio;
   }
 
-  if (typeof profileRow?.avatar_url === "string" && profileRow.avatar_url) {
-    payload.avatar_url = profileRow.avatar_url;
+  const resolvedAvatar = resolveAvatarUrl(profileRow?.avatar_url);
+  if (resolvedAvatar) {
+    payload.avatar_url = resolvedAvatar;
   }
 
   const { data, error } = await supabase
@@ -175,16 +202,9 @@ export async function fetchPublicProfile(profileId: string): Promise<PublicProfi
     ? profileRow.bio
     : (typeof data?.bio === "string" && data.bio ? data.bio : undefined);
 
-  const profileAvatarUrl = typeof profileRow?.avatar_url === "string" && isRenderableAvatarUrl(profileRow.avatar_url)
-    ? profileRow.avatar_url
-    : "";
-  const publicAvatarUrl = typeof data?.avatar_url === "string" && isRenderableAvatarUrl(data.avatar_url)
-    ? data.avatar_url
-    : "";
-  const seedAvatarUrl = getSeedAvatarUrlForProfile({
-    profileId: cleanProfileId,
-    displayName,
-  });
+  const profileAvatarUrl = resolveAvatarUrl(profileRow?.avatar_url);
+  const publicAvatarUrl = resolveAvatarUrl(data?.avatar_url);
+  const seedAvatarUrl = getSeedAvatarUrlForProfile({ profileId: cleanProfileId, displayName });
   const avatarUrl = profileAvatarUrl || publicAvatarUrl || seedAvatarUrl;
 
   return {

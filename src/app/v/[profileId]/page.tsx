@@ -345,7 +345,8 @@ export default function PublicVaultPage({
           <p className="text-sm text-[color:var(--muted)] mb-4">Vault, grade, value, and share your collectibles.</p>
           <Link
             href="/signup"
-            className="inline-flex items-center gap-2 rounded-full bg-[color:var(--theme-gold,#F5B548)] px-5 py-2 text-sm font-bold text-black"
+            className="inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-bold"
+            style={{ background: "#F5B548", color: "#0B0B0B" }}
           >
             Start your vault →
           </Link>
