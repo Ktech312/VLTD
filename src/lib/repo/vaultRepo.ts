@@ -110,11 +110,12 @@ class LocalVaultRepo implements VaultRepo {
   }
 
   /**
-   * ✅ ensureSeed:
-   * - If vault is empty: seed it.
-   * - If vault exists but looks "accidentally overwritten" (ex: only 1 item),
-   *   and seed hasn't been applied yet: merge seed items in without overwriting.
-   * This helps restore demo items for testing after a bad upsertAll.
+   * ensureSeed:
+   * - If vault is empty for the current profile: seed it.
+   * - Otherwise leave the vault alone — never merge demo items into a real vault.
+   *
+   * The "recovery mode" that previously merged seed items when vault had < 3 items
+   * was removed: it was silently injecting demo content into real user vaults.
    */
   async ensureSeed(seed: VaultItem[]) {
     const existing = loadItems();
@@ -124,17 +125,6 @@ class LocalVaultRepo implements VaultRepo {
       saveItems(s);
       setSeededFlag();
       return s;
-    }
-
-    // Recovery mode: merge in seed once if not already seeded and vault is unusually small.
-    const seeded = getSeededFlag();
-    const looksOverwritten = existing.length > 0 && s.length > 0 && existing.length < Math.min(3, s.length);
-
-    if (!seeded && looksOverwritten) {
-      const merged = mergeById(existing, s);
-      saveItems(merged);
-      setSeededFlag();
-      return merged;
     }
 
     return existing;

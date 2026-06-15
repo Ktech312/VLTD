@@ -12,6 +12,7 @@ import SwipeStack from "@/components/SwipeStack";
 import { PillButton } from "@/components/ui/PillButton";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import VaultMuseumView from "@/components/VaultMuseumView";
+import VaultWrappedSheet from "@/components/VaultWrappedSheet";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
@@ -717,6 +718,7 @@ export default function VaultUniversePage() {
   const [sortMode, setSortMode] = useState<SortMode>("newest");
   const [viewMode, setViewMode] = useState<ViewMode>("museum");
   const [showSoldItems, setShowSoldItems] = useState(false);
+  const [wrappedOpen, setWrappedOpen] = useState(false);
   const [sales, setSales] = useState<SaleInfo[]>([]);
   function refresh() {
     setItems(loadItems());
@@ -968,8 +970,17 @@ export default function VaultUniversePage() {
                   Sold
                 </Link>
                 <RestoreVaultButton />
+                <button
+                  type="button"
+                  onClick={() => setWrappedOpen(true)}
+                  className="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
+                >
+                  ✦ Wrapped
+                </button>
               </div>
             </div>
+
+            {wrappedOpen && <VaultWrappedSheet onClose={() => setWrappedOpen(false)} />}
 
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
               <div className="rounded-[14px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)]">

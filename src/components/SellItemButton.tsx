@@ -5,6 +5,7 @@ import { useState } from "react";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { saveItem, type VaultItem } from "@/lib/vaultModel";
 import { showToast } from "@/lib/toast";
+import { dispatchItemSold } from "@/hooks/useAutoShareTrigger";
 
 const SALES_KEY = "vltd_sales_history";
 
@@ -72,6 +73,7 @@ export default function SellItemButton({ item }: { item: VaultItem }) {
       await processVaultSyncQueue();
 
       window.dispatchEvent(new Event("vltd:vault-updated"));
+      dispatchItemSold(soldItem, salePrice);
     } catch (error) {
       console.error(error);
       showToast("Failed to mark item sold.");

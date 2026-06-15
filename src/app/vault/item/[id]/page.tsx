@@ -12,7 +12,9 @@ import NotableBadge from "@/components/NotableBadge";
 import PricingMvpCard from "@/components/PricingMvpCard";
 import ShareBar from "@/components/ShareBar";
 import SocialExportSheet from "@/components/SocialExportSheet";
+import AutoSharePrompt from "@/components/AutoSharePrompt";
 import AuctionSetupSheet, { AuctionCountdownChip } from "@/components/AuctionSetupSheet";
+import { useAutoShareTrigger } from "@/hooks/useAutoShareTrigger";
 import { removeBackgroundStub } from "@/lib/imageAI";
 import { getStoredActiveProfileId, getCurrentUser } from "@/lib/auth";
 import VideoClipSection from "@/components/VideoClipSection";
@@ -201,6 +203,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   const [isSoldView, setIsSoldView] = useState(false);
   const [socialExportOpen, setSocialExportOpen] = useState(false);
   const [auctionOpen, setAuctionOpen] = useState(false);
+  const { trigger: shareTrigger, dismiss: dismissShareTrigger } = useAutoShareTrigger();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [registryEntry, setRegistryEntry] = useState<import("@/lib/registryModel").RegistrySubject | null>(null);
 
@@ -700,6 +703,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   const notable = isNotable(item);
 
   return (
+    <>
     <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-5 sm:py-6">
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_360px]">
@@ -1226,5 +1230,14 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
         </div>
       </div>
     </main>
+
+      {shareTrigger && (
+        <AutoSharePrompt
+          trigger={shareTrigger}
+          onShare={() => setSocialExportOpen(true)}
+          onDismiss={() => dismissShareTrigger()}
+        />
+      )}
+    </>
   );
 }

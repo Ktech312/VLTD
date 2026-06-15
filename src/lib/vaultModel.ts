@@ -797,7 +797,9 @@ export function loadItems(options: LoadItemsOptions = {}) {
   return all.filter((item) => {
     if (options.includeAllProfiles) return true;
     if (options.profileId) return item.profile_id === options.profileId;
-    if (!activeProfileId) return true;
+    // When no active profile is set, only show items that also have no profile_id
+    // (un-authed local-only use). Never leak another user's items.
+    if (!activeProfileId) return !item.profile_id;
     return item.profile_id === activeProfileId;
   });
 }
@@ -831,22 +833,33 @@ export function saveItem(item: VaultItem) {
 }
 
 export function seedDemoIfEmpty() {
-  const existing = loadItems({ includeAllProfiles: true });
+  const existing = loadItems();
 
   if (!existing.length) {
-    const demo = getDemoItems();
+    const activeProfileId = getActiveProfileId();
+    const demo = getDemoItems().map((item) =>
+      activeProfileId ? { ...item, profile_id: activeProfileId } : item
+    );
     saveItems(demo);
   }
 }
 
 export function loadItemsOrSeed(seed?: VaultItem[]) {
-  const existing = loadItems({ includeAllProfiles: true });
+  // Never use includeAllProfiles here — we only want the current user's items.
+  const existing = loadItems();
   if (existing.length > 0) return existing;
 
-  const safeSeed = Array.isArray(seed) ? seed.filter(Boolean).map(syncPrimaryFields) : [];
+  // Only seed if we have no items for the current profile.
+  // Stamp each seed item with the active profile_id so it never leaks to
+  // another user via migrateMissingProfileIds.
+  const activeProfileId = getActiveProfileId();
+  const safeSeed = Array.isArray(seed) ? seed.filter(Boolean).map((item) =>
+    syncPrimaryFields(activeProfileId ? { ...item, profile_id: activeProfileId } : item)
+  ) : [];
+
   if (safeSeed.length > 0) {
     saveItems(safeSeed);
-    return loadItems({ includeAllProfiles: true });
+    return loadItems();
   }
 
   return existing;

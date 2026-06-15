@@ -21,8 +21,8 @@ Any image showing a laptop, tablet, or phone screen must use a screenshot captur
 
 Asset:
 
-- Hold for replacement. The current tablet versions are not approved because the tablet screen is not from the live VLTD app.
-- Use a newly captured live-app screenshot before publishing this asset.
+- `source/01-mixed-collector-vault-live-app.png`
+- Tablet screen is composited from a real locally rendered VLTD dashboard screenshot, not generated UI.
 
 Instagram caption:
 
@@ -34,7 +34,7 @@ I am building a digital vault for collectors with mixed collections: cards, comi
 
 Kickstarter use:
 
-Lead hero or first campaign section visual after the tablet screen is replaced with a live VLTD app screenshot.
+Lead hero or first campaign section visual.
 
 ### Post 2: Sports Cards
 

@@ -10,6 +10,7 @@ import {
   type AICatalogDraft,
 } from "@/lib/aiCatalogDrafts";
 import { saveItem } from "@/lib/vaultModel";
+import { dispatchItemGraded } from "@/hooks/useAutoShareTrigger";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -169,6 +170,7 @@ function ReviewInner() {
 
     saveItem(vaultItem);
     window.dispatchEvent(new Event("vltd:vault-updated"));
+    if (vaultItem.grade) dispatchItemGraded(vaultItem, vaultItem.grade);
 
     const converted = { ...buildUpdatedDraft(), status: "CONVERTED" as const, reviewedAt: new Date().toISOString() };
     upsertDraft(converted);

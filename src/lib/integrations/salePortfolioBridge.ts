@@ -1,5 +1,6 @@
 import { recordSale } from "@/lib/salesLedger";
 import { loadItems, saveItems } from "@/lib/vaultModel";
+import { dispatchItemSold } from "@/hooks/useAutoShareTrigger";
 
 export function sellItemAndRecord(item: any, salePrice: number) {
   const purchase = Number(item.purchasePrice ?? 0);
@@ -21,6 +22,7 @@ export function sellItemAndRecord(item: any, salePrice: number) {
 
   // 3. notify app
   window.dispatchEvent(new Event("vltd:vault-updated"));
+  dispatchItemSold(item, salePrice);
 
   return {
     profit: salePrice - purchase,

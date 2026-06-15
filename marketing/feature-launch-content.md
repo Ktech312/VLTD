@@ -438,3 +438,224 @@ Full list + one-liner on each:
 All live. All free. All on vltd.app.
 
 #collector #sportscards #TCG #hobbylife #VLTD
+
+---
+
+---
+
+# Social Share Hub — New Feature Drop
+
+---
+
+## Then vs Now Share Card
+
+### LinkedIn Post
+Before and after is the most powerful story in collecting.
+
+We just shipped **Then vs Now** on VLTD — a one-tap export that puts your item's purchase price next to its current value, side by side, in a shareable card built for Instagram, Twitter, and TikTok.
+
+The left side shows what you paid. The right shows what it's worth today. The gain sits right in the middle, color-coded green or red.
+
+No manual math. No screenshot-and-crop. One tap.
+
+For collectors who've held long positions, Then vs Now is the content that proves the thesis.
+
+→ vltd.app
+
+#collectibles #gainz #sportscards #hobbyinvesting #VLTD
+
+---
+
+### X/Twitter Thread
+🧵 We shipped Then vs Now on VLTD.
+
+The share card that shows your gain in one image 👇
+
+1/ Any item in your vault can now generate a "Then vs Now" card — purchase price on the left, current value on the right, gain (or loss) right in the middle.
+
+2/ One tap. You get a 1080×1080 image. Grab it and post it anywhere.
+
+3/ The gain number is color-coded. Up is gold. Down is honest. No filters on reality.
+
+4/ Collectors talk about their wins. VLTD makes it easy to show the work behind them.
+
+5/ Then vs Now is live inside Social Export → Then vs Now tab. Open any item on vltd.app.
+
+#sportscards #hobbyinvesting #gainz #VLTD
+
+---
+
+### Changelog Entry
+**Then vs Now** — Social share card comparing an item's purchase price to its current value. Exports as a 1080×1080 PNG with THEN/NOW split layout, item image centered, and a color-coded gain/loss pill. Generated client-side via Canvas API. Available in Social Export → Then vs Now tab.
+
+---
+
+---
+
+## Vault Wrapped
+
+### LinkedIn Post
+What did your collection actually do this year?
+
+**Vault Wrapped** on VLTD generates a Spotify Wrapped-style stats card for your entire vault — total value, total gain, most valuable category, biggest single gainer, graded item count. All in one shareable 9:16 card.
+
+It's a year-in-review for your collection, available any time.
+
+Share it when the mood strikes. Pull it at the end of the year. Show people what serious collecting looks like in numbers.
+
+→ Hit "✦ Wrapped" on your vault page.
+
+#collector #vaultstats #yearinreview #hobbylife #VLTD
+
+---
+
+### X/Twitter Thread
+🧵 Vault Wrapped is live on VLTD.
+
+Your entire collection in one shareable card 👇
+
+1/ Hit "✦ Wrapped" on your vault and get a 9:16 Spotify Wrapped-style card with your vault's top stats. Total value, total gain, biggest gainer, top universe, graded count.
+
+2/ It generates on-device. Nothing uploaded, nothing shared without your permission.
+
+3/ Works for any size collection — 5 items or 500. The card scales to what you've got.
+
+4/ The card is designed for Stories. Post it on Instagram, TikTok, X. "Here's what my collection is worth" has never been this easy to communicate.
+
+5/ Vault Wrapped is live now. Open your vault at vltd.app and tap ✦ Wrapped.
+
+#collector #sportscards #pokemontcg #vaultlife #VLTD
+
+---
+
+### Changelog Entry
+**Vault Wrapped** — Full-vault stats card in 9:16 format (1080×1920). Displays total value, total cost, net gain, gain %, top universe, top category, biggest gainer, and graded item count. Generated client-side via Canvas API with animated gradient background. Available via the ✦ Wrapped button on the vault universe page.
+
+---
+
+---
+
+## Animated Video Export
+
+### LinkedIn Post
+Your collection moves. Now your content can too.
+
+**Animated Video Export** on VLTD generates a short animated video for any item in your vault — the kind of looping, cinematic content that performs on Reels, TikTok, and Shorts.
+
+No editing software. No templates to fiddle with. Tap the Video tab in Social Export, hit Generate, and get a `.webm` clip ready to upload.
+
+Still images are easy to scroll past. Motion stops the thumb.
+
+→ vltd.app
+
+#contentcreator #collector #reels #sportscards #VLTD
+
+---
+
+### X/Twitter Thread
+🧵 Animated Video Export just shipped on VLTD.
+
+Here's why it matters for collectors who post 👇
+
+1/ You can now generate an animated video for any vault item — right in the browser, no editing tools required. Tap Video tab → Generate → download the clip.
+
+2/ The animation highlights the item, pulses the value, and fades in the grade. Short enough for Reels. High enough quality for TikTok.
+
+3/ Built with the MediaRecorder API — no server, no processing queue. It generates on your device in seconds.
+
+4/ Motion content dramatically outperforms static images on every short-form platform. VLTD gives you motion content with one tap.
+
+5/ Video Export is live in Social Export → Video tab. Open any item on vltd.app.
+
+#collector #reels #tiktok #sportscards #contentcreator #VLTD
+
+---
+
+### Changelog Entry
+**Animated Video Export** — Short-form animated video export for vault items. Uses the browser's MediaRecorder API to generate a ~2.4s animated clip with item highlight, value reveal, and grade fade-in. Output format: .webm. Available in Social Export → Video tab.
+
+---
+
+---
+
+## Instagram Carousel Export
+
+### LinkedIn Post
+The best collectors don't just have great items — they tell great stories.
+
+**Carousel Export** on VLTD lets you build a multi-item Instagram carousel from your vault. Select up to 10 items, pick a theme, and export individual square cards — each with the item image, name, value, and grade.
+
+Post the whole set as a carousel. Let your collection do the talking across multiple slides.
+
+→ Social Export → Carousel tab on any item.
+
+#collector #instagramcollector #carousel #hobbylife #VLTD
+
+---
+
+### X/Twitter Thread
+🧵 Carousel Export is now live on VLTD.
+
+Build a multi-item Instagram carousel from your vault 👇
+
+1/ Go to Social Export → Carousel tab. Pick up to 10 vault items. Export them as individual cards. Post as an Instagram carousel.
+
+2/ Each card is 1080×1080 with the item image, title, value, grade chip, and VLTD watermark. Consistent style across all slides.
+
+3/ Downloads stagger with a small delay so your browser doesn't choke. You get clean, individually named files ready to drag into Instagram.
+
+4/ The carousel format is the highest-engagement content type on Instagram. Now you can build one from your collection in 2 minutes.
+
+5/ Carousel Export is live now at vltd.app.
+
+#collector #instagram #carousel #sportscards #VLTD
+
+---
+
+### Changelog Entry
+**Carousel Export** — Multi-item export that generates individual 1080×1080 PNG cards for use in Instagram carousels. Select up to 10 items from the vault. Cards include item image, title, value, grade chip, and VLTD watermark. Files download with staggered timing and sequential filenames. Available in Social Export → Carousel tab.
+
+---
+
+---
+
+## Auto-Share Prompt (Just Sold / Just Graded)
+
+### LinkedIn Post
+The best time to share a win is right when it happens.
+
+**Auto-Share Prompt** on VLTD watches for two moments: when you mark an item sold and when a graded item enters your vault. When either happens, a prompt slides up and asks if you want to share.
+
+"Just sold for $340!" — one tap to generate the card, one more to post it.
+
+No hunting through your vault for the item. No remembering to come back later. The prompt meets you at the moment.
+
+Master toggle in settings if you want to turn it off. But most collectors won't.
+
+→ vltd.app
+
+#collector #sold #newgrade #hobbylife #VLTD
+
+---
+
+### X/Twitter Thread
+🧵 Auto-Share Prompt just shipped on VLTD.
+
+It's the feature that catches the moment before you move on 👇
+
+1/ VLTD now watches for two events: item marked as sold, and graded item added to vault. When either happens, a share prompt slides up from the bottom.
+
+2/ "Just Sold for $340!" — the prompt shows the item, the price, and one "Share Now" button. Tap it and Social Export opens pre-loaded with that item.
+
+3/ "Just Graded — PSA 9!" — same thing. The grade-reveal moment is shareable. VLTD makes it effortless.
+
+4/ Skip it and it disappears. Turn off Auto-Prompt entirely with the toggle in the banner. Your vault, your settings.
+
+5/ Auto-Share Prompt is live now. Mark something sold on vltd.app and see it in action.
+
+#collector #sold #PSA #gradedcards #VLTD
+
+---
+
+### Changelog Entry
+**Auto-Share Prompt** — Floating toast prompt triggered by `vltd:item-sold` and `vltd:item-graded` window events. Displays item title, event type (sold/graded), and a "Share Now" CTA that opens Social Export pre-loaded with the item. Includes an inline master toggle (persisted in localStorage). Dismissal is tracked to prevent repeated prompts for the same event. Available on the item detail page.
