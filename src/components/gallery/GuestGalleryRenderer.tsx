@@ -296,21 +296,19 @@ export default function GuestGalleryRenderer({
       .eq("profile_id", profileId)
       .maybeSingle()
       .then(({ data }) => {
-        if (data) {
-          const displayName = String(data.display_name || "Collector");
-          const storedAvatarUrl =
-            typeof data.avatar_url === "string" && isRenderableAvatarUrl(data.avatar_url)
-              ? data.avatar_url
-              : "";
-          const seedAvatarUrl = getSeedAvatarUrlForProfile({ profileId, displayName });
+        const displayName = String(data?.display_name || "Collector");
+        const storedAvatarUrl =
+          typeof data?.avatar_url === "string" && isRenderableAvatarUrl(data.avatar_url)
+            ? data.avatar_url
+            : "";
+        const seedAvatarUrl = getSeedAvatarUrlForProfile({ profileId, displayName });
 
-          setOwner({
-            displayName,
-            profileId,
-            avatarUrl: storedAvatarUrl || seedAvatarUrl,
-            avatar: String(data.avatar_emoji || "🗝️"),
-          });
-        }
+        setOwner({
+          displayName,
+          profileId,
+          avatarUrl: storedAvatarUrl || seedAvatarUrl,
+          avatar: String(data?.avatar_emoji || "🗝️"),
+        });
       });
   }, [model.gallery?.profile_id, embedded]);
 
