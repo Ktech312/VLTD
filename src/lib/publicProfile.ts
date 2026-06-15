@@ -166,28 +166,31 @@ export async function fetchPublicProfile(profileId: string): Promise<PublicProfi
   ]);
 
   if (error) throw new Error(error.message || "Failed to load public profile.");
-  if (!data) return null;
 
+  // Fall back to profiles table if no public_profiles row exists
+  if (!data && !profileRow) return null;
+
+  const displayName = String(data?.display_name || profileRow?.display_name || "Collector");
   const bio = typeof profileRow?.bio === "string" && profileRow.bio
     ? profileRow.bio
-    : (typeof data.bio === "string" && data.bio ? data.bio : undefined);
+    : (typeof data?.bio === "string" && data.bio ? data.bio : undefined);
 
   const profileAvatarUrl = typeof profileRow?.avatar_url === "string" && isRenderableAvatarUrl(profileRow.avatar_url)
     ? profileRow.avatar_url
     : "";
-  const publicAvatarUrl = typeof data.avatar_url === "string" && isRenderableAvatarUrl(data.avatar_url)
+  const publicAvatarUrl = typeof data?.avatar_url === "string" && isRenderableAvatarUrl(data.avatar_url)
     ? data.avatar_url
     : "";
   const seedAvatarUrl = getSeedAvatarUrlForProfile({
-    profileId: String(data.profile_id),
-    displayName: String(data.display_name || ""),
+    profileId: cleanProfileId,
+    displayName,
   });
   const avatarUrl = profileAvatarUrl || publicAvatarUrl || seedAvatarUrl;
 
   return {
-    profileId: String(data.profile_id),
-    displayName: String(data.display_name || "Collector"),
-    avatarEmoji: String(data.avatar_emoji || "🗝️"),
+    profileId: cleanProfileId,
+    displayName,
+    avatarEmoji: String(data?.avatar_emoji || "🗝️"),
     avatarUrl: avatarUrl || undefined,
     bannerUrl: typeof profileRow?.banner_url === "string" && profileRow.banner_url ? profileRow.banner_url : undefined,
     bio,

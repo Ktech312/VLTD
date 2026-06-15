@@ -8,8 +8,7 @@ import FavoriteButton from "@/components/FavoriteButton";
 import GalleryShelfScene from "@/components/gallery/GalleryShelfScene";
 import { PillButton } from "@/components/ui/PillButton";
 import { getGallerySections } from "@/lib/galleryModel";
-import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
+import { fetchPublicProfile } from "@/lib/publicProfile";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import type { GuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
 
@@ -288,28 +287,24 @@ export default function GuestGalleryRenderer({
   useEffect(() => {
     const profileId = model.gallery?.profile_id;
     if (!profileId || embedded) return;
-    const supabase = getSupabaseBrowserClient();
-    if (!supabase) return;
-    void supabase
-      .from("public_profiles")
-      .select("display_name, avatar_emoji, avatar_url")
-      .eq("profile_id", profileId)
-      .maybeSingle()
-      .then(({ data }) => {
-        const displayName = String(data?.display_name || "Collector");
-        const storedAvatarUrl =
-          typeof data?.avatar_url === "string" && isRenderableAvatarUrl(data.avatar_url)
-            ? data.avatar_url
-            : "";
-        const seedAvatarUrl = getSeedAvatarUrlForProfile({ profileId, displayName });
-
+    void fetchPublicProfile(profileId).then((profile) => {
+      if (profile) {
         setOwner({
-          displayName,
-          profileId,
-          avatarUrl: storedAvatarUrl || seedAvatarUrl,
-          avatar: String(data?.avatar_emoji || "🗝️"),
+          displayName: profile.displayName,
+          profileId: profile.profileId,
+          avatarUrl: profile.avatarUrl,
+          avatar: profile.avatarEmoji,
         });
-      });
+      } else {
+        // No public_profiles row yet — fall back to profiles table via seed avatar
+        setOwner({
+          displayName: "Collector",
+          profileId,
+          avatarUrl: undefined,
+          avatar: "🗝️",
+        });
+      }
+    });
   }, [model.gallery?.profile_id, embedded]);
 
   // ── Drag delegation handlers (defined here, outside JSX, to avoid TSX parser ambiguity) ──
