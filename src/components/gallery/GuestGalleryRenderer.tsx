@@ -9,6 +9,7 @@ import GalleryShelfScene from "@/components/gallery/GalleryShelfScene";
 import { PillButton } from "@/components/ui/PillButton";
 import { getGallerySections } from "@/lib/galleryModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import type { GuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
 
@@ -296,10 +297,17 @@ export default function GuestGalleryRenderer({
       .maybeSingle()
       .then(({ data }) => {
         if (data) {
+          const displayName = String(data.display_name || "Collector");
+          const storedAvatarUrl =
+            typeof data.avatar_url === "string" && isRenderableAvatarUrl(data.avatar_url)
+              ? data.avatar_url
+              : "";
+          const seedAvatarUrl = getSeedAvatarUrlForProfile({ profileId, displayName });
+
           setOwner({
-            displayName: String(data.display_name || "Collector"),
+            displayName,
             profileId,
-            avatarUrl: typeof data.avatar_url === "string" ? data.avatar_url : "",
+            avatarUrl: storedAvatarUrl || seedAvatarUrl,
             avatar: String(data.avatar_emoji || "🗝️"),
           });
         }
