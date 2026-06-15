@@ -1021,6 +1021,15 @@ export default function VaultUniversePage() {
           </div>
         </section>
 
+        {featuredItem ? (
+          <div className="mt-3">
+            <ItemIntelligencePanel
+              item={featuredItem}
+              intelligence={intelligenceMap[featuredItem.id] ?? null}
+            />
+          </div>
+        ) : null}
+
         <section className="mt-3 rounded-[18px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -1180,14 +1189,6 @@ export default function VaultUniversePage() {
           </section>
         )}
 
-        {featuredItem ? (
-          <div className="mt-4">
-            <ItemIntelligencePanel
-              item={featuredItem}
-              intelligence={intelligenceMap[featuredItem.id] ?? null}
-            />
-          </div>
-        ) : null}
       </div>
     </main>
   );
