@@ -75,7 +75,7 @@ function totalCost(item: VaultItem) {
 function itemGain(item: VaultItem) {
   return Number(item.currentValue ?? 0) - totalCost(item);
 }
-type VaultUniverseSlug = "pop-culture" | "sports" | "tcg" | "music" | "jewelry-apparel" | "games" | "misc";
+type VaultUniverseSlug = "pop-culture" | "sports" | "tcg" | "music" | "jewelry-apparel" | "games" | "built-botany" | "misc";
 
 type VaultUniverseEntry = {
   key: UniverseKey;
