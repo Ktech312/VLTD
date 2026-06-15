@@ -592,7 +592,7 @@ async function exportAnimatedVideo(item: VaultItem, bg: string): Promise<Blob> {
 
   recorder.start(100); // timeslice=100ms ensures periodic data chunks
 
-  const DURATION = 2400; // ms
+  const DURATION = 5000; // ms — cinematic reveal
 
   function easeOut(t: number) { return 1 - Math.pow(1 - t, 3); }
   function easeInOut(t: number) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
@@ -616,10 +616,10 @@ async function exportAnimatedVideo(item: VaultItem, bg: string): Promise<Blob> {
     c.fillStyle = bg2;
     c.fillRect(0, 0, S, S);
 
-    // Phase 0-0.35: image slides in from bottom + fades
-    if (t > 0.05 && itemImg) {
-      const imgAlpha = Math.min(1, easeOut(Math.max(0, (t - 0.05) / 0.30)));
-      const slideT = easeOut(Math.min(1, Math.max(0, (t - 0.05) / 0.35)));
+    // Phase 0-0.42: image drifts up from bottom + slow fade in
+    if (t > 0.02 && itemImg) {
+      const imgAlpha = Math.min(1, easeOut(Math.max(0, (t - 0.02) / 0.38)));
+      const slideT = easeOut(Math.min(1, Math.max(0, (t - 0.02) / 0.40)));
       const pad = 80;
       const imgH = Math.round(S * 0.60);
       const scale = Math.min((S - pad * 2) / itemImg.width, imgH / itemImg.height);
@@ -627,7 +627,7 @@ async function exportAnimatedVideo(item: VaultItem, bg: string): Promise<Blob> {
       const sh = itemImg.height * scale;
       const sx = (S - sw) / 2;
       const baseY = pad + (imgH - sh) / 2;
-      const sy = baseY + (1 - slideT) * 60;
+      const sy = baseY + (1 - slideT) * 80;
 
       c.save();
       c.globalAlpha = imgAlpha;
@@ -638,9 +638,9 @@ async function exportAnimatedVideo(item: VaultItem, bg: string): Promise<Blob> {
       c.restore();
     }
 
-    // Phase 0.35-0.55: gold line sweeps in
-    if (t > 0.35) {
-      const lineT = easeOut(Math.min(1, (t - 0.35) / 0.20));
+    // Phase 0.42-0.68: gold line sweeps in from left
+    if (t > 0.42) {
+      const lineT = easeOut(Math.min(1, (t - 0.42) / 0.26));
       const lineY = Math.round(S * 0.74);
       const lineStart = 80;
       const lineEnd = 80 + (S - 160) * lineT;
@@ -660,9 +660,9 @@ async function exportAnimatedVideo(item: VaultItem, bg: string): Promise<Blob> {
       c.restore();
     }
 
-    // Phase 0.50-0.75: title fades up
-    if (t > 0.50) {
-      const textT = easeOut(Math.min(1, (t - 0.50) / 0.25));
+    // Phase 0.58-0.82: title fades up
+    if (t > 0.58) {
+      const textT = easeOut(Math.min(1, (t - 0.58) / 0.24));
       const lineY = Math.round(S * 0.74);
       c.save();
       c.globalAlpha = textT;
@@ -672,7 +672,7 @@ async function exportAnimatedVideo(item: VaultItem, bg: string): Promise<Blob> {
       c.font = `700 46px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
       const words = item.title.split(" ");
       let tl = "";
-      let ty = lineY + 28 - (1 - textT) * 20;
+      let ty = lineY + 28 - (1 - textT) * 24;
       for (const w of words) {
         const test = tl ? `${tl} ${w}` : w;
         if (c.measureText(test).width > S * 0.80 && tl) {
@@ -693,9 +693,9 @@ async function exportAnimatedVideo(item: VaultItem, bg: string): Promise<Blob> {
       c.restore();
     }
 
-    // Phase 0.70-0.90: value fades in with scale
-    if (t > 0.70 && value && value > 0) {
-      const valT = easeInOut(Math.min(1, (t - 0.70) / 0.20));
+    // Phase 0.76-0.92: value fades in with scale
+    if (t > 0.76 && value && value > 0) {
+      const valT = easeInOut(Math.min(1, (t - 0.76) / 0.16));
       const lineY = Math.round(S * 0.74);
       c.save();
       c.globalAlpha = valT;
@@ -707,9 +707,9 @@ async function exportAnimatedVideo(item: VaultItem, bg: string): Promise<Blob> {
       c.restore();
     }
 
-    // Phase 0.85+: watermark
-    if (t > 0.85) {
-      const wmT = Math.min(1, (t - 0.85) / 0.15);
+    // Phase 0.88+: watermark
+    if (t > 0.88) {
+      const wmT = Math.min(1, (t - 0.88) / 0.12);
       c.save();
       c.globalAlpha = wmT * 0.55;
       c.font = `700 24px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
@@ -1120,14 +1120,17 @@ function VideoTab({ item }: { item: VaultItem }) {
   const [recording, setRecording] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
+  const [ended, setEnded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const supported = typeof MediaRecorder !== "undefined";
+  const canShare = typeof navigator !== "undefined" && "share" in navigator;
 
   async function handleRecord() {
     setRecording(true);
     setVideoUrl(null);
     setVideoBlob(null);
+    setEnded(false);
     try {
       const blob = await exportAnimatedVideo(item, bg);
       const url = URL.createObjectURL(blob);
@@ -1145,6 +1148,26 @@ function VideoTab({ item }: { item: VaultItem }) {
     setTimeout(() => URL.revokeObjectURL(url), 5000);
   }
 
+  async function handleShare() {
+    if (!videoBlob) return;
+    const slug = item.title.replace(/[^a-z0-9]/gi, "-").toLowerCase().slice(0, 36);
+    const file = new File([videoBlob], `vltd-${slug}.webm`, { type: videoBlob.type });
+    try {
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: item.title });
+      } else {
+        handleDownload();
+      }
+    } catch (e) {
+      if ((e as Error).name !== "AbortError") handleDownload();
+    }
+  }
+
+  function handleReplay() {
+    setEnded(false);
+    videoRef.current?.play();
+  }
+
   if (!supported) {
     return (
       <div className="rounded-2xl p-5 text-center text-sm ring-1 ring-[color:var(--border)]"
@@ -1158,20 +1181,42 @@ function VideoTab({ item }: { item: VaultItem }) {
     <div className="flex flex-col gap-5">
       <div className="rounded-2xl p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
         <div className="text-xs font-semibold" style={{ color: "var(--muted)" }}>
-          Creates a 2.4 second animated reveal — image fades in, gold line sweeps, title and value appear. Downloads as .webm.
+          Creates a 5 second animated reveal — image fades in, gold line sweeps, title and value appear. Share directly or save to your device.
         </div>
       </div>
 
       {/* Background */}
       <div>
         <div className="mb-2 text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>Background</div>
-        <BgPicker value={bg} onChange={(v) => { setBg(v); setVideoUrl(null); }} />
+        <BgPicker value={bg} onChange={(v) => { setBg(v); setVideoUrl(null); setEnded(false); }} />
       </div>
 
-      {/* Video preview */}
+      {/* Video preview — plays once, replay button appears when done */}
       {videoUrl && (
-        <div className="rounded-2xl overflow-hidden ring-1 ring-[color:var(--border)]" style={{ aspectRatio: "1" }}>
-          <video ref={videoRef} src={videoUrl} autoPlay loop muted playsInline className="h-full w-full object-cover" />
+        <div className="relative rounded-2xl overflow-hidden ring-1 ring-[color:var(--border)]" style={{ aspectRatio: "1" }}>
+          <video
+            ref={videoRef}
+            src={videoUrl}
+            autoPlay
+            muted
+            playsInline
+            className="h-full w-full object-cover"
+            onEnded={() => setEnded(true)}
+            onPlay={() => setEnded(false)}
+          />
+          {ended && (
+            <button
+              type="button"
+              onClick={handleReplay}
+              className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full shadow-lg transition active:scale-95"
+              style={{ background: "rgba(0,0,0,0.72)", border: "1px solid rgba(245,181,72,0.4)" }}
+              aria-label="Replay video"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <polygon points="6,4 20,12 6,20" fill="#F5B548" />
+              </svg>
+            </button>
+          )}
         </div>
       )}
 
@@ -1180,26 +1225,35 @@ function VideoTab({ item }: { item: VaultItem }) {
           <button type="button" onClick={() => void handleRecord()} disabled={recording}
             className="flex-1 rounded-2xl py-3 text-sm font-bold transition"
             style={{ background: "var(--theme-gold)", color: "#0B0B0B", opacity: recording ? 0.6 : 1 }}>
-            {recording ? "Recording… (~3 sec)" : "Generate Video"}
+            {recording ? "Generating… (~5 sec)" : "Generate Video"}
           </button>
         ) : (
           <>
-            <button type="button" onClick={() => { setVideoUrl(null); setVideoBlob(null); }}
+            <button type="button" onClick={() => { setVideoUrl(null); setVideoBlob(null); setEnded(false); }}
               className="rounded-2xl px-4 py-3 text-sm font-semibold ring-1 ring-[color:var(--border)]"
               style={{ background: "var(--pill)", color: "var(--fg)" }}>
-              Regenerate
+              Redo
             </button>
+            {canShare ? (
+              <button type="button" onClick={() => void handleShare()}
+                className="flex-1 rounded-2xl py-3 text-sm font-bold"
+                style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}>
+                Share
+              </button>
+            ) : (
+              <button type="button" onClick={handleDownload}
+                className="flex-1 rounded-2xl py-3 text-sm font-bold"
+                style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}>
+                Save .webm
+              </button>
+            )}
             <button type="button" onClick={handleDownload}
-              className="flex-1 rounded-2xl py-3 text-sm font-bold"
-              style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}>
-              Download .webm
+              className="rounded-2xl px-4 py-3 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+              style={{ background: "var(--pill)", color: "var(--fg)" }}>
+              Save
             </button>
           </>
         )}
-      </div>
-
-      <div className="text-[10px] text-center" style={{ color: "var(--muted)" }}>
-        .webm works on Instagram, TikTok, X, and most social platforms. Convert to .mp4 with any free tool if needed.
       </div>
     </div>
   );
