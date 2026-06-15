@@ -703,6 +703,19 @@ export default function VaultMuseumView({
 
   return (
     <div className="space-y-8">
+      {orderedUniverses.map((u) => {
+        const sectionItems = universeGroups[u] ?? [];
+        return (
+          <UniverseSection
+            key={u}
+            universeKey={u}
+            items={sectionItems}
+            onViewAll={onFilterToUniverse}
+            onFeaturedChange={setFeaturedOverride}
+          />
+        );
+      })}
+
       {spotlight && (
         <div>
           <div className="mb-3 flex items-center gap-2 px-0.5">
@@ -729,19 +742,6 @@ export default function VaultMuseumView({
           <SpotlightCard key={spotlight.id} item={spotlight} />
         </div>
       )}
-
-      {orderedUniverses.map((u) => {
-        const sectionItems = universeGroups[u] ?? [];
-        return (
-          <UniverseSection
-            key={u}
-            universeKey={u}
-            items={sectionItems}
-            onViewAll={onFilterToUniverse}
-            onFeaturedChange={setFeaturedOverride}
-          />
-        );
-      })}
     </div>
   );
 }
