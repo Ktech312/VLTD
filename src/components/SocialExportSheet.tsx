@@ -1262,7 +1262,7 @@ function CarouselTab({ currentItem }: { currentItem: VaultItem }) {
             return (
               <button key={i.id} type="button" onClick={() => toggleItem(i.id)}
                 className="relative rounded-xl overflow-hidden ring-2 transition aspect-square"
-                style={{ ringColor: isSel ? "#F5B548" : "transparent", border: isSel ? "2px solid #F5B548" : "2px solid transparent" }}>
+                style={{ border: isSel ? "2px solid #F5B548" : "2px solid transparent" }}>
                 {imgUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={imgUrl} alt={i.title} className="h-full w-full object-cover" />
