@@ -640,9 +640,7 @@ function UniverseOverviewCard({
   category: (typeof VAULT_UNIVERSES)[number];
   items: VaultItem[];
 }) {
-  const coverItem = items[0];
-  const coverImage = useResolvedVaultImage(coverItem ?? null);
-  const thumbnailImage = coverImage || category.thumbnailSrc;
+  const thumbnailImage = category.thumbnailSrc;
   const totalValue = items.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
   const totalCostValue = items.reduce((sum, item) => sum + totalCost(item), 0);
   const totalGain = totalValue - totalCostValue;
