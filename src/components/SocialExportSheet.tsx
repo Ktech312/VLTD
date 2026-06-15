@@ -589,20 +589,19 @@ async function exportAnimatedVideo(item: VaultItem, bg: string): Promise<Blob> {
   const chunks: BlobPart[] = [];
   recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
 
-  await new Promise<void>((resolve) => {
-    recorder.onstart = () => resolve();
-    recorder.start();
-  });
+  recorder.start(100); // timeslice=100ms ensures periodic data chunks
 
   const DURATION = 2400; // ms
-  const FPS = 30;
-  const FRAMES = Math.round((DURATION / 1000) * FPS);
 
   function easeOut(t: number) { return 1 - Math.pow(1 - t, 3); }
   function easeInOut(t: number) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
 
-  for (let f = 0; f < FRAMES; f++) {
-    const t = f / FRAMES; // 0..1
+  // rAF-based loop — timestamp-driven so Chrome can't throttle it
+  await new Promise<void>((resolve) => {
+    const startTime = performance.now();
+    function frame() {
+      const elapsed = performance.now() - startTime;
+      const t = Math.min(elapsed / DURATION, 1);
     ctx.clearRect(0, 0, S, S);
 
     // Background
@@ -720,13 +719,19 @@ async function exportAnimatedVideo(item: VaultItem, bg: string): Promise<Blob> {
       ctx.restore();
     }
 
-    // Frame delay
-    await new Promise<void>((res) => setTimeout(res, 1000 / FPS));
-  }
+      if (t < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        resolve();
+      }
+    }
+    requestAnimationFrame(frame);
+  });
 
-  // Stop recording
+  // Stop recording with hard timeout fallback
   await new Promise<void>((resolve) => {
-    recorder.onstop = () => resolve();
+    const timeout = setTimeout(resolve, 2000);
+    recorder.onstop = () => { clearTimeout(timeout); resolve(); };
     recorder.stop();
   });
 
