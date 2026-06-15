@@ -160,7 +160,7 @@ export async function fetchPublicProfile(profileId: string): Promise<PublicProfi
       .maybeSingle(),
     supabase
       .from("profiles")
-      .select("social_links, bio, avatar_url, banner_url")
+      .select("social_links, bio, avatar_url, banner_url, display_name")
       .eq("id", cleanProfileId)
       .maybeSingle(),
   ]);
