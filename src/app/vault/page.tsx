@@ -82,6 +82,7 @@ type VaultUniverseEntry = {
   slug: VaultUniverseSlug;
   description: string;
   href: string;
+  thumbnailSrc: string;
 };
 
 const VAULT_UNIVERSES: VaultUniverseEntry[] = [
@@ -90,48 +91,56 @@ const VAULT_UNIVERSES: VaultUniverseEntry[] = [
     slug: "pop-culture",
     description: "Comics, toys, art cards, character collectibles, slabs, variants, and pop-culture pieces.",
     href: "/vault/pop-culture",
+    thumbnailSrc: "/universe-thumbnails/pop-culture.png",
   },
   {
     key: "SPORTS",
     slug: "sports",
     description: "Sports cards, jerseys, autos, game-used items, memorabilia, and athlete collectibles.",
     href: "/vault/sports",
+    thumbnailSrc: "/universe-thumbnails/sports.png",
   },
   {
     key: "TCG",
     slug: "tcg",
     description: "Pokemon, MTG, Bo Jackson Arena, sealed products, slabs, singles, foils, and promos.",
     href: "/vault/tcg",
+    thumbnailSrc: "/universe-thumbnails/tcg.png",
   },
   {
     key: "MUSIC",
     slug: "music",
     description: "Vinyl records, CDs, instruments, signed albums, box sets, and music collectibles.",
     href: "/vault/music",
+    thumbnailSrc: "/universe-thumbnails/music.png",
   },
   {
     key: "JEWELRY_APPAREL",
     slug: "jewelry-apparel",
     description: "Watches, bags, apparel, streetwear, vintage pieces, luxury items, and limited drops.",
     href: "/vault/jewelry-apparel",
+    thumbnailSrc: "/universe-thumbnails/jewelry-apparel.png",
   },
   {
     key: "GAMES",
     slug: "games",
     description: "Video games, consoles, cartridges, controllers, sealed games, and arcade/handheld pieces.",
     href: "/vault/games",
+    thumbnailSrc: "/universe-thumbnails/games.png",
   },
   {
     key: "BUILT_BOTANY",
     slug: "built-botany",
     description: "Handmade items, crafts, plants, terrariums, garden tools, and living collectibles.",
     href: "/vault/built-botany",
+    thumbnailSrc: "/universe-thumbnails/built-botany.png",
   },
   {
     key: "MISC",
     slug: "misc",
     description: "Everything that cannot be confidently assigned to another Universe yet.",
     href: "/vault/misc",
+    thumbnailSrc: "/universe-thumbnails/misc.png",
   },
 ];
 
@@ -671,6 +680,7 @@ function UniverseOverviewCard({
 }) {
   const coverItem = items[0];
   const coverImage = useResolvedVaultImage(coverItem ?? null);
+  const thumbnailImage = coverImage || category.thumbnailSrc;
   const totalValue = items.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
   const totalCostValue = items.reduce((sum, item) => sum + totalCost(item), 0);
   const totalGain = totalValue - totalCostValue;
@@ -693,9 +703,9 @@ function UniverseOverviewCard({
           className="overflow-hidden rounded-[12px]"
           style={{ height: 88, background: "var(--theme-elevated, rgba(20,32,55,0.9))", border: "1px solid var(--theme-border, rgba(245,181,72,0.08))" }}
         >
-          {coverImage ? (
+          {thumbnailImage ? (
             <ProgressiveImage
-              src={coverImage}
+              src={thumbnailImage}
               alt={`${universeDisplayName(category.key)} cover`}
               className="h-full w-full"
               imageClassName="object-cover transition duration-300 group-hover:scale-105"
