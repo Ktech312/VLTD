@@ -64,6 +64,13 @@ function rowToVaultItem(row: Record<string, unknown>): VaultItem {
   };
 }
 
+const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
+
+function getLocalProfileId(): string {
+  if (typeof window === "undefined") return "";
+  return window.localStorage.getItem(ACTIVE_PROFILE_KEY) ?? "";
+}
+
 export default function GuestGalleryPage() {
   const params = useParams<{ galleryId: string }>();
   const galleryId = String(params?.galleryId ?? "");
@@ -71,6 +78,7 @@ export default function GuestGalleryPage() {
   const [gallery, setGallery] = useState<Gallery | null>(null);
   const [items, setItems] = useState<VaultItem[]>([]);
   const [isResolved, setIsResolved] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
 
   useEffect(() => {
     if (!galleryId) return;
@@ -78,10 +86,8 @@ export default function GuestGalleryPage() {
     let cancelled = false;
 
     async function resolveGuestPage() {
-      // 1. Try local storage first (own galleries load instantly)
       let found = getGalleryById(galleryId);
 
-      // 2. If not found locally, fetch directly from Supabase (seed/other user galleries)
       if (!found) {
         const supabase = getSupabaseBrowserClient();
         if (supabase) {
@@ -102,10 +108,16 @@ export default function GuestGalleryPage() {
       if (cancelled) return;
       setGallery(found);
 
+      if (found?.profile_id) {
+        const localProfileId = getLocalProfileId();
+        if (localProfileId && localProfileId === found.profile_id) {
+          setIsOwner(true);
+        }
+      }
+
       if (found) {
         recordGalleryView(found.id);
 
-        // 3. If this gallery belongs to another profile, fetch their public vault items
         if (found.profile_id) {
           const supabase = getSupabaseBrowserClient();
           if (supabase) {
@@ -125,7 +137,6 @@ export default function GuestGalleryPage() {
         }
       }
 
-      // 4. Fall back to own vault items
       await syncVaultItemsFromSupabase();
       if (cancelled) return;
       setItems(loadItems());
@@ -174,9 +185,10 @@ export default function GuestGalleryPage() {
       resolveGuestGalleryViewModel(gallery, resolvedItems, {
         navigation: {
           show: !!gallery,
-          primaryLabel: "Exhibit as Guest",
-          backHref: gallery ? `/museum/${gallery.id}/guest` : null,
+          primaryLabel: "Guest View",
+          backHref: null,
           homeHref: "/discover",
+          homeLabel: "Back to Discover",
         },
         access: {
           modeLabel: "Guest Preview",
@@ -193,10 +205,10 @@ export default function GuestGalleryPage() {
       <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(30,36,46,0.96),rgba(8,10,14,1)_62%)] text-text-primary">
         <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
           <div className="rounded-[28px] border border-white/10 bg-black/25 p-8 text-center ring-1 ring-white/10 backdrop-blur-sm">
-            <div className="text-[11px] tracking-[0.22em] text-white/55">MUSEUM</div>
-            <h1 className="mt-3 text-2xl font-semibold">Exhibit not found</h1>
+            <div className="text-[11px] tracking-[0.22em] text-white/55">GALLERY</div>
+            <h1 className="mt-3 text-2xl font-semibold">Gallery not found</h1>
             <p className="mt-3 text-sm text-white/70">
-              This exhibit could not be loaded from local storage.
+              This gallery could not be loaded.
             </p>
             <div className="mt-6">
               <Link
@@ -220,7 +232,16 @@ export default function GuestGalleryPage() {
 
   return (
     <>
-      <div className="fixed right-4 top-4 z-40">
+      <div className="fixed right-4 top-4 z-40 flex items-center gap-2">
+        {isOwner ? (
+          <Link
+            href={`/museum/${gallery.id}`}
+            className="inline-flex min-h-[34px] items-center justify-center rounded-full bg-black/45 px-3 py-1 text-xs font-semibold ring-1 backdrop-blur transition hover:bg-black/65"
+            style={{ color: "var(--theme-gold, #F5B548)", borderColor: "rgba(245,181,72,0.35)" }}
+          >
+            Edit Gallery
+          </Link>
+        ) : null}
         <ReportContentButton contentType="gallery" contentId={gallery.id} />
       </div>
       <GuestGalleryRenderer model={model} />

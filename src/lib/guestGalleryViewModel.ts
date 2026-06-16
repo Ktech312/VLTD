@@ -26,7 +26,9 @@ export type GuestGalleryNavigation = {
   show: boolean;
   primaryLabel?: string;
   backHref?: string | null;
+  backLabel?: string;
   homeHref?: string | null;
+  homeLabel?: string;
 };
 
 export type GuestGalleryAccess = {

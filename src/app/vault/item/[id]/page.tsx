@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { use, useEffect, useMemo, useState } from "react";
 
 import CostToSellPanel from "@/components/CostToSellPanel";
@@ -33,6 +34,7 @@ import {
   deleteImageAtIndex,
   getOrderedImageUrls,
   getOrderedImages,
+  deleteVaultItem,
   loadItems,
   markItemViewed,
   reorderImages,
@@ -205,6 +207,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   const [auctionOpen, setAuctionOpen] = useState(false);
   const { trigger: shareTrigger, dismiss: dismissShareTrigger } = useAutoShareTrigger();
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const router = useRouter();
   const [registryEntry, setRegistryEntry] = useState<import("@/lib/registryModel").RegistrySubject | null>(null);
 
   // Fetch current user email for feature gating
@@ -708,7 +712,23 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-5 sm:py-6">
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_360px]">
           <div>
-            <div className="rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+            <div className="relative rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+              {/* Delete button — top-right */}
+              <button
+                type="button"
+                onClick={() => setDeleteConfirm(true)}
+                className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full ring-1 transition-colors"
+                style={{ background: "rgba(248,113,113,0.08)", borderColor: "rgba(248,113,113,0.22)", color: "rgba(248,113,113,0.75)" }}
+                aria-label="Delete item"
+                title="Delete item"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  <path d="M10 11v6M14 11v6" />
+                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                </svg>
+              </button>
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ITEM</div>
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">{item.title}</h1>
@@ -1237,6 +1257,47 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
           onShare={() => setSocialExportOpen(true)}
           onDismiss={() => dismissShareTrigger()}
         />
+      )}
+
+      {deleteConfirm && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center px-4"
+          onClick={() => setDeleteConfirm(false)}
+        >
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div
+            className="relative z-10 w-full max-w-sm rounded-[24px] p-6 ring-1"
+            style={{ background: "var(--surface)", borderColor: "var(--border)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">DELETE ITEM</div>
+            <h2 className="mt-3 text-xl font-semibold">{item.title}</h2>
+            <p className="mt-2 text-sm text-[color:var(--muted)]">
+              This will permanently remove the item from your vault. This cannot be undone.
+            </p>
+            <div className="mt-5 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirm(false)}
+                className="flex-1 rounded-full py-2.5 text-sm font-semibold ring-1 transition"
+                style={{ background: "var(--pill)", borderColor: "var(--border)", color: "var(--fg)" }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  deleteVaultItem(item.id);
+                  router.replace("/vault");
+                }}
+                className="flex-1 rounded-full py-2.5 text-sm font-semibold transition"
+                style={{ background: "rgba(248,113,113,0.15)", color: "rgb(248,113,113)", border: "1px solid rgba(248,113,113,0.35)" }}
+              >
+                Delete Forever
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

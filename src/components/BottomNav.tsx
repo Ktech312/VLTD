@@ -5,19 +5,19 @@ import { usePathname } from "next/navigation";
 
 /* ── Icons ─────────────────────────────────────────────── */
 
-function IconHome({ active }: { active: boolean }) {
+function IconVault({ active }: { active: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
       style={{ color: active ? "#F5B548" : "#A0956B" }}>
-      <path
-        d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9.5Z"
-        stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
-        fill={active ? "rgba(245,181,72,0.14)" : "none"}
-      />
-      <path
-        d="M9 21V13h6v8"
-        stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
-      />
+      <rect x="3" y="3" width="18" height="18" rx="3"
+        stroke="currentColor" strokeWidth="1.75"
+        fill={active ? "rgba(245,181,72,0.10)" : "none"} />
+      <circle cx="12" cy="12" r="3.5"
+        stroke="currentColor" strokeWidth="1.75" />
+      <path d="M12 8.5V6M12 18v-2.5M8.5 12H6M18 12h-2.5"
+        stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="12" cy="12" r="1"
+        fill="currentColor" />
     </svg>
   );
 }
@@ -80,19 +80,29 @@ type Tab = {
 };
 
 const TABS: (Tab | null)[] = [
-  { label: "Home",     href: "/",         icon: IconHome,        exact: true  },
-  { label: "Vault",    href: "/vault",    icon: IconDiscover,    exact: false },
+  { label: "Exhibits",  href: "/museum",   icon: IconExhibitions, exact: false },
+  { label: "Vault",     href: "/vault",    icon: IconVault,       exact: false },
   null, // gold + button (capture)
-  { label: "Discover", href: "/discover", icon: IconExhibitions, exact: false },
-  { label: "Activity", href: "/portfolio", icon: IconActivity,   exact: false },
+  { label: "Discover",  href: "/discover", icon: IconDiscover,    exact: false },
+  { label: "Activity",  href: "/portfolio", icon: IconActivity,   exact: false },
 ];
+
+// Guest gallery routes (/museum/[id]/guest) should highlight Discover, not Exhibits
+function isGuestGalleryRoute(pathname: string) {
+  const parts = pathname.split("/");
+  return parts.length >= 4 && parts[1] === "museum" && parts[3] === "guest";
+}
 
 /* ── Component ──────────────────────────────────────────── */
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const guestRoute = isGuestGalleryRoute(pathname ?? "");
 
   function active(tab: Tab) {
+    if (guestRoute) {
+      return tab.href === "/discover";
+    }
     return tab.exact ? pathname === tab.href : pathname.startsWith(tab.href);
   }
 
@@ -110,7 +120,7 @@ export default function BottomNav() {
       <div
         className="backdrop-blur-2xl"
         style={{
-          background: "rgba(11,11,11,0.96)",
+          background: "rgba(10,10,10,1)",
           paddingBottom: "max(env(safe-area-inset-bottom, 0px), 8px)",
         }}
       >
@@ -132,12 +142,12 @@ export default function BottomNav() {
                     style={{
                       background: "linear-gradient(145deg, #FFE08A 0%, #F5B548 30%, #C8941F 60%, #8B6914 100%)",
                       boxShadow: [
-                        "0 0 0 3px #0B0B0B",           /* gap between ring and bg */
-                        "0 0 0 4px rgba(245,181,72,0.35)", /* subtle outer ring */
-                        "0 8px 28px rgba(245,181,72,0.55)", /* warm bloom */
-                        "0 2px 8px rgba(0,0,0,0.60)",       /* depth shadow */
-                        "inset 0 1px 0 rgba(255,255,255,0.40)", /* top highlight */
-                        "inset 0 -2px 4px rgba(0,0,0,0.30)",   /* bottom depth */
+                        "0 0 0 3px #0B0B0B",
+                        "0 0 0 4px rgba(245,181,72,0.35)",
+                        "0 8px 28px rgba(245,181,72,0.55)",
+                        "0 2px 8px rgba(0,0,0,0.60)",
+                        "inset 0 1px 0 rgba(255,255,255,0.40)",
+                        "inset 0 -2px 4px rgba(0,0,0,0.30)",
                       ].join(", "),
                     }}
                   >
@@ -166,12 +176,11 @@ export default function BottomNav() {
               >
                 <Icon active={isActive} />
                 <span
-                  className="text-[10px] font-semibold tracking-[0.04em] transition-colors"
-                  style={{ color: isActive ? "#F5B548" : "#A0956B" }}
+                  className="text-[11px] font-semibold tracking-[0.04em] transition-colors"
+                  style={{ color: isActive ? "#F5B548" : "#C4B07A" }}
                 >
                   {tab.label}
                 </span>
-                {/* Active dot indicator */}
                 {isActive && (
                   <div
                     className="h-[3px] w-[3px] rounded-full"

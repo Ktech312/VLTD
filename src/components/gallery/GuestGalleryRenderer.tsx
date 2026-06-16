@@ -380,7 +380,7 @@ export default function GuestGalleryRenderer({
                   href={model.navigation.backHref}
                   className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
                 >
-                  Back to Exhibit
+                  {model.navigation.backLabel ?? "Back"}
                 </Link>
               ) : null}
 
@@ -389,7 +389,7 @@ export default function GuestGalleryRenderer({
                   href={model.navigation.homeHref}
                   className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
                 >
-                  Exhibitions
+                  {model.navigation.homeLabel ?? "Galleries"}
                 </Link>
               ) : null}
             </div>

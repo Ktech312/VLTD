@@ -31,7 +31,11 @@ export default function ProtectedRoute({
 
     const isPublicRoute =
       pathname?.startsWith("/museum/share") ||
-      pathname?.startsWith("/museum/guest");
+      // Guest gallery: /museum/[galleryId]/guest (NOT /museum/guest)
+      (() => {
+        const parts = (pathname ?? "").split("/");
+        return parts.length >= 4 && parts[1] === "museum" && parts[3] === "guest";
+      })();
 
     if (isPublicRoute) {
       setAllowed(true);
