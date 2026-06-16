@@ -6,9 +6,9 @@ import { useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
 
-type GalleryCategory = "All" | "TCG" | "Sports" | "Music" | "Jewelry" | "Games" | "Pop Culture" | "Misc";
+type GalleryCategory = "All" | "TCG" | "Sports" | "Music" | "Jewelry" | "Games" | "Pop Culture" | "Built & Botany" | "Misc";
 
-const TABS: GalleryCategory[] = ["All", "Pop Culture", "Sports", "TCG", "Music", "Jewelry", "Games", "Misc"];
+const TABS: GalleryCategory[] = ["All", "Pop Culture", "Sports", "TCG", "Music", "Jewelry", "Games", "Built & Botany", "Misc"];
 
 type PublicGallery = {
   id: string;
@@ -37,6 +37,7 @@ function inferGalleryCategory(gallery: PublicGallery): GalleryCategory {
   if (/watch|jewelry|apparel|streetwear|luxury|handbag|limited drop|jewel|necklace|diamond|antoinette/.test(text)) return "Jewelry";
   if (/game|console|nintendo|playstation|xbox|sega|atari|cartridge|arcade|controller/.test(text)) return "Games";
   if (/comic|marvel| dc |figure|toy|manga|funko|prop|statue|pop culture/.test(text)) return "Pop Culture";
+  if (/handmade|ceramic|woodwork|metalwork|textile|resin|leatherwork|origami|succulent|tropical|cacti|cactus|bonsai|terrarium|plant|botany|garden|seedling|houseplant/.test(text)) return "Built & Botany";
   return "Misc";
 }
 
@@ -62,7 +63,7 @@ function rowToGallery(row: Record<string, unknown>): PublicGallery {
 
 const CATEGORY_ICONS: Record<string, string> = {
   TCG: "🃏", Sports: "🏆", Music: "🎵", Jewelry: "💎",
-  Games: "🎮", "Pop Culture": "🌟", Misc: "📦",
+  Games: "🎮", "Pop Culture": "🌟", "Built & Botany": "🌿", Misc: "📦",
 };
 
 type CategoryPulse = {
