@@ -588,6 +588,46 @@ function RecentSidebarItems({ items }: { items: VaultItem[] }) {
 }
 
 // ── Main HomeClient ───────────────────────────────────────────────
+
+// ─── Profile completion nudge ────────────────────────────────────────────────
+
+
+function ProfileNudge({ primaryFocus }: { primaryFocus: string }) {
+  const [dismissed, setDismissed] = useState(() => {
+    try { return localStorage.getItem("vltd_profile_nudge_dismissed") === "1"; } catch { return false; }
+  });
+
+  // Show nudge only when collection focus hasn't been set
+  if (primaryFocus || dismissed) return null;
+
+  function dismiss() {
+    try { localStorage.setItem("vltd_profile_nudge_dismissed", "1"); } catch { /* noop */ }
+    setDismissed(true);
+  }
+
+  return (
+    <div className="mb-3 flex items-center gap-3 rounded-[10px] px-4 py-3" style={{
+      background: "rgba(245,181,72,0.08)",
+      border: "1px solid rgba(245,181,72,0.22)",
+    }}>
+      <span className="text-lg shrink-0">✨</span>
+      <div className="flex-1 min-w-0">
+        <div style={{ fontSize: "12px", fontWeight: 700, color: "#F5B548" }}>Complete your profile</div>
+        <div style={{ fontSize: "11px", color: "#A0956B", marginTop: "1px" }}>
+          Add your collection focus to personalise your Discover feed.
+        </div>
+      </div>
+      <a href="/account#profile-setup" style={{
+        flexShrink: 0, fontSize: "11px", fontWeight: 700, color: "#0B0B0B", textDecoration: "none",
+        background: "linear-gradient(135deg, #8B6914, #F5B548)", borderRadius: "20px", padding: "5px 12px",
+      }}>Set up</a>
+      <button type="button" onClick={dismiss}
+        style={{ flexShrink: 0, fontSize: "14px", color: "#635F59", background: "none", border: "none", cursor: "pointer", lineHeight: 1 }}
+        aria-label="Dismiss">✕</button>
+    </div>
+  );
+}
+
 export default function HomeClient() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -754,18 +794,22 @@ export default function HomeClient() {
             <SocialLinksCard profileId={profileId} bio={bio} socialLinks={socialLinks} displayName={displayName} editable={true} />
           )}
 
+          {/* Profile completion nudge — shown only when focus/bio not set */}
+          <ProfileNudge primaryFocus={primaryFocus} />
+
           {/* Quick Actions + Movers */}
           <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2">
             <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
               <CardHd label="Quick Actions" />
               <div className="grid grid-cols-2 gap-[7px] sm:grid-cols-3" style={{ padding: "12px 15px" }}>
                 {([
-                  { label: "Smart Scan", href: "/capture",     accent: true,  tip: "AI-powered item identification." },
-                  { label: "Quick Add",  href: "/vault/quick", accent: false, tip: "Fast manual form — minimal fields." },
-                  { label: "Add Item",   href: "/vault/add",   accent: false, tip: "Full detail entry with all fields." },
-                  { label: "Vault",      href: "/vault",       accent: false, tip: "" },
-                  { label: "Galleries",  href: "/museum",      accent: false, tip: "" },
-                  { label: "Account",    href: "/account",     accent: false, tip: "" },
+                  { label: "Smart Scan", href: "/capture",           accent: true,  tip: "AI-powered item identification." },
+                  { label: "Quick Add",  href: "/vault/quick",       accent: false, tip: "Fast manual form — minimal fields." },
+                  { label: "Add Item",   href: "/vault/add",         accent: false, tip: "Full detail entry with all fields." },
+                  { label: "Vault",      href: "/vault",             accent: false, tip: "" },
+                  { label: "Galleries",  href: "/museum",            accent: false, tip: "" },
+                  { label: "Saved",      href: "/account#watchlist", accent: false, tip: "Items saved from The Flip." },
+                  { label: "Account",    href: "/account",           accent: false, tip: "" },
                 ] as { label: string; href: string; accent: boolean; tip: string }[]).map(({ label, href, accent, tip }) => (
                   <div key={href + label} className="relative">
                     {tip && <div className="absolute -right-1 -top-1 z-10"><InfoTooltip text={tip} /></div>}

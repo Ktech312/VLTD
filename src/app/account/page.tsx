@@ -1,4 +1,5 @@
 "use client";
+// NOTE: primaryFocus uses taxonomy universe keys for personalisation
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -11,6 +12,7 @@ import { syncPublicProfile } from "@/lib/publicProfile";
 import { processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { syncVaultItemsFromSupabase } from "@/lib/vaultModel";
 import { loadWatchlist, removeFromWatchlist, type WatchlistItem } from "@/lib/watchlistModel";
+import { UNIVERSE_KEYS, UNIVERSE_LABEL, UNIVERSE_ICON } from "@/lib/taxonomy";
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
 
 export default function AccountPage() {
@@ -96,6 +98,13 @@ export default function AccountPage() {
       setWatchlist(loadWatchlist());
     }
     window.addEventListener("vltd:watchlist-updated", onWatchlistUpdate);
+
+    // Scroll to anchor if URL has a hash (e.g. #watchlist or #profile-setup)
+    if (window.location.hash) {
+      const target = document.getElementById(window.location.hash.slice(1));
+      if (target) setTimeout(() => target.scrollIntoView({ behavior: "smooth", block: "start" }), 400);
+    }
+
     return () => window.removeEventListener("vltd:watchlist-updated", onWatchlistUpdate);
   }, []);
 
@@ -146,6 +155,7 @@ export default function AccountPage() {
         </div>
 
         <section
+          id="profile-setup"
           className="relative overflow-hidden rounded-[34px] p-5 sm:p-7"
           style={{
             background: 'var(--theme-elevated, rgba(20,32,55,0.9))',
@@ -233,16 +243,38 @@ export default function AccountPage() {
                   </button>
                 </div>
 
-                <label className="block">
-                  <span className="text-sm font-semibold text-text-primary">Primary focus</span>
-                  <input
-                    value={primaryFocus}
-                    onChange={(e) => setPrimaryFocus(e.target.value)}
-                    placeholder="Primary focus"
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
-                    style={{ background: "var(--theme-card)" }}
-                  />
-                </label>
+                <div>
+                  <span className="text-sm font-semibold text-text-primary">Collection focus</span>
+                  <p className="mt-0.5 text-xs text-[color:var(--muted2)]">
+                    Used to personalise your Discover feed — pick your primary universe.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {UNIVERSE_KEYS.map((key) => {
+                      const active = primaryFocus === key;
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => setPrimaryFocus(active ? "" : key)}
+                          className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition ring-1"
+                          style={active ? {
+                            background: "rgba(245,181,72,0.15)",
+                            border: "1px solid rgba(245,181,72,0.55)",
+                            color: "var(--theme-text-primary, #F0EAD6)",
+                          } : {
+                            background: "var(--theme-card)",
+                            border: "1px solid var(--theme-border, rgba(245,181,72,0.12))",
+                            color: "var(--muted)",
+                          }}
+                        >
+                          <span>{UNIVERSE_ICON[key]}</span>
+                          <span>{UNIVERSE_LABEL[key]}</span>
+                          {active && <span style={{ color: "#F5B548" }}>✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
                 <label className="block">
                   <span className="text-sm font-semibold text-text-primary">Bio</span>
@@ -364,7 +396,7 @@ export default function AccountPage() {
         </section>
 
         {/* Watchlist */}
-        <section className="mt-6 rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
+        <section id="watchlist" className="mt-6 rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
           <div className="flex items-center justify-between px-1 mb-4">
             <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)]">
               Watchlist

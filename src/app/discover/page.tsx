@@ -6,9 +6,24 @@ import { useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
 import DiscoverSwipe from "@/components/DiscoverSwipe";
-import { type UniverseKey, UNIVERSE_KEYS, UNIVERSE_LABEL, UNIVERSE_ICON } from "@/lib/taxonomy";
+import { type UniverseKey, UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
+import { loadItems } from "@/lib/vaultModel";
+import { loadWatchlist } from "@/lib/watchlistModel";
+import { buildUserPreferences, sortByPersonalization } from "@/lib/personalization";
 
 const TABS: Array<"All" | UniverseKey> = ["All", ...UNIVERSE_KEYS];
+
+// Realistic universe thumbnail images — stored in /public/universe-thumbnails/
+const UNIVERSE_THUMB: Record<UniverseKey, string> = {
+  POP_CULTURE:      "/universe-thumbnails/pop-culture.png",
+  SPORTS:           "/universe-thumbnails/sports.png",
+  TCG:              "/universe-thumbnails/tcg.png",
+  MUSIC:            "/universe-thumbnails/music.png",
+  JEWELRY_APPAREL:  "/universe-thumbnails/jewelry-apparel.png",
+  GAMES:            "/universe-thumbnails/games.png",
+  BUILT_BOTANY:     "/universe-thumbnails/built-botany.png",
+  MISC:             "/universe-thumbnails/misc.png",
+};
 
 type PublicGallery = {
   id: string;
@@ -62,11 +77,10 @@ function rowToGallery(row: Record<string, unknown>): PublicGallery {
 
 // ─── Market Pulse: category risers/droppers based on gallery view momentum ───
 
-// Category icons sourced from taxonomy.ts UNIVERSE_ICON
 
 type CategoryPulse = {
-  category: string;
-  icon: string;
+  category: UniverseKey;
+  thumbnail: string;
   totalViews: number;
   galleryCount: number;
   topTitle: string;
@@ -88,8 +102,8 @@ function MarketPulse({ galleries }: { galleries: PublicGallery[] }) {
     }
     return Array.from(map.entries())
       .map(([category, data]) => ({
-        category,
-        icon: UNIVERSE_ICON[category as UniverseKey] ?? "📦",
+        category: category as UniverseKey,
+        thumbnail: UNIVERSE_THUMB[category as UniverseKey] ?? "/universe-thumbnails/misc.png",
         totalViews: data.views,
         galleryCount: data.count,
         topTitle: data.topTitle,
@@ -125,7 +139,8 @@ function MarketPulse({ galleries }: { galleries: PublicGallery[] }) {
                 borderColor: isTop ? "rgba(245,181,72,0.35)" : "var(--theme-border, rgba(245,181,72,0.12))",
               }}>
               <div className="flex items-start justify-between gap-1">
-                <span className="text-xl leading-none">{item.icon}</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={item.thumbnail} alt={UNIVERSE_LABEL[item.category]} className="h-9 w-9 rounded-lg object-cover ring-1 ring-white/10" />
                 {isTop && (
                   <span className="rounded-full px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.15em]"
                     style={{ background: "rgba(245,181,72,0.2)", color: "#F5B548" }}>
@@ -135,10 +150,10 @@ function MarketPulse({ galleries }: { galleries: PublicGallery[] }) {
               </div>
               <div>
                 <div className="text-xs font-bold" style={{ color: isTop ? "#F5B548" : "var(--theme-text-primary, #F0EAD6)" }}>
-                  {item.category}
+                  {UNIVERSE_LABEL[item.category]}
                 </div>
                 <div className="mt-0.5 text-[10px]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
-                  {item.galleryCount} exhibition{item.galleryCount !== 1 ? "s" : ""}
+                  {item.galleryCount} {item.galleryCount !== 1 ? "galleries" : "gallery"}
                 </div>
               </div>
               {/* Bar */}
@@ -165,6 +180,7 @@ export default function DiscoverPage() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [swipeOpen, setSwipeOpen] = useState(false);
+  const [userPrefs, setUserPrefs] = useState<ReturnType<typeof buildUserPreferences> | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -215,6 +231,14 @@ export default function DiscoverPage() {
         } else {
           setGalleries(mapped);
         }
+
+        // Build personalization preferences from vault + watchlist (non-critical)
+        try {
+          const vaultItems = loadItems();
+          const watchlistItems = loadWatchlist();
+          const prefs = buildUserPreferences(vaultItems, watchlistItems);
+          if (prefs.hasPreferences) setUserPrefs(prefs);
+        } catch { /* personalization is optional */ }
       } catch (e) {
         setFetchError(e instanceof Error ? e.message : "Unknown error");
       } finally {
@@ -226,7 +250,7 @@ export default function DiscoverPage() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return galleries.filter((g) => {
+    const base = galleries.filter((g) => {
       const category = inferUniverseKey(g);
       const matchesTab = activeTab === "All" || category === activeTab;
       const matchesQuery = !q ||
@@ -236,7 +260,12 @@ export default function DiscoverPage() {
         category.toLowerCase().includes(q);
       return matchesTab && matchesQuery;
     });
-  }, [galleries, activeTab, query]);
+    // Apply personalization re-ranking on the "All" tab with no search query
+    if (userPrefs && activeTab === "All" && !q) {
+      return sortByPersonalization(base, userPrefs, inferUniverseKey);
+    }
+    return base;
+  }, [galleries, activeTab, query, userPrefs]);
 
   const isEmpty = !loading && filtered.length === 0;
   const hasActiveFilter = activeTab !== "All" || query.trim() !== "";
@@ -278,14 +307,14 @@ export default function DiscoverPage() {
               </button>
             </div>
             <p className="mt-1 max-w-xl text-sm leading-6" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
-              Browse public exhibitions from collectors across every universe. Filter by category or search by name.
+              Browse public galleries from collectors across every universe. Filter by category or search by name.
             </p>
             <div className="mt-4 flex max-w-md items-center gap-2 rounded-2xl px-4" style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))", border: "1px solid var(--theme-border, rgba(245,181,72,0.14))" }}>
               <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 opacity-50" fill="none">
                 <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
                 <path d="m16.5 16.5 4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
-              <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search exhibitions or collectors…" className="flex-1 bg-transparent py-2.5 text-sm outline-none placeholder:opacity-40" style={{ color: "var(--theme-text-primary, #F0EAD6)" }} />
+              <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search galleries or collectors…" className="flex-1 bg-transparent py-2.5 text-sm outline-none placeholder:opacity-40" style={{ color: "var(--theme-text-primary, #F0EAD6)" }} />
               {query && <button type="button" onClick={() => setQuery("")} className="text-xs opacity-50 hover:opacity-100">✕</button>}
             </div>
             {fetchError && (
@@ -297,7 +326,7 @@ export default function DiscoverPage() {
         {/* Stats bar */}
         {!loading && galleries.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 px-1 text-[11px]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
-            <span><span className="font-bold" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>{galleries.length}</span> exhibitions</span>
+            <span><span className="font-bold" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>{galleries.length}</span> galleries</span>
             <span><span className="font-bold" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>{uniqueCollectors}</span> collectors</span>
             {totalViews > 0 && <span><span className="font-bold" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>{totalViews.toLocaleString()}</span> total views</span>}
             <Link href="/registry" className="ml-auto font-semibold hover:underline" style={{ color: "var(--theme-gold, #F5B548)" }}>
@@ -330,7 +359,7 @@ export default function DiscoverPage() {
         {isEmpty && (
           <section className="mt-6 rounded-[20px] p-10 text-center" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", border: "1px solid var(--theme-border, rgba(245,181,72,0.12))" }}>
             <div className="text-3xl">🔍</div>
-            <h2 className="mt-3 text-lg font-black" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>No exhibitions match</h2>
+            <h2 className="mt-3 text-lg font-black" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>No galleries match</h2>
             <p className="mt-1 text-sm" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
               {hasActiveFilter ? `No results for${activeTab !== "All" ? ` "${UNIVERSE_LABEL[activeTab]}"` : ""}${query ? ` "${query}"` : ""}.` : "No public galleries yet. Be the first!"}
             </p>
@@ -474,7 +503,7 @@ export default function DiscoverPage() {
             <div className="flex flex-wrap justify-center gap-3">
               <Link href="/museum/new" className="rounded-full px-5 py-2 text-sm font-black transition hover:brightness-105"
                 style={{ background: "linear-gradient(135deg, #8B6914 0%, #C8941F 30%, #F5B548 60%, #C8941F 100%)", color: "#0B0B0B" }}>
-                Create Exhibition
+                Create Gallery
               </Link>
               <Link href="/vault" className="rounded-full border px-5 py-2 text-sm font-semibold transition hover:brightness-110"
                 style={{ borderColor: "rgba(245,181,72,0.28)", color: "#F5B548", background: "rgba(245,181,72,0.06)" }}>
