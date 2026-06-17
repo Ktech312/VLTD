@@ -3,10 +3,8 @@
 import { useEffect, useState } from "react";
 import type { ShareTrigger } from "@/hooks/useAutoShareTrigger";
 import { getAutoShareEnabled, setAutoShareEnabled } from "@/hooks/useAutoShareTrigger";
+import { fmtUsd } from "@/lib/format";
 
-function fmt(n: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
-}
 
 type Props = {
   trigger: ShareTrigger;
@@ -38,7 +36,7 @@ export default function AutoSharePrompt({ trigger, onShare, onDismiss }: Props) 
   const isSold = trigger.kind === "sold";
   const emoji = isSold ? "🎉" : "🏅";
   const headline = isSold
-    ? `Just Sold${trigger.salePrice ? ` for ${fmt(trigger.salePrice)}` : ""}!`
+    ? `Just Sold${trigger.salePrice ? ` for ${fmtUsd(trigger.salePrice)}` : ""}!`
     : `Just Graded${trigger.grade ? ` — ${trigger.grade}` : ""}!`;
   const sub = isSold
     ? "Share the sale before it slips away."

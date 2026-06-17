@@ -8,15 +8,8 @@ import { isNotable, notableReason } from "@/lib/itemIntelligence";
 import { itemCurrentValue, itemProfit, itemTotalCost } from "@/lib/portfolioMetrics";
 import { UNIVERSE_LABEL, UNIVERSE_KEYS, type UniverseKey } from "@/lib/taxonomy";
 import type { VaultItem as ModelItem } from "@/lib/vaultModel";
+import { fmtUsdOrDash } from "@/lib/format";
 
-function money(n: number) {
-  if (!Number.isFinite(n) || n === 0) return "-";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(n);
-}
 
 function gainColor(n: number) {
   if (n > 0) return "var(--gain-positive, #4ade80)";
@@ -234,7 +227,7 @@ function SpotlightCard({ item }: { item: ModelItem }) {
               Value
             </div>
             <div className="text-xl font-bold" style={{ color: "var(--theme-gold, #F5B548)" }}>
-              {money(value)}
+              {fmtUsdOrDash(value)}
             </div>
           </div>
         </div>
@@ -250,7 +243,7 @@ function SpotlightCard({ item }: { item: ModelItem }) {
               Cost Basis
             </div>
             <div className="mt-0.5 text-sm font-semibold" style={{ color: "var(--fg)" }}>
-              {money(cost)}
+              {fmtUsdOrDash(cost)}
             </div>
           </div>
         )}
@@ -261,7 +254,7 @@ function SpotlightCard({ item }: { item: ModelItem }) {
             </div>
             <div className="mt-0.5 text-sm font-semibold" style={{ color: gainColor(gain) }}>
               {gain >= 0 ? "+" : ""}
-              {money(gain)}
+              {fmtUsdOrDash(gain)}
             </div>
           </div>
         )}
@@ -423,7 +416,7 @@ function MuseumCard({
                 color: "var(--theme-gold, #F5B548)",
               }}
             >
-              {money(value)}
+              {fmtUsdOrDash(value)}
             </div>
           )}
         </div>
@@ -568,7 +561,7 @@ function UniverseSection({
                 color: "var(--theme-gold, #F5B548)",
               }}
             >
-              {money(totalValue)}
+              {fmtUsdOrDash(totalValue)}
             </span>
           )}
         </div>

@@ -4,6 +4,7 @@ import { useRef, useState, useMemo, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
 import GenerateCopyPanel from "@/components/GenerateCopyPanel";
+import { fmtUsd } from "@/lib/format";
 
 // ─── Tab types ─────────────────────────────────────────────────────────────────
 type Tab = "image" | "then-vs-now" | "video" | "carousel";
@@ -95,9 +96,6 @@ function generateHashtags(item: VaultItem): string[] {
   return Array.from(tags).slice(0, 15);
 }
 
-function fmt(n: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
-}
 
 // ─── Image card canvas ────────────────────────────────────────────────────────
 async function exportToCanvas(opts: {
@@ -209,7 +207,7 @@ async function exportToCanvas(opts: {
     if (showValue) {
       ctx.font = `800 ${Math.round(w * 0.058)}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
       ctx.fillStyle = "#F5B548";
-      ctx.fillText(fmt(value), w / 2, valueY);
+      ctx.fillText(fmtUsd(value), w / 2, valueY);
     } else {
       ctx.fillStyle = "rgba(245,181,72,0.28)";
       const bw = Math.round(w * 0.28);
@@ -318,7 +316,7 @@ async function exportThenVsNow(opts: {
   ctx.font = `800 ${priceSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
   if (showValues && paid > 0) {
     ctx.fillStyle = mutedColor;
-    ctx.fillText(fmt(paid), halfW / 2, priceY);
+    ctx.fillText(fmtUsd(paid), halfW / 2, priceY);
   } else if (!showValues) {
     ctx.fillStyle = isLight ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.15)";
     ctx.beginPath();
@@ -332,7 +330,7 @@ async function exportThenVsNow(opts: {
   // NOW price
   if (showValues && now > 0) {
     ctx.fillStyle = GOLD;
-    ctx.fillText(fmt(now), halfW + halfW / 2, priceY);
+    ctx.fillText(fmtUsd(now), halfW + halfW / 2, priceY);
   } else if (!showValues) {
     ctx.fillStyle = "rgba(245,181,72,0.25)";
     ctx.beginPath();
@@ -430,7 +428,7 @@ async function exportThenVsNow(opts: {
   if (paid > 0 && now > 0) {
     const gainY = 870;
     const gainText = showValues
-      ? `${isGain ? "+" : ""}${fmt(gain)}  ${isGain ? "+" : ""}${gainPct.toFixed(0)}% ${isGain ? "↑" : "↓"}`
+      ? `${isGain ? "+" : ""}${fmtUsd(gain)}  ${isGain ? "+" : ""}${gainPct.toFixed(0)}% ${isGain ? "↑" : "↓"}`
       : `${isGain ? "↑" : "↓"} ${Math.abs(gainPct).toFixed(0)}% ${isGain ? "gain" : "loss"}`;
     const gainColor = isGain ? "#4CAF82" : "#E05B5B";
     const gainBg = isGain ? "rgba(76,175,130,0.15)" : "rgba(224,91,91,0.15)";
@@ -703,7 +701,7 @@ async function exportAnimatedVideo(item: VaultItem, bg: string): Promise<Blob> {
       c.textBaseline = "bottom";
       c.font = `800 62px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
       c.fillStyle = GOLD;
-      c.fillText(fmt(value), S / 2, lineY - 16);
+      c.fillText(fmtUsd(value), S / 2, lineY - 16);
       c.restore();
     }
 
@@ -1037,11 +1035,11 @@ function ThenVsNowTab({ item }: { item: VaultItem }) {
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
               <div className="text-[10px] uppercase tracking-widest" style={{ color: "var(--muted)" }}>Paid</div>
-              <div className="mt-1 text-lg font-bold" style={{ color: "var(--fg)" }}>{fmt(paid)}</div>
+              <div className="mt-1 text-lg font-bold" style={{ color: "var(--fg)" }}>{fmtUsd(paid)}</div>
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-widest" style={{ color: "var(--muted)" }}>Now</div>
-              <div className="mt-1 text-lg font-bold" style={{ color: "var(--theme-gold, #F5B548)" }}>{fmt(now)}</div>
+              <div className="mt-1 text-lg font-bold" style={{ color: "var(--theme-gold, #F5B548)" }}>{fmtUsd(now)}</div>
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-widest" style={{ color: "var(--muted)" }}>ROI</div>
