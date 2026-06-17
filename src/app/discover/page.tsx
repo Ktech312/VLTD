@@ -6,10 +6,9 @@ import { useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
 import DiscoverSwipe from "@/components/DiscoverSwipe";
+import { type UniverseKey, UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
 
-type GalleryCategory = "All" | "TCG" | "Sports" | "Music" | "Jewelry" | "Games" | "Pop Culture" | "Built & Botany" | "Misc";
-
-const TABS: GalleryCategory[] = ["All", "Pop Culture", "Sports", "TCG", "Music", "Jewelry", "Games", "Built & Botany", "Misc"];
+const TABS: Array<"All" | UniverseKey> = ["All", ...UNIVERSE_KEYS];
 
 type PublicGallery = {
   id: string;
@@ -26,20 +25,21 @@ type PublicGallery = {
   collector_avatar_url?: string;
 };
 
-function normalizeText(value: unknown) {
+function normalizeForSearch(value: unknown) {
   return String(value ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
 
-function inferGalleryCategory(gallery: PublicGallery): GalleryCategory {
-  const text = normalizeText([gallery.title, gallery.description, gallery.theme_pack].filter(Boolean).join(" "));
-  if (/pokemon|magic|yugioh|yu gi oh|tcg|trading card|card game|slab|foil|single/.test(text)) return "TCG";
-  if (/sports|rookie|jersey|autograph|memorabilia|baseball|basketball|football|soccer|hockey/.test(text)) return "Sports";
-  if (/vinyl|album|music|record|instrument|signed lp|turntable|blues|delta|jazz|78rpm|78 rpm|crossroads|harmonica|guitar|piano|symphony|composer|beethoven|orpheus|solomon|lyre|aulos|lute|fiddle|resonator|ragtime|gospel|spiritual|78 rpm|juke joint|juke|harp|pipe organ|fortepiano|broadwood/.test(text)) return "Music";
-  if (/watch|jewelry|apparel|streetwear|luxury|handbag|limited drop|jewel|necklace|diamond|antoinette/.test(text)) return "Jewelry";
-  if (/game|console|nintendo|playstation|xbox|sega|atari|cartridge|arcade|controller/.test(text)) return "Games";
-  if (/comic|marvel| dc |figure|toy|manga|funko|prop|statue|pop culture/.test(text)) return "Pop Culture";
-  if (/handmade|ceramic|woodwork|metalwork|textile|resin|leatherwork|origami|succulent|tropical|cacti|cactus|bonsai|terrarium|plant|botany|garden|seedling|houseplant/.test(text)) return "Built & Botany";
-  return "Misc";
+function inferUniverseKey(gallery: PublicGallery): UniverseKey {
+  const text = normalizeForSearch([gallery.title, gallery.description, gallery.theme_pack].filter(Boolean).join(" "));
+  const includes = (...terms: string[]) => terms.some((t) => text.includes(t));
+  if (includes("pokemon", "magic", "yugioh", "yu gi oh", "tcg", "trading card", "card game", "slab", "foil", "single")) return "TCG";
+  if (includes("sports", "rookie", "jersey", "autograph", "memorabilia", "baseball", "basketball", "football", "soccer", "hockey")) return "SPORTS";
+  if (includes("vinyl", "album", "music", "record", "instrument", "signed lp", "turntable", "jazz", "harmonica", "guitar", "piano", "symphony")) return "MUSIC";
+  if (includes("watch", "jewelry", "apparel", "streetwear", "luxury", "handbag", "limited drop", "jewel", "necklace", "diamond")) return "JEWELRY_APPAREL";
+  if (includes("game", "console", "nintendo", "playstation", "xbox", "sega", "atari", "cartridge", "arcade", "controller")) return "GAMES";
+  if (includes("comic", "marvel", " dc ", "figure", "toy", "manga", "funko", "prop", "statue", "pop culture")) return "POP_CULTURE";
+  if (includes("handmade", "ceramic", "woodwork", "metalwork", "textile", "resin", "leatherwork", "origami", "succulent", "tropical", "cacti", "bonsai", "terrarium", "plant", "botany", "garden")) return "BUILT_BOTANY";
+  return "MISC";
 }
 
 function rowToGallery(row: Record<string, unknown>): PublicGallery {
@@ -80,7 +80,7 @@ function MarketPulse({ galleries }: { galleries: PublicGallery[] }) {
   const pulseData = useMemo((): CategoryPulse[] => {
     const map = new Map<string, { views: number; count: number; topViews: number; topTitle: string }>();
     for (const g of galleries) {
-      const cat = inferGalleryCategory(g);
+      const cat = inferUniverseKey(g);
       const existing = map.get(cat) ?? { views: 0, count: 0, topViews: 0, topTitle: "" };
       map.set(cat, {
         views: existing.views + g.analytics_views,
@@ -163,7 +163,7 @@ function MarketPulse({ galleries }: { galleries: PublicGallery[] }) {
 export default function DiscoverPage() {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<GalleryCategory>("All");
+  const [activeTab, setActiveTab] = useState<"All" | UniverseKey>("All");
   const [galleries, setGalleries] = useState<PublicGallery[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -230,7 +230,7 @@ export default function DiscoverPage() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return galleries.filter((g) => {
-      const category = inferGalleryCategory(g);
+      const category = inferUniverseKey(g);
       const matchesTab = activeTab === "All" || category === activeTab;
       const matchesQuery = !q ||
         (g.title ?? "").toLowerCase().includes(q) ||
@@ -318,7 +318,7 @@ export default function DiscoverPage() {
                 ? { background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B", border: "1px solid transparent" }
                 : { background: "var(--theme-elevated, rgba(20,32,55,0.9))", color: "var(--theme-text-muted, #A0956B)", border: "1px solid var(--theme-border, rgba(245,181,72,0.12))" }
               }
-            >{tab}</button>
+            >{tab === "All" ? "All" : UNIVERSE_LABEL[tab]}</button>
           ))}
         </div>
 
@@ -335,7 +335,7 @@ export default function DiscoverPage() {
             <div className="text-3xl">🔍</div>
             <h2 className="mt-3 text-lg font-black" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>No exhibitions match</h2>
             <p className="mt-1 text-sm" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
-              {hasActiveFilter ? `No results for${activeTab !== "All" ? ` "${activeTab}"` : ""}${query ? ` "${query}"` : ""}.` : "No public galleries yet. Be the first!"}
+              {hasActiveFilter ? `No results for${activeTab !== "All" ? ` "${UNIVERSE_LABEL[activeTab]}"` : ""}${query ? ` "${query}"` : ""}.` : "No public galleries yet. Be the first!"}
             </p>
             {hasActiveFilter && (
               <button type="button" onClick={() => { setActiveTab("All"); setQuery(""); }}
@@ -375,7 +375,7 @@ export default function DiscoverPage() {
                   <div className="p-3">
                     <div className="truncate text-sm font-black" style={{ color: "var(--theme-gold, #F5B548)" }}>{gallery.title}</div>
                     <div className="mt-1 flex items-center justify-between gap-2">
-                      <span className="text-[10px]" style={{ color: "var(--muted2)" }}>{gallery.item_count > 0 ? `${gallery.item_count} items` : inferGalleryCategory(gallery)}</span>
+                      <span className="text-[10px]" style={{ color: "var(--muted2)" }}>{gallery.item_count > 0 ? `${gallery.item_count} items` : UNIVERSE_LABEL[inferUniverseKey(gallery)]}</span>
                       {gallery.collector_name && (
                         <Link href={`/v/${gallery.profile_id}`}
                           className="flex items-center gap-1 text-[10px] hover:underline z-10 relative"
@@ -408,7 +408,7 @@ export default function DiscoverPage() {
           <section className="mt-6">
             <div className="mb-3 flex items-baseline justify-between gap-3">
               <div className="text-[11px] tracking-[0.22em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
-                {activeTab === "All" ? "ALL EXHIBITIONS" : `${activeTab.toUpperCase()} EXHIBITIONS`}
+                {activeTab === "All" ? "ALL GALLERIES" : `${UNIVERSE_LABEL[activeTab].toUpperCase()} GALLERIES`}
               </div>
               <span className="text-xs" style={{ color: "var(--theme-text-muted, #A0956B)" }}>{filtered.length} shown</span>
             </div>
@@ -422,7 +422,7 @@ export default function DiscoverPage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-transparent to-transparent" />
                     <span className="absolute left-3 top-3 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]"
                       style={{ background: "rgba(245,181,72,0.18)", color: "#F5B548", border: "1px solid rgba(245,181,72,0.28)" }}>
-                      {inferGalleryCategory(gallery)}
+                      {UNIVERSE_LABEL[inferUniverseKey(gallery)]}
                     </span>
                   </div>
                   <div className="p-4">
