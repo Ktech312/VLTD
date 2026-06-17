@@ -155,7 +155,7 @@ export default function GalleryHero({
                   }
             }
           >
-            Exhibit View
+            Gallery View
           </button>
         </div>
 

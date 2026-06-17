@@ -646,13 +646,13 @@ export default function GalleryPage() {
       setStatusTone(vaultSyncError ? "neutral" : "good");
       setStatus(
         vaultSyncError
-          ? "Exhibit saved. Some vault sync tasks still need retrying."
-          : "Exhibit saved."
+          ? "Gallery saved. Some vault sync tasks still need retrying."
+          : "Gallery saved."
       );
     } catch (error) {
       console.error("Direct gallery sync failed:", error);
       setStatusTone("neutral");
-      setStatus("Exhibit saved locally. Cloud sync failed.");
+      setStatus("Gallery saved locally. Cloud sync failed.");
     }
   }
 
@@ -753,7 +753,7 @@ export default function GalleryPage() {
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               MUSEUM
             </div>
-            <h1 className="mt-3 text-2xl font-semibold">Exhibit not found</h1>
+            <h1 className="mt-3 text-2xl font-semibold">Gallery not found</h1>
             <p className="mt-3 text-sm text-[color:var(--muted)]">
               This exhibit could not be loaded from local storage.
             </p>

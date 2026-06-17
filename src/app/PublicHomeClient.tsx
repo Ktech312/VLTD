@@ -114,7 +114,7 @@ const VAULT_UNIVERSES: UniverseCard[] = [
 const COMPARISON_ROWS = [
   ["Multi-category vault", "One category", "All 7 universes"],
   ["Portfolio analytics", "Basic", "Full P&L tracking"],
-  ["Exhibition-style gallery", "No", "Museum view"],
+  ["Public gallery", "No", "Museum view"],
   ["Insurance documentation", "No", "Printable packet"],
   ["AI identification & pricing", "Manual", "Smart Scan"],
   ["Offline capture queue", "No", "Built in"],
@@ -128,7 +128,7 @@ const FALLBACK_GALLERIES: PublicGalleryCard[] = [
   {
     id: "sample-pop-culture",
     title: "Pop Culture Collection",
-    description: "Exhibition-style public display for comics, figures, and key collectibles.",
+    description: "Public gallery display for comics, figures, and key collectibles.",
     href: "/signup",
     image: "/themes/classic-shelf-wall.webp",
     itemCount: 7,
@@ -649,7 +649,7 @@ export default function PublicHomeClient() {
                 <div className="flex flex-col gap-1.5">
                   <Link href="#public-galleries" className="text-[color:var(--muted)] hover:text-text-primary transition">Galleries</Link>
                   <Link href="/discover" className="text-[color:var(--muted)] hover:text-text-primary transition">Discover</Link>
-                  <Link href="/museum" className="text-[color:var(--muted)] hover:text-text-primary transition">Exhibitions</Link>
+                  <Link href="/museum" className="text-[color:var(--muted)] hover:text-text-primary transition">Galleries</Link>
                 </div>
               </div>
               <div>

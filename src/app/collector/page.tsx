@@ -201,15 +201,15 @@ export default function CollectorProfilePage() {
               </h1>
 
               <p className="mt-3 max-w-3xl text-sm leading-6 text-[color:var(--muted)]">
-                A cleaner read of the active collector’s strength, collection depth, museum
+                A cleaner read of the active collector’s strength, collection depth, gallery
                 activity, and strongest portfolio signals.
               </p>
 
               <div className="mt-5 flex flex-wrap gap-2">
                 <TinyBadge>{collection.totalItems} items</TinyBadge>
-                <TinyBadge>{galleries.length} exhibits</TinyBadge>
+                <TinyBadge>{galleries.length} galleries</TinyBadge>
                 <TinyBadge>{stats.activeGalleries} active</TinyBadge>
-                <TinyBadge>{stats.totalViews} exhibit views</TinyBadge>
+                <TinyBadge>{stats.totalViews} gallery views</TinyBadge>
                 <TinyBadge>{stats.curatorNotes} curator notes</TinyBadge>
               </div>
             </div>
@@ -273,7 +273,7 @@ export default function CollectorProfilePage() {
 
               <QuietCard title="Curatorial readiness">
                 {stats.curatorNotes > 0
-                  ? `${stats.curatorNotes} curator notes are already written across the museum.`
+                  ? `${stats.curatorNotes} curator notes are already written across the vault.`
                   : "Curator notes have not been built out yet."}
               </QuietCard>
 
@@ -298,7 +298,7 @@ export default function CollectorProfilePage() {
             <SectionHeader
               eyebrow="TOP SIGNALS"
               title="Best current indicators"
-              description="The strongest single-item and museum-level signals for the active profile."
+              description="The strongest single-item and collection-level signals for the active profile."
             />
 
             <div className="mt-5 grid gap-3">
@@ -339,13 +339,13 @@ export default function CollectorProfilePage() {
         <section className="vltd-panel-main mt-6 rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <SectionHeader
             eyebrow="FEATURED GALLERIES"
-            title="Most viewed exhibits"
-            description="Your strongest public museum presentations, sorted by attention."
+            title="Most viewed galleries"
+            description="Your strongest public gallery presentations, sorted by attention."
           />
 
           {featuredGalleries.length === 0 ? (
             <div className="mt-4 text-sm text-[color:var(--muted)]">
-              No exhibits yet.
+              No galleries yet.
             </div>
           ) : (
             <div className="mt-5 grid gap-3">

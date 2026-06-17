@@ -615,9 +615,9 @@ export default function GalleryBuilder({
       <section className="overflow-hidden rounded-[24px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
-            <div className="text-sm font-semibold">Exhibition Layout</div>
+            <div className="text-sm font-semibold">Gallery Layout</div>
             <div className="mt-1 text-sm text-[color:var(--muted)]">
-              Turn this gallery into a structured exhibition with sections, featured works,
+              Turn this gallery into a structured layout with sections, featured works,
               shelf styling, guest preview, and curatorial flow.
             </div>
           </div>
@@ -668,12 +668,12 @@ export default function GalleryBuilder({
           </div>
         </div>
 
-        {/* ── Exhibition stat chips — compact row ── */}
+        {/* ── Gallery stat chips — compact row ── */}
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {[
             { label: "LAYOUT", value: layoutType },
             { label: "SECTIONS", value: sections.length },
-            { label: "EXHIBITS", value: selectedCount },
+            { label: "ITEMS", value: selectedCount },
             { label: "FEATURED", value: sections.filter((s) => !!s.featuredItemId).length },
           ].map(({ label, value }) => (
             <div key={label} className="rounded-[14px] bg-[color:var(--surface)] px-3 py-2.5 ring-1 ring-[color:var(--border)]">
@@ -686,7 +686,7 @@ export default function GalleryBuilder({
         {/* ── Selected Items stats ── */}
         <div className="mt-2 grid grid-cols-3 gap-2">
           <div className="rounded-[14px] bg-[color:var(--surface)] px-3 py-2.5 ring-1 ring-[color:var(--border)]">
-            <div className="text-[10px] tracking-[0.14em] text-[color:var(--muted2)]">EXHIBITS</div>
+            <div className="text-[10px] tracking-[0.14em] text-[color:var(--muted2)]">ITEMS</div>
             <div className="mt-1 text-base font-semibold leading-none">{selectedCount}</div>
           </div>
           <div className="rounded-[14px] bg-[color:var(--surface)] px-3 py-2.5 ring-1 ring-[color:var(--border)]">
@@ -699,7 +699,7 @@ export default function GalleryBuilder({
           </div>
         </div>
 
-        {/* ── CURATE PANEL (merged with Exhibit View controls) ── */}
+        {/* ── CURATE PANEL (merged with Gallery View controls) ── */}
         <div className="mt-5 overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
 
           {/* Header row: label left, Expand right */}
@@ -732,7 +732,7 @@ export default function GalleryBuilder({
                 value={selectedGalleryView}
                 onChange={setGalleryView}
                 options={GALLERY_VIEW_OPTIONS}
-                ariaLabel="Exhibit view"
+                ariaLabel="Gallery view"
                 align="left"
                 minWidthPx={140}
                 extraWidthPx={6}
@@ -1486,7 +1486,7 @@ export default function GalleryBuilder({
 
             <div className="grid grid-cols-3 gap-2">
               <div className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
-                <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">EXHIBITS</div>
+                <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">ITEMS</div>
                 <div className="mt-2 text-xl font-semibold">{selectedCount}</div>
               </div>
 
@@ -1588,7 +1588,7 @@ export default function GalleryBuilder({
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-3">
                           <div className="text-[9px] tracking-[0.15em] text-[color:var(--muted2)]">
-                            EXHIBIT #{index + 1}
+                            SECTION #{index + 1}
                           </div>
 
                           {assignedSection ? (
@@ -1663,7 +1663,7 @@ export default function GalleryBuilder({
               <div>
                 <div className="text-[11px] tracking-[0.2em]" style={{ color: "var(--muted2)" }}>LIVE PREVIEW</div>
                 <div className="mt-0.5 flex items-baseline gap-1.5 text-sm font-semibold">
-                  {gallery.title || "Exhibition"}
+                  {gallery.title || "Gallery"}
                   {sections.length > 0 && sections[activeSectionIdx] && (
                     <span className="text-xs font-normal" style={{ color: "var(--muted)" }}>
                       · S{activeSectionIdx + 1} {sections[activeSectionIdx].title}

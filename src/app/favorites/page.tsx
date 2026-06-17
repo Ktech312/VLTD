@@ -25,7 +25,7 @@ function favoriteSubtitle(r: FavoriteRecord, items: VaultItem[], galleries: Gall
   }
   const g = galleries.find((x) => String(x.id) === String(r.content_id));
   const n = g?.itemIds?.length ?? r.metadata?.itemCount ?? 0;
-  return `${n} item${n === 1 ? "" : "s"} · Exhibition`;
+  return `${n} item${n === 1 ? "" : "s"} · Gallery`;
 }
 
 function favoriteImage(r: FavoriteRecord, items: VaultItem[], galleries: Gallery[]) {

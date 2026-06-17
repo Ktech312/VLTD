@@ -95,11 +95,11 @@ export function ItemPickerSheet({
   }
 
   const addLabel = pickedCount > 0
-    ? ("Add to Exhibition  (" + pickedCount + ")")
+    ? ("Add to Gallery (" + pickedCount + ")")
     : "Select items to add";
 
   const slotLabel = slotsLeft === 0
-    ? "Exhibition is full (16 items max)"
+    ? "Gallery is full (16 items max)"
     : (slotsLeft + " slot" + (slotsLeft === 1 ? "" : "s") + " remaining");
 
   const isAtMax = pickedCount >= MAX_EXHIBIT_ITEMS;

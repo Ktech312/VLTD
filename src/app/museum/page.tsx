@@ -293,7 +293,7 @@ export default function MuseumPage() {
     updateGallery(gallerySettings);
     refresh();
     setGallerySettings(null);
-    setStatusMessage("Exhibit settings updated.");
+    setStatusMessage("Gallery settings updated.");
   }
 
   return (

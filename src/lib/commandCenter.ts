@@ -127,7 +127,7 @@ export function getBaseCommands(): CommandItem[] {
     },
     {
       id: "nav_new_gallery",
-      label: "Create Exhibit",
+      label: "Create Gallery",
       subtitle: "Start a new curated exhibit",
       href: "/museum/new",
       section: "action",
@@ -220,7 +220,7 @@ function getProductivityCommands(
   if (topGalleryByViews) {
     commands.push({
       id: "action_top_gallery_views",
-      label: "Open Top Exhibit by Views",
+      label: "Open Top Gallery by Views",
       subtitle: `${topGalleryByViews.title} • ${safeNumber(topGalleryByViews.analytics?.views)} views`,
       href: `/museum/${topGalleryByViews.id}`,
       section: "action",
@@ -231,7 +231,7 @@ function getProductivityCommands(
   if (largestGallery) {
     commands.push({
       id: "action_largest_gallery",
-      label: "Open Largest Exhibit",
+      label: "Open Largest Gallery",
       subtitle: `${largestGallery.title} • ${largestGallery.itemIds.length} items`,
       href: `/museum/${largestGallery.id}`,
       section: "action",
@@ -242,7 +242,7 @@ function getProductivityCommands(
   if (mostValuableGallery) {
     commands.push({
       id: "action_most_valuable_gallery",
-      label: "Open Most Valuable Exhibit",
+      label: "Open Most Valuable Gallery",
       subtitle: `${mostValuableGallery.title} • ${formatMoney(getGalleryItemsValue(mostValuableGallery, itemsById))}`,
       href: `/museum/${mostValuableGallery.id}`,
       section: "action",
@@ -256,7 +256,7 @@ function getProductivityCommands(
 function getGalleryCommands(galleries: Gallery[]): CommandItem[] {
   return galleries.map((gallery) => ({
     id: `gallery_${gallery.id}`,
-    label: gallery.title?.trim() || "Untitled Exhibit",
+    label: gallery.title?.trim() || "Untitled Gallery",
     subtitle: `${gallery.itemIds.length} items • ${gallery.visibility} gallery`,
     href: `/museum/${gallery.id}`,
     section: "museum",
