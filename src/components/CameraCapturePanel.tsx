@@ -3,6 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import ScanCropEditor from "@/components/ScanCropEditor";
 import {
+  getUniverses,
+  getCategories,
+  getSubcategories,
+  UNIVERSE_LABEL,
+  type UniverseKey,
+} from "@/lib/taxonomy";
+import {
   buildCaptureFilterCss,
   CAPTURE_FILTER_PRESETS,
   DEFAULT_CAPTURE_ADJUSTMENTS,
@@ -28,6 +35,7 @@ type DetectionState = "idle" | "loading" | "ready" | "unavailable";
 type DetectionBox = { x: number; y: number; width: number; height: number };
 
 const DEFAULT_CROP: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
+const BULK_UNIVERSES = getUniverses();
 
 const FRAME_PRESETS: Array<{ id: string; label: string; frame: CaptureFrame }> = [
   {
@@ -61,6 +69,7 @@ export default function CameraCapturePanel({
   description,
   universe,
   onCapture,
+  onBulkCapture,
   onClose,
   onUseFileInstead,
 }: {
@@ -68,6 +77,7 @@ export default function CameraCapturePanel({
   description: string;
   universe?: string | null;
   onCapture: (file: File) => void;
+  onBulkCapture?: (file: File, category: string, subcategory: string) => void;
   onClose: () => void;
   onUseFileInstead: () => void;
 }) {
@@ -98,6 +108,16 @@ export default function CameraCapturePanel({
   const [selectedBackgroundId, setSelectedBackgroundId] = useState("transparent");
   const [selectedFrameId, setSelectedFrameId] = useState("auto");
   const [showFineTune, setShowFineTune] = useState(false);
+  // ── Bulk Add mode ──
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkUniverse, setBulkUniverse] = useState<UniverseKey>("MISC");
+  const [bulkCategory, setBulkCategory] = useState(() => getCategories("MISC")[0] ?? "");
+  const [bulkSubcategory, setBulkSubcategory] = useState("");
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkSavedCount, setBulkSavedCount] = useState(0);
+
+  const bulkCategoryOptions = getCategories(bulkUniverse);
+  const bulkSubcategoryOptions = getSubcategories(bulkUniverse, bulkCategory);
 
   const activeFilter =
     CAPTURE_FILTER_PRESETS.find((preset) => preset.id === selectedFilterId) ??
@@ -431,7 +451,20 @@ export default function CameraCapturePanel({
         ? await compositeBackgroundToFile(finalFile, selectedBackground)
         : finalFile;
 
-      onCapture(finishedFile);
+      if (bulkMode && onBulkCapture) {
+        // Bulk mode: quick-save without AI review, then reset camera
+        setBulkSaving(true);
+        try {
+          onBulkCapture(finishedFile, bulkCategory, bulkSubcategory);
+          setBulkSavedCount((n) => n + 1);
+          // Reset for next shot
+          handleRetakePhoto();
+        } finally {
+          setBulkSaving(false);
+        }
+      } else {
+        onCapture(finishedFile);
+      }
     } catch (error) {
       setCameraError(error instanceof Error ? error.message : "Failed to crop photo.");
     } finally {
@@ -486,7 +519,7 @@ export default function CameraCapturePanel({
   }
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-start justify-center bg-black/75 p-2 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={title}>
+    <div className="fixed inset-0 z-[10000] flex items-start justify-center bg-black/75 p-2 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={title}>
       <div className="flex h-[calc(100dvh-1rem)] w-full max-w-[520px] flex-col overflow-y-auto overscroll-contain rounded-[18px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:h-auto sm:max-h-[calc(100dvh-80px)] sm:absolute sm:top-[68px] sm:left-1/2 sm:-translate-x-1/2 sm:w-[calc(100%-24px)] sm:rounded-[18px]">
         {capturedFile ? (
           <div className="flex justify-end">
@@ -871,6 +904,69 @@ export default function CameraCapturePanel({
               </select>
             ) : null}
 
+            {/* ── Bulk Mode controls (shown above shutter when bulk on) ── */}
+            {bulkMode && (
+              <div className="mt-2 rounded-[14px] bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--theme-gold-border,rgba(245,181,72,0.25))]">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.16em]"
+                    style={{ background: "rgba(245,181,72,0.14)", color: "#F5B548" }}>
+                    ⚡ Bulk Mode
+                  </span>
+                  {bulkSavedCount > 0 && (
+                    <span className="text-[11px] font-semibold text-[color:var(--muted)]">
+                      {bulkSavedCount} saved
+                    </span>
+                  )}
+                </div>
+                <div className="grid gap-2 grid-cols-3">
+                  <div>
+                    <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] mb-0.5">Universe</div>
+                    <select
+                      className="w-full rounded-lg bg-[color:var(--surface)] px-2 py-1 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+                      value={bulkUniverse}
+                      onChange={(e) => {
+                        const u = e.target.value as UniverseKey;
+                        const cats = getCategories(u);
+                        setBulkUniverse(u);
+                        setBulkCategory(cats[0] ?? "");
+                        setBulkSubcategory("");
+                      }}
+                    >
+                      {BULK_UNIVERSES.map((u) => (
+                        <option key={u} value={u}>{UNIVERSE_LABEL[u]}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] mb-0.5">Category</div>
+                    <select
+                      className="w-full rounded-lg bg-[color:var(--surface)] px-2 py-1 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+                      value={bulkCategory}
+                      onChange={(e) => {
+                        const cat = e.target.value;
+                        const subs = getSubcategories(bulkUniverse, cat);
+                        setBulkCategory(cat);
+                        setBulkSubcategory(subs[0] ?? "");
+                      }}
+                    >
+                      {bulkCategoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] mb-0.5">Subcategory</div>
+                    <select
+                      className="w-full rounded-lg bg-[color:var(--surface)] px-2 py-1 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+                      value={bulkSubcategory}
+                      onChange={(e) => setBulkSubcategory(e.target.value)}
+                    >
+                      <option value="">Any</option>
+                      {bulkSubcategoryOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Single camera button row */}
             <div className="mt-3 mb-1 flex items-center justify-center gap-8">
               <button
@@ -923,6 +1019,28 @@ export default function CameraCapturePanel({
               >
                 File
               </button>
+            </div>
+
+            {/* ── Bulk Add toggle — sleeper feature ── */}
+            <div className="mt-3 flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => setBulkMode((v) => !v)}
+                className="flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-semibold ring-1 transition"
+                style={bulkMode
+                  ? { background: "rgba(245,181,72,0.12)", borderColor: "rgba(245,181,72,0.35)", color: "#F5B548" }
+                  : { background: "var(--pill)", borderColor: "var(--border)", color: "var(--muted2)" }
+                }
+              >
+                <span
+                  className="inline-block h-2 w-2 rounded-full transition-colors"
+                  style={{ background: bulkMode ? "#F5B548" : "var(--muted2)" }}
+                />
+                Bulk Add
+              </button>
+              {bulkSaving && (
+                <span className="text-[10px] text-[color:var(--muted)]">Saving…</span>
+              )}
             </div>
           </>
         )}

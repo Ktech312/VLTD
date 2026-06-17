@@ -78,13 +78,24 @@ export default function VaultCard({
 }) {
   const tiltRef = useTilt();
   const notable = isNotable(item);
+  const isBulkPending = Boolean((item as ModelItem & { bulkPending?: boolean }).bulkPending);
 
   return (
     <a href={`/vault/item/${item.id}`} className="block">
       <div
         ref={tiltRef}
-        className={`rounded-2xl vltd-panel-soft p-2.5 sm:p-3 ${frame.card} transition-transform duration-200`}
+        className={`relative rounded-2xl vltd-panel-soft p-2.5 sm:p-3 ${frame.card} transition-transform duration-200`}
+        style={isBulkPending ? {
+          boxShadow: "0 0 0 2px rgba(245,181,72,0.60), 0 0 22px rgba(245,181,72,0.35), 0 0 48px rgba(245,181,72,0.15)",
+          animation: "bulk-glow-pulse 2s ease-in-out infinite",
+        } : undefined}
       >
+        {isBulkPending && (
+          <div className="absolute -top-1.5 left-3 z-20 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.18em]"
+            style={{ background: "rgba(245,181,72,0.95)", color: "#1A0F00" }}>
+            Tap to complete
+          </div>
+        )}
         <div className={frame.frame}>
           <div className={frame.imgWrap}>
             <div className="relative aspect-[3/4] w-full">

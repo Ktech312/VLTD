@@ -18,10 +18,20 @@ import {
   prepareImageBlob,
   saveImageBlobToIndexedDb,
 } from "@/lib/vaultImageStore";
+import {
+  getUniverses,
+  getCategories,
+  getSubcategories,
+  UNIVERSE_LABEL,
+  isUniverseKey,
+  type UniverseKey,
+} from "@/lib/taxonomy";
 
 /* ── Types ─────────────────────────────────────────────────────── */
 
 type Phase = "idle" | "loading" | "review" | "error";
+
+const UNIVERSES = getUniverses();
 
 type ReviewFields = {
   title: string;
@@ -230,20 +240,36 @@ export default function CapturePage() {
     }
   }, [capturedImageFile, fields, router]);
 
-  /* ── Go to full add page with pre-filled fields ── */
-  const handleEditMore = useCallback(() => {
-    const params = new URLSearchParams();
-    if (fields.title) params.set("title", fields.title);
-    if (fields.subtitle) params.set("subtitle", fields.subtitle);
-    if (fields.category) params.set("category", fields.category);
-    if (fields.universe) params.set("universe", fields.universe);
-    if (fields.grade) params.set("grade", fields.grade);
-    if (fields.certNumber) params.set("certNumber", fields.certNumber);
-    if (fields.description) params.set("notes", fields.description);
-    if (fields.number) params.set("number", fields.number);
-    const qs = params.toString();
-    router.push(`/vault/add${qs ? `?${qs}` : ""}`);
-  }, [fields, router]);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showExtraFields, setShowExtraFields] = useState(false);
+
+  /* ── Bulk capture ── */
+  const handleBulkCapture = useCallback(async (file: File, categoryLabel: string, subcategoryLabel: string) => {
+    try {
+      const id = newId();
+      const imagePatch = await persistCapturedImage(id, file);
+      const item = {
+        id,
+        title: "Bulk Item",
+        categoryLabel: categoryLabel || undefined,
+        subcategoryLabel: subcategoryLabel || undefined,
+        status: "COLLECTION" as const,
+        createdAt: Date.now(),
+        bulkPending: true,
+        ...imagePatch,
+      };
+      await appendItems([item]);
+      emitVaultUpdate();
+    } catch (err) {
+      console.error("[Bulk Capture] Save error:", err);
+    }
+  }, []);
+
+  const universeKey = isUniverseKey(fields.universe) ? fields.universe as UniverseKey : null;
+  const categoryOptions = universeKey ? getCategories(universeKey) : [];
+  const subcategoryOptions = universeKey && fields.categoryLabel
+    ? getSubcategories(universeKey, fields.categoryLabel)
+    : [];
 
   const badge = confidenceBadge(fields.confidence);
 
@@ -381,13 +407,49 @@ export default function CapturePage() {
               )}
             </div>
 
-            {/* Right: camera — visible in idle and loading phases */}
-            {(phase === "idle" || phase === "loading") && (
+            {/* Right: camera (idle) or analyzing preview (loading) */}
+            {phase === "idle" && (
               <div className="order-first lg:order-none">
                 <CaptureCamera
                   onCapture={handleCapture}
                   onOpenCamera={() => setIsCameraPanelOpen(true)}
                 />
+              </div>
+            )}
+            {phase === "loading" && (
+              <div className="order-first lg:order-none">
+                <div
+                  className="relative flex min-h-[260px] w-full flex-col items-center justify-center overflow-hidden rounded-[30px] border"
+                  style={{
+                    borderColor: "var(--theme-gold-border, rgba(245,181,72,0.35))",
+                    background: "radial-gradient(circle at 50% 30%, rgba(245,181,72,0.08), rgba(5,11,21,0.72) 70%)",
+                  }}
+                >
+                  {capturedImageFile && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={URL.createObjectURL(capturedImageFile)}
+                      alt="Captured"
+                      className="absolute inset-0 h-full w-full object-cover opacity-25"
+                    />
+                  )}
+                  <div className="relative flex flex-col items-center gap-3 px-6 text-center">
+                    <div
+                      className="flex h-14 w-14 items-center justify-center rounded-full"
+                      style={{
+                        background: "rgba(245,181,72,0.12)",
+                        border: "1px solid rgba(245,181,72,0.35)",
+                      }}
+                    >
+                      <span
+                        className="h-5 w-5 rounded-full border-[2.5px] border-transparent border-t-[#F5B548] animate-spin"
+                        style={{ borderTopColor: "#F5B548", borderRightColor: "rgba(245,181,72,0.3)" }}
+                      />
+                    </div>
+                    <div className="text-base font-black text-text-primary">Analyzing…</div>
+                    <div className="text-xs text-[color:var(--muted)]">Running vision + barcode scan</div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -410,62 +472,150 @@ export default function CapturePage() {
                   className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em]"
                   style={{ background: badge.bg, color: badge.color }}
                 >
-                  <span
-                    className="inline-block h-1.5 w-1.5 rounded-full"
-                    style={{ background: badge.color }}
-                  />
+                  <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: badge.color }} />
                   {badge.label}
                 </span>
               </div>
 
-              {/* Editable fields grid */}
-              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {(
-                  [
-                    ["Title", "title"],
-                    ["Category", "category"],
-                    ["Universe / Series", "universe"],
-                    ["Grade", "grade"],
-                    ["Cert Number", "certNumber"],
-                    ["Condition", "condition"],
-                  ] as [string, keyof ReviewFields][]
-                ).map(([label, key]) => (
-                  <div key={key}>
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">
-                      {label}
-                    </label>
-                    <input
-                      className="mt-1 w-full rounded-xl border bg-vault-card px-3 py-2 text-sm font-semibold text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]"
-                      style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}
-                      value={String(fields[key] ?? "")}
-                      onChange={(e) =>
-                        setFields((prev) => ({ ...prev, [key]: e.target.value }))
-                      }
-                      placeholder={`Enter ${label.toLowerCase()}`}
-                    />
-                  </div>
-                ))}
+              {/* ── Core fields: Title + Universe ── */}
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Title</label>
+                  <input
+                    className="mt-1 w-full rounded-xl border bg-vault-card px-3 py-2 text-sm font-semibold text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]"
+                    style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}
+                    value={fields.title}
+                    onChange={(e) => setFields((prev) => ({ ...prev, title: e.target.value }))}
+                    placeholder="Item title"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Universe</label>
+                  <select
+                    className="mt-1 w-full rounded-xl border bg-vault-card px-3 py-2 text-sm font-semibold text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]"
+                    style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}
+                    value={fields.universe}
+                    onChange={(e) => {
+                      const u = e.target.value as UniverseKey;
+                      const cats = getCategories(u);
+                      setFields((prev) => ({ ...prev, universe: u, categoryLabel: cats[0] ?? "", subcategoryLabel: "" }));
+                    }}
+                  >
+                    <option value="">— Select —</option>
+                    {UNIVERSES.map((u) => (
+                      <option key={u} value={u}>{UNIVERSE_LABEL[u]}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
-              {/* Description — full width */}
-              <div className="mt-3">
-                <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">
-                  Description / Notes
-                </label>
-                <textarea
-                  className="mt-1 w-full rounded-xl border bg-vault-card px-3 py-2 text-sm text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]"
-                  style={{
-                    borderColor: "var(--theme-border, rgba(245,181,72,0.12))",
-                    minHeight: 80,
-                    resize: "vertical",
-                  }}
-                  value={fields.description}
-                  onChange={(e) =>
-                    setFields((prev) => ({ ...prev, description: e.target.value }))
-                  }
-                  placeholder="Add notes about this item"
-                />
+              {/* ── Category + Subcategory ── */}
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Category</label>
+                  <select
+                    className="mt-1 w-full rounded-xl border bg-vault-card px-3 py-2 text-sm font-semibold text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]"
+                    style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}
+                    value={fields.categoryLabel}
+                    onChange={(e) => {
+                      const cat = e.target.value;
+                      const subs = universeKey ? getSubcategories(universeKey, cat) : [];
+                      setFields((prev) => ({ ...prev, categoryLabel: cat, subcategoryLabel: subs[0] ?? "" }));
+                    }}
+                    disabled={!universeKey}
+                  >
+                    <option value="">— Select Category —</option>
+                    {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Subcategory</label>
+                  <select
+                    className="mt-1 w-full rounded-xl border bg-vault-card px-3 py-2 text-sm font-semibold text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]"
+                    style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}
+                    value={fields.subcategoryLabel}
+                    onChange={(e) => setFields((prev) => ({ ...prev, subcategoryLabel: e.target.value }))}
+                    disabled={subcategoryOptions.length === 0}
+                  >
+                    <option value="">— Select Subcategory —</option>
+                    {subcategoryOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
               </div>
+
+              {/* ── Advanced toggle ── */}
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAdvanced((v) => !v)}
+                  className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)] transition hover:text-[color:var(--muted)]"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+                    className={`transition-transform ${showAdvanced ? "rotate-180" : ""}`}>
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                  {showAdvanced ? "Hide" : "Show"} Advanced Fields
+                </button>
+
+                {showAdvanced && (
+                  <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                    {(
+                      [
+                        ["Grade", "grade"],
+                        ["Cert Number", "certNumber"],
+                        ["Condition", "condition"],
+                      ] as [string, keyof ReviewFields][]
+                    ).map(([label, key]) => (
+                      <div key={key}>
+                        <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">{label}</label>
+                        <input
+                          className="mt-1 w-full rounded-xl border bg-vault-card px-3 py-2 text-sm font-semibold text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]"
+                          style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}
+                          value={String(fields[key] ?? "")}
+                          onChange={(e) => setFields((prev) => ({ ...prev, [key]: e.target.value }))}
+                          placeholder={`Enter ${label.toLowerCase()}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* ── Inline expand: Extra Fields (#21 fix) ── */}
+              {showExtraFields && (
+                <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.15))" }}>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)] mb-3">More Fields</div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {(
+                      [
+                        ["Subtitle", "subtitle"],
+                        ["Number / Edition", "number"],
+                      ] as [string, keyof ReviewFields][]
+                    ).map(([label, key]) => (
+                      <div key={key}>
+                        <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">{label}</label>
+                        <input
+                          className="mt-1 w-full rounded-xl border bg-vault-card px-3 py-2 text-sm font-semibold text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]"
+                          style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}
+                          value={String(fields[key] ?? "")}
+                          onChange={(e) => setFields((prev) => ({ ...prev, [key]: e.target.value }))}
+                          placeholder={`Enter ${label.toLowerCase()}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3">
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Description / Notes</label>
+                    <textarea
+                      className="mt-1 w-full rounded-xl border bg-vault-card px-3 py-2 text-sm text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]"
+                      style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.12))", minHeight: 72, resize: "vertical" }}
+                      value={fields.description}
+                      onChange={(e) => setFields((prev) => ({ ...prev, description: e.target.value }))}
+                      placeholder="Add notes about this item"
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Action buttons */}
               <div className="mt-5 flex flex-wrap gap-3">
@@ -473,19 +623,16 @@ export default function CapturePage() {
                   type="button"
                   onClick={handleSave}
                   className="inline-flex min-h-12 items-center justify-center rounded-full px-6 text-sm font-black text-[#0B0B0B]"
-                  style={{
-                    background: "var(--theme-gold-gradient)",
-                    boxShadow: "var(--theme-gold-glow)",
-                  }}
+                  style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
                 >
                   Save to Vault
                 </button>
                 <button
                   type="button"
-                  onClick={handleEditMore}
+                  onClick={() => setShowExtraFields((v) => !v)}
                   className="inline-flex min-h-12 items-center justify-center rounded-full border border-[color:var(--border)] bg-vault-card px-6 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
                 >
-                  Edit More Fields
+                  {showExtraFields ? "Less Fields" : "Edit More Fields"}
                 </button>
                 <button
                   type="button"
@@ -517,6 +664,7 @@ export default function CapturePage() {
             description="Use the guided camera to frame, crop, and improve this item before Smart Scan identifies it."
             universe={fields.universe}
             onCapture={handleCapture}
+            onBulkCapture={handleBulkCapture}
             onClose={() => setIsCameraPanelOpen(false)}
             onUseFileInstead={() => {
               setIsCameraPanelOpen(false);

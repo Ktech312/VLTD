@@ -2194,3 +2194,7 @@ main {
 /* Scrollbar styling */
 /* scrollbar base — overridden by theme-override.css below */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
+@keyframes bulk-glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(245,181,72,0.55), 0 0 22px rgba(245,181,72,0.30), 0 0 48px rgba(245,181,72,0.12); }
+  50%       { box-shadow: 0 0 0 2px rgba(245,181,72,0.90), 0 0 32px rgba(245,181,72,0.55), 0 0 72px rgba(245,181,72,0.25); }
+}
