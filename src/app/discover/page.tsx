@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
+import DiscoverSwipe from "@/components/DiscoverSwipe";
 
 type GalleryCategory = "All" | "TCG" | "Sports" | "Music" | "Jewelry" | "Games" | "Pop Culture" | "Built & Botany" | "Misc";
 
@@ -166,6 +167,7 @@ export default function DiscoverPage() {
   const [galleries, setGalleries] = useState<PublicGallery[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [swipeOpen, setSwipeOpen] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -268,7 +270,16 @@ export default function DiscoverPage() {
           <div className="pointer-events-none absolute -right-10 -top-10 h-56 w-56 rounded-full" style={{ background: "radial-gradient(circle, rgba(245,181,72,0.10) 0%, transparent 70%)", filter: "blur(30px)" }} />
           <div className="relative">
             <div className="text-[11px] tracking-[0.22em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>DISCOVER</div>
-            <h1 className="mt-1 text-3xl font-black tracking-[-0.04em]" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>Explore Exhibitions</h1>
+            <div className="mt-1 flex items-center justify-between gap-3">
+              <h1 className="text-3xl font-black tracking-[-0.04em]" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>Explore Galleries</h1>
+              <button
+                onClick={() => setSwipeOpen(true)}
+                className="flex min-h-[44px] items-center gap-1.5 rounded-full px-4 text-sm font-black transition hover:brightness-110 active:scale-95"
+                style={{ background: "linear-gradient(135deg, #8B6914 0%, #C8941F 30%, #F5B548 60%, #C8941F 100%)", color: "#0B0B0B" }}
+              >
+                🃏 The Flip
+              </button>
+            </div>
             <p className="mt-1 max-w-xl text-sm leading-6" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
               Browse public exhibitions from collectors across every universe. Filter by category or search by name.
             </p>
@@ -392,7 +403,7 @@ export default function DiscoverPage() {
           <MarketPulse galleries={galleries} />
         )}
 
-        {/* All Exhibitions grid — no cap */}
+        {/* All Galleries grid — no cap */}
         {!loading && filtered.length > 0 && (
           <section className="mt-6">
             <div className="mb-3 flex items-baseline justify-between gap-3">
@@ -446,7 +457,7 @@ export default function DiscoverPage() {
                     </div>
                   </div>
                   <div className="absolute inset-0 flex items-center justify-center rounded-[18px] opacity-0 transition group-hover:opacity-100 pointer-events-none" style={{ background: "rgba(0,0,0,0.55)" }}>
-                    <span className="rounded-full px-4 py-2 text-xs font-bold" style={{ background: "var(--theme-gold, #F5B548)", color: "#0B0B0B" }}>View Exhibition</span>
+                    <span className="rounded-full px-4 py-2 text-xs font-bold" style={{ background: "var(--theme-gold, #F5B548)", color: "#0B0B0B" }}>View Gallery</span>
                   </div>
                 </div>
               ))}
@@ -459,7 +470,7 @@ export default function DiscoverPage() {
           <section className="mt-10 flex flex-col items-center gap-3 rounded-[20px] px-6 py-8 text-center"
             style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", border: "1px solid var(--theme-border, rgba(245,181,72,0.12))" }}>
             <div className="text-[11px] tracking-[0.22em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>BUILD YOUR OWN</div>
-            <h2 className="text-xl font-black" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>Create a public exhibition</h2>
+            <h2 className="text-xl font-black" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>Create a public gallery</h2>
             <p className="max-w-sm text-sm leading-6" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
               Vault your collection, curate a gallery, and share it with one link.
             </p>
@@ -477,6 +488,7 @@ export default function DiscoverPage() {
         )}
 
       </div>
+      <DiscoverSwipe open={swipeOpen} onClose={() => setSwipeOpen(false)} />
     </main>
   );
 }
