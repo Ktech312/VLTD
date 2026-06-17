@@ -1,0 +1,3 @@
+# Normalise line endings: store as LF in git, check out as-is on all platforms.
+# This stops Windows FUSE-mount CRLF noise from showing as dirty files.
+* text=auto eol=lf
