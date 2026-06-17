@@ -10,6 +10,7 @@ import { getOnboardingStatus, updateProfile } from "@/lib/auth";
 import { syncPublicProfile } from "@/lib/publicProfile";
 import { processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { syncVaultItemsFromSupabase } from "@/lib/vaultModel";
+import { loadWatchlist, removeFromWatchlist, type WatchlistItem } from "@/lib/watchlistModel";
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
 
 export default function AccountPage() {
@@ -28,6 +29,7 @@ export default function AccountPage() {
   const [syncStatus, setSyncStatus] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -53,7 +55,8 @@ export default function AccountPage() {
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load account.");
       } finally {
-        setLoading(false);
+        setWatchlist(loadWatchlist());
+      setLoading(false);
       }
     }
     void load();
@@ -87,6 +90,14 @@ export default function AccountPage() {
       setIsMigrating(false);
     }
   }
+
+  useEffect(() => {
+    function onWatchlistUpdate() {
+      setWatchlist(loadWatchlist());
+    }
+    window.addEventListener("vltd:watchlist-updated", onWatchlistUpdate);
+    return () => window.removeEventListener("vltd:watchlist-updated", onWatchlistUpdate);
+  }, []);
 
   async function handleSave() {
     if (!profileId) return;
@@ -351,6 +362,66 @@ export default function AccountPage() {
             <p className="mt-3 text-sm text-[color:var(--muted)]">{syncStatus}</p>
           ) : null}
         </section>
+
+        {/* Watchlist */}
+        <section className="mt-6 rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
+          <div className="flex items-center justify-between px-1 mb-4">
+            <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)]">
+              Watchlist
+            </div>
+            {watchlist.length > 0 && (
+              <span className="rounded-full px-2.5 py-0.5 text-xs font-bold" style={{ background: "rgba(245,181,72,0.15)", color: "var(--theme-gold, #F5B548)" }}>
+                {watchlist.length}
+              </span>
+            )}
+          </div>
+
+          {watchlist.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 py-6 text-center">
+              <div className="text-2xl">🃏</div>
+              <p className="text-sm text-[color:var(--muted)]">Nothing saved yet — use The Flip in Discover to save items you like.</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {watchlist.map((item) => (
+                <div key={item.id} className="flex items-center gap-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--bg)] p-3">
+                  {item.imageFrontUrl ? (
+                    <img
+                      src={item.imageFrontUrl}
+                      alt={item.title}
+                      className="h-14 w-14 shrink-0 rounded-xl object-cover"
+                    />
+                  ) : (
+                    <div className="h-14 w-14 shrink-0 rounded-xl bg-white/8 flex items-center justify-center text-xl">🎴</div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-semibold text-[color:var(--fg)]">{item.title}</div>
+                    {item.subtitle && <div className="truncate text-xs text-[color:var(--muted)]">{item.subtitle}</div>}
+                    <div className="mt-0.5 flex items-center gap-2">
+                      {item.grade && (
+                        <span className="rounded px-1.5 py-0.5 text-[10px] font-bold" style={{ background: "rgba(245,181,72,0.18)", color: "var(--theme-gold, #F5B548)" }}>{item.grade}</span>
+                      )}
+                      {item.collectorName && (
+                        <span className="text-[11px] text-[color:var(--muted2)]">by {item.collectorName}</span>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeFromWatchlist(item.id)}
+                    className="ml-1 grid h-9 w-9 shrink-0 place-items-center rounded-full text-[color:var(--muted)] transition hover:bg-red-500/12 hover:text-red-400"
+                    aria-label="Remove from watchlist"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
       </div>
     </main>
   );
