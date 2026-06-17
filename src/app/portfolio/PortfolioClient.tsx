@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { loadGoals } from "@/lib/collectionGoals";
-import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+import { UNIVERSE_LABEL, UNIVERSE_KEYS, type UniverseKey } from "@/lib/taxonomy";
 import { loadItemsOrSeed, saveItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
 
 import NeonBarChart from "@/components/ui/NeonBarChart";
@@ -21,7 +21,7 @@ const LS_RANK_MODE = "vltd_rank_mode";
 
 type PortfolioView = "bars" | "donut" | "sparklines";
 const LS_PORTFOLIO_VIEW = "vltd_portfolio_view";
-const PORTFOLIO_UNIVERSES: UniverseKey[] = ["POP_CULTURE", "SPORTS", "TCG", "MUSIC", "JEWELRY_APPAREL", "GAMES", "MISC"];
+const PORTFOLIO_UNIVERSES = UNIVERSE_KEYS;
 
 function clamp(n: number) {
   return Number.isFinite(n) ? n : 0;

@@ -12,7 +12,7 @@ import {
   prepareImageBlob,
   saveImageBlobToIndexedDb,
 } from "@/lib/vaultImageStore";
-import { getCategories, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+import { getCategories, UNIVERSE_KEYS, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 
 type FrameType = "card" | "book" | "jewelry" | "art";
 type LockStatus = "scanning" | "locking" | "locked" | "snapped";
@@ -45,15 +45,8 @@ const FRAME_LABELS: Record<FrameType, string> = {
   art: "Art",
 };
 
-const UNIVERSES: UniverseKey[] = [
-  "TCG",
-  "SPORTS",
-  "POP_CULTURE",
-  "MUSIC",
-  "GAMES",
-  "JEWELRY_APPAREL",
-  "MISC",
-];
+// Scan universes derived from taxonomy (BUILT_BOTANY excluded — scan AI not tuned for it)
+const UNIVERSES = UNIVERSE_KEYS.filter((k) => k !== "BUILT_BOTANY");
 
 function categoryCode(label: string) {
   return (

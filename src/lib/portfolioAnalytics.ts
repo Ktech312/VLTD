@@ -1,6 +1,6 @@
 // Path: src/lib/portfolioAnalytics.ts
 import type { VaultItem } from "@/lib/vaultModel";
-import type { UniverseKey } from "@/lib/taxonomy";
+import { UNIVERSE_KEYS, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 
 export type RankMode = "gain" | "value";
 export type AllocationMode = "usd" | "pct";
@@ -30,15 +30,7 @@ export function roiPct(i: VaultItem) {
 
 export function normUniverse(u: any): UniverseKey {
   const v = String(u ?? "").toUpperCase();
-  if (
-    v === "POP_CULTURE" ||
-    v === "SPORTS" ||
-    v === "TCG" ||
-    v === "MUSIC" ||
-    v === "JEWELRY_APPAREL" ||
-    v === "GAMES" ||
-    v === "MISC"
-  ) {
+  if (isUniverseKey(v)) {
     return v as UniverseKey;
   }
   return "MISC";
@@ -60,7 +52,7 @@ export function topN(items: VaultItem[], mode: RankMode, n: number) {
 }
 
 export function universeRows(items: VaultItem[], mode: RankMode) {
-  const universes: UniverseKey[] = ["POP_CULTURE", "SPORTS", "TCG", "MUSIC", "JEWELRY_APPAREL", "GAMES", "MISC"];
+  const universes: UniverseKey[] = UNIVERSE_KEYS;
   return universes.map((u) => {
     const pool = items.filter((i) => normUniverse((i as any).universe) === u);
     const metric = mode === "value" ? pool.reduce((s, i) => s + value(i), 0) : pool.reduce((s, i) => s + gain(i), 0);

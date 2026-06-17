@@ -79,7 +79,7 @@ type Parsed = {
 
 function IconHome({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
       <path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9.5Z"
         stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
         fill={active ? "rgba(245,181,72,0.14)" : "none"} />
@@ -90,7 +90,7 @@ function IconHome({ active }: { active: boolean }) {
 
 function IconVault({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
       <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.75"
         fill={active ? "rgba(245,181,72,0.10)" : "none"} />
       <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.75" />
@@ -101,7 +101,7 @@ function IconVault({ active }: { active: boolean }) {
 
 function IconExhibitions({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
       <path d="M3 21h18" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
       <path d="M5 21V11M19 21V11" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
       <path d="M2 11h20" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
@@ -114,7 +114,7 @@ function IconExhibitions({ active }: { active: boolean }) {
 
 function IconDiscover({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
       <circle cx="11" cy="11" r="7.5" stroke="currentColor" strokeWidth="1.75"
         fill={active ? "rgba(245,181,72,0.10)" : "none"} />
       <path d="M16.5 16.5 21 21" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
@@ -125,7 +125,7 @@ function IconDiscover({ active }: { active: boolean }) {
 
 function IconActivity({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
       <rect x="3" y="13" width="3.5" height="8" rx="1" stroke="currentColor" strokeWidth="1.75"
         fill={active ? "rgba(245,181,72,0.20)" : "rgba(160,149,107,0.14)"} />
       <rect x="8.5" y="9" width="3.5" height="12" rx="1" stroke="currentColor" strokeWidth="1.75"
@@ -138,7 +138,7 @@ function IconActivity({ active }: { active: boolean }) {
 
 function IconWatchlist({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
       <path d="M12 21C12 21 3.5 14 3.5 8.5A4.5 4.5 0 0 1 12 6a4.5 4.5 0 0 1 8.5 2.5C20.5 14 12 21 12 21Z"
         stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
         fill={active ? "rgba(245,181,72,0.14)" : "none"} />
@@ -148,7 +148,7 @@ function IconWatchlist({ active }: { active: boolean }) {
 
 function IconGoals({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
       <circle
         cx="12"
         cy="12"
@@ -165,7 +165,7 @@ function IconGoals({ active }: { active: boolean }) {
 
 function IconLearn({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
       <path d="M4 4h7a1 1 0 0 1 1 1v14a1 1 0 0 0-1-1H4V4Z"
         stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
         fill={active ? "rgba(245,181,72,0.14)" : "none"} />
@@ -179,7 +179,7 @@ function IconLearn({ active }: { active: boolean }) {
 
 function IconInsights({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "#A0956B" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
       <path d="M3 17l4.5-5.5 4 3.5 4.5-6 4.5 3.5"
         stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M3 20h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
@@ -198,7 +198,7 @@ function IconSearch({ className = "h-4 w-4" }: { className?: string }) {
 
 function IconBell() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: "#A0956B" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: "var(--muted2, #A0956B)" }}>
       <path d="M15 17H9a3 3 0 0 0 6 0Z" stroke="currentColor" strokeWidth="1.75" />
       <path d="M4 17h16M12 3v1m0 0a7 7 0 0 1 7 7v3.5H5V11a7 7 0 0 1 7-7Z"
         stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
@@ -226,7 +226,7 @@ const NAV_ITEMS = [
     desc: "Your private collection inventory.",
   },
   {
-    label: "Exhibitions", href: "/museum",     icon: IconExhibitions, exact: false,
+    label: "Galleries",   href: "/museum",     icon: IconExhibitions, exact: false,
     desc: "Curate and display collections for the world.",
   },
   {
@@ -443,8 +443,8 @@ function TopNavInner() {
                   >
                     <Icon active={active} />
                     <span
-                      className="text-[10px] font-semibold tracking-[0.04em] leading-none whitespace-nowrap"
-                      style={{ color: active ? "#F5B548" : "#A0956B" }}
+                      className="text-[11px] font-semibold tracking-[0.04em] leading-none whitespace-nowrap"
+                      style={{ color: active ? "#F5B548" : "var(--muted, #C4B07A)" }}
                     >
                       {item.label}
                     </span>
@@ -473,7 +473,7 @@ function TopNavInner() {
                 style={{
                   background: guideOpen ? "rgba(245,181,72,0.12)" : "rgba(255,255,255,0.05)",
                   border: `1px solid ${guideOpen ? "rgba(245,181,72,0.35)" : "rgba(255,255,255,0.10)"}`,
-                  color: guideOpen ? "#F5B548" : "#A0956B",
+                  color: guideOpen ? "#F5B548" : "var(--muted2, #A0956B)",
                 }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-label="Guide">
@@ -507,7 +507,7 @@ function TopNavInner() {
                   transition: "width 0.2s",
                 }}
               >
-                <button type="submit" className="shrink-0" style={{ color: "#5A5040" }} aria-label="Search">
+                <button type="submit" className="shrink-0" style={{ color: "var(--muted, #8A7A5A)" }} aria-label="Search">
                   <IconSearch className="h-3.5 w-3.5" />
                 </button>
                 <input
@@ -520,7 +520,7 @@ function TopNavInner() {
                   style={{ color: "var(--theme-text-primary, #F0EAD6)" }}
                 />
                 <span className="shrink-0 hidden lg:inline text-[11px] rounded px-1.5 py-0.5"
-                  style={{ background: "rgba(255,255,255,0.07)", color: "#5A5040", fontFamily: "monospace" }}>
+                  style={{ background: "rgba(255,255,255,0.07)", color: "var(--muted, #8A7A5A)", fontFamily: "monospace" }}>
                   ⌘K
                 </span>
               </div>
@@ -538,7 +538,7 @@ function TopNavInner() {
                 {/* Zero badge: shown on hover only */}
                 <span
                   className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold opacity-0 transition-opacity group-hover:opacity-100"
-                  style={{ background: "rgba(255,255,255,0.12)", color: "#A0956B", lineHeight: 1 }}
+                  style={{ background: "rgba(255,255,255,0.12)", color: "var(--muted2, #A0956B)", lineHeight: 1 }}
                 >
                   0
                 </span>
@@ -583,7 +583,7 @@ function TopNavInner() {
             style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.10))", background: "var(--theme-nav-bg, rgba(11,11,11,0.98))" }}
           >
             <div className="mx-auto max-w-[1400px] px-6 py-3">
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.28em]" style={{ color: "#5A5040" }}>
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.28em]" style={{ color: "var(--muted, #8A7A5A)" }}>
                 Explore VLTD
               </p>
               <div className="grid grid-cols-4 gap-2 lg:grid-cols-10">
@@ -616,7 +616,7 @@ function TopNavInner() {
                         <p className="text-[11px] font-bold leading-none" style={{ color: active ? "#F5B548" : "var(--theme-text-primary, #F0EAD6)" }}>
                           {item.label}
                         </p>
-                        <p className="mt-0.5 line-clamp-2 text-[10px] leading-tight" style={{ color: "#5A5040" }}>
+                        <p className="mt-0.5 line-clamp-2 text-[10px] leading-tight" style={{ color: "var(--muted, #8A7A5A)" }}>
                           {item.desc}
                         </p>
                       </div>
@@ -641,7 +641,7 @@ function TopNavInner() {
                   </div>
                   <div>
                     <p className="text-[10px] font-black leading-tight" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
-                      Your Collection.<br />Your Exhibitions.<br />Your Legacy.
+                      Your Collection.<br />Your Galleries.<br />Your Legacy.
                     </p>
                     <Link
                       href="/about"
@@ -686,7 +686,7 @@ function TopNavInner() {
                 <div className="truncate text-sm font-semibold" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
                   {activeProfile?.display_name || accountEmail || "Guest"}
                 </div>
-                <div className="mt-0.5 truncate text-xs" style={{ color: "#A0956B" }}>
+                <div className="mt-0.5 truncate text-xs" style={{ color: "var(--muted2, #A0956B)" }}>
                   {accountEmail || "Not signed in"}
                 </div>
               </div>

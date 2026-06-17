@@ -739,7 +739,7 @@ export default function HomeClient() {
               )}
             </div>
             <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
-              <CardHd label="Active Exhibitions" href="/museum" linkText="All" />
+              <CardHd label="Active Galleries" href="/museum" linkText="All" />
               {galleries.length > 0 ? (
                 <FeaturedGalleryCarousel galleries={galleries} />
               ) : (

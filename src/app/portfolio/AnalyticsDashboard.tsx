@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { PillSelect } from "@/components/ui/PillSelect";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
-import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+import { UNIVERSE_LABEL, UNIVERSE_KEYS, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import { loadItemsOrSeed, saveItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { readHistory, sliceHistory, takeDailySnapshotIfNeeded } from "@/lib/valueHistory";
 
@@ -59,15 +59,7 @@ function fmtMonthDay(ms: number) {
 
 function normUniverse(u: any): UniverseKey {
   const v = String(u ?? "").toUpperCase();
-  if (
-    v === "POP_CULTURE" ||
-    v === "SPORTS" ||
-    v === "TCG" ||
-    v === "MUSIC" ||
-    v === "JEWELRY_APPAREL" ||
-    v === "GAMES" ||
-    v === "MISC"
-  ) {
+  if (isUniverseKey(v)) {
     return v as UniverseKey;
   }
   return "MISC";
@@ -430,7 +422,7 @@ export function AnalyticsDashboard(props: {
   const breakdown = useMemo(() => {
     // ALL => universe
     if (scope === "all") {
-      const universes: UniverseKey[] = ["POP_CULTURE", "SPORTS", "TCG", "MUSIC", "JEWELRY_APPAREL", "GAMES", "MISC"];
+      const universes: UniverseKey[] = UNIVERSE_KEYS;
       const rows = universes.map((u) => {
         const pool = scoped.filter((i) => normUniverse((i as any).universe) === u);
         const value = pool.reduce((s, i) => s + clamp(Number(i.currentValue ?? 0)), 0);

@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { LockKeyhole } from "lucide-react";
 import { isNotable, notableReason } from "@/lib/itemIntelligence";
 import { itemCurrentValue, itemProfit, itemTotalCost } from "@/lib/portfolioMetrics";
-import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+import { UNIVERSE_LABEL, UNIVERSE_KEYS, type UniverseKey } from "@/lib/taxonomy";
 import type { VaultItem as ModelItem } from "@/lib/vaultModel";
 
 function money(n: number) {
@@ -649,15 +649,7 @@ function UniverseSection({
   );
 }
 
-const UNIVERSE_ORDER: UniverseKey[] = [
-  "TCG",
-  "SPORTS",
-  "POP_CULTURE",
-  "MUSIC",
-  "GAMES",
-  "JEWELRY_APPAREL",
-  "MISC",
-];
+const UNIVERSE_ORDER = UNIVERSE_KEYS;
 
 export default function VaultMuseumView({
   items,

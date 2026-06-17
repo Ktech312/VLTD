@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
 import DiscoverSwipe from "@/components/DiscoverSwipe";
-import { type UniverseKey, UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
+import { type UniverseKey, UNIVERSE_KEYS, UNIVERSE_LABEL, UNIVERSE_ICON } from "@/lib/taxonomy";
 
 const TABS: Array<"All" | UniverseKey> = ["All", ...UNIVERSE_KEYS];
 
@@ -62,10 +62,7 @@ function rowToGallery(row: Record<string, unknown>): PublicGallery {
 
 // ─── Market Pulse: category risers/droppers based on gallery view momentum ───
 
-const CATEGORY_ICONS: Record<string, string> = {
-  TCG: "🃏", Sports: "🏆", Music: "🎵", Jewelry: "💎",
-  Games: "🎮", "Pop Culture": "🌟", "Built & Botany": "🌿", Misc: "📦",
-};
+// Category icons sourced from taxonomy.ts UNIVERSE_ICON
 
 type CategoryPulse = {
   category: string;
@@ -92,7 +89,7 @@ function MarketPulse({ galleries }: { galleries: PublicGallery[] }) {
     return Array.from(map.entries())
       .map(([category, data]) => ({
         category,
-        icon: CATEGORY_ICONS[category] ?? "📦",
+        icon: UNIVERSE_ICON[category as UniverseKey] ?? "📦",
         totalViews: data.views,
         galleryCount: data.count,
         topTitle: data.topTitle,

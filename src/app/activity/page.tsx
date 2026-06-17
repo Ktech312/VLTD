@@ -291,7 +291,7 @@ export default function ActivityPage() {
               </h2>
               <div className="mt-4 grid gap-3">
                 {[
-                  "Comments on public exhibitions",
+                  "Comments on public galleries",
                   "Appreciations on featured items",
                   "New followers and collector updates",
                   "Gallery publish and share events",

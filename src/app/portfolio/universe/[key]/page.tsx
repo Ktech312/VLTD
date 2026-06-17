@@ -6,7 +6,7 @@ import { use, useEffect, useMemo, useState } from "react";
 import ItemIntelligencePanel from "@/components/ItemIntelligencePanel";
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
-import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+import { UNIVERSE_LABEL, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import { loadItemsOrSeed, saveItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
 
 type RankMode = "gain" | "value";
@@ -118,15 +118,7 @@ function downloadTextFile(filename: string, content: string, mime = "text/plain"
 
 function normUniverse(u: any): UniverseKey {
   const v = String(u ?? "").toUpperCase();
-  if (
-    v === "POP_CULTURE" ||
-    v === "SPORTS" ||
-    v === "TCG" ||
-    v === "MUSIC" ||
-    v === "JEWELRY_APPAREL" ||
-    v === "GAMES" ||
-    v === "MISC"
-  ) {
+  if (isUniverseKey(v)) {
     return v as UniverseKey;
   }
   return "MISC";

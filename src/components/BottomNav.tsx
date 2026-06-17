@@ -80,14 +80,14 @@ type Tab = {
 };
 
 const TABS: (Tab | null)[] = [
-  { label: "Exhibits",  href: "/museum",   icon: IconExhibitions, exact: false },
+  { label: "Galleries", href: "/museum",   icon: IconExhibitions, exact: false },
   { label: "Vault",     href: "/vault",    icon: IconVault,       exact: false },
   null, // gold + button (capture)
   { label: "Discover",  href: "/discover", icon: IconDiscover,    exact: false },
   { label: "Activity",  href: "/portfolio", icon: IconActivity,   exact: false },
 ];
 
-// Guest gallery routes (/museum/[id]/guest) should highlight Discover, not Exhibits
+// Guest gallery routes (/museum/[id]/guest) should highlight Discover, not Galleries
 function isGuestGalleryRoute(pathname: string) {
   const parts = pathname.split("/");
   return parts.length >= 4 && parts[1] === "museum" && parts[3] === "guest";
