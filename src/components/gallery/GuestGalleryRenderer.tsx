@@ -349,13 +349,6 @@ export default function GuestGalleryRenderer({
   // Precompute drop handlers to keep arrow functions out of JSX attribute expressions
   const gridDropMain = makeGridDrop(model.galleryItems.map((gi) => gi.id)) ?? undefined;
 
-  // Section-filtered items for non-embedded public view
-  const displayItems: VaultItem[] = !embedded && sectionViews.length > 0
-    ? (sectionViews[Math.min(selectedSectionIdx, sectionViews.length - 1)]?.items ?? model.galleryItems)
-    : model.galleryItems;
-  const backgroundImageUrl = model.background.url;
-  const coverImageUrl = typeof model.gallery?.coverImage === "string" ? model.gallery.coverImage.trim() : "";
-  const shelfSlotLayout = getShelfSlotLayout(model);
   const sectionViews = getGallerySections(model.gallery)
     .map((section) => ({
       section,
@@ -364,6 +357,14 @@ export default function GuestGalleryRenderer({
         .filter(Boolean) as VaultItem[],
     }))
     .filter((entry) => entry.items.length > 0);
+
+  // Section-filtered items for non-embedded public view
+  const displayItems: VaultItem[] = !embedded && sectionViews.length > 0
+    ? (sectionViews[Math.min(selectedSectionIdx, sectionViews.length - 1)]?.items ?? model.galleryItems)
+    : model.galleryItems;
+  const backgroundImageUrl = model.background.url;
+  const coverImageUrl = typeof model.gallery?.coverImage === "string" ? model.gallery.coverImage.trim() : "";
+  const shelfSlotLayout = getShelfSlotLayout(model);
 
   return (
     <main
