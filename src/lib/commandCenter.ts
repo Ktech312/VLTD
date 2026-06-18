@@ -127,7 +127,7 @@ export function getBaseCommands(): CommandItem[] {
     },
     {
       id: "nav_new_gallery",
-      label: "Create Gallery",
+      label: "Create Exhibition",
       subtitle: "Start a new curated exhibit",
       href: "/museum/new",
       section: "action",

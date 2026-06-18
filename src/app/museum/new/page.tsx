@@ -102,7 +102,7 @@ export default function NewMuseumGalleryPage() {
             </div>
 
             <h1 className="mt-2 text-3xl font-semibold sm:text-[2.2rem]">
-              Create Gallery
+              Create Exhibition
             </h1>
 
             <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
@@ -124,7 +124,7 @@ export default function NewMuseumGalleryPage() {
 
               <div className="rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                  CURRENT GALLERIES
+                  CURRENT EXHIBITIONS
                 </div>
                 <div className="mt-2 text-2xl font-semibold">{existingGalleries.length}</div>
                 <div className="mt-1 text-sm text-[color:var(--muted)]">
@@ -149,13 +149,13 @@ export default function NewMuseumGalleryPage() {
 
         <section className="mt-6 rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
-            GALLERY SETUP
+            EXHIBITION SETUP
           </div>
           <h2 className="mt-2 text-xl font-semibold">Basic Information</h2>
 
           <div className="mt-5 grid gap-4">
             <div>
-              <label className="mb-2 block text-sm font-medium">Gallery Title</label>
+              <label className="mb-2 block text-sm font-medium">Exhibition Title</label>
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -295,7 +295,7 @@ export default function NewMuseumGalleryPage() {
               disabled={!canCreate || !safeTrim(title) || submitting}
               className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {submitting ? "Creating..." : "Create Gallery"}
+              {submitting ? "Creating..." : "Create Exhibition"}
             </button>
 
             <Link

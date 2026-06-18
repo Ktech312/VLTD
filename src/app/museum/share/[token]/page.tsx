@@ -240,7 +240,7 @@ function GateCard({
       <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
         <div className="w-full rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
-            SHARED GALLERY
+            SHARED EXHIBITION
           </div>
           <h1 className="mt-3 text-3xl font-semibold">{gallery.title}</h1>
           {gallery.description?.trim() ? (
@@ -269,7 +269,7 @@ function GateCard({
                 onClick={onEnterGuest}
                 className="vltd-pill-main-glow inline-flex min-h-[48px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-6 py-3 text-sm font-semibold text-[color:var(--fg)]"
               >
-                Continue to Gallery
+                Continue to Exhibition
               </button>
             )}
 
@@ -471,7 +471,7 @@ export default function SharedGalleryPage() {
           homeHref: "/museum",
         },
         access: {
-          modeLabel: "Shared Gallery",
+          modeLabel: "Shared Exhibition",
           isPublic: accessMode !== "registered_users",
         },
         itemsAreResolvedGalleryItems: true,
@@ -511,7 +511,7 @@ export default function SharedGalleryPage() {
         <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
           <div className="rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
-              SHARED GALLERY
+              SHARED EXHIBITION
             </div>
             <h1 className="mt-3 text-2xl font-semibold">Link not available</h1>
             <p className="mt-3 text-sm text-[color:var(--muted)]">
@@ -537,9 +537,9 @@ export default function SharedGalleryPage() {
         <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
           <div className="w-full rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
-              SHARED GALLERY
+              SHARED EXHIBITION
             </div>
-            <h1 className="mt-3 text-2xl font-semibold">Private Gallery</h1>
+            <h1 className="mt-3 text-2xl font-semibold">Private Exhibition</h1>
             <p className="mt-3 text-sm text-[color:var(--muted)]">
               This gallery is private and cannot be viewed from a shared link.
             </p>

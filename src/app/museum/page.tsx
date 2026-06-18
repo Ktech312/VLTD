@@ -278,10 +278,10 @@ export default function MuseumPage() {
       const publicUrl = await uploadGalleryCover(coverTargetGallery.id, file);
       updateGallery({ ...coverTargetGallery, coverImage: publicUrl });
       refresh();
-      setStatusMessage("Gallery cover updated.");
+      setStatusMessage("Exhibition cover updated.");
     } catch (error) {
       console.error("Failed uploading gallery cover:", error);
-      setStatusMessage(error instanceof Error ? error.message : "Gallery cover upload failed.");
+      setStatusMessage(error instanceof Error ? error.message : "Exhibition cover upload failed.");
     } finally {
       setIsUploadingCover(false);
       setCoverTargetGallery(null);
@@ -293,7 +293,7 @@ export default function MuseumPage() {
     updateGallery(gallerySettings);
     refresh();
     setGallerySettings(null);
-    setStatusMessage("Gallery settings updated.");
+    setStatusMessage("Exhibition settings updated.");
   }
 
   return (
@@ -515,7 +515,7 @@ export default function MuseumPage() {
                     color: "#0B0B0B",
                   }}
                 >
-                  Create First Gallery
+                  Create First Exhibition
                 </Link>
                 <Link
                   href="/vault"

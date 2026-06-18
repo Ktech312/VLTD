@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 export const metadata: Metadata = {
-  title: "Galleries — VLTD",
+  title: "Exhibitions — VLTD",
   description: "Your curated exhibitions and galleries",
 };
 

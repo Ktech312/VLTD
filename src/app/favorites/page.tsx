@@ -25,7 +25,7 @@ function favoriteSubtitle(r: FavoriteRecord, items: VaultItem[], galleries: Gall
   }
   const g = galleries.find((x) => String(x.id) === String(r.content_id));
   const n = g?.itemIds?.length ?? r.metadata?.itemCount ?? 0;
-  return `${n} item${n === 1 ? "" : "s"} · Gallery`;
+  return `${n} item${n === 1 ? "" : "s"} · Exhibition`;
 }
 
 function favoriteImage(r: FavoriteRecord, items: VaultItem[], galleries: Gallery[]) {
@@ -102,7 +102,7 @@ function FavoriteCard({
           className="absolute bottom-1 left-1 rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide"
           style={{ background: "rgba(0,0,0,0.72)", color: isItem ? "var(--theme-gold)" : "#a78bfa" }}
         >
-          {isItem ? "Item" : "Gallery"}
+          {isItem ? "Item" : "Exhibition"}
         </div>
       </div>
 
@@ -188,7 +188,7 @@ export default function FavoritesPage() {
   const TABS: { key: Filter; label: string; count: number }[] = [
     { key: "all", label: "All", count: favorites.length },
     { key: "item", label: "Items", count: itemCount },
-    { key: "gallery", label: "Galleries", count: galleryCount },
+    { key: "gallery", label: "Exhibitions", count: galleryCount },
   ];
 
   return (

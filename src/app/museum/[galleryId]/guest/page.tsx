@@ -205,10 +205,10 @@ export default function GuestGalleryPage() {
       <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(30,36,46,0.96),rgba(8,10,14,1)_62%)] text-text-primary">
         <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
           <div className="rounded-[28px] border border-white/10 bg-black/25 p-8 text-center ring-1 ring-white/10 backdrop-blur-sm">
-            <div className="text-[11px] tracking-[0.22em] text-white/55">GALLERY</div>
-            <h1 className="mt-3 text-2xl font-semibold">Gallery not found</h1>
+            <div className="text-[11px] tracking-[0.22em] text-white/55">EXHIBITION</div>
+            <h1 className="mt-3 text-2xl font-semibold">Exhibition not found</h1>
             <p className="mt-3 text-sm text-white/70">
-              This gallery could not be loaded.
+              This exhibition could not be loaded.
             </p>
             <div className="mt-6">
               <Link
@@ -239,7 +239,7 @@ export default function GuestGalleryPage() {
             className="inline-flex min-h-[34px] items-center justify-center rounded-full bg-black/45 px-3 py-1 text-xs font-semibold ring-1 backdrop-blur transition hover:bg-black/65"
             style={{ color: "var(--theme-gold, #F5B548)", borderColor: "rgba(245,181,72,0.35)" }}
           >
-            Edit Gallery
+            Edit Exhibition
           </Link>
         ) : null}
         <ReportContentButton contentType="gallery" contentId={gallery.id} />

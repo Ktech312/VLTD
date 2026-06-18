@@ -626,7 +626,7 @@ export default function GalleryBuilder({
       <section className="overflow-hidden rounded-[24px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
-            <div className="text-sm font-semibold">Gallery Layout</div>
+            <div className="text-sm font-semibold">Exhibition Layout</div>
             <div className="mt-1 text-sm text-[color:var(--muted)]">
               Turn this gallery into a structured layout with sections, featured works,
               shelf styling, guest preview, and curatorial flow.

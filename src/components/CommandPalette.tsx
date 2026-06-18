@@ -24,7 +24,7 @@ type Props = {
 const SECTION_LABELS: Record<CommandSection, string> = {
   navigation: "Navigation",
   vault: "Vault",
-  museum: "Galleries",
+  museum: "Exhibitions",
   portfolio: "Portfolio",
   account: "Account",
   action: "Actions",

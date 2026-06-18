@@ -1072,7 +1072,7 @@ export default function VaultUniversePage() {
                 </span>
                 {(
                   [
-                    ["museum", "Gallery"],
+                    ["museum", "Exhibition"],
                     ["shelf", "Shelf"],
                     ["swipe", "Flip"],
                   ] as const

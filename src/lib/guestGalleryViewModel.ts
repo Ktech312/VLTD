@@ -117,7 +117,7 @@ export function resolveGuestGalleryViewModel(
   return {
     gallery: safeGallery,
     galleryId: safeGallery?.id ?? null,
-    galleryTitle: safeGallery?.title || "Untitled Gallery",
+    galleryTitle: safeGallery?.title || "Untitled Exhibition",
     galleryDescription:
       safeGallery?.description?.trim() || "Curated collection presentation",
     galleryItems,

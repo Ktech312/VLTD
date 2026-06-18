@@ -226,7 +226,7 @@ const NAV_ITEMS = [
     desc: "Your private collection inventory.",
   },
   {
-    label: "Galleries",   href: "/museum",     icon: IconExhibitions, exact: false,
+    label: "Exhibitions",   href: "/museum",     icon: IconExhibitions, exact: false,
     desc: "Curate and display collections for the world.",
   },
   {
@@ -641,7 +641,7 @@ function TopNavInner() {
                   </div>
                   <div>
                     <p className="text-[10px] font-black leading-tight" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
-                      Your Collection.<br />Your Galleries.<br />Your Legacy.
+                      Your Collection.<br />Your Exhibitions.<br />Your Legacy.
                     </p>
                     <Link
                       href="/about"

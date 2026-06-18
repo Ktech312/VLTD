@@ -113,7 +113,7 @@ export default function GalleryHero({
         </div>
       </div>
 
-      {/* ── Bottom row: Swipe + Gallery View on left, + on right ── */}
+      {/* ── Bottom row: Swipe + Exhibition View on left, + on right ── */}
       <div className="absolute bottom-3 left-3 right-3 z-10 flex items-center justify-between">
         {/* Left: mode pills */}
         <div className="flex gap-2">
@@ -155,7 +155,7 @@ export default function GalleryHero({
                   }
             }
           >
-            Gallery View
+            Exhibition View
           </button>
         </div>
 

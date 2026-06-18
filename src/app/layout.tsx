@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   applicationName: "VLTD",
   title: {
-    default: "VLTD | Collectible Vaults and Public Galleries",
+    default: "VLTD | Collectible Vaults and Public Exhibitions",
     template: "%s | VLTD",
   },
   description:
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     type: "website",
     url: "/",
     siteName: "VLTD",
-    title: "VLTD | Collectible Vaults and Public Galleries",
+    title: "VLTD | Collectible Vaults and Public Exhibitions",
     description:
       "Organize private collector inventory and share polished public galleries for comics, cards, music, games, memorabilia, and more.",
     images: [
@@ -64,13 +64,13 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "VLTD \u2014 Collectible Vaults and Public Galleries",
+        alt: "VLTD \u2014 Collectible Vaults and Public Exhibitions",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "VLTD | Collectible Vaults and Public Galleries",
+    title: "VLTD | Collectible Vaults and Public Exhibitions",
     description:
       "A private collector vault with polished public galleries for sharing your collection.",
     images: ["/og-image.png"],
