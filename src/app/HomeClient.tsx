@@ -808,7 +808,7 @@ export default function HomeClient() {
                   { label: "Add Item",   href: "/vault/add",         accent: false, tip: "Full detail entry with all fields." },
                   { label: "Vault",      href: "/vault",             accent: false, tip: "" },
                   { label: "Galleries",  href: "/museum",            accent: false, tip: "" },
-                  { label: "Saved",      href: "/account#watchlist", accent: false, tip: "Items saved from The Flip." },
+                  { label: "Saved",      href: "/saved", accent: false, tip: "Items saved from The Flip." },
                   { label: "Account",    href: "/account",           accent: false, tip: "" },
                 ] as { label: string; href: string; accent: boolean; tip: string }[]).map(({ label, href, accent, tip }) => (
                   <div key={href + label} className="relative">
