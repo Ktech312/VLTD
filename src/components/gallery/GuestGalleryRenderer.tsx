@@ -283,6 +283,7 @@ export default function GuestGalleryRenderer({
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<VaultItem | null>(null);
   const [owner, setOwner] = useState<OwnerProfile | null>(null);
+  const [selectedSectionIdx, setSelectedSectionIdx] = useState(0);
 
   useEffect(() => {
     const profileId = model.gallery?.profile_id;
@@ -347,6 +348,11 @@ export default function GuestGalleryRenderer({
 
   // Precompute drop handlers to keep arrow functions out of JSX attribute expressions
   const gridDropMain = makeGridDrop(model.galleryItems.map((gi) => gi.id)) ?? undefined;
+
+  // Section-filtered items for non-embedded public view
+  const displayItems: VaultItem[] = !embedded && sectionViews.length > 0
+    ? (sectionViews[Math.min(selectedSectionIdx, sectionViews.length - 1)]?.items ?? model.galleryItems)
+    : model.galleryItems;
   const backgroundImageUrl = model.background.url;
   const coverImageUrl = typeof model.gallery?.coverImage === "string" ? model.gallery.coverImage.trim() : "";
   const shelfSlotLayout = getShelfSlotLayout(model);
@@ -479,10 +485,31 @@ export default function GuestGalleryRenderer({
             </div>
           </section> : null}
 
+          {/* Section navigation tabs — public view only */}
+          {!embedded && sectionViews.length > 1 && (
+            <div className={["mx-auto flex gap-2 overflow-x-auto pb-1 pt-3", GALLERY_STAGE_WIDTH_CLASS].join(" ")}>
+              {sectionViews.map((sv, idx) => (
+                <button
+                  key={sv.section.id}
+                  type="button"
+                  onClick={() => setSelectedSectionIdx(idx)}
+                  className="shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition"
+                  style={{
+                    background: idx === selectedSectionIdx ? "rgba(245,181,72,0.18)" : "rgba(255,255,255,0.06)",
+                    color: idx === selectedSectionIdx ? "#F5B548" : "rgba(255,255,255,0.55)",
+                    border: `1px solid ${idx === selectedSectionIdx ? "rgba(245,181,72,0.35)" : "rgba(255,255,255,0.08)"}`,
+                  }}
+                >
+                  {sv.section.title || `Section ${idx + 1}`}
+                </button>
+              ))}
+            </div>
+          )}
+
           {model.displayMode === "shelf" ? (
             <div className={embedded ? "" : "mt-3"}>
               <GalleryShelfScene
-                items={model.galleryItems}
+                items={displayItems}
                 themePack={model.themePack}
                 backgroundImageUrl={backgroundImageUrl}
                 shelvesEnabled={model.shelvesEnabled}
@@ -523,7 +550,7 @@ export default function GuestGalleryRenderer({
                   </div>
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                    {model.galleryItems.map((item, index) => (
+                    {displayItems.map((item, index) => (
                       <button
                         key={item.id}
                         type="button"
@@ -543,7 +570,7 @@ export default function GuestGalleryRenderer({
           )}
 
 
-          {model.galleryItems.length === 0 ? (
+          {displayItems.length === 0 ? (
             <section className={["mt-6 mx-auto", GALLERY_STAGE_WIDTH_CLASS].join(" ")}>
               <div className="rounded-[28px] bg-[color:var(--surface)] p-8 ring-1 ring-[color:var(--border)]">
                 <div className="text-sm text-[color:var(--muted)]">

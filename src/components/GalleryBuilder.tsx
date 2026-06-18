@@ -290,6 +290,7 @@ export default function GalleryBuilder({
   const previewScale = 0.36;
   const previewWidthPercent = 100 / previewScale;
   const [previewExpanded, setPreviewExpanded] = useState(false);
+  const [previewSectionIdx, setPreviewSectionIdx] = useState(0);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
   const [slotDragIdx, setSlotDragIdx] = useState<number | null>(null);
@@ -358,6 +359,16 @@ export default function GalleryBuilder({
     // Use section order directly so drag-reorder is immediately visible
     return activeSection.itemIds.map((id) => itemMap.get(id)).filter(Boolean) as VaultItem[];
   }, [items, selectedItems, sections, activeSectionIdx]);
+
+  // Items to show in the fullscreen preview (section-specific, driven by previewSectionIdx)
+  const fullPreviewItems = useMemo(() => {
+    const itemMap = new Map(items.map((item) => [item.id, item]));
+    if (sections.length === 0) return selectedItems;
+    const section = sections[previewSectionIdx];
+    if (!section || section.itemIds.length === 0) return [];
+    return section.itemIds.map((id) => itemMap.get(id)).filter(Boolean) as VaultItem[];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, selectedItems, sections, previewSectionIdx]);
 
   // Sync previewSlots when section changes (full reset) or items added/removed (incremental)
   // Must be declared AFTER previewItems
@@ -712,7 +723,7 @@ export default function GalleryBuilder({
             </div>
             <button
               type="button"
-              onClick={() => setPreviewExpanded(true)}
+              onClick={() => { setPreviewSectionIdx(0); setPreviewExpanded(true); }}
               className="shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold transition hover:opacity-90"
               style={{
                 background: "rgba(245,181,72,0.12)",
@@ -720,7 +731,7 @@ export default function GalleryBuilder({
                 border: "1px solid rgba(245,181,72,0.3)",
               }}
             >
-              Expand ↗
+              Preview ↗
             </button>
           </div>
 
@@ -1659,22 +1670,34 @@ export default function GalleryBuilder({
               borderBottom: "1px solid rgba(255,255,255,0.07)",
             }}
           >
-            <div className="mx-auto flex w-full max-w-[1120px] items-center justify-between px-4 pb-3">
-              <div>
+            <div className="mx-auto flex w-full max-w-[1120px] items-center gap-3 px-4 pb-3">
+              <div className="min-w-0 flex-1">
                 <div className="text-[11px] tracking-[0.2em]" style={{ color: "var(--muted2)" }}>LIVE PREVIEW</div>
-                <div className="mt-0.5 flex items-baseline gap-1.5 text-sm font-semibold">
-                  {gallery.title || "Gallery"}
-                  {sections.length > 0 && sections[activeSectionIdx] && (
-                    <span className="text-xs font-normal" style={{ color: "var(--muted)" }}>
-                      · S{activeSectionIdx + 1} {sections[activeSectionIdx].title}
-                    </span>
-                  )}
-                </div>
+                <div className="mt-0.5 text-sm font-semibold truncate">{gallery.title || "Exhibition"}</div>
               </div>
+              {sections.length > 1 && (
+                <div className="flex shrink-0 gap-1.5 overflow-x-auto max-w-[55%]">
+                  {sections.map((section, idx) => (
+                    <button
+                      key={section.id}
+                      type="button"
+                      onClick={() => setPreviewSectionIdx(idx)}
+                      className="shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold transition"
+                      style={{
+                        background: idx === previewSectionIdx ? "rgba(245,181,72,0.18)" : "rgba(255,255,255,0.07)",
+                        color: idx === previewSectionIdx ? "#F5B548" : "rgba(255,255,255,0.45)",
+                        border: `1px solid ${idx === previewSectionIdx ? "rgba(245,181,72,0.35)" : "rgba(255,255,255,0.1)"}`,
+                      }}
+                    >
+                      {section.title || `S${idx + 1}`}
+                    </button>
+                  ))}
+                </div>
+              )}
               <button
                 type="button"
                 onClick={() => setPreviewExpanded(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-full transition active:opacity-70"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition active:opacity-70"
                 style={{ background: "rgba(255,255,255,0.07)" }}
                 aria-label="Close preview"
               >
@@ -1685,7 +1708,7 @@ export default function GalleryBuilder({
             </div>
           </div>
           <div className="flex-1 overflow-y-auto overscroll-contain" style={{ minHeight: 0, WebkitOverflowScrolling: "touch" }}>
-            <BuilderPreviewBridge gallery={gallery} items={previewItems} onHeightChange={setPreviewNaturalHeight} />
+            <BuilderPreviewBridge gallery={gallery} items={fullPreviewItems} onHeightChange={setPreviewNaturalHeight} />
           </div>
         </div>
       )}
