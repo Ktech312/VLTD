@@ -1,6 +1,6 @@
 "use client";
 
-import {
+import React, {
   useCallback,
   useEffect,
   useRef,
@@ -427,6 +427,39 @@ export default function ScanCropEditor({
     pinchRef.current = null;
   }
 
+  // Attach wheel + touch handlers imperatively so we can use { passive: false }
+  // React 17+ registers onWheel/onTouchMove as passive, which blocks preventDefault().
+  const _imperativeHandlersRef = useRef({
+    handleWheel,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+  });
+  _imperativeHandlersRef.current = { handleWheel, handleTouchStart, handleTouchMove, handleTouchEnd };
+
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) =>
+      _imperativeHandlersRef.current.handleWheel(e as unknown as React.WheelEvent<HTMLDivElement>);
+    const onTouchStart = (e: TouchEvent) =>
+      _imperativeHandlersRef.current.handleTouchStart(e as unknown as React.TouchEvent<HTMLDivElement>);
+    const onTouchMove = (e: TouchEvent) =>
+      _imperativeHandlersRef.current.handleTouchMove(e as unknown as React.TouchEvent<HTMLDivElement>);
+    const onTouchEnd = () => _imperativeHandlersRef.current.handleTouchEnd();
+    el.addEventListener("wheel", onWheel, { passive: false });
+    el.addEventListener("touchstart", onTouchStart, { passive: false });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd);
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // stable wrappers — always read latest handler from ref
+
   const zoomLabel = Math.round(zoom * 100);
   const cornerHandleClass = "absolute z-30 h-1.5 w-1.5 rounded-full border border-white/90 bg-white/95 shadow-[0_0_5px_rgba(0,0,0,0.55)] touch-none pointer-events-auto";
   const edgeHandleClass = "absolute z-30 rounded-full bg-white/95 shadow-[0_0_5px_rgba(0,0,0,0.5)] touch-none pointer-events-auto";
@@ -481,10 +514,7 @@ export default function ScanCropEditor({
         <div
           ref={viewportRef}
           className={viewportClassName}
-          onWheel={handleWheel}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+          {/* wheel/touch listeners attached imperatively (non-passive) in useEffect above */}
         >
           <div
             ref={imageBaseRef}

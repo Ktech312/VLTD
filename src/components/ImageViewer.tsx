@@ -36,6 +36,9 @@ export default function ImageViewer({
   const lastPointRef = useRef<Point>({ x: 0, y: 0 });
   const pinchStartRef = useRef<number | null>(null);
   const pinchScaleStartRef = useRef(1);
+  const scaleRef = useRef(scale);
+  scaleRef.current = scale;  // always track latest scale
+  const panContainerRef = useRef<HTMLDivElement | null>(null);
 
   const currentImage = images[current] ?? "";
   const canPan = scale > 1.01;
@@ -88,7 +91,70 @@ export default function ImageViewer({
 
     document.addEventListener("keydown", onKeyDown);
 
+    // Attach wheel + touch listeners non-passively so preventDefault() works
+  // (React 17+ makes onWheel/onTouchMove passive by default)
+  useEffect(() => {
+    const el = panContainerRef.current;
+    if (!el) return;
+
+    function onWheel(e: WheelEvent) {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.2 : -0.2;
+      setScale((prev) => clamp(prev + delta, 1, 5));
+    }
+
+    function onTouchStart(e: TouchEvent) {
+      if (e.touches.length === 2) {
+        pinchStartRef.current = distance(e.touches[0], e.touches[1]);
+        pinchScaleStartRef.current = scaleRef.current;
+        return;
+      }
+      if (e.touches.length === 1) {
+        draggingRef.current = true;
+        lastPointRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
+    }
+
+    function onTouchMove(e: TouchEvent) {
+      if (e.touches.length === 2 && pinchStartRef.current) {
+        e.preventDefault();
+        const cur = distance(e.touches[0], e.touches[1]);
+        const nextScale = clamp(
+          pinchScaleStartRef.current * (cur / pinchStartRef.current),
+          1, 5
+        );
+        if (nextScale <= 1.01) setOffset({ x: 0, y: 0 });
+        setScale(nextScale);
+        return;
+      }
+      if (e.touches.length === 1 && draggingRef.current) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - lastPointRef.current.x;
+        const dy = e.touches[0].clientY - lastPointRef.current.y;
+        lastPointRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        setOffset((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+      }
+    }
+
+    function onTouchEnd() {
+      draggingRef.current = false;
+      pinchStartRef.current = null;
+    }
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    el.addEventListener("touchstart", onTouchStart, { passive: false });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd);
     return () => {
+      el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // stable — handlers read latest values from refs
+
+  return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousBodyOverflow;
       document.documentElement.style.overflow = previousHtmlOverflow;
@@ -187,13 +253,10 @@ export default function ImageViewer({
       </div>
 
       <div
+        ref={panContainerRef}
         className="fixed inset-0 z-[95] flex items-center justify-center overflow-hidden px-3 pb-20 pt-16 sm:px-12 sm:pb-20 sm:pt-20"
         onMouseDown={(event) => {
           if (event.target === event.currentTarget) onClose();
-        }}
-        onWheel={(event) => {
-          event.preventDefault();
-          zoomBy(event.deltaY < 0 ? 0.2 : -0.2);
         }}
         onMouseMove={(event) => {
           if (!draggingRef.current || !canPan) return;
@@ -205,60 +268,10 @@ export default function ImageViewer({
             y: prevOffset.y + dy,
           }));
         }}
-        onMouseUp={() => {
-          draggingRef.current = false;
-        }}
-        onMouseLeave={() => {
-          draggingRef.current = false;
-        }}
-        onTouchStart={(event) => {
-          if (event.touches.length === 2) {
-            pinchStartRef.current = distance(event.touches[0], event.touches[1]);
-            pinchScaleStartRef.current = scale;
-            return;
-          }
-
-          if (event.touches.length === 1 && canPan) {
-            draggingRef.current = true;
-            lastPointRef.current = {
-              x: event.touches[0].clientX,
-              y: event.touches[0].clientY,
-            };
-          }
-        }}
-        onTouchMove={(event) => {
-          if (event.touches.length === 2 && pinchStartRef.current) {
-            event.preventDefault();
-            const currentDistance = distance(event.touches[0], event.touches[1]);
-            const nextScale = clamp(
-              pinchScaleStartRef.current * (currentDistance / pinchStartRef.current),
-              1,
-              5
-            );
-            if (nextScale <= 1.01) setOffset({ x: 0, y: 0 });
-            setScale(nextScale);
-            return;
-          }
-
-          if (event.touches.length === 1 && draggingRef.current && canPan) {
-            event.preventDefault();
-            const dx = event.touches[0].clientX - lastPointRef.current.x;
-            const dy = event.touches[0].clientY - lastPointRef.current.y;
-            lastPointRef.current = {
-              x: event.touches[0].clientX,
-              y: event.touches[0].clientY,
-            };
-            setOffset((prevOffset) => ({
-              x: prevOffset.x + dx,
-              y: prevOffset.y + dy,
-            }));
-          }
-        }}
-        onTouchEnd={() => {
-          draggingRef.current = false;
-          pinchStartRef.current = null;
-        }}
+        onMouseUp={() => { draggingRef.current = false; }}
+        onMouseLeave={() => { draggingRef.current = false; }}
       >
+        {/* wheel/touch attached imperatively (non-passive) via useEffect below */}
         {currentImage ? (
           <img
             src={currentImage}
