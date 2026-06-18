@@ -514,8 +514,8 @@ export default function ScanCropEditor({
         <div
           ref={viewportRef}
           className={viewportClassName}
-          {/* wheel/touch listeners attached imperatively (non-passive) in useEffect above */}
         >
+          {/* wheel/touch listeners attached imperatively (non-passive) in useEffect above */}
           <div
             ref={imageBaseRef}
             className="relative max-h-full max-w-full will-change-transform"
