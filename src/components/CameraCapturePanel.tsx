@@ -82,6 +82,7 @@ export default function CameraCapturePanel({
   onUseFileInstead: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoContainerRef = useRef<HTMLDivElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const selectedDeviceIdRef = useRef("");
   const preferredDeviceIdRef = useRef("");
@@ -107,7 +108,7 @@ export default function CameraCapturePanel({
   const [isBackgroundRemoved, setIsBackgroundRemoved] = useState(false);
   const [selectedBackgroundId, setSelectedBackgroundId] = useState("transparent");
   const [selectedFrameId, setSelectedFrameId] = useState("auto");
-  const [showFineTune, setShowFineTune] = useState(false);
+  const [showFineTune, setShowFineTune] = useState(true);
   // ── Bulk Add mode ──
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkUniverse, setBulkUniverse] = useState<UniverseKey>("MISC");
@@ -376,6 +377,69 @@ export default function CameraCapturePanel({
           ? "Blocked"
           : "Unknown";
 
+  /** Compute a ScanCropRect that matches the guide overlay position in the live camera view.
+   *  Uses the video container's rendered size + the video's native dimensions to
+   *  account for object-contain letterboxing/pillarboxing.
+   */
+  function computeGuideCrop(): ScanCropRect {
+    const video = videoRef.current;
+    const container = videoContainerRef.current;
+    if (!video || !container || selectedFrameId === "auto") return DEFAULT_CROP;
+
+    const containerW = container.clientWidth;
+    const containerH = container.clientHeight;
+    const videoW = video.videoWidth;
+    const videoH = video.videoHeight;
+    if (!containerW || !containerH || !videoW || !videoH) return DEFAULT_CROP;
+
+    // Determine rendered video size + offset within the container (object-contain)
+    const containerAR = containerW / containerH;
+    const videoAR = videoW / videoH;
+    let renderedW: number, renderedH: number, offsetX: number, offsetY: number;
+    if (videoAR > containerAR) {
+      renderedW = containerW;
+      renderedH = containerW / videoAR;
+      offsetX = 0;
+      offsetY = (containerH - renderedH) / 2;
+    } else {
+      renderedH = containerH;
+      renderedW = containerH * videoAR;
+      offsetX = (containerW - renderedW) / 2;
+      offsetY = 0;
+    }
+    if (renderedW <= 0 || renderedH <= 0) return DEFAULT_CROP;
+
+    // Guide overlay geometry (matches the CSS in the JSX)
+    const insetFraction = parseFloat(frame.inset) / 100;
+    const [arWStr, arHStr] = frame.aspectRatio.split("/").map((s) => parseFloat(s.trim()));
+    const guideAR = arWStr / arHStr;
+    const maxFraction = 0.82;
+
+    let guideH = containerH * (1 - insetFraction);
+    let guideW = guideH * guideAR;
+    if (guideH > containerH * maxFraction) { guideH = containerH * maxFraction; guideW = guideH * guideAR; }
+    if (guideW > containerW * maxFraction) { guideW = containerW * maxFraction; guideH = guideW / guideAR; }
+
+    // Guide is centered in the container
+    const gLeft = (containerW - guideW) / 2;
+    const gTop = (containerH - guideH) / 2;
+    const gRight = gLeft + guideW;
+    const gBottom = gTop + guideH;
+
+    // Map to [0,1] fractions of the native video frame
+    const vLeft = Math.max(0, (gLeft - offsetX) / renderedW);
+    const vTop = Math.max(0, (gTop - offsetY) / renderedH);
+    const vRight = Math.min(1, (gRight - offsetX) / renderedW);
+    const vBottom = Math.min(1, (gBottom - offsetY) / renderedH);
+
+    return {
+      left: vLeft,
+      top: vTop,
+      right: 1 - vRight,
+      bottom: 1 - vBottom,
+    };
+  }
+
   async function handleCapture() {
     const video = videoRef.current;
     if (!video) return;
@@ -419,7 +483,7 @@ export default function CameraCapturePanel({
 
       setCapturedFile(file);
       setCapturedPreviewUrl(URL.createObjectURL(file));
-      setCaptureCrop(DEFAULT_CROP);
+      setCaptureCrop(computeGuideCrop());
       setSelectedFilterId("original");
       setAdjustments(DEFAULT_CAPTURE_ADJUSTMENTS);
       setBackgroundError("");
@@ -541,40 +605,15 @@ export default function CameraCapturePanel({
         )}
 
         {capturedFile && capturedPreviewUrl ? (
-          <div className="mt-1.5">
-            <div className="mb-1.5 flex items-start justify-between gap-3 rounded-[14px] bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]">
-              <div>
-                <div className="text-[11px] font-semibold tracking-[0.18em] text-[color:var(--muted2)]">
-                  PHOTO REVIEW
-                </div>
-                <div className="mt-0.5 text-xs leading-5 text-[color:var(--muted)]">
-                  {blurAssessment?.isBlurry
-                    ? "This shot may be soft. Retake if the label or serial details matter."
-                    : "Crop, tune, or use this photo for Smart Scan."}
-                </div>
+          <div className="mt-1.5 pb-8">
+            {/* Blur badge — only shown when the shot is soft */}
+            {blurAssessment?.isBlurry ? (
+              <div className="mb-1.5 flex items-center gap-2 rounded-[10px] bg-red-500/10 px-3 py-1.5 ring-1 ring-red-500/20">
+                <span className="text-[11px] font-semibold text-red-300">⚠ Soft image</span>
+                <span className="text-[11px] text-[color:var(--muted)]">Retake for sharper label detail.</span>
               </div>
-              {blurAssessment ? (
-                <div
-                  className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1"
-                  style={
-                    blurAssessment.isBlurry
-                      ? {
-                          background: "rgba(239,68,68,0.12)",
-                          borderColor: "rgba(239,68,68,0.28)",
-                          color: "#FCA5A5",
-                        }
-                      : {
-                          background: "rgba(34,197,94,0.12)",
-                          borderColor: "rgba(34,197,94,0.28)",
-                          color: "#86EFAC",
-                        }
-                  }
-                >
-                  {blurAssessment.isBlurry ? "Soft" : "Sharp"} {Math.round(blurAssessment.score)}
-                </div>
-              ) : null}
-            </div>
-            <div className="mb-1.5 flex items-center gap-1.5 overflow-x-auto py-1 [scrollbar-width:none]">
+            ) : null}
+            <div className="mb-1.5 flex items-center gap-1.5 overflow-x-auto py-1 pl-1 [scrollbar-width:none]">
               <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
                 Frame
               </span>
@@ -607,7 +646,7 @@ export default function CameraCapturePanel({
               ))}
             </div>
             {/* Filter strip — moved above the image */}
-            <div className="mb-1.5 flex items-center gap-1.5 overflow-x-auto py-1 [scrollbar-width:none]">
+            <div className="mb-1.5 flex items-center gap-1.5 overflow-x-auto py-1 pl-1 [scrollbar-width:none]">
               {CAPTURE_FILTER_PRESETS.map((preset) => (
                 <button
                   key={preset.id}
@@ -638,7 +677,7 @@ export default function CameraCapturePanel({
               onChange={setCaptureCrop}
               title="ADJUST PHOTO"
               description="Move or resize the crop box here before this photo is added to the item."
-              applyLabel="Use Photo"
+              applyLabel="Save"
               onApply={() => void handleUseCapturedPhoto()}
               onReset={() => setCaptureCrop(DEFAULT_CROP)}
               onCancel={handleRetakePhoto}
@@ -648,7 +687,16 @@ export default function CameraCapturePanel({
               hideActionButtons
             />
 
-            <div className="mt-2 flex justify-center">
+            <div className="mt-2 flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={handleRetakePhoto}
+                disabled={isApplyingCrop}
+                className="rounded-full px-5 py-2.5 text-sm font-semibold ring-1 ring-[color:var(--border)] disabled:opacity-40"
+                style={{ background: "var(--pill)", color: "var(--muted)" }}
+              >
+                ↩ Retake
+              </button>
               <button
                 type="button"
                 onClick={() => void handleUseCapturedPhoto()}
@@ -656,7 +704,7 @@ export default function CameraCapturePanel({
                 className="rounded-full px-8 py-2.5 text-sm font-bold disabled:opacity-40"
                 style={{ background: "var(--pill-active-bg)", color: "var(--fg)" }}
               >
-                {isApplyingCrop ? "Saving..." : "Use Photo"}
+                {isApplyingCrop ? "Saving..." : "Save"}
               </button>
             </div>
 
@@ -810,6 +858,7 @@ export default function CameraCapturePanel({
             </div>
             <div className="mt-2 overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-1.5 ring-1 ring-[color:var(--border)]">
               <div
+                  ref={videoContainerRef}
                   className="relative flex items-center justify-center overflow-hidden rounded-[12px] bg-[color:var(--surface)]"
                   style={{ height: "min(42dvh, 360px)", minHeight: "200px" }}
                 >
