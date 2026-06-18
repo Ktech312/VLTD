@@ -80,7 +80,7 @@ type Tab = {
 };
 
 const TABS: (Tab | null)[] = [
-  { label: "Galleries", href: "/museum",   icon: IconExhibitions, exact: false },
+  { label: "Exhibitions", href: "/museum",   icon: IconExhibitions, exact: false },
   { label: "Vault",     href: "/vault",    icon: IconVault,       exact: false },
   null, // gold + button (capture)
   { label: "Discover",  href: "/discover", icon: IconDiscover,    exact: false },
