@@ -417,7 +417,7 @@ function TopNavInner() {
   return (
     <>
       <div
-        className={`sticky top-0 backdrop-blur-xl ${userOpen || commandOpen || guideOpen ? "z-[9999]" : "z-40"}`}
+        className={`fixed top-0 left-0 right-0 w-full backdrop-blur-xl ${userOpen || commandOpen || guideOpen ? "z-[9999]" : "z-40"}`}
         style={{ background: "var(--theme-nav-bg, rgba(11,19,32,0.96))", borderBottom: "1px solid var(--theme-nav-border, rgba(245,181,72,0.15))" }}
       >
         {/* ── Main nav row ── */}
