@@ -2301,7 +2301,7 @@ export default function AddPage() {
             }
             universe={values.universe}
             onCapture={handleCapturedPhoto}
-            onClose={() => { setIsCameraPanelOpen(false); router.back(); }}
+            onClose={() => router.back()}
             onUseFileInstead={() => {
               setIsCameraPanelOpen(false);
               if (cameraTarget === "scan") {

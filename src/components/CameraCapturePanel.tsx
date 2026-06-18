@@ -384,7 +384,7 @@ export default function CameraCapturePanel({
   function computeGuideCrop(): ScanCropRect {
     const video = videoRef.current;
     const container = videoContainerRef.current;
-    if (!video || !container || selectedFrameId === "auto") return DEFAULT_CROP;
+    if (!video || !container) return DEFAULT_CROP;
 
     const containerW = container.clientWidth;
     const containerH = container.clientHeight;
@@ -605,7 +605,7 @@ export default function CameraCapturePanel({
         )}
 
         {capturedFile && capturedPreviewUrl ? (
-          <div className="mt-1.5 pb-8">
+          <div className="mt-1.5 pb-32">
             {/* Blur badge — only shown when the shot is soft */}
             {blurAssessment?.isBlurry ? (
               <div className="mb-1.5 flex items-center gap-2 rounded-[10px] bg-red-500/10 px-3 py-1.5 ring-1 ring-red-500/20">
