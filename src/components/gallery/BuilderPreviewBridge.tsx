@@ -13,14 +13,18 @@ type Props = {
   onHeightChange?: (height: number) => void;
   onRemoveItem?: (itemId: string) => void;
   onReorder?: (orderedIds: string[]) => void;
+  /** When true, renders exactly as a guest would see it — no drag handles, real section nav */
+  readOnly?: boolean;
 };
 
-export default function BuilderPreviewBridge({ gallery, items, onHeightChange, onRemoveItem, onReorder }: Props) {
+export default function BuilderPreviewBridge({ gallery, items, onHeightChange, onRemoveItem, onReorder, readOnly }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const model = resolveGuestGalleryViewModel(gallery, items, {
     navigation: { show: false },
     access: { modeLabel: "Preview", isPublic: true },
-    itemsAreResolvedGalleryItems: true,
+    // readOnly passes all items and lets VM resolve order from gallery.itemIds (same as real guest)
+    // embedded edit mode passes pre-filtered section items already in the right order
+    itemsAreResolvedGalleryItems: !readOnly,
   });
 
   useEffect(() => {
@@ -48,7 +52,13 @@ export default function BuilderPreviewBridge({ gallery, items, onHeightChange, o
     <div ref={containerRef}>
       {/* Gallery shelf is a virtual room — always dark regardless of app theme */}
       <div style={{ isolation: "isolate", background: "#0B1320", borderRadius: "16px", overflow: "hidden" }}>
-        <GuestGalleryRenderer model={model} embedded onRemoveItem={onRemoveItem} onReorder={onReorder} />
+        {readOnly ? (
+          // Guest-accurate preview: same renderer, same logic, no editor chrome
+          <GuestGalleryRenderer model={model} />
+        ) : (
+          // Edit mode: embedded with drag/reorder handles
+          <GuestGalleryRenderer model={model} embedded onRemoveItem={onRemoveItem} onReorder={onReorder} />
+        )}
       </div>
     </div>
   );

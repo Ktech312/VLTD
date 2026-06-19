@@ -463,7 +463,7 @@ export default function GuestGalleryRenderer({
                       <>
                         <span className="text-[color:var(--muted2)]" aria-hidden="true">·</span>
                         <span className="text-sm font-medium" style={{ color: "var(--gold, #F5B548)" }}>
-                          {sectionViews.length} {sectionViews.length === 1 ? "section" : "sections"}
+                          {sectionViews.length} {sectionViews.length === 1 ? "exhibit" : "exhibits"}
                         </span>
                       </>
                     ) : null}

@@ -663,7 +663,7 @@ export default function GalleryBuilder({
                     ...getGallerySections(current),
                     {
                       id: makeLocalSectionId(),
-                      title: `Section ${((sections.length ?? 0) + 1).toString()}`,
+                      title: `Exhibit ${((sections.length ?? 0) + 1).toString()}`,
                       description: "",
                       itemIds: [],
                       featuredItemId: undefined,
@@ -674,7 +674,7 @@ export default function GalleryBuilder({
               }
               className="vltd-selectable rounded-full bg-[color:var(--surface)] px-4 py-2 text-xs font-semibold ring-1 ring-[color:var(--border)]"
             >
-              Add Section
+              Add Exhibit
             </button>
           </div>
         </div>
@@ -886,7 +886,7 @@ export default function GalleryBuilder({
                 className="inline-flex min-h-[28px] items-center justify-between gap-1.5 rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all select-none"
               >
                 <span>
-                  {"Section #" + (activeSectionIdx + 1)}
+                  {"Exhibit #" + (activeSectionIdx + 1)}
                 </span>
                 <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className="h-4 w-4 opacity-60 shrink-0">
                   <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
@@ -910,7 +910,7 @@ export default function GalleryBuilder({
                     }}
                   >
                     {sections.length === 0 ? (
-                      <div className="px-3 py-2 text-sm text-[color:var(--muted)]">No sections yet</div>
+                      <div className="px-3 py-2 text-sm text-[color:var(--muted)]">No exhibits yet</div>
                     ) : (
                       sections.map((s, i) => (
                         <button
@@ -927,7 +927,7 @@ export default function GalleryBuilder({
                               : "text-[color:var(--fg)] hover:bg-[color:var(--pill)]",
                           ].join(" ")}
                         >
-                          {"Section #" + (i + 1)}{s.title ? (" — " + s.title) : ""}
+                          {"Exhibit #" + (i + 1)}{s.title ? (" — " + s.title) : ""}
                         </button>
                       ))
                     )}
@@ -939,7 +939,7 @@ export default function GalleryBuilder({
                             ...getGallerySections(current),
                             {
                               id: makeLocalSectionId(),
-                              title: "Section " + ((sections.length + 1).toString()),
+                              title: "Exhibit " + ((sections.length + 1).toString()),
                               description: "",
                               itemIds: [],
                               featuredItemId: undefined,
@@ -952,7 +952,7 @@ export default function GalleryBuilder({
                       }}
                       className="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm text-[color:var(--muted)] hover:bg-[color:var(--pill)] transition"
                     >
-                      + Add Section
+                      + Add Exhibit
                     </button>
                   </div>
                 </>,
@@ -1672,28 +1672,9 @@ export default function GalleryBuilder({
           >
             <div className="mx-auto flex w-full max-w-[1120px] items-center gap-3 px-4 pb-3">
               <div className="min-w-0 flex-1">
-                <div className="text-[11px] tracking-[0.2em]" style={{ color: "var(--muted2)" }}>LIVE PREVIEW</div>
+                <div className="text-[11px] tracking-[0.2em]" style={{ color: "var(--muted2)" }}>GUEST PREVIEW</div>
                 <div className="mt-0.5 text-sm font-semibold truncate">{gallery.title || "Exhibition"}</div>
               </div>
-              {sections.length > 1 && (
-                <div className="flex shrink-0 gap-1.5 overflow-x-auto max-w-[55%]">
-                  {sections.map((section, idx) => (
-                    <button
-                      key={section.id}
-                      type="button"
-                      onClick={() => setPreviewSectionIdx(idx)}
-                      className="shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold transition"
-                      style={{
-                        background: idx === previewSectionIdx ? "rgba(245,181,72,0.18)" : "rgba(255,255,255,0.07)",
-                        color: idx === previewSectionIdx ? "#F5B548" : "rgba(255,255,255,0.45)",
-                        border: `1px solid ${idx === previewSectionIdx ? "rgba(245,181,72,0.35)" : "rgba(255,255,255,0.1)"}`,
-                      }}
-                    >
-                      {section.title || `S${idx + 1}`}
-                    </button>
-                  ))}
-                </div>
-              )}
               <button
                 type="button"
                 onClick={() => setPreviewExpanded(false)}
@@ -1708,7 +1689,8 @@ export default function GalleryBuilder({
             </div>
           </div>
           <div className="flex-1 overflow-y-auto overscroll-contain" style={{ minHeight: 0, WebkitOverflowScrolling: "touch" }}>
-            <BuilderPreviewBridge gallery={gallery} items={fullPreviewItems} onHeightChange={setPreviewNaturalHeight} />
+            {/* readOnly=true → renders exactly what a guest sees: real section nav, no edit chrome */}
+            <BuilderPreviewBridge gallery={gallery} items={selectedItems} readOnly onHeightChange={setPreviewNaturalHeight} />
           </div>
         </div>
       )}
