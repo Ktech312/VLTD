@@ -13,6 +13,7 @@ import { SEED_CHARACTERS_PART3 } from "@/lib/seedCharacters_part3";
 import { SEED_CHARACTERS_PART4 } from "@/lib/seedCharacters_part4";
 import type { SeedCharacter, SeedItem, SeedGallery } from "@/lib/seedCharacters";
 import { getSeedAvatarUrl } from "@/lib/seedAvatar";
+import { useSaveFeedback } from "@/lib/useSaveFeedback";
 import {
   getMyAdminRole,
   listAdmins,
@@ -259,6 +260,8 @@ function ItemEditModal({
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const { justSaved, flashSaved } = useSaveFeedback();
+
   async function handleUpload(file: File) {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) { setError("No Supabase client"); return; }
@@ -301,7 +304,8 @@ function ItemEditModal({
         currentValue: Number(value) || 0,
         purchasePrice: Number(cost) || 0,
       });
-      onClose();
+      flashSaved();
+      setTimeout(onClose, 450);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
     } finally {
@@ -424,9 +428,12 @@ function ItemEditModal({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-xl bg-amber-500 px-5 py-2 text-xs font-semibold text-black transition hover:bg-amber-400 disabled:opacity-50"
+            className={[
+              "rounded-xl px-5 py-2 text-xs font-semibold transition disabled:opacity-50",
+              justSaved ? "bg-emerald-500 text-white" : "bg-amber-500 text-black hover:bg-amber-400",
+            ].join(" ")}
           >
-            {saving ? "Saving…" : "Save Changes"}
+            {saving ? "Saving…" : justSaved ? "Saved ✓" : "Save Changes"}
           </button>
         </div>
       </div>
@@ -449,6 +456,7 @@ function BioEditModal({
   const [bio, setBio] = useState(currentBio);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const { justSaved, flashSaved } = useSaveFeedback();
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
@@ -461,7 +469,8 @@ function BioEditModal({
     setError("");
     try {
       await onSave(bio.trim());
-      onClose();
+      flashSaved();
+      setTimeout(onClose, 450);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
     } finally {
@@ -498,9 +507,12 @@ function BioEditModal({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-xl bg-amber-500 px-5 py-2 text-xs font-semibold text-black transition hover:bg-amber-400 disabled:opacity-50"
+            className={[
+              "rounded-xl px-5 py-2 text-xs font-semibold transition disabled:opacity-50",
+              justSaved ? "bg-emerald-500 text-white" : "bg-amber-500 text-black hover:bg-amber-400",
+            ].join(" ")}
           >
-            {saving ? "Saving…" : "Save Bio"}
+            {saving ? "Saving…" : justSaved ? "Saved ✓" : "Save Bio"}
           </button>
         </div>
       </div>
@@ -524,6 +536,7 @@ function ExhibitEditModal({
   const [description, setDescription] = useState(exhibit.description);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const { justSaved, flashSaved } = useSaveFeedback();
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
@@ -536,7 +549,8 @@ function ExhibitEditModal({
     setError("");
     try {
       await onSave(exhibit.id, { title: title.trim(), description: description.trim() });
-      onClose();
+      flashSaved();
+      setTimeout(onClose, 450);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
     } finally {
@@ -584,9 +598,12 @@ function ExhibitEditModal({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-xl bg-amber-500 px-5 py-2 text-xs font-semibold text-black transition hover:bg-amber-400 disabled:opacity-50"
+            className={[
+              "rounded-xl px-5 py-2 text-xs font-semibold transition disabled:opacity-50",
+              justSaved ? "bg-emerald-500 text-white" : "bg-amber-500 text-black hover:bg-amber-400",
+            ].join(" ")}
           >
-            {saving ? "Saving…" : "Save Gallery"}
+            {saving ? "Saving…" : justSaved ? "Saved ✓" : "Save Gallery"}
           </button>
         </div>
       </div>
@@ -794,6 +811,7 @@ function ExhibitGrid({
 }) {
   const [pickingSlot, setPickingSlot] = useState<number | null>(null);
   const [pickSearch, setPickSearch] = useState("");
+  const { justSaved, flashSaved } = useSaveFeedback();
 
   const itemById = new Map(allItems.map((i) => [i.id, i]));
   const occupied = new Set(slots.filter(Boolean) as string[]);
@@ -929,11 +947,17 @@ function ExhibitGrid({
             Close
           </button>
           <button
-            onClick={() => onSave(galleryId)}
+            onClick={async () => {
+              await onSave(galleryId);
+              flashSaved();
+            }}
             disabled={saving}
-            className="rounded-xl bg-amber-500 px-5 py-2 text-sm font-bold text-black transition hover:bg-amber-400 disabled:opacity-50"
+            className={[
+              "rounded-xl px-5 py-2 text-sm font-bold transition disabled:opacity-50",
+              justSaved ? "bg-emerald-500 text-white" : "bg-amber-500 text-black hover:bg-amber-400",
+            ].join(" ")}
           >
-            {saving ? "Saving…" : "Save Gallery"}
+            {saving ? "Saving…" : justSaved ? "Saved ✓" : "Save Gallery"}
           </button>
         </div>
       </div>

@@ -23,13 +23,14 @@ import {
 import BuilderPreviewBridge from "@/components/gallery/BuilderPreviewBridge";
 import { PillSelect, type PillSelectOption } from "@/components/ui/PillSelect";
 import { isUniverseKey, UNIVERSE_LABEL } from "@/lib/taxonomy";
+import { useSaveFeedback, SAVE_FEEDBACK_STYLE } from "@/lib/useSaveFeedback";
 
 type Props = {
   gallery: Gallery;
   items: VaultItem[];
   onChange: (ids: string[]) => void;
   onGalleryChange: (updater: (current: Gallery) => Gallery) => void;
-  onQuickSave?: (overrideIds?: string[], overrideSections?: NonNullable<Gallery["sections"]>) => void;
+  onQuickSave?: (overrideIds?: string[], overrideSections?: NonNullable<Gallery["sections"]>) => void | Promise<void>;
   onOpenPicker?: (sectionTitle?: string, sectionItemIds?: string[], sectionIdx?: number) => void;
   advancedContent?: ReactNode;
 };
@@ -297,6 +298,7 @@ export default function GalleryBuilder({
   const [slotDragOverIdx, setSlotDragOverIdx] = useState<number | null>(null);
   const [isOrganizing, setIsOrganizing] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const { justSaved: quickSaveJustSaved, flashSaved: flashQuickSaved } = useSaveFeedback();
   const touchSlotFromRef = useRef<number | null>(null);
   const touchSlotOverRef = useRef<number | null>(null);
   const touchCloneRef = useRef<HTMLElement | null>(null);
@@ -772,14 +774,17 @@ export default function GalleryBuilder({
               />
             </div>
 
-            {/* Save — gold pill, thinner */}
+            {/* Save — gold pill, thinner; flashes green + "Saved" on success */}
             <button
               type="button"
-              onClick={() => onQuickSave?.()}
+              onClick={async () => {
+                await onQuickSave?.();
+                flashQuickSaved();
+              }}
               className="inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
-              style={{ background: "rgba(245,181,72,0.22)", color: "#F5B548", borderColor: "rgba(245,181,72,0.55)" }}
+              style={quickSaveJustSaved ? SAVE_FEEDBACK_STYLE : { background: "rgba(245,181,72,0.22)", color: "#F5B548", borderColor: "rgba(245,181,72,0.55)" }}
             >
-              Save
+              {quickSaveJustSaved ? "Saved ✓" : "Save"}
             </button>
           </div>
 
