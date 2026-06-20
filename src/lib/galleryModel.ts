@@ -638,7 +638,10 @@ function normalizeSections(value: unknown, galleryItemIds?: string[]): GallerySe
     const id = safeString((raw as any)?.id) || makeSectionId();
     if (seen.has(id)) continue;
 
-    const title = safeString((raw as any)?.title) || "Untitled Section";
+    const rawTitle = safeString((raw as any)?.title);
+    // "Untitled Section" was the old legacy default — treat it as unset so existing
+    // galleries self-heal to the new "Exhibit N" default instead of staying stuck.
+    const title = rawTitle && rawTitle !== "Untitled Section" ? rawTitle : `Exhibit ${out.length + 1}`;
     const description =
       typeof (raw as any)?.description === "string" ? (raw as any).description : "";
     const itemIds = normalizeItemIds((raw as any)?.itemIds).filter((itemId) =>
@@ -2311,7 +2314,7 @@ export function updateGallerySection(
   if (!cleanSectionId) return;
 
   mutateGallery(galleryId, (gallery) => {
-    const nextSections = normalizeSections(getGallerySections(gallery), gallery.itemIds).map((section) => {
+    const nextSections = normalizeSections(getGallerySections(gallery), gallery.itemIds).map((section, sectionIndex) => {
       if (section.id !== cleanSectionId) return section;
 
       const featuredItemId =
@@ -2325,7 +2328,7 @@ export function updateGallerySection(
         ...section,
         title:
           typeof patch.title === "string"
-            ? patch.title.trim() || "Untitled Section"
+            ? patch.title.trim() || `Exhibit ${sectionIndex + 1}`
             : section.title,
         description:
           typeof patch.description === "string" ? patch.description : section.description,

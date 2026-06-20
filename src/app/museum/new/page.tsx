@@ -107,7 +107,7 @@ export default function NewMuseumGalleryPage() {
 
             <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
               Start a new curated gallery with your preferred visibility, theme pack,
-              display mode, and guest view behavior. You can refine sections, items,
+              display mode, and guest view behavior. You can refine exhibits, items,
               notes, shelves, and sharing after creation.
             </p>
 
