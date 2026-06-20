@@ -141,7 +141,7 @@ export default function MuseumGalleryCard({
 
         <div className="mt-3 flex items-center justify-between text-sm text-[color:var(--muted)]">
           <div>
-            {score.signals.sections} sections • {score.signals.featuredWorks} featured
+            {score.signals.sections} exhibits • {score.signals.featuredWorks} featured
           </div>
           <div className="transition group-hover:translate-x-0.5">Open →</div>
         </div>
