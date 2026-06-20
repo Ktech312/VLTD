@@ -628,7 +628,7 @@ export default function GalleryBuilder({
           <div>
             <div className="text-sm font-semibold">Exhibition Layout</div>
             <div className="mt-1 text-sm text-[color:var(--muted)]">
-              Turn this gallery into a structured layout with exhibits, featured works,
+              Turn this gallery into a structured layout with sections, featured works,
               shelf styling, guest preview, and curatorial flow.
             </div>
           </div>
@@ -683,7 +683,7 @@ export default function GalleryBuilder({
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {[
             { label: "LAYOUT", value: layoutType },
-            { label: "EXHIBITS", value: sections.length },
+            { label: "SECTIONS", value: sections.length },
             { label: "ITEMS", value: selectedCount },
             { label: "FEATURED", value: sections.filter((s) => !!s.featuredItemId).length },
           ].map(({ label, value }) => (
@@ -970,7 +970,7 @@ export default function GalleryBuilder({
                 );
                 onGalleryChange((current) => syncSectionsAndLayout(current, updated));
               }}
-              placeholder="Exhibit name…"
+              placeholder="Section name…"
               className="min-w-0 flex-1 min-h-[28px] rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
             />
           </div>
@@ -996,7 +996,7 @@ export default function GalleryBuilder({
                 e.currentTarget.style.height = "auto";
               }
             }}
-            placeholder="Exhibit description…"
+            placeholder="Section description…"
             className="mt-1 block w-full resize-none overflow-hidden rounded-2xl bg-[color:var(--pill)] px-3 py-2 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
           />
 
@@ -1272,7 +1272,7 @@ export default function GalleryBuilder({
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex-1">
                       <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">
-                        EXHIBIT #{sectionIndex + 1}
+                        SECTION #{sectionIndex + 1}
                       </div>
 
                       <input
@@ -1281,7 +1281,7 @@ export default function GalleryBuilder({
                           onGalleryChange((current) => {
                             const nextSections = getGallerySections(current).map((entry) =>
                               entry.id === section.id
-                                ? { ...entry, title: e.target.value.trim() || `Exhibit ${sectionIndex + 1}` }
+                                ? { ...entry, title: e.target.value.trim() || "Untitled Section" }
                                 : entry
                             );
                             return syncSectionsAndLayout(current, nextSections);
@@ -1301,7 +1301,7 @@ export default function GalleryBuilder({
                           })
                         }
                         rows={2}
-                        placeholder="Exhibit curatorial description..."
+                        placeholder="Section curatorial description..."
                         className="mt-2 w-full rounded-xl bg-[color:var(--input)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
                       />
                     </div>
@@ -1325,7 +1325,7 @@ export default function GalleryBuilder({
                       {unassignedSelectedItems.length ? (
                         <div className="text-[10px] text-[color:var(--muted2)]">
                           {unassignedSelectedItems.length} selected item
-                          {unassignedSelectedItems.length === 1 ? "" : "s"} not in an exhibit.
+                          {unassignedSelectedItems.length === 1 ? "" : "s"} not in a section.
                         </div>
                       ) : null}
                       <button
@@ -1333,7 +1333,7 @@ export default function GalleryBuilder({
                         onClick={() => onGalleryChange((current) => syncSectionsAndLayout(current, getGallerySections(current).filter((entry) => entry.id !== section.id)))}
                         className="inline-flex items-center rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
                       >
-                        Remove Exhibit
+                        Remove Section
                       </button>
                     </div>
                   </div>
@@ -1599,7 +1599,7 @@ export default function GalleryBuilder({
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-3">
                           <div className="text-[9px] tracking-[0.15em] text-[color:var(--muted2)]">
-                            EXHIBIT #{index + 1}
+                            SECTION #{index + 1}
                           </div>
 
                           {assignedSection ? (

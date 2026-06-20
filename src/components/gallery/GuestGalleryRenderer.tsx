@@ -501,7 +501,7 @@ export default function GuestGalleryRenderer({
                     border: `1px solid ${idx === selectedSectionIdx ? "rgba(245,181,72,0.35)" : "rgba(255,255,255,0.08)"}`,
                   }}
                 >
-                  {sv.section.title && sv.section.title !== "Untitled Section" ? sv.section.title : `Exhibit ${idx + 1}`}
+                  {sv.section.title || `Section ${idx + 1}`}
                 </button>
               ))}
             </div>
