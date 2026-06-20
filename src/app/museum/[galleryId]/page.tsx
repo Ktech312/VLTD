@@ -30,7 +30,6 @@ import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import GalleryBuilder from "@/components/GalleryBuilder";
 import { ItemPickerSheet } from "@/components/gallery/ItemPickerSheet";
 import { formatMoney, getGalleryMetrics } from "@/lib/portfolioMetrics";
-import { useSaveFeedback, SAVE_FEEDBACK_STYLE } from "@/lib/useSaveFeedback";
 
 type GalleryAccessPillMode = "private" | "public_gallery" | "guest_view" | "registered_users";
 
@@ -314,7 +313,6 @@ export default function GalleryPage() {
   const [status, setStatus] = useState("");
   const [statusTone, setStatusTone] = useState<"neutral" | "good">("neutral");
   const [isUploadingCover, setIsUploadingCover] = useState(false);
-  const { justSaved: saveChangesJustSaved, flashSaved: flashSaveChangesSaved } = useSaveFeedback();
 
   const [originalSnapshot, setOriginalSnapshot] = useState("");
   const latestGalleryRef = useRef<Gallery | null>(null);
@@ -1050,20 +1048,11 @@ export default function GalleryPage() {
                     <div className="flex flex-wrap items-center gap-1.5 md:ml-auto md:flex-nowrap">
                       <button
                         type="button"
-                        onClick={async () => {
-                          await saveDraft();
-                          flashSaveChangesSaved();
-                        }}
+                        onClick={() => void saveDraft()}
                         disabled={!isDirty}
-                        className={[
-                          "inline-flex min-h-[30px] min-w-[104px] items-center justify-center rounded-full px-3 py-1 text-[10px] font-semibold ring-1 transition hover:opacity-95",
-                          saveChangesJustSaved
-                            ? ""
-                            : "vltd-pill-main-glow bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[rgba(245,181,72,0.48)]",
-                        ].join(" ")}
-                        style={saveChangesJustSaved ? SAVE_FEEDBACK_STYLE : undefined}
+                        className="vltd-pill-main-glow inline-flex min-h-[30px] min-w-[104px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-3 py-1 text-[10px] font-semibold text-[color:var(--fg)] ring-1 ring-[rgba(245,181,72,0.48)] transition hover:opacity-95"
                       >
-                        {saveChangesJustSaved ? "Saved ✓" : "Save Changes"}
+                        Save Changes
                       </button>
                       <button
                         type="button"

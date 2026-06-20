@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { PillButton } from "@/components/ui/PillButton";
 import { showToast } from "@/lib/toast";
-import { useSaveFeedback } from "@/lib/useSaveFeedback";
 import {
   DEFAULT_PROFILE,
   UserProfile,
@@ -153,7 +152,6 @@ export default function UserProfilePage() {
 
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const { justSaved, flashSaved } = useSaveFeedback();
 
   const importJsonRef = useRef<HTMLInputElement | null>(null);
   const avatarUploadRef = useRef<HTMLInputElement | null>(null);
@@ -201,7 +199,6 @@ export default function UserProfilePage() {
 
     saveProfile(next);
     showToast("Saved profile.");
-    flashSaved();
   }
 
   function onResetToDefaults() {
@@ -280,11 +277,11 @@ export default function UserProfilePage() {
           </Link>
 
           <PillButton
-            variant={justSaved ? "success" : dirty && !saving ? "active" : "default"}
+            variant={dirty && !saving ? "active" : "default"}
             onClick={onSaveClick}
             disabled={!dirty || saving}
           >
-            {saving ? "Saving..." : justSaved ? "Saved ✓" : dirty ? "Save Changes" : "Saved"}
+            {saving ? "Saving..." : dirty ? "Save Changes" : "Saved"}
           </PillButton>
         </div>
 

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-type Variant = "default" | "active" | "primary" | "success";
+type Variant = "default" | "active" | "primary";
 
 export function PillButton({
   children,
@@ -34,15 +34,7 @@ export function PillButton({
   ].join(" ");
 
   const styles =
-    variant === "success"
-      ? [
-          "bg-emerald-500/90",
-          "text-white",
-          "ring-emerald-400/60",
-          "font-semibold",
-          "hover:bg-emerald-500",
-        ].join(" ")
-      : variant === "active"
+    variant === "active"
       ? [
           "bg-[color:var(--pill)]",
           "text-[color:var(--fg)]",
