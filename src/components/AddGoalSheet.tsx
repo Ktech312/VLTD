@@ -3,7 +3,6 @@
 import { useState } from "react";
 import type { CollectionGoal } from "@/lib/collectionGoals";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
-import { useSaveFeedback } from "@/lib/useSaveFeedback";
 
 type GoalFields = Omit<CollectionGoal, "id" | "createdAt">;
 
@@ -21,23 +20,18 @@ export default function AddGoalSheet({
   const [universe, setUniverse] = useState(initial?.universe ?? "");
   const [subject, setSubject] = useState(initial?.subject ?? "");
   const [notes, setNotes] = useState(initial?.notes ?? "");
-  const { justSaved, flashSaved } = useSaveFeedback();
 
   const canSave = !!name.trim() && Number(targetCount) > 0;
 
   function handleSave() {
     if (!canSave) return;
-    const fields = {
+    onSave({
       name: name.trim(),
       targetCount: Math.max(1, Math.round(Number(targetCount))),
       universe: universe || undefined,
       subject: subject.trim() || undefined,
       notes: notes.trim() || undefined,
-    };
-    flashSaved();
-    // Hold the sheet open briefly so the green "Saved" state is visible
-    // before the parent closes it via onSave.
-    setTimeout(() => onSave(fields), 450);
+    });
   }
 
   return (
@@ -138,14 +132,14 @@ export default function AddGoalSheet({
         <button
           type="button"
           onClick={handleSave}
-          disabled={!canSave || justSaved}
+          disabled={!canSave}
           className="mt-6 w-full rounded-full py-3.5 text-[14px] font-bold transition"
           style={{
-            background: justSaved ? "rgba(16,185,129,0.92)" : canSave ? "var(--theme-gold)" : "var(--pill)",
-            color: justSaved ? "#ffffff" : canSave ? "var(--ink, #0A0800)" : "var(--muted2)",
+            background: canSave ? "var(--theme-gold)" : "var(--pill)",
+            color: canSave ? "var(--ink, #0A0800)" : "var(--muted2)",
           }}
         >
-          {justSaved ? "Saved ✓" : "Save Goal"}
+          Save Goal
         </button>
       </div>
     </>

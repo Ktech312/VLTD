@@ -497,8 +497,7 @@ export default function GuestGalleryRenderer({
                   className="shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition"
                   style={{
                     background: idx === selectedSectionIdx ? "rgba(245,181,72,0.18)" : "rgba(255,255,255,0.06)",
-                    // PILL LOCKS: text stays theme fg — gold stays in the background tint/border only.
-                    color: idx === selectedSectionIdx ? "var(--fg)" : "rgba(255,255,255,0.55)",
+                    color: idx === selectedSectionIdx ? "#F5B548" : "rgba(255,255,255,0.55)",
                     border: `1px solid ${idx === selectedSectionIdx ? "rgba(245,181,72,0.35)" : "rgba(255,255,255,0.08)"}`,
                   }}
                 >
