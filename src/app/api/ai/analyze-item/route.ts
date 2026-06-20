@@ -1,0 +1,237 @@
+import { NextRequest, NextResponse } from "next/server";
+
+type VisionRouteResult = {
+  detectedTitle: string;
+  detectedCategory: string;
+  estimatedValue?: number;
+  confidence: number;
+  subtitle?: string;
+  number?: string;
+  grade?: string;
+  certNumber?: string;
+  categoryLabel?: string;
+  subcategoryLabel?: string;
+  universe?: string;
+  notes?: string;
+  year?: string;
+  brand?: string;
+  condition?: string;
+  conditionReason?: string;
+  conditionConfidence?: number;
+  barcode?: string;
+};
+
+function extractJsonObject(raw: string) {
+  const fenced = raw.match(/```json\s*([\s\S]*?)```/i)?.[1];
+  const source = fenced || raw;
+
+  const firstBrace = source.indexOf("{");
+  const lastBrace = source.lastIndexOf("}");
+  if (firstBrace < 0 || lastBrace <= firstBrace) {
+    throw new Error("AI did not return JSON.");
+  }
+
+  return JSON.parse(source.slice(firstBrace, lastBrace + 1)) as Partial<VisionRouteResult>;
+}
+
+function sanitizeVisionResult(raw: Partial<VisionRouteResult>): VisionRouteResult {
+  return {
+    detectedTitle: String(raw.detectedTitle ?? "").trim() || "Unknown Item",
+    detectedCategory: String(raw.detectedCategory ?? "").trim() || "Unknown",
+    estimatedValue:
+      typeof raw.estimatedValue === "number" && Number.isFinite(raw.estimatedValue)
+        ? raw.estimatedValue
+        : undefined,
+    confidence:
+      typeof raw.confidence === "number" && Number.isFinite(raw.confidence)
+        ? Math.max(0, Math.min(1, raw.confidence))
+        : 0.45,
+    subtitle: typeof raw.subtitle === "string" ? raw.subtitle.trim() : undefined,
+    number: typeof raw.number === "string" ? raw.number.trim() : undefined,
+    grade: typeof raw.grade === "string" ? raw.grade.trim() : undefined,
+    certNumber: typeof raw.certNumber === "string" ? raw.certNumber.trim() : undefined,
+    notes: typeof raw.notes === "string" ? raw.notes.trim() : undefined,
+    year: typeof raw.year === "string" ? raw.year.trim() : undefined,
+    brand: typeof raw.brand === "string" ? raw.brand.trim() : undefined,
+    condition: typeof raw.condition === "string" ? raw.condition.trim() : undefined,
+    conditionReason: typeof raw.conditionReason === "string" ? raw.conditionReason.trim() : undefined,
+    conditionConfidence:
+      typeof raw.conditionConfidence === "number" && Number.isFinite(raw.conditionConfidence)
+        ? Math.max(0, Math.min(1, raw.conditionConfidence))
+        : undefined,
+    barcode: typeof raw.barcode === "string" ? raw.barcode.trim() : undefined,
+  };
+}
+
+function gradingScaleInstructions(universe: string, category: string) {
+  const u = universe.toUpperCase();
+  const c = category.toLowerCase();
+
+  if (u === "SPORTS" || u === "TCG") {
+    return "Grading scale: PSA/BGS numeric 1-10 (10=Gem Mint, 9=Mint, 8=NM-MT, 7=NM, 6=EX-MT, 5=EX, 4=VG-EX, 3=VG, 2=Good, 1=Poor). If a slab label is visible, read the grade directly. If raw, estimate a grade range based on surface, corners, edges, and centering.";
+  }
+
+  if (u === "POP_CULTURE" || c.includes("comic")) {
+    return "Grading scale: CGC/CBCS numeric comic scale from 0.5 to 10. Assess spine stress, staple rust, centerfold, water damage, tape, writing, and cover gloss. If raw, estimate a sensible grade range.";
+  }
+
+  if (u === "MUSIC") {
+    return "Grading scale: Goldmine standard - M, NM, VG+, VG, G+, G, F, P. Assess sleeve condition separately from media condition when visible.";
+  }
+
+  if (u === "GAMES") {
+    return "Grading scale for sealed games: WATA/VGA style. For opened games, use completeness terms like CIB, Loose, Manual Only, Box Only. Note visible box, manual, inserts, seals, and wear.";
+  }
+
+  if (u === "JEWELRY_APPAREL") {
+    return "Describe condition in plain language: Mint/Unworn, Excellent, Very Good, Good, Fair, Poor. Note tags, packaging, visible wear, scratches, tarnish, missing stones, or hardware issues.";
+  }
+
+  return "Describe overall condition as Mint, Near Mint, Excellent, Very Good, Good, Fair, or Poor. Note visible defects such as scratches, tears, fading, stains, missing parts, or packaging wear.";
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "AI identification is not configured." },
+        { status: 503 }
+      );
+    }
+
+    const formData = await req.formData();
+    const image = formData.get("image");
+    const hints = String(formData.get("hints") ?? "").trim();
+    const universe = String(formData.get("universe") ?? "").trim();
+    const category = String(formData.get("category") ?? "").trim();
+    const subcategory = String(formData.get("subcategory") ?? "").trim();
+
+    if (!(image instanceof File)) {
+      return NextResponse.json({ error: "Missing image upload." }, { status: 400 });
+    }
+
+    const arrayBuffer = await image.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString("base64");
+    const gradingInstructions = gradingScaleInstructions(universe, category);
+
+    const prompt = [
+      "Analyze this collectible or product photo and return JSON only.",
+      universe || category || subcategory
+        ? `Context: This item has been pre-classified as:\nUniverse: ${universe || "unknown"}\nCategory: ${category || "unknown"}\nSubcategory: ${subcategory || "unknown"}\nUse this context to focus your identification on the specific item name, set name, number, year, grade, and condition. Do not return universe or category fields.`
+        : "",
+      gradingInstructions,
+      "Use this exact schema:",
+      JSON.stringify(
+        {
+          detectedTitle: "string - full item name",
+          confidence: 0.0,
+          subtitle: "string - series name, set name, or subtitle if applicable",
+          number: "string - issue number, card number, or item number",
+          grade: "string - grading score or named grade, e.g. PSA 9, 9.8, NM, VG+, CIB",
+          certNumber: "string - PSA/CGC/BCCG cert number if visible",
+          notes: "string - brief description of the item",
+          year: "string - publication or release year if visible",
+          brand: "string - manufacturer or publisher",
+          condition: "string - named condition tier, e.g. Near Mint, Very Fine, Good",
+          conditionReason: "string - 1-2 sentences explaining visible condition evidence",
+          conditionConfidence: 0.0,
+          barcode: "string - UPC or barcode digits if clearly visible, else empty",
+        },
+        null,
+        2
+      ),
+      "confidence and conditionConfidence must be between 0 and 1. Lower them if unsure.",
+      "Leave fields as empty string if not visible or not applicable.",
+      "Return ONLY the JSON object. No explanation, no markdown, no extra text.",
+      hints ? `Extra hints from app: ${hints}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
+    let response: Response;
+    try {
+      response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 1024,
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "image",
+                  source: {
+                    type: "base64",
+                    media_type: image.type || "image/jpeg",
+                    data: base64,
+                  },
+                },
+                {
+                  type: "text",
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+        }),
+      });
+    } catch (err) {
+      console.error("Claude fetch error:", err);
+      return NextResponse.json(
+        { error: "AI request failed", detail: String(err) },
+        { status: 503 }
+      );
+    }
+
+    if (response.status === 429) {
+      return NextResponse.json(
+        { error: "AI is busy right now. Please wait a moment and try again." },
+        { status: 429 }
+      );
+    }
+
+    if (!response.ok) {
+      const details = await response.text();
+      console.error("Claude non-OK response:", response.status, details);
+      return NextResponse.json(
+        { error: "AI Vision request failed.", details },
+        { status: 502 }
+      );
+    }
+
+    const result = (await response.json()) as { content?: { type: string; text: string }[] };
+    const rawText = result.content?.[0]?.text || "{}";
+    const parsed = sanitizeVisionResult(extractJsonObject(rawText));
+
+    return NextResponse.json({
+      title: parsed.detectedTitle,
+      subtitle: parsed.subtitle ?? "",
+      year: parsed.year ?? "",
+      brand: parsed.brand ?? "",
+      grade: parsed.grade ?? "",
+      certNumber: parsed.certNumber ?? "",
+      condition: parsed.condition ?? "",
+      conditionReason: parsed.conditionReason ?? "",
+      conditionConfidence: parsed.conditionConfidence ?? 0,
+      description: parsed.notes ?? "",
+      confidence: parsed.confidence,
+      barcode: parsed.barcode ?? "",
+      number: parsed.number ?? "",
+      estimatedValue: parsed.estimatedValue,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Unknown AI analysis error.",
+      },
+      { status: 500 }
+    );
+  }
+}

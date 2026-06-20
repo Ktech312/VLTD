@@ -1,0 +1,280 @@
+/* Path: src/app/theme-override.css */
+/* ============================================
+   VLTD THEME OVERRIDE — loads last, wins always
+
+   Specificity strategy:
+   - Pass files use body:has(a[href="..."]) selectors ≈ (0,1,3)
+   - [data-vltd-theme] prefix is set by ThemeContext on <html>
+   - [data-vltd-theme] body main = (0,2,2) → beats pass files
+   - [data-vltd-theme] body .vltd-panel-main = (0,3,1) → beats pass files
+
+   The data-vltd-theme attribute is applied by ThemeContext on mount.
+   :root defaults in globals.css cover SSR until JS hydrates.
+   ============================================ */
+
+/* ── PAGE BACKGROUNDS ── */
+[data-vltd-theme] body {
+  background: var(--theme-bg, #0B1320) !important;
+  background-attachment: fixed !important;
+  color: var(--theme-text-primary, #F0EAD6) !important;
+}
+
+/* Force all <main> elements transparent — body fixed gradient shows through */
+[data-vltd-theme] body main {
+  background: transparent !important;
+}
+
+/* ── PANEL BACKGROUNDS — only vltd-specific classes, never broad section/article/rounded ── */
+[data-vltd-theme] body .vltd-panel-main,
+[data-vltd-theme] body .vltd-panel-soft {
+  background: var(--surface, var(--theme-card, rgba(15,25,45,0.85))) !important;
+  border-color: var(--frame-ring, var(--theme-gold-border, rgba(245,181,72,0.25))) !important;
+  color: var(--theme-text-primary, #F0EAD6) !important;
+}
+
+/* ── CARDS — only named classes, not every rounded element ── */
+[data-vltd-theme] body .vault-card,
+[data-vltd-theme] body .vault-card-gold {
+  background: var(--surface, var(--theme-card, rgba(15,25,45,0.85))) !important;
+  border-color: var(--border, var(--theme-border, rgba(245,181,72,0.12))) !important;
+}
+
+/* ── NAVIGATION ── */
+[data-vltd-theme] body nav,
+[data-vltd-theme] body header,
+[data-vltd-theme] body [role="navigation"] {
+  background: var(--theme-nav-bg, rgba(11,19,32,0.95)) !important;
+  border-color: var(--theme-nav-border, rgba(245,181,72,0.15)) !important;
+}
+
+/* ── INPUTS ── */
+[data-vltd-theme] body input:not([type="checkbox"]):not([type="radio"]),
+[data-vltd-theme] body textarea,
+[data-vltd-theme] body select {
+  background: var(--theme-elevated, rgba(20,32,55,0.9)) !important;
+  border-color: var(--theme-border, rgba(245,181,72,0.12)) !important;
+  color: var(--theme-text-primary, #F0EAD6) !important;
+}
+[data-vltd-theme] body input::placeholder,
+[data-vltd-theme] body textarea::placeholder {
+  color: var(--theme-text-muted, #5A5040) !important;
+}
+[data-vltd-theme] body input:focus,
+[data-vltd-theme] body textarea:focus,
+[data-vltd-theme] body select:focus {
+  border-color: var(--theme-gold-border, rgba(245,181,72,0.3)) !important;
+  box-shadow: 0 0 0 2px var(--theme-gold-subtle, rgba(245,181,72,0.08)) !important;
+  outline: none !important;
+}
+
+/* ── GOLD ELEMENTS — preserve gold regardless of theme ── */
+[data-vltd-theme] body .btn-gold,
+[data-vltd-theme] body [class*="btn-gold"] {
+  background: var(--theme-gold-gradient) !important;
+  color: #0B0B0B !important;
+  box-shadow: var(--theme-gold-glow) !important;
+}
+
+[data-vltd-theme] body .gold-text,
+[data-vltd-theme] body [class*="gold-text"] {
+  background: var(--theme-gold-gradient) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* ── KILL HARDCODED BLUE / NAVY ── */
+/* Blue text → gold */
+[data-vltd-theme] body [class*="text-blue-"],
+[data-vltd-theme] body [class*="text-indigo-"],
+[data-vltd-theme] body [class*="text-cyan-"]:not([class*="keep-cyan"]) {
+  color: var(--theme-gold, #F5B548) !important;
+}
+
+/* Blue backgrounds → theme subtle */
+[data-vltd-theme] body [class*="bg-blue-"]:not(button):not(a),
+[data-vltd-theme] body [class*="bg-indigo-"]:not(button):not(a),
+[data-vltd-theme] body [class*="bg-cyan-"]:not(button):not(a):not([class*="keep-cyan"]) {
+  background-color: var(--theme-gold-subtle, rgba(245,181,72,0.08)) !important;
+}
+
+/* Blue borders → theme gold border */
+[data-vltd-theme] body [class*="border-blue-"],
+[data-vltd-theme] body [class*="border-indigo-"],
+[data-vltd-theme] body [class*="border-cyan-"]:not([class*="keep-cyan"]) {
+  border-color: var(--theme-gold-border, rgba(245,181,72,0.3)) !important;
+}
+
+/* Blue buttons → gold */
+[data-vltd-theme] body button[class*="bg-blue"],
+[data-vltd-theme] body button[class*="bg-indigo"],
+[data-vltd-theme] body button[class*="bg-cyan"],
+[data-vltd-theme] body a[class*="bg-blue"],
+[data-vltd-theme] body a[class*="bg-indigo"] {
+  background: var(--theme-gold-gradient) !important;
+  color: #0B0B0B !important;
+  border-color: transparent !important;
+}
+
+/* ── PRICE & DATA — cyan stays ── */
+[class*="price"],
+[class*="Price"],
+[data-type="price"],
+[data-type="value"] {
+  color: #52D6F4 !important;
+}
+
+/* ── LIGHT THEME — readable dark text ── */
+.theme-light [data-vltd-theme] body,
+[data-vltd-theme].theme-light body {
+  color: var(--theme-text-primary) !important;
+}
+
+/* Force dark text on all text utilities in light mode */
+.theme-light body,
+.theme-light body p,
+.theme-light body span:not([class*="gold-text"]):not([class*="keep-white"]),
+.theme-light body h1,
+.theme-light body h2,
+.theme-light body h3,
+.theme-light body h4,
+.theme-light body h5,
+.theme-light body h6,
+.theme-light body li,
+.theme-light body label,
+.theme-light body div:not([class*="gold-text"]) {
+  color: var(--theme-text-primary, #1A1A2E) !important;
+}
+
+/* White text → dark in light mode */
+.theme-light [class*="text-white"]:not(.keep-white),
+.theme-light [class*="text-gray-1"]:not(.keep-white),
+.theme-light [class*="text-gray-2"]:not(.keep-white) {
+  color: var(--theme-text-primary, #1A1A2E) !important;
+}
+
+/* Cards/panels — white or very light bg, visible shadow for depth */
+.theme-light body .vltd-panel-main,
+.theme-light body .vltd-panel-soft,
+.theme-light body .vault-card {
+  background: var(--theme-card, rgba(255,255,255,0.85)) !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08) !important;
+  color: var(--theme-text-primary, #1A1A2E) !important;
+}
+
+/* bg-vault-card Tailwind utility — force theme-responsive in light mode */
+.theme-light body .bg-vault-card,
+.theme-light body [class~="bg-vault-card"] {
+  background: var(--theme-card, rgba(255,255,255,0.80)) !important;
+}
+
+/* Sections and articles in light mode */
+.theme-light body section,
+.theme-light body article {
+  background: var(--theme-card, rgba(255,255,255,0.80)) !important;
+}
+
+/* Browse public galleries button */
+.theme-light body a[href="#public-galleries"] {
+  background: var(--theme-card, rgba(255,255,255,0.80)) !important;
+}
+
+/* Nav/header — light surface */
+.theme-light body nav,
+.theme-light body header,
+.theme-light body [role="navigation"] {
+  background: var(--theme-nav-bg, rgba(255,255,255,0.95)) !important;
+  color: var(--theme-text-primary, #1A1A2E) !important;
+}
+
+/* Nav links — dark readable in light mode */
+.theme-light body nav a,
+.theme-light body header a,
+.theme-light body [role="navigation"] a {
+  color: var(--theme-text-primary, #1A1A2E) !important;
+}
+
+/* Inputs — white bg, dark text */
+.theme-light body input:not([type="checkbox"]):not([type="radio"]),
+.theme-light body textarea,
+.theme-light body select {
+  background: var(--theme-elevated, #ffffff) !important;
+  color: var(--theme-text-primary, #1A1A2E) !important;
+}
+
+/* Muted text stays legible */
+.theme-light body [class*="text-muted"],
+.theme-light body [class*="opacity-5"],
+.theme-light body [class*="opacity-6"],
+.theme-light body [class*="opacity-7"] {
+  color: var(--theme-text-muted, #5A5A6A) !important;
+  opacity: 1 !important;
+}
+
+/* ── PILLS & BADGES — theme-variable consistency ── */
+
+/* Any pill/badge with a bg utility gets a gold border in dark mode */
+[data-vltd-theme] body .rounded-full[class*="bg-"],
+[data-vltd-theme] body [class*="rounded-full"][class*="px-"][class*="py-"],
+[data-vltd-theme] body [class*="badge"],
+[data-vltd-theme] body [class*="pill"] {
+  border-color: var(--theme-gold-border, rgba(245,181,72,0.25)) !important;
+}
+
+/* Pills with white/gray bg in dark mode → theme card */
+[data-vltd-theme] body .rounded-full[class*="bg-white"],
+[data-vltd-theme] body .rounded-full[class*="bg-gray-"],
+[data-vltd-theme] body .rounded-full[class*="bg-slate-"] {
+  background: var(--theme-elevated, rgba(20,32,55,0.9)) !important;
+  color: var(--theme-text-primary, #F0EAD6) !important;
+}
+
+/* Pills text in light mode — always dark */
+.theme-light body .rounded-full,
+.theme-light body [class*="badge"],
+.theme-light body [class*="pill"] {
+  color: var(--theme-text-primary, #1A1A2E) !important;
+}
+
+/* Button text in light mode */
+.theme-light body button:not([class*="btn-gold"]):not([class*="vltd-gold"]):not([class*="bg-red"]) {
+  color: var(--theme-text-primary, #1A1A2E) !important;
+}
+
+/* Link text in light mode — unless gold */
+.theme-light body a:not([class*="gold"]):not([class*="btn-gold"]):not([class*="vltd-gold"]) {
+  color: var(--theme-text-primary, #1A1A2E) !important;
+}
+
+/* Hardcoded dark bg overrides in light mode */
+.theme-light body [class*="bg-[#14"],
+.theme-light body [class*="bg-[#0"],
+.theme-light body [class*="bg-[rgba(20"],
+.theme-light body [class*="bg-[rgba(15"],
+.theme-light body [class*="bg-[rgba(14"] {
+  background: var(--theme-card, rgba(255,255,255,0.85)) !important;
+  color: var(--theme-text-primary, #1A1A2E) !important;
+}
+
+/* Section/card headings in light mode — keep gold labels gold */
+.theme-light body [class*="tracking-[0.2"]:not([class*="gold"]):not([class*="text-[#F5"]) {
+  color: var(--theme-text-muted, #5A5A6A) !important;
+}
+
+/* ── PILL/BADGE DARK BG CATCH-ALL (light themes) ── */
+/* Any pill or small badge with black/dark inline bg gets flipped to theme surface */
+.theme-light body [class*="rounded-full"][class*="bg-black"],
+.theme-light body [class*="rounded-full"][class*="bg-[rgba(0"],
+.theme-light body [class*="rounded-2xl"][class*="bg-black"],
+.theme-light body [class*="rounded-xl"][class*="bg-black"],
+.theme-light body [class*="rounded-lg"][class*="bg-black"] {
+  background: var(--theme-elevated, rgba(245,240,228,0.95)) !important;
+  color: var(--theme-text-secondary, #4A3A1A) !important;
+  border: 1px solid var(--theme-border, rgba(180,140,60,0.18)) !important;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--theme-card, #141414); }
+::-webkit-scrollbar-thumb { background: var(--theme-border, #2A2418); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--theme-gold-border, rgba(245,181,72,0.4)); }

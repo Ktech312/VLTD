@@ -1,0 +1,146 @@
+/* Path: src/app/vault-pass.css */
+/* Pass 5: visible Vault page hardening. Scoped by the Vault search field. */
+
+body:has(input[placeholder="Search vault items..."]) main > div {
+  max-width: 1180px !important;
+}
+
+body:has(input[placeholder="Search vault items..."]) section {
+  border-color: rgba(245, 181, 72, 0.18) !important;
+  background: var(--theme-card, rgba(15,25,45,0.85)) !important;
+  box-shadow:
+    0 0 0 1px rgba(245, 181, 72, 0.04),
+    0 22px 72px rgba(0, 0, 0, 0.40) !important;
+}
+
+body:has(input[placeholder="Search vault items..."]) section:first-of-type {
+  border-color: rgba(245, 181, 72, 0.25) !important;
+  box-shadow:
+    0 0 0 1px rgba(245, 181, 72, 0.06),
+    0 26px 86px rgba(245, 181, 72, 0.06),
+    0 24px 88px rgba(0, 0, 0, 0.50) !important;
+}
+
+body:has(input[placeholder="Search vault items..."]) input[placeholder="Search vault items..."],
+body:has(input[placeholder="Search vault items..."]) select {
+  background: var(--theme-elevated, rgba(20,32,55,0.9)) !important;
+  border: 1px solid rgba(245, 181, 72, 0.18) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+}
+
+body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"] {
+  height: 142px !important;
+  border-radius: 22px !important;
+  padding: 10px !important;
+  background: var(--theme-card, rgba(15,25,45,0.85)) !important;
+  border-color: rgba(245, 181, 72, 0.16) !important;
+  box-shadow:
+    0 0 0 1px rgba(245, 181, 72, 0.04),
+    0 16px 46px rgba(0, 0, 0, 0.40) !important;
+}
+
+body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"]:hover {
+  transform: translateY(-1px);
+  border-color: rgba(245, 181, 72, 0.38) !important;
+  box-shadow:
+    0 0 0 1px rgba(245, 181, 72, 0.08),
+    0 18px 48px rgba(245, 181, 72, 0.08),
+    0 18px 70px rgba(0, 0, 0, 0.40) !important;
+}
+
+body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"] > div.grid {
+  grid-template-columns: 96px minmax(0, 1fr) 96px !important;
+  gap: 12px !important;
+}
+
+body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"] > div.grid > a:first-child {
+  border-radius: 16px !important;
+  background: radial-gradient(circle at top, rgba(245, 181, 72, 0.06), rgba(0, 0, 0, 0.20) 58%, rgba(0, 0, 0, 0.28) 100%) !important;
+}
+
+body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"] select {
+  min-height: 28px !important;
+  border-radius: 10px !important;
+  font-size: 11px !important;
+}
+
+body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"] [class*="text-gold-light"] {
+  color: #FFE08A !important;
+}
+
+@media (max-width: 700px) {
+  body:has(input[placeholder="Search vault items..."]) main {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  body:has(input[placeholder="Search vault items..."]) main > div {
+    max-width: 100% !important;
+  }
+
+  body:has(input[placeholder="Search vault items..."]) section {
+    border-radius: 22px !important;
+    padding: 14px !important;
+  }
+
+  body:has(input[placeholder="Search vault items..."]) section:has(input[placeholder="Search vault items..."]) > div,
+  body:has(input[placeholder="Search vault items..."]) section:has(input[placeholder="Search vault items..."]) > div > div {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: none !important;
+    gap: 10px !important;
+  }
+
+  body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"] {
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 12px !important;
+    border-radius: 24px !important;
+  }
+
+  body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"] > div.grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+    gap: 12px !important;
+  }
+
+  body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"] > div.grid > a:first-child {
+    height: 190px !important;
+    width: 100% !important;
+    border-radius: 18px !important;
+  }
+
+  body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"] > div.grid > div:nth-child(2),
+  body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"] > div.grid > div:nth-child(3) {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+  }
+
+  body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"] > div.grid > div:nth-child(3) {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"] [class*="line-clamp-1"] {
+    display: block !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    -webkit-line-clamp: unset !important;
+    line-clamp: unset !important;
+  }
+
+  body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"] select {
+    min-height: 40px !important;
+    width: 100% !important;
+    padding: 8px 10px !important;
+    font-size: 13px !important;
+  }
+
+  body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"] button,
+  body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"] a {
+    min-height: 36px;
+  }
+}

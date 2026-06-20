@@ -1,0 +1,987 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+
+import { loadItems, type VaultItem } from "@/lib/vaultModel";
+import { useResolvedVaultImage } from "@/lib/useResolvedVaultImages";
+
+// ─── Types ─────────────────────────────────────────────────────────────────────
+
+type FrameType = "slab" | "onetouch" | "case" | "comic" | "neon";
+type StickerKey = "grade" | "key" | "forsale" | "sold" | "hot" | "edition";
+type ExportRatio = "free" | "1:1" | "4:5" | "9:16";
+
+// ─── html2canvas loader (CDN, same pattern as JSZip) ─────────────────────────
+
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    html2canvas?: any;
+  }
+}
+function loadHtml2Canvas(): Promise<typeof window.html2canvas> {
+  return new Promise((resolve, reject) => {
+    if (typeof window.html2canvas === "function") { resolve(window.html2canvas); return; }
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+    s.onload = () => resolve(window.html2canvas);
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+// ─── Shared card image inside frames ─────────────────────────────────────────
+
+function CardImage({ src, title }: { src: string; title: string }) {
+  if (src) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt={title}
+        crossOrigin="anonymous"
+        style={{ width: "100%", height: "100%", objectFit: "contain", display: "block", borderRadius: 3 }}
+      />
+    );
+  }
+  return (
+    <div style={{
+      width: "100%", height: "100%", background: "#1a2a3a",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      borderRadius: 3, flexDirection: "column", gap: 6,
+    }}>
+      <div style={{ fontSize: 28, opacity: 0.4 }}>🖼</div>
+      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", textAlign: "center", padding: "0 8px" }}>No image</div>
+    </div>
+  );
+}
+
+// ─── Frame 1: Grade Slab ──────────────────────────────────────────────────────
+
+function GradeSlabFrame({ item, imageUrl }: { item: VaultItem; imageUrl: string }) {
+  const grade = item.grade ?? "–";
+  const gradeLabel = item.conditionReason ?? (item.grade ? "GEM MT" : "RAW");
+  const certNum = item.certNumber ?? item.serialNumber ?? "00000001";
+
+  return (
+    <div style={{
+      width: 180,
+      borderRadius: 8,
+      overflow: "hidden",
+      border: "2px solid rgba(192,218,235,0.9)",
+      boxShadow: "4px 8px 22px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.35), inset 1px 1px 8px rgba(255,255,255,0.45)",
+      background: "rgba(210,232,248,0.15)",
+    }}>
+      {/* Header */}
+      <div style={{ background: "#001869", padding: "8px 10px 7px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          {/* Left: title */}
+          <div style={{ flex: 1, paddingRight: 8 }}>
+            <div style={{ font: "700 7px/1 Arial, sans-serif", color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 2 }}>
+              VLTD Registry
+            </div>
+            <div style={{
+              font: "700 11px/1.2 Arial Narrow, Arial, sans-serif", color: "#fff",
+              textTransform: "uppercase", marginBottom: 2,
+              maxWidth: 100, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}>
+              {item.title ?? "Untitled"}
+            </div>
+            <div style={{ font: "400 7px/1.3 Arial, sans-serif", color: "rgba(255,255,255,0.5)" }}>
+              {item.universe ?? ""} {item.number ? `#${item.number}` : ""}
+            </div>
+          </div>
+          {/* Right: grade box */}
+          <div style={{
+            background: "rgba(255,255,255,0.08)", border: "1.5px solid rgba(255,255,255,0.28)",
+            borderRadius: 4, padding: "5px 9px", textAlign: "center", minWidth: 42,
+          }}>
+            <div style={{ font: "900 28px/1 Times New Roman, Georgia, serif", color: "#fff" }}>{grade}</div>
+            <div style={{ font: "700 6px/1 Arial, sans-serif", color: "rgba(255,255,255,0.55)", textTransform: "uppercase", marginTop: 2, letterSpacing: "0.4px" }}>
+              {gradeLabel}
+            </div>
+          </div>
+        </div>
+        {/* Cert */}
+        <div style={{ textAlign: "right" }}>
+          <div style={{ font: "400 7.5px/1.5 Courier New, monospace", color: "#1a1a1a", letterSpacing: "0.3px" }}>{certNum}</div>
+          <div style={{ font: "400 7px/1 Arial, sans-serif", color: "#444" }}>vltd.app</div>
+        </div>
+      </div>
+      {/* Slab rails */}
+      <div style={{
+        height: 6, background: "rgba(152,190,215,0.55)",
+        borderTop: "1px solid rgba(198,225,240,0.6)", borderBottom: "1px solid rgba(118,163,194,0.4)",
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 32,
+      }}>
+        <div style={{ width: 20, height: 3, background: "rgba(255,255,255,0.65)", borderRadius: 1 }} />
+        <div style={{ width: 20, height: 3, background: "rgba(255,255,255,0.65)", borderRadius: 1 }} />
+      </div>
+      {/* Card window */}
+      <div style={{ padding: 10 }}>
+        <div style={{
+          aspectRatio: "2.5/3.5", background: "#fff", borderRadius: 4,
+          padding: 4, boxShadow: "inset 0 0 0 0.5px rgba(0,0,0,0.1)",
+          overflow: "hidden",
+        }}>
+          <CardImage src={imageUrl} title={item.title ?? ""} />
+        </div>
+      </div>
+      {/* Bottom shelf */}
+      <div style={{ height: 9, background: "rgba(152,195,222,0.18)", borderTop: "0.5px solid rgba(203,228,242,0.7)" }} />
+    </div>
+  );
+}
+
+// ─── Frame 2: One-Touch Holder ────────────────────────────────────────────────
+
+function OneTouchFrame({ item, imageUrl }: { item: VaultItem; imageUrl: string }) {
+  return (
+    <div style={{ width: 230, position: "relative" }}>
+      {/* Top tab */}
+      <div style={{
+        width: 46, height: 11, background: "rgba(232,244,252,0.88)",
+        border: "2px solid rgba(155,198,220,0.85)", borderBottom: "none",
+        borderRadius: "4px 4px 0 0", margin: "0 auto", position: "relative", top: 1,
+        boxShadow: "inset 0 1px 2px rgba(255,255,255,0.7)",
+      }} />
+      {/* Body */}
+      <div style={{
+        border: "2.5px solid rgba(155,198,220,0.9)", borderRadius: 5,
+        background: "rgba(232,244,252,0.32)",
+        boxShadow: "4px 7px 20px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.7), inset 1px 1px 5px rgba(255,255,255,0.5)",
+        padding: "12px 12px 10px",
+      }}>
+        {/* Gold screws */}
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 9, padding: "0 5px" }}>
+          {[0, 1].map((i) => (
+            <div key={i} style={{
+              width: 12, height: 12, borderRadius: "50%",
+              background: "linear-gradient(135deg, #b8960c, #ffe066, #b8960c, #8a6e00)",
+              border: "1px solid rgba(0,0,0,0.3)", boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+              position: "relative",
+            }}>
+              <div style={{
+                position: "absolute", top: "50%", left: "50%",
+                transform: "translate(-50%,-50%) rotate(45deg)",
+                width: 8, height: 1.5, background: "rgba(80,50,0,0.6)", borderRadius: 1,
+              }} />
+            </div>
+          ))}
+        </div>
+        {/* Card */}
+        <div style={{
+          aspectRatio: "2.5/3.5", background: "#fff", borderRadius: 4, padding: 4,
+          border: "0.5px solid rgba(0,0,0,0.08)", boxShadow: "inset 0 0 0 0.5px rgba(0,0,0,0.07)",
+          overflow: "hidden",
+        }}>
+          <CardImage src={imageUrl} title={item.title ?? ""} />
+        </div>
+        {/* Title strip */}
+        <div style={{ marginTop: 8, textAlign: "center" }}>
+          <div style={{ font: "600 9px/1.3 Arial, sans-serif", color: "rgba(30,50,80,0.7)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+            {item.title ?? "Untitled"}
+          </div>
+          {item.grade && (
+            <div style={{ font: "400 8px/1 Arial, sans-serif", color: "rgba(30,50,80,0.5)", marginTop: 2 }}>
+              Grade: {item.grade}
+            </div>
+          )}
+        </div>
+        {/* Bottom clips */}
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, padding: "0 20px" }}>
+          {[0, 1].map((i) => (
+            <div key={i} style={{
+              width: 24, height: 5, background: "rgba(155,198,220,0.7)",
+              borderRadius: "0 0 3px 3px", border: "1px solid rgba(118,170,200,0.55)", borderTop: "none",
+            }} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Frame 3: Black Aluminum Case ─────────────────────────────────────────────
+
+function BlackCaseFrame({ item, imageUrl }: { item: VaultItem; imageUrl: string }) {
+  const grade = item.grade ?? "–";
+  const gradeLabel = item.conditionReason ?? (item.grade ? "GEM MT" : "RAW");
+  const certNum = item.certNumber ?? item.serialNumber ?? "00000001";
+
+  return (
+    <div style={{ width: 320 }}>
+      {/* Lid */}
+      <div style={{
+        height: 80, background: "#141414", borderRadius: "5px 5px 0 0",
+        position: "relative", overflow: "hidden",
+        border: "2px solid #333", borderBottom: "none",
+        boxShadow: "0 -4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
+      }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "linear-gradient(90deg,#2e2e2e,#4a4a4a 20%,#3a3a3a 40%,#4a4a4a 60%,#3a3a3a 80%,#2e2e2e)" }} />
+        <div style={{
+          position: "absolute", inset: "7px 7px 5px",
+          borderRadius: 2, overflow: "hidden", backgroundColor: "#1e1e1e",
+          backgroundImage: "radial-gradient(ellipse 9px 7px at 50% 50%, #303030 0%, #1a1a1a 60%)",
+          backgroundSize: "16px 13px",
+          boxShadow: "inset 0 3px 8px rgba(0,0,0,0.5)",
+        }} />
+        <div style={{ position: "absolute", bottom: 8, right: 14 }}>
+          <span style={{ font: "700 9px/1 Arial, sans-serif", color: "rgba(255,255,255,0.12)", letterSpacing: 3, textTransform: "uppercase" }}>VLTD</span>
+        </div>
+      </div>
+      {/* Hinge */}
+      <div style={{
+        height: 11, background: "#1a1a1a",
+        display: "flex", alignItems: "center", justifyContent: "space-evenly",
+        padding: "0 40px", border: "0 solid #333", borderLeft: "2px solid #333", borderRight: "2px solid #333",
+      }}>
+        {[0, 1, 2].map((i) => (
+          <div key={i} style={{
+            width: 28, height: 9,
+            background: "linear-gradient(180deg, #555 0%, #383838 50%, #2a2a2a 100%)",
+            borderRadius: 2, border: "1px solid #444",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.12)",
+          }} />
+        ))}
+      </div>
+      {/* Tray */}
+      <div style={{
+        background: "#141414", borderRadius: "0 0 5px 5px",
+        border: "2px solid #333", borderTop: "1px solid #222",
+        boxShadow: "0 10px 28px rgba(0,0,0,0.65)", overflow: "hidden", position: "relative",
+      }}>
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 3, background: "linear-gradient(90deg,#2e2e2e,#4a4a4a 20%,#3a3a3a 40%,#4a4a4a 60%,#3a3a3a 80%,#2e2e2e)" }} />
+        {/* Latches */}
+        <div style={{ position: "absolute", top: 4, left: 0, right: 0, display: "flex", justifyContent: "space-evenly", padding: "0 50px", zIndex: 2 }}>
+          {[0, 1].map((i) => (
+            <div key={i} style={{
+              width: 32, height: 7, background: "linear-gradient(180deg,#444,#282828)",
+              borderRadius: 1, border: "1px solid #555",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.5)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <div style={{ width: 16, height: 2.5, background: "linear-gradient(180deg,#666,#444)", borderRadius: 1 }} />
+            </div>
+          ))}
+        </div>
+        {/* Foam + slab */}
+        <div style={{
+          margin: "14px 10px 12px",
+          borderRadius: 3, overflow: "hidden",
+          backgroundColor: "#1e1e1e",
+          backgroundImage: "radial-gradient(ellipse 9px 7px at 50% 50%, #303030 0%, #1a1a1a 60%)",
+          backgroundSize: "16px 13px",
+          boxShadow: "inset 0 4px 12px rgba(0,0,0,0.55)",
+          padding: 12,
+        }}>
+          <div style={{
+            background: "#161616", borderRadius: 5, padding: 8,
+            boxShadow: "inset 0 4px 10px rgba(0,0,0,0.65)",
+            display: "flex", justifyContent: "center",
+          }}>
+            {/* Mini grade slab inside case */}
+            <div style={{
+              width: 148, borderRadius: 6, overflow: "hidden",
+              border: "2px solid rgba(192,218,235,0.9)",
+              boxShadow: "4px 6px 16px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(255,255,255,0.35)",
+              background: "rgba(210,232,248,0.15)",
+            }}>
+              <div style={{ background: "#001869", padding: "6px 8px 5px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div style={{ flex: 1, paddingRight: 6 }}>
+                    <div style={{ font: "700 6px/1 Arial, sans-serif", color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 2 }}>VLTD Registry</div>
+                    <div style={{ font: "700 8.5px/1.2 Arial Narrow, Arial, sans-serif", color: "#fff", textTransform: "uppercase", marginBottom: 1, maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {item.title ?? "Untitled"}
+                    </div>
+                    <div style={{ font: "400 6px/1.3 Arial, sans-serif", color: "rgba(255,255,255,0.5)" }}>{item.universe ?? ""} {item.number ? `#${item.number}` : ""}</div>
+                    <div style={{ font: "400 5.5px/1 Arial, sans-serif", color: "rgba(255,255,255,0.4)", marginTop: 3 }}>Cert: {certNum}</div>
+                  </div>
+                  <div style={{
+                    background: "rgba(255,255,255,0.08)", border: "1.5px solid rgba(255,255,255,0.28)",
+                    borderRadius: 4, padding: "4px 7px", textAlign: "center", minWidth: 36,
+                  }}>
+                    <div style={{ font: "900 24px/1 Times New Roman, Georgia, serif", color: "#fff" }}>{grade}</div>
+                    <div style={{ font: "700 5.5px/1 Arial, sans-serif", color: "rgba(255,255,255,0.55)", textTransform: "uppercase", marginTop: 2, letterSpacing: "0.4px" }}>{gradeLabel}</div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ height: 4, background: "rgba(152,190,215,0.5)", display: "flex", alignItems: "center", justifyContent: "center", gap: 22 }}>
+                <div style={{ width: 14, height: 2, background: "rgba(255,255,255,0.6)", borderRadius: 1 }} />
+                <div style={{ width: 14, height: 2, background: "rgba(255,255,255,0.6)", borderRadius: 1 }} />
+              </div>
+              <div style={{ padding: 6, aspectRatio: "auto" }}>
+                <div style={{ aspectRatio: "2.5/3.5", background: "#fff", borderRadius: 3, overflow: "hidden", boxShadow: "inset 0 0 0 0.5px rgba(0,0,0,0.1)" }}>
+                  <CardImage src={imageUrl} title={item.title ?? ""} />
+                </div>
+              </div>
+              <div style={{ height: 6, background: "rgba(152,195,222,0.16)", borderTop: "0.5px solid rgba(203,228,242,0.6)" }} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Frame 4: Comic Panel ─────────────────────────────────────────────────────
+
+function ComicPanelFrame({ item, imageUrl }: { item: VaultItem; imageUrl: string }) {
+  return (
+    <div style={{ width: 260 }}>
+      {/* Outer comic panel border */}
+      <div style={{
+        border: "5px solid #111",
+        borderRadius: 3,
+        background: "#fefde8",
+        boxShadow: "5px 5px 0 #111",
+        overflow: "hidden",
+      }}>
+        {/* Top header strip */}
+        <div style={{
+          background: "#f5c52a",
+          borderBottom: "3px solid #111",
+          padding: "5px 10px",
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+        }}>
+          <span style={{ font: "900 9px/1 Impact, Arial Black, sans-serif", color: "#111", letterSpacing: "1.5px", textTransform: "uppercase" }}>
+            VLTD VAULT
+          </span>
+          {item.grade ? (
+            <span style={{
+              font: "900 10px/1 Impact, sans-serif",
+              background: "#111", color: "#f5c52a", padding: "1px 5px", borderRadius: 2,
+            }}>
+              {item.grade}
+            </span>
+          ) : (
+            <span style={{ font: "700 8px/1 Arial, sans-serif", color: "#666", textTransform: "uppercase" }}>RAW</span>
+          )}
+        </div>
+
+        {/* Card area with halftone accents */}
+        <div style={{ padding: "8px 8px 6px", background: "#fefde8" }}>
+          {/* Top halftone dots */}
+          <div style={{
+            height: 8, marginBottom: 5,
+            backgroundImage: "radial-gradient(circle, rgba(0,0,0,0.3) 1.2px, transparent 1.2px)",
+            backgroundSize: "6px 6px",
+          }} />
+
+          {/* Card with thick black border */}
+          <div style={{
+            aspectRatio: "2.5/3.5",
+            background: "#fff",
+            border: "3px solid #111",
+            overflow: "hidden",
+          }}>
+            <CardImage src={imageUrl} title={item.title ?? ""} />
+          </div>
+
+          {/* Bottom halftone dots */}
+          <div style={{
+            height: 8, marginTop: 5,
+            backgroundImage: "radial-gradient(circle, rgba(0,0,0,0.3) 1.2px, transparent 1.2px)",
+            backgroundSize: "6px 6px",
+          }} />
+        </div>
+
+        {/* Bottom title bar */}
+        <div style={{
+          background: "#111",
+          borderTop: "3px solid #f5c52a",
+          padding: "6px 10px",
+          textAlign: "center",
+        }}>
+          <div style={{
+            font: "900 11px/1.2 Impact, Arial Black, sans-serif",
+            color: "#f5c52a", textTransform: "uppercase", letterSpacing: "1px",
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          }}>
+            {(item.title ?? "Untitled").slice(0, 28)}
+          </div>
+          {item.universe && (
+            <div style={{ font: "400 7.5px/1.2 Arial, sans-serif", color: "rgba(255,255,255,0.45)", marginTop: 2, letterSpacing: "0.5px" }}>
+              {item.universe}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Frame 5: Neon Display Case ───────────────────────────────────────────────
+
+function NeonCaseFrame({ item, imageUrl }: { item: VaultItem; imageUrl: string }) {
+  const grade = item.grade ?? null;
+
+  return (
+    <div style={{ width: 240 }}>
+      <div style={{
+        background: "#080814",
+        border: "2px solid #00d4ff",
+        borderRadius: 10,
+        boxShadow: "0 0 18px rgba(0,212,255,0.45), 0 0 40px rgba(0,212,255,0.15), inset 0 0 20px rgba(0,212,255,0.04)",
+        overflow: "hidden",
+        padding: "12px 12px 10px",
+      }}>
+        {/* Top glow bar */}
+        <div style={{
+          height: 2,
+          background: "linear-gradient(90deg, transparent 0%, #00d4ff 40%, #b800ff 60%, transparent 100%)",
+          marginBottom: 12,
+          boxShadow: "0 0 10px #00d4ff, 0 0 4px #b800ff",
+        }} />
+
+        {/* Card window */}
+        <div style={{
+          aspectRatio: "2.5/3.5",
+          background: "#0a0a1a",
+          border: "1px solid rgba(0,212,255,0.35)",
+          borderRadius: 4,
+          overflow: "hidden",
+          boxShadow: "inset 0 0 16px rgba(0,0,0,0.6), 0 0 10px rgba(0,212,255,0.08)",
+        }}>
+          <CardImage src={imageUrl} title={item.title ?? ""} />
+        </div>
+
+        {/* Bottom glow bar */}
+        <div style={{
+          height: 2,
+          background: "linear-gradient(90deg, transparent 0%, #b800ff 40%, #00d4ff 60%, transparent 100%)",
+          marginTop: 12,
+          boxShadow: "0 0 10px #b800ff, 0 0 4px #00d4ff",
+        }} />
+
+        {/* Title */}
+        <div style={{ marginTop: 8, textAlign: "center" }}>
+          <div style={{
+            font: "700 10px/1.3 -apple-system, sans-serif",
+            color: "#00d4ff",
+            textTransform: "uppercase",
+            letterSpacing: "2.5px",
+            textShadow: "0 0 10px rgba(0,212,255,0.7), 0 0 20px rgba(0,212,255,0.3)",
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          }}>
+            {item.title ?? "Untitled"}
+          </div>
+          {grade ? (
+            <div style={{
+              marginTop: 4, font: "600 8px/1 monospace",
+              color: "rgba(184,0,255,0.7)", letterSpacing: "2px",
+              textShadow: "0 0 6px rgba(184,0,255,0.5)",
+            }}>
+              GRADE {grade} · VLTD
+            </div>
+          ) : (
+            <div style={{ marginTop: 4, font: "400 7px/1 monospace", color: "rgba(0,212,255,0.35)", letterSpacing: "2px" }}>
+              VLTD.APP
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Sticker Layer ─────────────────────────────────────────────────────────────
+
+interface StickerLayerProps {
+  item: VaultItem;
+  activeStickers: Set<StickerKey>;
+}
+
+function StickerLayer({ item, activeStickers }: StickerLayerProps) {
+  const hotTop = activeStickers.has("key") ? 36 : 8;
+
+  return (
+    <>
+      {/* Grade badge — top left */}
+      {activeStickers.has("grade") && item.grade && (
+        <div style={{
+          position: "absolute", top: 8, left: 8, zIndex: 10,
+          background: "#001869", color: "#fff",
+          borderRadius: 4, padding: "3px 8px",
+          font: "800 12px/1.4 Arial, sans-serif",
+          border: "1.5px solid rgba(255,255,255,0.2)",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.55)",
+          letterSpacing: "0.5px",
+        }}>
+          {item.grade}
+        </div>
+      )}
+
+      {/* Key Item — top right */}
+      {activeStickers.has("key") && (
+        <div style={{
+          position: "absolute", top: 8, right: 8, zIndex: 10,
+          background: "#f5c52a", color: "#0a0a0a",
+          borderRadius: 99, padding: "3px 9px",
+          font: "700 10px/1.4 Arial, sans-serif",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+          whiteSpace: "nowrap",
+        }}>
+          ⭐ Key Item
+        </div>
+      )}
+
+      {/* For Sale ribbon — bottom left */}
+      {activeStickers.has("forsale") && (
+        <div style={{
+          position: "absolute", bottom: 18, left: 0, zIndex: 10,
+          background: "#22c55e", color: "#fff",
+          padding: "4px 14px 4px 8px",
+          font: "700 10px/1.4 Arial, sans-serif",
+          clipPath: "polygon(0 0, 100% 0, 90% 100%, 0 100%)",
+          boxShadow: "2px 2px 8px rgba(0,0,0,0.4)",
+          whiteSpace: "nowrap",
+        }}>
+          For Sale{item.askingPrice && item.askingPrice > 0 ? ` $${item.askingPrice.toLocaleString()}` : ""}
+        </div>
+      )}
+
+      {/* SOLD stamp — center */}
+      {activeStickers.has("sold") && (
+        <div style={{
+          position: "absolute", top: "50%", left: "50%", zIndex: 10,
+          transform: "translate(-50%, -50%) rotate(-12deg)",
+          border: "4px solid #ef4444",
+          color: "#ef4444",
+          padding: "6px 14px",
+          font: "900 26px/1 Impact, Arial Black, sans-serif",
+          letterSpacing: "4px",
+          textShadow: "1px 1px 0 rgba(0,0,0,0.15)",
+          background: "rgba(239,68,68,0.08)",
+          borderRadius: 2,
+        }}>
+          SOLD
+        </div>
+      )}
+
+      {/* Hot tag — top right (offset if Key Item active) */}
+      {activeStickers.has("hot") && (
+        <div style={{
+          position: "absolute", top: hotTop, right: 8, zIndex: 10,
+          background: "#ef4444", color: "#fff",
+          borderRadius: 99, padding: "3px 9px",
+          font: "700 10px/1.4 Arial, sans-serif",
+          boxShadow: "0 2px 10px rgba(239,68,68,0.55)",
+          whiteSpace: "nowrap",
+        }}>
+          🔥 HOT
+        </div>
+      )}
+
+      {/* Edition — bottom right */}
+      {activeStickers.has("edition") && item.edition && (
+        <div style={{
+          position: "absolute", bottom: 10, right: 8, zIndex: 10,
+          background: "rgba(0,0,0,0.72)", color: "rgba(255,255,255,0.88)",
+          borderRadius: 4, padding: "2px 8px",
+          font: "600 9px/1.4 monospace",
+          border: "1px solid rgba(255,255,255,0.15)",
+          whiteSpace: "nowrap",
+        }}>
+          {item.edition}
+        </div>
+      )}
+    </>
+  );
+}
+
+// ─── Item row in picker list ───────────────────────────────────────────────────
+
+function ItemRow({ item, selected, onSelect }: { item: VaultItem; selected: boolean; onSelect: () => void }) {
+  const imageUrl = useResolvedVaultImage(item);
+  return (
+    <button
+      onClick={onSelect}
+      style={{
+        display: "flex", alignItems: "center", gap: 10, width: "100%",
+        padding: "8px 10px", textAlign: "left", border: "none", cursor: "pointer",
+        background: selected ? "rgba(245,197,42,0.12)" : "transparent",
+        borderLeft: selected ? "3px solid #f5c52a" : "3px solid transparent",
+        borderRadius: 4, transition: "background 0.15s",
+      }}
+    >
+      {/* Thumbnail */}
+      <div style={{
+        width: 36, height: 50, borderRadius: 3, overflow: "hidden", flexShrink: 0,
+        background: "#1a2a3a", border: "0.5px solid var(--border)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        {imageUrl
+          ? <img src={imageUrl} alt="" crossOrigin="anonymous" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          : <span style={{ fontSize: 16, opacity: 0.4 }}>🖼</span>
+        }
+      </div>
+      {/* Info */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ font: "600 13px/1.3 var(--font-sans)", color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {item.title ?? "Untitled"}
+        </div>
+        <div style={{ font: "400 11px/1.4 var(--font-sans)", color: "var(--text-muted, #888)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {[item.universe, item.category, item.grade ? `Grade ${item.grade}` : null].filter(Boolean).join(" · ")}
+        </div>
+      </div>
+      {selected && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#f5c52a", flexShrink: 0 }} />}
+    </button>
+  );
+}
+
+// ─── Frame preview wrapper ────────────────────────────────────────────────────
+
+function FramePreview({ item, imageUrl, frame }: { item: VaultItem; imageUrl: string; frame: FrameType }) {
+  if (frame === "slab")     return <GradeSlabFrame item={item} imageUrl={imageUrl} />;
+  if (frame === "onetouch") return <OneTouchFrame item={item} imageUrl={imageUrl} />;
+  if (frame === "case")     return <BlackCaseFrame item={item} imageUrl={imageUrl} />;
+  if (frame === "comic")    return <ComicPanelFrame item={item} imageUrl={imageUrl} />;
+  return <NeonCaseFrame item={item} imageUrl={imageUrl} />;
+}
+
+// ─── Ratio config ─────────────────────────────────────────────────────────────
+
+const RATIO_DIMS: Record<ExportRatio, { w: number; h: number } | null> = {
+  "free":  null,
+  "1:1":   { w: 420, h: 420 },
+  "4:5":   { w: 420, h: 525 },
+  "9:16":  { w: 370, h: 657 },
+};
+
+// ─── Main page ────────────────────────────────────────────────────────────────
+
+export default function FramesPage() {
+  const [items] = useState<VaultItem[]>(() => loadItems());
+  const [search, setSearch] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [frame, setFrame] = useState<FrameType>("slab");
+  const [bgColor, setBgColor] = useState("#c8bfb2");
+  const [ratio, setRatio] = useState<ExportRatio>("free");
+  const [activeStickers, setActiveStickers] = useState<Set<StickerKey>>(new Set());
+  const [downloading, setDownloading] = useState(false);
+  const [dlError, setDlError] = useState("");
+  const captureRef = useRef<HTMLDivElement>(null);
+
+  // Pre-select item from URL param (?id=...)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const idParam = params.get("id");
+    if (idParam) setSelectedId(idParam);
+  }, []);
+
+  function toggleSticker(key: StickerKey) {
+    setActiveStickers((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  const selectedItem = items.find((i) => i.id === selectedId) ?? null;
+  const imageUrl = useResolvedVaultImage(selectedItem);
+  const ratioSpec = RATIO_DIMS[ratio];
+
+  const filtered = items.filter((i) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      i.title?.toLowerCase().includes(q) ||
+      i.subject?.toLowerCase().includes(q) ||
+      i.universe?.toLowerCase().includes(q) ||
+      i.category?.toLowerCase().includes(q)
+    );
+  });
+
+  async function handleDownload() {
+    if (!captureRef.current || !selectedItem) return;
+    setDownloading(true);
+    setDlError("");
+    try {
+      const h2c = await loadHtml2Canvas();
+      const canvas = await h2c(captureRef.current, {
+        useCORS: true,
+        scale: 2,
+        backgroundColor: bgColor,
+        logging: false,
+      });
+      const link = document.createElement("a");
+      const safeName = (selectedItem.title ?? "item").replace(/[^a-z0-9]/gi, "-").toLowerCase();
+      const ratioSuffix = ratio === "free" ? frame : ratio.replace(":", "x");
+      link.download = `vltd-${safeName}-${ratioSuffix}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } catch (err) {
+      setDlError("Download failed. Try a different browser or check image CORS.");
+      console.error(err);
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  const FRAMES: { id: FrameType; label: string }[] = [
+    { id: "slab",     label: "Grade Slab" },
+    { id: "onetouch", label: "One-Touch" },
+    { id: "case",     label: "Aluminum Case" },
+    { id: "comic",    label: "Comic Panel" },
+    { id: "neon",     label: "Neon Case" },
+  ];
+
+  const RATIO_OPTIONS: { id: ExportRatio; label: string; desc: string }[] = [
+    { id: "free",  label: "Free",  desc: "" },
+    { id: "1:1",   label: "1:1",   desc: "Feed" },
+    { id: "4:5",   label: "4:5",   desc: "Portrait" },
+    { id: "9:16",  label: "9:16",  desc: "Stories" },
+  ];
+
+  const BG_OPTIONS = [
+    { color: "#c8bfb2", label: "Warm" },
+    { color: "#1a1a1a", label: "Dark" },
+    { color: "#ffffff", label: "White" },
+    { color: "#0d1b2a", label: "Navy" },
+    { color: "#2d1b00", label: "Walnut" },
+    { color: "#0a0014", label: "Void" },
+  ];
+
+  const STICKER_OPTIONS: { key: StickerKey; label: string; bg: string; fg: string }[] = [
+    { key: "grade",   label: "Grade",    bg: "#001869", fg: "#fff" },
+    { key: "key",     label: "⭐ Key",   bg: "#f5c52a", fg: "#000" },
+    { key: "forsale", label: "For Sale", bg: "#22c55e", fg: "#fff" },
+    { key: "sold",    label: "SOLD",     bg: "#ef4444", fg: "#fff" },
+    { key: "hot",     label: "🔥 Hot",  bg: "#f97316", fg: "#fff" },
+    { key: "edition", label: "Edition",  bg: "#6366f1", fg: "#fff" },
+  ];
+
+  return (
+    <div style={{ minHeight: "100vh", background: "var(--bg, #f5f0e8)", fontFamily: "var(--font-sans, -apple-system, sans-serif)" }}>
+      {/* Header */}
+      <div style={{ background: "#1a1a1a", color: "#fff", padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div>
+          <div style={{ fontSize: 10, letterSpacing: "0.22em", color: "#f5c52a", fontWeight: 700 }}>VLTD</div>
+          <h1 style={{ margin: "2px 0 0", fontSize: 18, fontWeight: 700 }}>Frame Studio</h1>
+        </div>
+        <Link href="/vault" style={{ color: "#f5c52a", textDecoration: "none", fontSize: 13, fontWeight: 600 }}>← Vault</Link>
+      </div>
+
+      <div style={{ display: "flex", height: "calc(100vh - 57px)", overflow: "hidden" }}>
+
+        {/* ── Left: item picker ── */}
+        <div style={{
+          width: 280, flexShrink: 0, borderRight: "1px solid var(--border, #e0ddd5)",
+          background: "var(--bg, #fff)", display: "flex", flexDirection: "column", overflow: "hidden",
+        }}>
+          <div style={{ padding: "12px 10px 8px", borderBottom: "1px solid var(--border, #e0ddd5)" }}>
+            <input
+              type="text"
+              placeholder="Search items…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                width: "100%", padding: "7px 10px", borderRadius: 6, fontSize: 13,
+                border: "1px solid var(--border, #ddd)", background: "var(--bg, #fff)",
+                color: "var(--text, #111)", boxSizing: "border-box",
+              }}
+            />
+          </div>
+          <div style={{ flex: 1, overflowY: "auto", padding: "6px 4px" }}>
+            {filtered.length === 0 && (
+              <div style={{ padding: "24px 16px", textAlign: "center", fontSize: 13, color: "#888" }}>
+                {items.length === 0 ? "No items in vault yet." : "No matches."}
+              </div>
+            )}
+            {filtered.map((item) => (
+              <ItemRow
+                key={item.id}
+                item={item}
+                selected={item.id === selectedId}
+                onSelect={() => setSelectedId(item.id)}
+              />
+            ))}
+          </div>
+          <div style={{ padding: "10px 12px", borderTop: "1px solid var(--border, #e0ddd5)", fontSize: 11, color: "#888" }}>
+            {items.length} item{items.length !== 1 ? "s" : ""} in vault
+          </div>
+        </div>
+
+        {/* ── Right: preview + controls ── */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+
+          {/* ── Toolbar row 1: frames + bg + ratio + download ── */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap",
+            padding: "10px 20px", borderBottom: "1px solid var(--border, #e0ddd5)",
+            background: "var(--bg, #fff)",
+          }}>
+            {/* Frame pills */}
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+              {FRAMES.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setFrame(f.id)}
+                  style={{
+                    padding: "4px 11px", borderRadius: 99, fontSize: 11, fontWeight: 600, cursor: "pointer",
+                    border: frame === f.id ? "1.5px solid #f5c52a" : "1.5px solid var(--border, #ddd)",
+                    background: frame === f.id ? "#f5c52a" : "transparent",
+                    color: frame === f.id ? "#000" : "var(--text, #333)",
+                  }}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ width: 1, height: 20, background: "var(--border, #ddd)", margin: "0 2px", flexShrink: 0 }} />
+
+            {/* BG swatches */}
+            <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+              <span style={{ fontSize: 11, color: "#888", marginRight: 2 }}>BG</span>
+              {BG_OPTIONS.map((bg) => (
+                <button
+                  key={bg.color}
+                  title={bg.label}
+                  onClick={() => setBgColor(bg.color)}
+                  style={{
+                    width: 18, height: 18, borderRadius: "50%",
+                    border: bgColor === bg.color ? "2px solid #f5c52a" : "1.5px solid rgba(0,0,0,0.15)",
+                    background: bg.color, cursor: "pointer", padding: 0, flexShrink: 0,
+                  }}
+                />
+              ))}
+            </div>
+
+            <div style={{ width: 1, height: 20, background: "var(--border, #ddd)", margin: "0 2px", flexShrink: 0 }} />
+
+            {/* Ratio pills */}
+            <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
+              <span style={{ fontSize: 11, color: "#888", marginRight: 2 }}>Ratio</span>
+              {RATIO_OPTIONS.map((r) => (
+                <button
+                  key={r.id}
+                  title={r.desc || r.label}
+                  onClick={() => setRatio(r.id)}
+                  style={{
+                    padding: "3px 9px", borderRadius: 99, fontSize: 11, fontWeight: 600, cursor: "pointer",
+                    border: ratio === r.id ? "1.5px solid #f5c52a" : "1.5px solid var(--border, #ddd)",
+                    background: ratio === r.id ? "#f5c52a" : "transparent",
+                    color: ratio === r.id ? "#000" : "var(--text, #333)",
+                  }}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ flex: 1 }} />
+
+            {selectedItem && (
+              <button
+                onClick={() => void handleDownload()}
+                disabled={downloading}
+                style={{
+                  padding: "7px 20px", borderRadius: 99, fontSize: 13, fontWeight: 700,
+                  cursor: downloading ? "default" : "pointer",
+                  background: downloading ? "#ddd" : "#f5c52a", border: "none", color: "#000",
+                  opacity: downloading ? 0.7 : 1, flexShrink: 0,
+                }}
+              >
+                {downloading ? "Rendering…" : "↓ Download PNG"}
+              </button>
+            )}
+          </div>
+
+          {/* ── Toolbar row 2: sticker overlays (only when item selected) ── */}
+          {selectedItem && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap",
+              padding: "7px 20px", borderBottom: "1px solid var(--border, #e0ddd5)",
+              background: "var(--bg, #fff)",
+            }}>
+              <span style={{ fontSize: 11, color: "#888", flexShrink: 0 }}>Stickers</span>
+              {STICKER_OPTIONS.map((s) => {
+                const isActive = activeStickers.has(s.key);
+                // Dim stickers that don't apply to this item
+                const noData =
+                  (s.key === "grade" && !selectedItem.grade) ||
+                  (s.key === "edition" && !selectedItem.edition);
+                return (
+                  <button
+                    key={s.key}
+                    onClick={() => toggleSticker(s.key)}
+                    title={noData ? "No data for this item" : undefined}
+                    style={{
+                      padding: "3px 10px", borderRadius: 99, fontSize: 11, fontWeight: 600,
+                      cursor: "pointer",
+                      background: isActive ? s.bg : "transparent",
+                      color: isActive ? s.fg : "var(--text, #555)",
+                      border: isActive ? `1.5px solid ${s.bg}` : "1.5px solid var(--border, #ddd)",
+                      opacity: noData ? 0.4 : 1,
+                    }}
+                  >
+                    {s.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Preview area */}
+          <div style={{ flex: 1, overflow: "auto", display: "flex", alignItems: "center", justifyContent: "center", background: "#e8e0d4" }}>
+            {!selectedItem ? (
+              <div style={{ textAlign: "center", color: "#888" }}>
+                <div style={{ fontSize: 40, marginBottom: 12, opacity: 0.3 }}>🖼</div>
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Select an item</div>
+                <div style={{ fontSize: 12 }}>Choose from your vault to preview in a frame</div>
+              </div>
+            ) : (
+              <div style={{ padding: 40, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+                {/* Capture target */}
+                <div
+                  ref={captureRef}
+                  style={{
+                    background: bgColor,
+                    borderRadius: ratioSpec ? 4 : 8,
+                    ...(ratioSpec
+                      ? {
+                          width: ratioSpec.w,
+                          height: ratioSpec.h,
+                          overflow: "hidden",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }
+                      : {
+                          padding: 32,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }
+                    ),
+                  }}
+                >
+                  {/* Inner frame + sticker wrapper — stickers are positioned relative to this */}
+                  <div style={{ position: "relative", display: "inline-flex" }}>
+                    <FramePreview item={selectedItem} imageUrl={imageUrl} frame={frame} />
+                    {activeStickers.size > 0 && (
+                      <StickerLayer item={selectedItem} activeStickers={activeStickers} />
+                    )}
+                  </div>
+                </div>
+
+                {dlError && <div style={{ fontSize: 12, color: "#c00", maxWidth: 320, textAlign: "center" }}>{dlError}</div>}
+
+                <div style={{ fontSize: 11, color: "#888", textAlign: "center" }}>
+                  {ratioSpec
+                    ? `${ratio} canvas · 2× resolution`
+                    : "Frame-fitted canvas · 2× resolution"}
+                </div>
+              </div>
+            )}
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
