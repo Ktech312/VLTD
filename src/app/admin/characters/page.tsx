@@ -552,7 +552,7 @@ function ExhibitEditModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-white/8 px-5 py-4">
-          <div className="text-sm font-semibold text-white">Edit Exhibit</div>
+          <div className="text-sm font-semibold text-white">Edit Gallery</div>
           <button onClick={onClose} className="text-white/40 hover:text-white text-lg leading-none">✕</button>
         </div>
         <div className="grid gap-3 p-5">
@@ -586,7 +586,7 @@ function ExhibitEditModal({
             disabled={saving}
             className="rounded-xl bg-amber-500 px-5 py-2 text-xs font-semibold text-black transition hover:bg-amber-400 disabled:opacity-50"
           >
-            {saving ? "Saving…" : "Save Exhibit"}
+            {saving ? "Saving…" : "Save Gallery"}
           </button>
         </div>
       </div>
@@ -760,7 +760,7 @@ function CharacterCard({
       </div>
       <div className="mt-2 flex gap-3 text-[10px] text-white/50">
         <span>{char.items.length} items</span>
-        <span>{char.galleries.length} exhibits</span>
+        <span>{char.galleries.length} galleries</span>
         <span className="text-amber-400/70">{formatMoney(totalValue)}</span>
       </div>
       <div className="mt-1 text-[10px] text-white/30">{char.primaryFocus}</div>
@@ -914,7 +914,7 @@ function ExhibitGrid({
             })}
             {filtered.length === 0 && (
               <div className="col-span-2 py-6 text-center text-sm text-white/30">
-                {available.length === 0 ? "All items are in this exhibit" : "No items match"}
+                {available.length === 0 ? "All items are in this gallery" : "No items match"}
               </div>
             )}
           </div>
@@ -933,7 +933,7 @@ function ExhibitGrid({
             disabled={saving}
             className="rounded-xl bg-amber-500 px-5 py-2 text-sm font-bold text-black transition hover:bg-amber-400 disabled:opacity-50"
           >
-            {saving ? "Saving…" : "Save Exhibit"}
+            {saving ? "Saving…" : "Save Gallery"}
           </button>
         </div>
       </div>
@@ -1203,7 +1203,7 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
                 : "border-transparent text-white/40 hover:text-white/70",
             ].join(" ")}
           >
-            {t === "items" ? `Items (${char.items.length})` : t === "exhibits" ? `Exhibits (${char.galleries.length})` : "Bio"}
+            {t === "items" ? `Items (${char.items.length})` : t === "exhibits" ? `Galleries (${char.galleries.length})` : "Bio"}
           </button>
         ))}
       </div>
@@ -1230,7 +1230,7 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
               <div className="font-mono text-xs text-white/50 break-all">{char.profileId}</div>
             </div>
             <div className="mt-3 rounded-2xl bg-white/[0.03] p-4 ring-1 ring-white/8">
-              <div className="text-[10px] text-white/30 uppercase tracking-widest mb-2">Exhibit IDs</div>
+              <div className="text-[10px] text-white/30 uppercase tracking-widest mb-2">Gallery IDs</div>
               {char.galleries.map((g) => (
                 <div key={g.id} className="font-mono text-[10px] text-white/40 mb-1">{g.id}</div>
               ))}

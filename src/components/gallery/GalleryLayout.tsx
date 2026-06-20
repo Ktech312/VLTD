@@ -53,7 +53,7 @@ function ShelfGrid({ items, hrefPrefix, title }: { items: VaultItem[]; hrefPrefi
     return (
       <div className="flex flex-col items-center gap-3 py-16 text-center">
         <span className="text-4xl opacity-20">&#127963;</span>
-        <p className="text-sm text-[#A0956B]">No items in this exhibition yet.</p>
+        <p className="text-sm text-[#A0956B]">No items in this gallery yet.</p>
       </div>
     );
   }

@@ -25,7 +25,7 @@ function favoriteSubtitle(r: FavoriteRecord, items: VaultItem[], galleries: Gall
   }
   const g = galleries.find((x) => String(x.id) === String(r.content_id));
   const n = g?.itemIds?.length ?? r.metadata?.itemCount ?? 0;
-  return `${n} item${n === 1 ? "" : "s"} · Exhibition`;
+  return `${n} item${n === 1 ? "" : "s"} · Gallery`;
 }
 
 function favoriteImage(r: FavoriteRecord, items: VaultItem[], galleries: Gallery[]) {
@@ -102,7 +102,7 @@ function FavoriteCard({
           className="absolute bottom-1 left-1 rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide"
           style={{ background: "rgba(0,0,0,0.72)", color: isItem ? "var(--theme-gold)" : "#a78bfa" }}
         >
-          {isItem ? "Item" : "Exhibition"}
+          {isItem ? "Item" : "Gallery"}
         </div>
       </div>
 
@@ -188,7 +188,7 @@ export default function FavoritesPage() {
   const TABS: { key: Filter; label: string; count: number }[] = [
     { key: "all", label: "All", count: favorites.length },
     { key: "item", label: "Items", count: itemCount },
-    { key: "gallery", label: "Exhibitions", count: galleryCount },
+    { key: "gallery", label: "Galleries", count: galleryCount },
   ];
 
   return (
@@ -203,7 +203,7 @@ export default function FavoritesPage() {
           </div>
           <h1 className="mt-3 text-2xl font-bold" style={{ color: "var(--fg)" }}>Favorites</h1>
           <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
-            Items and exhibitions you've saved from across VLTD.
+            Items and galleries you've saved from across VLTD.
           </p>
 
           {/* Stats bar */}

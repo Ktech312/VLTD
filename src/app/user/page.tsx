@@ -400,7 +400,7 @@ export default function UserSettingsPage() {
               href="/vault"
               className="inline-flex h-10 items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
             >
-              Back to Exhibitions
+              Back to Galleries
             </Link>
 
             <Link
@@ -454,7 +454,7 @@ export default function UserSettingsPage() {
           <section className="vltd-panel-main rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
             <div className="text-sm font-semibold">Museum Background</div>
             <div className="mt-1 text-sm text-[color:var(--muted)]">
-              Upload your own gallery wall image for the Exhibitions page. PNG, JPG, and WEBP work well.
+              Upload your own gallery wall image for the Galleries page. PNG, JPG, and WEBP work well.
             </div>
 
             <div className="mt-2 text-xs text-[color:var(--muted2)]">

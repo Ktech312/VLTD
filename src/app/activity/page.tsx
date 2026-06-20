@@ -294,7 +294,7 @@ export default function ActivityPage() {
                   "Comments on public galleries",
                   "Appreciations on featured items",
                   "New followers and collector updates",
-                  "Exhibition publish and share events",
+                  "Gallery publish and share events",
                 ].map((label) => (
                   <div key={label} className="rounded-[14px] bg-[color:var(--pill)] px-3 py-2 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
                     {label}

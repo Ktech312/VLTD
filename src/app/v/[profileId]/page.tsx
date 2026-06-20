@@ -7,7 +7,9 @@ import VaultMuseumView from "@/components/VaultMuseumView";
 import {
   fetchPublicProfile,
   fetchPublicVaultItems,
+  fetchPublicGalleriesForProfile,
   type PublicProfile,
+  type PublicGallery,
 } from "@/lib/publicProfile";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 
@@ -115,6 +117,41 @@ function FeaturedCard({ item }: { item: VaultItem }) {
   );
 }
 
+// ─── Gallery card ─────────────────────────────────────────────────────────────
+function GalleryCard({ gallery, profileId }: { gallery: PublicGallery; profileId: string }) {
+  return (
+    <Link
+      href={`/museum/${gallery.id}/guest`}
+      className="group flex flex-col overflow-hidden rounded-2xl bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] transition hover:-translate-y-0.5"
+    >
+      <div className="relative h-[120px] overflow-hidden bg-[color:var(--pill)]">
+        {gallery.coverImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={gallery.coverImage} alt={gallery.title} className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full items-center justify-center text-3xl opacity-20">🏛️</div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        {gallery.views > 0 && (
+          <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/50 px-2 py-0.5 text-[10px] text-white/80">
+            👁 {gallery.views.toLocaleString()}
+          </div>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col p-3">
+        <div className="truncate text-sm font-semibold">{gallery.title}</div>
+        {gallery.description && (
+          <div className="mt-1 line-clamp-2 text-[11px] leading-5 text-[color:var(--muted)]">{gallery.description}</div>
+        )}
+        <div className="mt-auto pt-2 text-[10px] text-[color:var(--muted2)] uppercase tracking-[0.14em]">
+          {gallery.itemCount > 0 ? `${gallery.itemCount} items` : "Gallery"}
+          {gallery.visibility === "INVITE" && " · Invite only"}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function PublicVaultPage({
   params,
@@ -124,6 +161,7 @@ export default function PublicVaultPage({
   const { profileId } = use(params);
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [items, setItems] = useState<VaultItem[]>([]);
+  const [galleries, setGalleries] = useState<PublicGallery[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
@@ -134,13 +172,15 @@ export default function PublicVaultPage({
       setLoading(true);
       setError("");
       try {
-        const [nextProfile, nextItems] = await Promise.all([
+        const [nextProfile, nextItems, nextGalleries] = await Promise.all([
           fetchPublicProfile(profileId),
           fetchPublicVaultItems(profileId),
+          fetchPublicGalleriesForProfile(profileId),
         ]);
         if (!active) return;
         setProfile(nextProfile);
         setItems(nextItems);
+        setGalleries(nextGalleries);
       } catch (err) {
         if (!active) return;
         setError(err instanceof Error ? err.message : "Could not load public vault.");
@@ -263,9 +303,10 @@ export default function PublicVaultPage({
           </div>
 
           {/* Stats bar */}
-          {items.length > 0 && (
+          {(items.length > 0 || galleries.length > 0) && (
             <div className="flex flex-wrap justify-center divide-x divide-[color:var(--border)] rounded-2xl bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] overflow-hidden">
-              <Stat value={items.length} label={items.length === 1 ? "Item" : "Items"} />
+              {items.length > 0 && <Stat value={items.length} label={items.length === 1 ? "Item" : "Items"} />}
+              {galleries.length > 0 && <Stat value={galleries.length} label={galleries.length === 1 ? "Gallery" : "Galleries"} />}
               {universes.length > 0 && <Stat value={universes.length} label={universes.length === 1 ? "Universe" : "Universes"} />}
               {gradedCount > 0 && <Stat value={gradedCount} label="Graded" />}
               {topGrade !== null && <Stat value={topGrade} label="Top Grade" />}
@@ -325,6 +366,21 @@ export default function PublicVaultPage({
                   {subject}
                   <span className="rounded-full bg-[color:var(--pill)] px-1.5 py-0.5 text-[10px] font-semibold">{count}</span>
                 </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── Galleries ── */}
+        {galleries.length > 0 && (
+          <section className="mb-8">
+            <div className="mb-3 flex items-baseline gap-2">
+              <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">Galleries</h2>
+              <span className="text-[10px] text-[color:var(--muted2)]">{galleries.length === 1 ? "1 public gallery" : `${galleries.length} public galleries`}</span>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {galleries.map((gallery) => (
+                <GalleryCard key={gallery.id} gallery={gallery} profileId={profileId} />
               ))}
             </div>
           </section>

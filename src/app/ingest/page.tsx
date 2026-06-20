@@ -58,7 +58,7 @@ export default function IngestHubPage() {
 
           <div className="flex flex-wrap items-center gap-2">
             <PillLink href="/">Home</PillLink>
-            <PillLink href="/vault">Open Exhibitions</PillLink>
+            <PillLink href="/vault">Open Galleries</PillLink>
             <PillLink href="/portfolio">Portfolio</PillLink>
           </div>
         </div>

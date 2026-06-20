@@ -1198,7 +1198,7 @@ export default function VaultInner() {
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-5 sm:py-8">
         <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <div className="text-xs tracking-widest text-[color:var(--muted2)]">Exhibitions</div>
+            <div className="text-xs tracking-widest text-[color:var(--muted2)]">Galleries</div>
             <h1 className="mt-2 text-3xl font-semibold">Your Collection</h1>
             <p className="mt-1 text-[color:var(--muted)]">Floating shelf presentation. Collector-first. More gallery-style, less grid.</p>
           </div>

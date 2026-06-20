@@ -148,9 +148,13 @@ export async function syncPublicProfile(profileId = getStoredActiveProfileId()) 
   }
 
   const profile = getProfileSafe();
+  function validName(s?: string | null) {
+    const t = s?.trim() ?? "";
+    return t && t.toLowerCase() !== "user" ? t : "";
+  }
   const payload: Record<string, unknown> = {
     profile_id: cleanProfileId,
-    display_name: profile.displayName?.trim() || profile.username?.trim() || "Collector",
+    display_name: validName(profile.displayName) || validName(profile.username) || "Collector",
     avatar_emoji: profile.avatarEmoji?.trim() || "🗝️",
     updated_at: new Date().toISOString(),
   };
@@ -197,7 +201,11 @@ export async function fetchPublicProfile(profileId: string): Promise<PublicProfi
   // Fall back to profiles table if no public_profiles row exists
   if (!data && !profileRow) return null;
 
-  const displayName = String(data?.display_name || profileRow?.display_name || "Collector");
+  function sanitizeName(s: unknown) {
+    const t = typeof s === "string" ? s.trim() : "";
+    return t && t.toLowerCase() !== "user" ? t : "";
+  }
+  const displayName = sanitizeName(data?.display_name) || sanitizeName(profileRow?.display_name) || "Collector";
   const bio = typeof profileRow?.bio === "string" && profileRow.bio
     ? profileRow.bio
     : (typeof data?.bio === "string" && data.bio ? data.bio : undefined);
@@ -232,6 +240,46 @@ export async function fetchPublicVaultItems(profileId: string): Promise<VaultIte
 
   if (error) throw new Error(error.message || "Failed to load public vault.");
   return (data ?? []).map(r => publicRowToItem(r) as MarketItem);
+}
+
+export type PublicGallery = {
+  id: string;
+  title: string;
+  description?: string;
+  coverImage?: string;
+  itemCount: number;
+  views: number;
+  visibility: string;
+};
+
+export async function fetchPublicGalleriesForProfile(profileId: string): Promise<PublicGallery[]> {
+  const supabase = getSupabaseBrowserClient();
+  const cleanProfileId = String(profileId ?? "").trim();
+  if (!supabase || !cleanProfileId) return [];
+
+  const { data, error } = await supabase
+    .from("galleries")
+    .select("id, title, description, cover_image, layout, analytics, visibility")
+    .eq("profile_id", cleanProfileId)
+    .neq("visibility", "LOCKED")
+    .order("created_at", { ascending: false });
+
+  if (error) return [];
+
+  return (data ?? []).map((row) => {
+    const layout = typeof row.layout === "object" && row.layout ? row.layout as Record<string, unknown> : {};
+    const itemIds = Array.isArray(layout.itemIds) ? layout.itemIds : [];
+    const analytics = typeof row.analytics === "object" && row.analytics ? row.analytics as Record<string, unknown> : {};
+    return {
+      id: String(row.id),
+      title: String(row.title || "Untitled Gallery"),
+      description: typeof row.description === "string" && row.description ? row.description : undefined,
+      coverImage: typeof row.cover_image === "string" && row.cover_image ? row.cover_image : undefined,
+      itemCount: itemIds.length,
+      views: typeof analytics.views === "number" ? analytics.views : 0,
+      visibility: String(row.visibility || "PUBLIC"),
+    };
+  });
 }
 
 export function getPublicVaultUrl(profileId = getStoredActiveProfileId()) {

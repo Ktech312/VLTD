@@ -297,7 +297,7 @@ export default function DiscoverPage() {
           <div className="relative">
             <div className="text-[11px] tracking-[0.22em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>DISCOVER</div>
             <div className="mt-1 flex items-center justify-between gap-3">
-              <h1 className="text-3xl font-black tracking-[-0.04em]" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>Explore Exhibitions</h1>
+              <h1 className="text-3xl font-black tracking-[-0.04em]" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>Explore Galleries</h1>
               <button
                 onClick={() => setSwipeOpen(true)}
                 className="flex min-h-[44px] items-center gap-1.5 rounded-full px-4 text-sm font-black transition hover:brightness-110 active:scale-95"
@@ -483,7 +483,7 @@ export default function DiscoverPage() {
                     </div>
                   </div>
                   <div className="absolute inset-0 flex items-center justify-center rounded-[18px] opacity-0 transition group-hover:opacity-100 pointer-events-none" style={{ background: "rgba(0,0,0,0.55)" }}>
-                    <span className="rounded-full px-4 py-2 text-xs font-bold" style={{ background: "var(--theme-gold, #F5B548)", color: "#0B0B0B" }}>View Exhibition</span>
+                    <span className="rounded-full px-4 py-2 text-xs font-bold" style={{ background: "var(--theme-gold, #F5B548)", color: "#0B0B0B" }}>View Gallery</span>
                   </div>
                 </div>
               ))}
@@ -498,12 +498,12 @@ export default function DiscoverPage() {
             <div className="text-[11px] tracking-[0.22em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>BUILD YOUR OWN</div>
             <h2 className="text-xl font-black" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>Create a public gallery</h2>
             <p className="max-w-sm text-sm leading-6" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
-              Vault your collection, curate an exhibition, and share it with one link.
+              Vault your collection, curate a gallery, and share it with one link.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <Link href="/museum/new" className="rounded-full px-5 py-2 text-sm font-black transition hover:brightness-105"
                 style={{ background: "linear-gradient(135deg, #8B6914 0%, #C8941F 30%, #F5B548 60%, #C8941F 100%)", color: "#0B0B0B" }}>
-                Create Exhibition
+                Create Gallery
               </Link>
               <Link href="/vault" className="rounded-full border px-5 py-2 text-sm font-semibold transition hover:brightness-110"
                 style={{ borderColor: "rgba(245,181,72,0.28)", color: "#F5B548", background: "rgba(245,181,72,0.06)" }}>

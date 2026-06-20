@@ -180,7 +180,7 @@ export default function MuseumFlowGallery({
           <div className="min-w-0">
             <div className="mb-4 flex items-center justify-between gap-4">
               <div>
-                <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">EXHIBIT STACK</div>
+                <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">GALLERY STACK</div>
                 <div className="mt-1 text-sm text-[color:var(--muted)]">Tap a card to bring it forward.</div>
               </div>
               <div className="rounded-full bg-white/[0.05] px-3 py-1.5 text-xs font-semibold text-white/76 ring-1 ring-white/10">
@@ -246,13 +246,13 @@ export default function MuseumFlowGallery({
 
             <div className="mt-5 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <ActionButton label={selectedLiked ? "Unlike exhibit" : "Like exhibit"} active={selectedLiked} onClick={() => toggleLike(selectedItem.id)}>
+                <ActionButton label={selectedLiked ? "Unlike item" : "Like item"} active={selectedLiked} onClick={() => toggleLike(selectedItem.id)}>
                   <ActionIcon type="heart" filled={selectedLiked} />
                 </ActionButton>
                 <ActionButton label="Comment" onClick={() => setMessage("Comments are coming soon.")}>
                   <ActionIcon type="comment" />
                 </ActionButton>
-                <ActionButton label="Share exhibit" onClick={() => void shareItem(selectedItem)}>
+                <ActionButton label="Share item" onClick={() => void shareItem(selectedItem)}>
                   <ActionIcon type="share" />
                 </ActionButton>
               </div>
@@ -261,7 +261,7 @@ export default function MuseumFlowGallery({
                 contentType="item"
                 contentId={String(selectedItem.id)}
                 metadata={{ title: selectedItem.title, subtitle: selectedItem.subtitle, image: selectedImage || "" }}
-                label="Save exhibit"
+                label="Save item"
                 compact
                 showMessage={false}
               />

@@ -278,10 +278,10 @@ export default function MuseumPage() {
       const publicUrl = await uploadGalleryCover(coverTargetGallery.id, file);
       updateGallery({ ...coverTargetGallery, coverImage: publicUrl });
       refresh();
-      setStatusMessage("Exhibition cover updated.");
+      setStatusMessage("Gallery cover updated.");
     } catch (error) {
       console.error("Failed uploading gallery cover:", error);
-      setStatusMessage(error instanceof Error ? error.message : "Exhibition cover upload failed.");
+      setStatusMessage(error instanceof Error ? error.message : "Gallery cover upload failed.");
     } finally {
       setIsUploadingCover(false);
       setCoverTargetGallery(null);
@@ -293,7 +293,7 @@ export default function MuseumPage() {
     updateGallery(gallerySettings);
     refresh();
     setGallerySettings(null);
-    setStatusMessage("Exhibition settings updated.");
+    setStatusMessage("Gallery settings updated.");
   }
 
   return (
@@ -319,7 +319,7 @@ export default function MuseumPage() {
                 </div>
 
                 <h1 className="mt-2 text-3xl font-semibold sm:text-[2.2rem]">
-                  Curated Exhibitions
+                  Curated Galleries
                 </h1>
 
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
@@ -333,7 +333,7 @@ export default function MuseumPage() {
                   href="/museum/new"
                   className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-ring)] vltd-pill-main-glow transition hover:bg-[color:var(--pill-hover)]"
                 >
-                  Add Exhibit
+                  Add Gallery
                 </Link>
               </div>
             </div>
@@ -345,7 +345,7 @@ export default function MuseumPage() {
                 </div>
                 <div className="mt-2 text-2xl font-semibold">{stats.total}</div>
                 <div className="mt-1 text-sm text-[color:var(--muted)]">
-                  All exhibits
+                  All galleries
                 </div>
               </div>
 
@@ -355,7 +355,7 @@ export default function MuseumPage() {
                 </div>
                 <div className="mt-2 text-2xl font-semibold">{stats.active}</div>
                 <div className="mt-1 text-sm text-[color:var(--muted)]">
-                  Live exhibitions
+                  Live galleries
                 </div>
               </div>
 
@@ -365,7 +365,7 @@ export default function MuseumPage() {
                 </div>
                 <div className="mt-2 text-2xl font-semibold">{stats.publicCount}</div>
                 <div className="mt-1 text-sm text-[color:var(--muted)]">
-                  Share-ready exhibits
+                  Share-ready galleries
                 </div>
               </div>
 
@@ -398,7 +398,7 @@ export default function MuseumPage() {
           <section className="mt-6 grid gap-5 xl:grid-cols-3">
             <div className="vltd-panel-soft rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
-                STRONGEST EXHIBIT
+                STRONGEST GALLERY
               </div>
               <h2 className="mt-2 text-xl font-semibold">
                 {strongestGallery?.gallery.title || "—"}
@@ -406,7 +406,7 @@ export default function MuseumPage() {
               <div className="mt-3 text-sm text-[color:var(--muted)]">
                 {strongestGallery
                   ? `${strongestGallery.score.score}/100 • ${scoreBandTone(strongestGallery.score.band)}`
-                  : "No exhibit signal yet."}
+                  : "No gallery signal yet."}
               </div>
               {strongestGallery ? (
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -414,7 +414,7 @@ export default function MuseumPage() {
                     {strongestGallery.gallery.itemIds.length} items
                   </span>
                   <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
-                    {strongestGallery.score.signals.sections} exhibits
+                    {strongestGallery.score.signals.sections} sections
                   </span>
                   <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
                     {strongestGallery.score.signals.featuredWorks} featured
@@ -456,7 +456,7 @@ export default function MuseumPage() {
               </h2>
               <div className="mt-3 text-sm text-[color:var(--muted)]">
                 {mostValuableGallery
-                  ? `${formatMoney(mostValuableGallery.totalValue)} total exhibit value`
+                  ? `${formatMoney(mostValuableGallery.totalValue)} total gallery value`
                   : "No value data yet."}
               </div>
               {mostValuableGallery ? (
@@ -515,7 +515,7 @@ export default function MuseumPage() {
                     color: "#0B0B0B",
                   }}
                 >
-                  Create First Exhibition
+                  Create First Gallery
                 </Link>
                 <Link
                   href="/vault"
@@ -581,7 +581,7 @@ export default function MuseumPage() {
                     <div className="relative flex min-h-0 flex-1 flex-col">
                       <div className="flex items-start justify-between gap-3">
                         <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                          CURATED EXHIBIT
+                          CURATED GALLERY
                         </div>
 
                         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -658,7 +658,7 @@ export default function MuseumPage() {
 
                         <div className="mt-3 flex items-center justify-between gap-3 text-sm text-[color:var(--muted)]">
                           <div>
-                            {score.signals.sections} exhibits • {score.signals.featuredWorks} featured
+                            {score.signals.sections} sections • {score.signals.featuredWorks} featured
                           </div>
                           <button
                             type="button"
@@ -668,7 +668,7 @@ export default function MuseumPage() {
                               handleAskDelete(gallery);
                             }}
                             className="order-first inline-flex min-h-[28px] items-center justify-center rounded-full bg-red-500/10 px-3 py-1 text-[11px] font-semibold text-red-100 ring-1 ring-red-400/20 transition hover:bg-red-500/18"
-                            aria-label={`Delete exhibit ${gallery.title}`}
+                            aria-label={`Delete gallery ${gallery.title}`}
                           >
                             Delete
                           </button>
@@ -687,19 +687,19 @@ export default function MuseumPage() {
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
           <div className="w-full max-w-lg rounded-[28px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
-              DELETE EXHIBIT
+              DELETE GALLERY
             </div>
 
             <h2 className="mt-3 text-2xl font-semibold">
-              Delete Exhibit: {galleryPendingDelete.title}?
+              Delete Gallery: {galleryPendingDelete.title}?
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
-              This will delete exhibit {galleryPendingDelete.title}. Are you sure you want to continue?
+              This will delete the gallery {galleryPendingDelete.title}. Are you sure you want to continue?
             </p>
 
             <p className="mt-4 text-sm text-[color:var(--muted)]">
-              Deleting this Exhibit will not delete items in your Vault.
+              Deleting this gallery will not delete items in your Vault.
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">

@@ -519,7 +519,7 @@ export default function PublicHomeClient() {
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             <div className="text-[11px] font-semibold uppercase tracking-[0.32em]" style={{ color: 'var(--muted)' }}>
-              Public Exhibitions
+              Public Galleries
             </div>
             <h2 className="mt-2 text-3xl font-black tracking-[-0.04em]" style={{ color: 'var(--fg)' }}>
               Your collection, displayed like it deserves.
@@ -647,9 +647,9 @@ export default function PublicHomeClient() {
               <div>
                 <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Explore</div>
                 <div className="flex flex-col gap-1.5">
-                  <Link href="#public-galleries" className="text-[color:var(--muted)] hover:text-text-primary transition">Exhibitions</Link>
+                  <Link href="#public-galleries" className="text-[color:var(--muted)] hover:text-text-primary transition">Galleries</Link>
                   <Link href="/discover" className="text-[color:var(--muted)] hover:text-text-primary transition">Discover</Link>
-                  <Link href="/museum" className="text-[color:var(--muted)] hover:text-text-primary transition">Exhibitions</Link>
+                  <Link href="/museum" className="text-[color:var(--muted)] hover:text-text-primary transition">Galleries</Link>
                 </div>
               </div>
               <div>

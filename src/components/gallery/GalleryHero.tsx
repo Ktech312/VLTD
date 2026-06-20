@@ -88,7 +88,7 @@ export default function GalleryHero({
         <div className="max-w-3xl">
           <div className="flex flex-wrap items-center gap-3">
             <div className="text-[11px] tracking-[0.26em] text-[color:var(--muted2)]">
-              EXHIBIT
+              GALLERY
             </div>
             {guestMode ? (
               <div className="rounded-full bg-black/20 px-3 py-1 text-[10px] tracking-[0.14em] ring-1 ring-white/10">
@@ -113,7 +113,7 @@ export default function GalleryHero({
         </div>
       </div>
 
-      {/* ── Bottom row: Swipe + Exhibition View on left, + on right ── */}
+      {/* ── Bottom row: Swipe + Gallery View on left, + on right ── */}
       <div className="absolute bottom-3 left-3 right-3 z-10 flex items-center justify-between">
         {/* Left: mode pills */}
         <div className="flex gap-2">
@@ -155,7 +155,7 @@ export default function GalleryHero({
                   }
             }
           >
-            Exhibition View
+            Gallery View
           </button>
         </div>
 
@@ -172,7 +172,7 @@ export default function GalleryHero({
               fontSize: "20px",
               fontWeight: 300,
             }}
-            aria-label="Add item to exhibit"
+            aria-label="Add item to gallery"
           >
             +
           </button>

@@ -339,7 +339,7 @@ function FeaturedGalleryCard({ galleries }: { galleries: Gallery[] }) {
       <div style={{ marginTop: "9px" }}>
         <div style={{ fontFamily: C.r, fontSize: "15px", fontWeight: 600, color: C.text }}>{g.title || "Untitled"}</div>
         <div style={{ fontSize: "11px", color: C.muted, marginTop: "2px" }}>{itemCount} piece{itemCount !== 1 ? "s" : ""}</div>
-        <Link href={"/gallery/" + g.id} style={{ display: "inline-flex", alignItems: "center", marginTop: "7px", fontSize: "11px", color: C.gold, textDecoration: "none" }}>View Exhibition →</Link>
+        <Link href={"/gallery/" + g.id} style={{ display: "inline-flex", alignItems: "center", marginTop: "7px", fontSize: "11px", color: C.gold, textDecoration: "none" }}>View Gallery →</Link>
       </div>
     </div>
   );
@@ -376,7 +376,7 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
         <div>
           <p style={{ fontSize: "9px", fontWeight: 600, letterSpacing: "0.28em", textTransform: "uppercase", color: C.muted }}>
-            Featured Exhibition <span style={{ opacity: 0.5, marginLeft: "6px" }}>{idx + 1} / {n}</span>
+            Featured Gallery <span style={{ opacity: 0.5, marginLeft: "6px" }}>{idx + 1} / {n}</span>
           </p>
           <h2 style={{ fontSize: "13px", fontWeight: 700, color: C.text, marginTop: "2px" }}>{current.title || "Untitled"}</h2>
           <p style={{ fontSize: "11px", color: C.muted, marginTop: "1px" }}>{itemCount} piece{itemCount !== 1 ? "s" : ""}</p>
@@ -418,8 +418,8 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
       </div>
       {/* Bottom row: View Gallery centered, All Galleries right */}
       <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", marginTop: "12px" }}>
-        <Link href={"/gallery/" + current.id} style={{ borderRadius: "6px", padding: "6px 14px", fontSize: "11px", fontWeight: 700, background: `linear-gradient(135deg,#8B6914,#F5B548)`, color: "#0B0B0B", textDecoration: "none" }}>View Exhibition ↑</Link>
-        <Link href="/museum" style={{ position: "absolute", right: 0, fontSize: "11px", fontWeight: 600, color: C.gold, textDecoration: "none", opacity: 0.75 }}>All Exhibitions</Link>
+        <Link href={"/gallery/" + current.id} style={{ borderRadius: "6px", padding: "6px 14px", fontSize: "11px", fontWeight: 700, background: `linear-gradient(135deg,#8B6914,#F5B548)`, color: "#0B0B0B", textDecoration: "none" }}>View Gallery ↑</Link>
+        <Link href="/museum" style={{ position: "absolute", right: 0, fontSize: "11px", fontWeight: 600, color: C.gold, textDecoration: "none", opacity: 0.75 }}>All Galleries</Link>
       </div>
     </div>
   );
@@ -768,18 +768,18 @@ export default function HomeClient() {
           {/* Featured Gallery card (left) + coverflow carousel (right) */}
           <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2">
             <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
-              <CardHd label="Featured Exhibition" />
+              <CardHd label="Featured Gallery" />
               {galleries.length > 0 ? (
                 <FeaturedGalleryCard galleries={galleries} />
               ) : (
                 <div style={{ padding: "16px" }}>
                   <div style={{ fontFamily: C.r, fontSize: "15px", fontWeight: 600, color: C.text }}>No galleries yet</div>
-                  <Link href="/museum/new" style={{ display: "inline-flex", marginTop: "8px", fontSize: "11px", color: C.gold, textDecoration: "none" }}>Create Exhibition →</Link>
+                  <Link href="/museum/new" style={{ display: "inline-flex", marginTop: "8px", fontSize: "11px", color: C.gold, textDecoration: "none" }}>Create Gallery →</Link>
                 </div>
               )}
             </div>
             <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
-              <CardHd label="Active Exhibitions" href="/museum" linkText="All" />
+              <CardHd label="Active Galleries" href="/museum" linkText="All" />
               {galleries.length > 0 ? (
                 <FeaturedGalleryCarousel galleries={galleries} />
               ) : (
@@ -807,7 +807,7 @@ export default function HomeClient() {
                   { label: "Quick Add",  href: "/vault/quick",       accent: false, tip: "Fast manual form — minimal fields." },
                   { label: "Add Item",   href: "/vault/add",         accent: false, tip: "Full detail entry with all fields." },
                   { label: "Vault",      href: "/vault",             accent: false, tip: "" },
-                  { label: "Exhibitions",  href: "/museum",            accent: false, tip: "" },
+                  { label: "Galleries",    href: "/museum",            accent: false, tip: "" },
                   { label: "Saved",      href: "/saved", accent: false, tip: "Items saved from The Flip." },
                   { label: "Account",    href: "/account",           accent: false, tip: "" },
                 ] as { label: string; href: string; accent: boolean; tip: string }[]).map(({ label, href, accent, tip }) => (

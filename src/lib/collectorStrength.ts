@@ -63,7 +63,7 @@ export function getCollectorStrength(
   if (roi > 20) highlights.push("Strong investment performance");
   if (universes >= 4) highlights.push("Diversified collection");
   if (items >= 50) highlights.push("Large vault inventory");
-  if (galleryCount >= 3) highlights.push("Active exhibitions");
+  if (galleryCount >= 3) highlights.push("Active galleries");
 
   const collectorBand = band(score);
 
