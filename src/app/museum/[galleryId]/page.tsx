@@ -1055,7 +1055,12 @@ export default function GalleryPage() {
                           flashSaveChangesSaved();
                         }}
                         disabled={!isDirty}
-                        className="vltd-pill-main-glow inline-flex min-h-[30px] min-w-[104px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-3 py-1 text-[10px] font-semibold text-[color:var(--fg)] ring-1 ring-[rgba(245,181,72,0.48)] transition hover:opacity-95"
+                        className={[
+                          "inline-flex min-h-[30px] min-w-[104px] items-center justify-center rounded-full px-3 py-1 text-[10px] font-semibold ring-1 transition hover:opacity-95",
+                          saveChangesJustSaved
+                            ? ""
+                            : "vltd-pill-main-glow bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[rgba(245,181,72,0.48)]",
+                        ].join(" ")}
                         style={saveChangesJustSaved ? SAVE_FEEDBACK_STYLE : undefined}
                       >
                         {saveChangesJustSaved ? "Saved ✓" : "Save Changes"}

@@ -726,12 +726,7 @@ export default function GalleryBuilder({
             <button
               type="button"
               onClick={() => { setPreviewSectionIdx(0); setPreviewExpanded(true); }}
-              className="shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold transition hover:opacity-90"
-              style={{
-                background: "rgba(245,181,72,0.12)",
-                color: "#F5B548",
-                border: "1px solid rgba(245,181,72,0.3)",
-              }}
+              className="vltd-pill-micro shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold transition hover:opacity-90"
             >
               Preview ↗
             </button>
@@ -774,15 +769,20 @@ export default function GalleryBuilder({
               />
             </div>
 
-            {/* Save — gold pill, thinner; flashes green + "Saved" on success */}
+            {/* Save — matches Save Changes pill exactly: same glow lock, same fg text */}
             <button
               type="button"
               onClick={async () => {
                 await onQuickSave?.();
                 flashQuickSaved();
               }}
-              className="inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
-              style={quickSaveJustSaved ? SAVE_FEEDBACK_STYLE : { background: "rgba(245,181,72,0.22)", color: "#F5B548", borderColor: "rgba(245,181,72,0.55)" }}
+              className={[
+                "inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]",
+                quickSaveJustSaved
+                  ? ""
+                  : "vltd-pill-main-glow bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[rgba(245,181,72,0.48)]",
+              ].join(" ")}
+              style={quickSaveJustSaved ? SAVE_FEEDBACK_STYLE : undefined}
             >
               {quickSaveJustSaved ? "Saved ✓" : "Save"}
             </button>
