@@ -676,7 +676,7 @@ export default function GalleryBuilder({
               }
               className="vltd-selectable rounded-full bg-[color:var(--surface)] px-4 py-2 text-xs font-semibold ring-1 ring-[color:var(--border)]"
             >
-              Add Section
+              Add Exhibit
             </button>
           </div>
         </div>
@@ -685,7 +685,7 @@ export default function GalleryBuilder({
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {[
             { label: "LAYOUT", value: layoutType },
-            { label: "SECTIONS", value: sections.length },
+            { label: "EXHIBITS", value: sections.length },
             { label: "ITEMS", value: selectedCount },
             { label: "FEATURED", value: sections.filter((s) => !!s.featuredItemId).length },
           ].map(({ label, value }) => (
@@ -838,7 +838,9 @@ export default function GalleryBuilder({
                 background: selectedCount > 0
                   ? "linear-gradient(135deg, #FFE08A 0%, #F5B548 40%, #C8941F 100%)"
                   : "rgba(245,181,72,0.12)",
-                color: selectedCount > 0 ? "#1A0F00" : "#F5B548",
+                // PILL LOCKS: text stays theme fg (white/black only) — never raw gold.
+                // Filled/active state already uses black (#1A0F00), which is compliant.
+                color: selectedCount > 0 ? "#1A0F00" : "var(--fg)",
                 boxShadow: selectedCount > 0
                   ? "0 0 0 1px rgba(245,181,72,0.35), 0 4px 14px rgba(245,181,72,0.3)"
                   : "none",
@@ -866,7 +868,7 @@ export default function GalleryBuilder({
                 }}
                 className="inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
                 style={isOrganizing
-                  ? { background: "rgba(74,222,128,0.22)", color: "#4ADE80", borderColor: "rgba(74,222,128,0.55)" }
+                  ? { background: "rgba(74,222,128,0.22)", color: "var(--fg)", borderColor: "rgba(74,222,128,0.55)" }
                   : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", borderColor: "rgba(255,255,255,0.15)" }}
               >
                 {isOrganizing ? "Done" : "Organize"}
@@ -891,7 +893,7 @@ export default function GalleryBuilder({
                 className="inline-flex min-h-[28px] items-center justify-between gap-1.5 rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all select-none"
               >
                 <span>
-                  {"Section #" + (activeSectionIdx + 1)}
+                  {"Exhibit #" + (activeSectionIdx + 1)}
                 </span>
                 <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className="h-4 w-4 opacity-60 shrink-0">
                   <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
@@ -915,7 +917,7 @@ export default function GalleryBuilder({
                     }}
                   >
                     {sections.length === 0 ? (
-                      <div className="px-3 py-2 text-sm text-[color:var(--muted)]">No sections yet</div>
+                      <div className="px-3 py-2 text-sm text-[color:var(--muted)]">No exhibits yet</div>
                     ) : (
                       sections.map((s, i) => (
                         <button
@@ -932,7 +934,7 @@ export default function GalleryBuilder({
                               : "text-[color:var(--fg)] hover:bg-[color:var(--pill)]",
                           ].join(" ")}
                         >
-                          {"Section #" + (i + 1)}{s.title ? (" — " + s.title) : ""}
+                          {"Exhibit #" + (i + 1)}{s.title ? (" — " + s.title) : ""}
                         </button>
                       ))
                     )}
@@ -944,7 +946,7 @@ export default function GalleryBuilder({
                             ...getGallerySections(current),
                             {
                               id: makeLocalSectionId(),
-                              title: "Section " + ((sections.length + 1).toString()),
+                              title: "Exhibit " + ((sections.length + 1).toString()),
                               description: "",
                               itemIds: [],
                               featuredItemId: undefined,
@@ -957,7 +959,7 @@ export default function GalleryBuilder({
                       }}
                       className="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm text-[color:var(--muted)] hover:bg-[color:var(--pill)] transition"
                     >
-                      + Add Section
+                      + Add Exhibit
                     </button>
                   </div>
                 </>,
@@ -975,7 +977,7 @@ export default function GalleryBuilder({
                 );
                 onGalleryChange((current) => syncSectionsAndLayout(current, updated));
               }}
-              placeholder="Section name…"
+              placeholder="Exhibit name…"
               className="min-w-0 flex-1 min-h-[28px] rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
             />
           </div>
@@ -1001,7 +1003,7 @@ export default function GalleryBuilder({
                 e.currentTarget.style.height = "auto";
               }
             }}
-            placeholder="Section description…"
+            placeholder="Exhibit description…"
             className="mt-1 block w-full resize-none overflow-hidden rounded-2xl bg-[color:var(--pill)] px-3 py-2 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
           />
 
@@ -1277,7 +1279,7 @@ export default function GalleryBuilder({
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex-1">
                       <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted2)]">
-                        SECTION #{sectionIndex + 1}
+                        EXHIBIT #{sectionIndex + 1}
                       </div>
 
                       <input
@@ -1306,7 +1308,7 @@ export default function GalleryBuilder({
                           })
                         }
                         rows={2}
-                        placeholder="Section curatorial description..."
+                        placeholder="Exhibit curatorial description..."
                         className="mt-2 w-full rounded-xl bg-[color:var(--input)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
                       />
                     </div>
@@ -1330,7 +1332,7 @@ export default function GalleryBuilder({
                       {unassignedSelectedItems.length ? (
                         <div className="text-[10px] text-[color:var(--muted2)]">
                           {unassignedSelectedItems.length} selected item
-                          {unassignedSelectedItems.length === 1 ? "" : "s"} not in a section.
+                          {unassignedSelectedItems.length === 1 ? "" : "s"} not in an exhibit.
                         </div>
                       ) : null}
                       <button
@@ -1338,7 +1340,7 @@ export default function GalleryBuilder({
                         onClick={() => onGalleryChange((current) => syncSectionsAndLayout(current, getGallerySections(current).filter((entry) => entry.id !== section.id)))}
                         className="inline-flex items-center rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
                       >
-                        Remove Section
+                        Remove Exhibit
                       </button>
                     </div>
                   </div>
