@@ -9,6 +9,7 @@ import {
   type AccentStyle,
 } from "@/lib/seasonalTheme";
 import { showToast } from "@/lib/toast";
+import { useSaveFeedback } from "@/lib/useSaveFeedback";
 
 const ACCENT_STYLES: AccentStyle[] = ["none", "snowflakes", "confetti", "stars", "leaves"];
 const ACCENT_STYLE_LABELS: Record<AccentStyle, string> = {
@@ -69,6 +70,7 @@ export default function AdminThemesPage() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Partial<SeasonalTheme> | null>(null);
   const [saving, setSaving] = useState(false);
+  const { justSaved, flashSaved } = useSaveFeedback();
   const [deleting, setDeleting] = useState<string | null>(null);
 
   async function load() {
@@ -118,8 +120,13 @@ export default function AdminThemesPage() {
     setSaving(false);
     if (error) { showToast(`Error: ${error}`); return; }
     showToast("Theme saved.");
-    setEditing(null);
-    void load();
+    flashSaved();
+    // Hold the editor open briefly so the green "Saved" state on the button is visible
+    // before the panel closes — otherwise the success flash would never be seen.
+    setTimeout(() => {
+      setEditing(null);
+      void load();
+    }, 550);
   }
 
   async function remove(id: string) {
@@ -391,9 +398,12 @@ export default function AdminThemesPage() {
               <button
                 onClick={() => void save()}
                 disabled={saving}
-                className="flex-1 rounded-full bg-amber-500 py-2.5 text-sm font-bold text-black hover:bg-amber-400 transition disabled:opacity-50"
+                className={[
+                  "flex-1 rounded-full py-2.5 text-sm font-bold transition disabled:opacity-50",
+                  justSaved ? "bg-emerald-500 text-white" : "bg-amber-500 text-black hover:bg-amber-400",
+                ].join(" ")}
               >
-                {saving ? "Saving…" : "Save Theme"}
+                {saving ? "Saving…" : justSaved ? "Saved ✓" : "Save Theme"}
               </button>
               <button
                 onClick={() => setEditing(null)}
