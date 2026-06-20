@@ -822,39 +822,36 @@ export default function GalleryBuilder({
               </button>
             ) : null}
 
-            {/* Edit Selection — gold pill, thinner */}
-            <button
-              type="button"
-              onClick={() => {
-                const activeSection = sections[activeSectionIdx];
-                if (activeSection) {
-                  onOpenPicker?.(activeSection.title, activeSection.itemIds, activeSectionIdx);
-                } else {
-                  onOpenPicker?.();
-                }
-              }}
-              className="inline-flex min-h-[28px] items-center justify-center rounded-full px-3 text-[11px] font-black tracking-wide transition-all hover:opacity-90 active:scale-[0.98]"
-              style={{
-                background: selectedCount > 0
-                  ? "linear-gradient(135deg, #FFE08A 0%, #F5B548 40%, #C8941F 100%)"
-                  : "rgba(245,181,72,0.12)",
-                // PILL LOCKS: text stays theme fg (white/black only) — never raw gold.
-                // Filled/active state already uses black (#1A0F00), which is compliant.
-                color: selectedCount > 0 ? "#1A0F00" : "var(--fg)",
-                boxShadow: selectedCount > 0
-                  ? "0 0 0 1px rgba(245,181,72,0.35), 0 4px 14px rgba(245,181,72,0.3)"
-                  : "none",
-                border: selectedCount === 0 ? "1px solid rgba(245,181,72,0.45)" : "none",
-              }}
-            >
-              {(() => {
-                const activeSection = sections[activeSectionIdx];
-                const count = activeSection ? activeSection.itemIds.length : selectedCount;
-                return count === 0 ? "Edit Selection" : `Edit (${count})`;
-              })()}
-            </button>
+            {/* Edit Selection — same toggle-pill system as GRID/CURATED/TIMELINE: neutral by
+                default, the one shared glow when active. No bespoke fill colors. */}
+            {(() => {
+              const activeSection = sections[activeSectionIdx];
+              const editCount = activeSection ? activeSection.itemIds.length : selectedCount;
+              const hasSelection = editCount > 0;
+              return (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (activeSection) {
+                      onOpenPicker?.(activeSection.title, activeSection.itemIds, activeSectionIdx);
+                    } else {
+                      onOpenPicker?.();
+                    }
+                  }}
+                  aria-pressed={hasSelection}
+                  className={[
+                    "vltd-selectable inline-flex min-h-[28px] items-center justify-center rounded-full px-3 text-[11px] font-black tracking-wide ring-1 transition-all hover:opacity-90 active:scale-[0.98]",
+                    hasSelection
+                      ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
+                      : "bg-[color:var(--surface)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
+                  ].join(" ")}
+                >
+                  {editCount === 0 ? "Edit Selection" : `Edit (${editCount})`}
+                </button>
+              );
+            })()}
 
-            {/* Organize pill — thinner */}
+            {/* Organize pill — same shared toggle-pill system, no bespoke green text/fill */}
             {sections.length > 0 ? (
               <button
                 type="button"
@@ -866,10 +863,13 @@ export default function GalleryBuilder({
                     commitSlots([...latestPreviewSlotsRef.current]);
                   }
                 }}
-                className="inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]"
-                style={isOrganizing
-                  ? { background: "rgba(74,222,128,0.22)", color: "var(--fg)", borderColor: "rgba(74,222,128,0.55)" }
-                  : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", borderColor: "rgba(255,255,255,0.15)" }}
+                aria-pressed={isOrganizing}
+                className={[
+                  "vltd-selectable inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]",
+                  isOrganizing
+                    ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
+                    : "bg-[color:var(--surface)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
+                ].join(" ")}
               >
                 {isOrganizing ? "Done" : "Organize"}
               </button>
