@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { getCurrentUser } from "@/lib/auth";
 import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
 import DiscoverSwipe from "@/components/DiscoverSwipe";
 import { type UniverseKey, UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
@@ -181,6 +182,18 @@ export default function DiscoverPage() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [swipeOpen, setSwipeOpen] = useState(false);
   const [userPrefs, setUserPrefs] = useState<ReturnType<typeof buildUserPreferences> | null>(null);
+  const [signedIn, setSignedIn] = useState(false);
+
+  // Drives the "Create a public gallery" CTA below - only relevant to logged-out
+  // visitors, since a signed-in collector already has a vault and can create one
+  // from inside the app.
+  useEffect(() => {
+    let active = true;
+    void getCurrentUser().then(({ data }) => {
+      if (active) setSignedIn(Boolean(data.user));
+    });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -491,8 +504,9 @@ export default function DiscoverPage() {
           </section>
         )}
 
-        {/* CTA */}
-        {!loading && (
+        {/* CTA — logged-out visitors only; a signed-in collector already has a
+            vault and can create a gallery from inside the app. */}
+        {!loading && !signedIn && (
           <section className="mt-10 flex flex-col items-center gap-3 rounded-[20px] px-6 py-8 text-center"
             style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", border: "1px solid var(--theme-border, rgba(245,181,72,0.12))" }}>
             <div className="text-[11px] tracking-[0.22em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>BUILD YOUR OWN</div>
