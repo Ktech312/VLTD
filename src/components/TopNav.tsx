@@ -644,7 +644,7 @@ function TopNavInner() {
                       Your Collection.<br />Your Exhibitions.<br />Your Legacy.
                     </p>
                     <Link
-                      href="/about"
+                      href="/guide"
                       onClick={() => setGuideOpen(false)}
                       className="mt-1 inline-block text-[10px] font-semibold leading-tight"
                       style={{ color: "#F5B548" }}
