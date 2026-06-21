@@ -24,7 +24,15 @@ function money(n: number) {
   }).format(n);
 }
 
-export default function WishlistCard({ item }: { item: WishlistItem }) {
+export default function WishlistCard({
+  item,
+  onMoveToVault,
+  onRemove,
+}: {
+  item: WishlistItem;
+  onMoveToVault?: (item: WishlistItem) => void;
+  onRemove?: (item: WishlistItem) => void;
+}) {
   const priority = item.priority ? PRIORITY_STYLES[item.priority] : null;
 
   return (
@@ -85,6 +93,31 @@ export default function WishlistCard({ item }: { item: WishlistItem }) {
           }}
         >
           {item.notes}
+        </div>
+      )}
+
+      {(onMoveToVault || onRemove) && (
+        <div className="mt-3 flex items-center gap-2">
+          {onMoveToVault && (
+            <button
+              type="button"
+              onClick={() => onMoveToVault(item)}
+              className="vltd-pill-main-glow flex-1 rounded-full px-3 py-2 text-xs font-bold transition"
+              style={{ background: "var(--pill-active-bg)", border: "none", cursor: "pointer" }}
+            >
+              Move to Vault
+            </button>
+          )}
+          {onRemove && (
+            <button
+              type="button"
+              onClick={() => onRemove(item)}
+              className="vltd-pill-neutral rounded-full px-3 py-2 text-xs font-semibold transition"
+              style={{ background: "var(--pill)", border: "none", cursor: "pointer" }}
+            >
+              Remove
+            </button>
+          )}
         </div>
       )}
     </div>

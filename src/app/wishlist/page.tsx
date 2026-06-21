@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import WishlistCard from "@/components/WishlistCard";
-import { loadWishlist, type WishlistItem } from "@/lib/wishlistModel";
+import { loadWishlist, removeWishlistItem, type WishlistItem } from "@/lib/wishlistModel";
+import { convertWishlistToVault } from "@/lib/wishlistToVault";
+import { showToast } from "@/lib/toast";
 
 function IconHeart({
   size = 24,
@@ -33,9 +35,29 @@ function IconHeart({
 type SortMode = "newest" | "price-asc" | "price-desc" | "priority";
 
 export default function WishlistPage() {
-  const [items] = useState<WishlistItem[]>(() => loadWishlist());
+  const [items, setItems] = useState<WishlistItem[]>(() => loadWishlist());
   const [sort, setSort] = useState<SortMode>("newest");
   const [filterPriority, setFilterPriority] = useState<string>("all");
+  const [movingId, setMovingId] = useState<string | null>(null);
+
+  async function handleMoveToVault(item: WishlistItem) {
+    if (movingId) return;
+    setMovingId(item.id);
+    try {
+      await convertWishlistToVault(item);
+      setItems((prev) => prev.filter((i) => i.id !== item.id));
+      showToast(`Moved "${item.title}" to your vault`);
+    } catch {
+      showToast("Couldn't move that item — try again.");
+    } finally {
+      setMovingId(null);
+    }
+  }
+
+  function handleRemove(item: WishlistItem) {
+    removeWishlistItem(item.id);
+    setItems((prev) => prev.filter((i) => i.id !== item.id));
+  }
 
   const sorted = useMemo(() => {
     let list = [...items];
@@ -178,7 +200,12 @@ export default function WishlistPage() {
         ) : (
           <div className="grid gap-4 md:grid-cols-3">
             {sorted.map((item) => (
-              <WishlistCard key={item.id} item={item} />
+              <WishlistCard
+                key={item.id}
+                item={item}
+                onMoveToVault={handleMoveToVault}
+                onRemove={handleRemove}
+              />
             ))}
           </div>
         )}

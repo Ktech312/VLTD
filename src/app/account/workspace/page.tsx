@@ -13,6 +13,17 @@ import {
   type ProfileRow,
 } from "@/lib/auth";
 import { hasSupabaseEnv } from "@/lib/vaultCloud";
+import { loadItems } from "@/lib/vaultModel";
+import {
+  startGoogleConnect,
+  finishGoogleConnectIfPresent,
+  getStoredToken,
+  isTokenValid,
+  clearStoredToken,
+  getLastSheetId,
+  createSheet,
+  writeVaultToSheet,
+} from "@/lib/googleSheets";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -73,6 +84,8 @@ export default function WorkspaceSettingsPage() {
   const [notifyActivity, setNotifyActivity] = useState(false);
   const [aiAutoReview, setAiAutoReview] = useState(false);
   const [showConfidence, setShowConfidence] = useState(true);
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -98,6 +111,9 @@ export default function WorkspaceSettingsPage() {
       if (typeof p.aiAutoReview === "boolean") setAiAutoReview(p.aiAutoReview);
       if (typeof p.showConfidence === "boolean") setShowConfidence(p.showConfidence);
     } catch (e) { /* ignore */ }
+
+    finishGoogleConnectIfPresent();
+    setGoogleConnected(isTokenValid(getStoredToken()));
   }, []);
 
   const activeProfile = profiles.find((p) => p.id === activeId) ?? profiles[0];
@@ -131,6 +147,36 @@ export default function WorkspaceSettingsPage() {
     if (p) {
       setEditDisplay(p.display_name ?? "");
       setEditEmoji((p as ProfileRow & { avatar_emoji?: string }).avatar_emoji ?? "🗹");
+    }
+  }
+
+  function handleGoogleDisconnect() {
+    clearStoredToken();
+    setGoogleConnected(false);
+    showToast("Google Sheets disconnected.");
+  }
+
+  async function handleGoogleExport() {
+    const token = getStoredToken();
+    if (!token || !isTokenValid(token)) {
+      setGoogleConnected(false);
+      showToast("Google Sheets session expired — reconnect.");
+      return;
+    }
+    setGoogleBusy(true);
+    try {
+      let sheetId = getLastSheetId();
+      if (!sheetId) {
+        const sheet = await createSheet(token, "VLTD Vault");
+        sheetId = sheet.id;
+      }
+      const items = loadItems({ includeAllProfiles: false });
+      await writeVaultToSheet(token, sheetId, items);
+      showToast(`Exported ${items.length} item${items.length === 1 ? "" : "s"} to Google Sheets.`);
+    } catch {
+      showToast("Export failed — try reconnecting Google Sheets.");
+    } finally {
+      setGoogleBusy(false);
     }
   }
 
@@ -246,10 +292,40 @@ export default function WorkspaceSettingsPage() {
         </Section>
 
         <Section title="Integrations">
-          <Row label="Google Sheets sync" sub="Export vault data to a connected spreadsheet">
-            <button type="button" onClick={() => showToast("Google Sheets sync coming soon.")} className="rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)", color: "var(--muted)" }}>
-              Connect
-            </button>
+          <Row
+            label="Google Sheets sync"
+            sub={googleConnected ? "Connected — export your vault anytime" : "Export vault data to a connected spreadsheet"}
+          >
+            {googleConnected ? (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void handleGoogleExport()}
+                  disabled={googleBusy}
+                  className="vltd-pill-main-glow rounded-full px-3 py-1.5 text-xs font-bold transition disabled:opacity-50"
+                  style={{ background: "var(--pill-active-bg)", border: "none", cursor: googleBusy ? "default" : "pointer" }}
+                >
+                  {googleBusy ? "Exporting…" : "Export now"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleGoogleDisconnect}
+                  className="vltd-pill-neutral rounded-full px-3 py-1.5 text-xs font-semibold transition"
+                  style={{ background: "var(--pill)", border: "none", cursor: "pointer" }}
+                >
+                  Disconnect
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void startGoogleConnect()}
+                className="rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]"
+                style={{ background: "var(--pill)", color: "var(--fg)" }}
+              >
+                Connect
+              </button>
+            )}
           </Row>
           <Row label="CSV export" sub="Download your vault as a spreadsheet">
             <Link href="/vault?export=csv" className="rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)", color: "var(--fg)" }}>

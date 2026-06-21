@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { PillButton } from "@/components/ui/PillButton";
 import { getCurrentUser, signOut } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import TwoFactorAuthCard from "@/components/account/TwoFactorAuthCard";
 
 type Session = { id: string; device: string; location: string; lastSeen: string; current: boolean };
 
@@ -96,26 +97,7 @@ export default function SecurityPage() {
         </div>
 
         {/* 2FA */}
-        <div className="rounded-2xl p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
-          <div className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--muted)" }}>Two-factor authentication</div>
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <div className="text-sm font-semibold" style={{ color: "var(--fg)" }}>Authenticator app</div>
-              <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>Add an extra layer of protection to your account.</div>
-            </div>
-            <span className="rounded-full px-3 py-1 text-[10px] font-semibold" style={{ background: "rgba(248,113,113,0.1)", color: "#f87171" }}>
-              Not enabled
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => showToast("2FA setup coming soon.")}
-            className="mt-3 rounded-full px-4 py-1.5 text-xs font-semibold ring-1"
-            style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}
-          >
-            Enable 2FA
-          </button>
-        </div>
+        <TwoFactorAuthCard />
 
         {/* Active sessions */}
         <div className="rounded-2xl p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
