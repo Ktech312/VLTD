@@ -105,47 +105,63 @@ export function ItemPickerSheet({
   const isAtMax = pickedCount >= MAX_EXHIBIT_ITEMS;
 
   // Single max-width column so this reads as a contained sheet, not a full-bleed
-  // takeover on wide screens — same content-width convention used elsewhere in
-  // the gallery builder (GALLERY_STAGE_WIDTH_CLASS).
-  const STAGE_WIDTH_CLASS = "mx-auto w-full max-w-[640px]";
+  // takeover on wide screens — same content-width convention used in the builder.
+  const stageStyle: React.CSSProperties = { marginLeft: "auto", marginRight: "auto", width: "100%", maxWidth: 640 };
 
   const overlay = (
-    <div className="fixed inset-0 z-[9000] flex flex-col bg-[#080C14]">
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 9000,
+        background: "#080C14",
+        display: "flex",
+        flexDirection: "column",
+        overflowY: "hidden",
+      }}
+    >
       {/* ── Row 1: Close + Search + Counter ── */}
       <div
-        className={[STAGE_WIDTH_CLASS, "flex shrink-0 items-center gap-2 px-3.5 pb-2.5"].join(" ")}
-        style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 12px)" }}
+        style={{
+          ...stageStyle,
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "max(env(safe-area-inset-top, 0px), 12px) 14px 10px",
+        }}
       >
         <button
           type="button"
           onClick={onClose}
           aria-label="Close picker"
-          className="vltd-selectable flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition"
+          className="vltd-selectable bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition"
+          style={{ flexShrink: 0, width: 34, height: 34, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}
         >
-          <svg viewBox="0 0 20 20" fill="none" className="h-[15px] w-[15px]">
+          <svg viewBox="0 0 20 20" fill="none" style={{ width: 15, height: 15 }}>
             <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
           </svg>
         </button>
 
-        <div className="relative flex-1">
-          <svg viewBox="0 0 24 24" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[color:var(--muted)]">
+        <div style={{ position: "relative", flex: 1 }}>
+          <svg viewBox="0 0 24 24" fill="none" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 14, height: 14, pointerEvents: "none", color: "var(--muted)" }}>
             <path d="m21 21-4.35-4.35m1.35-5.15a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
           </svg>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search vault..."
-            className="w-full rounded-full bg-[color:var(--pill)] py-[7px] pl-8 pr-3.5 text-[13px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] outline-none transition focus:ring-[color:var(--pill-active-ring)] placeholder:text-[color:var(--muted)]"
+            className="bg-[color:var(--pill)] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] transition focus:ring-[color:var(--pill-active-ring)] placeholder:text-[color:var(--muted)]"
+            style={{ width: "100%", borderRadius: 999, padding: "7px 14px 7px 32px", fontSize: 13, outline: "none", boxSizing: "border-box", border: "none" }}
           />
         </div>
 
         <div
-          className={[
-            "shrink-0 whitespace-nowrap rounded-full px-2.5 py-[5px] text-[11px] font-bold tabular-nums ring-1",
-            isAtMax
-              ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[color:var(--pill-active-ring)]"
-              : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]",
-          ].join(" ")}
+          className={isAtMax ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-ring)]" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"}
+          style={{ flexShrink: 0, borderRadius: 999, padding: "5px 10px", fontSize: 11, fontWeight: 700, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}
         >
           {pickedCount}/{MAX_EXHIBIT_ITEMS}
         </div>
@@ -153,9 +169,17 @@ export function ItemPickerSheet({
 
       {/* ── Row 2: Exhibit name ── */}
       <div
-        className={[STAGE_WIDTH_CLASS, "flex shrink-0 items-center gap-2 border-b border-[color:var(--border)] px-3.5 pb-2.5"].join(" ")}
+        style={{
+          ...stageStyle,
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "0 14px 10px",
+          borderBottom: "1px solid var(--border)",
+        }}
       >
-        <div className="shrink-0 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--muted)]">
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", color: "var(--muted)", textTransform: "uppercase", flexShrink: 0 }}>
           EXHIBIT
         </div>
         <input
@@ -163,14 +187,23 @@ export function ItemPickerSheet({
           onChange={(e) => setSectionName(e.target.value)}
           placeholder="Exhibit 1"
           maxLength={40}
-          className="flex-1 border-b border-[color:var(--border)] bg-transparent px-0.5 py-[3px] text-[13px] font-semibold text-[color:var(--fg)] outline-none transition focus:border-[color:var(--pill-active-ring)]"
+          className="text-[color:var(--fg)] transition"
+          style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid var(--border)", borderRadius: 0, padding: "3px 2px", fontSize: 13, fontWeight: 600, outline: "none" }}
         />
       </div>
 
       {/* ── Row 3: Universe filter chips — same shared toggle-pill system, same glow ── */}
       <div
-        className={[STAGE_WIDTH_CLASS, "flex shrink-0 gap-1.5 overflow-x-auto border-b border-[color:var(--divider)] px-3.5 py-2"].join(" ")}
-        style={{ WebkitOverflowScrolling: "touch" } as React.CSSProperties}
+        style={{
+          ...stageStyle,
+          flexShrink: 0,
+          display: "flex",
+          gap: 6,
+          padding: "8px 14px",
+          borderBottom: "1px solid var(--divider)",
+          overflowX: "auto",
+          WebkitOverflowScrolling: "touch",
+        } as React.CSSProperties}
       >
         {UNIVERSE_KEYS.map((u) => {
           const active = activeUniverses.includes(u);
@@ -181,11 +214,12 @@ export function ItemPickerSheet({
               onClick={() => toggleUniverse(u)}
               aria-pressed={active}
               className={[
-                "vltd-selectable shrink-0 rounded-full px-2.5 py-[3px] text-[10px] font-bold tracking-[0.02em] ring-1 transition",
+                "vltd-selectable transition",
                 active
                   ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
-                  : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
+                  : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]",
               ].join(" ")}
+              style={{ flexShrink: 0, borderRadius: 999, padding: "3px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.02em", border: "none", cursor: "pointer" }}
             >
               {chipLabel(u)}
             </button>
@@ -194,14 +228,14 @@ export function ItemPickerSheet({
       </div>
 
       {/* ── Photo grid ── */}
-      <div className="min-h-0 flex-1 overflow-y-scroll overscroll-contain" style={{ WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
-        <div className={STAGE_WIDTH_CLASS}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: "scroll", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
+        <div style={stageStyle}>
           {filtered.length === 0 ? (
-            <div className="flex h-40 items-center justify-center text-[13px] text-[color:var(--muted)]">
+            <div style={{ display: "flex", height: 160, alignItems: "center", justifyContent: "center", fontSize: 13, color: "var(--muted)" }}>
               No items matched.
             </div>
           ) : (
-            <div className="grid grid-cols-4 gap-1.5 p-1.5">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6, padding: 6 }}>
               {filtered.map((item) => {
                 const isSelected = picked.has(item.id);
                 const canPick = isSelected || pickedCount < MAX_EXHIBIT_ITEMS;
@@ -214,40 +248,54 @@ export function ItemPickerSheet({
                     onClick={() => canPick && toggleItem(item.id)}
                     aria-pressed={isSelected}
                     aria-label={item.title}
-                    className={[
-                      "vltd-selectable relative aspect-[3/4] overflow-hidden rounded-[10px] bg-[color:var(--pill)] p-0 ring-1 transition",
-                      !canPick ? "opacity-35" : "",
-                      isSelected
-                        ? "vltd-selected ring-[color:var(--pill-active-ring)]"
-                        : "ring-[color:var(--border)]",
-                    ].join(" ")}
-                    style={{ cursor: canPick ? "pointer" : "default" }}
+                    className={["vltd-selectable transition", isSelected ? "vltd-selected ring-[color:var(--pill-active-ring)]" : "ring-1 ring-[color:var(--border)]"].join(" ")}
+                    style={{
+                      position: "relative",
+                      overflow: "hidden",
+                      aspectRatio: "3 / 4",
+                      borderRadius: 10,
+                      opacity: !canPick ? 0.35 : 1,
+                      border: "none",
+                      cursor: canPick ? "pointer" : "default",
+                      padding: 0,
+                      background: "var(--pill)",
+                    }}
                   >
                     {img ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={img}
                         alt={item.title}
-                        className="h-full w-full object-cover"
+                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                         draggable={false}
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-[color:var(--surface)] text-[10px] text-[color:var(--muted)]">
+                      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "var(--muted)", background: "var(--surface)" }}>
                         {"—"}
                       </div>
                     )}
 
                     {/* Selection circle */}
                     <div
-                      className={[
-                        "absolute right-1 top-1 flex h-[22px] w-[22px] items-center justify-center rounded-full ring-2",
-                        isSelected
-                          ? "bg-[color:var(--pill-active-bg)] ring-[color:var(--pill-active-ring)]"
-                          : "bg-black/50 ring-white/55",
-                      ].join(" ")}
+                      className={isSelected ? "bg-[color:var(--pill-active-bg)]" : ""}
+                      style={{
+                        position: "absolute",
+                        right: 5,
+                        top: 5,
+                        width: 22,
+                        height: 22,
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        background: isSelected ? undefined : "rgba(0,0,0,0.50)",
+                        boxShadow: isSelected
+                          ? "0 0 0 2px var(--pill-active-ring)"
+                          : "0 0 0 1.5px rgba(255,255,255,0.55)",
+                      }}
                     >
                       {isSelected && (
-                        <svg viewBox="0 0 20 20" fill="none" className="h-[13px] w-[13px] text-[color:var(--fg)]">
+                        <svg viewBox="0 0 20 20" fill="none" style={{ width: 13, height: 13, color: "var(--fg)" }}>
                           <path d="m4.5 10 3.5 3.5 7.5-7.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       )}
@@ -262,17 +310,16 @@ export function ItemPickerSheet({
 
       {/* ── Footer ── */}
       <div
-        className="shrink-0 border-t border-[color:var(--border)] bg-[color:var(--surface)] px-3.5 pt-2.5"
-        style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 14px)" }}
+        style={{
+          flexShrink: 0,
+          padding: "10px 14px max(env(safe-area-inset-bottom, 0px), 14px)",
+          borderTop: "1px solid var(--border)",
+          background: "var(--surface)",
+        }}
       >
-        <div className={STAGE_WIDTH_CLASS}>
+        <div style={stageStyle}>
           {slotsLeft < MAX_EXHIBIT_ITEMS && (
-            <div
-              className={[
-                "mb-2 text-center text-[11px]",
-                slotsLeft === 0 ? "text-[color:var(--fg)]" : "text-[color:var(--muted)]",
-              ].join(" ")}
-            >
+            <div style={{ marginBottom: 8, textAlign: "center", fontSize: 11, color: slotsLeft === 0 ? "var(--fg)" : "var(--muted)" }}>
               {slotLabel}
             </div>
           )}
@@ -280,12 +327,18 @@ export function ItemPickerSheet({
             type="button"
             onClick={() => onConfirm(Array.from(picked), sectionName)}
             disabled={pickedCount === 0}
-            className={[
-              "vltd-pill-main-glow w-full rounded-full py-3.5 text-[14px] font-extrabold tracking-[0.05em] transition disabled:opacity-35",
-              pickedCount > 0
-                ? "bg-[color:var(--pill-active-bg)]"
-                : "bg-[color:var(--pill)]",
-            ].join(" ")}
+            className={["vltd-pill-main-glow transition", pickedCount > 0 ? "bg-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)]"].join(" ")}
+            style={{
+              width: "100%",
+              borderRadius: 999,
+              padding: "14px 0",
+              fontSize: 14,
+              fontWeight: 900,
+              letterSpacing: "0.05em",
+              border: "none",
+              cursor: pickedCount > 0 ? "pointer" : "default",
+              opacity: pickedCount === 0 ? 0.35 : 1,
+            }}
           >
             {addLabel}
           </button>
