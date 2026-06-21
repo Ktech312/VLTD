@@ -7,7 +7,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { getCurrentUser } from "@/lib/auth";
 import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
 import DiscoverSwipe from "@/components/DiscoverSwipe";
-import { type UniverseKey, UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
+import { type UniverseKey, UNIVERSE_KEYS, UNIVERSE_LABEL, isUniverseKey } from "@/lib/taxonomy";
 import { loadItems } from "@/lib/vaultModel";
 import { loadWatchlist } from "@/lib/watchlistModel";
 import { buildUserPreferences, sortByPersonalization } from "@/lib/personalization";
@@ -36,6 +36,9 @@ type PublicGallery = {
   item_count: number;
   theme_pack: string | null;
   layout: Record<string, unknown> | null;
+  itemIds: string[];
+  /** Computed once at fetch time from the gallery's actual items - see computeGalleryUniverse. */
+  universeKey: UniverseKey;
   collector_name?: string;
   collector_avatar?: string;
   collector_avatar_url?: string;
@@ -45,7 +48,10 @@ function normalizeForSearch(value: unknown) {
   return String(value ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
 
-function inferUniverseKey(gallery: PublicGallery): UniverseKey {
+// Fallback only - used when a gallery has no resolvable items (e.g. all items were
+// deleted, or none matched the vault_items lookup). Real classification below uses
+// the gallery's actual item universes instead of guessing from title/description text.
+function inferUniverseKeyFromText(gallery: Pick<PublicGallery, "title" | "description" | "theme_pack">): UniverseKey {
   const text = normalizeForSearch([gallery.title, gallery.description, gallery.theme_pack].filter(Boolean).join(" "));
   const includes = (...terms: string[]) => terms.some((t) => text.includes(t));
   if (includes("pokemon", "magic", "yugioh", "yu gi oh", "tcg", "trading card", "card game", "slab", "foil", "single")) return "TCG";
@@ -58,9 +64,35 @@ function inferUniverseKey(gallery: PublicGallery): UniverseKey {
   return "MISC";
 }
 
+// Real classification: majority vote across the gallery's actual item universes
+// (looked up from vault_items), falling back to the text heuristic only when none
+// of the gallery's items resolve to a known universe.
+function computeGalleryUniverse(
+  itemIds: string[],
+  itemUniverseMap: Map<string, UniverseKey>,
+  gallery: Pick<PublicGallery, "title" | "description" | "theme_pack">
+): UniverseKey {
+  const counts = new Map<UniverseKey, number>();
+  for (const id of itemIds) {
+    const u = itemUniverseMap.get(id);
+    if (u) counts.set(u, (counts.get(u) ?? 0) + 1);
+  }
+  let best: UniverseKey | null = null;
+  let bestCount = 0;
+  for (const [u, c] of counts) {
+    if (c > bestCount) { best = u; bestCount = c; }
+  }
+  return best ?? inferUniverseKeyFromText(gallery);
+}
+
+function inferUniverseKey(gallery: PublicGallery): UniverseKey {
+  return gallery.universeKey;
+}
+
 function rowToGallery(row: Record<string, unknown>): PublicGallery {
   const layout = row.layout && typeof row.layout === "object" ? (row.layout as Record<string, unknown>) : null;
-  const itemIds = Array.isArray(layout?.itemIds) ? layout!.itemIds : [];
+  const rawItemIds = Array.isArray(layout?.itemIds) ? layout!.itemIds : [];
+  const itemIds = rawItemIds.filter((id): id is string => typeof id === "string");
   const themePack = typeof layout?.themePack === "string" ? layout.themePack : null;
   return {
     id: String(row.id),
@@ -72,6 +104,8 @@ function rowToGallery(row: Record<string, unknown>): PublicGallery {
     item_count: itemIds.length,
     theme_pack: themePack,
     layout,
+    itemIds,
+    universeKey: "MISC", // overwritten in fetchData once real item universes are known
   };
 }
 
@@ -88,7 +122,7 @@ type CategoryPulse = {
   trend: "up" | "neutral";
 };
 
-function MarketPulse({ galleries }: { galleries: PublicGallery[] }) {
+function MarketPulse({ galleries, onSelectCategory }: { galleries: PublicGallery[]; onSelectCategory: (key: UniverseKey) => void }) {
   const pulseData = useMemo((): CategoryPulse[] => {
     const map = new Map<string, { views: number; count: number; topViews: number; topTitle: string }>();
     for (const g of galleries) {
@@ -133,11 +167,14 @@ function MarketPulse({ galleries }: { galleries: PublicGallery[] }) {
           const barPct = Math.max(8, Math.round((item.totalViews / maxViews) * 100));
           const isTop = i === 0;
           return (
-            <div key={item.category}
-              className="flex flex-col gap-2 rounded-[14px] px-3 py-3 ring-1 transition hover:ring-[color:var(--theme-gold)]"
+            <button key={item.category}
+              type="button"
+              onClick={() => onSelectCategory(item.category)}
+              className="flex flex-col gap-2 rounded-[14px] px-3 py-3 text-left ring-1 transition hover:ring-[color:var(--theme-gold)]"
               style={{
                 background: isTop ? "rgba(245,181,72,0.08)" : "var(--theme-elevated, rgba(20,32,55,0.9))",
                 borderColor: isTop ? "rgba(245,181,72,0.35)" : "var(--theme-border, rgba(245,181,72,0.12))",
+                cursor: "pointer",
               }}>
               <div className="flex items-start justify-between gap-1">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -165,7 +202,7 @@ function MarketPulse({ galleries }: { galleries: PublicGallery[] }) {
               <div className="text-[10px] tabular-nums" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
                 {item.totalViews.toLocaleString()} views
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -215,6 +252,33 @@ export default function DiscoverPage() {
         }
 
         const mapped = (data ?? []).map((r) => rowToGallery(r as Record<string, unknown>));
+
+        // Classify each gallery by its actual item universes instead of guessing
+        // from title/description text - fixes both miscategorized galleries
+        // dumped into Misc, and universes with real galleries never showing up
+        // in Market Pulse because their titles happened not to match any keyword.
+        const allItemIds = [...new Set(mapped.flatMap((g) => g.itemIds))];
+        if (allItemIds.length > 0) {
+          const { data: itemRows } = await supabase
+            .from("vault_items")
+            .select("id, universe")
+            .in("id", allItemIds);
+          const itemUniverseMap = new Map<string, UniverseKey>();
+          for (const row of itemRows ?? []) {
+            const universe = String((row as Record<string, unknown>).universe ?? "").toUpperCase();
+            if (isUniverseKey(universe)) {
+              itemUniverseMap.set(String((row as Record<string, unknown>).id), universe);
+            }
+          }
+          for (const gallery of mapped) {
+            gallery.universeKey = computeGalleryUniverse(gallery.itemIds, itemUniverseMap, gallery);
+          }
+        } else {
+          for (const gallery of mapped) {
+            gallery.universeKey = inferUniverseKeyFromText(gallery);
+          }
+        }
+
         const profileIds = [...new Set(mapped.map((g) => g.profile_id).filter(Boolean))];
 
         if (profileIds.length > 0) {
@@ -439,7 +503,7 @@ export default function DiscoverPage() {
 
         {/* Market Pulse widget — category activity heatmap */}
         {!loading && galleries.length > 3 && activeTab === "All" && !query.trim() && (
-          <MarketPulse galleries={galleries} />
+          <MarketPulse galleries={galleries} onSelectCategory={setActiveTab} />
         )}
 
         {/* All Galleries grid — no cap */}
