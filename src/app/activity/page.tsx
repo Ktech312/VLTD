@@ -291,10 +291,10 @@ export default function ActivityPage() {
               </h2>
               <div className="mt-4 grid gap-3">
                 {[
-                  "Comments on public galleries",
+                  "Comments on public exhibitions",
                   "Appreciations on featured items",
                   "New followers and collector updates",
-                  "Gallery publish and share events",
+                  "Exhibition publish and share events",
                 ].map((label) => (
                   <div key={label} className="rounded-[14px] bg-[color:var(--pill)] px-3 py-2 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
                     {label}
@@ -312,7 +312,7 @@ export default function ActivityPage() {
                   Vault
                 </Link>
                 <Link href="/museum" className="rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">
-                  Collections
+                  Exhibitions
                 </Link>
                 <Link href="/portfolio" className="rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">
                   Insights

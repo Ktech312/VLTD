@@ -319,7 +319,7 @@ export default function MuseumPage() {
                 </div>
 
                 <h1 className="mt-2 text-3xl font-semibold sm:text-[2.2rem]">
-                  Curated Galleries
+                  Curated Exhibitions
                 </h1>
 
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
@@ -414,7 +414,7 @@ export default function MuseumPage() {
                     {strongestGallery.gallery.itemIds.length} items
                   </span>
                   <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
-                    {strongestGallery.score.signals.sections} sections
+                    {strongestGallery.score.signals.sections} exhibits
                   </span>
                   <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
                     {strongestGallery.score.signals.featuredWorks} featured
@@ -658,7 +658,7 @@ export default function MuseumPage() {
 
                         <div className="mt-3 flex items-center justify-between gap-3 text-sm text-[color:var(--muted)]">
                           <div>
-                            {score.signals.sections} sections • {score.signals.featuredWorks} featured
+                            {score.signals.sections} exhibits • {score.signals.featuredWorks} featured
                           </div>
                           <button
                             type="button"
