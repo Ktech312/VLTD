@@ -275,6 +275,35 @@ export function ItemPickerSheet({
                       </div>
                     )}
 
+                    {/* Item name */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        padding: "10px 5px 4px",
+                        background: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.82) 70%)",
+                        pointerEvents: "none",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 10,
+                          lineHeight: 1.2,
+                          fontWeight: 600,
+                          color: "#fff",
+                          overflow: "hidden",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          textAlign: "left",
+                        }}
+                      >
+                        {item.title}
+                      </div>
+                    </div>
+
                     {/* Selection circle */}
                     <div
                       className={isSelected ? "bg-[color:var(--pill-active-bg)]" : ""}

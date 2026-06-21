@@ -1362,32 +1362,42 @@ export default function GalleryPage() {
           sectionTitle={pickerSectionTitle}
           onConfirm={(ids) => {
             if (pickerSectionIds !== null && pickerSectionIdx !== null) {
-              // Section-specific update: add/remove items for this section only
-              patchDraft((current) => {
-                const oldSet = new Set(pickerSectionIds);
-                const removedFromSection = pickerSectionIds.filter((id) => !ids.includes(id));
-                const addedToSection = ids.filter((id) => !oldSet.has(id));
-                const removedSet = new Set(removedFromSection);
-                // Sync gallery.itemIds: remove deselected, add newly picked
-                let nextGalleryIds = current.itemIds.filter((id) => !removedSet.has(id));
-                const gallerySet = new Set(nextGalleryIds);
-                nextGalleryIds = [...nextGalleryIds, ...addedToSection.filter((id) => !gallerySet.has(id))];
-                // Update the section's itemIds
-                const currentSections = Array.isArray(current.sections) ? current.sections : [];
-                const nextSections = currentSections.map((s, i) =>
-                  i === pickerSectionIdx ? { ...s, itemIds: ids } : s
-                );
-                return {
-                  ...current,
-                  itemIds: nextGalleryIds,
+              // Section-specific update: add/remove items for this section only.
+              // Compute the next ids/sections from the freshest known draft BEFORE
+              // calling patchDraft (which only schedules an async setState) so we
+              // can pass them straight into saveDraft as overrides. saveDraft()
+              // with no arguments would otherwise read latestDraftRef/draft before
+              // the patch has actually landed, silently saving the OLD item list -
+              // this is what was causing picked items to not persist.
+              const baseDraft = latestDraftRef.current ?? draft;
+              if (!baseDraft) {
+                setPickerOpen(false);
+                return;
+              }
+              const oldSet = new Set(pickerSectionIds);
+              const removedFromSection = pickerSectionIds.filter((id) => !ids.includes(id));
+              const addedToSection = ids.filter((id) => !oldSet.has(id));
+              const removedSet = new Set(removedFromSection);
+              // Sync gallery.itemIds: remove deselected, add newly picked
+              let nextGalleryIds = baseDraft.itemIds.filter((id) => !removedSet.has(id));
+              const gallerySet = new Set(nextGalleryIds);
+              nextGalleryIds = [...nextGalleryIds, ...addedToSection.filter((id) => !gallerySet.has(id))];
+              // Update the section's itemIds
+              const currentSections = Array.isArray(baseDraft.sections) ? baseDraft.sections : [];
+              const nextSections = currentSections.map((s, i) =>
+                i === pickerSectionIdx ? { ...s, itemIds: ids } : s
+              );
+
+              patchDraft((current) => ({
+                ...current,
+                itemIds: nextGalleryIds,
+                sections: nextSections,
+                exhibitionLayout: {
+                  ...(current.exhibitionLayout as object ?? {}),
                   sections: nextSections,
-                  exhibitionLayout: {
-                    ...(current.exhibitionLayout as object ?? {}),
-                    sections: nextSections,
-                  } as Gallery["exhibitionLayout"],
-                };
-              });
-              void saveDraft();
+                } as Gallery["exhibitionLayout"],
+              }));
+              void saveDraft(nextGalleryIds, nextSections);
             } else {
               // No sections — old behavior
               update(ids);
