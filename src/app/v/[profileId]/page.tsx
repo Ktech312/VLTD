@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 import VaultMuseumView from "@/components/VaultMuseumView";
 import {
@@ -83,10 +84,14 @@ function UniverseChip({ universe, count }: { universe: string; count: number }) 
 }
 
 // ─── Featured item card ────────────────────────────────────────────────────────
-function FeaturedCard({ item }: { item: VaultItem }) {
+function FeaturedCard({ item, onClick }: { item: VaultItem; onClick?: (item: VaultItem) => void }) {
   const imageUrl = getPrimaryImageUrl(item);
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-[color:var(--surface)] ring-1 ring-[color:var(--border)]">
+    <button
+      type="button"
+      onClick={onClick ? () => onClick(item) : undefined}
+      className="block w-full text-left relative overflow-hidden rounded-2xl bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] transition hover:-translate-y-0.5"
+    >
       <div className="aspect-[3/4] w-full overflow-hidden bg-[color:var(--pill)]">
         {imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -113,8 +118,137 @@ function FeaturedCard({ item }: { item: VaultItem }) {
           )}
         </div>
       </div>
+    </button>
+  );
+}
+
+// ─── Item detail modal — single item, or a filtered list (e.g. "Collects Most") ──
+function ProfileItemModal({
+  singleItem,
+  listItems,
+  listTitle,
+  onClose,
+  onSelectItem,
+}: {
+  singleItem?: VaultItem | null;
+  listItems?: VaultItem[];
+  listTitle?: string;
+  onClose: () => void;
+  onSelectItem?: (item: VaultItem) => void;
+}) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtml = html.style.overflow;
+    const prevBody = body.style.overflow;
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    return () => {
+      html.style.overflow = prevHtml;
+      body.style.overflow = prevBody;
+    };
+  }, []);
+
+  const overlay = (
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 9100,
+        background: "rgba(5,8,14,0.86)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 16,
+      }}
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          position: "relative",
+          width: "100%",
+          maxWidth: singleItem ? 420 : 560,
+          maxHeight: "85vh",
+          overflowY: "auto",
+          borderRadius: 24,
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          padding: 20,
+        }}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          style={{ position: "absolute", right: 14, top: 14, width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer", background: "var(--pill)", color: "var(--fg)" }}
+        >
+          <svg viewBox="0 0 20 20" fill="none" style={{ width: 13, height: 13 }}>
+            <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </button>
+
+        {singleItem ? (
+          <>
+            <div style={{ aspectRatio: "3 / 4", width: "100%", maxWidth: 260, margin: "0 auto", borderRadius: 16, overflow: "hidden", background: "var(--pill)" }}>
+              {getPrimaryImageUrl(singleItem) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={getPrimaryImageUrl(singleItem)} alt={singleItem.title ?? ""} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+              ) : (
+                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40, opacity: 0.25 }}>🖼</div>
+              )}
+            </div>
+            <div style={{ marginTop: 14, textAlign: "center" }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "var(--fg)" }}>{singleItem.title ?? "Untitled"}</div>
+              <div style={{ marginTop: 4, fontSize: 12, color: "var(--muted)" }}>
+                {[singleItem.subtitle, singleItem.number, singleItem.grade ? `Grade ${singleItem.grade}` : null].filter(Boolean).join(" · ") || (singleItem.universe ?? singleItem.category ?? "")}
+              </div>
+              {typeof singleItem.currentValue === "number" && singleItem.currentValue > 0 && (
+                <div style={{ marginTop: 8, display: "inline-flex", borderRadius: 999, padding: "5px 14px", fontSize: 13, fontWeight: 700, background: "var(--pill)", color: "var(--theme-gold, #F5B548)" }}>
+                  {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(singleItem.currentValue)}
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "var(--fg)", paddingRight: 30 }}>
+              {listTitle}
+            </div>
+            <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+              {(listItems ?? []).map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onSelectItem?.(item)}
+                  style={{ borderRadius: 12, overflow: "hidden", background: "var(--pill)", border: "1px solid var(--border)", padding: 0, cursor: "pointer", textAlign: "left" }}
+                >
+                  <div style={{ aspectRatio: "3 / 4", background: "var(--surface)" }}>
+                    {getPrimaryImageUrl(item) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={getPrimaryImageUrl(item)} alt={item.title ?? ""} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                    ) : null}
+                  </div>
+                  <div style={{ padding: "6px 7px", fontSize: 10, fontWeight: 600, color: "var(--fg)", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, lineHeight: 1.25 }}>
+                    {item.title ?? "Untitled"}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
+
+  if (!mounted || typeof document === "undefined") return null;
+  return createPortal(overlay, document.body);
 }
 
 // ─── Gallery card ─────────────────────────────────────────────────────────────
@@ -165,6 +299,8 @@ export default function PublicVaultPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<VaultItem | null>(null);
+  const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -341,12 +477,12 @@ export default function PublicVaultPage({
         {featuredItems.length > 0 && (
           <section className="mb-8">
             <div className="mb-3 flex items-baseline gap-2">
-              <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">Featured</h2>
+              <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">Featured Items</h2>
               <span className="text-[10px] text-[color:var(--muted2)]">{plural(items.length, "public item")}</span>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {featuredItems.map((item) => (
-                <FeaturedCard key={item.id} item={item} />
+                <FeaturedCard key={item.id} item={item} onClick={setSelectedItem} />
               ))}
             </div>
           </section>
@@ -358,14 +494,15 @@ export default function PublicVaultPage({
             <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">Collects most</h2>
             <div className="flex flex-wrap gap-2">
               {topSubjects.map(({ subject, count }) => (
-                <Link
+                <button
                   key={subject}
-                  href={`/registry/${encodeURIComponent(subject)}`}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--surface)] px-4 py-2 text-sm font-medium ring-1 ring-[color:var(--border)] hover:ring-[color:var(--border-strong)]"
+                  type="button"
+                  onClick={() => setSubjectFilter(subject)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--surface)] px-4 py-2 text-sm font-medium ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--border-strong)]"
                 >
                   {subject}
                   <span className="rounded-full bg-[color:var(--pill)] px-1.5 py-0.5 text-[10px] font-semibold">{count}</span>
-                </Link>
+                </button>
               ))}
             </div>
           </section>
@@ -390,7 +527,7 @@ export default function PublicVaultPage({
         {items.length > 0 && (
           <section className="mb-12">
             <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">Full collection</h2>
-            <VaultMuseumView items={items} onFilterToUniverse={() => {}} />
+            <VaultMuseumView items={items} onFilterToUniverse={() => {}} onItemClick={setSelectedItem} />
           </section>
         )}
 
@@ -409,6 +546,22 @@ export default function PublicVaultPage({
         </div>
 
       </div>
+
+      {selectedItem ? (
+        <ProfileItemModal singleItem={selectedItem} onClose={() => setSelectedItem(null)} />
+      ) : null}
+
+      {subjectFilter ? (
+        <ProfileItemModal
+          listTitle={subjectFilter}
+          listItems={items.filter((i) => (i.subject ?? i.category ?? i.universe) === subjectFilter)}
+          onClose={() => setSubjectFilter(null)}
+          onSelectItem={(item) => {
+            setSubjectFilter(null);
+            setSelectedItem(item);
+          }}
+        />
+      ) : null}
     </main>
   );
 }

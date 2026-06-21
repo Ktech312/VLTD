@@ -59,7 +59,7 @@ function PrivateBadge({ compact = false }: { compact?: boolean }) {
   );
 }
 
-function SpotlightCard({ item }: { item: ModelItem }) {
+function SpotlightCard({ item, onItemClick }: { item: ModelItem; onItemClick?: (item: ModelItem) => void }) {
   const grade = itemGradeShort(item);
   const cost = itemTotalCost(item);
   const value = itemCurrentValue(item);
@@ -269,8 +269,9 @@ function SpotlightCard({ item }: { item: ModelItem }) {
           </div>
         )}
         <div className="ml-auto flex items-center gap-2">
-          <a
-            href={`/vault/item/${item.id}`}
+          <button
+            type="button"
+            onClick={onItemClick ? () => onItemClick(item) : undefined}
             aria-label="Open item detail"
             className="flex items-center justify-center rounded-full transition-opacity hover:opacity-90"
             style={{
@@ -278,6 +279,7 @@ function SpotlightCard({ item }: { item: ModelItem }) {
               border: "1.5px solid rgba(255,255,255,0.22)",
               boxShadow: "0 2px 10px rgba(59,130,246,0.45)",
               color: "#fff",
+              cursor: "pointer",
               flexShrink: 0,
               height: 28,
               textDecoration: "none",
@@ -293,14 +295,15 @@ function SpotlightCard({ item }: { item: ModelItem }) {
                 strokeLinejoin="round"
               />
             </svg>
-          </a>
-          <a
-            href={`/vault/item/${item.id}`}
+          </button>
+          <button
+            type="button"
+            onClick={onItemClick ? () => onItemClick(item) : undefined}
             className="text-[11px] font-semibold transition-opacity hover:opacity-80"
-            style={{ color: "var(--theme-gold, #F5B548)" }}
+            style={{ color: "var(--theme-gold, #F5B548)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
           >
             View details →
-          </a>
+          </button>
         </div>
       </div>
     </div>
@@ -310,9 +313,11 @@ function SpotlightCard({ item }: { item: ModelItem }) {
 function MuseumCard({
   item,
   isActive = false,
+  onItemClick,
 }: {
   item: ModelItem;
   isActive?: boolean;
+  onItemClick?: (item: ModelItem) => void;
 }) {
   const grade = itemGradeShort(item);
   const value = itemCurrentValue(item);
@@ -421,11 +426,14 @@ function MuseumCard({
           )}
         </div>
 
-        <a
-          href={`/vault/item/${item.id}`}
-          className="block"
+        <button
+          type="button"
+          onClick={onItemClick ? () => onItemClick(item) : undefined}
+          className="block w-full text-left"
           draggable={false}
           style={{
+            background: "none",
+            border: "none",
             cursor: "pointer",
             display: "flex",
             flexDirection: "column",
@@ -442,7 +450,7 @@ function MuseumCard({
               {[item.subtitle, item.number, item.grade].filter(Boolean).join(" · ")}
             </div>
           )}
-        </a>
+        </button>
       </div>
     </div>
   );
@@ -453,11 +461,13 @@ function UniverseSection({
   items,
   onViewAll,
   onFeaturedChange,
+  onItemClick,
 }: {
   universeKey: UniverseKey;
   items: ModelItem[];
   onViewAll: (u: UniverseKey) => void;
   onFeaturedChange?: (item: ModelItem) => void;
+  onItemClick?: (item: ModelItem) => void;
 }) {
   const label = UNIVERSE_LABEL[universeKey] ?? universeKey;
   const totalValue = items.reduce((sum, i) => sum + itemCurrentValue(i), 0);
@@ -634,7 +644,7 @@ function UniverseSection({
             }}
             style={{ flexShrink: 0, scrollSnapAlign: "center" }}
           >
-            <MuseumCard item={item} isActive={i === activeIndex} />
+            <MuseumCard item={item} isActive={i === activeIndex} onItemClick={onItemClick} />
           </div>
         ))}
       </div>
@@ -647,9 +657,11 @@ const UNIVERSE_ORDER = UNIVERSE_KEYS;
 export default function VaultMuseumView({
   items,
   onFilterToUniverse,
+  onItemClick,
 }: {
   items: ModelItem[];
   onFilterToUniverse: (u: UniverseKey) => void;
+  onItemClick?: (item: ModelItem) => void;
 }) {
   const [featuredOverride, setFeaturedOverride] = useState<ModelItem | null>(null);
 
@@ -711,7 +723,7 @@ export default function VaultMuseumView({
               </span>
             )}
           </div>
-          <SpotlightCard key={spotlight.id} item={spotlight} />
+          <SpotlightCard key={spotlight.id} item={spotlight} onItemClick={onItemClick} />
         </div>
       )}
 
@@ -724,6 +736,7 @@ export default function VaultMuseumView({
             items={sectionItems}
             onViewAll={onFilterToUniverse}
             onFeaturedChange={setFeaturedOverride}
+            onItemClick={onItemClick}
           />
         );
       })}
