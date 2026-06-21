@@ -144,8 +144,11 @@ function MarketPulse({ galleries, onSelectCategory }: { galleries: PublicGallery
         topTitle: data.topTitle,
         trend: data.views > 100 ? "up" as const : "neutral" as const,
       }))
+      // No cap beyond the universe count itself (UNIVERSE_KEYS.length) - previously
+      // capped at 6, which silently dropped any category that has galleries but
+      // ranks below the 6 most-viewed, even though it's a real, valid category.
       .sort((a, b) => b.totalViews - a.totalViews)
-      .slice(0, 6);
+      .slice(0, UNIVERSE_KEYS.length);
   }, [galleries]);
 
   if (pulseData.length < 2) return null;
