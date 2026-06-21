@@ -48,6 +48,8 @@ export type PublicProfile = {
   bannerUrl?: string;
   bio?: string;
   socialLinks?: SocialLinks;
+  /** ISO timestamp from profiles.created_at - powers "Member since" in the Bio view. */
+  createdAt?: string;
 };
 
 function asRecord(value: unknown): UnknownRecord {
@@ -191,7 +193,7 @@ export async function fetchPublicProfile(profileId: string): Promise<PublicProfi
       .maybeSingle(),
     supabase
       .from("profiles")
-      .select("social_links, bio, avatar_url, banner_url, display_name")
+      .select("social_links, bio, avatar_url, banner_url, display_name, created_at")
       .eq("id", cleanProfileId)
       .maybeSingle(),
   ]);
@@ -223,6 +225,7 @@ export async function fetchPublicProfile(profileId: string): Promise<PublicProfi
     bannerUrl: typeof profileRow?.banner_url === "string" && profileRow.banner_url ? profileRow.banner_url : undefined,
     bio,
     socialLinks: (profileRow?.social_links as SocialLinks) ?? undefined,
+    createdAt: typeof profileRow?.created_at === "string" ? profileRow.created_at : undefined,
   };
 }
 
@@ -250,6 +253,10 @@ export type PublicGallery = {
   itemCount: number;
   views: number;
   visibility: string;
+  /** Count of Exhibits (sections) within this Exhibition - powers the Bio view's totals. */
+  exhibitsCount: number;
+  /** featuredItemId values across this gallery's sections - powers the Bio view's highlight reel. */
+  featuredItemIds: string[];
 };
 
 export async function fetchPublicGalleriesForProfile(profileId: string): Promise<PublicGallery[]> {
@@ -259,7 +266,7 @@ export async function fetchPublicGalleriesForProfile(profileId: string): Promise
 
   const { data, error } = await supabase
     .from("galleries")
-    .select("id, title, description, cover_image, layout, analytics, visibility")
+    .select("id, title, description, cover_image, layout, analytics, visibility, sections, exhibition_layout")
     .eq("profile_id", cleanProfileId)
     .neq("visibility", "LOCKED")
     .order("created_at", { ascending: false });
@@ -270,6 +277,19 @@ export async function fetchPublicGalleriesForProfile(profileId: string): Promise
     const layout = typeof row.layout === "object" && row.layout ? row.layout as Record<string, unknown> : {};
     const itemIds = Array.isArray(layout.itemIds) ? layout.itemIds : [];
     const analytics = typeof row.analytics === "object" && row.analytics ? row.analytics as Record<string, unknown> : {};
+
+    // Sections may live directly on the row or nested under exhibition_layout - same
+    // fallback the builder uses (chooseSectionSource), just inlined for a lightweight count.
+    const directSections = Array.isArray(row.sections) ? row.sections : [];
+    const exhibitionLayout = typeof row.exhibition_layout === "object" && row.exhibition_layout
+      ? row.exhibition_layout as Record<string, unknown>
+      : {};
+    const layoutSections = Array.isArray(exhibitionLayout.sections) ? exhibitionLayout.sections : [];
+    const sections = directSections.length > 0 ? directSections : layoutSections;
+    const featuredItemIds = sections
+      .map((s) => (s && typeof s === "object" ? (s as Record<string, unknown>).featuredItemId : undefined))
+      .filter((id): id is string => typeof id === "string" && id.length > 0);
+
     return {
       id: String(row.id),
       title: String(row.title || "Untitled Gallery"),
@@ -278,6 +298,8 @@ export async function fetchPublicGalleriesForProfile(profileId: string): Promise
       itemCount: itemIds.length,
       views: typeof analytics.views === "number" ? analytics.views : 0,
       visibility: String(row.visibility || "PUBLIC"),
+      exhibitsCount: sections.length,
+      featuredItemIds,
     };
   });
 }

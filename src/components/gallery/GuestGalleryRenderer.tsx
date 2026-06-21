@@ -11,6 +11,8 @@ import { getGallerySections } from "@/lib/galleryModel";
 import { fetchPublicProfile } from "@/lib/publicProfile";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import type { GuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
+import CollectorBioModal from "@/components/gallery/CollectorBioModal";
+import ExhibitionInfoModal from "@/components/gallery/ExhibitionInfoModal";
 
 const GALLERY_STAGE_WIDTH_CLASS = "max-w-[1120px]";
 
@@ -284,6 +286,8 @@ export default function GuestGalleryRenderer({
   const [selectedItem, setSelectedItem] = useState<VaultItem | null>(null);
   const [owner, setOwner] = useState<OwnerProfile | null>(null);
   const [selectedSectionIdx, setSelectedSectionIdx] = useState(0);
+  const [bioOpen, setBioOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   useEffect(() => {
     const profileId = model.gallery?.profile_id;
@@ -446,13 +450,24 @@ export default function GuestGalleryRenderer({
                         ) : (
                           <span className="text-lg leading-none">{owner.avatar}</span>
                         )}
-                        <Link
-                          href={`/v/${owner.profileId}`}
+                        <button
+                          type="button"
+                          onClick={() => setBioOpen(true)}
                           className="text-sm font-semibold transition-opacity hover:opacity-80"
-                          style={{ color: "var(--gold, #F5B548)" }}
+                          style={{ color: "var(--gold, #F5B548)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                         >
                           {owner.displayName}
-                        </Link>
+                        </button>
+                        {model.gallery ? (
+                          <button
+                            type="button"
+                            onClick={() => setInfoOpen(true)}
+                            className="vltd-pill-micro transition"
+                            style={{ borderRadius: 999, padding: "2px 10px", fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer" }}
+                          >
+                            Info
+                          </button>
+                        ) : null}
                         <span className="text-[color:var(--muted2)]" aria-hidden="true">·</span>
                       </>
                     ) : null}
@@ -585,6 +600,14 @@ export default function GuestGalleryRenderer({
 
       {selectedItem && !embedded ? (
         <GuestItemModal item={selectedItem} onClose={() => setSelectedItem(null)} />
+      ) : null}
+
+      {bioOpen && owner ? (
+        <CollectorBioModal profileId={owner.profileId} onClose={() => setBioOpen(false)} />
+      ) : null}
+
+      {infoOpen && model.gallery ? (
+        <ExhibitionInfoModal gallery={model.gallery} items={model.galleryItems} onClose={() => setInfoOpen(false)} />
       ) : null}
     </main>
   );
