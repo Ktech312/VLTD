@@ -465,6 +465,39 @@ hr {
 }
 
 /* =========================================================
+   SPARK BURST (Appreciate/"Vibe" button click effect)
+   - Pure CSS, no animation library
+   - Uses --accent (the same gold every glow already uses) so it never
+     introduces a new color into the palette
+========================================================= */
+
+.vltd-spark-burst {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.vltd-spark-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translate(-50%, -50%) rotate(var(--vltd-spark-angle)) translateY(0) scale(1);
+  opacity: 0.9;
+  animation: vltd-spark-fly 420ms ease-out forwards;
+}
+
+@keyframes vltd-spark-fly {
+  to {
+    transform: translate(-50%, -50%) rotate(var(--vltd-spark-angle)) translateY(-16px) scale(0);
+    opacity: 0;
+  }
+}
+
+/* =========================================================
    FRAME GLOW LOCK
    - Major frames glow
    - Buttons/pills do not inherit this automatically
@@ -2177,24 +2210,4 @@ main {
 .btn-gold-outline {
   background: transparent;
   border: 1px solid var(--theme-gold-border, rgba(245,181,72,0.3));
-  color: var(--theme-gold, #F5B548);
-  font-weight: 500;
-  border-radius: 8px;
-  transition: background 0.2s, box-shadow 0.2s;
-}
-.btn-gold-outline:hover {
-  background: var(--theme-gold-subtle, rgba(245,181,72,0.1));
-}
-
-/* Light theme text overrides */
-.theme-light .text-text-primary { color: var(--theme-text-primary) !important; }
-.theme-light .text-text-secondary { color: var(--theme-text-secondary) !important; }
-.theme-light .vault-card { box-shadow: 0 2px 16px rgba(0,0,0,0.12); }
-
-/* Scrollbar styling */
-/* scrollbar base — overridden by theme-override.css below */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-@keyframes bulk-glow-pulse {
-  0%, 100% { box-shadow: 0 0 0 2px rgba(245,181,72,0.55), 0 0 22px rgba(245,181,72,0.30), 0 0 48px rgba(245,181,72,0.12); }
-  50%       { box-shadow: 0 0 0 2px rgba(245,181,72,0.90), 0 0 32px rgba(245,181,72,0.55), 0 0 72px rgba(245,181,72,0.25); }
-}
+  color: var(--th
