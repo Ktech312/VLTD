@@ -13,6 +13,19 @@ import {
   type PublicGallery,
 } from "@/lib/publicProfile";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
+import { getFollowerCount, isFollowing } from "@/lib/follows";
+import { FollowButton } from "@/components/social/FollowButton";
+
+const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
+
+function getActiveProfileId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return String(window.localStorage.getItem(ACTIVE_PROFILE_KEY) ?? "").trim();
+  } catch {
+    return "";
+  }
+}
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 function plural(n: number, word: string) {
@@ -278,7 +291,7 @@ function GalleryCard({ gallery, profileId }: { gallery: PublicGallery; profileId
           <div className="mt-1 line-clamp-2 text-[11px] leading-5 text-[color:var(--muted)]">{gallery.description}</div>
         )}
         <div className="mt-auto pt-2 text-[10px] text-[color:var(--muted2)] uppercase tracking-[0.14em]">
-          {gallery.itemCount > 0 ? `${gallery.itemCount} items` : "Gallery"}
+          {gallery.itemCount > 0 ? `${gallery.itemCount} items` : "Exhibition"}
           {gallery.visibility === "INVITE" && " · Invite only"}
         </div>
       </div>
@@ -301,6 +314,13 @@ export default function PublicVaultPage({
   const [copied, setCopied] = useState(false);
   const [selectedItem, setSelectedItem] = useState<VaultItem | null>(null);
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
+  const [viewerProfileId, setViewerProfileId] = useState("");
+  const [followerCount, setFollowerCount] = useState(0);
+  const [viewerFollowing, setViewerFollowing] = useState(false);
+
+  useEffect(() => {
+    setViewerProfileId(getActiveProfileId());
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -308,15 +328,20 @@ export default function PublicVaultPage({
       setLoading(true);
       setError("");
       try {
-        const [nextProfile, nextItems, nextGalleries] = await Promise.all([
+        const viewer = getActiveProfileId();
+        const [nextProfile, nextItems, nextGalleries, nextFollowerCount, nextViewerFollowing] = await Promise.all([
           fetchPublicProfile(profileId),
           fetchPublicVaultItems(profileId),
           fetchPublicGalleriesForProfile(profileId),
+          getFollowerCount(profileId),
+          viewer ? isFollowing(viewer, profileId) : Promise.resolve(false),
         ]);
         if (!active) return;
         setProfile(nextProfile);
         setItems(nextItems);
         setGalleries(nextGalleries);
+        setFollowerCount(nextFollowerCount);
+        setViewerFollowing(nextViewerFollowing);
       } catch (err) {
         if (!active) return;
         setError(err instanceof Error ? err.message : "Could not load public vault.");
@@ -438,14 +463,23 @@ export default function PublicVaultPage({
             {bio && <p className="mt-2 max-w-md text-sm leading-relaxed text-[color:var(--muted)]">{bio}</p>}
           </div>
 
+          {viewerProfileId !== profileId && (
+            <FollowButton
+              viewerProfileId={viewerProfileId}
+              targetProfileId={profileId}
+              initialFollowing={viewerFollowing}
+            />
+          )}
+
           {/* Stats bar */}
-          {(items.length > 0 || galleries.length > 0) && (
+          {(items.length > 0 || galleries.length > 0 || followerCount > 0) && (
             <div className="flex flex-wrap justify-center divide-x divide-[color:var(--border)] rounded-2xl bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] overflow-hidden">
               {items.length > 0 && <Stat value={items.length} label={items.length === 1 ? "Item" : "Items"} />}
-              {galleries.length > 0 && <Stat value={galleries.length} label={galleries.length === 1 ? "Gallery" : "Galleries"} />}
+              {galleries.length > 0 && <Stat value={galleries.length} label={galleries.length === 1 ? "Exhibition" : "Exhibitions"} />}
               {universes.length > 0 && <Stat value={universes.length} label={universes.length === 1 ? "Universe" : "Universes"} />}
               {gradedCount > 0 && <Stat value={gradedCount} label="Graded" />}
               {topGrade !== null && <Stat value={topGrade} label="Top Grade" />}
+              <Stat value={followerCount} label={followerCount === 1 ? "Follower" : "Followers"} />
             </div>
           )}
 
@@ -512,8 +546,8 @@ export default function PublicVaultPage({
         {galleries.length > 0 && (
           <section className="mb-8">
             <div className="mb-3 flex items-baseline gap-2">
-              <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">Galleries</h2>
-              <span className="text-[10px] text-[color:var(--muted2)]">{galleries.length === 1 ? "1 public gallery" : `${galleries.length} public galleries`}</span>
+              <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">Exhibitions</h2>
+              <span className="text-[10px] text-[color:var(--muted2)]">{galleries.length === 1 ? "1 public exhibition" : `${galleries.length} public exhibitions`}</span>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {galleries.map((gallery) => (

@@ -11,6 +11,19 @@ import {
 } from "@/lib/publicProfile";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+import { getFollowerCount, isFollowing } from "@/lib/follows";
+import { FollowButton } from "@/components/social/FollowButton";
+
+const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
+
+function getActiveProfileId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return String(window.localStorage.getItem(ACTIVE_PROFILE_KEY) ?? "").trim();
+  } catch {
+    return "";
+  }
+}
 
 function formatMemberSince(createdAt?: string): string | null {
   if (!createdAt) return null;
@@ -54,6 +67,8 @@ type BioData = {
   totalItems: number;
   totalExhibitions: number;
   totalExhibits: number;
+  followerCount: number;
+  viewerFollowing: boolean;
   highlights: VaultItem[];
 };
 
@@ -67,17 +82,24 @@ export default function CollectorBioModal({
   const [mounted, setMounted] = useState(false);
   const [data, setData] = useState<BioData | null>(null);
   const [loadError, setLoadError] = useState(false);
+  const [viewerProfileId, setViewerProfileId] = useState("");
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    setViewerProfileId(getActiveProfileId());
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
-        const [profile, galleries, items] = await Promise.all([
+        const viewer = getActiveProfileId();
+        const [profile, galleries, items, followerCount, viewerFollowing] = await Promise.all([
           fetchPublicProfile(profileId),
           fetchPublicGalleriesForProfile(profileId),
           fetchPublicVaultItems(profileId),
+          getFollowerCount(profileId),
+          viewer ? isFollowing(viewer, profileId) : Promise.resolve(false),
         ]);
         if (cancelled) return;
         if (!profile) {
@@ -91,6 +113,8 @@ export default function CollectorBioModal({
           totalItems: items.length,
           totalExhibitions: galleries.length,
           totalExhibits,
+          followerCount,
+          viewerFollowing,
           highlights: buildHighlights(items, featuredIds),
         });
       } catch {
@@ -189,13 +213,23 @@ export default function CollectorBioModal({
                   {data.profile.bio}
                 </div>
               )}
+              {viewerProfileId !== data.profile.profileId && (
+                <div style={{ marginTop: 12 }}>
+                  <FollowButton
+                    viewerProfileId={viewerProfileId}
+                    targetProfileId={data.profile.profileId}
+                    initialFollowing={data.viewerFollowing}
+                  />
+                </div>
+              )}
             </div>
 
-            <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+            <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
               {[
                 { label: "Items", value: data.totalItems },
                 { label: "Exhibitions", value: data.totalExhibitions },
                 { label: "Exhibits", value: data.totalExhibits },
+                { label: "Followers", value: data.followerCount },
               ].map(({ label, value }) => (
                 <div key={label} style={{ borderRadius: 14, background: "var(--pill)", border: "1px solid var(--border)", padding: "10px 6px", textAlign: "center" }}>
                   <div style={{ fontSize: 18, fontWeight: 700, color: "var(--fg)" }}>{value}</div>
