@@ -13,6 +13,19 @@ import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import type { GuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
 import CollectorBioModal from "@/components/gallery/CollectorBioModal";
 import ExhibitionInfoModal from "@/components/gallery/ExhibitionInfoModal";
+import { VibeButton } from "@/components/social/VibeButton";
+import { getAppreciationCounts, getAppreciatedSet } from "@/lib/appreciations";
+
+const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
+
+function getActiveProfileId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return String(window.localStorage.getItem(ACTIVE_PROFILE_KEY) ?? "").trim();
+  } catch {
+    return "";
+  }
+}
 
 const GALLERY_STAGE_WIDTH_CLASS = "max-w-[1120px]";
 
@@ -41,6 +54,10 @@ function ViewerItemCard({
   onRemove,
   isDragOver,
   isDraggable,
+  ownerProfileId,
+  viewerProfileId,
+  vibeCount = 0,
+  viewerVibed = false,
 }: {
   item: VaultItem;
   label: string;
@@ -48,6 +65,10 @@ function ViewerItemCard({
   onRemove?: () => void;
   isDragOver?: boolean;
   isDraggable?: boolean;
+  ownerProfileId?: string;
+  viewerProfileId?: string;
+  vibeCount?: number;
+  viewerVibed?: boolean;
 }) {
   const imageUrl = getPrimaryImageUrl(item);
   const subtitle = itemSubtitle(item);
@@ -154,8 +175,20 @@ function ViewerItemCard({
       <div className="mt-1 line-clamp-1 text-[11px] text-[color:var(--muted)]">
         {itemSubtitle(item) || "—"}
       </div>
-      <div className="mt-3 rounded-full bg-black/10 px-3 py-1 text-[11px] text-[color:var(--muted)] ring-1 ring-black/10">
-        EMV {formatMoney(item.currentValue)}
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <div className="rounded-full bg-black/10 px-3 py-1 text-[11px] text-[color:var(--muted)] ring-1 ring-black/10">
+          EMV {formatMoney(item.currentValue)}
+        </div>
+        <div onClick={(e) => e.stopPropagation()}>
+          <VibeButton
+            itemId={String(item.id)}
+            profileId={viewerProfileId ?? ""}
+            isOwner={Boolean(viewerProfileId) && ownerProfileId === viewerProfileId}
+            initialCount={vibeCount}
+            initialVibed={viewerVibed}
+            size="compact"
+          />
+        </div>
       </div>
     </article>
   );
@@ -172,7 +205,21 @@ function reorderByDrag(ids: string[], fromId: string, toId: string): string[] {
   return next;
 }
 
-function GuestItemModal({ item, onClose }: { item: VaultItem; onClose: () => void }) {
+function GuestItemModal({
+  item,
+  onClose,
+  ownerProfileId,
+  viewerProfileId,
+  vibeCount = 0,
+  viewerVibed = false,
+}: {
+  item: VaultItem;
+  onClose: () => void;
+  ownerProfileId?: string;
+  viewerProfileId?: string;
+  vibeCount?: number;
+  viewerVibed?: boolean;
+}) {
   const imageUrl = getPrimaryImageUrl(item);
   const subtitle = itemSubtitle(item);
 
@@ -249,6 +296,16 @@ function GuestItemModal({ item, onClose }: { item: VaultItem; onClose: () => voi
             </div>
           ) : null}
 
+          <div className="mt-4 flex justify-center">
+            <VibeButton
+              itemId={String(item.id)}
+              profileId={viewerProfileId ?? ""}
+              isOwner={Boolean(viewerProfileId) && ownerProfileId === viewerProfileId}
+              initialCount={vibeCount}
+              initialVibed={viewerVibed}
+            />
+          </div>
+
           <div className="mt-4 text-center text-[10px] uppercase tracking-[0.14em] text-white/25">
             GUEST VIEW · Financial details not shown
           </div>
@@ -288,6 +345,22 @@ export default function GuestGalleryRenderer({
   const [selectedSectionIdx, setSelectedSectionIdx] = useState(0);
   const [bioOpen, setBioOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [viewerProfileId, setViewerProfileId] = useState("");
+  const [vibeCounts, setVibeCounts] = useState<Map<string, number>>(new Map());
+  const [vibedSet, setVibedSet] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    setViewerProfileId(getActiveProfileId());
+  }, []);
+
+  useEffect(() => {
+    const itemIds = model.galleryItems.map((item) => String(item.id));
+    if (itemIds.length === 0) return;
+    void getAppreciationCounts(itemIds).then(setVibeCounts);
+    if (viewerProfileId) {
+      void getAppreciatedSet(itemIds, viewerProfileId).then(setVibedSet);
+    }
+  }, [model.galleryItems, viewerProfileId]);
 
   useEffect(() => {
     const profileId = model.gallery?.profile_id;
@@ -576,6 +649,10 @@ export default function GuestGalleryRenderer({
                         <ViewerItemCard
                           item={item}
                           label={`GRID ITEM #${index + 1}`}
+                          ownerProfileId={model.gallery?.profile_id}
+                          viewerProfileId={viewerProfileId}
+                          vibeCount={vibeCounts.get(String(item.id)) ?? 0}
+                          viewerVibed={vibedSet.has(String(item.id))}
                         />
                       </button>
                     ))}
@@ -599,7 +676,14 @@ export default function GuestGalleryRenderer({
       </div>
 
       {selectedItem && !embedded ? (
-        <GuestItemModal item={selectedItem} onClose={() => setSelectedItem(null)} />
+        <GuestItemModal
+          item={selectedItem}
+          onClose={() => setSelectedItem(null)}
+          ownerProfileId={model.gallery?.profile_id}
+          viewerProfileId={viewerProfileId}
+          vibeCount={vibeCounts.get(String(selectedItem.id)) ?? 0}
+          viewerVibed={vibedSet.has(String(selectedItem.id))}
+        />
       ) : null}
 
       {bioOpen && owner ? (

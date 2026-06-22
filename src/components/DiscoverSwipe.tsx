@@ -4,6 +4,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { addToWatchlist, isWatchlisted, type WatchlistItem } from "@/lib/watchlistModel";
 import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
+import { getAppreciationCounts, getAppreciatedSet } from "@/lib/appreciations";
+import { VibeButton } from "@/components/social/VibeButton";
+
+const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
+
+function getActiveProfileId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return String(window.localStorage.getItem(ACTIVE_PROFILE_KEY) ?? "").trim();
+  } catch {
+    return "";
+  }
+}
 
 /* ── Types ─────────────────────────────────────────────────── */
 
@@ -17,6 +30,8 @@ type FlipCard = {
   profileId: string;
   collectorName: string;
   collectorAvatarUrl: string;
+  vibeCount: number;
+  viewerVibed: boolean;
 };
 
 /* ── Helpers ────────────────────────────────────────────────── */
@@ -32,9 +47,10 @@ type CardProps = {
   card: FlipCard;
   onSwipe: (dir: "left" | "right") => void;
   active: boolean;
+  viewerProfileId: string;
 };
 
-function SwipeCard({ card, onSwipe, active }: CardProps) {
+function SwipeCard({ card, onSwipe, active, viewerProfileId }: CardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const startX = useRef(0);
   const currentX = useRef(0);
@@ -168,16 +184,28 @@ function SwipeCard({ card, onSwipe, active }: CardProps) {
             </div>
           </div>
 
-          {/* Collector */}
-          <div className="flex items-center gap-2">
-            {card.collectorAvatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={card.collectorAvatarUrl} alt="" className="h-7 w-7 rounded-full object-cover ring-1 ring-white/20" />
-            ) : (
-              <div className="flex h-7 w-7 items-center justify-center rounded-full text-sm"
-                style={{ background: "var(--pill)" }}>🗝️</div>
-            )}
-            <span className="text-xs" style={{ color: "var(--muted)" }}>{card.collectorName}</span>
+          {/* Collector + Vibe */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              {card.collectorAvatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={card.collectorAvatarUrl} alt="" className="h-7 w-7 rounded-full object-cover ring-1 ring-white/20" />
+              ) : (
+                <div className="flex h-7 w-7 items-center justify-center rounded-full text-sm"
+                  style={{ background: "var(--pill)" }}>🗝️</div>
+              )}
+              <span className="text-xs truncate" style={{ color: "var(--muted)" }}>{card.collectorName}</span>
+            </div>
+            <div onPointerDown={(e) => e.stopPropagation()}>
+              <VibeButton
+                itemId={card.id}
+                profileId={viewerProfileId}
+                isOwner={Boolean(viewerProfileId) && card.profileId === viewerProfileId}
+                initialCount={card.vibeCount}
+                initialVibed={card.viewerVibed}
+                size="compact"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -241,10 +269,18 @@ export default function DiscoverSwipe({ open, onClose }: Props) {
         });
       }
 
+      const itemIds = items.map((item) => String(item.id));
+      const viewerProfileId = getActiveProfileId();
+      const [vibeCounts, vibedSet] = await Promise.all([
+        getAppreciationCounts(itemIds),
+        getAppreciatedSet(itemIds, viewerProfileId),
+      ]);
+
       const mapped: FlipCard[] = items.map((item) => {
         const profile = profileMap.get(String(item.profile_id));
+        const id = String(item.id);
         return {
-          id: String(item.id),
+          id,
           title: String(item.title ?? "Untitled"),
           subtitle: typeof item.subtitle === "string" ? item.subtitle : undefined,
           grade: typeof item.grade === "string" ? item.grade : undefined,
@@ -253,6 +289,8 @@ export default function DiscoverSwipe({ open, onClose }: Props) {
           profileId: String(item.profile_id ?? ""),
           collectorName: profile?.name ?? "Collector",
           collectorAvatarUrl: profile?.avatarUrl ?? "",
+          vibeCount: vibeCounts.get(id) ?? 0,
+          viewerVibed: vibedSet.has(id),
         };
       });
 
@@ -410,6 +448,7 @@ export default function DiscoverSwipe({ open, onClose }: Props) {
               card={cards[index]}
               onSwipe={handleSwipe}
               active={true}
+              viewerProfileId={getActiveProfileId()}
             />
           </>
         )}
