@@ -332,11 +332,13 @@ export default function GuestGalleryRenderer({
   embedded = false,
   onRemoveItem,
   onReorder,
+  focusCommentId,
 }: {
   model: GuestGalleryViewModel;
   embedded?: boolean;
   onRemoveItem?: (itemId: string) => void;
   onReorder?: (orderedIds: string[]) => void;
+  focusCommentId?: string;
 }) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -352,6 +354,26 @@ export default function GuestGalleryRenderer({
   useEffect(() => {
     setViewerProfileId(getActiveProfileId());
   }, []);
+
+  // Deep link from the Activity dashboard: open the Info modal (where
+  // comments live) and scroll straight to the comment that was clicked.
+  useEffect(() => {
+    if (!focusCommentId) return;
+    setInfoOpen(true);
+    const start = Date.now();
+    const interval = setInterval(() => {
+      const el = document.getElementById(`comment-${focusCommentId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.style.outline = "2px solid var(--theme-gold, #F5B548)";
+        el.style.borderRadius = "8px";
+        clearInterval(interval);
+      } else if (Date.now() - start > 4000) {
+        clearInterval(interval);
+      }
+    }, 150);
+    return () => clearInterval(interval);
+  }, [focusCommentId]);
 
   useEffect(() => {
     const itemIds = model.galleryItems.map((item) => String(item.id));

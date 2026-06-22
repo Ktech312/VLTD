@@ -4,6 +4,18 @@ import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { getGallerySections, type Gallery } from "@/lib/galleryModel";
 import { type VaultItem } from "@/lib/vaultModel";
+import { CommentThread } from "@/components/social/CommentThread";
+
+const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
+
+function getActiveProfileId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return String(window.localStorage.getItem(ACTIVE_PROFILE_KEY) ?? "").trim();
+  } catch {
+    return "";
+  }
+}
 
 function formatMoney(value: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
@@ -19,7 +31,11 @@ export default function ExhibitionInfoModal({
   onClose: () => void;
 }) {
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  const [viewerProfileId, setViewerProfileId] = useState("");
+  useEffect(() => {
+    setMounted(true);
+    setViewerProfileId(getActiveProfileId());
+  }, []);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -141,6 +157,14 @@ export default function ExhibitionInfoModal({
             This Exhibition isn&apos;t broken into Exhibits yet - all items are shown together.
           </div>
         )}
+
+        <div style={{ marginTop: 22, paddingTop: 18, borderTop: "1px solid var(--border)" }}>
+          <CommentThread
+            exhibitionId={String(gallery.id)}
+            ownerProfileId={gallery.profile_id}
+            viewerProfileId={viewerProfileId}
+          />
+        </div>
       </div>
     </div>
   );

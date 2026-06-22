@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 
 import GuestGalleryRenderer from "@/components/gallery/GuestGalleryRenderer";
 import {
@@ -74,6 +74,8 @@ function getLocalProfileId(): string {
 export default function GuestGalleryPage() {
   const params = useParams<{ galleryId: string }>();
   const galleryId = String(params?.galleryId ?? "");
+  const searchParams = useSearchParams();
+  const focusCommentId = searchParams?.get("comment") ?? "";
 
   const [gallery, setGallery] = useState<Gallery | null>(null);
   const [items, setItems] = useState<VaultItem[]>([]);
@@ -244,7 +246,7 @@ export default function GuestGalleryPage() {
         ) : null}
         <ReportContentButton contentType="gallery" contentId={gallery.id} />
       </div>
-      <GuestGalleryRenderer model={model} />
+      <GuestGalleryRenderer model={model} focusCommentId={focusCommentId} />
     </>
   );
 }
