@@ -34,6 +34,30 @@ export async function listComments(exhibitionId: string): Promise<Comment[]> {
   });
 }
 
+/** Recent comments across all of the given exhibitions - for an owner's "what did people say on my exhibitions" view. */
+export async function listRecentCommentsForExhibitions(exhibitionIds: string[], limit = 20): Promise<Comment[]> {
+  if (exhibitionIds.length === 0) return [];
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from(TABLE)
+    .select("id, exhibition_id, author_id, body, created_at")
+    .in("exhibition_id", exhibitionIds)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  return (data ?? []).map((row) => {
+    const r = row as Record<string, unknown>;
+    return {
+      id: String(r.id),
+      exhibitionId: String(r.exhibition_id),
+      authorId: String(r.author_id),
+      body: String(r.body ?? ""),
+      createdAt: r.created_at ? new Date(String(r.created_at)).getTime() : 0,
+    };
+  });
+}
+
 export async function addComment(
   exhibitionId: string,
   authorId: string,
