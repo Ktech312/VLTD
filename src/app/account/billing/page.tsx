@@ -30,17 +30,12 @@ const PLANS: { key: Plan; name: string; price: string; features: string[] }[] = 
   },
 ];
 
-// Demo data - real plan/invoice state needs a webhook syncing Stripe
-// subscription events back to a profile record, which is a separate piece
-// of work from the checkout/portal plumbing built here.
-const MOCK_INVOICES = [
-  { id: "INV-2026-06", date: "Jun 1, 2026", amount: "$9.00", status: "Paid" },
-  { id: "INV-2026-05", date: "May 1, 2026", amount: "$9.00", status: "Paid" },
-  { id: "INV-2026-04", date: "Apr 1, 2026", amount: "$9.00", status: "Paid" },
-];
+// Plan and invoice state requires a Stripe webhook syncing subscription
+// events to a profile record. Until that's built, we show the free plan
+// and hide payment/invoice/cancel sections until a customerId exists.
 
 export default function BillingPage() {
-  const currentPlan: Plan = "pro";
+  const currentPlan: Plan = "free";
   const [email, setEmail] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [busyPlan, setBusyPlan] = useState<Plan | null>(null);
@@ -146,8 +141,12 @@ export default function BillingPage() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--theme-gold)" }}>Current plan</div>
-              <div className="mt-1 text-xl font-black" style={{ color: "var(--fg)" }}>Pro — $9 / month</div>
-              <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>Renews Jul 1, 2026 · Cancel anytime</div>
+              <div className="mt-1 text-xl font-black" style={{ color: "var(--fg)" }}>
+                {currentPlan === "free" ? "Free" : currentPlan === "pro" ? "Pro — $9 / month" : "Business — $29 / month"}
+              </div>
+              <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
+                {currentPlan === "free" ? "Upgrade to unlock more features" : "Cancel anytime"}
+              </div>
             </div>
             <div className="text-3xl">⭐</div>
           </div>
@@ -214,63 +213,49 @@ export default function BillingPage() {
           </div>
         </div>
 
-        {/* Payment method */}
-        <div className="rounded-2xl p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
-          <div className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--muted)" }}>Payment method</div>
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-12 items-center justify-center rounded-md text-xs font-bold" style={{ background: "#1a1f71", color: "#fff" }}>VISA</div>
-              <div>
-                <div className="text-sm font-semibold" style={{ color: "var(--fg)" }}>•••• •••• •••• 4242</div>
-                <div className="text-xs" style={{ color: "var(--muted)" }}>Expires 12/27</div>
-              </div>
+        {/* Payment method — only shown once a real subscription exists */}
+        {customerId && (
+          <div className="rounded-2xl p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+            <div className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--muted)" }}>Payment method</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm" style={{ color: "var(--muted)" }}>Managed via Stripe billing portal</div>
+              <button
+                type="button"
+                onClick={openBillingPortal}
+                disabled={busyPortal}
+                className="rounded-full px-3 py-1.5 text-xs ring-1 disabled:opacity-50"
+                style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
+              >
+                {busyPortal ? "Opening…" : "Manage"}
+              </button>
             </div>
+          </div>
+        )}
+
+        {/* Invoice history — only shown once a real subscription exists */}
+        {customerId && (
+          <div className="rounded-2xl p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+            <div className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--muted)" }}>Invoice history</div>
+            <p className="text-xs" style={{ color: "var(--muted)" }}>View invoices and receipts in the <button type="button" onClick={openBillingPortal} className="underline" style={{ color: "var(--theme-gold)" }}>billing portal</button>.</p>
+          </div>
+        )}
+
+        {/* Cancel — only shown once a real subscription exists */}
+        {customerId && (
+          <div className="rounded-2xl p-5 ring-1 ring-[color:rgba(248,113,113,0.3)]" style={{ background: "rgba(248,113,113,0.04)" }}>
+            <div className="text-[11px] font-semibold uppercase tracking-widest mb-1" style={{ color: "#f87171" }}>Cancel subscription</div>
+            <p className="text-xs mb-3" style={{ color: "var(--muted)" }}>Your vault data is always yours. Canceling downgrades to Free at the end of the billing period.</p>
             <button
               type="button"
               onClick={openBillingPortal}
               disabled={busyPortal}
-              className="rounded-full px-3 py-1.5 text-xs ring-1 disabled:opacity-50"
-              style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
+              className="rounded-full px-4 py-1.5 text-xs font-semibold ring-1 disabled:opacity-50"
+              style={{ background: "rgba(248,113,113,0.08)", color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}
             >
-              {busyPortal ? "Opening…" : "Update"}
+              {busyPortal ? "Opening…" : "Cancel plan"}
             </button>
           </div>
-        </div>
-
-        {/* Invoice history */}
-        <div className="rounded-2xl p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
-          <div className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--muted)" }}>Invoice history</div>
-          <div className="space-y-2">
-            {MOCK_INVOICES.map((inv) => (
-              <div key={inv.id} className="flex items-center justify-between gap-3 py-2 border-b border-[color:var(--border)] last:border-0">
-                <div>
-                  <div className="text-sm font-semibold" style={{ color: "var(--fg)" }}>{inv.id}</div>
-                  <div className="text-xs" style={{ color: "var(--muted)" }}>{inv.date}</div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "rgba(74,222,128,0.12)", color: "#4ade80" }}>{inv.status}</span>
-                  <span className="text-sm font-semibold" style={{ color: "var(--fg)" }}>{inv.amount}</span>
-                  <button type="button" className="text-xs" style={{ color: "var(--muted)" }}>PDF</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Cancel */}
-        <div className="rounded-2xl p-5 ring-1 ring-[color:rgba(248,113,113,0.3)]" style={{ background: "rgba(248,113,113,0.04)" }}>
-          <div className="text-[11px] font-semibold uppercase tracking-widest mb-1" style={{ color: "#f87171" }}>Cancel subscription</div>
-          <p className="text-xs mb-3" style={{ color: "var(--muted)" }}>Your vault data is always yours. Canceling downgrades to Free at the end of the billing period.</p>
-          <button
-            type="button"
-            onClick={openBillingPortal}
-            disabled={busyPortal}
-            className="rounded-full px-4 py-1.5 text-xs font-semibold ring-1 disabled:opacity-50"
-            style={{ background: "rgba(248,113,113,0.08)", color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}
-          >
-            {busyPortal ? "Opening…" : "Cancel plan"}
-          </button>
-        </div>
+        )}
       </div>
     </main>
   );
