@@ -24,6 +24,7 @@ import {
 } from "@/lib/galleryModel";
 
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
+import { logExhibitionPublished, logExhibitionAnnouncement } from "@/lib/exhibitionEvents";
 import { getVaultImagePublicUrl } from "@/lib/vaultCloud";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -313,6 +314,8 @@ export default function GalleryPage() {
   const [status, setStatus] = useState("");
   const [statusTone, setStatusTone] = useState<"neutral" | "good">("neutral");
   const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [announcing, setAnnouncing] = useState(false);
+  const [announced, setAnnounced] = useState(false);
 
   const [originalSnapshot, setOriginalSnapshot] = useState("");
   const latestGalleryRef = useRef<Gallery | null>(null);
@@ -617,6 +620,11 @@ export default function GalleryPage() {
     setDraft(cloneGallery(nextDraft));
     setOriginalSnapshot(normalizeDraftForCompare(nextDraft));
 
+    // Detect first-time or re-publish: was not PUBLIC, is now PUBLIC.
+    const wasPublic = gallery?.visibility === "PUBLIC";
+    const isNowPublic = nextDraft.visibility === "PUBLIC";
+    const justPublished = !wasPublic && isNowPublic;
+
     try {
       // Sync gallery to Supabase FIRST so slotLayout/sections land in cloud immediately.
       // Vault item syncs are secondary — they run concurrently but don't block gallery save.
@@ -647,8 +655,21 @@ export default function GalleryPage() {
       setStatus(
         vaultSyncError
           ? "Gallery saved. Some vault sync tasks still need retrying."
-          : "Gallery saved."
+          : justPublished
+            ? "Exhibition published!"
+            : "Gallery saved."
       );
+
+      // Log publish event after a successful save — fire-and-forget.
+      if (justPublished) {
+        const profileId =
+          typeof window !== "undefined"
+            ? String(window.localStorage.getItem("vltd_active_profile_id_v1") ?? "").trim()
+            : "";
+        if (profileId) {
+          void logExhibitionPublished(nextDraft.id, profileId, nextDraft.title);
+        }
+      }
     } catch (error) {
       console.error("Direct gallery sync failed:", error);
       setStatusTone("neutral");
@@ -662,6 +683,23 @@ export default function GalleryPage() {
     setDraft(cloneGallery(gallery));
     setStatusTone("neutral");
     setStatus("Changes reverted.");
+  }
+
+  async function handleAnnounce() {
+    if (!gallery || announcing) return;
+    const profileId =
+      typeof window !== "undefined"
+        ? String(window.localStorage.getItem("vltd_active_profile_id_v1") ?? "").trim()
+        : "";
+    if (!profileId) return;
+    setAnnouncing(true);
+    try {
+      await logExhibitionAnnouncement(gallery.id, profileId, gallery.title, gallery.itemIds.length);
+      setAnnounced(true);
+      setTimeout(() => setAnnounced(false), 3000);
+    } finally {
+      setAnnouncing(false);
+    }
   }
 
   async function copyShareLink() {
@@ -1046,6 +1084,17 @@ export default function GalleryPage() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-1.5 md:ml-auto md:flex-nowrap">
+                      {gallery?.visibility === "PUBLIC" && (
+                        <button
+                          type="button"
+                          onClick={() => void handleAnnounce()}
+                          disabled={announcing || announced}
+                          title="Let your followers know you&#39;ve updated this exhibition"
+                          className="inline-flex min-h-[30px] items-center justify-center gap-1 rounded-full bg-[color:var(--pill)] px-3 py-1 text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-60"
+                        >
+                          {announced ? "✓ Announced" : announcing ? "Announcing…" : "📣 Announce"}
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => void saveDraft()}

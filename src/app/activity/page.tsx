@@ -9,6 +9,7 @@ import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vau
 import type { SaleRecord } from "@/types/vaultLifecycle";
 import { loadGalleries } from "@/lib/galleryModel";
 import { listRecentCommentsForExhibitions, type Comment } from "@/lib/comments";
+import { listExhibitionEventsForGalleries, type ExhibitionEvent } from "@/lib/exhibitionEvents";
 import { fetchPublicProfile } from "@/lib/publicProfile";
 
 type ActivityKind = "added" | "sold" | "valued" | "social";
@@ -194,6 +195,7 @@ export default function ActivityPage() {
   const [sales, setSales] = useState<Array<SaleRecord | LegacySaleRecord>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [recentComments, setRecentComments] = useState<RecentComment[]>([]);
+  const [exhibitionEvents, setExhibitionEvents] = useState<(ExhibitionEvent & { galleryTitle: string })[]>([]);
 
   useEffect(() => {
     let isActive = true;
@@ -219,29 +221,43 @@ export default function ActivityPage() {
     };
   }, []);
 
-  // Recent comments left on exhibitions this collector owns - "what did
-  // people say" view, each entry deep-links straight to that comment.
+  // Recent comments + exhibition events for exhibitions this collector owns.
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       const myGalleries = loadGalleries();
       if (myGalleries.length === 0) return;
+      const galleryIds = myGalleries.map((g) => g.id);
       const titleById = new Map(myGalleries.map((g) => [g.id, g.title || "Exhibition"]));
-      const comments = await listRecentCommentsForExhibitions(myGalleries.map((g) => g.id));
-      if (cancelled || comments.length === 0) return;
 
-      const uniqueAuthorIds = [...new Set(comments.map((c) => c.authorId))];
-      const profiles = await Promise.all(uniqueAuthorIds.map((id) => fetchPublicProfile(id)));
+      const [comments, events] = await Promise.all([
+        listRecentCommentsForExhibitions(galleryIds),
+        listExhibitionEventsForGalleries(galleryIds),
+      ]);
       if (cancelled) return;
-      const nameById = new Map(uniqueAuthorIds.map((id, i) => [id, profiles[i]?.displayName ?? "Collector"]));
 
-      setRecentComments(
-        comments.map((c) => ({
-          ...c,
-          exhibitionTitle: titleById.get(c.exhibitionId) ?? "Exhibition",
-          authorName: nameById.get(c.authorId) ?? "Collector",
-        }))
-      );
+      if (comments.length > 0) {
+        const uniqueAuthorIds = [...new Set(comments.map((c) => c.authorId))];
+        const profiles = await Promise.all(uniqueAuthorIds.map((id) => fetchPublicProfile(id)));
+        if (cancelled) return;
+        const nameById = new Map(uniqueAuthorIds.map((id, i) => [id, profiles[i]?.displayName ?? "Collector"]));
+        setRecentComments(
+          comments.map((c) => ({
+            ...c,
+            exhibitionTitle: titleById.get(c.exhibitionId) ?? "Exhibition",
+            authorName: nameById.get(c.authorId) ?? "Collector",
+          }))
+        );
+      }
+
+      if (events.length > 0) {
+        setExhibitionEvents(
+          events.map((e) => ({
+            ...e,
+            galleryTitle: titleById.get(e.galleryId) ?? "Exhibition",
+          }))
+        );
+      }
     })();
     return () => { cancelled = true; };
   }, []);
@@ -263,7 +279,7 @@ export default function ActivityPage() {
               Collection Activity
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[color:var(--muted)]">
-              Recent vault updates, sales, and value changes. Comments on your exhibitions appear in the sidebar - Vibes and new followers show up on your public profile.
+              Recent vault updates, sales, and value changes. Comments and exhibition activity appear in the sidebar — Vibes and new followers show up on your public profile.
             </p>
           </div>
           <Link
@@ -356,20 +372,37 @@ export default function ActivityPage() {
               </div>
             )}
 
-            <div className="rounded-[18px] border p-4" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
-              <h2 className="text-sm font-bold uppercase tracking-[0.22em] text-[color:var(--muted2)]">
-                Coming Next
-              </h2>
-              <div className="mt-4 grid gap-3">
-                {[
-                  "Exhibition publish and share events",
-                ].map((label) => (
-                  <div key={label} className="rounded-[14px] bg-[color:var(--pill)] px-3 py-2 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
-                    {label}
-                  </div>
-                ))}
+            {exhibitionEvents.length > 0 && (
+              <div className="rounded-[18px] border p-4" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
+                <h2 className="text-sm font-bold uppercase tracking-[0.22em] text-[color:var(--muted2)]">
+                  Exhibition Activity
+                </h2>
+                <div className="mt-4 grid gap-2">
+                  {exhibitionEvents.slice(0, 6).map((e) => {
+                    const isPublish = e.type === "published";
+                    const itemCount = typeof e.metadata.itemCount === "number" ? e.metadata.itemCount : null;
+                    return (
+                      <Link
+                        key={e.id}
+                        href={`/museum/${e.galleryId}`}
+                        className="block rounded-[14px] bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold,#F5B548)]"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-semibold text-[color:var(--fg)]">
+                            {isPublish ? "🔓 Published" : "📣 Announced"}
+                          </span>
+                          <span className="text-[10px] text-[color:var(--muted2)]">{formatRelative(e.createdAt)}</span>
+                        </div>
+                        <div className="mt-0.5 truncate text-xs text-[color:var(--muted)]">{e.galleryTitle}</div>
+                        {!isPublish && itemCount !== null && (
+                          <div className="mt-0.5 text-[10px] uppercase tracking-[0.1em] text-[color:var(--muted2)]">{itemCount} items</div>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="rounded-[18px] border p-4" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
               <h2 className="text-sm font-bold uppercase tracking-[0.22em] text-[color:var(--muted2)]">
