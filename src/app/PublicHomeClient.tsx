@@ -283,6 +283,11 @@ export default function PublicHomeClient() {
   const [authChecked, setAuthChecked] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
 
+  // Beta waitlist state
+  const [waitlistEmail, setWaitlistEmail] = useState("");
+  const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "loading" | "success" | "already" | "error">("idle");
+  const [waitlistMessage, setWaitlistMessage] = useState("");
+
   // Redirect logged-in users to dashboard
   useEffect(() => {
     initAuthListener();
@@ -319,6 +324,34 @@ export default function PublicHomeClient() {
     const live = galleries.slice(0, 6).map(toPublicCard);
     return live.length ? live : FALLBACK_GALLERIES;
   }, [galleries]);
+
+  async function handleWaitlistSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!waitlistEmail || waitlistStatus === "loading") return;
+    setWaitlistStatus("loading");
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: waitlistEmail, source: "landing" }),
+      });
+      const data = await res.json();
+      if (data.already) {
+        setWaitlistStatus("already");
+        setWaitlistMessage(data.message);
+      } else if (res.ok) {
+        setWaitlistStatus("success");
+        setWaitlistMessage(data.message);
+        setWaitlistEmail("");
+      } else {
+        setWaitlistStatus("error");
+        setWaitlistMessage(data.message || "Something went wrong. Try again.");
+      }
+    } catch {
+      setWaitlistStatus("error");
+      setWaitlistMessage("Couldn't connect. Check your internet and try again.");
+    }
+  }
 
   // Show nothing while checking auth (prevents flash of marketing page for logged-in users)
   if (!authChecked) {
@@ -396,6 +429,51 @@ export default function PublicHomeClient() {
           <p className="mt-5 text-xs text-[color:var(--muted2)]">
             No credit card · No ads · No lock-in
           </p>
+        </div>
+      </section>
+
+      {/* ── Beta invite / early access ────────────────────────── */}
+      <section className="border-b" style={{ borderColor: 'var(--border)', background: 'linear-gradient(135deg, rgba(245,181,72,0.06) 0%, var(--bg) 60%)' }}>
+        <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(245,181,72,0.32)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] mb-4" style={{ color: '#F5B548', background: 'rgba(245,181,72,0.07)' }}>
+            🔐 Beta Access
+          </div>
+          <h2 className="text-2xl font-black tracking-[-0.04em] text-text-primary sm:text-3xl">
+            Join the early access list.
+          </h2>
+          <p className="mt-2 text-base leading-7" style={{ color: 'var(--muted)' }}>
+            VLTD is invite-only during beta. Drop your email and we&apos;ll reach out when your spot is ready.
+          </p>
+          {waitlistStatus === "success" || waitlistStatus === "already" ? (
+            <div className="mt-6 rounded-2xl border border-[rgba(74,222,128,0.3)] bg-[rgba(74,222,128,0.06)] px-6 py-5 text-center">
+              <div className="text-2xl mb-2">{waitlistStatus === "already" ? "👋" : "✅"}</div>
+              <p className="text-sm font-semibold" style={{ color: '#4ade80' }}>{waitlistMessage}</p>
+            </div>
+          ) : (
+            <form onSubmit={handleWaitlistSubmit} className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <input
+                type="email"
+                required
+                placeholder="your@email.com"
+                value={waitlistEmail}
+                onChange={(e) => setWaitlistEmail(e.target.value)}
+                className="h-12 flex-1 max-w-sm rounded-full border px-5 text-sm outline-none transition focus:ring-2 focus:ring-[rgba(245,181,72,0.4)]"
+                style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--fg)' }}
+                disabled={waitlistStatus === "loading"}
+              />
+              <button
+                type="submit"
+                disabled={waitlistStatus === "loading"}
+                className="vltd-primary-button h-12 rounded-full px-6 text-sm font-black transition disabled:opacity-60 whitespace-nowrap"
+              >
+                {waitlistStatus === "loading" ? "Sending…" : "Request early access →"}
+              </button>
+            </form>
+          )}
+          {waitlistStatus === "error" && (
+            <p className="mt-3 text-xs" style={{ color: '#f87171' }}>{waitlistMessage}</p>
+          )}
+          <p className="mt-3 text-xs" style={{ color: 'var(--muted2)' }}>No spam. Invite-only slots are limited.</p>
         </div>
       </section>
 
