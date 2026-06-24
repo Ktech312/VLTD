@@ -181,7 +181,6 @@ function EventCard({ ev, past = false }: { ev: CollectorEvent; past?: boolean })
             style={{
               background: "transparent",
               color: "var(--theme-gold, #F5B548)",
-              ringColor: "rgba(245,181,72,0.35)",
               border: "1px solid rgba(245,181,72,0.35)",
             }}
           >
