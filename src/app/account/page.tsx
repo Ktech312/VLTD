@@ -32,6 +32,17 @@ export default function AccountPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
+  // Contact info
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [addressLine1, setAddressLine1] = useState("");
+  const [addressLine2, setAddressLine2] = useState("");
+  const [city, setCity] = useState("");
+  const [stateVal, setStateVal] = useState("");
+  const [zip, setZip] = useState("");
+  const [country, setCountry] = useState("US");
+  const [contactSaving, setContactSaving] = useState(false);
+  const [contactSuccess, setContactSuccess] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -54,6 +65,14 @@ export default function AccountPage() {
         setPrimaryFocus(String(status.activeProfile.primary_focus ?? ""));
         setBio(String(status.activeProfile.bio ?? ""));
         setIsPublic(status.activeProfile.is_public !== false);
+        setFullName(status.activeProfile.full_name ?? "");
+        setPhone(status.activeProfile.phone ?? "");
+        setAddressLine1(status.activeProfile.address_line1 ?? "");
+        setAddressLine2(status.activeProfile.address_line2 ?? "");
+        setCity(status.activeProfile.city ?? "");
+        setStateVal(status.activeProfile.state ?? "");
+        setZip(status.activeProfile.zip ?? "");
+        setCountry(status.activeProfile.country ?? "US");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load account.");
       } finally {
@@ -129,6 +148,30 @@ export default function AccountPage() {
       setError(err instanceof Error ? err.message : "Failed to save account.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleContactSave() {
+    if (!profileId) return;
+    setContactSaving(true);
+    setContactSuccess("");
+    try {
+      await updateProfile(profileId, {
+        full_name: fullName,
+        phone,
+        address_line1: addressLine1,
+        address_line2: addressLine2,
+        city,
+        state: stateVal,
+        zip,
+        country,
+      });
+      setContactSuccess("Contact info saved.");
+    } catch (err) {
+      setContactSuccess(err instanceof Error ? err.message : "Failed to save.");
+    } finally {
+      setContactSaving(false);
+      setTimeout(() => setContactSuccess(""), 3000);
     }
   }
 
@@ -393,6 +436,121 @@ export default function AccountPage() {
           {syncStatus ? (
             <p className="mt-3 text-sm text-[color:var(--muted)]">{syncStatus}</p>
           ) : null}
+        </section>
+
+        {/* Contact Info */}
+        <section className="mt-6 rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
+          <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-4">
+            Contact Information
+          </div>
+          <p className="px-1 mb-4 text-xs text-[color:var(--muted)]">Private — used for shipping and billing. Never shown publicly.</p>
+
+          <div className="grid gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block">
+                <span className="text-sm font-semibold text-text-primary">Full name</span>
+                <input
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="First and last name"
+                  className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
+                  style={{ background: "var(--theme-card)" }}
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm font-semibold text-text-primary">Phone</span>
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="(555) 000-0000"
+                  type="tel"
+                  className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
+                  style={{ background: "var(--theme-card)" }}
+                />
+              </label>
+            </div>
+
+            <label className="block">
+              <span className="text-sm font-semibold text-text-primary">Address line 1</span>
+              <input
+                value={addressLine1}
+                onChange={(e) => setAddressLine1(e.target.value)}
+                placeholder="Street address"
+                className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
+                style={{ background: "var(--theme-card)" }}
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-sm font-semibold text-text-primary">Address line 2 <span className="font-normal text-[color:var(--muted)]">(optional)</span></span>
+              <input
+                value={addressLine2}
+                onChange={(e) => setAddressLine2(e.target.value)}
+                placeholder="Apt, suite, unit, etc."
+                className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
+                style={{ background: "var(--theme-card)" }}
+              />
+            </label>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <label className="block">
+                <span className="text-sm font-semibold text-text-primary">City</span>
+                <input
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="City"
+                  className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
+                  style={{ background: "var(--theme-card)" }}
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm font-semibold text-text-primary">State</span>
+                <input
+                  value={stateVal}
+                  onChange={(e) => setStateVal(e.target.value)}
+                  placeholder="State"
+                  className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
+                  style={{ background: "var(--theme-card)" }}
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm font-semibold text-text-primary">ZIP code</span>
+                <input
+                  value={zip}
+                  onChange={(e) => setZip(e.target.value)}
+                  placeholder="00000"
+                  className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
+                  style={{ background: "var(--theme-card)" }}
+                />
+              </label>
+            </div>
+
+            <label className="block">
+              <span className="text-sm font-semibold text-text-primary">Country</span>
+              <input
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                placeholder="US"
+                className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
+                style={{ background: "var(--theme-card)" }}
+              />
+            </label>
+          </div>
+
+          <div className="mt-5 flex items-center gap-4">
+            <button
+              type="button"
+              disabled={contactSaving}
+              onClick={() => void handleContactSave()}
+              className="inline-flex h-12 items-center rounded-full px-6 text-sm font-black text-[#0B0B0B] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ background: 'var(--theme-gold-gradient)', boxShadow: 'var(--theme-gold-glow)' }}
+            >
+              {contactSaving ? "Saving..." : "Save contact info"}
+            </button>
+            {contactSuccess && (
+              <span className="text-sm text-emerald-400">{contactSuccess}</span>
+            )}
+          </div>
         </section>
 
         {/* Watchlist */}

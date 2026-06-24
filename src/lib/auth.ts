@@ -15,6 +15,15 @@ export type ProfileRow = {
   is_public?: boolean | null;
   created_at?: string;
   is_default?: boolean | null;
+  // Contact info (private, not on public profile)
+  full_name?: string | null;
+  phone?: string | null;
+  address_line1?: string | null;
+  address_line2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+  country?: string | null;
 };
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
@@ -460,6 +469,11 @@ export async function updateProfile(profileId: string, patch: Partial<ProfileRow
   }
   if (typeof patch.is_default === "boolean") {
     payload.is_default = patch.is_default;
+  }
+  // Contact info fields
+  const contactFields = ["full_name", "phone", "address_line1", "address_line2", "city", "state", "zip", "country"] as const;
+  for (const field of contactFields) {
+    if (field in patch) payload[field] = typeof patch[field] === "string" ? (patch[field] as string).trim() || null : null;
   }
 
   const result = await withTimeout(
