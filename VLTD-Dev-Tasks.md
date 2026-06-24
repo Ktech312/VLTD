@@ -5,13 +5,13 @@
 
 ---
 
-## 📊 STATUS SNAPSHOT — Last Updated May 2026
+## 📊 STATUS SNAPSHOT — Last Updated June 2026
 
 | Status | Count |
 |--------|-------|
-| ✅ Fully complete | 34 |
+| ✅ Fully complete | 38 |
 | 🔶 Partially complete | 0 |
-| ⬜ Not started | 7+ (Phase 2 expanded — see below) |
+| ⬜ Not started | Phase 2 items below |
 
 ### ✅ Fully Completed
 - **Scan Autofill Flow** — scan/barcode/OCR/AI now auto-fills fields directly, low-confidence image scan no longer fills fields (`429fa5e`)
@@ -45,6 +45,9 @@
 - **primary_focus routing** — Focus badge on HomeClient becomes a `<Link>` to collector's universe vault page via `focusToVaultSlug()`; vault/page.tsx caches focus in localStorage, `orderedUniverses` memo floats focus universe to top of grid with "· Your Focus" label
 - **Discover filter tabs + search** — discover/page.tsx rewritten: Supabase select expanded to include description + theme_pack, `inferGalleryCategory()` classifies galleries by text match, 8 category tabs (All + 7 universes), combined tab + search filter applied to both Featured Museums grid and Trending Exhibitions row, filtered empty state with "Show All" reset
 - **Landing page rewrite** — PublicHomeClient.tsx: hero sharpened, 6 feature cards (+ Stream Mode + Auto-Lock Scanner), Scanner callout section with frame mockup + Haul Mode copy, comparison table expanded 6 → 9 rows with proper header row, 3-stat social proof strip, updated CTA + 3-col footer
+- **Beta waitlist / invite system** — `/api/waitlist` route, `beta_waitlist` Supabase table, landing page email capture section with success/already/error states, service role key for server-side insert
+- **Stripe checkout** — Sandbox prices wired to correct env vars, hosted Stripe checkout working for Pro ($9/mo) and Business ($29/mo) plans
+- **Contact info on Account page** — full_name, phone, address_line1/2, city, state, zip, country fields added to profiles table and Account settings page, saves independently
 
 ### 🏁 Safe Next Queue — ALL COMPLETE ✅
 1. ✅ Data Export / Vault Portability — `64a2c69`

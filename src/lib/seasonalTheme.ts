@@ -26,6 +26,7 @@ export interface SeasonalTheme {
 
 /** Returns the currently active theme (if any). Cached for 5 min client-side. */
 const CACHE_KEY = "vltd_active_theme";
+const CACHE_KEY_ALL = "vltd_active_themes_all";
 const CACHE_TTL = 5 * 60 * 1000;
 
 export async function fetchActiveTheme(): Promise<SeasonalTheme | null> {
@@ -55,6 +56,37 @@ export async function fetchActiveTheme(): Promise<SeasonalTheme | null> {
 
   try {
     sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data: result }));
+  } catch {}
+
+  return result;
+}
+
+/** Returns ALL currently active themes — for rotating banners. */
+export async function fetchActiveThemes(): Promise<SeasonalTheme[]> {
+  try {
+    const cached = sessionStorage.getItem(CACHE_KEY_ALL);
+    if (cached) {
+      const { ts, data } = JSON.parse(cached) as { ts: number; data: SeasonalTheme[] };
+      if (Date.now() - ts < CACHE_TTL) return data;
+    }
+  } catch {}
+
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return [];
+
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("seasonal_themes")
+    .select("*")
+    .eq("enabled", true)
+    .lte("starts_at", now)
+    .gte("ends_at", now)
+    .order("starts_at", { ascending: true });
+
+  const result = error ? [] : ((data ?? []) as SeasonalTheme[]);
+
+  try {
+    sessionStorage.setItem(CACHE_KEY_ALL, JSON.stringify({ ts: Date.now(), data: result }));
   } catch {}
 
   return result;

@@ -628,6 +628,68 @@ function ProfileNudge({ primaryFocus }: { primaryFocus: string }) {
   );
 }
 
+// ── Upcoming Events Widget ──────────────────────────────────────
+type HomeEvent = {
+  id: string;
+  name: string;
+  emoji: string | null;
+  starts_at: string;
+  city: string | null;
+  state_region: string | null;
+  is_featured: boolean;
+};
+
+function UpcomingEventsWidget() {
+  const [evs, setEvs] = useState<HomeEvent[]>([]);
+  useEffect(() => {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    const now = new Date().toISOString();
+    supabase
+      .from("collector_events")
+      .select("id,name,emoji,starts_at,city,state_region,is_featured")
+      .eq("enabled", true)
+      .gte("ends_at", now)
+      .order("is_featured", { ascending: false })
+      .order("starts_at", { ascending: true })
+      .limit(2)
+      .then(({ data }) => { if (data) setEvs(data as HomeEvent[]); });
+  }, []);
+
+  if (evs.length === 0) return null;
+
+  function fmtDate(dt: string) {
+    return new Date(dt).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+  }
+
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
+      <div style={{ padding: "11px 15px", borderBottom: `1px solid ${C.bd}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ fontSize: "10px", letterSpacing: "1.4px", textTransform: "uppercase", color: C.muted2, fontWeight: 600 }}>Upcoming Events</span>
+        <Link href="/events" style={{ fontSize: "11px", color: C.gold, textDecoration: "none" }}>See all →</Link>
+      </div>
+      <div style={{ padding: "10px 15px", display: "flex", flexDirection: "column", gap: "8px" }}>
+        {evs.map((ev) => (
+          <Link key={ev.id} href="/events" style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}>
+            <span style={{ fontSize: "20px", flexShrink: 0 }}>{ev.emoji ?? "🎪"}</span>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontSize: "12px", fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {ev.name}
+              </div>
+              <div style={{ fontSize: "11px", color: C.muted }}>
+                {fmtDate(ev.starts_at)}{ev.city ? ` · ${ev.city}${ev.state_region ? `, ${ev.state_region}` : ""}` : ""}
+              </div>
+            </div>
+            {ev.is_featured && (
+              <span style={{ fontSize: "10px", color: C.gold, flexShrink: 0 }}>★</span>
+            )}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function HomeClient() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -826,6 +888,8 @@ export default function HomeClient() {
             </div>
             <BiggestMoversPanel items={items} />
           </div>
+
+          <UpcomingEventsWidget />
 
         </div>{/* end LEFT */}
 

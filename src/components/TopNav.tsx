@@ -187,6 +187,20 @@ function IconInsights({ active }: { active: boolean }) {
   );
 }
 
+function IconEvents({ active }: { active: boolean }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
+      <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="1.75"
+        fill={active ? "rgba(245,181,72,0.10)" : "none"} />
+      <path d="M3 10h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
+      <path d="M8 3v4M16 3v4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+      <circle cx="8" cy="15" r="1.2" fill="currentColor" opacity={active ? "1" : "0.6"} />
+      <circle cx="12" cy="15" r="1.2" fill="currentColor" opacity={active ? "1" : "0.6"} />
+      <circle cx="16" cy="15" r="1.2" fill="currentColor" opacity={active ? "0.5" : "0.3"} />
+    </svg>
+  );
+}
+
 function IconSearch({ className = "h-4 w-4" }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className}>
@@ -232,6 +246,10 @@ const NAV_ITEMS = [
   {
     label: "Discover",    href: "/discover",   icon: IconDiscover,    exact: false,
     desc: "Find collectors, museums and inspiration.",
+  },
+  {
+    label: "Events",      href: "/events",     icon: IconEvents,      exact: false,
+    desc: "Shows, conventions & collector gatherings.",
   },
   {
     label: "Insights",    href: "/portfolio",  icon: IconInsights,    exact: true,  subpathOnly: false,
