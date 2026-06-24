@@ -1,8 +1,27 @@
-# VLTD Morning Checklist — 2026-06-24
+# Morning Checklist — Built Overnight
 
-## Step 1 — Run Migration A: Collector Events
+## What's New
 
-Paste into Supabase SQL Editor and run:
+- `/events` — Collector events discovery page with filter tabs (All / Local / National / Intl / Past), countdown badges, featured highlights. 4 events seeded: SD Card Show, The National, San Diego Comic-Con, NAMM (past).
+- `/registry` — Vault Registry global leaderboard. Calls `get_top_subjects()` RPC, shows collector count + item count per subject, search box, links to subject detail pages.
+- `/registry/[subject]` — Per-subject leaderboard. Calls `get_subject_leaderboard()` RPC, shows ranked collectors with sample item thumbnails and share button.
+- `/market` — VLTD Marketplace. Fetches `vault_items` where status = FOR_SALE, universe filter tabs, sort (recent / price asc / price desc), search, grading service chips, seller info.
+- `SeasonalBanner` — Rotates multiple active themes every 35s. Optional "Apply this theme's colors?" prompt per banner.
+- `UpcomingEventsWidget` — Shows next 2 featured events on the home dashboard sidebar.
+- `SocialExportSheet` — Full canvas social export with aspect ratio picker (1:1 / 4:5 / 9:16 / 16:9), background picker, hashtag generation, video support, PNG download.
+- Nav — Events icon + link added to TopNav.
+
+---
+
+## Step 1: Run Migrations in Supabase SQL Editor
+
+Go to: **https://supabase.com → your project → SQL Editor → New query**
+
+Run Migration A first, then Migration B.
+
+---
+
+### Migration A — Collector Events Table
 
 ```sql
 create table if not exists public.collector_events (
@@ -52,9 +71,7 @@ values
 
 ---
 
-## Step 2 — Run Migration B: Vault Registry RPCs
-
-Paste into Supabase SQL Editor and run:
+### Migration B — Vault Registry RPCs
 
 ```sql
 create or replace function public.get_subject_leaderboard(p_subject text, p_limit int default 25)
@@ -95,26 +112,22 @@ grant execute on function public.get_top_subjects to anon, authenticated;
 
 ---
 
-## Step 3 — Deploy
+## Step 2: Check these URLs after migrations
 
-```bash
-git add -A && git commit -m "feat: events system, vault registry, marketplace, social export" && git push && npx vercel --prod
-```
+- `/events` — should show 3 upcoming + 1 past (NAMM in Past tab)
+- `/registry` — will be empty until vault items have subjects tagged
+- `/market` — will be empty until items are marked FOR_SALE
+- Home dashboard — Upcoming Events widget shows next 2 featured events
 
----
+## Step 3: Create event themes (optional)
 
-## Step 4 — New URLs to check after deploy
-
-- `/events` — Upcoming Events page with Local / National / Past filter tabs and 4 seeded events
-- `/registry` — Vault Registry subject leaderboard index (already existed, now has backup RPCs)
-- `/market` — VLTD Marketplace (already existed, fully featured)
+In `/admin/themes`, create a seasonal theme for each upcoming event if you want custom accent colors when that event's banner rotates into view. Match the theme's `slug` to the event's `theme_slug` column. The SeasonalBanner rotates all active themes automatically every 35 seconds.
 
 ---
 
 ## Notes
 
-- The Events nav item ("Events") was added to `TopNav.tsx` after "Discover" using a calendar `IconEvents` SVG
-- An `UpcomingEventsWidget` was added to `HomeClient.tsx` showing the next 2 featured upcoming events with a "See all →" link to `/events`
-- Social Export sheet (`SocialExportSheet.tsx`) and its "Share" button are already wired in `src/app/vault/item/[id]/page.tsx` — no new work needed
-- Marketplace (`/market`) and Registry (`/registry`, `/registry/[subject]`) pages already fully existed with all features — migration B adds the two new RPCs (`get_subject_leaderboard`, `get_top_subjects`) as `create or replace` so they are safe to run even if earlier versions exist
-- To add a new event later: insert a row into `collector_events` in the Supabase table editor
+- All pages are `"use client"` components — no auth required for public data
+- Market listings link to `/v/[profile_id]` for seller contact (no payments through VLTD)
+- Registry leaderboard only shows public profiles (`is_public = true`)
+- SocialExportSheet is accessed from the vault item detail sheet via the Share button

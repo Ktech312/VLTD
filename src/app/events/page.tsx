@@ -208,7 +208,7 @@ export default function EventsPage() {
       .select("*")
       .eq("enabled", true)
       .order("starts_at", { ascending: true })
-      .then(({ data, error: e }) => {
+      .then(({ data, error: e }: { data: CollectorEvent[] | null; error: { message: string } | null }) => {
         if (e) setError(e.message);
         else setEvents((data ?? []) as CollectorEvent[]);
         setLoading(false);

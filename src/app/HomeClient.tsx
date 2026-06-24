@@ -653,7 +653,7 @@ function UpcomingEventsWidget() {
       .order("is_featured", { ascending: false })
       .order("starts_at", { ascending: true })
       .limit(2)
-      .then(({ data }) => { if (data) setEvs(data as HomeEvent[]); });
+      .then(({ data }: { data: HomeEvent[] | null; error: unknown }) => { if (data) setEvs(data); });
   }, []);
 
   if (evs.length === 0) return null;
