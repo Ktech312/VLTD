@@ -362,6 +362,7 @@ function TopNavInner() {
   const loadingAuthRef = useRef(false);
   const initializedRef = useRef(false);
   const [dropdownPos, setDropdownPos] = useState<{ top: number; right: number } | null>(null);
+  const [moreDropdownPos, setMoreDropdownPos] = useState<{ top: number; left: number } | null>(null);
 
   const activeProfile = useMemo(
     () => profiles.find((p) => p.id === activeProfileId) ?? null,
@@ -513,7 +514,13 @@ function TopNavInner() {
               <div ref={moreRef} className="relative">
                 <button
                   type="button"
-                  onClick={() => setMoreOpen((v) => !v)}
+                  onClick={() => {
+                    if (!moreOpen && moreRef.current) {
+                      const r = moreRef.current.getBoundingClientRect();
+                      setMoreDropdownPos({ top: r.bottom + 6, left: r.left + r.width / 2 });
+                    }
+                    setMoreOpen((v) => !v);
+                  }}
                   className="relative flex flex-col items-center gap-[3px] px-3 pt-2 pb-[10px] transition-opacity hover:opacity-100"
                   style={{ opacity: isMoreActive || moreOpen ? 1 : 0.65 }}
                 >
@@ -537,44 +544,7 @@ function TopNavInner() {
                   )}
                 </button>
 
-                {/* More dropdown panel */}
-                {moreOpen && (
-                  <div
-                    ref={moreDropdownRef}
-                    className="absolute top-full mt-1 left-1/2 -translate-x-1/2 min-w-[180px] rounded-2xl overflow-hidden shadow-2xl z-50"
-                    style={{
-                      background: "var(--theme-nav-bg, rgba(11,19,32,0.99))",
-                      border: "1px solid var(--theme-nav-border, rgba(245,181,72,0.18))",
-                      backdropFilter: "blur(20px)",
-                    }}
-                  >
-                    <div className="py-1.5 px-1.5">
-                      {MORE_NAV_ITEMS.map((item) => {
-                        const active = isActive(item);
-                        const Icon = item.icon;
-                        return (
-                          <Link
-                            key={item.href}
-                            href={item.href}
-                            onClick={() => setMoreOpen(false)}
-                            className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition hover:bg-[rgba(245,181,72,0.07)]"
-                            style={{ background: active ? "rgba(245,181,72,0.07)" : "transparent" }}
-                          >
-                            <div className="[&_svg]:h-4 [&_svg]:w-4 shrink-0">
-                              <Icon active={active} />
-                            </div>
-                            <span
-                              className="text-sm font-semibold"
-                              style={{ color: active ? "#F5B548" : "var(--theme-text-primary, #F0EAD6)" }}
-                            >
-                              {item.label}
-                            </span>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                {/* More dropdown panel — rendered via fixed portal to escape nav stacking context */}
               </div>
             </div>
           </div>
@@ -776,6 +746,53 @@ function TopNavInner() {
         )}
 
       </div>
+
+      {/* More dropdown — fixed positioning outside nav stacking context */}
+      {moreOpen && moreDropdownPos && (
+        <div
+          ref={moreDropdownRef}
+          style={{
+            position: "fixed",
+            top: moreDropdownPos.top,
+            left: moreDropdownPos.left,
+            transform: "translateX(-50%)",
+            minWidth: 200,
+            zIndex: 9999,
+            background: "var(--theme-nav-bg, rgba(11,19,32,0.99))",
+            border: "1px solid var(--theme-nav-border, rgba(245,181,72,0.18))",
+            backdropFilter: "blur(20px)",
+            borderRadius: "16px",
+            overflow: "hidden",
+            boxShadow: "0 18px 50px rgba(0,0,0,0.6)",
+          }}
+        >
+          <div className="py-1.5 px-1.5">
+            {MORE_NAV_ITEMS.map((item) => {
+              const active = isActive(item);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMoreOpen(false)}
+                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition hover:bg-[rgba(245,181,72,0.07)]"
+                  style={{ background: active ? "rgba(245,181,72,0.07)" : "transparent" }}
+                >
+                  <div className="[&_svg]:h-4 [&_svg]:w-4 shrink-0">
+                    <Icon active={active} />
+                  </div>
+                  <span
+                    className="text-sm font-semibold"
+                    style={{ color: active ? "#F5B548" : "var(--theme-text-primary, #F0EAD6)" }}
+                  >
+                    {item.label}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* User dropdown — fixed positioning outside nav stacking context */}
       {userOpen && dropdownPos && (
