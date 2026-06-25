@@ -409,11 +409,47 @@ export default function DiscoverPage() {
             <span><span className="font-bold" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>{galleries.length}</span> galleries</span>
             <span><span className="font-bold" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>{uniqueCollectors}</span> collectors</span>
             {totalViews > 0 && <span><span className="font-bold" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>{totalViews.toLocaleString()}</span> total views</span>}
-            <Link href="/registry" className="ml-auto font-semibold hover:underline" style={{ color: "var(--theme-gold, #F5B548)" }}>
-              Registry rankings →
+            <Link href="/community-board" className="ml-auto font-semibold hover:underline" style={{ color: "var(--theme-gold, #F5B548)" }}>
+              Community Board rankings →
             </Link>
           </div>
         )}
+
+        {/* Community Board + Marketplace quick-access cards */}
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <Link
+            href="/community-board"
+            className="group flex flex-col gap-2 rounded-[16px] px-4 py-4 transition hover:-translate-y-0.5 hover:brightness-110"
+            style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))", border: "1px solid var(--theme-border, rgba(245,181,72,0.14))" }}
+          >
+            <div className="text-2xl">🏆</div>
+            <div>
+              <div className="text-sm font-black" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>Community Board</div>
+              <div className="mt-0.5 text-[11px]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
+                Top collectors ranked by universe
+              </div>
+            </div>
+            <div className="mt-auto text-[11px] font-semibold" style={{ color: "var(--theme-gold, #F5B548)" }}>
+              View rankings →
+            </div>
+          </Link>
+          <Link
+            href="/market"
+            className="group flex flex-col gap-2 rounded-[16px] px-4 py-4 transition hover:-translate-y-0.5 hover:brightness-110"
+            style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))", border: "1px solid var(--theme-border, rgba(245,181,72,0.14))" }}
+          >
+            <div className="text-2xl">🛒</div>
+            <div>
+              <div className="text-sm font-black" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>Marketplace</div>
+              <div className="mt-0.5 text-[11px]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
+                Browse items for sale from collectors
+              </div>
+            </div>
+            <div className="mt-auto text-[11px] font-semibold" style={{ color: "var(--theme-gold, #F5B548)" }}>
+              Browse listings →
+            </div>
+          </Link>
+        </div>
 
         {/* Tab bar */}
         <div className="mt-4 flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">

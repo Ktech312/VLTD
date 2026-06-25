@@ -77,17 +77,6 @@ type Parsed = {
 
 /* ── Icons ──────────────────────────────────────────────── */
 
-function IconHome({ active }: { active: boolean }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
-      <path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9.5Z"
-        stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
-        fill={active ? "rgba(245,181,72,0.14)" : "none"} />
-      <path d="M9 21V13h6v8" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function IconVault({ active }: { active: boolean }) {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
@@ -149,14 +138,8 @@ function IconWatchlist({ active }: { active: boolean }) {
 function IconGoals({ active }: { active: boolean }) {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
-      <circle
-        cx="12"
-        cy="12"
-        r="8"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        fill={active ? "rgba(245,181,72,0.12)" : "none"}
-      />
+      <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.75"
+        fill={active ? "rgba(245,181,72,0.12)" : "none"} />
       <circle cx="12" cy="12" r="3.5" stroke="currentColor" strokeWidth="1.5" />
       <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
     </svg>
@@ -230,17 +213,14 @@ function IconChevron({ size = 14 }: { size?: number }) {
 
 /* ── Nav items ──────────────────────────────────────────── */
 
-const NAV_ITEMS = [
-  {
-    label: "Home",        href: "/",          icon: IconHome,        exact: true,
-    desc: "Your personal museum command center.",
-  },
+// Main nav bar items
+const MAIN_NAV_ITEMS = [
   {
     label: "Vault",       href: "/vault",      icon: IconVault,       exact: false,
     desc: "Your private collection inventory.",
   },
   {
-    label: "Exhibitions",   href: "/museum",     icon: IconExhibitions, exact: false,
+    label: "Exhibitions", href: "/museum",     icon: IconExhibitions, exact: false,
     desc: "Curate and display collections for the world.",
   },
   {
@@ -255,23 +235,30 @@ const NAV_ITEMS = [
     label: "Insights",    href: "/portfolio",  icon: IconInsights,    exact: true,  subpathOnly: false,
     desc: "Track value, growth, provenance and collection health.",
   },
+];
+
+// "More" dropdown items
+const MORE_NAV_ITEMS = [
   {
-    label: "Watchlist",   href: "/wishlist",   icon: IconWatchlist,   exact: false, subpathOnly: false,
+    label: "Watchlist",   href: "/wishlist",   icon: IconWatchlist,   exact: false,
     desc: "Save pieces, collectors and exhibitions you love.",
   },
   {
-    label: "Goals",       href: "/goals",      icon: IconGoals,       exact: false, subpathOnly: false,
+    label: "Goals",       href: "/goals",      icon: IconGoals,       exact: false,
     desc: "Track collection completion targets.",
   },
   {
-    label: "Learn",       href: "/learn",      icon: IconLearn,       exact: false, subpathOnly: false,
+    label: "Learn",       href: "/learn",      icon: IconLearn,       exact: false,
     desc: "Universe guide, grading scales, and collecting tips.",
   },
   {
-    label: "Activity",    href: "/activity",   icon: IconActivity,    exact: false, subpathOnly: false,
+    label: "Activity",    href: "/activity",   icon: IconActivity,    exact: false,
     desc: "See updates, comments, appreciations and follows.",
   },
 ];
+
+// All items combined (for guide panel)
+const ALL_NAV_ITEMS = [...MAIN_NAV_ITEMS, ...MORE_NAV_ITEMS];
 
 /* ── Helpers ────────────────────────────────────────────── */
 
@@ -321,6 +308,7 @@ function TopNavInner() {
   const [userOpen, setUserOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [searchExpanded, setSearchExpanded] = useState(false);
 
   const [signedIn, setSignedIn] = useState(false);
@@ -332,6 +320,8 @@ function TopNavInner() {
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const guideRef = useRef<HTMLDivElement | null>(null);
+  const moreRef = useRef<HTMLDivElement | null>(null);
+  const moreDropdownRef = useRef<HTMLDivElement | null>(null);
   const loadingAuthRef = useRef(false);
   const initializedRef = useRef(false);
   const [dropdownPos, setDropdownPos] = useState<{ top: number; right: number } | null>(null);
@@ -400,6 +390,9 @@ function TopNavInner() {
       const inDropdown = dropdownRef.current?.contains(target);
       if (!inTrigger && !inDropdown) setUserOpen(false);
       if (guideRef.current && !guideRef.current.contains(target)) setGuideOpen(false);
+      const inMore = moreRef.current?.contains(target);
+      const inMoreDropdown = moreDropdownRef.current?.contains(target);
+      if (!inMore && !inMoreDropdown) setMoreOpen(false);
     }
     document.addEventListener("mousedown", handleOutside);
     return () => document.removeEventListener("mousedown", handleOutside);
@@ -421,10 +414,13 @@ function TopNavInner() {
     router.push("/login"); router.refresh();
   }
 
-  function isActive(item: typeof NAV_ITEMS[0]) {
+  function isActive(item: { href: string; exact?: boolean; subpathOnly?: boolean }) {
     if (item.subpathOnly) return pathname.startsWith(item.href + '/');
     return item.exact ? pathname === item.href : pathname.startsWith(item.href);
   }
+
+  // Check if any "more" item is active (to highlight the More button)
+  const isMoreActive = MORE_NAV_ITEMS.some((item) => isActive(item));
 
   const avatarText = signedIn
     ? (activeProfile?.display_name || accountEmail || "U").slice(0, 1).toUpperCase()
@@ -435,7 +431,7 @@ function TopNavInner() {
   return (
     <>
       <div
-        className={`fixed top-0 left-0 right-0 w-full backdrop-blur-xl ${userOpen || commandOpen || guideOpen ? "z-[9999]" : "z-40"}`}
+        className={`sticky top-0 left-0 right-0 w-full backdrop-blur-xl ${userOpen || commandOpen || guideOpen ? "z-[9999]" : "z-50"}`}
         style={{ background: "var(--theme-nav-bg, rgba(11,19,32,0.96))", borderBottom: "1px solid var(--theme-nav-border, rgba(245,181,72,0.15))" }}
       >
         {/* ── Main nav row ── */}
@@ -449,7 +445,7 @@ function TopNavInner() {
           {/* Desktop icon nav — centered */}
           <div className="hidden md:flex flex-1 items-center justify-center">
             <div className="flex items-end gap-1">
-              {NAV_ITEMS.map((item) => {
+              {MAIN_NAV_ITEMS.map((item) => {
                 const active = isActive(item);
                 const Icon = item.icon;
                 return (
@@ -466,7 +462,6 @@ function TopNavInner() {
                     >
                       {item.label}
                     </span>
-                    {/* Active underline */}
                     {active && (
                       <span
                         className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
@@ -476,6 +471,74 @@ function TopNavInner() {
                   </Link>
                 );
               })}
+
+              {/* More ··· dropdown trigger */}
+              <div ref={moreRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setMoreOpen((v) => !v)}
+                  className="relative flex flex-col items-center gap-[3px] px-3 pt-2 pb-[10px] transition-opacity hover:opacity-100"
+                  style={{ opacity: isMoreActive || moreOpen ? 1 : 0.65 }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    style={{ color: isMoreActive || moreOpen ? "#F5B548" : "var(--muted2, #A0956B)" }}>
+                    <circle cx="5" cy="12" r="1.5" fill="currentColor" />
+                    <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                    <circle cx="19" cy="12" r="1.5" fill="currentColor" />
+                  </svg>
+                  <span
+                    className="text-[11px] font-semibold tracking-[0.04em] leading-none whitespace-nowrap"
+                    style={{ color: isMoreActive || moreOpen ? "#F5B548" : "var(--muted, #C4B07A)" }}
+                  >
+                    More
+                  </span>
+                  {isMoreActive && (
+                    <span
+                      className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
+                      style={{ background: "linear-gradient(90deg, transparent, #F5B548, transparent)" }}
+                    />
+                  )}
+                </button>
+
+                {/* More dropdown panel */}
+                {moreOpen && (
+                  <div
+                    ref={moreDropdownRef}
+                    className="absolute top-full mt-1 left-1/2 -translate-x-1/2 min-w-[180px] rounded-2xl overflow-hidden shadow-2xl z-50"
+                    style={{
+                      background: "var(--theme-nav-bg, rgba(11,19,32,0.99))",
+                      border: "1px solid var(--theme-nav-border, rgba(245,181,72,0.18))",
+                      backdropFilter: "blur(20px)",
+                    }}
+                  >
+                    <div className="py-1.5 px-1.5">
+                      {MORE_NAV_ITEMS.map((item) => {
+                        const active = isActive(item);
+                        const Icon = item.icon;
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={() => setMoreOpen(false)}
+                            className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition hover:bg-[rgba(245,181,72,0.07)]"
+                            style={{ background: active ? "rgba(245,181,72,0.07)" : "transparent" }}
+                          >
+                            <div className="[&_svg]:h-4 [&_svg]:w-4 shrink-0">
+                              <Icon active={active} />
+                            </div>
+                            <span
+                              className="text-sm font-semibold"
+                              style={{ color: active ? "#F5B548" : "var(--theme-text-primary, #F0EAD6)" }}
+                            >
+                              {item.label}
+                            </span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -544,7 +607,7 @@ function TopNavInner() {
               </div>
             </form>
 
-            {/* Bell — notifCount wired up here when notifications are built */}
+            {/* Bell */}
             <div className="group relative hidden md:flex">
               <button
                 type="button"
@@ -553,7 +616,6 @@ function TopNavInner() {
                 aria-label="Notifications"
               >
                 <IconBell />
-                {/* Zero badge: shown on hover only */}
                 <span
                   className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold opacity-0 transition-opacity group-hover:opacity-100"
                   style={{ background: "rgba(255,255,255,0.12)", color: "var(--muted2, #A0956B)", lineHeight: 1 }}
@@ -563,7 +625,7 @@ function TopNavInner() {
               </button>
             </div>
 
-            {/* User menu trigger only — dropdown rendered outside nav div below */}
+            {/* User menu trigger */}
             <div ref={userMenuRef} className="relative">
               <button
                 type="button"
@@ -605,7 +667,7 @@ function TopNavInner() {
                 Explore VLTD
               </p>
               <div className="grid grid-cols-4 gap-2 lg:grid-cols-10">
-                {NAV_ITEMS.map((item) => {
+                {ALL_NAV_ITEMS.map((item) => {
                   const active = isActive(item);
                   const Icon = item.icon;
                   return (
@@ -678,9 +740,7 @@ function TopNavInner() {
 
       </div>
 
-      {/* User dropdown — sibling of nav div, uses position:fixed so it is in the
-          root stacking context and never trapped inside the nav's backdrop-filter
-          stacking context. dropdownPos calculated from button's bounding rect. */}
+      {/* User dropdown — fixed positioning outside nav stacking context */}
       {userOpen && dropdownPos && (
         <div
           ref={dropdownRef}

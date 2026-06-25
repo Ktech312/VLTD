@@ -1181,7 +1181,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                     Subject
                   </span>
                   <Link
-                    href={`/registry/${encodeURIComponent(item.subject)}`}
+                    href={`/community-board/${encodeURIComponent(item.subject)}`}
                     className="rounded-full px-2.5 py-0.5 text-[12px] font-semibold ring-1 hover:brightness-110 transition"
                     style={{
                       background: "var(--theme-gold-subtle)",
@@ -1194,13 +1194,13 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 </div>
                 {registryEntry && (
                   <Link
-                    href={`/registry/${encodeURIComponent(item.subject)}`}
+                    href={`/community-board/${encodeURIComponent(item.subject)}`}
                     className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold ring-1 hover:ring-[color:var(--theme-gold)] transition"
                     style={{ background: "var(--pill)", borderColor: "var(--border)", color: "var(--muted)" }}
                   >
                     <span>👥 {registryEntry.collectorCount} collector{registryEntry.collectorCount !== 1 ? "s" : ""} tracking</span>
                     <span style={{ color: "var(--border)" }}>·</span>
-                    <span style={{ color: "var(--theme-gold)" }}>View registry →</span>
+                    <span style={{ color: "var(--theme-gold)" }}>View on Community Board →</span>
                   </Link>
                 )}
               </div>
