@@ -5,11 +5,11 @@
 
 ---
 
-## 📊 STATUS SNAPSHOT — Last Updated June 2026
+## 📊 STATUS SNAPSHOT — Last Updated 2026-06-25
 
 | Status | Count |
 |--------|-------|
-| ✅ Fully complete | 38 |
+| ✅ Fully complete | 46 |
 | 🔶 Partially complete | 0 |
 | ⬜ Not started | Phase 2 items below |
 
@@ -48,6 +48,13 @@
 - **Beta waitlist / invite system** — `/api/waitlist` route, `beta_waitlist` Supabase table, landing page email capture section with success/already/error states, service role key for server-side insert
 - **Stripe checkout** — Sandbox prices wired to correct env vars, hosted Stripe checkout working for Pro ($9/mo) and Business ($29/mo) plans
 - **Contact info on Account page** — full_name, phone, address_line1/2, city, state, zip, country fields added to profiles table and Account settings page, saves independently
+- **Collector Events System / Events Discovery** — `/events` route with event cards, maps, dates, RSVP/interested toggles, category filters, and search (`2026-06-25`)
+- **Rotating Seasonal Event Banners** — `SeasonalBanner` component, `SeasonalThemeProvider`, rotating banner slots on dashboard, user opt-in accent color theming (`2026-06-25`)
+- **Community Board (Vault Registry Rankings)** — `/community-board` and `/community-board/[subject]` public leaderboard pages replacing `/registry`, subject rankings widget, global collector rankings per subject (`2026-06-25`)
+- **VLTD Marketplace `/market` page** — public for-sale item board browsable by universe/category/price, contact-only seller flow, no payment processing (`2026-06-25`)
+- **Social-Ready Export** — `SocialExportSheet` component, format picker (1:1/9:16/4:5/16:9), creative backgrounds, watermark, value blur overlay, share flow on item detail (`2026-06-25`)
+- **Sticky Nav Header** — TopNav uses `sticky top-0` with `backdrop-blur-xl`, z-index management, auto-hide scroll behavior via `AppShellEffects`, `--topnav-h` CSS variable reserves layout space (`2026-06-25`)
+- **Nav Cleanup / More Dropdown** — TopNav "More" dropdown added with Watchlist, Goals, Learn, Activity, Community Board, Marketplace; active state detection; guide panel includes all nav items (`2026-06-25`)
 
 ### 🏁 Safe Next Queue — ALL COMPLETE ✅
 1. ✅ Data Export / Vault Portability — `64a2c69`
@@ -566,4 +573,4 @@ All handoffs shipped. Core loop (scan → vault → share) is complete.
 
 ---
 
-*Last updated: May 2026 · Review and reprioritize monthly based on user feedback*
+*Last updated: 2026-06-25 · Review and reprioritize monthly based on user feedback*

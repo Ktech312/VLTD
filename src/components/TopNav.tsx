@@ -160,6 +160,35 @@ function IconLearn({ active }: { active: boolean }) {
   );
 }
 
+function IconCommunityBoard({ active }: { active: boolean }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
+      {/* Podium / leaderboard */}
+      <rect x="2" y="13" width="5" height="8" rx="1" stroke="currentColor" strokeWidth="1.75"
+        fill={active ? "rgba(245,181,72,0.16)" : "none"} />
+      <rect x="9.5" y="9" width="5" height="12" rx="1" stroke="currentColor" strokeWidth="1.75"
+        fill={active ? "rgba(245,181,72,0.24)" : "none"} />
+      <rect x="17" y="11" width="5" height="10" rx="1" stroke="currentColor" strokeWidth="1.75"
+        fill={active ? "rgba(245,181,72,0.16)" : "none"} />
+      <path d="M12 6.5l1 2h2l-1.5 1.2.5 2L12 10.7 10 11.7l.5-2L9 8.5h2l1-2Z"
+        stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"
+        fill={active ? "rgba(245,181,72,0.30)" : "none"} />
+    </svg>
+  );
+}
+
+function IconMarketplace({ active }: { active: boolean }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
+      {/* Price tag */}
+      <path d="M3 7.5V3h4.5l9.8 9.8a2 2 0 0 1 0 2.83l-3.67 3.67a2 2 0 0 1-2.83 0L3 7.5Z"
+        stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
+        fill={active ? "rgba(245,181,72,0.12)" : "none"} />
+      <circle cx="7.5" cy="7.5" r="1.2" fill="currentColor" opacity={active ? "1" : "0.7"} />
+    </svg>
+  );
+}
+
 function IconInsights({ active }: { active: boolean }) {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
@@ -239,6 +268,14 @@ const MAIN_NAV_ITEMS = [
 
 // "More" dropdown items
 const MORE_NAV_ITEMS = [
+  {
+    label: "Community Board", href: "/community-board", icon: IconCommunityBoard, exact: false,
+    desc: "Global leaderboards — see top collectors for every subject.",
+  },
+  {
+    label: "Marketplace",  href: "/market",     icon: IconMarketplace, exact: false,
+    desc: "Browse for-sale items from collectors across VLTD.",
+  },
   {
     label: "Watchlist",   href: "/wishlist",   icon: IconWatchlist,   exact: false,
     desc: "Save pieces, collectors and exhibitions you love.",

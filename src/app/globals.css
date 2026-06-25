@@ -2231,3 +2231,16 @@ main {
   0%, 100% { box-shadow: 0 0 0 2px rgba(245,181,72,0.55), 0 0 22px rgba(245,181,72,0.30), 0 0 48px rgba(245,181,72,0.12); }
   50%       { box-shadow: 0 0 0 2px rgba(245,181,72,0.90), 0 0 32px rgba(245,181,72,0.55), 0 0 72px rgba(245,181,72,0.25); }
 }
+
+/* =========================================================
+   SEASONAL THEME OVERRIDES
+   Applied when user opts in via SeasonalBanner ("Yes, switch").
+   SeasonalBanner sets data-seasonal on <html> and writes
+   --seasonal-accent / --seasonal-accent-secondary to :root.
+========================================================= */
+[data-seasonal] {
+  --accent: var(--seasonal-accent, #F5B548);
+  --accent-2: var(--seasonal-accent-secondary, #C8941F);
+  --theme-gold: var(--seasonal-accent, #F5B548);
+  --theme-gold-gradient: linear-gradient(135deg, var(--seasonal-accent-secondary, #C8941F), var(--seasonal-accent, #F5B548));
+}
