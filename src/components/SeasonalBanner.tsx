@@ -71,6 +71,7 @@ export default function SeasonalBanner() {
   const [idx, setIdx] = useState(0);
   const [visible, setVisible] = useState(true);
   const [themePrefs, setThemePrefs] = useState<Record<string, "accepted" | "dismissed">>({});
+  const touchStartX = useRef<number | null>(null); // must be before any early return
 
   useEffect(() => {
     async function loadSlides() {
@@ -163,7 +164,6 @@ export default function SeasonalBanner() {
   }
 
   // Touch swipe support
-  const touchStartX = useRef<number | null>(null);
   function handleTouchStart(e: React.TouchEvent) {
     touchStartX.current = e.touches[0].clientX;
   }
