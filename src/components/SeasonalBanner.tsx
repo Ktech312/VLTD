@@ -24,7 +24,8 @@ type CollectorEvent = {
   emoji: string | null;
   starts_at: string;
   ends_at: string;
-  location: string | null;
+  city: string | null;
+  state_region: string | null;
 };
 
 type Slide =
@@ -58,7 +59,8 @@ function getEventCountdown(event: CollectorEvent): string {
   const diffMs = starts.getTime() - now.getTime();
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-  const locationSuffix = event.location ? ` — ${event.location}` : "";
+  const loc = [event.city, event.state_region].filter(Boolean).join(", ");
+  const locationSuffix = loc ? ` — ${loc}` : "";
 
   if (diffDays <= 2) return `This weekend!${locationSuffix}`;
   return `Starts in ${diffDays} day${diffDays !== 1 ? "s" : ""}${locationSuffix}`;
@@ -90,7 +92,7 @@ export default function SeasonalBanner() {
         const now = new Date().toISOString();
         const { data } = await supabase
           .from("collector_events")
-          .select("id, slug, name, emoji, starts_at, ends_at, location")
+          .select("id, slug, name, emoji, starts_at, ends_at, city, state_region")
           .gte("ends_at", now)
           .order("starts_at", { ascending: true })
           .limit(10);
