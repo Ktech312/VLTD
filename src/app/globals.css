@@ -328,8 +328,10 @@ body {
   -webkit-font-smoothing: antialiased;
   position: relative;
 
-  /* Prevent horizontal scroll on mobile */
-  overflow-x: hidden;
+  /* Prevent horizontal scroll on mobile.
+     clip (not hidden) avoids creating a scroll container on iOS Safari,
+     which would break position:fixed elements like the top nav. */
+  overflow-x: clip;
 
   /* iOS momentum scroll + less accidental sideways rubber-banding */
   -webkit-overflow-scrolling: touch;
