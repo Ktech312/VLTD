@@ -175,23 +175,50 @@ export default function SeasonalBanner() {
         <SeasonalAccents style={slide.theme.accent_style} color={accent} />
       )}
 
-      {/* Dot indicators — bottom-right, only if multiple slides */}
+      {/* Navigation arrows + dot indicators — only if multiple slides */}
       {slides.length > 1 && (
-        <div className="absolute bottom-3 right-3 flex gap-1 z-20">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => jumpTo(i)}
-              className="rounded-full transition-all"
-              style={{
-                width: i === idx ? 16 : 6,
-                height: 6,
-                background: i === idx ? accent : `${accent}55`,
-              }}
-              aria-label={`Show banner ${i + 1}`}
-            />
-          ))}
-        </div>
+        <>
+          {/* Left arrow */}
+          <button
+            onClick={() => jumpTo((idx - 1 + slides.length) % slides.length)}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center rounded-full w-7 h-7 transition hover:opacity-100"
+            style={{ background: `${accent}22`, border: `1px solid ${accent}44`, opacity: 0.75 }}
+            aria-label="Previous banner"
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M7.5 2L4 6l3.5 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          {/* Right arrow */}
+          <button
+            onClick={() => jumpTo((idx + 1) % slides.length)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center rounded-full w-7 h-7 transition hover:opacity-100"
+            style={{ background: `${accent}22`, border: `1px solid ${accent}44`, opacity: 0.75 }}
+            aria-label="Next banner"
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M4.5 2L8 6l-3.5 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          {/* Dot indicators — bottom-center */}
+          <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => jumpTo(i)}
+                className="rounded-full transition-all"
+                style={{
+                  width: i === idx ? 20 : 8,
+                  height: 8,
+                  background: i === idx ? accent : `${accent}44`,
+                }}
+                aria-label={`Show banner ${i + 1}`}
+              />
+            ))}
+          </div>
+        </>
       )}
 
       {/* Main banner content */}
