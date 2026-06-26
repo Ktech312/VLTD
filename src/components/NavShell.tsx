@@ -16,11 +16,22 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <TopNav />
+      {/*
+        Content scrolls inside this fixed-position container — NOT the body.
+        This is the only approach that reliably keeps fixed nav bars locked
+        on iOS Safari, which breaks position:fixed when body itself scrolls.
+      */}
       <div
         className="vltd-content-wrap"
         style={{
-          paddingTop: "var(--topnav-h)",
-          paddingBottom: "calc(var(--bottomnav-h) + max(env(safe-area-inset-bottom, 0px), 16px))",
+          position: "fixed",
+          top: "var(--topnav-h)",
+          left: 0,
+          right: 0,
+          bottom: "calc(var(--bottomnav-h) + max(env(safe-area-inset-bottom, 0px), 0px))",
+          overflowY: "auto",
+          WebkitOverflowScrolling: "touch",
+          overscrollBehaviorY: "contain",
         }}
       >
         {children}
