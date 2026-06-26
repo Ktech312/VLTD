@@ -236,6 +236,12 @@ export default function CapturePage() {
       emitVaultUpdate();
       router.push("/vault");
     } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.startsWith("FREE_TIER_LIMIT:")) {
+        // Redirect to billing with a toast-friendly message
+        router.push("/account/billing?reason=vault_limit");
+        return;
+      }
       console.error("[Capture] Save error:", err);
     }
   }, [capturedImageFile, fields, router]);

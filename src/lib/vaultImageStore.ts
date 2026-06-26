@@ -77,8 +77,23 @@ export async function prepareImageBlob(
     mimeType?: string;
   }
 ): Promise<Blob> {
-  const maxDimension = options?.maxDimension ?? 1600;
-  const quality = options?.quality ?? 0.82;
+  // Auto-detect tier-based defaults when caller doesn't override
+  let defaultMaxDimension = 1600;
+  let defaultQuality = 0.82;
+  if (typeof window !== "undefined" && options?.maxDimension === undefined && options?.quality === undefined) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { getTierSafe } = require("./subscription") as typeof import("./subscription");
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { getImageUploadOptions } = require("./galleryTier") as typeof import("./galleryTier");
+      const imgOpts = getImageUploadOptions(getTierSafe());
+      defaultMaxDimension = imgOpts.maxDimension;
+      defaultQuality = imgOpts.quality;
+    } catch { /* no-op — fall back to defaults */ }
+  }
+
+  const maxDimension = options?.maxDimension ?? defaultMaxDimension;
+  const quality = options?.quality ?? defaultQuality;
   const mimeType = options?.mimeType ?? "image/jpeg";
 
   const image = await readAsImageElement(file);

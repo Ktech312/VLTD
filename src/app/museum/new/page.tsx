@@ -12,7 +12,7 @@ import {
   type Gallery,
   type GalleryThemePack,
 } from "@/lib/galleryModel";
-import { getGalleryLimits } from "@/lib/galleryTier";
+import { getGalleryLimits, mustBePublicGallery } from "@/lib/galleryTier";
 import { getTierSafe } from "@/lib/subscription";
 
 function safeTrim(value: string) {
@@ -27,10 +27,14 @@ export default function NewMuseumGalleryPage() {
   const existingGalleries = useMemo(() => loadGalleries(), []);
   const canCreate =
     limits.galleries === Infinity || existingGalleries.length < limits.galleries;
+  const forcePublic = mustBePublicGallery(tier);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [visibility, setVisibility] = useState<Gallery["visibility"]>("LOCKED");
+  // Free tier exhibitions must be PUBLIC
+  const [visibility, setVisibility] = useState<Gallery["visibility"]>(
+    forcePublic ? "PUBLIC" : "LOCKED"
+  );
   const [state, setState] = useState<Gallery["state"]>("ACTIVE");
   const [themePack, setThemePack] = useState<GalleryThemePack>("classic");
   const [displayMode, setDisplayMode] = useState<"grid" | "shelf">("grid");
@@ -187,15 +191,24 @@ export default function NewMuseumGalleryPage() {
             <div className="mt-5 grid gap-4">
               <div>
                 <label className="mb-2 block text-sm font-medium">Visibility</label>
-                <select
-                  value={visibility}
-                  onChange={(e) => setVisibility(e.target.value as Gallery["visibility"])}
-                  className="min-h-[46px] w-full rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)] focus:outline-none"
-                >
-                  <option value="PUBLIC">Public</option>
-                  <option value="INVITE">Invite Only</option>
-                  <option value="LOCKED">Locked</option>
-                </select>
+                {forcePublic ? (
+                  <div className="flex items-center gap-2 min-h-[46px] w-full rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)]">
+                    <span className="text-sm text-[color:var(--fg)]">Public</span>
+                    <span className="ml-auto text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">
+                      Free plan · <a href="/account/billing" className="underline">Upgrade</a> for private
+                    </span>
+                  </div>
+                ) : (
+                  <select
+                    value={visibility}
+                    onChange={(e) => setVisibility(e.target.value as Gallery["visibility"])}
+                    className="min-h-[46px] w-full rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)] focus:outline-none"
+                  >
+                    <option value="PUBLIC">Public</option>
+                    <option value="INVITE">Invite Only</option>
+                    <option value="LOCKED">Locked</option>
+                  </select>
+                )}
               </div>
 
               <div>

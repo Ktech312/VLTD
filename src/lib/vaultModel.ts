@@ -809,7 +809,24 @@ export function saveItems(items: VaultItem[]) {
 }
 
 export function appendItems(items: VaultItem[]) {
-  saveRawItems([...loadRawItems(), ...items.map(syncPrimaryFields)]);
+  const existing = loadRawItems();
+
+  // Enforce free-tier vault item cap (client-side gate)
+  if (typeof window !== "undefined") {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { getTierSafe } = require("./subscription") as typeof import("./subscription");
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { getVaultItemLimit } = require("./galleryTier") as typeof import("./galleryTier");
+    const tier = getTierSafe();
+    const limit = getVaultItemLimit(tier);
+    if (isFinite(limit) && existing.length >= limit) {
+      throw new Error(
+        `FREE_TIER_LIMIT:You've reached the ${limit}-item limit on the free plan. Upgrade to add more items.`
+      );
+    }
+  }
+
+  saveRawItems([...existing, ...items.map(syncPrimaryFields)]);
 }
 
 export function deleteVaultItem(itemId: string) {

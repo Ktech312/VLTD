@@ -14,7 +14,7 @@ const PLANS: { key: Plan; name: string; price: string; features: string[] }[] = 
     key: "free",
     name: "Free",
     price: "$0 / mo",
-    features: ["Up to 100 vault items", "1 public profile", "Basic analytics", "Community registry"],
+    features: ["Up to 50 vault items", "4 public exhibitions", "Standard image quality", "Basic analytics", "Community registry"],
   },
   {
     key: "pro",
