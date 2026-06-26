@@ -60,41 +60,53 @@ export default function PWAInstallBanner() {
 
   if (!show) return null;
 
-  // Shared banner style — sits directly below the top nav, never overlaps it
-  const bannerStyle: React.CSSProperties = {
+  // Small floating pill — bottom-left, above the bottom nav
+  const pillStyle: React.CSSProperties = {
     position: "fixed",
-    top: "var(--topnav-h, 72px)",
-    left: 0,
-    right: 0,
-    zIndex: 9998, // nav is 9999, banner is one below
+    bottom: "calc(var(--bottomnav-h, 64px) + max(env(safe-area-inset-bottom, 0px), 0px) + 12px)",
+    left: 16,
+    zIndex: 9998,
+    maxWidth: 280,
   };
+
+  const XButton = () => (
+    <button
+      onClick={dismiss}
+      aria-label="Dismiss"
+      style={{ minHeight: 36, minWidth: 36 }}
+      className="flex items-center justify-center text-white/40 hover:text-white/70 transition flex-shrink-0"
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  );
 
   // Android/Chrome — native prompt available
   if (deferredPrompt) {
     return (
       <div
-        style={bannerStyle}
-        className="flex items-center gap-3 border-b border-white/10 bg-[#12101C]/95 px-4 py-3 shadow-lg backdrop-blur-xl"
+        style={pillStyle}
+        className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#12101C]/95 px-3 py-2 shadow-xl backdrop-blur-xl"
       >
-        <img src="/icons/icon-96x96.png" alt="VLTD" className="h-10 w-10 rounded-xl flex-shrink-0" />
+        <img src="/icons/icon-96x96.png" alt="VLTD" className="h-8 w-8 rounded-xl flex-shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-white leading-tight">Add VLTD to Home Screen</p>
-          <p className="text-xs text-white/50 mt-0.5">Instant access — no App Store needed</p>
+          <p className="text-xs font-semibold text-white leading-tight">Add to Home Screen</p>
+          <p className="text-[10px] text-white/40 leading-tight mt-0.5">No App Store needed</p>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <button
-            onClick={() => void install()}
-            className="rounded-full bg-amber-500 px-4 py-1.5 text-xs font-bold text-black transition hover:bg-amber-400 min-h-[36px]"
-          >
-            Add
-          </button>
-          <button
-            onClick={dismiss}
-            className="rounded-full px-3 py-1.5 text-xs text-white/40 hover:text-white/70 transition min-h-[36px]"
-          >
-            Not now
-          </button>
-        </div>
+        <button
+          onClick={() => void install()}
+          aria-label="Install"
+          style={{ minHeight: 36, minWidth: 36 }}
+          className="flex items-center justify-center rounded-full bg-amber-500 hover:bg-amber-400 transition flex-shrink-0"
+        >
+          {/* Download / add icon */}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5">
+            <path d="M12 3v13M5 16l7 7 7-7"/>
+            <path d="M4 21h16" strokeLinecap="round"/>
+          </svg>
+        </button>
+        <XButton />
       </div>
     );
   }
@@ -103,31 +115,23 @@ export default function PWAInstallBanner() {
   if (isIOS) {
     return (
       <div
-        style={bannerStyle}
-        className="border-b border-white/10 bg-[#12101C]/95 px-4 py-3 shadow-lg backdrop-blur-xl"
+        style={pillStyle}
+        className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#12101C]/95 px-3 py-2 shadow-xl backdrop-blur-xl"
       >
-        <div className="flex items-start gap-3">
-          <img src="/icons/icon-96x96.png" alt="VLTD" className="h-10 w-10 rounded-xl flex-shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-white leading-tight">Install VLTD</p>
-            <p className="text-xs text-white/50 mt-1 leading-relaxed">
-              Tap the{" "}
-              <span className="inline-block align-middle">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline text-white/70">
-                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-                  <polyline points="16 6 12 2 8 6"/>
-                  <line x1="12" y1="2" x2="12" y2="15"/>
-                </svg>
-              </span>{" "}
-              Share button, then <strong className="text-white/80">Add to Home Screen</strong>
-            </p>
-          </div>
-          <button onClick={dismiss} className="text-white/30 hover:text-white/60 transition mt-0.5 min-h-[36px] min-w-[36px] flex items-center justify-center">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        <img src="/icons/icon-96x96.png" alt="VLTD" className="h-8 w-8 rounded-xl flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold text-white leading-tight">Install VLTD</p>
+          <p className="text-[10px] text-white/40 leading-tight mt-0.5">
+            Tap{" "}
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline align-middle text-white/60">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+              <polyline points="16 6 12 2 8 6"/>
+              <line x1="12" y1="2" x2="12" y2="15"/>
             </svg>
-          </button>
+            {" "}then Add to Home Screen
+          </p>
         </div>
+        <XButton />
       </div>
     );
   }

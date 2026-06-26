@@ -5,11 +5,11 @@
 
 ---
 
-## 📊 STATUS SNAPSHOT — Last Updated 2026-06-26
+## 📊 STATUS SNAPSHOT — Last Updated 2026-06-25
 
 | Status | Count |
 |--------|-------|
-| ✅ Fully complete | 51 |
+| ✅ Fully complete | 46 |
 | 🔶 Partially complete | 0 |
 | ⬜ Not started | Phase 2 items below |
 
@@ -55,12 +55,6 @@
 - **Social-Ready Export** — `SocialExportSheet` component, format picker (1:1/9:16/4:5/16:9), creative backgrounds, watermark, value blur overlay, share flow on item detail (`2026-06-25`)
 - **Sticky Nav Header** — TopNav uses `sticky top-0` with `backdrop-blur-xl`, z-index management, auto-hide scroll behavior via `AppShellEffects`, `--topnav-h` CSS variable reserves layout space (`2026-06-25`)
 - **Nav Cleanup / More Dropdown** — TopNav "More" dropdown added with Watchlist, Goals, Learn, Activity, Community Board, Marketplace; active state detection; guide panel includes all nav items (`2026-06-25`)
-
-- **VLT Lounge (renamed from Community Board)** — `/community-board` renamed to "VLT Lounge" in all display text, TopNav More dropdown, Discover quick-access card, and stats bar link (`2026-06-26`)
-- **Spotlights System** — `spotlights` table migration, VLT Lounge rebuilt with spotlight cards (type tabs: All/Collectors/Artists & Brands), featured badge + gold border, VLT MVPs sidebar with per-universe top-3 leaderboard, admin page at `/admin/spotlights` (`2026-06-26`)
-- **Universe Focus / Personalized Filtering** — `focused_universes` column on profiles, onboarding step 4 (universe chip picker), Account Settings Universe Focus section with show-all toggle, Discover and Vault default to focused universes with "Show all" escape (`2026-06-26`)
-- **PWA Banner Fix** — banner repositioned from `bottom-[100px]` to `top: var(--topnav-h, 72px)`, z-index 9998 (below nav at 9999), sits flush below nav as full-width bar instead of floating card (`2026-06-26`)
-- **Sticky Top Nav** — already shipped; noted above (`2026-06-25`)
 
 ### 🏁 Safe Next Queue — ALL COMPLETE ✅
 1. ✅ Data Export / Vault Portability — `64a2c69`

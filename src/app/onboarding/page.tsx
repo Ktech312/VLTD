@@ -4,8 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { createProfile, getOnboardingStatus } from "@/lib/auth";
-import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import { UNIVERSE_KEYS, UNIVERSE_LABEL, UNIVERSE_ICON } from "@/lib/taxonomy";
 import { clearOnboardingDraft, loadOnboardingDraft, saveOnboardingDraft } from "@/lib/onboardingDraft";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -52,8 +50,8 @@ function accountTypeCardClass(active: boolean) {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 function StepIndicator({ step }: { step: number }) {
   return (
-    <div className="mt-6 grid grid-cols-4 gap-2">
-      {[1, 2, 3, 4].map((n) => (
+    <div className="mt-6 grid grid-cols-3 gap-2">
+      {[1, 2, 3].map((n) => (
         <div
           key={n}
           className={[
@@ -114,14 +112,13 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
 
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [avatarEmoji, setAvatarEmoji] = useState("");
   const [profileType, setProfileType] = useState<"personal" | "business">("personal");
   const [primaryFocus, setPrimaryFocus] = useState("");
-  const [focusedUniverses, setFocusedUniverses] = useState<string[]>([]);
 
   const resolvedAvatar = avatarEmoji || "🗝️";
 
@@ -163,23 +160,13 @@ export default function OnboardingPage() {
     setSaving(true);
     setError("");
     try {
-      const profileData = await createProfile({
+      await createProfile({
         username: slugifyUsername(username),
         display_name: displayName.trim(),
         profile_type: profileType,
         primary_focus: primaryFocus.trim() || undefined,
         avatar_emoji: resolvedAvatar,
       });
-      // Save focused_universes if any were chosen
-      if (focusedUniverses.length > 0 && profileData?.id) {
-        const supabase = getSupabaseBrowserClient();
-        if (supabase) {
-          await supabase
-            .from("profiles")
-            .update({ focused_universes: focusedUniverses })
-            .eq("id", profileData.id);
-        }
-      }
       clearOnboardingDraft();
       router.replace("/");
       router.refresh();
@@ -228,13 +215,11 @@ export default function OnboardingPage() {
               {step === 1 && "Your identity."}
               {step === 2 && "Account type."}
               {step === 3 && "What you collect."}
-              {step === 4 && "Your universes."}
             </h1>
             <p className="mt-2 text-sm text-[color:var(--muted)]">
               {step === 1 && "Pick an avatar, set your name. You can change all of this later."}
               {step === 2 && "This shapes your dashboard and visibility defaults."}
               {step === 3 && "Helps us tune the registry and discovery for you."}
-              {step === 4 && "Pick the universes to focus your experience. Skip to show everything."}
             </p>
 
             <StepIndicator step={step} />
@@ -394,72 +379,15 @@ export default function OnboardingPage() {
                 </div>
 
                 <div className="flex gap-3">
-                  <GoldButton onClick={() => setStep(4)}>Continue →</GoldButton>
+                  <GoldButton disabled={saving || !canContinueIdentity} onClick={() => void handleFinish()}>
+                    {saving ? "Setting up…" : "Launch my vault →"}
+                  </GoldButton>
                   <GhostButton onClick={() => setStep(2)}>Back</GhostButton>
                 </div>
               </div>
             )}
           </div>
         </section>
-
-            {/* ── Step 4: Universe Focus ── */}
-            {step === 4 && (
-              <div className="mt-6 space-y-5">
-                <div>
-                  <div className="text-sm font-semibold text-text-primary mb-1">What universes do you collect in?</div>
-                  <p className="text-xs text-[color:var(--muted2)] mb-3">We&apos;ll focus your experience around these. You can always change it later.</p>
-                  <div className="flex flex-wrap gap-2">
-                    {UNIVERSE_KEYS.map((key) => {
-                      const active = focusedUniverses.includes(key);
-                      return (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() =>
-                            setFocusedUniverses((prev) =>
-                              active ? prev.filter((k) => k !== key) : [...prev, key]
-                            )
-                          }
-                          className={[
-                            "inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold transition ring-1",
-                            active
-                              ? "bg-[rgba(245,181,72,0.15)] ring-[rgba(245,181,72,0.55)] text-text-primary"
-                              : "bg-[color:var(--pill)] ring-[color:var(--border)] text-[color:var(--muted)] hover:ring-[rgba(245,181,72,0.35)] hover:text-text-primary",
-                          ].join(" ")}
-                        >
-                          <span>{UNIVERSE_ICON[key]}</span>
-                          <span>{UNIVERSE_LABEL[key]}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setFocusedUniverses([...UNIVERSE_KEYS])}
-                      className="text-xs font-semibold text-[color:var(--muted)] hover:text-text-primary transition"
-                    >
-                      Select all
-                    </button>
-                    <span className="text-[color:var(--muted2)]">·</span>
-                    <button
-                      type="button"
-                      onClick={() => setFocusedUniverses([])}
-                      className="text-xs font-semibold text-[color:var(--muted)] hover:text-text-primary transition"
-                    >
-                      Skip — show everything
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <GoldButton disabled={saving || !canContinueIdentity} onClick={() => void handleFinish()}>
-                    {saving ? "Setting up…" : "Launch my vault →"}
-                  </GoldButton>
-                  <GhostButton onClick={() => setStep(3)}>Back</GhostButton>
-                </div>
-              </div>
-            )}
 
         {/* Fine print */}
         <p className="mt-5 text-center text-xs text-[color:var(--muted2)]">

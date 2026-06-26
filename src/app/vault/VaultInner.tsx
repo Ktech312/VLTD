@@ -9,8 +9,7 @@ import UniverseRail from "@/components/UniverseRail";
 import SwipeStack from "@/components/SwipeStack";
 import VaultMuseumView from "@/components/VaultMuseumView";
 import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
-import { TAXONOMY, UNIVERSE_LABEL, type UniverseKey, isUniverseKey } from "@/lib/taxonomy";
-import { getOnboardingStatus } from "@/lib/auth";
+import { TAXONOMY, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { loadItemsOrSeed, saveItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { type Tier, getTierSafe, onTierChange } from "@/lib/subscription";
 import { createClientVaultId } from "@/lib/clientVaultId";
@@ -731,7 +730,6 @@ export default function VaultInner() {
   const [forSaleOnly, setForSaleOnly] = useState(false);
 
   const [uFilter, setUFilter] = useState<UniverseKey | "ALL">("ALL");
-  const [focusedUniverses, setFocusedUniverses] = useState<UniverseKey[]>([]);
   const [cFilter, setCFilter] = useState<string>("ALL");
   const [sFilter, setSFilter] = useState<string>("ALL");
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
@@ -864,26 +862,6 @@ export default function VaultInner() {
     if (s) setSFilter(s);
     else setSFilter("ALL");
   }, [sp]);
-
-  // Load focused_universes from profile — applied as default filter when no ?u= in URL
-  useEffect(() => {
-    async function loadFocus() {
-      if (sp.get("u")) return; // URL param takes precedence
-      try {
-        const status = await getOnboardingStatus();
-        const fu = (status.activeProfile as Record<string, unknown> | null)?.focused_universes;
-        if (Array.isArray(fu) && fu.length > 0) {
-          const valid = (fu as string[]).filter(isUniverseKey) as UniverseKey[];
-          if (valid.length > 0) {
-            setFocusedUniverses(valid);
-            setUFilter(valid[0]);
-          }
-        }
-      } catch { /* non-critical */ }
-    }
-    void loadFocus();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const wantsAdd = sp.get("add") === "1" || sp.get("new") === "1";
 
@@ -1272,22 +1250,6 @@ export default function VaultInner() {
             }
           }}
         />
-
-        {/* Focused universe filter note */}
-        {focusedUniverses.length > 0 && uFilter !== "ALL" && (
-          <div className="mt-1.5 flex items-center gap-1.5 text-[11px]" style={{ color: "var(--muted2, #A0956B)" }}>
-            <span>Showing your focused universes</span>
-            <span>·</span>
-            <button
-              type="button"
-              onClick={() => { setUFilter("ALL"); setFocusedUniverses([]); pushFilters({ u: "ALL", c: "ALL", s: "ALL" }); }}
-              className="font-semibold hover:underline"
-              style={{ color: "var(--theme-gold, #F5B548)" }}
-            >
-              Show all
-            </button>
-          </div>
-        )}
 
         <div className="mt-4 flex flex-wrap gap-2">
           <PillButton
