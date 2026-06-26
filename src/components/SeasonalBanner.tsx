@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { fetchActiveThemes, type SeasonalTheme } from "@/lib/seasonalTheme";
 
@@ -162,69 +162,39 @@ export default function SeasonalBanner() {
     setTimeout(() => { setIdx(i); setVisible(true); }, 300);
   }
 
+  // Touch swipe support
+  const touchStartX = useRef<number | null>(null);
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX;
+  }
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null || slides.length <= 1) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(dx) < 40) return; // ignore tiny moves
+    if (dx < 0) jumpTo((idx + 1) % slides.length);       // swipe left → next
+    else jumpTo((idx - 1 + slides.length) % slides.length); // swipe right → prev
+    touchStartX.current = null;
+  }
+
   return (
     <div
-      className="relative overflow-hidden rounded-2xl mb-4"
+      className="relative overflow-hidden rounded-2xl mb-4 select-none"
       style={{
         background: `linear-gradient(135deg, ${secondary}cc, ${accent}33)`,
         border: `1px solid ${accent}44`,
         opacity: visible ? 1 : 0,
         transition: "opacity 0.4s ease",
       }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Accent decorations for seasonal themes */}
       {slide.type === "theme" && (
         <SeasonalAccents style={slide.theme.accent_style} color={accent} />
       )}
 
-      {/* Navigation arrows + dot indicators — only if multiple slides */}
-      {slides.length > 1 && (
-        <>
-          {/* Left arrow */}
-          <button
-            onClick={() => jumpTo((idx - 1 + slides.length) % slides.length)}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center rounded-full w-7 h-7 transition hover:opacity-100"
-            style={{ background: `${accent}22`, border: `1px solid ${accent}44`, opacity: 0.75 }}
-            aria-label="Previous banner"
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M7.5 2L4 6l3.5 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-
-          {/* Right arrow */}
-          <button
-            onClick={() => jumpTo((idx + 1) % slides.length)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center rounded-full w-7 h-7 transition hover:opacity-100"
-            style={{ background: `${accent}22`, border: `1px solid ${accent}44`, opacity: 0.75 }}
-            aria-label="Next banner"
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M4.5 2L8 6l-3.5 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-
-          {/* Dot indicators — bottom-center */}
-          <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
-            {slides.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => jumpTo(i)}
-                className="rounded-full transition-all"
-                style={{
-                  width: i === idx ? 20 : 8,
-                  height: 8,
-                  background: i === idx ? accent : `${accent}44`,
-                }}
-                aria-label={`Show banner ${i + 1}`}
-              />
-            ))}
-          </div>
-        </>
-      )}
-
-      {/* Main banner content */}
-      <div className="relative z-10 px-5 py-4">
+      {/* Main banner content — padded away from arrows */}
+      <div className="relative z-10 px-5 py-4" style={{ paddingLeft: slides.length > 1 ? 44 : 20, paddingRight: slides.length > 1 ? 44 : 20 }}>
         {slide.type === "theme" ? (
           // Seasonal theme slide
           <>
@@ -309,6 +279,49 @@ export default function SeasonalBanner() {
           </div>
         )}
       </div>
+
+      {/* Nav controls — dots + arrows in a row below content, only if multiple slides */}
+      {slides.length > 1 && (
+        <div className="relative z-10 flex items-center justify-center gap-3 pb-3">
+          <button
+            onClick={() => jumpTo((idx - 1 + slides.length) % slides.length)}
+            className="flex items-center justify-center rounded-full w-6 h-6 transition hover:opacity-100"
+            style={{ background: `${accent}22`, border: `1px solid ${accent}55`, opacity: 0.8 }}
+            aria-label="Previous"
+          >
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+              <path d="M7.5 2L4 6l3.5 4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          <div className="flex gap-1.5">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => jumpTo(i)}
+                className="rounded-full transition-all duration-300"
+                style={{
+                  width: i === idx ? 20 : 7,
+                  height: 7,
+                  background: i === idx ? accent : `${accent}44`,
+                }}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={() => jumpTo((idx + 1) % slides.length)}
+            className="flex items-center justify-center rounded-full w-6 h-6 transition hover:opacity-100"
+            style={{ background: `${accent}22`, border: `1px solid ${accent}55`, opacity: 0.8 }}
+            aria-label="Next"
+          >
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+              <path d="M4.5 2L8 6l-3.5 4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
