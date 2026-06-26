@@ -8,6 +8,7 @@ import { ThemePicker } from "@/components/ui/ThemePicker";
 import { PillButton } from "@/components/ui/PillButton";
 
 import { getOnboardingStatus, updateProfile } from "@/lib/auth";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { syncPublicProfile } from "@/lib/publicProfile";
 import { processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { syncVaultItemsFromSupabase } from "@/lib/vaultModel";
@@ -43,6 +44,11 @@ export default function AccountPage() {
   const [country, setCountry] = useState("US");
   const [contactSaving, setContactSaving] = useState(false);
   const [contactSuccess, setContactSuccess] = useState("");
+  // Universe Focus
+  const [focusedUniverses, setFocusedUniverses] = useState<string[]>([]);
+  const [showAllUniverses, setShowAllUniverses] = useState(false);
+  const [universeFocusSaving, setUniverseFocusSaving] = useState(false);
+  const [universeFocusSuccess, setUniverseFocusSuccess] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -73,6 +79,9 @@ export default function AccountPage() {
         setStateVal(status.activeProfile.state ?? "");
         setZip(status.activeProfile.zip ?? "");
         setCountry(status.activeProfile.country ?? "US");
+        const fu = (status.activeProfile as Record<string, unknown>).focused_universes;
+        setFocusedUniverses(Array.isArray(fu) ? fu as string[] : []);
+        setShowAllUniverses(!Array.isArray(fu) || (fu as string[]).length === 0);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load account.");
       } finally {
@@ -172,6 +181,24 @@ export default function AccountPage() {
     } finally {
       setContactSaving(false);
       setTimeout(() => setContactSuccess(""), 3000);
+    }
+  }
+
+  async function handleUniverseFocusSave() {
+    if (!profileId) return;
+    setUniverseFocusSaving(true);
+    setUniverseFocusSuccess("");
+    try {
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) throw new Error("Supabase not ready");
+      const val = showAllUniverses ? null : (focusedUniverses.length > 0 ? focusedUniverses : null);
+      await supabase.from("profiles").update({ focused_universes: val }).eq("id", profileId);
+      setUniverseFocusSuccess("Universe focus saved.");
+    } catch (err) {
+      setUniverseFocusSuccess(err instanceof Error ? err.message : "Failed to save.");
+    } finally {
+      setUniverseFocusSaving(false);
+      setTimeout(() => setUniverseFocusSuccess(""), 3000);
     }
   }
 
@@ -549,6 +576,85 @@ export default function AccountPage() {
             </button>
             {contactSuccess && (
               <span className="text-sm text-emerald-400">{contactSuccess}</span>
+            )}
+          </div>
+        </section>
+
+        {/* Universe Focus */}
+        <section className="mt-6 rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
+          <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-1">
+            Universe Focus
+          </div>
+          <p className="px-1 mb-4 text-xs text-[color:var(--muted)]">
+            Choose which universes appear in your home, vault, and discover pages.
+          </p>
+
+          {/* Show all toggle */}
+          <div className="mb-4 flex items-center justify-between gap-4 rounded-2xl border border-[color:var(--border)] px-4 py-3" style={{ background: "var(--theme-card)" }}>
+            <div>
+              <div className="text-sm font-black text-text-primary">Show all universes</div>
+              <div className="mt-0.5 text-xs text-[color:var(--muted)]">Turn off to pick specific universes</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowAllUniverses((v) => !v)}
+              aria-pressed={showAllUniverses}
+              className="relative h-6 w-11 shrink-0 rounded-full transition-colors"
+              style={{ background: showAllUniverses ? "var(--theme-gold-gradient, #f5b548)" : "rgba(255,255,255,0.12)" }}
+            >
+              <span
+                className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
+                style={{ transform: showAllUniverses ? "translateX(20px)" : "translateX(0)" }}
+              />
+            </button>
+          </div>
+
+          {/* Universe chip grid */}
+          {!showAllUniverses && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {UNIVERSE_KEYS.map((key) => {
+                const active = focusedUniverses.includes(key);
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() =>
+                      setFocusedUniverses((prev) =>
+                        active ? prev.filter((k) => k !== key) : [...prev, key]
+                      )
+                    }
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition ring-1 min-h-[40px]"
+                    style={active ? {
+                      background: "rgba(245,181,72,0.15)",
+                      border: "1px solid rgba(245,181,72,0.55)",
+                      color: "var(--theme-text-primary, #F0EAD6)",
+                    } : {
+                      background: "var(--theme-card)",
+                      border: "1px solid var(--theme-border, rgba(245,181,72,0.12))",
+                      color: "var(--muted)",
+                    }}
+                  >
+                    <span>{UNIVERSE_ICON[key]}</span>
+                    <span>{UNIVERSE_LABEL[key]}</span>
+                    {active && <span style={{ color: "#F5B548" }}>✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              disabled={universeFocusSaving}
+              onClick={() => void handleUniverseFocusSave()}
+              className="inline-flex h-12 items-center rounded-full px-6 text-sm font-black text-[#0B0B0B] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
+            >
+              {universeFocusSaving ? "Saving..." : "Save focus"}
+            </button>
+            {universeFocusSuccess && (
+              <span className="text-sm text-emerald-400">{universeFocusSuccess}</span>
             )}
           </div>
         </section>

@@ -269,8 +269,8 @@ const MAIN_NAV_ITEMS = [
 // "More" dropdown items
 const MORE_NAV_ITEMS = [
   {
-    label: "Community Board", href: "/community-board", icon: IconCommunityBoard, exact: false,
-    desc: "Global leaderboards — see top collectors for every subject.",
+    label: "VLT Lounge", href: "/community-board", icon: IconCommunityBoard, exact: false,
+    desc: "Spotlights, MVPs & collector community.",
   },
   {
     label: "Marketplace",  href: "/market",     icon: IconMarketplace, exact: false,

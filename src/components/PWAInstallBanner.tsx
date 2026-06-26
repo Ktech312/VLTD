@@ -60,25 +60,37 @@ export default function PWAInstallBanner() {
 
   if (!show) return null;
 
+  // Shared banner style — sits directly below the top nav, never overlaps it
+  const bannerStyle: React.CSSProperties = {
+    position: "fixed",
+    top: "var(--topnav-h, 72px)",
+    left: 0,
+    right: 0,
+    zIndex: 9998, // nav is 9999, banner is one below
+  };
+
   // Android/Chrome — native prompt available
   if (deferredPrompt) {
     return (
-      <div className="fixed bottom-[100px] left-3 right-3 z-50 flex items-center gap-3 rounded-2xl border border-white/10 bg-[#12101C]/95 px-4 py-3 shadow-2xl backdrop-blur-xl overflow-hidden sm:left-auto sm:right-4 sm:w-80">
-        <img src="/icons/icon-96x96.png" alt="VLTD" className="h-11 w-11 rounded-xl flex-shrink-0" />
+      <div
+        style={bannerStyle}
+        className="flex items-center gap-3 border-b border-white/10 bg-[#12101C]/95 px-4 py-3 shadow-lg backdrop-blur-xl"
+      >
+        <img src="/icons/icon-96x96.png" alt="VLTD" className="h-10 w-10 rounded-xl flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-white leading-tight">Add VLTD to Home Screen</p>
           <p className="text-xs text-white/50 mt-0.5">Instant access — no App Store needed</p>
         </div>
-        <div className="flex flex-col gap-1.5 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={() => void install()}
-            className="rounded-full bg-amber-500 px-3 py-1 text-xs font-bold text-black transition hover:bg-amber-400"
+            className="rounded-full bg-amber-500 px-4 py-1.5 text-xs font-bold text-black transition hover:bg-amber-400 min-h-[36px]"
           >
             Add
           </button>
           <button
             onClick={dismiss}
-            className="rounded-full px-3 py-1 text-xs text-white/40 hover:text-white/70 transition"
+            className="rounded-full px-3 py-1.5 text-xs text-white/40 hover:text-white/70 transition min-h-[36px]"
           >
             Not now
           </button>
@@ -90,9 +102,12 @@ export default function PWAInstallBanner() {
   // iOS Safari — manual instructions
   if (isIOS) {
     return (
-      <div className="fixed bottom-[100px] left-3 right-3 z-50 rounded-2xl border border-white/10 bg-[#12101C]/95 px-4 py-3 shadow-2xl backdrop-blur-xl overflow-hidden">
+      <div
+        style={bannerStyle}
+        className="border-b border-white/10 bg-[#12101C]/95 px-4 py-3 shadow-lg backdrop-blur-xl"
+      >
         <div className="flex items-start gap-3">
-          <img src="/icons/icon-96x96.png" alt="VLTD" className="h-11 w-11 rounded-xl flex-shrink-0 mt-0.5" />
+          <img src="/icons/icon-96x96.png" alt="VLTD" className="h-10 w-10 rounded-xl flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-sm font-semibold text-white leading-tight">Install VLTD</p>
             <p className="text-xs text-white/50 mt-1 leading-relaxed">
@@ -107,7 +122,7 @@ export default function PWAInstallBanner() {
               Share button, then <strong className="text-white/80">Add to Home Screen</strong>
             </p>
           </div>
-          <button onClick={dismiss} className="text-white/30 hover:text-white/60 transition mt-0.5">
+          <button onClick={dismiss} className="text-white/30 hover:text-white/60 transition mt-0.5 min-h-[36px] min-w-[36px] flex items-center justify-center">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
             </svg>

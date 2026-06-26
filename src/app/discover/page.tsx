@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getOnboardingStatus } from "@/lib/auth";
 import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
 import DiscoverSwipe from "@/components/DiscoverSwipe";
 import { type UniverseKey, UNIVERSE_KEYS, UNIVERSE_LABEL, isUniverseKey } from "@/lib/taxonomy";
@@ -223,15 +223,33 @@ export default function DiscoverPage() {
   const [swipeOpen, setSwipeOpen] = useState(false);
   const [userPrefs, setUserPrefs] = useState<ReturnType<typeof buildUserPreferences> | null>(null);
   const [signedIn, setSignedIn] = useState(false);
+  const [focusedUniverses, setFocusedUniverses] = useState<UniverseKey[]>([]);
 
   // Drives the "Create a public gallery" CTA below - only relevant to logged-out
   // visitors, since a signed-in collector already has a vault and can create one
   // from inside the app.
   useEffect(() => {
     let active = true;
-    void getCurrentUser().then(({ data }) => {
-      if (active) setSignedIn(Boolean(data.user));
-    });
+    async function loadUser() {
+      const { data } = await getCurrentUser();
+      if (!active) return;
+      setSignedIn(Boolean(data.user));
+      if (data.user) {
+        // Load focused_universes to default the active tab
+        try {
+          const status = await getOnboardingStatus();
+          const fu = (status.activeProfile as Record<string, unknown> | null)?.focused_universes;
+          if (Array.isArray(fu) && fu.length > 0) {
+            const validKeys = (fu as string[]).filter(isUniverseKey) as UniverseKey[];
+            if (validKeys.length > 0) {
+              setFocusedUniverses(validKeys);
+              setActiveTab(validKeys[0]);
+            }
+          }
+        } catch { /* non-critical */ }
+      }
+    }
+    void loadUser();
     return () => { active = false; };
   }, []);
 
@@ -410,27 +428,27 @@ export default function DiscoverPage() {
             <span><span className="font-bold" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>{uniqueCollectors}</span> collectors</span>
             {totalViews > 0 && <span><span className="font-bold" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>{totalViews.toLocaleString()}</span> total views</span>}
             <Link href="/community-board" className="ml-auto font-semibold hover:underline" style={{ color: "var(--theme-gold, #F5B548)" }}>
-              Community Board rankings →
+              VLT Lounge →
             </Link>
           </div>
         )}
 
-        {/* Community Board + Marketplace quick-access cards */}
+        {/* VLT Lounge + Marketplace quick-access cards */}
         <div className="mt-4 grid grid-cols-2 gap-3">
           <Link
             href="/community-board"
             className="group flex flex-col gap-2 rounded-[16px] px-4 py-4 transition hover:-translate-y-0.5 hover:brightness-110"
             style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))", border: "1px solid var(--theme-border, rgba(245,181,72,0.14))" }}
           >
-            <div className="text-2xl">🏆</div>
+            <div className="text-2xl">🛋️</div>
             <div>
-              <div className="text-sm font-black" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>Community Board</div>
+              <div className="text-sm font-black" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>VLT Lounge</div>
               <div className="mt-0.5 text-[11px]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
-                Top collectors ranked by universe
+                Spotlights, MVPs &amp; collector community
               </div>
             </div>
             <div className="mt-auto text-[11px] font-semibold" style={{ color: "var(--theme-gold, #F5B548)" }}>
-              View rankings →
+              Visit VLT Lounge →
             </div>
           </Link>
           <Link
@@ -454,7 +472,7 @@ export default function DiscoverPage() {
         {/* Tab bar */}
         <div className="mt-4 flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           {TABS.map((tab) => (
-            <button key={tab} type="button" onClick={() => setActiveTab(tab)}
+            <button key={tab} type="button" onClick={() => { setActiveTab(tab); if (tab !== "All") setFocusedUniverses([]); }}
               className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold transition"
               style={activeTab === tab
                 ? { background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B", border: "1px solid transparent" }
@@ -463,6 +481,22 @@ export default function DiscoverPage() {
             >{tab === "All" ? "All" : UNIVERSE_LABEL[tab]}</button>
           ))}
         </div>
+
+        {/* Focused universe note */}
+        {focusedUniverses.length > 0 && activeTab !== "All" && (
+          <div className="mt-2 flex items-center gap-1.5 text-[11px]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
+            <span>Showing your focused universes</span>
+            <span>·</span>
+            <button
+              type="button"
+              onClick={() => { setActiveTab("All"); setFocusedUniverses([]); }}
+              className="font-semibold hover:underline"
+              style={{ color: "var(--theme-gold, #F5B548)" }}
+            >
+              Show all
+            </button>
+          </div>
+        )}
 
         {/* Loading */}
         {loading && (
