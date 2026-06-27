@@ -2249,7 +2249,12 @@ main {
 ========================================================= */
 [data-seasonal] {
   --accent: var(--seasonal-accent, #F5B548);
-  --accent-2: var(--seasonal-accent-secondary, #C8941F);
+accent-secondary, #C8941F);
   --theme-gold: var(--seasonal-accent, #F5B548);
   --theme-gold-gradient: linear-gradient(135deg, var(--seasonal-accent-secondary, #C8941F), var(--seasonal-accent, #F5B548));
+}
+
+/* Pull-to-refresh spinner */
+@keyframes ptr-spin {
+  to { transform: rotate(360deg); }
 }
