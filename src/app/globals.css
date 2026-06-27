@@ -81,7 +81,7 @@
   --theme-nav-border: rgba(245, 181, 72, 0.15);
 
   /* ✅ Reserve TopNav height so content never jumps */
-  --topnav-h: 52px;
+  --topnav-h: 44px;
 
   /* Reserve BottomNav height so content clears it on mobile */
   --bottomnav-h: 120px;
@@ -182,7 +182,7 @@
 /* Mobile: compact nav */
 @media (max-width: 767px) {
   :root {
-    --topnav-h: 44px;
+    --topnav-h: 36px;
   }
 }
 
