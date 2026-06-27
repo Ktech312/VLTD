@@ -769,7 +769,7 @@ export default function HomeClient() {
   );
 
   return (
-    <main style={{ minHeight: "100vh", color: C.text }}>
+    <main style={{ color: C.text }}>
 
       {/* Avatar picker modal */}
       {showAvatarPicker && profileId && (
