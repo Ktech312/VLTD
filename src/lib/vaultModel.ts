@@ -1086,18 +1086,3 @@ export function loadItemsOrSeed(seed?: VaultItem[]) {
 
   return existing;
 }
- the current profile.
-  // Stamp each seed item with the active profile_id so it never leaks to
-  // another user via migrateMissingProfileIds.
-  const activeProfileId = getActiveProfileId();
-  const safeSeed = Array.isArray(seed) ? seed.filter(Boolean).map((item) =>
-    syncPrimaryFields(activeProfileId ? { ...item, profile_id: activeProfileId } : item)
-  ) : [];
-
-  if (safeSeed.length > 0) {
-    saveItems(safeSeed);
-    return loadItems();
-  }
-
-  return existing;
-}
