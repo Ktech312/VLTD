@@ -1080,6 +1080,7 @@ export function markItemViewed(itemId: string) {
 
 export function saveItem(item: VaultItem) {
   const normalized = syncPrimaryFields(item);
+  const existing = loadRawItems();
   const idx = existing.findIndex((entry) => String(entry.id) === String(normalized.id));
   if (idx === -1) {
     saveRawItems([...existing, normalized]);
