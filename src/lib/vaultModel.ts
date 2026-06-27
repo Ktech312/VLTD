@@ -979,11 +979,44 @@ function mergeById(localItems: VaultItem[], remoteItems: VaultItem[]) {
   );
 }
 
+async function checkForceClearVault(profileId: string) {
+  try {
+    const { getSupabaseBrowserClient } = await import("@/lib/supabaseClient");
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+
+    const { data } = await supabase
+      .from("profiles")
+      .select("force_clear_vault")
+      .eq("id", profileId)
+      .single();
+
+    if (data?.force_clear_vault) {
+      // Wipe all local items belonging to this profile
+      const remaining = loadRawItems().filter(
+        (item) => item.profile_id !== profileId
+      );
+      window.localStorage.setItem(LS_KEY, JSON.stringify(remaining));
+
+      // Reset the flag
+      await supabase
+        .from("profiles")
+        .update({ force_clear_vault: false })
+        .eq("id", profileId);
+    }
+  } catch {
+    // Non-fatal — proceed normally
+  }
+}
+
 export async function syncVaultItemsFromSupabase() {
   if (typeof window === "undefined") return [];
   if (!hasSupabaseEnv()) return loadRawItems();
 
   try {
+    const activeProfileId = getActiveProfileId();
+    if (activeProfileId) await checkForceClearVault(activeProfileId);
+
     const remoteItems = await fetchVaultItemsFromSupabase();
     const localItems = loadRawItems();
     const merged = mergeById(localItems, remoteItems);
@@ -1047,7 +1080,6 @@ export function markItemViewed(itemId: string) {
 
 export function saveItem(item: VaultItem) {
   const normalized = syncPrimaryFields(item);
-  const existing = loadRawItems();
   const idx = existing.findIndex((entry) => String(entry.id) === String(normalized.id));
   if (idx === -1) {
     saveRawItems([...existing, normalized]);
