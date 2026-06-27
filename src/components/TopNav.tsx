@@ -269,8 +269,8 @@ const MAIN_NAV_ITEMS = [
 // "More" dropdown items
 const MORE_NAV_ITEMS = [
   {
-    label: "Community Board", href: "/community-board", icon: IconCommunityBoard, exact: false,
-    desc: "Global leaderboards — see top collectors for every subject.",
+    label: "VLT Lounge", href: "/community-board", icon: IconCommunityBoard, exact: false,
+    desc: "Spotlights, MVPs & collector community.",
   },
   {
     label: "Marketplace",  href: "/market",     icon: IconMarketplace, exact: false,
@@ -473,11 +473,11 @@ function TopNavInner() {
         style={{ background: "var(--theme-nav-bg, rgba(11,19,32,0.96))", borderBottom: "1px solid var(--theme-nav-border, rgba(245,181,72,0.15))" }}
       >
         {/* ── Main nav row ── */}
-        <div className="mx-auto flex h-[64px] max-w-[1400px] items-center gap-4 px-4 sm:px-6">
+        <div className="mx-auto flex h-[52px] md:h-[64px] max-w-[1400px] items-center gap-4 px-4 sm:px-6">
 
           {/* Logo */}
           <Link href="/" className="shrink-0 flex items-center">
-            <Image src="/brand/vltd-logo.png" alt="VLTD" width={120} height={42} className="h-[42px] w-auto" priority />
+            <Image src="/brand/vltd-logo.png" alt="VLTD" width={120} height={42} className="h-[30px] md:h-[42px] w-auto" priority />
           </Link>
 
           {/* Desktop icon nav — centered */}
