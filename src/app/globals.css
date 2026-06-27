@@ -2121,11 +2121,11 @@ main {
   color: var(--data-color);
 }
 
-/* Bottom nav clearance — applied to main content wrapper on mobile */
-@media (max-width: 767px) {
-  .vltd-content-wrap {
-    padding-bottom: calc(var(--bottomnav-h) + max(env(safe-area-inset-bottom, 0px), 8px));
-  }
+/* NavShell fixed container already stops at bottom nav via `bottom:` CSS — no extra padding needed.
+   Also kill min-h-screen inside the scrollable shell so pages don't add blank space. */
+.vltd-content-wrap main,
+.vltd-content-wrap > div > main {
+  min-height: 0 !important;
 }
 
 /* =========================================================
