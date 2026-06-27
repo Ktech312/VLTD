@@ -186,6 +186,13 @@
   }
 }
 
+/* Desktop: bottom nav is hidden (md:hidden), so reserve no space for it */
+@media (min-width: 768px) {
+  :root {
+    --bottomnav-h: 0px;
+  }
+}
+
 /* =========================================================
    THEME CLASS BRIDGES
    ThemeProvider adds .theme-dark / .theme-light to <html>,
