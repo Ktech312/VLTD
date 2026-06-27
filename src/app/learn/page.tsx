@@ -89,7 +89,7 @@ export default function LearnPage() {
   const universeKeys = Object.keys(TAXONOMY) as UniverseKey[];
 
   return (
-    <main className="min-h-screen text-[color:var(--fg)]">
+    <main className="text-[color:var(--fg)]">
       {/* ── Nav ── */}
       <nav className="border-b border-[color:var(--border)]">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">

@@ -94,7 +94,7 @@ export default function InsuranceItemPage() {
   const item = useMemo(() => items.find((x) => String(x.id) === String(id)), [items, id]);
 
   return (
-    <main className="min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
+    <main className="px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <style>{`
         @media print {
           .no-print { display: none !important; }

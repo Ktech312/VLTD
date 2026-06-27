@@ -390,8 +390,8 @@ export default function PublicVaultPage({
   // ── Loading ──
   if (loading) {
     return (
-      <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
-        <div className="flex min-h-screen items-center justify-center">
+      <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
+        <div className="flex items-center justify-center">
           <div className="text-sm text-[color:var(--muted)]">Loading vault…</div>
         </div>
       </main>
@@ -401,7 +401,7 @@ export default function PublicVaultPage({
   // ── Error ──
   if (error) {
     return (
-      <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+      <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
         <div className="mx-auto max-w-lg px-4 py-20 text-center">
           <div className="text-4xl mb-4">🔒</div>
           <h1 className="text-xl font-semibold mb-2">Vault not found</h1>
@@ -415,7 +415,7 @@ export default function PublicVaultPage({
   }
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+    <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
 
       {/* ── Top nav bar ── */}
       <header className="sticky top-0 z-30 border-b border-[color:var(--border)] bg-[color:var(--surface)]/90 px-4 py-3 backdrop-blur">

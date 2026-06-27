@@ -310,7 +310,7 @@ export default function GuidePage() {
     .filter((f): f is Feature => !!f);
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--bg)" }}>
+    <div className="" style={{ background: "var(--bg)" }}>
       {/* Hero header */}
       <div
         className="border-b"

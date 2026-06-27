@@ -281,7 +281,7 @@ export default function CapturePage() {
 
   /* ── Render ── */
   return (
-    <main className="min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
+    <main className="px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
         <section
           className="relative overflow-hidden rounded-[34px] p-5 sm:p-7"

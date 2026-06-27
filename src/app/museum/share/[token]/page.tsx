@@ -206,14 +206,14 @@ function GalleryBackgroundShell({
   const hasBackground = !!backgroundUrl?.trim();
 
   return (
-    <main className="relative min-h-screen text-text-primary" style={getBackgroundShellStyle(backgroundUrl)}>
+    <main className="relative text-text-primary" style={getBackgroundShellStyle(backgroundUrl)}>
       {hasBackground ? (
         <div
           className="absolute inset-0 bg-vault-card backdrop-blur-[1.5px]"
           aria-hidden="true"
         />
       ) : null}
-      <div className="relative z-10 min-h-screen">{children}</div>
+      <div className="relative z-10 ">{children}</div>
     </main>
   );
 }
@@ -237,7 +237,7 @@ function GateCard({
 
   return (
     <GalleryBackgroundShell backgroundUrl={backgroundUrl}>
-      <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
+      <div className="mx-auto flex max-w-3xl items-center justify-center px-4">
         <div className="w-full rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
             SHARED EXHIBITION
@@ -484,7 +484,7 @@ export default function SharedGalleryPage() {
   if (!isResolved) {
     return (
       <GalleryBackgroundShell backgroundUrl={model.background.url}>
-        <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
+        <div className="mx-auto flex max-w-3xl items-center justify-center px-4">
           <div className="rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)]">
             Loading gallery...
           </div>
@@ -496,7 +496,7 @@ export default function SharedGalleryPage() {
   if (error) {
     return (
       <GalleryBackgroundShell backgroundUrl={model.background.url}>
-        <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
+        <div className="mx-auto flex max-w-3xl items-center justify-center px-4">
           <div className="rounded-[28px] border border-red-500/40 bg-red-500/10 p-8 text-center text-red-200">
             {error}
           </div>
@@ -508,7 +508,7 @@ export default function SharedGalleryPage() {
   if (!gallery) {
     return (
       <GalleryBackgroundShell backgroundUrl={model.background.url}>
-        <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
+        <div className="mx-auto flex max-w-3xl items-center justify-center px-4">
           <div className="rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               SHARED EXHIBITION
@@ -534,7 +534,7 @@ export default function SharedGalleryPage() {
   if (accessMode === "private") {
     return (
       <GalleryBackgroundShell backgroundUrl={model.background.url}>
-        <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
+        <div className="mx-auto flex max-w-3xl items-center justify-center px-4">
           <div className="w-full rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               SHARED EXHIBITION

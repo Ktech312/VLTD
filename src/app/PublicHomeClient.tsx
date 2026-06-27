@@ -355,11 +355,11 @@ export default function PublicHomeClient() {
 
   // Show nothing while checking auth (prevents flash of marketing page for logged-in users)
   if (!authChecked) {
-    return <div className="min-h-screen bg-[color:var(--bg)]" />;
+    return <div className="bg-[color:var(--bg)]" />;
   }
 
   return (
-    <main className="min-h-screen text-[color:var(--fg)]">
+    <main className="text-[color:var(--fg)]">
       <section className="border-b border-[color:var(--border)]">
         {/* ── Top nav ───────────────────────────────────────────── */}
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">

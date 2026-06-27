@@ -268,7 +268,7 @@ export default function ActivityPage() {
   const totalValue = items.reduce((sum, item) => sum + Number(item.currentValue ?? 0), 0);
 
   return (
-    <main className="min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
+    <main className="px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>

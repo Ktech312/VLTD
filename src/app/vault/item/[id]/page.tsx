@@ -271,7 +271,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
   if (!item) {
     return (
-      <main className="min-h-screen bg-[color:var(--bg)] px-4 py-10 text-[color:var(--fg)]">
+      <main className="bg-[color:var(--bg)] px-4 py-10 text-[color:var(--fg)]">
         <div className="mx-auto max-w-5xl rounded-[24px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)]">
           Item not found.
         </div>
@@ -729,7 +729,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
   return (
     <>
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+    <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-5 sm:py-6">
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_360px]">
           <div>

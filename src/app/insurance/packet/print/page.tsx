@@ -100,7 +100,7 @@ export default function InsurancePacketPrintPage() {
   }, [selectedItems]);
 
   return (
-    <main className="min-h-screen bg-white px-5 py-5 text-black">
+    <main className="bg-white px-5 py-5 text-black">
       <style>{`
         :root { color-scheme: light; }
         body { background: white !important; color: black !important; }

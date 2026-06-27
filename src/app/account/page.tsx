@@ -204,7 +204,7 @@ export default function AccountPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6 lg:px-8">
+      <main className="px-4 py-8 text-[color:var(--fg)] sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl rounded-[28px] border border-[color:var(--border)] p-6 text-[color:var(--muted)] shadow-[0_22px_72px_rgba(0,0,0,0.24)]" style={{ background: "var(--theme-card)" }}>
           Loading account...
         </div>
@@ -213,7 +213,7 @@ export default function AccountPage() {
   }
 
   return (
-    <main className="min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
+    <main className="px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
         <div className="mb-6 flex flex-wrap gap-2">
           <PillButton variant="active">Account</PillButton>

@@ -278,7 +278,7 @@ export default function VLTLoungePage() {
   });
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--bg)" }}>
+    <div className="" style={{ background: "var(--bg)" }}>
       {/* Header */}
       <div style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))", borderBottom: "1px solid var(--theme-border, rgba(245,181,72,0.12))" }}>
         <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">

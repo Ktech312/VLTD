@@ -241,7 +241,7 @@ export default function EventsPage() {
   ];
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--bg, #0B0F1A)" }}>
+    <div className="" style={{ background: "var(--bg, #0B0F1A)" }}>
       {/* Header */}
       <div className="border-b" style={{ background: "var(--surface, rgba(15,25,45,0.95))", borderColor: "var(--border, rgba(255,255,255,0.07))" }}>
         <div className="mx-auto max-w-4xl px-4 py-6">

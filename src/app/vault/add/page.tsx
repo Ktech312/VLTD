@@ -1685,7 +1685,7 @@ export default function AddPage() {
     cropEditorTarget === "media" ? cropMediaImage?.previewUrl : scanSession.image?.previewUrl;
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+    <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className={`w-full px-4 py-3 sm:px-6 sm:py-4 ${dropMode ? "pb-24" : "pb-20 sm:pb-4"}`}>
         <div className="sticky top-0 z-20 mx-auto mb-3 w-full max-w-5xl rounded-[16px] border border-[color:var(--theme-border)] bg-[color:var(--surface)]/92 p-3 backdrop-blur">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">

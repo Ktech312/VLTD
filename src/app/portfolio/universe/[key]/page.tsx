@@ -458,7 +458,7 @@ export default function UniverseDrillPage({
           : "All time";
 
   return (
-    <main className="min-h-screen text-[color:var(--fg)]">
+    <main className="text-[color:var(--fg)]">
       <div className="mx-auto max-w-6xl px-5 py-10">
         <section className="relative overflow-hidden rounded-[26px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] px-5 py-5 shadow-[0_18px_54px_rgba(0,0,0,0.3)] sm:px-6 sm:py-6">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),rgba(255,255,255,0)_28%),radial-gradient(circle_at_75%_0%,rgba(255,205,120,0.06),rgba(255,205,120,0)_22%)]" />

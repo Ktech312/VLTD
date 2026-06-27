@@ -125,7 +125,7 @@ export default function SubjectCommunityBoardPage({ params }: { params: Promise<
   const totalCollectors = entries.length;
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--bg)" }}>
+    <div className="" style={{ background: "var(--bg)" }}>
       {/* Header */}
       <div className="border-b border-[color:var(--border)]" style={{ background: "var(--surface)" }}>
         <div className="mx-auto max-w-2xl px-4 py-6">

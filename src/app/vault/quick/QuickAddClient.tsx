@@ -588,8 +588,8 @@ export default function QuickAddClient() {
   }
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
-      <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-3 py-2 sm:px-4">
+    <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
+      <div className="mx-auto flex w-full max-w-2xl flex-col px-3 py-2 sm:px-4">
         <div className="flex items-start gap-3">
           <div>
             <div className="text-[10px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">

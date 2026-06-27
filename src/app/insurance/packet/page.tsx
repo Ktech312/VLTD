@@ -107,7 +107,7 @@ export default function InsurancePacketPage() {
   const printHref = `/insurance/packet/print?page=${safePageIndex}&images=${includeImages ? "1" : "0"}`;
 
   return (
-    <main className="min-h-screen px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
+    <main className="px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <div className="packet-shell mx-auto max-w-6xl">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[color:var(--border)] bg-vault-card p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
           <Link href="/insurance" className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(245,181,72,0.42)]">

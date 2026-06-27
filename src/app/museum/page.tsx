@@ -297,7 +297,7 @@ export default function MuseumPage() {
   }
 
   return (
-    <main className="min-h-screen text-[color:var(--fg)]">
+    <main className="text-[color:var(--fg)]">
       <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-7">
         <input
           ref={coverInputRef}

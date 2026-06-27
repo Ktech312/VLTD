@@ -211,7 +211,7 @@ export default function SalesHistoryPage() {
   }, [sales, sort, search, universeFilter]);
 
   return (
-    <main className="min-h-screen" style={{ background: "var(--bg)", color: "var(--fg)" }}>
+    <main className="" style={{ background: "var(--bg)", color: "var(--fg)" }}>
       <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
 
         {/* Header */}

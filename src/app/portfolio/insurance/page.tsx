@@ -35,7 +35,7 @@ export default function InsuranceReportPage() {
   }
 
   return (
-    <main className="min-h-screen text-[color:var(--fg)]">
+    <main className="text-[color:var(--fg)]">
       {/* Print styles */}
       <style>{`
         @media print {

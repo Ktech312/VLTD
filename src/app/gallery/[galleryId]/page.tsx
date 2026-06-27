@@ -52,7 +52,7 @@ export default function PublicGalleryPage() {
 
   if (!gallery) {
     return (
-      <main className="min-h-screen text-[color:var(--fg)]">
+      <main className="text-[color:var(--fg)]">
         <div className="mx-auto max-w-4xl px-6 py-16">
           <div className="text-2xl font-semibold">This exhibit is private</div>
           <div className="mt-2 text-sm opacity-70">The owner has restricted public access.</div>
@@ -63,7 +63,7 @@ export default function PublicGalleryPage() {
 
   if (!canViewPublicGallery(gallery)) {
     return (
-      <main className="min-h-screen text-[color:var(--fg)]">
+      <main className="text-[color:var(--fg)]">
         <div className="mx-auto max-w-4xl px-6 py-16">
           <div className="text-2xl font-semibold">This exhibit is private</div>
           <div className="mt-2 text-sm opacity-70">The owner has restricted public access.</div>
@@ -77,7 +77,7 @@ export default function PublicGalleryPage() {
   }
 
   return (
-    <main className="min-h-screen text-[color:var(--fg)]">
+    <main className="text-[color:var(--fg)]">
       <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
 
         {/* Hero with all controls embedded */}

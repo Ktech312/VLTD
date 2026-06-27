@@ -486,7 +486,7 @@ export default function InviteGalleryPage() {
   if (pageState.status === "loading") {
     return (
       <main className={shellClass}>
-        <div className="mx-auto flex min-h-screen max-w-2xl items-center justify-center px-4">
+        <div className="mx-auto flex max-w-2xl items-center justify-center px-4">
           <div className="rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)]">
             Loading exhibit…
           </div>
@@ -498,7 +498,7 @@ export default function InviteGalleryPage() {
   if (pageState.status === "invalid") {
     return (
       <main className={shellClass}>
-        <div className="mx-auto flex min-h-screen max-w-2xl items-center justify-center px-4">
+        <div className="mx-auto flex max-w-2xl items-center justify-center px-4">
           <div className="w-full rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">INVITE LINK</div>
             <h1 className="mt-3 text-2xl font-semibold">Link not available</h1>
@@ -514,7 +514,7 @@ export default function InviteGalleryPage() {
   if (pageState.status === "expired") {
     return (
       <main className={shellClass}>
-        <div className="mx-auto flex min-h-screen max-w-2xl items-center justify-center px-4">
+        <div className="mx-auto flex max-w-2xl items-center justify-center px-4">
           <div className="w-full rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">INVITE LINK</div>
             <h1 className="mt-3 text-2xl font-semibold">Link expired</h1>

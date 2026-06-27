@@ -120,7 +120,7 @@ export default function BillingPage() {
   }
 
   return (
-    <main className="min-h-screen" style={{ background: "var(--bg)", color: "var(--fg)" }}>
+    <main className="" style={{ background: "var(--bg)", color: "var(--fg)" }}>
       <div className="border-b border-[color:var(--border)]" style={{ background: "var(--surface)" }}>
         <div className="mx-auto max-w-2xl px-4 py-4">
           <div className="flex flex-wrap gap-2">

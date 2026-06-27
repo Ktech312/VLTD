@@ -352,7 +352,7 @@ export default function AuctionItemPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg)" }}>
+      <div className="flex items-center justify-center" style={{ background: "var(--bg)" }}>
         <div className="text-sm" style={{ color: "var(--muted)" }}>Loading auction…</div>
       </div>
     );
@@ -360,7 +360,7 @@ export default function AuctionItemPage() {
 
   if (notFound || !item) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ background: "var(--bg)" }}>
+      <div className="flex flex-col items-center justify-center gap-4" style={{ background: "var(--bg)" }}>
         <div className="text-4xl">🔨</div>
         <div className="text-base font-semibold" style={{ color: "var(--fg)" }}>Auction not found</div>
         <Link href="/auction" className="text-sm underline" style={{ color: "var(--theme-gold)" }}>
@@ -376,7 +376,7 @@ export default function AuctionItemPage() {
   const currentBid = item.auctionCurrentBid ?? item.auctionStartingBid;
   const bidCount = item.auctionBidCount ?? 0;
   return (
-    <div className="min-h-screen" style={{ background: "var(--bg)" }}>
+    <div className="" style={{ background: "var(--bg)" }}>
       {/* Breadcrumb */}
       <div
         className="border-b border-[color:var(--border)] px-4 py-3"

@@ -586,7 +586,7 @@ export default function SoldPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+    <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1500px] px-3 py-3 sm:px-4 sm:py-4">
         <section className="relative overflow-hidden rounded-[18px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)]">
           <div className="relative flex flex-col gap-4">

@@ -292,8 +292,8 @@ export default function TextImportClient() {
   }
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
-      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-5 sm:px-6 sm:py-8">
+    <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
+      <div className="mx-auto flex w-full max-w-6xl flex-col px-4 py-5 sm:px-6 sm:py-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">VLTD Import</div>

@@ -274,7 +274,7 @@ export default function PortfolioClient() {
   }, [items, rankMode]);
 
   return (
-    <main className="min-h-screen text-[color:var(--fg)]">
+    <main className="text-[color:var(--fg)]">
       <div className="mx-auto max-w-6xl px-5 py-8">
         <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>

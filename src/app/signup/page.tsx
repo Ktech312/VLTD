@@ -43,7 +43,7 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="min-h-screen px-4 py-8 text-[color:var(--fg)] sm:px-6 sm:py-10">
+    <main className="px-4 py-8 text-[color:var(--fg)] sm:px-6 sm:py-10">
       <div className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-5xl flex-col">
         <Link href="/" className="w-fit text-sm font-medium text-[color:var(--muted2)] transition hover:text-[color:var(--fg)]">
           &lsaquo; Back to VLTD

@@ -510,7 +510,7 @@ export default function PortfolioPage() {
   const noValueCount = items.filter(i => !i.currentValue || Number(i.currentValue) <= 0).length;
 
   return (
-    <main className="min-h-screen text-[color:var(--fg)]">
+    <main className="text-[color:var(--fg)]">
       <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-7">
         {/* Breadcrumb */}
         <div className="mb-4 flex items-center gap-2 text-sm">

@@ -1086,3 +1086,5 @@ export function loadItemsOrSeed(seed?: VaultItem[]) {
 
   return existing;
 }
+
+}
