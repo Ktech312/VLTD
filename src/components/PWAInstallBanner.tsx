@@ -87,21 +87,17 @@ export default function PWAInstallBanner() {
     return (
       <div
         style={pillStyle}
-        className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#12101C]/95 px-3 py-2 shadow-xl backdrop-blur-xl"
+        className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-[#12101C]/95 px-2 py-1.5 shadow-xl backdrop-blur-xl"
       >
-        <img src="/icons/icon-96x96.png" alt="VLTD" className="h-8 w-8 rounded-xl flex-shrink-0" />
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-white leading-tight">Add to Home Screen</p>
-          <p className="text-[10px] text-white/40 leading-tight mt-0.5">No App Store needed</p>
-        </div>
+        <img src="/icons/icon-96x96.png" alt="VLTD" className="h-6 w-6 rounded-lg flex-shrink-0" />
+        <p className="text-[11px] font-semibold text-white whitespace-nowrap">Add to Home Screen</p>
         <button
           onClick={() => void install()}
           aria-label="Install"
-          style={{ minHeight: 36, minWidth: 36 }}
+          style={{ minHeight: 28, minWidth: 28 }}
           className="flex items-center justify-center rounded-full bg-amber-500 hover:bg-amber-400 transition flex-shrink-0"
         >
-          {/* Download / add icon */}
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5">
             <path d="M12 3v13M5 16l7 7 7-7"/>
             <path d="M4 21h16" strokeLinecap="round"/>
           </svg>
@@ -116,21 +112,12 @@ export default function PWAInstallBanner() {
     return (
       <div
         style={pillStyle}
-        className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#12101C]/95 px-3 py-2 shadow-xl backdrop-blur-xl"
+        className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-[#12101C]/95 px-2 py-1.5 shadow-xl backdrop-blur-xl"
       >
-        <img src="/icons/icon-96x96.png" alt="VLTD" className="h-8 w-8 rounded-xl flex-shrink-0" />
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-white leading-tight">Install VLTD</p>
-          <p className="text-[10px] text-white/40 leading-tight mt-0.5">
-            Tap{" "}
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline align-middle text-white/60">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-              <polyline points="16 6 12 2 8 6"/>
-              <line x1="12" y1="2" x2="12" y2="15"/>
-            </svg>
-            {" "}then Add to Home Screen
-          </p>
-        </div>
+        <img src="/icons/icon-96x96.png" alt="VLTD" className="h-6 w-6 rounded-lg flex-shrink-0" />
+        <p className="text-[11px] font-semibold text-white whitespace-nowrap">
+          Tap <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline align-middle text-white/60"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> → Add to Home Screen
+        </p>
         <XButton />
       </div>
     );
