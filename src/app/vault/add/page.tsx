@@ -1515,10 +1515,108 @@ export default function AddPage() {
         vinylMatrix: (normalizedValues.vinylMatrix ?? "").trim() || undefined,
         vinylSpeedRpm: (normalizedValues.vinylSpeedRpm ?? "") || undefined,
         vinylColor: (normalizedValues.vinylColor ?? "").trim() || undefined,
+        // TCG additions
+        tcgRarity: (normalizedValues.tcgRarity ?? "").trim() || undefined,
+        tcgLanguage: (normalizedValues.tcgLanguage ?? "").trim() || undefined,
+        tcgGradingCompany: (normalizedValues.tcgGradingCompany ?? "").trim() || undefined,
+        // Sports additions
+        sportsSport: (normalizedValues.sportsSport ?? "").trim() || undefined,
+        sportsTeam: (normalizedValues.sportsTeam ?? "").trim() || undefined,
+        sportsGradingCompany: (normalizedValues.sportsGradingCompany ?? "").trim() || undefined,
+        sportsPop: (normalizedValues.sportsPop ?? "").trim() || undefined,
+        sportsAutoAuth: (normalizedValues.sportsAutoAuth ?? "").trim() || undefined,
+        // Memorabilia
+        memorabiliaTeam: (normalizedValues.memorabiliaTeam ?? "").trim() || undefined,
+        memorabiliaEvent: (normalizedValues.memorabiliaEvent ?? "").trim() || undefined,
+        memorabiliaSigningDate: (normalizedValues.memorabiliaSigningDate ?? "").trim() || undefined,
+        memorabiliaWitnessed: normalizedValues.memorabiliaWitnessed === "true" ? true : undefined,
+        memorabiliaAuthCompany: (normalizedValues.memorabiliaAuthCompany ?? "").trim() || undefined,
+        memorabiliaGameUsed: normalizedValues.memorabiliaGameUsed === "true" ? true : undefined,
+        memorabiliaGameUsedDesc: (normalizedValues.memorabiliaGameUsedDesc ?? "").trim() || undefined,
+        // Vinyl additions
+        vinylCountry: (normalizedValues.vinylCountry ?? "").trim() || undefined,
+        vinylSleeveCondition: (normalizedValues.vinylSleeveCondition ?? "").trim() || undefined,
+        vinylInserts: normalizedValues.vinylInserts === "true" ? true : undefined,
+        vinylGatefold: normalizedValues.vinylGatefold === "true" ? true : undefined,
         // Comics
         comicIssueNumber: (normalizedValues.comicIssueNumber ?? "").trim() || undefined,
         comicCoverVariant: (normalizedValues.comicCoverVariant ?? "").trim() || undefined,
         comicArcTitle: (normalizedValues.comicArcTitle ?? "").trim() || undefined,
+        comicPublisher: (normalizedValues.comicPublisher ?? "").trim() || undefined,
+        comicCoverDate: (normalizedValues.comicCoverDate ?? "").trim() || undefined,
+        comicGradingCompany: (normalizedValues.comicGradingCompany ?? "").trim() || undefined,
+        comicPageQuality: (normalizedValues.comicPageQuality ?? "").trim() || undefined,
+        comicRestorationStatus: (normalizedValues.comicRestorationStatus ?? "").trim() || undefined,
+        comicHolderType: (normalizedValues.comicHolderType ?? "").trim() || undefined,
+        comicCensusRank: (normalizedValues.comicCensusRank ?? "").trim() || undefined,
+        // Original Comic Art
+        artPenciller: (normalizedValues.artPenciller ?? "").trim() || undefined,
+        artInker: (normalizedValues.artInker ?? "").trim() || undefined,
+        artColorist: (normalizedValues.artColorist ?? "").trim() || undefined,
+        artType: (normalizedValues.artType ?? "").trim() || undefined,
+        artFirstAppearance: (normalizedValues.artFirstAppearance ?? "").trim() || undefined,
+        // Toys
+        toyBrand: (normalizedValues.toyBrand ?? "").trim() || undefined,
+        toyLine: (normalizedValues.toyLine ?? "").trim() || undefined,
+        toyScale: (normalizedValues.toyScale ?? "").trim() || undefined,
+        toyPackageCondition: (normalizedValues.toyPackageCondition ?? "").trim() || undefined,
+        toyBoxIncluded: normalizedValues.toyBoxIncluded === "true" ? true : undefined,
+        toyAccessoriesIncluded: normalizedValues.toyAccessoriesIncluded === "true" ? true : undefined,
+        toyIsComplete: normalizedValues.toyIsComplete === "true" ? true : undefined,
+        // Art Cards
+        artCardArtist: (normalizedValues.artCardArtist ?? "").trim() || undefined,
+        artCardSet: (normalizedValues.artCardSet ?? "").trim() || undefined,
+        artCardType: (normalizedValues.artCardType ?? "").trim() || undefined,
+        // Art & Prints
+        artMedium: (normalizedValues.artMedium ?? "").trim() || undefined,
+        artSurface: (normalizedValues.artSurface ?? "").trim() || undefined,
+        artHeight: (normalizedValues.artHeight ?? "").trim() || undefined,
+        artWidth: (normalizedValues.artWidth ?? "").trim() || undefined,
+        artDepth: (normalizedValues.artDepth ?? "").trim() || undefined,
+        artIsFramed: normalizedValues.artIsFramed === "true" ? true : undefined,
+        artIsSigned: normalizedValues.artIsSigned === "true" ? true : undefined,
+        artSignatureLocation: (normalizedValues.artSignatureLocation ?? "").trim() || undefined,
+        artProvenance: (normalizedValues.artProvenance ?? "").trim() || undefined,
+        artExhibitions: (normalizedValues.artExhibitions ?? "").trim() || undefined,
+        // Watches
+        watchBrand: (normalizedValues.watchBrand ?? "").trim() || undefined,
+        watchReference: (normalizedValues.watchReference ?? "").trim() || undefined,
+        watchMovement: (normalizedValues.watchMovement ?? "").trim() || undefined,
+        watchCaseMaterial: (normalizedValues.watchCaseMaterial ?? "").trim() || undefined,
+        watchCaseSize: (normalizedValues.watchCaseSize ?? "").trim() || undefined,
+        watchDialColor: (normalizedValues.watchDialColor ?? "").trim() || undefined,
+        watchBox: normalizedValues.watchBox === "true" ? true : undefined,
+        watchPapers: normalizedValues.watchPapers === "true" ? true : undefined,
+        watchFullSet: normalizedValues.watchFullSet === "true" ? true : undefined,
+        // Bags
+        bagBrand: (normalizedValues.bagBrand ?? "").trim() || undefined,
+        bagColor: (normalizedValues.bagColor ?? "").trim() || undefined,
+        bagMaterial: (normalizedValues.bagMaterial ?? "").trim() || undefined,
+        bagHardware: (normalizedValues.bagHardware ?? "").trim() || undefined,
+        bagAuthCard: normalizedValues.bagAuthCard === "true" ? true : undefined,
+        bagDustbag: normalizedValues.bagDustbag === "true" ? true : undefined,
+        bagBox: normalizedValues.bagBox === "true" ? true : undefined,
+        // Apparel
+        apparelSize: (normalizedValues.apparelSize ?? "").trim() || undefined,
+        apparelColorway: (normalizedValues.apparelColorway ?? "").trim() || undefined,
+        apparelWorn: normalizedValues.apparelWorn === "true" ? true : undefined,
+        // Games
+        gamePlatform: (normalizedValues.gamePlatform ?? "").trim() || undefined,
+        gameRegion: (normalizedValues.gameRegion ?? "").trim() || undefined,
+        gameGradingCompany: (normalizedValues.gameGradingCompany ?? "").trim() || undefined,
+        gameIsSealed: normalizedValues.gameIsSealed === "true" ? true : undefined,
+        gameIsCIB: normalizedValues.gameIsCIB === "true" ? true : undefined,
+        gameHasManual: normalizedValues.gameHasManual === "true" ? true : undefined,
+        gamePublisher: (normalizedValues.gamePublisher ?? "").trim() || undefined,
+        // Coins
+        coinDenomination: (normalizedValues.coinDenomination ?? "").trim() || undefined,
+        coinCountry: (normalizedValues.coinCountry ?? "").trim() || undefined,
+        coinMint: (normalizedValues.coinMint ?? "").trim() || undefined,
+        coinMintMark: (normalizedValues.coinMintMark ?? "").trim() || undefined,
+        coinGradingCompany: (normalizedValues.coinGradingCompany ?? "").trim() || undefined,
+        coinPopulation: (normalizedValues.coinPopulation ?? "").trim() || undefined,
+        coinError: (normalizedValues.coinError ?? "").trim() || undefined,
+        coinKeyDate: normalizedValues.coinKeyDate === "true" ? true : undefined,
         notes: normalizedValues.notes.trim() || undefined,
         primaryImageKey,
         images,
@@ -1926,14 +2024,22 @@ export default function AddPage() {
                 </span>
               </label>
 
-              {/* TCG-specific fields */}
+              {/* ── TCG fields ───────────────────────────────────── */}
               {values.universe === "TCG" && (<>
-                <Field label="Parallel Type" locked={false} onToggleLock={() => {}}>
+                <Field label="Rarity" locked={false} onToggleLock={() => {}}>
+                  <input
+                    className={inputClass()}
+                    value={values.tcgRarity ?? ""}
+                    onChange={(e) => setField("tcgRarity", e.target.value)}
+                    placeholder="Holo Rare, Secret Rare, Ultra Rare, Common…"
+                  />
+                </Field>
+                <Field label="Parallel / Finish" locked={false} onToggleLock={() => {}}>
                   <input
                     className={inputClass()}
                     value={values.tcgParallelType ?? ""}
                     onChange={(e) => setField("tcgParallelType", e.target.value)}
-                    placeholder="Holo Rare, Rainbow Rare, Gold, Secret Rare…"
+                    placeholder="Rainbow Rare, Gold, Reverse Holo…"
                   />
                 </Field>
                 <Field label="Holo / Foil Type" locked={false} onToggleLock={() => {}}>
@@ -1941,7 +2047,7 @@ export default function AddPage() {
                     className={inputClass()}
                     value={values.tcgHoloType ?? ""}
                     onChange={(e) => setField("tcgHoloType", e.target.value)}
-                    placeholder="Cosmos Holo, Reverse Holo, Cracked Ice…"
+                    placeholder="Cosmos Holo, Cracked Ice, Crosshatch…"
                   />
                 </Field>
                 <Field label="Set Code" locked={false} onToggleLock={() => {}}>
@@ -1952,19 +2058,79 @@ export default function AddPage() {
                     placeholder="SV3pt5, BW1, EX Dragon…"
                   />
                 </Field>
+                <Field label="Language" locked={false} onToggleLock={() => {}}>
+                  <select
+                    className={inputClass()}
+                    value={values.tcgLanguage ?? ""}
+                    onChange={(e) => setField("tcgLanguage", e.target.value)}
+                  >
+                    <option value="">—</option>
+                    <option>English</option>
+                    <option>Japanese</option>
+                    <option>Korean</option>
+                    <option>Chinese</option>
+                    <option>German</option>
+                    <option>French</option>
+                    <option>Spanish</option>
+                    <option>Italian</option>
+                    <option>Portuguese</option>
+                  </select>
+                </Field>
+                <Field label="Grading Company" locked={false} onToggleLock={() => {}}>
+                  <select
+                    className={inputClass()}
+                    value={values.tcgGradingCompany ?? ""}
+                    onChange={(e) => setField("tcgGradingCompany", e.target.value)}
+                  >
+                    <option value="">Raw (Ungraded)</option>
+                    <option>PSA</option>
+                    <option>BGS / Beckett</option>
+                    <option>CGC</option>
+                    <option>SGC</option>
+                    <option>ACE</option>
+                  </select>
+                </Field>
               </>)}
 
-              {/* Sports-specific fields */}
-              {values.universe === "SPORTS" && (<>
-                <Field label="Parallel Type" locked={false} onToggleLock={() => {}}>
+              {/* ── Sports Cards fields ───────────────────────────── */}
+              {values.universe === "SPORTS" && selectedCategory === "Sports Cards" && (<>
+                <Field label="Sport" locked={false} onToggleLock={() => {}}>
+                  <select
+                    className={inputClass()}
+                    value={values.sportsSport ?? ""}
+                    onChange={(e) => setField("sportsSport", e.target.value)}
+                  >
+                    <option value="">—</option>
+                    <option>Baseball</option>
+                    <option>Basketball</option>
+                    <option>Football</option>
+                    <option>Soccer</option>
+                    <option>Hockey</option>
+                    <option>Golf</option>
+                    <option>Tennis</option>
+                    <option>UFC / MMA</option>
+                    <option>Racing</option>
+                    <option>Multi-Sport</option>
+                    <option>Other</option>
+                  </select>
+                </Field>
+                <Field label="Team" locked={false} onToggleLock={() => {}}>
+                  <input
+                    className={inputClass()}
+                    value={values.sportsTeam ?? ""}
+                    onChange={(e) => setField("sportsTeam", e.target.value)}
+                    placeholder="Lakers, Yankees, Chiefs…"
+                  />
+                </Field>
+                <Field label="Parallel / Color" locked={false} onToggleLock={() => {}}>
                   <input
                     className={inputClass()}
                     value={values.sportsParallelType ?? ""}
                     onChange={(e) => setField("sportsParallelType", e.target.value)}
-                    placeholder="Prizm Silver, Mosaic Reactive Blue, Refractor…"
+                    placeholder="Prizm Silver, Reactive Blue, Gold Refractor…"
                   />
                 </Field>
-                <Field label="Serial Number" locked={false} onToggleLock={() => {}}>
+                <Field label="Serial / Print Run" locked={false} onToggleLock={() => {}}>
                   <input
                     className={inputClass()}
                     value={values.sportsSerialNumber ?? ""}
@@ -1972,60 +2138,129 @@ export default function AddPage() {
                     placeholder="/25, /10, 1/1…"
                   />
                 </Field>
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <Field label="Grading Company" locked={false} onToggleLock={() => {}}>
+                  <select
+                    className={inputClass()}
+                    value={values.sportsGradingCompany ?? ""}
+                    onChange={(e) => setField("sportsGradingCompany", e.target.value)}
+                  >
+                    <option value="">Raw (Ungraded)</option>
+                    <option>PSA</option>
+                    <option>BGS / Beckett</option>
+                    <option>SGC</option>
+                    <option>CGC</option>
+                    <option>HGA</option>
+                    <option>KSA</option>
+                  </select>
+                </Field>
+                <Field label="Pop Report" locked={false} onToggleLock={() => {}}>
                   <input
-                    type="checkbox"
-                    checked={values.sportsIsRelic === "true"}
-                    onChange={(e) => setField("sportsIsRelic", e.target.checked ? "true" : "")}
-                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]"
+                    className={inputClass()}
+                    value={values.sportsPop ?? ""}
+                    onChange={(e) => setField("sportsPop", e.target.value)}
+                    placeholder="e.g., 12 at this grade, 3 higher"
                   />
+                </Field>
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input type="checkbox" checked={values.sportsIsRelic === "true"}
+                    onChange={(e) => setField("sportsIsRelic", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
                   <span className="text-sm" style={{ color: "var(--fg)" }}>Relic / Patch Card</span>
                 </label>
                 {values.sportsIsRelic === "true" && (
                   <Field label="Relic Description" locked={false} onToggleLock={() => {}}>
-                    <input
-                      className={inputClass()}
-                      value={values.sportsRelicDescription ?? ""}
+                    <input className={inputClass()} value={values.sportsRelicDescription ?? ""}
                       onChange={(e) => setField("sportsRelicDescription", e.target.value)}
-                      placeholder="Game-used jersey, 3-color patch…"
-                    />
+                      placeholder="Game-used jersey, 3-color patch…" />
                   </Field>
                 )}
                 <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
-                  <input
-                    type="checkbox"
-                    checked={values.sportsIsAuto === "true"}
+                  <input type="checkbox" checked={values.sportsIsAuto === "true"}
                     onChange={(e) => setField("sportsIsAuto", e.target.checked ? "true" : "")}
-                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]"
-                  />
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
                   <span className="text-sm" style={{ color: "var(--fg)" }}>Autograph</span>
                 </label>
+                {values.sportsIsAuto === "true" && (
+                  <Field label="Auto Authenticator" locked={false} onToggleLock={() => {}}>
+                    <select className={inputClass()} value={values.sportsAutoAuth ?? ""}
+                      onChange={(e) => setField("sportsAutoAuth", e.target.value)}>
+                      <option value="">—</option>
+                      <option>On-Card (PSA/DNA)</option>
+                      <option>On-Card (JSA)</option>
+                      <option>On-Card (Beckett)</option>
+                      <option>Stickered</option>
+                      <option>Unverified</option>
+                    </select>
+                  </Field>
+                )}
               </>)}
 
-              {/* Vinyl / Music-specific fields */}
+              {/* ── Sports Memorabilia fields ─────────────────────── */}
+              {values.universe === "SPORTS" && selectedCategory === "Memorabilia" && (<>
+                <Field label="Sport / Team" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.memorabiliaTeam ?? ""}
+                    onChange={(e) => setField("memorabiliaTeam", e.target.value)}
+                    placeholder="Lakers, Yankees, Team USA…" />
+                </Field>
+                <Field label="Event / Season" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.memorabiliaEvent ?? ""}
+                    onChange={(e) => setField("memorabiliaEvent", e.target.value)}
+                    placeholder="2000 Finals, 1998 World Series, Super Bowl LV…" />
+                </Field>
+                <Field label="Signing Date" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.memorabiliaSigningDate ?? ""}
+                    onChange={(e) => setField("memorabiliaSigningDate", e.target.value)}
+                    placeholder="March 12, 2023" />
+                </Field>
+                <Field label="Auth Company" locked={false} onToggleLock={() => {}}>
+                  <select className={inputClass()} value={values.memorabiliaAuthCompany ?? ""}
+                    onChange={(e) => setField("memorabiliaAuthCompany", e.target.value)}>
+                    <option value="">—</option>
+                    <option>PSA/DNA</option><option>JSA</option><option>Beckett</option>
+                    <option>Steiner</option><option>Fanatics</option><option>Unverified</option>
+                  </select>
+                </Field>
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input type="checkbox" checked={values.memorabiliaWitnessed === "true"}
+                    onChange={(e) => setField("memorabiliaWitnessed", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>Signing witnessed</span>
+                </label>
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input type="checkbox" checked={values.memorabiliaGameUsed === "true"}
+                    onChange={(e) => setField("memorabiliaGameUsed", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>Game used / match worn</span>
+                </label>
+                {values.memorabiliaGameUsed === "true" && (
+                  <Field label="Game-Used Description" locked={false} onToggleLock={() => {}}>
+                    <input className={inputClass()} value={values.memorabiliaGameUsedDesc ?? ""}
+                      onChange={(e) => setField("memorabiliaGameUsedDesc", e.target.value)}
+                      placeholder="Jersey worn Game 7, bat used 2002 ALCS…" />
+                  </Field>
+                )}
+              </>)}
+
+              {/* ── Vinyl / Music fields ──────────────────────────── */}
               {values.universe === "MUSIC" && (<>
                 <Field label="Pressing" locked={false} onToggleLock={() => {}}>
-                  <input
-                    className={inputClass()}
-                    value={values.vinylPressing ?? ""}
+                  <input className={inputClass()} value={values.vinylPressing ?? ""}
                     onChange={(e) => setField("vinylPressing", e.target.value)}
-                    placeholder="Original Press, Reissue, 180g, Limited…"
-                  />
+                    placeholder="Original Press, Reissue, 180g, Limited…" />
                 </Field>
                 <Field label="Label" locked={false} onToggleLock={() => {}}>
-                  <input
-                    className={inputClass()}
-                    value={values.vinylLabel ?? ""}
+                  <input className={inputClass()} value={values.vinylLabel ?? ""}
                     onChange={(e) => setField("vinylLabel", e.target.value)}
-                    placeholder="Blue Note, Impulse!, Motown, Columbia…"
-                  />
+                    placeholder="Blue Note, Impulse!, Motown, Columbia…" />
+                </Field>
+                <Field label="Country of Pressing" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.vinylCountry ?? ""}
+                    onChange={(e) => setField("vinylCountry", e.target.value)}
+                    placeholder="US, UK, Japan, Germany…" />
                 </Field>
                 <Field label="Speed (RPM)" locked={false} onToggleLock={() => {}}>
-                  <select
-                    className={inputClass()}
-                    value={values.vinylSpeedRpm ?? ""}
-                    onChange={(e) => setField("vinylSpeedRpm", e.target.value)}
-                  >
+                  <select className={inputClass()} value={values.vinylSpeedRpm ?? ""}
+                    onChange={(e) => setField("vinylSpeedRpm", e.target.value)}>
                     <option value="">—</option>
                     <option value="33">33 RPM</option>
                     <option value="45">45 RPM</option>
@@ -2033,52 +2268,470 @@ export default function AddPage() {
                   </select>
                 </Field>
                 <Field label="Vinyl Color" locked={false} onToggleLock={() => {}}>
-                  <input
-                    className={inputClass()}
-                    value={values.vinylColor ?? ""}
+                  <input className={inputClass()} value={values.vinylColor ?? ""}
                     onChange={(e) => setField("vinylColor", e.target.value)}
-                    placeholder="Black, Clear, Red, Picture Disc…"
-                  />
+                    placeholder="Black, Clear, Red, Picture Disc…" />
+                </Field>
+                <Field label="Sleeve Condition" locked={false} onToggleLock={() => {}}>
+                  <select className={inputClass()} value={values.vinylSleeveCondition ?? ""}
+                    onChange={(e) => setField("vinylSleeveCondition", e.target.value)}>
+                    <option value="">—</option>
+                    <option>Mint (M)</option><option>Near Mint (NM)</option>
+                    <option>Very Good Plus (VG+)</option><option>Very Good (VG)</option>
+                    <option>Good Plus (G+)</option><option>Good (G)</option><option>Fair (F)</option>
+                  </select>
                 </Field>
                 <div className="sm:col-span-2">
                   <Field label="Matrix / Runout" locked={false} onToggleLock={() => {}}>
-                    <input
-                      className={inputClass()}
-                      value={values.vinylMatrix ?? ""}
+                    <input className={inputClass()} value={values.vinylMatrix ?? ""}
                       onChange={(e) => setField("vinylMatrix", e.target.value)}
-                      placeholder="Etched matrix info from the dead wax"
-                    />
+                      placeholder="Etched matrix info from the dead wax" />
+                  </Field>
+                </div>
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input type="checkbox" checked={values.vinylInserts === "true"}
+                    onChange={(e) => setField("vinylInserts", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>Inserts / lyric sheet included</span>
+                </label>
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input type="checkbox" checked={values.vinylGatefold === "true"}
+                    onChange={(e) => setField("vinylGatefold", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>Gatefold sleeve</span>
+                </label>
+              </>)}
+
+              {/* ── Comics fields ─────────────────────────────────── */}
+              {values.universe === "POP_CULTURE" && selectedCategory === "Comics" && (<>
+                <Field label="Publisher" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.comicPublisher ?? ""}
+                    onChange={(e) => setField("comicPublisher", e.target.value)}
+                    placeholder="Marvel, DC, Image, Dark Horse, IDW, Indie…" />
+                </Field>
+                <Field label="Issue Number" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.comicIssueNumber ?? ""}
+                    onChange={(e) => setField("comicIssueNumber", e.target.value)}
+                    placeholder="#1, Vol 2 #4, Annual #1…" />
+                </Field>
+                <Field label="Cover Date" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.comicCoverDate ?? ""}
+                    onChange={(e) => setField("comicCoverDate", e.target.value)}
+                    placeholder="July 1962, Dec 1939 (as printed on cover)" />
+                </Field>
+                <Field label="Cover Variant" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.comicCoverVariant ?? ""}
+                    onChange={(e) => setField("comicCoverVariant", e.target.value)}
+                    placeholder="Variant A, Incentive, Sketch, Foil…" />
+                </Field>
+                <Field label="Arc / Story Title" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.comicArcTitle ?? ""}
+                    onChange={(e) => setField("comicArcTitle", e.target.value)}
+                    placeholder="The Dark Phoenix Saga, Knightfall…" />
+                </Field>
+                <Field label="Grading Company" locked={false} onToggleLock={() => {}}>
+                  <select className={inputClass()} value={values.comicGradingCompany ?? ""}
+                    onChange={(e) => setField("comicGradingCompany", e.target.value)}>
+                    <option value="">Raw (Ungraded)</option>
+                    <option>CGC</option><option>CBCS</option><option>PGX</option><option>CGS</option>
+                  </select>
+                </Field>
+                {values.comicGradingCompany && values.comicGradingCompany !== "Raw (Ungraded)" && (<>
+                  <Field label="Page Quality" locked={false} onToggleLock={() => {}}>
+                    <select className={inputClass()} value={values.comicPageQuality ?? ""}
+                      onChange={(e) => setField("comicPageQuality", e.target.value)}>
+                      <option value="">—</option>
+                      <option>White</option><option>Off-White/White</option><option>Off-White</option>
+                      <option>Light Tan</option><option>Tan</option><option>Cream</option><option>Yellow</option>
+                    </select>
+                  </Field>
+                  <Field label="Restoration Status" locked={false} onToggleLock={() => {}}>
+                    <select className={inputClass()} value={values.comicRestorationStatus ?? ""}
+                      onChange={(e) => setField("comicRestorationStatus", e.target.value)}>
+                      <option value="">—</option>
+                      <option>None / Unrestored</option><option>Slight</option>
+                      <option>Moderate</option><option>Extensive</option><option>Qualified</option>
+                    </select>
+                  </Field>
+                  <Field label="Holder Type" locked={false} onToggleLock={() => {}}>
+                    <select className={inputClass()} value={values.comicHolderType ?? ""}
+                      onChange={(e) => setField("comicHolderType", e.target.value)}>
+                      <option value="">—</option>
+                      <option>Universal</option><option>Signature Series</option>
+                      <option>Pedigree</option><option>Conserved</option><option>Restored</option>
+                    </select>
+                  </Field>
+                  <Field label="Census Rank" locked={false} onToggleLock={() => {}}>
+                    <input className={inputClass()} value={values.comicCensusRank ?? ""}
+                      onChange={(e) => setField("comicCensusRank", e.target.value)}
+                      placeholder="e.g., Highest Graded — 1 of 4" />
+                  </Field>
+                </>)}
+              </>)}
+
+              {/* ── Toys fields ───────────────────────────────────── */}
+              {values.universe === "POP_CULTURE" && selectedCategory === "Toys" && (<>
+                <Field label="Brand / Manufacturer" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.toyBrand ?? ""}
+                    onChange={(e) => setField("toyBrand", e.target.value)}
+                    placeholder="Hasbro, Mattel, NECA, McFarlane, Hot Toys, Funko…" />
+                </Field>
+                <Field label="Toy Line / Series" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.toyLine ?? ""}
+                    onChange={(e) => setField("toyLine", e.target.value)}
+                    placeholder="Marvel Legends, Star Wars Black Series, MOTU…" />
+                </Field>
+                <Field label="Scale" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.toyScale ?? ""}
+                    onChange={(e) => setField("toyScale", e.target.value)}
+                    placeholder='1:6, 1:12, 3.75", 6", 12", Life-Size' />
+                </Field>
+                <Field label="Package Condition" locked={false} onToggleLock={() => {}}>
+                  <select className={inputClass()} value={values.toyPackageCondition ?? ""}
+                    onChange={(e) => setField("toyPackageCondition", e.target.value)}>
+                    <option value="">—</option>
+                    <option>MOC (Mint on Card)</option><option>MIB (Mint in Box)</option>
+                    <option>MISB (Mint in Sealed Box)</option><option>C-9</option>
+                    <option>C-8</option><option>Loose</option>
+                  </select>
+                </Field>
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input type="checkbox" checked={values.toyBoxIncluded === "true"}
+                    onChange={(e) => setField("toyBoxIncluded", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>Box included</span>
+                </label>
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input type="checkbox" checked={values.toyAccessoriesIncluded === "true"}
+                    onChange={(e) => setField("toyAccessoriesIncluded", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>All accessories / inserts present</span>
+                </label>
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input type="checkbox" checked={values.toyIsComplete === "true"}
+                    onChange={(e) => setField("toyIsComplete", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>Complete — all parts accounted for</span>
+                </label>
+              </>)}
+
+              {/* ── Art Cards fields ──────────────────────────────── */}
+              {values.universe === "POP_CULTURE" && selectedCategory === "Art Cards" && (<>
+                <Field label="Artist" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.artCardArtist ?? ""}
+                    onChange={(e) => setField("artCardArtist", e.target.value)}
+                    placeholder="Artist name" />
+                </Field>
+                <Field label="Card Set / Event" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.artCardSet ?? ""}
+                    onChange={(e) => setField("artCardSet", e.target.value)}
+                    placeholder="SDCC 2024, Artist Alley, Convention sketch…" />
+                </Field>
+                <Field label="Card Type" locked={false} onToggleLock={() => {}}>
+                  <select className={inputClass()} value={values.artCardType ?? ""}
+                    onChange={(e) => setField("artCardType", e.target.value)}>
+                    <option value="">—</option>
+                    <option>Sketch Card</option><option>Artist Proof</option>
+                    <option>Limited Print</option><option>Original Art</option>
+                  </select>
+                </Field>
+              </>)}
+
+              {/* ── Art & Prints (Fine Art) fields ────────────────── */}
+              {values.universe === "MISC" && selectedCategory === "Art & Prints" && (<>
+                <Field label="Medium" locked={false} onToggleLock={() => {}}>
+                  <select className={inputClass()} value={values.artMedium ?? ""}
+                    onChange={(e) => setField("artMedium", e.target.value)}>
+                    <option value="">—</option>
+                    <option>Oil on Canvas</option><option>Acrylic on Canvas</option>
+                    <option>Watercolor</option><option>Pen &amp; Ink</option><option>Pencil</option>
+                    <option>Mixed Media</option><option>Digital Print</option>
+                    <option>Screenprint</option><option>Lithograph</option>
+                    <option>Etching</option><option>Photography</option><option>Sculpture</option>
+                    <option>Other</option>
+                  </select>
+                </Field>
+                <Field label="Surface" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.artSurface ?? ""}
+                    onChange={(e) => setField("artSurface", e.target.value)}
+                    placeholder="Canvas, Panel, Bristol, Paper, Illustration Board…" />
+                </Field>
+                <Field label="Width (in)" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.artWidth ?? ""}
+                    onChange={(e) => setField("artWidth", e.target.value)} placeholder='e.g., 11"' />
+                </Field>
+                <Field label="Height (in)" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.artHeight ?? ""}
+                    onChange={(e) => setField("artHeight", e.target.value)} placeholder='e.g., 17"' />
+                </Field>
+                <Field label="Depth (in)" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.artDepth ?? ""}
+                    onChange={(e) => setField("artDepth", e.target.value)}
+                    placeholder='e.g., 1.5" (optional)' />
+                </Field>
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input type="checkbox" checked={values.artIsSigned === "true"}
+                    onChange={(e) => setField("artIsSigned", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>Signed by artist</span>
+                </label>
+                {values.artIsSigned === "true" && (
+                  <Field label="Signature Location" locked={false} onToggleLock={() => {}}>
+                    <input className={inputClass()} value={values.artSignatureLocation ?? ""}
+                      onChange={(e) => setField("artSignatureLocation", e.target.value)}
+                      placeholder="Lower right, lower left, verso…" />
+                  </Field>
+                )}
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input type="checkbox" checked={values.artIsFramed === "true"}
+                    onChange={(e) => setField("artIsFramed", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>Framed</span>
+                </label>
+                <div className="sm:col-span-2">
+                  <Field label="Provenance" locked={false} onToggleLock={() => {}}>
+                    <textarea className={textareaClass(false)} value={values.artProvenance ?? ""}
+                      onChange={(e) => setField("artProvenance", e.target.value)}
+                      placeholder="Purchased from gallery / artist directly, collection history…" />
+                  </Field>
+                </div>
+                <div className="sm:col-span-2">
+                  <Field label="Exhibition History" locked={false} onToggleLock={() => {}}>
+                    <textarea className={textareaClass(false)} value={values.artExhibitions ?? ""}
+                      onChange={(e) => setField("artExhibitions", e.target.value)}
+                      placeholder="Shows, galleries, or publications this piece has appeared in…" />
                   </Field>
                 </div>
               </>)}
 
-              {/* Comics-specific fields */}
-              {values.universe === "POP_CULTURE" && (<>
-                <Field label="Issue Number" locked={false} onToggleLock={() => {}}>
-                  <input
-                    className={inputClass()}
-                    value={values.comicIssueNumber ?? ""}
-                    onChange={(e) => setField("comicIssueNumber", e.target.value)}
-                    placeholder="#1, Vol 2 #4, Annual #1…"
-                  />
+              {/* ── Watches fields ────────────────────────────────── */}
+              {values.universe === "JEWELRY_APPAREL" && selectedCategory === "Watches" && (<>
+                <Field label="Brand" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.watchBrand ?? ""}
+                    onChange={(e) => setField("watchBrand", e.target.value)}
+                    placeholder="Rolex, Patek Philippe, AP, Omega, Seiko…" />
                 </Field>
-                <Field label="Cover Variant" locked={false} onToggleLock={() => {}}>
-                  <input
-                    className={inputClass()}
-                    value={values.comicCoverVariant ?? ""}
-                    onChange={(e) => setField("comicCoverVariant", e.target.value)}
-                    placeholder="Variant A, Incentive, Sketch, Foil…"
-                  />
+                <Field label="Reference / Model" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.watchReference ?? ""}
+                    onChange={(e) => setField("watchReference", e.target.value)}
+                    placeholder="116610LN, 5711/1A-010…" />
                 </Field>
-                <Field label="Arc / Story Title" locked={false} onToggleLock={() => {}}>
-                  <input
-                    className={inputClass()}
-                    value={values.comicArcTitle ?? ""}
-                    onChange={(e) => setField("comicArcTitle", e.target.value)}
-                    placeholder="The Dark Phoenix Saga, Knightfall…"
-                  />
+                <Field label="Movement" locked={false} onToggleLock={() => {}}>
+                  <select className={inputClass()} value={values.watchMovement ?? ""}
+                    onChange={(e) => setField("watchMovement", e.target.value)}>
+                    <option value="">—</option>
+                    <option>Automatic</option><option>Manual Wind</option>
+                    <option>Quartz</option><option>Solar</option><option>Spring Drive</option>
+                  </select>
                 </Field>
+                <Field label="Case Material" locked={false} onToggleLock={() => {}}>
+                  <select className={inputClass()} value={values.watchCaseMaterial ?? ""}
+                    onChange={(e) => setField("watchCaseMaterial", e.target.value)}>
+                    <option value="">—</option>
+                    <option>Stainless Steel</option><option>Yellow Gold</option>
+                    <option>White Gold</option><option>Rose Gold</option>
+                    <option>Titanium</option><option>Platinum</option><option>Ceramic</option><option>Other</option>
+                  </select>
+                </Field>
+                <Field label="Case Size (mm)" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.watchCaseSize ?? ""}
+                    onChange={(e) => setField("watchCaseSize", e.target.value)}
+                    placeholder="40mm, 36mm, 41mm…" />
+                </Field>
+                <Field label="Dial Color" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.watchDialColor ?? ""}
+                    onChange={(e) => setField("watchDialColor", e.target.value)}
+                    placeholder="Black, Blue, White, Champagne, Green…" />
+                </Field>
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input type="checkbox" checked={values.watchBox === "true"}
+                    onChange={(e) => setField("watchBox", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>Original box included</span>
+                </label>
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input type="checkbox" checked={values.watchPapers === "true"}
+                    onChange={(e) => setField("watchPapers", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>Papers / warranty card included</span>
+                </label>
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input type="checkbox" checked={values.watchFullSet === "true"}
+                    onChange={(e) => setField("watchFullSet", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>Full set (box + papers + all accessories)</span>
+                </label>
               </>)}
+
+              {/* ── Bags / Handbags fields ────────────────────────── */}
+              {values.universe === "JEWELRY_APPAREL" && selectedCategory === "Bags" && (<>
+                <Field label="Brand" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.bagBrand ?? ""}
+                    onChange={(e) => setField("bagBrand", e.target.value)}
+                    placeholder="Hermès, Chanel, Louis Vuitton, Gucci, Prada…" />
+                </Field>
+                <Field label="Color" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.bagColor ?? ""}
+                    onChange={(e) => setField("bagColor", e.target.value)}
+                    placeholder="Black, Togo Étoupe, Rose Gold…" />
+                </Field>
+                <Field label="Material / Leather" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.bagMaterial ?? ""}
+                    onChange={(e) => setField("bagMaterial", e.target.value)}
+                    placeholder="Togo, Clemence, Epsom, Canvas, Patent…" />
+                </Field>
+                <Field label="Hardware" locked={false} onToggleLock={() => {}}>
+                  <select className={inputClass()} value={values.bagHardware ?? ""}
+                    onChange={(e) => setField("bagHardware", e.target.value)}>
+                    <option value="">—</option>
+                    <option>Gold Hardware (GHW)</option><option>Silver Hardware (SHW)</option>
+                    <option>Palladium Hardware (PHW)</option><option>Rose Gold Hardware (RGHW)</option>
+                    <option>Brushed Gold</option><option>Ruthenium</option>
+                  </select>
+                </Field>
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input type="checkbox" checked={values.bagAuthCard === "true"}
+                    onChange={(e) => setField("bagAuthCard", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>Authentication card included</span>
+                </label>
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input type="checkbox" checked={values.bagDustbag === "true"}
+                    onChange={(e) => setField("bagDustbag", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>Dust bag included</span>
+                </label>
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input type="checkbox" checked={values.bagBox === "true"}
+                    onChange={(e) => setField("bagBox", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>Original box included</span>
+                </label>
+              </>)}
+
+              {/* ── Apparel / Streetwear fields ───────────────────── */}
+              {values.universe === "JEWELRY_APPAREL" && selectedCategory === "Apparel" && (<>
+                <Field label="Size" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.apparelSize ?? ""}
+                    onChange={(e) => setField("apparelSize", e.target.value)}
+                    placeholder="S, M, L, XL, XXL, 32W 30L, US 10…" />
+                </Field>
+                <Field label="Colorway" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.apparelColorway ?? ""}
+                    onChange={(e) => setField("apparelColorway", e.target.value)}
+                    placeholder="Triple White, University Red, Black/Gum…" />
+                </Field>
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input type="checkbox" checked={values.apparelWorn === "true"}
+                    onChange={(e) => setField("apparelWorn", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>Worn / used</span>
+                </label>
+              </>)}
+
+              {/* ── Games / Video Games fields ────────────────────── */}
+              {values.universe === "GAMES" && selectedCategory === "Video Games" && (<>
+                <Field label="Platform" locked={false} onToggleLock={() => {}}>
+                  <select className={inputClass()} value={values.gamePlatform ?? ""}
+                    onChange={(e) => setField("gamePlatform", e.target.value)}>
+                    <option value="">—</option>
+                    <option>NES</option><option>SNES</option><option>N64</option><option>GameCube</option>
+                    <option>Wii</option><option>Wii U</option><option>Nintendo Switch</option>
+                    <option>Game Boy</option><option>GBA</option><option>DS</option><option>3DS</option>
+                    <option>Sega Genesis</option><option>Sega Saturn</option><option>Dreamcast</option>
+                    <option>PlayStation</option><option>PS2</option><option>PS3</option>
+                    <option>PS4</option><option>PS5</option>
+                    <option>Xbox</option><option>Xbox 360</option><option>Xbox One</option><option>Xbox Series</option>
+                    <option>Atari 2600</option><option>PC</option><option>Other</option>
+                  </select>
+                </Field>
+                <Field label="Region" locked={false} onToggleLock={() => {}}>
+                  <select className={inputClass()} value={values.gameRegion ?? ""}
+                    onChange={(e) => setField("gameRegion", e.target.value)}>
+                    <option value="">—</option>
+                    <option>NTSC-U (North America)</option><option>PAL (Europe/Australia)</option>
+                    <option>NTSC-J (Japan)</option><option>Other</option>
+                  </select>
+                </Field>
+                <Field label="Publisher" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.gamePublisher ?? ""}
+                    onChange={(e) => setField("gamePublisher", e.target.value)}
+                    placeholder="Nintendo, Capcom, Konami, Square…" />
+                </Field>
+                <Field label="Grading Company" locked={false} onToggleLock={() => {}}>
+                  <select className={inputClass()} value={values.gameGradingCompany ?? ""}
+                    onChange={(e) => setField("gameGradingCompany", e.target.value)}>
+                    <option value="">Raw (Ungraded)</option>
+                    <option>WATA</option><option>VGA</option><option>CGC</option>
+                  </select>
+                </Field>
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input type="checkbox" checked={values.gameIsSealed === "true"}
+                    onChange={(e) => setField("gameIsSealed", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>Sealed / factory sealed</span>
+                </label>
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input type="checkbox" checked={values.gameIsCIB === "true"}
+                    onChange={(e) => setField("gameIsCIB", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>CIB (Complete In Box)</span>
+                </label>
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input type="checkbox" checked={values.gameHasManual === "true"}
+                    onChange={(e) => setField("gameHasManual", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>Manual included</span>
+                </label>
+              </>)}
+
+              {/* ── Coins & Currency fields ───────────────────────── */}
+              {values.universe === "MISC" && selectedCategory === "Coins & Currency" && (<>
+                <Field label="Denomination" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.coinDenomination ?? ""}
+                    onChange={(e) => setField("coinDenomination", e.target.value)}
+                    placeholder="Morgan Dollar, Lincoln Cent, Double Eagle…" />
+                </Field>
+                <Field label="Country" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.coinCountry ?? ""}
+                    onChange={(e) => setField("coinCountry", e.target.value)}
+                    placeholder="USA, UK, Germany, Japan…" />
+                </Field>
+                <Field label="Mint" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.coinMint ?? ""}
+                    onChange={(e) => setField("coinMint", e.target.value)}
+                    placeholder="Philadelphia, Denver, San Francisco, Carson City…" />
+                </Field>
+                <Field label="Mint Mark" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.coinMintMark ?? ""}
+                    onChange={(e) => setField("coinMintMark", e.target.value)}
+                    placeholder="P, D, S, CC, O, W — or none" />
+                </Field>
+                <Field label="Grading Company" locked={false} onToggleLock={() => {}}>
+                  <select className={inputClass()} value={values.coinGradingCompany ?? ""}
+                    onChange={(e) => setField("coinGradingCompany", e.target.value)}>
+                    <option value="">Raw (Ungraded)</option>
+                    <option>PCGS</option><option>NGC</option><option>ANACS</option><option>ICG</option>
+                  </select>
+                </Field>
+                <Field label="Pop / Census" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.coinPopulation ?? ""}
+                    onChange={(e) => setField("coinPopulation", e.target.value)}
+                    placeholder="e.g., 12 at this grade, 3 finer" />
+                </Field>
+                <Field label="Error Type" locked={false} onToggleLock={() => {}}>
+                  <input className={inputClass()} value={values.coinError ?? ""}
+                    onChange={(e) => setField("coinError", e.target.value)}
+                    placeholder="Doubled Die, Off-Center, Struck Through… (blank if none)" />
+                </Field>
+                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                  <input type="checkbox" checked={values.coinKeyDate === "true"}
+                    onChange={(e) => setField("coinKeyDate", e.target.checked ? "true" : "")}
+                    className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
+                  <span className="text-sm" style={{ color: "var(--fg)" }}>Key date / semi-key</span>
+                </label>
+              </>)}
+
 
               <div className="sm:col-span-2 lg:col-span-3">
                 <Field label="Notes" locked={locks.notes} onToggleLock={() => handleToggleLock("notes")}>

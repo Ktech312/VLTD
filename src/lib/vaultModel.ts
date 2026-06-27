@@ -113,6 +113,108 @@ export type VaultItem = {
   comicIssueNumber?: string;
   comicCoverVariant?: string;
   comicArcTitle?: string;
+  comicPublisher?: string;
+  comicCoverDate?: string;
+  comicGradingCompany?: string;
+  comicPageQuality?: string;
+  comicRestorationStatus?: string;
+  comicHolderType?: string;
+  comicCensusRank?: string;
+  // Original Comic Art (also used under Art & Prints)
+  artPenciller?: string;
+  artInker?: string;
+  artColorist?: string;
+  artType?: string;
+  artFirstAppearance?: string;
+  // Toys
+  toyBrand?: string;
+  toyLine?: string;
+  toyScale?: string;
+  toyPackageCondition?: string;
+  toyBoxIncluded?: boolean;
+  toyAccessoriesIncluded?: boolean;
+  toyIsComplete?: boolean;
+  // Art Cards
+  artCardArtist?: string;
+  artCardSet?: string;
+  artCardType?: string;
+  // Sports additions
+  sportsSport?: string;
+  sportsTeam?: string;
+  sportsGradingCompany?: string;
+  sportsPop?: string;
+  sportsAutoAuth?: string;
+  // Memorabilia
+  memorabiliaTeam?: string;
+  memorabiliaEvent?: string;
+  memorabiliaSigningDate?: string;
+  memorabiliaWitnessed?: boolean;
+  memorabiliaAuthCompany?: string;
+  memorabiliaGameUsed?: boolean;
+  memorabiliaGameUsedDesc?: string;
+  // TCG additions
+  tcgRarity?: string;
+  tcgLanguage?: string;
+  tcgGradingCompany?: string;
+  // Watches
+  watchBrand?: string;
+  watchReference?: string;
+  watchMovement?: string;
+  watchCaseMaterial?: string;
+  watchCaseSize?: string;
+  watchDialColor?: string;
+  watchBox?: boolean;
+  watchPapers?: boolean;
+  watchFullSet?: boolean;
+  // Bags / Handbags
+  bagBrand?: string;
+  bagColor?: string;
+  bagMaterial?: string;
+  bagHardware?: string;
+  bagAuthCard?: boolean;
+  bagDustbag?: boolean;
+  bagBox?: boolean;
+  // Apparel / Streetwear
+  apparelSize?: string;
+  apparelColorway?: string;
+  apparelWorn?: boolean;
+  // Vinyl / Music additions
+  vinylCountry?: string;
+  vinylSleeveCondition?: string;
+  vinylInserts?: boolean;
+  vinylGatefold?: boolean;
+  // Art & Prints (Fine Art)
+  artMedium?: string;
+  artSurface?: string;
+  artHeight?: string;
+  artWidth?: string;
+  artDepth?: string;
+  artIsFramed?: boolean;
+  artIsSigned?: boolean;
+  artSignatureLocation?: string;
+  artProvenance?: string;
+  artExhibitions?: string;
+  // Coins & Currency
+  coinDenomination?: string;
+  coinCountry?: string;
+  coinMint?: string;
+  coinMintMark?: string;
+  coinGradingCompany?: string;
+  coinPopulation?: string;
+  coinError?: string;
+  coinKeyDate?: boolean;
+  // Games
+  gamePlatform?: string;
+  gameRegion?: string;
+  gameGradingCompany?: string;
+  gameIsSealed?: boolean;
+  gameIsCIB?: boolean;
+  gameHasManual?: boolean;
+  gamePublisher?: string;
+  consoleControllerCount?: string;
+  consoleCables?: boolean;
+  consoleBox?: boolean;
+  consoleTested?: boolean;
   // Video clip (beta, paid feature)
   videoClip?: {
     url: string;
@@ -495,6 +597,108 @@ function normalizeOne(input: unknown): VaultItem | null {
     comicIssueNumber: raw.comicIssueNumber ?? undefined,
     comicCoverVariant: raw.comicCoverVariant ?? undefined,
     comicArcTitle: raw.comicArcTitle ?? undefined,
+    comicPublisher: raw.comicPublisher ?? undefined,
+    comicCoverDate: raw.comicCoverDate ?? undefined,
+    comicGradingCompany: raw.comicGradingCompany ?? undefined,
+    comicPageQuality: raw.comicPageQuality ?? undefined,
+    comicRestorationStatus: raw.comicRestorationStatus ?? undefined,
+    comicHolderType: raw.comicHolderType ?? undefined,
+    comicCensusRank: raw.comicCensusRank ?? undefined,
+    // Original Comic Art
+    artPenciller: raw.artPenciller ?? undefined,
+    artInker: raw.artInker ?? undefined,
+    artColorist: raw.artColorist ?? undefined,
+    artType: raw.artType ?? undefined,
+    artFirstAppearance: raw.artFirstAppearance ?? undefined,
+    // Toys
+    toyBrand: raw.toyBrand ?? undefined,
+    toyLine: raw.toyLine ?? undefined,
+    toyScale: raw.toyScale ?? undefined,
+    toyPackageCondition: raw.toyPackageCondition ?? undefined,
+    toyBoxIncluded: raw.toyBoxIncluded === true ? true : undefined,
+    toyAccessoriesIncluded: raw.toyAccessoriesIncluded === true ? true : undefined,
+    toyIsComplete: raw.toyIsComplete === true ? true : undefined,
+    // Art Cards
+    artCardArtist: raw.artCardArtist ?? undefined,
+    artCardSet: raw.artCardSet ?? undefined,
+    artCardType: raw.artCardType ?? undefined,
+    // Sports additions
+    sportsSport: raw.sportsSport ?? undefined,
+    sportsTeam: raw.sportsTeam ?? undefined,
+    sportsGradingCompany: raw.sportsGradingCompany ?? undefined,
+    sportsPop: raw.sportsPop ?? undefined,
+    sportsAutoAuth: raw.sportsAutoAuth ?? undefined,
+    // Memorabilia
+    memorabiliaTeam: raw.memorabiliaTeam ?? undefined,
+    memorabiliaEvent: raw.memorabiliaEvent ?? undefined,
+    memorabiliaSigningDate: raw.memorabiliaSigningDate ?? undefined,
+    memorabiliaWitnessed: raw.memorabiliaWitnessed === true ? true : undefined,
+    memorabiliaAuthCompany: raw.memorabiliaAuthCompany ?? undefined,
+    memorabiliaGameUsed: raw.memorabiliaGameUsed === true ? true : undefined,
+    memorabiliaGameUsedDesc: raw.memorabiliaGameUsedDesc ?? undefined,
+    // TCG additions
+    tcgRarity: raw.tcgRarity ?? undefined,
+    tcgLanguage: raw.tcgLanguage ?? undefined,
+    tcgGradingCompany: raw.tcgGradingCompany ?? undefined,
+    // Watches
+    watchBrand: raw.watchBrand ?? undefined,
+    watchReference: raw.watchReference ?? undefined,
+    watchMovement: raw.watchMovement ?? undefined,
+    watchCaseMaterial: raw.watchCaseMaterial ?? undefined,
+    watchCaseSize: raw.watchCaseSize ?? undefined,
+    watchDialColor: raw.watchDialColor ?? undefined,
+    watchBox: raw.watchBox === true ? true : undefined,
+    watchPapers: raw.watchPapers === true ? true : undefined,
+    watchFullSet: raw.watchFullSet === true ? true : undefined,
+    // Bags
+    bagBrand: raw.bagBrand ?? undefined,
+    bagColor: raw.bagColor ?? undefined,
+    bagMaterial: raw.bagMaterial ?? undefined,
+    bagHardware: raw.bagHardware ?? undefined,
+    bagAuthCard: raw.bagAuthCard === true ? true : undefined,
+    bagDustbag: raw.bagDustbag === true ? true : undefined,
+    bagBox: raw.bagBox === true ? true : undefined,
+    // Apparel
+    apparelSize: raw.apparelSize ?? undefined,
+    apparelColorway: raw.apparelColorway ?? undefined,
+    apparelWorn: raw.apparelWorn === true ? true : undefined,
+    // Vinyl additions
+    vinylCountry: raw.vinylCountry ?? undefined,
+    vinylSleeveCondition: raw.vinylSleeveCondition ?? undefined,
+    vinylInserts: raw.vinylInserts === true ? true : undefined,
+    vinylGatefold: raw.vinylGatefold === true ? true : undefined,
+    // Art & Prints
+    artMedium: raw.artMedium ?? undefined,
+    artSurface: raw.artSurface ?? undefined,
+    artHeight: raw.artHeight ?? undefined,
+    artWidth: raw.artWidth ?? undefined,
+    artDepth: raw.artDepth ?? undefined,
+    artIsFramed: raw.artIsFramed === true ? true : undefined,
+    artIsSigned: raw.artIsSigned === true ? true : undefined,
+    artSignatureLocation: raw.artSignatureLocation ?? undefined,
+    artProvenance: raw.artProvenance ?? undefined,
+    artExhibitions: raw.artExhibitions ?? undefined,
+    // Coins
+    coinDenomination: raw.coinDenomination ?? undefined,
+    coinCountry: raw.coinCountry ?? undefined,
+    coinMint: raw.coinMint ?? undefined,
+    coinMintMark: raw.coinMintMark ?? undefined,
+    coinGradingCompany: raw.coinGradingCompany ?? undefined,
+    coinPopulation: raw.coinPopulation ?? undefined,
+    coinError: raw.coinError ?? undefined,
+    coinKeyDate: raw.coinKeyDate === true ? true : undefined,
+    // Games
+    gamePlatform: raw.gamePlatform ?? undefined,
+    gameRegion: raw.gameRegion ?? undefined,
+    gameGradingCompany: raw.gameGradingCompany ?? undefined,
+    gameIsSealed: raw.gameIsSealed === true ? true : undefined,
+    gameIsCIB: raw.gameIsCIB === true ? true : undefined,
+    gameHasManual: raw.gameHasManual === true ? true : undefined,
+    gamePublisher: raw.gamePublisher ?? undefined,
+    consoleControllerCount: raw.consoleControllerCount ?? undefined,
+    consoleCables: raw.consoleCables === true ? true : undefined,
+    consoleBox: raw.consoleBox === true ? true : undefined,
+    consoleTested: raw.consoleTested === true ? true : undefined,
   };
 }
 
@@ -797,8 +1001,6 @@ export function loadItems(options: LoadItemsOptions = {}) {
   return all.filter((item) => {
     if (options.includeAllProfiles) return true;
     if (options.profileId) return item.profile_id === options.profileId;
-    // When no active profile is set, only show items that also have no profile_id
-    // (un-authed local-only use). Never leak another user's items.
     if (!activeProfileId) return !item.profile_id;
     return item.profile_id === activeProfileId;
   });
@@ -811,7 +1013,6 @@ export function saveItems(items: VaultItem[]) {
 export function appendItems(items: VaultItem[]) {
   const existing = loadRawItems();
 
-  // Enforce free-tier vault item cap (client-side gate)
   if (typeof window !== "undefined") {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { getTierSafe } = require("./subscription") as typeof import("./subscription");
@@ -870,11 +1071,22 @@ export function seedDemoIfEmpty() {
 }
 
 export function loadItemsOrSeed(seed?: VaultItem[]) {
-  // Never use includeAllProfiles here — we only want the current user's items.
   const existing = loadItems();
   if (existing.length > 0) return existing;
 
-  // Only seed if we have no items for the current profile.
+  const activeProfileId = getActiveProfileId();
+  const safeSeed = Array.isArray(seed) ? seed.filter(Boolean).map((item) =>
+    syncPrimaryFields(activeProfileId ? { ...item, profile_id: activeProfileId } : item)
+  ) : [];
+
+  if (safeSeed.length > 0) {
+    saveItems(safeSeed);
+    return loadItems();
+  }
+
+  return existing;
+}
+ the current profile.
   // Stamp each seed item with the active profile_id so it never leaks to
   // another user via migrateMissingProfileIds.
   const activeProfileId = getActiveProfileId();
