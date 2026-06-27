@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { use, useEffect, useMemo, useState } from "react";
 
 import CostToSellPanel from "@/components/CostToSellPanel";
+import CoaScanButton from "@/components/CoaScanButton";
+import type { CoaAnalysisResult } from "@/app/api/ai/analyze-coa/route";
 import ExportListingButton from "@/components/ExportListingButton";
 import InsurancePdfButton from "@/components/InsurancePdfButton";
 import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
@@ -338,6 +340,25 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
     await persist(nextItem);
     setRecordMessage("Basic item record saved.");
+  }
+
+  async function handleApplyCoa(data: CoaAnalysisResult, imageFile: File) {
+    if (!item) return;
+    // Merge extracted fields — only overwrite if the field is currently empty
+    const nextItem: VaultItem = {
+      ...item,
+      certNumber: item.certNumber || data.certNumber || item.certNumber,
+      grade: item.grade || data.grade || item.grade,
+      condition: item.condition || data.authenticator || item.condition,
+      notes: item.notes
+        ? item.notes
+        : [data.itemDescription, data.signerName, data.authDate, data.notes]
+            .filter(Boolean)
+            .join(" · ") || item.notes,
+    };
+    await persist(nextItem);
+    // Also save the CoA image as a secondary photo on the item
+    await handleAddImages([imageFile]);
   }
 
   async function handleAddImages(files: File[]) {
@@ -865,12 +886,13 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                     { label: "Added", value: fmtDate(addedAt) },
                   ]}
                 />
-                <div className="mt-4">
+                <div className="mt-4 flex flex-wrap gap-2">
                   <InsurancePdfButton
                     items={[item]}
                     label="Add to Insurance"
                     className="inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-[12px] font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)] hover:text-[color:var(--theme-gold)]"
                   />
+                  <CoaScanButton onApply={(data, file) => void handleApplyCoa(data, file)} />
                 </div>
               </div>
 
