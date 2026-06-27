@@ -176,150 +176,120 @@ export default function SeasonalBanner() {
     touchStartX.current = null;
   }
 
+  const label = slide.type === "theme"
+    ? slide.theme.banner_heading ?? ""
+    : slide.event.name;
+  const sublabel = slide.type === "theme"
+    ? slide.theme.banner_subtext ?? ""
+    : getEventCountdown(slide.event);
+  const emoji = slide.type === "theme" ? slide.theme.banner_emoji : slide.event.emoji;
+  const ctaLabel = slide.type === "theme" ? slide.theme.banner_cta_label : "Learn More";
+  const ctaHref  = slide.type === "theme" ? (slide.theme.banner_cta_href ?? "#") : "/events";
+
   return (
     <div
-      className="relative overflow-hidden rounded-2xl mb-4 select-none"
+      className="relative overflow-hidden rounded-xl mb-3 select-none"
       style={{
-        background: `linear-gradient(135deg, ${secondary}cc, ${accent}33)`,
-        border: `1px solid ${accent}44`,
+        background: `linear-gradient(135deg, ${secondary}dd, ${accent}22)`,
+        border: `1px solid ${accent}33`,
         opacity: visible ? 1 : 0,
         transition: "opacity 0.4s ease",
+        minHeight: 44,
       }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Accent decorations for seasonal themes */}
-      {slide.type === "theme" && (
-        <SeasonalAccents style={slide.theme.accent_style} color={accent} />
-      )}
+      {/* Single slim row */}
+      <div className="flex items-center gap-2 px-3 py-2">
 
-      {/* Main banner content — padded away from arrows */}
-      <div className="relative z-10 px-5 py-4" style={{ paddingLeft: slides.length > 1 ? 44 : 20, paddingRight: slides.length > 1 ? 44 : 20 }}>
-        {slide.type === "theme" ? (
-          // Seasonal theme slide
-          <>
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3 min-w-0">
-                {slide.theme.banner_emoji && (
-                  <span className="text-3xl flex-shrink-0">{slide.theme.banner_emoji}</span>
-                )}
-                <div className="min-w-0">
-                  {slide.theme.banner_heading && (
-                    <p className="font-bold text-white text-sm leading-tight truncate">
-                      {slide.theme.banner_heading}
-                    </p>
-                  )}
-                  {slide.theme.banner_subtext && (
-                    <p className="text-xs mt-0.5 leading-snug" style={{ color: `${accent}cc` }}>
-                      {slide.theme.banner_subtext}
-                    </p>
-                  )}
-                </div>
-              </div>
-              {slide.theme.banner_cta_label && slide.theme.banner_cta_href && (
-                <Link
-                  href={slide.theme.banner_cta_href}
-                  className="flex-shrink-0 rounded-full px-4 py-1.5 text-xs font-bold transition hover:opacity-90"
-                  style={{ background: accent, color: "#000" }}
-                >
-                  {slide.theme.banner_cta_label}
-                </Link>
-              )}
-            </div>
-            {showThemePrompt && (
-              <div
-                className="mt-3 flex items-center justify-between gap-3 rounded-xl px-3 py-2"
-                style={{ background: `${secondary}88`, border: `1px solid ${accent}33` }}
-              >
-                <p className="text-xs" style={{ color: `${accent}cc` }}>
-                  🎨 Change your app theme for this event?
-                </p>
-                <div className="flex gap-2 flex-shrink-0">
-                  <button
-                    onClick={handleAcceptTheme}
-                    className="rounded-full px-3 py-1 text-[11px] font-bold transition hover:opacity-90"
-                    style={{ background: accent, color: "#000" }}
-                  >
-                    Yes, switch
-                  </button>
-                  <button
-                    onClick={handleDismissTheme}
-                    className="rounded-full px-3 py-1 text-[11px] font-semibold"
-                    style={{ background: `${accent}22`, color: `${accent}cc` }}
-                  >
-                    No thanks
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
-        ) : (
-          // Collector event slide
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
-              {slide.event.emoji && (
-                <span className="text-3xl flex-shrink-0">{slide.event.emoji}</span>
-              )}
-              <div className="min-w-0">
-                <p className="font-bold text-white text-sm leading-tight truncate">
-                  {slide.event.name}
-                </p>
-                <p className="text-xs mt-0.5 leading-snug" style={{ color: `${accent}cc` }}>
-                  {getEventCountdown(slide.event)}
-                </p>
-              </div>
-            </div>
-            <Link
-              href="/events"
-              className="flex-shrink-0 rounded-full px-4 py-1.5 text-xs font-bold transition hover:opacity-90"
-              style={{ background: accent, color: "#000" }}
-            >
-              Learn More →
-            </Link>
-          </div>
+        {/* Prev arrow */}
+        {slides.length > 1 && (
+          <button
+            onClick={() => jumpTo((idx - 1 + slides.length) % slides.length)}
+            aria-label="Previous"
+            className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full"
+            style={{ background: `${accent}22` }}
+          >
+            <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
+              <path d="M7.5 2L4 6l3.5 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        )}
+
+        {/* Emoji */}
+        {emoji && <span className="text-base flex-shrink-0">{emoji}</span>}
+
+        {/* Text — one line title + faint sublabel */}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-bold text-white leading-tight truncate">{label}</p>
+          {sublabel && (
+            <p className="text-[10px] leading-tight truncate" style={{ color: `${accent}bb` }}>{sublabel}</p>
+          )}
+        </div>
+
+        {/* CTA */}
+        {ctaLabel && (
+          <Link
+            href={ctaHref ?? "#"}
+            className="flex-shrink-0 rounded-full px-3 py-1 text-[11px] font-bold transition hover:opacity-90"
+            style={{ background: accent, color: "#000" }}
+          >
+            {ctaLabel}
+          </Link>
+        )}
+
+        {/* Next arrow */}
+        {slides.length > 1 && (
+          <button
+            onClick={() => jumpTo((idx + 1) % slides.length)}
+            aria-label="Next"
+            className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full"
+            style={{ background: `${accent}22` }}
+          >
+            <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
+              <path d="M4.5 2L8 6l-3.5 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
         )}
       </div>
 
-      {/* Nav controls — dots + arrows in a row below content, only if multiple slides */}
+      {/* Dot indicators — single pixel row at bottom */}
       {slides.length > 1 && (
-        <div className="relative z-10 flex items-center justify-center gap-3 pb-3">
-          <button
-            onClick={() => jumpTo((idx - 1 + slides.length) % slides.length)}
-            className="flex items-center justify-center rounded-full w-6 h-6 transition hover:opacity-100"
-            style={{ background: `${accent}22`, border: `1px solid ${accent}55`, opacity: 0.8 }}
-            aria-label="Previous"
-          >
-            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-              <path d="M7.5 2L4 6l3.5 4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+        <div className="flex justify-center gap-1 pb-1">
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => jumpTo(i)}
+              className="rounded-full transition-all duration-300"
+              style={{
+                width: i === idx ? 12 : 4,
+                height: 3,
+                background: i === idx ? accent : `${accent}44`,
+              }}
+              aria-label={`Slide ${i + 1}`}
+            />
+          ))}
+        </div>
+      )}
 
-          <div className="flex gap-1.5">
-            {slides.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => jumpTo(i)}
-                className="rounded-full transition-all duration-300"
-                style={{
-                  width: i === idx ? 20 : 7,
-                  height: 7,
-                  background: i === idx ? accent : `${accent}44`,
-                }}
-                aria-label={`Go to slide ${i + 1}`}
-              />
-            ))}
+      {/* Theme prompt — only shown if user hasn't decided yet */}
+      {slide.type === "theme" && showThemePrompt && (
+        <div
+          className="flex items-center justify-between gap-2 px-3 pb-2"
+        >
+          <p className="text-[10px]" style={{ color: `${accent}bb` }}>🎨 Switch app theme?</p>
+          <div className="flex gap-1.5 flex-shrink-0">
+            <button
+              onClick={handleAcceptTheme}
+              className="rounded-full px-2 py-0.5 text-[10px] font-bold"
+              style={{ background: accent, color: "#000" }}
+            >Yes</button>
+            <button
+              onClick={handleDismissTheme}
+              className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+              style={{ background: `${accent}22`, color: `${accent}cc` }}
+            >No</button>
           </div>
-
-          <button
-            onClick={() => jumpTo((idx + 1) % slides.length)}
-            className="flex items-center justify-center rounded-full w-6 h-6 transition hover:opacity-100"
-            style={{ background: `${accent}22`, border: `1px solid ${accent}55`, opacity: 0.8 }}
-            aria-label="Next"
-          >
-            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-              <path d="M4.5 2L8 6l-3.5 4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
         </div>
       )}
     </div>
