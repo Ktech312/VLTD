@@ -56,6 +56,18 @@ const FRAMES: Record<UniverseKey, CaptureFrame> = {
     inset: "9%",
     radius: "16px",
   },
+  AUTOMOTIVE: {
+    label: "Vehicle frame",
+    aspectRatio: "16 / 9",
+    inset: "7%",
+    radius: "16px",
+  },
+  ART: {
+    label: "Art frame",
+    aspectRatio: "4 / 5",
+    inset: "8%",
+    radius: "4px",
+  },
 };
 
 function isUniverseKey(value: unknown): value is UniverseKey {
@@ -67,7 +79,9 @@ function isUniverseKey(value: unknown): value is UniverseKey {
     value === "JEWELRY_APPAREL" ||
     value === "GAMES" ||
     value === "BUILT_BOTANY" ||
-    value === "MISC"
+    value === "MISC" ||
+    value === "AUTOMOTIVE" ||
+    value === "ART"
   );
 }
 

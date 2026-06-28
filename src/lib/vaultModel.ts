@@ -220,6 +220,9 @@ export type VaultItem = {
     url: string;
     durationSeconds: number;
   };
+  // Universal taxonomy extras (Type dropdown + Attributes checkboxes)
+  itemType?: string;
+  itemAttributes?: string[];
 };
 
 type LoadItemsOptions = {

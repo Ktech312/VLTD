@@ -80,6 +80,8 @@ import {
   getCategories,
   getDefaultCategory,
   getSubcategories,
+  getTypeOptions,
+  getCheckboxOptions,
   getUniverses,
   isUniverseKey,
   UNIVERSE_LABEL,
@@ -435,6 +437,22 @@ export default function AddPage() {
       ? [selectedCategory, ...baseCategoryOptions]
       : baseCategoryOptions;
   const subcategoryOptions = getSubcategories(selectedUniverse, selectedCategory);
+  const typeOptions = getTypeOptions(selectedUniverse, selectedCategory, values.subcategoryLabel || undefined);
+  const checkboxOptions = getCheckboxOptions(selectedUniverse, selectedCategory, values.subcategoryLabel || undefined);
+
+  // Parse itemAttributes from JSON or comma string to Set for checkbox state
+  const selectedAttributes: Set<string> = useMemo(() => {
+    const raw = (values.itemAttributes ?? "").trim();
+    if (!raw) return new Set();
+    try { const p = JSON.parse(raw); if (Array.isArray(p)) return new Set(p as string[]); } catch {}
+    return new Set(raw.split(",").map((s: string) => s.trim()).filter(Boolean));
+  }, [values.itemAttributes]);
+
+  function toggleAttribute(attr: string) {
+    const next = new Set(selectedAttributes);
+    if (next.has(attr)) next.delete(attr); else next.add(attr);
+    setField("itemAttributes", JSON.stringify(Array.from(next)));
+  }
 
   function markDraftChanged() {
     setHasDraftChanges(true);
@@ -1617,6 +1635,14 @@ export default function AddPage() {
         coinPopulation: (normalizedValues.coinPopulation ?? "").trim() || undefined,
         coinError: (normalizedValues.coinError ?? "").trim() || undefined,
         coinKeyDate: normalizedValues.coinKeyDate === "true" ? true : undefined,
+        // Universal type + attributes
+        itemType: (normalizedValues.itemType ?? "").trim() || undefined,
+        itemAttributes: (() => {
+          const raw = (normalizedValues.itemAttributes ?? "").trim();
+          if (!raw) return undefined;
+          try { const parsed = JSON.parse(raw); if (Array.isArray(parsed)) return parsed.length ? parsed : undefined; } catch {}
+          return raw.split(",").map(s => s.trim()).filter(Boolean);
+        })(),
         notes: normalizedValues.notes.trim() || undefined,
         primaryImageKey,
         images,
@@ -1851,6 +1877,58 @@ export default function AddPage() {
                       />
                     )}
                   </Field>
+
+                  {typeOptions.length > 0 && (
+                    <Field label="Type" locked={locks.itemType} onToggleLock={() => handleToggleLock("itemType")}>
+                      <select
+                        className={selectClass(false)}
+                        value={values.itemType}
+                        onChange={(e) => setField("itemType", e.target.value)}
+                      >
+                        <option value="">Select type...</option>
+                        {typeOptions.map((opt) => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </Field>
+                  )}
+
+                  {checkboxOptions.length > 0 && (
+                    <div className="sm:col-span-2 2xl:col-span-4">
+                      <div className="mb-1.5 flex items-center justify-between">
+                        <span className="text-xs font-medium" style={{ color: "var(--fg-muted)" }}>Attributes</span>
+                        {selectedAttributes.size > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setField("itemAttributes", "")}
+                            className="text-xs"
+                            style={{ color: "var(--fg-muted)" }}
+                          >Clear</button>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {checkboxOptions.map((attr) => {
+                          const active = selectedAttributes.has(attr);
+                          return (
+                            <button
+                              key={attr}
+                              type="button"
+                              onClick={() => toggleAttribute(attr)}
+                              className="rounded-full px-3 py-1 text-xs font-medium transition-colors"
+                              style={{
+                                background: active ? "var(--theme-gold)" : "var(--pill)",
+                                color: active ? "#000" : "var(--fg)",
+                                border: "1px solid",
+                                borderColor: active ? "var(--theme-gold)" : "var(--border)",
+                              }}
+                            >
+                              {attr}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   <Field label="Title" locked={locks.title} onToggleLock={() => handleToggleLock("title")}>
                     <input

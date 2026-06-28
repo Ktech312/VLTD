@@ -136,7 +136,10 @@ export type BulkAddFieldKey =
   | "coinGradingCompany"
   | "coinPopulation"
   | "coinError"
-  | "coinKeyDate";
+  | "coinKeyDate"
+  // Universal type + attributes (new taxonomy fields)
+  | "itemType"
+  | "itemAttributes";
 
 export type BulkAddValues = Record<BulkAddFieldKey, string>;
 export type BulkAddLocks = Record<BulkAddFieldKey, boolean>;
@@ -268,6 +271,8 @@ export const EMPTY_BULK_ADD_VALUES: BulkAddValues = {
   coinPopulation: "",
   coinError: "",
   coinKeyDate: "",
+  itemType: "",
+  itemAttributes: "",
 };
 
 export const DEFAULT_BULK_ADD_LOCKS: BulkAddLocks = {
@@ -395,6 +400,8 @@ export const DEFAULT_BULK_ADD_LOCKS: BulkAddLocks = {
   coinPopulation: false,
   coinError: false,
   coinKeyDate: false,
+  itemType: false,
+  itemAttributes: false,
 };
 
 export type BulkAddState = {
@@ -539,6 +546,7 @@ export function resetUnlockedBulkValues(
   }
 
   return next;
+
 }
 
 export function toggleBulkAddLock(

@@ -18,6 +18,8 @@ const UNIVERSE_ICONS: Record<UniverseKey, string> = {
   GAMES: "🎮",
   BUILT_BOTANY: "🌿",
   MISC: "✦",
+  AUTOMOTIVE: "🚗",
+  ART: "🎨",
 };
 
 const UNIVERSE_DESCRIPTIONS: Record<UniverseKey, string> = {
@@ -34,9 +36,13 @@ const UNIVERSE_DESCRIPTIONS: Record<UniverseKey, string> = {
   GAMES:
     "Video games, consoles, and accessories across every era. Retro sealed games, graded cartridges, limited editions, and arcade boards.",
   BUILT_BOTANY:
-    "Handmade crafts, ceramics, woodwork, and living collectibles — plants, succulents, terrariums, and rare botanicals worth cataloguing.",
+    "Handmade crafts, ceramics, woodwork, bar spirits, and living collectibles — plants, succulents, terrariums, and rare botanicals worth cataloguing.",
   MISC:
-    "Art prints, coins, currency, stamps, props, and anything that doesn't fit a single category. Every collection has these.",
+    "Coins, currency, stamps, armory, books, and anything that doesn't fit a single category. Every collection has these.",
+  AUTOMOTIVE:
+    "Classic cars, motorcycles, bicycles, and all the parts that make them legendary. From matching-numbers muscle cars to vintage Schwinn cruisers.",
+  ART:
+    "Original paintings, sculptures, fine art prints, and artist sketch cards. Document provenance, dimensions, medium, and exhibition history.",
 };
 
 const GRADING_GUIDES = [

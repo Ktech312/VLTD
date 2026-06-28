@@ -24,6 +24,8 @@ const UNIVERSE_THUMB: Record<UniverseKey, string> = {
   GAMES:            "/universe-thumbnails/games.png",
   BUILT_BOTANY:     "/universe-thumbnails/built-botany.png",
   MISC:             "/universe-thumbnails/misc.png",
+  AUTOMOTIVE:       "/universe-thumbnails/automotive.png",
+  ART:              "/universe-thumbnails/art.png",
 };
 
 type PublicGallery = {

@@ -869,6 +869,8 @@ export default function VaultUniversePage() {
       GAMES: 0,
       BUILT_BOTANY: 0,
       MISC: 0,
+      AUTOMOTIVE: 0,
+      ART: 0,
     };
     for (const item of items) counts[universeForItem(item)] += 1;
     return counts;
