@@ -135,7 +135,7 @@ function inputClass(isAiFilled?: boolean) {
 
 function selectClass(isAiFilled?: boolean) {
   return [
-    "h-11 rounded-xl px-3 text-sm focus:outline-none transition-all",
+    "h-11 w-full rounded-xl px-3 text-sm focus:outline-none transition-all",
     isAiFilled
       ? "bg-[rgba(245,181,72,0.18)] ring-2 ring-[rgba(245,181,72,0.7)] text-[#FFE08A] font-semibold"
       : "bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]",

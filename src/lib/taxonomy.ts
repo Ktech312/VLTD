@@ -25,6 +25,7 @@ export const TAXONOMY: Taxonomy = {
     "Lego & Brick Systems": ["System Sets", "Ultimate Collector Series (UCS)", "Minifigures", "Technic & Robotics", "Microscale & Architecture", "Loose Bricks & Bulk", "BIONICLE & Figures"],
     "Disney & Cartoon Collectibles": ["Pins", "Animation Cels", "Snowglobes", "Ears / Headwear", "Ornaments", "Lithographs", "Theme Park Exclusives", "Vinylmation"],
     "Collectible Art Plates": ["Limited Edition Plates", "Hand-Painted Porcelain", "Commemorative Plates", "Vintage Ceramic Plates"],
+    "Art Cards": ["Sketch Cards", "Limited Prints", "Original Autographed Cards", "Acetate Cards", "Printing Plates", "Metal Cards"],
   },
 
   SPORTS: {
@@ -204,6 +205,10 @@ type FormDataShape = Partial<Record<UniverseKey, Record<string, CategoryFormDef>
 
 export const FORM_DATA: FormDataShape = {
   POP_CULTURE: {
+    "Art Cards": {
+      typeOptions: ["Lithograph", "Serigraph / Silk Screen", "Giclee", "Woodblock", "Etching / Engraving", "Misc / Other"],
+      checkboxOptions: ["Autographed", "Graded", "Encapsulated", "Numbered Run", "CoA Included"],
+    },
     "Comics": {
       typeOptions: ["Marvel", "DC", "Image", "Misc / Other"],
       checkboxOptions: ["Indie", "Manga", "Golden Age", "Silver Age", "Modern", "Slabs", "Variant Covers"],
