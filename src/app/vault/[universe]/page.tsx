@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import ItemIntelligencePanel from "@/components/ItemIntelligencePanel";
 import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
@@ -266,12 +266,6 @@ function getCreatedAtMs(item: VaultItem) {
   return 0;
 }
 
-function readinessTone(readiness: string) {
-  if (readiness === "High") return "bg-emerald-500/15 text-emerald-200 ring-emerald-400/20";
-  if (readiness === "Medium") return "bg-amber-500/15 text-amber-200 ring-amber-400/20";
-  return "bg-[color:var(--surface)] text-[color:var(--fg)] ring-[color:var(--border)]";
-}
-
 function itemMeta(item: VaultItem) {
   const primary = [item.subtitle, item.number, item.grade].filter(Boolean).join(" • ");
   if (primary) return primary;
@@ -430,12 +424,6 @@ function VaultCard({
     }
   }
 
-  const statusLabel = isSold ? "SOLD" : item.isNew ? "NEW" : readiness;
-  const statusClass = isSold
-    ? "bg-amber-500/18 text-amber-100 ring-amber-400/30"
-    : item.isNew
-      ? "bg-red-600/18 text-red-100 ring-red-400/30"
-      : readinessTone(readiness);
   const marketValue = Number(item.currentValue ?? 0);
   const gain = itemGain(item);
   const showGain = Math.abs(gain) > 0.49;
@@ -458,10 +446,6 @@ function VaultCard({
           {isDeleting ? "…" : "Delete"}
         </button>
       </div>
-
-      <span className={["absolute right-2 top-2 z-10 rounded-full px-1.5 py-0.5 text-[8px] font-semibold ring-1", statusClass].join(" ")}>
-        {statusLabel}
-      </span>
 
       <div className="relative h-[78px] overflow-hidden rounded-[10px] bg-black/18">
         <div className="block h-full">
@@ -828,25 +812,23 @@ export default function VaultUniversePage() {
     [sales]
   );
 
-  // Scroll position restore — save before leaving, restore after items paint
-  const scrollRestored = useRef(false);
+  // Scroll restoration — save on card click, restore by polling after mount
   useEffect(() => {
-    function onLeave() {
-      sessionStorage.setItem("vltd_vault_scroll_y", String(window.scrollY));
-    }
-    window.addEventListener("pagehide", onLeave);
-    return () => window.removeEventListener("pagehide", onLeave);
-  }, []);
-
-  useEffect(() => {
-    if (scrollRestored.current || filteredItems.length === 0) return;
     const saved = sessionStorage.getItem("vltd_vault_scroll_y");
     if (!saved) return;
-    scrollRestored.current = true;
+    const target = parseInt(saved, 10);
     sessionStorage.removeItem("vltd_vault_scroll_y");
-    const y = parseInt(saved, 10);
-    requestAnimationFrame(() => window.scrollTo({ top: y, behavior: "instant" }));
-  }, [filteredItems.length]);
+    let attempts = 0;
+    function tryScroll() {
+      if (document.body.scrollHeight > target || attempts > 30) {
+        window.scrollTo({ top: target, behavior: "instant" });
+      } else {
+        attempts++;
+        setTimeout(tryScroll, 80);
+      }
+    }
+    setTimeout(tryScroll, 80);
+  }, []);
 
   function saveScrollPosition() {
     sessionStorage.setItem("vltd_vault_scroll_y", String(window.scrollY));
