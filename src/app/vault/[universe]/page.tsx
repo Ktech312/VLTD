@@ -845,7 +845,7 @@ export default function VaultUniversePage() {
   async function handleMassDelete() {
     const count = selectedIds.size;
     if (count === 0) return;
-    const ok = window.confirm(\`Are you sure you want to delete \${count} \${count === 1 ? "item" : "items"}?\`);
+    const ok = window.confirm(`Are you sure you want to delete ${count} ${count === 1 ? "item" : "items"}?`);
     if (!ok) return;
     const toDelete = items.filter((item) => selectedIds.has(item.id));
     for (const item of toDelete) {
