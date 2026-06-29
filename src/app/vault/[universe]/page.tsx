@@ -1077,10 +1077,12 @@ export default function VaultUniversePage() {
             <button
               type="button"
               onClick={() => setGradedOnly((v) => !v)}
-              className="inline-flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition ring-1"
+              className={gradedOnly
+                ? "inline-flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition ring-1 ring-[rgba(245,181,72,0.35)]"
+                : "inline-flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition ring-1 ring-[color:var(--border)]"}
               style={gradedOnly
-                ? { background: "rgba(245,181,72,0.12)", color: "var(--theme-gold, #F5B548)", borderColor: "transparent", ringColor: "rgba(245,181,72,0.35)" }
-                : { background: "var(--input)", color: "var(--fg-muted)", ringColor: "var(--border)" }}
+                ? { background: "rgba(245,181,72,0.12)", color: "var(--theme-gold, #F5B548)" }
+                : { background: "var(--input)", color: "var(--fg-muted)" }}
             >
               <span
                 className="inline-flex h-4 w-4 items-center justify-center rounded"
@@ -1142,8 +1144,8 @@ export default function VaultUniversePage() {
                 onClick={() => { setSelectMode((v) => !v); setSelectedIds(new Set()); }}
                 className="inline-flex min-h-[36px] items-center justify-center rounded-full px-3 text-sm font-medium transition ring-1"
                 style={selectMode
-                  ? { background: "rgba(220,38,38,0.12)", color: "#f87171", ringColor: "rgba(220,38,38,0.3)" }
-                  : { background: "var(--pill)", color: "var(--fg-muted)", ringColor: "var(--border)" }}
+                  ? { background: "rgba(220,38,38,0.12)", color: "#f87171" }
+                  : { background: "var(--pill)", color: "var(--fg-muted)" }}
                 aria-label="Select items to delete"
               >
                 <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1154,7 +1156,7 @@ export default function VaultUniversePage() {
           </div>
           {/* Mass delete action bar */}
           {selectMode && (
-            <div className="mt-2 flex items-center gap-2 rounded-xl px-3 py-2 ring-1" style={{ background: "rgba(220,38,38,0.08)", ringColor: "rgba(220,38,38,0.25)" }}>
+            <div className="mt-2 flex items-center gap-2 rounded-xl px-3 py-2 ring-1" style={{ background: "rgba(220,38,38,0.08)" }}>
               <span className="flex-1 text-sm font-medium" style={{ color: "#f87171" }}>
                 {selectedIds.size === 0 ? "Tap items to select" : `${selectedIds.size} selected`}
               </span>
