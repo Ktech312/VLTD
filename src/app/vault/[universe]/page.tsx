@@ -815,40 +815,70 @@ export default function VaultUniversePage() {
     [sales]
   );
 
-  // Scroll restoration
-  // - history.scrollRestoration = "manual" so Next.js doesn't auto-scroll
-  // - Save on ANY link click anywhere on the page
-  // - Restore on mount: wait 500ms FIRST (so Next.js finishes its own
-  //   scroll-to-top), then poll every 100ms until page is tall enough
+  // ─── Scroll restoration ────────────────────────────────────────────────────
+  // Next.js App Router has two back-navigation paths:
+  //
+  //   A) Fresh remount  — component unmounted, then remounts on back.
+  //      useEffect([], []) fires → reads sessionStorage → restores.
+  //
+  //   B) Router cache   — component stays mounted while on item page.
+  //      useEffect([], []) does NOT re-fire on back.
+  //      BUT window "popstate" fires every time back is pressed,
+  //      even when the component is cached. We handle it there.
+  //
+  // applyScrollRestore re-applies scrollTo every 100ms for 1s to beat
+  // any late scrollTo(0,0) calls from Next.js, and polls until the page
+  // is tall enough (items may still be loading from IndexedDB).
+  // ───────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 
-    function saveOnNav(e: MouseEvent) {
+    function applyScrollRestore(target: number) {
+      let attempts = 0;
+      function poll() {
+        if (document.body.scrollHeight >= target || attempts >= 30) {
+          window.scrollTo({ top: target, behavior: "instant" });
+        }
+        // Keep re-applying for 1s so any late Next.js reset gets overridden
+        if (++attempts < 10) setTimeout(poll, 100);
+      }
+      setTimeout(poll, 50);
+    }
+
+    // Save scroll on any outbound link click (forward navigation)
+    function saveOnClick(e: MouseEvent) {
       if ((e.target as HTMLElement).closest("a[href]")) {
         sessionStorage.setItem("vltd_vault_scroll_y", String(window.scrollY));
       }
     }
-    document.addEventListener("click", saveOnNav, true);
+    document.addEventListener("click", saveOnClick, true);
 
-    const saved = sessionStorage.getItem("vltd_vault_scroll_y");
-    if (saved) {
-      const target = parseInt(saved, 10);
+    // PATH B — router cache: component stayed mounted, popstate fired
+    function onPopState() {
+      const raw = sessionStorage.getItem("vltd_vault_scroll_y");
+      if (!raw) return;
+      const target = parseInt(raw, 10);
+      if (isNaN(target) || target <= 0) return;
       sessionStorage.removeItem("vltd_vault_scroll_y");
-      let attempts = 0;
-      function tryScroll() {
-        if (document.body.scrollHeight > target || attempts > 40) {
-          window.scrollTo({ top: target, behavior: "instant" });
-        } else {
-          attempts++;
-          setTimeout(tryScroll, 100);
-        }
+      applyScrollRestore(target);
+    }
+    window.addEventListener("popstate", onPopState);
+
+    // PATH A — fresh remount: popstate fired before this listener was
+    // added, so the key is still in sessionStorage. Read it now.
+    const raw = sessionStorage.getItem("vltd_vault_scroll_y");
+    if (raw) {
+      const target = parseInt(raw, 10);
+      if (!isNaN(target) && target > 0) {
+        sessionStorage.removeItem("vltd_vault_scroll_y");
+        applyScrollRestore(target);
       }
-      // 500ms head-start lets Next.js finish its own scroll-to-top
-      // before we override it; polling continues for up to ~4s after that
-      setTimeout(tryScroll, 500);
     }
 
-    return () => document.removeEventListener("click", saveOnNav, true);
+    return () => {
+      document.removeEventListener("click", saveOnClick, true);
+      window.removeEventListener("popstate", onPopState);
+    };
   }, []);
 
   function saveScrollPosition() {

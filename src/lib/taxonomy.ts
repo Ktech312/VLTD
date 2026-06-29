@@ -103,7 +103,7 @@ export const TAXONOMY: Taxonomy = {
 export const UNIVERSE_LABEL: Record<UniverseKey, string> = {
   POP_CULTURE:      "Pop Culture",
   SPORTS:           "Sports",
-  TCG:              "TCG",
+  TCG:              "TCG & Non Sport Card",
   MUSIC:            "Music",
   JEWELRY_APPAREL:  "Jewelry & Apparel",
   GAMES:            "Games",

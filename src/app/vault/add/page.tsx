@@ -151,6 +151,64 @@ function textareaClass(isAiFilled?: boolean) {
   ].join(" ");
 }
 
+function generateNotesSummary(values: FormValues): string {
+  const p: string[] = [];
+  const u = values.universe;
+
+  // Universe-specific lead
+  if (u === "SPORTS" && values.sportsSport) p.push(values.sportsSport);
+  if (values.categoryLabel) p.push(values.categoryLabel);
+
+  // Subject (player/character) before title when different
+  if (values.subject && values.subject !== values.title) p.push(values.subject);
+  if (values.title) p.push(values.title);
+  if (values.subtitle) p.push(values.subtitle);
+  if (values.number) p.push(`#${values.number}`);
+
+  // Edition / variant
+  if (values.edition) p.push(values.edition);
+  if (values.variant) p.push(values.variant);
+
+  // Universe-specific detail
+  if (u === "SPORTS") {
+    if (values.sportsTeam) p.push(values.sportsTeam);
+    if (values.sportsParallelType) p.push(values.sportsParallelType);
+    if (values.sportsSerialNumber) p.push(`/${values.sportsSerialNumber}`);
+  } else if (u === "TCG") {
+    if (values.tcgRarity) p.push(values.tcgRarity);
+    if (values.tcgParallelType) p.push(values.tcgParallelType);
+    if (values.tcgLanguage && values.tcgLanguage !== "English") p.push(values.tcgLanguage);
+  } else if (u === "MUSIC") {
+    if (values.vinylLabel) p.push(values.vinylLabel);
+    if (values.vinylPressing) p.push(values.vinylPressing);
+    if (values.vinylColor) p.push(values.vinylColor);
+  } else if (u === "POP_CULTURE") {
+    if (values.comicPublisher) p.unshift(values.comicPublisher);
+    if (values.comicCoverDate) p.push(values.comicCoverDate);
+    if (values.toyBrand) p.unshift(values.toyBrand);
+    if (values.toyLine) p.push(values.toyLine);
+    if (values.artCardArtist) p.push(values.artCardArtist);
+  } else if (u === "JEWELRY_APPAREL") {
+    if (values.watchBrand) p.unshift(values.watchBrand);
+    if (values.watchReference) p.push(`Ref. ${values.watchReference}`);
+    if (values.watchMovement) p.push(values.watchMovement);
+    if (values.bagBrand) p.unshift(values.bagBrand);
+    if (values.bagColor) p.push(values.bagColor);
+    if (values.bagMaterial) p.push(values.bagMaterial);
+    if (values.apparelColorway) p.push(values.apparelColorway);
+    if (values.apparelSize) p.push(values.apparelSize);
+  } else if (u === "GAMES") {
+    if (values.gamePlatform) p.push(values.gamePlatform);
+    if (values.gamePublisher) p.push(values.gamePublisher);
+  }
+
+  // Grade always last
+  if (values.grade) p.push(values.grade);
+
+  // Deduplicate and join
+  return [...new Set(p.filter(Boolean))].join(" · ");
+}
+
 function categoryCode(label: string) {
   return label
     .trim()
@@ -2812,14 +2870,51 @@ export default function AddPage() {
 
 
               <div className="sm:col-span-2 lg:col-span-3">
-                <Field label="Notes" locked={locks.notes} onToggleLock={() => handleToggleLock("notes")}>
+                <div className="grid gap-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="text-xs font-medium tracking-[0.14em] text-[color:var(--muted2)]">Notes</label>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        title="Auto-fill from filled fields"
+                        onClick={() => {
+                          const generated = generateNotesSummary(values);
+                          if (generated) {
+                            setField("notes", generated);
+                            setAiFilledFields((prev) => { const n = new Set(prev); n.add("notes"); return n; });
+                          }
+                        }}
+                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 transition bg-[color:var(--pill)] text-[color:var(--theme-gold,#F5B548)] ring-[color:var(--border)] hover:ring-[color:var(--theme-gold,#F5B548)]"
+                      >
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3v1M18.364 5.636l-.707.707M21 12h-1M18.364 18.364l-.707-.707M12 21v-1M5.636 18.364l.707-.707M3 12h1M5.636 5.636l.707.707"/><circle cx="12" cy="12" r="4"/></svg>
+                        Auto
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleLock("notes")}
+                        className={[
+                          "inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 transition",
+                          locks.notes
+                            ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[color:var(--pill-active-bg)]"
+                            : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]",
+                        ].join(" ")}
+                        title={locks.notes ? "Locked for next item" : "Unlocked for next item"}
+                      >
+                        {locks.notes ? (
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: "var(--theme-gold, #F5B548)" }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        ) : (
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: "var(--muted)" }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
                   <textarea
                     className={textareaClass(aiFilledFields.has("notes"))}
                     value={values.notes}
-                    onChange={(e) => { setAiFilledFields(prev => { const n = new Set(prev); n.delete("notes"); return n; }); setField("notes", e.target.value); }}
+                    onChange={(e) => { setAiFilledFields((prev) => { const n = new Set(prev); n.delete("notes"); return n; }); setField("notes", e.target.value); }}
                     placeholder="Notes, artist, run info, or anything repeated until dedicated fields exist."
                   />
-                </Field>
+                </div>
               </div>
           </div>
         </section>
