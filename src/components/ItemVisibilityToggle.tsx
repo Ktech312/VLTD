@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Eye, LockKeyhole } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 import { emitVaultUpdate } from "@/lib/vaultEvents";
 import { saveItem, type VaultItem } from "@/lib/vaultModel";
@@ -61,7 +61,7 @@ export default function ItemVisibilityToggle({
 
   const label = isPublic ? "Public" : "Private";
   const buttonLabel = isPublic ? "Make item private" : "Make item public";
-  const Icon = isPublic ? Eye : LockKeyhole;
+  const Icon = isPublic ? Eye : EyeOff;
 
   return (
     <div className={["pointer-events-auto inline-flex flex-col items-end gap-1", className].filter(Boolean).join(" ")}>

@@ -81,7 +81,7 @@ export default function VaultCard({
   const isBulkPending = Boolean((item as ModelItem & { bulkPending?: boolean }).bulkPending);
 
   return (
-    <a href={`/vault/item/${item.id}`} className="block">
+    <div>
       <div
         ref={tiltRef}
         className={`relative rounded-2xl vltd-panel-soft p-2.5 sm:p-3 ${frame.card} transition-transform duration-200`}
@@ -113,7 +113,7 @@ export default function VaultCard({
           </div>
         </div>
 
-        <div className="mt-2.5">
+        <a href={`/vault/item/${item.id}`} className="mt-2.5 block">
           <div className="text-xs text-[color:var(--muted2)]">{label}</div>
           <div className="mt-1 flex items-start justify-between gap-2">
             <div className="min-w-0 text-[14px] font-medium text-[color:var(--fg)] sm:text-[15px]">
@@ -129,8 +129,8 @@ export default function VaultCard({
               Value: <span className="font-medium">${item.currentValue}</span>
             </div>
           ) : null}
-        </div>
+        </a>
       </div>
-    </a>
+    </div>
   );
 }

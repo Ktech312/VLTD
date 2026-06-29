@@ -35,7 +35,6 @@ const SALES_KEY = "vltd_sales_history";
 const VIEW_MODE_KEY = "vltd_vault_view_mode";
 
 type SortMode = "newest" | "value_desc" | "value_asc" | "gain_desc" | "gain_asc" | "title";
-type ReadinessFilter = "all" | "high" | "medium" | "low";
 type UniverseFilter = "ALL" | UniverseKey;
 type ViewMode = "museum" | "shelf" | "swipe";
 type InlineField = "" | "value" | "cost";
@@ -390,12 +389,14 @@ function VaultCard({
   sale,
   onSaveItem,
   onDeleteItem,
+  onNavigate,
 }: {
   item: VaultItem;
   readiness: string;
   sale: SaleInfo | null;
   onSaveItem: (item: VaultItem) => Promise<void>;
   onDeleteItem: (item: VaultItem) => Promise<void>;
+  onNavigate?: () => void;
 }) {
   const image = useResolvedVaultImage(item);
   const isSold = Boolean(sale);
@@ -448,19 +449,13 @@ function VaultCard({
       ].join(" ")}
     >
       <div className="absolute right-1.5 top-1.5 z-20 hidden items-center gap-1 group-hover:flex">
-        <Link
-          href={detailHref}
-          className="inline-flex h-6 items-center justify-center rounded-full bg-black/70 px-2 text-[10px] text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
-        >
-          Edit
-        </Link>
         <button
           type="button"
           onClick={handleDelete}
           disabled={isDeleting}
           className="inline-flex h-6 items-center justify-center rounded-full bg-red-600/90 px-2 text-[10px] text-text-primary ring-1 ring-red-500/40"
         >
-          {isDeleting ? "..." : "Delete"}
+          {isDeleting ? "…" : "Delete"}
         </button>
       </div>
 
@@ -469,7 +464,7 @@ function VaultCard({
       </span>
 
       <div className="relative h-[78px] overflow-hidden rounded-[10px] bg-black/18">
-        <Link href={detailHref} className="block h-full">
+        <div className="block h-full">
           {image ? (
             <ProgressiveImage
               src={image}
@@ -484,13 +479,13 @@ function VaultCard({
               <span>No photo</span>
             </div>
           )}
-        </Link>
+        </div>
         <div className="absolute right-1.5 top-1.5 z-30">
           <ItemVisibilityToggle item={item} />
         </div>
       </div>
 
-      <Link href={detailHref} className="mt-2 min-w-0">
+      <Link href={detailHref} className="mt-2 min-w-0" onClick={onNavigate}>
         <div className="line-clamp-1 text-[13px] font-extrabold leading-tight text-text-primary sm:text-[14px]">
           {item.title}
         </div>
@@ -711,8 +706,9 @@ export default function VaultUniversePage() {
   const [items, setItems] = useState<VaultItem[]>([]);
   const [query, setQuery] = useState("");
   const [universeFilter, setUniverseFilter] = useState<UniverseFilter>("ALL");
-  const [readinessFilter, setReadinessFilter] = useState<ReadinessFilter>("all");
   const [gradedOnly, setGradedOnly] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [sortMode, setSortMode] = useState<SortMode>("newest");
   const [viewMode, setViewMode] = useState<ViewMode>("museum");
   const [showSoldItems, setShowSoldItems] = useState(false);
@@ -787,9 +783,6 @@ export default function VaultUniversePage() {
       if (universeForItem(item) !== activeUniverse) return false;
       if (universeFilter !== "ALL" && universeForItem(item) !== universeFilter) return false;
       if (gradedOnly && !item.grade) return false;
-      const intelligence = intelligenceMap[item.id];
-      const readiness = (intelligence?.readiness ?? "Low").toLowerCase();
-      if (readinessFilter !== "all" && readiness !== readinessFilter) return false;
       if (q) {
         const text = [
           item.title,
@@ -828,12 +821,47 @@ export default function VaultUniversePage() {
     });
 
     return next;
-  }, [items, query, universeFilter, gradedOnly, sortMode, readinessFilter, intelligenceMap, sales, showSoldItems, activeUniverse]);
+  }, [items, query, universeFilter, gradedOnly, sortMode, intelligenceMap, sales, showSoldItems, activeUniverse]);
 
   const saleMap = useMemo(
     () => Object.fromEntries(sales.map((sale) => [String(sale.id), sale])),
     [sales]
   );
+
+  // Scroll position restore when returning via back button
+  useEffect(() => {
+    const saved = sessionStorage.getItem("vltd_vault_scroll_y");
+    if (saved && items.length > 0) {
+      const y = parseInt(saved, 10);
+      requestAnimationFrame(() => window.scrollTo({ top: y, behavior: "instant" }));
+      sessionStorage.removeItem("vltd_vault_scroll_y");
+    }
+  }, [items.length]);
+
+  function saveScrollPosition() {
+    sessionStorage.setItem("vltd_vault_scroll_y", String(window.scrollY));
+  }
+
+  async function handleMassDelete() {
+    const count = selectedIds.size;
+    if (count === 0) return;
+    const ok = window.confirm(\`Are you sure you want to delete \${count} \${count === 1 ? "item" : "items"}?\`);
+    if (!ok) return;
+    const toDelete = items.filter((item) => selectedIds.has(item.id));
+    for (const item of toDelete) {
+      await handleDeleteItem(item);
+    }
+    setSelectedIds(new Set());
+    setSelectMode(false);
+  }
+
+  function toggleSelectItem(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
   const soldCount = useMemo(
     () => items.filter((item) => saleInfoForItem(item, saleMap)).length,
     [items, saleMap]
@@ -879,7 +907,6 @@ export default function VaultUniversePage() {
   const hasActiveFilters =
     query.trim().length > 0 ||
     universeFilter !== "ALL" ||
-    readinessFilter !== "all" ||
     gradedOnly ||
     showSoldItems ||
     sortMode !== "newest";
@@ -918,7 +945,6 @@ export default function VaultUniversePage() {
   function handleClearFilters() {
     setQuery("");
     setUniverseFilter("ALL");
-    setReadinessFilter("all");
     setGradedOnly(false);
     setSortMode("newest");
   }
@@ -1037,16 +1063,6 @@ export default function VaultUniversePage() {
               ))}
             </select>
             <select
-              value={readinessFilter}
-              onChange={(e) => setReadinessFilter(e.target.value as ReadinessFilter)}
-              className="min-h-[40px] rounded-xl bg-[color:var(--input)] px-4 py-2 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
-            >
-              <option value="all">All Readiness</option>
-              <option value="high">High Readiness</option>
-              <option value="medium">Medium Readiness</option>
-              <option value="low">Low Readiness</option>
-            </select>
-            <select
               value={sortMode}
               onChange={(e) => setSortMode(e.target.value as SortMode)}
               className="min-h-[40px] rounded-xl bg-[color:var(--input)] px-4 py-2 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
@@ -1058,13 +1074,24 @@ export default function VaultUniversePage() {
               <option value="gain_asc">Gain ↑</option>
               <option value="title">Title A-Z</option>
             </select>
-            <PillButton
-              variant={gradedOnly ? "active" : "default"}
+            <button
+              type="button"
               onClick={() => setGradedOnly((v) => !v)}
-              className="min-h-[40px] rounded-xl px-4 py-2 text-sm font-medium text-[color:var(--fg)]"
+              className="inline-flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition ring-1"
+              style={gradedOnly
+                ? { background: "rgba(245,181,72,0.12)", color: "var(--theme-gold, #F5B548)", borderColor: "transparent", ringColor: "rgba(245,181,72,0.35)" }
+                : { background: "var(--input)", color: "var(--fg-muted)", ringColor: "var(--border)" }}
             >
-              {gradedOnly ? "Graded: On" : "Graded Only"}
-            </PillButton>
+              <span
+                className="inline-flex h-4 w-4 items-center justify-center rounded"
+                style={gradedOnly
+                  ? { background: "var(--theme-gold, #F5B548)" }
+                  : { border: "1.5px solid var(--border)", background: "transparent" }}
+              >
+                {gradedOnly && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+              </span>
+              Graded
+            </button>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {filteredItems.length > 0 ? (
@@ -1108,7 +1135,49 @@ export default function VaultUniversePage() {
             >
               {showSoldItems ? `Hide Sold Items (${soldCount})` : `Show Sold Items (${soldCount})`}
             </PillButton>
+            {/* Mass Delete toggle */}
+            {filteredItems.length > 0 && (
+              <button
+                type="button"
+                onClick={() => { setSelectMode((v) => !v); setSelectedIds(new Set()); }}
+                className="inline-flex min-h-[36px] items-center justify-center rounded-full px-3 text-sm font-medium transition ring-1"
+                style={selectMode
+                  ? { background: "rgba(220,38,38,0.12)", color: "#f87171", ringColor: "rgba(220,38,38,0.3)" }
+                  : { background: "var(--pill)", color: "var(--fg-muted)", ringColor: "var(--border)" }}
+                aria-label="Select items to delete"
+              >
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 1h5M1 3h13M2.5 3l1 9.5a1 1 0 001 .5h6a1 1 0 001-.5l1-9.5M5.5 6v4M9.5 6v4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            )}
           </div>
+          {/* Mass delete action bar */}
+          {selectMode && (
+            <div className="mt-2 flex items-center gap-2 rounded-xl px-3 py-2 ring-1" style={{ background: "rgba(220,38,38,0.08)", ringColor: "rgba(220,38,38,0.25)" }}>
+              <span className="flex-1 text-sm font-medium" style={{ color: "#f87171" }}>
+                {selectedIds.size === 0 ? "Tap items to select" : `${selectedIds.size} selected`}
+              </span>
+              {selectedIds.size > 0 && (
+                <button
+                  type="button"
+                  onClick={() => void handleMassDelete()}
+                  className="inline-flex min-h-[34px] items-center rounded-xl px-4 text-sm font-semibold text-white transition"
+                  style={{ background: "#dc2626" }}
+                >
+                  Delete {selectedIds.size}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => { setSelectMode(false); setSelectedIds(new Set()); }}
+                className="inline-flex min-h-[34px] items-center rounded-xl px-3 text-sm font-medium transition ring-1 ring-[color:var(--border)]"
+                style={{ background: "var(--pill)", color: "var(--fg-muted)" }}
+              >
+                Cancel
+              </button>
+            </div>
+          )}
         </section>
 
         {filteredItems.length === 0 ? (
@@ -1138,16 +1207,38 @@ export default function VaultUniversePage() {
                 {filteredItems.map((item) => {
                   const intelligence = intelligenceMap[item.id];
                   const readiness = intelligence?.readiness ?? "Low";
+                  const isSelected = selectedIds.has(item.id);
 
                   return (
-                    <VaultCard
-                      key={item.id}
-                      item={item}
-                      readiness={readiness}
-                      sale={saleInfoForItem(item, saleMap)}
-                      onSaveItem={handleSaveItem}
-                      onDeleteItem={handleDeleteItem}
-                    />
+                    <div key={item.id} className="relative">
+                      {selectMode && (
+                        <button
+                          type="button"
+                          onClick={() => toggleSelectItem(item.id)}
+                          className="absolute inset-0 z-40 flex items-center justify-center rounded-[14px]"
+                          style={{ background: isSelected ? "rgba(220,38,38,0.18)" : "rgba(0,0,0,0.04)" }}
+                        >
+                          <span
+                            className="flex h-8 w-8 items-center justify-center rounded-full"
+                            style={isSelected
+                              ? { background: "#dc2626", boxShadow: "0 0 0 2px #fff" }
+                              : { background: "rgba(255,255,255,0.15)", border: "2px solid rgba(220,38,38,0.6)" }}
+                          >
+                            {isSelected && (
+                              <svg width="14" height="11" viewBox="0 0 14 11" fill="none"><path d="M1 5.5l4 4L13 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                            )}
+                          </span>
+                        </button>
+                      )}
+                      <VaultCard
+                        item={item}
+                        readiness={readiness}
+                        sale={saleInfoForItem(item, saleMap)}
+                        onSaveItem={handleSaveItem}
+                        onDeleteItem={handleDeleteItem}
+                        onNavigate={saveScrollPosition}
+                      />
+                    </div>
                   );
                 })}
               </div>
