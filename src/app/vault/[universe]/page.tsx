@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import ItemIntelligencePanel from "@/components/ItemIntelligencePanel";
 import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
@@ -480,7 +480,7 @@ function VaultCard({
             </div>
           )}
         </div>
-        <div className="absolute right-1.5 top-1.5 z-30">
+        <div className="absolute left-1.5 top-1.5 z-30">
           <ItemVisibilityToggle item={item} />
         </div>
       </div>
@@ -828,15 +828,25 @@ export default function VaultUniversePage() {
     [sales]
   );
 
-  // Scroll position restore when returning via back button
+  // Scroll position restore — save before leaving, restore after items paint
+  const scrollRestored = useRef(false);
   useEffect(() => {
-    const saved = sessionStorage.getItem("vltd_vault_scroll_y");
-    if (saved && items.length > 0) {
-      const y = parseInt(saved, 10);
-      requestAnimationFrame(() => window.scrollTo({ top: y, behavior: "instant" }));
-      sessionStorage.removeItem("vltd_vault_scroll_y");
+    function onLeave() {
+      sessionStorage.setItem("vltd_vault_scroll_y", String(window.scrollY));
     }
-  }, [items.length]);
+    window.addEventListener("pagehide", onLeave);
+    return () => window.removeEventListener("pagehide", onLeave);
+  }, []);
+
+  useEffect(() => {
+    if (scrollRestored.current || filteredItems.length === 0) return;
+    const saved = sessionStorage.getItem("vltd_vault_scroll_y");
+    if (!saved) return;
+    scrollRestored.current = true;
+    sessionStorage.removeItem("vltd_vault_scroll_y");
+    const y = parseInt(saved, 10);
+    requestAnimationFrame(() => window.scrollTo({ top: y, behavior: "instant" }));
+  }, [filteredItems.length]);
 
   function saveScrollPosition() {
     sessionStorage.setItem("vltd_vault_scroll_y", String(window.scrollY));
@@ -1137,49 +1147,46 @@ export default function VaultUniversePage() {
             >
               {showSoldItems ? `Hide Sold Items (${soldCount})` : `Show Sold Items (${soldCount})`}
             </PillButton>
-            {/* Mass Delete toggle */}
+            {/* Mass Delete — trash icon + inline actions */}
             {filteredItems.length > 0 && (
-              <button
-                type="button"
-                onClick={() => { setSelectMode((v) => !v); setSelectedIds(new Set()); }}
-                className="inline-flex min-h-[36px] items-center justify-center rounded-full px-3 text-sm font-medium transition ring-1"
-                style={selectMode
-                  ? { background: "rgba(220,38,38,0.12)", color: "#f87171" }
-                  : { background: "var(--pill)", color: "var(--fg-muted)" }}
-                aria-label="Select items to delete"
-              >
-                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M5 1h5M1 3h13M2.5 3l1 9.5a1 1 0 001 .5h6a1 1 0 001-.5l1-9.5M5.5 6v4M9.5 6v4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            )}
-          </div>
-          {/* Mass delete action bar */}
-          {selectMode && (
-            <div className="mt-2 flex items-center gap-2 rounded-xl px-3 py-2 ring-1" style={{ background: "rgba(220,38,38,0.08)" }}>
-              <span className="flex-1 text-sm font-medium" style={{ color: "#f87171" }}>
-                {selectedIds.size === 0 ? "Tap items to select" : `${selectedIds.size} selected`}
-              </span>
-              {selectedIds.size > 0 && (
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={() => void handleMassDelete()}
-                  className="inline-flex min-h-[34px] items-center rounded-xl px-4 text-sm font-semibold text-white transition"
-                  style={{ background: "#dc2626" }}
+                  onClick={() => { setSelectMode((v) => !v); setSelectedIds(new Set()); }}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full transition"
+                  style={selectMode
+                    ? { background: "rgba(220,38,38,0.15)", color: "#f87171" }
+                    : { background: "var(--pill)", color: "var(--fg-muted)" }}
+                  aria-label="Select items to delete"
                 >
-                  Delete {selectedIds.size}
+                  <svg width="14" height="14" viewBox="0 0 15 15" fill="none">
+                    <path d="M5 1h5M1 3h13M2.5 3l1 9.5a1 1 0 001 .5h6a1 1 0 001-.5l1-9.5M5.5 6v4M9.5 6v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={() => { setSelectMode(false); setSelectedIds(new Set()); }}
-                className="inline-flex min-h-[34px] items-center rounded-xl px-3 text-sm font-medium transition ring-1 ring-[color:var(--border)]"
-                style={{ background: "var(--pill)", color: "var(--fg-muted)" }}
-              >
-                Cancel
-              </button>
-            </div>
-          )}
+                {selectMode && selectedIds.size > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => void handleMassDelete()}
+                    className="inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold text-white"
+                    style={{ background: "#dc2626" }}
+                  >
+                    Delete {selectedIds.size}
+                  </button>
+                )}
+                {selectMode && (
+                  <button
+                    type="button"
+                    onClick={() => { setSelectMode(false); setSelectedIds(new Set()); }}
+                    className="inline-flex h-8 items-center rounded-full px-3 text-xs font-medium ring-1 ring-[color:var(--border)]"
+                    style={{ background: "var(--pill)", color: "var(--fg-muted)" }}
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
         </section>
 
         {filteredItems.length === 0 ? (

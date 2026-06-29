@@ -106,7 +106,7 @@ export default function VaultCard({
                 className="h-full w-full object-cover"
                 loading="lazy"
               />
-              <div className="absolute right-2 top-2 z-10">
+              <div className="absolute left-2 top-2 z-10">
                 <ItemVisibilityToggle item={item} />
               </div>
             </div>
