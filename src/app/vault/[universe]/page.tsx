@@ -441,9 +441,12 @@ function VaultCard({
           type="button"
           onClick={handleDelete}
           disabled={isDeleting}
-          className="inline-flex h-6 items-center justify-center rounded-full bg-red-600/90 px-2 text-[10px] text-text-primary ring-1 ring-red-500/40"
+          aria-label="Delete item"
+          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white ring-1 ring-red-500/40 disabled:opacity-50"
         >
-          {isDeleting ? "…" : "Delete"}
+          {isDeleting
+            ? <span className="text-[9px]">…</span>
+            : <svg width="13" height="13" viewBox="0 0 15 15" fill="none"><path d="M5 1h5M1 3h13M2.5 3l1 9.5a1 1 0 001 .5h6a1 1 0 001-.5l1-9.5M5.5 6v4M9.5 6v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>}
         </button>
       </div>
 
@@ -812,22 +815,37 @@ export default function VaultUniversePage() {
     [sales]
   );
 
-  // Scroll restoration — save on card click, restore by polling after mount
+  // Scroll restoration
+  // - Take over from browser (Next.js can interfere with "auto")
+  // - Save on ANY link click anywhere on the page (not just title)
+  // - Restore on mount by polling until page is tall enough
   useEffect(() => {
-    const saved = sessionStorage.getItem("vltd_vault_scroll_y");
-    if (!saved) return;
-    const target = parseInt(saved, 10);
-    sessionStorage.removeItem("vltd_vault_scroll_y");
-    let attempts = 0;
-    function tryScroll() {
-      if (document.body.scrollHeight > target || attempts > 30) {
-        window.scrollTo({ top: target, behavior: "instant" });
-      } else {
-        attempts++;
-        setTimeout(tryScroll, 80);
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+
+    function saveOnNav(e: MouseEvent) {
+      if ((e.target as HTMLElement).closest("a[href]")) {
+        sessionStorage.setItem("vltd_vault_scroll_y", String(window.scrollY));
       }
     }
-    setTimeout(tryScroll, 80);
+    document.addEventListener("click", saveOnNav, true);
+
+    const saved = sessionStorage.getItem("vltd_vault_scroll_y");
+    if (saved) {
+      const target = parseInt(saved, 10);
+      sessionStorage.removeItem("vltd_vault_scroll_y");
+      let attempts = 0;
+      function tryScroll() {
+        if (document.body.scrollHeight > target || attempts > 25) {
+          window.scrollTo({ top: target, behavior: "instant" });
+        } else {
+          attempts++;
+          setTimeout(tryScroll, 100);
+        }
+      }
+      setTimeout(tryScroll, 100);
+    }
+
+    return () => document.removeEventListener("click", saveOnNav, true);
   }, []);
 
   function saveScrollPosition() {
