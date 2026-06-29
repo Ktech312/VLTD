@@ -816,9 +816,10 @@ export default function VaultUniversePage() {
   );
 
   // Scroll restoration
-  // - Take over from browser (Next.js can interfere with "auto")
-  // - Save on ANY link click anywhere on the page (not just title)
-  // - Restore on mount by polling until page is tall enough
+  // - history.scrollRestoration = "manual" so Next.js doesn't auto-scroll
+  // - Save on ANY link click anywhere on the page
+  // - Restore on mount: wait 500ms FIRST (so Next.js finishes its own
+  //   scroll-to-top), then poll every 100ms until page is tall enough
   useEffect(() => {
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 
@@ -835,14 +836,16 @@ export default function VaultUniversePage() {
       sessionStorage.removeItem("vltd_vault_scroll_y");
       let attempts = 0;
       function tryScroll() {
-        if (document.body.scrollHeight > target || attempts > 25) {
+        if (document.body.scrollHeight > target || attempts > 40) {
           window.scrollTo({ top: target, behavior: "instant" });
         } else {
           attempts++;
           setTimeout(tryScroll, 100);
         }
       }
-      setTimeout(tryScroll, 100);
+      // 500ms head-start lets Next.js finish its own scroll-to-top
+      // before we override it; polling continues for up to ~4s after that
+      setTimeout(tryScroll, 500);
     }
 
     return () => document.removeEventListener("click", saveOnNav, true);

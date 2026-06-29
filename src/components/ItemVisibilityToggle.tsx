@@ -88,11 +88,11 @@ export default function ItemVisibilityToggle({
         aria-label={buttonLabel}
         title={buttonLabel}
         className={[
-          "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full ring-1 backdrop-blur transition disabled:cursor-not-allowed disabled:opacity-60",
+          "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full transition disabled:cursor-not-allowed disabled:opacity-60",
           size === "md" ? "h-9 px-3 text-xs font-semibold" : "h-7 min-w-7 px-2 text-[10px] font-semibold",
           isPublic
-            ? "bg-[color:var(--theme-gold,#F5B548)] text-[#0A0800] ring-[color:var(--theme-gold,#F5B548)] shadow-[0_0_14px_rgba(245,181,72,0.28)]"
-            : "bg-black/70 text-white/78 ring-white/15 hover:text-white",
+            ? "text-[color:var(--theme-gold,#F5B548)]"
+            : "text-white/40 hover:text-white/70",
         ].join(" ")}
       >
         <Icon size={size === "md" ? 15 : 13} strokeWidth={2.2} aria-hidden="true" />
