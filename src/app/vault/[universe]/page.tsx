@@ -1262,32 +1262,30 @@ export default function VaultUniversePage() {
                         <option key={key} value={key}>{UNIVERSE_LABEL[key]}</option>
                       ))}
                     </select>
-                    {moveTargetUniverse && isUniverseKey(moveTargetUniverse) && (
-                      <select
-                        value={moveTargetCategory}
-                        onChange={(e) => { setMoveTargetCategory(e.target.value); setMoveTargetSubcategory(""); }}
-                        className="h-8 rounded-full bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
-                        style={{ color: moveTargetCategory ? "var(--fg)" : "var(--muted)" }}
-                      >
-                        <option value="">Category (optional)</option>
-                        {getCategories(moveTargetUniverse).map((cat) => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
-                    )}
-                    {moveTargetUniverse && isUniverseKey(moveTargetUniverse) && moveTargetCategory && TAXONOMY[moveTargetUniverse][moveTargetCategory]?.length > 0 && (
-                      <select
-                        value={moveTargetSubcategory}
-                        onChange={(e) => setMoveTargetSubcategory(e.target.value)}
-                        className="h-8 rounded-full bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
-                        style={{ color: moveTargetSubcategory ? "var(--fg)" : "var(--muted)" }}
-                      >
-                        <option value="">Set / Group (optional)</option>
-                        {TAXONOMY[moveTargetUniverse][moveTargetCategory].map((sub) => (
-                          <option key={sub} value={sub}>{sub}</option>
-                        ))}
-                      </select>
-                    )}
+                    <select
+                      value={moveTargetCategory}
+                      onChange={(e) => { setMoveTargetCategory(e.target.value); setMoveTargetSubcategory(""); }}
+                      className="h-8 rounded-full bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
+                      style={{ color: moveTargetCategory ? "var(--fg)" : "var(--muted)" }}
+                      disabled={!moveTargetUniverse}
+                    >
+                      <option value="">Sub</option>
+                      {moveTargetUniverse && isUniverseKey(moveTargetUniverse) && getCategories(moveTargetUniverse).map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={moveTargetSubcategory}
+                      onChange={(e) => setMoveTargetSubcategory(e.target.value)}
+                      className="h-8 rounded-full bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
+                      style={{ color: moveTargetSubcategory ? "var(--fg)" : "var(--muted)" }}
+                      disabled={!moveTargetCategory}
+                    >
+                      <option value="">Type</option>
+                      {moveTargetUniverse && isUniverseKey(moveTargetUniverse) && moveTargetCategory && TAXONOMY[moveTargetUniverse][moveTargetCategory]?.map((sub) => (
+                        <option key={sub} value={sub}>{sub}</option>
+                      ))}
+                    </select>
                     {moveTargetUniverse && (
                       <button
                         type="button"
