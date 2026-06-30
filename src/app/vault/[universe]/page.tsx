@@ -908,6 +908,18 @@ export default function VaultUniversePage() {
     setSelectMode(false);
   }
 
+  function handleMassMove(targetUniverse: string) {
+    if (!targetUniverse || selectedIds.size === 0) return;
+    const updated = items.map((item) =>
+      selectedIds.has(item.id) ? { ...item, universe: targetUniverse } : item
+    );
+    saveItems(updated);
+    setItems(updated);
+    window.dispatchEvent(new Event("vltd:vault-updated"));
+    setSelectedIds(new Set());
+    setSelectMode(false);
+  }
+
   function toggleSelectItem(id: string) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -1100,8 +1112,8 @@ export default function VaultUniversePage() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search vault items..."
-              className="min-h-[40px] min-w-0 flex-1 rounded-xl bg-[color:var(--input)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              placeholder="Search..."
+              className="min-h-[40px] w-[180px] rounded-xl bg-[color:var(--input)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
             />
             <select
               value={universeFilter}
@@ -1204,14 +1216,27 @@ export default function VaultUniversePage() {
                   </svg>
                 </button>
                 {selectMode && selectedIds.size > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => void handleMassDelete()}
-                    className="inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold text-white"
-                    style={{ background: "#dc2626" }}
-                  >
-                    Delete {selectedIds.size}
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => void handleMassDelete()}
+                      className="inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold text-white"
+                      style={{ background: "#dc2626" }}
+                    >
+                      Delete {selectedIds.size}
+                    </button>
+                    <select
+                      defaultValue=""
+                      onChange={(e) => { if (e.target.value) handleMassMove(e.target.value); e.target.value = ""; }}
+                      className="h-8 rounded-full bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
+                      style={{ color: "var(--fg-muted)" }}
+                    >
+                      <option value="" disabled>Move {selectedIds.size} to…</option>
+                      {(Object.keys(UNIVERSE_LABEL) as UniverseKey[]).map((key) => (
+                        <option key={key} value={key}>{UNIVERSE_LABEL[key]}</option>
+                      ))}
+                    </select>
+                  </>
                 )}
                 {selectMode && (
                   <button
