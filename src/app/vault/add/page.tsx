@@ -1733,10 +1733,10 @@ export default function AddPage() {
 
       setStatus(
         dropMode
-          ? "Saved to batch. Ready for the next item."
+          ? "✓ Saved to batch. Ready for the next item."
           : saveAndNext
-            ? "Saved. Ready for next item."
-            : "Saved."
+            ? "✓ Saved. Ready for next item."
+            : "✓ Saved!"
       );
       clearAllImages();
       clearPricing();
@@ -1746,6 +1746,10 @@ export default function AddPage() {
       setScanSession((prev) => clearScanSessionReview(prev));
       setAiFilledFields(new Set());
       setHasDraftChanges(false);
+
+      // Scroll back to top so the user is ready to start the next item
+      const scroller = document.querySelector<HTMLElement>(".vltd-content-wrap");
+      if (scroller) scroller.scrollTop = 0;
 
       if (saveAndNext) {
         window.setTimeout(() => numberInputRef.current?.focus(), 0);
@@ -1798,7 +1802,14 @@ export default function AddPage() {
           </div>
 
           {status ? (
-            <div className="mt-3 rounded-xl bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]">
+            <div
+              className="mt-3 rounded-xl px-3 py-2 text-sm ring-1"
+              style={
+                status.startsWith("✓")
+                  ? { background: "rgba(74,222,128,0.10)", color: "#4ade80", borderColor: "rgba(74,222,128,0.30)" }
+                  : { background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }
+              }
+            >
               {status}
             </div>
           ) : null}
