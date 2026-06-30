@@ -154,6 +154,8 @@ function inferUniverseFromWatchlistItem(item: WatchlistItem): UniverseKey | null
   if (/game|console|nintendo|playstation|xbox|sega|atari|arcade/.test(text)) return "GAMES";
   if (/comic|marvel|dc|figure|toy|manga|funko|statue/.test(text)) return "POP_CULTURE";
   if (/handmade|ceramic|woodwork|plant|botany|succulent|terrarium|bonsai/.test(text)) return "BUILT_BOTANY";
+  if (/car|cars|automobile|automotive|motorcycle|bicycle|vehicle|hotrod|hot rod/.test(text)) return "AUTOMOTIVE";
+  if (/painting|sculpture|fine art|original art|print|lithograph|sketch card/.test(text)) return "ART";
 
   return null; // unknown — don't assume MISC, just skip
 }

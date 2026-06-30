@@ -75,7 +75,7 @@ function totalCost(item: VaultItem) {
 function itemGain(item: VaultItem) {
   return Number(item.currentValue ?? 0) - totalCost(item);
 }
-type VaultUniverseSlug = "pop-culture" | "sports" | "tcg" | "music" | "jewelry-apparel" | "games" | "built-botany" | "misc";
+type VaultUniverseSlug = "pop-culture" | "sports" | "tcg" | "music" | "jewelry-apparel" | "games" | "built-botany" | "misc" | "automotive" | "art";
 
 type VaultUniverseEntry = {
   key: UniverseKey;
@@ -142,6 +142,20 @@ const VAULT_UNIVERSES: VaultUniverseEntry[] = [
     href: "/vault/misc",
     thumbnailSrc: "/universe-thumbnails/misc.png",
   },
+  {
+    key: "AUTOMOTIVE",
+    slug: "automotive",
+    description: "Classic cars, motorcycles, bicycles, car parts, and vehicle collectibles.",
+    href: "/vault/automotive",
+    thumbnailSrc: "/universe-thumbnails/automotive.png",
+  },
+  {
+    key: "ART",
+    slug: "art",
+    description: "Original paintings, sculptures, limited prints, art cards, and fine art collectibles.",
+    href: "/vault/art",
+    thumbnailSrc: "/universe-thumbnails/art.png",
+  },
 ];
 
 function universeDisplayName(key: UniverseKey) {
@@ -183,6 +197,8 @@ function directUniverseMatch(value: unknown): UniverseKey | "" {
   if (["games", "game", "video games", "video game", "console", "consoles", "cartridge", "cartridges", "arcade", "handhelds"].includes(text)) return "GAMES";
   if (["built botany", "built and botany", "handmade", "plants", "crafts", "botany", "garden"].includes(text)) return "BUILT_BOTANY";
   if (["misc", "miscellaneous", "other", "uncategorized", "unknown", "collectors choice"].includes(text)) return "MISC";
+  if (["automotive", "cars", "car", "classic cars", "motorcycles", "motorcycle", "bicycles", "bicycle", "vehicle", "vehicles"].includes(text)) return "AUTOMOTIVE";
+  if (["art", "painting", "paintings", "sculpture", "sculptures", "fine art", "prints", "original art"].includes(text)) return "ART";
 
   return "";
 }
