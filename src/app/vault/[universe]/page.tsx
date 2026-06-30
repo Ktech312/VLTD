@@ -15,7 +15,7 @@ import VaultMuseumView from "@/components/VaultMuseumView";
 import VaultWrappedSheet from "@/components/VaultWrappedSheet";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
-import { UNIVERSE_LABEL, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
+import { UNIVERSE_LABEL, TAXONOMY, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import {
   enqueueVaultItemSync,
   processVaultSyncQueue,
@@ -699,6 +699,7 @@ export default function VaultUniversePage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [moveTargetUniverse, setMoveTargetUniverse] = useState<string>("");
   const [moveTargetCategory, setMoveTargetCategory] = useState<string>("");
+  const [moveTargetSubcategory, setMoveTargetSubcategory] = useState<string>("");
   const [sortMode, setSortMode] = useState<SortMode>("newest");
   const [viewMode, setViewMode] = useState<ViewMode>("museum");
   const [showSoldItems, setShowSoldItems] = useState(false);
@@ -920,6 +921,7 @@ export default function VaultUniversePage() {
         ...item,
         universe: moveTargetUniverse,
         ...(moveTargetCategory ? { category: moveTargetCategory, categoryLabel: moveTargetCategory } : {}),
+        ...(moveTargetSubcategory ? { subcategoryLabel: moveTargetSubcategory } : {}),
       };
     });
     const movedItems = updated.filter((item) => selectedIds.has(item.id));
@@ -936,6 +938,7 @@ export default function VaultUniversePage() {
     setSelectMode(false);
     setMoveTargetUniverse("");
     setMoveTargetCategory("");
+    setMoveTargetSubcategory("");
   }
 
   function toggleSelectItem(id: string) {
@@ -1222,7 +1225,7 @@ export default function VaultUniversePage() {
               <div className="flex flex-wrap items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={() => { setSelectMode((v) => !v); setSelectedIds(new Set()); setMoveTargetUniverse(""); setMoveTargetCategory(""); }}
+                  onClick={() => { setSelectMode((v) => !v); setSelectedIds(new Set()); setMoveTargetUniverse(""); setMoveTargetCategory(""); setMoveTargetSubcategory(""); }}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full transition"
                   style={selectMode
                     ? { background: "rgba(245,181,72,0.18)", color: "#F5B548" }
@@ -1250,7 +1253,7 @@ export default function VaultUniversePage() {
                     </button>
                     <select
                       value={moveTargetUniverse}
-                      onChange={(e) => { setMoveTargetUniverse(e.target.value); setMoveTargetCategory(""); }}
+                      onChange={(e) => { setMoveTargetUniverse(e.target.value); setMoveTargetCategory(""); setMoveTargetSubcategory(""); }}
                       className="h-8 rounded-full bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
                       style={{ color: moveTargetUniverse ? "var(--fg)" : "var(--muted)" }}
                     >
@@ -1262,13 +1265,26 @@ export default function VaultUniversePage() {
                     {moveTargetUniverse && isUniverseKey(moveTargetUniverse) && (
                       <select
                         value={moveTargetCategory}
-                        onChange={(e) => setMoveTargetCategory(e.target.value)}
+                        onChange={(e) => { setMoveTargetCategory(e.target.value); setMoveTargetSubcategory(""); }}
                         className="h-8 rounded-full bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
                         style={{ color: moveTargetCategory ? "var(--fg)" : "var(--muted)" }}
                       >
                         <option value="">Category (optional)</option>
                         {getCategories(moveTargetUniverse).map((cat) => (
                           <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    )}
+                    {moveTargetUniverse && isUniverseKey(moveTargetUniverse) && moveTargetCategory && TAXONOMY[moveTargetUniverse][moveTargetCategory]?.length > 0 && (
+                      <select
+                        value={moveTargetSubcategory}
+                        onChange={(e) => setMoveTargetSubcategory(e.target.value)}
+                        className="h-8 rounded-full bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
+                        style={{ color: moveTargetSubcategory ? "var(--fg)" : "var(--muted)" }}
+                      >
+                        <option value="">Set / Group (optional)</option>
+                        {TAXONOMY[moveTargetUniverse][moveTargetCategory].map((sub) => (
+                          <option key={sub} value={sub}>{sub}</option>
                         ))}
                       </select>
                     )}
@@ -1287,7 +1303,7 @@ export default function VaultUniversePage() {
                 {selectMode && (
                   <button
                     type="button"
-                    onClick={() => { setSelectMode(false); setSelectedIds(new Set()); setMoveTargetUniverse(""); setMoveTargetCategory(""); }}
+                    onClick={() => { setSelectMode(false); setSelectedIds(new Set()); setMoveTargetUniverse(""); setMoveTargetCategory(""); setMoveTargetSubcategory(""); }}
                     className="inline-flex h-8 items-center rounded-full px-3 text-xs font-medium ring-1 ring-[color:var(--border)]"
                     style={{ background: "var(--pill)", color: "var(--muted)" }}
                   >
