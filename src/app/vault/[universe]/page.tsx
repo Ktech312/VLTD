@@ -1254,4 +1254,147 @@ export default function VaultUniversePage() {
                     <rect x="1" y="8.5" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.3"/>
                     <rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.3"/>
                   </svg>
-        
+                </button>
+                {selectMode && selectedIds.size > 0 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => void handleMassDelete()}
+                      className="inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold text-white"
+                      style={{ background: "#dc2626" }}
+                    >
+                      Delete {selectedIds.size}
+                    </button>
+                    <select
+                      value={moveTargetUniverse}
+                      onChange={(e) => { setMoveTargetUniverse(e.target.value); setMoveTargetCategory(""); setMoveTargetSubcategory(""); }}
+                      className="h-8 rounded-full bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
+                      style={{ color: moveTargetUniverse ? "var(--fg)" : "var(--muted)" }}
+                    >
+                      <option value="">Move {selectedIds.size} to…</option>
+                      {(Object.keys(UNIVERSE_LABEL) as UniverseKey[]).map((key) => (
+                        <option key={key} value={key}>{UNIVERSE_LABEL[key]}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={moveTargetCategory}
+                      onChange={(e) => { setMoveTargetCategory(e.target.value); setMoveTargetSubcategory(""); }}
+                      className="h-8 rounded-full bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
+                      style={{ color: moveTargetCategory ? "var(--fg)" : "var(--muted)" }}
+                      disabled={!moveTargetUniverse}
+                    >
+                      <option value="">Sub</option>
+                      {moveTargetUniverse && isUniverseKey(moveTargetUniverse) && getCategories(moveTargetUniverse).map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={moveTargetSubcategory}
+                      onChange={(e) => setMoveTargetSubcategory(e.target.value)}
+                      className="h-8 rounded-full bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
+                      style={{ color: moveTargetSubcategory ? "var(--fg)" : "var(--muted)" }}
+                      disabled={!moveTargetCategory}
+                    >
+                      <option value="">Type</option>
+                      {moveTargetUniverse && isUniverseKey(moveTargetUniverse) && moveTargetCategory && TAXONOMY[moveTargetUniverse][moveTargetCategory]?.map((sub) => (
+                        <option key={sub} value={sub}>{sub}</option>
+                      ))}
+                    </select>
+                    {moveTargetUniverse && (
+                      <button
+                        type="button"
+                        onClick={() => void handleMassMove()}
+                        className="inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold"
+                        style={{ background: "rgba(245,181,72,0.18)", color: "#F5B548", border: "1px solid rgba(245,181,72,0.4)" }}
+                      >
+                        Move
+                      </button>
+                    )}
+                  </>
+                )}
+                {selectMode && (
+                  <button
+                    type="button"
+                    onClick={() => { setSelectMode(false); setSelectedIds(new Set()); setMoveTargetUniverse(""); setMoveTargetCategory(""); setMoveTargetSubcategory(""); }}
+                    className="inline-flex h-8 items-center rounded-full px-3 text-xs font-medium ring-1 ring-[color:var(--border)]"
+                    style={{ background: "var(--pill)", color: "var(--muted)" }}
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+        </section>
+
+        {filteredItems.length === 0 ? (
+          <VaultEmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearFilters} />
+        ) : (
+          <section className="mt-3">
+            {viewMode === "museum" ? (
+              <VaultMuseumView
+                items={filteredItems}
+                onFilterToUniverse={(universe) => {
+                  setUniverseFilter("ALL");
+                  router.push(`/vault/${universeToSlug(universe)}`);
+                }}
+              />
+            ) : viewMode === "swipe" ? (
+              <div className="mx-auto max-w-sm">
+                <SwipeStack
+                  items={filteredItems}
+                  mode="vault"
+                  onOpen={(item) => {
+                    router.push(`/vault/item/${item.id}`);
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                {filteredItems.map((item) => {
+                  const intelligence = intelligenceMap[item.id];
+                  const readiness = intelligence?.readiness ?? "Low";
+                  const isSelected = selectedIds.has(item.id);
+
+                  return (
+                    <div key={item.id} className="relative">
+                      {selectMode && (
+                        <button
+                          type="button"
+                          onClick={() => toggleSelectItem(item.id)}
+                          className="absolute inset-0 z-40 flex items-center justify-center rounded-[14px]"
+                          style={{ background: isSelected ? "rgba(245,181,72,0.18)" : "rgba(0,0,0,0.04)" }}
+                        >
+                          <span
+                            className="flex h-8 w-8 items-center justify-center rounded-full"
+                            style={isSelected
+                              ? { background: "#F5B548", boxShadow: "0 0 0 2px rgba(245,181,72,0.5)" }
+                              : { background: "rgba(255,255,255,0.15)", border: "2px solid rgba(245,181,72,0.55)" }}
+                          >
+                            {isSelected && (
+                              <svg width="14" height="11" viewBox="0 0 14 11" fill="none"><path d="M1 5.5l4 4L13 1" stroke="#1A0F00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                            )}
+                          </span>
+                        </button>
+                      )}
+                      <VaultCard
+                        item={item}
+                        readiness={readiness}
+                        sale={saleInfoForItem(item, saleMap)}
+                        onSaveItem={handleSaveItem}
+                        onDeleteItem={handleDeleteItem}
+                        onNavigate={saveScrollPosition}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
+
+      </div>
+    </main>
+  );
+}
