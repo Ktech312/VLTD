@@ -15,7 +15,7 @@ import VaultMuseumView from "@/components/VaultMuseumView";
 import VaultWrappedSheet from "@/components/VaultWrappedSheet";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
-import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+import { UNIVERSE_LABEL, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import {
   enqueueVaultItemSync,
   processVaultSyncQueue,
@@ -696,6 +696,8 @@ export default function VaultUniversePage() {
   const [gradedOnly, setGradedOnly] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [moveTargetUniverse, setMoveTargetUniverse] = useState<string>("");
+  const [moveTargetCategory, setMoveTargetCategory] = useState<string>("");
   const [sortMode, setSortMode] = useState<SortMode>("newest");
   const [viewMode, setViewMode] = useState<ViewMode>("museum");
   const [showSoldItems, setShowSoldItems] = useState(false);
@@ -908,16 +910,30 @@ export default function VaultUniversePage() {
     setSelectMode(false);
   }
 
-  function handleMassMove(targetUniverse: string) {
-    if (!targetUniverse || selectedIds.size === 0) return;
-    const updated = items.map((item) =>
-      selectedIds.has(item.id) ? { ...item, universe: targetUniverse } : item
-    );
-    saveItems(updated);
+  async function handleMassMove() {
+    if (!moveTargetUniverse || selectedIds.size === 0) return;
+    const updated = items.map((item) => {
+      if (!selectedIds.has(item.id)) return item;
+      return {
+        ...item,
+        universe: moveTargetUniverse,
+        ...(moveTargetCategory ? { category: moveTargetCategory, categoryLabel: moveTargetCategory } : {}),
+      };
+    });
+    const movedItems = updated.filter((item) => selectedIds.has(item.id));
+    for (const item of movedItems) {
+      saveItem(item);
+      enqueueVaultItemSync(item.id);
+    }
     setItems(updated);
+    if (hasSupabaseEnv()) {
+      await processVaultSyncQueue();
+    }
     window.dispatchEvent(new Event("vltd:vault-updated"));
     setSelectedIds(new Set());
     setSelectMode(false);
+    setMoveTargetUniverse("");
+    setMoveTargetCategory("");
   }
 
   function toggleSelectItem(id: string) {
@@ -1199,20 +1215,25 @@ export default function VaultUniversePage() {
             >
               {showSoldItems ? `Hide Sold Items (${soldCount})` : `Show Sold Items (${soldCount})`}
             </PillButton>
-            {/* Mass Delete — trash icon + inline actions */}
+            {/* Bulk select — checkboxes icon + inline actions */}
             {filteredItems.length > 0 && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={() => { setSelectMode((v) => !v); setSelectedIds(new Set()); }}
+                  onClick={() => { setSelectMode((v) => !v); setSelectedIds(new Set()); setMoveTargetUniverse(""); setMoveTargetCategory(""); }}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full transition"
                   style={selectMode
-                    ? { background: "rgba(220,38,38,0.15)", color: "#f87171" }
-                    : { background: "var(--pill)", color: "var(--fg-muted)" }}
-                  aria-label="Select items to delete"
+                    ? { background: "rgba(245,181,72,0.18)", color: "#F5B548" }
+                    : { background: "var(--pill)", color: "var(--muted)" }}
+                  aria-label="Select items"
                 >
-                  <svg width="14" height="14" viewBox="0 0 15 15" fill="none">
-                    <path d="M5 1h5M1 3h13M2.5 3l1 9.5a1 1 0 001 .5h6a1 1 0 001-.5l1-9.5M5.5 6v4M9.5 6v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                  {/* Multi-select / checkboxes icon */}
+                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                    <rect x="1" y="1" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.3"/>
+                    <path d="M2.5 3.75l1.2 1.2 2-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <rect x="8.5" y="1" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.3"/>
+                    <rect x="1" y="8.5" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.3"/>
+                    <rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.3"/>
                   </svg>
                 </button>
                 {selectMode && selectedIds.size > 0 && (
@@ -1226,24 +1247,47 @@ export default function VaultUniversePage() {
                       Delete {selectedIds.size}
                     </button>
                     <select
-                      defaultValue=""
-                      onChange={(e) => { if (e.target.value) handleMassMove(e.target.value); e.target.value = ""; }}
+                      value={moveTargetUniverse}
+                      onChange={(e) => { setMoveTargetUniverse(e.target.value); setMoveTargetCategory(""); }}
                       className="h-8 rounded-full bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
-                      style={{ color: "var(--fg-muted)" }}
+                      style={{ color: moveTargetUniverse ? "var(--fg)" : "var(--muted)" }}
                     >
-                      <option value="" disabled>Move {selectedIds.size} to…</option>
+                      <option value="">Move {selectedIds.size} to…</option>
                       {(Object.keys(UNIVERSE_LABEL) as UniverseKey[]).map((key) => (
                         <option key={key} value={key}>{UNIVERSE_LABEL[key]}</option>
                       ))}
                     </select>
+                    {moveTargetUniverse && isUniverseKey(moveTargetUniverse) && (
+                      <select
+                        value={moveTargetCategory}
+                        onChange={(e) => setMoveTargetCategory(e.target.value)}
+                        className="h-8 rounded-full bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
+                        style={{ color: moveTargetCategory ? "var(--fg)" : "var(--muted)" }}
+                      >
+                        <option value="">Category (optional)</option>
+                        {getCategories(moveTargetUniverse).map((cat) => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    )}
+                    {moveTargetUniverse && (
+                      <button
+                        type="button"
+                        onClick={() => void handleMassMove()}
+                        className="inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold"
+                        style={{ background: "rgba(245,181,72,0.18)", color: "#F5B548", border: "1px solid rgba(245,181,72,0.4)" }}
+                      >
+                        Move
+                      </button>
+                    )}
                   </>
                 )}
                 {selectMode && (
                   <button
                     type="button"
-                    onClick={() => { setSelectMode(false); setSelectedIds(new Set()); }}
+                    onClick={() => { setSelectMode(false); setSelectedIds(new Set()); setMoveTargetUniverse(""); setMoveTargetCategory(""); }}
                     className="inline-flex h-8 items-center rounded-full px-3 text-xs font-medium ring-1 ring-[color:var(--border)]"
-                    style={{ background: "var(--pill)", color: "var(--fg-muted)" }}
+                    style={{ background: "var(--pill)", color: "var(--muted)" }}
                   >
                     Cancel
                   </button>
@@ -1290,16 +1334,16 @@ export default function VaultUniversePage() {
                           type="button"
                           onClick={() => toggleSelectItem(item.id)}
                           className="absolute inset-0 z-40 flex items-center justify-center rounded-[14px]"
-                          style={{ background: isSelected ? "rgba(220,38,38,0.18)" : "rgba(0,0,0,0.04)" }}
+                          style={{ background: isSelected ? "rgba(245,181,72,0.18)" : "rgba(0,0,0,0.04)" }}
                         >
                           <span
                             className="flex h-8 w-8 items-center justify-center rounded-full"
                             style={isSelected
-                              ? { background: "#dc2626", boxShadow: "0 0 0 2px #fff" }
-                              : { background: "rgba(255,255,255,0.15)", border: "2px solid rgba(220,38,38,0.6)" }}
+                              ? { background: "#F5B548", boxShadow: "0 0 0 2px rgba(245,181,72,0.5)" }
+                              : { background: "rgba(255,255,255,0.15)", border: "2px solid rgba(245,181,72,0.55)" }}
                           >
                             {isSelected && (
-                              <svg width="14" height="11" viewBox="0 0 14 11" fill="none"><path d="M1 5.5l4 4L13 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                              <svg width="14" height="11" viewBox="0 0 14 11" fill="none"><path d="M1 5.5l4 4L13 1" stroke="#1A0F00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                             )}
                           </span>
                         </button>
