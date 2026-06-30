@@ -831,29 +831,38 @@ export default function VaultUniversePage() {
   // is tall enough (items may still be loading from IndexedDB).
   // ───────────────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    // The page content scrolls inside .vltd-content-wrap (PullToRefresh div),
+    // NOT on window. All previous attempts used window.scrollY / window.scrollTo
+    // which targeted the wrong element — that's why they all failed.
+    function getScroller() {
+      return document.querySelector<HTMLElement>(".vltd-content-wrap");
+    }
 
     function applyScrollRestore(target: number) {
       let attempts = 0;
       function poll() {
-        if (document.body.scrollHeight >= target || attempts >= 30) {
-          window.scrollTo({ top: target, behavior: "instant" });
+        const el = getScroller();
+        if (el) {
+          if (el.scrollHeight >= target || attempts >= 30) {
+            el.scrollTop = target;
+          }
         }
-        // Keep re-applying for 1s so any late Next.js reset gets overridden
         if (++attempts < 10) setTimeout(poll, 100);
       }
       setTimeout(poll, 50);
     }
 
-    // Save scroll on any outbound link click (forward navigation)
+    // Save on any outbound link click
     function saveOnClick(e: MouseEvent) {
       if ((e.target as HTMLElement).closest("a[href]")) {
-        sessionStorage.setItem("vltd_vault_scroll_y", String(window.scrollY));
+        const el = getScroller();
+        sessionStorage.setItem("vltd_vault_scroll_y", String(el ? el.scrollTop : 0));
       }
     }
     document.addEventListener("click", saveOnClick, true);
 
-    // PATH B — router cache: component stayed mounted, popstate fired
+    // PATH B — router cache: component stayed mounted while on item page.
+    // popstate fires when user presses Back even when component didn't remount.
     function onPopState() {
       const raw = sessionStorage.getItem("vltd_vault_scroll_y");
       if (!raw) return;
@@ -864,8 +873,8 @@ export default function VaultUniversePage() {
     }
     window.addEventListener("popstate", onPopState);
 
-    // PATH A — fresh remount: popstate fired before this listener was
-    // added, so the key is still in sessionStorage. Read it now.
+    // PATH A — fresh remount: popstate fired before this listener existed,
+    // so the key is still in sessionStorage. Read it here on mount.
     const raw = sessionStorage.getItem("vltd_vault_scroll_y");
     if (raw) {
       const target = parseInt(raw, 10);
@@ -882,7 +891,8 @@ export default function VaultUniversePage() {
   }, []);
 
   function saveScrollPosition() {
-    sessionStorage.setItem("vltd_vault_scroll_y", String(window.scrollY));
+    const el = document.querySelector<HTMLElement>(".vltd-content-wrap");
+    sessionStorage.setItem("vltd_vault_scroll_y", String(el ? el.scrollTop : 0));
   }
 
   async function handleMassDelete() {
@@ -1086,17 +1096,17 @@ export default function VaultUniversePage() {
 
 
         <section className="mt-3 rounded-[18px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-          <div className="grid gap-2 lg:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,0.7fr))]">
+          <div className="flex flex-wrap gap-2">
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search vault items..."
-              className="min-h-[40px] w-full rounded-xl bg-[color:var(--input)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              className="min-h-[40px] min-w-0 flex-1 rounded-xl bg-[color:var(--input)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
             />
             <select
               value={universeFilter}
               onChange={(e) => setUniverseFilter(e.target.value as UniverseFilter)}
-              className="min-h-[40px] rounded-xl bg-[color:var(--input)] px-4 py-2 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+              className="min-h-[40px] w-auto rounded-xl bg-[color:var(--input)] px-3 py-2 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
             >
               <option value="ALL">All Universes</option>
               {(Object.keys(UNIVERSE_LABEL) as UniverseKey[]).map((key) => (
@@ -1108,7 +1118,7 @@ export default function VaultUniversePage() {
             <select
               value={sortMode}
               onChange={(e) => setSortMode(e.target.value as SortMode)}
-              className="min-h-[40px] rounded-xl bg-[color:var(--input)] px-4 py-2 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+              className="min-h-[40px] w-auto rounded-xl bg-[color:var(--input)] px-3 py-2 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
             >
               <option value="newest">Newest</option>
               <option value="value_desc">Value ↓</option>
@@ -1117,18 +1127,17 @@ export default function VaultUniversePage() {
               <option value="gain_asc">Gain ↑</option>
               <option value="title">Title A-Z</option>
             </select>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {/* Graded toggle — plain checkbox, no pill background */}
             <button
               type="button"
               onClick={() => setGradedOnly((v) => !v)}
-              className={gradedOnly
-                ? "inline-flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition ring-1 ring-[rgba(245,181,72,0.35)]"
-                : "inline-flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition ring-1 ring-[color:var(--border)]"}
-              style={gradedOnly
-                ? { background: "rgba(245,181,72,0.12)", color: "var(--theme-gold, #F5B548)" }
-                : { background: "var(--input)", color: "var(--fg-muted)" }}
+              className="inline-flex min-h-[36px] items-center gap-1.5 px-1 text-sm font-medium transition"
+              style={gradedOnly ? { color: "var(--theme-gold, #F5B548)" } : { color: "var(--fg-muted)" }}
             >
               <span
-                className="inline-flex h-4 w-4 items-center justify-center rounded"
+                className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded"
                 style={gradedOnly
                   ? { background: "var(--theme-gold, #F5B548)" }
                   : { border: "1.5px solid var(--border)", background: "transparent" }}
@@ -1137,8 +1146,6 @@ export default function VaultUniversePage() {
               </span>
               Graded
             </button>
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
             {filteredItems.length > 0 ? (
               <div className="flex flex-wrap items-center gap-2 rounded-full bg-[color:var(--input)] px-2 py-1 ring-1 ring-[color:var(--border)]">
                 <span className="px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">
