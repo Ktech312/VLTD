@@ -694,6 +694,7 @@ export default function VaultUniversePage() {
   const [query, setQuery] = useState("");
   const [universeFilter, setUniverseFilter] = useState<UniverseFilter>("ALL");
   const [gradedOnly, setGradedOnly] = useState(false);
+  const [showUncategorized, setShowUncategorized] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [moveTargetUniverse, setMoveTargetUniverse] = useState<string>("");
@@ -772,6 +773,7 @@ export default function VaultUniversePage() {
       if (universeForItem(item) !== activeUniverse) return false;
       if (universeFilter !== "ALL" && universeForItem(item) !== universeFilter) return false;
       if (gradedOnly && !item.grade) return false;
+      if (showUncategorized && (item.categoryLabel || item.category)) return false;
       if (q) {
         const text = [
           item.title,
@@ -987,8 +989,8 @@ export default function VaultUniversePage() {
 
   const hasActiveFilters =
     query.trim().length > 0 ||
-    universeFilter !== "ALL" ||
     gradedOnly ||
+    showUncategorized ||
     showSoldItems ||
     sortMode !== "newest";
 
@@ -1025,8 +1027,8 @@ export default function VaultUniversePage() {
 
   function handleClearFilters() {
     setQuery("");
-    setUniverseFilter("ALL");
     setGradedOnly(false);
+    setShowUncategorized(false);
     setSortMode("newest");
   }
 
@@ -1124,25 +1126,13 @@ export default function VaultUniversePage() {
 
 
         <section className="mt-3 rounded-[18px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search..."
               className="min-h-[40px] w-[180px] rounded-xl bg-[color:var(--input)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
             />
-            <select
-              value={universeFilter}
-              onChange={(e) => setUniverseFilter(e.target.value as UniverseFilter)}
-              className="min-h-[40px] w-auto rounded-xl bg-[color:var(--input)] px-3 py-2 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
-            >
-              <option value="ALL">All Universes</option>
-              {(Object.keys(UNIVERSE_LABEL) as UniverseKey[]).map((key) => (
-                <option key={key} value={key}>
-                  {UNIVERSE_LABEL[key]} ({universeCounts[key]})
-                </option>
-              ))}
-            </select>
             <select
               value={sortMode}
               onChange={(e) => setSortMode(e.target.value as SortMode)}
@@ -1155,9 +1145,7 @@ export default function VaultUniversePage() {
               <option value="gain_asc">Gain ↑</option>
               <option value="title">Title A-Z</option>
             </select>
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            {/* Graded toggle — plain checkbox, no pill background */}
+            {/* Graded checkbox — moved up from row 2 */}
             <button
               type="button"
               onClick={() => setGradedOnly((v) => !v)}
@@ -1174,6 +1162,24 @@ export default function VaultUniversePage() {
               </span>
               Graded
             </button>
+            {/* Uncategorized checkbox */}
+            <button
+              type="button"
+              onClick={() => setShowUncategorized((v) => !v)}
+              className="inline-flex min-h-[36px] items-center gap-1.5 px-1 text-sm font-medium transition"
+              style={showUncategorized ? { color: "var(--theme-gold, #F5B548)" } : { color: "var(--fg-muted)" }}
+            >
+              <span
+                className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded"
+                style={showUncategorized
+                  ? { background: "var(--theme-gold, #F5B548)" }
+                  : { border: "1.5px solid var(--border)", background: "transparent" }}
+              >
+                {showUncategorized && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+              </span>
+              Uncategorized
+            </button>
+            {/* View bar — moved up from row 2 */}
             {filteredItems.length > 0 ? (
               <div className="flex flex-wrap items-center gap-2 rounded-full bg-[color:var(--input)] px-2 py-1 ring-1 ring-[color:var(--border)]">
                 <span className="px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">
@@ -1193,14 +1199,8 @@ export default function VaultUniversePage() {
                     className="min-h-[30px] rounded-full px-3 py-1 text-[12px] font-semibold transition"
                     style={
                       viewMode === mode
-                        ? {
-                            background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))",
-                            color: "var(--theme-gold, #F5B548)",
-                          }
-                        : {
-                            background: "transparent",
-                            color: "var(--muted)",
-                          }
+                        ? { background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))", color: "var(--theme-gold, #F5B548)" }
+                        : { background: "transparent", color: "var(--muted)" }
                     }
                   >
                     {label}
@@ -1208,6 +1208,8 @@ export default function VaultUniversePage() {
                 ))}
               </div>
             ) : null}
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <PillButton
               variant={showSoldItems ? "active" : "default"}
               onClick={() => setShowSoldItems((value) => !value)}
