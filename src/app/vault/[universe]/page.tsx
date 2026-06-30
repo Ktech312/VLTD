@@ -145,7 +145,7 @@ const VAULT_UNIVERSES: VaultUniverseEntry[] = [
   {
     key: "AUTOMOTIVE",
     slug: "automotive",
-    description: "Classic cars, motorcycles, bicycles, car parts, and vehicle collectibles.",
+    description: "Classic cars, motorcycles, bicycles, hot rods, car parts, and vehicle collectibles.",
     href: "/vault/automotive",
     thumbnailSrc: "/universe-thumbnails/automotive.png",
   },

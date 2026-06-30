@@ -145,7 +145,7 @@ const VAULT_UNIVERSES: VaultUniverseEntry[] = [
   {
     key: "AUTOMOTIVE",
     slug: "automotive",
-    description: "Classic cars, motorcycles, bicycles, car parts, and vehicle collectibles.",
+    description: "Classic cars, motorcycles, bicycles, hot rods, car parts, and vehicle collectibles.",
     href: "/vault/automotive",
     thumbnailSrc: "/universe-thumbnails/automotive.png",
   },
@@ -197,7 +197,7 @@ function directUniverseMatch(value: unknown): UniverseKey | "" {
   if (["games", "game", "video games", "video game", "console", "consoles", "cartridge", "cartridges", "arcade", "handhelds"].includes(text)) return "GAMES";
   if (["built botany", "built and botany", "handmade", "plants", "crafts", "botany", "garden"].includes(text)) return "BUILT_BOTANY";
   if (["misc", "miscellaneous", "other", "uncategorized", "unknown", "collectors choice"].includes(text)) return "MISC";
-  if (["automotive", "cars", "car", "classic cars", "motorcycles", "motorcycle", "bicycles", "bicycle", "vehicle", "vehicles"].includes(text)) return "AUTOMOTIVE";
+  if (["automotive", "gears and gasoline", "gears gasoline", "cars", "car", "classic cars", "motorcycles", "motorcycle", "bicycles", "bicycle", "vehicle", "vehicles"].includes(text)) return "AUTOMOTIVE";
   if (["art", "painting", "paintings", "sculpture", "sculptures", "fine art", "prints", "original art"].includes(text)) return "ART";
 
   return "";

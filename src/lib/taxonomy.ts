@@ -109,7 +109,7 @@ export const UNIVERSE_LABEL: Record<UniverseKey, string> = {
   GAMES:            "Games",
   BUILT_BOTANY:     "Built, Botany & Bar",
   MISC:             "Misc",
-  AUTOMOTIVE:       "Automotive",
+  AUTOMOTIVE:       "Gears & Gasoline",
   ART:              "Art",
 };
 
