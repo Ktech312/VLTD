@@ -944,9 +944,13 @@ export default function VaultUniversePage() {
         const supabase = getSupabaseBrowserClient();
         if (supabase) {
           await Promise.all(
-            toDelete.map((item) =>
-              supabase.from(VAULT_ITEMS_TABLE).delete().eq("id", item.id).catch(() => {})
-            )
+            toDelete.map(async (item) => {
+              try {
+                await supabase.from(VAULT_ITEMS_TABLE).delete().eq("id", item.id);
+              } catch {
+                // ignore individual delete failures
+              }
+            })
           );
         }
       }
