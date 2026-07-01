@@ -714,6 +714,8 @@ export default function VaultUniversePage() {
   const [moveTargetUniverse, setMoveTargetUniverse] = useState<string>("");
   const [moveTargetCategory, setMoveTargetCategory] = useState<string>("");
   const [moveTargetSubcategory, setMoveTargetSubcategory] = useState<string>("");
+  const [deleteConfirmPending, setDeleteConfirmPending] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [sortMode, setSortMode] = useState<SortMode>("newest");
   const [viewMode, setViewMode] = useState<ViewMode>("museum");
   const [showSoldItems, setShowSoldItems] = useState(false);
@@ -914,17 +916,49 @@ export default function VaultUniversePage() {
     sessionStorage.setItem("vltd_vault_scroll_y", String(el ? el.scrollTop : 0));
   }
 
-  async function handleMassDelete() {
-    const count = selectedIds.size;
-    if (count === 0) return;
-    const ok = window.confirm(`Are you sure you want to delete ${count} ${count === 1 ? "item" : "items"}?`);
-    if (!ok) return;
+  function handleMassDelete() {
+    if (selectedIds.size === 0) return;
+    // Don't use window.confirm — it's blocked in PWA/iframe contexts on mobile.
+    // Show an inline confirmation bar instead.
+    setDeleteConfirmPending(true);
+  }
+
+  async function confirmMassDelete() {
     const toDelete = items.filter((item) => selectedIds.has(item.id));
-    for (const item of toDelete) {
-      await handleDeleteItem(item);
+    if (toDelete.length === 0) { setDeleteConfirmPending(false); return; }
+    const idsToDelete = new Set(toDelete.map((i) => String(i.id)));
+
+    setIsDeleting(true);
+    try {
+      // Single localStorage read → filter → single write (instead of N reads/writes)
+      const remaining = loadItems({ includeAllProfiles: true }).filter(
+        (entry) => !idsToDelete.has(String(entry.id))
+      );
+      saveItems(remaining);
+
+      // Update React state once
+      setItems((prev) => prev.filter((entry) => !idsToDelete.has(String(entry.id))));
+
+      // Parallel Supabase deletes (instead of sequential awaits)
+      if (hasSupabaseEnv()) {
+        const supabase = getSupabaseBrowserClient();
+        if (supabase) {
+          await Promise.all(
+            toDelete.map((item) =>
+              supabase.from(VAULT_ITEMS_TABLE).delete().eq("id", item.id).catch(() => {})
+            )
+          );
+        }
+      }
+
+      // Single event dispatch at the end
+      window.dispatchEvent(new Event("vltd:vault-updated"));
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirmPending(false);
+      setSelectedIds(new Set());
+      setSelectMode(false);
     }
-    setSelectedIds(new Set());
-    setSelectMode(false);
   }
 
   async function handleMassMove() {
@@ -1257,14 +1291,40 @@ export default function VaultUniversePage() {
                 </button>
                 {selectMode && selectedIds.size > 0 && (
                   <>
-                    <button
-                      type="button"
-                      onClick={() => void handleMassDelete()}
-                      className="inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold text-white"
-                      style={{ background: "#dc2626" }}
-                    >
-                      Delete {selectedIds.size}
-                    </button>
+                    {deleteConfirmPending ? (
+                      <>
+                        <span className="text-xs font-semibold" style={{ color: "#f87171" }}>
+                          Delete {selectedIds.size} {selectedIds.size === 1 ? "item" : "items"}?
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => void confirmMassDelete()}
+                          disabled={isDeleting}
+                          className="inline-flex h-8 items-center rounded-full px-3 text-xs font-bold text-white"
+                          style={{ background: "#dc2626", opacity: isDeleting ? 0.6 : 1 }}
+                        >
+                          {isDeleting ? "Deleting…" : "Yes, Delete"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteConfirmPending(false)}
+                          disabled={isDeleting}
+                          className="inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold ring-1 ring-[color:var(--border)]"
+                          style={{ background: "var(--pill)", color: "var(--muted)" }}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleMassDelete}
+                        className="inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold text-white"
+                        style={{ background: "#dc2626" }}
+                      >
+                        Delete {selectedIds.size}
+                      </button>
+                    )}
                     <select
                       value={moveTargetUniverse}
                       onChange={(e) => { setMoveTargetUniverse(e.target.value); setMoveTargetCategory(""); setMoveTargetSubcategory(""); }}
@@ -1315,7 +1375,7 @@ export default function VaultUniversePage() {
                 {selectMode && (
                   <button
                     type="button"
-                    onClick={() => { setSelectMode(false); setSelectedIds(new Set()); setMoveTargetUniverse(""); setMoveTargetCategory(""); setMoveTargetSubcategory(""); }}
+                    onClick={() => { setSelectMode(false); setSelectedIds(new Set()); setMoveTargetUniverse(""); setMoveTargetCategory(""); setMoveTargetSubcategory(""); setDeleteConfirmPending(false); }}
                     className="inline-flex h-8 items-center rounded-full px-3 text-xs font-medium ring-1 ring-[color:var(--border)]"
                     style={{ background: "var(--pill)", color: "var(--muted)" }}
                   >
