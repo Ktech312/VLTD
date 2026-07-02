@@ -83,7 +83,11 @@ export async function generateMetadata(
   return {
     title: `${title}${grade} · VLTD`,
     description,
+    alternates: {
+      canonical: `https://vltd.vercel.app/share/${itemId}`,
+    },
     openGraph: {
+      url: `https://vltd.vercel.app/share/${itemId}`,
       title: `${title}${grade}`,
       description,
       images: imageUrl
