@@ -5,7 +5,6 @@ export const runtime = "edge";
 
 const GOLD = "#F5B548";
 const BG = "#0d0d0d";
-const SURFACE = "#161616";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -26,51 +25,62 @@ export async function GET(request: NextRequest) {
           fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
         }}
       >
-        {/* Left: photo with gold frame */}
+        {/* ── Left: photo inside gold picture frame ── */}
+        {/* Outer gold border */}
         <div
           style={{
             width: 630,
             height: 630,
+            background: GOLD,
+            padding: 7,
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: SURFACE,
             flexShrink: 0,
-            position: "relative",
           }}
         >
-          {imageUrl ? (
-            <img
-              src={imageUrl}
-              alt={title}
-              width={630}
-              height={630}
-              style={{ objectFit: "cover", width: "100%", height: "100%" }}
-            />
-          ) : (
-            <div style={{ fontSize: 80, display: "flex" }}>📦</div>
-          )}
+          {/* Dark mat inside the frame */}
           <div
             style={{
-              position: "absolute",
-              inset: 0,
-              border: "5px solid #F5B548",
-              boxSizing: "border-box",
+              flex: 1,
+              background: "#111",
+              padding: 10,
               display: "flex",
             }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              inset: 12,
-              border: "1px solid rgba(245,181,72,0.35)",
-              boxSizing: "border-box",
-              display: "flex",
-            }}
-          />
+          >
+            {/* Inner thin gold line */}
+            <div
+              style={{
+                flex: 1,
+                border: "1px solid rgba(245,181,72,0.55)",
+                display: "flex",
+                overflow: "hidden",
+              }}
+            >
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt={title}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    background: "#1a1a1a",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 80,
+                  }}
+                >
+                  📦
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Right: content */}
+        {/* ── Right: content ── */}
         <div
           style={{
             flex: 1,
@@ -78,13 +88,14 @@ export async function GET(request: NextRequest) {
             flexDirection: "column",
             justifyContent: "space-between",
             padding: "48px 52px",
-            borderLeft: "1px solid rgba(245,181,72,0.2)",
+            borderLeft: "1px solid rgba(245,181,72,0.18)",
           }}
         >
+          {/* Brand */}
           <div
             style={{
               color: GOLD,
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: 700,
               letterSpacing: "0.36em",
               display: "flex",
@@ -93,13 +104,13 @@ export async function GET(request: NextRequest) {
             VLTD
           </div>
 
+          {/* Title block */}
           <div style={{ display: "flex", flexDirection: "column" }}>
             {grade ? (
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
                   background: "rgba(245,181,72,0.14)",
                   color: GOLD,
                   fontSize: 12,
@@ -143,6 +154,7 @@ export async function GET(request: NextRequest) {
             ) : null}
           </div>
 
+          {/* Footer */}
           <div
             style={{
               color: "rgba(245,181,72,0.38)",

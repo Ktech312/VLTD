@@ -125,15 +125,19 @@ export default function ShareBar({ title, shareUrl, itemId, compact = false }: S
   }
 
   async function handleInstagram() {
-    if (typeof navigator !== "undefined" && navigator.share) {
+    const isMobile = typeof navigator !== "undefined" &&
+      /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    if (isMobile && navigator.share) {
       try {
         await navigator.share({ title, url });
         return;
       } catch {
-        // user cancelled or not supported — fall through to copy
+        // cancelled — fall through to copy
       }
     }
-    // Desktop fallback: copy link, show "IG" state
+
+    // Desktop (or mobile fallback): copy link
     try {
       await navigator.clipboard.writeText(url);
     } catch {
