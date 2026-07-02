@@ -199,24 +199,4 @@ export default function ShareBar({ title, shareUrl, itemId, compact = false }: S
       <a href={waUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on WhatsApp">
         <WhatsAppIcon />
       </a>
-      <a href={tgUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on Telegram">
-        <TelegramIcon />
-      </a>
-      <a href={smsUrl} className={iconBtn} style={iconStyle} title="Share via SMS">
-        <SmsIcon />
-      </a>
-      <a href={emailUrl} className={iconBtn} style={iconStyle} title="Share via Email">
-        <EmailIcon />
-      </a>
-    </div>
-  );
-
-  if (compact) return icons;
-
-  return (
-    <div className="rounded-[22px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-      <div className="mb-3 text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">SHARE THIS ITEM</div>
-      {icons}
-    </div>
-  );
-}
+      <a href={tgUrl} target="_blank" rel="noope
