@@ -74,11 +74,15 @@ export async function generateMetadata(
   }
 
   const title = String(row.title ?? "Collectible");
-  const grade = row.grade ? ` · ${String(row.grade)}` : "";
+  const gradeRaw = row.grade ? String(row.grade) : "";
+  const grade = gradeRaw ? ` · ${gradeRaw}` : "";
   const imageUrl = buildImageUrl(row);
   const description = row.notes
     ? String(row.notes).slice(0, 150)
     : `A collectible from my vault on VLTD.`;
+
+  // Branded OG image via /api/og (dark card + gold frame + title + description)
+  const ogImageUrl = `https://vltd.vercel.app/api/og?title=${encodeURIComponent(title)}&grade=${encodeURIComponent(gradeRaw)}&description=${encodeURIComponent(description)}&imageUrl=${encodeURIComponent(imageUrl)}`;
 
   return {
     title: `${title}${grade} · VLTD`,
@@ -90,17 +94,15 @@ export async function generateMetadata(
       url: `https://vltd.vercel.app/share/${itemId}`,
       title: `${title}${grade}`,
       description,
-      images: imageUrl
-        ? [{ url: imageUrl, width: 1200, height: 1200, alt: title }]
-        : [],
+      images: [{ url: ogImageUrl, width: 1200, height: 630, alt: title }],
       type: "website",
       siteName: "VLTD",
     },
     twitter: {
-      card: imageUrl ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title: `${title}${grade}`,
       description,
-      images: imageUrl ? [imageUrl] : [],
+      images: [ogImageUrl],
       site: "@vltdapp",
     },
   };
