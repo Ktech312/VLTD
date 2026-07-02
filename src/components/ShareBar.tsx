@@ -133,11 +133,11 @@ export default function ShareBar({ title, shareUrl, itemId, compact = false }: S
         await navigator.share({ title, url });
         return;
       } catch {
-        // cancelled — fall through to copy
+        // cancelled — fall through
       }
     }
 
-    // Desktop (or mobile fallback): copy link
+    // Copy link to clipboard
     try {
       await navigator.clipboard.writeText(url);
     } catch {
@@ -149,6 +149,10 @@ export default function ShareBar({ title, shareUrl, itemId, compact = false }: S
       document.execCommand("copy");
       ta.remove();
     }
+
+    // Open Instagram in new tab so they can paste
+    window.open("https://www.instagram.com/", "_blank", "noopener");
+
     setIgCopied(true);
     setTimeout(() => setIgCopied(false), 1800);
   }
