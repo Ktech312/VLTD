@@ -22,6 +22,7 @@ import {
   type Gallery,
 } from "@/lib/galleryModel";
 import { getGalleryLimits } from "@/lib/galleryTier";
+import { getUserBonusGalleries } from "@/lib/referral";
 import { getTierSafe, onTierChange, type Tier } from "@/lib/subscription";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
@@ -116,6 +117,7 @@ export default function MuseumPage() {
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [items, setItems] = useState<VaultItem[]>([]);
   const [tier, setTier] = useState<Tier>(getTierSafe());
+  const [bonusGalleries, setBonusGalleries] = useState(0);
   const [galleryPendingDelete, setGalleryPendingDelete] = useState<Gallery | null>(null);
   const [gallerySettings, setGallerySettings] = useState<Gallery | null>(null);
   const [coverTargetGallery, setCoverTargetGallery] = useState<Gallery | null>(null);
@@ -128,6 +130,18 @@ export default function MuseumPage() {
     setGalleries(loadGalleries());
     setItems(loadItems());
   }
+
+  useEffect(() => {
+    // Fetch referral bonus galleries for this user
+    const supabase = getSupabaseBrowserClient();
+    if (supabase) {
+      void supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          void getUserBonusGalleries(user.id).then(setBonusGalleries);
+        }
+      });
+    }
+  }, []);
 
   useEffect(() => {
     refresh();
@@ -178,7 +192,15 @@ export default function MuseumPage() {
     return unsub;
   }, []);
 
-  const limits = useMemo(() => getGalleryLimits(tier), [tier]);
+  const baseLimits = useMemo(() => getGalleryLimits(tier), [tier]);
+  const limits = useMemo(
+    () => ({
+      ...baseLimits,
+      galleries:
+        baseLimits.galleries === Infinity ? Infinity : baseLimits.galleries + bonusGalleries,
+    }),
+    [baseLimits, bonusGalleries]
+  );
   const itemsById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
 
   const scoredGalleries = useMemo(() => {

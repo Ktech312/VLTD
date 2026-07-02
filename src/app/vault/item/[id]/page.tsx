@@ -773,7 +773,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                   Stream
                 </Link>
                 <div className="ml-1 h-6 w-px bg-[color:var(--border)]" />
-                <ShareBar title={item.title} compact />
+                <ShareBar title={item.title} itemId={item.id} compact />
                 <button
                   type="button"
                   onClick={() => setSocialExportOpen(true)}

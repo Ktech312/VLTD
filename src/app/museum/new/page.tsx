@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -13,6 +13,8 @@ import {
   type GalleryThemePack,
 } from "@/lib/galleryModel";
 import { getGalleryLimits, mustBePublicGallery } from "@/lib/galleryTier";
+import { getUserBonusGalleries } from "@/lib/referral";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { getTierSafe } from "@/lib/subscription";
 
 function safeTrim(value: string) {
@@ -23,11 +25,28 @@ export default function NewMuseumGalleryPage() {
   const router = useRouter();
 
   const tier = getTierSafe();
-  const limits = useMemo(() => getGalleryLimits(tier), [tier]);
+  const baseLimits = useMemo(() => getGalleryLimits(tier), [tier]);
   const existingGalleries = useMemo(() => loadGalleries(), []);
-  const canCreate =
-    limits.galleries === Infinity || existingGalleries.length < limits.galleries;
   const forcePublic = mustBePublicGallery(tier);
+
+  const [bonusGalleries, setBonusGalleries] = useState(0);
+
+  useEffect(() => {
+    async function fetchBonus() {
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const bonus = await getUserBonusGalleries(user.id);
+      setBonusGalleries(bonus);
+    }
+    void fetchBonus();
+  }, []);
+
+  const effectiveLimit =
+    baseLimits.galleries === Infinity ? Infinity : baseLimits.galleries + bonusGalleries;
+
+  const canCreate = effectiveLimit === Infinity || existingGalleries.length < effectiveLimit;
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -43,9 +62,9 @@ export default function NewMuseumGalleryPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const remaining =
-    limits.galleries === Infinity
+    effectiveLimit === Infinity
       ? Infinity
-      : Math.max(0, limits.galleries - existingGalleries.length);
+      : Math.max(0, effectiveLimit - existingGalleries.length);
 
   async function handleCreate() {
     if (submitting) return;

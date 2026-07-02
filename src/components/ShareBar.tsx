@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 
 // ── Social icon SVGs ──────────────────────────────────────────────────────────
 function CopyIcon() {
@@ -75,14 +75,19 @@ function EmailIcon() {
 type ShareBarProps = {
   title: string;
   shareUrl?: string;
+  /** When provided, share URLs point to /share/[itemId] which has item-specific OG tags */
+  itemId?: string;
   /** When true, renders just the icon row with no container or heading */
   compact?: boolean;
 };
 
-export default function ShareBar({ title, shareUrl, compact = false }: ShareBarProps) {
+export default function ShareBar({ title, shareUrl, itemId, compact = false }: ShareBarProps) {
   const [copied, setCopied] = useState(false);
 
-  const url = shareUrl || (typeof window !== "undefined" ? window.location.href : "");
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const url = itemId
+    ? `${origin}/share/${itemId}`
+    : shareUrl || (typeof window !== "undefined" ? window.location.href : "");
   const encodedUrl = encodeURIComponent(url);
   const encodedTitle = encodeURIComponent(title);
 
@@ -109,15 +114,15 @@ export default function ShareBar({ title, shareUrl, compact = false }: ShareBarP
   const smsUrl = `sms:?body=${encodeURIComponent(`${title} — ${url}`)}`;
   const emailUrl = `mailto:?subject=${encodeURIComponent(`Check out: ${title}`)}&body=${encodeURIComponent(`${title}\n${url}`)}`;
 
-  const iconBtn = [
-    "flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] ring-1 transition-all",
-    "hover:brightness-125 active:scale-90",
-  ].join(" ");
+  const iconBtn = "flex shrink-0 items-center justify-center transition-all hover:opacity-70 active:scale-90";
 
-  const iconStyle = {
-    background: "rgba(245,181,72,0.12)",
-    borderColor: "rgba(245,181,72,0.28)",
+  const iconStyle: React.CSSProperties = {
     color: "var(--theme-gold, #F5B548)",
+    background: "none",
+    border: "none",
+    boxShadow: "none",
+    padding: 0,
+    borderRadius: 0,
   };
 
   const icons = (
