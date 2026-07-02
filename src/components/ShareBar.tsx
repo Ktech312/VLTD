@@ -99,6 +99,7 @@ type ShareBarProps = {
 
 export default function ShareBar({ title, shareUrl, itemId, compact = false }: ShareBarProps) {
   const [copied, setCopied] = useState(false);
+  const [igCopied, setIgCopied] = useState(false);
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const url = itemId
@@ -129,11 +130,23 @@ export default function ShareBar({ title, shareUrl, itemId, compact = false }: S
         await navigator.share({ title, url });
         return;
       } catch {
-        // user cancelled or browser blocked — fall through to copy
+        // user cancelled or not supported — fall through to copy
       }
     }
-    // Desktop fallback: copy link
-    await handleCopy();
+    // Desktop fallback: copy link, show "IG" state
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      ta.style.cssText = "position:fixed;opacity:0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+    }
+    setIgCopied(true);
+    setTimeout(() => setIgCopied(false), 1800);
   }
 
   const tweetUrl = `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}&via=vltdapp`;
@@ -169,8 +182,8 @@ export default function ShareBar({ title, shareUrl, itemId, compact = false }: S
       <a href={fbUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on Facebook">
         <FacebookIcon />
       </a>
-      <button type="button" onClick={() => void handleInstagram()} className={iconBtn} style={iconStyle} title="Share on Instagram">
-        <InstagramIcon />
+      <button type="button" onClick={() => void handleInstagram()} className={iconBtn} style={iconStyle} title={igCopied ? "Link copied — paste into Instagram" : "Share on Instagram"}>
+        {igCopied ? <CheckIcon /> : <InstagramIcon />}
       </button>
       <a href={redditUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on Reddit">
         <RedditIcon />
