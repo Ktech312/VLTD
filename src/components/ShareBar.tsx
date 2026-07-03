@@ -137,7 +137,7 @@ export default function ShareBar({ title, shareUrl, itemId, compact = false }: S
       }
     }
 
-    // Copy link to clipboard
+    // Desktop: copy link to clipboard
     try {
       await navigator.clipboard.writeText(url);
     } catch {
@@ -150,7 +150,7 @@ export default function ShareBar({ title, shareUrl, itemId, compact = false }: S
       ta.remove();
     }
 
-    // Open Instagram in new tab so they can paste
+    // Open Instagram so they can paste
     window.open("https://www.instagram.com/", "_blank", "noopener");
 
     setIgCopied(true);
@@ -159,14 +159,11 @@ export default function ShareBar({ title, shareUrl, itemId, compact = false }: S
 
   const tweetUrl = `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}&via=vltdapp`;
   const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
-  const igUrl = null; // handled via native share / copy
   const redditUrl = `https://reddit.com/submit?url=${encodedUrl}&title=${encodedTitle}`;
   const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(`${title} — ${url}`)}`;
   const tgUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`;
   const smsUrl = `sms:?body=${encodeURIComponent(`${title} — ${url}`)}`;
   const emailUrl = `mailto:?subject=${encodeURIComponent(`Check out: ${title}`)}&body=${encodeURIComponent(`${title}\n${url}`)}`;
-
-  void igUrl; // suppress unused warning
 
   const iconBtn = "flex shrink-0 items-center justify-center transition-all hover:opacity-70 active:scale-90";
 
@@ -190,7 +187,7 @@ export default function ShareBar({ title, shareUrl, itemId, compact = false }: S
       <a href={fbUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on Facebook">
         <FacebookIcon />
       </a>
-      <button type="button" onClick={() => void handleInstagram()} className={iconBtn} style={iconStyle} title={igCopied ? "Link copied — paste into Instagram" : "Share on Instagram"}>
+      <button type="button" onClick={() => void handleInstagram()} className={iconBtn} style={iconStyle} title={igCopied ? "Link copied — paste on Instagram" : "Share on Instagram"}>
         {igCopied ? <CheckIcon /> : <InstagramIcon />}
       </button>
       <a href={redditUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on Reddit">
@@ -199,4 +196,29 @@ export default function ShareBar({ title, shareUrl, itemId, compact = false }: S
       <a href={waUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on WhatsApp">
         <WhatsAppIcon />
       </a>
-      <a href={tgUrl} target="_blank" rel="noope
+      <a href={tgUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on Telegram">
+        <TelegramIcon />
+      </a>
+      <a href={smsUrl} className={iconBtn} style={iconStyle} title="Share via SMS">
+        <SmsIcon />
+      </a>
+      <a href={emailUrl} className={iconBtn} style={iconStyle} title="Share via Email">
+        <EmailIcon />
+      </a>
+    </div>
+  );
+
+  if (compact) return icons;
+
+  return (
+    <div
+      className="rounded-2xl p-4 ring-1 ring-[color:var(--border)]"
+      style={{ background: "var(--surface)" }}
+    >
+      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
+        Share
+      </p>
+      {icons}
+    </div>
+  );
+}

@@ -308,6 +308,23 @@ export function getPublicVaultUrl(profileId = getStoredActiveProfileId()) {
   const cleanProfileId = String(profileId ?? "").trim();
   if (!cleanProfileId) return "";
   const origin = typeof window !== "undefined" ? window.location.origin : "";
+
+  // Prefer @username URL if the user has set one
+  try {
+    const stored = typeof window !== "undefined"
+      ? window.localStorage.getItem("vltd_profile_v1")
+      : null;
+    if (stored) {
+      const parsed = JSON.parse(stored) as { username?: string };
+      const username = parsed?.username?.trim();
+      if (username && username !== "collector") {
+        return `${origin}/@${encodeURIComponent(username)}`;
+      }
+    }
+  } catch {
+    // fall through to UUID URL
+  }
+
   return `${origin}/v/${encodeURIComponent(cleanProfileId)}`;
 }
 
