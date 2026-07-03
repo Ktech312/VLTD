@@ -44,7 +44,7 @@ function buildImageUrl(row: Row): string {
 }
 
 function buildOgUrl(title: string, gradeRaw: string, description: string, imageUrl: string): string {
-  return `https://vltd.vercel.app/api/og?title=${encodeURIComponent(title)}&grade=${encodeURIComponent(gradeRaw)}&description=${encodeURIComponent(description)}&imageUrl=${encodeURIComponent(imageUrl)}`;
+  return `https://vltd.vercel.app/api/og?v=3&title=${encodeURIComponent(title)}&grade=${encodeURIComponent(gradeRaw)}&description=${encodeURIComponent(description)}&imageUrl=${encodeURIComponent(imageUrl)}`;
 }
 
 async function fetchItem(itemId: string): Promise<Row | null> {
