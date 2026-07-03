@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import CameraCapturePanel from "@/components/CameraCapturePanel";
+import BarcodeScanCamera from "@/components/BarcodeScanCamera";
 import DropReviewSheet from "@/components/DropReviewSheet";
 import { type ImageRole } from "@/components/ImageRoleSelector";
 import ScanCropEditor from "@/components/ScanCropEditor";
@@ -334,6 +335,7 @@ export default function AddPage() {
   const [cameraTarget, setCameraTarget] = useState<"scan" | "item">("scan");
   const [isCameraPanelOpen, setIsCameraPanelOpen] = useState(false);
   const [cameraPanelKey, setCameraPanelKey] = useState(0);
+  const [isBarcodeScanOpen, setIsBarcodeScanOpen] = useState(false);
 
   const [pricingValues, setPricingValues] = useState<PricingMvpFields>(EMPTY_PRICING_VALUES);
 
@@ -1063,6 +1065,12 @@ export default function AddPage() {
     }
   }
 
+  /** Called when BarcodeScanCamera detects a barcode live from the camera. */
+  async function handleLiveBarcodeScanned(result: { digits: string; rawValue: string }) {
+    setIsBarcodeScanOpen(false);
+    await runUpcLookupForCode(result.digits, result.rawValue);
+  }
+
   async function runOcrAutofillForFile(file: File, forcedType: ScanItemType = scanType) {
     setIsScanning(true);
     setScanSession((prev) => markScanSessionScanning(prev));
@@ -1290,19 +1298,18 @@ export default function AddPage() {
       return;
     }
 
-    if (!scanFile) {
-      setStatus("Attach a scan image or enter a serial/barcode first.");
-      return;
+    // If there's an existing scan image, try to decode the barcode from it
+    if (scanFile) {
+      setStatus("Trying product lookup...");
+      const barcode = await scanBarcodeFromFile(scanFile);
+      if (barcode?.digits) {
+        await runUpcLookupForCode(barcode.digits, barcode.rawValue);
+        return;
+      }
     }
 
-    setStatus("Trying product lookup...");
-    const barcode = await scanBarcodeFromFile(scanFile);
-    if (!barcode?.digits) {
-      setStatus("No barcode found for product lookup.");
-      return;
-    }
-
-    await runUpcLookupForCode(barcode.digits, barcode.rawValue);
+    // No digits and no image with a barcode — open the live barcode scanner
+    setIsBarcodeScanOpen(true);
   }
 
   async function handleApplyScanCrop() {
@@ -1866,6 +1873,7 @@ export default function AddPage() {
                 onBookLookup={() => void handleBookIsbnLookup()}
                 onComicLookup={() => void handleComicLookup()}
                 onUpcLookup={() => void handleUpcLookup()}
+                onOpenBarcodeScanner={() => setIsBarcodeScanOpen(true)}
                 onClearImage={clearScanImage}
                 onToggleSaveScanAsPhoto={handleToggleSaveScanAsPhoto}
                 onSaveItem={() => void saveForm(false)}
@@ -3124,6 +3132,13 @@ export default function AddPage() {
             session={dropSession}
             onClose={() => setShowDropReview(false)}
             onFinish={finishDrop}
+          />
+        ) : null}
+
+        {isBarcodeScanOpen ? (
+          <BarcodeScanCamera
+            onScan={(result) => void handleLiveBarcodeScanned(result)}
+            onClose={() => setIsBarcodeScanOpen(false)}
           />
         ) : null}
 

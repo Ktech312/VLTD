@@ -48,6 +48,7 @@ export default function ScanPanel({
   capturedPhotos = [],
   activeCapturedPhotoId = "",
   onSelectCapturedPhoto,
+  onOpenBarcodeScanner,
 }: {
   session: ScanSessionState;
   scanType: ScanItemType;
@@ -77,6 +78,7 @@ export default function ScanPanel({
   }>;
   activeCapturedPhotoId?: string;
   onSelectCapturedPhoto?: (id: string) => void;
+  onOpenBarcodeScanner?: () => void;
 }) {
   const previewUrl = session.image?.previewUrl ?? "";
   const hasImage = Boolean(previewUrl);
@@ -219,6 +221,27 @@ export default function ScanPanel({
               </svg>
             </button>
           </div>
+
+          {onOpenBarcodeScanner ? (
+            <button
+              type="button"
+              onClick={onOpenBarcodeScanner}
+              disabled={isIdentifying}
+              className="flex w-full items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition disabled:opacity-40"
+              style={{ background: "rgba(245,181,72,0.10)", color: "#F5B548", border: "1px solid rgba(245,181,72,0.35)" }}
+            >
+              {/* Barcode icon */}
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="1" y="3" width="2" height="18" rx="0.5"/>
+                <rect x="5" y="3" width="1" height="18" rx="0.5"/>
+                <rect x="8" y="3" width="3" height="18" rx="0.5"/>
+                <rect x="13" y="3" width="2" height="18" rx="0.5"/>
+                <rect x="17" y="3" width="1" height="18" rx="0.5"/>
+                <rect x="20" y="3" width="3" height="18" rx="0.5"/>
+              </svg>
+              Scan Barcode
+            </button>
+          ) : null}
 
           <button
             type="button"

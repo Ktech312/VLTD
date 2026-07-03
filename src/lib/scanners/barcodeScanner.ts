@@ -224,6 +224,36 @@ function buildRegions(width: number, height: number): ScanRegion[] {
   ];
 }
 
+/** Decode one frame from a live <video> element synchronously.
+ *  Call this inside a rAF / setInterval loop for continuous scanning. */
+export function scanBarcodeFromVideoFrame(
+  video: HTMLVideoElement
+): BarcodeScanResult | null {
+  const width = video.videoWidth;
+  const height = video.videoHeight;
+  if (!width || !height) return null;
+
+  const regions = buildRegions(width, height);
+
+  for (const region of regions) {
+    if (region.w < 40 || region.h < 40) continue;
+
+    const canvas = makeCanvas(region.w * (region.scale ?? 1), region.h * (region.scale ?? 1));
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) continue;
+    ctx.drawImage(
+      video,
+      region.x, region.y, region.w, region.h,
+      0, 0, canvas.width, canvas.height
+    );
+
+    const result = tryDecodeVariants(canvas, region.name);
+    if (result) return result;
+  }
+
+  return null;
+}
+
 export async function scanBarcodeFromFile(file: File | Blob): Promise<BarcodeScanResult | null> {
   if (typeof window === "undefined") return null;
 
