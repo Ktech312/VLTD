@@ -11,87 +11,47 @@ export const contentType = "image/png";
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
-type GalleryRow = {
-  id: string;
-  title: string;
-  description: string | null;
-  cover_image: string | null;
-  layout: { itemIds?: string[] } | null;
-  profile_id: string;
-};
-
-type ProfileRow = {
-  display_name: string | null;
-};
-
-async function fetchCoverImageAsDataUri(url: string): Promise<string | null> {
-  try {
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) return null;
-    const buffer = await res.arrayBuffer();
-    const bytes = new Uint8Array(buffer);
-    let binary = "";
-    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-    const b64 = btoa(binary);
-    const ct = res.headers.get("content-type") ?? "image/jpeg";
-    return `data:${ct};base64,${b64}`;
-  } catch {
-    return null;
-  }
-}
-
 async function fetchGalleryByToken(token: string) {
-  const fallback: GalleryRow = {
-    id: "",
-    title: "VLTD Exhibition",
-    description: null,
-    cover_image: null,
-    layout: null,
-    profile_id: "",
-  };
-
-  if (!SUPABASE_URL || !SUPABASE_ANON) return { gallery: fallback, profile: null, coverDataUri: null };
-
+  if (!SUPABASE_URL || !SUPABASE_ANON) {
+    return { title: "VLTD Exhibition", description: null, itemCount: null, collector: "Collector" };
+  }
   try {
-    // No state filter — gallery may be in various states
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/galleries?public_token=eq.${encodeURIComponent(token)}&visibility=eq.PUBLIC&select=id,title,description,cover_image,layout,profile_id&limit=1`,
-      { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } }
-    );
-    const rows: GalleryRow[] = await res.json().catch(() => []);
+    const [galRes, ] = await Promise.all([
+      fetch(
+        `${SUPABASE_URL}/rest/v1/galleries?public_token=eq.${encodeURIComponent(token)}&visibility=eq.PUBLIC&select=id,title,description,layout,profile_id&limit=1`,
+        { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } }
+      ),
+    ]);
+    const rows = await galRes.json().catch(() => []) as Array<{
+      id: string; title: string; description: string | null;
+      layout: { itemIds?: string[] } | null; profile_id: string;
+    }>;
     const gallery = rows[0];
-    if (!gallery) return { gallery: fallback, profile: null, coverDataUri: null };
+    if (!gallery) return { title: "VLTD Exhibition", description: null, itemCount: null, collector: "Collector" };
 
-    let profile: ProfileRow | null = null;
+    const itemCount = Array.isArray(gallery.layout?.itemIds) ? gallery.layout!.itemIds.length : null;
+
+    let collector = "Collector";
     if (gallery.profile_id) {
       const pRes = await fetch(
         `${SUPABASE_URL}/rest/v1/public_profiles?profile_id=eq.${gallery.profile_id}&select=display_name&limit=1`,
         { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } }
       );
-      const profiles: ProfileRow[] = await pRes.json().catch(() => []);
-      profile = profiles[0] ?? null;
+      const profiles = await pRes.json().catch(() => []) as Array<{ display_name: string | null }>;
+      collector = profiles[0]?.display_name ?? "Collector";
     }
 
-    // Pre-fetch cover image as base64 so Satori can render it without CORS issues
-    const coverDataUri = gallery.cover_image
-      ? await fetchCoverImageAsDataUri(gallery.cover_image)
-      : null;
-
-    return { gallery, profile, coverDataUri };
+    return { title: gallery.title, description: gallery.description, itemCount, collector };
   } catch {
-    return { gallery: fallback, profile: null, coverDataUri: null };
+    return { title: "VLTD Exhibition", description: null, itemCount: null, collector: "Collector" };
   }
 }
 
 export default async function Image({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const { gallery, profile, coverDataUri } = await fetchGalleryByToken(token);
+  const { title, description, itemCount, collector } = await fetchGalleryByToken(token);
 
-  const itemCount = Array.isArray(gallery.layout?.itemIds)
-    ? gallery.layout!.itemIds.length
-    : null;
-  const collectorName = profile?.display_name ?? "Collector";
-  const hasCover = !!coverDataUri;
+  const titleSize = title.length > 40 ? "44px" : title.length > 25 ? "52px" : "62px";
 
   return new ImageResponse(
     (
@@ -100,182 +60,108 @@ export default async function Image({ params }: { params: Promise<{ token: strin
           width: "1200px",
           height: "630px",
           display: "flex",
-          background: "#0B0B0B",
-          position: "relative",
-          overflow: "hidden",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          padding: "56px 64px",
+          background: "linear-gradient(135deg, #0B0B0B 0%, #111827 60%, #1a0e00 100%)",
           fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          position: "relative",
         }}
       >
-        {/* Cover image — right half, pre-fetched as data URI */}
-        {hasCover && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={coverDataUri!}
-            alt=""
-            width={600}
-            height={630}
-            style={{
-              position: "absolute",
-              right: 0,
-              top: 0,
-              width: "600px",
-              height: "630px",
-            }}
-          />
-        )}
-
-        {/* Gradient overlay */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: hasCover
-              ? "linear-gradient(90deg, #0B0B0B 45%, rgba(11,11,11,0.7) 65%, rgba(11,11,11,0.15) 100%)"
-              : "radial-gradient(ellipse at 80% 50%, rgba(245,181,72,0.12) 0%, transparent 65%)",
-          }}
-        />
-
-        {/* Gold top accent bar */}
+        {/* Gold top bar */}
         <div
           style={{
             position: "absolute",
             top: 0,
             left: 0,
             right: 0,
-            height: "3px",
-            background: "linear-gradient(90deg, transparent, #F5B548 30%, #F5B548 70%, transparent)",
+            height: "4px",
+            background: "linear-gradient(90deg, transparent 0%, #F5B548 20%, #F5B548 80%, transparent 100%)",
           }}
         />
 
-        {/* Left content column */}
-        <div
-          style={{
-            position: "relative",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            padding: "48px 52px",
-            width: hasCover ? "580px" : "100%",
-          }}
-        >
-          {/* VLTD wordmark */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div
-              style={{
-                fontSize: "16px",
-                fontWeight: 700,
-                letterSpacing: "0.22em",
-                color: "#F5B548",
-                opacity: 0.9,
-              }}
-            >
-              VLTD
-            </div>
-            <div style={{ width: "1px", height: "14px", background: "rgba(245,181,72,0.4)" }} />
-            <div
-              style={{
-                fontSize: "13px",
-                color: "rgba(245,181,72,0.6)",
-                letterSpacing: "0.12em",
-              }}
-            >
-              COLLECTOR VAULT
-            </div>
+        {/* Top: VLTD wordmark */}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "0.25em", color: "#F5B548" }}>
+            VLTD
+          </div>
+          <div style={{ width: "1px", height: "16px", background: "rgba(245,181,72,0.35)" }} />
+          <div style={{ fontSize: "12px", color: "rgba(245,181,72,0.55)", letterSpacing: "0.14em" }}>
+            COLLECTOR VAULT
+          </div>
+        </div>
+
+        {/* Middle: main content */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+          {/* Badge */}
+          <div
+            style={{
+              display: "flex",
+              width: "fit-content",
+              alignItems: "center",
+              background: "rgba(245,181,72,0.12)",
+              border: "1px solid rgba(245,181,72,0.28)",
+              borderRadius: "100px",
+              padding: "6px 16px",
+              fontSize: "11px",
+              fontWeight: 700,
+              letterSpacing: "0.2em",
+              color: "#F5B548",
+            }}
+          >
+            PUBLIC EXHIBITION
           </div>
 
-          {/* Gallery info */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                background: "rgba(245,181,72,0.14)",
-                border: "1px solid rgba(245,181,72,0.32)",
-                borderRadius: "100px",
-                padding: "5px 14px",
-                fontSize: "11px",
-                fontWeight: 600,
-                letterSpacing: "0.18em",
-                color: "#F5B548",
-                width: "fit-content",
-              }}
-            >
-              PUBLIC EXHIBITION
-            </div>
-
-            <div
-              style={{
-                fontSize: gallery.title.length > 40 ? "36px" : "48px",
-                fontWeight: 800,
-                color: "#F0EAD6",
-                lineHeight: 1.1,
-                letterSpacing: "-0.03em",
-                maxWidth: "480px",
-              }}
-            >
-              {gallery.title}
-            </div>
-
-            {gallery.description ? (
-              <div
-                style={{
-                  fontSize: "16px",
-                  color: "rgba(240,234,214,0.55)",
-                  lineHeight: 1.5,
-                  maxWidth: "440px",
-                }}
-              >
-                {gallery.description.slice(0, 120)}
-              </div>
-            ) : null}
-
-            <div style={{ display: "flex", alignItems: "center", gap: "20px", marginTop: "4px" }}>
-              {itemCount !== null && (
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <div
-                    style={{
-                      width: "6px",
-                      height: "6px",
-                      borderRadius: "50%",
-                      background: "#F5B548",
-                    }}
-                  />
-                  <span style={{ fontSize: "14px", color: "rgba(245,181,72,0.8)", fontWeight: 600 }}>
-                    {itemCount} item{itemCount !== 1 ? "s" : ""}
-                  </span>
-                </div>
-              )}
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <div
-                  style={{
-                    width: "6px",
-                    height: "6px",
-                    borderRadius: "50%",
-                    background: "rgba(160,149,107,0.6)",
-                  }}
-                />
-                <span style={{ fontSize: "14px", color: "rgba(160,149,107,0.7)" }}>
-                  {collectorName}
-                </span>
-              </div>
-            </div>
+          {/* Title */}
+          <div
+            style={{
+              fontSize: titleSize,
+              fontWeight: 800,
+              color: "#F0EAD6",
+              lineHeight: 1.05,
+              letterSpacing: "-0.03em",
+              maxWidth: "900px",
+            }}
+          >
+            {title}
           </div>
 
-          {/* CTA */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div
-              style={{
-                background: "linear-gradient(135deg, #8B6914, #F5B548)",
-                borderRadius: "100px",
-                padding: "10px 22px",
-                fontSize: "14px",
-                fontWeight: 700,
-                color: "#0B0B0B",
-              }}
-            >
-              View Exhibition
+          {/* Description */}
+          {description ? (
+            <div style={{ fontSize: "18px", color: "rgba(240,234,214,0.5)", lineHeight: 1.5, maxWidth: "700px" }}>
+              {description.slice(0, 100)}
             </div>
-            <div style={{ fontSize: "13px", color: "rgba(160,149,107,0.6)" }}>vltd.app</div>
+          ) : null}
+        </div>
+
+        {/* Bottom: meta row */}
+        <div style={{ display: "flex", alignItems: "center", gap: "28px" }}>
+          {itemCount !== null && (
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#F5B548" }} />
+              <span style={{ fontSize: "16px", color: "rgba(245,181,72,0.85)", fontWeight: 600 }}>
+                {itemCount} {itemCount === 1 ? "item" : "items"}
+              </span>
+            </div>
+          )}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: "rgba(160,149,107,0.55)" }} />
+            <span style={{ fontSize: "16px", color: "rgba(160,149,107,0.7)" }}>
+              Curated by {collector}
+            </span>
+          </div>
+          <div
+            style={{
+              marginLeft: "auto",
+              background: "linear-gradient(135deg, #7a5c10, #F5B548)",
+              borderRadius: "100px",
+              padding: "10px 24px",
+              fontSize: "15px",
+              fontWeight: 700,
+              color: "#0B0B0B",
+            }}
+          >
+            View Exhibition →
           </div>
         </div>
       </div>
