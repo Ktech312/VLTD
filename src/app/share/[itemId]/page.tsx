@@ -43,6 +43,10 @@ function buildImageUrl(row: Row): string {
   return "";
 }
 
+function buildOgUrl(title: string, gradeRaw: string, description: string, imageUrl: string): string {
+  return `https://vltd.vercel.app/api/og?title=${encodeURIComponent(title)}&grade=${encodeURIComponent(gradeRaw)}&description=${encodeURIComponent(description)}&imageUrl=${encodeURIComponent(imageUrl)}`;
+}
+
 async function fetchItem(itemId: string): Promise<Row | null> {
   const supabase = getServerSupabase();
   if (!supabase) return null;
@@ -81,8 +85,7 @@ export async function generateMetadata(
     ? String(row.notes).slice(0, 150)
     : `A collectible from my vault on VLTD.`;
 
-  // Branded OG image via /api/og (dark card + gold frame + title + description)
-  const ogImageUrl = `https://vltd.vercel.app/api/og?title=${encodeURIComponent(title)}&grade=${encodeURIComponent(gradeRaw)}&description=${encodeURIComponent(description)}&imageUrl=${encodeURIComponent(imageUrl)}`;
+  const ogImageUrl = buildOgUrl(title, gradeRaw, description, imageUrl);
 
   return {
     title: `${title}${grade} · VLTD`,
@@ -117,11 +120,17 @@ export default async function ShareItemPage(
   if (!row) notFound();
 
   const title = String(row.title ?? "");
-  const grade = row.grade ? String(row.grade) : null;
+  const gradeRaw = row.grade ? String(row.grade) : "";
+  const grade = gradeRaw || null;
   const imageUrl = buildImageUrl(row);
   const universe = row.universe
     ? String(row.universe).replace(/_/g, " ")
     : null;
+  const description = row.notes
+    ? String(row.notes).slice(0, 150)
+    : `A collectible from my vault on VLTD.`;
+  const ogImageUrl = buildOgUrl(title, gradeRaw, description, imageUrl);
+  const downloadName = `vltd-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.jpg`;
 
   return (
     <main
@@ -133,7 +142,7 @@ export default async function ShareItemPage(
         alignItems: "center",
         justifyContent: "center",
         padding: "1.5rem",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        fontFamily: "-apple-system, BlinkMacSystemFont, \'Segoe UI\', sans-serif",
       }}
     >
       <div style={{ width: "100%", maxWidth: 400 }}>
@@ -264,6 +273,63 @@ export default async function ShareItemPage(
               Open VLTD
             </Link>
           </div>
+        </div>
+
+        {/* Download Card — gold frame image + save button */}
+        <div style={{ marginTop: "1.25rem" }}>
+          {/* Preview of the branded OG card */}
+          <a
+            href={ogImageUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: "block", marginBottom: "0.75rem" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={ogImageUrl}
+              alt={`${title} — VLTD card`}
+              width={1200}
+              height={630}
+              style={{
+                width: "100%",
+                height: "auto",
+                borderRadius: 12,
+                display: "block",
+                border: "1px solid rgba(245,181,72,0.25)",
+              }}
+            />
+          </a>
+
+          {/* Download / Save button */}
+          <a
+            href={ogImageUrl}
+            download={downloadName}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.5rem",
+              background: "rgba(245,181,72,0.08)",
+              color: "#F5B548",
+              border: "1px solid rgba(245,181,72,0.35)",
+              textAlign: "center",
+              padding: "12px",
+              borderRadius: 12,
+              textDecoration: "none",
+              fontSize: 14,
+              fontWeight: 600,
+              letterSpacing: "0.02em",
+            }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Save Card
+          </a>
         </div>
 
         <p
