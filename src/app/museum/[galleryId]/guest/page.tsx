@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
+import ShareBar from "@/components/ShareBar";
 
 import GuestGalleryRenderer from "@/components/gallery/GuestGalleryRenderer";
 import {
@@ -81,6 +82,7 @@ export default function GuestGalleryPage() {
   const [items, setItems] = useState<VaultItem[]>([]);
   const [isResolved, setIsResolved] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
+  const [showShare, setShowShare] = useState(false);
 
   useEffect(() => {
     if (!galleryId) return;
@@ -232,6 +234,10 @@ export default function GuestGalleryPage() {
     return <AdultContentGate onConfirm={adultGate.confirm} />;
   }
 
+  const publicShareUrl = gallery.share?.publicToken
+    ? `https://vltd.vercel.app/museum/share/${gallery.share.publicToken}`
+    : typeof window !== "undefined" ? window.location.href : "";
+
   return (
     <>
       <div className="fixed right-4 top-4 z-40 flex items-center gap-2">
@@ -244,8 +250,34 @@ export default function GuestGalleryPage() {
             Edit Exhibition
           </Link>
         ) : null}
+        <button
+          type="button"
+          onClick={() => setShowShare((s) => !s)}
+          className="flex items-center gap-1.5 rounded-full bg-[rgba(245,181,72,0.12)] px-3 py-2 text-xs font-semibold text-[#F5B548] ring-1 ring-[rgba(245,181,72,0.35)] backdrop-blur-sm transition-all hover:bg-[rgba(245,181,72,0.2)]"
+          aria-label="Share this exhibition"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+          Share
+        </button>
         <ReportContentButton contentType="gallery" contentId={gallery.id} />
       </div>
+
+      {showShare && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]" onClick={() => setShowShare(false)} />
+          <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl bg-[#111827] p-6 pb-10 ring-1 ring-white/10 shadow-2xl">
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
+            <p className="mb-1 text-sm font-semibold text-white">{gallery.title}</p>
+            <p className="mb-4 text-xs text-white/40">Share this exhibition</p>
+            <ShareBar title={gallery.title} shareUrl={publicShareUrl} compact />
+          </div>
+        </>
+      )}
+
       <GuestGalleryRenderer model={model} focusCommentId={focusCommentId} />
     </>
   );

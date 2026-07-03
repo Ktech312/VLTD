@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
+import ShareBar from "@/components/ShareBar";
 
 import {
   loadGalleries,
@@ -977,6 +978,12 @@ export default function GalleryPage() {
                     Regenerate
                   </button>
                 </div>
+
+                {shareUrl ? (
+                  <div className="mt-3">
+                    <ShareBar title={draft?.title ?? gallery?.title ?? "My Exhibition"} shareUrl={shareUrl} compact />
+                  </div>
+                ) : null}
 
                 <div className="relative mt-4 xl:mt-2">
                   <div className="flex items-center gap-2">
