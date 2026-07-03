@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
                     style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
                   />
                 ) : (
-                  <div style={{ fontSize: 56, display: "flex" }}>\u{1F4E6}</div>
+                  <div style={{ fontSize: 56, display: "flex" }}>📦</div>
                 )}
               </div>
 
