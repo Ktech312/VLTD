@@ -1,70 +1,29 @@
 import { ImageResponse } from "next/og";
 
-// Switch to Node.js runtime — edge runtime has a 5s timeout which is too tight
-// for two sequential Supabase fetch calls before Satori renders the image.
-export const runtime = "nodejs";
+export const runtime = "edge";
 export const alt = "VLTD Exhibition";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-const SB_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+export default async function Image({
+  searchParams,
+}: {
+  params: Promise<{ token: string }>;
+  searchParams: Promise<{ t?: string; d?: string; n?: string; c?: string }>;
+}) {
+  const sp = await Promise.resolve(searchParams).catch(() => ({})) as {
+    t?: string; d?: string; n?: string; c?: string;
+  };
 
-type Meta = { title: string; description: string; items: string; collector: string };
+  const title = String(sp.t ?? "VLTD Exhibition").slice(0, 80);
+  const description = String(sp.d ?? "").slice(0, 120);
+  const itemsLabel = sp.n ? `${sp.n} ${sp.n === "1" ? "item" : "items"}` : "";
+  const collector = String(sp.c ?? "");
 
-async function getMeta(token: string): Promise<Meta> {
-  const fallback: Meta = { title: "VLTD Exhibition", description: "", items: "", collector: "" };
-  if (!SB_URL || !SB_KEY) return fallback;
-
-  try {
-    const r = await fetch(
-      `${SB_URL}/rest/v1/galleries?public_token=eq.${token}&visibility=eq.PUBLIC&select=title,description,layout,profile_id&limit=1`,
-      { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` } }
-    );
-    if (!r.ok) return fallback;
-
-    const rows = (await r.json()) as Array<{
-      title?: string;
-      description?: string | null;
-      layout?: { itemIds?: string[] } | null;
-      profile_id?: string;
-    }>;
-    const g = rows[0];
-    if (!g) return fallback;
-
-    const title = String(g.title ?? "").slice(0, 80) || fallback.title;
-    const description = String(g.description ?? "").slice(0, 120);
-    const count = Array.isArray(g.layout?.itemIds) ? g.layout!.itemIds.length : 0;
-    const items = count > 0 ? `${count} ${count === 1 ? "item" : "items"}` : "";
-
-    let collector = "";
-    if (g.profile_id) {
-      const pr = await fetch(
-        `${SB_URL}/rest/v1/public_profiles?profile_id=eq.${g.profile_id}&select=display_name&limit=1`,
-        { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` } }
-      );
-      if (pr.ok) {
-        const profiles = (await pr.json()) as Array<{ display_name?: string | null }>;
-        collector = String(profiles[0]?.display_name ?? "").slice(0, 40);
-      }
-    }
-
-    return { title, description, items, collector };
-  } catch {
-    return fallback;
-  }
-}
-
-export default async function Image({ params }: { params: Promise<{ token: string }> }) {
-  const { token } = await params;
-  const meta = await getMeta(token).catch(() => ({
-    title: "VLTD Exhibition", description: "", items: "", collector: "",
-  }));
-
-  const titleSize = meta.title.length > 35 ? "44px" : "58px";
+  const titleSize = title.length > 35 ? "44px" : "58px";
   const metaParts: string[] = [];
-  if (meta.items) metaParts.push(meta.items);
-  if (meta.collector) metaParts.push(`Curated by ${meta.collector}`);
+  if (itemsLabel) metaParts.push(itemsLabel);
+  if (collector) metaParts.push(`Curated by ${collector}`);
   const metaLine = metaParts.join("  ·  ");
 
   return new ImageResponse(
@@ -81,7 +40,7 @@ export default async function Image({ params }: { params: Promise<{ token: strin
           fontFamily: "sans-serif",
         }}
       >
-        {/* Wordmark */}
+        {/* Wordmark row */}
         <div style={{ display: "flex", alignItems: "center" }}>
           <span style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "0.28em", color: "#F5B548" }}>
             VLTD
@@ -92,8 +51,8 @@ export default async function Image({ params }: { params: Promise<{ token: strin
           </span>
         </div>
 
-        {/* Main content */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+        {/* Main block */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <div
             style={{
               display: "flex",
@@ -119,10 +78,10 @@ export default async function Image({ params }: { params: Promise<{ token: strin
               maxWidth: "900px",
             }}
           >
-            {meta.title}
+            {title}
           </div>
 
-          {meta.description ? (
+          {description ? (
             <div
               style={{
                 fontSize: "17px",
@@ -131,7 +90,7 @@ export default async function Image({ params }: { params: Promise<{ token: strin
                 maxWidth: "700px",
               }}
             >
-              {meta.description}
+              {description}
             </div>
           ) : null}
         </div>
@@ -147,6 +106,7 @@ export default async function Image({ params }: { params: Promise<{ token: strin
                   borderRadius: "50%",
                   background: "rgba(245,181,72,0.6)",
                   marginRight: "10px",
+                  flexShrink: 0,
                 }}
               />
               <span style={{ fontSize: "15px", color: "rgba(245,181,72,0.8)", fontWeight: 600 }}>
@@ -154,7 +114,7 @@ export default async function Image({ params }: { params: Promise<{ token: strin
               </span>
             </div>
           ) : (
-            <div />
+            <span style={{ fontSize: "15px", color: "rgba(245,181,72,0.4)" }}>vltd.app</span>
           )}
           <div
             style={{

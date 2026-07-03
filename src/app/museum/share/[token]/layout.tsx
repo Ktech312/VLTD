@@ -1,7 +1,4 @@
 // Server component — provides OG metadata for the public exhibit share page.
-// The page itself is "use client" so can't export generateMetadata;
-// a layout at the same segment level can, and is the correct Next.js pattern.
-
 import type { Metadata } from "next";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
@@ -11,29 +8,19 @@ type GalleryRow = {
   id: string;
   title: string;
   description: string | null;
-  cover_image: string | null;
   layout: { itemIds?: string[] } | null;
   profile_id: string;
 };
 
 type ProfileRow = { display_name: string | null };
 
-async function fetchGalleryMeta(
-  token: string
-): Promise<{ title: string; description: string; imageUrl: string; itemCount: number | null; collector: string }> {
-  const fallback = {
-    title: "VLTD Exhibition",
-    description: "View this curated collectibles exhibition on VLTD.",
-    imageUrl: `https://vltd.vercel.app/museum/share/${encodeURIComponent(token)}/opengraph-image`,
-    itemCount: null,
-    collector: "Collector",
-  };
-
+async function fetchGalleryMeta(token: string) {
+  const fallback = { title: "VLTD Exhibition", description: "", itemCount: null as number | null, collector: "" };
   if (!SUPABASE_URL || !SUPABASE_ANON) return fallback;
 
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/galleries?public_token=eq.${encodeURIComponent(token)}&visibility=eq.PUBLIC&select=id,title,description,cover_image,layout,profile_id&limit=1`,
+      `${SUPABASE_URL}/rest/v1/galleries?public_token=eq.${encodeURIComponent(token)}&visibility=eq.PUBLIC&select=id,title,description,layout,profile_id&limit=1`,
       { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` }, next: { revalidate: 120 } }
     );
     const rows: GalleryRow[] = await res.json().catch(() => []);
@@ -41,27 +28,19 @@ async function fetchGalleryMeta(
     if (!gallery) return fallback;
 
     const itemCount = Array.isArray(gallery.layout?.itemIds) ? gallery.layout!.itemIds.length : null;
-
-    let collector = "Collector";
+    let collector = "";
     try {
       const pRes = await fetch(
         `${SUPABASE_URL}/rest/v1/public_profiles?profile_id=eq.${gallery.profile_id}&select=display_name&limit=1`,
         { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` }, next: { revalidate: 120 } }
       );
       const profiles: ProfileRow[] = await pRes.json().catch(() => []);
-      collector = profiles[0]?.display_name ?? "Collector";
+      collector = profiles[0]?.display_name ?? "";
     } catch { /* ignore */ }
-
-    const descParts = [
-      gallery.description?.trim(),
-      itemCount !== null ? `${itemCount} item${itemCount !== 1 ? "s" : ""}` : null,
-      `Curated by ${collector}`,
-    ].filter(Boolean);
 
     return {
       title: gallery.title,
-      description: descParts.join(" · "),
-      imageUrl: `https://vltd.vercel.app/museum/share/${encodeURIComponent(token)}/opengraph-image`,
+      description: gallery.description ?? "",
       itemCount,
       collector,
     };
@@ -70,31 +49,46 @@ async function fetchGalleryMeta(
   }
 }
 
+const BASE = "https://vltd.vercel.app";
+
 export async function generateMetadata(
   { params }: { params: Promise<{ token: string }> }
 ): Promise<Metadata> {
   const { token } = await params;
   const meta = await fetchGalleryMeta(token);
-  const pageUrl = `https://vltd.vercel.app/museum/share/${token}`;
+  const pageUrl = `${BASE}/museum/share/${token}`;
+
+  // Build the og:image URL with the data baked in as query params
+  // so the image edge function needs zero network calls
+  const imgUrl = new URL(`${BASE}/museum/share/${token}/opengraph-image`);
+  imgUrl.searchParams.set("t", meta.title);
+  if (meta.description) imgUrl.searchParams.set("d", meta.description);
+  if (meta.itemCount !== null) imgUrl.searchParams.set("n", String(meta.itemCount));
+  if (meta.collector) imgUrl.searchParams.set("c", meta.collector);
+
+  const descParts = [
+    meta.description,
+    meta.itemCount !== null ? `${meta.itemCount} item${meta.itemCount !== 1 ? "s" : ""}` : null,
+    meta.collector ? `Curated by ${meta.collector}` : null,
+  ].filter(Boolean);
 
   return {
     title: `${meta.title} · VLTD`,
-    description: meta.description,
+    description: descParts.join(" · "),
     alternates: { canonical: pageUrl },
     openGraph: {
       url: pageUrl,
       title: meta.title,
-      description: meta.description,
-      images: [{ url: meta.imageUrl, width: 1200, height: 630, alt: meta.title }],
+      description: descParts.join(" · "),
+      images: [{ url: imgUrl.toString(), width: 1200, height: 630, alt: meta.title }],
       type: "website",
       siteName: "VLTD",
     },
     twitter: {
       card: "summary_large_image",
       title: meta.title,
-      description: meta.description,
-      images: [meta.imageUrl],
-      site: "@vltdapp",
+      description: descParts.join(" · "),
+      images: [imgUrl.toString()],
     },
   };
 }
