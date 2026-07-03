@@ -1,6 +1,8 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
+// Switch to Node.js runtime — edge runtime has a 5s timeout which is too tight
+// for two sequential Supabase fetch calls before Satori renders the image.
+export const runtime = "nodejs";
 export const alt = "VLTD Exhibition";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -11,20 +13,16 @@ const SB_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 type Meta = { title: string; description: string; items: string; collector: string };
 
 async function getMeta(token: string): Promise<Meta> {
-  const fallback: Meta = {
-    title: "VLTD Exhibition",
-    description: "",
-    items: "",
-    collector: "",
-  };
+  const fallback: Meta = { title: "VLTD Exhibition", description: "", items: "", collector: "" };
   if (!SB_URL || !SB_KEY) return fallback;
 
   try {
     const r = await fetch(
       `${SB_URL}/rest/v1/galleries?public_token=eq.${token}&visibility=eq.PUBLIC&select=title,description,layout,profile_id&limit=1`,
-      { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }, cache: "no-store" }
+      { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` } }
     );
     if (!r.ok) return fallback;
+
     const rows = (await r.json()) as Array<{
       title?: string;
       description?: string | null;
@@ -43,7 +41,7 @@ async function getMeta(token: string): Promise<Meta> {
     if (g.profile_id) {
       const pr = await fetch(
         `${SB_URL}/rest/v1/public_profiles?profile_id=eq.${g.profile_id}&select=display_name&limit=1`,
-        { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }, cache: "no-store" }
+        { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` } }
       );
       if (pr.ok) {
         const profiles = (await pr.json()) as Array<{ display_name?: string | null }>;
@@ -57,42 +55,17 @@ async function getMeta(token: string): Promise<Meta> {
   }
 }
 
-function dot() {
-  return (
-    <div
-      style={{
-        width: "6px",
-        height: "6px",
-        borderRadius: "50%",
-        background: "rgba(245,181,72,0.6)",
-        marginRight: "8px",
-        flexShrink: 0,
-      }}
-    />
-  );
-}
-
 export default async function Image({ params }: { params: Promise<{ token: string }> }) {
-  let token = "";
-  try {
-    const p = await params;
-    token = String(p?.token ?? "");
-  } catch {
-    token = "";
-  }
-
+  const { token } = await params;
   const meta = await getMeta(token).catch(() => ({
-    title: "VLTD Exhibition",
-    description: "",
-    items: "",
-    collector: "",
+    title: "VLTD Exhibition", description: "", items: "", collector: "",
   }));
 
   const titleSize = meta.title.length > 35 ? "44px" : "58px";
-
-  const metaRow: string[] = [];
-  if (meta.items) metaRow.push(meta.items);
-  if (meta.collector) metaRow.push(`Curated by ${meta.collector}`);
+  const metaParts: string[] = [];
+  if (meta.items) metaParts.push(meta.items);
+  if (meta.collector) metaParts.push(`Curated by ${meta.collector}`);
+  const metaLine = metaParts.join("  ·  ");
 
   return new ImageResponse(
     (
@@ -108,49 +81,19 @@ export default async function Image({ params }: { params: Promise<{ token: strin
           fontFamily: "sans-serif",
         }}
       >
-        {/* Gold top stripe */}
-        <div style={{ display: "flex", width: "100%", height: "3px", marginBottom: "0px" }}>
-          <div style={{ flex: 1, height: "3px", background: "transparent" }} />
-          <div style={{ width: "600px", height: "3px", background: "#F5B548" }} />
-          <div style={{ flex: 1, height: "3px", background: "transparent" }} />
-        </div>
-
         {/* Wordmark */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0" }}>
-          <span
-            style={{
-              fontSize: "18px",
-              fontWeight: 800,
-              letterSpacing: "0.28em",
-              color: "#F5B548",
-            }}
-          >
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <span style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "0.28em", color: "#F5B548" }}>
             VLTD
           </span>
-          <span
-            style={{
-              marginLeft: "12px",
-              marginRight: "12px",
-              color: "rgba(245,181,72,0.3)",
-              fontSize: "16px",
-            }}
-          >
-            |
-          </span>
-          <span
-            style={{
-              fontSize: "12px",
-              color: "rgba(245,181,72,0.5)",
-              letterSpacing: "0.14em",
-            }}
-          >
+          <span style={{ margin: "0 12px", color: "rgba(245,181,72,0.3)", fontSize: "16px" }}>|</span>
+          <span style={{ fontSize: "12px", color: "rgba(245,181,72,0.5)", letterSpacing: "0.14em" }}>
             COLLECTOR VAULT
           </span>
         </div>
 
         {/* Main content */}
         <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-          {/* Badge */}
           <div
             style={{
               display: "flex",
@@ -167,7 +110,6 @@ export default async function Image({ params }: { params: Promise<{ token: strin
             PUBLIC EXHIBITION
           </div>
 
-          {/* Title */}
           <div
             style={{
               fontSize: titleSize,
@@ -180,7 +122,6 @@ export default async function Image({ params }: { params: Promise<{ token: strin
             {meta.title}
           </div>
 
-          {/* Description */}
           {meta.description ? (
             <div
               style={{
@@ -197,16 +138,24 @@ export default async function Image({ params }: { params: Promise<{ token: strin
 
         {/* Bottom row */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center" }}>
-            {metaRow.length > 0 ? (
-              <div style={{ display: "flex", alignItems: "center" }}>
-                {dot()}
-                <span style={{ fontSize: "15px", color: "rgba(245,181,72,0.75)", fontWeight: 600 }}>
-                  {metaRow.join("  ·  ")}
-                </span>
-              </div>
-            ) : null}
-          </div>
+          {metaLine ? (
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <div
+                style={{
+                  width: "6px",
+                  height: "6px",
+                  borderRadius: "50%",
+                  background: "rgba(245,181,72,0.6)",
+                  marginRight: "10px",
+                }}
+              />
+              <span style={{ fontSize: "15px", color: "rgba(245,181,72,0.8)", fontWeight: 600 }}>
+                {metaLine}
+              </span>
+            </div>
+          ) : (
+            <div />
+          )}
           <div
             style={{
               padding: "10px 26px",
