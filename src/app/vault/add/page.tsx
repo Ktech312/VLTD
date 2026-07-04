@@ -39,6 +39,8 @@ import {
 import { buildPricingPatch, type PricingMvpFields } from "@/lib/pricingMvp";
 import { parseComicScanResult, scanComicRegionsFromFile } from "@/lib/scanners/comicParser";
 import { lookupComicByUpc, lookupComicBySeries, formatComicCoverDate } from "@/lib/metronLookup";
+import { lookupVinylByBarcode, lookupVinylByText } from "@/lib/discogLookup";
+import { lookupPSACert, looksLikePSACert, extractPSACertFromUrl, formatPSAGrade, formatPSASet } from "@/lib/psaLookup";
 import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 import { scanBarcodeFromFile } from "@/lib/scanners/barcodeScanner";
 import {
@@ -1052,6 +1054,186 @@ export default function AddPage() {
     }
   }
 
+  async function runPSALookupForCode(certRaw: string) {
+    const certNumber = extractPSACertFromUrl(certRaw) ?? certRaw.replace(/\D/g, "").trim();
+    if (!certNumber) return false;
+
+    setIsComicLookupRunning(true);
+    setScanSession((prev) => markScanSessionScanning(prev));
+
+    try {
+      const cert = await lookupPSACert(certNumber);
+
+      if (!cert) {
+        setScanSession((prev) => markScanSessionFailed(prev, "No PSA cert data found."));
+        setStatus("PSA cert not found. Check the number and try again.");
+        return false;
+      }
+
+      const grade = formatPSAGrade(cert);
+      const setLabel = formatPSASet(cert);
+
+      const fields: Partial<FormValues> = {
+        title: setLabel ? `${setLabel} #${cert.cardNumber}`.trim() : cert.cardNumber,
+        subject: cert.subject,
+        subtitle: setLabel,
+        grade,
+        certNumber: cert.certNumber,
+        universe: "SPORTS",
+        category: "Sports Cards",
+        categoryLabel: "Sports Cards",
+        sportsGradingCompany: "PSA",
+        sportsPop: cert.population && cert.totalPopulation
+          ? `${cert.population} / ${cert.totalPopulation}`
+          : cert.population || "",
+      };
+
+      setScanSession((prev) =>
+        setScanSessionReview(prev, {
+          source: "comic_lookup",
+          confidence: "high",
+          score: 97,
+          safeToAutofill: true,
+          warnings: [],
+          rawText: `PSA ${cert.certNumber}: ${cert.subject} — ${setLabel} #${cert.cardNumber} | Grade: ${grade}`,
+          fields,
+        })
+      );
+
+      applyScanFieldsToEmpty(fields);
+
+      setValues((prev) => {
+        const next = { ...prev };
+        let changed = false;
+        const set = (k: keyof FormValues, v: string | undefined) => {
+          if (v != null && v !== (prev[k] ?? "")) {
+            (next as Record<string, string>)[k] = v;
+            changed = true;
+          }
+        };
+        set("grade", grade);
+        set("certNumber", cert.certNumber);
+        set("sportsGradingCompany", "PSA");
+        if (cert.population && cert.totalPopulation) {
+          set("sportsPop", `${cert.population} / ${cert.totalPopulation}`);
+        }
+        if (changed) setHasDraftChanges(true);
+        return changed ? next : prev;
+      });
+
+      setScanSession((prev) => markScanSessionApplied(prev));
+      setStatus(`PSA ${grade} — ${cert.subject} — details filled.`);
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "PSA lookup failed.";
+      setScanSession((prev) => markScanSessionFailed(prev, message));
+      setStatus(message);
+      return false;
+    } finally {
+      setIsComicLookupRunning(false);
+    }
+  }
+
+  async function runVinylLookupForFile(file: File, barcodeDigits?: string, barcodeRawValue?: string) {
+    setIsComicLookupRunning(true); // reuse scanning state
+    setScanSession((prev) => markScanSessionScanning(prev));
+
+    try {
+      const effectiveBarcode = barcodeDigits?.replace(/\D/g, "").trim() ?? "";
+
+      // Run OCR and Discogs lookup in parallel
+      const [fallbackOcr, discogsResult] = await Promise.all([
+        runImageScanAutofill(file, "auto"),
+        effectiveBarcode.length >= 12
+          ? lookupVinylByBarcode(effectiveBarcode).catch(() => null)
+          : Promise.resolve(null),
+      ]);
+
+      const matched = Boolean(discogsResult);
+
+      // If no barcode hit, try text-based lookup from OCR title
+      const textResult =
+        !matched && fallbackOcr.fields?.title
+          ? await lookupVinylByText(
+              fallbackOcr.fields?.title ?? "",
+              fallbackOcr.fields?.subtitle ?? ""
+            ).catch(() => null)
+          : null;
+
+      const best = discogsResult ?? textResult;
+
+      if (!best) {
+        setScanSession((prev) => markScanSessionFailed(prev, "No vinyl match found."));
+        setStatus("No vinyl match found — try image identify.");
+        return false;
+      }
+
+      const fields: Partial<FormValues> = {
+        title: best.albumTitle || fallbackOcr.fields?.title || "",
+        subject: best.artist || "",
+        subtitle: best.year ?? "",
+        universe: "MUSIC",
+        category: "Audio Formats",
+        categoryLabel: "Audio Formats",
+        subcategoryLabel: best.format ?? "Vinyl Records",
+        vinylLabel: best.label ?? "",
+        vinylCountry: best.country ?? "",
+        vinylPressing: best.format ?? "",
+      };
+
+      if (barcodeRawValue || effectiveBarcode) {
+        setScanSession((prev) =>
+          setScanSessionBarcode(prev, barcodeRawValue || "", effectiveBarcode || "")
+        );
+      }
+
+      setScanSession((prev) =>
+        setScanSessionReview(prev, {
+          source: "comic_lookup",
+          confidence: "high",
+          score: discogsResult ? 95 : 72,
+          safeToAutofill: true,
+          warnings: [],
+          rawText: `Discogs: ${best.artist} — ${best.albumTitle}${best.year ? ` (${best.year})` : ""}${best.label ? ` · ${best.label}` : ""}`,
+          fields,
+        })
+      );
+
+      applyScanFieldsToEmpty(fields);
+
+      setValues((prev) => {
+        const next = { ...prev };
+        let changed = false;
+        const set = (k: keyof FormValues, v: string | undefined) => {
+          if (v && v !== (prev[k] ?? "")) { (next as Record<string, string>)[k] = v; changed = true; }
+        };
+        set("vinylLabel", best.label ?? undefined);
+        set("vinylCountry", best.country ?? undefined);
+        set("vinylPressing", best.format ?? undefined);
+        if (best.year && !prev.subtitle?.trim()) {
+          set("subtitle", best.year);
+        }
+        if (changed) setHasDraftChanges(true);
+        return changed ? next : prev;
+      });
+
+      setScanSession((prev) => markScanSessionApplied(prev));
+      setStatus(
+        discogsResult
+          ? "Vinyl found in Discogs database — details filled."
+          : "Vinyl matched by title — details filled."
+      );
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Vinyl scan failed.";
+      setScanSession((prev) => markScanSessionFailed(prev, message));
+      setStatus(message);
+      return false;
+    } finally {
+      setIsComicLookupRunning(false);
+    }
+  }
+
   async function runUpcLookupForCode(barcodeDigits?: string, barcodeRawValue?: string) {
     const digits = String(barcodeDigits ?? "").replace(/\D/g, "").trim();
     if (!digits) return false;
@@ -1274,6 +1456,18 @@ export default function AddPage() {
         ? { digits: scanSession.barcodeDigits, rawValue: scanSession.barcodeRaw }
         : undefined);
 
+    // MUSIC universe → Discogs vinyl lookup (barcode or OCR text fallback)
+    if (values.universe === "MUSIC") {
+      const vinylMatched = await runVinylLookupForFile(
+        file,
+        currentBarcode?.digits,
+        currentBarcode?.rawValue
+      );
+      if (vinylMatched) return;
+      await runVisionLookupForFile(file, "auto");
+      return;
+    }
+
     if (scanType === "book") {
       const bookMatched = await runBookLookupForFile(file);
       if (bookMatched) return;
@@ -1296,7 +1490,21 @@ export default function AddPage() {
       return;
     }
 
-    if (scanType === "card" || scanType === "graded_card") {
+    if (scanType === "graded_card") {
+      // graded_card: barcode IS the cert number — try PSA first
+      if (currentBarcode?.rawValue || currentBarcode?.digits) {
+        const psaMatched = await runPSALookupForCode(
+          currentBarcode.rawValue || currentBarcode.digits || ""
+        );
+        if (psaMatched) return;
+      }
+      const ocrMatched = await runOcrAutofillForFile(file, scanType);
+      if (ocrMatched) return;
+      await runVisionLookupForFile(file, scanType);
+      return;
+    }
+
+    if (scanType === "card") {
       const ocrMatched = await runOcrAutofillForFile(file, scanType);
       if (ocrMatched) return;
       await runVisionLookupForFile(file, scanType);
@@ -1304,6 +1512,14 @@ export default function AddPage() {
     }
 
     if (currentBarcode?.digits) {
+      // Short numeric barcode (7-10 digits) = likely a graded slab cert number
+      if (looksLikePSACert(currentBarcode.digits)) {
+        const psaMatched = await runPSALookupForCode(
+          currentBarcode.rawValue || currentBarcode.digits
+        );
+        if (psaMatched) return;
+      }
+
       const bookLike = looksLikeBookBarcode(currentBarcode.digits);
 
       if (bookLike) {
@@ -1323,6 +1539,14 @@ export default function AddPage() {
         currentBarcode.rawValue
       );
       if (comicMatched) return;
+
+      // Also try Discogs — vinyl barcodes are standard UPCs too
+      const vinylMatched = await runVinylLookupForFile(
+        file,
+        currentBarcode.digits,
+        currentBarcode.rawValue
+      );
+      if (vinylMatched) return;
     }
 
     const ocrMatched = await runOcrAutofillForFile(file, "auto");
