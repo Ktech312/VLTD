@@ -23,7 +23,7 @@ export default function NotificationsPage() {
   useEffect(() => {
     async function load() {
       try {
-        const user = await getCurrentUser();
+        const { data: { user } } = await getCurrentUser();
         if (!user) { setError("Sign in to see notifications."); setLoading(false); return; }
         const profileId = getStoredActiveProfileId() ?? user.id;
         const items = await fetchFollowingFeed(profileId);
