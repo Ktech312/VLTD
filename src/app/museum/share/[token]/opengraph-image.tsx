@@ -129,7 +129,7 @@ export default async function Image({ params }: { params: Promise<{ token: strin
         </div>
 
         {/* ── RIGHT: items list (400px) ── */}
-        <div style={{ width: "400px", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "44px 40px 44px 36px", background: "rgba(245,181,72,0.04)", borderLeft: "1px solid rgba(245,181,72,0.12)" }}>
+        <div style={{ width: "400px", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "44px 40px 44px 36px", background: "#0A0A12" }}>
           <span style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.22em", color: "rgba(245,181,72,0.5)" }}>IN THIS EXHIBITION</span>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "16px", flex: 1, marginTop: "28px", marginBottom: "20px" }}>
