@@ -170,12 +170,3 @@ export default async function Image({ params }: { params: Promise<{ token: strin
     { width: 1200, height: 630 }
   );
 }
-Size: "17px", color: "rgba(245,181,72,0.65)", fontWeight: 600, fontStyle: "italic" }}>And many more…</span>
-          )}
-        </div>
-
-      </div>
-    ),
-    { width: 1200, height: 630 }
-  );
-}
