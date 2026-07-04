@@ -66,7 +66,7 @@ export default async function Image({ params }: { params: Promise<{ token: strin
           </div>
 
           {/* Title */}
-          <div style={{ display: "flex", flex: 1, alignItems: "flex-start" }}>
+          <div style={{ display: "flex", flex: 1, alignItems: "center" }}>
             <span
               style={{
                 fontSize: title.length > 30 ? "52px" : "68px",
