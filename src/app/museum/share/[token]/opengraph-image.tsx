@@ -5,27 +5,26 @@ export const alt = "VLTD Exhibition";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default async function Image({
-  searchParams,
-}: {
+export default async function Image(props: {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ t?: string; d?: string; n?: string; c?: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  // searchParams may be a plain object (Next 14) or Promise (Next 15)
-  const sp = (await Promise.resolve(searchParams).catch(() => ({}))) as {
-    t?: string; d?: string; n?: string; c?: string;
-  };
+  // searchParams may be undefined, a plain object, or a Promise depending on Next.js version
+  let sp: Record<string, string | string[] | undefined> = {};
+  try {
+    sp = Object.assign({}, await Promise.resolve(props.searchParams));
+  } catch { sp = {}; }
 
-  const title  = String(sp.t ?? "VLTD Exhibition").slice(0, 80);
-  const desc   = String(sp.d ?? "").slice(0, 120);
-  const items  = sp.n ? `${sp.n} ${sp.n === "1" ? "item" : "items"}` : "";
-  const col    = String(sp.c ?? "");
+  const get = (k: string) => { const v = sp[k]; return typeof v === "string" ? v : (Array.isArray(v) ? v[0] : undefined); };
 
-  const titleSize = title.length > 35 ? "44px" : "58px";
-  const parts: string[] = [];
-  if (items) parts.push(items);
-  if (col)   parts.push(`Curated by ${col}`);
-  const meta = parts.join("  ·  ");
+  const title  = (get("t") ?? "VLTD Exhibition").slice(0, 80);
+  const desc   = (get("d") ?? "").slice(0, 120);
+  const n      = get("n");
+  const col    = get("c") ?? "";
+
+  const items    = n ? `${n} ${n === "1" ? "item" : "items"}` : "";
+  const titlePx  = title.length > 35 ? "44px" : "58px";
+  const metaLine = [items, col ? `Curated by ${col}` : ""].filter(Boolean).join("  ·  ");
 
   return new ImageResponse(
     (
@@ -43,18 +42,13 @@ export default async function Image({
       >
         {/* Wordmark */}
         <div style={{ display: "flex", alignItems: "center" }}>
-          <span style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "0.28em", color: "#F5B548" }}>
-            VLTD
-          </span>
+          <span style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "0.28em", color: "#F5B548" }}>VLTD</span>
           <span style={{ margin: "0 12px", color: "rgba(245,181,72,0.3)", fontSize: "16px" }}>|</span>
-          <span style={{ fontSize: "12px", color: "rgba(245,181,72,0.5)", letterSpacing: "0.14em" }}>
-            COLLECTOR VAULT
-          </span>
+          <span style={{ fontSize: "12px", color: "rgba(245,181,72,0.5)", letterSpacing: "0.14em" }}>COLLECTOR VAULT</span>
         </div>
 
-        {/* Content */}
+        {/* Title block */}
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          {/* Badge — inline-flex NOT flex+fit-content (Satori compat) */}
           <div
             style={{
               display: "inline-flex",
@@ -69,18 +63,9 @@ export default async function Image({
           >
             PUBLIC EXHIBITION
           </div>
-
-          <div
-            style={{
-              fontSize: titleSize,
-              fontWeight: 800,
-              color: "#F0EAD6",
-              lineHeight: 1.05,
-            }}
-          >
+          <div style={{ fontSize: titlePx, fontWeight: 800, color: "#F0EAD6", lineHeight: 1.05 }}>
             {title}
           </div>
-
           {desc ? (
             <div style={{ fontSize: "17px", color: "rgba(240,234,214,0.45)", lineHeight: 1.5 }}>
               {desc}
@@ -88,26 +73,11 @@ export default async function Image({
           ) : null}
         </div>
 
-        {/* Bottom */}
+        {/* Bottom row */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          {meta ? (
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <div
-                style={{
-                  width: "6px",
-                  height: "6px",
-                  borderRadius: "50%",
-                  background: "rgba(245,181,72,0.6)",
-                  marginRight: "10px",
-                }}
-              />
-              <span style={{ fontSize: "15px", color: "rgba(245,181,72,0.8)", fontWeight: 600 }}>
-                {meta}
-              </span>
-            </div>
-          ) : (
-            <span style={{ fontSize: "15px", color: "rgba(245,181,72,0.4)" }}>vltd.app</span>
-          )}
+          <span style={{ fontSize: "15px", color: "rgba(245,181,72,0.8)", fontWeight: 600 }}>
+            {metaLine || "vltd.app"}
+          </span>
           <div
             style={{
               padding: "10px 26px",
