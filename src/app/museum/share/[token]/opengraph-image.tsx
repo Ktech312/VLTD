@@ -6,7 +6,10 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+// Service role key bypasses RLS — galleries table restricts anon reads
+const SUPABASE_ANON =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ??
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
 type GalleryRow = {
   title: string;
