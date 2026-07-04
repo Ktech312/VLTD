@@ -20,7 +20,7 @@ async function fetchGalleryMeta(token: string) {
 
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/galleries?public_token=eq.${encodeURIComponent(token)}&visibility=eq.PUBLIC&select=id,title,description,layout,profile_id&limit=1`,
+      `${SUPABASE_URL}/rest/v1/galleries?public_token=eq.${encodeURIComponent(token)}&select=id,title,description,layout,profile_id&limit=1`,
       { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` }, next: { revalidate: 120 } }
     );
     const rows: GalleryRow[] = await res.json().catch(() => []);
