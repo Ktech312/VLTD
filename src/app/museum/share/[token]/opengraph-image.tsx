@@ -61,7 +61,7 @@ export default async function Image({ params }: { params: Promise<{ token: strin
     collector ? `Curated by ${collector}` : null,
   ].filter(Boolean).join("  ·  ");
 
-  const titleSize = title.length > 30 ? "64px" : title.length > 20 ? "80px" : "96px";
+  const titleSize = title.length > 30 ? "52px" : title.length > 20 ? "64px" : "72px";
 
   return new ImageResponse(
     (
@@ -70,89 +70,56 @@ export default async function Image({ params }: { params: Promise<{ token: strin
           width: "1200px",
           height: "630px",
           display: "flex",
-          position: "relative",
-          overflow: "hidden",
+          flexDirection: "row",
           background: "#0A0A12",
           fontFamily: "'Segoe UI', system-ui, sans-serif",
+          overflow: "hidden",
         }}
       >
-        {/* Full-bleed cover image */}
-        {coverImage && (
-          <img
-            src={coverImage}
-            alt=""
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "1200px",
-              height: "630px",
-              objectFit: "cover",
-              objectPosition: "center",
-            }}
-          />
-        )}
-
-        {/* Heavy dark gradient so text is always readable */}
+        {/* LEFT: dark text column */}
         <div
           style={{
-            position: "absolute",
-            inset: 0,
-            background: coverImage
-              ? "linear-gradient(160deg, rgba(10,10,18,0.82) 0%, rgba(10,10,18,0.55) 50%, rgba(10,10,18,0.88) 100%)"
-              : "radial-gradient(ellipse at 70% 40%, rgba(245,181,72,0.08) 0%, transparent 60%)",
-          }}
-        />
-
-        {/* Gold top bar */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: "4px",
-            background: "#F5B548",
-          }}
-        />
-
-        {/* Content — full width overlay */}
-        <div
-          style={{
-            position: "relative",
+            width: "560px",
+            flexShrink: 0,
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            padding: "44px 64px 52px",
-            width: "100%",
+            padding: "48px 52px 52px 56px",
+            background: "#0A0A12",
+            position: "relative",
           }}
         >
+          {/* Gold left border accent */}
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              width: "4px",
+              height: "630px",
+              background: "#F5B548",
+            }}
+          />
+
           {/* Top: brand */}
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <span
-              style={{
-                fontSize: "18px",
-                fontWeight: 800,
-                letterSpacing: "0.28em",
-                color: "#F5B548",
-              }}
-            >
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <span style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "0.28em", color: "#F5B548" }}>
               VLTD
             </span>
-            <span style={{ fontSize: "13px", color: "rgba(245,181,72,0.55)", letterSpacing: "0.18em", fontWeight: 500 }}>
+            <span style={{ fontSize: "16px", color: "rgba(245,181,72,0.6)", letterSpacing: "0.18em", fontWeight: 500 }}>
               PUBLIC EXHIBITION
             </span>
           </div>
 
-          {/* Center: big title + description */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "18px", maxWidth: "780px" }}>
+          {/* Middle: title + description */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div
               style={{
                 fontSize: titleSize,
                 fontWeight: 800,
-                color: "#FFFFFF",
-                lineHeight: 1,
-                letterSpacing: "-0.03em",
-                textShadow: "0 2px 24px rgba(0,0,0,0.6)",
+                color: "#F0EAD6",
+                lineHeight: 1.05,
+                letterSpacing: "-0.02em",
               }}
             >
               {title}
@@ -160,36 +127,80 @@ export default async function Image({ params }: { params: Promise<{ token: strin
             {description && (
               <div
                 style={{
-                  fontSize: "22px",
-                  color: "rgba(255,255,255,0.72)",
-                  lineHeight: 1.4,
+                  fontSize: "18px",
+                  color: "rgba(240,234,214,0.55)",
+                  lineHeight: 1.45,
                   fontWeight: 400,
                 }}
               >
-                {description.length > 90 ? description.slice(0, 87) + "…" : description}
+                {description.length > 80 ? description.slice(0, 77) + "…" : description}
               </div>
             )}
           </div>
 
           {/* Bottom: meta + CTA */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontSize: "17px", color: "rgba(245,181,72,0.9)", fontWeight: 600, letterSpacing: "0.02em" }}>
-              {meta || "View the collection"}
-            </span>
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {meta && (
+              <span style={{ fontSize: "20px", color: "rgba(245,181,72,0.85)", fontWeight: 600 }}>
+                {meta}
+              </span>
+            )}
             <div
               style={{
-                background: "#F5B548",
-                borderRadius: "100px",
-                padding: "12px 32px",
-                fontSize: "16px",
-                fontWeight: 700,
-                color: "#0A0A12",
-                letterSpacing: "0.04em",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
               }}
             >
-              View Exhibition
+              <span style={{ fontSize: "15px", color: "rgba(160,149,107,0.55)" }}>vltd.app</span>
+              <div
+                style={{
+                  background: "#F5B548",
+                  borderRadius: "100px",
+                  padding: "12px 28px",
+                  fontSize: "17px",
+                  fontWeight: 700,
+                  color: "#0A0A12",
+                }}
+              >
+                View Exhibition
+              </div>
             </div>
           </div>
+        </div>
+
+        {/* RIGHT: image contained, not stretched */}
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "#0A0A12",
+            overflow: "hidden",
+          }}
+        >
+          {coverImage ? (
+            <img
+              src={coverImage}
+              alt=""
+              style={{
+                width: "640px",
+                height: "630px",
+                objectFit: "contain",
+                objectPosition: "center",
+              }}
+            />
+          ) : (
+            /* No cover: subtle gold radial glow */
+            <div
+              style={{
+                width: "640px",
+                height: "630px",
+                background: "radial-gradient(ellipse at center, rgba(245,181,72,0.10) 0%, transparent 70%)",
+              }}
+            />
+          )}
         </div>
       </div>
     ),
