@@ -19,7 +19,13 @@ type GalleryRow = {
 type ProfileRow = { display_name: string | null };
 
 async function fetchData(token: string) {
-  const fallback = { title: "VLTD Exhibition", description: null as string | null, coverImage: null as string | null, itemCount: null as number | null, collector: "" };
+  const fallback = {
+    title: "VLTD Exhibition",
+    description: null as string | null,
+    coverImage: null as string | null,
+    itemCount: null as number | null,
+    collector: "",
+  };
   if (!SUPABASE_URL || !SUPABASE_ANON) return fallback;
   const headers = { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` };
   try {
@@ -49,7 +55,13 @@ async function fetchData(token: string) {
 export default async function Image({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const { title, description, coverImage, itemCount, collector } = await fetchData(token);
-  const hasCover = !!coverImage;
+
+  const meta = [
+    itemCount !== null ? `${itemCount} item${itemCount !== 1 ? "s" : ""}` : null,
+    collector ? `Curated by ${collector}` : null,
+  ].filter(Boolean).join("  ·  ");
+
+  const titleSize = title.length > 30 ? "64px" : title.length > 20 ? "80px" : "96px";
 
   return new ImageResponse(
     (
@@ -58,22 +70,21 @@ export default async function Image({ params }: { params: Promise<{ token: strin
           width: "1200px",
           height: "630px",
           display: "flex",
-          background: "#0B0B0B",
           position: "relative",
           overflow: "hidden",
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          background: "#0A0A12",
+          fontFamily: "'Segoe UI', system-ui, sans-serif",
         }}
       >
-        {/* Cover image — right half */}
-        {hasCover && (
+        {/* Full-bleed cover image */}
+        {coverImage && (
           <img
-            src={coverImage!}
+            src={coverImage}
             alt=""
             style={{
               position: "absolute",
-              right: 0,
-              top: 0,
-              width: "600px",
+              inset: 0,
+              width: "1200px",
               height: "630px",
               objectFit: "cover",
               objectPosition: "center",
@@ -81,61 +92,67 @@ export default async function Image({ params }: { params: Promise<{ token: strin
           />
         )}
 
-        {/* Gradient overlay */}
+        {/* Heavy dark gradient so text is always readable */}
         <div
           style={{
             position: "absolute",
             inset: 0,
-            background: hasCover
-              ? "linear-gradient(90deg, #0B0B0B 45%, rgba(11,11,11,0.7) 65%, rgba(11,11,11,0.15) 100%)"
-              : "radial-gradient(ellipse at 80% 50%, rgba(245,181,72,0.10) 0%, transparent 65%)",
+            background: coverImage
+              ? "linear-gradient(160deg, rgba(10,10,18,0.82) 0%, rgba(10,10,18,0.55) 50%, rgba(10,10,18,0.88) 100%)"
+              : "radial-gradient(ellipse at 70% 40%, rgba(245,181,72,0.08) 0%, transparent 60%)",
           }}
         />
 
-        {/* Gold top accent bar */}
+        {/* Gold top bar */}
         <div
           style={{
             position: "absolute",
             top: 0,
             left: 0,
             right: 0,
-            height: "3px",
-            background: "linear-gradient(90deg, transparent, #F5B548 30%, #F5B548 70%, transparent)",
+            height: "4px",
+            background: "#F5B548",
           }}
         />
 
-        {/* Left content column */}
+        {/* Content — full width overlay */}
         <div
           style={{
             position: "relative",
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            padding: "48px 52px",
-            width: hasCover ? "580px" : "100%",
+            padding: "44px 64px 52px",
+            width: "100%",
           }}
         >
-          {/* Top: VLTD label */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{ fontSize: "16px", fontWeight: 700, letterSpacing: "0.22em", color: "#F5B548" }}>
+          {/* Top: brand */}
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <span
+              style={{
+                fontSize: "18px",
+                fontWeight: 800,
+                letterSpacing: "0.28em",
+                color: "#F5B548",
+              }}
+            >
               VLTD
-            </div>
-            <div style={{ width: "1px", height: "14px", background: "rgba(245,181,72,0.4)" }} />
-            <div style={{ fontSize: "13px", color: "rgba(245,181,72,0.6)", letterSpacing: "0.12em" }}>
+            </span>
+            <span style={{ fontSize: "13px", color: "rgba(245,181,72,0.55)", letterSpacing: "0.18em", fontWeight: 500 }}>
               PUBLIC EXHIBITION
-            </div>
+            </span>
           </div>
 
-          {/* Middle: title + description */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+          {/* Center: big title + description */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "18px", maxWidth: "780px" }}>
             <div
               style={{
-                fontSize: title.length > 40 ? "36px" : "52px",
+                fontSize: titleSize,
                 fontWeight: 800,
-                color: "#F0EAD6",
-                lineHeight: 1.05,
-                letterSpacing: "-0.02em",
-                maxWidth: "480px",
+                color: "#FFFFFF",
+                lineHeight: 1,
+                letterSpacing: "-0.03em",
+                textShadow: "0 2px 24px rgba(0,0,0,0.6)",
               }}
             >
               {title}
@@ -143,51 +160,35 @@ export default async function Image({ params }: { params: Promise<{ token: strin
             {description && (
               <div
                 style={{
-                  fontSize: "16px",
-                  color: "rgba(240,234,214,0.55)",
-                  lineHeight: 1.5,
-                  maxWidth: "440px",
+                  fontSize: "22px",
+                  color: "rgba(255,255,255,0.72)",
+                  lineHeight: 1.4,
+                  fontWeight: 400,
                 }}
               >
-                {description.length > 100 ? description.slice(0, 97) + "..." : description}
+                {description.length > 90 ? description.slice(0, 87) + "…" : description}
               </div>
             )}
-            {/* Meta row */}
-            <div style={{ display: "flex", alignItems: "center", gap: "18px", marginTop: "4px" }}>
-              {itemCount !== null && (
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#F5B548" }} />
-                  <span style={{ fontSize: "14px", color: "rgba(245,181,72,0.85)", fontWeight: 600 }}>
-                    {itemCount} item{itemCount !== 1 ? "s" : ""}
-                  </span>
-                </div>
-              )}
-              {collector && (
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "rgba(160,149,107,0.6)" }} />
-                  <span style={{ fontSize: "14px", color: "rgba(160,149,107,0.75)" }}>
-                    {collector}
-                  </span>
-                </div>
-              )}
-            </div>
           </div>
 
-          {/* Bottom: CTA */}
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          {/* Bottom: meta + CTA */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontSize: "17px", color: "rgba(245,181,72,0.9)", fontWeight: 600, letterSpacing: "0.02em" }}>
+              {meta || "View the collection"}
+            </span>
             <div
               style={{
-                background: "linear-gradient(135deg, #8B6914, #F5B548)",
+                background: "#F5B548",
                 borderRadius: "100px",
-                padding: "10px 24px",
-                fontSize: "14px",
+                padding: "12px 32px",
+                fontSize: "16px",
                 fontWeight: 700,
-                color: "#0B0B0B",
+                color: "#0A0A12",
+                letterSpacing: "0.04em",
               }}
             >
               View Exhibition
             </div>
-            <div style={{ fontSize: "13px", color: "rgba(160,149,107,0.6)" }}>vltd.app</div>
           </div>
         </div>
       </div>
