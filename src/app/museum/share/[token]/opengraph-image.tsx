@@ -40,10 +40,11 @@ async function fetchData(token: string) {
     const sampleIds = itemIds.slice(0, 8);
 
     // Fetch profile and items in parallel
+    // vault_items RLS: anon key can read rows where is_public = true
     const [profileRes, itemsRes] = await Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/public_profiles?profile_id=eq.${g.profile_id}&select=display_name&limit=1`, { headers: h, cache: "no-store" }),
       sampleIds.length > 0
-        ? fetch(`${SUPABASE_URL}/rest/v1/vault_items?id=in.(${sampleIds.join(",")})&select=title&limit=8`, { headers: h, cache: "no-store" })
+        ? fetch(`${SUPABASE_URL}/rest/v1/vault_items?id=in.(${sampleIds.join(",")})&is_public=eq.true&select=title&limit=8`, { headers: h, cache: "no-store" })
         : Promise.resolve(null),
     ]);
 
@@ -78,18 +79,15 @@ export default async function Image({ params }: { params: Promise<{ token: strin
     (
       <div style={{ width: "1200px", height: "630px", display: "flex", flexDirection: "row", background: "#0A0A12", fontFamily: "'Segoe UI', system-ui, sans-serif", overflow: "hidden" }}>
 
-        {/* ── LEFT: text content (400px) ── */}
+        {/* ── LEFT: text (400px) ── */}
         <div style={{ width: "400px", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "44px 40px 44px 52px", position: "relative" }}>
-          {/* Gold left bar */}
           <div style={{ position: "absolute", left: 0, top: 0, width: "4px", height: "630px", background: "#F5B548" }} />
 
-          {/* Brand */}
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
             <span style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "0.28em", color: "#F5B548" }}>VLTD</span>
             <span style={{ fontSize: "15px", color: "rgba(245,181,72,0.55)", letterSpacing: "0.2em", fontWeight: 500 }}>PUBLIC EXHIBITION</span>
           </div>
 
-          {/* Title + description */}
           <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
             <div style={{ fontSize: titleSize, fontWeight: 800, color: "#F0EAD6", lineHeight: 1.05, letterSpacing: "-0.02em" }}>
               {title}
@@ -99,32 +97,41 @@ export default async function Image({ params }: { params: Promise<{ token: strin
                 {description.length > 85 ? description.slice(0, 82) + "…" : description}
               </div>
             ) : (
-              <div style={{ fontSize: "17px", color: "rgba(240,234,214,0.25)", lineHeight: 1.45, fontStyle: "italic" }}>
+              <div style={{ fontSize: "17px", color: "rgba(240,234,214,0.22)", lineHeight: 1.45, fontStyle: "italic" }}>
                 A curated collection
               </div>
             )}
           </div>
 
-          {/* Meta + CTA */}
           <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-            {meta ? (
-              <span style={{ fontSize: "19px", color: "rgba(245,181,72,0.85)", fontWeight: 600 }}>{meta}</span>
-            ) : null}
+            {meta ? <span style={{ fontSize: "19px", color: "rgba(245,181,72,0.85)", fontWeight: 600 }}>{meta}</span> : null}
             <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
               <div style={{ background: "#F5B548", borderRadius: "100px", padding: "11px 26px", fontSize: "16px", fontWeight: 700, color: "#0A0A12" }}>
                 View Exhibition
               </div>
-              <span style={{ fontSize: "14px", color: "rgba(160,149,107,0.45)" }}>vltd.app</span>
+              <span style={{ fontSize: "14px", color: "rgba(160,149,107,0.4)" }}>vltd.app</span>
             </div>
           </div>
         </div>
 
-        {/* ── CENTER: cover image (400px, contained) ── */}
-        <div style={{ width: "400px", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#0A0A12", overflow: "hidden" }}>
+        {/* ── CENTER: cover image or geometric fallback (400px) ── */}
+        <div style={{ width: "400px", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#0A0A12", overflow: "hidden", position: "relative" }}>
           {coverImage ? (
             <img src={coverImage} alt="" style={{ width: "400px", height: "630px", objectFit: "contain", objectPosition: "center" }} />
           ) : (
-            <div style={{ width: "400px", height: "630px", background: "radial-gradient(ellipse at center, rgba(245,181,72,0.08) 0%, transparent 70%)" }} />
+            /* Geometric fallback: nested gold diamond shapes */
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "400px", height: "630px" }}>
+              <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: "260px", height: "260px" }}>
+                {/* Outer ring */}
+                <div style={{ position: "absolute", width: "240px", height: "240px", borderRadius: "50%", border: "1px solid rgba(245,181,72,0.15)", display: "flex" }} />
+                <div style={{ position: "absolute", width: "180px", height: "180px", borderRadius: "50%", border: "1px solid rgba(245,181,72,0.25)", display: "flex" }} />
+                <div style={{ position: "absolute", width: "120px", height: "120px", borderRadius: "50%", border: "1px solid rgba(245,181,72,0.4)", display: "flex" }} />
+                {/* Center mark */}
+                <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "rgba(245,181,72,0.12)", border: "1px solid rgba(245,181,72,0.6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ width: "12px", height: "12px", borderRadius: "50%", background: "#F5B548", display: "flex" }} />
+                </div>
+              </div>
+            </div>
           )}
         </div>
 
@@ -141,7 +148,13 @@ export default async function Image({ params }: { params: Promise<{ token: strin
                 </span>
               </div>
             )) : (
-              <span style={{ fontSize: "17px", color: "rgba(240,234,214,0.3)", fontStyle: "italic" }}>Collection items</span>
+              /* Items not public — show placeholder dots */
+              [1,2,3,4,5].map((_, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "rgba(245,181,72,0.3)", flexShrink: 0 }} />
+                  <div style={{ height: "14px", width: `${120 - i * 15}px`, borderRadius: "4px", background: "rgba(240,234,214,0.08)", display: "flex" }} />
+                </div>
+              ))
             )}
           </div>
 

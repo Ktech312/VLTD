@@ -235,7 +235,7 @@ export default function GuestGalleryPage() {
   }
 
   const publicShareUrl = gallery.share?.publicToken
-    ? `https://vltd.vercel.app/museum/share/${gallery.share.publicToken}`
+    ? `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://vltd.vercel.app"}/museum/share/${gallery.share.publicToken}`
     : typeof window !== "undefined" ? window.location.href : "";
 
   return (

@@ -39,7 +39,7 @@ export async function generateMetadata(
     title: `@${username} · VLTD`,
     description: `View @${username}'s vault on VLTD.`,
     alternates: {
-      canonical: `https://vltd.vercel.app/@${username}`,
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://vltd.vercel.app"}/@${username}`,
     },
   };
 }

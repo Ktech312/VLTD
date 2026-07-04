@@ -1,55 +1,47 @@
-// Server component — provides OG metadata for the public exhibit share page.
+// Server component — injects OG metadata for the public exhibit share page.
+// The opengraph-image.tsx at this route segment fetches its own data,
+// so we only need to set the text metadata here.
 import type { Metadata } from "next";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://vltd.vercel.app";
 
 type GalleryRow = {
-  id: string;
   title: string;
   description: string | null;
   layout: { itemIds?: string[] } | null;
   profile_id: string;
 };
-
 type ProfileRow = { display_name: string | null };
 
 async function fetchGalleryMeta(token: string) {
   const fallback = { title: "VLTD Exhibition", description: "", itemCount: null as number | null, collector: "" };
   if (!SUPABASE_URL || !SUPABASE_ANON) return fallback;
-
+  const h = { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` };
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/galleries?public_token=eq.${encodeURIComponent(token)}&select=id,title,description,layout,profile_id&limit=1`,
-      { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` }, next: { revalidate: 120 } }
+      `${SUPABASE_URL}/rest/v1/galleries?public_token=eq.${encodeURIComponent(token)}&select=title,description,layout,profile_id&limit=1`,
+      { headers: h, next: { revalidate: 120 } }
     );
     const rows: GalleryRow[] = await res.json().catch(() => []);
-    const gallery = rows[0];
-    if (!gallery) return fallback;
-
-    const itemCount = Array.isArray(gallery.layout?.itemIds) ? gallery.layout!.itemIds.length : null;
+    const g = rows[0];
+    if (!g) return fallback;
+    const itemCount = Array.isArray(g.layout?.itemIds) ? g.layout!.itemIds.length : null;
     let collector = "";
     try {
       const pRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/public_profiles?profile_id=eq.${gallery.profile_id}&select=display_name&limit=1`,
-        { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` }, next: { revalidate: 120 } }
+        `${SUPABASE_URL}/rest/v1/public_profiles?profile_id=eq.${g.profile_id}&select=display_name&limit=1`,
+        { headers: h, next: { revalidate: 120 } }
       );
       const profiles: ProfileRow[] = await pRes.json().catch(() => []);
       collector = profiles[0]?.display_name ?? "";
     } catch { /* ignore */ }
-
-    return {
-      title: gallery.title,
-      description: gallery.description ?? "",
-      itemCount,
-      collector,
-    };
+    return { title: g.title, description: g.description ?? "", itemCount, collector };
   } catch {
     return fallback;
   }
 }
-
-const BASE = "https://vltd.vercel.app";
 
 export async function generateMetadata(
   { params }: { params: Promise<{ token: string }> }
@@ -57,14 +49,7 @@ export async function generateMetadata(
   const { token } = await params;
   const meta = await fetchGalleryMeta(token);
   const pageUrl = `${BASE}/museum/share/${token}`;
-
-  // Build the og:image URL with the data baked in as query params
-  // so the image edge function needs zero network calls
-  const imgUrl = new URL(`${BASE}/museum/share/${token}/opengraph-image`);
-  imgUrl.searchParams.set("t", meta.title);
-  if (meta.description) imgUrl.searchParams.set("d", meta.description);
-  if (meta.itemCount !== null) imgUrl.searchParams.set("n", String(meta.itemCount));
-  if (meta.collector) imgUrl.searchParams.set("c", meta.collector);
+  const imgUrl = `${BASE}/museum/share/${token}/opengraph-image`;
 
   const descParts = [
     meta.description,
@@ -80,7 +65,7 @@ export async function generateMetadata(
       url: pageUrl,
       title: meta.title,
       description: descParts.join(" · "),
-      images: [{ url: imgUrl.toString(), width: 1200, height: 630, alt: meta.title }],
+      images: [{ url: imgUrl, width: 1200, height: 630, alt: meta.title }],
       type: "website",
       siteName: "VLTD",
     },
@@ -88,7 +73,7 @@ export async function generateMetadata(
       card: "summary_large_image",
       title: meta.title,
       description: descParts.join(" · "),
-      images: [imgUrl.toString()],
+      images: [imgUrl],
     },
   };
 }

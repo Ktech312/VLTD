@@ -10,6 +10,7 @@ const SUPABASE_SERVICE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 const VAULT_IMAGES_BUCKET = "vault-images";
 const VAULT_ITEMS_TABLE = "vault_items";
+const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "${BASE}";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
@@ -44,7 +45,7 @@ function buildImageUrl(row: Row): string {
 }
 
 function buildOgUrl(title: string, gradeRaw: string, description: string, imageUrl: string): string {
-  return `https://vltd.vercel.app/api/og?v=3&title=${encodeURIComponent(title)}&grade=${encodeURIComponent(gradeRaw)}&description=${encodeURIComponent(description)}&imageUrl=${encodeURIComponent(imageUrl)}`;
+  return `${BASE}/api/og?v=3&title=${encodeURIComponent(title)}&grade=${encodeURIComponent(gradeRaw)}&description=${encodeURIComponent(description)}&imageUrl=${encodeURIComponent(imageUrl)}`;
 }
 
 async function fetchItem(itemId: string): Promise<Row | null> {
@@ -91,10 +92,10 @@ export async function generateMetadata(
     title: `${title}${grade} · VLTD`,
     description,
     alternates: {
-      canonical: `https://vltd.vercel.app/share/${itemId}`,
+      canonical: `${BASE}/share/${itemId}`,
     },
     openGraph: {
-      url: `https://vltd.vercel.app/share/${itemId}`,
+      url: `${BASE}/share/${itemId}`,
       title: `${title}${grade}`,
       description,
       images: [{ url: ogImageUrl, width: 1200, height: 630, alt: title }],
