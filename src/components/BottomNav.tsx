@@ -50,22 +50,14 @@ function IconDiscover({ active }: { active: boolean }) {
   );
 }
 
-function IconActivity({ active }: { active: boolean }) {
+function IconAlerts({ active }: { active: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
       style={{ color: active ? "#F5B548" : "#A0956B" }}>
-      <rect x="3" y="14" width="3" height="7" rx="1"
-        fill={active ? "rgba(245,181,72,0.20)" : "rgba(160,149,107,0.20)"}
-        stroke="currentColor" strokeWidth="1.75" />
-      <rect x="8.5" y="10" width="3" height="11" rx="1"
-        fill={active ? "rgba(245,181,72,0.20)" : "rgba(160,149,107,0.20)"}
-        stroke="currentColor" strokeWidth="1.75" />
-      <rect x="14" y="6" width="3" height="15" rx="1"
-        fill={active ? "rgba(245,181,72,0.28)" : "rgba(160,149,107,0.14)"}
-        stroke="currentColor" strokeWidth="1.75" />
-      <rect x="19.5" y="11" width="3" height="10" rx="1"
-        fill={active ? "rgba(245,181,72,0.20)" : "rgba(160,149,107,0.20)"}
-        stroke="currentColor" strokeWidth="1.75" />
+      <path d="M15 17H9a3 3 0 0 0 6 0Z" stroke="currentColor" strokeWidth="1.75" />
+      <path d="M4 17h16M12 3v1m0 0a7 7 0 0 1 7 7v3.5H5V11a7 7 0 0 1 7-7Z"
+        stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"
+        fill={active ? "rgba(245,181,72,0.14)" : "none"} />
     </svg>
   );
 }
@@ -83,8 +75,8 @@ const TABS: (Tab | null)[] = [
   { label: "Exhibitions", href: "/museum",   icon: IconExhibitions, exact: false },
   { label: "Vault",     href: "/vault",    icon: IconVault,       exact: false },
   null, // gold + button (capture)
-  { label: "Discover",  href: "/discover", icon: IconDiscover,    exact: false },
-  { label: "Activity",  href: "/portfolio", icon: IconActivity,   exact: false },
+  { label: "Discover",  href: "/discover",       icon: IconDiscover, exact: false },
+  { label: "Alerts",   href: "/notifications",  icon: IconAlerts,   exact: false },
 ];
 
 // Guest gallery routes (/museum/[id]/guest) should highlight Discover, not Galleries

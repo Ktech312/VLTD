@@ -213,6 +213,17 @@ function IconEvents({ active }: { active: boolean }) {
   );
 }
 
+function IconBellNav({ active }: { active: boolean }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
+      <path d="M15 17H9a3 3 0 0 0 6 0Z" stroke="currentColor" strokeWidth="1.75" />
+      <path d="M4 17h16M12 3v1m0 0a7 7 0 0 1 7 7v3.5H5V11a7 7 0 0 1 7-7Z"
+        stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"
+        fill={active ? "rgba(245,181,72,0.12)" : "none"} />
+    </svg>
+  );
+}
+
 function IconSearch({ className = "h-4 w-4" }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className}>
@@ -291,6 +302,10 @@ const MORE_NAV_ITEMS = [
   {
     label: "Activity",    href: "/activity",   icon: IconActivity,    exact: false,
     desc: "See updates, comments, appreciations and follows.",
+  },
+  {
+    label: "Notifications", href: "/notifications", icon: IconBellNav, exact: false,
+    desc: "New exhibitions from collectors you follow.",
   },
 ];
 
@@ -616,20 +631,14 @@ function TopNavInner() {
 
             {/* Bell */}
             <div className="group relative hidden md:flex">
-              <button
-                type="button"
+              <Link
+                href="/notifications"
                 className="h-[36px] w-[36px] flex items-center justify-center rounded-full transition"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                style={{ background: pathname === "/notifications" ? "rgba(245,181,72,0.12)" : "rgba(255,255,255,0.04)", border: `1px solid ${pathname === "/notifications" ? "rgba(245,181,72,0.35)" : "rgba(255,255,255,0.08)"}` }}
                 aria-label="Notifications"
               >
                 <IconBell />
-                <span
-                  className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold opacity-0 transition-opacity group-hover:opacity-100"
-                  style={{ background: "rgba(255,255,255,0.12)", color: "var(--muted2, #A0956B)", lineHeight: 1 }}
-                >
-                  0
-                </span>
-              </button>
+              </Link>
             </div>
 
             {/* User menu trigger */}

@@ -49,7 +49,10 @@ async function fetchData(token: string) {
     ]);
 
     const profiles: ProfileRow[] = await profileRes.json().catch(() => []);
-    const collector = profiles[0]?.display_name ?? "";
+    const rawName = profiles[0]?.display_name ?? "";
+    // Filter out obvious placeholder names set during onboarding
+    const PLACEHOLDERS = new Set(["collector", "user", "vltd user", "vltd collector", ""]);
+    const collector = PLACEHOLDERS.has(rawName.trim().toLowerCase()) ? "" : rawName.trim();
 
     let items: string[] = [];
     if (itemsRes) {

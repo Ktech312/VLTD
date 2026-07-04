@@ -1,27 +1,21 @@
-// Server component — injects OG metadata for the public exhibit share page.
-// The opengraph-image.tsx at this route segment fetches its own data,
-// so we only need to set the text metadata here.
+// Server component — injects OG/Twitter metadata for the public guest gallery page.
 import type { Metadata } from "next";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://vltd.vercel.app";
+const PLACEHOLDERS = new Set(["collector", "user", "vltd user", "vltd collector", ""]);
 
-type GalleryRow = {
-  title: string;
-  description: string | null;
-  layout: { itemIds?: string[] } | null;
-  profile_id: string;
-};
+type GalleryRow = { title: string; description: string | null; layout: { itemIds?: string[] } | null; profile_id: string };
 type ProfileRow = { display_name: string | null };
 
-async function fetchGalleryMeta(token: string) {
-  const fallback = { title: "VLTD Exhibition", description: "", itemCount: null as number | null, collector: "" };
+async function fetchMeta(galleryId: string) {
+  const fallback = { title: "VLTD Gallery", description: "", itemCount: null as number | null, collector: "" };
   if (!SUPABASE_URL || !SUPABASE_ANON) return fallback;
   const h = { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` };
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/galleries?public_token=eq.${encodeURIComponent(token)}&select=title,description,layout,profile_id&limit=1`,
+      `${SUPABASE_URL}/rest/v1/galleries?id=eq.${galleryId}&visibility=eq.PUBLIC&select=title,description,layout,profile_id&limit=1`,
       { headers: h, next: { revalidate: 120 } }
     );
     const rows: GalleryRow[] = await res.json().catch(() => []);
@@ -36,7 +30,6 @@ async function fetchGalleryMeta(token: string) {
       );
       const profiles: ProfileRow[] = await pRes.json().catch(() => []);
       const rawName = profiles[0]?.display_name ?? "";
-      const PLACEHOLDERS = new Set(["collector", "user", "vltd user", "vltd collector", ""]);
       collector = PLACEHOLDERS.has(rawName.trim().toLowerCase()) ? "" : rawName.trim();
     } catch { /* ignore */ }
     return { title: g.title, description: g.description ?? "", itemCount, collector };
@@ -46,12 +39,12 @@ async function fetchGalleryMeta(token: string) {
 }
 
 export async function generateMetadata(
-  { params }: { params: Promise<{ token: string }> }
+  { params }: { params: Promise<{ galleryId: string }> }
 ): Promise<Metadata> {
-  const { token } = await params;
-  const meta = await fetchGalleryMeta(token);
-  const pageUrl = `${BASE}/museum/share/${token}`;
-  const imgUrl = `${BASE}/museum/share/${token}/opengraph-image`;
+  const { galleryId } = await params;
+  const meta = await fetchMeta(galleryId);
+  const pageUrl = `${BASE}/museum/${galleryId}/guest`;
+  const imgUrl = `${BASE}/museum/${galleryId}/guest/opengraph-image`;
 
   const descParts = [
     meta.description,
@@ -59,14 +52,16 @@ export async function generateMetadata(
     meta.collector ? `Curated by ${meta.collector}` : null,
   ].filter(Boolean);
 
+  const description = descParts.join(" · ") || "A curated collection on VLTD.";
+
   return {
     title: `${meta.title} · VLTD`,
-    description: descParts.join(" · "),
+    description,
     alternates: { canonical: pageUrl },
     openGraph: {
       url: pageUrl,
       title: meta.title,
-      description: descParts.join(" · "),
+      description,
       images: [{ url: imgUrl, width: 1200, height: 630, alt: meta.title }],
       type: "website",
       siteName: "VLTD",
@@ -74,12 +69,13 @@ export async function generateMetadata(
     twitter: {
       card: "summary_large_image",
       title: meta.title,
-      description: descParts.join(" · "),
+      description,
       images: [imgUrl],
+      site: "@vltdapp",
     },
   };
 }
 
-export default function ShareTokenLayout({ children }: { children: React.ReactNode }) {
+export default function GuestLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }

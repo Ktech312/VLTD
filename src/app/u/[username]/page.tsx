@@ -35,11 +35,29 @@ export async function generateMetadata(
   { params }: { params: Promise<Params> }
 ): Promise<Metadata> {
   const { username } = await params;
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://vltd.vercel.app";
+  const pageUrl = `${base}/@${username}`;
+  const imgUrl = `${base}/u/${username}/opengraph-image`;
+  const description = `View @${username}'s collector vault and public exhibitions on VLTD.`;
+
   return {
     title: `@${username} · VLTD`,
-    description: `View @${username}'s vault on VLTD.`,
-    alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://vltd.vercel.app"}/@${username}`,
+    description,
+    alternates: { canonical: pageUrl },
+    openGraph: {
+      url: pageUrl,
+      title: `@${username} · VLTD`,
+      description,
+      images: [{ url: imgUrl, width: 1200, height: 630, alt: `@${username}'s VLTD profile` }],
+      type: "profile",
+      siteName: "VLTD",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `@${username} · VLTD`,
+      description,
+      images: [imgUrl],
+      site: "@vltdapp",
     },
   };
 }
