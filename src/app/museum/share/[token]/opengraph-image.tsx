@@ -11,20 +11,21 @@ export default async function Image({
   params: Promise<{ token: string }>;
   searchParams: Promise<{ t?: string; d?: string; n?: string; c?: string }>;
 }) {
-  const sp = await Promise.resolve(searchParams).catch(() => ({})) as {
+  // searchParams may be a plain object (Next 14) or Promise (Next 15)
+  const sp = (await Promise.resolve(searchParams).catch(() => ({}))) as {
     t?: string; d?: string; n?: string; c?: string;
   };
 
-  const title = String(sp.t ?? "VLTD Exhibition").slice(0, 80);
-  const description = String(sp.d ?? "").slice(0, 120);
-  const itemsLabel = sp.n ? `${sp.n} ${sp.n === "1" ? "item" : "items"}` : "";
-  const collector = String(sp.c ?? "");
+  const title  = String(sp.t ?? "VLTD Exhibition").slice(0, 80);
+  const desc   = String(sp.d ?? "").slice(0, 120);
+  const items  = sp.n ? `${sp.n} ${sp.n === "1" ? "item" : "items"}` : "";
+  const col    = String(sp.c ?? "");
 
   const titleSize = title.length > 35 ? "44px" : "58px";
-  const metaParts: string[] = [];
-  if (itemsLabel) metaParts.push(itemsLabel);
-  if (collector) metaParts.push(`Curated by ${collector}`);
-  const metaLine = metaParts.join("  ·  ");
+  const parts: string[] = [];
+  if (items) parts.push(items);
+  if (col)   parts.push(`Curated by ${col}`);
+  const meta = parts.join("  ·  ");
 
   return new ImageResponse(
     (
@@ -40,7 +41,7 @@ export default async function Image({
           fontFamily: "sans-serif",
         }}
       >
-        {/* Wordmark row */}
+        {/* Wordmark */}
         <div style={{ display: "flex", alignItems: "center" }}>
           <span style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "0.28em", color: "#F5B548" }}>
             VLTD
@@ -51,12 +52,12 @@ export default async function Image({
           </span>
         </div>
 
-        {/* Main block */}
+        {/* Content */}
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {/* Badge — inline-flex NOT flex+fit-content (Satori compat) */}
           <div
             style={{
-              display: "flex",
-              width: "fit-content",
+              display: "inline-flex",
               padding: "5px 16px",
               borderRadius: "100px",
               border: "1px solid rgba(245,181,72,0.3)",
@@ -74,30 +75,22 @@ export default async function Image({
               fontSize: titleSize,
               fontWeight: 800,
               color: "#F0EAD6",
-              lineHeight: "1.05",
-              maxWidth: "900px",
+              lineHeight: 1.05,
             }}
           >
             {title}
           </div>
 
-          {description ? (
-            <div
-              style={{
-                fontSize: "17px",
-                color: "rgba(240,234,214,0.45)",
-                lineHeight: "1.5",
-                maxWidth: "700px",
-              }}
-            >
-              {description}
+          {desc ? (
+            <div style={{ fontSize: "17px", color: "rgba(240,234,214,0.45)", lineHeight: 1.5 }}>
+              {desc}
             </div>
           ) : null}
         </div>
 
-        {/* Bottom row */}
+        {/* Bottom */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          {metaLine ? (
+          {meta ? (
             <div style={{ display: "flex", alignItems: "center" }}>
               <div
                 style={{
@@ -106,11 +99,10 @@ export default async function Image({
                   borderRadius: "50%",
                   background: "rgba(245,181,72,0.6)",
                   marginRight: "10px",
-                  flexShrink: 0,
                 }}
               />
               <span style={{ fontSize: "15px", color: "rgba(245,181,72,0.8)", fontWeight: 600 }}>
-                {metaLine}
+                {meta}
               </span>
             </div>
           ) : (
