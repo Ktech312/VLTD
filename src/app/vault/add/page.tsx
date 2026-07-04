@@ -38,6 +38,7 @@ import {
 } from "@/lib/dropSession";
 import { buildPricingPatch, type PricingMvpFields } from "@/lib/pricingMvp";
 import { parseComicScanResult, scanComicRegionsFromFile } from "@/lib/scanners/comicParser";
+import { lookupComicByUpc, lookupComicBySeries, formatComicCoverDate } from "@/lib/metronLookup";
 import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 import { scanBarcodeFromFile } from "@/lib/scanners/barcodeScanner";
 import {
@@ -922,68 +923,125 @@ export default function AddPage() {
     setScanSession((prev) => markScanSessionScanning(prev));
 
     try {
-      const regionScan = await scanComicRegionsFromFile(file);
-      const fallbackOcr = await runImageScanAutofill(file, "comic");
+      const effectiveBarcode = barcodeDigits?.replace(/\D/g, "").trim() ?? "";
+
+      // Run OCR region scan and Metron database lookup in parallel
+      const [regionScan, fallbackOcr, metronResult] = await Promise.all([
+        scanComicRegionsFromFile(file),
+        runImageScanAutofill(file, "comic"),
+        // Only hit Metron if we have a barcode (12-13 digits — comic UPCs)
+        effectiveBarcode.length >= 12
+          ? lookupComicByUpc(effectiveBarcode).catch(() => null)
+          : Promise.resolve(null),
+      ]);
 
       const parsed = parseComicScanResult({
         titleRegionText: regionScan.titleText,
         issueRegionText: regionScan.issueText,
         addonText: regionScan.addon,
         fallbackOcrText: fallbackOcr.rawText,
-        barcodeDigits: barcodeDigits || regionScan.barcode,
+        barcodeDigits: effectiveBarcode || regionScan.barcode,
       });
+
+      // Build fields — Metron data wins over OCR when available
+      const metronTitle = metronResult?.seriesTitle ?? "";
+      const metronIssueNumber = metronResult?.issueNumber ?? "";
+      const metronPublisher = metronResult?.publisher ?? "";
+      const metronCoverDate = metronResult?.coverDate
+        ? formatComicCoverDate(metronResult.coverDate)
+        : "";
+
       const fields = {
-        title: parsed.title,
+        title: metronTitle || parsed.title,
         subtitle: parsed.subtitle,
-        number: parsed.issueNumber,
+        number: metronIssueNumber || parsed.issueNumber,
         universe: "POP_CULTURE",
         category: "COMICS",
         categoryLabel: "Comics",
         subcategoryLabel: "Comic Book",
+        comicPublisher: metronPublisher || undefined,
+        comicCoverDate: metronCoverDate || undefined,
         notes: parsed.notes || undefined,
       };
+
+      // Determine confidence — Metron match upgrades confidence
+      const metronMatched = Boolean(metronResult);
+      const ocrConfidence = parsed.confidence;
+      const finalConfidence: typeof parsed.confidence =
+        metronMatched
+          ? "high"
+          : ocrConfidence;
+
+      const warnings = finalConfidence === "low"
+        ? [
+            ...parsed.warnings,
+            "Try a straighter, tighter scan with the title band, issue box, and barcode all visible.",
+          ]
+        : parsed.warnings;
+
+      const rawText = [
+        metronMatched
+          ? `Metron DB: ${metronTitle} #${metronIssueNumber} (${metronPublisher})`
+          : "",
+        parsed.notes || fallbackOcr.rawText || "",
+      ]
+        .filter(Boolean)
+        .join("\n\n");
 
       setScanSession((prev) => {
         let next = prev;
 
-        if (barcodeRawValue || barcodeDigits) {
-          next = setScanSessionBarcode(next, barcodeRawValue || "", barcodeDigits || "");
+        if (barcodeRawValue || effectiveBarcode) {
+          next = setScanSessionBarcode(next, barcodeRawValue || "", effectiveBarcode || "");
         }
 
         return setScanSessionReview(next, {
           source: "comic_lookup",
-          confidence: parsed.confidence,
+          confidence: finalConfidence,
           score:
-            parsed.confidence === "high"
-              ? 88
-              : parsed.confidence === "medium"
+            finalConfidence === "high"
+              ? (metronMatched ? 95 : 88)
+              : finalConfidence === "medium"
                 ? 62
                 : 20,
-          safeToAutofill: parsed.confidence !== "low",
-          warnings:
-            parsed.confidence === "low"
-              ? [
-                  ...parsed.warnings,
-                  "Try a straighter, tighter scan with the title band, issue box, and barcode all visible.",
-                ]
-              : parsed.warnings,
-          rawText: parsed.notes || fallbackOcr.rawText || "",
+          safeToAutofill: finalConfidence !== "low",
+          warnings,
+          rawText,
           fields,
         });
       });
 
-      if (parsed.confidence !== "low") {
+      if (finalConfidence !== "low") {
         applyScanFieldsToEmpty(fields);
+        // Always set comic publisher and cover date from Metron if we got them
+        if (metronMatched) {
+          setValues((prev) => {
+            const next = { ...prev };
+            let changed = false;
+            if (metronPublisher && !prev.comicPublisher?.trim()) {
+              next.comicPublisher = metronPublisher;
+              changed = true;
+            }
+            if (metronCoverDate && !prev.comicCoverDate?.trim()) {
+              next.comicCoverDate = metronCoverDate;
+              changed = true;
+            }
+            if (changed) setHasDraftChanges(true);
+            return changed ? next : prev;
+          });
+        }
         setScanSession((prev) => markScanSessionApplied(prev));
       }
 
       setStatus(
-        parsed.confidence !== "low"
-          ? "Comic scan filled what it could."
-          : "Comic scan was weak. Try a better scan or use image identify."
+        metronMatched
+          ? "Comic found in Metron database — details filled."
+          : finalConfidence !== "low"
+            ? "Comic scan filled what it could."
+            : "Comic scan was weak. Try a better scan or use image identify."
       );
 
-      return parsed.confidence !== "low";
+      return finalConfidence !== "low";
     } catch (error) {
       const message = error instanceof Error ? error.message : "Comic scan failed.";
       setScanSession((prev) => markScanSessionFailed(prev, message));
@@ -3093,77 +3151,13 @@ export default function AddPage() {
               type="button"
               onClick={() => void saveForm(false)}
               disabled={!canSave}
-              className="shrink-0 rounded-full px-5 py-2.5 text-sm font-bold disabled:opacity-40"
-              style={{ background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B" }}
+              className="inline-flex shrink-0 h-11 items-center justify-center rounded-full px-5 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B", boxShadow: "0 4px 18px rgba(245,181,72,0.28)" }}
             >
               {isSaving ? "Saving…" : "Save"}
             </button>
           </div>
         )}
-
-        {dropMode && dropSession && !showDropReview ? (
-          <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-4 border-t border-[color:var(--border)] bg-[color:var(--surface)] px-5 py-3 shadow-[0_-8px_32px_rgba(0,0,0,0.35)]">
-            <div>
-              <div className="text-sm font-bold">{dropSession.name}</div>
-              <div className="text-xs text-[color:var(--muted)]">
-                {dropSessionStats(dropSession).count} saved
-                {dropSessionStats(dropSession).totalValue > 0
-                  ? ` · ${dropSessionStats(dropSession).totalValue.toLocaleString(undefined, {
-                      style: "currency",
-                      currency: "USD",
-                      maximumFractionDigits: 0,
-                    })} est. value`
-                  : ""}
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={endDrop}
-              className="rounded-full px-4 py-2 text-sm font-bold"
-              style={{ background: "var(--theme-gold, #F5B548)", color: "#0A0800" }}
-            >
-              Done · Review
-            </button>
-          </div>
-        ) : null}
-
-        {showDropReview && dropSession ? (
-          <DropReviewSheet
-            session={dropSession}
-            onClose={() => setShowDropReview(false)}
-            onFinish={finishDrop}
-          />
-        ) : null}
-
-        {isBarcodeScanOpen ? (
-          <BarcodeScanCamera
-            onScan={(result) => void handleLiveBarcodeScanned(result)}
-            onClose={() => setIsBarcodeScanOpen(false)}
-          />
-        ) : null}
-
-        {isCameraPanelOpen ? (
-          <CameraCapturePanel
-            key={cameraPanelKey}
-            title={cameraTarget === "scan" ? "Capture Item Picture" : "Capture Item Photo"}
-            description={
-              cameraTarget === "scan"
-                ? "Take an item picture. It will be added to this item and used for identify/autofill."
-                : "Capture a real item photo and add it to this item's saved photo list."
-            }
-            universe={values.universe}
-            onCapture={handleCapturedPhoto}
-            onClose={() => router.back()}
-            onUseFileInstead={() => {
-              setIsCameraPanelOpen(false);
-              if (cameraTarget === "scan") {
-                uploadInputRef.current?.click();
-                return;
-              }
-              mediaInputRef.current?.click();
-            }}
-          />
-        ) : null}
       </div>
     </main>
   );

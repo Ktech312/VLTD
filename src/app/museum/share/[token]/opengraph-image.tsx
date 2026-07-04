@@ -125,14 +125,11 @@ export default async function Image({ params }: { params: Promise<{ token: strin
           {coverImage ? (
             <img src={coverImage} alt="" style={{ width: "400px", height: "630px", objectFit: "contain", objectPosition: "center" }} />
           ) : (
-            /* Geometric fallback: nested gold diamond shapes */
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "400px", height: "630px" }}>
               <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: "260px", height: "260px" }}>
-                {/* Outer ring */}
                 <div style={{ position: "absolute", width: "240px", height: "240px", borderRadius: "50%", border: "1px solid rgba(245,181,72,0.15)", display: "flex" }} />
                 <div style={{ position: "absolute", width: "180px", height: "180px", borderRadius: "50%", border: "1px solid rgba(245,181,72,0.25)", display: "flex" }} />
                 <div style={{ position: "absolute", width: "120px", height: "120px", borderRadius: "50%", border: "1px solid rgba(245,181,72,0.4)", display: "flex" }} />
-                {/* Center mark */}
                 <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "rgba(245,181,72,0.12)", border: "1px solid rgba(245,181,72,0.6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <div style={{ width: "12px", height: "12px", borderRadius: "50%", background: "#F5B548", display: "flex" }} />
                 </div>
@@ -154,7 +151,6 @@ export default async function Image({ params }: { params: Promise<{ token: strin
                 </span>
               </div>
             )) : (
-              /* Items not public — show placeholder dots */
               [1,2,3,4,5].map((_, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                   <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "rgba(245,181,72,0.3)", flexShrink: 0 }} />
@@ -166,6 +162,15 @@ export default async function Image({ params }: { params: Promise<{ token: strin
 
           {showMore && (
             <span style={{ fontSize: "17px", color: "rgba(245,181,72,0.65)", fontWeight: 600, fontStyle: "italic" }}>And many more…</span>
+          )}
+        </div>
+
+      </div>
+    ),
+    { width: 1200, height: 630 }
+  );
+}
+Size: "17px", color: "rgba(245,181,72,0.65)", fontWeight: 600, fontStyle: "italic" }}>And many more…</span>
           )}
         </div>
 
