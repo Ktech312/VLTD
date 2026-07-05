@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "gcd:sync": "node scripts/gcd-sync.js",
+    "gcd:check": "node scripts/gcd-sync.js --check",
+    "gcd:force": "node scripts/gcd-sync.js --force",
+    "gcd:import": "node scripts/gcd-import.js"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",
@@ -27,6 +31,7 @@
     "react-dom": "19.2.3",
     "react-easy-crop": "^5.5.7",
     "better-sqlite3": "^11.9.1",
+    "dotenv": "^16.4.7",
     "stripe": "^22.2.2",
     "tesseract.js": "^7.0.0",
     "xlsx": "^0.18.5"
