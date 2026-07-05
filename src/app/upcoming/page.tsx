@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import Image from "next/image";
 import {
   fetchAllSources,
-  groupByStoreDate,
+  groupByYear,
   roleLabel,
   isCoverOnlyRole,
   type UpcomingIssue,
@@ -15,10 +15,9 @@ import {
   toggleComicWishlist,
 } from "@/lib/comicWishlistModel";
 
-/* ── Publisher pills ─────────────────────────────────────── */
+/* ── Publisher pills ──────────────────────────────────────────── */
 
-const PUBLISHERS = [
-  { label: "All",        value: "" },
+const ALL_PUBLISHERS = [
   { label: "Marvel",     value: "Marvel" },
   { label: "DC",         value: "DC Comics" },
   { label: "Dark Horse", value: "Dark Horse Comics" },
@@ -27,7 +26,7 @@ const PUBLISHERS = [
   { label: "BOOM!",      value: "BOOM! Studios" },
 ];
 
-/* ── Issue card ──────────────────────────────────────────── */
+/* ── Issue card ────────────────────────────────────────────────────── */
 
 function IssueCard({
   issue,
@@ -58,6 +57,7 @@ function IssueCard({
         textDecoration: "none",
         cursor: "pointer",
         transition: "border-color 0.15s",
+        height: "100%",
       }}
       onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(245,181,72,0.30)")}
       onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(245,181,72,0.10)")}
@@ -69,7 +69,7 @@ function IssueCard({
             src={issue.imageUrl}
             alt={`${issue.series} #${issue.number}`}
             fill
-            sizes="(max-width: 640px) 45vw, 180px"
+            sizes="(max-width: 640px) 45vw, 160px"
             style={{ objectFit: "cover" }}
             onError={() => setImgError(true)}
             unoptimized
@@ -79,7 +79,7 @@ function IssueCard({
             width: "100%", height: "100%", display: "flex", alignItems: "center",
             justifyContent: "center", background: "linear-gradient(145deg, #1a1a2e 0%, #0d0d1a 100%)",
           }}>
-            <span style={{ fontSize: "36px", opacity: 0.3 }}>&#128218;</span>
+            <span style={{ fontSize: "32px", opacity: 0.3 }}>&#128218;</span>
           </div>
         )}
 
@@ -121,26 +121,26 @@ function IssueCard({
       </div>
 
       {/* Info */}
-      <div style={{ padding: "10px 10px 12px", display: "flex", flexDirection: "column", gap: "4px", flex: 1 }}>
+      <div style={{ padding: "9px 9px 11px", display: "flex", flexDirection: "column", gap: "3px", flex: 1 }}>
         <div style={{
-          fontSize: "13px", fontWeight: 700, color: "#F0EAD6", lineHeight: 1.3,
+          fontSize: "12px", fontWeight: 700, color: "#F0EAD6", lineHeight: 1.3,
           overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
         }}>
           {issue.series}
         </div>
-        <div style={{ fontSize: "12px", color: "rgba(245,181,72,0.75)", fontWeight: 600 }}>
+        <div style={{ fontSize: "11px", color: "rgba(245,181,72,0.75)", fontWeight: 600 }}>
           #{issue.number}
         </div>
 
         {/* Role badge */}
         {role && (
-          <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginTop: "2px" }}>
+          <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginTop: "1px" }}>
             <span style={{
-              fontSize: "10px", fontWeight: 700,
+              fontSize: "9px", fontWeight: 700,
               color: isCoverOnly ? "rgba(180,100,220,0.9)" : "rgba(100,200,140,0.9)",
               background: isCoverOnly ? "rgba(180,100,220,0.12)" : "rgba(100,200,140,0.10)",
               border: isCoverOnly ? "1px solid rgba(180,100,220,0.25)" : "1px solid rgba(100,200,140,0.20)",
-              borderRadius: "4px", padding: "1px 5px",
+              borderRadius: "4px", padding: "1px 4px",
             }}>
               {role}
             </span>
@@ -148,7 +148,7 @@ function IssueCard({
         )}
 
         <div style={{
-          fontSize: "11px", color: "rgba(255,255,255,0.35)", marginTop: "2px",
+          fontSize: "10px", color: "rgba(255,255,255,0.30)", marginTop: "auto", paddingTop: "3px",
           whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
         }}>
           {issue.publisher}
@@ -158,12 +158,12 @@ function IssueCard({
   );
 }
 
-/* ── Main page ───────────────────────────────────────────── */
+/* ── Main page ─────────────────────────────────────────────────────── */
 
 export default function UpcomingPage() {
   const [mode, setMode]           = useState<"creator" | "series">("creator");
   const [query, setQuery]         = useState("");
-  const [publisher, setPublisher] = useState("");
+  const [selectedPubs, setSelectedPubs] = useState<Set<string>>(new Set());
   const [days, setDays]           = useState(90);
   const [allMode, setAllMode]     = useState(false);
   const [loading, setLoading]     = useState(false);
@@ -180,7 +180,7 @@ export default function UpcomingPage() {
 
   async function handleSearch(pg = 1) {
     const q = query.trim();
-    if (!q && !publisher) return;
+    if (!q) return;
     setLoading(true);
     setNotFound(false);
 
@@ -189,7 +189,6 @@ export default function UpcomingPage() {
       all: allMode || undefined,
       page: pg,
       pageSize: 25,
-      publisher: publisher || undefined,
       ...(mode === "creator" ? { creator: q } : { series: q }),
     };
 
@@ -235,9 +234,29 @@ export default function UpcomingPage() {
     setToggling((prev) => { const n = new Set(prev); n.delete(issue.id); return n; });
   }
 
-  const groups = fedResult ? groupByStoreDate(fedResult.results) : [];
+  function togglePub(value: string) {
+    setSelectedPubs((prev) => {
+      const next = new Set(prev);
+      if (next.has(value)) next.delete(value); else next.add(value);
+      if (next.size === ALL_PUBLISHERS.length) return new Set(); // all selected = clear to "All"
+      return next;
+    });
+  }
+
+  const filteredResults = useMemo(() => {
+    if (!fedResult) return [];
+    if (selectedPubs.size === 0) return fedResult.results;
+    return fedResult.results.filter((issue) =>
+      Array.from(selectedPubs).some((pub) =>
+        issue.publisher.toLowerCase().includes(pub.toLowerCase())
+      )
+    );
+  }, [fedResult, selectedPubs]);
+
+  const groups = useMemo(() => groupByYear(filteredResults), [filteredResults]);
   const totalCount = fedResult?.count ?? 0;
-  const variantCount = fedResult?.results.filter((r) => r.isVariant).length ?? 0;
+  const shownCount = filteredResults.length;
+  const variantCount = filteredResults.filter((r) => r.isVariant).length;
   const creatorName = fedResult?.resolvedCreator?.name;
 
   return (
@@ -253,7 +272,7 @@ export default function UpcomingPage() {
         borderBottom: "1px solid rgba(245,181,72,0.08)",
         padding: "16px 16px 12px",
       }}>
-        <div style={{ maxWidth: "680px", margin: "0 auto" }}>
+        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
 
           {/* Title */}
           <div style={{ display: "flex", alignItems: "baseline", gap: "10px", marginBottom: "14px" }}>
@@ -316,15 +335,25 @@ export default function UpcomingPage() {
             </button>
           </form>
 
-          {/* Publisher + days pills */}
+          {/* Publisher pills + days */}
           <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
-            {PUBLISHERS.map((p) => (
-              <button key={p.value} onClick={() => setPublisher(p.value)}
+            {/* All pill */}
+            <button onClick={() => setSelectedPubs(new Set())}
+              style={{
+                padding: "5px 12px", borderRadius: "100px", fontSize: "12px", fontWeight: 600,
+                border: selectedPubs.size === 0 ? "1px solid #F5B548" : "1px solid rgba(255,255,255,0.12)",
+                background: selectedPubs.size === 0 ? "rgba(245,181,72,0.12)" : "transparent",
+                color: selectedPubs.size === 0 ? "#F5B548" : "rgba(240,234,214,0.55)",
+                cursor: "pointer", transition: "all 0.15s",
+              }}>All</button>
+
+            {ALL_PUBLISHERS.map((p) => (
+              <button key={p.value} onClick={() => togglePub(p.value)}
                 style={{
                   padding: "5px 12px", borderRadius: "100px", fontSize: "12px", fontWeight: 600,
-                  border: publisher === p.value ? "1px solid #F5B548" : "1px solid rgba(255,255,255,0.12)",
-                  background: publisher === p.value ? "rgba(245,181,72,0.12)" : "transparent",
-                  color: publisher === p.value ? "#F5B548" : "rgba(240,234,214,0.55)",
+                  border: selectedPubs.has(p.value) ? "1px solid #F5B548" : "1px solid rgba(255,255,255,0.12)",
+                  background: selectedPubs.has(p.value) ? "rgba(245,181,72,0.12)" : "transparent",
+                  color: selectedPubs.has(p.value) ? "#F5B548" : "rgba(240,234,214,0.55)",
                   cursor: "pointer", transition: "all 0.15s",
                 }}>
                 {p.label}
@@ -360,7 +389,7 @@ export default function UpcomingPage() {
       </div>
 
       {/* ── Body ─── */}
-      <div style={{ maxWidth: "680px", margin: "0 auto", padding: "16px" }}>
+      <div style={{ maxWidth: "900px", margin: "0 auto", padding: "16px" }}>
 
         {/* Creator / count banner */}
         {fedResult && (
@@ -372,7 +401,11 @@ export default function UpcomingPage() {
             {creatorName ? (
               <>Showing work by <strong style={{ color: "#F5B548" }}>{creatorName}</strong>{" · "}</>
             ) : null}
-            {totalCount} issue{totalCount !== 1 ? "s" : ""}{allMode ? " (all time)" : ` in next ${days} days`}
+            {selectedPubs.size > 0
+              ? <>{shownCount} shown of {totalCount} total</>
+              : <>{totalCount} issue{totalCount !== 1 ? "s" : ""}</>
+            }
+            {allMode ? " (all time)" : ` in next ${days} days`}
             {variantCount > 0 && (
               <> · <span style={{ color: "rgba(180,100,220,0.8)" }}>{variantCount} variant{variantCount !== 1 ? "s" : ""}</span></>
             )}
@@ -386,7 +419,7 @@ export default function UpcomingPage() {
             <div style={{ fontSize: "16px", fontWeight: 600, marginBottom: "6px" }}>Nothing found</div>
             <div style={{ fontSize: "13px" }}>
               {mode === "creator"
-                ? 'Try the full name — e.g. "Peach Momoko" not just "Momoko"'
+                ? "Try the full name — e.g. \"Peach Momoko\" not just \"Momoko\""
                 : "Try a partial title or check the publisher filter"}
             </div>
           </div>
@@ -409,13 +442,13 @@ export default function UpcomingPage() {
 
         {/* Loading skeleton */}
         {loading && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-            {[1, 2].map((g) => (
-              <div key={g}>
-                <div style={{ height: "18px", width: "200px", borderRadius: "6px", background: "rgba(255,255,255,0.05)", marginBottom: "12px" }} />
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "10px" }}>
-                  {[1, 2, 3, 4].map((c) => (
-                    <div key={c} style={{ aspectRatio: "2/3", borderRadius: "10px", background: "rgba(255,255,255,0.04)", animation: "pulse 1.5s ease-in-out infinite" }} />
+          <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
+            {[2026, 2025].map((y) => (
+              <div key={y}>
+                <div style={{ height: "16px", width: "60px", borderRadius: "6px", background: "rgba(255,255,255,0.05)", marginBottom: "10px" }} />
+                <div style={{ display: "flex", gap: "10px", overflow: "hidden" }}>
+                  {[1, 2, 3, 4, 5].map((c) => (
+                    <div key={c} style={{ flexShrink: 0, width: "130px", aspectRatio: "2/3", borderRadius: "10px", background: "rgba(255,255,255,0.04)", animation: "pulse 1.5s ease-in-out infinite" }} />
                   ))}
                 </div>
               </div>
@@ -423,25 +456,30 @@ export default function UpcomingPage() {
           </div>
         )}
 
-        {/* Results */}
+        {/* Results — year rows with horizontal scroll */}
         {!loading && groups.map((group) => (
-          <div key={group.date} style={{ marginBottom: "28px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-              <div style={{ fontSize: "13px", fontWeight: 700, color: "#F5B548", letterSpacing: "0.04em" }}>
-                {group.label}
+          <div key={group.year} style={{ marginBottom: "28px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+              <div style={{ fontSize: "14px", fontWeight: 800, color: "#F5B548", letterSpacing: "0.06em" }}>
+                {group.year}
               </div>
               <div style={{ flex: 1, height: "1px", background: "rgba(245,181,72,0.12)" }} />
-              <div style={{ fontSize: "12px", color: "rgba(240,234,214,0.3)" }}>
+              <div style={{ fontSize: "11px", color: "rgba(240,234,214,0.3)" }}>
                 {group.issues.length} issue{group.issues.length !== 1 ? "s" : ""}
               </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "10px" }}>
+            <div className="year-row" style={{
+              display: "flex", overflowX: "auto", gap: "10px",
+              paddingBottom: "8px", scrollSnapType: "x mandatory",
+            }}>
               {group.issues.map((issue) => (
-                <IssueCard key={issue.id}
-                  issue={issue}
-                  wishlisted={wishlistIds.has(issue.id)}
-                  onToggle={handleToggle}
-                />
+                <div key={issue.id} style={{ flexShrink: 0, width: "140px", scrollSnapAlign: "start" }}>
+                  <IssueCard
+                    issue={issue}
+                    wishlisted={wishlistIds.has(issue.id)}
+                    onToggle={handleToggle}
+                  />
+                </div>
               ))}
             </div>
           </div>
@@ -450,6 +488,7 @@ export default function UpcomingPage() {
 
       <style>{`
         @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:.7} }
+        .year-row::-webkit-scrollbar { display: none }
       `}</style>
     </div>
   );

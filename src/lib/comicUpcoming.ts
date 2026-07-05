@@ -128,6 +128,29 @@ export function groupByStoreDate(
     }));
 }
 
+/** Group by year, newest year first. Within each year, newest issues first. */
+export function groupByYear(
+  issues: UpcomingIssue[]
+): Array<{ year: string; issues: UpcomingIssue[] }> {
+  const map = new Map<string, UpcomingIssue[]>();
+  for (const issue of issues) {
+    const year = issue.storeDate ? issue.storeDate.slice(0, 4) : "TBD";
+    if (!map.has(year)) map.set(year, []);
+    map.get(year)!.push(issue);
+  }
+  return Array.from(map.entries())
+    .sort(([a], [b]) => b.localeCompare(a)) // newest year first
+    .map(([year, items]) => ({
+      year,
+      issues: items.sort((a, b) => {
+        if (!a.storeDate && !b.storeDate) return 0;
+        if (!a.storeDate) return 1;
+        if (!b.storeDate) return -1;
+        return b.storeDate.localeCompare(a.storeDate); // newest first within year
+      }),
+    }));
+}
+
 /* ── Role helpers (kept for type compatibility) ──────────── */
 
 export function roleLabel(role: string | null | undefined): string | null {

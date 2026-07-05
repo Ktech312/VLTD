@@ -9,7 +9,7 @@ import { convertWishlistToVault } from "@/lib/wishlistToVault";
 import { showToast } from "@/lib/toast";
 import {
   fetchAllSources,
-  groupByStoreDate,
+  groupByYear,
   formatStoreDate,
   roleLabel,
   isCoverOnlyRole,
@@ -37,14 +37,13 @@ function IconHeart({ size = 24, style }: { size?: number; style?: Record<string,
 
 /* ── Publisher pills ─────────────────────────────────────── */
 
-const PUBLISHERS = [
-  { label: "All", value: "" },
-  { label: "Marvel", value: "Marvel" },
-  { label: "DC", value: "DC Comics" },
+const ALL_PUBLISHERS = [
+  { label: "Marvel",     value: "Marvel" },
+  { label: "DC",         value: "DC Comics" },
   { label: "Dark Horse", value: "Dark Horse Comics" },
-  { label: "Image", value: "Image Comics" },
-  { label: "IDW", value: "IDW Publishing" },
-  { label: "BOOM!", value: "BOOM! Studios" },
+  { label: "Image",      value: "Image Comics" },
+  { label: "IDW",        value: "IDW Publishing" },
+  { label: "BOOM!",      value: "BOOM! Studios" },
 ];
 
 /* ── Compact issue card for wishlist search panel ───────── */
@@ -160,7 +159,7 @@ function ComicSearchPanel({
   const [expanded, setExpanded] = useState(false);
   const [searchMode, setSearchMode] = useState<"creator" | "series">("creator");
   const [query, setQuery] = useState("");
-  const [publisher, setPublisher] = useState("");
+  const [selectedPubs, setSelectedPubs] = useState<Set<string>>(new Set());
   const [days, setDays] = useState(90);
   const [allMode, setAllMode] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -171,7 +170,7 @@ function ComicSearchPanel({
 
   async function handleSearch(pg = 1) {
     const q = query.trim();
-    if (!q && !publisher) return;
+    if (!q) return;
     setLoading(true);
     setNotFound(false);
 
@@ -179,8 +178,7 @@ function ComicSearchPanel({
       days: allMode ? undefined : days,
       all: allMode || undefined,
       page: pg,
-      pageSize: 24,
-      publisher: publisher || undefined,
+      pageSize: 25,
       ...(searchMode === "creator" ? { creator: q } : { series: q }),
     };
 
@@ -196,8 +194,29 @@ function ComicSearchPanel({
     setLoading(false);
   }
 
-  const groups = fedResult ? groupByStoreDate(fedResult.results) : [];
+  function togglePub(value: string) {
+    setSelectedPubs((prev) => {
+      const next = new Set(prev);
+      if (next.has(value)) next.delete(value); else next.add(value);
+      if (next.size === ALL_PUBLISHERS.length) return new Set();
+      return next;
+    });
+  }
+
+  const filteredResults = useMemo(() => {
+    if (!fedResult) return [];
+    if (selectedPubs.size === 0) return fedResult.results;
+    return fedResult.results.filter((issue) =>
+      Array.from(selectedPubs).some((pub) =>
+        issue.publisher.toLowerCase().includes(pub.toLowerCase())
+      )
+    );
+  }, [fedResult, selectedPubs]);
+
+  const groups = useMemo(() => groupByYear(filteredResults), [filteredResults]);
   const totalCount = fedResult?.count ?? 0;
+  const shownCount = filteredResults.length;
+  const variantCount = filteredResults.filter((r) => r.isVariant).length;
 
   return (
     <div style={{
@@ -272,13 +291,22 @@ function ComicSearchPanel({
 
           {/* Publisher + days */}
           <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", alignItems: "center", marginBottom: "14px" }}>
-            {PUBLISHERS.map((p) => (
-              <button key={p.value} onClick={() => setPublisher(p.value)}
+            {/* All pill */}
+            <button onClick={() => setSelectedPubs(new Set())}
+              style={{
+                padding: "4px 10px", borderRadius: "100px", fontSize: "11px", fontWeight: 600,
+                border: selectedPubs.size === 0 ? "1px solid #F5B548" : "1px solid rgba(255,255,255,0.12)",
+                background: selectedPubs.size === 0 ? "rgba(245,181,72,0.12)" : "transparent",
+                color: selectedPubs.size === 0 ? "#F5B548" : "rgba(240,234,214,0.50)",
+                cursor: "pointer", transition: "all 0.15s",
+              }}>All</button>
+            {ALL_PUBLISHERS.map((p) => (
+              <button key={p.value} onClick={() => togglePub(p.value)}
                 style={{
                   padding: "4px 10px", borderRadius: "100px", fontSize: "11px", fontWeight: 600,
-                  border: publisher === p.value ? "1px solid #F5B548" : "1px solid rgba(255,255,255,0.12)",
-                  background: publisher === p.value ? "rgba(245,181,72,0.12)" : "transparent",
-                  color: publisher === p.value ? "#F5B548" : "rgba(240,234,214,0.50)",
+                  border: selectedPubs.has(p.value) ? "1px solid #F5B548" : "1px solid rgba(255,255,255,0.12)",
+                  background: selectedPubs.has(p.value) ? "rgba(245,181,72,0.12)" : "transparent",
+                  color: selectedPubs.has(p.value) ? "#F5B548" : "rgba(240,234,214,0.50)",
                   cursor: "pointer", transition: "all 0.15s",
                 }}>{p.label}</button>
             ))}
@@ -310,8 +338,14 @@ function ComicSearchPanel({
               {fedResult.resolvedCreator?.name && (
                 <><strong style={{ color: "#F5B548" }}>{fedResult.resolvedCreator.name}</strong>{" · "}</>
               )}
-              {totalCount} issue{totalCount !== 1 ? "s" : ""}{allMode ? " (all time)" : ` in next ${days} days`}
-              {(() => { const vc = fedResult.results.filter((r) => r.isVariant).length; return vc > 0 ? <> · <span style={{ color: "rgba(180,100,220,0.8)" }}>{vc} variant{vc !== 1 ? "s" : ""}</span></> : null; })()}
+              {selectedPubs.size > 0
+                ? <>{shownCount} shown of {totalCount} total</>
+                : <>{totalCount} issue{totalCount !== 1 ? "s" : ""}</>
+              }
+              {allMode ? " (all time)" : ` in next ${days} days`}
+              {variantCount > 0 && (
+                <> · <span style={{ color: "rgba(180,100,220,0.8)" }}>{variantCount} variant{variantCount !== 1 ? "s" : ""}</span></>
+              )}
             </div>
           )}
 
@@ -327,35 +361,47 @@ function ComicSearchPanel({
 
           {/* Loading */}
           {loading && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: "8px" }}>
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} style={{ aspectRatio: "2/3", borderRadius: "8px", background: "rgba(255,255,255,0.04)" }} />
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              {[0, 1].map((y) => (
+                <div key={y}>
+                  <div style={{ height: "14px", width: "50px", borderRadius: "4px", background: "rgba(255,255,255,0.05)", marginBottom: "8px" }} />
+                  <div style={{ display: "flex", gap: "8px", overflow: "hidden" }}>
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} style={{ flexShrink: 0, width: "110px", aspectRatio: "2/3", borderRadius: "8px", background: "rgba(255,255,255,0.04)" }} />
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           )}
 
-          {/* Results */}
+          {/* Results — year rows with horizontal scroll */}
           {!loading && groups.map((group) => (
-            <div key={group.date} style={{ marginBottom: "18px" }}>
+            <div key={group.year} style={{ marginBottom: "20px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                <div style={{ fontSize: "11px", fontWeight: 700, color: "#F5B548", letterSpacing: "0.04em" }}>
-                  {group.label}
+                <div style={{ fontSize: "12px", fontWeight: 800, color: "#F5B548", letterSpacing: "0.06em" }}>
+                  {group.year}
                 </div>
                 <div style={{ flex: 1, height: "1px", background: "rgba(245,181,72,0.10)" }} />
                 <div style={{ fontSize: "10px", color: "rgba(240,234,214,0.3)" }}>{group.issues.length}</div>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: "8px" }}>
+              <div className="year-row-wl" style={{
+                display: "flex", overflowX: "auto", gap: "8px",
+                paddingBottom: "6px", scrollSnapType: "x mandatory",
+              }}>
                 {group.issues.map((issue) => (
-                  <ComicSearchCard
-                    key={issue.id}
-                    issue={issue}
-                    wishlisted={wishlistIds.has(issue.id)}
-                    onToggle={onToggle}
-                  />
+                  <div key={issue.id} style={{ flexShrink: 0, width: "110px", scrollSnapAlign: "start" }}>
+                    <ComicSearchCard
+                      issue={issue}
+                      wishlisted={wishlistIds.has(issue.id)}
+                      onToggle={onToggle}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
           ))}
+          <style>{`.year-row-wl::-webkit-scrollbar{display:none}`}</style>
         </div>
       )}
     </div>
