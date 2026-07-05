@@ -22,8 +22,19 @@ import {
   revokeImageObjectUrl,
   saveImageBlobToIndexedDb,
 } from "@/lib/vaultImageStore";
+import {
+  UNIVERSE_LABEL,
+  UNIVERSE_KEYS,
+  type UniverseKey,
+  isUniverseKey,
+  getCategories,
+  getSubcategories,
+} from "@/lib/taxonomy";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
+const LAST_UNIVERSE_KEY = "vltd_last_universe";
+const LAST_CATEGORY_KEY = "vltd_last_category_label";
+const LAST_SUBCATEGORY_KEY = "vltd_last_subcategory_label";
 const RECENT_LIMIT = 6;
 const DEFAULT_SCAN_CROP: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
 
@@ -60,6 +71,75 @@ function getActiveProfileId() {
   } catch {
     return "";
   }
+}
+
+function getLastUsedCategory(): { universe: UniverseKey | ""; categoryLabel: string; subcategoryLabel: string } {
+  if (typeof window === "undefined") return { universe: "", categoryLabel: "", subcategoryLabel: "" };
+  try {
+    const u = window.localStorage.getItem(LAST_UNIVERSE_KEY) ?? "";
+    return {
+      universe: isUniverseKey(u) ? u : "",
+      categoryLabel: window.localStorage.getItem(LAST_CATEGORY_KEY) ?? "",
+      subcategoryLabel: window.localStorage.getItem(LAST_SUBCATEGORY_KEY) ?? "",
+    };
+  } catch {
+    return { universe: "", categoryLabel: "", subcategoryLabel: "" };
+  }
+}
+
+function persistLastUsedCategory(universe: string, categoryLabel: string, subcategoryLabel: string) {
+  if (typeof window === "undefined") return;
+  try {
+    if (universe) window.localStorage.setItem(LAST_UNIVERSE_KEY, universe);
+    if (categoryLabel) window.localStorage.setItem(LAST_CATEGORY_KEY, categoryLabel);
+    if (subcategoryLabel) window.localStorage.setItem(LAST_SUBCATEGORY_KEY, subcategoryLabel);
+  } catch {
+    // ignore
+  }
+}
+
+function categoryCode(label: string) {
+  return label
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "") || "COLLECTORS_CHOICE";
+}
+
+/** Try to match a free-text universe string from AI to a known UniverseKey. */
+function matchVisionUniverse(visionUniverse: string): UniverseKey | "" {
+  if (!visionUniverse) return "";
+  const upper = visionUniverse.toUpperCase().replace(/[\s-]+/g, "_");
+  if (isUniverseKey(upper)) return upper;
+  // Label match
+  for (const key of UNIVERSE_KEYS) {
+    if (UNIVERSE_LABEL[key].toLowerCase() === visionUniverse.toLowerCase()) return key;
+  }
+  // Keyword heuristics
+  const v = visionUniverse.toLowerCase();
+  if (v.includes("comic") || v.includes("pop_culture") || v.includes("toy") || v.includes("figure") || v.includes("funko")) return "POP_CULTURE";
+  if (v.includes("sport") || v.includes("jersey") || v.includes("trading card")) return "SPORTS";
+  if (v.includes("tcg") || v.includes("pokemon") || v.includes("magic") || v.includes("yu-gi-oh") || v.includes("lorcana")) return "TCG";
+  if (v.includes("music") || v.includes("vinyl") || v.includes("record") || v.includes("album")) return "MUSIC";
+  if (v.includes("game") || v.includes("video game") || v.includes("console") || v.includes("nintendo") || v.includes("playstation")) return "GAMES";
+  if (v.includes("auto") || v.includes("car") || v.includes("motorcycle") || v.includes("vehicle")) return "AUTOMOTIVE";
+  if (v.includes("art") || v.includes("painting") || v.includes("sculpture")) return "ART";
+  if (v.includes("jewelry") || v.includes("watch") || v.includes("apparel") || v.includes("sneaker")) return "JEWELRY_APPAREL";
+  if (v.includes("plant") || v.includes("whisky") || v.includes("bourbon") || v.includes("handmade")) return "BUILT_BOTANY";
+  return "";
+}
+
+/** Try to match a free-text category from AI to a valid category for the given universe. */
+function matchVisionCategory(universe: UniverseKey, visionCategory: string): string {
+  if (!universe || !visionCategory) return "";
+  const cats = getCategories(universe);
+  const lower = visionCategory.toLowerCase().trim();
+  // Exact match
+  const exact = cats.find((c) => c.toLowerCase() === lower);
+  if (exact) return exact;
+  // Substring match
+  const partial = cats.find((c) => c.toLowerCase().includes(lower) || lower.includes(c.toLowerCase()));
+  return partial ?? "";
 }
 
 function buildRecent(): SavedItemPreview[] {
@@ -176,6 +256,7 @@ async function renderRotatedImageBlob(
 
 function RecentItemCard({ item }: { item: SavedItemPreview }) {
   const [imageUrl, setImageUrl] = useState<string | undefined>(item.imageFrontUrl);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -205,13 +286,27 @@ function RecentItemCard({ item }: { item: SavedItemPreview }) {
     };
   }, [item.primaryImageKey, item.imageFrontUrl]);
 
+  function handleShare(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const url = `${window.location.origin}/vault/item/${item.id}`;
+    if (navigator.share) {
+      void navigator.share({ title: item.title, url });
+    } else {
+      void navigator.clipboard.writeText(url).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  }
+
   return (
     <Link
       href={`/vault/item/${item.id}`}
       className="relative flex items-center gap-3 rounded-2xl bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
     >
       {item.isNew ? (
-        <div className="absolute right-3 top-3 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-text-primary">
+        <div className="absolute right-10 top-3 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-text-primary">
           NEW
         </div>
       ) : null}
@@ -228,9 +323,28 @@ function RecentItemCard({ item }: { item: SavedItemPreview }) {
           No Img
         </div>
       )}
-      <div className="min-w-0 flex-1 pr-10">
+      <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium">{item.title}</div>
       </div>
+      <button
+        type="button"
+        onClick={handleShare}
+        title={copied ? "Copied!" : "Copy share link"}
+        className="ml-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--surface)]"
+        style={{ color: copied ? "var(--theme-gold, #F5B548)" : "var(--muted)" }}
+      >
+        {copied ? (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        ) : (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+        )}
+      </button>
     </Link>
   );
 }
@@ -254,12 +368,20 @@ export default function QuickAddClient() {
   const [purchasePrice, setPurchasePrice] = useState("");
   const [notes, setNotes] = useState("");
   const [quantity, setQuantity] = useState("1");
+  const [universe, setUniverse] = useState<UniverseKey | "">(() => getLastUsedCategory().universe);
+  const [categoryLabel, setCategoryLabel] = useState(() => getLastUsedCategory().categoryLabel);
+  const [subcategoryLabel, setSubcategoryLabel] = useState(() => getLastUsedCategory().subcategoryLabel);
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [showMoreFields, setShowMoreFields] = useState(false);
   const [isPreparingImage, setIsPreparingImage] = useState(false);
   const [recentItems, setRecentItems] = useState<SavedItemPreview[]>([]);
 
+  const categoryOptions = useMemo(() => (universe ? getCategories(universe) : []), [universe]);
+  const subcategoryOptions = useMemo(
+    () => (universe && categoryLabel ? getSubcategories(universe, categoryLabel) : []),
+    [universe, categoryLabel]
+  );
   const quantityValue = useMemo(() => parseQuantity(quantity), [quantity]);
   const parsedPrice = useMemo(() => parseMoney(purchasePrice), [purchasePrice]);
   const canSave = title.trim().length > 0 && !isSaving;
@@ -418,6 +540,11 @@ export default function QuickAddClient() {
     setPurchasePrice("");
     setNotes("");
     setQuantity("1");
+    // Restore last-used category so the next item starts pre-categorized
+    const lu = getLastUsedCategory();
+    setUniverse(lu.universe);
+    setCategoryLabel(lu.categoryLabel);
+    setSubcategoryLabel(lu.subcategoryLabel);
   }
 
   async function handleApplyCrop() {
@@ -447,14 +574,34 @@ export default function QuickAddClient() {
         setTitle(vision.title.trim());
       }
 
+      // Auto-fill universe and category from AI detection
+      const detectedUniverse = matchVisionUniverse(vision.universe);
+      if (detectedUniverse) {
+        setUniverse(detectedUniverse);
+        const visionCatText = vision.categoryLabel || vision.category || "";
+        const matchedCategory = matchVisionCategory(detectedUniverse, visionCatText);
+        if (matchedCategory) {
+          setCategoryLabel(matchedCategory);
+          // Try to match subcategory too
+          if (vision.subcategoryLabel) {
+            const subs = getSubcategories(detectedUniverse, matchedCategory);
+            const lower = vision.subcategoryLabel.toLowerCase();
+            const matchedSub =
+              subs.find((s) => s.toLowerCase() === lower) ??
+              subs.find((s) => s.toLowerCase().includes(lower) || lower.includes(s.toLowerCase())) ??
+              "";
+            if (matchedSub) setSubcategoryLabel(matchedSub);
+          }
+          // Show More fields so user can see what AI picked
+          setShowMoreFields(true);
+        }
+      }
+
       const detailLines = [
         vision.subtitle ? `Subtitle: ${vision.subtitle}` : "",
         vision.number ? `Number: ${vision.number}` : "",
         vision.grade ? `Grade: ${vision.grade}` : "",
         vision.certNumber ? `Cert: ${vision.certNumber}` : "",
-        vision.categoryLabel || vision.category
-          ? `Category: ${vision.categoryLabel || vision.category}`
-          : "",
         vision.description || "",
       ]
         .filter(Boolean)
@@ -469,7 +616,7 @@ export default function QuickAddClient() {
         });
       }
 
-      setStatus("AI filled in basic details. Review them before saving.");
+      setStatus("AI filled in details. Review before saving.");
     } catch (error) {
       setStatus(
         error instanceof Error &&
@@ -552,6 +699,10 @@ export default function QuickAddClient() {
           purchasePrice: parsedPrice,
           currentValue: parsedPrice,
           notes: notes.trim() || undefined,
+          universe: universe || undefined,
+          category: categoryLabel ? categoryCode(categoryLabel) : undefined,
+          categoryLabel: categoryLabel || undefined,
+          subcategoryLabel: subcategoryLabel || undefined,
           primaryImageKey,
           images,
           imageFrontUrl,
@@ -562,6 +713,9 @@ export default function QuickAddClient() {
 
         created.push(item);
       }
+
+      // Persist last-used category before resetting the form
+      persistLastUsedCategory(universe, categoryLabel, subcategoryLabel);
 
       appendItems(created);
 
@@ -586,6 +740,8 @@ export default function QuickAddClient() {
       setIsSaving(false);
     }
   }
+
+  const selectClass = "h-11 w-full rounded-2xl bg-[color:var(--pill)] px-4 ring-1 ring-[color:var(--border)] appearance-none";
 
   return (
     <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
@@ -790,11 +946,71 @@ export default function QuickAddClient() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ transform: showMoreFields ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>
               <polyline points="6 9 12 15 18 9"/>
             </svg>
-            {showMoreFields ? "Hide extra fields" : "More fields — Quantity, Notes"}
+            <span className="flex-1 text-left">
+              {showMoreFields ? "Hide extra fields" : "More fields — Category, Quantity, Notes"}
+            </span>
+            {universe || categoryLabel ? (
+              <span className="max-w-[160px] truncate text-right text-[11px]" style={{ color: "var(--theme-gold, #F5B548)" }}>
+                {[universe ? UNIVERSE_LABEL[universe] : "", categoryLabel].filter(Boolean).join(" › ")}
+              </span>
+            ) : null}
           </button>
 
           {showMoreFields ? (
             <div className="mt-3 grid gap-3">
+              {/* Universe */}
+              <div className="relative">
+                <select
+                  value={universe}
+                  onChange={(e) => {
+                    setUniverse(e.target.value as UniverseKey | "");
+                    setCategoryLabel("");
+                    setSubcategoryLabel("");
+                  }}
+                  className={selectClass}
+                >
+                  <option value="">Universe — any</option>
+                  {UNIVERSE_KEYS.map((k) => (
+                    <option key={k} value={k}>{UNIVERSE_LABEL[k]}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Category */}
+              {categoryOptions.length > 0 ? (
+                <div className="relative">
+                  <select
+                    value={categoryLabel}
+                    onChange={(e) => {
+                      setCategoryLabel(e.target.value);
+                      setSubcategoryLabel("");
+                    }}
+                    className={selectClass}
+                  >
+                    <option value="">Category — any</option>
+                    {categoryOptions.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
+
+              {/* Subcategory */}
+              {subcategoryOptions.length > 0 ? (
+                <div className="relative">
+                  <select
+                    value={subcategoryLabel}
+                    onChange={(e) => setSubcategoryLabel(e.target.value)}
+                    className={selectClass}
+                  >
+                    <option value="">Subcategory — any</option>
+                    {subcategoryOptions.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
+
               <input
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}

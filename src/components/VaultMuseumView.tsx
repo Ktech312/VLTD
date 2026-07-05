@@ -3,11 +3,11 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import { LockKeyhole } from "lucide-react";
 import { isNotable, notableReason } from "@/lib/itemIntelligence";
 import { itemCurrentValue, itemProfit, itemTotalCost } from "@/lib/portfolioMetrics";
 import { UNIVERSE_LABEL, UNIVERSE_KEYS, type UniverseKey } from "@/lib/taxonomy";
 import type { VaultItem as ModelItem } from "@/lib/vaultModel";
+import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
 import { fmtUsdOrDash } from "@/lib/format";
 
 
@@ -44,20 +44,7 @@ function itemGradeShort(i: ModelItem): string | null {
   return g.length > 10 ? g.slice(0, 10) : g;
 }
 
-function PrivateBadge({ compact = false }: { compact?: boolean }) {
-  return (
-    <div
-      className={[
-        "pointer-events-none inline-flex items-center gap-1 rounded-full bg-black/68 font-bold uppercase tracking-[0.1em] text-white/72 ring-1 ring-white/14 backdrop-blur",
-        compact ? "px-1.5 py-0.5 text-[8px]" : "px-2.5 py-1 text-[10px]",
-      ].join(" ")}
-      title="Private item"
-    >
-      <LockKeyhole size={compact ? 10 : 12} strokeWidth={2.2} aria-hidden="true" />
-      Private
-    </div>
-  );
-}
+
 
 function SpotlightCard({ item, onItemClick }: { item: ModelItem; onItemClick?: (item: ModelItem) => void }) {
   const grade = itemGradeShort(item);
@@ -171,11 +158,9 @@ function SpotlightCard({ item, onItemClick }: { item: ModelItem; onItemClick?: (
           </div>
         )}
 
-        {!item.isPublic ? (
-          <div className="absolute left-3 top-12">
-            <PrivateBadge />
-          </div>
-        ) : null}
+        <div className="absolute left-3 top-12 z-20">
+          <ItemVisibilityToggle item={item} size="sm" />
+        </div>
 
         {grade && (
           <div
@@ -393,11 +378,9 @@ function MuseumCard({
             </div>
           )}
 
-          {!item.isPublic ? (
-            <div className="absolute bottom-1.5 right-1.5">
-              <PrivateBadge compact />
-            </div>
-          ) : null}
+          <div className="absolute bottom-1.5 right-1.5 z-20">
+            <ItemVisibilityToggle item={item} size="sm" />
+          </div>
 
           {grade && (
             <div
