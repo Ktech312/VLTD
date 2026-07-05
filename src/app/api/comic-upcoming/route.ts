@@ -18,6 +18,11 @@ export type UpcomingIssue = {
   storeDate: string | null;
   coverDate: string | null;
   imageUrl: string | null;
+  // Multi-source fields (populated by Marvel / ComicVine routes)
+  source?: "metron" | "marvel" | "comicvine";
+  creatorRole?: string | null;       // e.g. "cover artist", "penciler", "writer"
+  isVariant?: boolean;
+  variantDescription?: string | null;
 };
 
 export type CreatorResult = {
@@ -71,6 +76,7 @@ function normalizeItem(item: MetronListItem): UpcomingIssue {
     storeDate: item.store_date ?? null,
     coverDate: item.cover_date ?? null,
     imageUrl: item.image ?? null,
+    source: "metron" as const,
   };
 }
 
@@ -112,6 +118,8 @@ export async function GET(req: NextRequest) {
   }
 
   const { searchParams } = new URL(req.url);
+
+  const allIssues = searchParams.get("all") === "true";
 
   const days = Math.min(
     Math.max(1, parseInt(searchParams.get("days") ?? "60", 10)),
@@ -158,12 +166,15 @@ export async function GET(req: NextRequest) {
     }
 
     const params = new URLSearchParams({
-      store_date__gte: today,
-      store_date__lte: until,
-      ordering: "store_date",
+      // upcoming mode: soonest first; all mode: most recent first (descending)
+      ordering: allIssues ? "-store_date" : "store_date",
       page: String(page),
       page_size: String(pageSize),
     });
+    if (!allIssues) {
+      params.set("store_date__gte", today);
+      params.set("store_date__lte", until);
+    }
 
     if (creatorId) params.set("creator_id", creatorId);
     if (publisher) params.set("publisher_name", publisher);

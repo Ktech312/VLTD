@@ -37,9 +37,13 @@ function IssueCard({
   onToggle: (issue: UpcomingIssue) => void;
 }) {
   const [imgError, setImgError] = useState(false);
+  const metronUrl = `https://metron.cloud/issue/${issue.id}/`;
 
   return (
-    <div
+    <a
+      href={metronUrl}
+      target="_blank"
+      rel="noopener noreferrer"
       style={{
         background: "rgba(255,255,255,0.03)",
         border: "1px solid rgba(245,181,72,0.10)",
@@ -47,7 +51,12 @@ function IssueCard({
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
+        textDecoration: "none",
+        cursor: "pointer",
+        transition: "border-color 0.15s",
       }}
+      onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(245,181,72,0.30)")}
+      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(245,181,72,0.10)")}
     >
       <div
         style={{
@@ -85,7 +94,7 @@ function IssueCard({
 
         {/* Heart / wishlist toggle */}
         <button
-          onClick={() => onToggle(issue)}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggle(issue); }}
           aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
           style={{
             position: "absolute",
@@ -150,7 +159,7 @@ function IssueCard({
           {issue.publisher}
         </div>
       </div>
-    </div>
+    </a>
   );
 }
 
@@ -161,6 +170,7 @@ export default function UpcomingPage() {
   const [query, setQuery]         = useState("");
   const [publisher, setPublisher] = useState("");
   const [days, setDays]           = useState(90);
+  const [allMode, setAllMode]     = useState(false);
   const [loading, setLoading]     = useState(false);
   const [result, setResult]       = useState<UpcomingComicsResult | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -181,7 +191,8 @@ export default function UpcomingPage() {
     setNotFound(false);
 
     const opts = {
-      days,
+      days: allMode ? undefined : days,
+      all: allMode || undefined,
       page: pg,
       pageSize: 25,
       publisher: publisher || undefined,
@@ -396,23 +407,40 @@ export default function UpcomingPage() {
               {[30, 60, 90, 180].map((d) => (
                 <button
                   key={d}
-                  onClick={() => setDays(d)}
+                  onClick={() => { setDays(d); setAllMode(false); }}
                   style={{
                     padding: "5px 10px",
                     borderRadius: "100px",
                     fontSize: "11px",
                     fontWeight: 600,
-                    border: days === d
+                    border: !allMode && days === d
                       ? "1px solid rgba(245,181,72,0.5)"
                       : "1px solid rgba(255,255,255,0.08)",
-                    background: days === d ? "rgba(245,181,72,0.08)" : "transparent",
-                    color: days === d ? "rgba(245,181,72,0.8)" : "rgba(240,234,214,0.35)",
+                    background: !allMode && days === d ? "rgba(245,181,72,0.08)" : "transparent",
+                    color: !allMode && days === d ? "rgba(245,181,72,0.8)" : "rgba(240,234,214,0.35)",
                     cursor: "pointer",
                   }}
                 >
                   {d}d
                 </button>
               ))}
+              <button
+                onClick={() => setAllMode((prev) => !prev)}
+                style={{
+                  padding: "5px 10px",
+                  borderRadius: "100px",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  border: allMode
+                    ? "1px solid rgba(245,181,72,0.5)"
+                    : "1px solid rgba(255,255,255,0.08)",
+                  background: allMode ? "rgba(245,181,72,0.08)" : "transparent",
+                  color: allMode ? "rgba(245,181,72,0.8)" : "rgba(240,234,214,0.35)",
+                  cursor: "pointer",
+                }}
+              >
+                All
+              </button>
             </div>
           </div>
         </div>
@@ -434,17 +462,17 @@ export default function UpcomingPage() {
               color: "rgba(245,181,72,0.85)",
             }}
           >
-            Showing upcoming work by{" "}
+            Showing work by{" "}
             <strong style={{ color: "#F5B548" }}>{result.resolvedCreator.name}</strong>
-            {" "}&middot; {result.count} issue{result.count !== 1 ? "s" : ""} in next {days} days
+            {" "}&middot; {result.count} issue{result.count !== 1 ? "s" : ""}{allMode ? " (all time)" : ` in next ${days} days`}
           </div>
         )}
 
         {/* Series count */}
         {result && !result.resolvedCreator && (
           <div style={{ fontSize: "13px", color: "rgba(240,234,214,0.4)", marginBottom: "14px" }}>
-            {result.count} upcoming issue{result.count !== 1 ? "s" : ""}
-            {publisher ? ` · ${publisher}` : ""} in next {days} days
+            {result.count} issue{result.count !== 1 ? "s" : ""}
+            {publisher ? ` · ${publisher}` : ""}{allMode ? " (all time)" : ` in next ${days} days`}
           </div>
         )}
 
