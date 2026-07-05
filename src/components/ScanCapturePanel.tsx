@@ -453,8 +453,8 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Camera viewport */}
-        <div className="relative min-h-0 flex-1 w-full bg-[#040912]" style={{ overflow: "hidden" }}>
-          <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-cover" />
+        <div className="relative w-full shrink-0 bg-[#040912]" style={{ height: "min(28dvh, 240px)", overflow: "hidden" }}>
+          <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />
           <FrameOverlay frameType={frameType} lockProgress={lockProgress} />
 
           {/* Capture flash */}
