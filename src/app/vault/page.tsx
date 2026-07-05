@@ -8,6 +8,7 @@ import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
 import RestoreVaultButton from "@/components/RestoreVaultButton";
 import SellItemButton from "@/components/SellItemButton";
 import VaultExportButton from "@/components/VaultExportButton";
+import VaultWallView from "@/components/VaultWallView";
 import { PillButton } from "@/components/ui/PillButton";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -789,6 +790,7 @@ export default function VaultPage() {
   const [isMigrating, setIsMigrating] = useState(false);
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
   const [shareMessage, setShareMessage] = useState("");
+  const [wallMode, setWallMode] = useState(false);
 
   function refresh() {
     setItems(loadItems());
@@ -1082,6 +1084,26 @@ export default function VaultPage() {
               <div className="flex gap-2 overflow-x-auto pb-0.5" style={{ scrollbarWidth: "none" }}>
                 <button
                   type="button"
+                  onClick={() => setWallMode((v) => !v)}
+                  className={[
+                    "inline-flex shrink-0 min-h-[38px] items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold ring-1 transition",
+                    wallMode
+                      ? "bg-gold/20 text-gold ring-gold/40"
+                      : "bg-[color:var(--pill)] ring-[color:var(--border)]",
+                  ].join(" ")}
+                >
+                  <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
+                    <rect x="0" y="0" width="4" height="6" rx="0.8"/>
+                    <rect x="5" y="0" width="4" height="6" rx="0.8"/>
+                    <rect x="10" y="0" width="6" height="6" rx="0.8"/>
+                    <rect x="0" y="7" width="6" height="9" rx="0.8"/>
+                    <rect x="7" y="7" width="4" height="9" rx="0.8"/>
+                    <rect x="12" y="7" width="4" height="9" rx="0.8"/>
+                  </svg>
+                  Wall
+                </button>
+                <button
+                  type="button"
                   onClick={() => void handleShareVault()}
                   className="inline-flex shrink-0 min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
                 >
@@ -1134,7 +1156,7 @@ export default function VaultPage() {
                 <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">FILTERED GAIN</div>
                 <div className="mt-1 text-lg font-semibold">
                   {stats.totalGain >= 0 ? "+" : ""}
-                  {formatMoney(stats.totalGain)}
+                         {formatMoney(stats.totalGain)}
                 </div>
               </div>
               <div className="rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
@@ -1147,6 +1169,8 @@ export default function VaultPage() {
 
         {items.length === 0 ? (
           <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} />
+        ) : wallMode ? (
+          <VaultWallView items={items} saleMap={saleMap} />
         ) : (
           <section className="mt-3 max-w-3xl mx-auto w-full">
             <div className="grid grid-cols-2 gap-4">
