@@ -464,7 +464,7 @@ function VaultCard({
         </button>
       </div>
 
-      <div className="relative h-[78px] overflow-hidden rounded-[10px] bg-black/18">
+      <Link href={detailHref} onClick={onNavigate} className="relative block h-[78px] overflow-hidden rounded-[10px] bg-black/18">
         <div className="block h-full">
           {image ? (
             <ProgressiveImage
@@ -481,10 +481,10 @@ function VaultCard({
             </div>
           )}
         </div>
-        <div className="absolute left-1.5 top-1.5 z-30">
+        <div className="absolute left-1.5 top-1.5 z-30" onClick={(e) => e.preventDefault()}>
           <ItemVisibilityToggle item={item} />
         </div>
-      </div>
+      </Link>
 
       <Link href={detailHref} className="mt-2 min-w-0" onClick={onNavigate}>
         <div className="line-clamp-1 text-[13px] font-extrabold leading-tight text-text-primary sm:text-[14px]">

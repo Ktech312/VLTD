@@ -421,8 +421,39 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
+        {/* Universe / Category — top so it's always visible without scrolling */}
+        <div className="shrink-0 border-b border-white/5 bg-[#0a0f1e] px-3 pb-2 pt-2">
+          <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/36">Universe</div>
+          <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
+            {UNIVERSES.map((key) => (
+              <Pill
+                key={key}
+                label={UNIVERSE_LABEL[key]}
+                active={universe === key}
+                onClick={() => { setUniverse(key); setCategoryLabel(getCategories(key)[0] ?? "Collectors Choice"); }}
+              />
+            ))}
+          </div>
+
+          {categories.length ? (
+            <>
+              <div className="mb-1 mt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/36">Category</div>
+              <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
+                {categories.map((category) => (
+                  <Pill
+                    key={category}
+                    label={category}
+                    active={categoryLabel === category}
+                    onClick={() => setCategoryLabel(category)}
+                  />
+                ))}
+              </div>
+            </>
+          ) : null}
+        </div>
+
         {/* Camera viewport */}
-        <div className="relative w-full shrink-0 bg-[#040912]" style={{ height: "min(36dvh, 320px)", overflow: "hidden" }}>
+        <div className="relative w-full shrink-0 bg-[#040912]" style={{ height: "min(32dvh, 280px)", overflow: "hidden" }}>
           <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />
           <FrameOverlay frameType={frameType} lockProgress={lockProgress} />
 
@@ -596,40 +627,12 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        {/* Universe / Category / Done */}
+        {/* Done button */}
         <div className="shrink-0 border-t border-white/5 bg-[#0a0f1e] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
-          <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/36">Universe</div>
-          <div className="flex gap-1.5 overflow-x-auto pb-1.5 [scrollbar-width:none]">
-            {UNIVERSES.map((key) => (
-              <Pill
-                key={key}
-                label={UNIVERSE_LABEL[key]}
-                active={universe === key}
-                onClick={() => { setUniverse(key); setCategoryLabel(getCategories(key)[0] ?? "Collectors Choice"); }}
-              />
-            ))}
-          </div>
-
-          {categories.length ? (
-            <>
-              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/36">Category</div>
-              <div className="flex gap-1.5 overflow-x-auto pb-1.5 [scrollbar-width:none]">
-                {categories.map((category) => (
-                  <Pill
-                    key={category}
-                    label={category}
-                    active={categoryLabel === category}
-                    onClick={() => setCategoryLabel(category)}
-                  />
-                ))}
-              </div>
-            </>
-          ) : null}
-
           <button
             type="button"
             onClick={handleDone}
-            className="mt-1 flex h-10 w-full items-center justify-center rounded-xl text-sm font-bold ring-1 transition"
+            className="flex h-10 w-full items-center justify-center rounded-xl text-sm font-bold ring-1 transition"
             style={{
               background: capturedItems.length ? "rgba(245,181,72,0.12)" : "rgba(255,255,255,0.06)",
               borderColor: capturedItems.length ? "rgba(245,181,72,0.34)" : "rgba(255,255,255,0.1)",
