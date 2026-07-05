@@ -6,58 +6,77 @@ import { usePathname } from "next/navigation";
 /* ── Icons ─────────────────────────────────────────────── */
 
 function IconVault({ active }: { active: boolean }) {
+  const c = active ? "#F5B548" : "#D8C897";
+  const fill = active ? "rgba(245,181,72,0.12)" : "none";
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-      style={{ color: active ? "#F5B548" : "#A0956B" }}>
-      <rect x="3" y="3" width="18" height="18" rx="3"
-        stroke="currentColor" strokeWidth="1.75"
-        fill={active ? "rgba(245,181,72,0.10)" : "none"} />
-      <circle cx="12" cy="12" r="3.5"
-        stroke="currentColor" strokeWidth="1.75" />
-      <path d="M12 8.5V6M12 18v-2.5M8.5 12H6M18 12h-2.5"
-        stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="12" cy="12" r="1"
-        fill="currentColor" />
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      {/* Outer vault door circle */}
+      <circle cx="12" cy="12" r="9.5" stroke={c} strokeWidth="1.6" fill={fill} />
+      {/* Inner dial ring */}
+      <circle cx="12" cy="12" r="5.5" stroke={c} strokeWidth="1.4" />
+      {/* 4 corner bolts */}
+      <circle cx="12" cy="3.5" r="1.1" fill={c} />
+      <circle cx="12" cy="20.5" r="1.1" fill={c} />
+      <circle cx="3.5" cy="12" r="1.1" fill={c} />
+      <circle cx="20.5" cy="12" r="1.1" fill={c} />
+      {/* Center handle cross */}
+      <path d="M12 9v6M9 12h6" stroke={c} strokeWidth="1.6" strokeLinecap="round" />
+      {/* Center knob */}
+      <circle cx="12" cy="12" r="1.5" fill={c} />
     </svg>
   );
 }
 
 function IconExhibitions({ active }: { active: boolean }) {
+  const c = active ? "#F5B548" : "#D8C897";
+  const fill = active ? "rgba(245,181,72,0.14)" : "none";
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-      style={{ color: active ? "#F5B548" : "#A0956B" }}>
-      <path d="M3 21h18" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-      <path d="M4 21V10M20 21V10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-      <path d="M2 10h20" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-      <path d="M12 3 2 10h20L12 3Z" stroke="currentColor" strokeWidth="1.75"
-        strokeLinejoin="round" fill={active ? "rgba(245,181,72,0.12)" : "none"} />
-      <path d="M9 21v-5h6v5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      {/* Track rail */}
+      <path d="M4 4h16" stroke={c} strokeWidth="1.6" strokeLinecap="round" />
+      {/* Spotlight head */}
+      <rect x="9" y="4" width="6" height="4" rx="1.5" fill={fill} stroke={c} strokeWidth="1.5" />
+      {/* Pivot arm */}
+      <path d="M12 8v1.5" stroke={c} strokeWidth="1.4" strokeLinecap="round" />
+      {/* Light cone */}
+      <path d="M7.5 20L12 9.5L16.5 20" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill={active ? "rgba(245,181,72,0.08)" : "none"} />
+      {/* Base line = stage floor */}
+      <path d="M6 20h12" stroke={c} strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
 
 function IconDiscover({ active }: { active: boolean }) {
+  const c = active ? "#F5B548" : "#D8C897";
+  const fill = active ? "rgba(245,181,72,0.10)" : "none";
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-      style={{ color: active ? "#F5B548" : "#A0956B" }}>
-      <circle cx="11" cy="11" r="7.5" stroke="currentColor" strokeWidth="1.75"
-        fill={active ? "rgba(245,181,72,0.10)" : "none"} />
-      <path d="M16.5 16.5 21 21" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-      <path d="M13.5 8.5 10 13l-2-2" stroke="currentColor" strokeWidth="1.5"
-        strokeLinecap="round" strokeLinejoin="round"
-        opacity={active ? "1" : "0.6"} />
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      {/* Compass outer ring */}
+      <circle cx="12" cy="12" r="9" stroke={c} strokeWidth="1.6" fill={fill} />
+      {/* Cardinal tick marks */}
+      <path d="M12 4.5V6.5M12 17.5V19.5M4.5 12H6.5M17.5 12H19.5"
+        stroke={c} strokeWidth="1.4" strokeLinecap="round" />
+      {/* North needle (filled = gold when active) */}
+      <path d="M12 7.5L14 12H10Z"
+        fill={active ? "#F5B548" : c} stroke={c} strokeWidth="0.5" />
+      {/* South needle (hollow) */}
+      <path d="M12 16.5L10 12H14Z"
+        fill="none" stroke={c} strokeWidth="1.1" strokeLinejoin="round" />
+      {/* Center dot */}
+      <circle cx="12" cy="12" r="1.2" fill={c} />
     </svg>
   );
 }
 
 function IconAlerts({ active }: { active: boolean }) {
+  const c = active ? "#F5B548" : "#D8C897";
+  const fill = active ? "rgba(245,181,72,0.14)" : "none";
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-      style={{ color: active ? "#F5B548" : "#A0956B" }}>
-      <path d="M15 17H9a3 3 0 0 0 6 0Z" stroke="currentColor" strokeWidth="1.75" />
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M15 17H9a3 3 0 0 0 6 0Z" stroke={c} strokeWidth="1.75" />
       <path d="M4 17h16M12 3v1m0 0a7 7 0 0 1 7 7v3.5H5V11a7 7 0 0 1 7-7Z"
-        stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"
-        fill={active ? "rgba(245,181,72,0.14)" : "none"} />
+        stroke={c} strokeWidth="1.75" strokeLinecap="round"
+        fill={fill} />
     </svg>
   );
 }
@@ -72,11 +91,11 @@ type Tab = {
 };
 
 const TABS: (Tab | null)[] = [
-  { label: "Exhibitions", href: "/museum",   icon: IconExhibitions, exact: false },
-  { label: "Vault",     href: "/vault",    icon: IconVault,       exact: false },
+  { label: "Exhibitions", href: "/museum",        icon: IconExhibitions, exact: false },
+  { label: "Vault",       href: "/vault",         icon: IconVault,       exact: false },
   null, // gold + button (capture)
-  { label: "Discover",  href: "/discover",       icon: IconDiscover, exact: false },
-  { label: "Alerts",   href: "/notifications",  icon: IconAlerts,   exact: false },
+  { label: "Discover",   href: "/discover",       icon: IconDiscover,    exact: false },
+  { label: "Alerts",     href: "/notifications",  icon: IconAlerts,      exact: false },
 ];
 
 // Guest gallery routes (/museum/[id]/guest) should highlight Discover, not Galleries
@@ -128,7 +147,6 @@ export default function BottomNav() {
                   className="relative flex flex-col items-center"
                   style={{ marginTop: "-20px" }}
                 >
-                  {/* Outer glow ring */}
                   <div
                     className="flex h-[58px] w-[58px] items-center justify-center rounded-full"
                     style={{
@@ -169,7 +187,7 @@ export default function BottomNav() {
                 <Icon active={isActive} />
                 <span
                   className="text-[11px] font-semibold tracking-[0.04em] transition-colors"
-                  style={{ color: isActive ? "#F5B548" : "#C4B07A" }}
+                  style={{ color: isActive ? "#F5B548" : "#D8C897" }}
                 >
                   {tab.label}
                 </span>
