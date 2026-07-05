@@ -88,7 +88,6 @@ function ComicSearchCard({
           </div>
         )}
 
-        {/* Variant ribbon */}
         {issue.isVariant && (
           <div style={{
             position: "absolute", top: "4px", left: "4px",
@@ -98,7 +97,6 @@ function ComicSearchCard({
           }}>VARIANT</div>
         )}
 
-        {/* Heart button */}
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggle(issue); }}
           aria-label={wishlisted ? "Remove" : "Save to wishlist"}
@@ -163,49 +161,73 @@ function ComicSearchPanel({
   const [days, setDays] = useState(90);
   const [allMode, setAllMode] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [fedResult, setFedResult] = useState<UpcomingComicsResult | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [notFound, setNotFound] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  async function handleSearch(pg = 1) {
+  /**
+   * pubOverride: undefined = use current selectedPubs; null = no filter; string = specific publisher
+   */
+  async function handleSearch(pg = 1, pubOverride?: string | null) {
     const q = query.trim();
     if (!q) return;
-    setLoading(true);
-    setNotFound(false);
+
+    const isLoadMore = pg > 1;
+    if (isLoadMore) setLoadingMore(true);
+    else { setLoading(true); setNotFound(false); }
+
+    const singlePub =
+      pubOverride !== undefined
+        ? (pubOverride ?? undefined)
+        : selectedPubs.size === 1
+        ? Array.from(selectedPubs)[0]
+        : undefined;
 
     const opts = {
       days: allMode ? undefined : days,
       all: allMode || undefined,
       page: pg,
       pageSize: 25,
+      publisher: singlePub,
       ...(searchMode === "creator" ? { creator: q } : { series: q }),
     };
 
     const data = await fetchAllSources(opts);
 
-    if (!data || data.results.length === 0) {
-      setFedResult(null);
-      setNotFound(true);
-    } else {
+    if (!data || (data.results.length === 0 && pg === 1)) {
+      if (!isLoadMore) { setFedResult(null); setNotFound(true); }
+    } else if (data && isLoadMore && fedResult) {
+      setFedResult({ ...data, results: [...fedResult.results, ...data.results] });
+      setCurrentPage(pg);
+    } else if (data) {
       setFedResult(data as UpcomingComicsResult);
       setCurrentPage(pg);
     }
-    setLoading(false);
+
+    if (isLoadMore) setLoadingMore(false);
+    else setLoading(false);
   }
 
   function togglePub(value: string) {
-    setSelectedPubs((prev) => {
-      const next = new Set(prev);
-      if (next.has(value)) next.delete(value); else next.add(value);
-      if (next.size === ALL_PUBLISHERS.length) return new Set();
-      return next;
-    });
+    const next = new Set(selectedPubs);
+    if (next.has(value)) next.delete(value); else next.add(value);
+    if (next.size === ALL_PUBLISHERS.length) {
+      setSelectedPubs(new Set());
+      if (fedResult) handleSearch(1, null);
+      return;
+    }
+    setSelectedPubs(next);
+    if (fedResult) {
+      if (next.size === 1) handleSearch(1, Array.from(next)[0]);
+      else if (next.size === 0) handleSearch(1, null);
+    }
   }
 
   const filteredResults = useMemo(() => {
     if (!fedResult) return [];
-    if (selectedPubs.size === 0) return fedResult.results;
+    if (selectedPubs.size === 0 || selectedPubs.size === 1) return fedResult.results;
     return fedResult.results.filter((issue) =>
       Array.from(selectedPubs).some((pub) =>
         issue.publisher.toLowerCase().includes(pub.toLowerCase())
@@ -292,7 +314,7 @@ function ComicSearchPanel({
           {/* Publisher + days */}
           <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", alignItems: "center", marginBottom: "14px" }}>
             {/* All pill */}
-            <button onClick={() => setSelectedPubs(new Set())}
+            <button onClick={() => { setSelectedPubs(new Set()); if (fedResult) handleSearch(1, null); }}
               style={{
                 padding: "4px 10px", borderRadius: "100px", fontSize: "11px", fontWeight: 600,
                 border: selectedPubs.size === 0 ? "1px solid #F5B548" : "1px solid rgba(255,255,255,0.12)",
@@ -338,7 +360,7 @@ function ComicSearchPanel({
               {fedResult.resolvedCreator?.name && (
                 <><strong style={{ color: "#F5B548" }}>{fedResult.resolvedCreator.name}</strong>{" · "}</>
               )}
-              {selectedPubs.size > 0
+              {selectedPubs.size > 1
                 ? <>{shownCount} shown of {totalCount} total</>
                 : <>{totalCount} issue{totalCount !== 1 ? "s" : ""}</>
               }
@@ -401,6 +423,23 @@ function ComicSearchPanel({
               </div>
             </div>
           ))}
+
+          {/* Load more */}
+          {!loading && fedResult?.hasMore && (
+            <div style={{ textAlign: "center", paddingTop: "4px", paddingBottom: "8px" }}>
+              <button
+                onClick={() => handleSearch(currentPage + 1)}
+                disabled={loadingMore}
+                style={{
+                  background: "transparent", border: "1px solid rgba(245,181,72,0.30)",
+                  borderRadius: "10px", padding: "8px 22px",
+                  fontSize: "12px", fontWeight: 600, color: "#F5B548",
+                  cursor: loadingMore ? "not-allowed" : "pointer",
+                  opacity: loadingMore ? 0.6 : 1, transition: "all 0.15s",
+                }}
+              >{loadingMore ? "Loading…" : `Load more (${totalCount - shownCount} remaining)`}</button>
+            </div>
+          )}
           <style>{`.year-row-wl::-webkit-scrollbar{display:none}`}</style>
         </div>
       )}

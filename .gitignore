@@ -43,3 +43,9 @@ desktop.ini
 
 # Claude Code worktrees
 .claude/worktrees/
+
+# GCD database (large binary — download separately via scripts/gcd-import.js)
+data/gcd.db
+data/gcd.db.bak
+data/*.sql.gz
+data/*.sql

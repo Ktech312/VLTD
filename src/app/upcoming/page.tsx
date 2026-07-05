@@ -5,6 +5,7 @@ import Image from "next/image";
 import {
   fetchAllSources,
   groupByYear,
+  formatStoreDate,
   roleLabel,
   isCoverOnlyRole,
   type UpcomingIssue,
@@ -26,7 +27,7 @@ const ALL_PUBLISHERS = [
   { label: "BOOM!",      value: "BOOM! Studios" },
 ];
 
-/* ── Issue card ────────────────────────────────────────────────────── */
+/* ── Issue card ──────────────────────────────────────────────── */
 
 function IssueCard({
   issue,
@@ -62,7 +63,6 @@ function IssueCard({
       onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(245,181,72,0.30)")}
       onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(245,181,72,0.10)")}
     >
-      {/* Cover image */}
       <div style={{ position: "relative", width: "100%", aspectRatio: "2/3", background: "#111", flexShrink: 0 }}>
         {issue.imageUrl && !imgError ? (
           <Image
@@ -83,19 +83,15 @@ function IssueCard({
           </div>
         )}
 
-        {/* Variant ribbon */}
         {issue.isVariant && (
           <div style={{
             position: "absolute", top: "6px", left: "6px",
             background: "rgba(180,100,220,0.85)", backdropFilter: "blur(4px)",
             borderRadius: "4px", padding: "2px 6px",
             fontSize: "9px", fontWeight: 700, color: "#fff", letterSpacing: "0.05em",
-          }}>
-            VARIANT
-          </div>
+          }}>VARIANT</div>
         )}
 
-        {/* Heart / wishlist toggle */}
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggle(issue); }}
           aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
@@ -120,7 +116,6 @@ function IssueCard({
         </button>
       </div>
 
-      {/* Info */}
       <div style={{ padding: "9px 9px 11px", display: "flex", flexDirection: "column", gap: "3px", flex: 1 }}>
         <div style={{
           fontSize: "12px", fontWeight: 700, color: "#F0EAD6", lineHeight: 1.3,
@@ -132,120 +127,132 @@ function IssueCard({
           #{issue.number}
         </div>
 
-        {/* Role badge */}
         {role && (
-          <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginTop: "1px" }}>
-            <span style={{
-              fontSize: "9px", fontWeight: 700,
-              color: isCoverOnly ? "rgba(180,100,220,0.9)" : "rgba(100,200,140,0.9)",
-              background: isCoverOnly ? "rgba(180,100,220,0.12)" : "rgba(100,200,140,0.10)",
-              border: isCoverOnly ? "1px solid rgba(180,100,220,0.25)" : "1px solid rgba(100,200,140,0.20)",
-              borderRadius: "4px", padding: "1px 4px",
-            }}>
-              {role}
-            </span>
-          </div>
+          <span style={{
+            fontSize: "9px", fontWeight: 700, alignSelf: "flex-start",
+            color: isCoverOnly ? "rgba(180,100,220,0.9)" : "rgba(100,200,140,0.9)",
+            background: isCoverOnly ? "rgba(180,100,220,0.12)" : "rgba(100,200,140,0.10)",
+            border: isCoverOnly ? "1px solid rgba(180,100,220,0.25)" : "1px solid rgba(100,200,140,0.20)",
+            borderRadius: "4px", padding: "1px 4px",
+          }}>{role}</span>
         )}
 
-        <div style={{
-          fontSize: "10px", color: "rgba(255,255,255,0.30)", marginTop: "auto", paddingTop: "3px",
-          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-        }}>
-          {issue.publisher}
+        <div style={{ marginTop: "auto", paddingTop: "3px", display: "flex", flexDirection: "column", gap: "1px" }}>
+          {issue.storeDate && (
+            <div style={{ fontSize: "10px", color: "rgba(245,181,72,0.45)", fontWeight: 500 }}>
+              {formatStoreDate(issue.storeDate)}
+            </div>
+          )}
+          <div style={{
+            fontSize: "10px", color: "rgba(255,255,255,0.25)",
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+          }}>
+            {issue.publisher}
+          </div>
         </div>
       </div>
     </a>
   );
 }
 
-/* ── Main page ─────────────────────────────────────────────────────── */
+/* ── Main page ───────────────────────────────────────────────── */
 
 export default function UpcomingPage() {
-  const [mode, setMode]           = useState<"creator" | "series">("creator");
-  const [query, setQuery]         = useState("");
+  const [mode, setMode]               = useState<"creator" | "series">("creator");
+  const [query, setQuery]             = useState("");
   const [selectedPubs, setSelectedPubs] = useState<Set<string>>(new Set());
-  const [days, setDays]           = useState(90);
-  const [allMode, setAllMode]     = useState(false);
-  const [loading, setLoading]     = useState(false);
-  const [fedResult, setFedResult] = useState<UpcomingComicsResult | null>(null);
+  const [days, setDays]               = useState(90);
+  const [allMode, setAllMode]         = useState(false);
+  const [loading, setLoading]         = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [fedResult, setFedResult]     = useState<UpcomingComicsResult | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [wishlistIds, setWishlistIds] = useState<Set<number>>(new Set());
-  const [toggling, setToggling]   = useState<Set<number>>(new Set());
-  const [notFound, setNotFound]   = useState(false);
+  const [toggling, setToggling]       = useState<Set<number>>(new Set());
+  const [notFound, setNotFound]       = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadWishlistedIds().then(setWishlistIds).catch(() => {});
   }, []);
 
-  async function handleSearch(pg = 1) {
+  /**
+   * pubOverride: undefined = use current selectedPubs; null = no filter; string = specific publisher
+   */
+  async function handleSearch(pg = 1, pubOverride?: string | null) {
     const q = query.trim();
     if (!q) return;
-    setLoading(true);
-    setNotFound(false);
+
+    const isLoadMore = pg > 1;
+    if (isLoadMore) setLoadingMore(true);
+    else { setLoading(true); setNotFound(false); }
+
+    const singlePub =
+      pubOverride !== undefined
+        ? (pubOverride ?? undefined)
+        : selectedPubs.size === 1
+        ? Array.from(selectedPubs)[0]
+        : undefined;
 
     const opts = {
       days: allMode ? undefined : days,
       all: allMode || undefined,
       page: pg,
       pageSize: 25,
+      publisher: singlePub,
       ...(mode === "creator" ? { creator: q } : { series: q }),
     };
 
     const data = await fetchAllSources(opts);
 
-    if (!data || data.results.length === 0) {
-      setFedResult(null);
-      setNotFound(true);
-    } else {
+    if (!data || (data.results.length === 0 && pg === 1)) {
+      if (!isLoadMore) { setFedResult(null); setNotFound(true); }
+    } else if (data && isLoadMore && fedResult) {
+      setFedResult({ ...data, results: [...fedResult.results, ...data.results] });
+      setCurrentPage(pg);
+    } else if (data) {
       setFedResult(data as UpcomingComicsResult);
       setCurrentPage(pg);
     }
-    setLoading(false);
+
+    if (isLoadMore) setLoadingMore(false);
+    else setLoading(false);
   }
 
   async function handleToggle(issue: UpcomingIssue) {
     if (toggling.has(issue.id)) return;
     const isWishlisted = wishlistIds.has(issue.id);
-
-    setWishlistIds((prev) => {
-      const next = new Set(prev);
-      if (isWishlisted) next.delete(issue.id); else next.add(issue.id);
-      return next;
-    });
+    setWishlistIds((prev) => { const n = new Set(prev); isWishlisted ? n.delete(issue.id) : n.add(issue.id); return n; });
     setToggling((prev) => new Set(prev).add(issue.id));
-
     const { ok, nowWishlisted } = await toggleComicWishlist(issue, isWishlisted);
-
     if (!ok) {
-      setWishlistIds((prev) => {
-        const next = new Set(prev);
-        if (isWishlisted) next.add(issue.id); else next.delete(issue.id);
-        return next;
-      });
+      setWishlistIds((prev) => { const n = new Set(prev); isWishlisted ? n.add(issue.id) : n.delete(issue.id); return n; });
     } else {
-      setWishlistIds((prev) => {
-        const next = new Set(prev);
-        if (nowWishlisted) next.add(issue.id); else next.delete(issue.id);
-        return next;
-      });
+      setWishlistIds((prev) => { const n = new Set(prev); nowWishlisted ? n.add(issue.id) : n.delete(issue.id); return n; });
     }
-
     setToggling((prev) => { const n = new Set(prev); n.delete(issue.id); return n; });
   }
 
   function togglePub(value: string) {
-    setSelectedPubs((prev) => {
-      const next = new Set(prev);
-      if (next.has(value)) next.delete(value); else next.add(value);
-      if (next.size === ALL_PUBLISHERS.length) return new Set(); // all selected = clear to "All"
-      return next;
-    });
+    const next = new Set(selectedPubs);
+    if (next.has(value)) next.delete(value); else next.add(value);
+    // If all individually selected → snap to "All" (no filter)
+    if (next.size === ALL_PUBLISHERS.length) {
+      setSelectedPubs(new Set());
+      if (fedResult) handleSearch(1, null);
+      return;
+    }
+    setSelectedPubs(next);
+    if (fedResult) {
+      if (next.size === 1) handleSearch(1, Array.from(next)[0]); // server-side filter
+      else if (next.size === 0) handleSearch(1, null);           // clear filter
+      // 2+ selected: client-side filter only (no re-fetch)
+    }
   }
 
   const filteredResults = useMemo(() => {
     if (!fedResult) return [];
-    if (selectedPubs.size === 0) return fedResult.results;
+    if (selectedPubs.size === 0 || selectedPubs.size === 1) return fedResult.results; // server filtered or unfiltered
     return fedResult.results.filter((issue) =>
       Array.from(selectedPubs).some((pub) =>
         issue.publisher.toLowerCase().includes(pub.toLowerCase())
@@ -253,11 +260,11 @@ export default function UpcomingPage() {
     );
   }, [fedResult, selectedPubs]);
 
-  const groups = useMemo(() => groupByYear(filteredResults), [filteredResults]);
-  const totalCount = fedResult?.count ?? 0;
-  const shownCount = filteredResults.length;
+  const groups       = useMemo(() => groupByYear(filteredResults), [filteredResults]);
+  const totalCount   = fedResult?.count ?? 0;
+  const shownCount   = filteredResults.length;
   const variantCount = filteredResults.filter((r) => r.isVariant).length;
-  const creatorName = fedResult?.resolvedCreator?.name;
+  const creatorName  = fedResult?.resolvedCreator?.name;
 
   return (
     <div style={{
@@ -274,19 +281,14 @@ export default function UpcomingPage() {
       }}>
         <div style={{ maxWidth: "900px", margin: "0 auto" }}>
 
-          {/* Title */}
           <div style={{ display: "flex", alignItems: "baseline", gap: "10px", marginBottom: "14px" }}>
-            <span style={{ fontSize: "22px", fontWeight: 900, letterSpacing: "-0.02em" }}>
-              Upcoming Comics
-            </span>
+            <span style={{ fontSize: "22px", fontWeight: 900, letterSpacing: "-0.02em" }}>Upcoming Comics</span>
             {wishlistIds.size > 0 && (
               <span style={{
                 fontSize: "12px", fontWeight: 700, color: "#F5B548",
                 background: "rgba(245,181,72,0.12)", border: "1px solid rgba(245,181,72,0.25)",
                 borderRadius: "100px", padding: "2px 9px",
-              }}>
-                {wishlistIds.size} saved
-              </span>
+              }}>{wishlistIds.size} saved</span>
             )}
           </div>
 
@@ -303,9 +305,7 @@ export default function UpcomingPage() {
                   border: "none", cursor: "pointer", transition: "all 0.15s",
                   background: mode === m ? "#F5B548" : "transparent",
                   color: mode === m ? "#0A0A12" : "rgba(240,234,214,0.55)",
-                }}>
-                {m === "creator" ? "By Artist" : "By Series"}
-              </button>
+                }}>{m === "creator" ? "By Artist" : "By Series"}</button>
             ))}
           </div>
 
@@ -313,9 +313,7 @@ export default function UpcomingPage() {
           <form onSubmit={(e) => { e.preventDefault(); handleSearch(1); }}
             style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
             <input
-              ref={inputRef}
-              type="text"
-              value={query}
+              ref={inputRef} type="text" value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={mode === "creator" ? "Artist name — e.g. Peach Momoko" : "Series title — e.g. Demon Days"}
               style={{
@@ -330,15 +328,13 @@ export default function UpcomingPage() {
                 padding: "11px 18px", fontSize: "14px", fontWeight: 700,
                 color: "#0A0A12", cursor: loading ? "not-allowed" : "pointer",
                 opacity: loading ? 0.6 : 1, whiteSpace: "nowrap",
-              }}>
-              {loading ? "…" : "Search"}
-            </button>
+              }}>{loading ? "…" : "Search"}</button>
           </form>
 
           {/* Publisher pills + days */}
           <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
-            {/* All pill */}
-            <button onClick={() => setSelectedPubs(new Set())}
+            <button
+              onClick={() => { setSelectedPubs(new Set()); if (fedResult) handleSearch(1, null); }}
               style={{
                 padding: "5px 12px", borderRadius: "100px", fontSize: "12px", fontWeight: 600,
                 border: selectedPubs.size === 0 ? "1px solid #F5B548" : "1px solid rgba(255,255,255,0.12)",
@@ -355,9 +351,7 @@ export default function UpcomingPage() {
                   background: selectedPubs.has(p.value) ? "rgba(245,181,72,0.12)" : "transparent",
                   color: selectedPubs.has(p.value) ? "#F5B548" : "rgba(240,234,214,0.55)",
                   cursor: "pointer", transition: "all 0.15s",
-                }}>
-                {p.label}
-              </button>
+                }}>{p.label}</button>
             ))}
 
             <div style={{ marginLeft: "auto", display: "flex", gap: "4px" }}>
@@ -369,9 +363,7 @@ export default function UpcomingPage() {
                     background: !allMode && days === d ? "rgba(245,181,72,0.08)" : "transparent",
                     color: !allMode && days === d ? "rgba(245,181,72,0.8)" : "rgba(240,234,214,0.35)",
                     cursor: "pointer",
-                  }}>
-                  {d}d
-                </button>
+                  }}>{d}d</button>
               ))}
               <button onClick={() => setAllMode((v) => !v)}
                 style={{
@@ -380,9 +372,7 @@ export default function UpcomingPage() {
                   background: allMode ? "rgba(245,181,72,0.08)" : "transparent",
                   color: allMode ? "rgba(245,181,72,0.8)" : "rgba(240,234,214,0.35)",
                   cursor: "pointer",
-                }}>
-                All
-              </button>
+                }}>All</button>
             </div>
           </div>
         </div>
@@ -391,20 +381,17 @@ export default function UpcomingPage() {
       {/* ── Body ─── */}
       <div style={{ maxWidth: "900px", margin: "0 auto", padding: "16px" }}>
 
-        {/* Creator / count banner */}
+        {/* Banner */}
         {fedResult && (
           <div style={{
             background: "rgba(245,181,72,0.06)", border: "1px solid rgba(245,181,72,0.14)",
             borderRadius: "10px", padding: "10px 14px", marginBottom: "14px",
             fontSize: "13px", color: "rgba(245,181,72,0.85)",
           }}>
-            {creatorName ? (
-              <>Showing work by <strong style={{ color: "#F5B548" }}>{creatorName}</strong>{" · "}</>
-            ) : null}
-            {selectedPubs.size > 0
+            {creatorName && <><strong style={{ color: "#F5B548" }}>{creatorName}</strong>{" · "}</>}
+            {selectedPubs.size > 1
               ? <>{shownCount} shown of {totalCount} total</>
-              : <>{totalCount} issue{totalCount !== 1 ? "s" : ""}</>
-            }
+              : <>{totalCount} issue{totalCount !== 1 ? "s" : ""}</>}
             {allMode ? " (all time)" : ` in next ${days} days`}
             {variantCount > 0 && (
               <> · <span style={{ color: "rgba(180,100,220,0.8)" }}>{variantCount} variant{variantCount !== 1 ? "s" : ""}</span></>
@@ -418,8 +405,7 @@ export default function UpcomingPage() {
             <div style={{ fontSize: "40px", marginBottom: "12px" }}>&#128269;</div>
             <div style={{ fontSize: "16px", fontWeight: 600, marginBottom: "6px" }}>Nothing found</div>
             <div style={{ fontSize: "13px" }}>
-              {mode === "creator"
-                ? "Try the full name — e.g. \"Peach Momoko\" not just \"Momoko\""
+              {mode === "creator" ? "Try the full name — e.g. \"Peach Momoko\" not just \"Momoko\""
                 : "Try a partial title or check the publisher filter"}
             </div>
           </div>
@@ -448,7 +434,7 @@ export default function UpcomingPage() {
                 <div style={{ height: "16px", width: "60px", borderRadius: "6px", background: "rgba(255,255,255,0.05)", marginBottom: "10px" }} />
                 <div style={{ display: "flex", gap: "10px", overflow: "hidden" }}>
                   {[1, 2, 3, 4, 5].map((c) => (
-                    <div key={c} style={{ flexShrink: 0, width: "130px", aspectRatio: "2/3", borderRadius: "10px", background: "rgba(255,255,255,0.04)", animation: "pulse 1.5s ease-in-out infinite" }} />
+                    <div key={c} style={{ flexShrink: 0, width: "140px", aspectRatio: "2/3", borderRadius: "10px", background: "rgba(255,255,255,0.04)", animation: "pulse 1.5s ease-in-out infinite" }} />
                   ))}
                 </div>
               </div>
@@ -456,7 +442,7 @@ export default function UpcomingPage() {
           </div>
         )}
 
-        {/* Results — year rows with horizontal scroll */}
+        {/* Year rows */}
         {!loading && groups.map((group) => (
           <div key={group.year} style={{ marginBottom: "28px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
@@ -474,16 +460,29 @@ export default function UpcomingPage() {
             }}>
               {group.issues.map((issue) => (
                 <div key={issue.id} style={{ flexShrink: 0, width: "140px", scrollSnapAlign: "start" }}>
-                  <IssueCard
-                    issue={issue}
-                    wishlisted={wishlistIds.has(issue.id)}
-                    onToggle={handleToggle}
-                  />
+                  <IssueCard issue={issue} wishlisted={wishlistIds.has(issue.id)} onToggle={handleToggle} />
                 </div>
               ))}
             </div>
           </div>
         ))}
+
+        {/* Load more */}
+        {!loading && fedResult?.hasMore && (
+          <div style={{ textAlign: "center", paddingBottom: "16px" }}>
+            <button
+              onClick={() => handleSearch(currentPage + 1)}
+              disabled={loadingMore}
+              style={{
+                background: "transparent", border: "1px solid rgba(245,181,72,0.30)",
+                borderRadius: "10px", padding: "10px 28px",
+                fontSize: "13px", fontWeight: 600, color: "#F5B548",
+                cursor: loadingMore ? "not-allowed" : "pointer",
+                opacity: loadingMore ? 0.6 : 1, transition: "all 0.15s",
+              }}
+            >{loadingMore ? "Loading…" : `Load more (${totalCount - shownCount} remaining)`}</button>
+          </div>
+        )}
       </div>
 
       <style>{`

@@ -69,7 +69,7 @@ export const fetchAllSources = fetchUpcomingComics;
 /**
  * Metron encodes variants in the issue number field.
  * Examples: "1B", "1C", "1 (Variant)", "1 (Directors Cut)",
- *           "½", "1 (2nd Print)", "1A" (A cover = main, B+ = variants)
+ *           "1/2", "1 (2nd Print)", "1A" (A cover = main, B+ = variants)
  */
 export function detectVariant(number: string): boolean {
   const n = number.trim();
@@ -88,7 +88,7 @@ export function detectVariant(number: string): boolean {
 }
 
 function annotateVariant(issue: UpcomingIssue): UpcomingIssue {
-  if (issue.isVariant !== undefined) return issue; // already set (Marvel/CV)
+  if (issue.isVariant !== undefined) return issue; // already set
   return { ...issue, isVariant: detectVariant(issue.number) };
 }
 
@@ -166,4 +166,3 @@ export function isCoverOnlyRole(role: string | null | undefined): boolean {
   const r = role.toLowerCase();
   return r.includes("cover") && !r.includes("interior") && !r.includes("pencil");
 }
-
