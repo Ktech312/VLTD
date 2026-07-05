@@ -1415,7 +1415,7 @@ export default function VaultUniversePage() {
                 />
               </div>
             ) : (
-              <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                 {filteredItems.map((item) => {
                   const intelligence = intelligenceMap[item.id];
                   const readiness = intelligence?.readiness ?? "Low";
