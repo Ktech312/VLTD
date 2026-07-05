@@ -8,7 +8,7 @@ import {
   roleLabel,
   isCoverOnlyRole,
   type UpcomingIssue,
-  type FederatedResult,
+  type UpcomingComicsResult,
 } from "@/lib/comicUpcoming";
 import {
   loadWishlistedIds,
@@ -27,14 +27,6 @@ const PUBLISHERS = [
   { label: "BOOM!",      value: "BOOM! Studios" },
 ];
 
-/* ── Source badge colours ────────────────────────────────── */
-
-const SOURCE_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  marvel:    { bg: "rgba(220,40,40,0.18)",  color: "#E05555", label: "Marvel" },
-  metron:    { bg: "rgba(90,130,200,0.18)", color: "#7AABF0", label: "Metron" },
-  comicvine: { bg: "rgba(80,170,100,0.18)", color: "#65C97A", label: "CV" },
-};
-
 /* ── Issue card ──────────────────────────────────────────── */
 
 function IssueCard({
@@ -47,14 +39,7 @@ function IssueCard({
   onToggle: (issue: UpcomingIssue) => void;
 }) {
   const [imgError, setImgError] = useState(false);
-  const metronUrl = issue.source === "metron"
-    ? `https://metron.cloud/issue/${issue.id}/`
-    : issue.source === "marvel"
-    ? `https://www.marvel.com/comics/issue/${issue.id}/`
-    : `https://comicvine.gamespot.com/issue/4000-${issue.id}/`;
-
-  const src = issue.source ?? "metron";
-  const srcStyle = SOURCE_STYLE[src] ?? SOURCE_STYLE.metron;
+  const metronUrl = `https://metron.cloud/issue/${issue.id}/`;
   const role = roleLabel(issue.creatorRole);
   const isCoverOnly = isCoverOnlyRole(issue.creatorRole);
 
@@ -109,16 +94,6 @@ function IssueCard({
             VARIANT
           </div>
         )}
-
-        {/* Source badge */}
-        <div style={{
-          position: "absolute", bottom: "6px", left: "6px",
-          background: srcStyle.bg, backdropFilter: "blur(4px)",
-          borderRadius: "4px", padding: "2px 6px",
-          fontSize: "9px", fontWeight: 700, color: srcStyle.color, letterSpacing: "0.04em",
-        }}>
-          {srcStyle.label}
-        </div>
 
         {/* Heart / wishlist toggle */}
         <button
@@ -183,33 +158,6 @@ function IssueCard({
   );
 }
 
-/* ── Source summary bar ──────────────────────────────────── */
-
-function SourceSummary({ sources }: { sources: FederatedResult["sources"] }) {
-  const parts = [
-    { key: "marvel",    ...SOURCE_STYLE.marvel,    count: sources.marvel.count },
-    { key: "metron",    ...SOURCE_STYLE.metron,    count: sources.metron.count },
-    { key: "comicvine", ...SOURCE_STYLE.comicvine, count: sources.comicvine.count },
-  ].filter((s) => s.count > 0);
-
-  if (!parts.length) return null;
-
-  return (
-    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "14px", alignItems: "center" }}>
-      <span style={{ fontSize: "11px", color: "rgba(240,234,214,0.35)" }}>Sources:</span>
-      {parts.map((s) => (
-        <span key={s.key} style={{
-          fontSize: "11px", fontWeight: 700,
-          background: s.bg, color: s.color,
-          borderRadius: "6px", padding: "2px 8px",
-        }}>
-          {s.label} {s.count}
-        </span>
-      ))}
-    </div>
-  );
-}
-
 /* ── Main page ───────────────────────────────────────────── */
 
 export default function UpcomingPage() {
@@ -219,7 +167,7 @@ export default function UpcomingPage() {
   const [days, setDays]           = useState(90);
   const [allMode, setAllMode]     = useState(false);
   const [loading, setLoading]     = useState(false);
-  const [fedResult, setFedResult] = useState<FederatedResult | null>(null);
+  const [fedResult, setFedResult] = useState<UpcomingComicsResult | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [wishlistIds, setWishlistIds] = useState<Set<number>>(new Set());
   const [toggling, setToggling]   = useState<Set<number>>(new Set());
@@ -251,7 +199,7 @@ export default function UpcomingPage() {
       setFedResult(null);
       setNotFound(true);
     } else {
-      setFedResult(data);
+      setFedResult(data as UpcomingComicsResult);
       setCurrentPage(pg);
     }
     setLoading(false);
@@ -288,7 +236,8 @@ export default function UpcomingPage() {
   }
 
   const groups = fedResult ? groupByStoreDate(fedResult.results) : [];
-  const totalCount = fedResult?.results.length ?? 0;
+  const totalCount = fedResult?.count ?? 0;
+  const variantCount = fedResult?.results.filter((r) => r.isVariant).length ?? 0;
   const creatorName = fedResult?.resolvedCreator?.name;
 
   return (
@@ -424,11 +373,11 @@ export default function UpcomingPage() {
               <>Showing work by <strong style={{ color: "#F5B548" }}>{creatorName}</strong>{" · "}</>
             ) : null}
             {totalCount} issue{totalCount !== 1 ? "s" : ""}{allMode ? " (all time)" : ` in next ${days} days`}
+            {variantCount > 0 && (
+              <> · <span style={{ color: "rgba(180,100,220,0.8)" }}>{variantCount} variant{variantCount !== 1 ? "s" : ""}</span></>
+            )}
           </div>
         )}
-
-        {/* Source breakdown */}
-        {fedResult && <SourceSummary sources={fedResult.sources} />}
 
         {/* Not found */}
         {notFound && !loading && (
@@ -451,10 +400,9 @@ export default function UpcomingPage() {
               Find what&apos;s dropping soon
             </div>
             <div style={{ fontSize: "13px", lineHeight: 1.6 }}>
-              Search by artist or series. Results pull from{" "}
-              <span style={{ color: "rgba(245,181,72,0.6)" }}>Metron</span>,{" "}
-              <span style={{ color: "#E05555", opacity: 0.8 }}>Marvel</span> &amp;{" "}
-              <span style={{ color: "#65C97A", opacity: 0.8 }}>ComicVine</span>.
+              Search by artist or series — data from{" "}
+              <span style={{ color: "rgba(245,181,72,0.6)" }}>Metron</span>.
+              Variants are detected automatically.
             </div>
           </div>
         )}
@@ -489,7 +437,7 @@ export default function UpcomingPage() {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "10px" }}>
               {group.issues.map((issue) => (
-                <IssueCard key={`${issue.source}-${issue.id}`}
+                <IssueCard key={issue.id}
                   issue={issue}
                   wishlisted={wishlistIds.has(issue.id)}
                   onToggle={handleToggle}

@@ -18,9 +18,9 @@ export type UpcomingIssue = {
   storeDate: string | null;
   coverDate: string | null;
   imageUrl: string | null;
-  // Multi-source fields (populated by Marvel / ComicVine routes)
+  // Multi-source fields
   source?: "metron" | "marvel" | "comicvine";
-  creatorRole?: string | null;       // e.g. "cover artist", "penciler", "writer"
+  creatorRole?: string | null;
   isVariant?: boolean;
   variantDescription?: string | null;
 };
@@ -166,7 +166,6 @@ export async function GET(req: NextRequest) {
     }
 
     const params = new URLSearchParams({
-      // upcoming mode: soonest first; all mode: most recent first (descending)
       ordering: allIssues ? "-store_date" : "store_date",
       page: String(page),
       page_size: String(pageSize),

@@ -14,7 +14,7 @@ import {
   roleLabel,
   isCoverOnlyRole,
   type UpcomingIssue,
-  type FederatedResult,
+  type UpcomingComicsResult,
 } from "@/lib/comicUpcoming";
 import {
   loadWishlistedIds,
@@ -34,14 +34,6 @@ function IconHeart({ size = 24, style }: { size?: number; style?: Record<string,
     </svg>
   );
 }
-
-/* ── Source styles ───────────────────────────────────────── */
-
-const SOURCE_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  marvel:    { bg: "rgba(220,40,40,0.18)",  color: "#E05555", label: "Marvel" },
-  metron:    { bg: "rgba(90,130,200,0.18)", color: "#7AABF0", label: "Metron" },
-  comicvine: { bg: "rgba(80,170,100,0.18)", color: "#65C97A", label: "CV" },
-};
 
 /* ── Publisher pills ─────────────────────────────────────── */
 
@@ -67,14 +59,7 @@ function ComicSearchCard({
   onToggle: (issue: UpcomingIssue) => void;
 }) {
   const [imgError, setImgError] = useState(false);
-  const href = issue.source === "marvel"
-    ? `https://www.marvel.com/comics/issue/${issue.id}/`
-    : issue.source === "comicvine"
-    ? `https://comicvine.gamespot.com/issue/4000-${issue.id}/`
-    : `https://metron.cloud/issue/${issue.id}/`;
-
-  const src = issue.source ?? "metron";
-  const srcStyle = SOURCE_STYLE[src] ?? SOURCE_STYLE.metron;
+  const href = `https://metron.cloud/issue/${issue.id}/`;
   const role = roleLabel(issue.creatorRole);
   const coverOnly = isCoverOnlyRole(issue.creatorRole);
 
@@ -113,14 +98,6 @@ function ComicSearchCard({
             fontSize: "8px", fontWeight: 700, color: "#fff", letterSpacing: "0.05em",
           }}>VARIANT</div>
         )}
-
-        {/* Source badge */}
-        <div style={{
-          position: "absolute", bottom: "4px", left: "4px",
-          background: srcStyle.bg, backdropFilter: "blur(4px)",
-          borderRadius: "3px", padding: "1px 5px",
-          fontSize: "8px", fontWeight: 700, color: srcStyle.color,
-        }}>{srcStyle.label}</div>
 
         {/* Heart button */}
         <button
@@ -171,28 +148,6 @@ function ComicSearchCard({
   );
 }
 
-/* ── Source summary inside panel ─────────────────────────── */
-
-function SourceSummary({ sources }: { sources: FederatedResult["sources"] }) {
-  const parts = [
-    { key: "marvel",    ...SOURCE_STYLE.marvel,    count: sources.marvel.count },
-    { key: "metron",    ...SOURCE_STYLE.metron,    count: sources.metron.count },
-    { key: "comicvine", ...SOURCE_STYLE.comicvine, count: sources.comicvine.count },
-  ].filter((s) => s.count > 0);
-  if (!parts.length) return null;
-  return (
-    <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", marginBottom: "10px", alignItems: "center" }}>
-      <span style={{ fontSize: "10px", color: "rgba(240,234,214,0.35)" }}>Sources:</span>
-      {parts.map((s) => (
-        <span key={s.key} style={{
-          fontSize: "10px", fontWeight: 700,
-          background: s.bg, color: s.color, borderRadius: "5px", padding: "2px 7px",
-        }}>{s.label} {s.count}</span>
-      ))}
-    </div>
-  );
-}
-
 /* ── Comic search panel ─────────────────────────────────── */
 
 function ComicSearchPanel({
@@ -209,7 +164,7 @@ function ComicSearchPanel({
   const [days, setDays] = useState(90);
   const [allMode, setAllMode] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [fedResult, setFedResult] = useState<FederatedResult | null>(null);
+  const [fedResult, setFedResult] = useState<UpcomingComicsResult | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [notFound, setNotFound] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -235,14 +190,14 @@ function ComicSearchPanel({
       setFedResult(null);
       setNotFound(true);
     } else {
-      setFedResult(data);
+      setFedResult(data as UpcomingComicsResult);
       setCurrentPage(pg);
     }
     setLoading(false);
   }
 
   const groups = fedResult ? groupByStoreDate(fedResult.results) : [];
-  const totalCount = fedResult?.results.length ?? 0;
+  const totalCount = fedResult?.count ?? 0;
 
   return (
     <div style={{
@@ -262,7 +217,7 @@ function ComicSearchPanel({
           <div style={{ textAlign: "left" }}>
             <div style={{ fontSize: "15px", fontWeight: 700 }}>Upcoming Comics</div>
             <div style={{ fontSize: "12px", color: "rgba(240,234,214,0.4)", marginTop: "1px" }}>
-              Search Metron · Marvel · ComicVine — save to wishlist
+              Search Metron — save upcoming issues to wishlist
             </div>
           </div>
         </div>
@@ -349,9 +304,6 @@ function ComicSearchPanel({
             </div>
           </div>
 
-          {/* Source summary */}
-          {fedResult && <SourceSummary sources={fedResult.sources} />}
-
           {/* Creator / count */}
           {fedResult && (
             <div style={{ fontSize: "12px", color: "rgba(245,181,72,0.7)", marginBottom: "10px" }}>
@@ -359,13 +311,14 @@ function ComicSearchPanel({
                 <><strong style={{ color: "#F5B548" }}>{fedResult.resolvedCreator.name}</strong>{" · "}</>
               )}
               {totalCount} issue{totalCount !== 1 ? "s" : ""}{allMode ? " (all time)" : ` in next ${days} days`}
+              {(() => { const vc = fedResult.results.filter((r) => r.isVariant).length; return vc > 0 ? <> · <span style={{ color: "rgba(180,100,220,0.8)" }}>{vc} variant{vc !== 1 ? "s" : ""}</span></> : null; })()}
             </div>
           )}
 
           {/* Not found */}
           {notFound && !loading && (
             <div style={{ textAlign: "center", padding: "20px 16px", color: "rgba(240,234,214,0.35)" }}>
-              <div style={{ fontSize: "13px", fontWeight: 600 }}>Nothing found across all sources</div>
+              <div style={{ fontSize: "13px", fontWeight: 600 }}>Nothing found on Metron</div>
               <div style={{ fontSize: "12px", marginTop: "4px" }}>
                 {searchMode === "creator" ? 'Use the full name — e.g. "Peach Momoko"' : "Try a partial title"}
               </div>
@@ -394,7 +347,7 @@ function ComicSearchPanel({
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: "8px" }}>
                 {group.issues.map((issue) => (
                   <ComicSearchCard
-                    key={`${issue.source}-${issue.id}`}
+                    key={issue.id}
                     issue={issue}
                     wishlisted={wishlistIds.has(issue.id)}
                     onToggle={onToggle}
