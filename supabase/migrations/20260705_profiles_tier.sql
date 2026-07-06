@@ -5,8 +5,15 @@
 -- ─────────────────────────────────────────────────────────────
 
 alter table public.profiles
-  add column if not exists tier text
-  check (tier in ('FREE', 'MID', 'FULL'));
+  add column if not exists tier text;
+
+-- Safe to re-run: drop the CHECK + policies first, then recreate.
+alter table public.profiles drop constraint if exists profiles_tier_check;
+alter table public.profiles
+  add constraint profiles_tier_check check (tier is null or tier in ('FREE', 'MID', 'FULL'));
+
+drop policy if exists "admins_read_all_profiles" on public.profiles;
+drop policy if exists "admins_update_all_profiles" on public.profiles;
 
 -- Admins (user_roles) and the owner can read every profile
 create policy "admins_read_all_profiles" on public.profiles
