@@ -1,33 +1,36 @@
 import { NextResponse } from "next/server";
-import Database from "better-sqlite3";
+import { createClient, type Client } from "@libsql/client";
 import path from "path";
 
 /**
  * GET /api/gcd-search
  *
- * Searches the local GCD (Grand Comics Database) SQLite file.
+ * Searches the Grand Comics Database (GCD) via libSQL.
  *
- * The GCD provides a free monthly MySQL dump at https://www.comics.org/download/
- * (registration required). Convert to SQLite with `mysql2sqlite` or use
- * the import script at scripts/gcd-import.ts.
+ * Data source (chosen automatically):
+ *   • Production: Turso (libSQL) — set TURSO_DATABASE_URL + TURSO_AUTH_TOKEN.
+ *   • Local dev:  the trimmed SQLite file at <project root>/data/gcd.db
+ *                 (built with `node --experimental-sqlite scripts/gcd-trim.js`).
  *
- * Expected SQLite file location: <project root>/data/gcd.db
+ * The trimmed DB holds only gcd_publisher / gcd_series / gcd_issue — enough to
+ * match a scanned comic to its series, issue number, publisher, dates, ISBN,
+ * and barcode. Creator/story search is not included (those tables are ~16M rows
+ * and blow past serverless size limits).
  *
  * Query params:
  *   series=string    → search by series name (LIKE %series%)
- *   issue=string     → search by issue number
- *   publisher=string → filter by publisher name
- *   creator=string   → search by creator name (joins gcd_credit + gcd_creator)
+ *   issue=string     → filter by exact issue number
+ *   publisher=string → filter by publisher name (LIKE %publisher%)
+ *   barcode=string   → exact barcode match
+ *   isbn=string      → exact ISBN match (valid_isbn)
  *   page=number      → page (default 1)
  *   per_page=number  → results per page (default 25, max 100)
- *
- * Returns:
- *   { results: GcdIssue[], count: number, page: number, hasMore: boolean }
- *
- * If the GCD database hasn't been imported yet, returns a 503 with setup instructions.
  */
 
-const GCD_DB_PATH = path.join(process.cwd(), "data", "gcd.db");
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const LOCAL_DB_PATH = path.join(process.cwd(), "data", "gcd.db");
 
 export type GcdIssue = {
   id: number;
@@ -42,48 +45,30 @@ export type GcdIssue = {
   isbn: string | null;
   barcode: string | null;
   notes: string | null;
+  variantName: string | null;
   coverImageUrl: string | null;
 };
 
-/* ── DB singleton (module-level, survives hot reload in dev) ─── */
+/* ── libSQL client singleton ─────────────────────────────────── */
 
-let db: ReturnType<typeof Database> | null = null;
-let dbError: string | null = null;
+let client: Client | null = null;
+let clientError: string | null = null;
 
-function getDb(): ReturnType<typeof Database> {
-  if (db) return db;
-  if (dbError) throw new Error(dbError);
+function getClient(): Client {
+  if (client) return client;
+  if (clientError) throw new Error(clientError);
   try {
-    db = new Database(GCD_DB_PATH, { readonly: true, fileMustExist: true });
-    db.pragma("journal_mode = WAL");
-    db.pragma("query_only = true");
-    return db;
+    const tursoUrl = process.env.TURSO_DATABASE_URL;
+    const tursoToken = process.env.TURSO_AUTH_TOKEN;
+    client = tursoUrl
+      ? createClient({ url: tursoUrl, authToken: tursoToken })
+      : createClient({ url: `file:${LOCAL_DB_PATH}` });
+    return client;
   } catch (err) {
-    dbError = err instanceof Error ? err.message : String(err);
-    throw new Error(dbError);
+    clientError = err instanceof Error ? err.message : String(err);
+    throw new Error(clientError);
   }
 }
-
-/* ── Search logic ────────────────────────────────────────────── */
-
-/**
- * GCD MySQL schema key tables (abbreviated):
- *
- *  gcd_series      id, name, publisher_id, year_began, year_ended, country_id
- *  gcd_issue       id, series_id, number, publication_date, on_sale_date,
- *                  cover_date, price, page_count, isbn, barcode, notes
- *  gcd_publisher   id, name, country_id
- *  gcd_story       id, issue_id, title, type_id, feature, page_count
- *  gcd_credit      id, story_id, creator_id, credit_type_id
- *  gcd_creator     id, gcd_official_name, disambiguation
- *
- * We build a flattened view joining series + issue + publisher.
- * Creator joins require joining through story → credit → creator.
- *
- * GCD cover images: https://files.comics.org/img/gcd/covers_by_id/
- *   No guaranteed URL pattern. They provide cover scans separately.
- *   We return null for coverImageUrl — the UI can show the GCD page link instead.
- */
 
 type Row = {
   id: number;
@@ -92,28 +77,30 @@ type Row = {
   publisher: string;
   publication_date: string | null;
   on_sale_date: string | null;
-  cover_date: string | null;
+  key_date: string | null;
   page_count: number | null;
   price: string | null;
   isbn: string | null;
   barcode: string | null;
   notes: string | null;
+  variant_name: string | null;
 };
 
 function rowToIssue(row: Row): GcdIssue {
   return {
-    id: row.id,
+    id: Number(row.id),
     series: row.series,
     number: row.number,
     publisher: row.publisher,
-    publicationDate: row.publication_date ?? null,
-    onSaleDate: row.on_sale_date ?? null,
-    coverDate: row.cover_date ?? null,
-    pageCount: row.page_count ?? null,
-    price: row.price ?? null,
-    isbn: row.isbn ?? null,
-    barcode: row.barcode ?? null,
-    notes: row.notes ?? null,
+    publicationDate: row.publication_date || null,
+    onSaleDate: row.on_sale_date || null,
+    coverDate: row.key_date || null,
+    pageCount: row.page_count != null ? Number(row.page_count) : null,
+    price: row.price || null,
+    isbn: row.isbn || null,
+    barcode: row.barcode || null,
+    notes: row.notes || null,
+    variantName: row.variant_name || null,
     coverImageUrl: null, // GCD cover URLs require their own CDN mapping
   };
 }
@@ -125,32 +112,37 @@ export async function GET(req: Request) {
   const series    = (searchParams.get("series")    ?? "").trim();
   const issue     = (searchParams.get("issue")     ?? "").trim();
   const publisher = (searchParams.get("publisher") ?? "").trim();
-  const creator   = (searchParams.get("creator")   ?? "").trim();
+  const barcode   = (searchParams.get("barcode")   ?? "").trim();
+  const isbn      = (searchParams.get("isbn")       ?? "").trim();
   const page      = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
   const perPage   = Math.min(100, Math.max(1, parseInt(searchParams.get("per_page") ?? "25", 10)));
   const offset    = (page - 1) * perPage;
 
-  if (!series && !creator && !publisher) {
+  if (searchParams.get("creator")) {
     return NextResponse.json(
-      { error: "Provide at least one of: series, creator, publisher" },
+      { error: "Creator search is not available. Search by series, publisher, barcode, or ISBN." },
       { status: 400 }
     );
   }
 
-  let database: ReturnType<typeof Database>;
+  if (!series && !publisher && !barcode && !isbn) {
+    return NextResponse.json(
+      { error: "Provide at least one of: series, publisher, barcode, isbn" },
+      { status: 400 }
+    );
+  }
+
+  let db: Client;
   try {
-    database = getDb();
+    db = getClient();
   } catch {
     return NextResponse.json(
       {
-        error: "GCD database not found",
+        error: "GCD database not configured",
         setup: [
-          "1. Register at https://www.comics.org/accounts/register/",
-          "2. Download the latest dump from https://www.comics.org/download/",
-          "3. Run: node scripts/gcd-import.js  (converts MySQL dump → SQLite at data/gcd.db)",
-          "4. Restart the dev server",
+          "Local: build data/gcd.db with `node --experimental-sqlite scripts/gcd-trim.js <full-dump.db>`",
+          "Production: set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in the environment.",
         ],
-        estimatedSize: "~400-600 MB compressed, ~2-3 GB SQLite",
       },
       { status: 503 }
     );
@@ -158,79 +150,31 @@ export async function GET(req: Request) {
 
   try {
     const conditions: string[] = [];
-    const params: (string | number)[] = [];
+    const args: (string | number)[] = [];
 
     if (series) {
       conditions.push("s.name LIKE ?");
-      params.push(`%${series}%`);
+      args.push(`%${series}%`);
     }
     if (publisher) {
       conditions.push("p.name LIKE ?");
-      params.push(`%${publisher}%`);
+      args.push(`%${publisher}%`);
     }
     if (issue) {
       conditions.push("i.number = ?");
-      params.push(issue);
+      args.push(issue);
+    }
+    if (barcode) {
+      conditions.push("i.barcode = ?");
+      args.push(barcode);
+    }
+    if (isbn) {
+      conditions.push("(i.valid_isbn = ? OR i.isbn = ?)");
+      args.push(isbn, isbn);
     }
 
     const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
-    if (creator) {
-      // Creator search requires joining through stories and credits
-      const creatorQuery = `
-        SELECT DISTINCT
-          i.id,
-          s.name AS series,
-          i.number,
-          p.name AS publisher,
-          i.publication_date,
-          i.on_sale_date,
-          i.cover_date,
-          i.page_count,
-          i.price,
-          i.isbn,
-          i.barcode,
-          i.notes
-        FROM gcd_issue i
-        JOIN gcd_series s ON i.series_id = s.id
-        JOIN gcd_publisher p ON s.publisher_id = p.id
-        JOIN gcd_story st ON st.issue_id = i.id
-        JOIN gcd_credit c ON c.story_id = st.id
-        JOIN gcd_creator cr ON cr.id = c.creator_id
-        ${whereClause ? whereClause + " AND" : "WHERE"}
-          cr.gcd_official_name LIKE ?
-        ORDER BY s.name, i.number
-        LIMIT ? OFFSET ?
-      `;
-
-      const countQuery = `
-        SELECT COUNT(DISTINCT i.id) AS cnt
-        FROM gcd_issue i
-        JOIN gcd_series s ON i.series_id = s.id
-        JOIN gcd_publisher p ON s.publisher_id = p.id
-        JOIN gcd_story st ON st.issue_id = i.id
-        JOIN gcd_credit c ON c.story_id = st.id
-        JOIN gcd_creator cr ON cr.id = c.creator_id
-        ${whereClause ? whereClause + " AND" : "WHERE"}
-          cr.gcd_official_name LIKE ?
-      `;
-
-      const creatorParam = `%${creator}%`;
-      const allParams = [...params, creatorParam];
-
-      const count = (database.prepare(countQuery).get([...allParams]) as { cnt: number }).cnt;
-      const rows  = database.prepare(creatorQuery).all([...allParams, perPage, offset]) as Row[];
-
-      return NextResponse.json({
-        results: rows.map(rowToIssue),
-        count,
-        page,
-        perPage,
-        hasMore: offset + rows.length < count,
-      });
-    }
-
-    // Series / publisher / issue search (no creator join)
     const mainQuery = `
       SELECT
         i.id,
@@ -239,17 +183,18 @@ export async function GET(req: Request) {
         p.name AS publisher,
         i.publication_date,
         i.on_sale_date,
-        i.cover_date,
+        i.key_date,
         i.page_count,
         i.price,
         i.isbn,
         i.barcode,
-        i.notes
+        i.notes,
+        i.variant_name
       FROM gcd_issue i
       JOIN gcd_series s ON i.series_id = s.id
       JOIN gcd_publisher p ON s.publisher_id = p.id
       ${whereClause}
-      ORDER BY s.name, i.number
+      ORDER BY (i.key_date IS NULL OR i.key_date = ''), s.name, CAST(i.number AS INTEGER), i.number
       LIMIT ? OFFSET ?
     `;
 
@@ -261,8 +206,11 @@ export async function GET(req: Request) {
       ${whereClause}
     `;
 
-    const count = (database.prepare(countQuery).get(params) as { cnt: number }).cnt;
-    const rows  = database.prepare(mainQuery).all([...params, perPage, offset]) as Row[];
+    const countResult = await db.execute({ sql: countQuery, args });
+    const count = Number((countResult.rows[0] as unknown as { cnt: number })?.cnt ?? 0);
+
+    const rowsResult = await db.execute({ sql: mainQuery, args: [...args, perPage, offset] });
+    const rows = rowsResult.rows as unknown as Row[];
 
     return NextResponse.json({
       results: rows.map(rowToIssue),
