@@ -590,6 +590,16 @@ export default function AddPage() {
         newlyFilled.add(key);
       };
 
+      // Taxonomy fields: a detected universe/category may CORRECT a remembered
+      // value from the last item (e.g. camera sees a card while the form still
+      // says Gears & Gasoline). User locks always win.
+      const applyTaxonomy = (key: keyof FormValues, value: string | undefined, locked: boolean) => {
+        if (!value?.trim() || locked) return;
+        if (String(next[key] ?? "").trim() === value.trim()) return;
+        next[key] = value;
+        newlyFilled.add(key);
+      };
+
       apply("title", fields.title);
       apply("subtitle", fields.subtitle);
       apply("number", fields.number);
@@ -597,10 +607,10 @@ export default function AddPage() {
       apply("conditionReason", fields.conditionReason);
       apply("conditionSource", fields.conditionSource);
       apply("certNumber", fields.certNumber);
-      apply("universe", fields.universe);
-      apply("category", fields.category);
-      apply("categoryLabel", fields.categoryLabel);
-      apply("subcategoryLabel", fields.subcategoryLabel);
+      applyTaxonomy("universe", fields.universe, locks.universe);
+      applyTaxonomy("category", fields.category, locks.category || locks.categoryLabel);
+      applyTaxonomy("categoryLabel", fields.categoryLabel, locks.category || locks.categoryLabel);
+      applyTaxonomy("subcategoryLabel", fields.subcategoryLabel, locks.subcategoryLabel);
       apply("serialNumber", fields.serialNumber);
       apply("notes", fields.notes);
 

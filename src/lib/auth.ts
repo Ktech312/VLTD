@@ -15,6 +15,7 @@ export type ProfileRow = {
   is_public?: boolean | null;
   created_at?: string;
   is_default?: boolean | null;
+  tier?: string | null;
   // Contact info (private, not on public profile)
   full_name?: string | null;
   phone?: string | null;
@@ -542,6 +543,17 @@ export async function getOnboardingStatus() {
 
   if (activeProfile && activeProfile.id !== storedId) {
     setStoredActiveProfileId(activeProfile.id);
+  }
+
+  // Backend tier wins: sync the profile's tier into the local subscription state
+  if (
+    typeof window !== "undefined" &&
+    (activeProfile?.tier === "FREE" || activeProfile?.tier === "MID" || activeProfile?.tier === "FULL")
+  ) {
+    const { getTierSafe, setTierSafe } = await import("./subscription");
+    if (getTierSafe() !== activeProfile.tier) {
+      setTierSafe(activeProfile.tier);
+    }
   }
 
   return {
