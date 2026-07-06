@@ -1,20 +1,7 @@
 "use client";
 // v2 carousel layout
-import { useState, type ChangeEvent } from "react";
-
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
-import { type ScanItemType } from "@/lib/scanAutofill";
 import type { ScanSessionState } from "@/lib/scanners/scanSession";
-
-function selectClass() {
-  return "h-9 rounded-lg bg-[color:var(--pill)] px-2 text-xs ring-1 ring-[color:var(--border)] focus:outline-none";
-}
-
-function actionButtonClass(primary = false) {
-  return primary
-    ? "min-h-8 rounded-full bg-[color:var(--pill-active-bg)] px-3 py-1.5 text-xs font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)] disabled:opacity-40"
-    : "min-h-8 rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-40";
-}
 
 function chipClass(active = false) {
   return active
@@ -25,46 +12,35 @@ function chipClass(active = false) {
 
 export default function ScanPanel({
   session,
-  scanType,
   isScanning,
   isBookLookupRunning,
   isComicLookupRunning,
   isUpcLookupRunning = false,
   isVisionLookupRunning = false,
   saveScanAsPhoto,
-  onScanTypeChange,
   onUseCamera,
   onUploadImage,
   onScanAutofill,
   onOpenImage,
   onCropImage = () => {},
-  onBookLookup,
-  onComicLookup,
-  onUpcLookup = () => {},
   onClearImage,
   onToggleSaveScanAsPhoto,
   capturedPhotos = [],
   activeCapturedPhotoId = "",
   onSelectCapturedPhoto,
-  onOpenBarcodeScanner,
 }: {
   session: ScanSessionState;
-  scanType: ScanItemType;
   isScanning: boolean;
   isBookLookupRunning: boolean;
   isComicLookupRunning: boolean;
   isUpcLookupRunning?: boolean;
   isVisionLookupRunning?: boolean;
   saveScanAsPhoto: boolean;
-  onScanTypeChange: (value: ScanItemType) => void;
   onUseCamera: () => void;
   onUploadImage: () => void;
   onScanAutofill: () => void;
   onOpenImage?: () => void;
   onCropImage?: () => void;
-  onBookLookup: () => void;
-  onComicLookup: () => void;
-  onUpcLookup?: () => void;
   onClearImage: () => void;
   onToggleSaveScanAsPhoto: (checked: boolean) => void;
   capturedPhotos?: Array<{
@@ -74,14 +50,12 @@ export default function ScanPanel({
   }>;
   activeCapturedPhotoId?: string;
   onSelectCapturedPhoto?: (id: string) => void;
-  onOpenBarcodeScanner?: () => void;
 }) {
   const previewUrl = session.image?.previewUrl ?? "";
   const hasImage = Boolean(previewUrl);
   const review = session.review;
   const isIdentifying =
     isScanning || isBookLookupRunning || isComicLookupRunning || isUpcLookupRunning || isVisionLookupRunning;
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
     <section className="rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
@@ -218,27 +192,6 @@ export default function ScanPanel({
             </button>
           </div>
 
-          {onOpenBarcodeScanner ? (
-            <button
-              type="button"
-              onClick={onOpenBarcodeScanner}
-              disabled={isIdentifying}
-              className="flex w-full items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition disabled:opacity-40"
-              style={{ background: "rgba(245,181,72,0.10)", color: "#F5B548", border: "1px solid rgba(245,181,72,0.35)" }}
-            >
-              {/* Barcode icon */}
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <rect x="1" y="3" width="2" height="18" rx="0.5"/>
-                <rect x="5" y="3" width="1" height="18" rx="0.5"/>
-                <rect x="8" y="3" width="3" height="18" rx="0.5"/>
-                <rect x="13" y="3" width="2" height="18" rx="0.5"/>
-                <rect x="17" y="3" width="1" height="18" rx="0.5"/>
-                <rect x="20" y="3" width="3" height="18" rx="0.5"/>
-              </svg>
-              Scan Barcode
-            </button>
-          ) : null}
-
           <button
             type="button"
             onClick={onScanAutofill}
@@ -255,83 +208,8 @@ export default function ScanPanel({
             </svg>
             {isIdentifying ? "Reading..." : hasImage ? "Auto Identify" : "Take a picture first"}
           </button>
-
-          <button
-            type="button"
-            onClick={() => setShowAdvanced((prev) => !prev)}
-            className={actionButtonClass()}
-          >
-            More Identify Options
-          </button>
         </div>
       </div>
-
-      {/* Identify Options overlay popup */}
-      {showAdvanced ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center px-4"
-          style={{ background: "rgba(0,0,0,0.72)", backdropFilter: "blur(6px)" }}
-          onClick={() => setShowAdvanced(false)}
-        >
-          <div
-            className="w-full max-w-sm rounded-[22px] bg-[color:var(--surface)] p-4 shadow-2xl ring-1 ring-[color:var(--border)]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-[11px] font-semibold tracking-[0.18em] text-[color:var(--muted2)]">IDENTIFY OPTIONS</span>
-              <button
-                type="button"
-                onClick={() => setShowAdvanced(false)}
-                className="rounded-full bg-[color:var(--pill)] px-3 py-1 text-xs ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]"
-              >
-                ✕
-              </button>
-            </div>
-
-            <label className="mb-1 block text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">IDENTIFY MODE</label>
-            <select
-              className={selectClass()}
-              value={scanType}
-              onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                onScanTypeChange(e.target.value as ScanItemType)
-              }
-            >
-              <option value="auto">Auto Detect</option>
-              <option value="comic">Comic</option>
-              <option value="card">Trading Card</option>
-              <option value="graded_card">Graded Card</option>
-              <option value="book">Book</option>
-            </select>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={onBookLookup}
-                disabled={!hasImage || isBookLookupRunning}
-                className={actionButtonClass()}
-              >
-                {isBookLookupRunning ? "Looking Up..." : "Book / ISBN"}
-              </button>
-              <button
-                type="button"
-                onClick={onComicLookup}
-                disabled={!hasImage || isComicLookupRunning}
-                className={actionButtonClass()}
-              >
-                {isComicLookupRunning ? "Scanning..." : "Comic Scan"}
-              </button>
-              <button
-                type="button"
-                onClick={onUpcLookup}
-                disabled={(!hasImage && !session.barcodeDigits) || isUpcLookupRunning}
-                className={actionButtonClass()}
-              >
-                {isUpcLookupRunning ? "Looking Up..." : "Product Barcode"}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </section>
   );
 }

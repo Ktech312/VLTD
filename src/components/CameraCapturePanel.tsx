@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import ScanCropEditor from "@/components/ScanCropEditor";
+import { scanBarcodeFromVideoFrame, type BarcodeScanResult } from "@/lib/scanners/barcodeScanner";
 import {
   getUniverses,
   getCategories,
@@ -76,7 +77,7 @@ export default function CameraCapturePanel({
   title: string;
   description: string;
   universe?: string | null;
-  onCapture: (file: File) => void;
+  onCapture: (file: File, barcode?: BarcodeScanResult) => void;
   onBulkCapture?: (file: File, category: string, subcategory: string) => void;
   onClose: () => void;
   onUseFileInstead: () => void;
@@ -103,6 +104,8 @@ export default function CameraCapturePanel({
   const [blurAssessment, setBlurAssessment] = useState<BlurAssessment | null>(null);
   const [detectionState, setDetectionState] = useState<DetectionState>("idle");
   const [detectionBox, setDetectionBox] = useState<DetectionBox | null>(null);
+  const [liveBarcode, setLiveBarcode] = useState<BarcodeScanResult | null>(null);
+  const liveBarcodeRef = useRef<BarcodeScanResult | null>(null);
   const [isRemovingBackground, setIsRemovingBackground] = useState(false);
   const [backgroundError, setBackgroundError] = useState("");
   const [isBackgroundRemoved, setIsBackgroundRemoved] = useState(false);
@@ -368,6 +371,26 @@ export default function CameraCapturePanel({
     };
   }, [capturedPreviewUrl]);
 
+  // Live barcode read on the preview — like a native camera app. Stops after
+  // the first hit; the detected code is passed through on capture for identify.
+  useEffect(() => {
+    if (capturedFile || cameraError || !cameraReady) return;
+
+    const timer = window.setInterval(() => {
+      if (liveBarcodeRef.current) return;
+      const video = videoRef.current;
+      if (!video || video.readyState < 2 || !video.videoWidth) return;
+      const result = scanBarcodeFromVideoFrame(video);
+      if (result) {
+        liveBarcodeRef.current = result;
+        setLiveBarcode(result);
+        try { navigator.vibrate?.(60); } catch { /* ignore */ }
+      }
+    }, 450);
+
+    return () => window.clearInterval(timer);
+  }, [capturedFile, cameraError, cameraReady, retryCount]);
+
   const permissionLabel =
     permissionState === "granted"
       ? "Allowed"
@@ -527,7 +550,7 @@ export default function CameraCapturePanel({
           setBulkSaving(false);
         }
       } else {
-        onCapture(finishedFile);
+        onCapture(finishedFile, liveBarcodeRef.current ?? undefined);
       }
     } catch (error) {
       setCameraError(error instanceof Error ? error.message : "Failed to crop photo.");
@@ -547,6 +570,8 @@ export default function CameraCapturePanel({
     setCameraError("");
     setCameraReady(false);
     setBlurAssessment(null);
+    liveBarcodeRef.current = null;
+    setLiveBarcode(null);
     setSelectedFilterId("original");
     setAdjustments(DEFAULT_CAPTURE_ADJUSTMENTS);
     setBackgroundError("");
@@ -903,6 +928,19 @@ export default function CameraCapturePanel({
                     <div className="absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-black/45 px-2 py-0.5 text-[10px] font-semibold text-white/70 ring-1 ring-white/10">
                       Fill the guide, then tap capture
                     </div>
+                  </div>
+                ) : null}
+
+                {/* Live barcode badge — shows the moment a code is read off the feed */}
+                {!cameraError && liveBarcode ? (
+                  <div
+                    className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 flex items-center gap-2 rounded-full px-3 py-1.5 backdrop-blur"
+                    style={{ background: "rgba(0,0,0,0.72)", border: "1px solid rgba(74,222,128,0.5)" }}
+                  >
+                    <span className="text-sm font-bold" style={{ color: "#4ade80" }}>&#x2713;</span>
+                    <span className="text-[11px] font-semibold text-white">
+                      Barcode {liveBarcode.digits}
+                    </span>
                   </div>
                 ) : null}
 

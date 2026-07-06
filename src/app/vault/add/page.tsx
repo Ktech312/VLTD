@@ -353,7 +353,15 @@ export default function AddPage() {
   const [isUpcLookupRunning, setIsUpcLookupRunning] = useState(false);
   const [isVisionLookupRunning, setIsVisionLookupRunning] = useState(false);
   const [aiFilledFields, setAiFilledFields] = useState<Set<keyof FormValues>>(new Set());
-  const [scanType, setScanType] = useState<ScanItemType>("auto");
+  // Identify path derives from the universe/category the user already picked —
+  // no manual "identify mode" selector needed.
+  const scanType = useMemo<ScanItemType>(() => {
+    const cat = (values.categoryLabel || values.category || "").toLowerCase();
+    if (values.universe === "POP_CULTURE" && cat.includes("comic")) return "comic";
+    if (values.universe === "TCG" || values.universe === "SPORTS" || cat.includes("card")) return "card";
+    if (cat.includes("book")) return "book";
+    return "auto";
+  }, [values.universe, values.categoryLabel, values.category]);
   const [existingItems, setExistingItems] = useState<VaultItem[]>([]);
   const [duplicateWarning, setDuplicateWarning] = useState("");
   const [dropMode, setDropMode] = useState(false);
@@ -761,7 +769,7 @@ export default function AddPage() {
     openCameraFor("scan");
   }
 
-  function handleCapturedPhoto(file: File) {
+  function handleCapturedPhoto(file: File, barcode?: { digits?: string; rawValue?: string }) {
     setIsCameraPanelOpen(false);
 
     if (cameraTarget === "item") {
@@ -771,7 +779,17 @@ export default function AddPage() {
 
     addDraftMediaFiles([file]);
     replaceScanImage(file);
-    setStatus("Picture added. Run Auto Identify or save the item.");
+
+    // A barcode read live off the camera feed is more reliable than re-reading
+    // the compressed still — stash it so Auto Identify uses it directly.
+    if (barcode?.digits) {
+      const digits = barcode.digits;
+      const raw = barcode.rawValue ?? digits;
+      setScanSession((prev) => setScanSessionBarcode(prev, raw, digits));
+      setStatus("Picture + barcode captured. Run Auto Identify or save the item.");
+    } else {
+      setStatus("Picture added. Run Auto Identify or save the item.");
+    }
   }
 
   function replaceScanImage(file: File) {
@@ -1599,28 +1617,6 @@ export default function AddPage() {
     setStatus("Picture added. Crop if needed, then run Auto Identify or save the item.");
   }
 
-  async function handleUpcLookup() {
-    const manualDigits = String(values.serialNumber ?? "").replace(/\D/g, "").trim();
-    if (manualDigits) {
-      setStatus("Trying product lookup...");
-      await runUpcLookupForCode(manualDigits, manualDigits);
-      return;
-    }
-
-    // If there's an existing scan image, try to decode the barcode from it
-    if (scanFile) {
-      setStatus("Trying product lookup...");
-      const barcode = await scanBarcodeFromFile(scanFile);
-      if (barcode?.digits) {
-        await runUpcLookupForCode(barcode.digits, barcode.rawValue);
-        return;
-      }
-    }
-
-    // No digits and no image with a barcode — open the live barcode scanner
-    setIsBarcodeScanOpen(true);
-  }
-
   async function handleApplyScanCrop() {
     if (!scanFile) {
       setStatus("Take a photo first before cropping.");
@@ -1721,27 +1717,6 @@ export default function AddPage() {
     setStatus("Trying full auto-identify again...");
     const barcode = await scanBarcodeFromFile(scanFile);
     await handleIdentifyCurrentScan(scanFile, barcode ?? undefined);
-  }
-
-  async function handleBookIsbnLookup() {
-    if (!scanFile) {
-      setStatus("Take or choose an item picture first.");
-      return;
-    }
-
-    setStatus("Trying book / ISBN lookup...");
-    await runBookLookupForFile(scanFile);
-  }
-
-  async function handleComicLookup() {
-    if (!scanFile) {
-      setStatus("Take or choose an item picture first.");
-      return;
-    }
-
-    setStatus("Scanning comic regions...");
-    const barcode = await scanBarcodeFromFile(scanFile);
-    await runComicLookupForFile(scanFile, barcode?.digits, barcode?.rawValue);
   }
 
   function resetUnlockedFields() {
@@ -2146,23 +2121,17 @@ export default function AddPage() {
             <div ref={scanStageRef}>
               <ScanPanel
                 session={scanSession}
-                scanType={scanType}
                 isScanning={isScanning}
                 isBookLookupRunning={isBookLookupRunning}
                 isComicLookupRunning={isComicLookupRunning}
                 isUpcLookupRunning={isUpcLookupRunning}
                 isVisionLookupRunning={isVisionLookupRunning}
                 saveScanAsPhoto={saveScanAsPhoto}
-                onScanTypeChange={setScanType}
                 onUseCamera={openScanCamera}
                 onUploadImage={() => uploadInputRef.current?.click()}
                 onScanAutofill={() => void handleScanAutofill()}
                 onOpenImage={openActivePhotoOptions}
                 onCropImage={openScanCropEditor}
-                onBookLookup={() => void handleBookIsbnLookup()}
-                onComicLookup={() => void handleComicLookup()}
-                onUpcLookup={() => void handleUpcLookup()}
-                onOpenBarcodeScanner={() => setIsBarcodeScanOpen(true)}
                 onClearImage={clearScanImage}
                 onToggleSaveScanAsPhoto={handleToggleSaveScanAsPhoto}
                 capturedPhotos={draftMediaImages.map((image) => ({
