@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -482,20 +481,6 @@ export default function AddPage() {
 
   const canSave = useMemo(() => values.title.trim().length > 0 && !isSaving, [values.title, isSaving]);
 
-  // Completeness score for nudge bar
-  const completeness = useMemo(() => {
-    const hasTitle     = values.title.trim().length > 0;
-    const hasPhoto     = draftMediaImages.length > 0;
-    const hasGrade     = values.grade.trim().length > 0;
-    const hasPrice     = values.purchasePrice.trim().length > 0 || values.currentValue.trim().length > 0;
-    const hasSubject   = values.subject.trim().length > 0;
-    const hasNotes     = values.notes.trim().length > 0;
-    const hasNumber    = values.number.trim().length > 0;
-    const hasCert      = values.certNumber.trim().length > 0;
-    const fields = [hasTitle, hasPhoto, hasGrade, hasPrice, hasSubject, hasNotes, hasNumber, hasCert];
-    const filled = fields.filter(Boolean).length;
-    return { pct: Math.round((filled / fields.length) * 100), filled, total: fields.length, hasPhoto, hasGrade, hasPrice };
-  }, [values, draftMediaImages]);
   useUnsavedChangesGuard(
     hasDraftChanges && !isSaving,
     canSave
@@ -2088,75 +2073,55 @@ export default function AddPage() {
   return (
     <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className={`w-full px-4 py-3 sm:px-6 sm:py-4 ${dropMode ? "pb-24" : "pb-20 sm:pb-4"}`}>
-        <div className="sticky top-0 z-20 mx-auto mb-3 w-full max-w-5xl rounded-[16px] border border-[color:var(--theme-border)] bg-[color:var(--surface)]/92 p-3 backdrop-blur">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">VAULT ADD</div>
-              <h1 className="mt-1 text-2xl font-semibold">Add</h1>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href="/vault/quick"
-                className="inline-flex h-10 items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]"
-              >
-                Switch to Quick Add
-              </Link>
-              <button
-                type="button"
-                onClick={() => void saveForm(false)}
-                disabled={!canSave}
-                className="inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50 sm:h-10"
-                style={{ background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B", boxShadow: "0 4px 18px rgba(245,181,72,0.28)" }}
-              >
-                {isSaving ? "Saving..." : "Save"}
-              </button>
+        <div className="sticky top-0 z-20 mx-auto mb-3 w-full max-w-5xl rounded-[16px] border border-[color:var(--theme-border)] bg-[color:var(--surface)]/92 px-3 py-2 backdrop-blur">
+          <div className="flex items-center justify-between gap-3 pr-24">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold">Add</h1>
+              {/* Required-to-save chips — only what actually blocks saving */}
+              {!values.title.trim() ? (
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "rgba(248,113,113,0.12)", color: "#f87171" }}>
+                  Title required
+                </span>
+              ) : (
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "rgba(74,222,128,0.12)", color: "#4ade80" }}>
+                  Ready to save
+                </span>
+              )}
             </div>
           </div>
 
-          {status ? (
+          {/* Only surface important alerts (saved / errors / limits) — not routine nudges */}
+          {status && (status.startsWith("✓") || /limit|failed|error|required|unavailable|deleted|removed/i.test(status)) ? (
             <div
-              className="mt-3 rounded-xl px-3 py-2 text-sm ring-1"
+              className="mt-2 rounded-xl px-3 py-2 text-sm ring-1"
               style={
                 status.startsWith("✓")
                   ? { background: "rgba(74,222,128,0.10)", color: "#4ade80", borderColor: "rgba(74,222,128,0.30)" }
-                  : { background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }
+                  : { background: "rgba(248,113,113,0.10)", color: "#f87171", borderColor: "rgba(248,113,113,0.30)" }
               }
             >
               {status}
             </div>
           ) : null}
-
-          {/* Completeness nudge */}
-          {hasDraftChanges && completeness.pct < 100 && (
-            <div className="mt-2 space-y-1.5">
-              <div className="flex items-center gap-2">
-                <div className="relative h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: "var(--pill)" }}>
-                  <div
-                    className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
-                    style={{
-                      width: `${completeness.pct}%`,
-                      background: completeness.pct >= 75 ? "#4ade80" : completeness.pct >= 50 ? "var(--theme-gold)" : "rgba(245,181,72,0.5)",
-                    }}
-                  />
-                </div>
-                <span className="shrink-0 text-[10px] font-semibold tabular-nums" style={{ color: "var(--muted)" }}>
-                  {completeness.pct}%
-                </span>
-              </div>
-              {(!completeness.hasPhoto || !completeness.hasGrade) && (
-                <div className="flex flex-wrap gap-1.5">
-                  {!completeness.hasPhoto && (
-                    <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "rgba(248,113,113,0.12)", color: "#f87171" }}>📷 add photo</span>
-                  )}
-                  {!completeness.hasGrade && (
-                    <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "rgba(248,113,113,0.12)", color: "#f87171" }}>🏅 add grade</span>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
         </div>
+
+        {/* Floating Save — always visible while scrolling */}
+        {!dropMode && (
+          <button
+            type="button"
+            onClick={() => void saveForm(false)}
+            disabled={!canSave}
+            className="fixed right-4 z-[60] inline-flex h-11 items-center justify-center rounded-full px-6 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-45"
+            style={{
+              top: "calc(var(--topnav-h, 64px) + 12px)",
+              background: "linear-gradient(135deg, #8B6914, #F5B548)",
+              color: "#0B0B0B",
+              boxShadow: "0 6px 22px rgba(245,181,72,0.45)",
+            }}
+          >
+            {isSaving ? "Saving..." : "Save"}
+          </button>
+        )}
 
         <div className="mb-3 w-full max-w-5xl mx-auto grid gap-3">
           <div className="grid gap-3">
@@ -2182,8 +2147,6 @@ export default function AddPage() {
                 onOpenBarcodeScanner={() => setIsBarcodeScanOpen(true)}
                 onClearImage={clearScanImage}
                 onToggleSaveScanAsPhoto={handleToggleSaveScanAsPhoto}
-                onSaveItem={() => void saveForm(false)}
-                canSaveItem={canSave}
                 capturedPhotos={draftMediaImages.map((image) => ({
                   id: image.id,
                   previewUrl: image.previewUrl,
@@ -3383,29 +3346,6 @@ export default function AddPage() {
             ⚠ {duplicateWarning}
           </div>
         ) : null}
-
-        {/* Mobile bottom save bar — only when not in drop mode */}
-        {!dropMode && (
-          <div
-            className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between gap-3 border-t border-[color:var(--border)] px-4 py-3 sm:hidden"
-            style={{ background: "var(--surface)", paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
-          >
-            <div className="min-w-0 text-xs truncate" style={{ color: "var(--muted)" }}>
-              {values.title
-                ? <span className="font-semibold" style={{ color: "var(--fg)" }}>{values.title}</span>
-                : <span>No title yet</span>}
-            </div>
-            <button
-              type="button"
-              onClick={() => void saveForm(false)}
-              disabled={!canSave}
-              className="inline-flex shrink-0 h-11 items-center justify-center rounded-full px-5 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50"
-              style={{ background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B", boxShadow: "0 4px 18px rgba(245,181,72,0.28)" }}
-            >
-              {isSaving ? "Saving…" : "Save"}
-            </button>
-          </div>
-        )}
 
         {dropMode && dropSession && !showDropReview ? (
           <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-4 border-t border-[color:var(--border)] bg-[color:var(--surface)] px-5 py-3 shadow-[0_-8px_32px_rgba(0,0,0,0.35)]">
