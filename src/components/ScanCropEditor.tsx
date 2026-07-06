@@ -16,7 +16,6 @@ const MIN_CROP_SIZE_PX = 36;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 5;
 const WHEEL_ZOOM_SPEED = 0.0018;
-const BUTTON_ZOOM_STEP = 0.18;
 
 const FULL_CROP: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
 
@@ -55,10 +54,6 @@ type PinchSession = {
 
 function buttonClass() {
   return "rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]";
-}
-
-function iconButtonClass() {
-  return "inline-flex h-10 min-w-10 items-center justify-center rounded-xl bg-[color:var(--pill)] px-3 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-40";
 }
 
 function primaryButtonClass() {
@@ -124,6 +119,7 @@ export default function ScanCropEditor({
   compactViewport = "default",
   viewportFixed = false,
   hideActionButtons = false,
+  zoomRowRight,
 }: {
   imageUrl: string;
   crop: ScanCropRect;
@@ -142,6 +138,7 @@ export default function ScanCropEditor({
   compactViewport?: "default" | "short";
   viewportFixed?: boolean;
   hideActionButtons?: boolean;
+  zoomRowRight?: React.ReactNode;
 }) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const imageBaseRef = useRef<HTMLDivElement | null>(null);
@@ -384,7 +381,7 @@ export default function ScanCropEditor({
     onChange(nextCrop);
   }
 
-  function zoomBy(delta: number) {
+  function setZoomTo(nextZoom: number) {
     const box = cropBox;
     const viewport = viewportRef.current;
     if (!box || !viewport) return;
@@ -392,7 +389,7 @@ export default function ScanCropEditor({
     zoomAround(
       viewportRect.left + box.left + box.width / 2,
       viewportRect.top + box.top + box.height / 2,
-      zoom + delta
+      nextZoom
     );
   }
 
@@ -559,22 +556,19 @@ export default function ScanCropEditor({
         </div>
       </div>
 
-      <div className={compact ? "mt-2 flex flex-wrap items-center justify-between gap-2 px-1" : "mt-3 flex flex-wrap items-center justify-between gap-2"}>
-        <div className="flex flex-wrap items-center gap-2">
-          <button type="button" onClick={() => zoomBy(-BUTTON_ZOOM_STEP)} disabled={zoom <= MIN_ZOOM + 0.01} className={iconButtonClass()} aria-label="Zoom out">
-            −
-          </button>
-          <div className="min-w-[72px] text-center text-xs font-semibold text-[color:var(--muted)]">{zoomLabel}%</div>
-          <button type="button" onClick={() => zoomBy(BUTTON_ZOOM_STEP)} disabled={zoom >= MAX_ZOOM - 0.01} className={iconButtonClass()} aria-label="Zoom in">
-            +
-          </button>
-        </div>
-
-        <div className={compact && compactViewport === "short" ? "hidden sm:flex flex-wrap items-center justify-end gap-1.5 text-[10px] font-semibold text-[color:var(--muted)]" : "flex flex-wrap items-center justify-end gap-1.5 text-[10px] font-semibold text-[color:var(--muted)]"}>
-          <span className="rounded-full bg-white/5 px-2 py-1 ring-1 ring-[color:var(--border)]">Pinch/scroll to zoom</span>
-          <span className="rounded-full bg-white/5 px-2 py-1 ring-1 ring-[color:var(--border)]">Drag sides to crop</span>
-          <span className="rounded-full bg-white/5 px-2 py-1 ring-1 ring-[color:var(--border)]">Drag photo area to move</span>
-        </div>
+      {/* Zoom slider — centered under the image, with an optional right-side slot */}
+      <div className={compact ? "mt-2 flex items-center gap-3 px-1" : "mt-3 flex items-center gap-3"}>
+        <span className="w-9 shrink-0 text-[11px] font-semibold tabular-nums text-[color:var(--muted)]">{zoomLabel}%</span>
+        <input
+          type="range"
+          min={Math.round(MIN_ZOOM * 100)}
+          max={Math.round(MAX_ZOOM * 100)}
+          value={zoomLabel}
+          onChange={(event) => setZoomTo(Number(event.target.value) / 100)}
+          className="h-1.5 flex-1 accent-[color:var(--theme-gold)]"
+          aria-label="Zoom"
+        />
+        {zoomRowRight ? <div className="shrink-0">{zoomRowRight}</div> : null}
       </div>
 
       {!hideActionButtons ? (

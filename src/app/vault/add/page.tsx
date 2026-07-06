@@ -316,7 +316,6 @@ export default function AddPage() {
   const mediaInputRef = useRef<HTMLInputElement | null>(null);
   const mediaCameraInputRef = useRef<HTMLInputElement | null>(null);
   const numberInputRef = useRef<HTMLInputElement | null>(null);
-  const titleInputRef = useRef<HTMLInputElement | null>(null);
   const scanStageRef = useRef<HTMLDivElement | null>(null);
   const mediaImagesRef = useRef<DraftMediaImage[]>([]);
 
@@ -2141,6 +2140,8 @@ export default function AddPage() {
                 }))}
                 activeCapturedPhotoId={activeMediaImageId}
                 onSelectCapturedPhoto={setSelectedMediaImageId}
+                titleValue={values.title}
+                onTitleChange={(v) => setField("title", v)}
               />
             </div>
 
@@ -2263,15 +2264,6 @@ export default function AddPage() {
                     </div>
                   )}
 
-                  <Field label="Title" locked={locks.title} onToggleLock={() => handleToggleLock("title")}>
-                    <input
-                      ref={titleInputRef}
-                      className={inputClass(aiFilledFields.has("title"))}
-                      value={values.title}
-                      onChange={(e) => { setAiFilledFields(prev => { const n = new Set(prev); n.delete("title"); return n; }); setField("title", e.target.value); }}
-                      placeholder="Batman"
-                    />
-                  </Field>
                 </div>
               </div>
 

@@ -28,6 +28,8 @@ export default function ScanPanel({
   capturedPhotos = [],
   activeCapturedPhotoId = "",
   onSelectCapturedPhoto,
+  titleValue,
+  onTitleChange,
 }: {
   session: ScanSessionState;
   isScanning: boolean;
@@ -50,6 +52,8 @@ export default function ScanPanel({
   }>;
   activeCapturedPhotoId?: string;
   onSelectCapturedPhoto?: (id: string) => void;
+  titleValue: string;
+  onTitleChange: (value: string) => void;
 }) {
   const previewUrl = session.image?.previewUrl ?? "";
   const hasImage = Boolean(previewUrl);
@@ -59,18 +63,30 @@ export default function ScanPanel({
 
   return (
     <section className="rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">CAPTURE AND IDENTIFY</div>
-          <div className="mt-1 text-xs text-[color:var(--muted)]">
-            Take item pictures here. Use one picture to identify/autofill, then save the item.
-          </div>
-        </div>
-
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">CAPTURE AND IDENTIFY</div>
         <div className="flex flex-wrap gap-2">
           <span className={chipClass(hasImage)}>1. Photo</span>
           <span className={chipClass(Boolean(review) || isIdentifying)}>2. Review</span>
         </div>
+      </div>
+
+      {/* Title — required, kept front-and-center so you can name it and move on */}
+      <div className="mt-2">
+        <div className="mb-1 flex items-center gap-2">
+          <label htmlFor="scan-title" className="text-[11px] font-semibold tracking-[0.14em] text-[color:var(--muted2)]">TITLE</label>
+          {!titleValue.trim() ? (
+            <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "rgba(248,113,113,0.14)", color: "#f87171" }}>REQUIRED</span>
+          ) : null}
+        </div>
+        <input
+          id="scan-title"
+          value={titleValue}
+          onChange={(e) => onTitleChange(e.target.value)}
+          placeholder="Name this item to save it…"
+          className="h-11 w-full rounded-2xl bg-[color:var(--pill)] px-4 text-sm ring-1 focus:outline-none"
+          style={{ borderColor: titleValue.trim() ? "var(--border)" : "rgba(245,181,72,0.5)", boxShadow: titleValue.trim() ? undefined : "0 0 0 1px rgba(245,181,72,0.4)" }}
+        />
       </div>
 
       <div className="mt-3 grid gap-2 md:grid-cols-[minmax(0,1fr)_188px]">
@@ -208,6 +224,10 @@ export default function ScanPanel({
             </svg>
             {isIdentifying ? "Reading..." : hasImage ? "Auto Identify" : "Take a picture first"}
           </button>
+
+          <p className="text-center text-[10px] leading-4 text-[color:var(--muted2)]">
+            Take item pictures here. Use one to identify/autofill, then save.
+          </p>
         </div>
       </div>
     </section>

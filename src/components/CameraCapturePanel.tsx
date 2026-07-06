@@ -638,38 +638,6 @@ export default function CameraCapturePanel({
                 <span className="text-[11px] text-[color:var(--muted)]">Retake for sharper label detail.</span>
               </div>
             ) : null}
-            <div className="mb-1.5 flex items-center gap-1.5 overflow-x-auto py-1 pl-1 [scrollbar-width:none]">
-              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
-                Frame
-              </span>
-              <button
-                type="button"
-                onClick={() => setSelectedFrameId("auto")}
-                className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition"
-                style={
-                  selectedFrameId === "auto"
-                    ? { background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))", borderColor: "var(--theme-gold-border, rgba(245,181,72,0.38))", color: "var(--theme-gold, #F5B548)" }
-                    : { background: "var(--pill)", borderColor: "var(--border)", color: "var(--muted)" }
-                }
-              >
-                Auto
-              </button>
-              {FRAME_PRESETS.map((preset) => (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() => setSelectedFrameId(preset.id)}
-                  className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition"
-                  style={
-                    selectedFrameId === preset.id
-                      ? { background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))", borderColor: "var(--theme-gold-border, rgba(245,181,72,0.38))", color: "var(--theme-gold, #F5B548)" }
-                      : { background: "var(--pill)", borderColor: "var(--border)", color: "var(--muted)" }
-                  }
-                >
-                  {preset.label}
-                </button>
-              ))}
-            </div>
             {/* Filter strip — moved above the image */}
             <div className="mb-1.5 flex items-center gap-1.5 overflow-x-auto py-1 pl-1 [scrollbar-width:none]">
               {CAPTURE_FILTER_PRESETS.map((preset) => (
@@ -710,6 +678,31 @@ export default function CameraCapturePanel({
               isApplying={isApplyingCrop}
               compact
               hideActionButtons
+              zoomRowRight={
+                <button
+                  type="button"
+                  onClick={() => void handleRemoveBackground()}
+                  disabled={isRemovingBackground || !capturedFile}
+                  aria-label={isBackgroundRemoved ? "Remove background again" : "Remove background"}
+                  title="Remove background"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 transition disabled:opacity-45"
+                  style={{
+                    background: isBackgroundRemoved ? "var(--theme-gold-subtle, rgba(245,181,72,0.14))" : "var(--pill)",
+                    borderColor: "var(--theme-gold-border, rgba(245,181,72,0.35))",
+                    color: "var(--theme-gold, #F5B548)",
+                  }}
+                >
+                  {isRemovingBackground ? (
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21" />
+                      <path d="M22 21H7" />
+                      <path d="m5 11 9 9" />
+                    </svg>
+                  )}
+                </button>
+              }
             />
 
             <div className="mt-2 flex items-center justify-center gap-3">
@@ -778,45 +771,16 @@ export default function CameraCapturePanel({
                 </div>
               ) : null}
 
-              <div className="mt-2 rounded-2xl bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)]">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">
-                      Background
-                    </div>
-                    <div className="mt-0.5 text-[11px] text-[color:var(--muted)]">
-                      Browser-only removal; no upload needed.
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => void handleRemoveBackground()}
-                    disabled={isRemovingBackground || !capturedFile}
-                    className="rounded-full px-3 py-1.5 text-xs font-semibold ring-1 disabled:opacity-45"
-                    style={{
-                      background: isBackgroundRemoved
-                        ? "var(--theme-gold-subtle, rgba(245,181,72,0.12))"
-                        : "var(--surface)",
-                      borderColor: "var(--theme-gold-border, rgba(245,181,72,0.32))",
-                      color: "var(--theme-gold, #F5B548)",
-                    }}
-                  >
-                    {isRemovingBackground
-                      ? "Removing..."
-                      : isBackgroundRemoved
-                        ? "Remove Again"
-                        : "Remove BG"}
-                  </button>
-                </div>
-
+              <div className={isBackgroundRemoved || backgroundError ? "mt-2 rounded-2xl bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)]" : "hidden"}>
                 {backgroundError ? (
-                  <div className="mt-2 rounded-xl bg-red-500/10 px-3 py-2 text-[11px] text-red-200 ring-1 ring-red-500/20">
+                  <div className="rounded-xl bg-red-500/10 px-3 py-2 text-[11px] text-red-200 ring-1 ring-red-500/20">
                     {backgroundError}
                   </div>
                 ) : null}
 
                 {isBackgroundRemoved ? (
                   <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                    <span className="shrink-0 self-center text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">Backdrop</span>
                     {CAPTURE_BACKGROUNDS.map((background) => (
                       <button
                         key={background.id}
@@ -849,38 +813,6 @@ export default function CameraCapturePanel({
           </div>
         ) : (
           <>
-            <div className="mt-2 flex items-center gap-1.5 overflow-x-auto py-1 [scrollbar-width:none]">
-              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
-                Frame
-              </span>
-              <button
-                type="button"
-                onClick={() => setSelectedFrameId("auto")}
-                className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition"
-                style={
-                  selectedFrameId === "auto"
-                    ? { background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))", borderColor: "var(--theme-gold-border, rgba(245,181,72,0.38))", color: "var(--theme-gold, #F5B548)" }
-                    : { background: "var(--pill)", borderColor: "var(--border)", color: "var(--muted)" }
-                }
-              >
-                Auto
-              </button>
-              {FRAME_PRESETS.map((preset) => (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() => setSelectedFrameId(preset.id)}
-                  className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition"
-                  style={
-                    selectedFrameId === preset.id
-                      ? { background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))", borderColor: "var(--theme-gold-border, rgba(245,181,72,0.38))", color: "var(--theme-gold, #F5B548)" }
-                      : { background: "var(--pill)", borderColor: "var(--border)", color: "var(--muted)" }
-                  }
-                >
-                  {preset.label}
-                </button>
-              ))}
-            </div>
             <div className="mt-2 overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-1.5 ring-1 ring-[color:var(--border)]">
               <div
                   ref={videoContainerRef}
