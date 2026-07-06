@@ -401,8 +401,8 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
   const effectiveQuickMode = quickMode || bulkMode;
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/60 backdrop-blur-sm">
-      <div className="flex w-full max-w-[540px] flex-col overflow-hidden rounded-t-[20px] bg-[#060c1a] text-white" style={{ maxHeight: "88dvh" }}>
+    <div className="fixed inset-0 z-[10000] flex items-stretch justify-center bg-black/60 backdrop-blur-sm">
+      <div className="flex w-full max-w-[540px] flex-col overflow-hidden bg-[#060c1a] text-white" style={{ height: "100dvh" }}>
         <canvas ref={analysisCanvasRef} className="hidden" />
         <canvas ref={captureCanvasRef} className="hidden" />
 
@@ -421,39 +421,48 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {/* Universe / Category — top so it's always visible without scrolling */}
-        <div className="shrink-0 border-b border-white/5 bg-[#0a0f1e] px-3 pb-2 pt-2">
-          <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/36">Universe</div>
-          <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
+        {/* Universe / Category — compact strip, no labels to save vertical space */}
+        <div className="shrink-0 border-b border-white/5 bg-[#0a0f1e] px-3 py-1.5">
+          <div className="flex gap-1 overflow-x-auto [scrollbar-width:none]">
             {UNIVERSES.map((key) => (
-              <Pill
+              <button
                 key={key}
-                label={UNIVERSE_LABEL[key]}
-                active={universe === key}
+                type="button"
                 onClick={() => { setUniverse(key); setCategoryLabel(getCategories(key)[0] ?? "Collectors Choice"); }}
-              />
+                className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold transition"
+                style={{
+                  background: universe === key ? "rgba(245,181,72,0.18)" : "rgba(255,255,255,0.06)",
+                  border: universe === key ? "1px solid rgba(245,181,72,0.58)" : "1px solid rgba(255,255,255,0.10)",
+                  color: universe === key ? "#F5B548" : "rgba(255,255,255,0.46)",
+                }}
+              >
+                {UNIVERSE_LABEL[key]}
+              </button>
             ))}
           </div>
-
           {categories.length ? (
-            <>
-              <div className="mb-1 mt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/36">Category</div>
-              <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
-                {categories.map((category) => (
-                  <Pill
-                    key={category}
-                    label={category}
-                    active={categoryLabel === category}
-                    onClick={() => setCategoryLabel(category)}
-                  />
-                ))}
-              </div>
-            </>
+            <div className="mt-1 flex gap-1 overflow-x-auto [scrollbar-width:none]">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => setCategoryLabel(category)}
+                  className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold transition"
+                  style={{
+                    background: categoryLabel === category ? "rgba(245,181,72,0.18)" : "rgba(255,255,255,0.06)",
+                    border: categoryLabel === category ? "1px solid rgba(245,181,72,0.58)" : "1px solid rgba(255,255,255,0.10)",
+                    color: categoryLabel === category ? "#F5B548" : "rgba(255,255,255,0.46)",
+                  }}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
           ) : null}
         </div>
 
-        {/* Camera viewport */}
-        <div className="relative w-full shrink-0 bg-[#040912]" style={{ height: "min(28dvh, 240px)", overflow: "hidden" }}>
+        {/* Camera viewport — fills all space between the filter strips and the controls */}
+        <div className="relative w-full min-h-[200px] flex-1 bg-[#040912]" style={{ overflow: "hidden" }}>
           <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />
           <FrameOverlay frameType={frameType} lockProgress={lockProgress} />
 
@@ -629,7 +638,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
 
         {/* Done button */}
         <div className="shrink-0 border-t border-white/5 bg-[#0a0f1e] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
-          <button
+               <button
             type="button"
             onClick={handleDone}
             className="flex h-10 w-full items-center justify-center rounded-xl text-sm font-bold ring-1 transition"

@@ -3382,6 +3382,70 @@ export default function AddPage() {
             </button>
           </div>
         )}
+
+        {dropMode && dropSession && !showDropReview ? (
+          <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-4 border-t border-[color:var(--border)] bg-[color:var(--surface)] px-5 py-3 shadow-[0_-8px_32px_rgba(0,0,0,0.35)]">
+            <div>
+              <div className="text-sm font-bold">{dropSession.name}</div>
+              <div className="text-xs text-[color:var(--muted)]">
+                {dropSessionStats(dropSession).count} saved
+                {dropSessionStats(dropSession).totalValue > 0
+                  ? ` · ${dropSessionStats(dropSession).totalValue.toLocaleString(undefined, {
+                      style: "currency",
+                      currency: "USD",
+                      maximumFractionDigits: 0,
+                    })} est. value`
+                  : ""}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={endDrop}
+              className="rounded-full px-4 py-2 text-sm font-bold"
+              style={{ background: "var(--theme-gold, #F5B548)", color: "#0A0800" }}
+            >
+              Done · Review
+            </button>
+          </div>
+        ) : null}
+
+        {showDropReview && dropSession ? (
+          <DropReviewSheet
+            session={dropSession}
+            onClose={() => setShowDropReview(false)}
+            onFinish={finishDrop}
+          />
+        ) : null}
+
+        {isBarcodeScanOpen ? (
+          <BarcodeScanCamera
+            onScan={(result) => void handleLiveBarcodeScanned(result)}
+            onClose={() => setIsBarcodeScanOpen(false)}
+          />
+        ) : null}
+
+        {isCameraPanelOpen ? (
+          <CameraCapturePanel
+            key={cameraPanelKey}
+            title={cameraTarget === "scan" ? "Capture Item Picture" : "Capture Item Photo"}
+            description={
+              cameraTarget === "scan"
+                ? "Take an item picture. It will be added to this item and used for identify/autofill."
+                : "Capture a real item photo and add it to this item's saved photo list."
+            }
+            universe={values.universe}
+            onCapture={handleCapturedPhoto}
+            onClose={() => setIsCameraPanelOpen(false)}
+            onUseFileInstead={() => {
+              setIsCameraPanelOpen(false);
+              if (cameraTarget === "scan") {
+                uploadInputRef.current?.click();
+                return;
+              }
+              mediaInputRef.current?.click();
+            }}
+          />
+        ) : null}
       </div>
     </main>
   );
