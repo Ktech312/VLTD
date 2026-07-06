@@ -409,8 +409,18 @@ function sanitizeGrade(value?: string) {
 
 function titleLooksWeak(title: string) {
   if (!title) return true;
-  if (tokenCount(title) === 1 && title.length <= 4) return true;
-  if (uppercaseRatio(title) > 0.82 && tokenCount(title) >= 2) return true;
+  const trimmed = title.trim();
+  // Too short to be a real title (e.g. "pe", "NM 9")
+  if (trimmed.length <= 5) return true;
+  if (tokenCount(trimmed) === 1 && trimmed.length <= 4) return true;
+  if (uppercaseRatio(trimmed) > 0.82 && tokenCount(trimmed) >= 2) return true;
+  // Multi-token fragments where NO token is a substantial word (>=4 letters)
+  // are almost always OCR noise, e.g. "pe rad", "el ot". Real titles have at
+  // least one meaningful word. Failing here escalates to AI vision (better).
+  const tokens = trimmed.split(/\s+/).filter(Boolean);
+  if (tokens.length >= 2 && !tokens.some((t) => t.replace(/[^a-z0-9]/gi, "").length >= 4)) {
+    return true;
+  }
   return false;
 }
 
