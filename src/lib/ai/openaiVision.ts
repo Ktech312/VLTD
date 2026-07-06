@@ -20,7 +20,7 @@ export type VisionAnalysisResult = {
 };
 
 export const AI_ASSIST_SETUP_MESSAGE =
-  "AI Assist is unavailable. Please set the Gemini_API_Key environment variable in Vercel.";
+  "AI Assist is unavailable. Please set the ANTHROPIC_API_KEY environment variable in Vercel.";
 
 export async function analyzeImageWithVision(
   file: File,
@@ -49,7 +49,7 @@ export async function analyzeImageWithVision(
     const message =
       payload.error || payload.details || "Vision analysis failed.";
 
-    if (/Gemini_API_Key|GEMINI_API_KEY|GOOGLE_API_KEY|AI Assist is not set up|unavailable/i.test(message)) {
+    if (/ANTHROPIC_API_KEY|Gemini_API_Key|GEMINI_API_KEY|GOOGLE_API_KEY|not configured|AI Assist is not set up|unavailable/i.test(message)) {
       throw new Error(AI_ASSIST_SETUP_MESSAGE);
     }
 

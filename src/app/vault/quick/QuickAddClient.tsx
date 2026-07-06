@@ -626,7 +626,7 @@ export default function QuickAddClient() {
     } catch (error) {
       setStatus(
         error instanceof Error &&
-        /GEMINI_API_KEY|GOOGLE_API_KEY|AI Assist is unavailable/i.test(error.message)
+        /ANTHROPIC_API_KEY|GEMINI_API_KEY|GOOGLE_API_KEY|not configured|AI Assist is unavailable/i.test(error.message)
           ? AI_ASSIST_SETUP_MESSAGE
           : error instanceof Error
             ? error.message
@@ -875,7 +875,7 @@ export default function QuickAddClient() {
               </div>
 
               <div className="mt-3 rounded-[14px] bg-[color:var(--surface)] px-3 py-2 text-[11px] text-[color:var(--muted2)] ring-1 ring-[color:var(--border)]">
-                AI Assist needs `Gemini_API_Key` set in Vercel environment variables.
+                AI Assist needs `ANTHROPIC_API_KEY` set in Vercel environment variables.
                 If it is not set yet, crop and manual save still work.
               </div>
             </div>
