@@ -30,7 +30,6 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-easy-crop": "^5.5.7",
-    "@libsql/client": "^0.14.0",
     "dotenv": "^16.4.7",
     "stripe": "^22.2.2",
     "tesseract.js": "^7.0.0",
