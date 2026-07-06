@@ -108,7 +108,7 @@ export default function CameraCapturePanel({
   const [isBackgroundRemoved, setIsBackgroundRemoved] = useState(false);
   const [selectedBackgroundId, setSelectedBackgroundId] = useState("transparent");
   const [selectedFrameId, setSelectedFrameId] = useState("auto");
-  const [showFineTune, setShowFineTune] = useState(true);
+  const [showFineTune, setShowFineTune] = useState(false);
   // ── Bulk Add mode ──
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkUniverse, setBulkUniverse] = useState<UniverseKey>("MISC");
@@ -605,7 +605,7 @@ export default function CameraCapturePanel({
         )}
 
         {capturedFile && capturedPreviewUrl ? (
-          <div className="mt-1.5 pb-32">
+          <div className="mt-1.5 pb-3">
             {/* Blur badge — only shown when the shot is soft */}
             {blurAssessment?.isBlurry ? (
               <div className="mb-1.5 flex items-center gap-2 rounded-[10px] bg-red-500/10 px-3 py-1.5 ring-1 ring-red-500/20">

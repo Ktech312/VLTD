@@ -359,7 +359,8 @@ export default function QuickAddClient() {
   const [draftPreviewUrl, setDraftPreviewUrl] = useState<string | undefined>(undefined);
   const [rotation, setRotation] = useState(0);
   const [isCropEditorOpen, setIsCropEditorOpen] = useState(false);
-  const [isScanPanelOpen, setIsScanPanelOpen] = useState(false);
+  // Open the scanner immediately — Quick Add is "image first", so no landing tap needed
+  const [isScanPanelOpen, setIsScanPanelOpen] = useState(true);
   const [scanCrop, setScanCrop] = useState<ScanCropRect>(DEFAULT_SCAN_CROP);
   const [isApplyingCrop, setIsApplyingCrop] = useState(false);
   const [isAiAssisting, setIsAiAssisting] = useState(false);

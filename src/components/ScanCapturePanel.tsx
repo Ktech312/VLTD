@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type CSSProperties } from "react";
 
 import ScanReviewSheet, { type StagedItem } from "@/components/ScanReviewSheet";
 import { newId } from "@/lib/id";
@@ -170,6 +170,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
   const analysisCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const captureCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const lockStartRef = useRef<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const frontBlobRef = useRef<Blob | null>(null);
   const cooldownUntilRef = useRef<number>(0);
   const captureCountRef = useRef<number>(0);
@@ -301,6 +302,14 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     setAwaitingChoice(true);
   }
 
+  function handleFileUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      addCapturedItem(file, null);
+    }
+    event.target.value = "";
+  }
+
   function handleFrontSave() {
     if (frontBlobRef.current) addCapturedItem(frontBlobRef.current, null);
     cooldownUntilRef.current = Date.now() + 1500;
@@ -411,10 +420,36 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
           {(Object.keys(FRAME_LABELS) as FrameType[]).map((key) => (
             <Pill key={key} label={FRAME_LABELS[key]} active={frameType === key} onClick={() => setFrameType(key)} />
           ))}
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="ml-auto inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/8 text-white/60"
+            aria-label="Upload from file"
+            title="Upload from file"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={handleDone}
+            className="shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold ring-1 transition"
+            style={{
+              background: capturedItems.length ? "rgba(245,181,72,0.16)" : "rgba(255,255,255,0.06)",
+              borderColor: capturedItems.length ? "rgba(245,181,72,0.5)" : "rgba(255,255,255,0.12)",
+              color: capturedItems.length ? "#F5B548" : "rgba(255,255,255,0.5)",
+            }}
+          >
+            Done{capturedItems.length ? ` (${capturedItems.length})` : ""}
+          </button>
           <button
             type="button"
             onClick={onClose}
-            className="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/8 text-white/60"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/8 text-white/60"
             aria-label="Close scanner"
           >
             &#x2715;
@@ -499,8 +534,27 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
             </div>
           ) : null}
 
+          {/* Last-saved snapshot — always shows the most recent capture so you know it landed */}
+          {capturedItems.length > 0 ? (
+            <div
+              className="absolute bottom-3 left-3 flex items-center gap-2 rounded-[12px] p-1 pr-2.5 backdrop-blur"
+              style={{ background: "rgba(0,0,0,0.62)", border: "1px solid rgba(245,181,72,0.45)" }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={capturedItems[capturedItems.length - 1].frontObjectUrl}
+                alt="Last saved capture"
+                className="h-12 w-9 rounded-[8px] object-cover"
+              />
+              <div>
+                <div className="text-[10px] font-bold" style={{ color: "#4ade80" }}>&#x2713; Saved</div>
+                <div className="text-[10px] font-semibold text-white/65">{capturedItems.length} total</div>
+              </div>
+            </div>
+          ) : null}
+
           {/* Lock status bar */}
-          <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/38 px-3 py-1.5 ring-1 ring-white/10 backdrop-blur">
+          <div className="absolute bottom-3 right-3 flex items-center gap-2 rounded-full bg-black/38 px-3 py-1.5 ring-1 ring-white/10 backdrop-blur">
             <span
               className="h-2 w-2 rounded-full transition-all"
               style={{
@@ -528,7 +582,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Action controls */}
-        <div className="shrink-0 bg-[#0a0f1e] px-3 pb-2 pt-2.5">
+        <div className="shrink-0 bg-[#0a0f1e] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
           {/* 3 compact action pills */}
           <div className="flex items-center justify-center gap-2">
             <button
@@ -636,21 +690,6 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        {/* Done button */}
-        <div className="shrink-0 border-t border-white/5 bg-[#0a0f1e] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
-               <button
-            type="button"
-            onClick={handleDone}
-            className="flex h-10 w-full items-center justify-center rounded-xl text-sm font-bold ring-1 transition"
-            style={{
-              background: capturedItems.length ? "rgba(245,181,72,0.12)" : "rgba(255,255,255,0.06)",
-              borderColor: capturedItems.length ? "rgba(245,181,72,0.34)" : "rgba(255,255,255,0.1)",
-              color: capturedItems.length ? "rgba(255,255,255,0.86)" : "rgba(255,255,255,0.42)",
-            }}
-          >
-            Done {capturedItems.length ? `(${capturedItems.length})` : ""}
-          </button>
-        </div>
       </div>
     </div>
   );

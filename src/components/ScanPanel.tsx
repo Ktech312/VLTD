@@ -247,13 +247,17 @@ export default function ScanPanel({
             type="button"
             onClick={onScanAutofill}
             disabled={!hasImage || isIdentifying}
-            className="flex w-full items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-bold transition disabled:opacity-40"
-            style={{ background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B", boxShadow: "0 4px 18px rgba(245,181,72,0.28)" }}
+            className="flex w-full items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-bold transition disabled:opacity-60"
+            style={
+              hasImage
+                ? { background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B", boxShadow: "0 4px 18px rgba(245,181,72,0.28)" }
+                : { background: "var(--pill)", color: "var(--muted)", border: "1px solid var(--border)" }
+            }
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
             </svg>
-            {isIdentifying ? "Reading..." : "Auto Identify"}
+            {isIdentifying ? "Reading..." : hasImage ? "Auto Identify" : "Take a picture first"}
           </button>
 
           <button

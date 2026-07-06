@@ -431,6 +431,15 @@ export default function AddPage() {
     setMounted(true);
   }, []);
 
+  // Camera open and ready right away — skip the empty photo-box tap
+  const autoOpenedCameraRef = useRef(false);
+  useEffect(() => {
+    if (autoOpenedCameraRef.current) return;
+    autoOpenedCameraRef.current = true;
+    openCameraFor("scan");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (isCropEditorOpen || selectedMediaImageId || isCameraPanelOpen || showDropReview) return;
 
