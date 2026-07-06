@@ -133,7 +133,13 @@ export async function GET(req: Request) {
     if (series)    query = query.ilike("series", `%${escapeLike(series)}%`);
     if (publisher) query = query.ilike("publisher", `%${escapeLike(publisher)}%`);
     if (issue)     query = query.eq("number", issue);
-    if (barcode)   query = query.eq("barcode", barcode);
+    if (barcode) {
+      // Comic UPCs carry a 5-digit supplement (cover/printing) after the 12-digit
+      // base code. Match on the shared base so a scan hits regardless of supplement.
+      const digits = barcode.replace(/\D/g, "");
+      const base = digits.length >= 12 ? digits.slice(0, 12) : digits;
+      query = query.like("barcode", `${base}%`);
+    }
     if (isbn)      query = query.or(`valid_isbn.eq.${isbn},isbn.eq.${isbn}`);
 
     query = query

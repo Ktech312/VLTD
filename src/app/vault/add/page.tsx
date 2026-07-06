@@ -38,6 +38,7 @@ import {
 import { buildPricingPatch, type PricingMvpFields } from "@/lib/pricingMvp";
 import { parseComicScanResult, scanComicRegionsFromFile } from "@/lib/scanners/comicParser";
 import { lookupComicByUpc, lookupComicBySeries, formatComicCoverDate } from "@/lib/metronLookup";
+import { lookupComicByBarcode, lookupComicBySeriesIssue } from "@/lib/gcdLookup";
 import { lookupVinylByBarcode, lookupVinylByText } from "@/lib/discogLookup";
 import { lookupPSACert, looksLikePSACert, extractPSACertFromUrl, formatPSAGrade, formatPSASet } from "@/lib/psaLookup";
 import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
@@ -936,13 +937,17 @@ export default function AddPage() {
     try {
       const effectiveBarcode = barcodeDigits?.replace(/\D/g, "").trim() ?? "";
 
-      // Run OCR region scan and Metron database lookup in parallel
-      const [regionScan, fallbackOcr, metronResult] = await Promise.all([
+      // Run OCR region scan + Metron + GCD barcode lookup in parallel
+      const [regionScan, fallbackOcr, metronResult, gcdBarcodeResult] = await Promise.all([
         scanComicRegionsFromFile(file),
         runImageScanAutofill(file, "comic"),
         // Only hit Metron if we have a barcode (12-13 digits — comic UPCs)
         effectiveBarcode.length >= 12
           ? lookupComicByUpc(effectiveBarcode).catch(() => null)
+          : Promise.resolve(null),
+        // GCD barcode lookup (supplement-tolerant) — broad English DB backs up Metron
+        effectiveBarcode.length >= 8
+          ? lookupComicByBarcode(effectiveBarcode).catch(() => null)
           : Promise.resolve(null),
       ]);
 
@@ -954,7 +959,14 @@ export default function AddPage() {
         barcodeDigits: effectiveBarcode || regionScan.barcode,
       });
 
-      // Build fields — Metron data wins over OCR when available
+      // Metron wins; GCD backs it up. If neither hit by barcode but OCR found a
+      // title + issue, try GCD by series/issue before giving up.
+      let gcdResult = gcdBarcodeResult;
+      if (!metronResult && !gcdResult && parsed.title && parsed.issueNumber) {
+        gcdResult = await lookupComicBySeriesIssue(parsed.title, parsed.issueNumber).catch(() => null);
+      }
+
+      // Build fields — priority: Metron → GCD → OCR
       const metronTitle = metronResult?.seriesTitle ?? "";
       const metronIssueNumber = metronResult?.issueNumber ?? "";
       const metronPublisher = metronResult?.publisher ?? "";
@@ -962,24 +974,30 @@ export default function AddPage() {
         ? formatComicCoverDate(metronResult.coverDate)
         : "";
 
+      const dbTitle = metronTitle || gcdResult?.series || "";
+      const dbNumber = metronIssueNumber || gcdResult?.number || "";
+      const dbPublisher = metronPublisher || gcdResult?.publisher || "";
+      const dbCoverDate = metronCoverDate || gcdResult?.coverDate || "";
+
       const fields = {
-        title: metronTitle || parsed.title,
+        title: dbTitle || parsed.title,
         subtitle: parsed.subtitle,
-        number: metronIssueNumber || parsed.issueNumber,
+        number: dbNumber || parsed.issueNumber,
         universe: "POP_CULTURE",
         category: "COMICS",
         categoryLabel: "Comics",
         subcategoryLabel: "Comic Book",
-        comicPublisher: metronPublisher || undefined,
-        comicCoverDate: metronCoverDate || undefined,
+        comicPublisher: dbPublisher || undefined,
+        comicCoverDate: dbCoverDate || undefined,
         notes: parsed.notes || undefined,
       };
 
-      // Determine confidence — Metron match upgrades confidence
+      // Determine confidence — a database match (Metron or GCD) upgrades confidence
       const metronMatched = Boolean(metronResult);
+      const dbMatched = metronMatched || Boolean(gcdResult);
       const ocrConfidence = parsed.confidence;
       const finalConfidence: typeof parsed.confidence =
-        metronMatched
+        dbMatched
           ? "high"
           : ocrConfidence;
 
@@ -991,8 +1009,8 @@ export default function AddPage() {
         : parsed.warnings;
 
       const rawText = [
-        metronMatched
-          ? `Metron DB: ${metronTitle} #${metronIssueNumber} (${metronPublisher})`
+        dbMatched
+          ? `${metronMatched ? "Metron" : "GCD"} DB: ${dbTitle} #${dbNumber} (${dbPublisher})`
           : "",
         parsed.notes || fallbackOcr.rawText || "",
       ]
@@ -1011,7 +1029,7 @@ export default function AddPage() {
           confidence: finalConfidence,
           score:
             finalConfidence === "high"
-              ? (metronMatched ? 95 : 88)
+              ? (dbMatched ? 95 : 88)
               : finalConfidence === "medium"
                 ? 62
                 : 20,
@@ -1024,17 +1042,17 @@ export default function AddPage() {
 
       if (finalConfidence !== "low") {
         applyScanFieldsToEmpty(fields);
-        // Always set comic publisher and cover date from Metron if we got them
-        if (metronMatched) {
+        // Always set comic publisher and cover date from the DB match if we got them
+        if (dbMatched) {
           setValues((prev) => {
             const next = { ...prev };
             let changed = false;
-            if (metronPublisher && !prev.comicPublisher?.trim()) {
-              next.comicPublisher = metronPublisher;
+            if (dbPublisher && !prev.comicPublisher?.trim()) {
+              next.comicPublisher = dbPublisher;
               changed = true;
             }
-            if (metronCoverDate && !prev.comicCoverDate?.trim()) {
-              next.comicCoverDate = metronCoverDate;
+            if (dbCoverDate && !prev.comicCoverDate?.trim()) {
+              next.comicCoverDate = dbCoverDate;
               changed = true;
             }
             if (changed) setHasDraftChanges(true);
@@ -1045,8 +1063,8 @@ export default function AddPage() {
       }
 
       setStatus(
-        metronMatched
-          ? "Comic found in Metron database — details filled."
+        dbMatched
+          ? `Comic found in ${metronMatched ? "Metron" : "GCD"} database — details filled.`
           : finalConfidence !== "low"
             ? "Comic scan filled what it could."
             : "Comic scan was weak. Try a better scan or use image identify."
