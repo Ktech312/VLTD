@@ -49,3 +49,7 @@ data/gcd.db
 data/gcd.db.bak
 data/*.sql.gz
 data/*.sql
+data/*.db
+data/*.db.bak
+data/*.zip
+data/*.sqlite
