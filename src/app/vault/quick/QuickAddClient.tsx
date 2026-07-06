@@ -394,7 +394,12 @@ export default function QuickAddClient() {
     notes.trim().length > 0 ||
     quantity.trim() !== "1";
 
-  useUnsavedChangesGuard(hasQuickAddDraft && !isSaving);
+  useUnsavedChangesGuard(
+    hasQuickAddDraft && !isSaving,
+    canSave
+      ? "This item isn't saved to your vault yet. Tap Save Item first, or leave to discard it."
+      : "This item isn't saved yet — it needs a title before it can be saved. Leave and discard it?"
+  );
 
   useEffect(() => {
     setRecentItems(buildRecent());

@@ -496,7 +496,12 @@ export default function AddPage() {
     const filled = fields.filter(Boolean).length;
     return { pct: Math.round((filled / fields.length) * 100), filled, total: fields.length, hasPhoto, hasGrade, hasPrice };
   }, [values, draftMediaImages]);
-  useUnsavedChangesGuard(hasDraftChanges && !isSaving);
+  useUnsavedChangesGuard(
+    hasDraftChanges && !isSaving,
+    canSave
+      ? "This item isn't saved to your vault yet. Tap Save first, or leave to discard it."
+      : "This item isn't saved yet — it needs a title before it can be saved. Leave and discard it?"
+  );
 
   const selectedUniverse = safeUniverse(values.universe);
   const selectedCategory = safeCategoryForUniverse(
