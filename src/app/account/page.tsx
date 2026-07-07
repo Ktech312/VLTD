@@ -80,7 +80,15 @@ export default function AccountPage() {
         setZip(status.activeProfile.zip ?? "");
         setCountry(status.activeProfile.country ?? "US");
         const fu = (status.activeProfile as Record<string, unknown>).focused_universes;
-        setFocusedUniverses(Array.isArray(fu) ? fu as string[] : []);
+        const primary = String(status.activeProfile.primary_focus ?? "").trim();
+        // Seed the multi-select from focused_universes; fall back to the legacy
+        // single primary_focus so existing profiles show their selection.
+        const seeded = Array.isArray(fu) && fu.length > 0
+          ? (fu as string[])
+          : primary
+            ? [primary]
+            : [];
+        setFocusedUniverses(seeded);
         setShowAllUniverses(!Array.isArray(fu) || (fu as string[]).length === 0);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load account.");
@@ -150,6 +158,14 @@ export default function AccountPage() {
         bio: bio || null,
         is_public: isPublic,
       });
+      // Persist the multi-select collection focus alongside the primary.
+      const supabase = getSupabaseBrowserClient();
+      if (supabase) {
+        await supabase
+          .from("profiles")
+          .update({ focused_universes: focusedUniverses.length > 0 ? focusedUniverses : null })
+          .eq("id", profileId);
+      }
       void syncPublicProfile(profileId);
       setSuccess("Account updated.");
       router.refresh();
@@ -316,16 +332,22 @@ export default function AccountPage() {
                 <div>
                   <span className="text-sm font-semibold text-text-primary">Collection focus</span>
                   <p className="mt-0.5 text-xs text-[color:var(--muted2)]">
-                    Used to personalise your Discover feed — pick your primary universe.
+                    Used to personalise your Discover feed — pick every universe you focus on. Your first pick is your primary.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {UNIVERSE_KEYS.map((key) => {
-                      const active = primaryFocus === key;
+                      const active = focusedUniverses.includes(key);
                       return (
                         <button
                           key={key}
                           type="button"
-                          onClick={() => setPrimaryFocus(active ? "" : key)}
+                          onClick={() => {
+                            const next = active
+                              ? focusedUniverses.filter((k) => k !== key)
+                              : [...focusedUniverses, key];
+                            setFocusedUniverses(next);
+                            setPrimaryFocus(next[0] ?? "");
+                          }}
                           className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition ring-1"
                           style={active ? {
                             background: "rgba(245,181,72,0.15)",
