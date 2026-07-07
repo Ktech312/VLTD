@@ -189,8 +189,18 @@ export default function CommandPalette({
               </div>
             </div>
 
-            <div className="hidden rounded-full bg-[color:var(--pill)] px-3 py-1 text-xs text-[color:var(--muted2)] ring-1 ring-[color:var(--border)] sm:block">
-              ⌘K
+            <div className="flex items-center gap-2">
+              <div className="hidden rounded-full bg-[color:var(--pill)] px-3 py-1 text-xs text-[color:var(--muted2)] ring-1 ring-[color:var(--border)] sm:block">
+                ⌘K
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close command palette"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)] hover:text-[color:var(--fg)]"
+              >
+                ✕
+              </button>
             </div>
           </div>
 
