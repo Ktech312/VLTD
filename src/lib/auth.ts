@@ -16,6 +16,8 @@ export type ProfileRow = {
   created_at?: string;
   is_default?: boolean | null;
   tier?: string | null;
+  tier_expires_at?: string | null;
+  tier_source?: string | null;
   // Contact info (private, not on public profile)
   full_name?: string | null;
   phone?: string | null;
@@ -545,14 +547,17 @@ export async function getOnboardingStatus() {
     setStoredActiveProfileId(activeProfile.id);
   }
 
-  // Backend tier wins: sync the profile's tier into the local subscription state
-  if (
-    typeof window !== "undefined" &&
-    (activeProfile?.tier === "FREE" || activeProfile?.tier === "MID" || activeProfile?.tier === "FULL")
-  ) {
+  // Backend tier wins (when the column exists): sync the profile's tier into the
+  // local subscription state, honoring expiry — an expired grant reverts to FREE.
+  if (typeof window !== "undefined" && activeProfile && "tier" in activeProfile) {
+    const raw = activeProfile.tier;
+    const expiresAt = activeProfile.tier_expires_at;
+    const expired = expiresAt ? new Date(expiresAt).getTime() < Date.now() : false;
+    const effective: "FREE" | "MID" | "FULL" =
+      !raw || expired ? "FREE" : raw === "MID" || raw === "FULL" ? raw : "FREE";
     const { getTierSafe, setTierSafe } = await import("./subscription");
-    if (getTierSafe() !== activeProfile.tier) {
-      setTierSafe(activeProfile.tier);
+    if (getTierSafe() !== effective) {
+      setTierSafe(effective);
     }
   }
 

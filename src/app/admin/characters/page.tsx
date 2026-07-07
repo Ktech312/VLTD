@@ -8,6 +8,13 @@ import { useState, useMemo, useEffect, useCallback, useRef, type ReactNode } fro
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { setTierSafe, type Tier } from "@/lib/subscription";
 import { getStoredActiveProfileId } from "@/lib/auth";
+import {
+  listCoupons,
+  createCoupon,
+  setCouponActive,
+  durationLabel,
+  type AccessCoupon,
+} from "@/lib/accessCoupons";
 import { VAULT_IMAGES_BUCKET } from "@/lib/vaultCloud";
 import { SEED_CHARACTERS } from "@/lib/seedCharacters";
 import { SEED_CHARACTERS_PART2 } from "@/lib/seedCharacters_part2";
@@ -163,6 +170,8 @@ type TierProfile = {
   display_name: string;
   profile_type: string | null;
   tier: string | null;
+  tier_expires_at: string | null;
+  tier_source: string | null;
   created_at: string | null;
 };
 
@@ -187,7 +196,7 @@ function AccountRightsPanel() {
     setLoading(true);
     const { data, error } = await sb
       .from("profiles")
-      .select("id,user_id,username,display_name,profile_type,tier,created_at")
+      .select("id,user_id,username,display_name,profile_type,tier,tier_expires_at,tier_source,created_at")
       .order("created_at", { ascending: true });
     if (error) {
       if (/tier/i.test(error.message) && /column|does not exist|schema cache/i.test(error.message)) {
@@ -209,16 +218,18 @@ function AccountRightsPanel() {
     const sb = getSupabaseBrowserClient();
     if (!sb) return;
     setSavingId(p.id);
-    const { error } = await sb.from("profiles").update({ tier }).eq("id", p.id);
+    // Admin grants are lifetime (no expiry) and sourced as 'admin'.
+    const patch = { tier, tier_expires_at: null as string | null, tier_source: "admin" };
+    const { error } = await sb.from("profiles").update(patch).eq("id", p.id);
     if (error) {
       setStatus(`Failed: ${error.message}`);
       setSavingId("");
       return;
     }
-    setProfiles((prev) => prev.map((x) => (x.id === p.id ? { ...x, tier } : x)));
+    setProfiles((prev) => prev.map((x) => (x.id === p.id ? { ...x, ...patch } : x)));
     // If this profile is active on THIS device, apply immediately.
     if (getStoredActiveProfileId() === p.id) setTierSafe(tier);
-    setStatus(`${p.display_name || p.username} → ${tier}`);
+    setStatus(`${p.display_name || p.username} → ${tier} (lifetime)`);
     setSavingId("");
   }
 
@@ -291,6 +302,14 @@ function AccountRightsPanel() {
                       </span>
                     </div>
                     <div className="mt-0.5 truncate text-[11px] text-white/30">@{p.username} · {p.id}</div>
+                    {current !== "FREE" ? (
+                      <div className="mt-0.5 text-[10px] text-white/40">
+                        {p.tier_expires_at
+                          ? `Expires ${new Date(p.tier_expires_at).toLocaleDateString()}`
+                          : "Lifetime"}
+                        {p.tier_source ? ` · via ${p.tier_source}` : ""}
+                      </div>
+                    ) : null}
                   </div>
                   <div className="flex shrink-0 items-center gap-1.5">
                     {RIGHTS_TIERS.map((tier) => {
@@ -314,6 +333,181 @@ function AccountRightsPanel() {
                       );
                     })}
                   </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Coupons Panel — generate & manage redeemable access codes ─
+function CouponsPanel({ adminEmail }: { adminEmail: string }) {
+  const [coupons, setCoupons] = useState<AccessCoupon[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState("");
+  const [needsMigration, setNeedsMigration] = useState(false);
+  const [copied, setCopied] = useState("");
+
+  // form
+  const [tier, setTier] = useState<Tier>("FULL");
+  const [months, setMonths] = useState(6);
+  const [maxRedemptions, setMaxRedemptions] = useState("");
+  const [note, setNote] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const sb = getSupabaseBrowserClient();
+    if (!sb) { setStatus("Supabase is not configured."); setLoading(false); return; }
+    const { data, error } = await sb.from("access_coupons").select("*").order("created_at", { ascending: false });
+    if (error) {
+      if (/access_coupons/i.test(error.message) && /does not exist|schema cache|relation/i.test(error.message)) {
+        setNeedsMigration(true);
+      } else {
+        setStatus(error.message);
+      }
+      setLoading(false);
+      return;
+    }
+    setCoupons((data ?? []) as AccessCoupon[]);
+    setNeedsMigration(false);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { void load(); }, [load]);
+
+  async function handleCreate() {
+    setCreating(true);
+    setStatus("");
+    const res = await createCoupon({
+      tier,
+      durationMonths: months,
+      maxRedemptions: maxRedemptions.trim() ? Math.max(1, parseInt(maxRedemptions, 10)) : null,
+      note,
+      createdBy: adminEmail,
+    });
+    if (res.error) {
+      if (/access_coupons/i.test(res.error) && /does not exist|schema cache|relation/i.test(res.error)) setNeedsMigration(true);
+      else setStatus(res.error);
+    } else if (res.coupon) {
+      setCoupons((prev) => [res.coupon as AccessCoupon, ...prev]);
+      setNote("");
+      setMaxRedemptions("");
+      void copy(res.coupon.code);
+      setStatus(`Created ${res.coupon.code}`);
+    }
+    setCreating(false);
+  }
+
+  async function copy(code: string) {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(code);
+      setTimeout(() => setCopied(""), 1500);
+    } catch { /* ignore */ }
+  }
+
+  async function toggleActive(c: AccessCoupon) {
+    const err = await setCouponActive(c.id, !c.active);
+    if (err) { setStatus(err); return; }
+    setCoupons((prev) => prev.map((x) => (x.id === c.id ? { ...x, active: !x.active } : x)));
+  }
+
+  const inputCls = "h-9 rounded-xl bg-white/5 px-3 text-xs text-white ring-1 ring-white/10 focus:outline-none placeholder:text-white/30";
+
+  return (
+    <div className="flex h-full flex-col p-5">
+      <div className="shrink-0">
+        <h2 className="text-lg font-semibold">Coupons</h2>
+        <p className="mt-1 text-xs text-white/40">
+          Generate codes that grant timed access — hand out 6-month or 1-year FULL passes for beta.
+          Users redeem at <code>/redeem</code>.
+        </p>
+      </div>
+
+      {needsMigration ? (
+        <div className="mt-4 rounded-xl bg-amber-500/10 px-4 py-3 text-xs text-amber-200 ring-1 ring-amber-400/25">
+          The coupon tables aren&apos;t set up yet. Run <code className="mx-1">supabase/migrations/20260706_access_coupons.sql</code>
+          in your Supabase SQL editor, then Refresh.
+        </div>
+      ) : null}
+
+      {/* Generator */}
+      <div className="mt-4 shrink-0 rounded-2xl bg-white/[0.04] p-4 ring-1 ring-white/10">
+        <div className="text-[10px] uppercase tracking-widest text-white/40 mb-3">New coupon</div>
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="flex flex-col gap-1">
+            <span className="text-[10px] text-white/40">Tier</span>
+            <select value={tier} onChange={(e) => setTier(e.target.value as Tier)} className={inputCls}>
+              <option value="FULL">FULL</option>
+              <option value="MID">MID</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-[10px] text-white/40">Duration</span>
+            <select value={months} onChange={(e) => setMonths(Number(e.target.value))} className={inputCls}>
+              <option value={1}>1 month</option>
+              <option value={3}>3 months</option>
+              <option value={6}>6 months</option>
+              <option value={12}>1 year</option>
+              <option value={24}>2 years</option>
+              <option value={0}>Lifetime</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-[10px] text-white/40">Max uses</span>
+            <input value={maxRedemptions} onChange={(e) => setMaxRedemptions(e.target.value.replace(/\D/g, ""))} placeholder="∞" inputMode="numeric" className={`${inputCls} w-20`} />
+          </label>
+          <label className="flex flex-1 flex-col gap-1">
+            <span className="text-[10px] text-white/40">Note</span>
+            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. beta wave 1" className={`${inputCls} w-full`} />
+          </label>
+          <button
+            type="button"
+            onClick={() => void handleCreate()}
+            disabled={creating}
+            className="h-9 shrink-0 rounded-xl bg-amber-500 px-4 text-xs font-bold text-black transition hover:bg-amber-400 disabled:opacity-50"
+          >
+            {creating ? "…" : "Generate"}
+          </button>
+        </div>
+      </div>
+
+      {status ? <div className="mt-2 shrink-0 text-[11px] text-white/50">{status}</div> : null}
+
+      {/* List */}
+      <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
+        {loading ? (
+          <div className="text-xs text-white/30">Loading coupons…</div>
+        ) : coupons.length === 0 ? (
+          <div className="text-xs text-white/30">No coupons yet.</div>
+        ) : (
+          <div className="grid gap-2">
+            {coupons.map((c) => {
+              const used = c.max_redemptions != null;
+              const exhausted = used && c.times_redeemed >= (c.max_redemptions ?? 0);
+              return (
+                <div key={c.id} className={`flex flex-wrap items-center gap-3 rounded-2xl px-4 py-3 ring-1 ${c.active && !exhausted ? "bg-white/[0.04] ring-white/10" : "bg-white/[0.02] ring-white/5 opacity-60"}`}>
+                  <button type="button" onClick={() => void copy(c.code)} className="font-mono text-sm font-bold text-[#F5B548] hover:underline" title="Copy code">
+                    {copied === c.code ? "Copied!" : c.code}
+                  </button>
+                  <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "rgba(245,181,72,0.14)", color: "#F5B548" }}>{c.tier}</span>
+                  <span className="text-[11px] text-white/50">{durationLabel(c.duration_months)}</span>
+                  <span className="text-[11px] text-white/40">
+                    {c.times_redeemed}{used ? ` / ${c.max_redemptions}` : ""} used
+                  </span>
+                  {c.note ? <span className="text-[11px] text-white/30 truncate">— {c.note}</span> : null}
+                  <button
+                    type="button"
+                    onClick={() => void toggleActive(c)}
+                    className="ml-auto shrink-0 rounded-full px-3 py-1 text-[10px] font-semibold ring-1 ring-white/15 transition hover:bg-white/5"
+                    style={{ color: c.active ? "#f87171" : "#4ade80" }}
+                  >
+                    {c.active ? "Disable" : "Enable"}
+                  </button>
                 </div>
               );
             })}
@@ -1600,7 +1794,7 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
 }
 
 // ── Main Page ─────────────────────────────────────────────────
-type AdminSection = "characters" | "account-rights" | "admins" | "themes";
+type AdminSection = "characters" | "account-rights" | "coupons" | "admins" | "themes";
 
 export default function AdminCharactersPage() {
   const [authState, setAuthState] = useState<"loading" | "signed-out" | "unauthorized" | "authorized">("loading");
@@ -1612,6 +1806,7 @@ export default function AdminCharactersPage() {
   const [openSections, setOpenSections] = useState<Record<AdminSection, boolean>>({
     characters: true,
     "account-rights": false,
+    coupons: false,
     admins: false,
     themes: false,
   });
@@ -1718,6 +1913,19 @@ export default function AdminCharactersPage() {
             </p>
           </SidebarSection>
 
+          {/* Coupons */}
+          <SidebarSection
+            title="Coupons"
+            icon="🎟️"
+            open={openSections.coupons}
+            active={activeSection === "coupons"}
+            onToggle={() => selectSection("coupons")}
+          >
+            <p className="text-[11px] leading-4 text-white/40">
+              Generate 6-month / 1-year access codes for beta. Opens on the right.
+            </p>
+          </SidebarSection>
+
           {/* Manage Admins — owner only */}
           {role === "owner" && (
             <SidebarSection
@@ -1773,6 +1981,8 @@ export default function AdminCharactersPage() {
           )
         ) : activeSection === "account-rights" ? (
           <AccountRightsPanel />
+        ) : activeSection === "coupons" ? (
+          <CouponsPanel adminEmail={userEmail} />
         ) : activeSection === "admins" ? (
           <div className="h-full overflow-y-auto p-5">
             <h2 className="text-lg font-semibold">Manage Admins</h2>
