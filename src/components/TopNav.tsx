@@ -12,6 +12,7 @@ import {
   initAuthListener,
   listMyProfiles,
   onAuthStateChange,
+  setStoredActiveProfileId,
   signOut,
 } from "@/lib/auth";
 import { getMyAdminRole, type AdminRole } from "@/lib/adminAuth";
@@ -385,6 +386,19 @@ function TopNavInner() {
   );
 
   useEffect(() => { setInput(sp.get("q") ?? ""); }, [sp]);
+
+  // ⌘K / Ctrl+K opens the command palette (profile switching lives in the
+  // account menu now; this is for search + quick actions).
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setCommandOpen((v) => !v);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -855,12 +869,44 @@ function TopNavInner() {
                   </Link>
                 ))}
                 {profiles.length > 1 && (
-                  <button type="button"
-                    onClick={() => { setUserOpen(false); setCommandOpen(true); }}
-                    className="block w-full rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
-                    style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
-                    Switch Account
-                  </button>
+                  <div className="mt-1 pt-2" style={{ borderTop: "1px solid rgba(245,181,72,0.10)" }}>
+                    <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--muted2, #A0956B)" }}>
+                      Switch Profile
+                    </div>
+                    {profiles.map((p) => {
+                      const active = p.id === activeProfileId;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          disabled={active}
+                          onClick={() => {
+                            setUserOpen(false);
+                            setStoredActiveProfileId(p.id);
+                            window.location.reload();
+                          }}
+                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition hover:bg-[rgba(245,181,72,0.06)] disabled:cursor-default disabled:hover:bg-transparent"
+                        >
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm" style={{ background: "rgba(245,181,72,0.10)" }}>
+                            {p.avatar_emoji || (p.profile_type === "business" ? "🏛️" : "👤")}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-sm font-medium" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
+                              {p.display_name}
+                            </div>
+                            <div className="truncate text-[11px]" style={{ color: "var(--muted2, #A0956B)" }}>
+                              @{p.username} · {p.profile_type === "business" ? "Business" : "Personal"}
+                            </div>
+                          </div>
+                          {active ? (
+                            <span className="shrink-0 text-[9px] font-bold uppercase tracking-wide" style={{ color: "#4ade80" }}>Active</span>
+                          ) : (
+                            <span className="shrink-0 text-[10px] font-semibold" style={{ color: "#F5B548" }}>Switch</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
                 {adminRole && (
                   <Link href="/admin/characters" onClick={() => setUserOpen(false)}
