@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getAllLocalItems } from "@/lib/vaultModel";
-import { syncAllItemsToCloud } from "@/lib/vaultSyncQueue";
+import { syncAllItemsToCloud, restoreLocalVaultFromCloud } from "@/lib/vaultSyncQueue";
 import { fetchVaultItemsFromSupabase } from "@/lib/vaultCloud";
 import { hasSupabaseEnv } from "@/lib/vaultCloud";
 
@@ -112,6 +112,40 @@ export default function BackupPage() {
         <p className="mt-4 text-center text-xs text-[color:var(--muted2)]">
           Safe to run any time — items are updated in place, never deleted. You must be signed in.
         </p>
+
+        {/* Recovery — pull authoritative cloud data down, replacing the local cache */}
+        <div className="mt-6 rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+          <div className="text-[11px] font-semibold uppercase tracking-widest text-[color:var(--muted2)]">
+            Restore from cloud
+          </div>
+          <p className="mt-1 text-xs text-[color:var(--muted)]">
+            Replaces this device&apos;s copy of the <b>active profile</b> with what&apos;s in the cloud.
+            Use this if items look mis-assigned. Switch to the profile you want to restore first.
+          </p>
+          <button
+            type="button"
+            onClick={async () => {
+              if (busy) return;
+              if (!window.confirm("Replace this device's local copy of the active profile with the cloud version?")) return;
+              setBusy(true);
+              setResult(null);
+              try {
+                const r = await restoreLocalVaultFromCloud();
+                await refreshCounts();
+                setResult({ ok: true, message: `Restored ${r.pulled} items from the cloud.` });
+              } catch (e) {
+                setResult({ ok: false, message: e instanceof Error ? e.message : "Restore failed." });
+              } finally {
+                setBusy(false);
+              }
+            }}
+            disabled={busy}
+            className="mt-3 flex h-10 w-full items-center justify-center rounded-full text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)] disabled:opacity-40"
+            style={{ color: "var(--fg)" }}
+          >
+            Restore active profile from cloud
+          </button>
+        </div>
 
         <div className="mt-6 text-center">
           <Link href="/vault" className="text-sm text-[color:var(--muted)] underline underline-offset-2">

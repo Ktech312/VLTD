@@ -285,6 +285,22 @@ export async function syncAllItemsToCloud(): Promise<{
   };
 }
 
+/**
+ * Recovery: discard the local item cache + pending queue and re-pull the active
+ * profile's items fresh from Supabase (the source of truth). Use this if local
+ * assignments got out of sync with the cloud. Cloud data is not modified.
+ */
+export async function restoreLocalVaultFromCloud(): Promise<{ pulled: number }> {
+  if (typeof window === "undefined") return { pulled: 0 };
+  // Drop any pending (possibly mis-tagged) local edits so they can't re-upload.
+  window.localStorage.setItem("vltd_sync_queue_v1", "[]");
+  // Wipe the local item cache entirely, then re-pull authoritative cloud data.
+  window.localStorage.setItem("vltd_vault_items_v1", "[]");
+  const fresh = await syncVaultItemsFromSupabase();
+  window.dispatchEvent(new Event("vltd:vault-updated"));
+  return { pulled: Array.isArray(fresh) ? fresh.length : 0 };
+}
+
 export function clearVaultSyncQueue() {
   writeQueue([]);
 }
