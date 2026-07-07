@@ -18,6 +18,9 @@ export type ProfileRow = {
   tier?: string | null;
   tier_expires_at?: string | null;
   tier_source?: string | null;
+  business_type?: string | null;
+  website?: string | null;
+  tax_id?: string | null;
   // Contact info (private, not on public profile)
   full_name?: string | null;
   phone?: string | null;
@@ -415,6 +418,9 @@ export async function createProfile(input: {
   profile_type: AuthProfileType;
   primary_focus?: string;
   avatar_emoji?: string;
+  business_type?: string;
+  website?: string;
+  tax_id?: string;
 }) {
   const supabase = getSupabase();
   if (!supabase) throw new Error("Supabase not ready");
@@ -423,7 +429,7 @@ export async function createProfile(input: {
   const userId = userResult.data.user?.id;
   if (!userId) throw new Error("No authenticated user found.");
 
-  const payload = {
+  const payload: Record<string, unknown> = {
     user_id: userId,
     username: input.username.trim(),
     display_name: input.display_name.trim(),
@@ -431,6 +437,11 @@ export async function createProfile(input: {
     primary_focus: input.primary_focus?.trim() || null,
     avatar_emoji: input.avatar_emoji?.trim() || "🗝️",
   };
+  if (input.profile_type === "business") {
+    payload.business_type = input.business_type?.trim() || null;
+    payload.website = input.website?.trim() || null;
+    payload.tax_id = input.tax_id?.trim() || null;
+  }
 
   const result = await withTimeout(
     supabase

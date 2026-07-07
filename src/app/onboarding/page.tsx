@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { createProfile, getOnboardingStatus } from "@/lib/auth";
+import { createProfile, getOnboardingStatus, setStoredActiveProfileId } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL, UNIVERSE_ICON } from "@/lib/taxonomy";
 import { clearOnboardingDraft, loadOnboardingDraft, saveOnboardingDraft } from "@/lib/onboardingDraft";
@@ -119,9 +119,20 @@ export default function OnboardingPage() {
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [avatarEmoji, setAvatarEmoji] = useState("");
-  const [profileType, setProfileType] = useState<"personal" | "business">("personal");
+  const [accountChoice, setAccountChoice] = useState<"personal" | "business" | "both">("personal");
   const [primaryFocus, setPrimaryFocus] = useState("");
   const [focusedUniverses, setFocusedUniverses] = useState<string[]>([]);
+
+  // Business fields (shown for Business or Both)
+  const [bizName, setBizName] = useState("");
+  const [bizUsername, setBizUsername] = useState("");
+  const [bizType, setBizType] = useState("dealer");
+  const [bizWebsite, setBizWebsite] = useState("");
+  const [bizEin, setBizEin] = useState("");
+
+  // The PRIMARY profile is business only when "Business" is chosen; "Both" makes
+  // the primary personal and adds a separate business profile.
+  const profileType: "personal" | "business" = accountChoice === "business" ? "business" : "personal";
 
   const resolvedAvatar = avatarEmoji || "🗝️";
 
@@ -129,7 +140,7 @@ export default function OnboardingPage() {
     const draft = loadOnboardingDraft();
     setUsername(draft.username);
     setDisplayName(draft.display_name);
-    setProfileType(draft.profile_type);
+    setAccountChoice(draft.profile_type === "business" ? "business" : "personal");
     setPrimaryFocus(draft.primary_focus);
     setAvatarEmoji(draft.avatar_emoji);
 
@@ -163,12 +174,16 @@ export default function OnboardingPage() {
     setSaving(true);
     setError("");
     try {
+      const isPrimaryBusiness = accountChoice === "business";
       const profileData = await createProfile({
         username: slugifyUsername(username),
         display_name: displayName.trim(),
-        profile_type: profileType,
+        profile_type: isPrimaryBusiness ? "business" : "personal",
         primary_focus: primaryFocus.trim() || undefined,
         avatar_emoji: resolvedAvatar,
+        ...(isPrimaryBusiness
+          ? { business_type: bizType, website: bizWebsite, tax_id: bizEin }
+          : {}),
       });
       // Save focused_universes if any were chosen
       if (focusedUniverses.length > 0 && profileData?.id) {
@@ -180,6 +195,21 @@ export default function OnboardingPage() {
             .eq("id", profileData.id);
         }
       }
+
+      // "Both" — also create a separate business profile, then land on personal.
+      if (accountChoice === "both") {
+        await createProfile({
+          username: slugifyUsername(bizUsername || `${username}-biz`),
+          display_name: bizName.trim() || `${displayName.trim()} Business`,
+          profile_type: "business",
+          avatar_emoji: "🏛️",
+          business_type: bizType,
+          website: bizWebsite,
+          tax_id: bizEin,
+        });
+        if (profileData?.id) setStoredActiveProfileId(profileData.id);
+      }
+
       clearOnboardingDraft();
       router.replace("/");
       router.refresh();
@@ -308,28 +338,63 @@ export default function OnboardingPage() {
             {/* ── Step 2: Account type ── */}
             {step === 2 && (
               <div className="mt-6 space-y-5">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <button type="button" onClick={() => setProfileType("personal")} className={accountTypeCardClass(profileType === "personal")}>
-                    <div className="flex items-center justify-between">
-                      <div className="text-2xl mb-2">🧑</div>
-                      {profileType === "personal" && (
-                        <div className="rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.1em] text-[#0B0B0B]" style={{ background: "var(--theme-gold-gradient)" }}>✓</div>
-                      )}
-                    </div>
-                    <div className="text-base font-black text-text-primary">Collector</div>
-                    <div className="mt-1 text-sm leading-6 text-[color:var(--muted)]">Personal vault, portfolio, and public galleries.</div>
-                  </button>
-                  <button type="button" onClick={() => setProfileType("business")} className={accountTypeCardClass(profileType === "business")}>
-                    <div className="flex items-center justify-between">
-                      <div className="text-2xl mb-2">🏪</div>
-                      {profileType === "business" && (
-                        <div className="rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.1em] text-[#0B0B0B]" style={{ background: "var(--theme-gold-gradient)" }}>✓</div>
-                      )}
-                    </div>
-                    <div className="text-base font-black text-text-primary">Business</div>
-                    <div className="mt-1 text-sm leading-6 text-[color:var(--muted)]">Shop, resale inventory, or team workflow.</div>
-                  </button>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {([
+                    { key: "personal", icon: "🧑", title: "Collector", desc: "Personal vault, portfolio, and galleries." },
+                    { key: "business", icon: "🏪", title: "Business", desc: "Shop, resale inventory, or team workflow." },
+                    { key: "both", icon: "🔑", title: "Both", desc: "A personal vault plus a separate business." },
+                  ] as const).map(({ key, icon, title, desc }) => (
+                    <button key={key} type="button" onClick={() => setAccountChoice(key)} className={accountTypeCardClass(accountChoice === key)}>
+                      <div className="flex items-center justify-between">
+                        <div className="text-2xl mb-2">{icon}</div>
+                        {accountChoice === key && (
+                          <div className="rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.1em] text-[#0B0B0B]" style={{ background: "var(--theme-gold-gradient)" }}>✓</div>
+                        )}
+                      </div>
+                      <div className="text-base font-black text-text-primary">{title}</div>
+                      <div className="mt-1 text-sm leading-6 text-[color:var(--muted)]">{desc}</div>
+                    </button>
+                  ))}
                 </div>
+
+                {/* Business details — shown for Business or Both */}
+                {(accountChoice === "business" || accountChoice === "both") && (
+                  <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(255,255,255,0.02)] p-4 space-y-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted2)]">Business details</div>
+                    {accountChoice === "both" && (
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <label className="block">
+                          <span className="text-xs text-[color:var(--muted)]">Business name</span>
+                          <input value={bizName} onChange={(e) => setBizName(e.target.value)} placeholder="The Kellogg Collection" className="mt-1 w-full rounded-xl border border-[color:var(--border)] bg-[var(--theme-card)] px-3 py-2 text-sm outline-none" />
+                        </label>
+                        <label className="block">
+                          <span className="text-xs text-[color:var(--muted)]">Business handle</span>
+                          <input value={bizUsername} onChange={(e) => setBizUsername(e.target.value)} placeholder="kelloggcollection" className="mt-1 w-full rounded-xl border border-[color:var(--border)] bg-[var(--theme-card)] px-3 py-2 text-sm outline-none" />
+                        </label>
+                      </div>
+                    )}
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="block">
+                        <span className="text-xs text-[color:var(--muted)]">Business type</span>
+                        <select value={bizType} onChange={(e) => setBizType(e.target.value)} className="mt-1 w-full rounded-xl border border-[color:var(--border)] bg-[var(--theme-card)] px-3 py-2 text-sm outline-none">
+                          <option value="dealer">Dealer</option>
+                          <option value="gallery">Gallery</option>
+                          <option value="brand">Brand</option>
+                          <option value="estate">Estate</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </label>
+                      <label className="block">
+                        <span className="text-xs text-[color:var(--muted)]">Website (optional)</span>
+                        <input value={bizWebsite} onChange={(e) => setBizWebsite(e.target.value)} placeholder="https://…" className="mt-1 w-full rounded-xl border border-[color:var(--border)] bg-[var(--theme-card)] px-3 py-2 text-sm outline-none" />
+                      </label>
+                    </div>
+                    <label className="block">
+                      <span className="text-xs text-[color:var(--muted)]">EIN / Tax ID (optional, private)</span>
+                      <input value={bizEin} onChange={(e) => setBizEin(e.target.value)} placeholder="XX-XXXXXXX" className="mt-1 w-full rounded-xl border border-[color:var(--border)] bg-[var(--theme-card)] px-3 py-2 text-sm outline-none" />
+                    </label>
+                  </div>
+                )}
 
                 {/* Value props */}
                 <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(255,255,255,0.02)] p-4">
