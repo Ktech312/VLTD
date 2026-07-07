@@ -167,9 +167,9 @@ export default function CommandPalette({
       <div
         className="absolute left-1/2 top-[8vh] w-[min(760px,calc(100vw-24px))] -translate-x-1/2 overflow-hidden rounded-[28px] border border-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.55)]"
         style={{
-          // Composite the (possibly translucent) surface tint over an opaque base
-          // so themes with a glassy --surface-strong don't let the page bleed through.
-          backgroundColor: "var(--bg, #0a0c12)",
+          // Guaranteed-opaque base (no theme var can make it transparent), with the
+          // theme surface tint composited on top so it still matches the active theme.
+          backgroundColor: "#0e1526",
           backgroundImage: "linear-gradient(var(--surface-strong), var(--surface-strong))",
         }}
       >
