@@ -52,7 +52,10 @@ function getRequiredActiveProfileId(item?: VaultItem) {
   const activeProfileId = getStoredActiveProfileId().trim();
   const itemProfileId = String(item?.profile_id ?? "").trim();
 
-  return activeProfileId || itemProfileId;
+  // An item's OWN profile wins. Only fall back to the active profile for brand-new
+  // items that don't have one yet — otherwise syncing while on a different profile
+  // would reassign existing items to whatever is currently active.
+  return itemProfileId || activeProfileId;
 }
 
 function rowToVaultImage(entry: unknown, index: number): VaultImage | null {
