@@ -7,6 +7,7 @@ import { useCallback, useRef, useState } from "react";
 import CameraCapturePanel from "@/components/CameraCapturePanel";
 import CaptureCamera from "@/components/CaptureCamera";
 import { analyzeImageWithVision, type VisionAnalysisResult } from "@/lib/ai/openaiVision";
+import { resolveVisionTaxonomy } from "@/lib/visionTaxonomy";
 import { scanBarcodeFromFile } from "@/lib/scanners/barcodeScanner";
 import { lookupUpcItem } from "@/lib/upcLookup";
 import { newId } from "@/lib/id";
@@ -75,18 +76,25 @@ function mergeResults(
   vision: VisionAnalysisResult | null,
   upc: Awaited<ReturnType<typeof lookupUpcItem>> | null
 ): ReviewFields {
+  // Map the AI's free-text classification onto valid taxonomy values so the
+  // Universe / Category / Subcategory dropdowns auto-fill (user can override).
+  const taxo = resolveVisionTaxonomy({
+    universe: vision?.universe || upc?.universe || "",
+    category: vision?.categoryLabel || vision?.category || upc?.categoryLabel || "",
+    subcategory: vision?.subcategoryLabel || upc?.subcategoryLabel || "",
+  });
   return {
     title: vision?.title || upc?.title || "",
     subtitle: vision?.subtitle || upc?.subtitle || "",
-    category: vision?.category || upc?.categoryLabel || "",
-    universe: vision?.universe || upc?.universe || "",
+    category: taxo.categoryLabel || vision?.category || upc?.categoryLabel || "",
+    universe: taxo.universe || "",
     grade: vision?.grade || "",
     certNumber: vision?.certNumber || "",
     condition: vision?.condition || "",
     description: vision?.description || upc?.notes || "",
     number: vision?.number || "",
-    categoryLabel: vision?.categoryLabel || upc?.categoryLabel || "",
-    subcategoryLabel: vision?.subcategoryLabel || upc?.subcategoryLabel || "",
+    categoryLabel: taxo.categoryLabel || vision?.categoryLabel || upc?.categoryLabel || "",
+    subcategoryLabel: taxo.subcategoryLabel || vision?.subcategoryLabel || upc?.subcategoryLabel || "",
     confidence: vision?.confidence ?? 0.45,
   };
 }

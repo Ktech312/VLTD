@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
+
+const UNIVERSE_OPTIONS = UNIVERSE_KEYS.map((k) => UNIVERSE_LABEL[k]).join(", ");
 
 type VisionRouteResult = {
   detectedTitle: string;
@@ -60,7 +63,14 @@ function sanitizeVisionResult(raw: Partial<VisionRouteResult>): VisionRouteResul
         ? Math.max(0, Math.min(1, raw.conditionConfidence))
         : undefined,
     barcode: typeof raw.barcode === "string" ? raw.barcode.trim() : undefined,
+    universe: typeof rawAny(raw).universe === "string" ? (rawAny(raw).universe as string).trim() : undefined,
+    categoryLabel: typeof rawAny(raw).category === "string" ? (rawAny(raw).category as string).trim() : undefined,
+    subcategoryLabel: typeof rawAny(raw).subcategory === "string" ? (rawAny(raw).subcategory as string).trim() : undefined,
   };
+}
+
+function rawAny(raw: unknown): Record<string, unknown> {
+  return (raw ?? {}) as Record<string, unknown>;
 }
 
 function gradingScaleInstructions(universe: string, category: string) {
@@ -115,17 +125,23 @@ export async function POST(req: NextRequest) {
     const base64 = Buffer.from(arrayBuffer).toString("base64");
     const gradingInstructions = gradingScaleInstructions(universe, category);
 
+    const preClassified = Boolean(universe || category || subcategory);
     const prompt = [
       "Analyze this collectible or product photo and return JSON only.",
-      universe || category || subcategory
+      preClassified
         ? `Context: This item has been pre-classified as:\nUniverse: ${universe || "unknown"}\nCategory: ${category || "unknown"}\nSubcategory: ${subcategory || "unknown"}\nUse this context to focus your identification on the specific item name, set name, number, year, grade, and condition. Do not return universe or category fields.`
-        : "",
+        : `Also classify the item. For "universe", pick the single best match from EXACTLY this list: ${UNIVERSE_OPTIONS}. For "category" and "subcategory", give your best specific guess (e.g. universe "TCG & Non Sport Card", category "TCG / CCG", subcategory "Magic: The Gathering"). If unsure, leave them empty.`,
       gradingInstructions,
       "Use this exact schema:",
       JSON.stringify(
         {
           detectedTitle: "string - full item name",
           confidence: 0.0,
+          ...(preClassified ? {} : {
+            universe: "string - one universe label from the provided list, or empty",
+            category: "string - best-guess category, or empty",
+            subcategory: "string - best-guess subcategory / specific game or set family, or empty",
+          }),
           subtitle: "string - series name, set name, or subtitle if applicable",
           number: "string - issue number, card number, or item number",
           grade: "string - grading score or named grade, e.g. PSA 9, 9.8, NM, VG+, CIB",
@@ -225,6 +241,10 @@ export async function POST(req: NextRequest) {
       barcode: parsed.barcode ?? "",
       number: parsed.number ?? "",
       estimatedValue: parsed.estimatedValue,
+      universe: parsed.universe ?? "",
+      category: parsed.categoryLabel ?? "",
+      categoryLabel: parsed.categoryLabel ?? "",
+      subcategoryLabel: parsed.subcategoryLabel ?? "",
     });
   } catch (error) {
     return NextResponse.json(

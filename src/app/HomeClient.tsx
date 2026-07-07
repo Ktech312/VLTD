@@ -800,7 +800,12 @@ export default function HomeClient() {
                 <div style={{ fontSize: "11px", color: C.muted, marginBottom: "2px" }}>
                   {stats.totalItems === 0 ? "Your vault is ready," : "Welcome back,"}
                 </div>
-                <h1 style={{ fontFamily: C.r, fontSize: "34px", fontWeight: 600, lineHeight: 1.04, color: C.text }}>{displayName || "Collector"}</h1>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <h1 style={{ fontFamily: C.r, fontSize: "34px", fontWeight: 600, lineHeight: 1.04, color: C.text }}>{displayName || "Collector"}</h1>
+                  <Link href="/account" aria-label="Edit profile" title="Edit profile" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 8, background: "rgba(245,181,72,0.10)", border: `1px solid ${C.bd}`, color: C.gold, textDecoration: "none" }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                  </Link>
+                </div>
                 <div style={{ fontSize: "11.5px", color: C.muted2, marginTop: "4px" }}>
                   {stats.totalItems === 0 ? "Scan your first item to start building a real collection record." : summaryLine}
                 </div>
