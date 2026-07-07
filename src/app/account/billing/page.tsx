@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { PillButton } from "@/components/ui/PillButton";
 import { showToast } from "@/lib/toast";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getStoredActiveProfileId } from "@/lib/auth";
 import { getStoredStripeCustomerId, setStoredStripeCustomerId } from "@/lib/billingClient";
 
 type Plan = "free" | "pro" | "business";
@@ -79,6 +79,7 @@ export default function BillingPage() {
           plan,
           customerEmail: email || undefined,
           returnUrl: `${window.location.origin}/account/billing`,
+          profileId: getStoredActiveProfileId() || undefined,
         }),
       });
       const data = await res.json();

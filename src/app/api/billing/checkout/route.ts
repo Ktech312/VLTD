@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStripeClient, getStripePriceId, isStripeConfigured, type BillingPlan } from "@/lib/stripe";
+import { getStripeClient, getStripePriceId, isStripeConfigured, tierForPlan, type BillingPlan } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {
   if (!isStripeConfigured()) {
@@ -13,6 +13,8 @@ export async function POST(req: NextRequest) {
   const plan = body?.plan as BillingPlan | undefined;
   const customerEmail = typeof body?.customerEmail === "string" ? body.customerEmail : undefined;
   const returnUrl = typeof body?.returnUrl === "string" ? body.returnUrl : undefined;
+  // Which profile is being upgraded — carried through so the webhook can set its tier.
+  const profileId = typeof body?.profileId === "string" ? body.profileId : undefined;
 
   if (plan !== "pro" && plan !== "business") {
     return NextResponse.json({ error: "bad_request", message: "Unknown plan." }, { status: 400 });
@@ -41,6 +43,12 @@ export async function POST(req: NextRequest) {
       success_url: `${returnUrl}?billing=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${returnUrl}?billing=cancelled`,
       allow_promotion_codes: true,
+      client_reference_id: profileId,
+      metadata: profileId ? { profile_id: profileId } : undefined,
+      // Stamp the subscription too, so renewal/cancel webhooks know the profile + tier.
+      subscription_data: profileId
+        ? { metadata: { profile_id: profileId, tier: tierForPlan(plan) } }
+        : undefined,
     });
 
     if (!session.url) {
