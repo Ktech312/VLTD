@@ -162,9 +162,17 @@ export default function CommandPalette({
 
   return (
     <div className="fixed inset-0 z-[90]">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="absolute left-1/2 top-[8vh] w-[min(760px,calc(100vw-24px))] -translate-x-1/2 overflow-hidden rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface-strong)] shadow-[0_30px_90px_rgba(0,0,0,0.45)]">
+      <div
+        className="absolute left-1/2 top-[8vh] w-[min(760px,calc(100vw-24px))] -translate-x-1/2 overflow-hidden rounded-[28px] border border-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.55)]"
+        style={{
+          // Composite the (possibly translucent) surface tint over an opaque base
+          // so themes with a glassy --surface-strong don't let the page bleed through.
+          backgroundColor: "var(--bg, #0a0c12)",
+          backgroundImage: "linear-gradient(var(--surface-strong), var(--surface-strong))",
+        }}
+      >
         <div className="border-b border-[color:var(--border)] p-4 sm:p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
