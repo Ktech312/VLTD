@@ -44,3 +44,12 @@ export async function updateTeamMemberRole(profileId: string, userId: string, ro
   if (error) return { ok: false, error: error.message };
   return (data ?? { ok: false, error: "No response." }) as RpcResult;
 }
+
+/** Owner-only: hand the entire profile (items, exhibits, team, tier) to another account. */
+export async function transferOwnership(profileId: string, email: string): Promise<RpcResult> {
+  const sb = getSupabaseBrowserClient();
+  if (!sb) return { ok: false, error: "Not connected." };
+  const { data, error } = await sb.rpc("transfer_profile_ownership", { p_profile: profileId, p_email: email });
+  if (error) return { ok: false, error: error.message };
+  return (data ?? { ok: false, error: "No response." }) as RpcResult;
+}

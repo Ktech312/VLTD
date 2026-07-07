@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getCurrentUser, getOnboardingStatus, type ProfileRow } from "@/lib/auth";
+import { setStoredActiveProfileId, listMyProfiles } from "@/lib/auth";
 import {
   listTeamMembers,
   addTeamMember,
   removeTeamMember,
   updateTeamMemberRole,
+  transferOwnership,
   type TeamMember,
 } from "@/lib/team";
 
@@ -27,6 +29,11 @@ export default function TeamPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"admin" | "member">("member");
   const [busy, setBusy] = useState(false);
+
+  // Ownership transfer
+  const [transferEmail, setTransferEmail] = useState("");
+  const [transferConfirm, setTransferConfirm] = useState("");
+  const [transferring, setTransferring] = useState(false);
 
   const myRole = useMemo(
     () => members.find((m) => m.email.toLowerCase() === myEmail.toLowerCase())?.role,
@@ -78,6 +85,29 @@ export default function TeamPage() {
     const res = await removeTeamMember(profile.id, m.user_id);
     if (res.ok) await refreshMembers();
     else setStatus(res.error ?? "Failed to remove.");
+  }
+
+  async function handleTransfer() {
+    if (!profile || transferring) return;
+    if (transferConfirm.trim() !== profile.display_name) {
+      setStatus(`Type the profile name exactly ("${profile.display_name}") to confirm.`);
+      return;
+    }
+    if (!window.confirm(`Permanently transfer "${profile.display_name}" — with all its items, exhibits, and team — to ${transferEmail}? You will lose access to it.`)) return;
+    setTransferring(true);
+    setStatus("");
+    const res = await transferOwnership(profile.id, transferEmail.trim());
+    if (res.ok) {
+      // Move this device onto one of your remaining profiles, then reload.
+      const { data } = await listMyProfiles();
+      const remaining = (data ?? []).find((p) => p.id !== profile.id);
+      if (remaining) setStoredActiveProfileId(remaining.id);
+      window.alert(`"${profile.display_name}" was transferred to ${transferEmail}.`);
+      window.location.href = "/vault";
+    } else {
+      setStatus(res.error ?? "Transfer failed.");
+      setTransferring(false);
+    }
   }
 
   const inputCls = "w-full rounded-xl px-3 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none";
@@ -175,6 +205,41 @@ export default function TeamPage() {
               );
             })}
           </div>
+
+          {/* Danger zone — ownership transfer (owner only) */}
+          {myRole === "owner" && (
+            <div className="mt-8 rounded-2xl p-4 ring-1" style={{ background: "rgba(248,113,113,0.05)", borderColor: "rgba(248,113,113,0.3)" }}>
+              <div className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "#f87171" }}>Danger zone — transfer ownership</div>
+              <p className="mt-1 text-xs text-[color:var(--muted)]">
+                Hand <b>{profile.display_name}</b> — its items, exhibits, team, and subscription — to another
+                account (e.g. a buyer). <b>You&apos;ll lose access.</b> Your other profiles are unaffected.
+              </p>
+              <input
+                type="email"
+                value={transferEmail}
+                onChange={(e) => { setTransferEmail(e.target.value); setStatus(""); }}
+                placeholder="new-owner@email.com"
+                className={`${inputCls} mt-3`}
+                style={inputStyle}
+              />
+              <input
+                value={transferConfirm}
+                onChange={(e) => setTransferConfirm(e.target.value)}
+                placeholder={`Type "${profile.display_name}" to confirm`}
+                className={`${inputCls} mt-2`}
+                style={inputStyle}
+              />
+              <button
+                type="button"
+                onClick={() => void handleTransfer()}
+                disabled={transferring || !transferEmail.trim() || transferConfirm.trim() !== profile.display_name}
+                className="mt-3 w-full rounded-xl px-4 py-2.5 text-sm font-bold transition disabled:opacity-40"
+                style={{ background: "rgba(248,113,113,0.15)", color: "#f87171", border: "1px solid rgba(248,113,113,0.4)" }}
+              >
+                {transferring ? "Transferring…" : "Transfer ownership"}
+              </button>
+            </div>
+          )}
         </>
       )}
 
