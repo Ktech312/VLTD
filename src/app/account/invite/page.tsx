@@ -126,8 +126,20 @@ export default function InvitePage() {
     }
   }
 
-  const pill = "inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)] transition";
   const goldBtn = "inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition active:scale-95";
+
+  const shareMessage = `Join me on VLTD — the collector's vault app. Grab ${REFERRED_BONUS_GALLERIES} free Exhibition${REFERRED_BONUS_GALLERIES !== 1 ? "s" : ""} with my invite:`;
+  const enc = encodeURIComponent;
+  const shareTargets = referralUrl
+    ? [
+        { label: "Text", href: `sms:?&body=${enc(`${shareMessage} ${referralUrl}`)}`, external: false },
+        { label: "WhatsApp", href: `https://api.whatsapp.com/send?text=${enc(`${shareMessage} ${referralUrl}`)}`, external: true },
+        { label: "X", href: `https://twitter.com/intent/tweet?text=${enc(shareMessage)}&url=${enc(referralUrl)}`, external: true },
+        { label: "Facebook", href: `https://www.facebook.com/sharer/sharer.php?u=${enc(referralUrl)}`, external: true },
+        { label: "Reddit", href: `https://www.reddit.com/submit?url=${enc(referralUrl)}&title=${enc(shareMessage)}`, external: true },
+        { label: "Email", href: `mailto:?subject=${enc("Join me on VLTD")}&body=${enc(`${shareMessage}\n\n${referralUrl}`)}`, external: false },
+      ]
+    : [];
 
   return (
     <main className="mx-auto max-w-lg px-4 pb-24 pt-8">
@@ -217,6 +229,25 @@ export default function InvitePage() {
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                 Share
               </button>
+            </div>
+
+            {/* Share to specific apps — works on desktop where the native sheet isn't available */}
+            <div className="mt-4">
+              <p className="mb-2 text-[10px] font-semibold tracking-widest" style={{ color: "var(--muted2)" }}>SHARE TO</p>
+              <div className="grid grid-cols-3 gap-2">
+                {shareTargets.map((t) => (
+                  <a
+                    key={t.label}
+                    href={t.href}
+                    target={t.external ? "_blank" : undefined}
+                    rel={t.external ? "noopener noreferrer" : undefined}
+                    className="flex items-center justify-center rounded-xl px-2 py-2.5 text-xs font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+                    style={{ color: "var(--fg)" }}
+                  >
+                    {t.label}
+                  </a>
+                ))}
+              </div>
             </div>
           </>
         ) : (
