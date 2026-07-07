@@ -262,6 +262,29 @@ export async function processVaultSyncQueue() {
   }
 }
 
+/**
+ * One-time full backup: push every locally-stored item (all profiles) to
+ * Supabase. Reuses the tested queue/upsert path, so images go up too. Safe to
+ * run repeatedly — items are upserted, nothing is deleted.
+ */
+export async function syncAllItemsToCloud(): Promise<{
+  total: number;
+  processed: number;
+  remaining: number;
+}> {
+  if (typeof window === "undefined") return { total: 0, processed: 0, remaining: 0 };
+  const items = getAllLocalItems();
+  for (const item of items) {
+    if (item?.id) enqueueVaultItemSync(String(item.id));
+  }
+  const result = await processVaultSyncQueue();
+  return {
+    total: items.length,
+    processed: result.processed,
+    remaining: result.remaining,
+  };
+}
+
 export function clearVaultSyncQueue() {
   writeQueue([]);
 }

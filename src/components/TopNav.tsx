@@ -846,6 +846,7 @@ function TopNavInner() {
                   { href: "/account", label: "Account Settings" },
                   { href: "/account/invite", label: "Invite Friends" },
                   { href: "/redeem", label: "Redeem a Code" },
+                  { href: "/account/backup", label: "Cloud Backup" },
                 ].map(({ href, label }) => (
                   <Link key={href} href={href} onClick={() => setUserOpen(false)}
                     className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
