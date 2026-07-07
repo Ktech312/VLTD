@@ -339,7 +339,7 @@ function FeaturedGalleryCard({ galleries }: { galleries: Gallery[] }) {
       <div style={{ marginTop: "9px" }}>
         <div style={{ fontFamily: C.r, fontSize: "15px", fontWeight: 600, color: C.text }}>{g.title || "Untitled"}</div>
         <div style={{ fontSize: "11px", color: C.muted, marginTop: "2px" }}>{itemCount} piece{itemCount !== 1 ? "s" : ""}</div>
-        <Link href={"/gallery/" + g.id} style={{ display: "inline-flex", alignItems: "center", marginTop: "7px", fontSize: "11px", color: C.gold, textDecoration: "none" }}>View Gallery →</Link>
+        <Link href={"/gallery/" + g.id} style={{ display: "inline-flex", alignItems: "center", marginTop: "8px", borderRadius: "6px", padding: "6px 14px", fontSize: "11px", fontWeight: 700, background: "linear-gradient(135deg,#8B6914,#F5B548)", color: "#0B0B0B", textDecoration: "none" }}>View Gallery →</Link>
       </div>
     </div>
   );
@@ -836,7 +836,7 @@ export default function HomeClient() {
               ) : (
                 <div style={{ padding: "16px" }}>
                   <div style={{ fontFamily: C.r, fontSize: "15px", fontWeight: 600, color: C.text }}>No galleries yet</div>
-                  <Link href="/museum/new" style={{ display: "inline-flex", marginTop: "8px", fontSize: "11px", color: C.gold, textDecoration: "none" }}>Create Gallery →</Link>
+                  <Link href="/museum/new" style={{ display: "inline-flex", alignItems: "center", marginTop: "8px", borderRadius: "6px", padding: "6px 14px", fontSize: "11px", fontWeight: 700, background: "linear-gradient(135deg,#8B6914,#F5B548)", color: "#0B0B0B", textDecoration: "none" }}>Create Gallery →</Link>
                 </div>
               )}
             </div>
