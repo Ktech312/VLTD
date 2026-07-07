@@ -858,6 +858,7 @@ function TopNavInner() {
                   { href: "/dashboard", label: "Dashboard" },
                   { href: "/collector", label: "Collector Profile" },
                   { href: "/account", label: "Account Settings" },
+                  { href: "/account/team", label: "Team" },
                   { href: "/account/invite", label: "Invite Friends" },
                   { href: "/redeem", label: "Redeem a Code" },
                   { href: "/account/backup", label: "Cloud Backup" },
