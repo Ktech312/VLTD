@@ -29,6 +29,7 @@ import {
   type VaultItem,
 } from "@/lib/vaultModel";
 import { hasSupabaseEnv, VAULT_ITEMS_TABLE } from "@/lib/vaultCloud";
+import { listMyProfiles, getStoredActiveProfileId, type ProfileRow } from "@/lib/auth";
 
 const ACTIVE_PROFILE_EVENT = "vltd:active-profile";
 const SALES_KEY = "vltd_sales_history";
@@ -711,6 +712,8 @@ export default function VaultUniversePage() {
   const [showUncategorized, setShowUncategorized] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [myProfiles, setMyProfiles] = useState<ProfileRow[]>([]);
+  const [activeProfileId, setActiveProfileId] = useState<string>("");
   const [moveTargetUniverse, setMoveTargetUniverse] = useState<string>("");
   const [moveTargetCategory, setMoveTargetCategory] = useState<string>("");
   const [moveTargetSubcategory, setMoveTargetSubcategory] = useState<string>("");
@@ -963,6 +966,36 @@ export default function VaultUniversePage() {
       setSelectedIds(new Set());
       setSelectMode(false);
     }
+  }
+
+  // Load the user's profiles so items can be moved between them
+  useEffect(() => {
+    setActiveProfileId(getStoredActiveProfileId());
+    let active = true;
+    void listMyProfiles().then(({ data }) => {
+      if (active) setMyProfiles(data ?? []);
+    });
+    return () => { active = false; };
+  }, []);
+
+  /** Move the selected items to another profile (personal <-> business). */
+  async function handleMoveToProfile(targetProfileId: string) {
+    if (!targetProfileId || selectedIds.size === 0) return;
+    const movedItems = items
+      .filter((item) => selectedIds.has(item.id))
+      .map((item) => ({ ...item, profile_id: targetProfileId }));
+    for (const item of movedItems) {
+      saveItem(item);
+      enqueueVaultItemSync(item.id);
+    }
+    // Moved items now belong to another profile — drop them from this view.
+    setItems((prev) => prev.filter((item) => !selectedIds.has(item.id)));
+    if (hasSupabaseEnv()) {
+      await processVaultSyncQueue();
+    }
+    window.dispatchEvent(new Event("vltd:vault-updated"));
+    setSelectedIds(new Set());
+    setSelectMode(false);
   }
 
   async function handleMassMove() {
@@ -1374,6 +1407,23 @@ export default function VaultUniversePage() {
                         Move
                       </button>
                     )}
+                    {/* Move to another profile (personal <-> business) */}
+                    {myProfiles.filter((p) => p.id !== activeProfileId).map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`Move ${selectedIds.size} item${selectedIds.size === 1 ? "" : "s"} to "${p.display_name}"? They'll leave this profile's vault.`)) {
+                            void handleMoveToProfile(p.id);
+                          }
+                        }}
+                        className="inline-flex h-8 items-center gap-1 rounded-full px-3 text-xs font-semibold"
+                        style={{ background: "rgba(96,165,250,0.14)", color: "#93c5fd", border: "1px solid rgba(96,165,250,0.4)" }}
+                        title={`Move selected items to your ${p.profile_type} profile`}
+                      >
+                        → {p.display_name}
+                      </button>
+                    ))}
                   </>
                 )}
                 {selectMode && (
