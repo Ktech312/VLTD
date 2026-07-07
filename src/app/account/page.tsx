@@ -353,6 +353,7 @@ export default function AccountPage() {
                             background: "rgba(245,181,72,0.15)",
                             border: "1px solid rgba(245,181,72,0.55)",
                             color: "var(--theme-text-primary, #F0EAD6)",
+                            boxShadow: "0 0 12px rgba(245,181,72,0.35)",
                           } : {
                             background: "var(--theme-card)",
                             border: "1px solid var(--theme-border, rgba(245,181,72,0.12))",
@@ -361,7 +362,6 @@ export default function AccountPage() {
                         >
                           <span>{UNIVERSE_ICON[key]}</span>
                           <span>{UNIVERSE_LABEL[key]}</span>
-                          {active && <span style={{ color: "#F5B548" }}>✓</span>}
                         </button>
                       );
                     })}
@@ -650,6 +650,7 @@ export default function AccountPage() {
                       background: "rgba(245,181,72,0.15)",
                       border: "1px solid rgba(245,181,72,0.55)",
                       color: "var(--theme-text-primary, #F0EAD6)",
+                      boxShadow: "0 0 12px rgba(245,181,72,0.35)",
                     } : {
                       background: "var(--theme-card)",
                       border: "1px solid var(--theme-border, rgba(245,181,72,0.12))",
@@ -658,7 +659,6 @@ export default function AccountPage() {
                   >
                     <span>{UNIVERSE_ICON[key]}</span>
                     <span>{UNIVERSE_LABEL[key]}</span>
-                    {active && <span style={{ color: "#F5B548" }}>✓</span>}
                   </button>
                 );
               })}
