@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 
 import {
@@ -81,6 +82,8 @@ export default function CommandPalette({
 
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   const commands = useMemo(
     () => getAllCommands({ profiles, activeProfileId }),
@@ -158,9 +161,11 @@ export default function CommandPalette({
     onClose();
   }
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  // Portal to <body> so the overlay escapes the nav's stacking context /
+  // page-transition transforms — otherwise z-index can't lift it above content.
+  return createPortal(
     <div className="fixed inset-0 z-[9998]">
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
 
@@ -265,6 +270,7 @@ export default function CommandPalette({
           ↑ ↓ to move • Enter to open • Esc to close
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
