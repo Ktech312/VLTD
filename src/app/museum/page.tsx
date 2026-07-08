@@ -25,7 +25,7 @@ import { getGalleryLimits } from "@/lib/galleryTier";
 import { getUserBonusGalleries } from "@/lib/referral";
 import { getTierSafe, onTierChange, type Tier } from "@/lib/subscription";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import { loadItems, type VaultItem } from "@/lib/vaultModel";
+import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
 import { getVaultImagePublicUrl } from "@/lib/vaultCloud";
 
 const ACTIVE_PROFILE_EVENT = "vltd:active-profile";
@@ -64,15 +64,44 @@ function gradeLetter(band: "Basic" | "Curated" | "Exhibition Grade") {
   return "B+";
 }
 
-type ExhibitionFilter = "ALL" | "ACTIVE" | "DRAFTS" | "PUBLIC" | "INVITE" | "LOCKED";
+type ExhibitionFilter = "ACTIVE" | "DRAFTS" | "PUBLIC" | "PRIVATE" | "INVITE";
 const EXHIBITION_FILTERS: { key: ExhibitionFilter; label: string }[] = [
-  { key: "ALL", label: "All" },
   { key: "ACTIVE", label: "Active" },
   { key: "DRAFTS", label: "Drafts" },
   { key: "PUBLIC", label: "Public" },
-  { key: "INVITE", label: "Invite" },
-  { key: "LOCKED", label: "Locked" },
+  { key: "PRIVATE", label: "Private" },
+  { key: "INVITE", label: "Invite-only" },
 ];
+
+type ExhibitionSort = "updated" | "value" | "views" | "grade";
+const EXHIBITION_SORTS: { key: ExhibitionSort; label: string }[] = [
+  { key: "updated", label: "Recently updated" },
+  { key: "value", label: "Highest value" },
+  { key: "views", label: "Most viewed" },
+  { key: "grade", label: "Best grade" },
+];
+
+function gradeBandLabel(band: "Basic" | "Curated" | "Exhibition Grade") {
+  if (band === "Exhibition Grade") return "Exceptional";
+  if (band === "Curated") return "Solid";
+  return "Getting started";
+}
+
+function factorRating(value: number, good: number, veryGood: number, excellent: number) {
+  if (value >= excellent) return { label: "Excellent", ok: true };
+  if (value >= veryGood) return { label: "Very Good", ok: true };
+  if (value >= good) return { label: "Good", ok: true };
+  return { label: "Needs work", ok: false };
+}
+
+function formatGalleryDate(ms?: number) {
+  if (!ms || !Number.isFinite(ms)) return "—";
+  try {
+    return new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  } catch {
+    return "—";
+  }
+}
 
 function galleryValue(gallery: Gallery, itemsById: Map<string, VaultItem>) {
   return gallery.itemIds.reduce((sum, itemId) => {
@@ -141,7 +170,11 @@ export default function MuseumPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const coverInputRef = useRef<HTMLInputElement | null>(null);
-  const [filter, setFilter] = useState<ExhibitionFilter>("ALL");
+  const [filter, setFilter] = useState<ExhibitionFilter>("ACTIVE");
+  const [sortMode, setSortMode] = useState<ExhibitionSort>("updated");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [copyOk, setCopyOk] = useState(false);
 
   function refresh() {
     setGalleries(loadGalleries());
@@ -265,25 +298,40 @@ export default function MuseumPage() {
     [scoredGalleries]
   );
 
-  const orderedGalleries = useMemo(() => {
+  const sortedGalleries = useMemo(() => {
     return [...scoredGalleries].sort((a, b) => {
-      if (b.score.score !== a.score.score) return b.score.score - a.score.score;
-      if (b.views !== a.views) return b.views - a.views;
-      return b.totalValue - a.totalValue;
+      if (sortMode === "value") return b.totalValue - a.totalValue;
+      if (sortMode === "views") return b.views - a.views;
+      if (sortMode === "grade") return b.score.score - a.score.score;
+      return Number(b.gallery.updatedAt ?? 0) - Number(a.gallery.updatedAt ?? 0);
     });
-  }, [scoredGalleries]);
+  }, [scoredGalleries, sortMode]);
 
   const displayedGalleries = useMemo(() => {
-    if (filter === "ALL") return orderedGalleries;
-    return orderedGalleries.filter(({ gallery }) => {
+    return sortedGalleries.filter(({ gallery }) => {
       if (filter === "ACTIVE") return gallery.state === "ACTIVE";
       if (filter === "DRAFTS") return gallery.state === "STORAGE";
       if (filter === "PUBLIC") return gallery.visibility === "PUBLIC";
+      if (filter === "PRIVATE") return gallery.visibility === "LOCKED";
       if (filter === "INVITE") return gallery.visibility === "INVITE";
-      if (filter === "LOCKED") return gallery.visibility === "LOCKED";
       return true;
     });
-  }, [orderedGalleries, filter]);
+  }, [sortedGalleries, filter]);
+
+  const selectedEntry = useMemo(
+    () => displayedGalleries.find((e) => e.gallery.id === selectedId) ?? displayedGalleries[0] ?? null,
+    [displayedGalleries, selectedId]
+  );
+
+  async function handleCopyShareLink(shareUrl: string) {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopyOk(true);
+      window.setTimeout(() => setCopyOk(false), 1600);
+    } catch {
+      setCopyOk(false);
+    }
+  }
 
   function openGallery(galleryId: string) {
     router.push(`/museum/${galleryId}`);
@@ -349,7 +397,7 @@ export default function MuseumPage() {
 
   return (
     <main className="text-[color:var(--fg)]">
-      <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-7">
+      <div className="mx-auto max-w-[1500px] px-4 py-5 sm:px-6 sm:py-7">
         <input
           ref={coverInputRef}
           type="file"
@@ -358,46 +406,67 @@ export default function MuseumPage() {
           onChange={(event) => void handleCoverSelection(event)}
         />
 
-        <section className="relative overflow-hidden rounded-[18px] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)]" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),rgba(255,255,255,0)_28%),radial-gradient(circle_at_75%_0%,rgba(255,205,120,0.06),rgba(255,205,120,0)_22%)]" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.18))]" />
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-4xl font-black tracking-[-0.04em] leading-none">Exhibitions</h1>
+            <p className="mt-2 text-sm text-[color:var(--muted)]">Curate public rooms from your private vault.</p>
+          </div>
 
-          <div className="relative flex flex-col gap-5">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="max-w-2xl">
-                <h1 className="text-3xl font-black tracking-[-0.035em] leading-tight sm:text-4xl">
-                  Exhibitions
-                </h1>
-                <p className="mt-1.5 text-sm leading-6 text-[color:var(--muted)]">
-                  Curate public rooms from your private vault.
-                </p>
-              </div>
-
-              <div className="shrink-0">
-                <Link
-                  href="/museum/new"
-                  className="inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-full px-5 py-2 text-sm font-black transition"
-                  style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}
-                >
-                  + Create Exhibition
-                </Link>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {EXHIBITION_FILTERS.map((f) => (
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Grid / list toggle */}
+            <div className="inline-flex items-center rounded-full border p-0.5" style={{ borderColor: "var(--theme-border)", background: "var(--theme-card)" }}>
+              {(["grid", "list"] as const).map((mode) => (
                 <button
-                  key={f.key}
+                  key={mode}
                   type="button"
-                  onClick={() => setFilter(f.key)}
-                  className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-semibold ring-1 transition ${filter === f.key ? "bg-gold/20 text-gold ring-gold/40" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]"}`}
+                  onClick={() => setViewMode(mode)}
+                  aria-label={`${mode} view`}
+                  className={`inline-flex h-8 w-9 items-center justify-center rounded-full transition ${viewMode === mode ? "bg-gold/20 text-gold" : "text-[color:var(--muted2)]"}`}
                 >
-                  {f.label}
+                  {mode === "grid" ? (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
+                  ) : (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                  )}
                 </button>
               ))}
             </div>
+
+            {/* Sort */}
+            <select
+              value={sortMode}
+              onChange={(e) => setSortMode(e.target.value as ExhibitionSort)}
+              className="h-10 rounded-full border px-4 text-sm font-semibold outline-none"
+              style={{ borderColor: "var(--theme-border)", background: "var(--theme-card)", color: "var(--fg)" }}
+            >
+              {EXHIBITION_SORTS.map((s) => (
+                <option key={s.key} value={s.key}>{s.label}</option>
+              ))}
+            </select>
+
+            <Link
+              href="/museum/new"
+              className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-full px-5 text-sm font-black transition"
+              style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}
+            >
+              + Create Exhibition
+            </Link>
           </div>
-        </section>
+        </div>
+
+        {/* Filter pills */}
+        <div className="mt-5 flex flex-wrap gap-2">
+          {EXHIBITION_FILTERS.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setFilter(f.key)}
+              className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-semibold ring-1 transition ${filter === f.key ? "bg-gold/20 text-gold ring-gold/40" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]"}`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
 
         {/* Insight cards hidden to match the redesigned Exhibitions layout */}
         {false ? (
@@ -536,24 +605,25 @@ export default function MuseumPage() {
               </div>
             </div>
           ) : (
-            <div className="grid justify-center gap-5 [grid-template-columns:repeat(auto-fill,minmax(300px,360px))]">
-              {displayedGalleries.map(({ gallery, score, totalValue, views }) => {
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+              <div className={`grid gap-4 ${viewMode === "list" ? "grid-cols-1" : "sm:grid-cols-2"}`}>
+              {displayedGalleries.map(({ gallery, totalValue, views }) => {
                 const coverImage = resolveGalleryImage(gallery.coverImage);
 
                 return (
                   <article
                     key={gallery.id}
-                    onClick={() => openGallery(gallery.id)}
+                    onClick={() => setSelectedId(gallery.id)}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
-                        openGallery(gallery.id);
+                        setSelectedId(gallery.id);
                       }
                     }}
                     role="button"
                     tabIndex={0}
-                    aria-label={`Open gallery ${gallery.title}`}
-                    className="group relative flex w-full max-w-[360px] cursor-pointer flex-col overflow-hidden rounded-[20px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.30)]"
+                    aria-label={`Show details for ${gallery.title}`}
+                    className={`group relative flex w-full cursor-pointer flex-col overflow-hidden rounded-[20px] border bg-[color:var(--theme-card)] shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.30)] ${selectedEntry?.gallery.id === gallery.id ? "border-[color:var(--theme-gold)] ring-1 ring-[color:var(--theme-gold)]" : "border-[color:var(--theme-border)]"}`}
                   >
                     {/* Cover */}
                     <div className="relative h-[210px] overflow-hidden bg-[color:var(--theme-elevated)]">
@@ -635,18 +705,128 @@ export default function MuseumPage() {
                             {formatMoney(totalValue)}
                           </div>
                         </div>
-                        <span
-                          className="inline-flex h-8 items-center justify-center rounded-lg px-2 text-sm font-black"
-                          style={{ color: "var(--theme-gold, #F5B548)", background: "rgba(245,181,72,0.10)", border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.3))" }}
-                          title={`${scoreBandTone(score.band)} · ${score.score}/100`}
-                        >
-                          {gradeLetter(score.band)}
-                        </span>
+                        <div className="flex items-center gap-2.5 text-[color:var(--muted2)]">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3l2.4 5 5.6.5-4.2 3.7 1.3 5.3L12 20l-5.1 2.5 1.3-5.3L4 13.5l5.6-.5z"/></svg>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20s-7-4.35-9.5-8.5C1 8.5 2.5 5.5 6 5.5c2 0 3 1.2 6 4 3-2.8 4-4 6-4 3.5 0 5 3 3.5 6C19 15.65 12 20 12 20z"/></svg>
+                        </div>
                       </div>
                     </div>
                   </article>
                 );
               })}
+              </div>
+
+              {/* Right: Exhibition Details */}
+              <aside className="lg:sticky lg:top-4">
+                {selectedEntry ? (() => {
+                  const g = selectedEntry.gallery;
+                  const s = selectedEntry.score;
+                  const sig = s.signals;
+                  const cover = resolveGalleryImage(g.coverImage);
+                  const origin = typeof window !== "undefined" ? window.location.origin : "";
+                  const token = g.share?.publicToken;
+                  const shareUrl = token ? `${origin}/museum/share/${token}` : `${origin}/gallery/${g.id}`;
+                  const panelItems = g.itemIds.map((id) => itemsById.get(id)).filter(Boolean) as VaultItem[];
+                  const factors = [
+                    { name: "Presentation", r: factorRating(sig.hasCover ? (sig.hasDescription ? 2 : 1) : 0, 1, 2, 2) },
+                    { name: "Structure", r: factorRating(sig.sections, 1, 2, 4) },
+                    { name: "Featured works", r: factorRating(sig.featuredWorks, 1, 2, 3) },
+                    { name: "Curation notes", r: factorRating(sig.notes, 1, 3, 6) },
+                    { name: "Engagement", r: factorRating(sig.views, 1, 5, 20) },
+                  ];
+                  return (
+                    <div className="overflow-hidden rounded-[20px] border" style={{ borderColor: "var(--theme-border)", background: "var(--theme-card)" }}>
+                      <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: "var(--theme-border)" }}>
+                        <div className="text-sm font-black">Exhibition Details</div>
+                      </div>
+
+                      <div className="relative h-40 overflow-hidden bg-[color:var(--theme-elevated)]">
+                        {cover ? (
+                          <ProgressiveImage src={cover} alt={`${g.title} cover`} className="h-full w-full" imageClassName="object-cover object-center" draggable={false} />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-[11px] uppercase tracking-[0.18em] text-white/30">No cover</div>
+                        )}
+                        <button type="button" onClick={() => handleOpenCoverPicker(g)} disabled={isUploadingCover}
+                          className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/20 backdrop-blur transition hover:bg-black/75 disabled:opacity-50">
+                          Edit cover
+                        </button>
+                      </div>
+
+                      <div className="p-4">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="text-xl font-black">{g.title}</h2>
+                          <span className={["rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-[0.12em] ring-1", visibilityPillClass(g.visibility)].join(" ")}>{visibilityLabel(g.visibility)}</span>
+                        </div>
+                        <div className="mt-1 text-xs text-[color:var(--muted)]">{g.itemIds.length} items · Updated {formatGalleryDate(g.updatedAt)}</div>
+
+                        <div className="mt-4 flex items-center gap-4 rounded-2xl p-3" style={{ background: "var(--theme-elevated)", border: "1px solid var(--theme-border)" }}>
+                          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-2xl font-black" style={{ color: "var(--theme-gold)", background: "rgba(245,181,72,0.10)", border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.3))" }}>
+                            {gradeLetter(s.band)}
+                          </div>
+                          <div>
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Exhibition Grade</div>
+                            <div className="text-lg font-black" style={{ color: "var(--theme-gold)" }}>{gradeBandLabel(s.band)}</div>
+                            <div className="text-xs text-[color:var(--muted)]">{s.score}/100</div>
+                          </div>
+                        </div>
+
+                        <div className="mt-4">
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Grade factors</div>
+                          <div className="mt-2 space-y-1.5">
+                            {factors.map((f) => (
+                              <div key={f.name} className="flex items-center justify-between text-sm">
+                                <span className="flex items-center gap-2 text-[color:var(--muted)]">
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={f.r.ok ? "#4CAF82" : "#F5B548"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                                  {f.name}
+                                </span>
+                                <span className="font-semibold" style={{ color: f.r.ok ? "#4CAF82" : "#F5B548" }}>{f.r.label}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="mt-5">
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Share link</div>
+                          <div className="mt-2 flex gap-2">
+                            <input readOnly value={shareUrl} className="h-9 min-w-0 flex-1 rounded-full border px-3 text-xs" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--muted)" }} />
+                            <button type="button" onClick={() => handleCopyShareLink(shareUrl)} className="shrink-0 rounded-full px-3 text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
+                              {copyOk ? "Copied" : "Copy link"}
+                            </button>
+                          </div>
+                        </div>
+
+                        {panelItems.length > 0 ? (
+                          <div className="mt-5">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Selected items ({panelItems.length})</div>
+                            <div className="mt-2 flex gap-2">
+                              {panelItems.slice(0, 5).map((it) => {
+                                const img = getPrimaryImageUrl(it);
+                                return (
+                                  <div key={it.id} className="h-12 w-12 overflow-hidden rounded-lg bg-[color:var(--theme-elevated)] ring-1 ring-[color:var(--theme-border)]">
+                                    {img ? (
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img src={img} alt={it.title} className="h-full w-full object-cover" />
+                                    ) : null}
+                                  </div>
+                                );
+                              })}
+                              {panelItems.length > 5 ? (
+                                <div className="flex h-12 w-12 items-center justify-center rounded-lg text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--theme-border)]">+{panelItems.length - 5}</div>
+                              ) : null}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        <div className="mt-5 grid grid-cols-3 gap-2">
+                          <button type="button" onClick={() => openGallery(g.id)} className="inline-flex min-h-[40px] items-center justify-center rounded-full text-sm font-black" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B" }}>View</button>
+                          <button type="button" onClick={() => setGallerySettings(g)} className="inline-flex min-h-[40px] items-center justify-center rounded-full text-sm font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>Privacy</button>
+                          <button type="button" onClick={() => handleAskDelete(g)} className="inline-flex min-h-[40px] items-center justify-center rounded-full text-sm font-semibold ring-1" style={{ background: "rgba(248,113,113,0.08)", color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}>Delete</button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })() : null}
+              </aside>
             </div>
           )}
         </section>
