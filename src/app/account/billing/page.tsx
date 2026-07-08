@@ -40,6 +40,7 @@ export default function BillingPage() {
   const [customerId, setCustomerId] = useState("");
   const [busyPlan, setBusyPlan] = useState<Plan | null>(null);
   const [busyPortal, setBusyPortal] = useState(false);
+  const [fromLimit, setFromLimit] = useState(false);
 
   useEffect(() => {
     getCurrentUser().then(({ data }) => setEmail(data.user?.email ?? ""));
@@ -48,6 +49,7 @@ export default function BillingPage() {
     const params = new URLSearchParams(window.location.search);
     const billingStatus = params.get("billing");
     const sessionId = params.get("session_id");
+    if (params.get("reason") === "vault_limit") setFromLimit(true);
 
     if (billingStatus === "success" && sessionId) {
       fetch(`/api/billing/session?session_id=${encodeURIComponent(sessionId)}`)
@@ -137,6 +139,15 @@ export default function BillingPage() {
       </div>
 
       <div className="mx-auto max-w-2xl px-4 py-6 space-y-6">
+        {fromLimit ? (
+          <div className="rounded-2xl p-4 ring-1" style={{ background: "rgba(245,181,72,0.10)", borderColor: "rgba(245,181,72,0.4)" }}>
+            <div className="text-sm font-bold" style={{ color: "#F5B548" }}>You&apos;ve hit your free item limit</div>
+            <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
+              Upgrade to a paid plan below to add unlimited items and unlock everything.
+            </div>
+          </div>
+        ) : null}
+
         {/* Current plan banner */}
         <div className="rounded-2xl p-4 ring-1" style={{ background: "var(--theme-gold-subtle, rgba(245,181,72,0.1))", borderColor: "var(--theme-gold-border, rgba(245,181,72,0.3))" }}>
           <div className="flex items-center justify-between gap-3">

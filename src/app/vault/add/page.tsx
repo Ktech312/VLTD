@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import UpgradeNudge, { isFreeTierLimitError } from "@/components/UpgradeNudge";
 
 import CameraCapturePanel from "@/components/CameraCapturePanel";
 import BarcodeScanCamera from "@/components/BarcodeScanCamera";
@@ -346,6 +347,7 @@ export default function AddPage() {
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [hasDraftChanges, setHasDraftChanges] = useState(false);
+  const [limitHit, setLimitHit] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [isBookLookupRunning, setIsBookLookupRunning] = useState(false);
   const [isComicLookupRunning, setIsComicLookupRunning] = useState(false);
@@ -2051,7 +2053,8 @@ export default function AddPage() {
         }, 350);
       }
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Failed to save item.");
+      if (isFreeTierLimitError(error)) { setLimitHit(true); }
+      else setStatus(error instanceof Error ? error.message : "Failed to save item.");
     } finally {
       setIsSaving(false);
     }
@@ -2081,6 +2084,12 @@ export default function AddPage() {
               )}
             </div>
           </div>
+
+          {limitHit ? (
+            <div className="mt-2">
+              <UpgradeNudge onDismiss={() => setLimitHit(false)} />
+            </div>
+          ) : null}
 
           {/* Only surface important alerts (saved / errors / limits) — not routine nudges */}
           {status && (status.startsWith("✓") || /limit|failed|error|required|unavailable|deleted|removed/i.test(status)) ? (

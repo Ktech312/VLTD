@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import ScanCropEditor from "@/components/ScanCropEditor";
 import ScanCapturePanel from "@/components/ScanCapturePanel";
+import UpgradeNudge, { isFreeTierLimitError } from "@/components/UpgradeNudge";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { PillButton } from "@/components/ui/PillButton";
 import { AI_ASSIST_SETUP_MESSAGE, analyzeImageWithVision } from "@/lib/ai/openaiVision";
@@ -373,6 +374,7 @@ export default function QuickAddClient() {
   const [categoryLabel, setCategoryLabel] = useState(() => getLastUsedCategory().categoryLabel);
   const [subcategoryLabel, setSubcategoryLabel] = useState(() => getLastUsedCategory().subcategoryLabel);
   const [status, setStatus] = useState("");
+  const [limitHit, setLimitHit] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showMoreFields, setShowMoreFields] = useState(false);
   const [isPreparingImage, setIsPreparingImage] = useState(false);
@@ -741,6 +743,7 @@ export default function QuickAddClient() {
 
       resetForm();
     } catch (error) {
+      if (isFreeTierLimitError(error)) { setLimitHit(true); return; }
       setStatus(error instanceof Error ? error.message : "Quick Add failed.");
     } finally {
       setIsSaving(false);
@@ -1030,6 +1033,12 @@ export default function QuickAddClient() {
                 placeholder="Notes"
                 className="min-h-[100px] rounded-2xl bg-[color:var(--pill)] px-4 py-3 ring-1 ring-[color:var(--border)]"
               />
+            </div>
+          ) : null}
+
+          {limitHit ? (
+            <div className="mt-2">
+              <UpgradeNudge onDismiss={() => setLimitHit(false)} />
             </div>
           ) : null}
 
