@@ -33,36 +33,81 @@ type UniverseCard = {
   description: string;
 };
 
-const FEATURE_CARDS = [
+const ICON_SVG = {
+  common: {
+    width: 20,
+    height: 20,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  },
+};
+
+const FEATURE_CARDS: { icon: React.ReactNode; title: string; description: string }[] = [
   {
-    icon: "▣",
-    title: "Enhanced Smart Scan",
-    description: "Capture a clean item photo, crop it, tune it, and let AI identify the record before it lands in your vault.",
+    title: "Private Vault",
+    description: "Your data. Your control. Locked in, always.",
+    icon: (
+      <svg {...ICON_SVG.common}>
+        <rect x="5" y="11" width="14" height="9" rx="2" />
+        <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+      </svg>
+    ),
   },
   {
-    icon: "▤",
-    title: "Public Vault Control",
-    description: "Share a public link that only shows items you unlock. Your private vault stays private by default.",
+    title: "Portfolio Intelligence",
+    description: "Real-time values, analytics, and market insights.",
+    icon: (
+      <svg {...ICON_SVG.common}>
+        <path d="M3 3v18h18" />
+        <path d="M7 15l4-4 3 3 5-6" />
+      </svg>
+    ),
   },
   {
-    icon: "↗",
-    title: "Portfolio View",
-    description: "Track cost basis, current value, and gain/loss across every item in every category.",
+    title: "Insurance Ready",
+    description: "Export complete, accurate records in seconds.",
+    icon: (
+      <svg {...ICON_SVG.common}>
+        <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z" />
+        <path d="M9 12l2 2 4-4" />
+      </svg>
+    ),
   },
   {
-    icon: "☆",
-    title: "Insurance Docs",
-    description: "Generate complete insurance-ready documentation packets from your vault in seconds.",
+    title: "Museum Display",
+    description: "Create stunning galleries. Share or keep private.",
+    icon: (
+      <svg {...ICON_SVG.common}>
+        <path d="M3 21h18" />
+        <path d="M5 21V9M10 21V9M14 21V9M19 21V9" />
+        <path d="M3 9l9-5 9 5" />
+      </svg>
+    ),
   },
   {
-    icon: "⟳",
-    title: "Offline Queue",
-    description: "Capture at shows, storage units, or conventions. Local records and images wait safely until sync is available.",
+    title: "Sell Anywhere",
+    description: "Export anytime. List on any platform you want.",
+    icon: (
+      <svg {...ICON_SVG.common}>
+        <path d="M4 15a4 4 0 0 1 1-7.9A5 5 0 0 1 19 8a4 4 0 0 1-.5 8" />
+        <path d="M12 12v7" />
+        <path d="M9 15l3-3 3 3" />
+      </svg>
+    ),
   },
   {
-    icon: "◎",
-    title: "Marketplace Prep",
-    description: "Mark an item for sale and generate listing drafts for eBay, Mercari, Facebook, Whatnot, Discogs, PWCC, and more.",
+    title: "No Lock-In",
+    description: "Your collection is yours. Take it anywhere.",
+    icon: (
+      <svg {...ICON_SVG.common}>
+        <rect x="5" y="11" width="14" height="9" rx="2" />
+        <path d="M8 11V7a4 4 0 0 1 7-2.4" />
+      </svg>
+    ),
   },
 ];
 
@@ -109,6 +154,14 @@ const VAULT_UNIVERSES: UniverseCard[] = [
     meta: "Unique · Mixed",
     description: "Coins, art, oddities, and anything unique.",
   },
+];
+
+const HOW_IT_WORKS = [
+  { n: 1, title: "Capture", desc: "Take photos or scan. We handle the rest." },
+  { n: 2, title: "We analyze", desc: "AI reads, values, and grades with precision." },
+  { n: 3, title: "Secure in your vault", desc: "Everything organized, private, and backed up." },
+  { n: 4, title: "Track & grow", desc: "Watch values, trends, and portfolio performance." },
+  { n: 5, title: "Share or sell", desc: "Display in galleries or export anywhere." },
 ];
 
 const COMPARISON_ROWS = [
@@ -374,13 +427,6 @@ export default function PublicHomeClient() {
             {!signedIn && (
               <>
                 <Link
-                  href="#public-galleries"
-                  className="hidden md:inline-flex rounded-full border border-[color:var(--border)] px-4 py-2 text-sm font-semibold whitespace-nowrap text-[color:var(--muted)] transition hover:text-text-primary"
-                  style={{ background: cardBg }}
-                >
-                  View galleries
-                </Link>
-                <Link
                   href="/login"
                   className="rounded-full border border-[color:var(--border)] px-4 py-2 text-sm font-semibold whitespace-nowrap text-[color:var(--muted)] transition hover:text-text-primary"
                 >
@@ -406,29 +452,60 @@ export default function PublicHomeClient() {
           </div>
         </div>
 
-        {/* ── Hero — centered, stacked ───────────────────────────── */}
-        <div className="mx-auto flex max-w-4xl flex-col items-center px-4 pb-10 pt-8 text-center sm:px-6 sm:pb-14 sm:pt-12 lg:px-8">
-          <h1 className="max-w-2xl text-4xl font-black leading-[0.96] tracking-[-0.06em] text-text-primary sm:text-5xl lg:text-6xl">
-            Your collection deserves a <span className="text-[color:var(--accent)]">real home.</span>
-          </h1>
-          <p className="mt-4 max-w-lg text-base leading-7 text-[color:var(--muted)]">
-            Private vault. Portfolio intelligence. Insurance records. One home
-            for every card, comic, record, slab, game, and piece you collect.
-          </p>
+        {/* ── Hero — two-column: copy + CTAs left, vault visual right ─ */}
+        <div className="mx-auto max-w-7xl px-4 pb-12 pt-8 sm:px-6 sm:pb-16 sm:pt-12 lg:px-8">
+          <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
+            {/* Left — copy + calls to action */}
+            <div className="text-center lg:text-left">
+              <h1 className="mx-auto max-w-2xl text-4xl font-black leading-[0.96] tracking-[-0.06em] text-text-primary sm:text-5xl lg:mx-0 lg:text-6xl">
+                Your collection deserves a <span className="text-[color:var(--accent)]">real home.</span>
+              </h1>
+              <p className="mx-auto mt-4 max-w-lg text-base leading-7 text-[color:var(--muted)] lg:mx-0">
+                Private vault. Museum display. Portfolio intelligence. Insurance
+                records. One home for every card, comic, record, slab, game, and
+                piece you collect.
+              </p>
 
-          {/* Label above animation */}
-          <div className="mt-8 text-[11px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted2)]">
-            Your Digital Vault
+              <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
+                <Link
+                  href="/signup"
+                  className="vltd-primary-button inline-flex h-12 items-center justify-center rounded-full px-7 text-sm font-black transition"
+                >
+                  Start your vault — it&apos;s free →
+                </Link>
+                <Link
+                  href="#public-galleries"
+                  className="inline-flex h-12 items-center justify-center rounded-full border border-[color:var(--border)] px-7 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
+                  style={{ background: cardBg }}
+                >
+                  View public galleries
+                </Link>
+              </div>
+
+              {/* Trust row */}
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 lg:justify-start">
+                {["No credit card", "No ads", "No lock-in"].map((label) => (
+                  <span
+                    key={label}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[color:var(--muted2)]"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--accent)" }}>
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Right — vault visual */}
+            <div className="flex flex-col items-center">
+              <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted2)]">
+                Your Digital Vault
+              </div>
+              <VltdVaultLogoAnimation className="vltd-hero-vault-center" defaultOpen />
+            </div>
           </div>
-
-          {/* Centered, larger animation */}
-          <div className="mt-3 flex w-full justify-center">
-            <VltdVaultLogoAnimation className="vltd-hero-vault-center" defaultOpen />
-          </div>
-
-          <p className="mt-5 text-xs text-[color:var(--muted2)]">
-            No credit card · No ads · No lock-in
-          </p>
         </div>
       </section>
 
@@ -481,13 +558,53 @@ export default function PublicHomeClient() {
         <div className="mx-auto grid max-w-7xl divide-y divide-[color:var(--border)] px-4 sm:px-6 sm:grid-cols-2 sm:divide-x sm:divide-y-0 md:grid-cols-3 lg:grid-cols-6 lg:divide-x lg:divide-y-0 lg:px-8">
           {FEATURE_CARDS.map((feature) => (
             <div key={feature.title} className="px-2 py-7 md:px-6">
-              <div className="mb-3 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[rgba(245,181,72,0.22)] bg-[rgba(245,181,72,0.08)] text-[color:var(--accent)]">
+              <div
+                className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl border"
+                style={{ borderColor: 'var(--theme-gold-border, rgba(245,181,72,0.3))', background: 'rgba(245,181,72,0.08)', color: 'var(--theme-gold, #F5B548)' }}
+              >
                 {feature.icon}
               </div>
-              <div className="text-sm font-black" style={{ color: 'var(--fg)' }}>{feature.title}</div>
+              <div className="text-[13px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--theme-gold, #F5B548)' }}>
+                {feature.title}
+              </div>
               <p className="mt-2 text-sm leading-6" style={{ color: 'var(--muted)' }}>
                 {feature.description}
               </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── How it works — 5 numbered steps ──────────────────────── */}
+      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+        <div className="max-w-3xl">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted2)]">
+            How it works
+          </div>
+          <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-text-primary">
+            From shoebox to vault in five steps.
+          </h2>
+        </div>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {HOW_IT_WORKS.map((step, i) => (
+            <div
+              key={step.n}
+              className="relative rounded-2xl p-5"
+              style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+            >
+              <div
+                className="flex h-9 w-9 items-center justify-center rounded-full border text-sm font-black"
+                style={{ borderColor: 'var(--theme-gold-border, rgba(245,181,72,0.4))', color: 'var(--theme-gold, #F5B548)' }}
+              >
+                {step.n}
+              </div>
+              <div className="mt-4 text-sm font-black text-text-primary">{step.title}</div>
+              <p className="mt-1.5 text-sm leading-6 text-[color:var(--muted)]">{step.desc}</p>
+              {i < HOW_IT_WORKS.length - 1 && (
+                <span className="pointer-events-none absolute right-[-13px] top-1/2 hidden -translate-y-1/2 text-lg text-[color:var(--muted2)] lg:block">
+                  →
+                </span>
+              )}
             </div>
           ))}
         </div>
