@@ -4,6 +4,7 @@ export type OnboardingDraft = {
   profile_type: "personal" | "business";
   primary_focus: string;
   avatar_emoji: string;
+  avatar_url: string;
 };
 
 const LS_KEY = "vltd_onboarding_draft_v2";
@@ -14,6 +15,7 @@ const EMPTY_DRAFT: OnboardingDraft = {
   profile_type: "personal",
   primary_focus: "",
   avatar_emoji: "",
+  avatar_url: "",
 };
 
 export function loadOnboardingDraft(): OnboardingDraft {
@@ -28,6 +30,7 @@ export function loadOnboardingDraft(): OnboardingDraft {
       profile_type: parsed?.profile_type === "business" ? "business" : "personal",
       primary_focus: String(parsed?.primary_focus ?? ""),
       avatar_emoji: String(parsed?.avatar_emoji ?? ""),
+      avatar_url: String(parsed?.avatar_url ?? ""),
     };
   } catch {
     return EMPTY_DRAFT;

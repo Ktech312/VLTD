@@ -1,20 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 import { createProfile, getOnboardingStatus, setStoredActiveProfileId } from "@/lib/auth";
+import { AVATAR_PRESETS, DEFAULT_AVATAR_EMOJI, DEFAULT_AVATAR_URL, presetAvatarUrl, resolveAvatarImageSrc } from "@/lib/avatarRegistry";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL, UNIVERSE_ICON } from "@/lib/taxonomy";
 import { clearOnboardingDraft, loadOnboardingDraft, saveOnboardingDraft } from "@/lib/onboardingDraft";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const AVATAR_EMOJIS = [
-  "🗝️","🏆","⚡","🔥","👑","🎯","🎲","🎴","🃏","🀄",
-  "🏅","🎖️","💎","🪙","🔮","🧿","🎪","🎭","🛡️","⚔️",
-  "🦁","🐉","🦊","🦅","🐺","🦋","🐙","🦈","🌟","💫",
-];
-
 const FOCUS_OPTIONS = [
   { label: "Sports Cards", emoji: "⚾" },
   { label: "TCG", emoji: "🃏" },
@@ -119,6 +115,7 @@ export default function OnboardingPage() {
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [avatarEmoji, setAvatarEmoji] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState(DEFAULT_AVATAR_URL);
   const [accountChoice, setAccountChoice] = useState<"personal" | "business" | "both">("personal");
   const [primaryFocus, setPrimaryFocus] = useState("");
   const [focusedUniverses, setFocusedUniverses] = useState<string[]>([]);
@@ -134,7 +131,8 @@ export default function OnboardingPage() {
   // the primary personal and adds a separate business profile.
   const profileType: "personal" | "business" = accountChoice === "business" ? "business" : "personal";
 
-  const resolvedAvatar = avatarEmoji || "🗝️";
+  const resolvedAvatar = avatarEmoji || DEFAULT_AVATAR_EMOJI;
+  const resolvedAvatarImage = resolveAvatarImageSrc(avatarUrl);
 
   useEffect(() => {
     const draft = loadOnboardingDraft();
@@ -143,6 +141,7 @@ export default function OnboardingPage() {
     setAccountChoice(draft.profile_type === "business" ? "business" : "personal");
     setPrimaryFocus(draft.primary_focus);
     setAvatarEmoji(draft.avatar_emoji);
+    setAvatarUrl(draft.avatar_url || DEFAULT_AVATAR_URL);
 
     async function load() {
       const status = await getOnboardingStatus();
@@ -161,8 +160,9 @@ export default function OnboardingPage() {
       profile_type: profileType,
       primary_focus: primaryFocus,
       avatar_emoji: avatarEmoji,
+      avatar_url: avatarUrl,
     });
-  }, [username, displayName, profileType, primaryFocus, avatarEmoji]);
+  }, [username, displayName, profileType, primaryFocus, avatarEmoji, avatarUrl]);
 
   const canContinueIdentity = useMemo(
     () => displayName.trim().length >= 2 && slugifyUsername(username).length >= 3,
@@ -181,6 +181,7 @@ export default function OnboardingPage() {
         profile_type: isPrimaryBusiness ? "business" : "personal",
         primary_focus: primaryFocus.trim() || undefined,
         avatar_emoji: resolvedAvatar,
+        avatar_url: avatarUrl,
         ...(isPrimaryBusiness
           ? { business_type: bizType, website: bizWebsite, tax_id: bizEin }
           : {}),
@@ -203,6 +204,7 @@ export default function OnboardingPage() {
           display_name: bizName.trim() || `${displayName.trim()} Business`,
           profile_type: "business",
           avatar_emoji: "🏛️",
+          avatar_url: "__preset:vault",
           business_type: bizType,
           website: bizWebsite,
           tax_id: bizEin,
@@ -278,25 +280,34 @@ export default function OnboardingPage() {
             {/* ── Step 1: Identity ── */}
             {step === 1 && (
               <div className="mt-6 space-y-5">
-                {/* Emoji picker */}
+                {/* Real VLTD avatar picker */}
                 <div>
                   <div className="mb-2 text-sm font-semibold text-text-primary">Avatar</div>
-                  <div className="flex flex-wrap gap-2">
-                    {AVATAR_EMOJIS.map((emoji) => (
+                  <div className="grid grid-cols-4 gap-3 sm:grid-cols-8">
+                    {AVATAR_PRESETS.map((avatar) => {
+                      const nextAvatarUrl = presetAvatarUrl(avatar.id);
+                      const active = avatarUrl === nextAvatarUrl;
+                      return (
                       <button
-                        key={emoji}
+                        key={avatar.id}
                         type="button"
-                        onClick={() => setAvatarEmoji(emoji)}
+                        title={avatar.label}
+                        aria-label={avatar.label}
+                        onClick={() => {
+                          setAvatarUrl(nextAvatarUrl);
+                          setAvatarEmoji(DEFAULT_AVATAR_EMOJI);
+                        }}
                         className={[
-                          "flex h-10 w-10 items-center justify-center rounded-full text-xl transition",
-                          resolvedAvatar === emoji
-                            ? "bg-[rgba(245,181,72,0.2)] ring-2 ring-[#F5B548] scale-110"
-                            : "bg-[color:var(--pill)] ring-1 ring-[color:var(--border)] hover:scale-110 hover:ring-[rgba(245,181,72,0.4)]",
+                          "relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-[color:var(--pill)] p-1 transition",
+                          active
+                            ? "scale-105 ring-2 ring-[#F5B548] shadow-[0_0_22px_rgba(245,181,72,0.28)]"
+                            : "ring-1 ring-[color:var(--border)] hover:scale-105 hover:ring-[rgba(245,181,72,0.45)]",
                         ].join(" ")}
                       >
-                        {emoji}
+                        <Image src={avatar.src} alt="" width={72} height={72} className="h-full w-full rounded-[14px] object-cover" />
                       </button>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -448,8 +459,12 @@ export default function OnboardingPage() {
                 <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4 space-y-2">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted2)] mb-1">Confirming</div>
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--pill)] text-xl ring-1 ring-[color:var(--border)]">
-                      {resolvedAvatar}
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[color:var(--pill)] text-xl ring-1 ring-[color:var(--border)]">
+                      {resolvedAvatarImage ? (
+                        <Image src={resolvedAvatarImage} alt="" width={40} height={40} className="h-full w-full object-cover" />
+                      ) : (
+                        resolvedAvatar
+                      )}
                     </div>
                     <div>
                       <div className="font-semibold text-text-primary">{displayName.trim()}</div>

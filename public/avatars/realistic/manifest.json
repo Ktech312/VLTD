@@ -108,5 +108,10 @@
     "displayName": "Kai Sterling",
     "handle": "kaisterling",
     "src": "/avatars/realistic/kaisterling.png"
+  },
+  {
+    "displayName": "Funko Collector",
+    "handle": "funko-collector",
+    "src": "/avatars/realistic/funko-collector.png"
   }
 ]

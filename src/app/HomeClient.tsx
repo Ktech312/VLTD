@@ -559,30 +559,93 @@ function SocialLinksCard({ profileId, bio: initialBio, socialLinks: initialLinks
   );
 }
 
-// ── Recently Added sidebar ────────────────────────────────────────
-function RecentSidebarItems({ items }: { items: VaultItem[] }) {
-  const recent = useMemo(() => [...items].sort((a, b) => itemTimestamp(b) - itemTimestamp(a)).slice(0, 6), [items]);
-  if (recent.length === 0) return (
-    <div style={{ padding: "12px 15px", fontSize: "11px", color: C.muted, opacity: 0.6 }}>No items yet — scan your first collectible.</div>
-  );
+function CollectionSnapshotPanel({
+  totalValue,
+  totalCostValue,
+  gainTone,
+  gainPrefix,
+  gainPct,
+}: {
+  totalValue: number;
+  totalCostValue: number;
+  gainTone: "gain" | "loss";
+  gainPrefix: string;
+  gainPct: number;
+}) {
   return (
-    <div style={{ flex: 1, overflowY: "auto" }}>
-      {recent.map((item) => (
-        <Link key={item.id} href={"/vault/item/" + item.id}
-          style={{ display: "flex", gap: "9px", padding: "10px 15px", borderBottom: `1px solid ${C.bd2}`, alignItems: "center", textDecoration: "none" }}>
-          <div style={{ width: "32px", height: "32px", flexShrink: 0, borderRadius: "5px", border: `1px solid ${C.bd}`, background: "rgba(10,18,35,0.9)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px" }}>
-            {item.imageFrontUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={item.imageFrontUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            ) : "📦"}
-          </div>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: "12px", fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</div>
-            <div style={{ fontSize: "11px", color: C.muted }}>{item.universe || item.category || "Collectible"}</div>
-          </div>
-          <div style={{ fontSize: "12px", fontWeight: 600, flexShrink: 0, color: "#52D6F4", fontVariantNumeric: "tabular-nums" }}>{formatMoney(item.currentValue ?? item.estimatedValue ?? 0)}</div>
-        </Link>
-      ))}
+    <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden", minHeight: "100%" }}>
+      <CardHd label="Collection Value" href="/vault/sold" linkText="Analytics" />
+      <div className="grid gap-4 p-4 sm:grid-cols-[minmax(0,0.8fr)_minmax(220px,1fr)] sm:items-end">
+        <div>
+          <div style={{ fontFamily: C.r, fontSize: "32px", fontWeight: 700, lineHeight: 1, color: C.gold }}>{formatMoney(totalValue)}</div>
+          {totalCostValue > 0 ? (
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "8px" }}>
+              <span style={{ fontSize: "12px", fontWeight: 700, color: gainTone === "gain" ? C.green : C.red }}>
+                {gainTone === "gain" ? "▲" : "▼"} {gainPrefix}{gainPct.toFixed(1)}%
+              </span>
+              <span style={{ fontSize: "11px", color: C.muted }}>overall return</span>
+            </div>
+          ) : (
+            <div style={{ marginTop: "8px", fontSize: "11px", color: C.muted }}>Add purchase cost to track return.</div>
+          )}
+        </div>
+        <svg viewBox="0 0 230 52" width="100%" height="54" aria-hidden="true">
+          <defs>
+            <linearGradient id="homeValueGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={C.gold} stopOpacity=".28"/>
+              <stop offset="100%" stopColor={C.gold} stopOpacity=".02"/>
+            </linearGradient>
+          </defs>
+          <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2 L230 52 L0 52Z" fill="url(#homeValueGradient)"/>
+          <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2" fill="none" stroke={C.gold} strokeWidth="1.8"/>
+          <circle cx="230" cy="2" r="2.5" fill={C.gold}/>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+function RecentItemsRail({ items }: { items: VaultItem[] }) {
+  const recent = useMemo(() => [...items].sort((a, b) => itemTimestamp(b) - itemTimestamp(a)).slice(0, 8), [items]);
+
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
+      <CardHd label="Recently Added" href="/vault" linkText="View all" />
+      {recent.length === 0 ? (
+        <div style={{ padding: "14px 15px", fontSize: "11px", color: C.muted, opacity: 0.7 }}>No items yet. Scan your first collectible to start the record.</div>
+      ) : (
+        <div className="no-scrollbar flex gap-3 overflow-x-auto p-3" style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}>
+          {recent.map((item) => {
+            const imageUrl = item.imageFrontUrl || "/brand/vltd-icon.png";
+            return (
+              <Link key={item.id} href={"/vault/item/" + item.id}
+                className="group shrink-0"
+                style={{ width: "138px", textDecoration: "none", scrollSnapAlign: "start" }}>
+                <div style={{
+                  height: "112px",
+                  borderRadius: "8px",
+                  border: `1px solid ${C.bd}`,
+                  background: "rgba(10,18,35,0.9)",
+                  overflow: "hidden",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: item.imageFrontUrl ? "cover" : "contain", padding: item.imageFrontUrl ? 0 : 18, opacity: item.imageFrontUrl ? 1 : 0.72 }} />
+                </div>
+                <div style={{ marginTop: "8px", minWidth: 0 }}>
+                  <div style={{ fontSize: "12px", fontWeight: 700, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</div>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: "8px", marginTop: "3px", alignItems: "center" }}>
+                    <span style={{ fontSize: "10px", color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.universe || item.category || "Collectible"}</span>
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: "#52D6F4", fontVariantNumeric: "tabular-nums" }}>{formatMoney(item.currentValue ?? item.estimatedValue ?? 0)}</span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -782,10 +845,9 @@ export default function HomeClient() {
       )}
 
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}
-        className="grid items-start px-4 sm:px-5 lg:px-6 py-4 grid-cols-1 lg:[grid-template-columns:1fr_265px]">
+        className="px-4 py-4 sm:px-5 lg:px-6">
 
-        {/* ── LEFT COLUMN ── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "15px" }} className="lg:pr-5">
+        <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
 
           {/* Seasonal event banner */}
           <SeasonalBanner />
@@ -830,6 +892,17 @@ export default function HomeClient() {
 
             {/* Avatar panel — clickable */}
             <HeroAvatarPanel avatarUrl={avatarUrl} onClick={() => setShowAvatarPicker(true)} />
+          </div>
+
+          <div className="grid grid-cols-1 gap-[14px] lg:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)]">
+            <CollectionSnapshotPanel
+              totalValue={stats.totalValue}
+              totalCostValue={stats.totalCostValue}
+              gainTone={gainTone}
+              gainPrefix={gainPrefix}
+              gainPct={stats.gainPct}
+            />
+            <RecentItemsRail items={items} />
           </div>
 
           {/* Featured Gallery card (left) + coverflow carousel (right) */}
@@ -896,42 +969,7 @@ export default function HomeClient() {
 
           <UpcomingEventsWidget />
 
-        </div>{/* end LEFT */}
-
-        {/* ── RIGHT SIDEBAR ── */}
-        <div style={{ display: "flex", flexDirection: "column", borderLeft: `1px solid ${C.bd}` }} className="max-lg:border-l-0 max-lg:border-t max-lg:mt-4">
-          <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-            <div style={{ padding: "13px 15px", borderBottom: `1px solid ${C.bd}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: "10px", letterSpacing: "1.4px", textTransform: "uppercase", color: C.muted2, fontWeight: 600 }}>Recently Added</span>
-              <Link href="/vault" style={{ fontSize: "11px", color: C.gold, textDecoration: "none" }}>View all</Link>
-            </div>
-            <RecentSidebarItems items={items} />
-          </div>
-
-          <div style={{ padding: "14px 15px", borderTop: `1px solid ${C.bd}` }}>
-            <div style={{ fontSize: "10px", letterSpacing: "1.4px", textTransform: "uppercase", color: C.muted2, fontWeight: 600 }}>Collection Value</div>
-            <div style={{ fontFamily: C.r, fontSize: "28px", fontWeight: 700, lineHeight: 1, marginTop: "9px", color: C.gold }}>{formatMoney(stats.totalValue)}</div>
-            {stats.totalCostValue > 0 && (
-              <div style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "5px" }}>
-                <span style={{ fontSize: "12px", fontWeight: 600, color: gainTone === "gain" ? C.green : C.red }}>{gainTone === "gain" ? "▲" : "▼"} {gainPrefix}{stats.gainPct.toFixed(1)}%</span>
-                <span style={{ fontSize: "11px", color: C.muted }}>overall return</span>
-              </div>
-            )}
-            <svg viewBox="0 0 230 52" width="100%" height="44" style={{ marginTop: "12px" }}>
-              <defs>
-                <linearGradient id="vg3" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={C.gold} stopOpacity=".28"/>
-                  <stop offset="100%" stopColor={C.gold} stopOpacity=".02"/>
-                </linearGradient>
-              </defs>
-              <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2 L230 52 L0 52Z" fill="url(#vg3)"/>
-              <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2" fill="none" stroke={C.gold} strokeWidth="1.8"/>
-              <circle cx="230" cy="2" r="2.5" fill={C.gold}/>
-            </svg>
-            <Link href="/vault/sold" style={{ display: "block", textAlign: "center", marginTop: "8px", fontSize: "11px", color: C.muted, textDecoration: "none" }}>View analytics →</Link>
-          </div>
-
-        </div>{/* end RIGHT SIDEBAR */}
+        </div>
 
       </div>
     </main>

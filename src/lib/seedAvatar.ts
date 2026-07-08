@@ -1,27 +1,6 @@
-const REALISTIC_SEED_AVATAR_HANDLES = new Set([
-  "jpmorgan",
-  "wrhearst",
-  "thecommodore",
-  "kinghenry8",
-  "howardhughes",
-  "nikolatesla",
-  "emperornero",
-  "jdrockefeller",
-  "emperorqianlong",
-  "sunking",
-  "beethoven",
-  "leonardodavinci",
-  "blackbeard",
-  "ptbarnum",
-  "casanova",
-  "marieantoinette",
-  "orpheus",
-  "rumplestiltskin",
-  "waltonjjr",
-  "phantomoftheopera",
-  "solomonking",
-  "kaisterling",
-]);
+import { REALISTIC_AVATARS } from "@/lib/avatarRegistry";
+
+const REALISTIC_SEED_AVATAR_HANDLES = new Set(REALISTIC_AVATARS.map((avatar) => avatar.handle));
 
 const SEED_AVATAR_HANDLES = Array.from(REALISTIC_SEED_AVATAR_HANDLES);
 
@@ -49,6 +28,7 @@ const SEED_AVATAR_DISPLAY_NAMES: Record<string, string> = {
   "erik the phantom": "phantomoftheopera",
   "solomon king": "solomonking",
   "kai sterling": "kaisterling",
+  "funko collector": "funko-collector",
 };
 
 function normalizeSeedName(value?: string | null) {
