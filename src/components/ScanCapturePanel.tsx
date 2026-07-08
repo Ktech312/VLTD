@@ -233,14 +233,19 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [awaitingChoice, lockStatus, capturingBack, quickMode, bulkMode, bulkPaused, activeItemId]);
 
+  // Revoke object URLs ONLY when the panel unmounts. Using [capturedItems] here
+  // would revoke earlier captures' URLs every time a new item is added, which
+  // broke the first item's thumbnail. A ref keeps the latest list for cleanup.
+  const capturedItemsRef = useRef(capturedItems);
+  capturedItemsRef.current = capturedItems;
   useEffect(() => {
     return () => {
-      capturedItems.forEach((item) => {
+      capturedItemsRef.current.forEach((item) => {
         URL.revokeObjectURL(item.frontObjectUrl);
         if (item.backObjectUrl) URL.revokeObjectURL(item.backObjectUrl);
       });
     };
-  }, [capturedItems]);
+  }, []);
 
   function triggerFlash() {
     setFlashVisible(true);
