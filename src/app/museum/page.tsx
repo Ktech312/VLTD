@@ -58,6 +58,22 @@ function scoreBandTone(band: "Basic" | "Curated" | "Exhibition Grade") {
   return "Basic";
 }
 
+function gradeLetter(band: "Basic" | "Curated" | "Exhibition Grade") {
+  if (band === "Exhibition Grade") return "A+";
+  if (band === "Curated") return "A";
+  return "B+";
+}
+
+type ExhibitionFilter = "ALL" | "ACTIVE" | "DRAFTS" | "PUBLIC" | "INVITE" | "LOCKED";
+const EXHIBITION_FILTERS: { key: ExhibitionFilter; label: string }[] = [
+  { key: "ALL", label: "All" },
+  { key: "ACTIVE", label: "Active" },
+  { key: "DRAFTS", label: "Drafts" },
+  { key: "PUBLIC", label: "Public" },
+  { key: "INVITE", label: "Invite" },
+  { key: "LOCKED", label: "Locked" },
+];
+
 function galleryValue(gallery: Gallery, itemsById: Map<string, VaultItem>) {
   return gallery.itemIds.reduce((sum, itemId) => {
     const item = itemsById.get(itemId);
@@ -125,6 +141,7 @@ export default function MuseumPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const coverInputRef = useRef<HTMLInputElement | null>(null);
+  const [filter, setFilter] = useState<ExhibitionFilter>("ALL");
 
   function refresh() {
     setGalleries(loadGalleries());
@@ -256,6 +273,18 @@ export default function MuseumPage() {
     });
   }, [scoredGalleries]);
 
+  const displayedGalleries = useMemo(() => {
+    if (filter === "ALL") return orderedGalleries;
+    return orderedGalleries.filter(({ gallery }) => {
+      if (filter === "ACTIVE") return gallery.state === "ACTIVE";
+      if (filter === "DRAFTS") return gallery.state === "STORAGE";
+      if (filter === "PUBLIC") return gallery.visibility === "PUBLIC";
+      if (filter === "INVITE") return gallery.visibility === "INVITE";
+      if (filter === "LOCKED") return gallery.visibility === "LOCKED";
+      return true;
+    });
+  }, [orderedGalleries, filter]);
+
   function openGallery(galleryId: string) {
     router.push(`/museum/${galleryId}`);
   }
@@ -336,87 +365,42 @@ export default function MuseumPage() {
           <div className="relative flex flex-col gap-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="max-w-2xl">
-                <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
-                  MUSEUM
-                </div>
-
-                <h1 className="mt-2 text-3xl font-semibold sm:text-[2.2rem]">
-                  Curated Exhibitions
+                <h1 className="text-3xl font-black tracking-[-0.035em] leading-tight sm:text-4xl">
+                  Exhibitions
                 </h1>
-
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
-                  Build editorial, museum-style presentations from the active profile’s
-                  collection with public, locked, and invite-only sharing.
+                <p className="mt-1.5 text-sm leading-6 text-[color:var(--muted)]">
+                  Curate public rooms from your private vault.
                 </p>
               </div>
 
               <div className="shrink-0">
                 <Link
                   href="/museum/new"
-                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-ring)] vltd-pill-main-glow transition hover:bg-[color:var(--pill-hover)]"
+                  className="inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-full px-5 py-2 text-sm font-black transition"
+                  style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}
                 >
-                  Add Gallery
+                  + Create Exhibition
                 </Link>
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-              <div className="rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
-                <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                  TOTAL
-                </div>
-                <div className="mt-2 text-2xl font-semibold">{stats.total}</div>
-                <div className="mt-1 text-sm text-[color:var(--muted)]">
-                  All galleries
-                </div>
-              </div>
-
-              <div className="rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
-                <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                  ACTIVE
-                </div>
-                <div className="mt-2 text-2xl font-semibold">{stats.active}</div>
-                <div className="mt-1 text-sm text-[color:var(--muted)]">
-                  Live galleries
-                </div>
-              </div>
-
-              <div className="rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
-                <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                  PUBLIC
-                </div>
-                <div className="mt-2 text-2xl font-semibold">{stats.publicCount}</div>
-                <div className="mt-1 text-sm text-[color:var(--muted)]">
-                  Share-ready galleries
-                </div>
-              </div>
-
-              <div className="rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
-                <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                  TOTAL VIEWS
-                </div>
-                <div className="mt-2 text-2xl font-semibold">{stats.totalViews}</div>
-                <div className="mt-1 text-sm text-[color:var(--muted)]">
-                  Audience engagement
-                </div>
-              </div>
-
-              <div className="rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
-                <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                  TIER LIMIT
-                </div>
-                <div className="mt-2 text-2xl font-semibold">
-                  {limits.galleries === Infinity ? "∞" : limits.galleries}
-                </div>
-                <div className="mt-1 text-sm text-[color:var(--muted)]">
-                  {limits.galleries === Infinity ? "Unlimited" : "Per active profile"}
-                </div>
-              </div>
+            <div className="flex flex-wrap gap-2">
+              {EXHIBITION_FILTERS.map((f) => (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => setFilter(f.key)}
+                  className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-semibold ring-1 transition ${filter === f.key ? "bg-gold/20 text-gold ring-gold/40" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]"}`}
+                >
+                  {f.label}
+                </button>
+              ))}
             </div>
           </div>
         </section>
 
-        {galleries.length > 0 ? (
+        {/* Insight cards hidden to match the redesigned Exhibitions layout */}
+        {false ? (
           <section className="mt-6 grid gap-5 xl:grid-cols-3">
             <div className="vltd-panel-soft rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
@@ -553,7 +537,7 @@ export default function MuseumPage() {
             </div>
           ) : (
             <div className="grid justify-center gap-5 [grid-template-columns:repeat(auto-fill,minmax(300px,360px))]">
-              {orderedGalleries.map(({ gallery, score, totalValue, views }) => {
+              {displayedGalleries.map(({ gallery, score, totalValue, views }) => {
                 const coverImage = resolveGalleryImage(gallery.coverImage);
 
                 return (
@@ -602,8 +586,9 @@ export default function MuseumPage() {
 
                     <div className="relative flex min-h-0 flex-1 flex-col">
                       <div className="flex items-start justify-between gap-3">
-                        <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                          CURATED GALLERY
+                        <div className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold, #F5B548)" }}>
+                          <span className="inline-flex h-5 items-center justify-center rounded-md px-1.5 text-[10px] ring-1 ring-[color:var(--theme-gold-border,rgba(245,181,72,0.35))]">{gradeLetter(score.band)}</span>
+                          {scoreBandTone(score.band)}
                         </div>
 
                         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -674,7 +659,7 @@ export default function MuseumPage() {
                             <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
                               VALUE
                             </div>
-                            <div className="mt-1 text-xl font-semibold">{formatMoney(totalValue)}</div>
+                            <div className="mt-1 text-xl font-semibold" style={{ color: "var(--data-color, #52d6f4)" }}>{formatMoney(totalValue)}</div>
                           </div>
                         </div>
 
