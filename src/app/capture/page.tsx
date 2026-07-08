@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import CameraCapturePanel from "@/components/CameraCapturePanel";
 import CaptureCamera from "@/components/CaptureCamera";
@@ -46,6 +46,9 @@ type ReviewFields = {
   number: string;
   categoryLabel: string;
   subcategoryLabel: string;
+  storageLocation: string;
+  currentValue: string;
+  purchasePrice: string;
   confidence: number;
 };
 
@@ -61,8 +64,93 @@ const EMPTY_FIELDS: ReviewFields = {
   number: "",
   categoryLabel: "",
   subcategoryLabel: "",
+  storageLocation: "",
+  currentValue: "",
+  purchasePrice: "",
   confidence: 0.45,
 };
+
+/* ── Shared styles ─────────────────────────────────────────────── */
+
+const LABEL_CLS =
+  "text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]";
+const INPUT_CLS =
+  "mt-1 w-full rounded-xl border bg-vault-card px-3 py-2 text-sm font-semibold text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]";
+const INPUT_STYLE = { borderColor: "var(--theme-border, rgba(245,181,72,0.12))" } as const;
+
+/* ── Accordion section ─────────────────────────────────────────── */
+
+function AccordionSection({
+  n,
+  title,
+  hint,
+  open,
+  onToggle,
+  badge,
+  children,
+}: {
+  n: number;
+  title: string;
+  hint?: string;
+  open: boolean;
+  onToggle: () => void;
+  badge?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className="rounded-2xl border"
+      style={{
+        borderColor: open
+          ? "var(--theme-gold-border, rgba(245,181,72,0.35))"
+          : "var(--theme-gold-border, rgba(245,181,72,0.16))",
+        background: "var(--theme-card, rgba(15,25,45,0.6))",
+      }}
+    >
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
+      >
+        <span
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black"
+          style={{ border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.35))", color: "var(--theme-gold, #F5B548)" }}
+        >
+          {n}
+        </span>
+        <span className="shrink-0 text-[13px] font-black uppercase tracking-[0.14em] text-text-primary">
+          {title}
+        </span>
+        {hint && !open ? (
+          <span className="min-w-0 flex-1 truncate text-xs text-[color:var(--muted)]">{hint}</span>
+        ) : (
+          <span className="flex-1" />
+        )}
+        {badge}
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          className={`shrink-0 text-[color:var(--muted2)] transition-transform ${open ? "rotate-180" : ""}`}
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+      {open ? (
+        <div
+          className="border-t px-4 py-4"
+          style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.12))" }}
+        >
+          {children}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 /* ── Helpers ────────────────────────────────────────────────────── */
 
@@ -95,6 +183,9 @@ function mergeResults(
     number: vision?.number || "",
     categoryLabel: taxo.categoryLabel || vision?.categoryLabel || upc?.categoryLabel || "",
     subcategoryLabel: taxo.subcategoryLabel || vision?.subcategoryLabel || upc?.subcategoryLabel || "",
+    storageLocation: "",
+    currentValue: "",
+    purchasePrice: "",
     confidence: vision?.confidence ?? 0.45,
   };
 }
@@ -236,6 +327,10 @@ export default function CapturePage() {
         number: fields.number || undefined,
         categoryLabel: fields.categoryLabel || undefined,
         subcategoryLabel: fields.subcategoryLabel || undefined,
+        condition: fields.condition || undefined,
+        storageLocation: fields.storageLocation.trim() || undefined,
+        currentValue: fields.currentValue ? Number(fields.currentValue) : undefined,
+        purchasePrice: fields.purchasePrice ? Number(fields.purchasePrice) : undefined,
         status: "COLLECTION" as const,
         createdAt: Date.now(),
         ...imagePatch,
@@ -254,8 +349,27 @@ export default function CapturePage() {
     }
   }, [capturedImageFile, fields, router]);
 
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [showExtraFields, setShowExtraFields] = useState(false);
+  // Accordion open state — Identity open by default, like the record builder.
+  const [openSections, setOpenSections] = useState<Set<number>>(() => new Set([1]));
+  const toggleSection = useCallback((n: number) => {
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(n)) next.delete(n);
+      else next.add(n);
+      return next;
+    });
+  }, []);
+
+  // Object URL for the large preview in the review layout (revoked on change/unmount).
+  const previewUrl = useMemo(
+    () => (capturedImageFile ? URL.createObjectURL(capturedImageFile) : ""),
+    [capturedImageFile]
+  );
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   /* ── Bulk capture ── */
   const handleBulkCapture = useCallback(async (file: File, categoryLabel: string, subcategoryLabel: string) => {
@@ -308,7 +422,8 @@ export default function CapturePage() {
             }}
           />
 
-          {/* ── Two-column layout: info + camera ── */}
+          {/* ── Two-column layout: info + camera (capture states) ── */}
+          {phase !== "review" && (
           <div
             className={`relative flex flex-col gap-5 lg:gap-7 ${
               phase === "idle" || phase === "loading"
@@ -467,194 +582,334 @@ export default function CapturePage() {
               </div>
             )}
           </div>
+          )}
 
-          {/* ── REVIEW panel — full width below the grid ── */}
+          {/* ── REVIEW: record-builder (image left, numbered accordion right) ── */}
           {phase === "review" && (
-            <div
-              className="relative mt-6 rounded-[26px] border p-5 sm:p-6"
-              style={{
-                borderColor: "var(--theme-gold-border, rgba(245,181,72,0.25))",
-                background: "var(--theme-card, rgba(15,25,45,0.85))",
-              }}
-            >
-              {/* Header row with confidence badge */}
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--muted2)]">
-                  AI Identification — Review &amp; Edit
+            <div className="relative">
+              {/* Compact header + actions */}
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)]">
+                    Smart Scan
+                  </div>
+                  <h1 className="mt-1 text-2xl font-black leading-tight tracking-[-0.04em] text-text-primary lg:text-3xl">
+                    New Vault Item
+                  </h1>
                 </div>
-                <span
-                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em]"
-                  style={{ background: badge.bg, color: badge.color }}
-                >
-                  <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: badge.color }} />
-                  {badge.label}
-                </span>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsCameraPanelOpen(true)}
+                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[color:var(--border)] bg-vault-card px-4 text-xs font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
+                  >
+                    Scan Barcode
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => uploadInputRef.current?.click()}
+                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[color:var(--border)] bg-vault-card px-4 text-xs font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
+                  >
+                    Import
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFields(EMPTY_FIELDS);
+                      setCapturedImageFile(null);
+                      setPhase("idle");
+                    }}
+                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[color:var(--border)] bg-vault-card px-4 text-xs font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
+                  >
+                    Clear
+                  </button>
+                </div>
               </div>
 
-              {/* ── Core fields: Title + Universe ── */}
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {/* Two columns: preview | accordion */}
+              <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,380px)_1fr] lg:items-start">
+                {/* Left: image preview */}
                 <div>
-                  <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Title</label>
-                  <input
-                    className="mt-1 w-full rounded-xl border bg-vault-card px-3 py-2 text-sm font-semibold text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]"
-                    style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}
-                    value={fields.title}
-                    onChange={(e) => setFields((prev) => ({ ...prev, title: e.target.value }))}
-                    placeholder="Item title"
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Universe</label>
-                  <select
-                    className="mt-1 w-full rounded-xl border bg-vault-card px-3 py-2 text-sm font-semibold text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]"
-                    style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}
-                    value={fields.universe}
-                    onChange={(e) => {
-                      const u = e.target.value as UniverseKey;
-                      const cats = getCategories(u);
-                      setFields((prev) => ({ ...prev, universe: u, categoryLabel: cats[0] ?? "", subcategoryLabel: "" }));
+                  <div
+                    className="relative flex aspect-[4/5] w-full items-center justify-center overflow-hidden rounded-[26px] border"
+                    style={{
+                      borderColor: "var(--theme-gold-border, rgba(245,181,72,0.25))",
+                      background: "radial-gradient(circle at 50% 25%, rgba(245,181,72,0.06), rgba(5,11,21,0.65) 72%)",
                     }}
                   >
-                    <option value="">— Select —</option>
-                    {UNIVERSES.map((u) => (
-                      <option key={u} value={u}>{UNIVERSE_LABEL[u]}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* ── Category + Subcategory ── */}
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Category</label>
-                  <select
-                    className="mt-1 w-full rounded-xl border bg-vault-card px-3 py-2 text-sm font-semibold text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]"
-                    style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}
-                    value={fields.categoryLabel}
-                    onChange={(e) => {
-                      const cat = e.target.value;
-                      const subs = universeKey ? getSubcategories(universeKey, cat) : [];
-                      setFields((prev) => ({ ...prev, categoryLabel: cat, subcategoryLabel: subs[0] ?? "" }));
-                    }}
-                    disabled={!universeKey}
+                    {previewUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={previewUrl} alt="Captured item" className="h-full w-full object-contain" />
+                    ) : (
+                      <span className="text-sm text-[color:var(--muted)]">No image</span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsCameraPanelOpen(true)}
+                    className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-dashed px-4 text-xs font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
+                    style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.3))" }}
                   >
-                    <option value="">— Select Category —</option>
-                    {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                    + Add photos
+                  </button>
+                  <p className="mt-2 text-[11px] leading-4 text-[color:var(--muted2)]">
+                    Tip: good lighting and a straight-on angle produce the best identification.
+                  </p>
                 </div>
-                <div>
-                  <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Subcategory</label>
-                  <select
-                    className="mt-1 w-full rounded-xl border bg-vault-card px-3 py-2 text-sm font-semibold text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]"
-                    style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}
-                    value={fields.subcategoryLabel}
-                    onChange={(e) => setFields((prev) => ({ ...prev, subcategoryLabel: e.target.value }))}
-                    disabled={subcategoryOptions.length === 0}
+
+                {/* Right: numbered accordion */}
+                <div className="flex flex-col gap-3">
+                  {/* 1 — IDENTITY */}
+                  <AccordionSection
+                    n={1}
+                    title="Identity"
+                    hint={fields.title || "Name, cert, and grade"}
+                    open={openSections.has(1)}
+                    onToggle={() => toggleSection(1)}
+                    badge={
+                      <span
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em]"
+                        style={{ background: badge.bg, color: badge.color }}
+                      >
+                        <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: badge.color }} />
+                        {badge.label}
+                      </span>
+                    }
                   >
-                    <option value="">— Select Subcategory —</option>
-                    {subcategoryOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              {/* ── Advanced toggle ── */}
-              <div className="mt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowAdvanced((v) => !v)}
-                  className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)] transition hover:text-[color:var(--muted)]"
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
-                    className={`transition-transform ${showAdvanced ? "rotate-180" : ""}`}>
-                    <path d="M6 9l6 6 6-6" />
-                  </svg>
-                  {showAdvanced ? "Hide" : "Show"} Advanced Fields
-                </button>
-
-                {showAdvanced && (
-                  <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                    {(
-                      [
-                        ["Grade", "grade"],
-                        ["Cert Number", "certNumber"],
-                        ["Condition", "condition"],
-                      ] as [string, keyof ReviewFields][]
-                    ).map(([label, key]) => (
-                      <div key={key}>
-                        <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">{label}</label>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="sm:col-span-2">
+                        <label className={LABEL_CLS}>Item Name *</label>
                         <input
-                          className="mt-1 w-full rounded-xl border bg-vault-card px-3 py-2 text-sm font-semibold text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]"
-                          style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}
-                          value={String(fields[key] ?? "")}
-                          onChange={(e) => setFields((prev) => ({ ...prev, [key]: e.target.value }))}
-                          placeholder={`Enter ${label.toLowerCase()}`}
+                          className={INPUT_CLS}
+                          style={INPUT_STYLE}
+                          value={fields.title}
+                          onChange={(e) => setFields((p) => ({ ...p, title: e.target.value }))}
+                          placeholder="Item name"
                         />
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* ── Inline expand: Extra Fields (#21 fix) ── */}
-              {showExtraFields && (
-                <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.15))" }}>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)] mb-3">More Fields</div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {(
-                      [
-                        ["Subtitle", "subtitle"],
-                        ["Number / Edition", "number"],
-                      ] as [string, keyof ReviewFields][]
-                    ).map(([label, key]) => (
-                      <div key={key}>
-                        <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">{label}</label>
+                      <div>
+                        <label className={LABEL_CLS}>Alternate Name</label>
                         <input
-                          className="mt-1 w-full rounded-xl border bg-vault-card px-3 py-2 text-sm font-semibold text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]"
-                          style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}
-                          value={String(fields[key] ?? "")}
-                          onChange={(e) => setFields((prev) => ({ ...prev, [key]: e.target.value }))}
-                          placeholder={`Enter ${label.toLowerCase()}`}
+                          className={INPUT_CLS}
+                          style={INPUT_STYLE}
+                          value={fields.subtitle}
+                          onChange={(e) => setFields((p) => ({ ...p, subtitle: e.target.value }))}
+                          placeholder="Optional"
                         />
                       </div>
-                    ))}
-                  </div>
-                  <div className="mt-3">
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Description / Notes</label>
-                    <textarea
-                      className="mt-1 w-full rounded-xl border bg-vault-card px-3 py-2 text-sm text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]"
-                      style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.12))", minHeight: 72, resize: "vertical" }}
-                      value={fields.description}
-                      onChange={(e) => setFields((prev) => ({ ...prev, description: e.target.value }))}
-                      placeholder="Add notes about this item"
+                      <div>
+                        <label className={LABEL_CLS}>Number / Edition</label>
+                        <input
+                          className={INPUT_CLS}
+                          style={INPUT_STYLE}
+                          value={fields.number}
+                          onChange={(e) => setFields((p) => ({ ...p, number: e.target.value }))}
+                          placeholder="e.g. #57"
+                        />
+                      </div>
+                      <div>
+                        <label className={LABEL_CLS}>Certification #</label>
+                        <input
+                          className={INPUT_CLS}
+                          style={INPUT_STYLE}
+                          value={fields.certNumber}
+                          onChange={(e) => setFields((p) => ({ ...p, certNumber: e.target.value }))}
+                          placeholder="Cert number"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className={LABEL_CLS}>Grade</label>
+                          <input
+                            className={INPUT_CLS}
+                            style={INPUT_STYLE}
+                            value={fields.grade}
+                            onChange={(e) => setFields((p) => ({ ...p, grade: e.target.value }))}
+                            placeholder="9"
+                          />
+                        </div>
+                        <div>
+                          <label className={LABEL_CLS}>Condition</label>
+                          <input
+                            className={INPUT_CLS}
+                            style={INPUT_STYLE}
+                            value={fields.condition}
+                            onChange={(e) => setFields((p) => ({ ...p, condition: e.target.value }))}
+                            placeholder="Mint"
+                          />
+                        </div>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className={LABEL_CLS}>Notes</label>
+                        <textarea
+                          className={INPUT_CLS}
+                          style={{ ...INPUT_STYLE, minHeight: 68, resize: "vertical", fontWeight: 400 }}
+                          value={fields.description}
+                          onChange={(e) => setFields((p) => ({ ...p, description: e.target.value }))}
+                          placeholder="Add any details about this item…"
+                        />
+                      </div>
+                    </div>
+                  </AccordionSection>
+
+                  {/* 2 — CATEGORY */}
+                  <AccordionSection
+                    n={2}
+                    title="Category"
+                    hint={
+                      [fields.universe ? UNIVERSE_LABEL[fields.universe as UniverseKey] : "", fields.categoryLabel, fields.subcategoryLabel]
+                        .filter(Boolean)
+                        .join(" · ") || "Comics, Cards, Records, & more"
+                    }
+                    open={openSections.has(2)}
+                    onToggle={() => toggleSection(2)}
+                  >
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <div>
+                        <label className={LABEL_CLS}>Universe</label>
+                        <select
+                          className={INPUT_CLS}
+                          style={INPUT_STYLE}
+                          value={fields.universe}
+                          onChange={(e) => {
+                            const u = e.target.value as UniverseKey;
+                            const cats = u ? getCategories(u) : [];
+                            setFields((p) => ({ ...p, universe: u, categoryLabel: cats[0] ?? "", subcategoryLabel: "" }));
+                          }}
+                        >
+                          <option value="">— Select —</option>
+                          {UNIVERSES.map((u) => (
+                            <option key={u} value={u}>{UNIVERSE_LABEL[u]}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className={LABEL_CLS}>Category</label>
+                        <select
+                          className={INPUT_CLS}
+                          style={INPUT_STYLE}
+                          value={fields.categoryLabel}
+                          onChange={(e) => {
+                            const cat = e.target.value;
+                            const subs = universeKey ? getSubcategories(universeKey, cat) : [];
+                            setFields((p) => ({ ...p, categoryLabel: cat, subcategoryLabel: subs[0] ?? "" }));
+                          }}
+                          disabled={!universeKey}
+                        >
+                          <option value="">— Select —</option>
+                          {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className={LABEL_CLS}>Subcategory</label>
+                        <select
+                          className={INPUT_CLS}
+                          style={INPUT_STYLE}
+                          value={fields.subcategoryLabel}
+                          onChange={(e) => setFields((p) => ({ ...p, subcategoryLabel: e.target.value }))}
+                          disabled={subcategoryOptions.length === 0}
+                        >
+                          <option value="">— Select —</option>
+                          {subcategoryOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                  </AccordionSection>
+
+                  {/* 3 — LOCATION */}
+                  <AccordionSection
+                    n={3}
+                    title="Location"
+                    hint={fields.storageLocation || "Where it is stored"}
+                    open={openSections.has(3)}
+                    onToggle={() => toggleSection(3)}
+                  >
+                    <label className={LABEL_CLS}>Storage location</label>
+                    <input
+                      className={INPUT_CLS}
+                      style={INPUT_STYLE}
+                      value={fields.storageLocation}
+                      onChange={(e) => setFields((p) => ({ ...p, storageLocation: e.target.value }))}
+                      placeholder="e.g. Box 12 · Shelf B"
                     />
+                    <p className="mt-2 text-[11px] leading-4 text-[color:var(--muted2)]">
+                      Note where this item lives so it&apos;s easy to find later.
+                    </p>
+                  </AccordionSection>
+
+                  {/* 4 — VALUE */}
+                  <AccordionSection
+                    n={4}
+                    title="Value"
+                    hint={fields.currentValue ? `$${fields.currentValue}` : "Pricing and market insights"}
+                    open={openSections.has(4)}
+                    onToggle={() => toggleSection(4)}
+                  >
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className={LABEL_CLS}>Current value ($)</label>
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          className={INPUT_CLS}
+                          style={INPUT_STYLE}
+                          value={fields.currentValue}
+                          onChange={(e) => setFields((p) => ({ ...p, currentValue: e.target.value }))}
+                          placeholder="0"
+                        />
+                      </div>
+                      <div>
+                        <label className={LABEL_CLS}>Purchase price ($)</label>
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          className={INPUT_CLS}
+                          style={INPUT_STYLE}
+                          value={fields.purchasePrice}
+                          onChange={(e) => setFields((p) => ({ ...p, purchasePrice: e.target.value }))}
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
+                    <p className="mt-2 text-[11px] leading-4 text-[color:var(--muted2)]">
+                      Market comparables and value history arrive with the pricing engine — for now,
+                      set your own estimate.
+                    </p>
+                  </AccordionSection>
+
+                  {/* 5 — DOCUMENTS */}
+                  <AccordionSection
+                    n={5}
+                    title="Documents"
+                    hint="Certificates, receipts, and more"
+                    open={openSections.has(5)}
+                    onToggle={() => toggleSection(5)}
+                  >
+                    <p className="text-xs leading-5 text-[color:var(--muted)]">
+                      After saving, open the item to attach certificates, receipts, and extra photos,
+                      and to build its insurance packet.
+                    </p>
+                  </AccordionSection>
+
+                  {/* Save row */}
+                  <div className="mt-1 flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleSave}
+                      className="inline-flex min-h-12 items-center justify-center rounded-full px-7 text-sm font-black text-[#0B0B0B]"
+                      style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
+                    >
+                      Save to Vault
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPhase("idle")}
+                      className="inline-flex min-h-12 items-center justify-center rounded-full px-4 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
+                    >
+                      ← Rescan
+                    </button>
                   </div>
                 </div>
-              )}
-
-              {/* Action buttons */}
-              <div className="mt-5 flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  className="inline-flex min-h-12 items-center justify-center rounded-full px-6 text-sm font-black text-[#0B0B0B]"
-                  style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
-                >
-                  Save to Vault
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowExtraFields((v) => !v)}
-                  className="inline-flex min-h-12 items-center justify-center rounded-full border border-[color:var(--border)] bg-vault-card px-6 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
-                >
-                  {showExtraFields ? "Less Fields" : "Edit More Fields"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPhase("idle")}
-                  className="inline-flex min-h-12 items-center justify-center rounded-full px-4 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
-                >
-                  ← Rescan
-                </button>
               </div>
             </div>
           )}
