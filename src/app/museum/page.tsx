@@ -553,15 +553,16 @@ export default function MuseumPage() {
                     role="button"
                     tabIndex={0}
                     aria-label={`Open gallery ${gallery.title}`}
-                    className="vltd-panel-soft group relative flex h-[430px] w-full max-w-[360px] cursor-pointer flex-col overflow-hidden rounded-[22px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] p-4 shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.28)]"
+                    className="group relative flex w-full max-w-[360px] cursor-pointer flex-col overflow-hidden rounded-[20px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.30)]"
                   >
-                    <div className="relative mb-4 h-[188px] overflow-hidden rounded-[18px] bg-[color:var(--theme-elevated)] ring-1 ring-[color:var(--theme-border)]">
+                    {/* Cover */}
+                    <div className="relative h-[210px] overflow-hidden bg-[color:var(--theme-elevated)]">
                       {coverImage ? (
                         <ProgressiveImage
                           src={coverImage}
                           alt={`${gallery.title} cover`}
                           className="h-full w-full"
-                          imageClassName="object-cover object-center transition duration-300 group-hover:scale-[1.03]"
+                          imageClassName="object-cover object-center transition duration-500 group-hover:scale-[1.04]"
                           draggable={false}
                         />
                       ) : (
@@ -569,117 +570,78 @@ export default function MuseumPage() {
                           No cover
                         </div>
                       )}
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/5 to-transparent" />
+
+                      {/* Privacy badge — opens settings */}
                       <button
                         type="button"
                         onClick={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
-                          handleOpenCoverPicker(gallery);
+                          setGallerySettings(gallery);
                         }}
-                        disabled={isUploadingCover}
-                        className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-gold/18 text-lg font-semibold text-cyan-100 ring-1 ring-cyan-300/35 transition hover:bg-gold/28 disabled:opacity-50"
-                        aria-label={`Change cover image for ${gallery.title}`}
+                        className={[
+                          "absolute bottom-2.5 left-2.5 rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-[0.12em] ring-1 backdrop-blur transition",
+                          visibilityPillClass(gallery.visibility),
+                        ].join(" ")}
                       >
-                        +
+                        {visibilityLabel(gallery.visibility)}
                       </button>
+
+                      {/* Hover controls: change cover / delete */}
+                      <div className="absolute right-2 top-2 flex items-center gap-1.5 opacity-0 transition group-hover:opacity-100">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            handleOpenCoverPicker(gallery);
+                          }}
+                          disabled={isUploadingCover}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-sm font-semibold text-white ring-1 ring-white/20 backdrop-blur transition hover:bg-black/75 disabled:opacity-50"
+                          aria-label={`Change cover image for ${gallery.title}`}
+                        >
+                          +
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            handleAskDelete(gallery);
+                          }}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-red-200 ring-1 ring-red-400/30 backdrop-blur transition hover:bg-red-600/80 hover:text-white"
+                          aria-label={`Delete gallery ${gallery.title}`}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="relative flex min-h-0 flex-1 flex-col">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold, #F5B548)" }}>
-                          <span className="inline-flex h-5 items-center justify-center rounded-md px-1.5 text-[10px] ring-1 ring-[color:var(--theme-gold-border,rgba(245,181,72,0.35))]">{gradeLetter(score.band)}</span>
-                          {scoreBandTone(score.band)}
-                        </div>
-
-                        <div className="flex flex-wrap items-center justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              setGallerySettings(gallery);
-                            }}
-                            className={[
-                              "rounded-full px-2.5 py-1 text-[10px] tracking-[0.14em] ring-1 transition hover:ring-cyan-300/40",
-                              visibilityPillClass(gallery.visibility),
-                            ].join(" ")}
-                          >
-                            {visibilityLabel(gallery.visibility)}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              setGallerySettings(gallery);
-                            }}
-                            className={[
-                              "rounded-full px-2.5 py-1 text-[10px] tracking-[0.14em] ring-1 transition hover:ring-cyan-300/30",
-                              statePillClass(gallery.state),
-                            ].join(" ")}
-                          >
-                            {stateLabel(gallery.state)}
-                          </button>
-                        </div>
+                    {/* Info */}
+                    <div className="flex flex-col gap-1 p-4">
+                      <h2 className="line-clamp-1 text-lg font-black tracking-[-0.015em]">
+                        {gallery.title}
+                      </h2>
+                      <div className="text-xs text-[color:var(--muted)]">
+                        {gallery.itemIds.length} {gallery.itemIds.length === 1 ? "item" : "items"} · {visibilityLabel(gallery.visibility)} · {views} views
                       </div>
-
-                      <div className="mt-3 flex min-h-0 flex-1 flex-col text-left">
-                        <h2 className="line-clamp-2 text-xl font-semibold leading-tight">
-                          {gallery.title}
-                        </h2>
-
-                        <p className="mt-2 line-clamp-2 text-sm leading-5 text-[color:var(--muted)]">
-                          {gallery.description?.trim()
-                            ? gallery.description
-                            : "A museum-style presentation built from selected collection pieces."}
-                        </p>
-
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
-                            Score {score.score}/100
-                          </span>
-                          <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
-                            {scoreBandTone(score.band)}
-                          </span>
-                          <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
-                            {views} views
-                          </span>
-                        </div>
-
-                        <div className="mt-auto grid grid-cols-2 gap-3 rounded-[18px] bg-[color:var(--theme-elevated)] px-3 py-2.5 ring-1 ring-[color:var(--theme-border)]">
-                          <div>
-                            <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                              ITEMS
-                            </div>
-                            <div className="mt-1 text-xl font-semibold">{gallery.itemIds.length}</div>
+                      <div className="mt-1.5 flex items-end justify-between gap-3">
+                        <div>
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">
+                            Total Value
                           </div>
-
-                          <div>
-                            <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                              VALUE
-                            </div>
-                            <div className="mt-1 text-xl font-semibold" style={{ color: "var(--data-color, #52d6f4)" }}>{formatMoney(totalValue)}</div>
+                          <div className="text-xl font-black" style={{ color: "var(--data-color, #52d6f4)" }}>
+                            {formatMoney(totalValue)}
                           </div>
                         </div>
-
-                        <div className="mt-3 flex items-center justify-between gap-3 text-sm text-[color:var(--muted)]">
-                          <div>
-                            {score.signals.sections} exhibits • {score.signals.featuredWorks} featured
-                          </div>
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              handleAskDelete(gallery);
-                            }}
-                            className="order-first inline-flex min-h-[28px] items-center justify-center rounded-full bg-red-500/10 px-3 py-1 text-[11px] font-semibold text-red-100 ring-1 ring-red-400/20 transition hover:bg-red-500/18"
-                            aria-label={`Delete gallery ${gallery.title}`}
-                          >
-                            Delete
-                          </button>
-                        </div>
+                        <span
+                          className="inline-flex h-8 items-center justify-center rounded-lg px-2 text-sm font-black"
+                          style={{ color: "var(--theme-gold, #F5B548)", background: "rgba(245,181,72,0.10)", border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.3))" }}
+                          title={`${scoreBandTone(score.band)} · ${score.score}/100`}
+                        >
+                          {gradeLetter(score.band)}
+                        </span>
                       </div>
                     </div>
                   </article>
