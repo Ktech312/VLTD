@@ -13,7 +13,13 @@ import { syncPublicProfile } from "@/lib/publicProfile";
 import { processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { syncVaultItemsFromSupabase } from "@/lib/vaultModel";
 import { loadWatchlist, removeFromWatchlist, type WatchlistItem } from "@/lib/watchlistModel";
-import { UNIVERSE_KEYS, UNIVERSE_LABEL, UNIVERSE_ICON } from "@/lib/taxonomy";
+import { UNIVERSE_KEYS, UNIVERSE_LABEL, UNIVERSE_ICON, isUniverseKey } from "@/lib/taxonomy";
+
+/** Normalize a stored focus value — treats the literal string "null" as empty. */
+function normalizeFocus(value: unknown): string {
+  const s = String(value ?? "").trim();
+  return s && s.toLowerCase() !== "null" ? s : "";
+}
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
 
 export default function AccountPage() {
@@ -68,7 +74,7 @@ export default function AccountPage() {
         setDisplayName(status.activeProfile.display_name ?? "");
         setUsername(status.activeProfile.username ?? "");
         setProfileType(status.activeProfile.profile_type ?? "personal");
-        setPrimaryFocus(String(status.activeProfile.primary_focus ?? ""));
+        setPrimaryFocus(normalizeFocus(status.activeProfile.primary_focus));
         setBio(String(status.activeProfile.bio ?? ""));
         setIsPublic(status.activeProfile.is_public !== false);
         setFullName(status.activeProfile.full_name ?? "");
@@ -80,12 +86,12 @@ export default function AccountPage() {
         setZip(status.activeProfile.zip ?? "");
         setCountry(status.activeProfile.country ?? "US");
         const fu = (status.activeProfile as Record<string, unknown>).focused_universes;
-        const primary = String(status.activeProfile.primary_focus ?? "").trim();
+        const primary = normalizeFocus(status.activeProfile.primary_focus);
         // Seed the multi-select from focused_universes; fall back to the legacy
-        // single primary_focus so existing profiles show their selection.
+        // single primary_focus (only when it's a real universe key).
         const seeded = Array.isArray(fu) && fu.length > 0
-          ? (fu as string[])
-          : primary
+          ? (fu as string[]).filter((k) => isUniverseKey(k))
+          : primary && isUniverseKey(primary)
             ? [primary]
             : [];
         setFocusedUniverses(seeded);
@@ -415,7 +421,11 @@ export default function AccountPage() {
                 </div>
                 <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Focus</div>
-                  <div className="mt-1 font-black text-text-primary">{primaryFocus || "Not set"}</div>
+                  <div className="mt-1 font-black text-text-primary">
+                    {focusedUniverses.length > 0
+                      ? focusedUniverses.filter(isUniverseKey).map((k) => UNIVERSE_LABEL[k]).join(", ")
+                      : "Not set"}
+                  </div>
                 </div>
               </div>
             </aside>
