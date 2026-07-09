@@ -406,6 +406,8 @@ export default function MuseumPage() {
           onChange={(event) => void handleCoverSelection(event)}
         />
 
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-6">
+          <div className="min-w-0">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1 className="text-4xl font-black tracking-[-0.04em] leading-none">Exhibitions</h1>
@@ -466,6 +468,8 @@ export default function MuseumPage() {
               {f.label}
             </button>
           ))}
+        </div>
+          </div>
         </div>
 
         {/* Insight cards hidden to match the redesigned Exhibitions layout */}
@@ -606,7 +610,7 @@ export default function MuseumPage() {
             </div>
           ) : (
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
-              <div className={`grid gap-4 ${viewMode === "list" ? "grid-cols-1" : "sm:grid-cols-2"}`}>
+              <div className={`grid gap-4 ${viewMode === "list" ? "grid-cols-1" : "sm:grid-cols-2 xl:grid-cols-3"}`}>
               {displayedGalleries.map(({ gallery, totalValue, views }) => {
                 const coverImage = resolveGalleryImage(gallery.coverImage);
 
