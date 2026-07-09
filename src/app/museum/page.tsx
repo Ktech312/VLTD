@@ -395,6 +395,35 @@ export default function MuseumPage() {
     setStatusMessage("Gallery settings updated.");
   }
 
+  const headerBlock = (
+    <>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-4xl font-black tracking-[-0.04em] leading-none">Exhibitions</h1>
+          <p className="mt-2 text-sm text-[color:var(--muted)]">Curate public rooms from your private vault.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex items-center rounded-full border p-0.5" style={{ borderColor: "var(--theme-border)", background: "var(--theme-card)" }}>
+            {(["grid", "list"] as const).map((mode) => (
+              <button key={mode} type="button" onClick={() => setViewMode(mode)} aria-label={`${mode} view`} className={`inline-flex h-8 w-9 items-center justify-center rounded-full transition ${viewMode === mode ? "bg-gold/20 text-gold" : "text-[color:var(--muted2)]"}`}>
+                {mode === "grid" ? (<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>) : (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>)}
+              </button>
+            ))}
+          </div>
+          <select value={sortMode} onChange={(e) => setSortMode(e.target.value as ExhibitionSort)} className="h-10 rounded-full border px-4 text-sm font-semibold outline-none" style={{ borderColor: "var(--theme-border)", background: "var(--theme-card)", color: "var(--fg)" }}>
+            {EXHIBITION_SORTS.map((s) => (<option key={s.key} value={s.key}>{s.label}</option>))}
+          </select>
+          <Link href="/museum/new" className="inline-flex min-h-[40px] shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-sm font-black transition" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}>+ Create Exhibition</Link>
+        </div>
+      </div>
+      <div className="mt-5 flex flex-wrap gap-2">
+        {EXHIBITION_FILTERS.map((f) => (
+          <button key={f.key} type="button" onClick={() => setFilter(f.key)} className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-semibold ring-1 transition ${filter === f.key ? "bg-gold/20 text-gold ring-gold/40" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]"}`}>{f.label}</button>
+        ))}
+      </div>
+    </>
+  );
+
   return (
     <main className="text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1500px] px-4 py-5 sm:px-6 sm:py-7">
@@ -405,72 +434,6 @@ export default function MuseumPage() {
           className="hidden"
           onChange={(event) => void handleCoverSelection(event)}
         />
-
-        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-6">
-          <div className="min-w-0">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h1 className="text-4xl font-black tracking-[-0.04em] leading-none">Exhibitions</h1>
-            <p className="mt-2 text-sm text-[color:var(--muted)]">Curate public rooms from your private vault.</p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Grid / list toggle */}
-            <div className="inline-flex items-center rounded-full border p-0.5" style={{ borderColor: "var(--theme-border)", background: "var(--theme-card)" }}>
-              {(["grid", "list"] as const).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => setViewMode(mode)}
-                  aria-label={`${mode} view`}
-                  className={`inline-flex h-8 w-9 items-center justify-center rounded-full transition ${viewMode === mode ? "bg-gold/20 text-gold" : "text-[color:var(--muted2)]"}`}
-                >
-                  {mode === "grid" ? (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
-                  ) : (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {/* Sort */}
-            <select
-              value={sortMode}
-              onChange={(e) => setSortMode(e.target.value as ExhibitionSort)}
-              className="h-10 rounded-full border px-4 text-sm font-semibold outline-none"
-              style={{ borderColor: "var(--theme-border)", background: "var(--theme-card)", color: "var(--fg)" }}
-            >
-              {EXHIBITION_SORTS.map((s) => (
-                <option key={s.key} value={s.key}>{s.label}</option>
-              ))}
-            </select>
-
-            <Link
-              href="/museum/new"
-              className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-full px-5 text-sm font-black transition"
-              style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}
-            >
-              + Create Exhibition
-            </Link>
-          </div>
-        </div>
-
-        {/* Filter pills */}
-        <div className="mt-5 flex flex-wrap gap-2">
-          {EXHIBITION_FILTERS.map((f) => (
-            <button
-              key={f.key}
-              type="button"
-              onClick={() => setFilter(f.key)}
-              className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-semibold ring-1 transition ${filter === f.key ? "bg-gold/20 text-gold ring-gold/40" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]"}`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-          </div>
-        </div>
 
         {/* Insight cards hidden to match the redesigned Exhibitions layout */}
         {false ? (
@@ -610,7 +573,9 @@ export default function MuseumPage() {
             </div>
           ) : (
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
-              <div className={`grid gap-4 ${viewMode === "list" ? "grid-cols-1" : "sm:grid-cols-2 xl:grid-cols-3"}`}>
+              <div className="min-w-0">
+                {headerBlock}
+                <div className={`mt-5 grid gap-4 ${viewMode === "list" ? "grid-cols-1" : "sm:grid-cols-2 xl:grid-cols-3"}`}>
               {displayedGalleries.map(({ gallery, totalValue, views }) => {
                 const coverImage = resolveGalleryImage(gallery.coverImage);
 
@@ -718,6 +683,7 @@ export default function MuseumPage() {
                   </article>
                 );
               })}
+                </div>
               </div>
 
               {/* Right: Exhibition Details */}
