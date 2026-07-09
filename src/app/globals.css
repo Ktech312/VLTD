@@ -11,23 +11,23 @@
 
 @theme {
   /* Gold palette */
-  --color-gold: #F5B548;
-  --color-gold-light: #FFE08A;
+  --color-gold: #D9A23A;
+  --color-gold-light: #FFF1A8;
   --color-gold-dark: #8B6914;
-  --color-gold-mid: #C8941F;
-  --color-gold-subtle: rgba(245,181,72,0.15);
-  --color-gold-border: rgba(245,181,72,0.3);
+  --color-gold-mid: #B8872B;
+  --color-gold-subtle: rgba(217,162,58,0.12);
+  --color-gold-border: rgba(217,162,58,0.42);
 
   /* Vault surfaces */
-  --color-vault-base: #0B1320;
-  --color-vault-card: rgba(15, 25, 45, 0.85);
-  --color-vault-elevated: rgba(20, 32, 55, 0.9);
-  --color-vault-border: rgba(245, 181, 72, 0.12);
+  --color-vault-base: #02090B;
+  --color-vault-card: rgba(7, 17, 19, 0.88);
+  --color-vault-elevated: rgba(10, 21, 23, 0.94);
+  --color-vault-border: rgba(184, 135, 43, 0.22);
 
   /* Text scale */
-  --color-text-primary: #F0EAD6;
-  --color-text-secondary: #A0956B;
-  --color-text-muted: #5A5040;
+  --color-text-primary: #E8D7B8;
+  --color-text-secondary: #C5B284;
+  --color-text-muted: #7D7054;
 
   /* Data / status — cyan reserved for prices & numbers only */
   --color-data: #52D6F4;
@@ -35,9 +35,9 @@
   --color-loss: #E05252;
 
   /* Shadows */
-  --shadow-card: 0 4px 24px rgba(0,0,0,0.6);
-  --shadow-gold: 0 0 20px rgba(245,181,72,0.25), 0 0 40px rgba(245,181,72,0.1);
-  --shadow-elevated: 0 8px 40px rgba(0,0,0,0.8);
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.62), 0 0 22px rgba(15,48,50,0.10);
+  --shadow-gold: 0 0 18px rgba(245,181,72,0.28), 0 0 42px rgba(184,135,43,0.14), inset 0 1px 0 rgba(255,241,168,0.35);
+  --shadow-elevated: 0 8px 40px rgba(0,0,0,0.82), 0 0 34px rgba(15,48,50,0.10);
 
   /* Border radius */
   --radius-sm: 6px;
@@ -65,20 +65,20 @@
      Overridden at runtime by ThemeProvider via setProperty.
      These ensure SSR and first-paint use the correct defaults.
   ========================================================= */
-  --theme-bg: #0B1320;
-  --theme-card: rgba(15, 25, 45, 0.85);
-  --theme-elevated: rgba(20, 32, 55, 0.9);
-  --theme-border: rgba(245, 181, 72, 0.12);
-  --theme-text-primary: #F0EAD6;
-  --theme-text-secondary: #A0956B;
-  --theme-text-muted: #5A5040;
-  --theme-gold: #F5B548;
-  --theme-gold-gradient: linear-gradient(135deg, #8B6914 0%, #C8941F 25%, #F5B548 50%, #FFE08A 70%, #C8941F 100%);
-  --theme-gold-border: rgba(245, 181, 72, 0.3);
-  --theme-gold-glow: 0 0 20px rgba(245,181,72,0.25), 0 0 40px rgba(245,181,72,0.1);
-  --theme-gold-subtle: rgba(245, 181, 72, 0.08);
-  --theme-nav-bg: rgba(11, 19, 32, 0.95);
-  --theme-nav-border: rgba(245, 181, 72, 0.15);
+  --theme-bg: radial-gradient(circle at 12% 0%, rgba(15,48,50,0.32), transparent 38%), radial-gradient(circle at 78% 8%, rgba(184,135,43,0.10), transparent 30%), linear-gradient(180deg, #02090B 0%, #030709 100%);
+  --theme-card: rgba(7, 17, 19, 0.88);
+  --theme-elevated: rgba(10, 21, 23, 0.94);
+  --theme-border: rgba(184, 135, 43, 0.22);
+  --theme-text-primary: #E8D7B8;
+  --theme-text-secondary: #C5B284;
+  --theme-text-muted: #7D7054;
+  --theme-gold: #D9A23A;
+  --theme-gold-gradient: linear-gradient(135deg, #8B6914 0%, #F5D06F 38%, #B8872B 62%, #FFF1A8 78%, #8B6914 100%);
+  --theme-gold-border: rgba(217, 162, 58, 0.42);
+  --theme-gold-glow: 0 0 18px rgba(245,181,72,0.28), 0 0 42px rgba(184,135,43,0.14), inset 0 1px 0 rgba(255,241,168,0.35);
+  --theme-gold-subtle: rgba(217, 162, 58, 0.10);
+  --theme-nav-bg: rgba(3, 9, 11, 0.94);
+  --theme-nav-border: rgba(184, 135, 43, 0.20);
 
   /* ✅ Reserve TopNav height so content never jumps */
   --topnav-h: 72px;
@@ -95,12 +95,12 @@
   /* ---------------------------------------------------------
      PALETTE — Gold System
   --------------------------------------------------------- */
-  --accent: #F5B548;   /* Gold — primary accent everywhere */
-  --accent-2: #C8941F; /* Dark gold — depth / secondary */
+  --accent: #D9A23A;   /* Gold — primary accent everywhere */
+  --accent-2: #B8872B; /* Dark gold — depth / secondary */
 
   /* Cyan kept ONLY for prices, data values, and market numbers */
   --data-color: #52d6f4;
-  --warm-gray: #A0956B; /* secondary / muted text */
+  --warm-gray: #C5B284; /* secondary / muted text */
 
   /* ---------------------------------------------------------
      LIGHT MODE BASE
@@ -200,25 +200,25 @@
 ========================================================= */
 
 .theme-dark {
-  --bg: var(--theme-bg, #0B1320);
-  --surface: var(--theme-card, rgba(15, 25, 45, 0.85));
-  --surface-strong: var(--theme-elevated, rgba(20, 32, 55, 0.9));
+  --bg: var(--theme-bg, #02090B);
+  --surface: var(--theme-card, rgba(7, 17, 19, 0.88));
+  --surface-strong: var(--theme-elevated, rgba(10, 21, 23, 0.94));
 
-  --fg: var(--theme-text-primary, #F0EAD6);
-  --muted: var(--theme-text-secondary, rgba(200, 185, 140, 0.85));
-  --muted2: var(--theme-text-muted, rgba(160, 149, 107, 0.75));
+  --fg: var(--theme-text-primary, #E8D7B8);
+  --muted: var(--theme-text-secondary, rgba(197, 178, 132, 0.86));
+  --muted2: var(--theme-text-muted, rgba(125, 112, 84, 0.82));
 
-  --border: var(--theme-border, rgba(245, 181, 72, 0.12));
-  --border-strong: var(--theme-gold-border, rgba(245, 181, 72, 0.25));
+  --border: var(--theme-border, rgba(184, 135, 43, 0.22));
+  --border-strong: var(--theme-gold-border, rgba(217, 162, 58, 0.42));
   --divider: rgba(255, 255, 255, 0.1);
 
   --shadow-soft: 0 1px 0 rgba(255, 255, 255, 0.05);
   --shadow-pill: 0 16px 34px rgba(0, 0, 0, 0.55);
 
-  --pill: rgba(255, 255, 255, 0.07);
-  --pill-hover: rgba(255, 255, 255, 0.12);
-  --pill-fg: rgba(255, 255, 255, 0.92);
-  --pill-fg-muted: rgba(255, 255, 255, 0.7);
+  --pill: rgba(255, 241, 168, 0.055);
+  --pill-hover: rgba(217, 162, 58, 0.12);
+  --pill-fg: rgba(232, 215, 184, 0.94);
+  --pill-fg-muted: rgba(197, 178, 132, 0.72);
   --pill-active-bg: color-mix(in srgb, var(--surface) 94%, var(--accent) 6%);
   --pill-active-fg: var(--fg);
   --pill-active-ring: color-mix(in srgb, var(--accent) 86%, transparent);
@@ -240,16 +240,10 @@
 
   --table-row-hover: rgba(255, 255, 255, 0.05);
 
-  --bg-glow: radial-gradient(
-      ellipse 100% 55% at 50% -10%,
-      color-mix(in srgb, var(--accent) 10%, transparent),
-      transparent 68%
-    ),
-    radial-gradient(
-      ellipse 55% 30% at 88% 105%,
-      color-mix(in srgb, var(--accent-2) 7%, transparent),
-      transparent 58%
-    );
+  --bg-glow:
+    radial-gradient(circle at 12% 0%, rgba(15, 48, 50, 0.32), transparent 38%),
+    radial-gradient(circle at 78% 8%, rgba(184, 135, 43, 0.10), transparent 30%),
+    linear-gradient(180deg, #02090B 0%, #030709 100%);
 }
 
 .theme-light {
@@ -293,8 +287,8 @@
 ========================================================= */
 
 .theme-mirror {
-  --accent: #F5B548;   /* Gold */
-  --accent-2: #C8941F; /* Dark gold */
+  --accent: #D9A23A;   /* Gold */
+  --accent-2: #B8872B; /* Dark gold */
 }
 
 /* =========================================================
@@ -303,7 +297,7 @@
 
 .theme-purple {
   --accent: #E8A820;   /* Deeper gold */
-  --accent-2: #F5B548; /* Bright gold */
+  --accent-2: #D9A23A; /* Bright gold */
 }
 
 /* =========================================================
@@ -328,9 +322,9 @@ html {
 
 /* Better tap behavior on mobile */
 body {
-  background: var(--theme-bg, #0B1320);
+  background: var(--theme-bg, radial-gradient(circle at top left, rgba(15,48,50,0.28), transparent 38%), linear-gradient(180deg, #02090B 0%, #030709 100%));
   background-attachment: fixed;
-  color: var(--theme-text-primary, #F0EAD6);
+  color: var(--theme-text-primary, #E8D7B8);
   font-family: var(--font-inter, Inter), system-ui, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   position: relative;
@@ -393,7 +387,7 @@ select {
 }
 
 option {
-  background-color: #141414;
+  background-color: #071113;
   color: #f5f7fb;
 }
 
@@ -747,8 +741,8 @@ main {
 --------------------------------------------------------- */
 
 .style-neon_purple {
-  --accent: #F5B548;
-  --accent-2: #C8941F;
+  --accent: #D9A23A;
+  --accent-2: #B8872B;
 }
 
 .style-neon_purple .rounded-3xl {
@@ -960,7 +954,7 @@ main {
   border: 2px solid rgba(255, 255, 255, 0.22);
   box-shadow:
     inset 0 0 22px rgba(245, 181, 72, 0.16),
-    0 0 28px rgba(245, 181, 72, 0.12);
+    0 0 28px rgba(184, 135, 43, 0.22);
 }
 
 .vltd-vault-logo-animation__spokes {
@@ -1622,7 +1616,7 @@ main {
   object-fit: contain;
   filter:
     drop-shadow(0 18px 24px rgba(0, 0, 0, 0.48))
-    drop-shadow(0 0 20px rgba(245, 181, 72, 0.12));
+    drop-shadow(0 0 20px rgba(184, 135, 43, 0.22));
 }
 
 .vltd-portal-preview__toggle {
@@ -1814,7 +1808,7 @@ main {
   border: 2px solid rgba(221, 175, 67, 0.7);
   box-shadow:
     inset 0 0 0 8px rgba(221, 175, 67, 0.08),
-    inset 0 0 22px rgba(245, 181, 72, 0.12),
+    inset 0 0 22px rgba(184, 135, 43, 0.22),
     0 0 26px rgba(221, 175, 67, 0.22);
 }
 
@@ -2052,18 +2046,18 @@ main {
 /* =========================================================
    GOLD SYSTEM
    Metallic gold utilities — use on buttons, headings, CTAs.
-   Never use flat #F5B548; always use the gradient system.
+   Never use flat #D9A23A; always use the gradient system.
 ========================================================= */
 
 /* Metallic gold text — gradient shimmer */
 .vltd-gold-text {
   background: linear-gradient(
     135deg,
-    #C8941F 0%,
-    #F5B548 32%,
-    #FFE08A 52%,
-    #F5B548 68%,
-    #C8941F 100%
+    #B8872B 0%,
+    #D9A23A 32%,
+    #FFF1A8 52%,
+    #D9A23A 68%,
+    #B8872B 100%
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -2075,10 +2069,10 @@ main {
   background: linear-gradient(
     135deg,
     #8B6914 0%,
-    #C8941F 22%,
-    #F5B548 48%,
-    #FFE08A 62%,
-    #C8941F 82%,
+    #B8872B 22%,
+    #D9A23A 48%,
+    #FFF1A8 62%,
+    #B8872B 82%,
     #8B6914 100%
   );
   background-size: 200% 100%;
@@ -2111,7 +2105,7 @@ main {
   border-color: rgba(245, 181, 72, 0.30) !important;
   box-shadow:
     0 0 0 1px rgba(245, 181, 72, 0.18),
-    0 0 24px rgba(245, 181, 72, 0.12),
+    0 0 24px rgba(184, 135, 43, 0.22),
     0 0 48px rgba(200, 148, 31, 0.08) !important;
 }
 
@@ -2144,7 +2138,7 @@ main {
 
 /* Metallic gold text — wraps text in a gold gradient */
 .gold-text {
-  background: var(--theme-gold-gradient, linear-gradient(135deg, #C8941F, #F5B548, #FFE08A, #F5B548));
+  background: var(--theme-gold-gradient, linear-gradient(135deg, #B8872B, #D9A23A, #FFF1A8, #D9A23A));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -2172,10 +2166,10 @@ main {
 
 /* Background image utilities (defined explicitly for Tailwind v4 compatibility) */
 .bg-gold-gradient {
-  background-image: linear-gradient(135deg, #8B6914 0%, #C8941F 25%, #F5B548 50%, #FFE08A 70%, #C8941F 100%);
+  background-image: linear-gradient(135deg, #8B6914 0%, #B8872B 25%, #D9A23A 50%, #FFF1A8 70%, #B8872B 100%);
 }
 .bg-gold-gradient-text {
-  background-image: linear-gradient(135deg, #C8941F, #F5B548, #FFE08A);
+  background-image: linear-gradient(135deg, #B8872B, #D9A23A, #FFF1A8);
 }
 .bg-vault-base-glow {
   background-image: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(245,181,72,0.06) 0%, transparent 70%);
@@ -2186,9 +2180,9 @@ main {
 
 /* Standard vault card */
 .vault-card {
-  background: var(--theme-card, rgba(15, 25, 45, 0.85)) !important;
-  border: 1px solid var(--theme-border, rgba(245, 181, 72, 0.12)) !important;
-  color: var(--theme-text-primary, #F0EAD6) !important;
+  background: var(--theme-card, rgba(7, 17, 19, 0.88)) !important;
+  border: 1px solid var(--theme-border, rgba(184, 135, 43, 0.22)) !important;
+  color: var(--theme-text-primary, #E8D7B8) !important;
   border-radius: 14px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.2);
 }
@@ -2196,19 +2190,19 @@ main {
 
 /* Gold-accented card — for featured / highlighted items */
 .vault-card-gold {
-  background: var(--theme-card, rgba(15, 25, 45, 0.85));
-  border: 1px solid var(--theme-gold-border, rgba(245,181,72,0.3));
+  background: var(--theme-card, rgba(7, 17, 19, 0.88));
+  border: 1px solid var(--theme-gold-border, rgba(217,162,58,0.42));
   border-radius: 14px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.4), var(--theme-gold-glow, 0 0 20px rgba(245,181,72,0.1));
 }
 
 /* Primary gold gradient button */
 .btn-gold {
-  background: var(--theme-gold-gradient, linear-gradient(135deg, #8B6914 0%, #C8941F 25%, #F5B548 50%, #FFE08A 70%, #C8941F 100%));
+  background: var(--theme-gold-gradient, linear-gradient(135deg, #8B6914 0%, #B8872B 25%, #D9A23A 50%, #FFF1A8 70%, #B8872B 100%));
   color: #0B0B0B;
   font-weight: 600;
   border-radius: 8px;
-  box-shadow: var(--theme-gold-glow, 0 0 20px rgba(245,181,72,0.25));
+  box-shadow: var(--theme-gold-glow, 0 0 20px rgba(245,181,72,0.28));
   transition: filter 0.2s, box-shadow 0.2s;
 }
 .btn-gold:hover {
@@ -2218,8 +2212,8 @@ main {
 /* Outline gold button */
 .btn-gold-outline {
   background: transparent;
-  border: 1px solid var(--theme-gold-border, rgba(245,181,72,0.3));
-  color: var(--theme-gold, #F5B548);
+  border: 1px solid var(--theme-gold-border, rgba(217,162,58,0.42));
+  color: var(--theme-gold, #D9A23A);
   font-weight: 500;
   border-radius: 8px;
   transition: background 0.2s, box-shadow 0.2s;
@@ -2238,7 +2232,7 @@ main {
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 @keyframes bulk-glow-pulse {
   0%, 100% { box-shadow: 0 0 0 2px rgba(245,181,72,0.55), 0 0 22px rgba(245,181,72,0.30), 0 0 48px rgba(245,181,72,0.12); }
-  50%       { box-shadow: 0 0 0 2px rgba(245,181,72,0.90), 0 0 32px rgba(245,181,72,0.55), 0 0 72px rgba(245,181,72,0.25); }
+  50%       { box-shadow: 0 0 0 2px rgba(245,181,72,0.90), 0 0 32px rgba(245,181,72,0.55), 0 0 72px rgba(245,181,72,0.28); }
 }
 
 /* =========================================================
@@ -2248,10 +2242,10 @@ main {
    --seasonal-accent / --seasonal-accent-secondary to :root.
 ========================================================= */
 [data-seasonal] {
-  --accent: var(--seasonal-accent, #F5B548);
-  --accent-2: var(--seasonal-accent-secondary, #C8941F);
-  --theme-gold: var(--seasonal-accent, #F5B548);
-  --theme-gold-gradient: linear-gradient(135deg, var(--seasonal-accent-secondary, #C8941F), var(--seasonal-accent, #F5B548));
+  --accent: var(--seasonal-accent, #D9A23A);
+  --accent-2: var(--seasonal-accent-secondary, #B8872B);
+  --theme-gold: var(--seasonal-accent, #D9A23A);
+  --theme-gold-gradient: linear-gradient(135deg, var(--seasonal-accent-secondary, #B8872B), var(--seasonal-accent, #D9A23A));
 }
 
 /* Pull-to-refresh spinner */
