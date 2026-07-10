@@ -611,22 +611,6 @@ export default function MuseumPage() {
                       )}
                       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/5 to-transparent" />
 
-                      {/* Privacy badge — opens settings */}
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          setGallerySettings(gallery);
-                        }}
-                        className={[
-                          "absolute bottom-2.5 left-2.5 rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-[0.12em] ring-1 backdrop-blur transition",
-                          visibilityPillClass(gallery.visibility),
-                        ].join(" ")}
-                      >
-                        {visibilityLabel(gallery.visibility)}
-                      </button>
-
                       {/* Hover controls: change cover / delete */}
                       <div className="absolute right-2 top-2 flex items-center gap-1.5 opacity-0 transition group-hover:opacity-100">
                         <button
