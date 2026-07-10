@@ -722,16 +722,16 @@ export default function MuseumPage() {
                         <div className="mt-1 text-xs text-[color:var(--muted)]">{g.itemIds.length} items · Updated {formatGalleryDate(g.updatedAt)}</div>
 
                         {/* Grade + factors, side by side */}
-                        <div className="mt-4 grid grid-cols-[100px_1fr] gap-3 rounded-[8px] border bg-black/10 p-3" style={{ borderColor: "var(--theme-border)" }}>
+                        <div className="mt-4 grid grid-cols-[106px_1fr] gap-3 rounded-[8px] border bg-black/10 p-3" style={{ borderColor: "var(--theme-border)" }}>
                           <div className="flex flex-col">
-                            <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Exhibition Grade</div>
+                            <div className="text-[9px] font-semibold uppercase tracking-[0.06em] text-[color:var(--muted2)]">Exhibition Grade</div>
                             <div className="relative mt-2 flex h-[72px] w-[72px] items-center justify-center">
                               <svg viewBox="0 0 76 84" className="absolute inset-0 h-full w-full"><polygon points="38,3 71,22 71,62 38,81 5,62 5,22" fill="rgba(245,181,72,0.08)" stroke="var(--theme-gold-border, rgba(245,181,72,0.45))" strokeWidth="2"/></svg>
                               <span className="relative text-3xl font-black" style={{ color: "var(--theme-gold)" }}>{gradeLetter(s.band)}</span>
                             </div>
                             <div className="mt-1.5 text-base font-black" style={{ color: "var(--theme-gold)" }}>{gradeBandLabel(s.band)}</div>
                             <div className="text-[11px] leading-tight text-[color:var(--muted)]">Top {topPct}% of public exhibitions</div>
-                            <div className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold" style={{ color: "var(--theme-gold)" }}>How grades work <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></div>
+                            <div className="mt-1 text-[11px] font-semibold leading-tight" style={{ color: "var(--theme-gold)" }}>How grades work <svg className="ml-0.5 inline-block align-[-1.5px]" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></div>
                           </div>
                           <div className="min-w-0 border-l pl-3" style={{ borderColor: "var(--theme-border)" }}>
                             <div className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v13M6 12l6 6 6-6"/></svg>Grade factors</div>
