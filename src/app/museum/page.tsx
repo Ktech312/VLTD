@@ -720,7 +720,7 @@ export default function MuseumPage() {
                         <div className="mt-1 text-xs text-[color:var(--muted)]">{g.itemIds.length} items · Updated {formatGalleryDate(g.updatedAt)}</div>
 
                         {/* Grade + factors, side by side */}
-                        <div className="mt-4 grid grid-cols-[118px_1fr] gap-4 rounded-[8px] border bg-black/10 p-3" style={{ borderColor: "var(--theme-border)" }}>
+                        <div className="mt-4 grid grid-cols-[92px_1fr] gap-3 rounded-[8px] border bg-black/10 p-3" style={{ borderColor: "var(--theme-border)" }}>
                           <div className="flex flex-col items-center text-center">
                             <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Exhibition Grade</div>
                             <div className="relative mt-2 flex h-16 w-16 items-center justify-center">
@@ -731,11 +731,11 @@ export default function MuseumPage() {
                             <div className="text-[11px] leading-tight text-[color:var(--muted)]">Top {topPct}% of public exhibitions</div>
                             <div className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold" style={{ color: "var(--theme-gold)" }}>How grades work <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></div>
                           </div>
-                          <div className="min-w-0 border-l pl-4" style={{ borderColor: "var(--theme-border)" }}>
+                          <div className="min-w-0 border-l pl-3" style={{ borderColor: "var(--theme-border)" }}>
                             <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Grade factors</div>
                             <div className="mt-2 space-y-2">
                               {factors.map((f) => (
-                                <div key={f.name} className="flex items-center justify-between gap-2 text-[13px]">
+                                <div key={f.name} className="flex items-center justify-between gap-2 text-[12px]">
                                   <span className="flex min-w-0 items-center gap-2 text-[color:var(--muted)]">
                                     <svg width="16" height="16" viewBox="0 0 24 24" className="shrink-0">
                                       {f.r.ok ? (
