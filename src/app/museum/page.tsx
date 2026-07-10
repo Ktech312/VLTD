@@ -721,7 +721,7 @@ export default function MuseumPage() {
 
                         {/* Grade + factors, side by side */}
                         <div className="mt-4 grid grid-cols-[118px_1fr] gap-4 rounded-[8px] border bg-black/10 p-3" style={{ borderColor: "var(--theme-border)" }}>
-                          <div>
+                          <div className="flex flex-col items-center text-center">
                             <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Exhibition Grade</div>
                             <div className="relative mt-2 flex h-16 w-16 items-center justify-center">
                               <svg viewBox="0 0 76 84" className="absolute inset-0 h-full w-full"><polygon points="38,3 71,22 71,62 38,81 5,62 5,22" fill="rgba(245,181,72,0.08)" stroke="var(--theme-gold-border, rgba(245,181,72,0.45))" strokeWidth="2"/></svg>
@@ -780,7 +780,7 @@ export default function MuseumPage() {
                               {panelItems.slice(0, 5).map((it) => {
                                 const img = getPrimaryImageUrl(it);
                                 return (
-                                  <div key={it.id} className="h-12 w-12 overflow-hidden rounded-lg bg-[color:var(--theme-elevated)] ring-1 ring-[color:var(--theme-border)]">
+                                  <div key={it.id} className="h-16 w-12 overflow-hidden rounded-lg bg-[color:var(--theme-elevated)] ring-1 ring-[color:var(--theme-border)]">
                                     {img ? (
                                       // eslint-disable-next-line @next/next/no-img-element
                                       <img src={img} alt={it.title} className="h-full w-full object-cover" />
@@ -789,7 +789,7 @@ export default function MuseumPage() {
                                 );
                               })}
                               {panelItems.length > 5 ? (
-                                <div className="flex h-12 w-12 items-center justify-center rounded-lg text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--theme-border)]">+{panelItems.length - 5}</div>
+                                <div className="flex h-16 w-12 items-center justify-center rounded-lg text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--theme-border)]">+{panelItems.length - 5}</div>
                               ) : null}
                             </div>
                           </div>
