@@ -403,22 +403,22 @@ export default function MuseumPage() {
           <p className="mt-2 text-sm text-[color:var(--muted)]">Curate public rooms from your private vault.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex items-center rounded-full border p-0.5" style={{ borderColor: "var(--theme-border)", background: "var(--theme-card)" }}>
+          <div className="inline-flex items-center rounded-xl border p-0.5" style={{ borderColor: "var(--theme-border)", background: "var(--theme-card)" }}>
             {(["grid", "list"] as const).map((mode) => (
-              <button key={mode} type="button" onClick={() => setViewMode(mode)} aria-label={`${mode} view`} className={`inline-flex h-8 w-9 items-center justify-center rounded-full transition ${viewMode === mode ? "bg-gold/20 text-gold" : "text-[color:var(--muted2)]"}`}>
+              <button key={mode} type="button" onClick={() => setViewMode(mode)} aria-label={`${mode} view`} className={`inline-flex h-8 w-9 items-center justify-center rounded-lg transition ${viewMode === mode ? "bg-gold/20 text-gold" : "text-[color:var(--muted2)]"}`}>
                 {mode === "grid" ? (<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>) : (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>)}
               </button>
             ))}
           </div>
-          <select value={sortMode} onChange={(e) => setSortMode(e.target.value as ExhibitionSort)} className="h-10 rounded-full border px-4 text-sm font-semibold outline-none" style={{ borderColor: "var(--theme-border)", background: "var(--theme-card)", color: "var(--fg)" }}>
+          <select value={sortMode} onChange={(e) => setSortMode(e.target.value as ExhibitionSort)} className="h-10 rounded-xl border px-4 text-sm font-semibold outline-none" style={{ borderColor: "var(--theme-border)", background: "var(--theme-card)", color: "var(--fg)" }}>
             {EXHIBITION_SORTS.map((s) => (<option key={s.key} value={s.key}>{s.label}</option>))}
           </select>
-          <Link href="/museum/new" className="inline-flex min-h-[40px] shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-sm font-black transition" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}>+ Create Exhibition</Link>
+          <Link href="/museum/new" className="inline-flex min-h-[40px] shrink-0 items-center justify-center gap-1.5 rounded-xl px-5 text-sm font-black transition" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}>+ Create Exhibition</Link>
         </div>
       </div>
       <div className="mt-5 flex flex-wrap gap-2">
         {EXHIBITION_FILTERS.map((f) => (
-          <button key={f.key} type="button" onClick={() => setFilter(f.key)} className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-semibold ring-1 transition ${filter === f.key ? "bg-gold/20 text-gold ring-gold/40" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]"}`}>{f.label}</button>
+          <button key={f.key} type="button" onClick={() => setFilter(f.key)} className={`inline-flex items-center rounded-xl px-4 py-1.5 text-sm font-semibold ring-1 transition ${filter === f.key ? "bg-gold/20 text-gold ring-gold/40" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]"}`}>{f.label}</button>
         ))}
       </div>
     </>
@@ -734,7 +734,7 @@ export default function MuseumPage() {
                         <div className="mt-1 text-xs text-[color:var(--muted)]">{g.itemIds.length} items · Updated {formatGalleryDate(g.updatedAt)}</div>
 
                         {/* Grade + factors, side by side */}
-                        <div className="mt-4 grid grid-cols-[auto_1fr] gap-5">
+                        <div className="mt-4 grid grid-cols-[118px_1fr] gap-4">
                           <div>
                             <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Exhibition Grade</div>
                             <div className="relative mt-2 flex h-16 w-16 items-center justify-center">
@@ -749,12 +749,12 @@ export default function MuseumPage() {
                             <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Grade factors</div>
                             <div className="mt-2 space-y-2">
                               {factors.map((f) => (
-                                <div key={f.name} className="flex items-center justify-between text-[13px]">
-                                  <span className="flex items-center gap-2 text-[color:var(--muted)]">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={f.r.ok ? "#4CAF82" : "#F5B548"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-                                    {f.name}
+                                <div key={f.name} className="flex items-center justify-between gap-2 text-[13px]">
+                                  <span className="flex min-w-0 items-center gap-2 text-[color:var(--muted)]">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={f.r.ok ? "#4CAF82" : "#F5B548"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M20 6L9 17l-5-5"/></svg>
+                                    <span className="truncate">{f.name}</span>
                                   </span>
-                                  <span className="font-semibold" style={{ color: f.r.ok ? "#4CAF82" : "#F5B548" }}>{f.r.label}</span>
+                                  <span className="shrink-0 whitespace-nowrap font-semibold" style={{ color: f.r.ok ? "#4CAF82" : "#F5B548" }}>{f.r.label}</span>
                                 </div>
                               ))}
                             </div>
@@ -765,8 +765,8 @@ export default function MuseumPage() {
                         <div className="mt-5">
                           <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Share link</div>
                           <div className="mt-2 flex gap-2">
-                            <input readOnly value={shareUrl} className="h-9 min-w-0 flex-1 rounded-full border px-3 text-xs" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--muted)" }} />
-                            <button type="button" onClick={() => handleCopyShareLink(shareUrl)} className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
+                            <input readOnly value={shareUrl} className="h-9 min-w-0 flex-1 rounded-xl border px-3 text-xs" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--muted)" }} />
+                            <button type="button" onClick={() => handleCopyShareLink(shareUrl)} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
                               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
                               {copyOk ? "Copied" : "Copy link"}
                             </button>
@@ -784,7 +784,7 @@ export default function MuseumPage() {
                               <div className="text-[11px] text-[color:var(--muted)]">{g.visibility === "PUBLIC" ? "Anyone can view this exhibition." : g.visibility === "INVITE" ? "Only invited people can view." : "Only you can view this exhibition."}</div>
                             </div>
                           </div>
-                          <button type="button" onClick={() => setGallerySettings(g)} className="shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>Change</button>
+                          <button type="button" onClick={() => setGallerySettings(g)} className="shrink-0 rounded-xl px-3.5 py-1.5 text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>Change</button>
                         </div>
 
                         {panelItems.length > 0 ? (
@@ -810,15 +810,15 @@ export default function MuseumPage() {
                         ) : null}
 
                         <div className="mt-5 grid grid-cols-3 gap-2">
-                          <button type="button" onClick={() => openGallery(g.id)} className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-full text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
+                          <button type="button" onClick={() => openGallery(g.id)} className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
                             Duplicate
                           </button>
-                          <button type="button" onClick={() => openGallery(g.id)} className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-full text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
+                          <button type="button" onClick={() => openGallery(g.id)} className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
                             Export PDF
                           </button>
-                          <button type="button" onClick={() => handleAskDelete(g)} className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-full text-xs font-semibold ring-1" style={{ background: "rgba(248,113,113,0.08)", color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}>
+                          <button type="button" onClick={() => handleAskDelete(g)} className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl text-xs font-semibold ring-1" style={{ background: "rgba(248,113,113,0.08)", color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}>
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
                             Delete
                           </button>
