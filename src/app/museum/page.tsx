@@ -426,7 +426,7 @@ export default function MuseumPage() {
 
   return (
     <main className="text-[color:var(--fg)]">
-      <div className="mx-auto max-w-[1500px] px-4 py-5 sm:px-6 sm:py-7">
+      <div className="mx-auto max-w-[1500px] px-4 py-3 sm:px-6 sm:py-4">
         <input
           ref={coverInputRef}
           type="file"
@@ -515,7 +515,7 @@ export default function MuseumPage() {
           </section>
         ) : null}
 
-        <section className="mt-6">
+        <section className="mt-1">
           {statusMessage ? (
             <div className="mb-4 rounded-2xl bg-[color:var(--surface)] px-4 py-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
               {statusMessage}
@@ -595,7 +595,7 @@ export default function MuseumPage() {
                     className={`group relative flex w-full cursor-pointer flex-col overflow-hidden rounded-[20px] border bg-[color:var(--theme-card)] shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.30)] ${selectedEntry?.gallery.id === gallery.id ? "border-[color:var(--theme-gold)] ring-1 ring-[color:var(--theme-gold)]" : "border-[color:var(--theme-border)]"}`}
                   >
                     {/* Cover */}
-                    <div className="relative h-[140px] overflow-hidden bg-[color:var(--theme-elevated)]">
+                    <div className="relative h-[116px] overflow-hidden bg-[color:var(--theme-elevated)]">
                       {coverImage ? (
                         <ProgressiveImage
                           src={coverImage}
@@ -642,8 +642,8 @@ export default function MuseumPage() {
                     </div>
 
                     {/* Info */}
-                    <div className="flex flex-col gap-0.5 p-3">
-                      <h2 className="line-clamp-1 text-[15px] font-black tracking-[-0.015em]">
+                    <div className="flex flex-col gap-0.5 p-2.5">
+                      <h2 className="line-clamp-1 text-[14px] font-black tracking-[-0.015em]">
                         {gallery.title}
                       </h2>
                       <div className="flex items-center gap-1 text-[11px] text-[color:var(--muted)]">
