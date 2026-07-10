@@ -729,7 +729,7 @@ export default function MuseumPage() {
                             </div>
                             <div className="mt-1.5 text-base font-black" style={{ color: "var(--theme-gold)" }}>{gradeBandLabel(s.band)}</div>
                             <div className="text-[11px] leading-tight text-[color:var(--muted)]">Top {topPct}% of public exhibitions</div>
-                            <div className="mt-1 text-[11px] font-semibold" style={{ color: "var(--theme-gold)" }}>How grades work</div>
+                            <div className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold" style={{ color: "var(--theme-gold)" }}>How grades work <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></div>
                           </div>
                           <div className="border-l pl-4" style={{ borderColor: "var(--theme-border)" }}>
                             <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Grade factors</div>
@@ -737,7 +737,19 @@ export default function MuseumPage() {
                               {factors.map((f) => (
                                 <div key={f.name} className="flex items-center justify-between gap-2 text-[13px]">
                                   <span className="flex min-w-0 items-center gap-2 text-[color:var(--muted)]">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={f.r.ok ? "#4CAF82" : "#F5B548"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M20 6L9 17l-5-5"/></svg>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" className="shrink-0">
+                                      {f.r.ok ? (
+                                        <>
+                                          <circle cx="12" cy="12" r="10" fill="#4CAF82" />
+                                          <path d="M8 12.5l2.5 2.5 5-5.5" fill="none" stroke="#0B1320" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                                        </>
+                                      ) : (
+                                        <>
+                                          <circle cx="12" cy="12" r="10" fill="none" stroke="#F5B548" strokeWidth="2" />
+                                          <circle cx="12" cy="12" r="3.2" fill="#F5B548" />
+                                        </>
+                                      )}
+                                    </svg>
                                     <span className="truncate">{f.name}</span>
                                   </span>
                                   <span className="shrink-0 whitespace-nowrap font-semibold" style={{ color: f.r.ok ? "#4CAF82" : "#F5B548" }}>{f.r.label}</span>
@@ -775,7 +787,10 @@ export default function MuseumPage() {
 
                         {panelItems.length > 0 ? (
                           <div className="mt-5">
-                            <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Selected items ({panelItems.length})</div>
+                            <div className="flex items-center justify-between">
+                              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Selected items ({panelItems.length})</div>
+                              <button type="button" onClick={() => openGallery(g.id)} className="inline-flex items-center gap-0.5 text-[11px] font-semibold" style={{ color: "var(--theme-gold)" }}>View all ›</button>
+                            </div>
                             <div className="mt-2 flex gap-2">
                               {panelItems.slice(0, 5).map((it) => {
                                 const img = getPrimaryImageUrl(it);
