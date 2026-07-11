@@ -595,7 +595,7 @@ export default function MuseumPage() {
                     className={`group relative flex w-full cursor-pointer flex-col overflow-hidden rounded-[20px] border bg-[color:var(--theme-card)] shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.30)] ${selectedEntry?.gallery.id === gallery.id ? "border-[color:var(--theme-gold)] ring-1 ring-[color:var(--theme-gold)]" : "border-[color:var(--theme-border)]"}`}
                   >
                     {/* Cover */}
-                    <div className="relative h-[164px] overflow-hidden bg-[color:var(--theme-elevated)]">
+                    <div className="relative h-[208px] overflow-hidden bg-[color:var(--theme-elevated)]">
                       {coverImage ? (
                         <ProgressiveImage
                           src={coverImage}
@@ -642,7 +642,7 @@ export default function MuseumPage() {
                     </div>
 
                     {/* Info */}
-                    <div className="flex flex-col gap-1 p-3.5">
+                    <div className="flex min-h-[118px] flex-col gap-1 p-3.5">
                       <h2 className="line-clamp-1 text-[18px] font-black tracking-[-0.02em]">
                         {gallery.title}
                       </h2>
@@ -651,7 +651,7 @@ export default function MuseumPage() {
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="opacity-80"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
                         {visibilityLabel(gallery.visibility)}
                       </div>
-                      <div className="mt-2 flex items-end justify-between gap-3">
+                      <div className="mt-auto flex items-end justify-between gap-3">
                         <div>
                           <div className="text-[11px] font-semibold tracking-[0.01em] text-[color:var(--muted2)]">
                             Total Value
