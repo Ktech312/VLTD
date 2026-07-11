@@ -710,20 +710,20 @@ export default function MuseumPage() {
                   ];
                   const topPct = Math.max(1, 100 - s.score);
                   return (
-                    <div className="overflow-hidden rounded-[12px] border shadow-[0_18px_46px_rgba(0,0,0,0.24)]" style={{ borderColor: "var(--theme-border)", background: "var(--theme-card)", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.08), 0 18px 46px rgba(0,0,0,0.24)" }}>
+                    <div className="overflow-hidden rounded-[10px] border shadow-[0_18px_46px_rgba(0,0,0,0.24)]" style={{ borderColor: "var(--theme-border)", background: "var(--theme-card)", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.08), 0 18px 46px rgba(0,0,0,0.24)" }}>
                       <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: "var(--theme-border)" }}>
                         <div className="text-sm font-black">Exhibition Details</div>
                       </div>
 
                       <div className="px-3 pt-3">
-                        <div className="relative h-40 overflow-hidden rounded-[8px] border bg-[color:var(--theme-elevated)]" style={{ borderColor: "var(--theme-border)" }}>
+                        <div className="relative h-40 overflow-hidden rounded-[9px] border bg-[color:var(--theme-elevated)]" style={{ borderColor: "var(--theme-gold-border, var(--theme-border))", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.12)" }}>
                           {cover ? (
                             <ProgressiveImage src={cover} alt={`${g.title} cover`} className="h-full w-full" imageClassName="object-cover object-center" draggable={false} />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center text-[11px] uppercase tracking-[0.18em] text-white/30">No cover</div>
                           )}
                           <button type="button" onClick={() => handleOpenCoverPicker(g)} disabled={isUploadingCover}
-                            className="absolute right-2.5 top-2.5 inline-flex items-center gap-1.5 rounded-[6px] border bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur transition hover:bg-black/75 disabled:opacity-50" style={{ borderColor: "var(--theme-border)" }}>
+                            className="absolute right-2.5 top-2.5 inline-flex items-center gap-1.5 rounded-[7px] border px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur transition disabled:opacity-50" style={{ borderColor: "var(--theme-gold-border, var(--theme-border))", background: "rgba(3,8,14,0.72)", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.12)" }}>
                             Edit cover
                           </button>
                         </div>
@@ -740,23 +740,23 @@ export default function MuseumPage() {
                         <div className="mt-1 text-xs text-[color:var(--muted)]">{g.itemIds.length} items · Updated {formatGalleryDate(g.updatedAt)}</div>
 
                         {/* Grade + factors, side by side */}
-                        <div className="mt-4 grid grid-cols-[106px_1fr] gap-3 rounded-[8px] border bg-black/10 p-3" style={{ borderColor: "var(--theme-border)" }}>
+                        <div className="mt-4 grid grid-cols-[116px_minmax(0,1fr)] gap-4 rounded-[9px] border p-3" style={{ borderColor: "var(--theme-border)", background: "rgba(3, 8, 14, 0.44)", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.06)" }}>
                           <div className="flex flex-col">
                             <div className="text-[9px] font-semibold uppercase tracking-[0.06em] text-[color:var(--muted2)]">Exhibition Grade</div>
                             <div className="relative mt-2 flex h-[72px] w-[72px] items-center justify-center">
-                              <svg viewBox="0 0 76 84" className="absolute inset-0 h-full w-full"><polygon points="38,3 71,22 71,62 38,81 5,62 5,22" fill="rgba(245,181,72,0.08)" stroke="var(--theme-gold-border, rgba(245,181,72,0.45))" strokeWidth="2"/></svg>
+                              <svg viewBox="0 0 76 84" className="absolute inset-0 h-full w-full"><polygon points="38,3 71,22 71,62 38,81 5,62 5,22" fill="transparent" stroke="var(--theme-gold-border, rgba(245,181,72,0.45))" strokeWidth="2"/></svg>
                               <span className="relative text-3xl font-black" style={{ color: "var(--theme-gold)" }}>{gradeLetter(s.band)}</span>
                             </div>
                             <div className="mt-1.5 text-base font-black" style={{ color: "var(--theme-gold)" }}>{gradeBandLabel(s.band)}</div>
-                            <div className="text-[11px] leading-tight text-[color:var(--muted)]">Top {topPct}% of public exhibitions</div>
+                            <div className="text-[10.5px] leading-snug text-[color:var(--muted)]">Top {topPct}% of public exhibitions</div>
                             <div className="mt-1 text-[11px] font-semibold leading-tight" style={{ color: "var(--theme-gold)" }}>How grades work <svg className="ml-0.5 inline-block align-[-1.5px]" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></div>
                           </div>
                           <div className="min-w-0 border-l pl-3" style={{ borderColor: "var(--theme-border)" }}>
-                            <div className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v13M6 12l6 6 6-6"/></svg>Grade factors</div>
+                            <div className="flex items-center gap-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v13M6 12l6 6 6-6"/></svg>Grade factors</div>
                             <div className="mt-1.5 divide-y divide-[color:var(--theme-border)]">
                               {factors.map((f) => (
                                 <div key={f.name} className="flex items-center justify-between gap-2 py-[7px] text-[12px]">
-                                  <span className="flex min-w-0 items-center gap-2 text-[color:var(--muted)]">
+                                  <span className="flex min-w-0 items-center gap-2 whitespace-nowrap text-[color:var(--muted)]">
                                     <svg width="16" height="16" viewBox="0 0 24 24" className="shrink-0">
                                       {f.r.ok ? (
                                         <>

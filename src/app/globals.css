@@ -19,9 +19,9 @@
   --color-gold-border: rgba(217,162,58,0.42);
 
   /* Vault surfaces */
-  --color-vault-base: #010409;
-  --color-vault-card: rgba(4, 9, 15, 0.94);
-  --color-vault-elevated: rgba(7, 13, 22, 0.96);
+  --color-vault-base: #000307;
+  --color-vault-card: rgba(3, 8, 14, 0.95);
+  --color-vault-elevated: rgba(6, 12, 20, 0.96);
   --color-vault-border: rgba(184, 135, 43, 0.22);
 
   /* Text scale */
@@ -35,9 +35,9 @@
   --color-loss: #E05252;
 
   /* Shadows */
-  --shadow-card: 0 4px 24px rgba(0,0,0,0.62), 0 0 22px rgba(28,44,68,0.12);
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.66), 0 0 22px rgba(26,40,62,0.10);
   --shadow-gold: 0 0 18px rgba(245,181,72,0.28), 0 0 42px rgba(184,135,43,0.14), inset 0 1px 0 rgba(255,241,168,0.35);
-  --shadow-elevated: 0 8px 40px rgba(0,0,0,0.82), 0 0 34px rgba(28,44,68,0.12);
+  --shadow-elevated: 0 8px 40px rgba(0,0,0,0.84), 0 0 34px rgba(26,40,62,0.10);
 
   /* Border radius */
   --radius-sm: 6px;
@@ -65,9 +65,9 @@
      Overridden at runtime by ThemeProvider via setProperty.
      These ensure SSR and first-paint use the correct defaults.
   ========================================================= */
-  --theme-bg: radial-gradient(circle at 14% 0%, rgba(28,44,68,0.26), transparent 42%), linear-gradient(180deg, #000306 0%, #01080E 50%, #020B12 100%);
-  --theme-card: rgba(4, 9, 15, 0.94);
-  --theme-elevated: rgba(7, 13, 22, 0.96);
+  --theme-bg: radial-gradient(circle at 14% 0%, rgba(26,40,62,0.22), transparent 42%), linear-gradient(180deg, #000205 0%, #00060C 50%, #010911 100%);
+  --theme-card: rgba(3, 8, 14, 0.95);
+  --theme-elevated: rgba(6, 12, 20, 0.96);
   --theme-border: rgba(184, 135, 43, 0.22);
   --theme-text-primary: #E8D7B8;
   --theme-text-secondary: #C5B284;
@@ -200,9 +200,9 @@
 ========================================================= */
 
 .theme-dark {
-  --bg: var(--theme-bg, #010409);
-  --surface: var(--theme-card, rgba(4, 9, 15, 0.94));
-  --surface-strong: var(--theme-elevated, rgba(7, 13, 22, 0.96));
+  --bg: var(--theme-bg, #000307);
+  --surface: var(--theme-card, rgba(3, 8, 14, 0.95));
+  --surface-strong: var(--theme-elevated, rgba(6, 12, 20, 0.96));
 
   --fg: var(--theme-text-primary, #E8D7B8);
   --muted: var(--theme-text-secondary, rgba(197, 178, 132, 0.86));
@@ -241,9 +241,9 @@
   --table-row-hover: rgba(255, 255, 255, 0.05);
 
   --bg-glow:
-    radial-gradient(circle at 14% 0%, rgba(28, 44, 68, 0.26), transparent 42%),
+    radial-gradient(circle at 14% 0%, rgba(26, 40, 62, 0.22), transparent 42%),
     radial-gradient(circle at 78% 8%, rgba(184, 135, 43, 0.08), transparent 30%),
-    linear-gradient(180deg, #010409 0%, #030712 100%);
+    linear-gradient(180deg, #000307 0%, #02050D 100%);
 }
 
 .theme-light {
@@ -322,7 +322,7 @@ html {
 
 /* Better tap behavior on mobile */
 body {
-  background: var(--theme-bg, radial-gradient(circle at top left, rgba(28,44,68,0.24), transparent 42%), linear-gradient(180deg, #010409 0%, #030712 100%));
+  background: var(--theme-bg, radial-gradient(circle at top left, rgba(26,40,62,0.22), transparent 42%), linear-gradient(180deg, #000307 0%, #02050D 100%));
   background-attachment: fixed;
   color: var(--theme-text-primary, #E8D7B8);
   font-family: var(--font-inter, Inter), system-ui, Arial, sans-serif;
@@ -2180,7 +2180,7 @@ main {
 
 /* Standard vault card */
 .vault-card {
-  background: var(--theme-card, rgba(4, 9, 15, 0.94)) !important;
+  background: var(--theme-card, rgba(3, 8, 14, 0.95)) !important;
   border: 1px solid var(--theme-border, rgba(184, 135, 43, 0.22)) !important;
   color: var(--theme-text-primary, #E8D7B8) !important;
   border-radius: 14px;
@@ -2190,7 +2190,7 @@ main {
 
 /* Gold-accented card — for featured / highlighted items */
 .vault-card-gold {
-  background: var(--theme-card, rgba(4, 9, 15, 0.94));
+  background: var(--theme-card, rgba(3, 8, 14, 0.95));
   border: 1px solid var(--theme-gold-border, rgba(217,162,58,0.42));
   border-radius: 14px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.4), var(--theme-gold-glow, 0 0 20px rgba(245,181,72,0.1));
