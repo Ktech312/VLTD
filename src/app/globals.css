@@ -65,7 +65,7 @@
      Overridden at runtime by ThemeProvider via setProperty.
      These ensure SSR and first-paint use the correct defaults.
   ========================================================= */
-  --theme-bg: radial-gradient(circle at 14% 0%, rgba(28,44,68,0.26), transparent 42%), radial-gradient(circle at 78% 8%, rgba(184,135,43,0.08), transparent 30%), linear-gradient(180deg, #010409 0%, #030712 100%);
+  --theme-bg: radial-gradient(circle at 14% 0%, rgba(28,44,68,0.26), transparent 42%), linear-gradient(180deg, #000306 0%, #01080E 50%, #020B12 100%);
   --theme-card: rgba(4, 9, 15, 0.94);
   --theme-elevated: rgba(7, 13, 22, 0.96);
   --theme-border: rgba(184, 135, 43, 0.22);

@@ -14,7 +14,7 @@
 
 /* ── PAGE BACKGROUNDS ── */
 [data-vltd-theme] body {
-  background: var(--theme-bg, radial-gradient(circle at top left, rgba(28,44,68,0.24), transparent 42%), linear-gradient(180deg, #010409 0%, #030712 100%)) !important;
+  background: var(--theme-bg, radial-gradient(circle at 14% 0%, rgba(28,44,68,0.26), transparent 42%), linear-gradient(180deg, #000306 0%, #01080E 50%, #020B12 100%)) !important;
   background-attachment: fixed !important;
   color: var(--theme-text-primary, #E8D7B8) !important;
 }

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Cormorant_Garamond } from "next/font/google";
 
 import "./globals.css";
 
@@ -7,6 +7,13 @@ const inter = Inter({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-inter",
+});
+
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-serif",
 });
 import "./vltd-design.css";
 import "./vault-pass.css";
@@ -99,7 +106,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={inter.variable}>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${cormorant.variable}`}>
       <head>
         <ThemeScript />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />

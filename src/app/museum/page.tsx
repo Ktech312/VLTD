@@ -399,7 +399,7 @@ export default function MuseumPage() {
     <>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-4xl font-black tracking-[-0.04em] leading-none">Exhibitions</h1>
+          <h1 className="text-[52px] font-bold tracking-[-0.01em] leading-none" style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)" }}>Exhibitions</h1>
           <p className="mt-2 text-sm text-[color:var(--muted)]">Curate public rooms from your private vault.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -643,7 +643,7 @@ export default function MuseumPage() {
 
                       {/* Title + meta overlaid on the faded lower image */}
                       <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col gap-0.5 px-2.5 pb-2.5">
-                        <h2 className="line-clamp-1 text-[14px] font-black tracking-[-0.015em] text-white">
+                        <h2 className="line-clamp-1 text-[19px] font-semibold tracking-[0] text-white" style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)" }}>
                           {gallery.title}
                         </h2>
                         <div className="flex items-center gap-1 text-[11px] text-white/70">
@@ -659,7 +659,7 @@ export default function MuseumPage() {
                       <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#9E8D68]">
                         Total Value
                       </div>
-                      <div className="text-lg font-medium text-[#35C3D8]">
+                      <div className="text-lg font-medium text-[#2BD6ED]">
                         {formatMoney(totalValue)}
                       </div>
                     </div>
@@ -731,7 +731,7 @@ export default function MuseumPage() {
 
                       <div className="p-4">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h2 className="text-lg font-black">{g.title}</h2>
+                          <h2 className="text-2xl font-semibold" style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)" }}>{g.title}</h2>
                           <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: g.visibility === "PUBLIC" ? "#35C3D8" : "#E0C27A" }}>
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
                             {visibilityLabel(g.visibility)}
