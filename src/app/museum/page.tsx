@@ -425,20 +425,7 @@ export default function MuseumPage() {
   );
 
   return (
-    <main
-      className="min-h-screen text-[#E8D9B8]"
-      style={{
-        background: "radial-gradient(circle at 60% 0%, rgba(120,86,31,0.16), transparent 34%), linear-gradient(180deg, #040A0B 0%, #020708 100%)",
-        ["--theme-card" as string]: "#020B0C",
-        ["--theme-border" as string]: "rgba(134,98,45,0.34)",
-        ["--theme-gold" as string]: "#C4933B",
-        ["--data-color" as string]: "#35C3D8",
-        ["--pill" as string]: "rgba(9,17,18,0.82)",
-        ["--border" as string]: "rgba(134,98,45,0.34)",
-        ["--muted" as string]: "#B8AA84",
-        ["--muted2" as string]: "#8D7C58",
-      } as React.CSSProperties}
-    >
+    <main className="text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1500px] px-4 py-3 sm:px-6 sm:py-4">
         <input
           ref={coverInputRef}
@@ -608,7 +595,7 @@ export default function MuseumPage() {
                     className={`group relative flex w-full cursor-pointer flex-col overflow-hidden rounded-[10px] border bg-[#020B0C] shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.30)] ${selectedEntry?.gallery.id === gallery.id ? "border-[#B88734] ring-1 ring-[#B88734]/60" : "border-[#6F542B]/55"}`}
                   >
                     {/* Cover image with a distinct value shelf below. */}
-                    <div className="relative h-[150px] overflow-hidden bg-[#03090A]">
+                    <div className="relative h-[176px] overflow-hidden bg-[#03090A]">
                       {coverImage ? (
                         <ProgressiveImage
                           src={coverImage}
@@ -622,7 +609,8 @@ export default function MuseumPage() {
                           No cover
                         </div>
                       )}
-                      <div className="pointer-events-none absolute inset-0 bg-black/12" />
+                      <div className="pointer-events-none absolute inset-0 bg-black/10" />
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[56%] bg-gradient-to-t from-[#020B0C]/92 via-[#020B0C]/50 to-transparent" />
 
                       {/* Hover controls: change cover / delete */}
                       <div className="absolute right-2 top-2 z-20 flex items-center gap-1.5 opacity-0 transition group-hover:opacity-100">
@@ -654,7 +642,7 @@ export default function MuseumPage() {
                       </div>
 
                       {/* Title + meta overlaid on the faded lower image */}
-                      <div className="hidden">
+                      <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col gap-0.5 px-2.5 pb-2.5">
                         <h2 className="line-clamp-1 text-[14px] font-black tracking-[-0.015em] text-white">
                           {gallery.title}
                         </h2>
@@ -666,18 +654,8 @@ export default function MuseumPage() {
                       </div>
                     </div>
 
-                    <div className="border-t bg-[#061112] px-2.5 py-2" style={{ borderColor: "rgba(184,135,52,0.24)" }}>
-                      <h2 className="line-clamp-1 text-[14px] font-black tracking-[-0.015em] text-white">
-                        {gallery.title}
-                      </h2>
-                      <div className="mt-0.5 flex items-center gap-1 text-[11px] text-[#C8B98E]">
-                        {gallery.itemIds.length} {gallery.itemIds.length === 1 ? "item" : "items"} <span className="opacity-60">·</span>
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="opacity-80"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
-                        {visibilityLabel(gallery.visibility)}
-                      </div>
-                    </div>
-
-                    <div className="border-t bg-[#020B0C] p-2.5" style={{ borderColor: "rgba(184,135,52,0.26)" }}>
+                    {/* Divider + Total Value on the solid card background */}
+                    <div className="border-t bg-[#021011] p-2.5" style={{ borderColor: "rgba(184,135,52,0.26)" }}>
                       <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#9E8D68]">
                         Total Value
                       </div>
