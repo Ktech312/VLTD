@@ -595,7 +595,7 @@ export default function MuseumPage() {
                     className={`group relative flex w-full cursor-pointer flex-col overflow-hidden rounded-[20px] border bg-[color:var(--theme-card)] shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.30)] ${selectedEntry?.gallery.id === gallery.id ? "border-[color:var(--theme-gold)] ring-1 ring-[color:var(--theme-gold)]" : "border-[color:var(--theme-border)]"}`}
                   >
                     {/* Cover */}
-                    <div className="relative h-[208px] overflow-hidden bg-[color:var(--theme-elevated)]">
+                    <div className="relative h-[116px] overflow-hidden bg-[color:var(--theme-elevated)]">
                       {coverImage ? (
                         <ProgressiveImage
                           src={coverImage}
@@ -642,27 +642,27 @@ export default function MuseumPage() {
                     </div>
 
                     {/* Info */}
-                    <div className="flex min-h-[118px] flex-col gap-1 p-3.5">
-                      <h2 className="line-clamp-1 text-[18px] font-black tracking-[-0.02em]">
+                    <div className="flex flex-col gap-0.5 p-2.5">
+                      <h2 className="line-clamp-1 text-[14px] font-black tracking-[-0.015em]">
                         {gallery.title}
                       </h2>
-                      <div className="flex items-center gap-1.5 text-[13px] text-[color:var(--muted)]">
+                      <div className="flex items-center gap-1 text-[11px] text-[color:var(--muted)]">
                         {gallery.itemIds.length} {gallery.itemIds.length === 1 ? "item" : "items"} <span className="opacity-60">·</span>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="opacity-80"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="opacity-80"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
                         {visibilityLabel(gallery.visibility)}
                       </div>
-                      <div className="mt-auto flex items-end justify-between gap-3">
+                      <div className="mt-1 flex items-end justify-between gap-3">
                         <div>
-                          <div className="text-[11px] font-semibold tracking-[0.01em] text-[color:var(--muted2)]">
+                          <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">
                             Total Value
                           </div>
-                          <div className="mt-0.5 text-2xl font-black leading-none" style={{ color: "var(--data-color, #52d6f4)" }}>
+                          <div className="text-lg font-black" style={{ color: "var(--data-color, #52d6f4)" }}>
                             {formatMoney(totalValue)}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2.5 opacity-85" style={{ color: "var(--theme-gold)" }}>
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3l2.4 5 5.6.5-4.2 3.7 1.3 5.3L12 20l-5.1 2.5 1.3-5.3L4 13.5l5.6-.5z"/></svg>
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20s-7-4.35-9.5-8.5C1 8.5 2.5 5.5 6 5.5c2 0 3 1.2 6 4 3-2.8 4-4 6-4 3.5 0 5 3 3.5 6C19 15.65 12 20 12 20z"/></svg>
+                        <div className="flex items-center gap-2 text-[color:var(--muted2)]">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3l2.4 5 5.6.5-4.2 3.7 1.3 5.3L12 20l-5.1 2.5 1.3-5.3L4 13.5l5.6-.5z"/></svg>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20s-7-4.35-9.5-8.5C1 8.5 2.5 5.5 6 5.5c2 0 3 1.2 6 4 3-2.8 4-4 6-4 3.5 0 5 3 3.5 6C19 15.65 12 20 12 20z"/></svg>
                         </div>
                       </div>
                     </div>
