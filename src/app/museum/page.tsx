@@ -594,25 +594,28 @@ export default function MuseumPage() {
                     aria-label={`Show details for ${gallery.title}`}
                     className={`group relative flex w-full cursor-pointer flex-col overflow-hidden rounded-[10px] border bg-[color:var(--theme-card)] shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.30)] ${selectedEntry?.gallery.id === gallery.id ? "border-[color:var(--theme-gold)] ring-1 ring-[color:var(--theme-gold)]" : "border-[color:var(--theme-border)]"}`}
                   >
-                    {/* Cover */}
-                    <div className="relative h-[116px] overflow-hidden bg-[color:var(--theme-elevated)]">
+                    {/* Cover image — extends down behind the title/meta and fades into the card background toward the divider */}
+                    <div className="relative h-[176px] overflow-hidden bg-[color:var(--theme-elevated)]">
                       {coverImage ? (
                         <ProgressiveImage
                           src={coverImage}
                           alt={`${gallery.title} cover`}
-                          className="h-full w-full"
+                          className="absolute inset-0 h-full w-full"
                           imageClassName="object-cover object-center transition duration-500 group-hover:scale-[1.04]"
                           draggable={false}
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-white/32">
+                        <div className="absolute inset-0 flex items-center justify-center text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-white/32">
                           No cover
                         </div>
                       )}
-                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/5 to-transparent" />
+                      <div
+                        className="pointer-events-none absolute inset-0"
+                        style={{ background: "linear-gradient(to top, var(--theme-card) 3%, rgba(9,14,20,0.82) 22%, rgba(9,14,20,0.32) 46%, transparent 68%)" }}
+                      />
 
                       {/* Hover controls: change cover / delete */}
-                      <div className="absolute right-2 top-2 flex items-center gap-1.5 opacity-0 transition group-hover:opacity-100">
+                      <div className="absolute right-2 top-2 z-20 flex items-center gap-1.5 opacity-0 transition group-hover:opacity-100">
                         <button
                           type="button"
                           onClick={(event) => {
@@ -639,25 +642,27 @@ export default function MuseumPage() {
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
                         </button>
                       </div>
+
+                      {/* Title + meta overlaid on the faded lower image */}
+                      <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col gap-0.5 px-2.5 pb-2.5">
+                        <h2 className="line-clamp-1 text-[14px] font-black tracking-[-0.015em] text-white">
+                          {gallery.title}
+                        </h2>
+                        <div className="flex items-center gap-1 text-[11px] text-white/70">
+                          {gallery.itemIds.length} {gallery.itemIds.length === 1 ? "item" : "items"} <span className="opacity-60">·</span>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="opacity-80"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                          {visibilityLabel(gallery.visibility)}
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Info */}
-                    <div className="flex min-h-[128px] flex-col gap-0.5 p-2.5">
-                      <h2 className="line-clamp-1 text-[14px] font-black tracking-[-0.015em]">
-                        {gallery.title}
-                      </h2>
-                      <div className="flex items-center gap-1 text-[11px] text-[color:var(--muted)]">
-                        {gallery.itemIds.length} {gallery.itemIds.length === 1 ? "item" : "items"} <span className="opacity-60">·</span>
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="opacity-80"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
-                        {visibilityLabel(gallery.visibility)}
+                    {/* Divider + Total Value on the solid card background */}
+                    <div className="border-t p-2.5" style={{ borderColor: "var(--theme-border)" }}>
+                      <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">
+                        Total Value
                       </div>
-                      <div className="mt-auto border-t pt-2.5" style={{ borderColor: "var(--theme-border)" }}>
-                        <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">
-                          Total Value
-                        </div>
-                        <div className="text-lg font-black" style={{ color: "var(--data-color, #52d6f4)" }}>
-                          {formatMoney(totalValue)}
-                        </div>
+                      <div className="text-lg font-medium" style={{ color: "var(--data-color, #52d6f4)" }}>
+                        {formatMoney(totalValue)}
                       </div>
                     </div>
                   </article>
