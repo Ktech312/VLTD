@@ -31,13 +31,13 @@ export const THEME_PRESETS: ThemePreset[] = [
     description: "Black + warm gold. Closest to the current brand look.",
     preview: { hero: "/brand/vltd-mark.png", logo: "/brand/vltd-logo.png" },
     vars: {
-      "--bg": "#03070A",
+      "--bg": "#010409",
       "--fg": "#E8D7B8",
       "--muted": "rgba(197,178,132,0.86)",
       "--muted2": "rgba(125,112,84,0.82)",
 
-      "--surface": "rgba(5,12,16,0.92)",
-      "--surface-strong": "rgba(8,16,22,0.96)",
+      "--surface": "rgba(4,9,15,0.94)",
+      "--surface-strong": "rgba(7,13,22,0.96)",
       "--border": "rgba(184,135,43,0.22)",
 
       "--input": "rgba(255,241,168,0.045)",
@@ -51,7 +51,7 @@ export const THEME_PRESETS: ThemePreset[] = [
       "--pill-active-bg": "#D9A23A",
       "--pill-active-fg": "#100B02",
 
-      "--shadow-soft": "0 12px 34px rgba(0,0,0,0.52), 0 0 26px rgba(20,35,45,0.10)",
+      "--shadow-soft": "0 12px 34px rgba(0,0,0,0.52), 0 0 26px rgba(28,44,68,0.12)",
       "--shadow-pill": "0 16px 42px rgba(0,0,0,0.60), 0 0 18px rgba(217,162,58,0.10)",
     },
   },
@@ -62,13 +62,13 @@ export const THEME_PRESETS: ThemePreset[] = [
     description: "A sharper, modern take with silver accents.",
     preview: { hero: "/brand/vltd-mark.png", logo: "/brand/vltd-logo.png" },
     vars: {
-      "--bg": "#03070A",
+      "--bg": "#010409",
       "--fg": "#E8D7B8",
       "--muted": "rgba(197,178,132,0.82)",
       "--muted2": "rgba(125,112,84,0.78)",
 
-      "--surface": "rgba(5,12,16,0.92)",
-      "--surface-strong": "rgba(8,16,22,0.96)",
+      "--surface": "rgba(4,9,15,0.94)",
+      "--surface-strong": "rgba(7,13,22,0.96)",
       "--border": "rgba(184,135,43,0.22)",
 
       "--input": "rgba(255,241,168,0.045)",
@@ -80,9 +80,9 @@ export const THEME_PRESETS: ThemePreset[] = [
       "--pill-fg-muted": "rgba(197,178,132,0.72)",
 
       "--pill-active-bg": "#D9DEE7",
-      "--pill-active-fg": "#03070A",
+      "--pill-active-fg": "#010409",
 
-      "--shadow-soft": "0 12px 34px rgba(0,0,0,0.52), 0 0 26px rgba(20,35,45,0.10)",
+      "--shadow-soft": "0 12px 34px rgba(0,0,0,0.52), 0 0 26px rgba(28,44,68,0.12)",
       "--shadow-pill": "0 16px 42px rgba(0,0,0,0.60), 0 0 18px rgba(217,162,58,0.10)",
     },
   },
@@ -122,13 +122,13 @@ export const THEME_PRESETS: ThemePreset[] = [
     name: "Midnight (Neon Hint)",
     description: "Dark with a subtle neon energy for dashboards.",
     vars: {
-      "--bg": "#03070A",
+      "--bg": "#010409",
       "--fg": "#E8D7B8",
       "--muted": "rgba(197,178,132,0.82)",
       "--muted2": "rgba(125,112,84,0.78)",
 
-      "--surface": "rgba(5,12,16,0.92)",
-      "--surface-strong": "rgba(8,16,22,0.96)",
+      "--surface": "rgba(4,9,15,0.94)",
+      "--surface-strong": "rgba(7,13,22,0.96)",
       "--border": "rgba(184,135,43,0.22)",
 
       "--input": "rgba(255,241,168,0.045)",
@@ -142,7 +142,7 @@ export const THEME_PRESETS: ThemePreset[] = [
       "--pill-active-bg": "#D9A23A",
       "--pill-active-fg": "#100B02",
 
-      "--shadow-soft": "0 12px 34px rgba(0,0,0,0.52), 0 0 26px rgba(20,35,45,0.10)",
+      "--shadow-soft": "0 12px 34px rgba(0,0,0,0.52), 0 0 26px rgba(28,44,68,0.12)",
       "--shadow-pill": "0 18px 46px rgba(0,0,0,0.62), 0 0 18px rgba(217,162,58,0.10)",
     },
   },
