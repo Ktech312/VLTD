@@ -14,7 +14,7 @@
 
 /* ── PAGE BACKGROUNDS ── */
 [data-vltd-theme] body {
-  background: var(--theme-bg, radial-gradient(circle at top left, rgba(15,48,50,0.28), transparent 38%), linear-gradient(180deg, #02090B 0%, #030709 100%)) !important;
+  background: var(--theme-bg, radial-gradient(circle at top left, rgba(20,35,45,0.22), transparent 38%), linear-gradient(180deg, #03070A 0%, #05080B 100%)) !important;
   background-attachment: fixed !important;
   color: var(--theme-text-primary, #E8D7B8) !important;
 }
@@ -27,7 +27,7 @@
 /* ── PANEL BACKGROUNDS — only vltd-specific classes, never broad section/article/rounded ── */
 [data-vltd-theme] body .vltd-panel-main,
 [data-vltd-theme] body .vltd-panel-soft {
-  background: var(--surface, var(--theme-card, rgba(7,17,19,0.88))) !important;
+  background: var(--surface, var(--theme-card, rgba(5,12,16,0.92))) !important;
   border-color: var(--frame-ring, var(--theme-gold-border, rgba(217,162,58,0.42))) !important;
   color: var(--theme-text-primary, #E8D7B8) !important;
 }
@@ -35,7 +35,7 @@
 /* ── CARDS — only named classes, not every rounded element ── */
 [data-vltd-theme] body .vault-card,
 [data-vltd-theme] body .vault-card-gold {
-  background: var(--surface, var(--theme-card, rgba(7,17,19,0.88))) !important;
+  background: var(--surface, var(--theme-card, rgba(5,12,16,0.92))) !important;
   border-color: var(--border, var(--theme-border, rgba(184,135,43,0.22))) !important;
 }
 
@@ -51,7 +51,7 @@
 [data-vltd-theme] body input:not([type="checkbox"]):not([type="radio"]),
 [data-vltd-theme] body textarea,
 [data-vltd-theme] body select {
-  background: var(--theme-elevated, rgba(10,21,23,0.94)) !important;
+  background: var(--theme-elevated, rgba(8,16,22,0.94)) !important;
   border-color: var(--theme-border, rgba(184,135,43,0.22)) !important;
   color: var(--theme-text-primary, #E8D7B8) !important;
 }
@@ -225,7 +225,7 @@
 [data-vltd-theme] body .rounded-full[class*="bg-white"],
 [data-vltd-theme] body .rounded-full[class*="bg-gray-"],
 [data-vltd-theme] body .rounded-full[class*="bg-slate-"] {
-  background: var(--theme-elevated, rgba(10,21,23,0.94)) !important;
+  background: var(--theme-elevated, rgba(8,16,22,0.94)) !important;
   color: var(--theme-text-primary, #E8D7B8) !important;
 }
 
@@ -275,6 +275,6 @@
 
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: var(--theme-card, #071113); }
+::-webkit-scrollbar-track { background: var(--theme-card, #050C10); }
 ::-webkit-scrollbar-thumb { background: var(--theme-border, #3A2B13); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--theme-gold-border, rgba(245,181,72,0.4)); }
