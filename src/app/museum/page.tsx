@@ -669,6 +669,27 @@ export default function MuseumPage() {
                   </article>
                 );
               })}
+              {(() => {
+                // Ghost exhibits: fill the grid out to 3 rows (3 cols), always at least one create card.
+                const ghostCount = Math.max(1, 9 - displayedGalleries.length);
+                return Array.from({ length: ghostCount }).map((_, i) => (
+                  <Link
+                    key={`ghost-${i}`}
+                    href="/museum/new"
+                    aria-label="Create a new exhibit"
+                    className="group flex min-h-[206px] w-full flex-col items-center justify-center gap-2.5 rounded-[20px] border border-dashed border-[color:var(--theme-border)] transition duration-300 hover:-translate-y-0.5 hover:border-[color:var(--theme-gold)]"
+                    style={{ background: "rgba(255,255,255,0.015)" }}
+                  >
+                    <span
+                      className="flex h-12 w-12 items-center justify-center rounded-full border transition group-hover:scale-110"
+                      style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.35))", color: "var(--theme-gold)" }}
+                    >
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                    </span>
+                    <span className="text-[12px] font-semibold tracking-[0.02em] text-[color:var(--muted)] transition group-hover:text-[color:var(--theme-gold)]">New exhibit</span>
+                  </Link>
+                ));
+              })()}
                 </div>
               </div>
 
