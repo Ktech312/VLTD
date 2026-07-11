@@ -24,6 +24,7 @@ import "./vault-utility-pass.css";
 import "./vault-directives-pass.css";
 import "./insurance-pass.css";
 import "./theme-override.css";
+import BugReporter from "@/components/BugReporter";
 import NavShell from "@/components/NavShell";
 import Providers from "@/components/Providers";
 import PWAInstallBanner from "@/components/PWAInstallBanner";
@@ -125,6 +126,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <RouteTransition>{children}</RouteTransition>
               </NavShell>
               <PWAInstallBanner />
+              <BugReporter />
             </SeasonalThemeProvider>
           </Providers>
         </ThemeProvider>
