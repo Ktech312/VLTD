@@ -716,7 +716,7 @@ export default function MuseumPage() {
                       </div>
 
                       <div className="px-3 pt-3">
-                        <div className="relative h-40 overflow-hidden rounded-[9px] border bg-[color:var(--theme-elevated)]" style={{ borderColor: "var(--theme-gold-border, var(--theme-border))", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.12)" }}>
+                        <div className="relative h-40 overflow-hidden rounded-[9px] rounded-bl-[22px] border bg-[color:var(--theme-elevated)]" style={{ borderColor: "var(--theme-gold-border, var(--theme-border))", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.12)" }}>
                           {cover ? (
                             <ProgressiveImage src={cover} alt={`${g.title} cover`} className="h-full w-full" imageClassName="object-cover object-center" draggable={false} />
                           ) : (
