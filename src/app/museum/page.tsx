@@ -811,20 +811,37 @@ export default function MuseumPage() {
                               <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Selected items ({panelItems.length})</div>
                               <button type="button" onClick={() => openGallery(g.id)} className="inline-flex items-center gap-0.5 text-[11px] font-semibold" style={{ color: "var(--theme-gold)" }}>View all ›</button>
                             </div>
-                            <div className="mt-2 flex gap-2">
+                            <div className="mt-2 flex gap-2.5">
                               {panelItems.slice(0, 5).map((it) => {
                                 const img = getPrimaryImageUrl(it);
                                 return (
-                                  <div key={it.id} className="h-16 w-12 overflow-hidden rounded-lg bg-[color:var(--theme-elevated)] ring-1 ring-[color:var(--theme-border)]">
+                                  <div
+                                    key={it.id}
+                                    className="h-[68px] w-[50px] overflow-hidden rounded-[6px] border bg-[color:var(--theme-elevated)] p-[2px]"
+                                    style={{
+                                      borderColor: "var(--theme-gold-border, var(--theme-border))",
+                                      boxShadow: "inset 0 1px 0 rgba(255,241,168,0.16), inset 0 -10px 18px rgba(0,0,0,0.38), 0 7px 16px rgba(0,0,0,0.34)",
+                                    }}
+                                  >
                                     {img ? (
                                       // eslint-disable-next-line @next/next/no-img-element
-                                      <img src={img} alt={it.title} className="h-full w-full object-cover" />
+                                      <img src={img} alt={it.title} className="h-full w-full rounded-[4px] object-cover shadow-[inset_0_0_0_1px_rgba(255,255,255,0.10)]" />
                                     ) : null}
                                   </div>
                                 );
                               })}
                               {panelItems.length > 5 ? (
-                                <div className="flex h-16 w-12 items-center justify-center rounded-lg text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--theme-border)]">+{panelItems.length - 5}</div>
+                                <div
+                                  className="flex h-[68px] w-[50px] items-center justify-center rounded-[6px] border text-xs font-semibold"
+                                  style={{
+                                    borderColor: "var(--theme-gold-border, var(--theme-border))",
+                                    background: "linear-gradient(180deg, rgba(6,12,20,0.94), rgba(2,6,10,0.96))",
+                                    color: "var(--theme-gold)",
+                                    boxShadow: "inset 0 1px 0 rgba(255,241,168,0.14), inset 0 -10px 18px rgba(0,0,0,0.38), 0 7px 16px rgba(0,0,0,0.34)",
+                                  }}
+                                >
+                                  +{panelItems.length - 5}
+                                </div>
                               ) : null}
                             </div>
                           </div>
