@@ -592,76 +592,77 @@ export default function MuseumPage() {
                     role="button"
                     tabIndex={0}
                     aria-label={`Show details for ${gallery.title}`}
-                    className={`group relative flex aspect-[4/3] w-full cursor-pointer flex-col justify-end overflow-hidden rounded-[20px] border bg-[color:var(--theme-card)] shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.30)] ${selectedEntry?.gallery.id === gallery.id ? "border-[color:var(--theme-gold)] ring-1 ring-[color:var(--theme-gold)]" : "border-[color:var(--theme-border)]"}`}
+                    className={`group relative flex w-full cursor-pointer flex-col overflow-hidden rounded-[20px] border bg-[color:var(--theme-card)] shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.30)] ${selectedEntry?.gallery.id === gallery.id ? "border-[color:var(--theme-gold)] ring-1 ring-[color:var(--theme-gold)]" : "border-[color:var(--theme-border)]"}`}
                   >
-                    {/* Full-bleed cover */}
-                    {coverImage ? (
-                      <ProgressiveImage
-                        src={coverImage}
-                        alt={`${gallery.title} cover`}
-                        className="absolute inset-0 h-full w-full"
-                        imageClassName="object-cover object-center transition duration-500 group-hover:scale-[1.04]"
-                        draggable={false}
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-white/32">
-                        No cover
-                      </div>
-                    )}
-                    {/* Bottom fade — image dissolves into the card background so nothing has a hard edge */}
-                    <div
-                      className="pointer-events-none absolute inset-0"
-                      style={{
-                        background:
-                          "linear-gradient(to top, var(--theme-card) 2%, rgba(5,9,11,0.86) 22%, rgba(5,9,11,0.45) 42%, rgba(5,9,11,0.05) 64%, transparent 80%)",
-                      }}
-                    />
+                    {/* Cover */}
+                    <div className="relative h-[164px] overflow-hidden bg-[color:var(--theme-elevated)]">
+                      {coverImage ? (
+                        <ProgressiveImage
+                          src={coverImage}
+                          alt={`${gallery.title} cover`}
+                          className="h-full w-full"
+                          imageClassName="object-cover object-center transition duration-500 group-hover:scale-[1.04]"
+                          draggable={false}
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-white/32">
+                          No cover
+                        </div>
+                      )}
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/5 to-transparent" />
 
-                    {/* Hover controls: change cover / delete */}
-                    <div className="absolute right-2 top-2 z-20 flex items-center gap-1.5 opacity-0 transition group-hover:opacity-100">
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          handleOpenCoverPicker(gallery);
-                        }}
-                        disabled={isUploadingCover}
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-sm font-semibold text-white ring-1 ring-white/20 backdrop-blur transition hover:bg-black/75 disabled:opacity-50"
-                        aria-label={`Change cover image for ${gallery.title}`}
-                      >
-                        +
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          handleAskDelete(gallery);
-                        }}
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-red-200 ring-1 ring-red-400/30 backdrop-blur transition hover:bg-red-600/80 hover:text-white"
-                        aria-label={`Delete gallery ${gallery.title}`}
-                      >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
-                      </button>
+                      {/* Hover controls: change cover / delete */}
+                      <div className="absolute right-2 top-2 flex items-center gap-1.5 opacity-0 transition group-hover:opacity-100">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            handleOpenCoverPicker(gallery);
+                          }}
+                          disabled={isUploadingCover}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-sm font-semibold text-white ring-1 ring-white/20 backdrop-blur transition hover:bg-black/75 disabled:opacity-50"
+                          aria-label={`Change cover image for ${gallery.title}`}
+                        >
+                          +
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            handleAskDelete(gallery);
+                          }}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-red-200 ring-1 ring-red-400/30 backdrop-blur transition hover:bg-red-600/80 hover:text-white"
+                          aria-label={`Delete gallery ${gallery.title}`}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Info overlaid on the faded image */}
-                    <div className="relative z-10 flex flex-col gap-1 p-4">
-                      <h2 className="line-clamp-1 text-[18px] font-black tracking-[-0.02em] text-white">
+                    {/* Info */}
+                    <div className="flex flex-col gap-1 p-3.5">
+                      <h2 className="line-clamp-1 text-[18px] font-black tracking-[-0.02em]">
                         {gallery.title}
                       </h2>
-                      <div className="flex items-center gap-1.5 text-[13px] text-white/70">
+                      <div className="flex items-center gap-1.5 text-[13px] text-[color:var(--muted)]">
                         {gallery.itemIds.length} {gallery.itemIds.length === 1 ? "item" : "items"} <span className="opacity-60">·</span>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="opacity-80"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
                         {visibilityLabel(gallery.visibility)}
                       </div>
-                      <div className="mt-1.5">
-                        <div className="text-[11px] font-semibold tracking-[0.01em] text-white/55">
-                          Total Value
+                      <div className="mt-2 flex items-end justify-between gap-3">
+                        <div>
+                          <div className="text-[11px] font-semibold tracking-[0.01em] text-[color:var(--muted2)]">
+                            Total Value
+                          </div>
+                          <div className="mt-0.5 text-2xl font-black leading-none" style={{ color: "var(--data-color, #52d6f4)" }}>
+                            {formatMoney(totalValue)}
+                          </div>
                         </div>
-                        <div className="mt-0.5 text-2xl font-black leading-none" style={{ color: "var(--data-color, #52d6f4)" }}>
-                          {formatMoney(totalValue)}
+                        <div className="flex items-center gap-2.5 opacity-85" style={{ color: "var(--theme-gold)" }}>
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3l2.4 5 5.6.5-4.2 3.7 1.3 5.3L12 20l-5.1 2.5 1.3-5.3L4 13.5l5.6-.5z"/></svg>
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20s-7-4.35-9.5-8.5C1 8.5 2.5 5.5 6 5.5c2 0 3 1.2 6 4 3-2.8 4-4 6-4 3.5 0 5 3 3.5 6C19 15.65 12 20 12 20z"/></svg>
                         </div>
                       </div>
                     </div>
