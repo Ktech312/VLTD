@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type ChangeEvent, type MouseEvent, type PointerEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type ChangeEvent, type PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 function IconLayoutTemplate({ size = 24, style }: { size?: number; style?: Record<string, string | number> }) {
   return (
@@ -190,7 +190,6 @@ export default function MuseumPage() {
     drag.dragged = false;
     drag.startX = event.clientX;
     drag.scrollLeft = event.currentTarget.scrollLeft;
-    event.currentTarget.setPointerCapture(event.pointerId);
   }
 
   function handleSelectedItemsPointerMove(event: PointerEvent<HTMLDivElement>) {
@@ -203,18 +202,8 @@ export default function MuseumPage() {
     if (drag.dragged) event.preventDefault();
   }
 
-  function handleSelectedItemsPointerEnd(event: PointerEvent<HTMLDivElement>) {
+  function handleSelectedItemsPointerEnd() {
     selectedItemsDragRef.current.active = false;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-  }
-
-  function handleSelectedItemsClickCapture(event: MouseEvent<HTMLDivElement>) {
-    if (!selectedItemsDragRef.current.dragged) return;
-    event.preventDefault();
-    event.stopPropagation();
-    selectedItemsDragRef.current.dragged = false;
   }
 
   useEffect(() => {
@@ -853,7 +842,6 @@ export default function MuseumPage() {
                               onPointerMove={handleSelectedItemsPointerMove}
                               onPointerUp={handleSelectedItemsPointerEnd}
                               onPointerCancel={handleSelectedItemsPointerEnd}
-                              onClickCapture={handleSelectedItemsClickCapture}
                             >
                               {panelItems.map((it) => {
                                 const img = getPrimaryImageUrl(it);
@@ -863,6 +851,12 @@ export default function MuseumPage() {
                                     href={`/vault/item/${encodeURIComponent(it.id)}`}
                                     aria-label={`Open ${it.title}`}
                                     draggable={false}
+                                    onClick={(event) => {
+                                      if (!selectedItemsDragRef.current.dragged) return;
+                                      event.preventDefault();
+                                      event.stopPropagation();
+                                      selectedItemsDragRef.current.dragged = false;
+                                    }}
                                     className="block h-[68px] w-[50px] shrink-0 overflow-hidden rounded-[6px] border bg-[color:var(--theme-elevated)] p-[2px]"
                                     style={{
                                       borderColor: "var(--theme-gold-border, var(--theme-border))",
