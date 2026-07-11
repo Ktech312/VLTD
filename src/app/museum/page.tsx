@@ -11,6 +11,16 @@ function IconLayoutTemplate({ size = 24, style }: { size?: number; style?: Recor
   );
 }
 
+function ExternalOpenIcon({ size = 17 }: { size?: number }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M15 3h6v6" />
+      <path d="M10 14 21 3" />
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    </svg>
+  );
+}
+
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { getGalleryScore } from "@/lib/galleryScore";
 import {
@@ -687,6 +697,19 @@ export default function MuseumPage() {
                       <div className="text-lg font-medium text-[color:var(--data-color)]">
                         {formatMoney(totalValue)}
                       </div>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          openGallery(gallery.id);
+                        }}
+                        className="absolute bottom-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-[7px] border transition hover:bg-[color:var(--theme-gold-subtle)]"
+                        style={{ borderColor: "var(--theme-gold-border, var(--theme-border))", color: "var(--theme-gold)" }}
+                        aria-label={`Open full exhibit page for ${gallery.title}`}
+                      >
+                        <ExternalOpenIcon />
+                      </button>
                     </div>
                   </article>
                 );
@@ -755,12 +778,23 @@ export default function MuseumPage() {
                       </div>
 
                       <div className="p-4">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h2 className="text-2xl font-semibold" style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)" }}>{g.title}</h2>
-                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: g.visibility === "PUBLIC" ? "var(--data-color)" : "var(--theme-gold)" }}>
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
-                            {visibilityLabel(g.visibility)}
-                          </span>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex min-w-0 flex-wrap items-center gap-2">
+                            <h2 className="text-2xl font-semibold" style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)" }}>{g.title}</h2>
+                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: g.visibility === "PUBLIC" ? "var(--data-color)" : "var(--theme-gold)" }}>
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                              {visibilityLabel(g.visibility)}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => openGallery(g.id)}
+                            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[7px] border transition hover:bg-[color:var(--theme-gold-subtle)]"
+                            style={{ borderColor: "var(--theme-gold-border, var(--theme-border))", color: "var(--theme-gold)" }}
+                            aria-label={`Open full exhibit page for ${g.title}`}
+                          >
+                            <ExternalOpenIcon />
+                          </button>
                         </div>
                         <div className="mt-1 text-xs text-[color:var(--muted)]">{g.itemIds.length} items · Updated {formatGalleryDate(g.updatedAt)}</div>
 
