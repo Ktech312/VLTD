@@ -572,7 +572,7 @@ export default function MuseumPage() {
               </div>
             </div>
           ) : (
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_440px] lg:items-start">
               <div className="min-w-0">
                 {headerBlock}
                 <div className={`mt-5 grid gap-4 ${viewMode === "list" ? "grid-cols-1" : "sm:grid-cols-2 xl:grid-cols-3"}`}>
