@@ -9,24 +9,28 @@ import { UNIVERSE_KEYS, UNIVERSE_LABEL, UNIVERSE_ICON } from "@/lib/taxonomy";
 import { clearOnboardingDraft, loadOnboardingDraft, saveOnboardingDraft } from "@/lib/onboardingDraft";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const AVATAR_EMOJIS = [
-  "🗝️","🏆","⚡","🔥","👑","🎯","🎲","🎴","🃏","🀄",
-  "🏅","🎖️","💎","🪙","🔮","🧿","🎪","🎭","🛡️","⚔️",
-  "🦁","🐉","🦊","🦅","🐺","🦋","🐙","🦈","🌟","💫",
+// Realistic preset avatars — the same illustrated set the app renders elsewhere
+// (TopNav resolves `__preset:<id>` → /avatars/presets/<id>.png). No more raw emoji.
+const AVATAR_PRESETS: { id: string; label: string }[] = [
+  { id: "key", label: "Vault Key" },
+  { id: "crown", label: "Crown Vault" },
+  { id: "vault", label: "Museum Vault" },
+  { id: "cards", label: "Card Vault" },
+  { id: "gem", label: "Blue Gem" },
+  { id: "orb", label: "Crystal Orb" },
+  { id: "dragon", label: "Jade Dragon" },
+  { id: "lion", label: "Lion Collector" },
+  { id: "fox", label: "Fox Collector" },
+  { id: "eagle", label: "Eagle Aviator" },
+  { id: "sword", label: "Crossed Swords" },
+  { id: "fire", label: "Fire Relic" },
+  { id: "guitar", label: "Guitar" },
+  { id: "vinyl", label: "Vinyl" },
+  { id: "harp", label: "Golden Harp" },
+  { id: "keysmith", label: "Keysmith" },
 ];
-
-const FOCUS_OPTIONS = [
-  { label: "Sports Cards", emoji: "⚾" },
-  { label: "TCG", emoji: "🃏" },
-  { label: "Comics", emoji: "📚" },
-  { label: "Toys", emoji: "🧸" },
-  { label: "Memorabilia", emoji: "🏆" },
-  { label: "Watches", emoji: "⌚" },
-  { label: "Coins", emoji: "🪙" },
-  { label: "Vinyl", emoji: "💿" },
-  { label: "Art", emoji: "🎨" },
-  { label: "Mixed", emoji: "📦" },
-];
+const AVATAR_PRESET_IDS = new Set(AVATAR_PRESETS.map((a) => a.id));
+const presetSrc = (id: string) => `/avatars/presets/${id}.png`;
 
 const VALUE_PROPS = [
   { icon: "🗄️", text: "Vault everything you own" },
@@ -50,10 +54,10 @@ function accountTypeCardClass(active: boolean) {
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-function StepIndicator({ step }: { step: number }) {
+function StepIndicator({ step, total }: { step: number; total: number }) {
   return (
-    <div className="mt-6 grid grid-cols-4 gap-2">
-      {[1, 2, 3, 4].map((n) => (
+    <div className="mt-6 grid gap-2" style={{ gridTemplateColumns: `repeat(${total}, minmax(0, 1fr))` }}>
+      {Array.from({ length: total }, (_, i) => i + 1).map((n) => (
         <div
           key={n}
           className={[
@@ -108,19 +112,34 @@ function GhostButton({
   );
 }
 
+function AvatarThumb({ id, size = 40 }: { id: string; size?: number }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={presetSrc(id)}
+      alt=""
+      width={size}
+      height={size}
+      className="h-full w-full rounded-full object-cover"
+      draggable={false}
+    />
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
+const TOTAL_STEPS = 3;
+
 export default function OnboardingPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
 
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [avatarEmoji, setAvatarEmoji] = useState("");
+  const [avatarPreset, setAvatarPreset] = useState("key");
   const [accountChoice, setAccountChoice] = useState<"personal" | "business" | "both">("personal");
-  const [primaryFocus, setPrimaryFocus] = useState("");
   const [focusedUniverses, setFocusedUniverses] = useState<string[]>([]);
 
   // Business fields (shown for Business or Both)
@@ -134,15 +153,15 @@ export default function OnboardingPage() {
   // the primary personal and adds a separate business profile.
   const profileType: "personal" | "business" = accountChoice === "business" ? "business" : "personal";
 
-  const resolvedAvatar = avatarEmoji || "🗝️";
-
   useEffect(() => {
     const draft = loadOnboardingDraft();
     setUsername(draft.username);
     setDisplayName(draft.display_name);
     setAccountChoice(draft.profile_type === "business" ? "business" : "personal");
-    setPrimaryFocus(draft.primary_focus);
-    setAvatarEmoji(draft.avatar_emoji);
+    // The draft stores the chosen avatar preset id in the avatar_emoji slot.
+    if (draft.avatar_emoji && AVATAR_PRESET_IDS.has(draft.avatar_emoji)) {
+      setAvatarPreset(draft.avatar_emoji);
+    }
 
     async function load() {
       const status = await getOnboardingStatus();
@@ -159,10 +178,10 @@ export default function OnboardingPage() {
       username,
       display_name: displayName,
       profile_type: profileType,
-      primary_focus: primaryFocus,
-      avatar_emoji: avatarEmoji,
+      primary_focus: "",
+      avatar_emoji: avatarPreset,
     });
-  }, [username, displayName, profileType, primaryFocus, avatarEmoji]);
+  }, [username, displayName, profileType, avatarPreset]);
 
   const canContinueIdentity = useMemo(
     () => displayName.trim().length >= 2 && slugifyUsername(username).length >= 3,
@@ -175,24 +194,34 @@ export default function OnboardingPage() {
     setError("");
     try {
       const isPrimaryBusiness = accountChoice === "business";
+      // Primary focus is derived from the first universe the user picked (if any).
+      const primaryFocus = focusedUniverses[0]
+        ? UNIVERSE_LABEL[focusedUniverses[0] as keyof typeof UNIVERSE_LABEL] ?? ""
+        : "";
       const profileData = await createProfile({
         username: slugifyUsername(username),
         display_name: displayName.trim(),
         profile_type: isPrimaryBusiness ? "business" : "personal",
-        primary_focus: primaryFocus.trim() || undefined,
-        avatar_emoji: resolvedAvatar,
+        primary_focus: primaryFocus || undefined,
+        avatar_url: `__preset:${avatarPreset}`,
         ...(isPrimaryBusiness
           ? { business_type: bizType, website: bizWebsite, tax_id: bizEin }
           : {}),
       });
-      // Save focused_universes if any were chosen
+
+      // Save focused_universes if any were chosen. This is best-effort: if the
+      // column isn't present yet it must NOT block onboarding from completing.
       if (focusedUniverses.length > 0 && profileData?.id) {
-        const supabase = getSupabaseBrowserClient();
-        if (supabase) {
-          await supabase
-            .from("profiles")
-            .update({ focused_universes: focusedUniverses })
-            .eq("id", profileData.id);
+        try {
+          const supabase = getSupabaseBrowserClient();
+          if (supabase) {
+            await supabase
+              .from("profiles")
+              .update({ focused_universes: focusedUniverses })
+              .eq("id", profileData.id);
+          }
+        } catch (universeErr) {
+          console.warn("Could not save focused universes (non-blocking):", universeErr);
         }
       }
 
@@ -202,7 +231,7 @@ export default function OnboardingPage() {
           username: slugifyUsername(bizUsername || `${username}-biz`),
           display_name: bizName.trim() || `${displayName.trim()} Business`,
           profile_type: "business",
-          avatar_emoji: "🏛️",
+          avatar_url: "__preset:vault",
           business_type: bizType,
           website: bizWebsite,
           tax_id: bizEin,
@@ -258,16 +287,14 @@ export default function OnboardingPage() {
               {step === 1 && "Your identity."}
               {step === 2 && "Account type."}
               {step === 3 && "What you collect."}
-              {step === 4 && "Your universes."}
             </h1>
             <p className="mt-2 text-sm text-[color:var(--muted)]">
               {step === 1 && "Pick an avatar, set your name. You can change all of this later."}
               {step === 2 && "This shapes your dashboard and visibility defaults."}
-              {step === 3 && "Helps us tune the registry and discovery for you."}
-              {step === 4 && "Pick the universes to focus your experience. Skip to show everything."}
+              {step === 3 && "Pick the universes to focus your experience. You can change this anytime."}
             </p>
 
-            <StepIndicator step={step} />
+            <StepIndicator step={step} total={TOTAL_STEPS} />
 
             {error && (
               <div className="mt-4 rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
@@ -278,23 +305,26 @@ export default function OnboardingPage() {
             {/* ── Step 1: Identity ── */}
             {step === 1 && (
               <div className="mt-6 space-y-5">
-                {/* Emoji picker */}
+                {/* Realistic avatar picker */}
                 <div>
                   <div className="mb-2 text-sm font-semibold text-text-primary">Avatar</div>
-                  <div className="flex flex-wrap gap-2">
-                    {AVATAR_EMOJIS.map((emoji) => (
+                  <div className="flex flex-wrap gap-2.5">
+                    {AVATAR_PRESETS.map(({ id, label }) => (
                       <button
-                        key={emoji}
+                        key={id}
                         type="button"
-                        onClick={() => setAvatarEmoji(emoji)}
+                        title={label}
+                        aria-label={label}
+                        aria-pressed={avatarPreset === id}
+                        onClick={() => setAvatarPreset(id)}
                         className={[
-                          "flex h-10 w-10 items-center justify-center rounded-full text-xl transition",
-                          resolvedAvatar === emoji
-                            ? "bg-[rgba(245,181,72,0.2)] ring-2 ring-[#F5B548] scale-110"
-                            : "bg-[color:var(--pill)] ring-1 ring-[color:var(--border)] hover:scale-110 hover:ring-[rgba(245,181,72,0.4)]",
+                          "flex h-12 w-12 items-center justify-center overflow-hidden rounded-full transition",
+                          avatarPreset === id
+                            ? "ring-2 ring-[#F5B548] scale-110"
+                            : "ring-1 ring-[color:var(--border)] opacity-85 hover:scale-105 hover:opacity-100 hover:ring-[rgba(245,181,72,0.5)]",
                         ].join(" ")}
                       >
-                        {emoji}
+                        <AvatarThumb id={id} />
                       </button>
                     ))}
                   </div>
@@ -398,7 +428,7 @@ export default function OnboardingPage() {
 
                 {/* Value props */}
                 <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(255,255,255,0.02)] p-4">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted2)] mb-3">What you're unlocking</div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted2)] mb-3">What you&apos;re unlocking</div>
                   <div className="grid grid-cols-2 gap-2">
                     {VALUE_PROPS.map(({ icon, text }) => (
                       <div key={text} className="flex items-start gap-2 text-sm text-[color:var(--muted)]">
@@ -416,59 +446,8 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            {/* ── Step 3: Focus + Confirm ── */}
+            {/* ── Step 3: Universes + Confirm + Launch ── */}
             {step === 3 && (
-              <div className="mt-6 space-y-5">
-                <div>
-                  <div className="text-sm font-semibold text-text-primary mb-3">Primary collection focus <span className="text-[color:var(--muted2)] font-normal">(optional)</span></div>
-                  <div className="flex flex-wrap gap-2">
-                    {FOCUS_OPTIONS.map(({ label, emoji }) => {
-                      const active = primaryFocus === label;
-                      return (
-                        <button
-                          key={label}
-                          type="button"
-                          onClick={() => setPrimaryFocus(active ? "" : label)}
-                          className={[
-                            "inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold transition ring-1",
-                            active
-                              ? "bg-[rgba(245,181,72,0.15)] ring-[rgba(245,181,72,0.55)] text-text-primary"
-                              : "bg-[color:var(--pill)] ring-[color:var(--border)] text-[color:var(--muted)] hover:ring-[rgba(245,181,72,0.35)] hover:text-text-primary",
-                          ].join(" ")}
-                        >
-                          <span>{emoji}</span>
-                          <span>{label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Confirm summary */}
-                <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4 space-y-2">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted2)] mb-1">Confirming</div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--pill)] text-xl ring-1 ring-[color:var(--border)]">
-                      {resolvedAvatar}
-                    </div>
-                    <div>
-                      <div className="font-semibold text-text-primary">{displayName.trim()}</div>
-                      <div className="text-xs text-[color:var(--muted2)]">@{slugifyUsername(username)} · {profileType === "business" ? "Business" : "Collector"}{primaryFocus ? ` · ${primaryFocus}` : ""}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <GoldButton onClick={() => setStep(4)}>Continue →</GoldButton>
-                  <GhostButton onClick={() => setStep(2)}>Back</GhostButton>
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-
-            {/* ── Step 4: Universe Focus ── */}
-            {step === 4 && (
               <div className="mt-6 space-y-5">
                 <div>
                   <div className="text-sm font-semibold text-text-primary mb-1">What universes do you collect in?</div>
@@ -517,14 +496,30 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
+                {/* Confirm summary */}
+                <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4 space-y-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted2)] mb-1">Confirming</div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full ring-1 ring-[color:var(--border)]">
+                      <AvatarThumb id={avatarPreset} />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-text-primary">{displayName.trim()}</div>
+                      <div className="text-xs text-[color:var(--muted2)]">@{slugifyUsername(username)} · {profileType === "business" ? "Business" : "Collector"}{focusedUniverses.length > 0 ? ` · ${focusedUniverses.length} ${focusedUniverses.length === 1 ? "universe" : "universes"}` : ""}</div>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex gap-3">
                   <GoldButton disabled={saving || !canContinueIdentity} onClick={() => void handleFinish()}>
                     {saving ? "Setting up…" : "Launch my vault →"}
                   </GoldButton>
-                  <GhostButton onClick={() => setStep(3)}>Back</GhostButton>
+                  <GhostButton onClick={() => setStep(2)}>Back</GhostButton>
                 </div>
               </div>
             )}
+          </div>
+        </section>
 
         {/* Fine print */}
         <p className="mt-5 text-center text-xs text-[color:var(--muted2)]">

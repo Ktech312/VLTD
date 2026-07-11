@@ -418,6 +418,7 @@ export async function createProfile(input: {
   profile_type: AuthProfileType;
   primary_focus?: string;
   avatar_emoji?: string;
+  avatar_url?: string;
   business_type?: string;
   website?: string;
   tax_id?: string;
@@ -437,6 +438,9 @@ export async function createProfile(input: {
     primary_focus: input.primary_focus?.trim() || null,
     avatar_emoji: input.avatar_emoji?.trim() || "🗝️",
   };
+  if (input.avatar_url?.trim()) {
+    payload.avatar_url = input.avatar_url.trim();
+  }
   if (input.profile_type === "business") {
     payload.business_type = input.business_type?.trim() || null;
     payload.website = input.website?.trim() || null;
