@@ -405,7 +405,7 @@ export default function MuseumPage() {
         <div className="flex flex-wrap items-center gap-2">
           <div className="inline-flex items-center rounded-[8px] border p-[3px]" style={{ borderColor: "var(--theme-border)", background: "rgba(3,9,11,0.72)", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.08)" }}>
             {(["grid", "list"] as const).map((mode) => (
-              <button key={mode} type="button" onClick={() => setViewMode(mode)} aria-label={`${mode} view`} className={`inline-flex h-7 w-8 items-center justify-center rounded-[6px] transition ${viewMode === mode ? "bg-gold/15 text-gold shadow-[inset_0_1px_0_rgba(255,241,168,0.12)]" : "text-[color:var(--muted2)]"}`}>
+              <button key={mode} type="button" onClick={() => setViewMode(mode)} aria-label={`${mode} view`} className={`inline-flex h-7 w-8 items-center justify-center rounded-[6px] transition ${viewMode === mode ? "bg-[#9f6f28]/25 text-[#E0C27A] shadow-[inset_0_1px_0_rgba(255,241,168,0.12)]" : "text-[color:var(--muted2)]"}`}>
                 {mode === "grid" ? (<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>) : (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>)}
               </button>
             ))}
@@ -413,12 +413,12 @@ export default function MuseumPage() {
           <select value={sortMode} onChange={(e) => setSortMode(e.target.value as ExhibitionSort)} className="h-9 rounded-[8px] border px-3 text-xs font-semibold outline-none" style={{ borderColor: "var(--theme-border)", background: "rgba(3,9,11,0.72)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.08)" }}>
             {EXHIBITION_SORTS.map((s) => (<option key={s.key} value={s.key}>{s.label}</option>))}
           </select>
-          <Link href="/museum/new" className="inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-[8px] px-4 text-xs font-black transition" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.38), 0 0 14px rgba(217,162,58,0.18)" }}>+ Create Exhibition</Link>
+          <Link href="/museum/new" className="inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-[8px] px-4 text-xs font-black transition" style={{ background: "linear-gradient(135deg, #9F6F28 0%, #D7A746 52%, #F1D178 100%)", color: "#0B0B0B", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.35), 0 0 12px rgba(189,137,45,0.18)" }}>+ Create Exhibition</Link>
         </div>
       </div>
       <div className="mt-5 flex flex-wrap gap-2">
         {EXHIBITION_FILTERS.map((f) => (
-          <button key={f.key} type="button" onClick={() => setFilter(f.key)} className={`inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 transition ${filter === f.key ? "bg-gold/15 text-gold ring-gold/35 shadow-[inset_0_1px_0_rgba(255,241,168,0.10)]" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]"}`}>{f.label}</button>
+          <button key={f.key} type="button" onClick={() => setFilter(f.key)} className={`inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 transition ${filter === f.key ? "bg-[#9f6f28]/25 text-[#E0C27A] ring-[#b88934]/45 shadow-[inset_0_1px_0_rgba(255,241,168,0.10)]" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]"}`}>{f.label}</button>
         ))}
       </div>
     </>
@@ -576,7 +576,7 @@ export default function MuseumPage() {
               <div className="min-w-0">
                 {headerBlock}
                 <div className={`mt-5 grid gap-4 ${viewMode === "list" ? "grid-cols-1" : "sm:grid-cols-2 xl:grid-cols-3"}`}>
-              {displayedGalleries.map(({ gallery, totalValue, views }) => {
+              {displayedGalleries.map(({ gallery, totalValue }) => {
                 const coverImage = resolveGalleryImage(gallery.coverImage);
 
                 return (
@@ -592,10 +592,10 @@ export default function MuseumPage() {
                     role="button"
                     tabIndex={0}
                     aria-label={`Show details for ${gallery.title}`}
-                    className={`group relative flex w-full cursor-pointer flex-col overflow-hidden rounded-[10px] border bg-[color:var(--theme-card)] shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.30)] ${selectedEntry?.gallery.id === gallery.id ? "border-[color:var(--theme-gold)] ring-1 ring-[color:var(--theme-gold)]" : "border-[color:var(--theme-border)]"}`}
+                    className={`group relative flex w-full cursor-pointer flex-col overflow-hidden rounded-[10px] border bg-[#020B0C] shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.30)] ${selectedEntry?.gallery.id === gallery.id ? "border-[#B88734] ring-1 ring-[#B88734]/60" : "border-[#6F542B]/55"}`}
                   >
-                    {/* Cover image — extends down behind the title/meta and fades into the card background toward the divider */}
-                    <div className="relative h-[176px] overflow-hidden bg-[color:var(--theme-elevated)]">
+                    {/* Cover image with a distinct value shelf below. */}
+                    <div className="relative h-[176px] overflow-hidden bg-[#03090A]">
                       {coverImage ? (
                         <ProgressiveImage
                           src={coverImage}
@@ -609,10 +609,8 @@ export default function MuseumPage() {
                           No cover
                         </div>
                       )}
-                      <div
-                        className="pointer-events-none absolute inset-0"
-                        style={{ background: "linear-gradient(to top, var(--theme-card) 3%, rgba(9,14,20,0.82) 22%, rgba(9,14,20,0.32) 46%, transparent 68%)" }}
-                      />
+                      <div className="pointer-events-none absolute inset-0 bg-black/10" />
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[56%] bg-gradient-to-t from-[#020B0C]/92 via-[#020B0C]/50 to-transparent" />
 
                       {/* Hover controls: change cover / delete */}
                       <div className="absolute right-2 top-2 z-20 flex items-center gap-1.5 opacity-0 transition group-hover:opacity-100">
@@ -657,11 +655,11 @@ export default function MuseumPage() {
                     </div>
 
                     {/* Divider + Total Value on the solid card background */}
-                    <div className="border-t p-2.5" style={{ borderColor: "var(--theme-border)" }}>
-                      <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">
+                    <div className="border-t bg-[#021011] p-2.5" style={{ borderColor: "rgba(184,135,52,0.26)" }}>
+                      <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#9E8D68]">
                         Total Value
                       </div>
-                      <div className="text-lg font-medium" style={{ color: "var(--data-color, #52d6f4)" }}>
+                      <div className="text-lg font-medium text-[#35C3D8]">
                         {formatMoney(totalValue)}
                       </div>
                     </div>
@@ -734,7 +732,7 @@ export default function MuseumPage() {
                       <div className="p-4">
                         <div className="flex flex-wrap items-center gap-2">
                           <h2 className="text-lg font-black">{g.title}</h2>
-                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: g.visibility === "PUBLIC" ? "var(--data-color, #52d6f4)" : "var(--theme-gold)" }}>
+                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: g.visibility === "PUBLIC" ? "#35C3D8" : "#E0C27A" }}>
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
                             {visibilityLabel(g.visibility)}
                           </span>
