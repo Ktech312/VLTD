@@ -340,6 +340,8 @@ export default function PublicHomeClient() {
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "loading" | "success" | "already" | "error">("idle");
   const [waitlistMessage, setWaitlistMessage] = useState("");
+  const [showConsent, setShowConsent] = useState(false);
+  const [consentAgreed, setConsentAgreed] = useState(false);
 
   // Redirect logged-in users to dashboard
   useEffect(() => {
@@ -378,15 +380,28 @@ export default function PublicHomeClient() {
     return live.length ? live : FALLBACK_GALLERIES;
   }, [galleries]);
 
-  async function handleWaitlistSubmit(e: React.FormEvent) {
+  // Opening the form submit no longer sends immediately — it gates the request
+  // behind the beta consent agreement (checkbox required before we submit).
+  function handleWaitlistSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!waitlistEmail || waitlistStatus === "loading") return;
+    setConsentAgreed(false);
+    setShowConsent(true);
+  }
+
+  async function submitWaitlist() {
+    if (!waitlistEmail || !consentAgreed || waitlistStatus === "loading") return;
+    setShowConsent(false);
     setWaitlistStatus("loading");
     try {
       const res = await fetch("/api/waitlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: waitlistEmail, source: "landing" }),
+        body: JSON.stringify({
+          email: waitlistEmail,
+          source: "landing",
+          consented_at: new Date().toISOString(),
+        }),
       });
       const data = await res.json();
       if (data.already) {
@@ -553,6 +568,72 @@ export default function PublicHomeClient() {
           <p className="mt-3 text-xs" style={{ color: 'var(--muted2)' }}>No spam. Invite-only slots are limited.</p>
         </div>
       </section>
+
+      {/* ── Beta consent gate ─────────────────────────────────────── */}
+      {showConsent && (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center px-4"
+          style={{ background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(4px)' }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Beta access agreement"
+        >
+          <div
+            className="w-full max-w-md rounded-[26px] p-6 sm:p-7"
+            style={{
+              background: 'var(--theme-elevated, rgba(12,18,30,0.98))',
+              border: '1px solid var(--theme-gold-border, rgba(245,181,72,0.28))',
+              boxShadow: '0 28px 90px rgba(0,0,0,0.5)',
+            }}
+          >
+            <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: '#F5B548', borderColor: 'rgba(245,181,72,0.32)', background: 'rgba(245,181,72,0.07)' }}>
+              🔐 Beta Access
+            </div>
+            <h3 className="mt-4 text-xl font-black tracking-[-0.02em] text-text-primary">VLTD Beta Access</h3>
+            <p className="mt-3 text-sm leading-6" style={{ color: 'var(--muted)' }}>
+              VLTD is currently in private beta. This is pre-release software offered for evaluation, and you may
+              occasionally encounter bugs or features that change as we improve the experience. Your feedback directly
+              shapes the product.
+            </p>
+            <p className="mt-3 text-sm leading-6" style={{ color: 'var(--muted)' }}>
+              By requesting access, you acknowledge that the app is provided &quot;as is&quot; during beta, that VLTD is not
+              liable for interruptions or data loss while in testing, and you agree to be contacted regarding your
+              invitation and for product feedback.
+            </p>
+
+            <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl border p-3.5" style={{ borderColor: 'var(--border)', background: 'rgba(255,255,255,0.02)' }}>
+              <input
+                type="checkbox"
+                checked={consentAgreed}
+                onChange={(e) => setConsentAgreed(e.target.checked)}
+                className="mt-0.5 h-5 w-5 shrink-0 accent-[#F5B548]"
+              />
+              <span className="text-sm font-semibold text-text-primary">
+                I have read and agree to the Beta Testing Terms.
+              </span>
+            </label>
+
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row-reverse">
+              <button
+                type="button"
+                disabled={!consentAgreed}
+                onClick={() => void submitWaitlist()}
+                className="vltd-primary-button h-12 flex-1 rounded-full px-6 text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                Agree &amp; request access →
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowConsent(false)}
+                className="h-12 rounded-full border px-6 text-sm font-semibold transition"
+                style={{ borderColor: 'var(--border)', background: 'var(--pill)', color: 'var(--muted)' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <section className="border-b" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
         <div className="mx-auto grid max-w-7xl divide-y divide-[color:var(--border)] px-4 sm:px-6 sm:grid-cols-2 sm:divide-x sm:divide-y-0 md:grid-cols-3 lg:grid-cols-6 lg:divide-x lg:divide-y-0 lg:px-8">
