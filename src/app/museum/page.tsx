@@ -642,7 +642,7 @@ export default function MuseumPage() {
                     </div>
 
                     {/* Info */}
-                    <div className="flex flex-col gap-0.5 p-2.5">
+                    <div className="flex min-h-[128px] flex-col gap-0.5 p-2.5">
                       <h2 className="line-clamp-1 text-[14px] font-black tracking-[-0.015em]">
                         {gallery.title}
                       </h2>
@@ -651,7 +651,7 @@ export default function MuseumPage() {
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="opacity-80"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
                         {visibilityLabel(gallery.visibility)}
                       </div>
-                      <div className="mt-1">
+                      <div className="mt-auto">
                         <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">
                           Total Value
                         </div>
