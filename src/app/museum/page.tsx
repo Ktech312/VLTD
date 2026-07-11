@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type ChangeEvent, type MouseEvent, type PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 function IconLayoutTemplate({ size = 24, style }: { size?: number; style?: Record<string, string | number> }) {
   return (
@@ -170,6 +170,7 @@ export default function MuseumPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const coverInputRef = useRef<HTMLInputElement | null>(null);
+  const selectedItemsDragRef = useRef({ active: false, dragged: false, startX: 0, scrollLeft: 0 });
   const [filter, setFilter] = useState<ExhibitionFilter>("ACTIVE");
   const [sortMode, setSortMode] = useState<ExhibitionSort>("updated");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -179,6 +180,41 @@ export default function MuseumPage() {
   function refresh() {
     setGalleries(loadGalleries());
     setItems(loadItems());
+  }
+
+  function handleSelectedItemsPointerDown(event: PointerEvent<HTMLDivElement>) {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+
+    const drag = selectedItemsDragRef.current;
+    drag.active = true;
+    drag.dragged = false;
+    drag.startX = event.clientX;
+    drag.scrollLeft = event.currentTarget.scrollLeft;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function handleSelectedItemsPointerMove(event: PointerEvent<HTMLDivElement>) {
+    const drag = selectedItemsDragRef.current;
+    if (!drag.active) return;
+
+    const delta = event.clientX - drag.startX;
+    if (Math.abs(delta) > 4) drag.dragged = true;
+    event.currentTarget.scrollLeft = drag.scrollLeft - delta;
+    if (drag.dragged) event.preventDefault();
+  }
+
+  function handleSelectedItemsPointerEnd(event: PointerEvent<HTMLDivElement>) {
+    selectedItemsDragRef.current.active = false;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }
+
+  function handleSelectedItemsClickCapture(event: MouseEvent<HTMLDivElement>) {
+    if (!selectedItemsDragRef.current.dragged) return;
+    event.preventDefault();
+    event.stopPropagation();
+    selectedItemsDragRef.current.dragged = false;
   }
 
   useEffect(() => {
@@ -811,13 +847,23 @@ export default function MuseumPage() {
                               <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Selected items ({panelItems.length})</div>
                               <button type="button" onClick={() => openGallery(g.id)} className="inline-flex items-center gap-0.5 text-[11px] font-semibold" style={{ color: "var(--theme-gold)" }}>View all ›</button>
                             </div>
-                            <div className="mt-2 flex gap-2.5">
-                              {panelItems.slice(0, 5).map((it) => {
+                            <div
+                              className="mt-2 flex cursor-grab touch-pan-x gap-2.5 overflow-x-auto overscroll-x-contain pb-1 active:cursor-grabbing"
+                              onPointerDown={handleSelectedItemsPointerDown}
+                              onPointerMove={handleSelectedItemsPointerMove}
+                              onPointerUp={handleSelectedItemsPointerEnd}
+                              onPointerCancel={handleSelectedItemsPointerEnd}
+                              onClickCapture={handleSelectedItemsClickCapture}
+                            >
+                              {panelItems.map((it) => {
                                 const img = getPrimaryImageUrl(it);
                                 return (
-                                  <div
+                                  <Link
                                     key={it.id}
-                                    className="h-[68px] w-[50px] overflow-hidden rounded-[6px] border bg-[color:var(--theme-elevated)] p-[2px]"
+                                    href={`/vault/item/${encodeURIComponent(it.id)}`}
+                                    aria-label={`Open ${it.title}`}
+                                    draggable={false}
+                                    className="block h-[68px] w-[50px] shrink-0 overflow-hidden rounded-[6px] border bg-[color:var(--theme-elevated)] p-[2px]"
                                     style={{
                                       borderColor: "var(--theme-gold-border, var(--theme-border))",
                                       boxShadow: "inset 0 1px 0 rgba(255,241,168,0.16), inset 0 -10px 18px rgba(0,0,0,0.38), 0 7px 16px rgba(0,0,0,0.34)",
@@ -825,24 +871,11 @@ export default function MuseumPage() {
                                   >
                                     {img ? (
                                       // eslint-disable-next-line @next/next/no-img-element
-                                      <img src={img} alt={it.title} className="h-full w-full rounded-[4px] object-cover shadow-[inset_0_0_0_1px_rgba(255,255,255,0.10)]" />
+                                      <img src={img} alt={it.title} draggable={false} className="h-full w-full select-none rounded-[4px] object-cover shadow-[inset_0_0_0_1px_rgba(255,255,255,0.10)]" />
                                     ) : null}
-                                  </div>
+                                  </Link>
                                 );
                               })}
-                              {panelItems.length > 5 ? (
-                                <div
-                                  className="flex h-[68px] w-[50px] items-center justify-center rounded-[6px] border text-xs font-semibold"
-                                  style={{
-                                    borderColor: "var(--theme-gold-border, var(--theme-border))",
-                                    background: "linear-gradient(180deg, rgba(6,12,20,0.94), rgba(2,6,10,0.96))",
-                                    color: "var(--theme-gold)",
-                                    boxShadow: "inset 0 1px 0 rgba(255,241,168,0.14), inset 0 -10px 18px rgba(0,0,0,0.38), 0 7px 16px rgba(0,0,0,0.34)",
-                                  }}
-                                >
-                                  +{panelItems.length - 5}
-                                </div>
-                              ) : null}
                             </div>
                           </div>
                         ) : null}
