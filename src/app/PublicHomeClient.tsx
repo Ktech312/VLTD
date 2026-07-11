@@ -525,7 +525,7 @@ export default function PublicHomeClient() {
       </section>
 
       {/* ── Beta invite / early access ────────────────────────── */}
-      <section className="border-b" style={{ borderColor: 'var(--border)', background: 'linear-gradient(135deg, rgba(245,181,72,0.06) 0%, var(--bg) 60%)' }}>
+      <section id="early-access" className="scroll-mt-24 border-b" style={{ borderColor: 'var(--border)', background: 'linear-gradient(135deg, rgba(245,181,72,0.06) 0%, var(--bg) 60%)' }}>
         <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(245,181,72,0.32)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] mb-4" style={{ color: '#F5B548', background: 'rgba(245,181,72,0.07)' }}>
             🔐 Beta Access
