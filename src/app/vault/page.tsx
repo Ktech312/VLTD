@@ -803,6 +803,7 @@ export default function VaultPage() {
   const [universeFilter, setUniverseFilter] = useState<UniverseFilter>("ALL");
   const [readinessFilter, setReadinessFilter] = useState<ReadinessFilter>("all");
   const [gradedOnly, setGradedOnly] = useState(false);
+  const [uncategorizedOnly, setUncategorizedOnly] = useState(false);
   const [sortMode, setSortMode] = useState<SortMode>("newest");
   const [showSoldItems, setShowSoldItems] = useState(false);
   const [sales, setSales] = useState<SaleInfo[]>([]);
@@ -812,6 +813,7 @@ export default function VaultPage() {
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
   const [shareMessage, setShareMessage] = useState("");
   const [wallMode, setWallMode] = useState(false);
+  const [vaultViewMode, setVaultViewMode] = useState<"gallery" | "shelf" | "flip">("shelf");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
 
   function refresh() {
@@ -903,6 +905,12 @@ export default function VaultPage() {
       if (!showSoldItems && isSold) return false;
       if (universeFilter !== "ALL" && universeForItem(item) !== universeFilter) return false;
       if (gradedOnly && !item.grade) return false;
+      if (
+        uncategorizedOnly &&
+        (item.categoryLabel || item.customCategoryLabel || item.category || item.subcategoryLabel || item.universe)
+      ) {
+        return false;
+      }
       const intelligence = intelligenceMap[item.id];
       const readiness = (intelligence?.readiness ?? "Low").toLowerCase();
       if (readinessFilter !== "all" && readiness !== readinessFilter) return false;
@@ -944,7 +952,7 @@ export default function VaultPage() {
     });
 
     return next;
-  }, [items, query, universeFilter, gradedOnly, sortMode, readinessFilter, intelligenceMap, sales, showSoldItems]);
+  }, [items, query, universeFilter, gradedOnly, uncategorizedOnly, sortMode, readinessFilter, intelligenceMap, sales, showSoldItems]);
 
   const saleMap = useMemo(
     () => Object.fromEntries(sales.map((sale) => [String(sale.id), sale])),
@@ -1027,6 +1035,7 @@ export default function VaultPage() {
     universeFilter !== "ALL" ||
     readinessFilter !== "all" ||
     gradedOnly ||
+    uncategorizedOnly ||
     showSoldItems ||
     sortMode !== "newest";
 
@@ -1144,6 +1153,7 @@ export default function VaultPage() {
     setUniverseFilter("ALL");
     setReadinessFilter("all");
     setGradedOnly(false);
+    setUncategorizedOnly(false);
     setSortMode("newest");
   }
 
@@ -1290,51 +1300,116 @@ export default function VaultPage() {
             </div>
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={selectVisibleItems}
-              className="rounded-[7px] bg-[color:var(--pill)] px-3 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
-            >
-              Select visible
-            </button>
-            {selectedIds.size > 0 ? (
-              <>
-                <span className="rounded-[7px] bg-[color:var(--theme-card)] px-3 py-2 text-sm font-semibold ring-1 ring-[color:var(--theme-border)]">
-                  {selectedIds.size} selected
-                </span>
-                <select
-                  defaultValue=""
-                  onChange={(event) => {
-                    void handleBulkMoveSelected(event.target.value as UniverseKey | "");
-                    event.currentTarget.value = "";
-                  }}
-                  className="h-[38px] rounded-[7px] border bg-[color:var(--theme-card)] px-3 text-sm font-semibold outline-none"
-                  style={{ borderColor: "var(--theme-border)" }}
-                >
-                  <option value="">Move to...</option>
-                  {VAULT_UNIVERSES.map((category) => (
-                    <option key={category.key} value={category.key}>
-                      {UNIVERSE_LABEL[category.key] ?? category.key}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => void handleBulkDeleteSelected()}
-                  className="rounded-[7px] bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-200 ring-1 ring-red-400/35"
-                >
-                  Delete selected
-                </button>
-                <button
-                  type="button"
-                  onClick={clearSelectedItems}
-                  className="rounded-[7px] bg-[color:var(--pill)] px-3 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
-                >
-                  Clear
-                </button>
-              </>
-            ) : null}
+          <div className="mt-3 rounded-[14px] border p-3" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search..."
+                className="h-10 w-[160px] rounded-[10px] border bg-[color:var(--theme-elevated)] px-4 text-sm outline-none placeholder:text-[color:var(--muted2)]"
+                style={{ borderColor: "var(--theme-border)" }}
+              />
+              <select
+                value={sortMode}
+                onChange={(event) => setSortMode(event.target.value as SortMode)}
+                className="h-10 rounded-[10px] border bg-[color:var(--theme-elevated)] px-3 text-sm font-semibold outline-none"
+                style={{ borderColor: "var(--theme-border)" }}
+              >
+                <option value="newest">Newest</option>
+                <option value="value_desc">Value high-low</option>
+                <option value="value_asc">Value low-high</option>
+                <option value="gain_desc">Gain high-low</option>
+                <option value="gain_asc">Gain low-high</option>
+                <option value="title">Title</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => setGradedOnly((value) => !value)}
+                className="inline-flex h-10 items-center gap-1.5 rounded-[10px] px-2.5 text-sm font-semibold"
+              >
+                <span className={["h-3.5 w-3.5 rounded-full border", gradedOnly ? "bg-[color:var(--theme-gold)]" : "bg-transparent"].join(" ")} style={{ borderColor: "var(--theme-border)" }} />
+                Graded
+              </button>
+              <button
+                type="button"
+                onClick={() => setUncategorizedOnly((value) => !value)}
+                className="inline-flex h-10 items-center gap-1.5 rounded-[10px] px-2.5 text-sm font-semibold"
+              >
+                <span className={["h-3.5 w-3.5 rounded-full border", uncategorizedOnly ? "bg-[color:var(--theme-gold)]" : "bg-transparent"].join(" ")} style={{ borderColor: "var(--theme-border)" }} />
+                Uncategorized
+              </button>
+              <div className="inline-flex h-10 items-center rounded-full bg-[color:var(--pill)] p-1 ring-1 ring-[color:var(--border)]">
+                <span className="px-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">View</span>
+                {(["gallery", "shelf", "flip"] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setVaultViewMode(mode)}
+                    className={["h-8 rounded-full px-3 text-xs font-semibold capitalize", vaultViewMode === mode ? "bg-[color:var(--theme-gold-subtle)] text-[color:var(--theme-gold)]" : "text-[color:var(--muted)]"].join(" ")}
+                  >
+                    {mode}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowSoldItems((value) => !value)}
+                className={["h-10 rounded-[10px] px-3 text-sm font-semibold ring-1", showSoldItems ? "bg-gold/20 text-gold ring-gold/40" : "bg-[color:var(--pill)] ring-[color:var(--border)]"].join(" ")}
+              >
+                Show Sold Items ({soldCount})
+              </button>
+              <button
+                type="button"
+                onClick={selectVisibleItems}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[color:var(--pill)] text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)]"
+                aria-label="Select all visible items"
+                title="Select all visible"
+              >
+                <svg viewBox="0 0 20 20" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                  <rect x="3" y="3" width="5" height="5" rx="1.2" />
+                  <rect x="12" y="3" width="5" height="5" rx="1.2" />
+                  <rect x="3" y="12" width="5" height="5" rx="1.2" />
+                  <rect x="12" y="12" width="5" height="5" rx="1.2" />
+                </svg>
+              </button>
+              {selectedIds.size > 0 ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => void handleBulkDeleteSelected()}
+                    className="h-10 rounded-[10px] bg-red-600 px-3 text-sm font-semibold text-white"
+                  >
+                    Delete {selectedIds.size}
+                  </button>
+                  <select
+                    defaultValue=""
+                    onChange={(event) => {
+                      void handleBulkMoveSelected(event.target.value as UniverseKey | "");
+                      event.currentTarget.value = "";
+                    }}
+                    className="h-10 min-w-[180px] rounded-[10px] border bg-[color:var(--theme-elevated)] px-3 text-sm font-semibold outline-none"
+                    style={{ borderColor: "var(--theme-border)" }}
+                  >
+                    <option value="">Move {selectedIds.size} to...</option>
+                    {VAULT_UNIVERSES.map((category) => (
+                      <option key={category.key} value={category.key}>
+                        {UNIVERSE_LABEL[category.key] ?? category.key}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={clearSelectedItems}
+                    className="h-10 rounded-[10px] bg-[color:var(--pill)] px-3 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : null}
+            </div>
           </div>
         </section>
 
