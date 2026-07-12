@@ -38,6 +38,7 @@ const FOCUS_LS_KEY = "vltd_primary_focus";
 type SortMode = "newest" | "value_desc" | "value_asc" | "gain_desc" | "gain_asc" | "title";
 type ReadinessFilter = "all" | "high" | "moderate" | "low";
 type UniverseFilter = "ALL" | UniverseKey;
+type VaultViewMode = "wall" | "gallery" | "shelf" | "flip";
 type InlineField = "" | "value" | "cost";
 type SaleInfo = {
   id: string;
@@ -506,12 +507,14 @@ function VaultCard({
   sale,
   onSaveItem,
   onDeleteItem,
+  displayMode = "gallery",
 }: {
   item: VaultItem;
   readiness: string;
   sale: SaleInfo | null;
   onSaveItem: (item: VaultItem) => Promise<void>;
   onDeleteItem: (item: VaultItem) => Promise<void>;
+  displayMode?: Exclude<VaultViewMode, "wall">;
 }) {
   const image = useResolvedVaultImage(item);
   const isSold = Boolean(sale);
@@ -559,7 +562,8 @@ function VaultCard({
   return (
     <div
       className={[
-        "group relative flex min-h-[324px] flex-col overflow-hidden rounded-[10px] border border-[color:var(--theme-border)] p-3 shadow-[0_16px_38px_rgba(0,0,0,0.26)] ring-1 ring-gold/10 transition hover:-translate-y-0.5 hover:border-[color:var(--theme-gold-border)]",
+        "group relative flex flex-col overflow-hidden rounded-[10px] border border-[color:var(--theme-border)] p-3 shadow-[0_16px_38px_rgba(0,0,0,0.26)] ring-1 ring-gold/10 transition hover:-translate-y-0.5 hover:border-[color:var(--theme-gold-border)]",
+        displayMode === "shelf" ? "min-h-[264px]" : displayMode === "flip" ? "min-h-[340px] hover:[transform:rotateY(2deg)_translateY(-2px)]" : "min-h-[324px]",
         marketValue > 0 ? "border-l-2 border-l-emerald-400/55" : "border-l border-l-white/8",
       ].join(" ")}
       style={{ background: "var(--theme-card, rgba(15,25,45,0.85))" }}
@@ -587,7 +591,7 @@ function VaultCard({
         </button>
       </div>
 
-      <div className="relative h-[190px] overflow-hidden rounded-[8px] bg-black/24">
+      <div className={["relative overflow-hidden rounded-[8px] bg-black/24", displayMode === "shelf" ? "h-[138px]" : displayMode === "flip" ? "h-[212px]" : "h-[190px]"].join(" ")}>
         <Link href={detailHref} className="block h-full">
           {image ? (
             <ProgressiveImage
@@ -879,8 +883,7 @@ export default function VaultPage() {
   const [isMigrating, setIsMigrating] = useState(false);
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
   const [shareMessage, setShareMessage] = useState("");
-  const [wallMode, setWallMode] = useState(false);
-  const [vaultViewMode, setVaultViewMode] = useState<"gallery" | "shelf" | "flip">("shelf");
+  const [vaultViewMode, setVaultViewMode] = useState<VaultViewMode>("shelf");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [selectMode, setSelectMode] = useState(false);
   const [moveTargetUniverse, setMoveTargetUniverse] = useState<string>("");
@@ -1292,24 +1295,6 @@ export default function VaultPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setWallMode((v) => !v)}
-                className={[
-                  "inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-[7px] px-3.5 py-2 text-sm font-semibold ring-1 transition",
-                  wallMode ? "bg-gold/20 text-gold ring-gold/40" : "bg-[color:var(--pill)] ring-[color:var(--border)]",
-                ].join(" ")}
-              >
-                <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
-                  <rect x="0" y="0" width="4" height="6" rx="0.8"/>
-                  <rect x="5" y="0" width="4" height="6" rx="0.8"/>
-                  <rect x="10" y="0" width="6" height="6" rx="0.8"/>
-                  <rect x="0" y="7" width="6" height="9" rx="0.8"/>
-                  <rect x="7" y="7" width="4" height="9" rx="0.8"/>
-                  <rect x="12" y="7" width="4" height="9" rx="0.8"/>
-                </svg>
-                Wall
-              </button>
               <button type="button" onClick={() => void handleShareVault()} className="inline-flex min-h-[38px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3.5 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">
                 {shareMessage || "Share vault"}
               </button>
@@ -1435,12 +1420,13 @@ export default function VaultPage() {
                 Uncategorized
               </button>
               {filteredItems.length > 0 ? (
-                <div className="flex flex-wrap items-center gap-2 rounded-full bg-[color:var(--input)] px-2 py-1 ring-1 ring-[color:var(--border)]">
+                <div className="flex flex-wrap items-center gap-2 rounded-[8px] bg-[color:var(--input)] px-2 py-1 ring-1 ring-[color:var(--border)]">
                   <span className="px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">
                     View
                   </span>
                   {(
                     [
+                      ["wall", "Wall"],
                       ["gallery", "Gallery"],
                       ["shelf", "Shelf"],
                       ["flip", "Flip"],
@@ -1450,7 +1436,7 @@ export default function VaultPage() {
                       key={mode}
                       type="button"
                       onClick={() => setVaultViewMode(mode)}
-                      className="min-h-[30px] rounded-full px-3 py-1 text-[12px] font-semibold transition"
+                      className="min-h-[30px] rounded-[7px] px-3 py-1 text-[12px] font-semibold transition"
                       style={vaultViewMode === mode
                         ? { background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))", color: "var(--theme-gold, #F5B548)" }
                         : { background: "transparent", color: "var(--muted)" }}
@@ -1588,13 +1574,22 @@ export default function VaultPage() {
 
         {items.length === 0 ? (
           <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} />
-        ) : wallMode ? (
+        ) : vaultViewMode === "wall" ? (
           <VaultWallView items={items} saleMap={saleMap} />
         ) : filteredItems.length === 0 ? (
           <VaultEmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearFilters} />
         ) : (
           <section className="mt-4">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            <div
+              className={[
+                "grid",
+                vaultViewMode === "shelf"
+                  ? "gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+                  : vaultViewMode === "flip"
+                    ? "gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                    : "gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5",
+              ].join(" ")}
+            >
               {filteredItems.map((item) => {
                 const isSelected = selectedIds.has(item.id);
                 return (
@@ -1624,6 +1619,7 @@ export default function VaultPage() {
                       sale={saleInfoForItem(item, saleMap)}
                       onSaveItem={handleSaveItem}
                       onDeleteItem={handleDeleteItem}
+                      displayMode={vaultViewMode}
                     />
                   </div>
                 );

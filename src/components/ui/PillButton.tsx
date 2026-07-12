@@ -25,7 +25,7 @@ export function PillButton({
     "inline-flex items-center justify-center",
     "h-11 sm:h-10",
     "px-4",
-    "rounded-full",
+    "rounded-[8px]",
     "text-sm font-medium",
     "whitespace-nowrap",
     "ring-1 transition select-none vltd-selectable",
