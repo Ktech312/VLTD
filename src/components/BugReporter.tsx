@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { getCurrentUser, initAuthListener, onAuthStateChange } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -9,12 +10,17 @@ type SubmitState = "idle" | "sending" | "done" | "error";
 
 export default function BugReporter() {
   const [signedIn, setSignedIn] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [state, setState] = useState<SubmitState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const fileRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     initAuthListener();
@@ -86,9 +92,9 @@ export default function BugReporter() {
     }
   }
 
-  if (!signedIn) return null;
+  if (!signedIn || !mounted) return null;
 
-  return (
+  return createPortal(
     <>
       {/* Floating trigger */}
       <button
@@ -188,6 +194,7 @@ export default function BugReporter() {
           </div>
         </div>
       )}
-    </>
+    </>,
+    document.body
   );
 }
