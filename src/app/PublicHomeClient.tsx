@@ -538,7 +538,12 @@ export default function PublicHomeClient() {
           </p>
           {waitlistStatus === "success" || waitlistStatus === "already" ? (
             <div className="mt-6 rounded-2xl border border-[rgba(74,222,128,0.3)] bg-[rgba(74,222,128,0.06)] px-6 py-5 text-center">
-              <div className="text-2xl mb-2">{waitlistStatus === "already" ? "👋" : "✅"}</div>
+              <div className="mb-2 flex justify-center">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M8 12.5l2.5 2.5 5-6" />
+                </svg>
+              </div>
               <p className="text-sm font-semibold" style={{ color: '#4ade80' }}>{waitlistMessage}</p>
             </div>
           ) : (

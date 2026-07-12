@@ -926,6 +926,26 @@ function TopNavInner() {
                     </span>
                   </Link>
                 )}
+                {adminRole && (
+                  <Link href="/admin/waitlist" onClick={() => setUserOpen(false)}
+                    className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition hover:bg-[rgba(245,181,72,0.08)]"
+                    style={{ color: "#F5B548" }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.9 }}>
+                      <path d="M4 4h16v16H4zM4 9h16M9 4v5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    Beta Waitlist
+                  </Link>
+                )}
+                {adminRole && (
+                  <Link href="/admin/bugs" onClick={() => setUserOpen(false)}
+                    className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition hover:bg-[rgba(245,181,72,0.08)]"
+                    style={{ color: "#F5B548" }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.9 }}>
+                      <path d="M12 20a6 6 0 0 0 6-6v-2a6 6 0 0 0-12 0v2a6 6 0 0 0 6 6zM12 8V6M5 11H3M5 15l-2 1M19 11h2M19 15l2 1" />
+                    </svg>
+                    Bug Reports
+                  </Link>
+                )}
               </>
             ) : (
               <>

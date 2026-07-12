@@ -1812,8 +1812,9 @@ export default function AdminCharactersPage() {
   });
 
   function selectSection(section: AdminSection) {
-    setActiveSection(section);
-    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] || section !== activeSection ? true : prev[section] }));
+    const willOpen = !openSections[section];
+    setOpenSections((prev) => ({ ...prev, [section]: willOpen }));
+    if (willOpen) setActiveSection(section);
   }
 
   async function checkAuth() {

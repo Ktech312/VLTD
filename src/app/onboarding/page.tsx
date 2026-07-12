@@ -33,11 +33,26 @@ const AVATAR_PRESET_IDS = new Set(AVATAR_PRESETS.map((a) => a.id));
 const presetSrc = (id: string) => `/avatars/presets/${id}.png`;
 
 const VALUE_PROPS = [
-  { icon: "🗄️", text: "Vault everything you own" },
-  { icon: "📊", text: "Track grades & market value" },
-  { icon: "🏆", text: "Rank on the global registry" },
-  { icon: "🖼️", text: "Share beautiful public galleries" },
+  { icon: "vault", text: "Vault everything you own" },
+  { icon: "chart", text: "Track grades & market value" },
+  { icon: "trophy", text: "Rank on the global registry" },
+  { icon: "image", text: "Share beautiful public galleries" },
 ];
+
+// Clean line icons (no emoji). name → SVG path set.
+function UiIcon({ name, size = 18 }: { name: string; size?: number }) {
+  const p = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
+  switch (name) {
+    case "person": return <svg {...p}><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" /></svg>;
+    case "store": return <svg {...p}><path d="M3 9l1.5-5h15L21 9M4 9h16v11H4zM9 20v-6h6v6" /></svg>;
+    case "key": return <svg {...p}><circle cx="8" cy="8" r="4" /><path d="M11 11l9 9M17 17l2-2M14 14l2-2" /></svg>;
+    case "vault": return <svg {...p}><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="12" cy="12" r="3" /><path d="M12 4v3M12 17v3" /></svg>;
+    case "chart": return <svg {...p}><path d="M4 20V10M10 20V4M16 20v-7M2 20h20" /></svg>;
+    case "trophy": return <svg {...p}><path d="M8 21h8M12 17v4M6 4h12v4a6 6 0 0 1-12 0zM6 5H3v2a3 3 0 0 0 3 3M18 5h3v2a3 3 0 0 1-3 3" /></svg>;
+    case "image": return <svg {...p}><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="1.6" /><path d="M21 15l-5-5L5 21" /></svg>;
+    default: return null;
+  }
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function slugifyUsername(value: string) {
@@ -370,13 +385,13 @@ export default function OnboardingPage() {
               <div className="mt-6 space-y-5">
                 <div className="grid gap-3 sm:grid-cols-3">
                   {([
-                    { key: "personal", icon: "🧑", title: "Collector", desc: "Personal vault, portfolio, and galleries." },
-                    { key: "business", icon: "🏪", title: "Business", desc: "Shop, resale inventory, or team workflow." },
-                    { key: "both", icon: "🔑", title: "Both", desc: "A personal vault plus a separate business." },
+                    { key: "personal", icon: "person", title: "Collector", desc: "Personal vault, portfolio, and galleries." },
+                    { key: "business", icon: "store", title: "Business", desc: "Shop, resale inventory, or team workflow." },
+                    { key: "both", icon: "key", title: "Both", desc: "A personal vault plus a separate business." },
                   ] as const).map(({ key, icon, title, desc }) => (
                     <button key={key} type="button" onClick={() => setAccountChoice(key)} className={accountTypeCardClass(accountChoice === key)}>
                       <div className="flex items-center justify-between">
-                        <div className="text-2xl mb-2">{icon}</div>
+                        <div className="mb-2 text-[color:var(--theme-gold,#F5B548)]"><UiIcon name={icon} size={22} /></div>
                         {accountChoice === key && (
                           <div className="rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.1em] text-[#0B0B0B]" style={{ background: "var(--theme-gold-gradient)" }}>✓</div>
                         )}
@@ -432,7 +447,7 @@ export default function OnboardingPage() {
                   <div className="grid grid-cols-2 gap-2">
                     {VALUE_PROPS.map(({ icon, text }) => (
                       <div key={text} className="flex items-start gap-2 text-sm text-[color:var(--muted)]">
-                        <span className="shrink-0 text-base">{icon}</span>
+                        <span className="shrink-0 text-[color:var(--theme-gold,#F5B548)]"><UiIcon name={icon} size={16} /></span>
                         <span>{text}</span>
                       </div>
                     ))}
