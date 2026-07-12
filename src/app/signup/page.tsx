@@ -21,7 +21,7 @@ export default function SignupPage() {
             </div>
 
             <div className="mt-8 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: "#F5B548", borderColor: "rgba(245,181,72,0.32)", background: "rgba(245,181,72,0.07)" }}>
-              🔐 Private Beta
+              Private Beta
             </div>
             <h1 className="mt-4 text-4xl font-black tracking-[-0.04em]">VLTD is invite-only.</h1>
             <p className="mt-3 text-base text-[color:var(--muted)]">

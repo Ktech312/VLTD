@@ -138,8 +138,7 @@ export default function BugReporter() {
 
             {state === "done" ? (
               <div className="mt-5 rounded-2xl border border-[rgba(74,222,128,0.3)] bg-[rgba(74,222,128,0.06)] px-4 py-5 text-center">
-                <div className="text-2xl">✅</div>
-                <p className="mt-1 text-sm font-semibold" style={{ color: "#4ade80" }}>Thanks — your report was sent!</p>
+                <p className="text-sm font-semibold" style={{ color: "#4ade80" }}>Thanks — your report was sent!</p>
               </div>
             ) : (
               <>
@@ -152,7 +151,6 @@ export default function BugReporter() {
                 />
 
                 <label className="mt-3 flex cursor-pointer items-center gap-3 rounded-2xl border border-[color:var(--border)] bg-[rgba(255,255,255,0.02)] px-4 py-3 text-sm text-[color:var(--muted)] transition hover:text-text-primary">
-                  <span className="text-base">📎</span>
                   <span className="truncate">{file ? file.name : "Attach a screenshot (optional)"}</span>
                   <input
                     ref={fileRef}

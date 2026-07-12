@@ -528,7 +528,7 @@ export default function PublicHomeClient() {
       <section id="early-access" className="scroll-mt-24 border-b" style={{ borderColor: 'var(--border)', background: 'linear-gradient(135deg, rgba(245,181,72,0.06) 0%, var(--bg) 60%)' }}>
         <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(245,181,72,0.32)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] mb-4" style={{ color: '#F5B548', background: 'rgba(245,181,72,0.07)' }}>
-            🔐 Beta Access
+            Beta Access
           </div>
           <h2 className="text-2xl font-black tracking-[-0.04em] text-text-primary sm:text-3xl">
             Join the early access list.
@@ -587,7 +587,7 @@ export default function PublicHomeClient() {
             }}
           >
             <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: '#F5B548', borderColor: 'rgba(245,181,72,0.32)', background: 'rgba(245,181,72,0.07)' }}>
-              🔐 Beta Access
+              Beta Access
             </div>
             <h3 className="mt-4 text-xl font-black tracking-[-0.02em] text-text-primary">VLTD Beta Access</h3>
             <p className="mt-3 text-sm leading-6" style={{ color: 'var(--muted)' }}>
