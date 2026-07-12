@@ -13,7 +13,7 @@ function IconLayoutTemplate({ size = 24, style }: { size?: number; style?: Recor
 
 function ExternalOpenIcon({ size = 17 }: { size?: number }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M15 3h6v6" />
       <path d="M10 14 21 3" />
       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -704,8 +704,8 @@ export default function MuseumPage() {
                           event.stopPropagation();
                           openGallery(gallery.id);
                         }}
-                        className="absolute bottom-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-[7px] border transition hover:bg-[color:var(--theme-gold-subtle)]"
-                        style={{ borderColor: "var(--theme-gold-border, var(--theme-border))", color: "var(--theme-gold)" }}
+                        className="absolute bottom-3 right-3 inline-flex h-8 w-8 items-center justify-center transition hover:text-[color:var(--theme-gold)]"
+                        style={{ color: "var(--theme-gold)" }}
                         aria-label={`Open full exhibit page for ${gallery.title}`}
                       >
                         <ExternalOpenIcon />
@@ -789,8 +789,8 @@ export default function MuseumPage() {
                           <button
                             type="button"
                             onClick={() => openGallery(g.id)}
-                            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[7px] border transition hover:bg-[color:var(--theme-gold-subtle)]"
-                            style={{ borderColor: "var(--theme-gold-border, var(--theme-border))", color: "var(--theme-gold)" }}
+                            className="inline-flex h-8 w-8 shrink-0 items-center justify-center transition hover:text-[color:var(--theme-gold)]"
+                            style={{ color: "var(--theme-gold)" }}
                             aria-label={`Open full exhibit page for ${g.title}`}
                           >
                             <ExternalOpenIcon />
