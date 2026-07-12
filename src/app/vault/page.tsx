@@ -1039,6 +1039,22 @@ export default function VaultPage() {
     () => items.filter((item) => saleInfoForItem(item, saleMap)).length,
     [items, saleMap]
   );
+  const gradedCount = useMemo(
+    () => items.filter((item) => Boolean(item.grade)).length,
+    [items]
+  );
+  const uncategorizedCount = useMemo(
+    () =>
+      items.filter(
+        (item) =>
+          !item.categoryLabel &&
+          !item.customCategoryLabel &&
+          !item.category &&
+          !item.subcategoryLabel &&
+          !item.universe
+      ).length,
+    [items]
+  );
   const publicCount = useMemo(
     () => items.filter((item) => item.isPublic === true && !saleInfoForItem(item, saleMap)).length,
     [items, saleMap]
@@ -1431,7 +1447,7 @@ export default function VaultPage() {
                 >
                   {gradedOnly && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                 </span>
-                Graded
+                Graded <span className="text-[11px] opacity-65">{gradedCount}</span>
               </button>
               <button
                 type="button"
@@ -1445,18 +1461,25 @@ export default function VaultPage() {
                 >
                   {uncategorizedOnly && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                 </span>
-                Uncategorized
+                Uncategorized <span className="text-[11px] opacity-65">{uncategorizedCount}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowSoldItems((value) => !value)}
+                className="inline-flex min-h-[36px] items-center gap-1.5 px-1 text-sm font-medium transition"
+                style={showSoldItems ? { color: "var(--theme-gold, #F5B548)" } : { color: "var(--fg-muted)" }}
+              >
+                <span
+                  className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded"
+                  style={showSoldItems ? { background: "var(--theme-gold, #F5B548)" } : { border: "1.5px solid var(--border)", background: "transparent" }}
+                >
+                  {showSoldItems && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                </span>
+                Show Sold <span className="text-[11px] opacity-65">{soldCount}</span>
               </button>
             </div>
 
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <PillButton
-                variant={showSoldItems ? "active" : "default"}
-                onClick={() => setShowSoldItems((value) => !value)}
-                className="min-h-[36px] rounded-full px-4 py-2 text-sm font-medium text-[color:var(--fg)]"
-              >
-                {showSoldItems ? `Hide Sold Items (${soldCount})` : `Show Sold Items (${soldCount})`}
-              </PillButton>
               {filteredItems.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5">
                   <button

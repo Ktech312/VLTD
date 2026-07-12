@@ -329,11 +329,11 @@ function ActionBar({
 
   // Vault mode
   return (
-    <div className="flex items-center justify-center gap-5 pt-4">
+    <div className="flex items-center justify-center gap-2 pt-2">
       {/* Prev */}
       <button
         type="button"
-        className={`${btnBase} w-14 h-14 ring-1`}
+        className={`${btnBase} h-11 w-11 ring-1`}
         style={{
           background: "var(--surface)",
           borderColor: "var(--border)",
@@ -351,7 +351,7 @@ function ActionBar({
       {/* Open / edit */}
       <button
         type="button"
-        className={`${btnBase} w-12 h-12 ring-2`}
+        className={`${btnBase} h-11 min-w-14 px-3 ring-2`}
         style={{
           background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))",
           borderColor: "var(--theme-gold-border, rgba(245,181,72,0.4))",
@@ -368,7 +368,7 @@ function ActionBar({
       {/* Next */}
       <button
         type="button"
-        className={`${btnBase} w-14 h-14 ring-1`}
+        className={`${btnBase} h-11 w-11 ring-1`}
         style={{
           background: "var(--surface)",
           borderColor: "var(--border)",
@@ -493,6 +493,17 @@ export default function SwipeStack({
         mode === "gallery" ? items[index] : items[index];
       if (!currentItem) return;
 
+      if (mode === "vault") {
+        const nextIndex =
+          direction === "right"
+            ? Math.min(index + 1, items.length - 1)
+            : Math.max(index - 1, 0);
+        setDrag(null);
+        setFlying(null);
+        setIndex(nextIndex);
+        return;
+      }
+
       setFlying(direction);
 
       setTimeout(() => {
@@ -511,13 +522,6 @@ export default function SwipeStack({
           } else {
             setIndex(nextIndex);
           }
-        } else {
-          // vault mode: navigate
-          const nextIndex =
-            direction === "right"
-              ? Math.min(index + 1, items.length - 1)
-              : Math.max(index - 1, 0);
-          setIndex(nextIndex);
         }
       }, parseInt(FLY_DURATION));
     },
