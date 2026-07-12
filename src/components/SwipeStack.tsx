@@ -819,8 +819,8 @@ export default function SwipeStack({
         <ActionBar
           mode={mode}
           onAction={handleAction}
-          canPrev={mode === "vault" && index > 0}
-          canNext={mode === "vault" && index < items.length - 1}
+          canPrev={false}
+          canNext={false}
         />
       )}
 
