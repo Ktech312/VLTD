@@ -22,7 +22,6 @@ import {
 } from "@/lib/vaultSyncQueue";
 import { useResolvedVaultImage } from "@/lib/useResolvedVaultImages";
 import {
-  getPrimaryImageUrl,
   loadItems,
   saveItem,
   saveItems,
@@ -419,12 +418,16 @@ function VaultCard({
   sale,
   onSaveItem,
   onDeleteItem,
+  selected = false,
+  onToggleSelected,
 }: {
   item: VaultItem;
   readiness: string;
   sale: SaleInfo | null;
   onSaveItem: (item: VaultItem) => Promise<void>;
   onDeleteItem: (item: VaultItem) => Promise<void>;
+  selected?: boolean;
+  onToggleSelected?: (id: string) => void;
 }) {
   const image = useResolvedVaultImage(item);
   const isSold = Boolean(sale);
@@ -478,9 +481,26 @@ function VaultCard({
       style={{ background: "var(--theme-card, rgba(15,25,45,0.85))" }}
     >
       {/* Status badge — top LEFT to avoid colliding with hover action buttons */}
-      <span className={["absolute left-2 top-2 z-10 rounded-full px-1.5 py-0.5 text-[8px] font-semibold ring-1", statusClass].join(" ")}>
-        {statusLabel}
-      </span>
+      <div className="absolute left-2 top-2 z-20 flex items-center gap-1.5">
+        {onToggleSelected ? (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onToggleSelected(item.id);
+            }}
+            className={["flex h-5 w-5 items-center justify-center rounded-[5px] border text-[11px] font-black", selected ? "bg-[color:var(--theme-gold)] text-black" : "bg-black/55 text-transparent"].join(" ")}
+            style={{ borderColor: "var(--theme-gold-border, var(--theme-border))" }}
+            aria-label={selected ? `Deselect ${item.title}` : `Select ${item.title}`}
+          >
+            ✓
+          </button>
+        ) : null}
+        <span className={["rounded-full px-1.5 py-0.5 text-[8px] font-semibold ring-1", statusClass].join(" ")}>
+          {statusLabel}
+        </span>
+      </div>
 
       {/* Hover action buttons — top RIGHT, clear of status badge */}
       <div className="absolute right-1.5 top-1.5 z-20 hidden items-center gap-1 group-hover:flex">
@@ -792,6 +812,7 @@ export default function VaultPage() {
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
   const [shareMessage, setShareMessage] = useState("");
   const [wallMode, setWallMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
 
   function refresh() {
     setItems(loadItems());
@@ -860,6 +881,14 @@ export default function VaultPage() {
       window.removeEventListener("offline", handleOfflineState);
     };
   }, []);
+
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      const valid = new Set(items.map((item) => String(item.id)));
+      const next = new Set([...prev].filter((id) => valid.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [items]);
 
   const intelligenceMap = useMemo(() => {
     if (!items.length) return {};
@@ -973,15 +1002,6 @@ export default function VaultPage() {
     return { totalItems, totalCost: totalCostValue, totalValue, totalGain };
   }, [filteredItems]);
 
-  const titlePreviewImages = useMemo(
-    () =>
-      filteredItems
-        .map((item) => ({ item, src: getPrimaryImageUrl(item) }))
-        .filter((entry) => Boolean(entry.src))
-        .slice(0, 4),
-    [filteredItems]
-  );
-
   const needsReviewCount = useMemo(
     () =>
       items.filter((item) => {
@@ -1055,6 +1075,70 @@ export default function VaultPage() {
     window.dispatchEvent(new Event("vltd:vault-updated"));
   }
 
+  function toggleSelectedItem(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function selectVisibleItems() {
+    setSelectedIds(new Set(filteredItems.map((item) => item.id)));
+  }
+
+  function clearSelectedItems() {
+    setSelectedIds(new Set());
+  }
+
+  async function handleBulkDeleteSelected() {
+    if (selectedIds.size === 0) return;
+    const ok = window.confirm(`Delete ${selectedIds.size} selected item${selectedIds.size === 1 ? "" : "s"}?`);
+    if (!ok) return;
+
+    const ids = new Set(selectedIds);
+    const next = loadItems({ includeAllProfiles: true }).filter((entry) => !ids.has(String(entry.id)));
+    saveItems(next);
+    setItems((prev) => prev.filter((entry) => !ids.has(String(entry.id))));
+    clearSelectedItems();
+
+    if (hasSupabaseEnv()) {
+      const supabase = getSupabaseBrowserClient();
+      if (supabase) {
+        for (const id of ids) {
+          try {
+            await supabase.from(VAULT_ITEMS_TABLE).delete().eq("id", id);
+          } catch {
+            // leave local delete in place
+          }
+        }
+      }
+    }
+
+    window.dispatchEvent(new Event("vltd:vault-updated"));
+  }
+
+  async function handleBulkMoveSelected(nextUniverse: UniverseKey | "") {
+    if (!nextUniverse || selectedIds.size === 0) return;
+
+    const ids = new Set(selectedIds);
+    const allItems = loadItems({ includeAllProfiles: true });
+    const next = allItems.map((item) => (ids.has(String(item.id)) ? { ...item, universe: nextUniverse } : item));
+    saveItems(next);
+
+    const movedItems = next.filter((item) => ids.has(String(item.id)));
+    for (const item of movedItems) enqueueVaultItemSync(item.id);
+    setItems((prev) => prev.map((item) => (ids.has(String(item.id)) ? { ...item, universe: nextUniverse } : item)));
+    clearSelectedItems();
+
+    if (hasSupabaseEnv()) {
+      await processVaultSyncQueue();
+    }
+
+    window.dispatchEvent(new Event("vltd:vault-updated"));
+  }
+
   function handleClearFilters() {
     setQuery("");
     setUniverseFilter("ALL");
@@ -1095,21 +1179,6 @@ export default function VaultPage() {
                   </h1>
                   <p className="mt-2 text-sm text-[color:var(--muted)]">Every item you own, documented and searchable.</p>
                 </div>
-                {titlePreviewImages.length > 0 ? (
-                  <div className="mb-1 flex items-end -space-x-2">
-                    {titlePreviewImages.map(({ item, src }) => (
-                      <Link
-                        key={item.id}
-                        href={`/vault/item/${item.id}`}
-                        className="block h-11 w-9 overflow-hidden rounded-[6px] border bg-[color:var(--theme-elevated)] p-[2px] shadow-[0_8px_18px_rgba(0,0,0,0.34)] transition hover:-translate-y-1"
-                        style={{ borderColor: "var(--theme-gold-border, var(--theme-border))" }}
-                        aria-label={`Open ${item.title}`}
-                      >
-                        <ProgressiveImage src={src} alt={item.title} className="h-full w-full" imageClassName="rounded-[4px] object-cover object-center" draggable={false} />
-                      </Link>
-                    ))}
-                  </div>
-                ) : null}
               </div>
               {items.length > 0 ? (
                 <div className="mt-3 flex flex-wrap gap-2 text-xs text-[color:var(--muted)]">
@@ -1182,9 +1251,13 @@ export default function VaultPage() {
                 key={category.key}
                 type="button"
                 onClick={() => setUniverseFilter(category.key)}
-                className={["shrink-0 rounded-[7px] px-4 py-2 text-sm font-semibold ring-1", universeFilter === category.key ? "bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)] ring-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)] ring-[color:var(--border)]"].join(" ")}
+                className={["inline-flex shrink-0 items-center gap-2 rounded-[7px] py-2 pl-2 pr-4 text-sm font-semibold ring-1", universeFilter === category.key ? "bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)] ring-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)] ring-[color:var(--border)]"].join(" ")}
               >
-                {UNIVERSE_LABEL[category.key] ?? category.key} <span className="ml-1 text-[11px] opacity-65">{universeGroups[category.key]?.length ?? 0}</span>
+                <span className="h-7 w-7 overflow-hidden rounded-[5px] border bg-[color:var(--theme-elevated)]" style={{ borderColor: "var(--theme-gold-border, var(--theme-border))" }}>
+                  <ProgressiveImage src={category.thumbnailSrc} alt="" className="h-full w-full" imageClassName="object-cover object-center" draggable={false} />
+                </span>
+                <span>{UNIVERSE_LABEL[category.key] ?? category.key}</span>
+                <span className="text-[11px] opacity-65">{universeGroups[category.key]?.length ?? 0}</span>
               </button>
             ))}
           </div>
@@ -1216,6 +1289,53 @@ export default function VaultPage() {
               <div className="mt-1 text-sm text-[color:var(--muted)]">Items missing info</div>
             </div>
           </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={selectVisibleItems}
+              className="rounded-[7px] bg-[color:var(--pill)] px-3 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+            >
+              Select visible
+            </button>
+            {selectedIds.size > 0 ? (
+              <>
+                <span className="rounded-[7px] bg-[color:var(--theme-card)] px-3 py-2 text-sm font-semibold ring-1 ring-[color:var(--theme-border)]">
+                  {selectedIds.size} selected
+                </span>
+                <select
+                  defaultValue=""
+                  onChange={(event) => {
+                    void handleBulkMoveSelected(event.target.value as UniverseKey | "");
+                    event.currentTarget.value = "";
+                  }}
+                  className="h-[38px] rounded-[7px] border bg-[color:var(--theme-card)] px-3 text-sm font-semibold outline-none"
+                  style={{ borderColor: "var(--theme-border)" }}
+                >
+                  <option value="">Move to...</option>
+                  {VAULT_UNIVERSES.map((category) => (
+                    <option key={category.key} value={category.key}>
+                      {UNIVERSE_LABEL[category.key] ?? category.key}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => void handleBulkDeleteSelected()}
+                  className="rounded-[7px] bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-200 ring-1 ring-red-400/35"
+                >
+                  Delete selected
+                </button>
+                <button
+                  type="button"
+                  onClick={clearSelectedItems}
+                  className="rounded-[7px] bg-[color:var(--pill)] px-3 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                >
+                  Clear
+                </button>
+              </>
+            ) : null}
+          </div>
         </section>
 
         {items.length === 0 ? (
@@ -1235,6 +1355,8 @@ export default function VaultPage() {
                   sale={saleInfoForItem(item, saleMap)}
                   onSaveItem={handleSaveItem}
                   onDeleteItem={handleDeleteItem}
+                  selected={selectedIds.has(item.id)}
+                  onToggleSelected={toggleSelectedItem}
                 />
               ))}
             </div>
