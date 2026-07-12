@@ -205,6 +205,51 @@ function CardFace({ item, isTop }: { item: ModelItem; isTop: boolean }) {
   );
 }
 
+function PreviewFace({ item }: { item: ModelItem }) {
+  const src = imgSrc(item);
+  const label = universeLabel(item);
+
+  return (
+    <div
+      className="relative h-full w-full overflow-hidden rounded-[18px]"
+      style={{
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+      }}
+    >
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={item.title}
+          className="h-full w-full object-cover"
+          loading="lazy"
+          draggable={false}
+        />
+      ) : (
+        <div
+          className="flex h-full w-full items-center justify-center px-3 text-center"
+          style={{ background: "var(--pill)" }}
+        >
+          <span
+            className="text-[10px] font-bold uppercase tracking-[0.16em]"
+            style={{ color: "var(--muted2)" }}
+          >
+            {label}
+          </span>
+        </div>
+      )}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          boxShadow: "inset 0 0 0 1px rgba(245,181,72,0.16)",
+          background: "linear-gradient(to bottom, rgba(0,0,0,0.08), rgba(0,0,0,0.42))",
+        }}
+      />
+    </div>
+  );
+}
+
 // ─── Swipe hint overlay ───────────────────────────────────────────────────────
 
 function SwipeHint({
@@ -646,48 +691,38 @@ export default function SwipeStack({
     const prevItem = index > 0 ? items[index - 1] : null;
     const nextItem = index < items.length - 1 ? items[index + 1] : null;
     const dragX = drag?.x ?? 0;
-    const previewShift = Math.max(-22, Math.min(22, dragX * 0.16));
+    const cardShift = Math.max(-18, Math.min(18, dragX * 0.12));
 
     return (
-      <div className={`flex flex-col ${className}`}>
-        <div className="relative mx-auto w-full max-w-[620px] px-12 sm:px-20" style={{ touchAction: "pan-y" }}>
-          <div className="relative aspect-[5/7]">
-            {isEmpty ? (
-              <div className="absolute inset-0">
+      <div className={`flex flex-col items-center ${className}`}>
+        <div className="w-full" style={{ touchAction: "pan-y" }}>
+          {isEmpty ? (
+            <div className="mx-auto aspect-[5/7] w-full max-w-[420px]">
+              <div className="h-full w-full">
                 <EmptyState mode={mode} />
               </div>
-            ) : (
-              <>
+            </div>
+          ) : (
+            <div className="flex w-full items-center justify-center gap-4 sm:gap-5">
+              <button
+                type="button"
+                onClick={() => triggerAction("left")}
+                disabled={!prevItem}
+                className="hidden aspect-[5/7] w-[96px] shrink-0 overflow-hidden rounded-[18px] opacity-70 transition hover:opacity-95 disabled:pointer-events-none disabled:opacity-20 sm:block md:w-[118px]"
+                aria-label="Previous item"
+              >
                 {prevItem ? (
-                  <button
-                    type="button"
-                    onClick={() => triggerAction("left")}
-                    className="absolute left-0 top-1/2 z-10 h-[70%] w-[34%] -translate-x-[58%] -translate-y-1/2 overflow-hidden rounded-[18px] opacity-55 ring-1 ring-[color:var(--border)] transition hover:opacity-80"
-                    style={{ transform: `translate(calc(-58% + ${previewShift}px), -50%) scale(0.88)`, background: "var(--surface)" }}
-                    aria-label="Previous item"
-                  >
-                    <CardFace item={prevItem} isTop={false} />
-                  </button>
+                  <PreviewFace item={prevItem} />
                 ) : null}
+              </button>
 
-                {nextItem ? (
-                  <button
-                    type="button"
-                    onClick={() => triggerAction("right")}
-                    className="absolute right-0 top-1/2 z-10 h-[70%] w-[34%] translate-x-[58%] -translate-y-1/2 overflow-hidden rounded-[18px] opacity-55 ring-1 ring-[color:var(--border)] transition hover:opacity-80"
-                    style={{ transform: `translate(calc(58% + ${previewShift}px), -50%) scale(0.88)`, background: "var(--surface)" }}
-                    aria-label="Next item"
-                  >
-                    <CardFace item={nextItem} isTop={false} />
-                  </button>
-                ) : null}
-
+              <div className="relative aspect-[5/7] w-[min(78vw,420px)] shrink-0">
                 {currentItem ? (
                   <div
                     ref={cardRef}
                     className="absolute inset-0 z-20 overflow-hidden rounded-[22px] cursor-grab active:cursor-grabbing"
                     style={{
-                      transform: `translateX(${previewShift}px)`,
+                      transform: `translateX(${cardShift}px)`,
                       transition: drag ? "none" : "transform 160ms ease-out",
                       touchAction: "none",
                     }}
@@ -700,13 +735,25 @@ export default function SwipeStack({
                     <CounterPill current={currentNumber} total={totalCount} />
                   </div>
                 ) : null}
-              </>
-            )}
-          </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => triggerAction("right")}
+                disabled={!nextItem}
+                className="hidden aspect-[5/7] w-[96px] shrink-0 overflow-hidden rounded-[18px] opacity-70 transition hover:opacity-95 disabled:pointer-events-none disabled:opacity-20 sm:block md:w-[118px]"
+                aria-label="Next item"
+              >
+                {nextItem ? (
+                  <PreviewFace item={nextItem} />
+                ) : null}
+              </button>
+            </div>
+          )}
         </div>
 
         {!isEmpty && (
-          <div className="flex items-center justify-center gap-2 pt-2">
+          <div className="flex items-center justify-center gap-2 pt-3">
             <button
               type="button"
               onClick={() => triggerAction("left")}

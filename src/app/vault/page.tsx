@@ -1604,7 +1604,7 @@ export default function VaultPage() {
           <VaultEmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearFilters} />
         ) : vaultViewMode === "flip" ? (
           <section className="mt-4">
-            <div className="mx-auto max-w-sm">
+            <div className="mx-auto max-w-3xl">
               <SwipeStack
                 items={filteredItems}
                 mode="vault"
