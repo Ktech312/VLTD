@@ -545,19 +545,27 @@ export default function SwipeStack({
       if (Math.abs(dx) >= SWIPE_THRESHOLD) {
         triggerAction(dx > 0 ? "right" : "left");
       } else {
+        if (mode === "vault") {
+          setDrag(null);
+          return;
+        }
         // Snap back
         setDrag({ x: 0, y: 0 });
         setTimeout(() => setDrag(null), parseInt(SNAP_DURATION));
       }
     },
-    [drag, index, items, onOpen, triggerAction]
+    [drag, index, items, mode, onOpen, triggerAction]
   );
 
   const onPointerCancel = useCallback(() => {
     pointerStart.current = null;
+    if (mode === "vault") {
+      setDrag(null);
+      return;
+    }
     setDrag({ x: 0, y: 0 });
     setTimeout(() => setDrag(null), parseInt(SNAP_DURATION));
-  }, []);
+  }, [mode]);
 
   // ── Button actions ────────────────────────────────────────────────────────
 
@@ -632,6 +640,114 @@ export default function SwipeStack({
       : isDragging
       ? "none"
       : `transform ${SNAP_DURATION} cubic-bezier(0.34, 1.56, 0.64, 1)`;
+
+  if (mode === "vault") {
+    const currentItem = items[index];
+    const prevItem = index > 0 ? items[index - 1] : null;
+    const nextItem = index < items.length - 1 ? items[index + 1] : null;
+    const dragX = drag?.x ?? 0;
+    const previewShift = Math.max(-22, Math.min(22, dragX * 0.16));
+
+    return (
+      <div className={`flex flex-col ${className}`}>
+        <div className="relative mx-auto w-full max-w-[620px] px-12 sm:px-20" style={{ touchAction: "pan-y" }}>
+          <div className="relative aspect-[5/7]">
+            {isEmpty ? (
+              <div className="absolute inset-0">
+                <EmptyState mode={mode} />
+              </div>
+            ) : (
+              <>
+                {prevItem ? (
+                  <button
+                    type="button"
+                    onClick={() => triggerAction("left")}
+                    className="absolute left-0 top-1/2 z-10 h-[70%] w-[34%] -translate-x-[58%] -translate-y-1/2 overflow-hidden rounded-[18px] opacity-55 ring-1 ring-[color:var(--border)] transition hover:opacity-80"
+                    style={{ transform: `translate(calc(-58% + ${previewShift}px), -50%) scale(0.88)`, background: "var(--surface)" }}
+                    aria-label="Previous item"
+                  >
+                    <CardFace item={prevItem} isTop={false} />
+                  </button>
+                ) : null}
+
+                {nextItem ? (
+                  <button
+                    type="button"
+                    onClick={() => triggerAction("right")}
+                    className="absolute right-0 top-1/2 z-10 h-[70%] w-[34%] translate-x-[58%] -translate-y-1/2 overflow-hidden rounded-[18px] opacity-55 ring-1 ring-[color:var(--border)] transition hover:opacity-80"
+                    style={{ transform: `translate(calc(58% + ${previewShift}px), -50%) scale(0.88)`, background: "var(--surface)" }}
+                    aria-label="Next item"
+                  >
+                    <CardFace item={nextItem} isTop={false} />
+                  </button>
+                ) : null}
+
+                {currentItem ? (
+                  <div
+                    ref={cardRef}
+                    className="absolute inset-0 z-20 overflow-hidden rounded-[22px] cursor-grab active:cursor-grabbing"
+                    style={{
+                      transform: `translateX(${previewShift}px)`,
+                      transition: drag ? "none" : "transform 160ms ease-out",
+                      touchAction: "none",
+                    }}
+                    onPointerDown={onPointerDown}
+                    onPointerMove={onPointerMove}
+                    onPointerUp={onPointerUp}
+                    onPointerCancel={onPointerCancel}
+                  >
+                    <CardFace item={currentItem} isTop={true} />
+                    <CounterPill current={currentNumber} total={totalCount} />
+                  </div>
+                ) : null}
+              </>
+            )}
+          </div>
+        </div>
+
+        {!isEmpty && (
+          <div className="flex items-center justify-center gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => triggerAction("left")}
+              disabled={!prevItem}
+              className="flex h-10 w-10 items-center justify-center rounded-full ring-1 transition disabled:opacity-35"
+              style={{ background: "var(--surface)", borderColor: "var(--border)", color: prevItem ? "var(--fg)" : "var(--muted2)" }}
+              aria-label="Previous"
+            >
+              ←
+            </button>
+            <button
+              type="button"
+              onClick={() => currentItem && onOpen?.(currentItem)}
+              className="flex h-10 min-w-14 items-center justify-center rounded-full px-3 text-[13px] font-bold ring-2"
+              style={{ background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))", borderColor: "var(--theme-gold-border, rgba(245,181,72,0.4))", color: "var(--theme-gold, #F5B548)" }}
+            >
+              VIEW
+            </button>
+            <button
+              type="button"
+              onClick={() => triggerAction("right")}
+              disabled={!nextItem}
+              className="flex h-10 w-10 items-center justify-center rounded-full ring-1 transition disabled:opacity-35"
+              style={{ background: "var(--surface)", borderColor: "var(--border)", color: nextItem ? "var(--fg)" : "var(--muted2)" }}
+              aria-label="Next"
+            >
+              →
+            </button>
+          </div>
+        )}
+
+        {!isEmpty && (
+          <div className="pt-1 text-center">
+            <span className="text-[11px]" style={{ color: "var(--muted2)" }}>
+              Drag or use arrows to browse · tap View to open
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={`flex flex-col ${className}`}>
