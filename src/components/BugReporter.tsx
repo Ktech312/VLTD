@@ -104,6 +104,11 @@ export default function BugReporter() {
         title="Report a bug"
         className="fixed right-4 bottom-24 z-[60] flex h-12 w-12 items-center justify-center rounded-full transition hover:-translate-y-0.5 sm:right-6 sm:bottom-6"
         style={{
+          // Force fixed positioning inline — a global button rule overrides the
+          // `fixed` class with position:relative, which shoved this off-screen.
+          position: "fixed",
+          top: "auto",
+          left: "auto",
           background: "var(--theme-elevated, rgba(12,18,30,0.96))",
           border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.4))",
           boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
@@ -121,7 +126,7 @@ export default function BugReporter() {
       {open && (
         <div
           className="fixed inset-0 z-[90] flex items-end justify-center px-4 pb-4 sm:items-center sm:pb-0"
-          style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
           role="dialog"
           aria-modal="true"
           aria-label="Report a bug"

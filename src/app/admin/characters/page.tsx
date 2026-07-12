@@ -1954,6 +1954,22 @@ export default function AdminCharactersPage() {
               Seasonal themes and overrides. Opens on the right.
             </p>
           </SidebarSection>
+
+          {/* Beta admin — these open their own pages */}
+          <a href="/admin/waitlist" className="flex items-center justify-between border-b border-white/8 px-4 py-3 transition hover:bg-white/[0.04]">
+            <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-white/70">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 4h16v16H4zM4 9h16M9 4v5" /></svg>
+              Beta Waitlist
+            </span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-white/40" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+          </a>
+          <a href="/admin/bugs" className="flex items-center justify-between border-b border-white/8 px-4 py-3 transition hover:bg-white/[0.04]">
+            <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-white/70">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20a6 6 0 0 0 6-6v-2a6 6 0 0 0-12 0v2a6 6 0 0 0 6 6zM12 8V6M5 11H3M19 11h2M5 16l-2 1M19 16l2 1" /></svg>
+              Bug Reports
+            </span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-white/40" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+          </a>
         </div>
 
         <div className="shrink-0 p-3 border-t border-white/8 flex items-center justify-between">
