@@ -11,6 +11,7 @@ import VaultExportButton from "@/components/VaultExportButton";
 import VaultWallView from "@/components/VaultWallView";
 import { PillButton } from "@/components/ui/PillButton";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
+import SwipeStack from "@/components/SwipeStack";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, TAXONOMY, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
@@ -1360,6 +1361,33 @@ export default function VaultPage() {
 
           <div className="mt-3 rounded-[14px] border p-3" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
             <div className="flex flex-wrap items-center gap-2">
+              {items.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-2 rounded-[8px] bg-[color:var(--input)] px-2 py-1 ring-1 ring-[color:var(--border)]">
+                  <span className="px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">
+                    View
+                  </span>
+                  {(
+                    [
+                      ["wall", "Wall"],
+                      ["gallery", "Gallery"],
+                      ["shelf", "Shelf"],
+                      ["flip", "Flip"],
+                    ] as const
+                  ).map(([mode, label]) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setVaultViewMode(mode)}
+                      className="min-h-[30px] rounded-[7px] px-3 py-1 text-[12px] font-semibold transition"
+                      style={vaultViewMode === mode
+                        ? { background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))", color: "var(--theme-gold, #F5B548)" }
+                        : { background: "transparent", color: "var(--muted)" }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -1419,33 +1447,6 @@ export default function VaultPage() {
                 </span>
                 Uncategorized
               </button>
-              {filteredItems.length > 0 ? (
-                <div className="flex flex-wrap items-center gap-2 rounded-[8px] bg-[color:var(--input)] px-2 py-1 ring-1 ring-[color:var(--border)]">
-                  <span className="px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">
-                    View
-                  </span>
-                  {(
-                    [
-                      ["wall", "Wall"],
-                      ["gallery", "Gallery"],
-                      ["shelf", "Shelf"],
-                      ["flip", "Flip"],
-                    ] as const
-                  ).map(([mode, label]) => (
-                    <button
-                      key={mode}
-                      type="button"
-                      onClick={() => setVaultViewMode(mode)}
-                      className="min-h-[30px] rounded-[7px] px-3 py-1 text-[12px] font-semibold transition"
-                      style={vaultViewMode === mode
-                        ? { background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))", color: "var(--theme-gold, #F5B548)" }
-                        : { background: "transparent", color: "var(--muted)" }}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
             </div>
 
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -1578,6 +1579,18 @@ export default function VaultPage() {
           <VaultWallView items={items} saleMap={saleMap} />
         ) : filteredItems.length === 0 ? (
           <VaultEmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearFilters} />
+        ) : vaultViewMode === "flip" ? (
+          <section className="mt-4">
+            <div className="mx-auto max-w-sm">
+              <SwipeStack
+                items={filteredItems}
+                mode="vault"
+                onOpen={(item) => {
+                  window.location.href = `/vault/item/${item.id}`;
+                }}
+              />
+            </div>
+          </section>
         ) : (
           <section className="mt-4">
             <div
@@ -1585,9 +1598,7 @@ export default function VaultPage() {
                 "grid",
                 vaultViewMode === "shelf"
                   ? "gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
-                  : vaultViewMode === "flip"
-                    ? "gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                    : "gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5",
+                  : "gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5",
               ].join(" ")}
             >
               {filteredItems.map((item) => {
