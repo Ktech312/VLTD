@@ -25,6 +25,7 @@ import "./vault-directives-pass.css";
 import "./insurance-pass.css";
 import "./theme-override.css";
 import BugReporter from "@/components/BugReporter";
+import PresenceHeartbeat from "@/components/PresenceHeartbeat";
 import NavShell from "@/components/NavShell";
 import Providers from "@/components/Providers";
 import PWAInstallBanner from "@/components/PWAInstallBanner";
@@ -127,6 +128,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </NavShell>
               <PWAInstallBanner />
               <BugReporter />
+              <PresenceHeartbeat />
             </SeasonalThemeProvider>
           </Providers>
         </ThemeProvider>

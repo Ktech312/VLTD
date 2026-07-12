@@ -22,6 +22,8 @@ import { SEED_CHARACTERS_PART3 } from "@/lib/seedCharacters_part3";
 import { SEED_CHARACTERS_PART4 } from "@/lib/seedCharacters_part4";
 import type { SeedCharacter, SeedItem, SeedGallery } from "@/lib/seedCharacters";
 import { getSeedAvatarUrl } from "@/lib/seedAvatar";
+import OnlineDot from "@/components/OnlineDot";
+import { isOnline, timeAgo, sessionLength } from "@/lib/presence";
 import { useSaveFeedback } from "@/lib/useSaveFeedback";
 import {
   getMyAdminRole,
@@ -173,6 +175,8 @@ type TierProfile = {
   tier_expires_at: string | null;
   tier_source: string | null;
   created_at: string | null;
+  last_seen_at?: string | null;
+  session_started_at?: string | null;
 };
 
 const RIGHTS_TIERS: Tier[] = ["FREE", "MID", "FULL"];
@@ -194,10 +198,23 @@ function AccountRightsPanel() {
     const sb = getSupabaseBrowserClient();
     if (!sb) { setStatus("Supabase is not configured."); setLoading(false); return; }
     setLoading(true);
-    const { data, error } = await sb
-      .from("profiles")
-      .select("id,user_id,username,display_name,profile_type,tier,tier_expires_at,tier_source,created_at")
-      .order("created_at", { ascending: true });
+    const BASE_COLS = "id,user_id,username,display_name,profile_type,tier,tier_expires_at,tier_source,created_at";
+    let data: TierProfile[] | null = null;
+    let error: { message: string } | null = null;
+    {
+      const res = await sb
+        .from("profiles")
+        .select(`${BASE_COLS},last_seen_at,session_started_at`)
+        .order("created_at", { ascending: true });
+      data = (res.data ?? null) as TierProfile[] | null;
+      error = res.error;
+    }
+    // Presence columns may not be migrated yet — fall back gracefully.
+    if (error && /last_seen_at|session_started_at/i.test(error.message)) {
+      const res = await sb.from("profiles").select(BASE_COLS).order("created_at", { ascending: true });
+      data = (res.data ?? null) as TierProfile[] | null;
+      error = res.error;
+    }
     if (error) {
       if (/tier/i.test(error.message) && /column|does not exist|schema cache/i.test(error.message)) {
         setNeedsMigration(true);
@@ -248,7 +265,13 @@ function AccountRightsPanel() {
   return (
     <div className="flex h-full flex-col p-5">
       <div className="shrink-0">
-        <h2 className="text-lg font-semibold">Account Rights</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-semibold">Account Rights</h2>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-0.5 text-[11px] font-semibold text-white/60 ring-1 ring-white/10">
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: "#4ade80", boxShadow: "0 0 8px rgba(74,222,128,0.7)" }} />
+            {profiles.filter((p) => isOnline(p.last_seen_at)).length} online now
+          </span>
+        </div>
         <p className="mt-1 text-xs text-white/40">
           Grant or revoke plan access per account. FULL lifts the item limit and unlocks paid features.
           Changes sync to the user on next app load (instantly if it&apos;s the profile active on this device).
@@ -302,6 +325,12 @@ function AccountRightsPanel() {
                       </span>
                     </div>
                     <div className="mt-0.5 truncate text-[11px] text-white/30">@{p.username} · {p.id}</div>
+                    <div className="mt-1 flex items-center gap-2 text-[10px] text-white/40">
+                      <OnlineDot lastSeenAt={p.last_seen_at} label size={8} />
+                      {isOnline(p.last_seen_at) && p.session_started_at ? (
+                        <span>· on for {sessionLength(p.session_started_at, p.last_seen_at)}</span>
+                      ) : null}
+                    </div>
                     {current !== "FREE" ? (
                       <div className="mt-0.5 text-[10px] text-white/40">
                         {p.tier_expires_at
