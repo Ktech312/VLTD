@@ -22,6 +22,7 @@ import {
 } from "@/lib/vaultSyncQueue";
 import { useResolvedVaultImage } from "@/lib/useResolvedVaultImages";
 import {
+  getPrimaryImageUrl,
   loadItems,
   saveItem,
   saveItems,
@@ -471,7 +472,7 @@ function VaultCard({
   return (
     <div
       className={[
-        "group relative flex h-[174px] flex-col overflow-hidden rounded-[14px] border border-[color:var(--theme-border)] p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-gold/10 transition hover:-translate-y-0.5",
+        "group relative flex min-h-[324px] flex-col overflow-hidden rounded-[10px] border border-[color:var(--theme-border)] p-3 shadow-[0_16px_38px_rgba(0,0,0,0.26)] ring-1 ring-gold/10 transition hover:-translate-y-0.5 hover:border-[color:var(--theme-gold-border)]",
         marketValue > 0 ? "border-l-2 border-l-emerald-400/55" : "border-l border-l-white/8",
       ].join(" ")}
       style={{ background: "var(--theme-card, rgba(15,25,45,0.85))" }}
@@ -499,14 +500,14 @@ function VaultCard({
         </button>
       </div>
 
-      <div className="relative h-[78px] overflow-hidden rounded-[10px] bg-black/18">
+      <div className="relative h-[190px] overflow-hidden rounded-[8px] bg-black/24">
         <Link href={detailHref} className="block h-full">
           {image ? (
             <ProgressiveImage
               src={image}
               alt={item.title}
               className="h-full w-full"
-              imageClassName="object-contain object-center"
+              imageClassName="object-contain object-center transition duration-500 group-hover:scale-[1.035]"
               draggable={false}
             />
           ) : (
@@ -521,16 +522,16 @@ function VaultCard({
         </div>
       </div>
 
-      <Link href={detailHref} className="mt-2 min-w-0">
-        <div className="line-clamp-1 text-[13px] font-extrabold leading-tight text-text-primary sm:text-[14px]">
+      <Link href={detailHref} className="mt-3 min-w-0">
+        <div className="line-clamp-1 text-[15px] font-semibold leading-tight text-text-primary">
           {item.title}
         </div>
-        <div className="mt-0.5 line-clamp-1 text-[10px] font-medium text-cyan-100/55">
+        <div className="mt-1 line-clamp-1 text-[11px] font-medium text-cyan-100/55">
           {itemCardSubtitle(item)}
         </div>
       </Link>
 
-      <div className="mt-auto flex items-end justify-between gap-2 pt-2">
+      <div className="mt-auto flex items-end justify-between gap-2 pt-3">
         <div className="min-w-0">
           {editingField === "value" ? (
             <input
@@ -551,7 +552,7 @@ function VaultCard({
             <button
               type="button"
               onClick={() => setEditingField("value")}
-              className="block text-left text-[13px] font-extrabold leading-none text-text-primary hover:text-gold-light"
+              className="block text-left text-[20px] font-semibold leading-none text-[color:var(--data-color)] hover:text-gold-light"
             >
               {marketValue > 0 ? formatMoney(marketValue) : "No value"}
             </button>
@@ -972,6 +973,34 @@ export default function VaultPage() {
     return { totalItems, totalCost: totalCostValue, totalValue, totalGain };
   }, [filteredItems]);
 
+  const titlePreviewImages = useMemo(
+    () =>
+      filteredItems
+        .map((item) => ({ item, src: getPrimaryImageUrl(item) }))
+        .filter((entry) => Boolean(entry.src))
+        .slice(0, 4),
+    [filteredItems]
+  );
+
+  const needsReviewCount = useMemo(
+    () =>
+      items.filter((item) => {
+        const intelligence = intelligenceMap[item.id];
+        return (intelligence?.readiness ?? "Low") !== "High";
+      }).length,
+    [items, intelligenceMap]
+  );
+
+  const insuranceReadyCount = useMemo(
+    () =>
+      items.filter((item) => {
+        const intelligence = intelligenceMap[item.id];
+        return (intelligence?.readiness ?? "Low") === "High";
+      }).length,
+    [items, intelligenceMap]
+  );
+
+  const insuranceReadyPct = items.length ? Math.round((insuranceReadyCount / items.length) * 100) : 0;
 
   const hasActiveFilters =
     query.trim().length > 0 ||
@@ -1055,114 +1084,136 @@ export default function VaultPage() {
 
   return (
     <main className="text-[color:var(--fg)]">
-      <div className="mx-auto max-w-[1500px] px-3 py-3 sm:px-4 sm:py-4">
-        <section
-          className="relative overflow-hidden rounded-[18px] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)] max-w-3xl mx-auto w-full"
-          style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", border: "1px solid var(--theme-border, rgba(245,181,72,0.12))" }}
-        >
-          <div className="relative flex flex-col gap-4">
-            <div className="flex flex-col gap-3">
-              <div>
-                <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">VAULT</div>
-                <h1 className="mt-2 text-[1.7rem] font-semibold leading-tight sm:text-[1.9rem]">
-                  Vault Universes
-                </h1>
-                {items.length > 0 ? (
-                  <div className="mt-2 flex flex-wrap gap-2 text-xs text-[color:var(--muted)]">
-                    <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">
-                      {privateCount} private
-                    </span>
-                    <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">
-                      {publicCount} public
-                    </span>
-                    <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">
-                      Public links only show items you unlock
-                    </span>
+      <div className="mx-auto max-w-[1500px] px-3 py-4 sm:px-5 sm:py-5">
+        <section className="mb-5">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-end gap-3">
+                <div>
+                  <h1 className="text-[2.7rem] font-semibold leading-none sm:text-[3.3rem]" style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)" }}>
+                    Vault
+                  </h1>
+                  <p className="mt-2 text-sm text-[color:var(--muted)]">Every item you own, documented and searchable.</p>
+                </div>
+                {titlePreviewImages.length > 0 ? (
+                  <div className="mb-1 flex items-end -space-x-2">
+                    {titlePreviewImages.map(({ item, src }) => (
+                      <Link
+                        key={item.id}
+                        href={`/vault/item/${item.id}`}
+                        className="block h-11 w-9 overflow-hidden rounded-[6px] border bg-[color:var(--theme-elevated)] p-[2px] shadow-[0_8px_18px_rgba(0,0,0,0.34)] transition hover:-translate-y-1"
+                        style={{ borderColor: "var(--theme-gold-border, var(--theme-border))" }}
+                        aria-label={`Open ${item.title}`}
+                      >
+                        <ProgressiveImage src={src} alt={item.title} className="h-full w-full" imageClassName="rounded-[4px] object-cover object-center" draggable={false} />
+                      </Link>
+                    ))}
                   </div>
                 ) : null}
               </div>
-              <div className="flex gap-2 overflow-x-auto pb-0.5" style={{ scrollbarWidth: "none" }}>
-                <button
-                  type="button"
-                  onClick={() => setWallMode((v) => !v)}
-                  className={[
-                    "inline-flex shrink-0 min-h-[38px] items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold ring-1 transition",
-                    wallMode
-                      ? "bg-gold/20 text-gold ring-gold/40"
-                      : "bg-[color:var(--pill)] ring-[color:var(--border)]",
-                  ].join(" ")}
-                >
-                  <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
-                    <rect x="0" y="0" width="4" height="6" rx="0.8"/>
-                    <rect x="5" y="0" width="4" height="6" rx="0.8"/>
-                    <rect x="10" y="0" width="6" height="6" rx="0.8"/>
-                    <rect x="0" y="7" width="6" height="9" rx="0.8"/>
-                    <rect x="7" y="7" width="4" height="9" rx="0.8"/>
-                    <rect x="12" y="7" width="4" height="9" rx="0.8"/>
-                  </svg>
-                  Wall
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void handleShareVault()}
-                  className="inline-flex shrink-0 min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
-                >
-                  {shareMessage || "Share vault"}
-                </button>
-                <VaultExportButton />
-                <Link
-                  href="/vault/add"
-                  className="inline-flex shrink-0 min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
-                >
-                  Add
-                </Link>
-                <Link
-                  href="/vault/quick"
-                  className="inline-flex shrink-0 min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]"
-                >
-                  Quick Add
-                </Link>
-                <Link
-                  href="/vault/import"
-                  className="inline-flex shrink-0 min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
-                >
-                  Import
-                </Link>
-                <Link
-                  href="/vault/sold"
-                  className="inline-flex shrink-0 min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
-                >
-                  Sold
-                </Link>
-                <Link
-                  href="/vault/for-sale"
-                  className="inline-flex shrink-0 min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
-                >
-                  For Sale
-                </Link>
-              </div>
+              {items.length > 0 ? (
+                <div className="mt-3 flex flex-wrap gap-2 text-xs text-[color:var(--muted)]">
+                  <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">{privateCount} private</span>
+                  <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">{publicCount} public</span>
+                  <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">Public links only show items you unlock</span>
+                </div>
+              ) : null}
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
-                <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">FILTERED ITEMS</div>
-                <div className="mt-1 text-lg font-semibold">{stats.totalItems}</div>
-              </div>
-              <div className="rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
-                <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">FILTERED COST</div>
-                <div className="mt-1 text-lg font-semibold">{formatMoney(stats.totalCost)}</div>
-              </div>
-              <div className="rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))', borderLeft: '3px solid #4CAF82' }}>
-                <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">FILTERED GAIN</div>
-                <div className="mt-1 text-lg font-semibold">
-                  {stats.totalGain >= 0 ? "+" : ""}
-                         {formatMoney(stats.totalGain)}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setWallMode((v) => !v)}
+                className={[
+                  "inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-[7px] px-3.5 py-2 text-sm font-semibold ring-1 transition",
+                  wallMode ? "bg-gold/20 text-gold ring-gold/40" : "bg-[color:var(--pill)] ring-[color:var(--border)]",
+                ].join(" ")}
+              >
+                <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
+                  <rect x="0" y="0" width="4" height="6" rx="0.8"/>
+                  <rect x="5" y="0" width="4" height="6" rx="0.8"/>
+                  <rect x="10" y="0" width="6" height="6" rx="0.8"/>
+                  <rect x="0" y="7" width="6" height="9" rx="0.8"/>
+                  <rect x="7" y="7" width="4" height="9" rx="0.8"/>
+                  <rect x="12" y="7" width="4" height="9" rx="0.8"/>
+                </svg>
+                Wall
+              </button>
+              <button type="button" onClick={() => void handleShareVault()} className="inline-flex min-h-[38px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3.5 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">
+                {shareMessage || "Share vault"}
+              </button>
+              <VaultExportButton />
+              <Link href="/vault/add" className="inline-flex min-h-[38px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3.5 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">Add</Link>
+              <Link href="/vault/quick" className="inline-flex min-h-[38px] items-center justify-center rounded-[7px] bg-[color:var(--pill-active-bg)] px-3.5 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]">Quick Add</Link>
+              <Link href="/vault/import" className="inline-flex min-h-[38px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3.5 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">Import</Link>
+              <Link href="/vault/sold" className="inline-flex min-h-[38px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3.5 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">Sold</Link>
+              <Link href="/vault/for-sale" className="inline-flex min-h-[38px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3.5 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">For Sale</Link>
+            </div>
+          </div>
+
+          <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex min-h-[42px] flex-1 items-center gap-2 rounded-[8px] border bg-[color:var(--theme-card)] px-3" style={{ borderColor: "var(--theme-border)" }}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="shrink-0 text-[color:var(--muted2)]"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search title, player, artist, serial #, notes..."
+                className="h-10 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[color:var(--muted2)]"
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <select value={sortMode} onChange={(event) => setSortMode(event.target.value as SortMode)} className="h-[42px] rounded-[8px] border bg-[color:var(--theme-card)] px-3 text-sm font-semibold outline-none" style={{ borderColor: "var(--theme-border)" }}>
+                <option value="newest">Newest</option>
+                <option value="value_desc">Value high-low</option>
+                <option value="value_asc">Value low-high</option>
+                <option value="gain_desc">Gain high-low</option>
+                <option value="gain_asc">Gain low-high</option>
+                <option value="title">Title</option>
+              </select>
+              <button type="button" onClick={() => setGradedOnly((value) => !value)} className={["h-[42px] rounded-[8px] px-3 text-sm font-semibold ring-1", gradedOnly ? "bg-gold/20 text-gold ring-gold/40" : "bg-[color:var(--pill)] ring-[color:var(--border)]"].join(" ")}>Graded</button>
+              <button type="button" onClick={() => setShowSoldItems((value) => !value)} className={["h-[42px] rounded-[8px] px-3 text-sm font-semibold ring-1", showSoldItems ? "bg-gold/20 text-gold ring-gold/40" : "bg-[color:var(--pill)] ring-[color:var(--border)]"].join(" ")}>Show sold</button>
+            </div>
+          </div>
+
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+            <button type="button" onClick={() => setUniverseFilter("ALL")} className={["shrink-0 rounded-[7px] px-4 py-2 text-sm font-semibold ring-1", universeFilter === "ALL" ? "bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)] ring-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)] ring-[color:var(--border)]"].join(" ")}>All</button>
+            {orderedUniverses.map((category) => (
+              <button
+                key={category.key}
+                type="button"
+                onClick={() => setUniverseFilter(category.key)}
+                className={["shrink-0 rounded-[7px] px-4 py-2 text-sm font-semibold ring-1", universeFilter === category.key ? "bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)] ring-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)] ring-[color:var(--border)]"].join(" ")}
+              >
+                {UNIVERSE_LABEL[category.key] ?? category.key} <span className="ml-1 text-[11px] opacity-65">{universeGroups[category.key]?.length ?? 0}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-[10px] border p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Total Value</div>
+              <div className="mt-3 text-3xl font-semibold text-[color:var(--data-color)]">{formatMoney(stats.totalValue)}</div>
+              <div className={stats.totalGain >= 0 ? "mt-1 text-sm text-emerald-300" : "mt-1 text-sm text-red-300"}>{stats.totalGain >= 0 ? "+" : ""}{formatMoney(stats.totalGain)} filtered gain</div>
+            </div>
+            <div className="rounded-[10px] border p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Items</div>
+              <div className="mt-3 text-3xl font-semibold">{stats.totalItems}</div>
+              <div className="mt-1 text-sm text-[color:var(--muted)]">Across {VAULT_UNIVERSES.length} universes</div>
+            </div>
+            <div className="rounded-[10px] border p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Insurance Ready</div>
+              <div className="mt-3 flex items-center gap-3">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full border-4 border-[color:var(--data-color)] text-sm font-semibold">{insuranceReadyPct}%</div>
+                <div>
+                  <div className="text-2xl font-semibold text-[color:var(--data-color)]">{insuranceReadyCount}</div>
+                  <div className="text-sm text-[color:var(--muted)]">of {items.length} items</div>
                 </div>
               </div>
-              <div className="rounded-[14px] p-2.5" style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}>
-                <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">FILTERED VALUE</div>
-                <div className="mt-1 text-lg font-semibold">{formatMoney(stats.totalValue)}</div>
-              </div>
+            </div>
+            <div className="rounded-[10px] border p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Needs Review</div>
+              <div className="mt-3 text-3xl font-semibold text-[color:var(--theme-gold)]">{needsReviewCount}</div>
+              <div className="mt-1 text-sm text-[color:var(--muted)]">Items missing info</div>
             </div>
           </div>
         </section>
@@ -1171,16 +1222,19 @@ export default function VaultPage() {
           <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} />
         ) : wallMode ? (
           <VaultWallView items={items} saleMap={saleMap} />
+        ) : filteredItems.length === 0 ? (
+          <VaultEmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearFilters} />
         ) : (
-          <section className="mt-3 max-w-3xl mx-auto w-full">
-            <div className="grid grid-cols-2 gap-4">
-              {orderedUniverses.map((category) => (
-                <UniverseOverviewCard
-                  key={category.key}
-                  category={category}
-                  items={universeGroups[category.key]}
-                  isFocus={focusKey === category.key}
-                  className=""
+          <section className="mt-4">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+              {filteredItems.map((item) => (
+                <VaultCard
+                  key={item.id}
+                  item={item}
+                  readiness={intelligenceMap[item.id]?.readiness ?? "Low"}
+                  sale={saleInfoForItem(item, saleMap)}
+                  onSaveItem={handleSaveItem}
+                  onDeleteItem={handleDeleteItem}
                 />
               ))}
             </div>
