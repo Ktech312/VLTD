@@ -15,6 +15,8 @@ import {
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import { getFollowerCount, isFollowing } from "@/lib/follows";
 import { FollowButton } from "@/components/social/FollowButton";
+import OnlineDot from "@/components/OnlineDot";
+import { fetchLastSeen } from "@/lib/presence";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 
@@ -317,6 +319,7 @@ export default function PublicVaultPage({
   const [viewerProfileId, setViewerProfileId] = useState("");
   const [followerCount, setFollowerCount] = useState(0);
   const [viewerFollowing, setViewerFollowing] = useState(false);
+  const [lastSeen, setLastSeen] = useState<string | null>(null);
 
   useEffect(() => {
     setViewerProfileId(getActiveProfileId());
@@ -329,12 +332,13 @@ export default function PublicVaultPage({
       setError("");
       try {
         const viewer = getActiveProfileId();
-        const [nextProfile, nextItems, nextGalleries, nextFollowerCount, nextViewerFollowing] = await Promise.all([
+        const [nextProfile, nextItems, nextGalleries, nextFollowerCount, nextViewerFollowing, nextLastSeen] = await Promise.all([
           fetchPublicProfile(profileId),
           fetchPublicVaultItems(profileId),
           fetchPublicGalleriesForProfile(profileId),
           getFollowerCount(profileId),
           viewer ? isFollowing(viewer, profileId) : Promise.resolve(false),
+          fetchLastSeen(profileId),
         ]);
         if (!active) return;
         setProfile(nextProfile);
@@ -342,6 +346,7 @@ export default function PublicVaultPage({
         setGalleries(nextGalleries);
         setFollowerCount(nextFollowerCount);
         setViewerFollowing(nextViewerFollowing);
+        setLastSeen(nextLastSeen);
       } catch (err) {
         if (!active) return;
         setError(err instanceof Error ? err.message : "Could not load public vault.");
@@ -450,16 +455,22 @@ export default function PublicVaultPage({
 
         {/* ── Hero ── */}
         <div className="py-8 flex flex-col items-center text-center gap-4">
-          <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[color:var(--pill)] text-5xl ring-2 ring-[color:var(--border)] shadow-lg">
-            {avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
-            ) : (
-              avatarEmoji
-            )}
+          <div className="relative h-20 w-20">
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[color:var(--pill)] text-5xl ring-2 ring-[color:var(--border)] shadow-lg">
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                avatarEmoji
+              )}
+            </div>
+            <OnlineDot lastSeenAt={lastSeen} size={16} className="absolute bottom-0.5 right-0.5 ring-2 ring-[color:var(--bg)]" />
           </div>
           <div>
             <h1 className="text-2xl font-bold">{displayName}</h1>
+            <div className="mt-1 flex justify-center">
+              <OnlineDot lastSeenAt={lastSeen} label size={8} />
+            </div>
             {bio && <p className="mt-2 max-w-md text-sm leading-relaxed text-[color:var(--muted)]">{bio}</p>}
           </div>
 
