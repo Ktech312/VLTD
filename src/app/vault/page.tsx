@@ -36,7 +36,7 @@ const SALES_KEY = "vltd_sales_history";
 const FOCUS_LS_KEY = "vltd_primary_focus";
 
 type SortMode = "newest" | "value_desc" | "value_asc" | "gain_desc" | "gain_asc" | "title";
-type ReadinessFilter = "all" | "high" | "medium" | "low";
+type ReadinessFilter = "all" | "high" | "moderate" | "low";
 type UniverseFilter = "ALL" | UniverseKey;
 type InlineField = "" | "value" | "cost";
 type SaleInfo = {
@@ -297,7 +297,7 @@ function getCreatedAtMs(item: VaultItem) {
 
 function readinessTone(readiness: string) {
   if (readiness === "High") return "bg-emerald-500/15 text-emerald-200 ring-emerald-400/20";
-  if (readiness === "Medium") return "bg-amber-500/15 text-amber-200 ring-amber-400/20";
+  if (readiness === "Moderate") return "bg-amber-500/15 text-amber-200 ring-amber-400/20";
   return "bg-white/10 text-[color:var(--theme-text-secondary)] ring-[color:var(--theme-border)]";
 }
 
@@ -329,6 +329,94 @@ function effectiveMarketValue(item: VaultItem) {
     return item.currentValue;
   }
   return 0;
+}
+
+function buildValueTrend(items: VaultItem[]) {
+  const total = items.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
+  if (!items.length) return [0, 0];
+
+  const dated = items
+    .map((item) => ({
+      value: effectiveMarketValue(item),
+      date: Number(item.createdAt ?? item.valueUpdatedAt ?? item.priceUpdatedAt ?? 0),
+    }))
+    .filter((entry) => Number.isFinite(entry.date) && entry.date > 0)
+    .sort((a, b) => a.date - b.date);
+
+  const undatedTotal = total - dated.reduce((sum, entry) => sum + entry.value, 0);
+  if (!dated.length) return [0, total];
+
+  const points = [Math.max(0, undatedTotal)];
+  let running = undatedTotal;
+  for (const entry of dated) {
+    running += entry.value;
+    points.push(running);
+  }
+
+  return points.length > 1 ? points : [0, total];
+}
+
+function MiniValueSparkline({ values }: { values: number[] }) {
+  const width = 170;
+  const height = 62;
+  const pad = 5;
+  const usableWidth = width - pad * 2;
+  const usableHeight = height - pad * 2;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = Math.max(1, max - min);
+  const step = values.length > 1 ? usableWidth / (values.length - 1) : usableWidth;
+  const points = values.map((value, index) => {
+    const x = pad + index * step;
+    const y = pad + usableHeight - ((value - min) / span) * usableHeight;
+    return `${x.toFixed(2)},${y.toFixed(2)}`;
+  });
+  const area = `${pad},${height - pad} ${points.join(" ")} ${width - pad},${height - pad}`;
+
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} className="h-16 w-full" aria-hidden="true">
+      <defs>
+        <linearGradient id="vaultValueLine" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0%" stopColor="rgba(82,214,244,0.25)" />
+          <stop offset="100%" stopColor="rgba(82,214,244,0.95)" />
+        </linearGradient>
+        <linearGradient id="vaultValueArea" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor="rgba(82,214,244,0.20)" />
+          <stop offset="100%" stopColor="rgba(82,214,244,0)" />
+        </linearGradient>
+      </defs>
+      <polygon points={area} fill="url(#vaultValueArea)" />
+      <polyline points={points.join(" ")} fill="none" stroke="url(#vaultValueLine)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={points.at(-1)?.split(",")[0] ?? width - pad} cy={points.at(-1)?.split(",")[1] ?? pad} r="2.4" fill="rgba(82,214,244,0.95)" />
+    </svg>
+  );
+}
+
+function PercentDonut({ percent }: { percent: number }) {
+  const size = 58;
+  const radius = 23;
+  const circumference = 2 * Math.PI * radius;
+  const clamped = Math.max(0, Math.min(100, percent));
+  const dash = (clamped / 100) * circumference;
+
+  return (
+    <div className="relative flex h-14 w-14 items-center justify-center">
+      <svg viewBox={`0 0 ${size} ${size}`} className="absolute inset-0 h-full w-full -rotate-90" aria-hidden="true">
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(82,214,244,0.16)" strokeWidth="5" />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="var(--data-color)"
+          strokeWidth="5"
+          strokeDasharray={`${dash} ${circumference - dash}`}
+          strokeLinecap="round"
+        />
+      </svg>
+      <span className="relative text-sm font-semibold">{clamped}%</span>
+    </div>
+  );
 }
 
 function saleInfoForItem(item: VaultItem, saleMap: Record<string, SaleInfo | undefined>): SaleInfo | null {
@@ -992,28 +1080,29 @@ export default function VaultPage() {
     const totalCostValue = filteredItems.reduce((sum, item) => sum + totalCost(item), 0);
     const totalValue = filteredItems.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
     const totalGain = totalValue - totalCostValue;
-    return { totalItems, totalCost: totalCostValue, totalValue, totalGain };
-  }, [filteredItems]);
-
-  const needsReviewCount = useMemo(
-    () =>
-      items.filter((item) => {
-        const intelligence = intelligenceMap[item.id];
-        return (intelligence?.readiness ?? "Low") !== "High";
-      }).length,
-    [items, intelligenceMap]
-  );
-
-  const insuranceReadyCount = useMemo(
-    () =>
-      items.filter((item) => {
-        const intelligence = intelligenceMap[item.id];
-        return (intelligence?.readiness ?? "Low") === "High";
-      }).length,
-    [items, intelligenceMap]
-  );
-
-  const insuranceReadyPct = items.length ? Math.round((insuranceReadyCount / items.length) * 100) : 0;
+    const valueTrend = buildValueTrend(filteredItems);
+    const universeCount = new Set(filteredItems.map((item) => universeForItem(item))).size;
+    const insuranceReadyCount = filteredItems.filter((item) => {
+      const intelligence = intelligenceMap[item.id];
+      return (intelligence?.readiness ?? "Low") === "High";
+    }).length;
+    const needsReviewCount = filteredItems.filter((item) => {
+      const intelligence = intelligenceMap[item.id];
+      return (intelligence?.readiness ?? "Low") !== "High";
+    }).length;
+    const insuranceReadyPct = totalItems ? Math.round((insuranceReadyCount / totalItems) * 100) : 0;
+    return {
+      totalItems,
+      totalCost: totalCostValue,
+      totalValue,
+      totalGain,
+      valueTrend,
+      universeCount,
+      insuranceReadyCount,
+      insuranceReadyPct,
+      needsReviewCount,
+    };
+  }, [filteredItems, intelligenceMap]);
 
   const hasActiveFilters =
     query.trim().length > 0 ||
@@ -1233,31 +1322,7 @@ export default function VaultPage() {
             </div>
           </div>
 
-          <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex min-h-[42px] flex-1 items-center gap-2 rounded-[8px] border bg-[color:var(--theme-card)] px-3" style={{ borderColor: "var(--theme-border)" }}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="shrink-0 text-[color:var(--muted2)]"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search title, player, artist, serial #, notes..."
-                className="h-10 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[color:var(--muted2)]"
-              />
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <select value={sortMode} onChange={(event) => setSortMode(event.target.value as SortMode)} className="h-[42px] rounded-[8px] border bg-[color:var(--theme-card)] px-3 text-sm font-semibold outline-none" style={{ borderColor: "var(--theme-border)" }}>
-                <option value="newest">Newest</option>
-                <option value="value_desc">Value high-low</option>
-                <option value="value_asc">Value low-high</option>
-                <option value="gain_desc">Gain high-low</option>
-                <option value="gain_asc">Gain low-high</option>
-                <option value="title">Title</option>
-              </select>
-              <button type="button" onClick={() => setGradedOnly((value) => !value)} className={["h-[42px] rounded-[8px] px-3 text-sm font-semibold ring-1", gradedOnly ? "bg-gold/20 text-gold ring-gold/40" : "bg-[color:var(--pill)] ring-[color:var(--border)]"].join(" ")}>Graded</button>
-              <button type="button" onClick={() => setShowSoldItems((value) => !value)} className={["h-[42px] rounded-[8px] px-3 text-sm font-semibold ring-1", showSoldItems ? "bg-gold/20 text-gold ring-gold/40" : "bg-[color:var(--pill)] ring-[color:var(--border)]"].join(" ")}>Show sold</button>
-            </div>
-          </div>
-
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+          <div className="mt-5 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
             <button type="button" onClick={() => setUniverseFilter("ALL")} className={["shrink-0 rounded-[7px] px-4 py-2 text-sm font-semibold ring-1", universeFilter === "ALL" ? "bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)] ring-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)] ring-[color:var(--border)]"].join(" ")}>All</button>
             {orderedUniverses.map((category) => (
               <button
@@ -1278,27 +1343,32 @@ export default function VaultPage() {
           <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-[10px] border p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
               <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Total Value</div>
-              <div className="mt-3 text-3xl font-semibold text-[color:var(--data-color)]">{formatMoney(stats.totalValue)}</div>
-              <div className={stats.totalGain >= 0 ? "mt-1 text-sm text-emerald-300" : "mt-1 text-sm text-red-300"}>{stats.totalGain >= 0 ? "+" : ""}{formatMoney(stats.totalGain)} filtered gain</div>
+              <div className="mt-3 grid grid-cols-[minmax(0,1fr)_minmax(96px,42%)] items-end gap-3">
+                <div>
+                  <div className="text-3xl font-semibold text-[color:var(--data-color)]">{formatMoney(stats.totalValue)}</div>
+                  <div className={stats.totalGain >= 0 ? "mt-1 text-sm text-emerald-300" : "mt-1 text-sm text-red-300"}>{stats.totalGain >= 0 ? "+" : ""}{formatMoney(stats.totalGain)} filtered gain</div>
+                </div>
+                <MiniValueSparkline values={stats.valueTrend} />
+              </div>
             </div>
             <div className="rounded-[10px] border p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
               <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Items</div>
               <div className="mt-3 text-3xl font-semibold">{stats.totalItems}</div>
-              <div className="mt-1 text-sm text-[color:var(--muted)]">Across {VAULT_UNIVERSES.length} universes</div>
+              <div className="mt-1 text-sm text-[color:var(--muted)]">Across {stats.universeCount} {stats.universeCount === 1 ? "universe" : "universes"}</div>
             </div>
             <div className="rounded-[10px] border p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
               <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Insurance Ready</div>
               <div className="mt-3 flex items-center gap-3">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full border-4 border-[color:var(--data-color)] text-sm font-semibold">{insuranceReadyPct}%</div>
+                <PercentDonut percent={stats.insuranceReadyPct} />
                 <div>
-                  <div className="text-2xl font-semibold text-[color:var(--data-color)]">{insuranceReadyCount}</div>
-                  <div className="text-sm text-[color:var(--muted)]">of {items.length} items</div>
+                  <div className="text-2xl font-semibold text-[color:var(--data-color)]">{stats.insuranceReadyCount}</div>
+                  <div className="text-sm text-[color:var(--muted)]">of {stats.totalItems} items</div>
                 </div>
               </div>
             </div>
             <div className="rounded-[10px] border p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
               <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Needs Review</div>
-              <div className="mt-3 text-3xl font-semibold text-[color:var(--theme-gold)]">{needsReviewCount}</div>
+              <div className="mt-3 text-3xl font-semibold text-[color:var(--theme-gold)]">{stats.needsReviewCount}</div>
               <div className="mt-1 text-sm text-[color:var(--muted)]">Items missing info</div>
             </div>
           </div>
