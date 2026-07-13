@@ -872,6 +872,175 @@ function UniverseOverviewCard({
   );
 }
 
+function documentationStatus(item: VaultItem) {
+  const photos = item.images?.length ?? (item.imageFrontUrl || item.imageBackUrl ? 1 : 0);
+  const rows = [
+    { label: `Photos (${photos})`, complete: photos > 0 },
+    { label: "Cert / Grade", complete: Boolean(item.grade || item.certNumber) },
+    { label: "Condition Notes", complete: Boolean(item.condition || item.conditionReason || item.notes) },
+    { label: "Purchase Info", complete: totalCost(item) > 0 || Boolean(item.purchaseSource || item.purchaseLocation || item.orderNumber) },
+    { label: "Insurance Document", complete: Boolean(item.orderNumber || item.storageLocation), warn: true },
+  ];
+  const completeCount = rows.filter((row) => row.complete).length;
+  const percent = Math.round((completeCount / rows.length) * 100);
+  return { rows, percent };
+}
+
+function VaultSelectionDrawer({
+  item,
+  readiness,
+  onClose,
+}: {
+  item: VaultItem;
+  readiness: string;
+  onClose: () => void;
+}) {
+  const image = useResolvedVaultImage(item);
+  const value = effectiveMarketValue(item);
+  const paid = totalCost(item);
+  const gain = value - paid;
+  const gainPct = paid > 0 ? (gain / paid) * 100 : 0;
+  const low = Number(item.valueLow ?? item.lastCompValue ?? (value > 0 ? value * 0.85 : 0));
+  const median = Number(item.valueMedian ?? value);
+  const high = Number(item.valueHigh ?? (value > 0 ? value * 1.15 : 0));
+  const docs = documentationStatus(item);
+  const detailHref = `/vault/item/${item.id}`;
+
+  function exportItemData() {
+    const blob = new Blob([JSON.stringify(item, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${String(item.title || "vault-item").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() || "vault-item"}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <section className="sticky bottom-3 z-30 mt-5 rounded-[14px] border border-[color:var(--theme-gold-border)] bg-[rgba(3,11,14,0.94)] p-3 shadow-[0_-18px_60px_rgba(0,0,0,0.46)] backdrop-blur-xl">
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close item details"
+        className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full text-xl leading-none text-[color:var(--muted)] transition hover:text-[color:var(--fg)]"
+      >
+        ×
+      </button>
+
+      <div className="grid gap-4 pr-8 lg:grid-cols-[360px_1fr_1fr_1fr]">
+        <div className="flex min-w-0 gap-4">
+          <Link href={detailHref} className="relative h-[150px] w-[112px] shrink-0 overflow-hidden rounded-[8px] border border-[color:var(--theme-gold-border)] bg-black/30">
+            {image ? (
+              <ProgressiveImage src={image} alt={item.title} className="h-full w-full" imageClassName="object-contain object-center" draggable={false} />
+            ) : (
+              <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/28">
+                <CameraIcon className="h-5 w-5" />
+                No photo
+              </div>
+            )}
+          </Link>
+
+          <div className="min-w-0 py-1">
+            <div className="flex items-center gap-2">
+              <Link href={detailHref} className="line-clamp-1 text-xl font-semibold leading-tight text-[color:var(--fg)]">
+                {item.title}
+              </Link>
+              <span className="text-2xl leading-none text-[color:var(--theme-gold)]">☆</span>
+              <span className="text-lg leading-none text-[color:var(--muted)]">⋮</span>
+            </div>
+            <div className="mt-1 line-clamp-1 text-sm text-[color:var(--muted)]">{itemMeta(item)}</div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {item.grade ? <span className="rounded-[6px] px-2 py-1 text-xs ring-1 ring-[color:var(--border)]">{item.grade}</span> : null}
+              {item.variant ? <span className="rounded-[6px] px-2 py-1 text-xs ring-1 ring-[color:var(--border)]">{item.variant}</span> : null}
+              <span className="rounded-[6px] px-2 py-1 text-xs text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)]">{item.isPublic ? "Public" : "Private"}</span>
+            </div>
+            <div className="mt-5 text-2xl font-bold text-[color:var(--data-color)]">{formatMoney(value)}</div>
+            <div className="mt-1 text-xs" style={{ color: gain >= 0 ? "var(--color-gain, #4CAF82)" : "var(--color-loss, #E05252)" }}>
+              {paid > 0 ? `${gain >= 0 ? "+" : ""}${gainPct.toFixed(1)}% this year` : "Add cost basis for return"}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[12px] border border-[color:var(--border)] p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--theme-gold)]">Value Evidence</div>
+          <div className="mt-5 grid grid-cols-3 gap-3 text-sm">
+            <div>
+              <div className="text-[color:var(--muted)]">Low</div>
+              <div className="mt-2 text-base font-semibold">{low > 0 ? formatMoney(low) : "—"}</div>
+            </div>
+            <div>
+              <div className="text-[color:var(--muted)]">Median</div>
+              <div className="mt-2 text-xl font-bold text-[color:var(--data-color)]">{median > 0 ? formatMoney(median) : "—"}</div>
+            </div>
+            <div>
+              <div className="text-[color:var(--muted)]">High</div>
+              <div className="mt-2 text-base font-semibold">{high > 0 ? formatMoney(high) : "—"}</div>
+            </div>
+          </div>
+          <div className="mt-5 text-xs text-[color:var(--muted)]">
+            Confidence: {item.priceConfidence || readiness} · {item.comparables?.length ?? 0} comps
+          </div>
+          <Link href={detailHref} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--theme-gold)]">
+            View details <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+
+        <div className="rounded-[12px] border border-[color:var(--border)] p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--theme-gold)]">Documentation</div>
+          <div className="mt-4 flex items-center gap-4">
+            <PercentDonut percent={docs.percent} />
+            <div className="text-sm text-[color:var(--muted)]">
+              <div className="text-lg font-bold text-[color:var(--fg)]">{docs.percent}%</div>
+              Complete
+            </div>
+          </div>
+          <div className="mt-4 space-y-1.5 text-sm">
+            {docs.rows.map((row) => (
+              <div key={row.label} className="flex items-center justify-between gap-3">
+                <span className="inline-flex min-w-0 items-center gap-2">
+                  <span className={["inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px]", row.complete ? "bg-emerald-500/80 text-black" : row.warn ? "bg-amber-500/20 text-amber-300 ring-1 ring-amber-400/50" : "bg-white/10 text-white/50"].join(" ")}>
+                    {row.complete ? "✓" : "!"}
+                  </span>
+                  <span className="truncate">{row.label}</span>
+                </span>
+                {!row.complete && row.warn ? <span className="text-xs text-amber-300">Missing</span> : null}
+              </div>
+            ))}
+          </div>
+          <Link href={detailHref} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--theme-gold)]">
+            View all docs <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+
+        <div className="rounded-[12px] border border-[color:var(--border)] p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--theme-gold)]">Share / Sell</div>
+          <div className="mt-4 flex items-center justify-between gap-3 text-sm">
+            <span className="inline-flex items-center gap-2">
+              <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/20 text-[10px] text-emerald-300 ring-1 ring-emerald-400/50">↗</span>
+              Public Gallery
+            </span>
+            <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-200">{item.isPublic ? "On" : "Off"}</span>
+          </div>
+          <Link href={detailHref} className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--theme-gold)]">
+            View public page <span aria-hidden="true">↗</span>
+          </Link>
+          <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            <Link href={detailHref} className="inline-flex min-h-[38px] items-center justify-center gap-2 rounded-[7px] px-3 text-sm font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--theme-gold-border)]">
+              Create Listing
+            </Link>
+            <button type="button" onClick={exportItemData} className="inline-flex min-h-[38px] items-center justify-center gap-2 rounded-[7px] px-3 text-sm font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--theme-gold-border)]">
+              Export Data
+            </button>
+          </div>
+          <Link href={detailHref} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--theme-gold)]">
+            More actions <span aria-hidden="true">⌄</span>
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function VaultPage() {
   const [focusKey] = useState<UniverseKey | null>(() => readFocusUniverseKey());
   const [items, setItems] = useState<VaultItem[]>([]);
@@ -897,6 +1066,8 @@ export default function VaultPage() {
   const [deleteConfirmPending, setDeleteConfirmPending] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showUniverseMenu, setShowUniverseMenu] = useState(false);
+  const [selectedDetailId, setSelectedDetailId] = useState<string | null>(null);
+  const [isDetailDrawerDismissed, setIsDetailDrawerDismissed] = useState(false);
   const [visibleUniverseKeys, setVisibleUniverseKeys] = useState<UniverseKey[] | null>(() => {
     if (typeof window === "undefined") return null;
     try {
@@ -1045,6 +1216,18 @@ export default function VaultPage() {
     return next;
   }, [items, query, universeFilter, gradedOnly, uncategorizedOnly, sortMode, readinessFilter, intelligenceMap, sales, showSoldItems]);
 
+  useEffect(() => {
+    if (filteredItems.length === 0) {
+      setSelectedDetailId(null);
+      return;
+    }
+
+    if (!selectedDetailId || !filteredItems.some((item) => String(item.id) === String(selectedDetailId))) {
+      setSelectedDetailId(filteredItems[0].id);
+      setIsDetailDrawerDismissed(false);
+    }
+  }, [filteredItems, selectedDetailId]);
+
   const saleMap = useMemo(
     () => Object.fromEntries(sales.map((sale) => [String(sale.id), sale])),
     [sales]
@@ -1173,6 +1356,15 @@ export default function VaultPage() {
     uncategorizedOnly ||
     showSoldItems ||
     sortMode !== "newest";
+
+  const selectedDetailItem =
+    filteredItems.find((item) => String(item.id) === String(selectedDetailId)) ?? filteredItems[0] ?? null;
+  const shouldShowSelectionDrawer =
+    Boolean(selectedDetailItem) &&
+    !isDetailDrawerDismissed &&
+    vaultViewMode !== "wall" &&
+    vaultViewMode !== "flip" &&
+    filteredItems.length > 0;
 
   async function runMigration() {
     setIsMigrating(true);
@@ -1727,7 +1919,18 @@ export default function VaultPage() {
               {filteredItems.map((item) => {
                 const isSelected = selectedIds.has(item.id);
                 return (
-                  <div key={item.id} className="relative">
+                  <div
+                    key={item.id}
+                    className="relative"
+                    onMouseEnter={() => {
+                      setSelectedDetailId(item.id);
+                      setIsDetailDrawerDismissed(false);
+                    }}
+                    onFocusCapture={() => {
+                      setSelectedDetailId(item.id);
+                      setIsDetailDrawerDismissed(false);
+                    }}
+                  >
                     {selectMode && (
                       <button
                         type="button"
@@ -1759,6 +1962,13 @@ export default function VaultPage() {
                 );
               })}
             </div>
+            {shouldShowSelectionDrawer && selectedDetailItem ? (
+              <VaultSelectionDrawer
+                item={selectedDetailItem}
+                readiness={intelligenceMap[selectedDetailItem.id]?.readiness ?? "Low"}
+                onClose={() => setIsDetailDrawerDismissed(true)}
+              />
+            ) : null}
           </section>
         )}
       </div>
