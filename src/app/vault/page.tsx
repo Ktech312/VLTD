@@ -35,6 +35,7 @@ import { getPublicVaultUrl, syncPublicProfile } from "@/lib/publicProfile";
 const ACTIVE_PROFILE_EVENT = "vltd:active-profile";
 const SALES_KEY = "vltd_sales_history";
 const FOCUS_LS_KEY = "vltd_primary_focus";
+const VISIBLE_UNIVERSE_CHIPS_LS_KEY = "vltd_visible_universe_chips";
 
 type SortMode = "newest" | "value_desc" | "value_asc" | "gain_desc" | "gain_asc" | "title";
 type ReadinessFilter = "all" | "high" | "moderate" | "low";
@@ -892,6 +893,16 @@ export default function VaultPage() {
   const [moveTargetSubcategory, setMoveTargetSubcategory] = useState<string>("");
   const [deleteConfirmPending, setDeleteConfirmPending] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showUniverseMenu, setShowUniverseMenu] = useState(false);
+  const [visibleUniverseKeys, setVisibleUniverseKeys] = useState<UniverseKey[] | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const parsed: unknown = JSON.parse(window.localStorage.getItem(VISIBLE_UNIVERSE_CHIPS_LS_KEY) || "null");
+      return Array.isArray(parsed) ? parsed.filter(isUniverseKey) : null;
+    } catch {
+      return null;
+    }
+  });
 
   function refresh() {
     setItems(loadItems());
@@ -1094,6 +1105,33 @@ export default function VaultPage() {
     arr.unshift(focusEntry);
     return arr;
   }, [focusKey]);
+
+  const defaultVisibleUniverseKeys = useMemo(() => {
+    const withItems = orderedUniverses
+      .filter((category) => (universeGroups[category.key]?.length ?? 0) > 0)
+      .map((category) => category.key);
+    if (focusKey) return Array.from(new Set([focusKey, ...withItems]));
+    return withItems.length ? withItems : orderedUniverses.map((category) => category.key);
+  }, [focusKey, orderedUniverses, universeGroups]);
+
+  const visibleUniverseKeySet = useMemo(
+    () => new Set(visibleUniverseKeys ?? defaultVisibleUniverseKeys),
+    [defaultVisibleUniverseKeys, visibleUniverseKeys]
+  );
+
+  const visibleUniverseChips = useMemo(
+    () => orderedUniverses.filter((category) => visibleUniverseKeySet.has(category.key)),
+    [orderedUniverses, visibleUniverseKeySet]
+  );
+
+  function updateVisibleUniverseKeys(updater: (current: UniverseKey[]) => UniverseKey[]) {
+    setVisibleUniverseKeys((current) => {
+      const base = current ?? defaultVisibleUniverseKeys;
+      const next = Array.from(new Set(updater(base))).filter(isUniverseKey);
+      window.localStorage.setItem(VISIBLE_UNIVERSE_CHIPS_LS_KEY, JSON.stringify(next));
+      return next;
+    });
+  }
 
   const stats = useMemo(() => {
     const totalItems = filteredItems.length;
@@ -1324,16 +1362,75 @@ export default function VaultPage() {
             </div>
           </div>
 
-          <div className="mt-5 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-            <button type="button" onClick={() => setUniverseFilter("ALL")} className={["shrink-0 rounded-[7px] px-4 py-2 text-sm font-semibold ring-1", universeFilter === "ALL" ? "bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)] ring-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)] ring-[color:var(--border)]"].join(" ")}>All</button>
-            {orderedUniverses.map((category) => (
+          <div className="mt-5 flex flex-wrap gap-2 pb-1">
+            <div className="relative shrink-0">
+              <div className="inline-flex overflow-hidden rounded-[8px] ring-1 ring-[color:var(--border)]">
+                <button
+                  type="button"
+                  onClick={() => setUniverseFilter("ALL")}
+                  className={["min-h-[38px] px-4 text-sm font-semibold", universeFilter === "ALL" ? "bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)]" : "bg-[color:var(--pill)]"].join(" ")}
+                >
+                  All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowUniverseMenu((value) => !value)}
+                  className="min-h-[38px] border-l px-3 text-sm font-semibold"
+                  style={{ background: "var(--pill)", borderColor: "var(--border)", color: "var(--fg)" }}
+                  aria-expanded={showUniverseMenu}
+                >
+                  Show v
+                </button>
+              </div>
+
+              {showUniverseMenu ? (
+                <div
+                  className="absolute left-0 top-[calc(100%+8px)] z-50 w-72 rounded-[8px] p-2 shadow-2xl"
+                  style={{
+                    background: "var(--theme-card)",
+                    border: "1px solid var(--theme-border)",
+                  }}
+                >
+                  <div className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">
+                    Show Universe Titles
+                  </div>
+                  <div className="max-h-72 space-y-1 overflow-y-auto pr-1">
+                    {orderedUniverses.map((category) => {
+                      const checked = visibleUniverseKeySet.has(category.key);
+                      return (
+                        <label
+                          key={category.key}
+                          className="flex min-h-[34px] cursor-pointer items-center gap-2 rounded-[7px] px-2 text-sm"
+                          style={{ color: "var(--fg)" }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => {
+                              updateVisibleUniverseKeys((current) =>
+                                checked
+                                  ? current.filter((key) => key !== category.key)
+                                  : [...current, category.key]
+                              );
+                            }}
+                          />
+                          <span className="min-w-0 flex-1 truncate">{UNIVERSE_LABEL[category.key] ?? category.key}</span>
+                          <span className="text-[11px] opacity-65">{universeGroups[category.key]?.length ?? 0}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+            {visibleUniverseChips.map((category) => (
               <button
                 key={category.key}
                 type="button"
                 onClick={() => setUniverseFilter(category.key)}
                 className={["inline-flex shrink-0 items-center gap-2 rounded-[7px] py-2 pl-2 pr-4 text-sm font-semibold ring-1", universeFilter === category.key ? "bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)] ring-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)] ring-[color:var(--border)]"].join(" ")}
               >
-                <span className="h-7 w-7 overflow-hidden rounded-[5px] border bg-[color:var(--theme-elevated)]" style={{ borderColor: "var(--theme-gold-border, var(--theme-border))" }}>
+                <span className="h-8 w-8 overflow-hidden rounded-[6px] border bg-[color:var(--theme-elevated)]" style={{ borderColor: "var(--theme-gold-border, var(--theme-border))" }}>
                   <ProgressiveImage src={category.thumbnailSrc} alt="" className="h-full w-full" imageClassName="object-cover object-center" draggable={false} />
                 </span>
                 <span>{UNIVERSE_LABEL[category.key] ?? category.key}</span>
@@ -1408,13 +1505,13 @@ export default function VaultPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search..."
-                className="min-h-[40px] w-[180px] rounded-xl bg-[color:var(--input)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                className="min-h-[38px] w-[180px] rounded-[8px] bg-[color:var(--input)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
                 style={{ borderColor: "var(--theme-border)" }}
               />
               <select
                 value={universeFilter}
                 onChange={(e) => setUniverseFilter(e.target.value as UniverseFilter)}
-                className="min-h-[40px] w-auto rounded-xl bg-[color:var(--input)] px-3 py-2 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+                className="min-h-[38px] w-auto rounded-[8px] bg-[color:var(--input)] px-3 py-2 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
               >
                 <option value="ALL">All Universes</option>
                 {VAULT_UNIVERSES.map((category) => (
@@ -1426,7 +1523,7 @@ export default function VaultPage() {
               <select
                 value={sortMode}
                 onChange={(e) => setSortMode(e.target.value as SortMode)}
-                className="min-h-[40px] w-auto rounded-xl bg-[color:var(--input)] px-3 py-2 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+                className="min-h-[38px] w-auto rounded-[8px] bg-[color:var(--input)] px-3 py-2 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
               >
                 <option value="newest">Newest</option>
                 <option value="value_desc">Value ↓</option>
