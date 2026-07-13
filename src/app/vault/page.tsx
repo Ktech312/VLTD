@@ -922,14 +922,15 @@ function VaultSelectionDrawer({
         type="button"
         onClick={onClose}
         aria-label="Close item details"
-        className="absolute right-2.5 top-2.5 inline-flex h-7 w-7 items-center justify-center rounded-full text-lg leading-none text-[#D6A84F] transition hover:text-[#F0EAD6]"
+        className="absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-full text-base leading-none transition"
+        style={{ color: "#D6A84F" }}
       >
         ×
       </button>
 
-      <div className="grid overflow-hidden rounded-[12px] border border-[color:var(--border)] pr-7 lg:grid-cols-[330px_1fr_1.15fr_1fr]">
-        <div className="flex min-w-0 gap-3 p-2.5">
-          <Link href={detailHref} className="relative h-[116px] w-[86px] shrink-0 overflow-hidden rounded-[8px] border border-[color:var(--theme-gold-border)] bg-black/30">
+      <div className="grid overflow-hidden rounded-[12px] border border-[color:var(--border)] pr-6 lg:grid-cols-[300px_210px_245px_minmax(210px,1fr)]">
+        <div className="flex min-w-0 gap-3 px-2.5 py-2">
+          <Link href={detailHref} className="relative h-[112px] w-[78px] shrink-0 overflow-hidden rounded-[8px] border border-[color:var(--theme-gold-border)] bg-black/30">
             {image ? (
               <ProgressiveImage src={image} alt={item.title} className="h-full w-full" imageClassName="object-contain object-center" draggable={false} />
             ) : (
@@ -940,100 +941,100 @@ function VaultSelectionDrawer({
             )}
           </Link>
 
-          <div className="min-w-0 py-0.5">
+          <div className="min-w-0 py-0">
             <div className="flex items-center gap-2">
-              <Link href={detailHref} className="line-clamp-1 text-[18px] font-semibold leading-tight text-[#F0EAD6]">
+              <Link href={detailHref} className="line-clamp-1 text-[18px] font-semibold leading-tight" style={{ color: "#F0EAD6" }}>
                 {item.title}
               </Link>
-              <span className="text-xl leading-none text-[#D6A84F]">☆</span>
-              <span className="text-base leading-none text-[#8E835F]">⋮</span>
+              <span className="text-lg leading-none" style={{ color: "#D6A84F" }}>☆</span>
+              <span className="text-sm leading-none" style={{ color: "#8E835F" }}>⋮</span>
             </div>
-            <div className="mt-1 line-clamp-1 text-[13px] text-[#B9AE86]">{itemMeta(item)}</div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {item.grade ? <span className="rounded-[5px] px-2 py-0.5 text-[11px] text-[#F0EAD6] ring-1 ring-[color:var(--border)]">{item.grade}</span> : null}
-              {item.variant ? <span className="rounded-[5px] px-2 py-0.5 text-[11px] text-[#F0EAD6] ring-1 ring-[color:var(--border)]">{item.variant}</span> : null}
-              <span className="rounded-[5px] px-2 py-0.5 text-[11px] text-[#D6A84F] ring-1 ring-[color:var(--border)]">{item.isPublic ? "Public" : "Private"}</span>
+            <div className="mt-0.5 line-clamp-1 text-[12px]" style={{ color: "#B9AE86" }}>{itemMeta(item)}</div>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {item.grade ? <span className="rounded-[5px] px-1.5 py-0.5 text-[10px] ring-1 ring-[color:var(--border)]" style={{ color: "#F0EAD6" }}>{item.grade}</span> : null}
+              {item.variant ? <span className="rounded-[5px] px-1.5 py-0.5 text-[10px] ring-1 ring-[color:var(--border)]" style={{ color: "#F0EAD6" }}>{item.variant}</span> : null}
+              <span className="rounded-[5px] px-1.5 py-0.5 text-[10px] ring-1 ring-[color:var(--border)]" style={{ color: "#D6A84F" }}>{item.isPublic ? "Public" : "Private"}</span>
             </div>
-            <div className="mt-3 text-[22px] font-bold leading-none text-[#44D9F2]">{formatMoney(value)}</div>
-            <div className="mt-1 text-xs" style={{ color: gain >= 0 ? "var(--color-gain, #4CAF82)" : "var(--color-loss, #E05252)" }}>
+            <div className="mt-3 text-[21px] font-bold leading-none" style={{ color: "#44D9F2" }}>{formatMoney(value)}</div>
+            <div className="mt-1 text-[11px]" style={{ color: gain >= 0 ? "var(--color-gain, #4CAF82)" : "var(--color-loss, #E05252)" }}>
               {paid > 0 ? `${gain >= 0 ? "+" : ""}${gainPct.toFixed(1)}% this year` : "Add cost basis for return"}
             </div>
           </div>
         </div>
 
-        <div className="border-l border-[color:var(--border)] p-2.5">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#D6A84F]">Value Evidence</div>
-          <div className="mt-3 grid grid-cols-3 gap-3 text-[12px]">
+        <div className="border-l border-[color:var(--border)] px-3 py-2">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: "#D6A84F" }}>Value Evidence</div>
+          <div className="mt-3 grid grid-cols-3 gap-2 text-[11px]">
             <div>
-              <div className="text-[#9E946E]">Low</div>
-              <div className="mt-2 text-[13px] font-semibold text-[#F0EAD6]">{low > 0 ? formatMoney(low) : "—"}</div>
+              <div style={{ color: "#9E946E" }}>Low</div>
+              <div className="mt-2 text-[12px] font-semibold" style={{ color: "#F0EAD6" }}>{low > 0 ? formatMoney(low) : "—"}</div>
             </div>
             <div>
-              <div className="text-[#9E946E]">Median</div>
-              <div className="mt-2 text-[19px] font-bold leading-none text-[#44D9F2]">{median > 0 ? formatMoney(median) : "—"}</div>
+              <div style={{ color: "#9E946E" }}>Median</div>
+              <div className="mt-2 text-[18px] font-bold leading-none" style={{ color: "#44D9F2" }}>{median > 0 ? formatMoney(median) : "—"}</div>
             </div>
             <div>
-              <div className="text-[#9E946E]">High</div>
-              <div className="mt-2 text-[13px] font-semibold text-[#F0EAD6]">{high > 0 ? formatMoney(high) : "—"}</div>
+              <div style={{ color: "#9E946E" }}>High</div>
+              <div className="mt-2 text-[12px] font-semibold" style={{ color: "#F0EAD6" }}>{high > 0 ? formatMoney(high) : "—"}</div>
             </div>
           </div>
-          <div className="mt-3 text-[11px] text-[#9E946E]">
+          <div className="mt-3 text-[10px]" style={{ color: "#9E946E" }}>
             Confidence: {item.priceConfidence || readiness} · {item.comparables?.length ?? 0} comps
           </div>
-          <Link href={detailHref} className="mt-3 inline-flex items-center gap-2 text-[12px] font-semibold text-[#D6A84F]">
+          <Link href={detailHref} className="mt-3 inline-flex items-center gap-2 text-[11px] font-semibold" style={{ color: "#D6A84F" }}>
             View details <span aria-hidden="true">→</span>
           </Link>
         </div>
 
-        <div className="border-l border-[color:var(--border)] p-2.5">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#D6A84F]">Documentation</div>
-          <div className="mt-3 grid grid-cols-[72px_minmax(0,1fr)] gap-3">
-            <div className="flex flex-col items-center gap-1">
+        <div className="border-l border-[color:var(--border)] px-3 py-2">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: "#D6A84F" }}>Documentation</div>
+          <div className="mt-2.5 grid grid-cols-[62px_minmax(0,1fr)] gap-3">
+            <div className="flex flex-col items-center gap-0.5">
               <PercentDonut percent={docs.percent} />
-              <div className="text-[11px] text-[#9E946E]">Complete</div>
+              <div className="text-[10px]" style={{ color: "#9E946E" }}>Complete</div>
             </div>
             <div className="min-w-0">
-              <div className="space-y-1 text-[12px]">
+              <div className="space-y-0.5 text-[11px]">
                 {docs.rows.map((row) => (
                   <div key={row.label} className="flex items-center justify-between gap-3">
                     <span className="inline-flex min-w-0 items-center gap-2">
-                      <span className={["inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px]", row.complete ? "bg-emerald-500/80 text-black" : row.warn ? "bg-amber-500/20 text-amber-300 ring-1 ring-amber-400/50" : "bg-white/10 text-white/50"].join(" ")}>
+                      <span className={["inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-[9px]", row.complete ? "bg-emerald-500/80 text-black" : row.warn ? "bg-amber-500/20 text-amber-300 ring-1 ring-amber-400/50" : "bg-white/10 text-white/50"].join(" ")}>
                         {row.complete ? "✓" : "!"}
                       </span>
-                      <span className="truncate text-[#F0EAD6]">{row.label}</span>
+                      <span className="truncate" style={{ color: "#F0EAD6" }}>{row.label}</span>
                     </span>
-                    {!row.complete && row.warn ? <span className="text-[11px] text-[#D6A84F]">Missing</span> : null}
+                    {!row.complete && row.warn ? <span className="text-[10px]" style={{ color: "#D6A84F" }}>Missing</span> : null}
                   </div>
                 ))}
               </div>
             </div>
           </div>
-          <Link href={detailHref} className="mt-2 inline-flex items-center gap-2 text-[12px] font-semibold text-[#D6A84F]">
+          <Link href={detailHref} className="mt-2 inline-flex items-center gap-2 text-[11px] font-semibold" style={{ color: "#D6A84F" }}>
             View all docs <span aria-hidden="true">→</span>
           </Link>
         </div>
 
-        <div className="border-l border-[color:var(--border)] p-2.5">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#D6A84F]">Share / Sell</div>
-          <div className="mt-3 flex items-center justify-between gap-3 text-[12px] text-[#F0EAD6]">
+        <div className="border-l border-[color:var(--border)] px-3 py-2">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: "#D6A84F" }}>Share / Sell</div>
+          <div className="mt-3 flex items-center justify-between gap-3 text-[11px]" style={{ color: "#F0EAD6" }}>
             <span className="inline-flex items-center gap-2">
-              <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/20 text-[10px] text-emerald-300 ring-1 ring-emerald-400/50">↗</span>
+              <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500/20 text-[9px] text-emerald-300 ring-1 ring-emerald-400/50">↗</span>
               Public Gallery
             </span>
-            <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-200">{item.isPublic ? "On" : "Off"}</span>
+            <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] text-emerald-200">{item.isPublic ? "On" : "Off"}</span>
           </div>
-          <Link href={detailHref} className="mt-2 inline-flex items-center gap-2 text-[12px] font-semibold text-[#D6A84F]">
+          <Link href={detailHref} className="mt-2 inline-flex items-center gap-2 text-[11px] font-semibold" style={{ color: "#D6A84F" }}>
             View public page <span aria-hidden="true">↗</span>
           </Link>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-            <Link href={detailHref} className="inline-flex min-h-[32px] items-center justify-center gap-2 rounded-[7px] px-3 text-[12px] font-semibold text-[#D6A84F] ring-1 ring-[color:var(--theme-gold-border)]">
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            <Link href={detailHref} className="inline-flex min-h-[28px] items-center justify-center gap-2 rounded-[7px] px-2.5 text-[11px] font-semibold ring-1 ring-[color:var(--theme-gold-border)]" style={{ color: "#D6A84F" }}>
               Create Listing
             </Link>
-            <button type="button" onClick={exportItemData} className="inline-flex min-h-[32px] items-center justify-center gap-2 rounded-[7px] px-3 text-[12px] font-semibold text-[#D6A84F] ring-1 ring-[color:var(--theme-gold-border)]">
+            <button type="button" onClick={exportItemData} className="inline-flex min-h-[28px] items-center justify-center gap-2 rounded-[7px] px-2.5 text-[11px] font-semibold ring-1 ring-[color:var(--theme-gold-border)]" style={{ color: "#D6A84F" }}>
               Export Data
             </button>
           </div>
-          <Link href={detailHref} className="mt-3 inline-flex items-center gap-2 text-[12px] font-semibold text-[#D6A84F]">
+          <Link href={detailHref} className="mt-2.5 inline-flex items-center gap-2 text-[11px] font-semibold" style={{ color: "#D6A84F" }}>
             More actions <span aria-hidden="true">⌄</span>
           </Link>
         </div>
