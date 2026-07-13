@@ -928,8 +928,8 @@ function VaultSelectionDrawer({
         ×
       </button>
 
-      <div className="grid overflow-hidden rounded-[12px] border border-[color:var(--border)] pr-6 lg:grid-cols-[300px_210px_245px_minmax(210px,1fr)]">
-        <div className="flex min-w-0 gap-3 px-2.5 py-2">
+      <div className="grid gap-3 pr-6 lg:grid-cols-[430px_minmax(0,1fr)]">
+        <div className="flex min-w-0 gap-3 px-2.5 py-2.5">
           <Link href={detailHref} className="relative h-[112px] w-[78px] shrink-0 overflow-hidden rounded-[8px] border border-[color:var(--theme-gold-border)] bg-black/30">
             {image ? (
               <ProgressiveImage src={image} alt={item.title} className="h-full w-full" imageClassName="object-contain object-center" draggable={false} />
@@ -962,9 +962,10 @@ function VaultSelectionDrawer({
           </div>
         </div>
 
-        <div className="border-l border-[color:var(--border)] px-3 py-2">
+        <div className="grid min-w-0 overflow-hidden rounded-[12px] border border-[color:var(--border)] lg:grid-cols-[270px_320px_minmax(240px,1fr)]">
+        <div className="px-4 py-2.5">
           <div className="text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: "#D6A84F" }}>Value Evidence</div>
-          <div className="mt-3 grid grid-cols-3 gap-2 text-[11px]">
+          <div className="mt-3 grid grid-cols-3 gap-5 text-[11px]">
             <div>
               <div style={{ color: "#9E946E" }}>Low</div>
               <div className="mt-2 text-[12px] font-semibold" style={{ color: "#F0EAD6" }}>{low > 0 ? formatMoney(low) : "—"}</div>
@@ -986,15 +987,15 @@ function VaultSelectionDrawer({
           </Link>
         </div>
 
-        <div className="border-l border-[color:var(--border)] px-3 py-2">
+        <div className="relative px-4 py-2.5 before:absolute before:bottom-3 before:left-0 before:top-3 before:w-px before:bg-[color:var(--border)]">
           <div className="text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: "#D6A84F" }}>Documentation</div>
-          <div className="mt-2.5 grid grid-cols-[62px_minmax(0,1fr)] gap-3">
+          <div className="mt-2.5 grid grid-cols-[72px_minmax(0,1fr)] gap-4">
             <div className="flex flex-col items-center gap-0.5">
               <PercentDonut percent={docs.percent} />
               <div className="text-[10px]" style={{ color: "#9E946E" }}>Complete</div>
             </div>
             <div className="min-w-0">
-              <div className="space-y-0.5 text-[11px]">
+              <div className="space-y-1 text-[11px]">
                 {docs.rows.map((row) => (
                   <div key={row.label} className="flex items-center justify-between gap-3">
                     <span className="inline-flex min-w-0 items-center gap-2">
@@ -1014,7 +1015,7 @@ function VaultSelectionDrawer({
           </Link>
         </div>
 
-        <div className="border-l border-[color:var(--border)] px-3 py-2">
+        <div className="relative px-4 py-2.5 before:absolute before:bottom-3 before:left-0 before:top-3 before:w-px before:bg-[color:var(--border)]">
           <div className="text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: "#D6A84F" }}>Share / Sell</div>
           <div className="mt-3 flex items-center justify-between gap-3 text-[11px]" style={{ color: "#F0EAD6" }}>
             <span className="inline-flex items-center gap-2">
@@ -1026,17 +1027,18 @@ function VaultSelectionDrawer({
           <Link href={detailHref} className="mt-2 inline-flex items-center gap-2 text-[11px] font-semibold" style={{ color: "#D6A84F" }}>
             View public page <span aria-hidden="true">↗</span>
           </Link>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-            <Link href={detailHref} className="inline-flex min-h-[28px] items-center justify-center gap-2 rounded-[7px] px-2.5 text-[11px] font-semibold ring-1 ring-[color:var(--theme-gold-border)]" style={{ color: "#D6A84F" }}>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Link href={detailHref} className="inline-flex min-h-[28px] w-auto items-center justify-center gap-2 rounded-[7px] px-3 text-[11px] font-semibold ring-1 ring-[color:var(--theme-gold-border)]" style={{ color: "#D6A84F" }}>
               Create Listing
             </Link>
-            <button type="button" onClick={exportItemData} className="inline-flex min-h-[28px] items-center justify-center gap-2 rounded-[7px] px-2.5 text-[11px] font-semibold ring-1 ring-[color:var(--theme-gold-border)]" style={{ color: "#D6A84F" }}>
+            <button type="button" onClick={exportItemData} className="inline-flex min-h-[28px] w-auto items-center justify-center gap-2 rounded-[7px] px-3 text-[11px] font-semibold ring-1 ring-[color:var(--theme-gold-border)]" style={{ color: "#D6A84F" }}>
               Export Data
             </button>
           </div>
           <Link href={detailHref} className="mt-2.5 inline-flex items-center gap-2 text-[11px] font-semibold" style={{ color: "#D6A84F" }}>
             More actions <span aria-hidden="true">⌄</span>
           </Link>
+        </div>
         </div>
       </div>
     </section>
