@@ -14,6 +14,7 @@
 // scaled/offset to give a stacked-depth effect.
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { ChevronLeft, ChevronRight, Eye, RotateCw } from "lucide-react";
 import type { VaultItem as ModelItem } from "@/lib/vaultModel";
 import { itemCurrentValue } from "@/lib/portfolioMetrics";
 import { isNotable } from "@/lib/itemIntelligence";
@@ -961,11 +962,9 @@ export default function SwipeStack({
     const nextItem = index < items.length - 1 ? items[index + 1] : null;
     const dragX = drag?.x ?? 0;
     const cardShift = Math.max(-18, Math.min(18, dragX * 0.12));
-    const profile = currentItem ? flipProfile(currentItem) : null;
-
     return (
       <div className={`flex flex-col items-center ${className}`}>
-        <div className="w-full" style={{ touchAction: "pan-y" }}>
+        <div className="w-full max-w-5xl px-4" style={{ touchAction: "pan-y" }}>
           {isEmpty ? (
             <div className="mx-auto aspect-[5/7] w-full max-w-[420px]">
               <div className="h-full w-full">
@@ -973,40 +972,61 @@ export default function SwipeStack({
               </div>
             </div>
           ) : (
-            <div className="flex w-full items-center justify-center gap-4 sm:gap-5">
-              <button
-                type="button"
-                onClick={() => triggerAction("left")}
-                disabled={!prevItem}
-                className="hidden aspect-[5/7] w-[96px] shrink-0 overflow-hidden rounded-[18px] opacity-70 transition hover:opacity-95 disabled:pointer-events-none disabled:opacity-20 sm:block md:w-[118px]"
-                aria-label="Previous item"
-              >
-                {prevItem ? (
+            <div
+              className="relative mx-auto flex w-full items-start justify-center overflow-hidden"
+              style={{ height: "520px", perspective: "1200px" }}
+            >
+              {prevItem ? (
+                <div
+                  className="pointer-events-none absolute left-1/2 top-0 h-[460px] w-[340px] rounded-[22px] transition-all duration-500 ease-out"
+                  style={{
+                    transform: "translate3d(-135%, 0, -200px) rotateY(32deg)",
+                    transformStyle: "preserve-3d",
+                    zIndex: 10,
+                    opacity: 0.35,
+                  }}
+                  aria-hidden="true"
+                >
                   <PreviewFace item={prevItem} />
-                ) : null}
-              </button>
+                </div>
+              ) : null}
+
+              {nextItem ? (
+                <div
+                  className="pointer-events-none absolute left-1/2 top-0 h-[460px] w-[340px] rounded-[22px] transition-all duration-500 ease-out"
+                  style={{
+                    transform: "translate3d(35%, 0, -200px) rotateY(-32deg)",
+                    transformStyle: "preserve-3d",
+                    zIndex: 10,
+                    opacity: 0.35,
+                  }}
+                  aria-hidden="true"
+                >
+                  <PreviewFace item={nextItem} />
+                </div>
+              ) : null}
 
               <div
-                className="relative shrink-0"
+                className="absolute left-1/2 top-0 h-[460px] w-[340px] max-w-[78vw] transition-all duration-500 ease-out"
                 style={{
-                  aspectRatio: profile?.aspectRatio ?? "2 / 3",
-                  width: profile?.width ?? "min(78vw, 410px)",
-                  perspective: "1200px",
+                  transform: `translate3d(calc(-50% + ${cardShift}px), 0, 0) scale(1)`,
+                  transformStyle: "preserve-3d",
+                  zIndex: 30,
                 }}
               >
                 {currentItem ? (
                   <>
-                    {[2, 1].map((depth) => (
+                    {[3, 2, 1].map((depth) => (
                       <div
                         key={depth}
-                        className="pointer-events-none absolute inset-0 rounded-[26px]"
+                        className="pointer-events-none absolute inset-0 rounded-[24px]"
                         style={{
-                          transform: `translateY(${depth * 12}px) scale(${1 - depth * 0.045}) rotate(${depth === 1 ? "-3deg" : "3deg"})`,
+                          transform: `translateY(${depth * 11}px) scale(${1 - depth * 0.038}) rotate(${depth % 2 === 0 ? "4deg" : "-4deg"})`,
                           transformOrigin: "center bottom",
-                          background: "linear-gradient(145deg, rgba(26,35,43,0.76), rgba(7,10,12,0.82))",
-                          border: "1px solid rgba(218,171,74,0.16)",
-                          boxShadow: "0 20px 45px rgba(0,0,0,0.36)",
-                          opacity: depth === 1 ? 0.58 : 0.34,
+                          background: "linear-gradient(145deg, rgba(210,218,222,0.34), rgba(58,67,76,0.34))",
+                          border: "1px solid rgba(255,255,255,0.12)",
+                          boxShadow: "0 18px 45px rgba(0,0,0,0.42)",
+                          opacity: 0.62 - depth * 0.12,
                         }}
                       />
                     ))}
@@ -1028,19 +1048,8 @@ export default function SwipeStack({
                         className="relative h-full w-full"
                         style={{
                           transformStyle: "preserve-3d",
-                          transition: "transform 260ms cubic-bezier(0.4, 0, 0.2, 1)",
-                          transform:
-                            profile?.frame === "box"
-                              ? isFlipped
-                                ? "rotateY(180deg) rotateX(3deg)"
-                                : "rotateY(0deg) rotateX(0deg)"
-                              : profile?.frame === "instrument"
-                              ? isFlipped
-                                ? "rotateY(180deg)"
-                                : "rotateY(0deg)"
-                              : isFlipped
-                              ? "rotateY(180deg)"
-                              : "rotateY(0deg)",
+                          transition: "transform 500ms cubic-bezier(0.4, 0, 0.2, 1)",
+                          transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
                         }}
                       >
                         <div className="absolute inset-0" style={{ backfaceVisibility: "hidden" }}>
@@ -1069,65 +1078,70 @@ export default function SwipeStack({
                       }}
                       aria-label={isFlipped ? "Show front" : "Show back"}
                     >
-                      ↻
+                      <RotateCw size={16} strokeWidth={2.4} />
                     </button>
                   </>
                 ) : null}
               </div>
 
-              <button
-                type="button"
-                onClick={() => triggerAction("right")}
-                disabled={!nextItem}
-                className="hidden aspect-[5/7] w-[96px] shrink-0 overflow-hidden rounded-[18px] opacity-70 transition hover:opacity-95 disabled:pointer-events-none disabled:opacity-20 sm:block md:w-[118px]"
-                aria-label="Next item"
-              >
-                {nextItem ? (
-                  <PreviewFace item={nextItem} />
-                ) : null}
-              </button>
             </div>
           )}
         </div>
 
         {!isEmpty && (
-          <div className="flex items-center justify-center gap-2 pt-3">
+          <div className="relative z-40 -mt-4 flex flex-col items-center gap-3">
+            <div
+              className="flex items-center gap-3 rounded-full p-2.5 shadow-2xl"
+              style={{
+                background: "rgba(12,16,20,0.82)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                backdropFilter: "blur(12px)",
+              }}
+            >
             <button
               type="button"
               onClick={() => triggerAction("left")}
               disabled={!prevItem}
-              className="flex h-10 w-10 items-center justify-center rounded-full ring-1 transition disabled:opacity-35"
+              className="flex h-11 w-11 items-center justify-center rounded-full ring-1 transition active:scale-95 disabled:opacity-35"
               style={{ background: "var(--surface)", borderColor: "var(--border)", color: prevItem ? "var(--fg)" : "var(--muted2)" }}
               aria-label="Previous"
             >
-              ←
+              <ChevronLeft size={20} strokeWidth={2.5} />
             </button>
             <button
               type="button"
               onClick={() => setIsFlipped((value) => !value)}
-              className="flex h-10 min-w-14 items-center justify-center rounded-full px-3 text-[12px] font-bold ring-1"
-              style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--theme-gold, #F5B548)" }}
+              className="flex h-11 min-w-28 items-center justify-center gap-2 rounded-full px-4 text-[12px] font-bold uppercase tracking-[0.12em] transition active:scale-95"
+              style={{
+                background: isFlipped ? "var(--theme-gold, #F5B548)" : "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: isFlipped ? "#070707" : "#F0EAD6",
+                boxShadow: isFlipped ? "0 0 24px rgba(245,181,72,0.2)" : "none",
+              }}
             >
-              FLIP
+              <RotateCw size={14} className={isFlipped ? "rotate-180 transition-transform" : "transition-transform"} strokeWidth={2.5} />
+              Flip
             </button>
             <button
               type="button"
               onClick={() => currentItem && onOpen?.(currentItem)}
-              className="flex h-10 min-w-14 items-center justify-center rounded-full px-3 text-[13px] font-bold ring-2"
-              style={{ background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))", borderColor: "var(--theme-gold-border, rgba(245,181,72,0.4))", color: "var(--theme-gold, #F5B548)" }}
+              className="flex h-11 min-w-24 items-center justify-center gap-2 rounded-full px-4 text-[12px] font-bold uppercase tracking-[0.12em] ring-1 transition active:scale-95"
+              style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.1)", color: "#F0EAD6" }}
             >
-              VIEW
+              <Eye size={14} strokeWidth={2.5} />
+              View
             </button>
             <button
               type="button"
               onClick={() => triggerAction("right")}
               disabled={!nextItem}
-              className="flex h-10 w-10 items-center justify-center rounded-full ring-1 transition disabled:opacity-35"
+              className="flex h-11 w-11 items-center justify-center rounded-full ring-1 transition active:scale-95 disabled:opacity-35"
               style={{ background: "var(--surface)", borderColor: "var(--border)", color: nextItem ? "var(--fg)" : "var(--muted2)" }}
               aria-label="Next"
             >
-              →
+              <ChevronRight size={20} strokeWidth={2.5} />
             </button>
+            </div>
           </div>
         )}
 
