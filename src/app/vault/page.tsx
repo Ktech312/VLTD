@@ -927,9 +927,9 @@ function VaultSelectionDrawer({
         ×
       </button>
 
-      <div className="grid gap-4 pr-8 lg:grid-cols-[360px_1fr_1fr_1fr]">
-        <div className="flex min-w-0 gap-4">
-          <Link href={detailHref} className="relative h-[150px] w-[112px] shrink-0 overflow-hidden rounded-[8px] border border-[color:var(--theme-gold-border)] bg-black/30">
+      <div className="grid overflow-hidden rounded-[12px] border border-[color:var(--border)] pr-8 lg:grid-cols-[360px_1fr_1fr_1fr]">
+        <div className="flex min-w-0 gap-4 p-3">
+          <Link href={detailHref} className="relative h-[126px] w-[96px] shrink-0 overflow-hidden rounded-[8px] border border-[color:var(--theme-gold-border)] bg-black/30">
             {image ? (
               <ProgressiveImage src={image} alt={item.title} className="h-full w-full" imageClassName="object-contain object-center" draggable={false} />
             ) : (
@@ -949,21 +949,21 @@ function VaultSelectionDrawer({
               <span className="text-lg leading-none text-[color:var(--muted)]">⋮</span>
             </div>
             <div className="mt-1 line-clamp-1 text-sm text-[color:var(--muted)]">{itemMeta(item)}</div>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-2 flex flex-wrap gap-2">
               {item.grade ? <span className="rounded-[6px] px-2 py-1 text-xs ring-1 ring-[color:var(--border)]">{item.grade}</span> : null}
               {item.variant ? <span className="rounded-[6px] px-2 py-1 text-xs ring-1 ring-[color:var(--border)]">{item.variant}</span> : null}
               <span className="rounded-[6px] px-2 py-1 text-xs text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)]">{item.isPublic ? "Public" : "Private"}</span>
             </div>
-            <div className="mt-5 text-2xl font-bold text-[color:var(--data-color)]">{formatMoney(value)}</div>
+            <div className="mt-4 text-2xl font-bold text-[color:var(--data-color)]">{formatMoney(value)}</div>
             <div className="mt-1 text-xs" style={{ color: gain >= 0 ? "var(--color-gain, #4CAF82)" : "var(--color-loss, #E05252)" }}>
               {paid > 0 ? `${gain >= 0 ? "+" : ""}${gainPct.toFixed(1)}% this year` : "Add cost basis for return"}
             </div>
           </div>
         </div>
 
-        <div className="rounded-[12px] border border-[color:var(--border)] p-4">
+        <div className="border-l border-[color:var(--border)] p-3">
           <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--theme-gold)]">Value Evidence</div>
-          <div className="mt-5 grid grid-cols-3 gap-3 text-sm">
+          <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
             <div>
               <div className="text-[color:var(--muted)]">Low</div>
               <div className="mt-2 text-base font-semibold">{low > 0 ? formatMoney(low) : "—"}</div>
@@ -977,42 +977,41 @@ function VaultSelectionDrawer({
               <div className="mt-2 text-base font-semibold">{high > 0 ? formatMoney(high) : "—"}</div>
             </div>
           </div>
-          <div className="mt-5 text-xs text-[color:var(--muted)]">
+          <div className="mt-4 text-xs text-[color:var(--muted)]">
             Confidence: {item.priceConfidence || readiness} · {item.comparables?.length ?? 0} comps
           </div>
-          <Link href={detailHref} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--theme-gold)]">
+          <Link href={detailHref} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--theme-gold)]">
             View details <span aria-hidden="true">→</span>
           </Link>
         </div>
 
-        <div className="rounded-[12px] border border-[color:var(--border)] p-4">
+        <div className="border-l border-[color:var(--border)] p-3">
           <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--theme-gold)]">Documentation</div>
-          <div className="mt-4 flex items-center gap-4">
+          <div className="mt-4 grid grid-cols-[76px_minmax(0,1fr)] gap-4">
             <PercentDonut percent={docs.percent} />
-            <div className="text-sm text-[color:var(--muted)]">
-              <div className="text-lg font-bold text-[color:var(--fg)]">{docs.percent}%</div>
-              Complete
+            <div className="min-w-0">
+              <div className="text-xs text-[color:var(--muted)]">Complete</div>
+              <div className="mt-2 space-y-1 text-sm">
+                {docs.rows.map((row) => (
+                  <div key={row.label} className="flex items-center justify-between gap-3">
+                    <span className="inline-flex min-w-0 items-center gap-2">
+                      <span className={["inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px]", row.complete ? "bg-emerald-500/80 text-black" : row.warn ? "bg-amber-500/20 text-amber-300 ring-1 ring-amber-400/50" : "bg-white/10 text-white/50"].join(" ")}>
+                        {row.complete ? "✓" : "!"}
+                      </span>
+                      <span className="truncate">{row.label}</span>
+                    </span>
+                    {!row.complete && row.warn ? <span className="text-xs text-amber-300">Missing</span> : null}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-          <div className="mt-4 space-y-1.5 text-sm">
-            {docs.rows.map((row) => (
-              <div key={row.label} className="flex items-center justify-between gap-3">
-                <span className="inline-flex min-w-0 items-center gap-2">
-                  <span className={["inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px]", row.complete ? "bg-emerald-500/80 text-black" : row.warn ? "bg-amber-500/20 text-amber-300 ring-1 ring-amber-400/50" : "bg-white/10 text-white/50"].join(" ")}>
-                    {row.complete ? "✓" : "!"}
-                  </span>
-                  <span className="truncate">{row.label}</span>
-                </span>
-                {!row.complete && row.warn ? <span className="text-xs text-amber-300">Missing</span> : null}
-              </div>
-            ))}
-          </div>
-          <Link href={detailHref} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--theme-gold)]">
+          <Link href={detailHref} className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--theme-gold)]">
             View all docs <span aria-hidden="true">→</span>
           </Link>
         </div>
 
-        <div className="rounded-[12px] border border-[color:var(--border)] p-4">
+        <div className="border-l border-[color:var(--border)] p-3">
           <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--theme-gold)]">Share / Sell</div>
           <div className="mt-4 flex items-center justify-between gap-3 text-sm">
             <span className="inline-flex items-center gap-2">
@@ -1032,7 +1031,7 @@ function VaultSelectionDrawer({
               Export Data
             </button>
           </div>
-          <Link href={detailHref} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--theme-gold)]">
+          <Link href={detailHref} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--theme-gold)]">
             More actions <span aria-hidden="true">⌄</span>
           </Link>
         </div>
@@ -1922,11 +1921,7 @@ export default function VaultPage() {
                   <div
                     key={item.id}
                     className="relative"
-                    onMouseEnter={() => {
-                      setSelectedDetailId(item.id);
-                      setIsDetailDrawerDismissed(false);
-                    }}
-                    onFocusCapture={() => {
+                    onPointerDownCapture={() => {
                       setSelectedDetailId(item.id);
                       setIsDetailDrawerDismissed(false);
                     }}
