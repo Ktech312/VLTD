@@ -1364,18 +1364,18 @@ export default function VaultPage() {
 
           <div className="mt-5 flex flex-wrap gap-2 pb-1">
             <div className="relative shrink-0">
-              <div className="inline-flex overflow-hidden rounded-[8px] ring-1 ring-[color:var(--border)]">
+              <div className="inline-flex gap-2">
                 <button
                   type="button"
                   onClick={() => setUniverseFilter("ALL")}
-                  className={["min-h-[38px] px-4 text-sm font-semibold", universeFilter === "ALL" ? "bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)]" : "bg-[color:var(--pill)]"].join(" ")}
+                  className={["inline-flex min-h-[42px] items-center rounded-[7px] px-4 text-sm font-semibold ring-1", universeFilter === "ALL" ? "bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)] ring-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)] ring-[color:var(--border)]"].join(" ")}
                 >
                   All
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowUniverseMenu((value) => !value)}
-                  className="min-h-[38px] border-l px-3 text-sm font-semibold"
+                  className="inline-flex min-h-[42px] items-center rounded-[7px] px-4 text-sm font-semibold ring-1"
                   style={{ background: "var(--pill)", borderColor: "var(--border)", color: "var(--fg)" }}
                   aria-expanded={showUniverseMenu}
                 >
@@ -1428,13 +1428,13 @@ export default function VaultPage() {
                 key={category.key}
                 type="button"
                 onClick={() => setUniverseFilter(category.key)}
-                className={["inline-flex shrink-0 items-center gap-2 rounded-[7px] py-2 pl-2 pr-4 text-sm font-semibold ring-1", universeFilter === category.key ? "bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)] ring-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)] ring-[color:var(--border)]"].join(" ")}
+                className={["inline-flex min-h-[42px] shrink-0 items-stretch gap-2 overflow-hidden rounded-[7px] pr-4 text-sm font-semibold ring-1", universeFilter === category.key ? "bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)] ring-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)] ring-[color:var(--border)]"].join(" ")}
               >
-                <span className="h-8 w-8 overflow-hidden rounded-[6px] border bg-[color:var(--theme-elevated)]" style={{ borderColor: "var(--theme-gold-border, var(--theme-border))" }}>
+                <span className="w-[42px] overflow-hidden border-r bg-[color:var(--theme-elevated)]" style={{ borderColor: "var(--theme-gold-border, var(--theme-border))" }}>
                   <ProgressiveImage src={category.thumbnailSrc} alt="" className="h-full w-full" imageClassName="object-cover object-center" draggable={false} />
                 </span>
-                <span>{UNIVERSE_LABEL[category.key] ?? category.key}</span>
-                <span className="text-[11px] opacity-65">{universeGroups[category.key]?.length ?? 0}</span>
+                <span className="self-center">{UNIVERSE_LABEL[category.key] ?? category.key}</span>
+                <span className="self-center text-[11px] opacity-65">{universeGroups[category.key]?.length ?? 0}</span>
               </button>
             ))}
           </div>
