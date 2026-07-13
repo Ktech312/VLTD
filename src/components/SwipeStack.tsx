@@ -330,7 +330,7 @@ function VaultFlipFront({ item }: { item: ModelItem }) {
         ) : null}
       </div>
 
-      <div className="absolute inset-x-6 top-14 bottom-[128px] flex items-center justify-center">
+      <div className="absolute inset-x-5 top-12 bottom-[120px] flex items-center justify-center">
         <div
           className="relative flex h-full w-full items-center justify-center overflow-hidden"
           style={{
@@ -349,7 +349,7 @@ function VaultFlipFront({ item }: { item: ModelItem }) {
             <img
               src={src}
               alt={item.title}
-              className="h-full w-full object-contain p-3"
+              className="h-full w-full object-contain p-1.5"
               loading="eager"
               draggable={false}
             />
@@ -1009,7 +1009,7 @@ export default function SwipeStack({
               <div
                 className="absolute left-1/2 top-0 h-[460px] w-[340px] max-w-[78vw] transition-all duration-500 ease-out"
                 style={{
-                  transform: `translate3d(calc(-50% + ${cardShift}px), 0, 0) scale(1.08)`,
+                  transform: `translate3d(calc(-50% + ${cardShift}px), 0, 0) scale(1)`,
                   transformStyle: "preserve-3d",
                   zIndex: 30,
                 }}
@@ -1069,7 +1069,7 @@ export default function SwipeStack({
                         event.stopPropagation();
                         setIsFlipped((value) => !value);
                       }}
-                      className="absolute right-4 top-4 z-40 flex h-9 w-9 items-center justify-center text-[16px] font-black transition hover:scale-110"
+                      className="absolute right-9 top-[70px] z-40 flex h-8 w-8 items-center justify-center text-[16px] font-black transition hover:scale-110"
                       style={{
                         color: "var(--theme-gold, #F5B548)",
                       }}
