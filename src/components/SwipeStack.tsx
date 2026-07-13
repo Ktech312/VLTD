@@ -13,7 +13,7 @@
 // Rendering: CSS transform + transition. Top card is draggable, cards below are
 // scaled/offset to give a stacked-depth effect.
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import type { VaultItem as ModelItem } from "@/lib/vaultModel";
 import { itemCurrentValue } from "@/lib/portfolioMetrics";
 import { isNotable } from "@/lib/itemIntelligence";
@@ -59,6 +59,10 @@ function imgSrc(item: ModelItem): string {
   return item.imageFrontUrl || (typeof legacy.imageUrl === "string" ? legacy.imageUrl : "");
 }
 
+function backImgSrc(item: ModelItem): string {
+  return item.imageBackUrl || "";
+}
+
 function money(n: number): string {
   if (!Number.isFinite(n) || n === 0) return "—";
   return new Intl.NumberFormat("en-US", {
@@ -70,6 +74,26 @@ function money(n: number): string {
 
 function universeLabel(item: ModelItem): string {
   return UNIVERSE_LABEL[(item.universe ?? "MISC") as UniverseKey] ?? "Collection";
+}
+
+function itemDescriptor(item: ModelItem): string {
+  return [item.subtitle, item.number, item.grade || item.condition].filter(Boolean).join(" · ");
+}
+
+function flipProfile(item: ModelItem): { aspectRatio: string; width: string; frame: "flat" | "box" | "instrument" | "square" } {
+  const text = `${item.universe ?? ""} ${item.category ?? ""} ${item.categoryLabel ?? ""} ${item.subcategoryLabel ?? ""} ${item.title ?? ""}`.toLowerCase();
+
+  if (/(guitar|instrument|bass|violin|sax|trumpet|keyboard)/.test(text)) {
+    return { aspectRatio: "1 / 1.65", width: "min(76vw, 380px)", frame: "instrument" };
+  }
+  if (/(vinyl|record|lp|album)/.test(text)) {
+    return { aspectRatio: "1 / 1.12", width: "min(78vw, 430px)", frame: "square" };
+  }
+  if (/(game|video game|cd|dvd|blu-ray|bluray|case|box)/.test(text)) {
+    return { aspectRatio: "2.7 / 3.7", width: "min(78vw, 410px)", frame: "box" };
+  }
+
+  return { aspectRatio: "2 / 3", width: "min(78vw, 410px)", frame: "flat" };
 }
 
 // ─── Card face ────────────────────────────────────────────────────────────────
@@ -246,6 +270,226 @@ function PreviewFace({ item }: { item: ModelItem }) {
           background: "linear-gradient(to bottom, rgba(0,0,0,0.08), rgba(0,0,0,0.42))",
         }}
       />
+    </div>
+  );
+}
+
+function VaultFlipFront({ item }: { item: ModelItem }) {
+  const src = imgSrc(item);
+  const value = itemCurrentValue(item);
+  const notable = isNotable(item);
+  const label = universeLabel(item);
+  const descriptor = itemDescriptor(item);
+  const profile = flipProfile(item);
+  const objectRadius = profile.frame === "square" ? 18 : profile.frame === "box" ? 14 : 12;
+
+  return (
+    <div
+      className="relative h-full w-full select-none overflow-hidden rounded-[26px]"
+      style={{
+        background: "linear-gradient(145deg, rgba(19,27,35,0.98), rgba(4,8,10,0.98))",
+        border: "1px solid rgba(218,171,74,0.32)",
+        boxShadow: "0 26px 70px rgba(0,0,0,0.58), inset 0 1px 0 rgba(255,255,255,0.06)",
+      }}
+    >
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 12%, rgba(245,181,72,0.18), transparent 32%), linear-gradient(180deg, rgba(255,255,255,0.06), transparent 18%, rgba(0,0,0,0.34))",
+        }}
+      />
+
+      <div className="absolute left-4 right-4 top-4 z-20 flex items-start justify-between gap-2">
+        {notable ? (
+          <span
+            className="rounded-[10px] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] ring-1"
+            style={{
+              background: "rgba(245,181,72,0.17)",
+              color: "var(--theme-gold, #F5B548)",
+              borderColor: "rgba(245,181,72,0.45)",
+            }}
+          >
+            Key Item
+          </span>
+        ) : (
+          <span />
+        )}
+        {item.grade ? (
+          <span
+            className="rounded-[10px] px-2.5 py-1 text-[11px] font-bold ring-1"
+            style={{
+              background: "rgba(6,8,9,0.78)",
+              color: "var(--theme-gold, #F5B548)",
+              borderColor: "rgba(245,181,72,0.45)",
+            }}
+          >
+            {item.grade.length > 12 ? item.grade.slice(0, 12) : item.grade}
+          </span>
+        ) : null}
+      </div>
+
+      <div className="absolute inset-x-6 top-14 bottom-[128px] flex items-center justify-center">
+        <div
+          className="relative flex h-full w-full items-center justify-center overflow-hidden"
+          style={{
+            borderRadius: objectRadius,
+            background:
+              profile.frame === "box"
+                ? "linear-gradient(90deg, rgba(245,181,72,0.12), rgba(255,255,255,0.06) 12%, rgba(0,0,0,0.24) 18%, rgba(255,255,255,0.04))"
+                : "linear-gradient(145deg, rgba(255,255,255,0.08), rgba(0,0,0,0.18))",
+            border: "1px solid rgba(245,181,72,0.24)",
+            boxShadow:
+              "0 18px 34px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.06), inset 0 -32px 42px rgba(0,0,0,0.2)",
+          }}
+        >
+          {src ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={src}
+              alt={item.title}
+              className="h-full w-full object-contain p-3"
+              loading="eager"
+              draggable={false}
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center px-8 text-center">
+              <span
+                className="text-[13px] font-bold uppercase tracking-[0.24em]"
+                style={{ color: "rgba(240,234,214,0.34)" }}
+              >
+                {profile.frame === "square" ? "Record" : profile.frame === "instrument" ? "Instrument" : label}
+              </span>
+            </div>
+          )}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(115deg, transparent 0%, rgba(255,255,255,0.11) 38%, transparent 48%), radial-gradient(circle at 18% 0%, rgba(255,255,255,0.12), transparent 24%)",
+            }}
+          />
+        </div>
+      </div>
+
+      <div
+        className="absolute inset-x-0 bottom-0 z-20 px-6 pb-5 pt-8"
+        style={{ background: "linear-gradient(to top, rgba(2,5,6,0.96), rgba(2,5,6,0.78), transparent)" }}
+      >
+        <div className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: "rgba(218,171,74,0.68)" }}>
+          {label}
+        </div>
+        <div className="mt-1 text-[24px] font-black leading-[1.05]" style={{ color: "#F0EAD6" }}>
+          {item.title}
+        </div>
+        {descriptor ? (
+          <div className="mt-1 text-[13px]" style={{ color: "rgba(240,234,214,0.62)" }}>
+            {descriptor}
+          </div>
+        ) : null}
+        <div className="mt-4 flex items-end justify-between gap-4">
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: "rgba(240,234,214,0.42)" }}>
+              Value
+            </div>
+            <div className="text-[22px] font-black" style={{ color: "var(--theme-gold, #F5B548)" }}>
+              {money(value)}
+            </div>
+          </div>
+          {item.purchasePrice != null && item.purchasePrice > 0 ? (
+            <div className="text-right">
+              <div className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: "rgba(240,234,214,0.42)" }}>
+                Paid
+              </div>
+              <div className="text-[16px] font-bold" style={{ color: "rgba(240,234,214,0.72)" }}>
+                {money(item.purchasePrice)}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VaultFlipBack({ item }: { item: ModelItem }) {
+  const backSrc = backImgSrc(item);
+  const label = universeLabel(item);
+  const fields = [
+    ["Serial", item.serialNumber || item.sportsSerialNumber || item.certNumber],
+    ["Barcode", item.orderNumber || item.tcgSetCode || item.vinylMatrix],
+    ["Condition", item.conditionReason || item.condition],
+    ["Source", item.purchaseSource || item.valueSource || item.priceSource],
+    ["Location", item.storageLocation || item.purchaseLocation],
+  ].filter((entry): entry is [string, string] => Boolean(entry[1]));
+
+  return (
+    <div
+      className="relative h-full w-full select-none overflow-hidden rounded-[26px] px-6 pb-6 pt-16"
+      style={{
+        background: "linear-gradient(145deg, rgba(9,17,21,0.98), rgba(2,5,6,0.99))",
+        border: "1px solid rgba(218,171,74,0.32)",
+        boxShadow: "0 26px 70px rgba(0,0,0,0.58), inset 0 1px 0 rgba(255,255,255,0.06)",
+      }}
+    >
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 8%, rgba(245,181,72,0.16), transparent 28%), linear-gradient(180deg, rgba(255,255,255,0.05), transparent 22%, rgba(0,0,0,0.35))",
+        }}
+      />
+
+      <div className="relative z-10">
+        <div className="text-[10px] font-bold uppercase tracking-[0.26em]" style={{ color: "rgba(218,171,74,0.62)" }}>
+          Back metadata
+        </div>
+        <div className="mt-1 text-[22px] font-black leading-tight" style={{ color: "#F0EAD6" }}>
+          {item.title}
+        </div>
+        <div className="mt-1 text-[12px]" style={{ color: "rgba(240,234,214,0.58)" }}>
+          {label}
+        </div>
+      </div>
+
+      <div className="relative z-10 mt-5 overflow-hidden rounded-[18px]" style={{ border: "1px solid rgba(245,181,72,0.25)" }}>
+        {backSrc ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={backSrc} alt={`${item.title} back`} className="h-36 w-full object-contain bg-black/35 p-2" draggable={false} />
+        ) : (
+          <div className="flex h-36 items-center justify-center bg-black/28 px-6 text-center">
+            <span className="text-[12px] font-bold uppercase tracking-[0.18em]" style={{ color: "rgba(240,234,214,0.34)" }}>
+              Add reverse photo
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className="relative z-10 mt-5 grid gap-2">
+        {(fields.length ? fields : [["Needs Review", "Add serial, barcode, back image, or notes"]]).map(([name, value]) => (
+          <div
+            key={name}
+            className="flex items-start justify-between gap-4 rounded-[12px] px-3 py-2"
+            style={{
+              background: "rgba(255,255,255,0.035)",
+              border: "1px solid rgba(255,255,255,0.06)",
+            }}
+          >
+            <span className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: "rgba(218,171,74,0.58)" }}>
+              {name}
+            </span>
+            <span className="max-w-[62%] text-right text-[12px] font-semibold leading-snug" style={{ color: "rgba(240,234,214,0.82)" }}>
+              {value}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {item.notes ? (
+        <div className="relative z-10 mt-4 rounded-[12px] px-3 py-2 text-[12px] leading-snug" style={{ color: "rgba(240,234,214,0.68)", background: "rgba(0,0,0,0.22)" }}>
+          {item.notes.length > 120 ? `${item.notes.slice(0, 120)}...` : item.notes}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -507,6 +751,7 @@ export default function SwipeStack({
   const [flying, setFlying] = useState<"left" | "right" | null>(null);
   // Undo stack for gallery mode
   const [history, setHistory] = useState<Array<{ item: ModelItem; action: "want" | "skip" }>>([]);
+  const [isFlipped, setIsFlipped] = useState(false);
 
   const cardRef = useRef<HTMLDivElement>(null);
   const pointerStart = useRef<{ x: number; y: number; pointerId: number } | null>(null);
@@ -545,6 +790,7 @@ export default function SwipeStack({
             : Math.max(index - 1, 0);
         setDrag(null);
         setFlying(null);
+        setIsFlipped(false);
         setIndex(nextIndex);
         return;
       }
@@ -572,6 +818,29 @@ export default function SwipeStack({
     },
     [index, items, mode, onWant, onSkip, onEnd]
   );
+
+  useEffect(() => {
+    if (mode !== "vault") return;
+
+    function onKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("input, textarea, select, [contenteditable='true']")) return;
+
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        triggerAction("right");
+      } else if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        triggerAction("left");
+      } else if (event.key === " " || event.key === "ArrowUp" || event.key === "ArrowDown") {
+        event.preventDefault();
+        setIsFlipped((value) => !value);
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mode, triggerAction]);
 
   const onPointerUp = useCallback(
     () => {
@@ -692,6 +961,7 @@ export default function SwipeStack({
     const nextItem = index < items.length - 1 ? items[index + 1] : null;
     const dragX = drag?.x ?? 0;
     const cardShift = Math.max(-18, Math.min(18, dragX * 0.12));
+    const profile = currentItem ? flipProfile(currentItem) : null;
 
     return (
       <div className={`flex flex-col items-center ${className}`}>
@@ -716,24 +986,92 @@ export default function SwipeStack({
                 ) : null}
               </button>
 
-              <div className="relative aspect-[5/7] w-[min(78vw,420px)] shrink-0">
+              <div
+                className="relative shrink-0"
+                style={{
+                  aspectRatio: profile?.aspectRatio ?? "2 / 3",
+                  width: profile?.width ?? "min(78vw, 410px)",
+                  perspective: "1200px",
+                }}
+              >
                 {currentItem ? (
-                  <div
-                    ref={cardRef}
-                    className="absolute inset-0 z-20 overflow-hidden rounded-[22px] cursor-grab active:cursor-grabbing"
-                    style={{
-                      transform: `translateX(${cardShift}px)`,
-                      transition: drag ? "none" : "transform 160ms ease-out",
-                      touchAction: "none",
-                    }}
-                    onPointerDown={onPointerDown}
-                    onPointerMove={onPointerMove}
-                    onPointerUp={onPointerUp}
-                    onPointerCancel={onPointerCancel}
-                  >
-                    <CardFace item={currentItem} isTop={true} />
+                  <>
+                    {[2, 1].map((depth) => (
+                      <div
+                        key={depth}
+                        className="pointer-events-none absolute inset-0 rounded-[26px]"
+                        style={{
+                          transform: `translateY(${depth * 12}px) scale(${1 - depth * 0.045}) rotate(${depth === 1 ? "-3deg" : "3deg"})`,
+                          transformOrigin: "center bottom",
+                          background: "linear-gradient(145deg, rgba(26,35,43,0.76), rgba(7,10,12,0.82))",
+                          border: "1px solid rgba(218,171,74,0.16)",
+                          boxShadow: "0 20px 45px rgba(0,0,0,0.36)",
+                          opacity: depth === 1 ? 0.58 : 0.34,
+                        }}
+                      />
+                    ))}
+
+                    <div
+                      ref={cardRef}
+                      className="absolute inset-0 z-20 cursor-grab active:cursor-grabbing"
+                      style={{
+                        transform: `translateX(${cardShift}px)`,
+                        transition: drag ? "none" : "transform 160ms ease-out",
+                        touchAction: "none",
+                      }}
+                      onPointerDown={onPointerDown}
+                      onPointerMove={onPointerMove}
+                      onPointerUp={onPointerUp}
+                      onPointerCancel={onPointerCancel}
+                    >
+                      <div
+                        className="relative h-full w-full"
+                        style={{
+                          transformStyle: "preserve-3d",
+                          transition: "transform 260ms cubic-bezier(0.4, 0, 0.2, 1)",
+                          transform:
+                            profile?.frame === "box"
+                              ? isFlipped
+                                ? "rotateY(180deg) rotateX(3deg)"
+                                : "rotateY(0deg) rotateX(0deg)"
+                              : profile?.frame === "instrument"
+                              ? isFlipped
+                                ? "rotateY(180deg)"
+                                : "rotateY(0deg)"
+                              : isFlipped
+                              ? "rotateY(180deg)"
+                              : "rotateY(0deg)",
+                        }}
+                      >
+                        <div className="absolute inset-0" style={{ backfaceVisibility: "hidden" }}>
+                          <VaultFlipFront item={currentItem} />
+                        </div>
+                        <div className="absolute inset-0" style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
+                          <VaultFlipBack item={currentItem} />
+                        </div>
+                      </div>
+                    </div>
+
                     <CounterPill current={currentNumber} total={totalCount} />
-                  </div>
+                    <button
+                      type="button"
+                      onPointerDown={(event) => event.stopPropagation()}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setIsFlipped((value) => !value);
+                      }}
+                      className="absolute right-4 top-4 z-40 flex h-9 w-9 items-center justify-center rounded-[12px] text-[16px] font-black ring-1 transition hover:scale-105"
+                      style={{
+                        background: "rgba(6,8,9,0.74)",
+                        borderColor: "rgba(245,181,72,0.42)",
+                        color: "var(--theme-gold, #F5B548)",
+                        backdropFilter: "blur(8px)",
+                      }}
+                      aria-label={isFlipped ? "Show front" : "Show back"}
+                    >
+                      ↻
+                    </button>
+                  </>
                 ) : null}
               </div>
 
@@ -766,6 +1104,14 @@ export default function SwipeStack({
             </button>
             <button
               type="button"
+              onClick={() => setIsFlipped((value) => !value)}
+              className="flex h-10 min-w-14 items-center justify-center rounded-full px-3 text-[12px] font-bold ring-1"
+              style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--theme-gold, #F5B548)" }}
+            >
+              FLIP
+            </button>
+            <button
+              type="button"
               onClick={() => currentItem && onOpen?.(currentItem)}
               className="flex h-10 min-w-14 items-center justify-center rounded-full px-3 text-[13px] font-bold ring-2"
               style={{ background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))", borderColor: "var(--theme-gold-border, rgba(245,181,72,0.4))", color: "var(--theme-gold, #F5B548)" }}
@@ -788,7 +1134,7 @@ export default function SwipeStack({
         {!isEmpty && (
           <div className="pt-1 text-center">
             <span className="text-[11px]" style={{ color: "var(--muted2)" }}>
-              Drag or use arrows to browse · tap View to open
+              Left/right browse - Space, Up, or Down flips - View opens item
             </span>
           </div>
         )}
