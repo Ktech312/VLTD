@@ -354,7 +354,8 @@ export default function MuseumPage() {
   }, [sortedGalleries, filter]);
 
   const selectedEntry = useMemo(
-    () => displayedGalleries.find((e) => e.gallery.id === selectedId) ?? displayedGalleries[0] ?? null,
+    // Detail panel stays hidden until the user selects a card (desktop + mobile).
+    () => displayedGalleries.find((e) => e.gallery.id === selectedId) ?? null,
     [displayedGalleries, selectedId]
   );
 
@@ -451,10 +452,17 @@ export default function MuseumPage() {
           <Link href="/museum/new" className="inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-[8px] px-4 text-xs font-black transition" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}>+ Create Exhibition</Link>
         </div>
       </div>
-      <div className="mt-5 flex flex-wrap gap-2">
-        {EXHIBITION_FILTERS.map((f) => (
-          <button key={f.key} type="button" onClick={() => setFilter(f.key)} className={`inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 transition ${filter === f.key ? "bg-[color:var(--theme-gold-subtle)] text-[color:var(--theme-gold)] ring-[color:var(--theme-gold-border)] shadow-[inset_0_1px_0_rgba(255,241,168,0.10)]" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]"}`}>{f.label}</button>
-        ))}
+      <div className="mt-5">
+        {/* Mobile: tap-to-select dropdown (no horizontal pill scroll) */}
+        <select value={filter} onChange={(e) => setFilter(e.target.value as ExhibitionFilter)} className="h-10 w-full rounded-[8px] border px-3 text-sm font-semibold outline-none sm:hidden" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)" }}>
+          {EXHIBITION_FILTERS.map((f) => (<option key={f.key} value={f.key}>{f.label}</option>))}
+        </select>
+        {/* Desktop: pill row */}
+        <div className="hidden flex-wrap gap-2 sm:flex">
+          {EXHIBITION_FILTERS.map((f) => (
+            <button key={f.key} type="button" onClick={() => setFilter(f.key)} className={`inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 transition ${filter === f.key ? "bg-[color:var(--theme-gold-subtle)] text-[color:var(--theme-gold)] ring-[color:var(--theme-gold-border)] shadow-[inset_0_1px_0_rgba(255,241,168,0.10)]" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]"}`}>{f.label}</button>
+          ))}
+        </div>
       </div>
     </>
   );
@@ -607,10 +615,10 @@ export default function MuseumPage() {
               </div>
             </div>
           ) : (
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_440px] lg:items-start">
+            <div className={`grid gap-6 lg:items-start ${selectedEntry ? "lg:grid-cols-[minmax(0,1fr)_440px]" : ""}`}>
               <div className="min-w-0">
                 {headerBlock}
-                <div className={`mt-5 grid gap-4 ${viewMode === "list" ? "grid-cols-1" : "sm:grid-cols-2 xl:grid-cols-3"}`}>
+                <div className={`mt-5 grid gap-4 ${viewMode === "list" ? "grid-cols-1" : "grid-cols-2 xl:grid-cols-3"}`}>
               {displayedGalleries.map(({ gallery, totalValue }) => {
                 const coverImage = resolveGalleryImage(gallery.coverImage);
 
@@ -739,7 +747,7 @@ export default function MuseumPage() {
               </div>
 
               {/* Right: Exhibition Details */}
-              <aside className="lg:sticky lg:top-4">
+              <aside className="fixed inset-x-2 bottom-[calc(var(--bottomnav-h,120px)+8px)] z-40 max-h-[74vh] overflow-y-auto lg:static lg:inset-x-auto lg:bottom-auto lg:z-auto lg:max-h-none lg:overflow-visible lg:sticky lg:top-4">
                 {selectedEntry ? (() => {
                   const g = selectedEntry.gallery;
                   const s = selectedEntry.score;
@@ -759,8 +767,12 @@ export default function MuseumPage() {
                   const topPct = Math.max(1, 100 - s.score);
                   return (
                     <div className="overflow-hidden rounded-[10px] border shadow-[0_18px_46px_rgba(0,0,0,0.24)]" style={{ borderColor: "var(--theme-border)", background: "var(--theme-card)", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.08), 0 18px 46px rgba(0,0,0,0.24)" }}>
+                      <div className="flex justify-center pt-2 lg:hidden"><span className="h-1 w-10 rounded-full bg-white/20" /></div>
                       <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: "var(--theme-border)" }}>
                         <div className="text-sm font-black">Exhibition Details</div>
+                        <button type="button" onClick={() => setSelectedId(null)} aria-label="Close details" className="inline-flex h-7 w-7 items-center justify-center rounded-full text-[color:var(--muted)] transition hover:text-[color:var(--fg)]">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                        </button>
                       </div>
 
                       <div className="px-3 pt-3">
