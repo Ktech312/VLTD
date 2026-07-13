@@ -577,19 +577,21 @@ function VaultCard({
 
       {/* Hover action buttons — top RIGHT, clear of status badge */}
       <div className="absolute right-1.5 top-1.5 z-20 hidden items-center gap-1 group-hover:flex">
-        <Link
-          href={detailHref}
-          className="inline-flex h-6 items-center justify-center rounded-full bg-black/70 px-2 text-[10px] text-text-primary ring-1 ring-[color:var(--theme-border)] backdrop-blur"
-        >
-          Edit
-        </Link>
         <button
           type="button"
           onClick={handleDelete}
           disabled={isDeleting}
-          className="inline-flex h-6 items-center justify-center rounded-full bg-red-600/90 px-2 text-[10px] text-text-primary ring-1 ring-red-500/40"
+          aria-label="Delete item"
+          title="Delete item"
+          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white ring-1 ring-red-500/40 disabled:opacity-50"
         >
-          {isDeleting ? "..." : "Delete"}
+          {isDeleting ? (
+            <span className="text-[9px]">...</span>
+          ) : (
+            <svg width="13" height="13" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+              <path d="M5 1h5M1 3h13M2.5 3l1 9.5a1 1 0 001 .5h6a1 1 0 001-.5l1-9.5M5.5 6v4M9.5 6v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          )}
         </button>
       </div>
 
@@ -610,12 +612,13 @@ function VaultCard({
             </div>
           )}
         </Link>
-        <div className="absolute right-1.5 top-1.5 z-30">
-          <ItemVisibilityToggle item={item} />
-        </div>
       </div>
 
-      <Link href={detailHref} className="mt-3 min-w-0">
+      <div className="mt-2 flex h-5 items-center">
+        <ItemVisibilityToggle item={item} />
+      </div>
+
+      <Link href={detailHref} className="mt-1 min-w-0">
         <div className="line-clamp-1 text-[15px] font-semibold leading-tight text-text-primary">
           {item.title}
         </div>
