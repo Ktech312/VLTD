@@ -917,19 +917,19 @@ function VaultSelectionDrawer({
   }
 
   return (
-    <section className="sticky bottom-3 z-30 mt-5 rounded-[14px] border border-[color:var(--theme-gold-border)] bg-[rgba(3,11,14,0.94)] p-3 shadow-[0_-18px_60px_rgba(0,0,0,0.46)] backdrop-blur-xl">
+    <section className="sticky bottom-2 z-30 mt-5 rounded-[14px] border border-[color:var(--theme-gold-border)] bg-[rgba(3,11,14,0.94)] p-2 shadow-[0_-18px_60px_rgba(0,0,0,0.46)] backdrop-blur-xl">
       <button
         type="button"
         onClick={onClose}
         aria-label="Close item details"
-        className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full text-xl leading-none text-[color:var(--muted)] transition hover:text-[color:var(--fg)]"
+        className="absolute right-2.5 top-2.5 inline-flex h-7 w-7 items-center justify-center rounded-full text-lg leading-none text-[#D6A84F] transition hover:text-[#F0EAD6]"
       >
         ×
       </button>
 
-      <div className="grid overflow-hidden rounded-[12px] border border-[color:var(--border)] pr-8 lg:grid-cols-[360px_1fr_1fr_1fr]">
-        <div className="flex min-w-0 gap-4 p-3">
-          <Link href={detailHref} className="relative h-[126px] w-[96px] shrink-0 overflow-hidden rounded-[8px] border border-[color:var(--theme-gold-border)] bg-black/30">
+      <div className="grid overflow-hidden rounded-[12px] border border-[color:var(--border)] pr-7 lg:grid-cols-[330px_1fr_1.15fr_1fr]">
+        <div className="flex min-w-0 gap-3 p-2.5">
+          <Link href={detailHref} className="relative h-[116px] w-[86px] shrink-0 overflow-hidden rounded-[8px] border border-[color:var(--theme-gold-border)] bg-black/30">
             {image ? (
               <ProgressiveImage src={image} alt={item.title} className="h-full w-full" imageClassName="object-contain object-center" draggable={false} />
             ) : (
@@ -940,98 +940,100 @@ function VaultSelectionDrawer({
             )}
           </Link>
 
-          <div className="min-w-0 py-1">
+          <div className="min-w-0 py-0.5">
             <div className="flex items-center gap-2">
-              <Link href={detailHref} className="line-clamp-1 text-xl font-semibold leading-tight text-[color:var(--fg)]">
+              <Link href={detailHref} className="line-clamp-1 text-[18px] font-semibold leading-tight text-[#F0EAD6]">
                 {item.title}
               </Link>
-              <span className="text-2xl leading-none text-[color:var(--theme-gold)]">☆</span>
-              <span className="text-lg leading-none text-[color:var(--muted)]">⋮</span>
+              <span className="text-xl leading-none text-[#D6A84F]">☆</span>
+              <span className="text-base leading-none text-[#8E835F]">⋮</span>
             </div>
-            <div className="mt-1 line-clamp-1 text-sm text-[color:var(--muted)]">{itemMeta(item)}</div>
+            <div className="mt-1 line-clamp-1 text-[13px] text-[#B9AE86]">{itemMeta(item)}</div>
             <div className="mt-2 flex flex-wrap gap-2">
-              {item.grade ? <span className="rounded-[6px] px-2 py-1 text-xs ring-1 ring-[color:var(--border)]">{item.grade}</span> : null}
-              {item.variant ? <span className="rounded-[6px] px-2 py-1 text-xs ring-1 ring-[color:var(--border)]">{item.variant}</span> : null}
-              <span className="rounded-[6px] px-2 py-1 text-xs text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)]">{item.isPublic ? "Public" : "Private"}</span>
+              {item.grade ? <span className="rounded-[5px] px-2 py-0.5 text-[11px] text-[#F0EAD6] ring-1 ring-[color:var(--border)]">{item.grade}</span> : null}
+              {item.variant ? <span className="rounded-[5px] px-2 py-0.5 text-[11px] text-[#F0EAD6] ring-1 ring-[color:var(--border)]">{item.variant}</span> : null}
+              <span className="rounded-[5px] px-2 py-0.5 text-[11px] text-[#D6A84F] ring-1 ring-[color:var(--border)]">{item.isPublic ? "Public" : "Private"}</span>
             </div>
-            <div className="mt-4 text-2xl font-bold text-[color:var(--data-color)]">{formatMoney(value)}</div>
+            <div className="mt-3 text-[22px] font-bold leading-none text-[#44D9F2]">{formatMoney(value)}</div>
             <div className="mt-1 text-xs" style={{ color: gain >= 0 ? "var(--color-gain, #4CAF82)" : "var(--color-loss, #E05252)" }}>
               {paid > 0 ? `${gain >= 0 ? "+" : ""}${gainPct.toFixed(1)}% this year` : "Add cost basis for return"}
             </div>
           </div>
         </div>
 
-        <div className="border-l border-[color:var(--border)] p-3">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--theme-gold)]">Value Evidence</div>
-          <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
+        <div className="border-l border-[color:var(--border)] p-2.5">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#D6A84F]">Value Evidence</div>
+          <div className="mt-3 grid grid-cols-3 gap-3 text-[12px]">
             <div>
-              <div className="text-[color:var(--muted)]">Low</div>
-              <div className="mt-2 text-base font-semibold">{low > 0 ? formatMoney(low) : "—"}</div>
+              <div className="text-[#9E946E]">Low</div>
+              <div className="mt-2 text-[13px] font-semibold text-[#F0EAD6]">{low > 0 ? formatMoney(low) : "—"}</div>
             </div>
             <div>
-              <div className="text-[color:var(--muted)]">Median</div>
-              <div className="mt-2 text-xl font-bold text-[color:var(--data-color)]">{median > 0 ? formatMoney(median) : "—"}</div>
+              <div className="text-[#9E946E]">Median</div>
+              <div className="mt-2 text-[19px] font-bold leading-none text-[#44D9F2]">{median > 0 ? formatMoney(median) : "—"}</div>
             </div>
             <div>
-              <div className="text-[color:var(--muted)]">High</div>
-              <div className="mt-2 text-base font-semibold">{high > 0 ? formatMoney(high) : "—"}</div>
+              <div className="text-[#9E946E]">High</div>
+              <div className="mt-2 text-[13px] font-semibold text-[#F0EAD6]">{high > 0 ? formatMoney(high) : "—"}</div>
             </div>
           </div>
-          <div className="mt-4 text-xs text-[color:var(--muted)]">
+          <div className="mt-3 text-[11px] text-[#9E946E]">
             Confidence: {item.priceConfidence || readiness} · {item.comparables?.length ?? 0} comps
           </div>
-          <Link href={detailHref} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--theme-gold)]">
+          <Link href={detailHref} className="mt-3 inline-flex items-center gap-2 text-[12px] font-semibold text-[#D6A84F]">
             View details <span aria-hidden="true">→</span>
           </Link>
         </div>
 
-        <div className="border-l border-[color:var(--border)] p-3">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--theme-gold)]">Documentation</div>
-          <div className="mt-4 grid grid-cols-[76px_minmax(0,1fr)] gap-4">
-            <PercentDonut percent={docs.percent} />
+        <div className="border-l border-[color:var(--border)] p-2.5">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#D6A84F]">Documentation</div>
+          <div className="mt-3 grid grid-cols-[72px_minmax(0,1fr)] gap-3">
+            <div className="flex flex-col items-center gap-1">
+              <PercentDonut percent={docs.percent} />
+              <div className="text-[11px] text-[#9E946E]">Complete</div>
+            </div>
             <div className="min-w-0">
-              <div className="text-xs text-[color:var(--muted)]">Complete</div>
-              <div className="mt-2 space-y-1 text-sm">
+              <div className="space-y-1 text-[12px]">
                 {docs.rows.map((row) => (
                   <div key={row.label} className="flex items-center justify-between gap-3">
                     <span className="inline-flex min-w-0 items-center gap-2">
                       <span className={["inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px]", row.complete ? "bg-emerald-500/80 text-black" : row.warn ? "bg-amber-500/20 text-amber-300 ring-1 ring-amber-400/50" : "bg-white/10 text-white/50"].join(" ")}>
                         {row.complete ? "✓" : "!"}
                       </span>
-                      <span className="truncate">{row.label}</span>
+                      <span className="truncate text-[#F0EAD6]">{row.label}</span>
                     </span>
-                    {!row.complete && row.warn ? <span className="text-xs text-amber-300">Missing</span> : null}
+                    {!row.complete && row.warn ? <span className="text-[11px] text-[#D6A84F]">Missing</span> : null}
                   </div>
                 ))}
               </div>
             </div>
           </div>
-          <Link href={detailHref} className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--theme-gold)]">
+          <Link href={detailHref} className="mt-2 inline-flex items-center gap-2 text-[12px] font-semibold text-[#D6A84F]">
             View all docs <span aria-hidden="true">→</span>
           </Link>
         </div>
 
-        <div className="border-l border-[color:var(--border)] p-3">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--theme-gold)]">Share / Sell</div>
-          <div className="mt-4 flex items-center justify-between gap-3 text-sm">
+        <div className="border-l border-[color:var(--border)] p-2.5">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#D6A84F]">Share / Sell</div>
+          <div className="mt-3 flex items-center justify-between gap-3 text-[12px] text-[#F0EAD6]">
             <span className="inline-flex items-center gap-2">
               <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/20 text-[10px] text-emerald-300 ring-1 ring-emerald-400/50">↗</span>
               Public Gallery
             </span>
             <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-200">{item.isPublic ? "On" : "Off"}</span>
           </div>
-          <Link href={detailHref} className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--theme-gold)]">
+          <Link href={detailHref} className="mt-2 inline-flex items-center gap-2 text-[12px] font-semibold text-[#D6A84F]">
             View public page <span aria-hidden="true">↗</span>
           </Link>
-          <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-            <Link href={detailHref} className="inline-flex min-h-[38px] items-center justify-center gap-2 rounded-[7px] px-3 text-sm font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--theme-gold-border)]">
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            <Link href={detailHref} className="inline-flex min-h-[32px] items-center justify-center gap-2 rounded-[7px] px-3 text-[12px] font-semibold text-[#D6A84F] ring-1 ring-[color:var(--theme-gold-border)]">
               Create Listing
             </Link>
-            <button type="button" onClick={exportItemData} className="inline-flex min-h-[38px] items-center justify-center gap-2 rounded-[7px] px-3 text-sm font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--theme-gold-border)]">
+            <button type="button" onClick={exportItemData} className="inline-flex min-h-[32px] items-center justify-center gap-2 rounded-[7px] px-3 text-[12px] font-semibold text-[#D6A84F] ring-1 ring-[color:var(--theme-gold-border)]">
               Export Data
             </button>
           </div>
-          <Link href={detailHref} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--theme-gold)]">
+          <Link href={detailHref} className="mt-3 inline-flex items-center gap-2 text-[12px] font-semibold text-[#D6A84F]">
             More actions <span aria-hidden="true">⌄</span>
           </Link>
         </div>
