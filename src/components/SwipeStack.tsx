@@ -1009,7 +1009,7 @@ export default function SwipeStack({
               <div
                 className="absolute left-1/2 top-0 h-[460px] w-[340px] max-w-[78vw] transition-all duration-500 ease-out"
                 style={{
-                  transform: `translate3d(calc(-50% + ${cardShift}px), 0, 0) scale(1)`,
+                  transform: `translate3d(calc(-50% + ${cardShift}px), 0, 0) scale(1.08)`,
                   transformStyle: "preserve-3d",
                   zIndex: 30,
                 }}
@@ -1069,12 +1069,9 @@ export default function SwipeStack({
                         event.stopPropagation();
                         setIsFlipped((value) => !value);
                       }}
-                      className="absolute right-4 top-4 z-40 flex h-9 w-9 items-center justify-center rounded-[12px] text-[16px] font-black ring-1 transition hover:scale-105"
+                      className="absolute right-4 top-4 z-40 flex h-9 w-9 items-center justify-center text-[16px] font-black transition hover:scale-110"
                       style={{
-                        background: "rgba(6,8,9,0.74)",
-                        borderColor: "rgba(245,181,72,0.42)",
                         color: "var(--theme-gold, #F5B548)",
-                        backdropFilter: "blur(8px)",
                       }}
                       aria-label={isFlipped ? "Show front" : "Show back"}
                     >
@@ -1107,20 +1104,6 @@ export default function SwipeStack({
               aria-label="Previous"
             >
               <ChevronLeft size={20} strokeWidth={2.5} />
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsFlipped((value) => !value)}
-              className="flex h-11 min-w-28 items-center justify-center gap-2 rounded-full px-4 text-[12px] font-bold uppercase tracking-[0.12em] transition active:scale-95"
-              style={{
-                background: isFlipped ? "var(--theme-gold, #F5B548)" : "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: isFlipped ? "#070707" : "#F0EAD6",
-                boxShadow: isFlipped ? "0 0 24px rgba(245,181,72,0.2)" : "none",
-              }}
-            >
-              <RotateCw size={14} className={isFlipped ? "rotate-180 transition-transform" : "transition-transform"} strokeWidth={2.5} />
-              Flip
             </button>
             <button
               type="button"
