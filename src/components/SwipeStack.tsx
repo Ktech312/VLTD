@@ -354,12 +354,12 @@ function VaultFlipFront({ item }: { item: ModelItem }) {
               draggable={false}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center px-8 text-center">
+            <div className="flex h-full w-full items-center justify-center bg-black/28 px-6 text-center">
               <span
-                className="text-[13px] font-bold uppercase tracking-[0.24em]"
+                className="text-[12px] font-bold uppercase tracking-[0.18em]"
                 style={{ color: "rgba(240,234,214,0.34)" }}
               >
-                {profile.frame === "square" ? "Record" : profile.frame === "instrument" ? "Instrument" : label}
+                Add front photo
               </span>
             </div>
           )}
@@ -709,12 +709,57 @@ function EmptyState({ mode }: { mode: SwipeMode }) {
 function CounterPill({
   current,
   total,
+  onJump,
 }: {
   current: number;
   total: number;
+  onJump?: (next: number) => void;
 }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(String(current));
+
+  function commitJump() {
+    const parsed = Number.parseInt(draft, 10);
+    if (Number.isFinite(parsed)) {
+      const clamped = Math.min(total, Math.max(1, parsed));
+      onJump?.(clamped);
+      setDraft(String(clamped));
+    } else {
+      setDraft(String(current));
+    }
+    setIsEditing(false);
+  }
+
+  if (isEditing && onJump) {
+    return (
+      <input
+        className="absolute top-4 left-1/2 z-30 w-16 -translate-x-1/2 rounded-full px-2 py-1 text-center text-[11px] font-semibold outline-none ring-1"
+        style={{
+          background: "rgba(0,0,0,0.68)",
+          color: "rgba(255,255,255,0.88)",
+          borderColor: "rgba(255,255,255,0.22)",
+          backdropFilter: "blur(6px)",
+        }}
+        value={draft}
+        inputMode="numeric"
+        autoFocus
+        onChange={(event) => setDraft(event.target.value.replace(/\D/g, ""))}
+        onBlur={commitJump}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") commitJump();
+          if (event.key === "Escape") {
+            setDraft(String(current));
+            setIsEditing(false);
+          }
+        }}
+        onPointerDown={(event) => event.stopPropagation()}
+      />
+    );
+  }
+
   return (
-    <div
+    <button
+      type="button"
       className="absolute top-4 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-[11px] font-semibold ring-1 z-30"
       style={{
         background: "rgba(0,0,0,0.55)",
@@ -722,9 +767,16 @@ function CounterPill({
         borderColor: "rgba(255,255,255,0.15)",
         backdropFilter: "blur(6px)",
       }}
+      onClick={() => {
+        if (!onJump) return;
+        setDraft(String(current));
+        setIsEditing(true);
+      }}
+      onPointerDown={(event) => event.stopPropagation()}
+      aria-label={onJump ? "Jump to item number" : undefined}
     >
       {current} / {total}
-    </div>
+    </button>
   );
 }
 
@@ -787,8 +839,8 @@ export default function SwipeStack({
       if (mode === "vault") {
         const nextIndex =
           direction === "right"
-            ? Math.min(index + 1, items.length - 1)
-            : Math.max(index - 1, 0);
+            ? (index + 1) % items.length
+            : (index - 1 + items.length) % items.length;
         setDrag(null);
         setFlying(null);
         setIsFlipped(false);
@@ -894,10 +946,10 @@ export default function SwipeStack({
           triggerAction("left");
           break;
         case "next":
-          if (mode === "vault" && index < items.length - 1) triggerAction("right");
+          if (mode === "vault" && items.length > 1) triggerAction("right");
           break;
         case "prev":
-          if (mode === "vault" && index > 0) triggerAction("left");
+          if (mode === "vault" && items.length > 1) triggerAction("left");
           break;
         case "open": {
           const currentItem = items[index];
@@ -958,8 +1010,9 @@ export default function SwipeStack({
 
   if (mode === "vault") {
     const currentItem = items[index];
-    const prevItem = index > 0 ? items[index - 1] : null;
-    const nextItem = index < items.length - 1 ? items[index + 1] : null;
+    const canCycle = items.length > 1;
+    const prevItem = canCycle ? items[(index - 1 + items.length) % items.length] : null;
+    const nextItem = canCycle ? items[(index + 1) % items.length] : null;
     const dragX = drag?.x ?? 0;
     const cardShift = Math.max(-18, Math.min(18, dragX * 0.12));
     return (
@@ -1061,7 +1114,16 @@ export default function SwipeStack({
                       </div>
                     </div>
 
-                    <CounterPill current={currentNumber} total={totalCount} />
+                    <CounterPill
+                      current={currentNumber}
+                      total={totalCount}
+                      onJump={(next) => {
+                        setIsFlipped(false);
+                        setDrag(null);
+                        setFlying(null);
+                        setIndex(next - 1);
+                      }}
+                    />
                     <button
                       type="button"
                       onPointerDown={(event) => event.stopPropagation()}
@@ -1098,9 +1160,9 @@ export default function SwipeStack({
             <button
               type="button"
               onClick={() => triggerAction("left")}
-              disabled={!prevItem}
+              disabled={!canCycle}
               className="flex h-11 w-11 items-center justify-center rounded-full ring-1 transition active:scale-95 disabled:opacity-35"
-              style={{ background: "var(--surface)", borderColor: "var(--border)", color: prevItem ? "var(--fg)" : "var(--muted2)" }}
+              style={{ background: "var(--surface)", borderColor: "var(--border)", color: canCycle ? "var(--fg)" : "var(--muted2)" }}
               aria-label="Previous"
             >
               <ChevronLeft size={20} strokeWidth={2.5} />
@@ -1117,9 +1179,9 @@ export default function SwipeStack({
             <button
               type="button"
               onClick={() => triggerAction("right")}
-              disabled={!nextItem}
+              disabled={!canCycle}
               className="flex h-11 w-11 items-center justify-center rounded-full ring-1 transition active:scale-95 disabled:opacity-35"
-              style={{ background: "var(--surface)", borderColor: "var(--border)", color: nextItem ? "var(--fg)" : "var(--muted2)" }}
+              style={{ background: "var(--surface)", borderColor: "var(--border)", color: canCycle ? "var(--fg)" : "var(--muted2)" }}
               aria-label="Next"
             >
               <ChevronRight size={20} strokeWidth={2.5} />
