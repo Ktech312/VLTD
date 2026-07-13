@@ -917,7 +917,7 @@ function VaultSelectionDrawer({
   }
 
   return (
-    <section className="sticky bottom-2 z-30 mt-5 rounded-[14px] border border-[color:var(--theme-gold-border)] bg-[rgba(3,11,14,0.94)] p-2 shadow-[0_-18px_60px_rgba(0,0,0,0.46)] backdrop-blur-xl">
+    <section className="fixed inset-x-2 bottom-[calc(var(--bottomnav-h,120px)+8px)] z-40 max-h-[74vh] overflow-y-auto rounded-[14px] border border-[color:var(--theme-gold-border)] bg-[rgba(3,11,14,0.94)] p-2 shadow-[0_-18px_60px_rgba(0,0,0,0.46)] backdrop-blur-xl lg:static lg:inset-x-auto lg:bottom-2 lg:z-30 lg:mt-5 lg:max-h-none lg:overflow-visible lg:sticky">
       <button
         type="button"
         onClick={onClose}
@@ -1362,7 +1362,8 @@ export default function VaultPage() {
     sortMode !== "newest";
 
   const selectedDetailItem =
-    filteredItems.find((item) => String(item.id) === String(selectedDetailId)) ?? filteredItems[0] ?? null;
+    // Quick-look stays hidden until an item is tapped (desktop + mobile).
+    filteredItems.find((item) => String(item.id) === String(selectedDetailId)) ?? null;
   const shouldShowSelectionDrawer =
     Boolean(selectedDetailItem) &&
     !isDetailDrawerDismissed &&
@@ -1638,7 +1639,7 @@ export default function VaultPage() {
             ))}
           </div>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-[10px] border p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
               <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Total Value</div>
               <div className="mt-3 grid grid-cols-[minmax(0,1fr)_minmax(96px,42%)] items-end gap-3">
@@ -1704,7 +1705,7 @@ export default function VaultPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search..."
-                className="min-h-[38px] w-[180px] rounded-[8px] bg-[color:var(--input)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                className="min-h-[38px] w-full sm:w-[180px] rounded-[8px] bg-[color:var(--input)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
                 style={{ borderColor: "var(--theme-border)" }}
               />
               <select
@@ -1916,8 +1917,8 @@ export default function VaultPage() {
               className={[
                 "grid",
                 vaultViewMode === "shelf"
-                  ? "gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
-                  : "gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5",
+                  ? "gap-2 grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+                  : "gap-3 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5",
               ].join(" ")}
             >
               {filteredItems.map((item) => {
