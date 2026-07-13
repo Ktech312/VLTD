@@ -595,8 +595,8 @@ function VaultCard({
         </button>
       </div>
 
-      <div className={["relative overflow-hidden rounded-[8px] bg-black/24", displayMode === "shelf" ? "h-[138px]" : displayMode === "flip" ? "h-[212px]" : "h-[190px]"].join(" ")}>
-        <Link href={detailHref} className="block h-full">
+      <div className={["relative z-0 overflow-visible rounded-[8px]", displayMode === "shelf" ? "h-[138px]" : displayMode === "flip" ? "h-[212px]" : "h-[190px]"].join(" ")}>
+        <Link href={detailHref} className="absolute inset-x-0 top-0 bottom-[-58px] z-0 block overflow-hidden rounded-[8px] bg-black/24">
           {image ? (
             <ProgressiveImage
               src={image}
@@ -614,11 +614,11 @@ function VaultCard({
         </Link>
       </div>
 
-      <div className="mt-2 flex h-5 items-center">
+      <div className="relative z-10 mt-2 flex h-5 items-center">
         <ItemVisibilityToggle item={item} />
       </div>
 
-      <Link href={detailHref} className="mt-1 min-w-0">
+      <Link href={detailHref} className="relative z-10 mt-1 min-w-0">
         <div className="line-clamp-1 text-[15px] font-semibold leading-tight text-text-primary">
           {item.title}
         </div>
