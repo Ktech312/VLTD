@@ -281,6 +281,10 @@ const MAIN_NAV_ITEMS = [
 // "More" dropdown items
 const MORE_NAV_ITEMS = [
   {
+    label: "Command Center", href: "/more", icon: IconVault, exact: true,
+    desc: "Account hub, tools, sync status and quick actions.",
+  },
+  {
     label: "VLT Lounge", href: "/community-board", icon: IconCommunityBoard, exact: false,
     desc: "Spotlights, MVPs & collector community.",
   },
