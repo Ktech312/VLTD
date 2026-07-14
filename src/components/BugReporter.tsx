@@ -176,19 +176,19 @@ export default function BugReporter() {
                   <p className="mt-3 text-xs" style={{ color: "#f87171" }}>{errorMsg}</p>
                 )}
 
-                <div className="mt-5 flex flex-col gap-3 sm:flex-row-reverse">
+                <div className="mt-5 flex flex-row-reverse gap-3">
                   <button
                     type="button"
                     disabled={!message.trim() || state === "sending"}
                     onClick={() => void submit()}
-                    className="vltd-primary-button h-12 flex-1 rounded-full px-6 text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-45"
+                    className="vltd-primary-button h-12 flex-1 rounded-full px-4 text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-45"
                   >
                     {state === "sending" ? "Sending…" : "Send report"}
                   </button>
                   <button
                     type="button"
                     onClick={() => { setOpen(false); reset(); }}
-                    className="h-12 rounded-full border px-6 text-sm font-semibold transition"
+                    className="h-12 flex-1 rounded-full border px-4 text-sm font-semibold transition"
                     style={{ borderColor: "var(--border)", background: "var(--pill)", color: "var(--muted)" }}
                   >
                     Cancel
