@@ -1539,9 +1539,9 @@ export default function VaultPage() {
                 </h1>
                 <p className="mt-2 text-sm text-[color:var(--muted)]">Every item you own, documented and searchable.</p>
               </div>
-              <Link href="/vault/add" className="inline-flex shrink-0 items-center justify-center gap-1 rounded-[8px] border px-3 py-1.5 text-sm font-semibold transition" style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.4))", color: "var(--theme-gold, #F5B548)" }}>
+              <Link href="/vault/add" className="inline-flex shrink-0 items-center justify-center gap-1 rounded-[8px] px-3 py-1.5 text-sm font-black transition" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}>
                 Add Item
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
               </Link>
             </div>
             {items.length > 0 ? (
