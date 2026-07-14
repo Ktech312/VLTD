@@ -917,7 +917,7 @@ function VaultSelectionDrawer({
   }
 
   return (
-    <section className="fixed inset-x-2 bottom-[calc(var(--bottomnav-h,120px)+8px)] z-40 max-h-[74vh] overflow-y-auto rounded-[14px] border border-[color:var(--theme-gold-border)] bg-[rgba(3,11,14,0.94)] p-2 shadow-[0_-18px_60px_rgba(0,0,0,0.46)] backdrop-blur-xl lg:static lg:inset-x-auto lg:bottom-2 lg:z-30 lg:mt-5 lg:max-h-none lg:w-fit lg:overflow-visible lg:sticky">
+    <section className="fixed inset-x-2 bottom-[calc(var(--bottomnav-h,120px)+8px)] z-40 max-h-[74vh] overflow-y-auto rounded-[14px] border border-[color:var(--theme-gold-border)] bg-[rgba(3,11,14,0.94)] p-2 shadow-[0_-18px_60px_rgba(0,0,0,0.46)] backdrop-blur-xl lg:static lg:inset-x-auto lg:bottom-2 lg:z-30 lg:mx-auto lg:mt-5 lg:max-h-none lg:w-fit lg:overflow-visible lg:sticky">
       <button
         type="button"
         onClick={onClose}
