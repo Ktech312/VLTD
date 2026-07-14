@@ -1638,36 +1638,26 @@ export default function VaultPage() {
             ))}
           </div>
 
-          <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-[10px] border p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Total Value</div>
-              <div className="mt-3 grid grid-cols-[minmax(0,1fr)_minmax(96px,42%)] items-end gap-3">
-                <div>
-                  <div className="text-3xl font-semibold text-[color:var(--data-color)]">{formatMoney(stats.totalValue)}</div>
-                  <div className={stats.totalGain >= 0 ? "mt-1 text-sm text-emerald-300" : "mt-1 text-sm text-red-300"}>{stats.totalGain >= 0 ? "+" : ""}{formatMoney(stats.totalGain)} filtered gain</div>
-                </div>
-                <MiniValueSparkline values={stats.valueTrend} />
-              </div>
+          <div className="mt-5 flex gap-2 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:gap-3 sm:overflow-visible xl:grid-cols-4">
+            <div className="w-[132px] shrink-0 rounded-[10px] border p-3 sm:w-auto sm:p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">Total Value</div>
+              <div className="mt-1.5 text-xl font-semibold text-[color:var(--data-color)] sm:mt-3 sm:text-3xl">{formatMoney(stats.totalValue)}</div>
+              <div className={(stats.totalGain >= 0 ? "text-emerald-300" : "text-red-300") + " mt-0.5 text-[11px] sm:mt-1 sm:text-sm"}>{stats.totalGain >= 0 ? "+" : ""}{formatMoney(stats.totalGain)}</div>
             </div>
-            <div className="rounded-[10px] border p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Items</div>
-              <div className="mt-3 text-3xl font-semibold">{stats.totalItems}</div>
-              <div className="mt-1 text-sm text-[color:var(--muted)]">Across {stats.universeCount} {stats.universeCount === 1 ? "universe" : "universes"}</div>
+            <div className="w-[132px] shrink-0 rounded-[10px] border p-3 sm:w-auto sm:p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">Items</div>
+              <div className="mt-1.5 text-xl font-semibold sm:mt-3 sm:text-3xl">{stats.totalItems}</div>
+              <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:mt-1 sm:text-sm">{stats.universeCount} {stats.universeCount === 1 ? "universe" : "universes"}</div>
             </div>
-            <div className="rounded-[10px] border p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Insurance Ready</div>
-              <div className="mt-3 flex items-center gap-3">
-                <PercentDonut percent={stats.insuranceReadyPct} />
-                <div>
-                  <div className="text-2xl font-semibold text-[color:var(--data-color)]">{stats.insuranceReadyCount}</div>
-                  <div className="text-sm text-[color:var(--muted)]">of {stats.totalItems} items</div>
-                </div>
-              </div>
+            <div className="w-[132px] shrink-0 rounded-[10px] border p-3 sm:w-auto sm:p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">Insurance Ready</div>
+              <div className="mt-1.5 text-xl font-semibold text-[color:var(--data-color)] sm:mt-3 sm:text-3xl">{stats.insuranceReadyPct}%</div>
+              <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:mt-1 sm:text-sm">{stats.insuranceReadyCount} of {stats.totalItems} items</div>
             </div>
-            <div className="rounded-[10px] border p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Needs Review</div>
-              <div className="mt-3 text-3xl font-semibold text-[color:var(--theme-gold)]">{stats.needsReviewCount}</div>
-              <div className="mt-1 text-sm text-[color:var(--muted)]">Items missing info</div>
+            <div className="w-[132px] shrink-0 rounded-[10px] border p-3 sm:w-auto sm:p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">Needs Review</div>
+              <div className="mt-1.5 text-xl font-semibold text-[color:var(--theme-gold)] sm:mt-3 sm:text-3xl">{stats.needsReviewCount}</div>
+              <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:mt-1 sm:text-sm">Items missing info</div>
             </div>
           </div>
 
