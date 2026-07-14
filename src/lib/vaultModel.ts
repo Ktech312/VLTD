@@ -1050,9 +1050,9 @@ export function appendItems(items: VaultItem[]) {
   const existing = loadRawItems();
 
   if (typeof window !== "undefined") {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { getTierSafe } = require("./subscription") as typeof import("./subscription");
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { getVaultItemLimit } = require("./galleryTier") as typeof import("./galleryTier");
     const tier = getTierSafe();
     const limit = getVaultItemLimit(tier);

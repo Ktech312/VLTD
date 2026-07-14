@@ -82,9 +82,9 @@ export async function prepareImageBlob(
   let defaultQuality = 0.82;
   if (typeof window !== "undefined" && options?.maxDimension === undefined && options?.quality === undefined) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { getTierSafe } = require("./subscription") as typeof import("./subscription");
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { getImageUploadOptions } = require("./galleryTier") as typeof import("./galleryTier");
       const imgOpts = getImageUploadOptions(getTierSafe());
       defaultMaxDimension = imgOpts.maxDimension;
