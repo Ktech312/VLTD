@@ -1531,39 +1531,37 @@ export default function VaultPage() {
     <main className="text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1500px] px-3 py-4 sm:px-5 sm:py-5">
         <section className="mb-5">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-end gap-3">
-                <div>
-                  <h1 className="text-[2.7rem] font-semibold leading-none sm:text-[3.3rem]" style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)" }}>
-                    Vault
-                  </h1>
-                  <p className="mt-2 text-sm text-[color:var(--muted)]">Every item you own, documented and searchable.</p>
-                </div>
+          <div className="min-w-0">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h1 className="text-[2.7rem] font-semibold leading-none sm:text-[3.3rem]" style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)" }}>
+                  Vault
+                </h1>
+                <p className="mt-2 text-sm text-[color:var(--muted)]">Every item you own, documented and searchable.</p>
               </div>
-              {items.length > 0 ? (
-                <div className="mt-3 flex flex-wrap gap-2 text-xs text-[color:var(--muted)]">
-                  <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">{privateCount} private</span>
-                  <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">{publicCount} public</span>
-                  <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">Public links only show items you unlock</span>
-                </div>
-              ) : null}
+              <Link href="/vault/add" className="inline-flex min-h-[38px] shrink-0 items-center justify-center gap-1.5 rounded-[8px] border px-3.5 text-sm font-semibold transition" style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.4))", color: "var(--theme-gold, #F5B548)" }}>
+                Add Item
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              </Link>
             </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <button type="button" onClick={() => void handleShareVault()} className="inline-flex min-h-[38px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3.5 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">
-                {shareMessage || "Share vault"}
-              </button>
+            {items.length > 0 ? (
+              <div className="mt-3 hidden flex-wrap gap-2 text-xs text-[color:var(--muted)] sm:flex">
+                <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">{privateCount} private</span>
+                <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">{publicCount} public</span>
+                <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">Public links only show items you unlock</span>
+              </div>
+            ) : null}
+            {/* Secondary actions — tightened pills (Share vault removed; sharing is per-item) */}
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <VaultExportButton />
-              <Link href="/vault/add" className="inline-flex min-h-[38px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3.5 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">Add</Link>
-              <Link href="/vault/quick" className="inline-flex min-h-[38px] items-center justify-center rounded-[7px] bg-[color:var(--pill-active-bg)] px-3.5 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]">Quick Add</Link>
-              <Link href="/vault/import" className="inline-flex min-h-[38px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3.5 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">Import</Link>
-              <Link href="/vault/sold" className="inline-flex min-h-[38px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3.5 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">Sold</Link>
-              <Link href="/vault/for-sale" className="inline-flex min-h-[38px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3.5 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">For Sale</Link>
+              <Link href="/vault/quick" className="inline-flex min-h-[30px] items-center justify-center rounded-[7px] bg-[color:var(--pill-active-bg)] px-3.5 py-1 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]">Quick Add</Link>
+              <Link href="/vault/import" className="inline-flex min-h-[30px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3.5 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Import</Link>
+              <Link href="/vault/sold" className="inline-flex min-h-[30px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3.5 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Sold</Link>
+              <Link href="/vault/for-sale" className="inline-flex min-h-[30px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3.5 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">For Sale</Link>
             </div>
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-2 pb-1">
+          <div className="mt-5 flex gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible">
             <div className="relative shrink-0">
               <div className="inline-flex gap-2">
                 <button
@@ -1576,7 +1574,7 @@ export default function VaultPage() {
                 <button
                   type="button"
                   onClick={() => setShowUniverseMenu((value) => !value)}
-                  className="inline-flex min-h-[42px] items-center rounded-[7px] px-4 text-sm font-semibold ring-1"
+                  className="hidden min-h-[42px] items-center rounded-[7px] px-4 text-sm font-semibold ring-1 sm:inline-flex"
                   style={{ background: "var(--pill)", borderColor: "var(--border)", color: "var(--fg)" }}
                   aria-expanded={showUniverseMenu}
                 >
