@@ -547,6 +547,39 @@ function CouponsPanel({ adminEmail }: { adminEmail: string }) {
   );
 }
 
+// ── Sidebar icons (clean line icons — no emoji) ──────────────
+function AdminIcon({ name }: { name: string }) {
+  const p = {
+    width: 14,
+    height: 14,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+  };
+  switch (name) {
+    case "characters":
+      return <svg {...p}><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" /></svg>;
+    case "key":
+      return <svg {...p}><circle cx="8" cy="8" r="4" /><path d="M11 11l9 9M17 17l2-2M14 14l2-2" /></svg>;
+    case "ticket":
+      return <svg {...p}><path d="M3 9a2 2 0 0 0 0 6v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3a2 2 0 0 1 0-6V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z" /><path d="M13 6v12" /></svg>;
+    case "shield":
+      return <svg {...p}><path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6l8-3z" /></svg>;
+    case "palette":
+      return <svg {...p}><path d="M12 3a9 9 0 1 0 0 18c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.2 0-1.1.9-2 2-2H17a4 4 0 0 0 4-4c0-4.4-4-7.5-9-7.5z" /><circle cx="7.5" cy="10.5" r="1" /><circle cx="12" cy="7.5" r="1" /><circle cx="16.5" cy="10.5" r="1" /></svg>;
+    case "inbox":
+      return <svg {...p}><path d="M4 4h16v16H4zM4 9h16M9 4v5" /></svg>;
+    case "bug":
+      return <svg {...p}><path d="M12 20a6 6 0 0 0 6-6v-2a6 6 0 0 0-12 0v2a6 6 0 0 0 6 6zM12 8V6M5 11H3M19 11h2M5 16l-2 1M19 16l2 1" /></svg>;
+    default:
+      return null;
+  }
+}
+
 // ── Collapsible sidebar section ──────────────────────────────
 function SidebarSection({
   title,
@@ -571,7 +604,9 @@ function SidebarSection({
         className={`flex w-full items-center justify-between px-4 py-3 text-left transition ${active ? "bg-white/[0.06]" : "hover:bg-white/[0.04]"}`}
       >
         <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-white/70">
-          <span>{icon}</span>
+          <span className="shrink-0" style={{ color: "var(--theme-gold, #F5B548)" }}>
+            <AdminIcon name={icon} />
+          </span>
           {title}
         </span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`text-white/40 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true">
@@ -1905,7 +1940,7 @@ export default function AdminCharactersPage() {
           {/* Characters */}
           <SidebarSection
             title="Characters"
-            icon="👤"
+            icon="characters"
             open={openSections.characters}
             active={activeSection === "characters"}
             onToggle={() => selectSection("characters")}
@@ -1935,7 +1970,7 @@ export default function AdminCharactersPage() {
           {/* Account Rights */}
           <SidebarSection
             title="Account Rights"
-            icon="🔑"
+            icon="key"
             open={openSections["account-rights"]}
             active={activeSection === "account-rights"}
             onToggle={() => selectSection("account-rights")}
@@ -1948,7 +1983,7 @@ export default function AdminCharactersPage() {
           {/* Coupons */}
           <SidebarSection
             title="Coupons"
-            icon="🎟️"
+            icon="ticket"
             open={openSections.coupons}
             active={activeSection === "coupons"}
             onToggle={() => selectSection("coupons")}
@@ -1962,7 +1997,7 @@ export default function AdminCharactersPage() {
           {role === "owner" && (
             <SidebarSection
               title="Manage Admins"
-              icon="🛡️"
+              icon="shield"
               open={openSections.admins}
               active={activeSection === "admins"}
               onToggle={() => selectSection("admins")}
@@ -1976,7 +2011,7 @@ export default function AdminCharactersPage() {
           {/* Themes */}
           <SidebarSection
             title="Themes"
-            icon="🎨"
+            icon="palette"
             open={openSections.themes}
             active={activeSection === "themes"}
             onToggle={() => selectSection("themes")}
@@ -1989,7 +2024,7 @@ export default function AdminCharactersPage() {
           {/* Beta Waitlist */}
           <SidebarSection
             title="Beta Waitlist"
-            icon="📨"
+            icon="inbox"
             open={openSections.waitlist}
             active={activeSection === "waitlist"}
             onToggle={() => selectSection("waitlist")}
@@ -2002,7 +2037,7 @@ export default function AdminCharactersPage() {
           {/* Bug Reports */}
           <SidebarSection
             title="Bug Reports"
-            icon="🐞"
+            icon="bug"
             open={openSections.bugs}
             active={activeSection === "bugs"}
             onToggle={() => selectSection("bugs")}
