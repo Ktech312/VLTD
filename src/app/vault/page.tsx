@@ -30,7 +30,6 @@ import {
   type VaultItem,
 } from "@/lib/vaultModel";
 import { hasSupabaseEnv, VAULT_ITEMS_TABLE } from "@/lib/vaultCloud";
-import { getPublicVaultUrl, syncPublicProfile } from "@/lib/publicProfile";
 
 const ACTIVE_PROFILE_EVENT = "vltd:active-profile";
 const SALES_KEY = "vltd_sales_history";
@@ -332,67 +331,6 @@ function effectiveMarketValue(item: VaultItem) {
     return item.currentValue;
   }
   return 0;
-}
-
-function buildValueTrend(items: VaultItem[]) {
-  const total = items.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
-  if (!items.length) return [0, 0];
-
-  const dated = items
-    .map((item) => ({
-      value: effectiveMarketValue(item),
-      date: Number(item.createdAt ?? item.valueUpdatedAt ?? item.priceUpdatedAt ?? 0),
-    }))
-    .filter((entry) => Number.isFinite(entry.date) && entry.date > 0)
-    .sort((a, b) => a.date - b.date);
-
-  const undatedTotal = total - dated.reduce((sum, entry) => sum + entry.value, 0);
-  if (!dated.length) return [0, total];
-
-  const points = [Math.max(0, undatedTotal)];
-  let running = undatedTotal;
-  for (const entry of dated) {
-    running += entry.value;
-    points.push(running);
-  }
-
-  return points.length > 1 ? points : [0, total];
-}
-
-function MiniValueSparkline({ values }: { values: number[] }) {
-  const width = 170;
-  const height = 62;
-  const pad = 5;
-  const usableWidth = width - pad * 2;
-  const usableHeight = height - pad * 2;
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const span = Math.max(1, max - min);
-  const step = values.length > 1 ? usableWidth / (values.length - 1) : usableWidth;
-  const points = values.map((value, index) => {
-    const x = pad + index * step;
-    const y = pad + usableHeight - ((value - min) / span) * usableHeight;
-    return `${x.toFixed(2)},${y.toFixed(2)}`;
-  });
-  const area = `${pad},${height - pad} ${points.join(" ")} ${width - pad},${height - pad}`;
-
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-16 w-full" aria-hidden="true">
-      <defs>
-        <linearGradient id="vaultValueLine" x1="0" x2="1" y1="0" y2="0">
-          <stop offset="0%" stopColor="rgba(82,214,244,0.25)" />
-          <stop offset="100%" stopColor="rgba(82,214,244,0.95)" />
-        </linearGradient>
-        <linearGradient id="vaultValueArea" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="rgba(82,214,244,0.20)" />
-          <stop offset="100%" stopColor="rgba(82,214,244,0)" />
-        </linearGradient>
-      </defs>
-      <polygon points={area} fill="url(#vaultValueArea)" />
-      <polyline points={points.join(" ")} fill="none" stroke="url(#vaultValueLine)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={points.at(-1)?.split(",")[0] ?? width - pad} cy={points.at(-1)?.split(",")[1] ?? pad} r="2.4" fill="rgba(82,214,244,0.95)" />
-    </svg>
-  );
 }
 
 function PercentDonut({ percent }: { percent: number }) {
@@ -1059,7 +997,6 @@ export default function VaultPage() {
   const [syncStatus, setSyncStatus] = useState("");
   const [isMigrating, setIsMigrating] = useState(false);
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
-  const [shareMessage, setShareMessage] = useState("");
   const [vaultViewMode, setVaultViewMode] = useState<VaultViewMode>("shelf");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [selectMode, setSelectMode] = useState(false);
@@ -1328,7 +1265,6 @@ export default function VaultPage() {
     const totalCostValue = filteredItems.reduce((sum, item) => sum + totalCost(item), 0);
     const totalValue = filteredItems.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
     const totalGain = totalValue - totalCostValue;
-    const valueTrend = buildValueTrend(filteredItems);
     const universeCount = new Set(filteredItems.map((item) => universeForItem(item))).size;
     const insuranceReadyCount = filteredItems.filter((item) => {
       const intelligence = intelligenceMap[item.id];
@@ -1344,7 +1280,6 @@ export default function VaultPage() {
       totalCost: totalCostValue,
       totalValue,
       totalGain,
-      valueTrend,
       universeCount,
       insuranceReadyCount,
       insuranceReadyPct,
@@ -1505,25 +1440,6 @@ export default function VaultPage() {
     setGradedOnly(false);
     setUncategorizedOnly(false);
     setSortMode("newest");
-  }
-
-  async function handleShareVault() {
-    const url = getPublicVaultUrl();
-    if (!url) {
-      setShareMessage("No active profile");
-      window.setTimeout(() => setShareMessage(""), 2000);
-      return;
-    }
-
-    try {
-      await syncPublicProfile();
-      await navigator.clipboard.writeText(url);
-      setShareMessage(publicCount > 0 ? "Copied!" : "Copied - no public items yet");
-    } catch (error) {
-      setShareMessage(error instanceof Error ? error.message : "Could not copy link");
-    }
-
-    window.setTimeout(() => setShareMessage(""), 2000);
   }
 
   return (

@@ -183,7 +183,6 @@ export default function MuseumPage() {
   const selectedItemsDragRef = useRef({ active: false, dragged: false, startX: 0, scrollLeft: 0 });
   const [filter, setFilter] = useState<ExhibitionFilter>("ACTIVE");
   const [sortMode, setSortMode] = useState<ExhibitionSort>("updated");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [copyOk, setCopyOk] = useState(false);
 
@@ -609,7 +608,7 @@ export default function MuseumPage() {
             <div className={`grid gap-6 lg:items-start ${selectedEntry ? "lg:grid-cols-[minmax(0,1fr)_440px]" : ""}`}>
               <div className="min-w-0">
                 {headerBlock}
-                <div className={`mt-5 grid gap-4 ${viewMode === "list" ? "grid-cols-1" : "grid-cols-2 xl:grid-cols-3"}`}>
+                <div className="mt-5 grid grid-cols-2 gap-4 xl:grid-cols-3">
               {displayedGalleries.map(({ gallery, totalValue }) => {
                 const coverImage = resolveGalleryImage(gallery.coverImage);
 
