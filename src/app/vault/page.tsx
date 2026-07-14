@@ -917,7 +917,7 @@ function VaultSelectionDrawer({
   }
 
   return (
-    <section className="fixed inset-x-2 bottom-[calc(var(--bottomnav-h,120px)+8px)] z-40 max-h-[74vh] overflow-y-auto rounded-[14px] border border-[color:var(--theme-gold-border)] bg-[rgba(3,11,14,0.94)] p-2 shadow-[0_-18px_60px_rgba(0,0,0,0.46)] backdrop-blur-xl lg:static lg:inset-x-auto lg:bottom-2 lg:z-30 lg:mt-5 lg:max-h-none lg:overflow-visible lg:sticky">
+    <section className="fixed inset-x-2 bottom-[calc(var(--bottomnav-h,120px)+8px)] z-40 max-h-[74vh] overflow-y-auto rounded-[14px] border border-[color:var(--theme-gold-border)] bg-[rgba(3,11,14,0.94)] p-2 shadow-[0_-18px_60px_rgba(0,0,0,0.46)] backdrop-blur-xl lg:static lg:inset-x-auto lg:bottom-2 lg:z-30 lg:mt-5 lg:max-h-none lg:w-fit lg:overflow-visible lg:sticky">
       <button
         type="button"
         onClick={onClose}
@@ -928,9 +928,9 @@ function VaultSelectionDrawer({
         ×
       </button>
 
-      <div className="grid gap-3 pr-6 lg:grid-cols-[430px_minmax(0,1fr)]">
-        <div className="flex min-w-0 gap-3 px-2.5 py-2.5">
-          <Link href={detailHref} className="relative h-[124px] w-[88px] shrink-0 overflow-hidden rounded-[8px] border border-[color:var(--theme-gold-border)] bg-black/30">
+      <div className="grid gap-3 pr-6 lg:grid-cols-[430px_auto] lg:justify-start">
+        <div className="flex min-w-0 gap-4 px-2.5 py-2.5">
+          <Link href={detailHref} className="relative h-[150px] w-[106px] shrink-0 overflow-hidden rounded-[8px] border border-[color:var(--theme-gold-border)] bg-black/30">
             {image ? (
               <ProgressiveImage src={image} alt={item.title} className="h-full w-full" imageClassName="object-cover object-center" draggable={false} />
             ) : (
@@ -946,7 +946,6 @@ function VaultSelectionDrawer({
               <Link href={detailHref} className="line-clamp-1 text-[18px] font-semibold leading-tight" style={{ color: "#F0EAD6" }}>
                 {item.title}
               </Link>
-              <span className="text-lg leading-none" style={{ color: "#D6A84F" }}>☆</span>
               <span className="text-sm leading-none" style={{ color: "#8E835F" }}>⋮</span>
             </div>
             <div className="mt-0.5 line-clamp-1 text-[12px]" style={{ color: "#B9AE86" }}>{itemMeta(item)}</div>
@@ -962,7 +961,7 @@ function VaultSelectionDrawer({
           </div>
         </div>
 
-        <div className="grid min-w-0 overflow-hidden rounded-[12px] border border-[color:var(--border)] lg:grid-cols-[270px_320px_minmax(240px,1fr)]">
+        <div className="grid min-w-0 overflow-hidden rounded-[12px] border border-[color:var(--border)] lg:w-fit lg:grid-cols-[minmax(0,270px)_minmax(0,320px)_auto]">
         <div className="px-4 py-2.5">
           <div className="text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: "#D6A84F" }}>Value Evidence</div>
           <div className="mt-3 grid grid-cols-3 gap-5 text-[11px]">
@@ -999,7 +998,7 @@ function VaultSelectionDrawer({
                 {docs.rows.map((row) => (
                   <div key={row.label} className="flex items-center justify-between gap-3">
                     <span className="inline-flex min-w-0 items-center gap-2">
-                      <span className={["inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-[9px]", row.complete ? "bg-emerald-500/80 text-black" : row.warn ? "bg-amber-500/20 text-amber-300 ring-1 ring-amber-400/50" : "bg-white/10 text-white/50"].join(" ")}>
+                      <span className={["inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold", row.complete ? "bg-emerald-500/80 text-black" : "bg-red-500/90 text-white"].join(" ")}>
                         {row.complete ? "✓" : "!"}
                       </span>
                       <span className="truncate" style={{ color: "#F0EAD6" }}>{row.label}</span>
@@ -1022,7 +1021,7 @@ function VaultSelectionDrawer({
               <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500/20 text-[9px] text-emerald-300 ring-1 ring-emerald-400/50">↗</span>
               Public Gallery
             </span>
-            <span className={"rounded-full px-1.5 py-0.5 text-[10px] " + (item.isPublic ? "bg-emerald-500/15 text-emerald-200" : "bg-white/10 text-white/55")}>{item.isPublic ? "On" : "Off"}</span>
+            <ItemVisibilityToggle item={item} />
           </div>
           <Link href={detailHref} className="mt-2 inline-flex items-center gap-2 text-[11px] font-semibold" style={{ color: "#D6A84F" }}>
             View public page <span aria-hidden="true">↗</span>
