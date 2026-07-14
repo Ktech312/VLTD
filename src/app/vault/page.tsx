@@ -930,9 +930,9 @@ function VaultSelectionDrawer({
 
       <div className="grid gap-3 pr-6 lg:grid-cols-[430px_minmax(0,1fr)]">
         <div className="flex min-w-0 gap-3 px-2.5 py-2.5">
-          <Link href={detailHref} className="relative h-[112px] w-[78px] shrink-0 overflow-hidden rounded-[8px] border border-[color:var(--theme-gold-border)] bg-black/30">
+          <Link href={detailHref} className="relative h-[124px] w-[88px] shrink-0 overflow-hidden rounded-[8px] border border-[color:var(--theme-gold-border)] bg-black/30">
             {image ? (
-              <ProgressiveImage src={image} alt={item.title} className="h-full w-full" imageClassName="object-contain object-center" draggable={false} />
+              <ProgressiveImage src={image} alt={item.title} className="h-full w-full" imageClassName="object-cover object-center" draggable={false} />
             ) : (
               <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/28">
                 <CameraIcon className="h-5 w-5" />
@@ -1017,12 +1017,12 @@ function VaultSelectionDrawer({
 
         <div className="relative px-4 py-2.5 before:absolute before:bottom-3 before:left-0 before:top-3 before:w-px before:bg-[color:var(--border)]">
           <div className="text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: "#D6A84F" }}>Share / Sell</div>
-          <div className="mt-3 flex items-center justify-between gap-3 text-[11px]" style={{ color: "#F0EAD6" }}>
+          <div className="mt-3 flex items-center gap-2 text-[11px]" style={{ color: "#F0EAD6" }}>
             <span className="inline-flex items-center gap-2">
               <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500/20 text-[9px] text-emerald-300 ring-1 ring-emerald-400/50">↗</span>
               Public Gallery
             </span>
-            <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] text-emerald-200">{item.isPublic ? "On" : "Off"}</span>
+            <span className={"rounded-full px-1.5 py-0.5 text-[10px] " + (item.isPublic ? "bg-emerald-500/15 text-emerald-200" : "bg-white/10 text-white/55")}>{item.isPublic ? "On" : "Off"}</span>
           </div>
           <Link href={detailHref} className="mt-2 inline-flex items-center gap-2 text-[11px] font-semibold" style={{ color: "#D6A84F" }}>
             View public page <span aria-hidden="true">↗</span>
