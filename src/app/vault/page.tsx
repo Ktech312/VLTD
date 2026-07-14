@@ -1531,33 +1531,41 @@ export default function VaultPage() {
     <main className="text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1500px] px-3 py-4 sm:px-5 sm:py-5">
         <section className="mb-5">
-          <div className="min-w-0">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h1 className="text-[2.7rem] font-semibold leading-none sm:text-[3.3rem]" style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)" }}>
-                  Vault
-                </h1>
-                <p className="mt-2 text-sm text-[color:var(--muted)]">Every item you own, documented and searchable.</p>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h1 className="text-[2.7rem] font-semibold leading-none sm:text-[3.3rem]" style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)" }}>
+                    Vault
+                  </h1>
+                  <p className="mt-2 text-sm text-[color:var(--muted)]">Every item you own, documented and searchable.</p>
+                </div>
+                {/* Mobile Add Item — top-right of the title (hidden on desktop) */}
+                <Link href="/vault/add" className="inline-flex shrink-0 items-center justify-center gap-1 rounded-[8px] px-3 py-1.5 text-sm font-black transition lg:hidden" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}>
+                  Add Item
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                </Link>
               </div>
-              <Link href="/vault/add" className="inline-flex shrink-0 items-center justify-center gap-1 rounded-[8px] px-3 py-1.5 text-sm font-black transition" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}>
-                Add Item
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-              </Link>
+              {items.length > 0 ? (
+                <div className="mt-3 hidden flex-wrap gap-2 text-xs text-[color:var(--muted)] sm:flex">
+                  <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">{privateCount} private</span>
+                  <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">{publicCount} public</span>
+                  <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">Public links only show items you unlock</span>
+                </div>
+              ) : null}
             </div>
-            {items.length > 0 ? (
-              <div className="mt-3 hidden flex-wrap gap-2 text-xs text-[color:var(--muted)] sm:flex">
-                <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">{privateCount} private</span>
-                <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">{publicCount} public</span>
-                <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">Public links only show items you unlock</span>
-              </div>
-            ) : null}
-            {/* Secondary actions — tightened pills (Share vault removed; sharing is per-item) */}
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+            {/* Actions — below the title on mobile, right-aligned on the title row on desktop */}
+            <div className="flex flex-wrap items-center gap-2 lg:shrink-0 lg:justify-end">
               <VaultExportButton />
               <Link href="/vault/quick" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill-active-bg)] px-3 py-1 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]">Quick Add</Link>
               <Link href="/vault/import" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Import</Link>
               <Link href="/vault/sold" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Sold</Link>
               <Link href="/vault/for-sale" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">For Sale</Link>
+              {/* Desktop Add Item — with the actions on the right (hidden on mobile) */}
+              <Link href="/vault/add" className="hidden shrink-0 items-center justify-center gap-1 rounded-[8px] px-3 py-1.5 text-sm font-black transition lg:inline-flex" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}>
+                Add Item
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              </Link>
             </div>
           </div>
 
