@@ -1539,9 +1539,9 @@ export default function VaultPage() {
                 </h1>
                 <p className="mt-2 text-sm text-[color:var(--muted)]">Every item you own, documented and searchable.</p>
               </div>
-              <Link href="/vault/add" className="inline-flex min-h-[38px] shrink-0 items-center justify-center gap-1.5 rounded-[8px] border px-3.5 text-sm font-semibold transition" style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.4))", color: "var(--theme-gold, #F5B548)" }}>
+              <Link href="/vault/add" className="inline-flex shrink-0 items-center justify-center gap-1 rounded-[8px] border px-3 py-1.5 text-sm font-semibold transition" style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.4))", color: "var(--theme-gold, #F5B548)" }}>
                 Add Item
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
               </Link>
             </div>
             {items.length > 0 ? (
@@ -1554,10 +1554,10 @@ export default function VaultPage() {
             {/* Secondary actions — tightened pills (Share vault removed; sharing is per-item) */}
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <VaultExportButton />
-              <Link href="/vault/quick" className="inline-flex min-h-[30px] items-center justify-center rounded-[7px] bg-[color:var(--pill-active-bg)] px-3.5 py-1 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]">Quick Add</Link>
-              <Link href="/vault/import" className="inline-flex min-h-[30px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3.5 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Import</Link>
-              <Link href="/vault/sold" className="inline-flex min-h-[30px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3.5 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Sold</Link>
-              <Link href="/vault/for-sale" className="inline-flex min-h-[30px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3.5 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">For Sale</Link>
+              <Link href="/vault/quick" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill-active-bg)] px-3 py-1 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]">Quick Add</Link>
+              <Link href="/vault/import" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Import</Link>
+              <Link href="/vault/sold" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Sold</Link>
+              <Link href="/vault/for-sale" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">For Sale</Link>
             </div>
           </div>
 
@@ -1639,25 +1639,37 @@ export default function VaultPage() {
           </div>
 
           <div className="mt-5 flex gap-2 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:gap-3 sm:overflow-visible xl:grid-cols-4">
-            <div className="w-[132px] shrink-0 rounded-[10px] border p-3 sm:w-auto sm:p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">Total Value</div>
-              <div className="mt-1.5 text-xl font-semibold text-[color:var(--data-color)] sm:mt-3 sm:text-3xl">{formatMoney(stats.totalValue)}</div>
-              <div className={(stats.totalGain >= 0 ? "text-emerald-300" : "text-red-300") + " mt-0.5 text-[11px] sm:mt-1 sm:text-sm"}>{stats.totalGain >= 0 ? "+" : ""}{formatMoney(stats.totalGain)}</div>
+            <div className="w-[140px] shrink-0 rounded-[10px] border p-2.5 sm:w-auto sm:p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/></svg>
+                Total Value
+              </div>
+              <div className="mt-1.5 text-xl font-semibold text-[color:var(--data-color)] sm:mt-2.5 sm:text-3xl">{formatMoney(stats.totalValue)}</div>
+              <div className={(stats.totalGain >= 0 ? "text-emerald-300" : "text-red-300") + " mt-0.5 text-[11px] sm:text-sm"}>{stats.totalGain >= 0 ? "+" : ""}{formatMoney(stats.totalGain)}</div>
             </div>
-            <div className="w-[132px] shrink-0 rounded-[10px] border p-3 sm:w-auto sm:p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">Items</div>
-              <div className="mt-1.5 text-xl font-semibold sm:mt-3 sm:text-3xl">{stats.totalItems}</div>
-              <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:mt-1 sm:text-sm">{stats.universeCount} {stats.universeCount === 1 ? "universe" : "universes"}</div>
+            <div className="w-[140px] shrink-0 rounded-[10px] border p-2.5 sm:w-auto sm:p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+                Items
+              </div>
+              <div className="mt-1.5 text-xl font-semibold sm:mt-2.5 sm:text-3xl">{stats.totalItems}</div>
+              <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:text-sm">{stats.universeCount} {stats.universeCount === 1 ? "universe" : "universes"}</div>
             </div>
-            <div className="w-[132px] shrink-0 rounded-[10px] border p-3 sm:w-auto sm:p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">Insurance Ready</div>
-              <div className="mt-1.5 text-xl font-semibold text-[color:var(--data-color)] sm:mt-3 sm:text-3xl">{stats.insuranceReadyPct}%</div>
-              <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:mt-1 sm:text-sm">{stats.insuranceReadyCount} of {stats.totalItems} items</div>
+            <div className="w-[140px] shrink-0 rounded-[10px] border p-2.5 sm:w-auto sm:p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6l8-3z"/></svg>
+                Insurance Ready
+              </div>
+              <div className="mt-1.5 text-xl font-semibold text-[color:var(--data-color)] sm:mt-2.5 sm:text-3xl">{stats.insuranceReadyPct}%</div>
+              <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:text-sm">{stats.insuranceReadyCount} of {stats.totalItems} items</div>
             </div>
-            <div className="w-[132px] shrink-0 rounded-[10px] border p-3 sm:w-auto sm:p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">Needs Review</div>
-              <div className="mt-1.5 text-xl font-semibold text-[color:var(--theme-gold)] sm:mt-3 sm:text-3xl">{stats.needsReviewCount}</div>
-              <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:mt-1 sm:text-sm">Items missing info</div>
+            <div className="w-[140px] shrink-0 rounded-[10px] border p-2.5 sm:w-auto sm:p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+                Needs Review
+              </div>
+              <div className="mt-1.5 text-xl font-semibold text-[color:var(--theme-gold)] sm:mt-2.5 sm:text-3xl">{stats.needsReviewCount}</div>
+              <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:text-sm">Items missing info</div>
             </div>
           </div>
 
