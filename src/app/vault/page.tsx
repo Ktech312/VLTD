@@ -1226,9 +1226,10 @@ export default function VaultPage() {
       return;
     }
 
-    if (!selectedDetailId || !filteredItems.some((item) => String(item.id) === String(selectedDetailId))) {
-      setSelectedDetailId(filteredItems[0].id);
-      setIsDetailDrawerDismissed(false);
+    // Clear a stale selection if the item left the list; never auto-select —
+    // the quick-look stays hidden until the user taps an item.
+    if (selectedDetailId && !filteredItems.some((item) => String(item.id) === String(selectedDetailId))) {
+      setSelectedDetailId(null);
     }
   }, [filteredItems, selectedDetailId]);
 
