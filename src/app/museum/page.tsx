@@ -433,36 +433,27 @@ export default function MuseumPage() {
 
   const headerBlock = (
     <>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-[52px] font-bold tracking-[-0.01em] leading-none" style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)" }}>Exhibitions</h1>
+          <h1 className="text-[42px] leading-none font-bold tracking-[-0.01em] sm:text-[52px]" style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)" }}>Exhibitions</h1>
           <p className="mt-2 text-sm text-[color:var(--muted)]">Curate public rooms from your private vault.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex items-center rounded-[8px] border p-[3px]" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.08)" }}>
-            {(["grid", "list"] as const).map((mode) => (
-              <button key={mode} type="button" onClick={() => setViewMode(mode)} aria-label={`${mode} view`} className={`inline-flex h-7 w-8 items-center justify-center rounded-[6px] transition ${viewMode === mode ? "bg-[color:var(--theme-gold-subtle)] text-[color:var(--theme-gold)] shadow-[inset_0_1px_0_rgba(255,241,168,0.12)]" : "text-[color:var(--muted2)]"}`}>
-                {mode === "grid" ? (<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>) : (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>)}
-              </button>
-            ))}
-          </div>
-          <select value={sortMode} onChange={(e) => setSortMode(e.target.value as ExhibitionSort)} className="h-9 rounded-[8px] border px-3 text-xs font-semibold outline-none" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.08)" }}>
+        <div className="flex items-center gap-2">
+          {/* Mobile-only: filter dropdown grouped inline with sort + create */}
+          <select value={filter} onChange={(e) => setFilter(e.target.value as ExhibitionFilter)} className="h-9 min-w-0 flex-1 rounded-[8px] border px-2.5 text-xs font-semibold outline-none sm:hidden" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.08)" }}>
+            {EXHIBITION_FILTERS.map((f) => (<option key={f.key} value={f.key}>{f.label}</option>))}
+          </select>
+          <select value={sortMode} onChange={(e) => setSortMode(e.target.value as ExhibitionSort)} className="h-9 min-w-0 flex-1 rounded-[8px] border px-2.5 text-xs font-semibold outline-none sm:flex-none sm:px-3" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.08)" }}>
             {EXHIBITION_SORTS.map((s) => (<option key={s.key} value={s.key}>{s.label}</option>))}
           </select>
-          <Link href="/museum/new" className="inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-[8px] px-4 text-xs font-black transition" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}>+ Create Exhibition</Link>
+          <Link href="/museum/new" className="inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-[8px] px-3 text-xs font-black transition sm:px-4" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}>+ Create<span className="hidden sm:inline"> Exhibition</span></Link>
         </div>
       </div>
-      <div className="mt-5">
-        {/* Mobile: tap-to-select dropdown (no horizontal pill scroll) */}
-        <select value={filter} onChange={(e) => setFilter(e.target.value as ExhibitionFilter)} className="h-10 w-full rounded-[8px] border px-3 text-sm font-semibold outline-none sm:hidden" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)" }}>
-          {EXHIBITION_FILTERS.map((f) => (<option key={f.key} value={f.key}>{f.label}</option>))}
-        </select>
-        {/* Desktop: pill row */}
-        <div className="hidden flex-wrap gap-2 sm:flex">
-          {EXHIBITION_FILTERS.map((f) => (
-            <button key={f.key} type="button" onClick={() => setFilter(f.key)} className={`inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 transition ${filter === f.key ? "bg-[color:var(--theme-gold-subtle)] text-[color:var(--theme-gold)] ring-[color:var(--theme-gold-border)] shadow-[inset_0_1px_0_rgba(255,241,168,0.10)]" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]"}`}>{f.label}</button>
-          ))}
-        </div>
+      {/* Desktop filter pills (mobile uses the inline dropdown above) */}
+      <div className="mt-4 hidden flex-wrap gap-2 sm:flex">
+        {EXHIBITION_FILTERS.map((f) => (
+          <button key={f.key} type="button" onClick={() => setFilter(f.key)} className={`inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 transition ${filter === f.key ? "bg-[color:var(--theme-gold-subtle)] text-[color:var(--theme-gold)] ring-[color:var(--theme-gold-border)] shadow-[inset_0_1px_0_rgba(255,241,168,0.10)]" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]"}`}>{f.label}</button>
+        ))}
       </div>
     </>
   );

@@ -125,7 +125,7 @@ export default function BugReporter() {
       {/* Modal */}
       {open && (
         <div
-          className="fixed inset-0 z-[90] flex items-end justify-center px-4 pb-4 sm:items-center sm:pb-0"
+          className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto px-4 pt-4 sm:items-center sm:pt-0"
           style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
           role="dialog"
           aria-modal="true"
