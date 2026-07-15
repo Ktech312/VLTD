@@ -240,7 +240,7 @@ export default function AccountPage() {
 
         <section
           id="profile-setup"
-          className="relative overflow-hidden rounded-[34px] p-5 sm:p-7"
+          className="relative -mt-px overflow-hidden rounded-[34px] rounded-tl-none p-5 sm:p-7"
           style={{
             background: 'var(--theme-elevated, rgba(20,32,55,0.9))',
             border: '1px solid var(--theme-gold-border, rgba(245,181,72,0.25))',
