@@ -403,6 +403,7 @@ function TopNavInner() {
     : "G";
   const avatarImageSrc = resolveAvatarImageSrc(activeProfile?.avatar_url || emojiToPresetUrl(activeProfile?.avatar_emoji));
   const accountTypeLabel = activeProfile?.profile_type === "business" ? "Business" : "Collector";
+  const isBusinessProfile = activeProfile?.profile_type === "business";
 
   return (
     <>
@@ -767,10 +768,10 @@ function TopNavInner() {
                   { href: "/dashboard", label: "Dashboard" },
                   { href: "/collector", label: "Collector Profile" },
                   { href: "/account", label: "Account Settings" },
-                  { href: "/account/team", label: "Team" },
+                  ...(isBusinessProfile ? [{ href: "/account/team", label: "Team" }] : []),
                   { href: "/account/invite", label: "Invite Friends" },
+                  { href: "/account/billing", label: "Billing & Plans" },
                   { href: "/redeem", label: "Redeem a Code" },
-                  { href: "/account/backup", label: "Cloud Backup" },
                 ].map(({ href, label }) => (
                   <Link key={href} href={href} onClick={() => setUserOpen(false)}
                     className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
