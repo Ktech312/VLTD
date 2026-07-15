@@ -26,6 +26,7 @@ type ProfileSummary = {
   displayName: string;
   username: string;
   memberSince: string;
+  profileType: "personal" | "business";
 };
 
 type IconName =
@@ -157,7 +158,7 @@ function StatStrip({ value, items, galleries, memberSince }: { value: number; it
 export default function MorePage() {
   const [items, setItems] = useState<VaultItem[]>([]);
   const [galleries, setGalleries] = useState<Gallery[]>([]);
-  const [profile, setProfile] = useState<ProfileSummary>({ displayName: "EK's Collection", username: "collection", memberSince: "Apr 2024" });
+  const [profile, setProfile] = useState<ProfileSummary>({ displayName: "EK's Collection", username: "collection", memberSince: "Apr 2024", profileType: "personal" });
 
   useEffect(() => {
     let active = true;
@@ -171,6 +172,7 @@ export default function MorePage() {
             displayName: status.activeProfile.display_name || "EK's Collection",
             username: status.activeProfile.username || "collection",
             memberSince: monthYear((status.activeProfile as Record<string, unknown>).created_at),
+            profileType: status.activeProfile.profile_type === "business" ? "business" : "personal",
           });
           const profileItems = loadItems({ profileId });
           const profileGalleries = loadGalleries({ profileId });
@@ -193,10 +195,16 @@ export default function MorePage() {
   const totalCost = useMemo(() => items.reduce((sum, item) => sum + itemCost(item), 0), [items]);
   const gain = totalCost > 0 ? ((totalValue - totalCost) / totalCost) * 100 : 12.6;
   const publicGalleries = galleries.filter((gallery) => gallery.visibility === "PUBLIC").length || galleries.length;
+  const isBusiness = profile.profileType === "business";
 
   const commandCards = [
-    { icon: "user" as const, title: "Account & Workspace", desc: "Manage your profile, workspace settings, and preferences.", href: "/account" },
-    { icon: "team" as const, title: "Team & Access", desc: "Invite, manage, and set roles for your team members.", href: "/account/team" },
+    { icon: "user" as const, title: "Account & Profile", desc: "Manage your collector identity, public handle, and preferences.", href: "/account" },
+    ...(isBusiness
+      ? [
+          { icon: "vault" as const, title: "Workspace Settings", desc: "Manage business workspace details, defaults, and controls.", href: "/account/workspace" },
+          { icon: "team" as const, title: "Team & Access", desc: "Invite team members and manage roles for your workspace.", href: "/account/team" },
+        ]
+      : []),
     { icon: "shield" as const, title: "Security", desc: "Passwords, 2FA, sessions, and privacy controls.", href: "/account/security" },
     { icon: "card" as const, title: "Billing & Plans", desc: "Manage subscription, payment methods, and invoices.", href: "/account/billing" },
     { icon: "cloud" as const, title: "Import & Export", desc: "Import collections or export your data and reports.", href: "/vault/import" },
@@ -246,27 +254,6 @@ export default function MorePage() {
         </header>
 
         <section className="hidden rounded-[10px] border lg:block" style={{ borderColor: border, background: "rgba(2,9,12,.74)" }}>
-          <div className="border-b px-6 py-3" style={{ borderColor: borderSoft }}>
-            <div className="flex items-center justify-between">
-              <div className="rounded-[6px] border px-5 py-2 text-[14px] font-bold uppercase tracking-[0.05em]" style={{ borderColor: gold, color: goldBright }}>More Desktop</div>
-              <nav className="flex items-center gap-11 text-[13px]" style={{ color: cream }}>
-                {[
-                  ["Vault", "/vault"],
-                  ["Exhibitions", "/museum"],
-                  ["Discover", "/discover"],
-                  ["Events", "/events"],
-                  ["Insights", "/portfolio"],
-                  ["More", "/more"],
-                ].map(([label, href]) => (
-                  <Link key={label} href={href} className="relative py-2" style={{ color: label === "More" ? goldBright : cream }}>
-                    {label}
-                    {label === "More" ? <span className="absolute inset-x-0 -bottom-3 h-px" style={{ background: `linear-gradient(90deg, transparent, ${goldBright}, transparent)` }} /> : null}
-                  </Link>
-                ))}
-              </nav>
-            </div>
-          </div>
-
           <div className="grid grid-cols-[230px_minmax(0,1fr)]">
             <aside className="relative min-h-[690px] border-r p-6" style={{ borderColor: borderSoft }}>
               <div className="relative h-[430px] overflow-hidden rounded-[10px] border" style={{ borderColor: border, background: "rgba(2,9,12,.86)" }}>
@@ -387,8 +374,9 @@ export default function MorePage() {
               <h2 className="text-[15px] font-semibold" style={{ color: cream }}>Command Center</h2>
               <p className="mt-1 text-[11px]" style={{ color: muted }}>Your tools, settings, and account hub.</p>
               <div className="mt-4 overflow-hidden rounded-[8px] border" style={{ borderColor: border, background: "rgba(3,12,16,.82)" }}>
-                <MobileRow icon="user" title="Account & Workspace" href="/account" />
-                <MobileRow icon="team" title="Team & Access" href="/account/team" />
+                <MobileRow icon="user" title="Account & Profile" href="/account" />
+                {isBusiness ? <MobileRow icon="vault" title="Workspace Settings" href="/account/workspace" /> : null}
+                {isBusiness ? <MobileRow icon="team" title="Team & Access" href="/account/team" /> : null}
                 <MobileRow icon="shield" title="Security" href="/account/security" />
                 <MobileRow icon="card" title="Billing & Plans" href="/account/billing" />
               </div>
