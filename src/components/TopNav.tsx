@@ -113,54 +113,6 @@ function IconDiscover({ active }: { active: boolean }) {
   );
 }
 
-function IconActivity({ active }: { active: boolean }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
-      <rect x="3" y="13" width="3.5" height="8" rx="1" stroke="currentColor" strokeWidth="1.75"
-        fill={active ? "rgba(245,181,72,0.20)" : "rgba(160,149,107,0.14)"} />
-      <rect x="8.5" y="9" width="3.5" height="12" rx="1" stroke="currentColor" strokeWidth="1.75"
-        fill={active ? "rgba(245,181,72,0.20)" : "rgba(160,149,107,0.14)"} />
-      <rect x="14" y="5" width="3.5" height="16" rx="1" stroke="currentColor" strokeWidth="1.75"
-        fill={active ? "rgba(245,181,72,0.28)" : "rgba(160,149,107,0.14)"} />
-    </svg>
-  );
-}
-
-function IconWatchlist({ active }: { active: boolean }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
-      <path d="M12 21C12 21 3.5 14 3.5 8.5A4.5 4.5 0 0 1 12 6a4.5 4.5 0 0 1 8.5 2.5C20.5 14 12 21 12 21Z"
-        stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
-        fill={active ? "rgba(245,181,72,0.14)" : "none"} />
-    </svg>
-  );
-}
-
-function IconGoals({ active }: { active: boolean }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
-      <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.75"
-        fill={active ? "rgba(245,181,72,0.12)" : "none"} />
-      <circle cx="12" cy="12" r="3.5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function IconLearn({ active }: { active: boolean }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
-      <path d="M4 4h7a1 1 0 0 1 1 1v14a1 1 0 0 0-1-1H4V4Z"
-        stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
-        fill={active ? "rgba(245,181,72,0.14)" : "none"} />
-      <path d="M20 4h-7a1 1 0 0 0-1 1v14a1 1 0 0 1 1-1h7V4Z"
-        stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
-        fill={active ? "rgba(245,181,72,0.10)" : "none"} />
-      <path d="M12 5v14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.45" />
-    </svg>
-  );
-}
-
 function IconCommunityBoard({ active }: { active: boolean }) {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
@@ -174,18 +126,6 @@ function IconCommunityBoard({ active }: { active: boolean }) {
       <path d="M12 6.5l1 2h2l-1.5 1.2.5 2L12 10.7 10 11.7l.5-2L9 8.5h2l1-2Z"
         stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"
         fill={active ? "rgba(245,181,72,0.30)" : "none"} />
-    </svg>
-  );
-}
-
-function IconMarketplace({ active }: { active: boolean }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
-      {/* Price tag */}
-      <path d="M3 7.5V3h4.5l9.8 9.8a2 2 0 0 1 0 2.83l-3.67 3.67a2 2 0 0 1-2.83 0L3 7.5Z"
-        stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
-        fill={active ? "rgba(245,181,72,0.12)" : "none"} />
-      <circle cx="7.5" cy="7.5" r="1.2" fill="currentColor" opacity={active ? "1" : "0.7"} />
     </svg>
   );
 }
@@ -210,17 +150,6 @@ function IconEvents({ active }: { active: boolean }) {
       <circle cx="8" cy="15" r="1.2" fill="currentColor" opacity={active ? "1" : "0.6"} />
       <circle cx="12" cy="15" r="1.2" fill="currentColor" opacity={active ? "1" : "0.6"} />
       <circle cx="16" cy="15" r="1.2" fill="currentColor" opacity={active ? "0.5" : "0.3"} />
-    </svg>
-  );
-}
-
-function IconBellNav({ active }: { active: boolean }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
-      <path d="M15 17H9a3 3 0 0 0 6 0Z" stroke="currentColor" strokeWidth="1.75" />
-      <path d="M4 17h16M12 3v1m0 0a7 7 0 0 1 7 7v3.5H5V11a7 7 0 0 1 7-7Z"
-        stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"
-        fill={active ? "rgba(245,181,72,0.12)" : "none"} />
     </svg>
   );
 }
@@ -282,35 +211,11 @@ const MAIN_NAV_ITEMS = [
 const MORE_NAV_ITEMS = [
   {
     label: "Command Center", href: "/more", icon: IconVault, exact: true,
-    desc: "Account hub, tools, sync status and quick actions.",
+    desc: "Account, tools, data, sharing and quick panels.",
   },
   {
     label: "VLT Lounge", href: "/community-board", icon: IconCommunityBoard, exact: false,
     desc: "Spotlights, MVPs & collector community.",
-  },
-  {
-    label: "Marketplace",  href: "/market",     icon: IconMarketplace, exact: false,
-    desc: "Browse for-sale items from collectors across VLTD.",
-  },
-  {
-    label: "Watchlist",   href: "/wishlist",   icon: IconWatchlist,   exact: false,
-    desc: "Save pieces, collectors and exhibitions you love.",
-  },
-  {
-    label: "Goals",       href: "/goals",      icon: IconGoals,       exact: false,
-    desc: "Track collection completion targets.",
-  },
-  {
-    label: "Learn",       href: "/learn",      icon: IconLearn,       exact: false,
-    desc: "Universe guide, grading scales, and collecting tips.",
-  },
-  {
-    label: "Activity",    href: "/activity",   icon: IconActivity,    exact: false,
-    desc: "See updates, comments, appreciations and follows.",
-  },
-  {
-    label: "Notifications", href: "/notifications", icon: IconBellNav, exact: false,
-    desc: "New exhibitions from collectors you follow.",
   },
 ];
 
