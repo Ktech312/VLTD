@@ -5,8 +5,9 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 
-import { getOnboardingStatus } from "@/lib/auth";
+import { getCurrentUser, getOnboardingStatus } from "@/lib/auth";
 import { loadGalleries, type Gallery } from "@/lib/galleryModel";
+import { isOwnerEmail } from "@/lib/ownerAccess";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
 
 const gold = "#D6A84F";
@@ -349,13 +350,16 @@ export default function MorePage() {
     memberSince: "Apr 2024",
     profileType: "personal",
   });
+  const [canUseOwnerTools, setCanUseOwnerTools] = useState(false);
 
   useEffect(() => {
     let active = true;
     async function load() {
       try {
         const status = await getOnboardingStatus();
+        const userResult = await getCurrentUser();
         if (!active) return;
+        setCanUseOwnerTools(isOwnerEmail(userResult.data.user?.email));
         if (status.activeProfile) {
           const profileId = status.activeProfile.id;
           setProfile({
@@ -374,6 +378,7 @@ export default function MorePage() {
         // Keep local visual shell available if auth lookup is delayed.
       }
       if (!active) return;
+      setCanUseOwnerTools(false);
       setItems(loadItems({ includeAllProfiles: true }));
       setGalleries(loadGalleries({ includeAllProfiles: true }));
     }
@@ -398,7 +403,9 @@ export default function MorePage() {
     { icon: "shield", title: "Security", desc: "Passwords, sessions, privacy controls, and account protection.", panel: "security" },
     { icon: "card", title: "Billing & Plans", desc: "Plan, payment, invoice, and portal shortcuts.", panel: "billing" },
     { icon: "cloud", title: "Import & Export", desc: "Bring data in, export records, or prepare reports.", panel: "importExport" },
-    { icon: "cloud", title: "Backup & Restore", desc: "Archive, restore, and protect your vault data.", panel: "backup" },
+    ...(canUseOwnerTools
+      ? [{ icon: "cloud" as const, title: "Backup & Restore", desc: "Archive, restore, and protect your vault data.", panel: "backup" as const }]
+      : []),
     { icon: "globe", title: "Public Profile & Share", desc: "Profile, gallery sharing, and public presentation controls.", panel: "publicProfile" },
     { icon: "camera", title: "Scan & Capture", desc: "Open the full capture flow for camera and scan work.", href: "/capture", cta: "Start Scan", accent: true },
   ];
@@ -560,7 +567,7 @@ export default function MorePage() {
               </div>
               <div className="mt-4 overflow-hidden rounded-[8px] border" style={{ borderColor: border, background: "rgba(3,12,16,.82)" }}>
                 <MobileRow icon="cloud" title="Import & Export" panel="importExport" onPanel={setActivePanel} />
-                <MobileRow icon="cloud" title="Backup & Restore" panel="backup" onPanel={setActivePanel} />
+                {canUseOwnerTools ? <MobileRow icon="cloud" title="Backup & Restore" panel="backup" onPanel={setActivePanel} /> : null}
                 <MobileRow icon="globe" title="Public Profile & Share" panel="publicProfile" onPanel={setActivePanel} />
                 <MobileRow icon="camera" title="Scan & Capture" href="/capture" onPanel={setActivePanel} />
               </div>

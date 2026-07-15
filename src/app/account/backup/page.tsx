@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { getCurrentUser } from "@/lib/auth";
+import { isOwnerEmail } from "@/lib/ownerAccess";
 import { getAllLocalItems } from "@/lib/vaultModel";
 import { syncAllItemsToCloud, restoreLocalVaultFromCloud } from "@/lib/vaultSyncQueue";
 import { fetchVaultItemsFromSupabase } from "@/lib/vaultCloud";
 import { hasSupabaseEnv } from "@/lib/vaultCloud";
 
 export default function BackupPage() {
+  const [access, setAccess] = useState<"checking" | "allowed" | "blocked">("checking");
   const [localCount, setLocalCount] = useState<number | null>(null);
   const [cloudCount, setCloudCount] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
@@ -25,7 +28,20 @@ export default function BackupPage() {
     }
   }
 
-  useEffect(() => { void refreshCounts(); }, []);
+  useEffect(() => {
+    let active = true;
+    async function loadAccess() {
+      const userResult = await getCurrentUser();
+      const allowed = isOwnerEmail(userResult.data.user?.email);
+      if (!active) return;
+      setAccess(allowed ? "allowed" : "blocked");
+      if (allowed) void refreshCounts();
+    }
+    void loadAccess();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function handleBackup() {
     if (busy) return;
@@ -54,6 +70,25 @@ export default function BackupPage() {
 
   const drift =
     localCount != null && cloudCount != null ? Math.max(0, localCount - cloudCount) : null;
+
+  if (access !== "allowed") {
+    return (
+      <main className="min-h-dvh bg-[color:var(--bg)] px-4 py-10 text-[color:var(--fg)]">
+        <div className="mx-auto w-full max-w-md rounded-2xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)]">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">VLTD</div>
+          <h1 className="mt-1 text-2xl font-semibold">Backup tools locked</h1>
+          <p className="mt-2 text-sm text-[color:var(--muted)]">
+            {access === "checking"
+              ? "Checking account access..."
+              : "Manual cloud backup and restore are limited while VLTD is in beta."}
+          </p>
+          <Link href="/more" className="mt-5 inline-flex text-sm text-[color:var(--muted)] underline underline-offset-2">
+            Back to command center
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-dvh bg-[color:var(--bg)] px-4 py-10 text-[color:var(--fg)]">
