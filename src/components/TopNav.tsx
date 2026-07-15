@@ -818,7 +818,7 @@ function TopNavInner() {
                   </div>
                 )}
                 {adminRole && (
-                  <div className="mt-2 pt-2" style={{ borderTop: "2px solid rgba(37,99,235,0.95)" }}>
+                  <div className="mt-2 pt-2" style={{ borderTop: "1px solid rgba(245,181,72,0.28)" }}>
                     <Link href="/admin/characters" onClick={() => setUserOpen(false)}
                       className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition hover:bg-[rgba(245,181,72,0.08)]"
                       style={{ color: "#F5B548" }}>
