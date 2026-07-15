@@ -5,6 +5,9 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getOnboardingStatus } from "@/lib/auth";
 
+const ACTIVE_PROFILE_TYPE_CACHE_KEY = "vltd_active_profile_type_v1";
+const ACTIVE_PROFILE_EVENT = "vltd:active-profile";
+
 type AccountSection = {
   href: string;
   label: string;
@@ -25,30 +28,52 @@ const sections: AccountSection[] = [
   { href: "/account/billing", label: "Billing" },
 ];
 
+function readCachedProfileType(): boolean | null {
+  if (typeof window === "undefined") return null;
+  const type = window.localStorage.getItem(ACTIVE_PROFILE_TYPE_CACHE_KEY);
+  if (type === "business") return true;
+  if (type === "personal") return false;
+  return null;
+}
+
+function writeCachedProfileType(isBusiness: boolean) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(ACTIVE_PROFILE_TYPE_CACHE_KEY, isBusiness ? "business" : "personal");
+}
+
 export function AccountTabs() {
   const pathname = usePathname();
-  const [isBusiness, setIsBusiness] = useState(false);
+  const [isBusiness, setIsBusiness] = useState<boolean | null>(() => readCachedProfileType());
 
   useEffect(() => {
     let active = true;
     async function loadProfileType() {
       try {
         const status = await getOnboardingStatus();
-        if (active) setIsBusiness(status.activeProfile?.profile_type === "business");
+        const nextIsBusiness = status.activeProfile?.profile_type === "business";
+        writeCachedProfileType(nextIsBusiness);
+        if (active) setIsBusiness(nextIsBusiness);
       } catch {
         if (active) setIsBusiness(false);
       }
     }
     void loadProfileType();
+    window.addEventListener(ACTIVE_PROFILE_EVENT, loadProfileType);
     return () => {
       active = false;
+      window.removeEventListener(ACTIVE_PROFILE_EVENT, loadProfileType);
     };
   }, []);
 
-  const visibleSections = sections.filter((section) => !section.businessOnly || isBusiness);
+  const isResolving = isBusiness === null;
+  const visibleSections = sections.filter((section) => isResolving || !section.businessOnly || isBusiness);
 
   return (
-    <nav className="overflow-x-auto" aria-label="Account sections">
+    <nav
+      className="overflow-x-auto"
+      aria-label="Account sections"
+      style={{ opacity: isResolving ? 0 : 1, transition: "opacity 120ms ease" }}
+    >
       <div
         className="relative flex min-w-max items-end"
         role="tablist"
@@ -62,6 +87,7 @@ export function AccountTabs() {
             <Link
               key={section.href}
               href={section.href}
+              prefetch
               role="tab"
               aria-selected={selected}
               className={[
