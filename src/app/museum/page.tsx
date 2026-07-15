@@ -433,19 +433,26 @@ export default function MuseumPage() {
   const headerBlock = (
     <>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-[42px] leading-none font-bold tracking-[-0.01em] sm:text-[52px]" style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)" }}>Exhibitions</h1>
-          <p className="mt-2 text-sm text-[color:var(--muted)]">Curate public rooms from your private vault.</p>
+        <div className="min-w-0">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h1 className="text-[42px] leading-none font-bold tracking-[-0.01em] sm:text-[52px]" style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)" }}>Exhibitions</h1>
+              <p className="mt-2 text-sm text-[color:var(--muted)]">Curate public rooms from your private vault.</p>
+            </div>
+            {/* Mobile Create — next to the title (kept on-screen); desktop version lives in the toolbar */}
+            <Link href="/museum/new" className="inline-flex shrink-0 items-center justify-center gap-1 rounded-[8px] px-3 py-1.5 text-xs font-black transition sm:hidden" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}>+ Create</Link>
+          </div>
         </div>
         <div className="flex items-center gap-2">
-          {/* Mobile-only: filter dropdown grouped inline with sort + create */}
+          {/* Mobile-only filter dropdown, grouped inline with sort */}
           <select value={filter} onChange={(e) => setFilter(e.target.value as ExhibitionFilter)} className="h-9 w-auto shrink-0 rounded-[8px] border px-2.5 text-xs font-semibold outline-none sm:hidden" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.08)" }}>
             {EXHIBITION_FILTERS.map((f) => (<option key={f.key} value={f.key}>{f.label}</option>))}
           </select>
           <select value={sortMode} onChange={(e) => setSortMode(e.target.value as ExhibitionSort)} className="h-9 w-auto shrink-0 rounded-[8px] border px-2.5 text-xs font-semibold outline-none sm:px-3" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.08)" }}>
             {EXHIBITION_SORTS.map((s) => (<option key={s.key} value={s.key}>{s.label}</option>))}
           </select>
-          <Link href="/museum/new" className="inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-[8px] px-3 text-xs font-black transition sm:flex-none sm:px-4" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}>+ Create<span className="hidden sm:inline"> Exhibition</span></Link>
+          {/* Desktop Create — with the toolbar */}
+          <Link href="/museum/new" className="hidden min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-[8px] px-4 text-xs font-black transition sm:inline-flex" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}>+ Create Exhibition</Link>
         </div>
       </div>
       {/* Desktop filter pills (mobile uses the inline dropdown above) */}

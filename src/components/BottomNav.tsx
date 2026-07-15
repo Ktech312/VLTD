@@ -15,7 +15,7 @@ type Tab = {
 /* ── Icon helpers ──────────────────────────────────────── */
 
 const GOLD  = "#F5B548";
-const DIM   = "rgba(245,214,160,0.78)";   // warm light gold — legible on the black nav in BOTH themes
+const DIM   = "rgba(240,226,198,0.94)";   // light warm cream — legible on the black nav (bumped up from 0.78, was too dim on real devices)
 
 function sz(active: boolean) { return active ? 2.2 : 1.75; }
 
