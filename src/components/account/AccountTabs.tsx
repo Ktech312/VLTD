@@ -92,20 +92,20 @@ export function AccountTabs() {
               aria-selected={selected}
               className={[
                 "relative -mb-px flex h-11 w-[112px] shrink-0 items-center justify-center px-4 text-sm font-bold transition",
-                "focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(245,181,72,0.45)]",
-                selected ? "z-20" : "z-10 hover:bg-[rgba(214,168,79,0.06)]",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--frame-ring)]",
+                selected ? "z-20" : "z-10 hover:bg-[color:var(--pill-hover)]",
               ].join(" ")}
               style={{
                 background: selected
-                  ? "linear-gradient(180deg, rgba(53,43,21,0.98), rgba(28,24,17,0.98))"
-                  : "linear-gradient(180deg, rgba(15,22,23,0.96), rgba(8,14,16,0.96))",
-                border: "1px solid rgba(214,168,79,0.28)",
+                  ? "linear-gradient(180deg, var(--pill-active-bg), color-mix(in srgb, var(--surface) 96%, black 4%))"
+                  : "linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--surface) 92%, black 8%))",
+                border: "1px solid var(--border)",
                 borderLeftWidth: first ? 1 : 0,
-                borderBottomColor: selected ? "transparent" : "rgba(214,168,79,0.28)",
+                borderBottomColor: selected ? "transparent" : "var(--border)",
                 borderRadius: `${first ? 10 : 0}px ${last ? 10 : 0}px 0 0`,
                 color: selected ? "var(--fg)" : "var(--muted, #B8A978)",
                 boxShadow: selected
-                  ? "0 0 18px rgba(214,168,79,0.16), inset 0 1px 0 rgba(255,255,255,0.06)"
+                  ? "0 0 18px var(--frame-glow-soft), inset 0 1px 0 rgba(255,255,255,0.06)"
                   : "inset 0 1px 0 rgba(255,255,255,0.03)",
               }}
             >
@@ -115,7 +115,7 @@ export function AccountTabs() {
         })}
         <div
           className="-mb-px h-11 min-w-[220px] flex-1 border-b"
-          style={{ borderColor: "rgba(214,168,79,0.28)" }}
+          style={{ borderColor: "var(--border)" }}
         />
       </div>
     </nav>

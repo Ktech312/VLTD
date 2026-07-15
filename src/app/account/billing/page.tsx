@@ -141,8 +141,8 @@ export default function BillingPage() {
         <RedeemCodeCard />
 
         {fromLimit ? (
-          <div className="rounded-2xl p-4 ring-1" style={{ background: "rgba(245,181,72,0.10)", borderColor: "rgba(245,181,72,0.4)" }}>
-            <div className="text-sm font-bold" style={{ color: "#F5B548" }}>You&apos;ve hit your free item limit</div>
+          <div className="rounded-2xl p-4 ring-1" style={{ background: "var(--pill-active-bg)", borderColor: "var(--frame-ring)" }}>
+            <div className="text-sm font-bold" style={{ color: "var(--theme-gold, #F5B548)" }}>You&apos;ve hit your free item limit</div>
             <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
               Upgrade to a paid plan below to add unlimited items and unlock everything.
             </div>

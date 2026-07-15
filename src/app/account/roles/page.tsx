@@ -67,14 +67,14 @@ export default function AccountRolesPage() {
           {roles.map((role) => {
             const perm = getRoleDefaults(role);
             return (
-              <section key={role} className="vltd-panel-main rounded-[26px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+              <section key={role} className="rounded-[26px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[0_18px_42px_rgba(0,0,0,0.28)]">
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-xl font-semibold">{labels[role]}</h2>
                   <span className="rounded-full bg-[color:var(--pill)] px-3 py-1 text-xs ring-1 ring-[color:var(--border)]">{role}</span>
                 </div>
                 <div className="mt-4 grid gap-2 text-sm">
                   {Object.entries(perm).map(([key, value]) => (
-                    <div key={key} className="vltd-panel-soft flex items-center justify-between rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)]">
+                    <div key={key} className="flex items-center justify-between rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)]">
                       <span className="text-[color:var(--fg)]">{key}</span>
                       <span className="text-[color:var(--muted)]">{value ? "Allowed" : "Hidden"}</span>
                     </div>

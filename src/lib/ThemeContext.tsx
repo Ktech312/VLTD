@@ -15,8 +15,16 @@ const ThemeContext = createContext<ThemeContextValue>({
   setTheme: () => {},
 })
 
+function getThemeAccent(theme: Theme) {
+  if (theme.id === 'midnight-gradient') return '#52D6F4'
+  if (theme.id === 'steel-light') return '#64748B'
+  if (theme.id === 'cloud-gradient') return '#5B8FB8'
+  return theme.gold
+}
+
 function applyThemeVars(theme: Theme) {
   const root = document.documentElement
+  const accent = getThemeAccent(theme)
   root.setAttribute('data-vltd-theme', theme.id)
   root.style.setProperty('--theme-bg', theme.background)
   root.style.setProperty('--theme-card', theme.bgCard)
@@ -30,6 +38,8 @@ function applyThemeVars(theme: Theme) {
   root.style.setProperty('--theme-gold-border', theme.goldBorder)
   root.style.setProperty('--theme-gold-glow', theme.goldGlow)
   root.style.setProperty('--theme-gold-subtle', theme.goldSubtle)
+  root.style.setProperty('--accent', accent)
+  root.style.setProperty('--accent-2', accent)
   root.style.setProperty('--theme-nav-bg', theme.navBg)
   root.style.setProperty('--theme-nav-border', theme.navBorder)
   root.classList.remove('theme-dark', 'theme-light')
@@ -40,10 +50,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [themeId, setThemeId] = useState<ThemeId>(defaultTheme)
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(THEME_LS_KEY) as ThemeId | null
-      if (saved && themes[saved]) setThemeId(saved)
-    } catch {}
+    const themeTimer = window.setTimeout(() => {
+      try {
+        const saved = localStorage.getItem(THEME_LS_KEY) as ThemeId | null
+        if (saved && themes[saved]) setThemeId(saved)
+      } catch {}
+    }, 0)
+    return () => window.clearTimeout(themeTimer)
   }, [])
 
   useEffect(() => {

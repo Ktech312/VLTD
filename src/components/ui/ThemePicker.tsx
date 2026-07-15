@@ -6,7 +6,7 @@ import { themes, ThemeId, ThemeMode } from '@/lib/themes'
 const previews: Record<ThemeId, string> = {
   'deep-vault':          'linear-gradient(135deg, #0B1320 60%, #1a2535 100%)',
   'midnight-gradient':   'linear-gradient(180deg, #0B1320 0%, #0A3040 100%)',
-  'warm-gold-haze':      'radial-gradient(ellipse at 80% 20%, rgba(200,148,31,0.5) 0%, #0B0E12 60%)',
+  'warm-gold-haze':      'linear-gradient(180deg, #090805 0%, #05070A 55%, #01070D 100%)',
   'steel-light':         'linear-gradient(135deg, #E8ECF0, #C8CDD2)',
   'cloud-gradient':      'linear-gradient(180deg, #B8D4E8, #E8F0F8)',
   'pearl-light':         'radial-gradient(ellipse at 50% 0%, #F5EBD2, #F5F0E8)',
@@ -165,7 +165,7 @@ function SwatchButton({
       {active && (
         <span
           className="absolute right-1 top-1 h-2 w-2 rounded-full"
-          style={{ background: '#F5B548', boxShadow: '0 0 4px rgba(245,181,72,0.8)' }}
+          style={{ background: 'var(--theme-gold, #F5B548)', boxShadow: '0 0 4px var(--frame-glow-mid)' }}
         />
       )}
     </button>

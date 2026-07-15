@@ -247,9 +247,6 @@ export default function AccountPage() {
             boxShadow: '0 26px 86px rgba(0,0,0,0.32)',
           }}
         >
-          <div className="pointer-events-none absolute inset-0"
-            style={{ background: 'radial-gradient(circle at 18% 0%, var(--theme-gold-subtle, rgba(245,181,72,0.06)), transparent 30%)' }} />
-
           <div className="relative grid gap-7 lg:grid-cols-[1fr_340px]">
             <div>
               <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)]">
@@ -303,10 +300,10 @@ export default function AccountPage() {
                     className={[
                       "rounded-2xl border p-4 text-left transition",
                       profileType === "personal"
-                        ? "border-[rgba(245,181,72,0.42)] text-text-primary"
+                        ? "border-[color:var(--frame-ring)] text-text-primary"
                         : "border-[color:var(--border)] text-[color:var(--muted)] hover:text-text-primary",
                     ].join(" ")}
-                    style={{ background: profileType === "personal" ? "rgba(245,181,72,0.10)" : "var(--theme-card)" }}
+                    style={{ background: profileType === "personal" ? "var(--pill-active-bg)" : "var(--theme-card)" }}
                   >
                     <div className="text-sm font-black">Collector</div>
                     <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">Personal vault and gallery.</div>
@@ -317,10 +314,10 @@ export default function AccountPage() {
                     className={[
                       "rounded-2xl border p-4 text-left transition",
                       profileType === "business"
-                        ? "border-[rgba(245,181,72,0.42)] text-text-primary"
+                        ? "border-[color:var(--frame-ring)] text-text-primary"
                         : "border-[color:var(--border)] text-[color:var(--muted)] hover:text-text-primary",
                     ].join(" ")}
-                    style={{ background: profileType === "business" ? "rgba(245,181,72,0.10)" : "var(--theme-card)" }}
+                    style={{ background: profileType === "business" ? "var(--pill-active-bg)" : "var(--theme-card)" }}
                   >
                     <div className="text-sm font-black">Business</div>
                     <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">Shop, team, or inventory workflow.</div>
@@ -348,10 +345,10 @@ export default function AccountPage() {
                           }}
                           className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition ring-1"
                           style={active ? {
-                            background: "rgba(245,181,72,0.15)",
-                            border: "1px solid rgba(245,181,72,0.55)",
+                            background: "var(--pill-active-bg)",
+                            border: "1px solid var(--frame-ring)",
                             color: "var(--theme-text-primary, #F0EAD6)",
-                            boxShadow: "0 0 12px rgba(245,181,72,0.35)",
+                            boxShadow: "0 0 12px var(--frame-glow-soft)",
                           } : {
                             background: "var(--theme-card)",
                             border: "1px solid var(--theme-border, rgba(245,181,72,0.12))",
@@ -442,7 +439,7 @@ export default function AccountPage() {
               <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">
                 Your vault and galleries are visible to other collectors. Turn this off to go incognito — your profile disappears from search and the Discover feed.
               </div>
-              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[rgba(245,181,72,0.35)] bg-[rgba(245,181,72,0.08)] px-3 py-1 text-[11px] font-semibold text-[rgba(245,181,72,0.85)]">
+              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold ring-1 ring-[color:var(--frame-ring)]" style={{ background: "var(--pill-active-bg)", color: "var(--theme-gold, #F5B548)" }}>
                 ✦ Paid feature — coming soon
               </div>
             </div>
@@ -649,10 +646,10 @@ export default function AccountPage() {
                     }
                     className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition ring-1 min-h-[40px]"
                     style={active ? {
-                      background: "rgba(245,181,72,0.15)",
-                      border: "1px solid rgba(245,181,72,0.55)",
+                      background: "var(--pill-active-bg)",
+                      border: "1px solid var(--frame-ring)",
                       color: "var(--theme-text-primary, #F0EAD6)",
-                      boxShadow: "0 0 12px rgba(245,181,72,0.35)",
+                      boxShadow: "0 0 12px var(--frame-glow-soft)",
                     } : {
                       background: "var(--theme-card)",
                       border: "1px solid var(--theme-border, rgba(245,181,72,0.12))",
@@ -690,7 +687,7 @@ export default function AccountPage() {
               Watchlist
             </div>
             {watchlist.length > 0 && (
-              <span className="rounded-full px-2.5 py-0.5 text-xs font-bold" style={{ background: "rgba(245,181,72,0.15)", color: "var(--theme-gold, #F5B548)" }}>
+              <span className="rounded-full px-2.5 py-0.5 text-xs font-bold" style={{ background: "var(--pill-active-bg)", color: "var(--theme-gold, #F5B548)" }}>
                 {watchlist.length}
               </span>
             )}
