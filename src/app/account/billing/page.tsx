@@ -132,6 +132,7 @@ export default function BillingPage() {
             <Link href="/account/team"><PillButton>Team</PillButton></Link>
             <Link href="/account/security"><PillButton>Security</PillButton></Link>
             <Link href="/account/billing"><PillButton variant="active">Billing</PillButton></Link>
+            <Link href="/redeem"><PillButton>Redeem Code</PillButton></Link>
           </div>
           <h1 className="mt-4 text-2xl font-bold" style={{ color: "var(--fg)" }}>Billing & Plans</h1>
           <p className="mt-0.5 text-sm" style={{ color: "var(--muted)" }}>Manage your subscription and view invoice history.</p>

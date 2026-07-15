@@ -770,8 +770,6 @@ function TopNavInner() {
                   { href: "/account", label: "Account Settings" },
                   ...(isBusinessProfile ? [{ href: "/account/team", label: "Team" }] : []),
                   { href: "/account/invite", label: "Invite Friends" },
-                  { href: "/account/billing", label: "Billing & Plans" },
-                  { href: "/redeem", label: "Redeem a Code" },
                 ].map(({ href, label }) => (
                   <Link key={href} href={href} onClick={() => setUserOpen(false)}
                     className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
@@ -820,21 +818,23 @@ function TopNavInner() {
                   </div>
                 )}
                 {adminRole && (
-                  <Link href="/admin/characters" onClick={() => setUserOpen(false)}
-                    className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition hover:bg-[rgba(245,181,72,0.08)]"
-                    style={{ color: "#F5B548" }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.9 }}>
-                      <path d="M12 2a5 5 0 1 1 0 10A5 5 0 0 1 12 2Z" stroke="currentColor" strokeWidth="1.75" />
-                      <path d="M3 21c0-4.418 4.03-8 9-8s9 3.582 9 8" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                      <circle cx="19" cy="7" r="3" fill="#F5B548" stroke="#0b1320" strokeWidth="1.5" />
-                      <path d="M18 7h2M19 6v2" stroke="#0b1320" strokeWidth="1.2" strokeLinecap="round" />
-                    </svg>
-                    Admin
-                    <span className="ml-auto rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide"
-                      style={{ background: "rgba(245,181,72,0.15)", color: "#F5B548", border: "1px solid rgba(245,181,72,0.25)" }}>
-                      {adminRole}
-                    </span>
-                  </Link>
+                  <div className="mt-2 pt-2" style={{ borderTop: "2px solid rgba(37,99,235,0.95)" }}>
+                    <Link href="/admin/characters" onClick={() => setUserOpen(false)}
+                      className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition hover:bg-[rgba(245,181,72,0.08)]"
+                      style={{ color: "#F5B548" }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.9 }}>
+                        <path d="M12 2a5 5 0 1 1 0 10A5 5 0 0 1 12 2Z" stroke="currentColor" strokeWidth="1.75" />
+                        <path d="M3 21c0-4.418 4.03-8 9-8s9 3.582 9 8" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                        <circle cx="19" cy="7" r="3" fill="#F5B548" stroke="#0b1320" strokeWidth="1.5" />
+                        <path d="M18 7h2M19 6v2" stroke="#0b1320" strokeWidth="1.2" strokeLinecap="round" />
+                      </svg>
+                      Admin
+                      <span className="ml-auto rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide"
+                        style={{ background: "rgba(245,181,72,0.15)", color: "#F5B548", border: "1px solid rgba(245,181,72,0.25)" }}>
+                        {adminRole}
+                      </span>
+                    </Link>
+                  </div>
                 )}
                 {adminRole && (
                   <Link href="/admin/waitlist" onClick={() => setUserOpen(false)}

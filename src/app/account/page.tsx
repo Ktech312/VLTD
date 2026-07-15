@@ -244,6 +244,7 @@ export default function AccountPage() {
           <Link href="/account/roles"><PillButton>Roles</PillButton></Link>
           <Link href="/account/security"><PillButton>Security</PillButton></Link>
           <Link href="/account/billing"><PillButton>Billing</PillButton></Link>
+          <Link href="/redeem"><PillButton>Redeem Code</PillButton></Link>
         </div>
 
         <section
