@@ -48,14 +48,20 @@ export default function AccountRolesPage() {
 
   return (
     <main className="text-[color:var(--fg)]">
-      <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
+      <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
         <AccountTabs />
 
-        <section className="vltd-panel-main rounded-[30px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <section
+          className="relative -mt-px overflow-hidden rounded-[34px] rounded-tl-none p-5 sm:p-7"
+          style={{
+            background: "var(--theme-elevated, rgba(20,32,55,0.9))",
+            border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.25))",
+            boxShadow: "0 26px 86px rgba(0,0,0,0.32)",
+          }}
+        >
           <div className="text-[11px] tracking-[0.24em] text-[color:var(--muted2)]">ROLES & PERMISSIONS</div>
           <h1 className="mt-3 text-3xl font-semibold">Permission shells for business access</h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-[color:var(--muted)]">These role defaults are placeholders for the real permission gate. The key business requirement is already represented: employees can add and view items without seeing portfolio financials unless explicitly allowed.</p>
-        </section>
 
         <div className="mt-8 grid gap-5 xl:grid-cols-2">
           {roles.map((role) => {
@@ -78,6 +84,7 @@ export default function AccountRolesPage() {
             );
           })}
         </div>
+        </section>
       </div>
     </main>
   );

@@ -121,8 +121,17 @@ export default function TeamPage() {
   const inputStyle = { background: "var(--pill)", color: "var(--fg)" } as const;
 
   return (
-    <main className="mx-auto max-w-5xl px-4 pb-24 pt-8">
-      <AccountTabs />
+    <main className="px-4 py-6 text-[color:var(--fg)]">
+      <div className="mx-auto max-w-5xl">
+        <AccountTabs />
+        <section
+          className="relative -mt-px overflow-hidden rounded-[34px] rounded-tl-none p-5 sm:p-7"
+          style={{
+            background: "var(--theme-elevated, rgba(20,32,55,0.9))",
+            border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.25))",
+            boxShadow: "0 26px 86px rgba(0,0,0,0.32)",
+          }}
+        >
       <div className="mx-auto max-w-lg">
       <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Business</div>
       <h1 className="mt-1 text-2xl font-semibold" style={{ color: "var(--fg)" }}>Team</h1>
@@ -255,6 +264,8 @@ export default function TeamPage() {
       <div className="mt-8 text-center">
         <Link href="/account" className="text-sm text-[color:var(--muted)] underline underline-offset-2">Back to account</Link>
       </div>
+      </div>
+        </section>
       </div>
     </main>
   );

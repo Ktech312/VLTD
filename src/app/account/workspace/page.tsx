@@ -190,16 +190,21 @@ export default function WorkspaceSettingsPage() {
   const publicUrl = activeProfile?.username ? `${origin}/v/${activeProfile.username}` : "";
 
   return (
-    <main className="" style={{ background: "var(--bg)", color: "var(--fg)" }}>
-      <div className="border-b border-[color:var(--border)]" style={{ background: "var(--surface)" }}>
-        <div className="mx-auto max-w-5xl px-4 py-4">
-          <AccountTabs />
-          <h1 className="mt-4 text-2xl font-bold">Workspace Settings</h1>
+    <main className="px-4 py-6" style={{ background: "var(--bg)", color: "var(--fg)" }}>
+      <div className="mx-auto max-w-5xl">
+        <AccountTabs />
+        <section
+          className="relative -mt-px overflow-hidden rounded-[34px] rounded-tl-none p-5 sm:p-7"
+          style={{
+            background: "var(--theme-elevated, rgba(20,32,55,0.9))",
+            border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.25))",
+            boxShadow: "0 26px 86px rgba(0,0,0,0.32)",
+          }}
+        >
+          <h1 className="text-2xl font-bold">Workspace Settings</h1>
           {email && <p className="mt-0.5 text-sm" style={{ color: "var(--muted)" }}>{email}</p>}
-        </div>
-      </div>
 
-      <div className="mx-auto max-w-2xl px-4 py-6 space-y-5">
+          <div className="mx-auto mt-6 max-w-2xl space-y-5">
 
         <Section title="Public profile">
           <div className="flex items-center gap-4 mb-5">
@@ -366,6 +371,8 @@ export default function WorkspaceSettingsPage() {
           </Section>
         )}
 
+          </div>
+        </section>
       </div>
     </main>
   );
