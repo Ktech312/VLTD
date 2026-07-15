@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AccountTabs } from "@/components/account/AccountTabs";
 import { showToast } from "@/lib/toast";
 import {
@@ -73,6 +74,7 @@ function saveLocalPrefs(patch: Record<string, unknown>) {
 }
 
 export default function WorkspaceSettingsPage() {
+  const router = useRouter();
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [activeId, setActiveId] = useState("");
   const [email, setEmail] = useState("");
@@ -97,6 +99,10 @@ export default function WorkspaceSettingsPage() {
       const aid = getStoredActiveProfileId() || rows[0]?.id || "";
       setActiveId(aid);
       const active = rows.find((r) => r.id === aid) ?? rows[0];
+      if (active?.profile_type !== "business") {
+        router.replace("/account");
+        return;
+      }
       if (active) {
         setEditDisplay(active.display_name ?? "");
         setEditEmoji((active as ProfileRow & { avatar_emoji?: string }).avatar_emoji ?? "🗹");
@@ -114,7 +120,7 @@ export default function WorkspaceSettingsPage() {
 
     finishGoogleConnectIfPresent();
     setGoogleConnected(isTokenValid(getStoredToken()));
-  }, []);
+  }, [router]);
 
   const activeProfile = profiles.find((p) => p.id === activeId) ?? profiles[0];
 
@@ -186,7 +192,7 @@ export default function WorkspaceSettingsPage() {
   return (
     <main className="" style={{ background: "var(--bg)", color: "var(--fg)" }}>
       <div className="border-b border-[color:var(--border)]" style={{ background: "var(--surface)" }}>
-        <div className="mx-auto max-w-2xl px-4 py-4">
+        <div className="mx-auto max-w-5xl px-4 py-4">
           <AccountTabs />
           <h1 className="mt-4 text-2xl font-bold">Workspace Settings</h1>
           {email && <p className="mt-0.5 text-sm" style={{ color: "var(--muted)" }}>{email}</p>}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AccountTabs } from "@/components/account/AccountTabs";
+import { RedeemCodeCard } from "@/components/account/RedeemCodeCard";
 import { showToast } from "@/lib/toast";
 import { getCurrentUser, getStoredActiveProfileId } from "@/lib/auth";
 import { getStoredStripeCustomerId, setStoredStripeCustomerId } from "@/lib/billingClient";
@@ -124,7 +125,7 @@ export default function BillingPage() {
   return (
     <main className="" style={{ background: "var(--bg)", color: "var(--fg)" }}>
       <div className="border-b border-[color:var(--border)]" style={{ background: "var(--surface)" }}>
-        <div className="mx-auto max-w-2xl px-4 py-4">
+        <div className="mx-auto max-w-5xl px-4 py-4">
           <AccountTabs />
           <h1 className="mt-4 text-2xl font-bold" style={{ color: "var(--fg)" }}>Billing & Plans</h1>
           <p className="mt-0.5 text-sm" style={{ color: "var(--muted)" }}>Manage your subscription and view invoice history.</p>
@@ -132,6 +133,8 @@ export default function BillingPage() {
       </div>
 
       <div className="mx-auto max-w-2xl px-4 py-6 space-y-6">
+        <RedeemCodeCard />
+
         {fromLimit ? (
           <div className="rounded-2xl p-4 ring-1" style={{ background: "rgba(245,181,72,0.10)", borderColor: "rgba(245,181,72,0.4)" }}>
             <div className="text-sm font-bold" style={{ color: "#F5B548" }}>You&apos;ve hit your free item limit</div>

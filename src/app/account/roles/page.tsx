@@ -1,11 +1,16 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AccountTabs } from "@/components/account/AccountTabs";
+import { getOnboardingStatus } from "@/lib/auth";
 import { getRoleDefaults, type WorkspaceRole } from "@/lib/workspaces";
 
 const roles: WorkspaceRole[] = ["OWNER", "ADMIN", "INVENTORY_MANAGER", "VIEWER"];
 
 export default function AccountRolesPage() {
+  const router = useRouter();
+  const [allowed, setAllowed] = useState<boolean | null>(null);
   const labels: Record<WorkspaceRole, string> = {
     OWNER: "Owner",
     ADMIN: "Admin",
@@ -13,9 +18,37 @@ export default function AccountRolesPage() {
     VIEWER: "Viewer",
   };
 
+  useEffect(() => {
+    let active = true;
+    async function gateBusinessOnly() {
+      const status = await getOnboardingStatus();
+      if (!active) return;
+      if (status.activeProfile?.profile_type !== "business") {
+        setAllowed(false);
+        router.replace("/account");
+        return;
+      }
+      setAllowed(true);
+    }
+    void gateBusinessOnly();
+    return () => {
+      active = false;
+    };
+  }, [router]);
+
+  if (allowed !== true) {
+    return (
+      <main className="px-4 py-8 text-[color:var(--fg)]">
+        <div className="mx-auto max-w-5xl">
+          <AccountTabs />
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="text-[color:var(--fg)]">
-      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
+      <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
         <AccountTabs />
 
         <section className="vltd-panel-main rounded-[30px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">

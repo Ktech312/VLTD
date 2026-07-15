@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AccountTabs } from "@/components/account/AccountTabs";
 import { getCurrentUser, getOnboardingStatus, type ProfileRow } from "@/lib/auth";
 import { setStoredActiveProfileId, listMyProfiles } from "@/lib/auth";
@@ -21,6 +22,7 @@ const ROLE_STYLE: Record<string, { bg: string; fg: string }> = {
 };
 
 export default function TeamPage() {
+  const router = useRouter();
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [myEmail, setMyEmail] = useState("");
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -47,10 +49,14 @@ export default function TeamPage() {
     const [{ data: user }, status] = await Promise.all([getCurrentUser(), getOnboardingStatus()]);
     setMyEmail(user.user?.email ?? "");
     const active = status.activeProfile;
+    if (active?.profile_type !== "business") {
+      router.replace("/account");
+      return;
+    }
     setProfile(active);
     if (active) setMembers(await listTeamMembers(active.id));
     setLoading(false);
-  }, []);
+  }, [router]);
 
   useEffect(() => { void load(); }, [load]);
 
