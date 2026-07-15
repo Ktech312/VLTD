@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
-import { PillButton } from "@/components/ui/PillButton";
+import { AccountTabs } from "@/components/account/AccountTabs";
 import { showToast } from "@/lib/toast";
 import { getCurrentUser, getStoredActiveProfileId } from "@/lib/auth";
 import { getStoredStripeCustomerId, setStoredStripeCustomerId } from "@/lib/billingClient";
@@ -126,14 +125,7 @@ export default function BillingPage() {
     <main className="" style={{ background: "var(--bg)", color: "var(--fg)" }}>
       <div className="border-b border-[color:var(--border)]" style={{ background: "var(--surface)" }}>
         <div className="mx-auto max-w-2xl px-4 py-4">
-          <div className="flex flex-wrap gap-2">
-            <Link href="/account"><PillButton>Account</PillButton></Link>
-            <Link href="/account/workspace"><PillButton>Workspace</PillButton></Link>
-            <Link href="/account/team"><PillButton>Team</PillButton></Link>
-            <Link href="/account/security"><PillButton>Security</PillButton></Link>
-            <Link href="/account/billing"><PillButton variant="active">Billing</PillButton></Link>
-            <Link href="/redeem"><PillButton>Redeem Code</PillButton></Link>
-          </div>
+          <AccountTabs />
           <h1 className="mt-4 text-2xl font-bold" style={{ color: "var(--fg)" }}>Billing & Plans</h1>
           <p className="mt-0.5 text-sm" style={{ color: "var(--muted)" }}>Manage your subscription and view invoice history.</p>
         </div>

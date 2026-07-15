@@ -1,11 +1,10 @@
 "use client";
 // NOTE: primaryFocus uses taxonomy universe keys for personalisation
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ThemePicker } from "@/components/ui/ThemePicker";
-import { PillButton } from "@/components/ui/PillButton";
+import { AccountTabs } from "@/components/account/AccountTabs";
 
 import { getOnboardingStatus, updateProfile } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -237,15 +236,7 @@ export default function AccountPage() {
   return (
     <main className="px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
-        <div className="mb-6 flex flex-wrap gap-2">
-          <PillButton variant="active">Account</PillButton>
-          <Link href="/account/workspace"><PillButton>Workspace</PillButton></Link>
-          <Link href="/account/team"><PillButton>Team</PillButton></Link>
-          <Link href="/account/roles"><PillButton>Roles</PillButton></Link>
-          <Link href="/account/security"><PillButton>Security</PillButton></Link>
-          <Link href="/account/billing"><PillButton>Billing</PillButton></Link>
-          <Link href="/redeem"><PillButton>Redeem Code</PillButton></Link>
-        </div>
+        <AccountTabs />
 
         <section
           id="profile-setup"

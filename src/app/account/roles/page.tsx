@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { PillButton } from "@/components/ui/PillButton";
+import { AccountTabs } from "@/components/account/AccountTabs";
 import { getRoleDefaults, type WorkspaceRole } from "@/lib/workspaces";
 
 const roles: WorkspaceRole[] = ["OWNER", "ADMIN", "INVENTORY_MANAGER", "VIEWER"];
@@ -17,12 +16,7 @@ export default function AccountRolesPage() {
   return (
     <main className="text-[color:var(--fg)]">
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
-        <div className="mb-6 flex flex-wrap items-center gap-3">
-          <Link href="/account"><PillButton>Account Center</PillButton></Link>
-          <Link href="/account/team"><PillButton>Team Members</PillButton></Link>
-          <Link href="/account/roles"><PillButton variant="active">Roles & Permissions</PillButton></Link>
-          <Link href="/account/workspace"><PillButton>Workspace Settings</PillButton></Link>
-        </div>
+        <AccountTabs />
 
         <section className="vltd-panel-main rounded-[30px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
           <div className="text-[11px] tracking-[0.24em] text-[color:var(--muted2)]">ROLES & PERMISSIONS</div>

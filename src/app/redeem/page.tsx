@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { AccountTabs } from "@/components/account/AccountTabs";
 import { redeemCoupon } from "@/lib/accessCoupons";
 import { setTierSafe, type Tier } from "@/lib/subscription";
 
@@ -41,6 +42,9 @@ export default function RedeemPage() {
 
   return (
     <main className="min-h-dvh bg-[color:var(--bg)] px-4 py-10 text-[color:var(--fg)]">
+      <div className="mx-auto w-full max-w-5xl">
+        <AccountTabs />
+      </div>
       <div className="mx-auto w-full max-w-md">
         <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">VLTD</div>
         <h1 className="mt-1 text-2xl font-semibold">Redeem a code</h1>

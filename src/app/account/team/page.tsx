@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { AccountTabs } from "@/components/account/AccountTabs";
 import { getCurrentUser, getOnboardingStatus, type ProfileRow } from "@/lib/auth";
 import { setStoredActiveProfileId, listMyProfiles } from "@/lib/auth";
 import {
@@ -114,7 +115,9 @@ export default function TeamPage() {
   const inputStyle = { background: "var(--pill)", color: "var(--fg)" } as const;
 
   return (
-    <main className="mx-auto max-w-lg px-4 pb-24 pt-8">
+    <main className="mx-auto max-w-5xl px-4 pb-24 pt-8">
+      <AccountTabs />
+      <div className="mx-auto max-w-lg">
       <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Business</div>
       <h1 className="mt-1 text-2xl font-semibold" style={{ color: "var(--fg)" }}>Team</h1>
       <p className="mt-1 text-sm text-[color:var(--muted)]">
@@ -245,6 +248,7 @@ export default function TeamPage() {
 
       <div className="mt-8 text-center">
         <Link href="/account" className="text-sm text-[color:var(--muted)] underline underline-offset-2">Back to account</Link>
+      </div>
       </div>
     </main>
   );
