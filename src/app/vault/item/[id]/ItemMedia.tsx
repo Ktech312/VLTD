@@ -27,6 +27,7 @@ export default function ItemMedia({ images }: ItemMediaProps) {
           }}
         >
           {current ? (
+            // eslint-disable-next-line @next/next/no-img-element -- user-uploaded photo (Supabase/object URL); next/image can't optimize these and the host isn't in remotePatterns
             <img src={current} alt="" className="h-full w-full object-cover" />
           ) : (
             "No image"

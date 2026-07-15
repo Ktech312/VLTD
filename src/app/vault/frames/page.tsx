@@ -613,6 +613,7 @@ function ItemRow({ item, selected, onSelect }: { item: VaultItem; selected: bool
         display: "flex", alignItems: "center", justifyContent: "center",
       }}>
         {imageUrl
+          // eslint-disable-next-line @next/next/no-img-element -- needs crossOrigin="anonymous" for canvas frame compositing; next/image doesn't support it
           ? <img src={imageUrl} alt="" crossOrigin="anonymous" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           : <span style={{ fontSize: 16, opacity: 0.4 }}>🖼</span>
         }

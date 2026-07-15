@@ -41,6 +41,7 @@ export default function VaultPrintPage() {
       if (ua !== ub) return ua.localeCompare(ub);
       return (a.title ?? "").localeCompare(b.title ?? "");
     });
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time client-only load from localStorage on mount (hydration-safe: can't run during render); batches to a single re-render, not a cascade
     setItems(all);
     setReady(true);
   }, []);
