@@ -6,7 +6,7 @@ import Link from "next/link";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { TAXONOMY, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
-import { loadItemsOrSeed, type VaultItem as ModelItem } from "@/lib/vaultModel";
+import { loadItemsOrSeed, loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
 
 function clamp(n: number) {
   return Number.isFinite(n) ? n : 0;
@@ -77,6 +77,13 @@ export default function InsuranceReportPage() {
     const seed = toSeedItemsFromDemo();
     const loaded = loadItemsOrSeed(seed);
     setItems(loaded);
+    let active = true;
+    void syncVaultItemsFromSupabase().then(() => {
+      if (active) setItems(loadItems());
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const sorted = useMemo(() => {

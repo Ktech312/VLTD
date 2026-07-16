@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
-import { loadItemsOrSeed, type VaultItem as ModelItem } from "@/lib/vaultModel";
+import { loadItemsOrSeed, loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 
 type Item = ModelItem & {
@@ -88,6 +88,13 @@ export default function InsuranceItemPage() {
     const seed = toSeedItemsFromDemo();
     const loaded = loadItemsOrSeed(seed as any) as any as Item[];
     setItems(loaded);
+    let active = true;
+    void syncVaultItemsFromSupabase().then(() => {
+      if (active) setItems(loadItems() as any as Item[]);
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const id = sp.get("id") ?? "";

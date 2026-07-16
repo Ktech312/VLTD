@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { UNIVERSE_LABEL, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
-import { loadItemsOrSeed, type VaultItem as ModelItem } from "@/lib/vaultModel";
+import { loadItemsOrSeed, loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
 
 type RankMode = "gain" | "value";
 type TimeRange = "7d" | "30d" | "90d" | "all";
@@ -148,6 +148,13 @@ export default function UniverseClient({ uKey }: { uKey: string }) {
     const seed = toSeedItemsFromDemo();
     const loaded = loadItemsOrSeed(seed);
     setItems(loaded);
+    let active = true;
+    void syncVaultItemsFromSupabase().then(() => {
+      if (active) setItems(loadItems());
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {

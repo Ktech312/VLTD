@@ -8,7 +8,7 @@ import { showToast } from "@/lib/toast";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
-import { loadItemsOrSeed, saveItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
+import { loadItemsOrSeed, saveItems, loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import {
   MUSEUM_BG_EVENT,
   clearMuseumBackground,
@@ -251,6 +251,16 @@ export default function UserSettingsPage() {
     setItems(loaded);
 
     setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    void syncVaultItemsFromSupabase().then(() => {
+      if (active) setItems(loadItems());
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {

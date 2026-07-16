@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
-import { loadItemsOrSeed, type VaultItem as ModelItem } from "@/lib/vaultModel";
+import { loadItemsOrSeed, loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 
 type Item = ModelItem & {
@@ -105,6 +105,13 @@ export default function InsuranceExportPage() {
     const loaded = loadItemsOrSeed(seed as any) as any as Item[];
     setItems(loaded);
     setExcludedIds(readExcludedIds());
+    let active = true;
+    void syncVaultItemsFromSupabase().then(() => {
+      if (active) setItems(loadItems() as any as Item[]);
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const selectedItems = useMemo(() => items.filter((item) => !excludedIds.has(String(item.id))), [items, excludedIds]);

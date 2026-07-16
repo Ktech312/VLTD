@@ -7,7 +7,7 @@ import { PillSelect } from "@/components/ui/PillSelect";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { UNIVERSE_LABEL, UNIVERSE_KEYS, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
-import { loadItemsOrSeed, type VaultItem as ModelItem } from "@/lib/vaultModel";
+import { loadItemsOrSeed, loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { readHistory, sliceHistory, takeDailySnapshotIfNeeded } from "@/lib/valueHistory";
 
 type RankMode = "gain" | "value";
@@ -322,6 +322,16 @@ export function AnalyticsDashboard(props: {
 
     takeDailySnapshotIfNeeded(loaded);
     setHistoryTick((x) => x + 1);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    void syncVaultItemsFromSupabase().then(() => {
+      if (active) setItems(loadItems());
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   // ---- load preferences
