@@ -8,11 +8,15 @@ import PortfolioIntelligencePanel from "@/components/PortfolioIntelligencePanel"
 import { PillSelect } from "@/components/ui/PillSelect";
 
 import { getCollectionValuationScore } from "@/lib/collectionValuationScore";
-import { DEMO_ITEMS } from "@/lib/demoVault";
 import { getCollectionMetrics } from "@/lib/portfolioMetrics";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
-import { loadItemsOrSeed, saveItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
-import { readHistory, sliceHistory, takeDailySnapshotIfNeeded } from "@/lib/valueHistory";
+import { loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
+import {
+  readHistory,
+  sliceHistory,
+  takeDailySnapshotIfNeeded,
+  syncValueHistoryFromSupabase,
+} from "@/lib/valueHistory";
 
 type RankMode = "gain" | "value";
 type PortfolioView = "bars" | "donut" | "sparklines";
@@ -58,32 +62,6 @@ function fmtMonthDay(ms: number) {
   return new Date(ms).toLocaleString(undefined, { month: "short", day: "2-digit" });
 }
 
-function toSeedItemsFromDemo(): ModelItem[] {
-  const now = Date.now();
-  return (DEMO_ITEMS as any[]).map((d, idx) => ({
-    id: String(d.id),
-    category: d.category,
-    customCategoryLabel: d.customCategoryLabel,
-    title: d.title,
-    subtitle: d.subtitle,
-    number: d.number,
-    grade: d.grade,
-    purchasePrice: Number(d.purchasePrice ?? 0),
-    currentValue: Number(d.currentValue ?? 0),
-    imageFrontUrl: d.imageFrontUrl ?? d.imageUrl,
-    imageBackUrl: d.imageBackUrl,
-    notes: d.notes ?? "",
-    universe: d.universe,
-    categoryLabel: d.categoryLabel,
-    subcategoryLabel: d.subcategoryLabel,
-    storageLocation: d.storageLocation,
-    certNumber: d.certNumber,
-    createdAt:
-      typeof d.createdAt === "number" && Number.isFinite(d.createdAt)
-        ? d.createdAt
-        : now - idx * 1000,
-  })) as ModelItem[];
-}
 
 function PillLink({
   href,
@@ -290,6 +268,7 @@ export default function PortfolioPage() {
   const [mounted, setMounted] = useState(false);
 
   const [items, setItems] = useState<ModelItem[]>([]);
+  const [didLoad, setDidLoad] = useState(false);
   const [rankMode, setRankMode] = useState<RankMode>("gain");
   const [view, setView] = useState<PortfolioView>("bars");
   const [range, setRange] = useState<TimeRange>("30d");
@@ -300,13 +279,32 @@ export default function PortfolioPage() {
   }, []);
 
   useEffect(() => {
-    const seed = toSeedItemsFromDemo();
-    const loaded = loadItemsOrSeed(seed);
-    saveItems(loaded);
-    setItems(loaded);
+    let cancelled = false;
+    async function load() {
+      // Pull the real vault from Supabase (source of truth) — no demo seeding.
+      try {
+        await syncVaultItemsFromSupabase();
+      } catch {
+        /* offline — fall back to the local cache */
+      }
+      if (cancelled) return;
+      const loaded = loadItems();
+      setItems(loaded);
+      setDidLoad(true);
 
-    takeDailySnapshotIfNeeded(loaded);
-    setHistoryTick((x) => x + 1);
+      takeDailySnapshotIfNeeded(loaded);
+      // Durable, per-profile value history from Supabase.
+      try {
+        await syncValueHistoryFromSupabase();
+      } catch {
+        /* table may not exist yet — local cache still works */
+      }
+      if (!cancelled) setHistoryTick((x) => x + 1);
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -508,6 +506,45 @@ export default function PortfolioPage() {
           : "All time";
 
   const noValueCount = items.filter(i => !i.currentValue || Number(i.currentValue) <= 0).length;
+
+  // Real empty state — a fresh vault shows a call to action, never demo data.
+  if (mounted && didLoad && items.length === 0) {
+    return (
+      <main className="text-[color:var(--fg)]">
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+          <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">INSIGHTS</div>
+          <h1 className="mt-2 text-3xl font-semibold">Your collection at a glance</h1>
+          <div
+            className="mt-8 rounded-3xl p-8 text-center"
+            style={{ background: 'var(--theme-card, rgba(15,25,45,0.85))', border: '1px solid var(--theme-border, rgba(245,181,72,0.12))' }}
+          >
+            <div className="text-5xl opacity-30">📊</div>
+            <div className="mt-4 text-lg font-semibold">No items yet</div>
+            <p className="mx-auto mt-2 max-w-md text-sm text-[color:var(--muted)]">
+              Add your first collectible and your Insights fill in — value over time, category mix,
+              top holdings, movers, and what needs attention.
+            </p>
+            <div className="mt-6 flex justify-center gap-2">
+              <Link
+                href="/capture"
+                className="rounded-full px-5 py-2.5 text-sm font-semibold"
+                style={{ background: 'var(--theme-gold, #F5B548)', color: '#0B0B0B' }}
+              >
+                Smart Scan
+              </Link>
+              <Link
+                href="/vault/add"
+                className="rounded-full px-5 py-2.5 text-sm font-semibold"
+                style={{ border: '1px solid var(--border)', color: 'var(--fg)' }}
+              >
+                Add manually
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="text-[color:var(--fg)]">
