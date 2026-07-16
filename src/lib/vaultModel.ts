@@ -5,7 +5,6 @@ import {
   isDirectBrowserImageUrl,
 } from "@/lib/vaultCloud";
 import { newId } from "@/lib/id";
-import { getDemoItems } from "@/lib/demoSeed";
 import {
   normalizeComparables,
   normalizePriceSources,
@@ -1092,18 +1091,6 @@ export function saveItem(item: VaultItem) {
   const next = [...existing];
   next[idx] = normalized;
   saveRawItems(next);
-}
-
-export function seedDemoIfEmpty() {
-  const existing = loadItems();
-
-  if (!existing.length) {
-    const activeProfileId = getActiveProfileId();
-    const demo = getDemoItems().map((item) =>
-      activeProfileId ? { ...item, profile_id: activeProfileId } : item
-    );
-    saveItems(demo);
-  }
 }
 
 export function loadItemsOrSeed(seed?: VaultItem[]) {
