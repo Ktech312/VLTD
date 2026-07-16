@@ -1851,7 +1851,12 @@ export default function VaultPage() {
                   <div
                     key={item.id}
                     className="relative"
-                    onPointerDownCapture={() => {
+                    onClick={(e) => {
+                      // Open the quick-look on a real tap only. A scroll gesture
+                      // isn't a click, so scrolling anywhere on the card is safe.
+                      // Skip taps on interactive children: the image/title links
+                      // navigate to the full item page; value/Sell do their thing.
+                      if ((e.target as HTMLElement).closest("a, button, input")) return;
                       setSelectedDetailId(item.id);
                       setIsDetailDrawerDismissed(false);
                     }}
