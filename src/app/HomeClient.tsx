@@ -8,6 +8,9 @@ import { getOnboardingStatus } from "@/lib/auth";
 import { syncPublicProfile } from "@/lib/publicProfile";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { loadGalleries, refreshGalleriesFromSupabase, type Gallery } from "@/lib/galleryModel";
+import { getCollectionMetrics } from "@/lib/portfolioMetrics";
+import { getCollectionValuationScore } from "@/lib/collectionValuationScore";
+import { getCollectorStrength } from "@/lib/collectorStrength";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import SeasonalBanner from "@/components/SeasonalBanner";
 
@@ -587,6 +590,77 @@ function RecentSidebarItems({ items }: { items: VaultItem[] }) {
   );
 }
 
+// ── Curator Strength glance (folded in from the old Collection Identity) ──
+function CuratorStrengthCard({
+  curator,
+  topItems,
+  roiPct,
+}: {
+  curator: ReturnType<typeof getCollectorStrength>;
+  topItems: VaultItem[];
+  roiPct: number;
+}) {
+  const roiTone = roiPct >= 0 ? C.green : C.red;
+  const roiPrefix = roiPct >= 0 ? "+" : "";
+  const pieces = topItems.slice(0, 3);
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "10px", overflow: "hidden" }}>
+      <CardHd label="Curator Strength" href="/portfolio" linkText="Full insights →" />
+      <div style={{ padding: "14px 16px" }}>
+        {/* Score + band + summary */}
+        <div style={{ display: "flex", alignItems: "center", gap: "18px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "2px", minWidth: "88px" }}>
+            <span style={{ fontFamily: C.r, fontSize: "40px", fontWeight: 700, lineHeight: 1, color: C.gold }}>{curator.score}</span>
+            <span style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.4px", color: C.text }}>{curator.band}</span>
+          </div>
+          <div style={{ width: "1px", alignSelf: "stretch", background: C.bd }} className="max-sm:hidden" />
+          <div style={{ flex: 1, minWidth: "180px", display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ fontSize: "12px", lineHeight: 1.5, color: C.muted }}>{curator.summary}</div>
+            {curator.highlights.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
+                {curator.highlights.map((h) => (
+                  <span key={h} style={{ fontSize: "10px", fontWeight: 500, color: "#C8BFA8", background: C.goldDim, border: `1px solid ${C.goldBd}`, borderRadius: "4px", padding: "3px 7px" }}>{h}</span>
+                ))}
+              </div>
+            )}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "2px", textAlign: "right", minWidth: "72px" }}>
+            <span style={{ fontFamily: C.r, fontSize: "22px", fontWeight: 700, lineHeight: 1, color: roiTone }}>{roiPrefix}{roiPct.toFixed(1)}%</span>
+            <span style={{ fontSize: "10px", color: C.muted2 }}>Overall ROI</span>
+          </div>
+        </div>
+
+        {/* Top pieces */}
+        {pieces.length > 0 && (
+          <div style={{ marginTop: "14px", borderTop: `1px solid ${C.bd2}`, paddingTop: "12px" }}>
+            <div style={{ fontSize: "10px", letterSpacing: "1.4px", textTransform: "uppercase", color: C.muted2, fontWeight: 600, marginBottom: "9px" }}>Top Pieces</div>
+            <div className="grid grid-cols-1 gap-[7px] sm:grid-cols-3">
+              {pieces.map((item) => {
+                const img = item.imageFrontUrl || item.imageBackUrl || "";
+                return (
+                  <Link key={item.id} href={"/vault/item/" + item.id}
+                    style={{ display: "flex", gap: "9px", alignItems: "center", padding: "8px", borderRadius: "7px", border: `1px solid ${C.bd}`, background: "rgba(255,255,255,0.02)", textDecoration: "none" }}>
+                    <div style={{ width: "36px", height: "36px", flexShrink: 0, borderRadius: "5px", border: `1px solid ${C.bd}`, background: "rgba(10,18,35,0.9)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px" }}>
+                      {img ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : "📦"}
+                    </div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: "12px", fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</div>
+                      <div style={{ fontSize: "11px", fontWeight: 600, color: C.gold }}>{formatMoney(Number(item.currentValue ?? 0))}</div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main HomeClient ───────────────────────────────────────────────
 
 // ─── Profile completion nudge ────────────────────────────────────────────────
@@ -747,6 +821,18 @@ export default function HomeClient() {
     return { totalItems, totalCostValue, totalValue, totalGain, gainPct };
   }, [items]);
 
+  // Curator Strength glance — folded in from the old Collection Identity page.
+  const strength = useMemo(() => {
+    if (items.length === 0) return null;
+    const metrics = getCollectionMetrics(items);
+    const valuation = getCollectionValuationScore(metrics);
+    return {
+      curator: getCollectorStrength(metrics, valuation, galleries.length),
+      topItems: metrics.topItems,
+      roiPct: metrics.roi ?? 0,
+    };
+  }, [items, galleries.length]);
+
   const gainTone = stats.totalGain >= 0 ? "gain" as const : "loss" as const;
   const gainPrefix = stats.totalGain >= 0 ? "+" : "";
   const summaryLine = stats.totalGain >= 0
@@ -801,7 +887,7 @@ export default function HomeClient() {
                   {stats.totalItems === 0 ? "Your vault is ready," : "Welcome back,"}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <h1 style={{ fontFamily: C.r, fontSize: "34px", fontWeight: 600, lineHeight: 1.04, color: C.text }}>{displayName || "Collector"}</h1>
+                  <h1 style={{ fontFamily: C.r, fontSize: "34px", fontWeight: 600, lineHeight: 1.04, color: C.text }}>{displayName || "Curator"}</h1>
                   <Link href="/account" aria-label="Edit profile" title="Edit profile" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 8, background: "rgba(245,181,72,0.10)", border: `1px solid ${C.bd}`, color: C.gold, textDecoration: "none" }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                   </Link>
@@ -831,6 +917,11 @@ export default function HomeClient() {
             {/* Avatar panel — clickable */}
             <HeroAvatarPanel avatarUrl={avatarUrl} onClick={() => setShowAvatarPicker(true)} />
           </div>
+
+          {/* Curator Strength glance — score · ROI · top pieces */}
+          {strength && (
+            <CuratorStrengthCard curator={strength.curator} topItems={strength.topItems} roiPct={strength.roiPct} />
+          )}
 
           {/* Featured Gallery card (left) + coverflow carousel (right) */}
           <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2">

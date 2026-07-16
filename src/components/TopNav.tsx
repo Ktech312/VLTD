@@ -769,7 +769,6 @@ function TopNavInner() {
               <>
                 {[
                   { href: "/more", label: "Command Center" },
-                  { href: "/collector", label: "Collection Identity" },
                   { href: "/account", label: "Account Settings" },
                   { href: "/account/invite", label: "Invite Friends" },
                 ].map(({ href, label }) => (

@@ -142,12 +142,12 @@ export function getBaseCommands(): CommandItem[] {
       keywords: ["portfolio", "roi", "value", "valuation", "metrics"],
     },
     {
-      id: "nav_collector",
-      label: "Open Collector Profile",
-      subtitle: "See the public-style collector overview",
-      href: "/collector",
+      id: "nav_curator_home",
+      label: "Open Curator Home",
+      subtitle: "Your collection at a glance — strength, ROI, top pieces",
+      href: "/dashboard",
       section: "account",
-      keywords: ["collector", "profile", "identity"],
+      keywords: ["curator", "home", "strength", "identity", "overview", "collector", "profile"],
     },
     {
       id: "nav_account",

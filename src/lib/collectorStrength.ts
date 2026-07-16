@@ -2,10 +2,10 @@ import type { CollectionMetrics } from "@/lib/portfolioMetrics";
 import type { CollectionValuationScore } from "@/lib/collectionValuationScore";
 
 export type CollectorBand =
-  | "Emerging Collector"
-  | "Active Collector"
-  | "Serious Collector"
-  | "Premier Collector";
+  | "Emerging Curator"
+  | "Active Curator"
+  | "Serious Curator"
+  | "Premier Curator";
 
 export type CollectorStrength = {
   score: number;
@@ -22,10 +22,10 @@ export type CollectorStrength = {
 };
 
 function band(score: number): CollectorBand {
-  if (score >= 85) return "Premier Collector";
-  if (score >= 65) return "Serious Collector";
-  if (score >= 40) return "Active Collector";
-  return "Emerging Collector";
+  if (score >= 85) return "Premier Curator";
+  if (score >= 65) return "Serious Curator";
+  if (score >= 40) return "Active Curator";
+  return "Emerging Curator";
 }
 
 function clamp(n: number, max = 100) {
