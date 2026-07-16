@@ -385,7 +385,7 @@ export default function OnboardingPage() {
               <div className="mt-6 space-y-5">
                 <div className="grid gap-3 sm:grid-cols-3">
                   {([
-                    { key: "personal", icon: "person", title: "Collector", desc: "Personal vault, portfolio, and galleries." },
+                    { key: "personal", icon: "person", title: "Curator", desc: "Personal vault, portfolio, and galleries." },
                     { key: "business", icon: "store", title: "Business", desc: "Shop, resale inventory, or team workflow." },
                     { key: "both", icon: "key", title: "Both", desc: "A personal vault plus a separate business." },
                   ] as const).map(({ key, icon, title, desc }) => (
@@ -520,7 +520,7 @@ export default function OnboardingPage() {
                     </div>
                     <div>
                       <div className="font-semibold text-text-primary">{displayName.trim()}</div>
-                      <div className="text-xs text-[color:var(--muted2)]">@{slugifyUsername(username)} · {profileType === "business" ? "Business" : "Collector"}{focusedUniverses.length > 0 ? ` · ${focusedUniverses.length} ${focusedUniverses.length === 1 ? "universe" : "universes"}` : ""}</div>
+                      <div className="text-xs text-[color:var(--muted2)]">@{slugifyUsername(username)} · {profileType === "business" ? "Business" : "Curator"}{focusedUniverses.length > 0 ? ` · ${focusedUniverses.length} ${focusedUniverses.length === 1 ? "universe" : "universes"}` : ""}</div>
                     </div>
                   </div>
                 </div>

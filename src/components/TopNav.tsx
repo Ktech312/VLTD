@@ -402,7 +402,7 @@ function TopNavInner() {
     ? (activeProfile?.display_name || accountEmail || "U").slice(0, 1).toUpperCase()
     : "G";
   const avatarImageSrc = resolveAvatarImageSrc(activeProfile?.avatar_url || emojiToPresetUrl(activeProfile?.avatar_emoji));
-  const accountTypeLabel = activeProfile?.profile_type === "business" ? "Business" : "Collector";
+  const accountTypeLabel = activeProfile?.profile_type === "business" ? "Business" : "Curator";
 
   return (
     <>

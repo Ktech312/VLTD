@@ -109,10 +109,10 @@ export default function NewMuseumGalleryPage() {
           </Link>
 
           <Link
-            href="/collector"
+            href="/dashboard"
             className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
           >
-            Collector Profile
+            Curator Home
           </Link>
         </div>
 

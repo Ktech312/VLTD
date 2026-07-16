@@ -393,7 +393,7 @@ export default function MorePage() {
   const isBusiness = profile.profileType === "business";
 
   const commandCards: CommandCardConfig[] = [
-    { icon: "user", title: "Account & Profile", desc: "Collector identity, handle, contact, and public profile controls.", panel: "account" },
+    { icon: "user", title: "Account & Profile", desc: "Curator identity, handle, contact, and public profile controls.", panel: "account" },
     ...(isBusiness
       ? [
           { icon: "vault" as const, title: "Workspace Settings", desc: "Business workspace details, defaults, and controls.", href: "/account/workspace" },
@@ -428,7 +428,7 @@ export default function MorePage() {
           <div className="flex items-center gap-7">
             <div className="h-20 w-px" style={{ background: border }} />
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em]" style={{ color: dim }}>{profile.profileType === "business" ? "Business Hub" : "Collector Hub"}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em]" style={{ color: dim }}>{profile.profileType === "business" ? "Business Hub" : "Curator Hub"}</p>
               <h1 className="mt-2 text-[42px] font-semibold leading-none" style={{ color: cream, fontFamily: serif }}>Command Center</h1>
               <p className="mt-2 max-w-[440px] text-[15px]" style={{ color: cream }}>Open account, data, sharing, help, and utility tools without hunting through menus.</p>
             </div>
@@ -460,7 +460,7 @@ export default function MorePage() {
                         <h2 className="text-[40px] font-semibold leading-none" style={{ color: cream, fontFamily: serif }}>{profile.displayName}</h2>
                         <button type="button" onClick={() => setActivePanel("account")} className="grid h-8 w-8 place-items-center rounded-[6px]" style={{ color: goldBright, border: `1px solid ${border}`, background: "rgba(214,168,79,.08)" }}>Edit</button>
                       </div>
-                      <p className="mt-2 text-[17px] font-semibold" style={{ color: cream }}>{profile.profileType === "business" ? "Business command tools" : "Collector command tools"}</p>
+                      <p className="mt-2 text-[17px] font-semibold" style={{ color: cream }}>{profile.profileType === "business" ? "Business command tools" : "Curator command tools"}</p>
                       <p className="mt-2 max-w-[430px] text-[12px] leading-[1.55]" style={{ color: muted }}>Panels keep common actions here. Deep workflows still open as full pages when they need room.</p>
                     </div>
                     <div className="w-full max-w-[690px]">
@@ -535,7 +535,7 @@ export default function MorePage() {
             </div>
             <button type="button" onClick={() => setActivePanel("account")} className="mx-4 mb-4 flex h-10 w-[calc(100%-2rem)] items-center justify-between rounded-full border px-4" style={{ borderColor: border, color: cream }}>
               <span className="text-[13px] font-semibold">@{profile.username}</span>
-              <span style={{ color: goldBright }}>{profile.profileType === "business" ? "Business" : "Collector"}</span>
+              <span style={{ color: goldBright }}>{profile.profileType === "business" ? "Business" : "Curator"}</span>
             </button>
             <div className="mx-4 grid grid-cols-3 rounded-[8px] border" style={{ borderColor: borderSoft, background: panel2 }}>
               <div className="p-3">
@@ -593,7 +593,7 @@ function PanelContent({ activePanel, profile, items, galleries }: { activePanel:
     account: {
       title: "Account & Profile",
       intro: "Fast account summary without leaving the command center.",
-      bullets: [`Display: ${profile.displayName}`, `Handle: @${profile.username}`, `Account type: ${profile.profileType === "business" ? "Business" : "Collector"}`],
+      bullets: [`Display: ${profile.displayName}`, `Handle: @${profile.username}`, `Account type: ${profile.profileType === "business" ? "Business" : "Curator"}`],
       links: [["Open account settings", "/account"], ["Edit public profile", "/user/profile"]],
     },
     security: {

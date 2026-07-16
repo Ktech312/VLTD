@@ -305,7 +305,7 @@ export default function AccountPage() {
                     ].join(" ")}
                     style={{ background: profileType === "personal" ? "var(--pill-active-bg)" : "var(--theme-card)" }}
                   >
-                    <div className="text-sm font-black">Collector</div>
+                    <div className="text-sm font-black">Curator</div>
                     <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">Personal vault and gallery.</div>
                   </button>
                   <button
@@ -406,7 +406,7 @@ export default function AccountPage() {
                 </div>
                 <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Type</div>
-                  <div className="mt-1 font-black text-text-primary">{profileType === "business" ? "Business" : "Collector"}</div>
+                  <div className="mt-1 font-black text-text-primary">{profileType === "business" ? "Business" : "Curator"}</div>
                 </div>
                 <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Focus</div>

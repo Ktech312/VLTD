@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "VLTD Collector Profile";
+export const alt = "VLTD Curator Profile";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -69,7 +69,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <span style={{ fontSize: "20px", fontWeight: 800, letterSpacing: "0.28em", color: "#F5B548" }}>VLTD</span>
             <div style={{ width: "1px", height: "16px", background: "rgba(245,181,72,0.3)", display: "flex" }} />
-            <span style={{ fontSize: "14px", color: "rgba(245,181,72,0.5)", letterSpacing: "0.18em" }}>COLLECTOR PROFILE</span>
+            <span style={{ fontSize: "14px", color: "rgba(245,181,72,0.5)", letterSpacing: "0.18em" }}>CURATOR PROFILE</span>
           </div>
 
           {/* Name + handle */}
