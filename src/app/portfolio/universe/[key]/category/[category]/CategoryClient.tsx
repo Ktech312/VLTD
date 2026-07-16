@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { UNIVERSE_LABEL, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
-import { loadItemsOrSeed, saveItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
+import { loadItemsOrSeed, type VaultItem as ModelItem } from "@/lib/vaultModel";
 
 type RankMode = "gain" | "value";
 type TimeRange = "7d" | "30d" | "90d" | "all";
@@ -127,7 +127,6 @@ export default function CategoryClient({ uKey, categorySlug }: { uKey: string; c
   useEffect(() => {
     const seed = toSeedItemsFromDemo();
     const loaded = loadItemsOrSeed(seed);
-    saveItems(loaded);
     setItems(loaded);
   }, []);
 

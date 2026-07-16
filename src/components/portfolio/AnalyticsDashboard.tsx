@@ -7,7 +7,7 @@ import { PillSelect } from "@/components/ui/PillSelect";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { UNIVERSE_LABEL, UNIVERSE_KEYS, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
-import { loadItemsOrSeed, saveItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
+import { loadItemsOrSeed, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { readHistory, sliceHistory, takeDailySnapshotIfNeeded } from "@/lib/valueHistory";
 
 type RankMode = "gain" | "value";
@@ -318,7 +318,6 @@ export function AnalyticsDashboard(props: {
   useEffect(() => {
     const seed = toSeedItemsFromDemo();
     const loaded = loadItemsOrSeed(seed);
-    saveItems(loaded);
     setItems(loaded);
 
     takeDailySnapshotIfNeeded(loaded);

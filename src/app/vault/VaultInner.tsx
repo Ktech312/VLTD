@@ -4,14 +4,13 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { DEMO_ITEMS } from "@/lib/demoVault";
 import UniverseRail from "@/components/UniverseRail";
 import SwipeStack from "@/components/SwipeStack";
 import VaultMuseumView from "@/components/VaultMuseumView";
 import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
 import { TAXONOMY, UNIVERSE_LABEL, type UniverseKey, isUniverseKey } from "@/lib/taxonomy";
 import { getOnboardingStatus } from "@/lib/auth";
-import { loadItemsOrSeed, saveItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
+import { loadItems, saveItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { type Tier, getTierSafe, onTierChange } from "@/lib/subscription";
 import { createClientVaultId } from "@/lib/clientVaultId";
 import {
@@ -175,31 +174,6 @@ async function normalizeImageForTier(file: File, tier: Tier): Promise<string> {
     img.onerror = () => resolve(original);
     img.src = original;
   });
-}
-
-function toSeedItemsFromDemo(): ModelItem[] {
-  return (DEMO_ITEMS as Array<Record<string, unknown>>).map((d) => ({
-    id: String(d.id),
-    category: typeof d.category === "string" ? d.category : undefined,
-    customCategoryLabel: typeof d.customCategoryLabel === "string" ? d.customCategoryLabel : undefined,
-    title: typeof d.title === "string" ? d.title : "Untitled",
-    subtitle: typeof d.subtitle === "string" ? d.subtitle : undefined,
-    number: typeof d.number === "string" ? d.number : undefined,
-    grade: typeof d.grade === "string" ? d.grade : undefined,
-    purchasePrice: Number(d.purchasePrice ?? 0),
-    currentValue: Number(d.currentValue ?? 0),
-    imageFrontUrl:
-      typeof d.imageFrontUrl === "string"
-        ? d.imageFrontUrl
-        : typeof d.imageUrl === "string"
-          ? d.imageUrl
-          : undefined,
-    imageBackUrl: typeof d.imageBackUrl === "string" ? d.imageBackUrl : undefined,
-    notes: typeof d.notes === "string" ? d.notes : "",
-    universe: typeof d.universe === "string" ? d.universe : undefined,
-    categoryLabel: typeof d.categoryLabel === "string" ? d.categoryLabel : undefined,
-    subcategoryLabel: typeof d.subcategoryLabel === "string" ? d.subcategoryLabel : undefined,
-  }));
 }
 
 function itemUniverse(i: ModelItem): UniverseKey {
@@ -777,9 +751,14 @@ export default function VaultInner() {
   const titleInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    const seed = toSeedItemsFromDemo();
-    const loaded = loadItemsOrSeed(seed);
-    setItems(loaded);
+    let active = true;
+    setItems(loadItems());
+    void syncVaultItemsFromSupabase().then(() => {
+      if (active) setItems(loadItems());
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -1474,16 +1453,6 @@ export default function VaultInner() {
                 <div className="flex flex-wrap gap-2">
                   <PillButton variant="primary" onClick={goQuickAdd}>
                     + Quick Add
-                  </PillButton>
-                  <PillButton
-                    onClick={() => {
-                      const seed = toSeedItemsFromDemo();
-                      const loaded = loadItemsOrSeed(seed);
-                      setItems(loaded);
-                      saveItems(loaded);
-                    }}
-                  >
-                    Seed demo items
                   </PillButton>
                 </div>
               }

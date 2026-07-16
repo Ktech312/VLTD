@@ -1110,15 +1110,13 @@ export function loadItemsOrSeed(seed?: VaultItem[]) {
   const existing = loadItems();
   if (existing.length > 0) return existing;
 
+  // Signed-in users always see their REAL vault — an empty vault stays empty
+  // (an empty state), never demo data, and demo is never written into a real
+  // profile's storage. Demo is display-only for the logged-out marketing preview.
   const activeProfileId = getActiveProfileId();
-  const safeSeed = Array.isArray(seed) ? seed.filter(Boolean).map((item) =>
-    syncPrimaryFields(activeProfileId ? { ...item, profile_id: activeProfileId } : item)
-  ) : [];
+  if (activeProfileId) return existing;
 
-  if (safeSeed.length > 0) {
-    saveItems(safeSeed);
-    return loadItems();
-  }
-
-  return existing;
+  return Array.isArray(seed)
+    ? seed.filter(Boolean).map((item) => syncPrimaryFields(item))
+    : [];
 }

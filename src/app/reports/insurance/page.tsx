@@ -6,7 +6,7 @@ import Link from "next/link";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { TAXONOMY, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
-import { loadItemsOrSeed, saveItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
+import { loadItemsOrSeed, type VaultItem as ModelItem } from "@/lib/vaultModel";
 
 function clamp(n: number) {
   return Number.isFinite(n) ? n : 0;
@@ -76,7 +76,6 @@ export default function InsuranceReportPage() {
   useEffect(() => {
     const seed = toSeedItemsFromDemo();
     const loaded = loadItemsOrSeed(seed);
-    saveItems(loaded);
     setItems(loaded);
   }, []);
 
