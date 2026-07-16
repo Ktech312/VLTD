@@ -1,3 +1,9 @@
+// src/lib/salesHistory.ts
+// Adapter over the unified sales model (src/lib/salesModel.ts). Kept so existing
+// callers (sales page, activity page, undoSale) keep working unchanged.
+
+import { addSale, loadSales as unifiedLoad, saveSales as unifiedSave, type Sale } from "@/lib/salesModel";
+
 export type SaleRecord = {
   id: string;
   itemId: string;
@@ -9,27 +15,48 @@ export type SaleRecord = {
   soldAt: number;
 };
 
-const STORAGE_KEY = "vltd_sales_history";
+function toRecord(s: Sale): SaleRecord {
+  return {
+    id: s.id,
+    itemId: s.itemId ?? "",
+    title: s.title,
+    universe: s.universe,
+    categoryLabel: s.category,
+    purchasePrice: s.purchasePrice,
+    salePrice: s.salePrice,
+    soldAt: s.soldAt,
+  };
+}
 
 export function loadSales(): SaleRecord[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw);
-  } catch {
-    return [];
-  }
+  return unifiedLoad().map(toRecord);
 }
 
 export function saveSales(sales: SaleRecord[]) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(sales));
+  unifiedSave(
+    sales.map((r) => ({
+      id: r.id,
+      itemId: r.itemId,
+      title: r.title,
+      universe: r.universe,
+      category: r.categoryLabel,
+      purchasePrice: r.purchasePrice,
+      salePrice: r.salePrice,
+      soldAt: r.soldAt,
+    }))
+  );
 }
 
 export function recordSale(record: SaleRecord) {
-  const existing = loadSales();
-  const next = [record, ...existing];
-  saveSales(next);
-  return next;
+  addSale({
+    id: record.id,
+    itemId: record.itemId,
+    title: record.title,
+    universe: record.universe,
+    category: record.categoryLabel,
+    purchasePrice: record.purchasePrice,
+    salePrice: record.salePrice,
+    soldAt: record.soldAt,
+  });
+  return loadSales();
 }

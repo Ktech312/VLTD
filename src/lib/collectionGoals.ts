@@ -1,3 +1,4 @@
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import type { VaultItem } from "@/lib/vaultModel";
 
 export type CollectionGoal = {
@@ -18,12 +19,35 @@ export type GoalProgress = CollectionGoal & {
   isAlmostThere: boolean;
 };
 
-const STORAGE_KEY = "vltd_collection_goals_v1";
+const LS_BASE = "vltd_collection_goals_v1";
+const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
+
+function activeProfileId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return window.localStorage.getItem(ACTIVE_PROFILE_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function lsKey(): string {
+  const pid = activeProfileId();
+  return pid ? `${LS_BASE}:${pid}` : LS_BASE;
+}
 
 export function loadGoals(): CollectionGoal[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const key = lsKey();
+    let raw = localStorage.getItem(key);
+    if (!raw && key !== LS_BASE) {
+      const legacy = localStorage.getItem(LS_BASE);
+      if (legacy) {
+        localStorage.setItem(key, legacy);
+        raw = legacy;
+      }
+    }
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     return Array.isArray(parsed) ? (parsed as CollectionGoal[]) : [];
@@ -34,7 +58,79 @@ export function loadGoals(): CollectionGoal[] {
 
 export function saveGoals(goals: CollectionGoal[]) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(goals));
+  localStorage.setItem(lsKey(), JSON.stringify(goals));
+}
+
+// ── Supabase sync (best-effort; local cache always works) ───────────
+function goalRow(goal: CollectionGoal, pid: string) {
+  return {
+    id: goal.id,
+    profile_id: pid,
+    name: goal.name,
+    target_count: goal.targetCount,
+    universe: goal.universe ?? null,
+    subject: goal.subject ?? null,
+    notes: goal.notes ?? null,
+    created_at: new Date(goal.createdAt || Date.now()).toISOString(),
+  };
+}
+
+async function pushGoal(goal: CollectionGoal) {
+  try {
+    const pid = activeProfileId();
+    if (!pid) return;
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    await supabase.from("collection_goals").upsert(goalRow(goal, pid), { onConflict: "id" });
+  } catch {
+    /* table may not exist yet — local still holds it */
+  }
+}
+
+async function deleteGoalRow(id: string) {
+  try {
+    const pid = activeProfileId();
+    if (!pid) return;
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    await supabase.from("collection_goals").delete().eq("id", id).eq("profile_id", pid);
+  } catch {
+    /* ignore */
+  }
+}
+
+export async function syncGoalsFromSupabase(): Promise<CollectionGoal[]> {
+  if (typeof window === "undefined") return [];
+  const local = loadGoals();
+  try {
+    const pid = activeProfileId();
+    if (!pid) return local;
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return local;
+    const { data, error } = await supabase
+      .from("collection_goals")
+      .select("id,name,target_count,universe,subject,notes,created_at")
+      .eq("profile_id", pid);
+    if (error || !data) return local;
+    if (data.length === 0) {
+      for (const g of local) void pushGoal(g);
+      return local;
+    }
+    const goals: CollectionGoal[] = data.map((r: Record<string, unknown>) => ({
+      id: String(r.id),
+      name: String(r.name ?? ""),
+      targetCount: Number(r.target_count ?? 1),
+      universe: (r.universe as string) ?? undefined,
+      subject: (r.subject as string) ?? undefined,
+      notes: (r.notes as string) ?? undefined,
+      createdAt: Date.parse(String(r.created_at)) || Date.now(),
+    }));
+    goals.sort((a, b) => b.createdAt - a.createdAt);
+    saveGoals(goals);
+    return goals;
+  } catch {
+    return local;
+  }
 }
 
 export function addGoal(fields: Omit<CollectionGoal, "id" | "createdAt">): CollectionGoal {
@@ -44,6 +140,7 @@ export function addGoal(fields: Omit<CollectionGoal, "id" | "createdAt">): Colle
     ...fields,
   };
   saveGoals([...loadGoals(), goal]);
+  void pushGoal(goal);
   return goal;
 }
 
@@ -51,11 +148,15 @@ export function updateGoal(
   id: string,
   patch: Partial<Omit<CollectionGoal, "id" | "createdAt">>
 ) {
-  saveGoals(loadGoals().map((goal) => (goal.id === id ? { ...goal, ...patch } : goal)));
+  const next = loadGoals().map((goal) => (goal.id === id ? { ...goal, ...patch } : goal));
+  saveGoals(next);
+  const updated = next.find((g) => g.id === id);
+  if (updated) void pushGoal(updated);
 }
 
 export function deleteGoal(id: string) {
   saveGoals(loadGoals().filter((goal) => goal.id !== id));
+  void deleteGoalRow(id);
 }
 
 function activeItems(items: VaultItem[]) {

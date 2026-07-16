@@ -1,5 +1,14 @@
-
 // src/lib/salesLedger.ts
+// Adapter over the unified sales model (src/lib/salesModel.ts). Kept so existing
+// callers (salePortfolioBridge) keep working; all data now flows to one store.
+
+import {
+  addSale,
+  getSalesMetrics as unifiedMetrics,
+  loadSales as unifiedLoad,
+  saveSales as unifiedSave,
+  type Sale,
+} from "@/lib/salesModel";
 
 export type SaleRecord = {
   id: string;
@@ -13,29 +22,37 @@ export type SaleRecord = {
   createdAt: number;
 };
 
-const LS_KEY = "vltd_sales_ledger_v1";
-
-function safeNumber(v: unknown) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : 0;
+function toRecord(s: Sale): SaleRecord {
+  return {
+    id: s.id,
+    itemId: s.itemId ?? "",
+    universe: s.universe,
+    category: s.category,
+    purchasePrice: s.purchasePrice ?? 0,
+    salePrice: s.salePrice ?? 0,
+    profit: s.profit ?? (s.salePrice ?? 0) - (s.purchasePrice ?? 0),
+    saleDate: s.soldAt,
+    createdAt: s.soldAt,
+  };
 }
 
 export function loadSales(): SaleRecord[] {
-  if (typeof window === "undefined") return [];
-
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+  return unifiedLoad().map(toRecord);
 }
 
 export function saveSales(records: SaleRecord[]) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(LS_KEY, JSON.stringify(records));
+  unifiedSave(
+    records.map((r) => ({
+      id: r.id,
+      itemId: r.itemId,
+      universe: r.universe,
+      category: r.category,
+      purchasePrice: r.purchasePrice,
+      salePrice: r.salePrice,
+      profit: r.profit,
+      soldAt: r.saleDate,
+    }))
+  );
 }
 
 export function recordSale(params: {
@@ -45,38 +62,16 @@ export function recordSale(params: {
   universe?: string;
   category?: string;
 }) {
-  const sales = loadSales();
-
-  const sale: SaleRecord = {
-    id: crypto.randomUUID(),
+  const sale = addSale({
     itemId: params.itemId,
     universe: params.universe,
     category: params.category,
-    purchasePrice: safeNumber(params.purchasePrice),
-    salePrice: safeNumber(params.salePrice),
-    profit: safeNumber(params.salePrice) - safeNumber(params.purchasePrice),
-    saleDate: Date.now(),
-    createdAt: Date.now(),
-  };
-
-  sales.push(sale);
-  saveSales(sales);
-
-  return sale;
+    purchasePrice: Number(params.purchasePrice) || 0,
+    salePrice: Number(params.salePrice) || 0,
+  });
+  return toRecord(sale);
 }
 
 export function getSalesMetrics() {
-  const sales = loadSales();
-
-  const totalSold = sales.length;
-  const totalRevenue = sales.reduce((s, r) => s + r.salePrice, 0);
-  const totalCost = sales.reduce((s, r) => s + r.purchasePrice, 0);
-  const totalProfit = totalRevenue - totalCost;
-
-  return {
-    totalSold,
-    totalRevenue,
-    totalCost,
-    totalProfit,
-  };
+  return unifiedMetrics();
 }

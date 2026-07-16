@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useMemo, useState, useEffect, useRef } from "react";
 import WishlistCard from "@/components/WishlistCard";
-import { loadWishlist, removeWishlistItem, type WishlistItem } from "@/lib/wishlistModel";
+import { loadWishlist, removeWishlistItem, syncWishlistFromSupabase, type WishlistItem } from "@/lib/wishlistModel";
 import { convertWishlistToVault } from "@/lib/wishlistToVault";
 import { showToast } from "@/lib/toast";
 import {
@@ -525,6 +525,13 @@ export default function WishlistPage() {
   useEffect(() => {
     loadComicWishlist().then(setComicItems).catch(() => {});
     loadWishlistedIds().then(setWishlistIds).catch(() => {});
+    let active = true;
+    void syncWishlistFromSupabase().then(() => {
+      if (active) setItems(loadWishlist());
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   async function handleComicToggle(issue: UpcomingIssue) {

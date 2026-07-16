@@ -7,6 +7,7 @@ import {
   loadWatchlist,
   removeFromWatchlist,
   clearWatchlist,
+  syncWatchlistFromSupabase,
   type WatchlistItem,
 } from "@/lib/watchlistModel";
 
@@ -19,9 +20,17 @@ export default function SavedPage() {
     setWatchlist(loadWatchlist());
     setLoaded(true);
 
+    let active = true;
+    void syncWatchlistFromSupabase().then(() => {
+      if (active) setWatchlist(loadWatchlist());
+    });
+
     function onUpdate() { setWatchlist(loadWatchlist()); }
     window.addEventListener("vltd:watchlist-updated", onUpdate);
-    return () => window.removeEventListener("vltd:watchlist-updated", onUpdate);
+    return () => {
+      active = false;
+      window.removeEventListener("vltd:watchlist-updated", onUpdate);
+    };
   }, []);
 
   function handleRemove(id: string) {

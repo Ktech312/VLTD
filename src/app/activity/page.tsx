@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { loadSaleHistory } from "@/lib/historyModel";
 import { loadSales, type SaleRecord as LegacySaleRecord } from "@/lib/salesHistory";
+import { syncSalesFromSupabase } from "@/lib/salesModel";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import type { SaleRecord } from "@/types/vaultLifecycle";
 import { loadGalleries } from "@/lib/galleryModel";
@@ -206,6 +207,11 @@ export default function ActivityPage() {
         await syncVaultItemsFromSupabase();
       } catch {
         // Local activity still gives the page useful history.
+      }
+      try {
+        await syncSalesFromSupabase();
+      } catch {
+        // Local sales still render.
       }
 
       if (!isActive) return;

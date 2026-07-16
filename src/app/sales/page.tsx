@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { loadSales, type SaleRecord } from "@/lib/salesHistory";
+import { syncSalesFromSupabase } from "@/lib/salesModel";
 import { loadItems, getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -168,6 +169,13 @@ export default function SalesHistoryPage() {
     const map = new Map<string, VaultItem>();
     for (const item of items) map.set(item.id, item);
     setItemMap(map);
+    let active = true;
+    void syncSalesFromSupabase().then(() => {
+      if (active) setSales(loadSales());
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const stats = useMemo(() => {

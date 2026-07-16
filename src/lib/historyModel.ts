@@ -1,45 +1,36 @@
-import { newId } from "@/lib/id";
+// src/lib/historyModel.ts
+// Adapter over the unified sales model (src/lib/salesModel.ts). Kept so existing
+// callers (vaultLifecycle.sellItem, activity page, portfolioHistoryMetrics)
+// keep working unchanged.
+
+import { addSale, loadSales as unifiedLoad, saveSales as unifiedSave, type Sale } from "@/lib/salesModel";
 import type { SaleRecord } from "@/types/vaultLifecycle";
 
-const LS_KEY = "vltd_sale_history_v1";
-
-function loadRaw(): SaleRecord[] {
-  if (typeof window === "undefined") return [];
-
-  try {
-    const raw = window.localStorage.getItem(LS_KEY);
-    if (!raw) return [];
-
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-
-    return parsed;
-  } catch {
-    return [];
-  }
+function toRecord(s: Sale): SaleRecord {
+  return {
+    id: s.id,
+    itemId: s.itemId ?? "",
+    title: s.title ?? "",
+    universe: s.universe,
+    category: s.category,
+    grade: s.grade,
+    certNumber: s.certNumber,
+    purchasePrice: s.purchasePrice,
+    salePrice: s.salePrice,
+    soldAt: s.soldAt,
+    platform: s.platform,
+    notes: s.notes,
+  };
 }
 
 export function loadSaleHistory(): SaleRecord[] {
-  return loadRaw();
+  return unifiedLoad().map(toRecord);
 }
 
 export function saveSaleHistory(records: SaleRecord[]) {
-  if (typeof window === "undefined") return;
-
-  try {
-    window.localStorage.setItem(LS_KEY, JSON.stringify(records));
-  } catch {
-    // ignore
-  }
+  unifiedSave(records.map((r) => ({ ...r })));
 }
 
 export function addSaleRecord(record: Omit<SaleRecord, "id">) {
-  const history = loadRaw();
-
-  const next: SaleRecord = {
-    id: newId(),
-    ...record,
-  };
-
-  saveSaleHistory([next, ...history]);
+  addSale({ ...record });
 }

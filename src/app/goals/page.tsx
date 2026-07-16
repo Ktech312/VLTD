@@ -9,6 +9,7 @@ import {
   computeAllGoalProgress,
   deleteGoal,
   loadGoals,
+  syncGoalsFromSupabase,
   type GoalProgress,
 } from "@/lib/collectionGoals";
 import { loadItems } from "@/lib/vaultModel";
@@ -132,6 +133,16 @@ export default function GoalsPage() {
     const onFocus = () => { setGoals(loadGoals()); setItems(loadItems()); };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    void syncGoalsFromSupabase().then(() => {
+      if (active) setGoals(loadGoals());
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const progress = useMemo(() => computeAllGoalProgress(goals, items), [goals, items]);
