@@ -5,16 +5,11 @@ import {
   Bookmark,
   CalendarDays,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   ExternalLink,
-  Globe2,
   Loader2,
   MapPin,
   PlusCircle,
   Search,
-  Sparkles,
-  Star,
   Ticket,
 } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -244,16 +239,6 @@ function categoryColor(category: EventCategory): string {
   return colors[category];
 }
 
-function statFor(event: CollectorEvent, kind: "attendees" | "exhibitors"): string {
-  const category = categoryFor(event);
-  if (category === "convention") return kind === "attendees" ? "130K+" : "350+";
-  if (category === "card_show") return kind === "attendees" ? "20K+" : "400+";
-  if (category === "auction") return kind === "attendees" ? "Live" : "500+ lots";
-  if (category === "drop") return kind === "attendees" ? "Online" : "Limited";
-  if (category === "gallery") return kind === "attendees" ? "RSVP" : "Curated";
-  return kind === "attendees" ? "Industry" : "Makers";
-}
-
 function eventArtStyle(event: CollectorEvent): React.CSSProperties {
   const category = categoryFor(event);
   const accent = categoryColor(category);
@@ -330,14 +315,6 @@ function MiniCalendar({ event }: { event: CollectorEvent }) {
     <aside className="rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--theme-gold)]">{monthName}</div>
-        <div className="flex gap-1">
-          <button type="button" className="grid h-7 w-7 place-items-center rounded-full border border-[color:var(--border)] text-[color:var(--muted)]">
-            <ChevronLeft size={14} />
-          </button>
-          <button type="button" className="grid h-7 w-7 place-items-center rounded-full border border-[color:var(--border)] text-[color:var(--muted)]">
-            <ChevronRight size={14} />
-          </button>
-        </div>
       </div>
       <div className="grid grid-cols-7 gap-1 text-center text-[9px] font-bold uppercase text-[color:var(--muted)]">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
@@ -364,31 +341,6 @@ function MiniCalendar({ event }: { event: CollectorEvent }) {
         <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--muted)] opacity-30" />
       </div>
     </aside>
-  );
-}
-
-function EventsMetric({ label, value, sub }: { label: string; value: string; sub: string }) {
-  return (
-    <div className="rounded-[7px] border border-[color:var(--border)] bg-black/10 p-3">
-      <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[color:var(--muted)]">{label}</div>
-      <div className="mt-2 text-lg font-black text-[color:var(--data-color)]">{value}</div>
-      <div className="text-[11px] text-[color:var(--muted)]">{sub}</div>
-    </div>
-  );
-}
-
-function FilterButton({ children, icon }: { children: React.ReactNode; icon?: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      className="inline-flex h-9 min-w-0 items-center justify-between gap-3 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] px-3 text-xs font-bold text-[color:var(--fg)]"
-    >
-      <span className="inline-flex min-w-0 items-center gap-2 truncate">
-        {icon}
-        {children}
-      </span>
-      <ChevronDown size={14} className="shrink-0 text-[color:var(--muted)]" />
-    </button>
   );
 }
 
@@ -593,6 +545,7 @@ export default function EventsPage() {
   const [savedIds, setSavedIds] = useState<Set<string>>(() => new Set());
   const [savedSuggestionIds, setSavedSuggestionIds] = useState<Set<string>>(() => new Set());
   const [selectedId, setSelectedId] = useState<string>("");
+  const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [nowMs, setNowMs] = useState(0);
   const [eventLocation, setEventLocation] = useState("");
   const [eventSearchCategory, setEventSearchCategory] = useState<EventFilter>("convention");
@@ -685,10 +638,10 @@ export default function EventsPage() {
   }, [featuredEvent, selectedId, sortedEvents]);
 
   const filteredEvents = useMemo(() => {
-    const active = upcomingEvents.length ? upcomingEvents : sortedEvents;
-    if (filter === "all") return active;
-    return active.filter((event) => categoryFor(event) === filter);
-  }, [filter, sortedEvents, upcomingEvents]);
+    const base = upcomingEvents.length ? upcomingEvents : sortedEvents;
+    const active = filter === "all" ? base : base.filter((event) => categoryFor(event) === filter);
+    return showSavedOnly ? active.filter((event) => savedIds.has(event.id)) : active;
+  }, [filter, sortedEvents, upcomingEvents, showSavedOnly, savedIds]);
 
   const savedEvents = useMemo(() => {
     return sortedEvents.filter((event) => savedIds.has(event.id));
@@ -787,18 +740,6 @@ export default function EventsPage() {
               <div className="relative min-h-[210px] overflow-hidden rounded-[7px] border border-[color:var(--border)]">
                 <EventArt event={featuredEvent} className="absolute inset-0 rounded-none border-0" />
                 <div className="absolute inset-0 bg-gradient-to-r from-black/76 via-black/38 to-black/12" />
-                <button
-                  type="button"
-                  className="absolute left-3 top-1/2 hidden h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-[color:var(--border)] bg-black/40 text-[color:var(--theme-gold)] md:grid"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 hidden h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-[color:var(--border)] bg-black/40 text-[color:var(--theme-gold)] md:grid"
-                >
-                  <ChevronRight size={16} />
-                </button>
                 <div className="absolute inset-x-0 bottom-0 p-5 md:p-7">
                   <div className="mb-2 inline-flex rounded-[5px] bg-black/45 px-2 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-[color:var(--theme-gold)]">
                     Featured Event
@@ -832,7 +773,6 @@ export default function EventsPage() {
           <aside className="hidden rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4 lg:block">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--theme-gold)]">Saved Events</h2>
-              <span className="text-[11px] text-[color:var(--muted)]">View all</span>
             </div>
             <div className="space-y-2">
               {(savedEvents.length ? savedEvents : filteredEvents.slice(0, 3)).map((event) => (
@@ -851,21 +791,29 @@ export default function EventsPage() {
                 </button>
               ))}
             </div>
-            <button type="button" className="mt-3 h-9 w-full rounded-[7px] border border-[color:var(--theme-gold-border)] text-xs font-black text-[color:var(--fg)]">
-              Manage Saved Events
-            </button>
           </aside>
         </section>
 
-        <section className="mt-4 grid gap-2 md:grid-cols-[repeat(4,minmax(0,1fr))_160px]">
+        <section className="mt-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_170px]">
           <EventTypeSelect value={filter} onChange={setFilter} />
-          <FilterButton icon={<Globe2 size={14} />}>All Universes</FilterButton>
-          <FilterButton icon={<MapPin size={14} />}>All Locations</FilterButton>
-          <FilterButton icon={<CalendarDays size={14} />}>Date Range</FilterButton>
-          <button type="button" className="inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] px-3 text-xs font-bold text-[color:var(--fg)]">
-            <Bookmark size={14} />
-            Saved Events
-            <span className="rounded bg-black/30 px-1.5 text-[10px] text-[color:var(--muted)]">{savedIds.size}</span>
+          <button
+            type="button"
+            onClick={() => setShowSavedOnly((v) => !v)}
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border px-3 text-xs font-bold"
+            style={{
+              background: showSavedOnly ? "var(--theme-gold)" : "var(--pill)",
+              color: showSavedOnly ? "#05080b" : "var(--fg)",
+              borderColor: "var(--border)",
+            }}
+          >
+            <Bookmark size={14} fill={showSavedOnly ? "currentColor" : "none"} />
+            {showSavedOnly ? "Showing saved" : "Saved Events"}
+            <span
+              className="rounded bg-black/20 px-1.5 text-[10px]"
+              style={{ color: showSavedOnly ? "#05080b" : "var(--muted)" }}
+            >
+              {savedIds.size}
+            </span>
           </button>
         </section>
 
@@ -991,9 +939,6 @@ export default function EventsPage() {
           <section>
             <div className="mb-2 flex items-center justify-between">
               <h2 className="text-[11px] font-black uppercase tracking-[0.18em] text-[color:var(--theme-gold)]">Upcoming Events</h2>
-              <button type="button" className="hidden text-xs font-bold text-[color:var(--theme-gold)] md:inline-flex">
-                View All Events <ChevronRight size={14} />
-              </button>
             </div>
 
             {loading ? (
@@ -1036,7 +981,6 @@ export default function EventsPage() {
           <aside className="rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4 lg:hidden">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--theme-gold)]">Saved Events</h2>
-              <span className="text-[11px] text-[color:var(--muted)]">View all</span>
             </div>
             <div className="space-y-2">
               {(savedEvents.length ? savedEvents : filteredEvents.slice(0, 3)).map((event) => (
@@ -1057,7 +1001,7 @@ export default function EventsPage() {
           className="mt-5 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4"
         >
           <div className="mb-3 text-[11px] font-black uppercase tracking-[0.18em] text-[color:var(--theme-gold)]">Event Highlight</div>
-          <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1.2fr)_minmax(180px,0.8fr)_180px]">
+          <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)_240px]">
             <EventArt event={selectedEvent} className="h-[132px] md:h-full" />
             <div>
               <h2 className="text-lg font-black text-[color:var(--fg)]">{selectedEvent.name}</h2>
@@ -1077,22 +1021,29 @@ export default function EventsPage() {
               </div>
             </div>
             <div className="rounded-[7px] border border-[color:var(--border)] bg-black/10 p-3">
-              <h3 className="mb-3 text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--muted)]">Why collectors go</h3>
+              <h3 className="mb-3 text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--muted)]">Details</h3>
               <div className="space-y-2 text-sm text-[color:var(--fg)]">
-                <div className="flex items-center gap-2"><Sparkles size={14} className="text-[color:var(--theme-gold)]" /> Exclusive releases</div>
-                <div className="flex items-center gap-2"><Star size={14} className="text-[color:var(--theme-gold)]" /> Signings and panels</div>
-                <div className="flex items-center gap-2"><Ticket size={14} className="text-[color:var(--theme-gold)]" /> Vintage finds</div>
+                <div className="flex items-center gap-2">
+                  <CalendarDays size={14} className="shrink-0 text-[color:var(--theme-gold)]" />
+                  {formatDateRange(selectedEvent.starts_at, selectedEvent.ends_at)}
+                </div>
+                <div className="flex items-start gap-2">
+                  <MapPin size={14} className="mt-0.5 shrink-0 text-[color:var(--theme-gold)]" />
+                  <span>{venueLine(selectedEvent)}</span>
+                </div>
+                {selectedEvent.admission && (
+                  <div className="flex items-center gap-2">
+                    <Ticket size={14} className="shrink-0 text-[color:var(--theme-gold)]" />
+                    {selectedEvent.admission}
+                  </div>
+                )}
               </div>
-            </div>
-            <div className="grid gap-2">
-              <EventsMetric label="At a glance" value={statFor(selectedEvent, "attendees")} sub="Attendees" />
-              <EventsMetric label="Collectors" value={statFor(selectedEvent, "exhibitors")} sub="Exhibitors" />
               {(selectedEvent.website_url || selectedEvent.ticket_url) && (
                 <a
                   href={selectedEvent.ticket_url ?? selectedEvent.website_url ?? "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border border-[color:var(--theme-gold-border)] bg-[color:var(--pill)] text-xs font-black text-[color:var(--theme-gold)]"
+                  className="mt-3 inline-flex h-9 w-full items-center justify-center gap-2 rounded-[7px] border border-[color:var(--theme-gold-border)] bg-[color:var(--pill)] text-xs font-black text-[color:var(--theme-gold)]"
                 >
                   Event link <ExternalLink size={13} />
                 </a>
