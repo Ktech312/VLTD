@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 /* ── Tab config ─────────────────────────────────────────── */
 
@@ -113,6 +114,9 @@ export default function BottomNav() {
   const pathname = usePathname();
   const guestRoute = isGuestGalleryRoute(pathname ?? "");
   const [moreOpen, setMoreOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   function active(tab: Tab) {
     if (tab.href === MORE_TAB) return moreOpen;
@@ -228,8 +232,9 @@ export default function BottomNav() {
         </div>
       </nav>
 
-      {/* Slide-up "More" sheet */}
-      {moreOpen && (
+      {/* Slide-up "More" sheet — portaled to <body> so it escapes the nav's
+          stacking context and covers the real viewport (same pattern as TopNav). */}
+      {moreOpen && mounted && createPortal(
         <div
           className="fixed inset-0 md:hidden"
           style={{ zIndex: 10000 }}
@@ -268,7 +273,8 @@ export default function BottomNav() {
               ))}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
