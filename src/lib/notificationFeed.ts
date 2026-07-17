@@ -1,6 +1,7 @@
 "use client";
 
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { listRecentCommentsForExhibitions } from "@/lib/comments";
 
 export type FeedNotification = {
   id: string;
@@ -106,6 +107,105 @@ export async function fetchFollowingFeed(
     publicToken: galleryMap.get(e.gallery_id) ?? undefined,
     createdAt: new Date(e.created_at).getTime(),
   }));
+}
+
+/* ── Unified alerts feed: follows + messages + bugs ──────────────── */
+
+export type AlertKind = "follow" | "message" | "bug";
+
+export type AlertItem = {
+  id: string;
+  kind: AlertKind;
+  title: string;
+  subtitle?: string;
+  href?: string;
+  createdAt: number;
+};
+
+/**
+ * The combined Alerts feed:
+ *  - follows  → new exhibitions from collectors you follow
+ *  - message  → comments left on your exhibitions
+ *  - bug      → bug reports (ALL of them, admin-only via /api/admin/bugs;
+ *               a 403 for non-admins simply contributes nothing)
+ * Each source is guarded, so one failing never breaks the others.
+ */
+export async function fetchAlerts(currentProfileId: string): Promise<AlertItem[]> {
+  const out: AlertItem[] = [];
+  const supabase = getSupabaseBrowserClient();
+
+  // 1. Follows
+  try {
+    const feed = await fetchFollowingFeed(currentProfileId, 20);
+    for (const f of feed) {
+      out.push({
+        id: `follow-${f.id}`,
+        kind: "follow",
+        title: f.type === "announced" ? "Updated exhibition" : "New exhibition",
+        subtitle: [f.collectorName ? `by ${f.collectorName}` : "", f.galleryTitle]
+          .filter(Boolean)
+          .join(" · "),
+        href: f.publicToken ? `/museum/share/${f.publicToken}` : `/museum/${f.galleryId}/guest`,
+        createdAt: f.createdAt,
+      });
+    }
+  } catch {
+    /* ignore */
+  }
+
+  // 2. Messages — comments on your exhibitions
+  try {
+    if (supabase && currentProfileId) {
+      const { data: gal } = await supabase
+        .from("galleries")
+        .select("id, title")
+        .eq("profile_id", currentProfileId);
+      const galleries = (gal ?? []) as { id: string; title: string | null }[];
+      const ids = galleries.map((g) => g.id);
+      if (ids.length > 0) {
+        const titleById = new Map(galleries.map((g) => [g.id, g.title ?? "your exhibition"]));
+        const comments = await listRecentCommentsForExhibitions(ids, 20);
+        for (const c of comments) {
+          const snippet = c.body.slice(0, 60) + (c.body.length > 60 ? "…" : "");
+          out.push({
+            id: `msg-${c.id}`,
+            kind: "message",
+            title: "New comment",
+            subtitle: `“${snippet}” on ${titleById.get(c.exhibitionId) ?? "your exhibition"}`,
+            href: `/museum/${c.exhibitionId}`,
+            createdAt: c.createdAt,
+          });
+        }
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+
+  // 3. Bugs — all reports (admins only; 403 for everyone else)
+  try {
+    const res = await fetch("/api/admin/bugs", { cache: "no-store" });
+    if (res.ok) {
+      const json = (await res.json()) as {
+        rows?: { id: string; message: string; status: string; page_path: string | null; created_at: string }[];
+      };
+      for (const b of json.rows ?? []) {
+        const snippet = (b.message ?? "").slice(0, 70) + ((b.message ?? "").length > 70 ? "…" : "");
+        out.push({
+          id: `bug-${b.id}`,
+          kind: "bug",
+          title: b.status && b.status !== "open" ? `Bug · ${b.status}` : "Bug report",
+          subtitle: [snippet, b.page_path ? `— ${b.page_path}` : ""].filter(Boolean).join(" "),
+          href: "/admin/bugs",
+          createdAt: new Date(b.created_at).getTime(),
+        });
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+
+  return out.sort((a, b) => b.createdAt - a.createdAt).slice(0, 50);
 }
 
 export function timeAgo(ts: number): string {

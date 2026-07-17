@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import { fetchFollowingFeed } from "@/lib/notificationFeed";
+import { fetchAlerts } from "@/lib/notificationFeed";
 
 const LAST_SEEN_KEY = "vltd_alerts_last_seen";
 const GREEN = "#52C27A";
@@ -43,30 +42,10 @@ export default function AlertsBell({ profileId, active }: { profileId?: string; 
       }
 
       let newest = 0;
-
-      // 1. Following feed (per-user, reliable).
       try {
-        const feed = await fetchFollowingFeed(profileId, 20);
-        for (const f of feed) newest = Math.max(newest, f.createdAt);
-      } catch {
-        /* ignore */
-      }
-
-      // 2. Your own bug reports (updates/new). Scoped to this profile so it can't
-      //    glow for unrelated activity. Guarded — if the column/table differs it
-      //    simply contributes nothing.
-      try {
-        const supabase = getSupabaseBrowserClient();
-        if (supabase) {
-          const { data } = await supabase
-            .from("bug_reports")
-            .select("created_at")
-            .eq("profile_id", profileId)
-            .order("created_at", { ascending: false })
-            .limit(1);
-          const ts = data?.[0]?.created_at;
-          if (ts) newest = Math.max(newest, new Date(ts).getTime());
-        }
+        // Combined feed: follows + comments on your exhibitions + bug reports.
+        const alerts = await fetchAlerts(profileId);
+        for (const a of alerts) newest = Math.max(newest, a.createdAt);
       } catch {
         /* ignore */
       }
