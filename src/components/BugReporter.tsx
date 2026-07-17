@@ -115,10 +115,17 @@ export default function BugReporter() {
           color: "var(--theme-gold, #F5B548)",
         }}
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M8 2l1.5 1.5M16 2l-1.5 1.5" />
-          <path d="M12 20a6 6 0 0 0 6-6v-3a6 6 0 0 0-12 0v3a6 6 0 0 0 6 6z" />
-          <path d="M12 8v12M3 9h3M3 14h3M3 19l3-2M18 9h3M18 14h3M18 19l-3-2M6 7l-2-2M18 7l2-2" />
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          {/* antennae */}
+          <path d="M9 4.3 8 2.8M15 4.3 16 2.8" />
+          {/* head */}
+          <circle cx="12" cy="6" r="1.5" />
+          {/* body */}
+          <ellipse cx="12" cy="13.5" rx="4.6" ry="6" />
+          {/* wing seam */}
+          <path d="M12 8v11" />
+          {/* legs (3 per side) */}
+          <path d="M7.4 10.5 4.3 9M7.4 13.5 4 13.5M7.4 16.5 4.3 18M16.6 10.5 19.7 9M16.6 13.5 20 13.5M16.6 16.5 19.7 18" />
         </svg>
       </button>
 
