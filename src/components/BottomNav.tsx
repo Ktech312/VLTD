@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 /* ── Tab config ─────────────────────────────────────────── */
 
@@ -92,7 +91,7 @@ const TABS: (Tab | null)[] = [
   { label: "More",     href: MORE_TAB,    icon: (a) => <IconMore active={a} />,         exact: false },
 ];
 
-// The rest of the categories, reachable from the "More" slide-up.
+// The rest of the categories, reachable from the "More" sheet.
 const MORE_LINKS: { label: string; href: string; emoji: string }[] = [
   { label: "Home",           href: "/dashboard",       emoji: "🏠" },
   { label: "Insights",       href: "/portfolio",       emoji: "📊" },
@@ -114,9 +113,6 @@ export default function BottomNav() {
   const pathname = usePathname();
   const guestRoute = isGuestGalleryRoute(pathname ?? "");
   const [moreOpen, setMoreOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
 
   function active(tab: Tab) {
     if (tab.href === MORE_TAB) return moreOpen;
@@ -125,132 +121,35 @@ export default function BottomNav() {
   }
 
   return (
-    <>
-      <nav
-        className="fixed bottom-0 left-0 right-0 z-50 md:hidden no-select"
-        style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999 }}
-        aria-label="Main navigation"
-      >
-        {/* Top separator */}
-        <div
-          className="h-px w-full"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent, rgba(245,181,72,0.18) 30%, rgba(245,181,72,0.18) 70%, transparent)",
-          }}
-        />
-
-        <div
-          className="backdrop-blur-2xl"
-          style={{
-            background: "rgba(10,10,10,1)",
-            paddingBottom: "max(env(safe-area-inset-bottom, 0px), 8px)",
-          }}
-        >
-          <div className="flex items-end justify-around px-2 pt-2.5 pb-1">
-            {TABS.map((tab) => {
-              /* Centre gold + button */
-              if (tab === null) {
-                return (
-                  <Link
-                    key="capture"
-                    href="/capture"
-                    aria-label="Add item to vault"
-                    className="relative flex flex-col items-center"
-                    style={{ marginTop: "-20px" }}
-                  >
-                    <div
-                      className="flex h-[58px] w-[58px] items-center justify-center rounded-full"
-                      style={{
-                        background:
-                          "linear-gradient(145deg, #FFE08A 0%, #F5B548 30%, #C8941F 60%, #8B6914 100%)",
-                        boxShadow: [
-                          "0 0 0 3px #0B0B0B",
-                          "0 0 0 4px rgba(245,181,72,0.35)",
-                          "0 8px 28px rgba(245,181,72,0.55)",
-                          "0 2px 8px rgba(0,0,0,0.60)",
-                          "inset 0 1px 0 rgba(255,255,255,0.40)",
-                          "inset 0 -2px 4px rgba(0,0,0,0.30)",
-                        ].join(", "),
-                      }}
-                    >
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 5v14M5 12h14" stroke="#1A0F00" strokeWidth="2.5" strokeLinecap="round" />
-                      </svg>
-                    </div>
-                  </Link>
-                );
-              }
-
-              const isActive = active(tab);
-
-              /* "More" — opens the slide-up sheet (not a route) */
-              if (tab.href === MORE_TAB) {
-                return (
-                  <button
-                    key="more"
-                    type="button"
-                    onClick={() => setMoreOpen(true)}
-                    aria-label="More categories"
-                    className="flex min-w-[56px] flex-col items-center gap-[3px] py-1 transition-opacity active:opacity-70"
-                  >
-                    {tab.icon(isActive)}
-                    <span
-                      className="text-[11px] font-semibold tracking-[0.04em] transition-colors"
-                      style={{ color: isActive ? GOLD : DIM }}
-                    >
-                      {tab.label}
-                    </span>
-                  </button>
-                );
-              }
-
-              /* Regular tab */
-              return (
-                <Link
-                  key={tab.href}
-                  href={tab.href}
-                  className="flex min-w-[56px] flex-col items-center gap-[3px] py-1 transition-opacity active:opacity-70"
-                >
-                  {tab.icon(isActive)}
-                  <span
-                    className="text-[11px] font-semibold tracking-[0.04em] transition-colors"
-                    style={{ color: isActive ? GOLD : DIM }}
-                  >
-                    {tab.label}
-                  </span>
-                  {isActive && (
-                    <div
-                      className="h-[3px] w-[3px] rounded-full"
-                      style={{ background: GOLD, boxShadow: "0 0 6px rgba(245,181,72,0.8)" }}
-                    />
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </nav>
-
-      {/* Slide-up "More" sheet — portaled to <body> so it escapes the nav's
-          stacking context and covers the real viewport (same pattern as TopNav). */}
-      {moreOpen && mounted && createPortal(
-        <div
-          className="fixed inset-0 md:hidden"
-          style={{ zIndex: 10000 }}
-          onClick={() => setMoreOpen(false)}
-          role="dialog"
-          aria-label="More categories"
-        >
-          <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.55)" }} />
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden no-select"
+      style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999 }}
+      aria-label="Main navigation"
+    >
+      {/* More menu — rendered as an absolute panel ABOVE the nav bar, anchored to
+          the nav (which is correctly positioned). This sidesteps the page-shell
+          route-transition transform that breaks position:fixed on descendants. */}
+      {moreOpen && (
+        <>
+          {/* Backdrop: extends from the top of the nav upward over the screen */}
           <div
-            className="absolute bottom-0 left-0 right-0 rounded-t-3xl p-4"
+            onClick={() => setMoreOpen(false)}
+            style={{ position: "absolute", bottom: "100%", left: 0, right: 0, height: "100vh", background: "rgba(0,0,0,0.55)", zIndex: 1 }}
+          />
+          {/* Sheet: sits directly above the nav bar */}
+          <div
             style={{
+              position: "absolute",
+              bottom: "100%",
+              left: 0,
+              right: 0,
+              zIndex: 2,
               background: "rgba(14,14,16,0.98)",
               borderTop: "1px solid rgba(245,181,72,0.20)",
-              paddingBottom: "max(env(safe-area-inset-bottom, 0px), 24px)",
+              borderTopLeftRadius: "24px",
+              borderTopRightRadius: "24px",
+              padding: "16px",
             }}
-            onClick={(e) => e.stopPropagation()}
           >
             <div className="mx-auto mb-3 h-1 w-10 rounded-full" style={{ background: "rgba(255,255,255,0.2)" }} />
             <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: "rgba(240,226,198,0.6)" }}>
@@ -273,9 +172,108 @@ export default function BottomNav() {
               ))}
             </div>
           </div>
-        </div>,
-        document.body
+        </>
       )}
-    </>
+
+      {/* Top separator */}
+      <div
+        className="h-px w-full"
+        style={{
+          background:
+            "linear-gradient(90deg, transparent, rgba(245,181,72,0.18) 30%, rgba(245,181,72,0.18) 70%, transparent)",
+        }}
+      />
+
+      <div
+        className="backdrop-blur-2xl"
+        style={{
+          background: "rgba(10,10,10,1)",
+          paddingBottom: "max(env(safe-area-inset-bottom, 0px), 8px)",
+        }}
+      >
+        <div className="flex items-end justify-around px-2 pt-2.5 pb-1">
+          {TABS.map((tab) => {
+            /* Centre gold + button */
+            if (tab === null) {
+              return (
+                <Link
+                  key="capture"
+                  href="/capture"
+                  aria-label="Add item to vault"
+                  className="relative flex flex-col items-center"
+                  style={{ marginTop: "-20px" }}
+                >
+                  <div
+                    className="flex h-[58px] w-[58px] items-center justify-center rounded-full"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #FFE08A 0%, #F5B548 30%, #C8941F 60%, #8B6914 100%)",
+                      boxShadow: [
+                        "0 0 0 3px #0B0B0B",
+                        "0 0 0 4px rgba(245,181,72,0.35)",
+                        "0 8px 28px rgba(245,181,72,0.55)",
+                        "0 2px 8px rgba(0,0,0,0.60)",
+                        "inset 0 1px 0 rgba(255,255,255,0.40)",
+                        "inset 0 -2px 4px rgba(0,0,0,0.30)",
+                      ].join(", "),
+                    }}
+                  >
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 5v14M5 12h14" stroke="#1A0F00" strokeWidth="2.5" strokeLinecap="round" />
+                    </svg>
+                  </div>
+                </Link>
+              );
+            }
+
+            const isActive = active(tab);
+
+            /* "More" — toggles the sheet (not a route) */
+            if (tab.href === MORE_TAB) {
+              return (
+                <button
+                  key="more"
+                  type="button"
+                  onClick={() => setMoreOpen((v) => !v)}
+                  aria-label="More categories"
+                  className="flex min-w-[56px] flex-col items-center gap-[3px] py-1 transition-opacity active:opacity-70"
+                >
+                  {tab.icon(isActive)}
+                  <span
+                    className="text-[11px] font-semibold tracking-[0.04em] transition-colors"
+                    style={{ color: isActive ? GOLD : DIM }}
+                  >
+                    {tab.label}
+                  </span>
+                </button>
+              );
+            }
+
+            /* Regular tab */
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className="flex min-w-[56px] flex-col items-center gap-[3px] py-1 transition-opacity active:opacity-70"
+              >
+                {tab.icon(isActive)}
+                <span
+                  className="text-[11px] font-semibold tracking-[0.04em] transition-colors"
+                  style={{ color: isActive ? GOLD : DIM }}
+                >
+                  {tab.label}
+                </span>
+                {isActive && (
+                  <div
+                    className="h-[3px] w-[3px] rounded-full"
+                    style={{ background: GOLD, boxShadow: "0 0 6px rgba(245,181,72,0.8)" }}
+                  />
+                )}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </nav>
   );
 }
