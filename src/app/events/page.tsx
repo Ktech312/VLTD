@@ -1,8 +1,22 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Bookmark,
+  CalendarDays,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  Globe2,
+  MapPin,
+  Sparkles,
+  Star,
+  Ticket,
+} from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+
+type EventType = "local" | "national" | "international";
 
 type CollectorEvent = {
   id: string;
@@ -10,7 +24,7 @@ type CollectorEvent = {
   name: string;
   short_desc: string | null;
   long_desc: string | null;
-  event_type: "local" | "national" | "international";
+  event_type: EventType;
   starts_at: string;
   ends_at: string;
   venue_name: string | null;
@@ -26,308 +40,810 @@ type CollectorEvent = {
   is_featured: boolean;
 };
 
+type EventCategory = "convention" | "card_show" | "auction" | "drop" | "gallery" | "music";
+type EventFilter = "all" | EventCategory;
+
+const SAVED_EVENTS_KEY = "vltd_saved_event_ids_v1";
+
+const fallbackEvents: CollectorEvent[] = [
+  {
+    id: "preview-sdcc-2026",
+    slug: "san-diego-comic-con-2026",
+    name: "San Diego Comic-Con 2026",
+    short_desc: "The ultimate celebration of comics, collectibles, pop culture, and fandom.",
+    long_desc:
+      "Collector-focused panels, exclusive releases, signings, vintage finds, and pop-culture exhibits across San Diego.",
+    event_type: "national",
+    starts_at: "2026-07-23T17:00:00-07:00",
+    ends_at: "2026-07-26T20:00:00-07:00",
+    venue_name: "San Diego Convention Center",
+    venue_address: "111 W Harbor Dr",
+    city: "San Diego",
+    state_region: "CA",
+    country: "US",
+    website_url: "https://www.comic-con.org/cc/",
+    ticket_url: "https://www.comic-con.org/cc/",
+    admission: "Badges required",
+    emoji: null,
+    relevant_universes: ["comics", "pop_culture", "collectibles"],
+    is_featured: true,
+  },
+  {
+    id: "preview-dallas-card-show",
+    slug: "dallas-card-show-2026",
+    name: "Dallas Card Show",
+    short_desc: "Sports cards, TCG, slabs, autos, and collector meetups.",
+    long_desc: "A card-focused buying and trading weekend with dealers, grading, and collector tables.",
+    event_type: "national",
+    starts_at: "2026-06-27T10:00:00-05:00",
+    ends_at: "2026-06-28T18:00:00-05:00",
+    venue_name: "Watters Creek Convention Center",
+    venue_address: null,
+    city: "Dallas",
+    state_region: "TX",
+    country: "US",
+    website_url: null,
+    ticket_url: null,
+    admission: "Tickets vary",
+    emoji: null,
+    relevant_universes: ["sports_cards", "tcg"],
+    is_featured: false,
+  },
+  {
+    id: "preview-heritage-auction",
+    slug: "heritage-comics-signature-auction",
+    name: "Heritage Auctions Comics Signature Auction",
+    short_desc: "High-value comics, original art, and key collector lots.",
+    long_desc: "A premium auction event for key comics, original art, graded books, and rare pop-culture pieces.",
+    event_type: "national",
+    starts_at: "2026-07-10T12:00:00-05:00",
+    ends_at: "2026-07-12T18:00:00-05:00",
+    venue_name: "Heritage Auctions",
+    venue_address: null,
+    city: "Dallas",
+    state_region: "TX",
+    country: "US",
+    website_url: null,
+    ticket_url: null,
+    admission: "Registration",
+    emoji: null,
+    relevant_universes: ["comics", "art"],
+    is_featured: false,
+  },
+  {
+    id: "preview-topps-drop",
+    slug: "topps-chrome-ucl-release-day",
+    name: "Topps Chrome UCL Release Day",
+    short_desc: "Online release drop for soccer collectors.",
+    long_desc: "A scheduled online drop with watchlist reminders and release-day tracking.",
+    event_type: "international",
+    starts_at: "2026-06-18T09:00:00-04:00",
+    ends_at: "2026-06-18T12:00:00-04:00",
+    venue_name: "Online",
+    venue_address: null,
+    city: "Online",
+    state_region: null,
+    country: "US",
+    website_url: null,
+    ticket_url: null,
+    admission: "Online",
+    emoji: null,
+    relevant_universes: ["sports_cards"],
+    is_featured: false,
+  },
+  {
+    id: "preview-marvel-gallery",
+    slug: "marvel-gallery-opening",
+    name: "Marvel Gallery Opening: Stan Lee Tribute",
+    short_desc: "A public gallery opening centered on Marvel history.",
+    long_desc: "A gallery event for original art, signed collectibles, creator history, and display inspiration.",
+    event_type: "local",
+    starts_at: "2026-06-21T18:00:00-04:00",
+    ends_at: "2026-06-21T21:00:00-04:00",
+    venue_name: "Museum Gallery",
+    venue_address: null,
+    city: "New York",
+    state_region: "NY",
+    country: "US",
+    website_url: null,
+    ticket_url: null,
+    admission: "RSVP",
+    emoji: null,
+    relevant_universes: ["comics", "art"],
+    is_featured: false,
+  },
+];
+
+function safeDate(value: string): Date {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? new Date() : date;
+}
+
 function formatDateRange(starts: string, ends: string): string {
-  const s = new Date(starts);
-  const e = new Date(ends);
-  const opts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", timeZone: "UTC" };
-  const sStr = s.toLocaleDateString("en-US", opts);
-  const eStr = e.toLocaleDateString("en-US", opts);
-  const year = s.getFullYear();
-  if (sStr === eStr) return `${sStr}, ${year}`;
-  if (s.getMonth() === e.getMonth()) {
-    const day2 = e.toLocaleDateString("en-US", { day: "numeric", timeZone: "UTC" });
-    return `${sStr}–${day2}, ${year}`;
+  const start = safeDate(starts);
+  const end = safeDate(ends);
+  const startText = start.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+  const endText = end.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+  const year = start.getUTCFullYear();
+
+  if (startText === endText) return `${startText}, ${year}`;
+  if (start.getUTCMonth() === end.getUTCMonth()) {
+    return `${startText}-${end.getUTCDate()}, ${year}`;
   }
-  return `${sStr} – ${eStr}, ${year}`;
+  return `${startText} - ${endText}, ${year}`;
 }
 
-function formatTime(dt: string): string {
-  const d = new Date(dt);
-  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "UTC" });
+function formatLongDate(starts: string, ends: string): string {
+  return formatDateRange(starts, ends).toUpperCase();
 }
 
-function typeBadgeStyle(type: string): { bg: string; color: string; label: string } {
-  if (type === "local") return { bg: "rgba(82,194,122,0.14)", color: "#52c27a", label: "Local" };
-  if (type === "international") return { bg: "rgba(192,132,252,0.14)", color: "#c084fc", label: "International" };
-  return { bg: "rgba(245,181,72,0.14)", color: "#F5B548", label: "National" };
+function locationLabel(event: CollectorEvent): string {
+  return [event.city, event.state_region].filter(Boolean).join(", ") || event.country || "Online";
 }
 
-function daysUntil(dt: string): number {
-  const now = new Date();
-  const d = new Date(dt);
-  return Math.ceil((d.getTime() - now.getTime()) / 86_400_000);
+function venueLine(event: CollectorEvent): string {
+  return [event.venue_name, locationLabel(event)].filter(Boolean).join(", ");
 }
 
-function CountdownBadge({ starts_at }: { starts_at: string }) {
-  const days = daysUntil(starts_at);
-  if (days < 0) return null;
-  if (days === 0) return (
-    <span className="rounded-full px-2 py-0.5 text-[10px] font-bold animate-pulse"
-      style={{ background: "rgba(245,181,72,0.2)", color: "#F5B548" }}>TODAY</span>
-  );
-  if (days <= 7) return (
-    <span className="rounded-full px-2 py-0.5 text-[10px] font-bold"
-      style={{ background: "rgba(245,181,72,0.15)", color: "#F5B548" }}>
-      {days}d away
-    </span>
-  );
-  if (days <= 30) return (
-    <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
-      style={{ background: "rgba(245,181,72,0.08)", color: "#A0956B" }}>
-      {days}d away
-    </span>
-  );
-  return null;
+function normalizeUniverse(universe: string): string {
+  return universe
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function EventCard({ ev, past = false }: { ev: CollectorEvent; past?: boolean }) {
-  const badge = typeBadgeStyle(ev.event_type);
-  const location = [ev.city, ev.state_region].filter(Boolean).join(", ");
-  const hasTickets = ev.ticket_url && ev.ticket_url !== ev.website_url;
+function categoryFor(event: CollectorEvent): EventCategory {
+  const text = `${event.name} ${event.short_desc ?? ""} ${event.long_desc ?? ""}`.toLowerCase();
+  if (text.includes("auction")) return "auction";
+  if (text.includes("drop") || text.includes("release")) return "drop";
+  if (text.includes("gallery") || text.includes("museum")) return "gallery";
+  if (text.includes("card show") || text.includes("sports card") || text.includes("trading card")) return "card_show";
+  if (text.includes("namm") || text.includes("music") || text.includes("instrument")) return "music";
+  return "convention";
+}
+
+function categoryLabel(category: EventCategory): string {
+  const labels: Record<EventCategory, string> = {
+    convention: "Convention",
+    card_show: "Card Show",
+    auction: "Auction",
+    drop: "Online Drop",
+    gallery: "Gallery",
+    music: "Music",
+  };
+  return labels[category];
+}
+
+function categoryColor(category: EventCategory): string {
+  const colors: Record<EventCategory, string> = {
+    convention: "#f5b548",
+    card_show: "#58d8f6",
+    auction: "#f07ab6",
+    drop: "#5dd892",
+    gallery: "#b989ff",
+    music: "#e0b44a",
+  };
+  return colors[category];
+}
+
+function statFor(event: CollectorEvent, kind: "attendees" | "exhibitors"): string {
+  const category = categoryFor(event);
+  if (category === "convention") return kind === "attendees" ? "130K+" : "350+";
+  if (category === "card_show") return kind === "attendees" ? "20K+" : "400+";
+  if (category === "auction") return kind === "attendees" ? "Live" : "500+ lots";
+  if (category === "drop") return kind === "attendees" ? "Online" : "Limited";
+  if (category === "gallery") return kind === "attendees" ? "RSVP" : "Curated";
+  return kind === "attendees" ? "Industry" : "Makers";
+}
+
+function eventArtStyle(event: CollectorEvent): React.CSSProperties {
+  const category = categoryFor(event);
+  const accent = categoryColor(category);
+  const overlays: Record<EventCategory, string> = {
+    convention:
+      "radial-gradient(circle at 78% 18%, rgba(245,181,72,0.38), transparent 24%), linear-gradient(135deg, rgba(23,39,64,0.92), rgba(6,10,14,0.62)), repeating-linear-gradient(90deg, rgba(245,181,72,0.16) 0 2px, transparent 2px 46px)",
+    card_show:
+      "radial-gradient(circle at 72% 24%, rgba(88,216,246,0.26), transparent 26%), linear-gradient(135deg, rgba(11,31,48,0.92), rgba(5,9,13,0.72)), repeating-linear-gradient(125deg, rgba(245,181,72,0.14) 0 1px, transparent 1px 34px)",
+    auction:
+      "radial-gradient(circle at 78% 22%, rgba(240,122,182,0.28), transparent 22%), linear-gradient(135deg, rgba(50,18,31,0.9), rgba(5,9,13,0.74)), repeating-linear-gradient(0deg, rgba(245,181,72,0.14) 0 1px, transparent 1px 40px)",
+    drop:
+      "radial-gradient(circle at 72% 18%, rgba(93,216,146,0.30), transparent 25%), linear-gradient(135deg, rgba(9,35,29,0.92), rgba(5,9,13,0.72)), repeating-linear-gradient(135deg, rgba(93,216,146,0.12) 0 1px, transparent 1px 36px)",
+    gallery:
+      "radial-gradient(circle at 76% 22%, rgba(185,137,255,0.30), transparent 24%), linear-gradient(135deg, rgba(33,22,48,0.92), rgba(5,9,13,0.75)), repeating-linear-gradient(90deg, rgba(245,181,72,0.12) 0 1px, transparent 1px 42px)",
+    music:
+      "radial-gradient(circle at 74% 20%, rgba(224,180,74,0.34), transparent 25%), linear-gradient(135deg, rgba(45,30,10,0.92), rgba(5,9,13,0.75)), repeating-linear-gradient(115deg, rgba(224,180,74,0.14) 0 1px, transparent 1px 38px)",
+  };
+
+  return {
+    background: overlays[category],
+    borderColor: `color-mix(in srgb, ${accent} 52%, transparent)`,
+  };
+}
+
+function EventArt({
+  event,
+  className = "",
+  compact = false,
+}: {
+  event: CollectorEvent;
+  className?: string;
+  compact?: boolean;
+}) {
+  const category = categoryFor(event);
+  const accent = categoryColor(category);
+  const titleWords = event.name.split(/\s+/).filter(Boolean).slice(0, compact ? 2 : 4).join(" ");
 
   return (
     <div
-      className="rounded-[28px] border p-5 flex flex-col gap-4 transition"
-      style={{
-        background: "var(--theme-card, rgba(15,25,45,0.90))",
-        borderColor: past ? "rgba(255,255,255,0.05)" : ev.is_featured ? "rgba(245,181,72,0.30)" : "var(--border)",
-        opacity: past ? 0.65 : 1,
-        boxShadow: ev.is_featured && !past ? "0 0 0 1px rgba(245,181,72,0.15)" : undefined,
-      }}
+      className={`relative overflow-hidden rounded-[7px] border ${className}`}
+      style={eventArtStyle(event)}
     >
-      {/* Top row */}
-      <div className="flex items-start gap-4">
-        <div
-          className="shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center text-3xl"
-          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
-        >
-          {ev.emoji ?? "🎪"}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-1.5 mb-1">
-            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-              style={{ background: badge.bg, color: badge.color }}>
-              {badge.label}
-            </span>
-            {ev.is_featured && !past && (
-              <span className="rounded-full px-2 py-0.5 text-[10px] font-bold"
-                style={{ background: "rgba(245,181,72,0.14)", color: "#F5B548" }}>
-                ★ Featured
-              </span>
-            )}
-            {!past && <CountdownBadge starts_at={ev.starts_at} />}
-          </div>
-          <h3 className="text-base font-bold leading-snug" style={{ color: "var(--fg, #EDEBE3)" }}>
-            {ev.name}
-          </h3>
-          <div className="mt-1 text-[12px]" style={{ color: "var(--muted, #A0956B)" }}>
-            📅 {formatDateRange(ev.starts_at, ev.ends_at)}
-            {!past && (
-              <span className="ml-2 opacity-70">
-                {formatTime(ev.starts_at)}
-              </span>
-            )}
-          </div>
-          {(ev.venue_name || location) && (
-            <div className="mt-0.5 text-[12px]" style={{ color: "var(--muted, #A0956B)" }}>
-              📍 {[ev.venue_name, location].filter(Boolean).join(" · ")}
-            </div>
-          )}
-        </div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_72%,rgba(0,0,0,0),rgba(0,0,0,0.62)_70%)]" />
+      <div className="absolute -right-8 top-4 h-28 w-28 rotate-12 rounded-[18px] border border-white/10 bg-black/20 shadow-[0_20px_70px_rgba(0,0,0,0.5)]" />
+      <div className="absolute right-8 top-5 h-24 w-16 rotate-6 rounded-[5px] border border-[color:var(--theme-gold-border)] bg-black/35 shadow-[0_12px_28px_rgba(0,0,0,0.45)]" />
+      <div className="absolute left-4 top-4 rounded-[5px] bg-black/45 px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em]" style={{ color: accent }}>
+        {categoryLabel(category)}
       </div>
-
-      {/* Description */}
-      {ev.short_desc && (
-        <p className="text-[13px] leading-relaxed" style={{ color: "rgba(237,235,227,0.75)" }}>
-          {ev.short_desc}
-        </p>
-      )}
-
-      {/* Admission + universes row */}
-      <div className="flex flex-wrap items-center gap-1.5">
-        {ev.admission && (
-          <span className="rounded-full px-2.5 py-1 text-[11px] font-semibold"
-            style={{ background: "rgba(82,194,122,0.10)", color: "#52c27a" }}>
-            🎟 {ev.admission}
-          </span>
-        )}
-        {(ev.relevant_universes ?? []).map((u) => (
-          <span key={u} className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-            style={{ background: "rgba(255,255,255,0.05)", color: "var(--muted, #A0956B)" }}>
-            {u.replace(/_/g, " ")}
-          </span>
-        ))}
-      </div>
-
-      {/* Buttons */}
-      <div className="flex flex-wrap gap-2">
-        {ev.website_url && (
-          <a
-            href={ev.website_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition hover:brightness-110"
-            style={{ background: "var(--theme-gold, #F5B548)", color: "#0B0B0B" }}
-          >
-            Visit Website ↗
-          </a>
-        )}
-        {hasTickets && (
-          <a
-            href={ev.ticket_url!}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold ring-1 transition hover:brightness-110"
-            style={{
-              background: "transparent",
-              color: "var(--theme-gold, #F5B548)",
-              border: "1px solid rgba(245,181,72,0.35)",
-            }}
-          >
-            Get Tickets ↗
-          </a>
-        )}
+      <div className="absolute inset-x-0 bottom-0 p-3">
+        <div className="max-w-[82%] text-sm font-black leading-tight text-[color:var(--fg)] drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
+          {titleWords}
+        </div>
       </div>
     </div>
   );
 }
 
-type FilterTab = "all" | "local" | "national" | "international" | "past";
+function makeUtcDate(year: number, month: number, day: number): Date {
+  return new Date(Date.UTC(year, month, day));
+}
+
+function MiniCalendar({ event }: { event: CollectorEvent }) {
+  const start = safeDate(event.starts_at);
+  const year = start.getUTCFullYear();
+  const month = start.getUTCMonth();
+  const first = makeUtcDate(year, month, 1);
+  const daysInMonth = makeUtcDate(year, month + 1, 0).getUTCDate();
+  const offset = first.getUTCDay();
+  const cells = Array.from({ length: offset + daysInMonth }, (_, index) => (index < offset ? 0 : index - offset + 1));
+  const monthName = start.toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+  const activeDay = start.getUTCDate();
+
+  return (
+    <aside className="rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--theme-gold)]">{monthName}</div>
+        <div className="flex gap-1">
+          <button type="button" className="grid h-7 w-7 place-items-center rounded-full border border-[color:var(--border)] text-[color:var(--muted)]">
+            <ChevronLeft size={14} />
+          </button>
+          <button type="button" className="grid h-7 w-7 place-items-center rounded-full border border-[color:var(--border)] text-[color:var(--muted)]">
+            <ChevronRight size={14} />
+          </button>
+        </div>
+      </div>
+      <div className="grid grid-cols-7 gap-1 text-center text-[9px] font-bold uppercase text-[color:var(--muted)]">
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+          <span key={day}>{day}</span>
+        ))}
+      </div>
+      <div className="mt-2 grid grid-cols-7 gap-1 text-center text-[11px] text-[color:var(--fg)]">
+        {cells.map((day, index) => (
+          <span
+            key={`${day}-${index}`}
+            className="grid h-6 place-items-center rounded-full"
+            style={{
+              color: day === activeDay ? "#05080b" : day ? "var(--fg)" : "transparent",
+              background: day === activeDay ? "var(--theme-gold)" : "transparent",
+              fontWeight: day === activeDay ? 900 : 600,
+            }}
+          >
+            {day || "."}
+          </span>
+        ))}
+      </div>
+      <div className="mt-3 flex justify-center gap-1">
+        <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--theme-gold)]" />
+        <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--muted)] opacity-30" />
+      </div>
+    </aside>
+  );
+}
+
+function EventsMetric({ label, value, sub }: { label: string; value: string; sub: string }) {
+  return (
+    <div className="rounded-[7px] border border-[color:var(--border)] bg-black/10 p-3">
+      <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[color:var(--muted)]">{label}</div>
+      <div className="mt-2 text-lg font-black text-[color:var(--data-color)]">{value}</div>
+      <div className="text-[11px] text-[color:var(--muted)]">{sub}</div>
+    </div>
+  );
+}
+
+function FilterButton({ children, icon }: { children: React.ReactNode; icon?: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      className="inline-flex h-9 min-w-0 items-center justify-between gap-3 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] px-3 text-xs font-bold text-[color:var(--fg)]"
+    >
+      <span className="inline-flex min-w-0 items-center gap-2 truncate">
+        {icon}
+        {children}
+      </span>
+      <ChevronDown size={14} className="shrink-0 text-[color:var(--muted)]" />
+    </button>
+  );
+}
+
+function EventTypeSelect({
+  value,
+  onChange,
+}: {
+  value: EventFilter;
+  onChange: (value: EventFilter) => void;
+}) {
+  return (
+    <label className="relative block">
+      <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[color:var(--muted)]">
+        <CalendarDays size={14} />
+      </span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value as EventFilter)}
+        className="h-9 w-full appearance-none rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] pl-9 pr-8 text-xs font-bold text-[color:var(--fg)] outline-none"
+      >
+        <option value="all">All Event Types</option>
+        <option value="convention">Conventions</option>
+        <option value="card_show">Card Shows</option>
+        <option value="auction">Auctions</option>
+        <option value="drop">Drops</option>
+        <option value="gallery">Gallery</option>
+        <option value="music">Music</option>
+      </select>
+      <ChevronDown
+        size={14}
+        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[color:var(--muted)]"
+      />
+    </label>
+  );
+}
+
+function SaveButton({
+  saved,
+  compact = false,
+  onClick,
+}: {
+  saved: boolean;
+  compact?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={saved ? "Remove saved event" : "Save event"}
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick();
+      }}
+      className={`inline-flex items-center justify-center rounded-[7px] border border-[color:var(--border)] bg-black/30 text-[color:var(--theme-gold)] ${compact ? "h-8 w-8" : "h-9 gap-2 px-3 text-xs font-bold"}`}
+    >
+      <Bookmark size={15} fill={saved ? "currentColor" : "none"} />
+      {!compact && <span>{saved ? "Saved" : "Save Event"}</span>}
+    </button>
+  );
+}
+
+function EventCard({
+  event,
+  selected,
+  saved,
+  onSelect,
+  onToggleSave,
+}: {
+  event: CollectorEvent;
+  selected: boolean;
+  saved: boolean;
+  onSelect: () => void;
+  onToggleSave: () => void;
+}) {
+  const category = categoryFor(event);
+  const accent = categoryColor(category);
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className="group overflow-hidden rounded-[7px] border text-left transition hover:-translate-y-0.5"
+      style={{
+        background: "var(--theme-card)",
+        borderColor: selected ? "var(--theme-gold)" : "var(--border)",
+        boxShadow: selected ? "0 0 0 1px rgba(245,181,72,0.18)" : "none",
+      }}
+    >
+      <div className="relative">
+        <EventArt event={event} className="h-[118px] rounded-none border-0" compact />
+        <div className="absolute right-2 top-2">
+          <SaveButton saved={saved} compact onClick={onToggleSave} />
+        </div>
+      </div>
+      <div className="border-t border-[color:var(--border)] p-3">
+        <h3 className="line-clamp-1 text-sm font-black text-[color:var(--fg)]">{event.name}</h3>
+        <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.06em] text-[color:var(--muted)]">
+          {formatDateRange(event.starts_at, event.ends_at)}
+        </p>
+        <p className="line-clamp-1 text-[11px] text-[color:var(--muted)]">{locationLabel(event)}</p>
+        <div className="mt-3 text-[10px] font-black uppercase tracking-[0.14em]" style={{ color: accent }}>
+          {categoryLabel(category)}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function EventRow({
+  event,
+  saved,
+  onSelect,
+  onToggleSave,
+}: {
+  event: CollectorEvent;
+  saved: boolean;
+  onSelect: () => void;
+  onToggleSave: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className="grid w-full grid-cols-[72px_minmax(0,1fr)_32px] gap-3 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--theme-card)] p-2 text-left"
+    >
+      <EventArt event={event} compact className="h-16" />
+      <div className="min-w-0 self-center">
+        <div className="line-clamp-1 text-sm font-black text-[color:var(--fg)]">{event.name}</div>
+        <div className="text-[10px] font-bold uppercase tracking-[0.06em] text-[color:var(--muted)]">
+          {formatDateRange(event.starts_at, event.ends_at)}
+        </div>
+        <div className="line-clamp-1 text-[11px] text-[color:var(--muted)]">{locationLabel(event)}</div>
+      </div>
+      <SaveButton saved={saved} compact onClick={onToggleSave} />
+    </button>
+  );
+}
 
 export default function EventsPage() {
   const [events, setEvents] = useState<CollectorEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<FilterTab>("all");
+  const [filter, setFilter] = useState<EventFilter>("all");
+  const [savedIds, setSavedIds] = useState<Set<string>>(() => new Set());
+  const [selectedId, setSelectedId] = useState<string>("");
+  const [nowMs, setNowMs] = useState(0);
+  const detailRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setNowMs(Date.now()), 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const stored = window.localStorage.getItem(SAVED_EVENTS_KEY);
+      if (!stored) return;
+      try {
+        const parsed = JSON.parse(stored) as string[];
+        setSavedIds(new Set(parsed));
+      } catch {
+        setSavedIds(new Set());
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
-    if (!supabase) { setError("Not connected"); setLoading(false); return; }
+    if (!supabase) {
+      const timer = window.setTimeout(() => {
+        setEvents(fallbackEvents);
+        setSelectedId(fallbackEvents[0]?.id ?? "");
+        setLoading(false);
+      }, 0);
+      return () => window.clearTimeout(timer);
+    }
+
     supabase
       .from("collector_events")
       .select("*")
       .eq("enabled", true)
       .order("starts_at", { ascending: true })
-      .then(({ data, error: e }: { data: CollectorEvent[] | null; error: { message: string } | null }) => {
-        if (e) setError(e.message);
-        else setEvents((data ?? []) as CollectorEvent[]);
+      .then(({ data, error: queryError }: { data: CollectorEvent[] | null; error: { message: string } | null }) => {
+        if (queryError) {
+          setError(queryError.message);
+          setEvents(fallbackEvents);
+          setSelectedId(fallbackEvents[0]?.id ?? "");
+        } else {
+          const rows = data?.length ? data : fallbackEvents;
+          setEvents(rows as CollectorEvent[]);
+          setSelectedId((rows as CollectorEvent[]).find((event) => event.is_featured)?.id ?? rows[0]?.id ?? "");
+        }
         setLoading(false);
       });
   }, []);
 
-  const now = new Date().toISOString();
+  const sortedEvents = useMemo(() => {
+    return [...events].sort((a, b) => safeDate(a.starts_at).getTime() - safeDate(b.starts_at).getTime());
+  }, [events]);
 
-  const upcoming = useMemo(
-    () => events.filter((e) => e.ends_at >= now),
-    [events, now]
-  );
-  const past = useMemo(
-    () => events.filter((e) => e.ends_at < now).slice().reverse(),
-    [events, now]
-  );
+  const upcomingEvents = useMemo(() => {
+    const baseline = nowMs || 0;
+    return sortedEvents.filter((event) => safeDate(event.ends_at).getTime() >= baseline);
+  }, [nowMs, sortedEvents]);
 
-  const displayed = useMemo(() => {
-    if (tab === "past") return past;
-    if (tab === "all") return upcoming;
-    return upcoming.filter((e) => e.event_type === tab);
-  }, [tab, upcoming, past]);
+  const featuredEvent = useMemo(() => {
+    return upcomingEvents.find((event) => event.is_featured) ?? upcomingEvents[0] ?? sortedEvents[0] ?? fallbackEvents[0];
+  }, [sortedEvents, upcomingEvents]);
 
-  const TABS: { key: FilterTab; label: string }[] = [
-    { key: "all", label: `All (${upcoming.length})` },
-    { key: "local", label: `Local (${upcoming.filter((e) => e.event_type === "local").length})` },
-    { key: "national", label: `National (${upcoming.filter((e) => e.event_type === "national").length})` },
-    { key: "international", label: `Intl (${upcoming.filter((e) => e.event_type === "international").length})` },
-    { key: "past", label: `Past (${past.length})` },
+  const selectedEvent = useMemo(() => {
+    return sortedEvents.find((event) => event.id === selectedId) ?? featuredEvent;
+  }, [featuredEvent, selectedId, sortedEvents]);
+
+  const filteredEvents = useMemo(() => {
+    const active = upcomingEvents.length ? upcomingEvents : sortedEvents;
+    if (filter === "all") return active;
+    return active.filter((event) => categoryFor(event) === filter);
+  }, [filter, sortedEvents, upcomingEvents]);
+
+  const savedEvents = useMemo(() => {
+    return sortedEvents.filter((event) => savedIds.has(event.id));
+  }, [savedIds, sortedEvents]);
+
+  const toggleSaved = (id: string) => {
+    setSavedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      window.localStorage.setItem(SAVED_EVENTS_KEY, JSON.stringify(Array.from(next)));
+      return next;
+    });
+  };
+
+  const selectEvent = (id: string, scroll = false) => {
+    setSelectedId(id);
+    if (scroll) {
+      window.setTimeout(() => detailRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 0);
+    }
+  };
+
+  const categories: { key: EventFilter; label: string }[] = [
+    { key: "all", label: "All" },
+    { key: "convention", label: "Conventions" },
+    { key: "card_show", label: "Card Shows" },
+    { key: "auction", label: "Auctions" },
+    { key: "drop", label: "Drops" },
   ];
 
   return (
-    <div className="" style={{ background: "var(--bg, #0B0F1A)" }}>
-      {/* Header */}
-      <div className="border-b" style={{ background: "var(--surface, rgba(15,25,45,0.95))", borderColor: "var(--border, rgba(255,255,255,0.07))" }}>
-        <div className="mx-auto max-w-4xl px-4 py-6">
-          <div className="flex items-center gap-3 text-sm mb-4" style={{ color: "var(--muted, #A0956B)" }}>
-            <Link href="/" style={{ color: "var(--muted, #A0956B)" }}>VLTD</Link>
-            <span>/</span>
-            <span style={{ color: "var(--fg, #EDEBE3)" }}>Events</span>
+    <main className="min-h-dvh bg-[color:var(--bg)] px-4 pb-24 pt-5 text-[color:var(--fg)] md:px-8 lg:px-10">
+      <div className="mx-auto max-w-[1360px]">
+        <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
+          <div className="relative overflow-hidden rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-3 md:p-4">
+            <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_238px]">
+              <div className="relative min-h-[210px] overflow-hidden rounded-[7px] border border-[color:var(--border)]">
+                <EventArt event={featuredEvent} className="absolute inset-0 rounded-none border-0" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/76 via-black/38 to-black/12" />
+                <button
+                  type="button"
+                  className="absolute left-3 top-1/2 hidden h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-[color:var(--border)] bg-black/40 text-[color:var(--theme-gold)] md:grid"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 hidden h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-[color:var(--border)] bg-black/40 text-[color:var(--theme-gold)] md:grid"
+                >
+                  <ChevronRight size={16} />
+                </button>
+                <div className="absolute inset-x-0 bottom-0 p-5 md:p-7">
+                  <div className="mb-2 inline-flex rounded-[5px] bg-black/45 px-2 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-[color:var(--theme-gold)]">
+                    Featured Event
+                  </div>
+                  <h1 className="max-w-2xl text-2xl font-black leading-tight md:text-3xl">{featuredEvent.name}</h1>
+                  <div className="mt-1 text-xs font-bold uppercase tracking-[0.08em] text-[color:var(--fg)]">
+                    {formatLongDate(featuredEvent.starts_at, featuredEvent.ends_at)} - {locationLabel(featuredEvent)}
+                  </div>
+                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[color:var(--muted)]">
+                    {featuredEvent.short_desc ?? "Collector event with shows, releases, and market moments worth tracking."}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => selectEvent(featuredEvent.id, true)}
+                      className="inline-flex h-9 items-center rounded-[7px] bg-[color:var(--theme-gold)] px-5 text-xs font-black text-black"
+                    >
+                      View Event
+                    </button>
+                    <SaveButton
+                      saved={savedIds.has(featuredEvent.id)}
+                      onClick={() => toggleSaved(featuredEvent.id)}
+                    />
+                  </div>
+                </div>
+              </div>
+              <MiniCalendar event={featuredEvent} />
+            </div>
           </div>
-          <h1 className="text-2xl font-bold" style={{ color: "var(--fg, #EDEBE3)" }}>
-            📅 Upcoming Events
-          </h1>
-          <p className="mt-1 text-sm" style={{ color: "var(--muted, #A0956B)" }}>
-            Shows, conventions &amp; collector gatherings
-          </p>
 
-          {/* Filter tabs */}
-          <div className="mt-5 flex flex-wrap gap-2">
-            {TABS.map((t) => (
+          <aside className="hidden rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4 lg:block">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--theme-gold)]">Saved Events</h2>
+              <span className="text-[11px] text-[color:var(--muted)]">View all</span>
+            </div>
+            <div className="space-y-2">
+              {(savedEvents.length ? savedEvents : filteredEvents.slice(0, 3)).map((event) => (
+                <button
+                  key={event.id}
+                  type="button"
+                  onClick={() => selectEvent(event.id, true)}
+                  className="grid w-full grid-cols-[44px_minmax(0,1fr)] gap-2 rounded-[7px] border border-[color:var(--border)] bg-black/10 p-2 text-left"
+                >
+                  <EventArt event={event} compact className="h-11" />
+                  <div className="min-w-0">
+                    <div className="line-clamp-1 text-[11px] font-black text-[color:var(--fg)]">{event.name}</div>
+                    <div className="text-[9px] font-bold uppercase text-[color:var(--muted)]">{formatDateRange(event.starts_at, event.ends_at)}</div>
+                    <div className="line-clamp-1 text-[9px] text-[color:var(--muted)]">{locationLabel(event)}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <button type="button" className="mt-3 h-9 w-full rounded-[7px] border border-[color:var(--theme-gold-border)] text-xs font-black text-[color:var(--fg)]">
+              Manage Saved Events
+            </button>
+          </aside>
+        </section>
+
+        <section className="mt-4 grid gap-2 md:grid-cols-[repeat(4,minmax(0,1fr))_160px]">
+          <EventTypeSelect value={filter} onChange={setFilter} />
+          <FilterButton icon={<Globe2 size={14} />}>All Universes</FilterButton>
+          <FilterButton icon={<MapPin size={14} />}>All Locations</FilterButton>
+          <FilterButton icon={<CalendarDays size={14} />}>Date Range</FilterButton>
+          <button type="button" className="inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] px-3 text-xs font-bold text-[color:var(--fg)]">
+            <Bookmark size={14} />
+            Saved Events
+            <span className="rounded bg-black/30 px-1.5 text-[10px] text-[color:var(--muted)]">{savedIds.size}</span>
+          </button>
+        </section>
+
+        <section className="mt-4 md:hidden">
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {categories.map((category) => (
               <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
-                className="rounded-full px-4 py-1.5 text-sm font-medium transition"
+                key={category.key}
+                type="button"
+                onClick={() => setFilter(category.key)}
+                className="h-8 shrink-0 rounded-[7px] border px-4 text-xs font-bold"
                 style={{
-                  background: tab === t.key ? "var(--theme-gold, #F5B548)" : "rgba(255,255,255,0.05)",
-                  color: tab === t.key ? "#0B0B0B" : "var(--muted, #A0956B)",
-                  border: tab === t.key ? "none" : "1px solid rgba(255,255,255,0.06)",
+                  background: filter === category.key ? "var(--theme-gold)" : "var(--pill)",
+                  color: filter === category.key ? "#05080b" : "var(--fg)",
+                  borderColor: "var(--border)",
                 }}
               >
-                {t.label}
+                {category.label}
               </button>
             ))}
           </div>
-        </div>
-      </div>
+        </section>
 
-      {/* Content */}
-      <div className="mx-auto max-w-4xl px-4 py-8">
-        {loading ? (
-          <div className="text-center py-20 text-sm" style={{ color: "var(--muted, #A0956B)" }}>
-            Loading events…
-          </div>
-        ) : error ? (
-          <div className="text-center py-20 text-sm text-red-400">{error}</div>
-        ) : displayed.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-5xl mb-4 opacity-30">📅</div>
-            <div className="text-sm" style={{ color: "var(--muted, #A0956B)" }}>
-              {tab === "past" ? "No past events recorded." : "No upcoming events in this category."}
+        <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <section>
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="text-[11px] font-black uppercase tracking-[0.18em] text-[color:var(--theme-gold)]">Upcoming Events</h2>
+              <button type="button" className="hidden text-xs font-bold text-[color:var(--theme-gold)] md:inline-flex">
+                View All Events <ChevronRight size={14} />
+              </button>
             </div>
-            {tab !== "all" && (
-              <button
-                onClick={() => setTab("all")}
-                className="mt-3 text-sm underline"
-                style={{ color: "var(--theme-gold, #F5B548)" }}
-              >
-                View all events
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {tab === "past" && (
-              <div className="text-xs font-semibold uppercase tracking-widest mb-2"
-                style={{ color: "var(--muted, #A0956B)", opacity: 0.6 }}>
-                Past Events
-              </div>
-            )}
-            {displayed.map((ev) => (
-              <EventCard key={ev.id} ev={ev} past={tab === "past"} />
-            ))}
-          </div>
-        )}
 
-        {/* Past events link when viewing upcoming */}
-        {tab !== "past" && past.length > 0 && !loading && (
-          <div className="mt-10 pt-6 border-t text-center" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
-            <button
-              onClick={() => setTab("past")}
-              className="text-sm"
-              style={{ color: "var(--muted, #A0956B)" }}
-            >
-              View {past.length} past event{past.length !== 1 ? "s" : ""} →
-            </button>
+            {loading ? (
+              <div className="rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-8 text-center text-sm text-[color:var(--muted)]">
+                Loading events...
+              </div>
+            ) : error ? (
+              <div className="rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4 text-sm text-red-300">
+                {error}
+              </div>
+            ) : (
+              <>
+                <div className="hidden grid-cols-5 gap-3 md:grid">
+                  {filteredEvents.slice(0, 5).map((event) => (
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      selected={selectedEvent.id === event.id}
+                      saved={savedIds.has(event.id)}
+                      onSelect={() => selectEvent(event.id)}
+                      onToggleSave={() => toggleSaved(event.id)}
+                    />
+                  ))}
+                </div>
+                <div className="space-y-2 md:hidden">
+                  {filteredEvents.map((event) => (
+                    <EventRow
+                      key={event.id}
+                      event={event}
+                      saved={savedIds.has(event.id)}
+                      onSelect={() => selectEvent(event.id, true)}
+                      onToggleSave={() => toggleSaved(event.id)}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </section>
+
+          <aside className="rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4 lg:hidden">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--theme-gold)]">Saved Events</h2>
+              <span className="text-[11px] text-[color:var(--muted)]">View all</span>
+            </div>
+            <div className="space-y-2">
+              {(savedEvents.length ? savedEvents : filteredEvents.slice(0, 3)).map((event) => (
+                <EventRow
+                  key={event.id}
+                  event={event}
+                  saved={savedIds.has(event.id)}
+                  onSelect={() => selectEvent(event.id, true)}
+                  onToggleSave={() => toggleSaved(event.id)}
+                />
+              ))}
+            </div>
+          </aside>
+        </div>
+
+        <section
+          ref={detailRef}
+          className="mt-5 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4"
+        >
+          <div className="mb-3 text-[11px] font-black uppercase tracking-[0.18em] text-[color:var(--theme-gold)]">Event Highlight</div>
+          <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1.2fr)_minmax(180px,0.8fr)_180px]">
+            <EventArt event={selectedEvent} className="h-[132px] md:h-full" />
+            <div>
+              <h2 className="text-lg font-black text-[color:var(--fg)]">{selectedEvent.name}</h2>
+              <p className="mt-1 text-xs font-bold uppercase tracking-[0.08em] text-[color:var(--muted)]">
+                {formatDateRange(selectedEvent.starts_at, selectedEvent.ends_at)}
+              </p>
+              <p className="mt-1 text-xs text-[color:var(--muted)]">{venueLine(selectedEvent)}</p>
+              <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-[color:var(--muted)]">
+                {selectedEvent.long_desc ?? selectedEvent.short_desc ?? "A collector event worth tracking for releases, panels, dealers, and gallery inspiration."}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {(selectedEvent.relevant_universes ?? ["collectibles"]).slice(0, 3).map((universe) => (
+                  <span key={universe} className="rounded-[5px] border border-[color:var(--border)] bg-[color:var(--pill)] px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-[color:var(--theme-gold)]">
+                    {normalizeUniverse(universe)}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-[7px] border border-[color:var(--border)] bg-black/10 p-3">
+              <h3 className="mb-3 text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--muted)]">Why collectors go</h3>
+              <div className="space-y-2 text-sm text-[color:var(--fg)]">
+                <div className="flex items-center gap-2"><Sparkles size={14} className="text-[color:var(--theme-gold)]" /> Exclusive releases</div>
+                <div className="flex items-center gap-2"><Star size={14} className="text-[color:var(--theme-gold)]" /> Signings and panels</div>
+                <div className="flex items-center gap-2"><Ticket size={14} className="text-[color:var(--theme-gold)]" /> Vintage finds</div>
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <EventsMetric label="At a glance" value={statFor(selectedEvent, "attendees")} sub="Attendees" />
+              <EventsMetric label="Collectors" value={statFor(selectedEvent, "exhibitors")} sub="Exhibitors" />
+              {(selectedEvent.website_url || selectedEvent.ticket_url) && (
+                <a
+                  href={selectedEvent.ticket_url ?? selectedEvent.website_url ?? "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border border-[color:var(--theme-gold-border)] bg-[color:var(--pill)] text-xs font-black text-[color:var(--theme-gold)]"
+                >
+                  Event link <ExternalLink size={13} />
+                </a>
+              )}
+            </div>
           </div>
-        )}
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
