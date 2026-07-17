@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { listViewerFavorites, type FavoriteRecord } from "@/lib/favorites";
 import { loadGalleries, type Gallery } from "@/lib/galleryModel";
 import { loadItems, getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
+import { Glyph } from "@/components/ui/Glyph";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -237,7 +238,7 @@ export default function FavoritesPage() {
             className="rounded-2xl px-6 py-14 text-center ring-1 ring-[color:var(--border)]"
             style={{ background: "var(--surface)" }}
           >
-            <div className="text-4xl">🤍</div>
+            <div className="flex justify-center" style={{ color: "var(--theme-gold)" }}><Glyph name="heart" size={42} /></div>
             <div className="mt-4 text-base font-semibold" style={{ color: "var(--fg)" }}>
               No favorites yet
             </div>

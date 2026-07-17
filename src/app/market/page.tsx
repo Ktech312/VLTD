@@ -6,6 +6,7 @@ import { fetchMarketItems, type MarketItem } from "@/lib/publicProfile";
 import { getPrimaryImageUrl } from "@/lib/vaultModel";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
+import { Glyph } from "@/components/ui/Glyph";
 
 const UNIVERSES: { key: string; label: string }[] = [
   { key: "", label: "All" },
@@ -280,7 +281,7 @@ export default function MarketPage() {
           <div className="text-center py-20 text-sm text-red-400">{error}</div>
         ) : displayed.length === 0 ? (
           <div className="text-center py-20">
-            <div className="text-4xl mb-3">🛍️</div>
+            <div className="mb-3 flex justify-center" style={{ color: "var(--theme-gold)" }}><Glyph name="bag" size={40} /></div>
             <div className="text-sm" style={{ color: "var(--muted)" }}>
               {search || universe
                 ? "No listings match your filters."
