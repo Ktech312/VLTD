@@ -59,114 +59,6 @@ type EventSuggestion = {
   source: string;
 };
 
-const fallbackEvents: CollectorEvent[] = [
-  {
-    id: "preview-sdcc-2026",
-    slug: "san-diego-comic-con-2026",
-    name: "San Diego Comic-Con 2026",
-    short_desc: "The ultimate celebration of comics, collectibles, pop culture, and fandom.",
-    long_desc:
-      "Collector-focused panels, exclusive releases, signings, vintage finds, and pop-culture exhibits across San Diego.",
-    event_type: "national",
-    starts_at: "2026-07-23T17:00:00-07:00",
-    ends_at: "2026-07-26T20:00:00-07:00",
-    venue_name: "San Diego Convention Center",
-    venue_address: "111 W Harbor Dr",
-    city: "San Diego",
-    state_region: "CA",
-    country: "US",
-    website_url: "https://www.comic-con.org/cc/",
-    ticket_url: "https://www.comic-con.org/cc/",
-    admission: "Badges required",
-    emoji: null,
-    relevant_universes: ["comics", "pop_culture", "collectibles"],
-    is_featured: true,
-  },
-  {
-    id: "preview-dallas-card-show",
-    slug: "dallas-card-show-2026",
-    name: "Dallas Card Show",
-    short_desc: "Sports cards, TCG, slabs, autos, and collector meetups.",
-    long_desc: "A card-focused buying and trading weekend with dealers, grading, and collector tables.",
-    event_type: "national",
-    starts_at: "2026-06-27T10:00:00-05:00",
-    ends_at: "2026-06-28T18:00:00-05:00",
-    venue_name: "Watters Creek Convention Center",
-    venue_address: null,
-    city: "Dallas",
-    state_region: "TX",
-    country: "US",
-    website_url: null,
-    ticket_url: null,
-    admission: "Tickets vary",
-    emoji: null,
-    relevant_universes: ["sports_cards", "tcg"],
-    is_featured: false,
-  },
-  {
-    id: "preview-heritage-auction",
-    slug: "heritage-comics-signature-auction",
-    name: "Heritage Auctions Comics Signature Auction",
-    short_desc: "High-value comics, original art, and key collector lots.",
-    long_desc: "A premium auction event for key comics, original art, graded books, and rare pop-culture pieces.",
-    event_type: "national",
-    starts_at: "2026-07-10T12:00:00-05:00",
-    ends_at: "2026-07-12T18:00:00-05:00",
-    venue_name: "Heritage Auctions",
-    venue_address: null,
-    city: "Dallas",
-    state_region: "TX",
-    country: "US",
-    website_url: null,
-    ticket_url: null,
-    admission: "Registration",
-    emoji: null,
-    relevant_universes: ["comics", "art"],
-    is_featured: false,
-  },
-  {
-    id: "preview-topps-drop",
-    slug: "topps-chrome-ucl-release-day",
-    name: "Topps Chrome UCL Release Day",
-    short_desc: "Online release drop for soccer collectors.",
-    long_desc: "A scheduled online drop with watchlist reminders and release-day tracking.",
-    event_type: "international",
-    starts_at: "2026-06-18T09:00:00-04:00",
-    ends_at: "2026-06-18T12:00:00-04:00",
-    venue_name: "Online",
-    venue_address: null,
-    city: "Online",
-    state_region: null,
-    country: "US",
-    website_url: null,
-    ticket_url: null,
-    admission: "Online",
-    emoji: null,
-    relevant_universes: ["sports_cards"],
-    is_featured: false,
-  },
-  {
-    id: "preview-marvel-gallery",
-    slug: "marvel-gallery-opening",
-    name: "Marvel Gallery Opening: Stan Lee Tribute",
-    short_desc: "A public gallery opening centered on Marvel history.",
-    long_desc: "A gallery event for original art, signed collectibles, creator history, and display inspiration.",
-    event_type: "local",
-    starts_at: "2026-06-21T18:00:00-04:00",
-    ends_at: "2026-06-21T21:00:00-04:00",
-    venue_name: "Museum Gallery",
-    venue_address: null,
-    city: "New York",
-    state_region: "NY",
-    country: "US",
-    website_url: null,
-    ticket_url: null,
-    admission: "RSVP",
-    emoji: null,
-    relevant_universes: ["comics", "art"],
-    is_featured: false,
-  },
-];
 
 function safeDate(value: string): Date {
   const date = new Date(value);
@@ -419,10 +311,11 @@ function EventCard({
   const accent = categoryColor(category);
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onSelect}
-      className="group overflow-hidden rounded-[7px] border text-left transition hover:-translate-y-0.5"
+      className="group cursor-pointer overflow-hidden rounded-[7px] border text-left transition hover:-translate-y-0.5"
       style={{
         background: "var(--theme-card)",
         borderColor: selected ? "var(--theme-gold)" : "var(--border)",
@@ -445,7 +338,7 @@ function EventCard({
           {categoryLabel(category)}
         </div>
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -461,10 +354,11 @@ function EventRow({
   onToggleSave: () => void;
 }) {
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onSelect}
-      className="grid w-full grid-cols-[72px_minmax(0,1fr)_32px] gap-3 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--theme-card)] p-2 text-left"
+      className="grid w-full cursor-pointer grid-cols-[72px_minmax(0,1fr)_32px] gap-3 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--theme-card)] p-2 text-left"
     >
       <EventArt event={event} compact className="h-16" />
       <div className="min-w-0 self-center">
@@ -475,7 +369,7 @@ function EventRow({
         <div className="line-clamp-1 text-[11px] text-[color:var(--muted)]">{locationLabel(event)}</div>
       </div>
       <SaveButton saved={saved} compact onClick={onToggleSave} />
-    </button>
+    </div>
   );
 }
 
@@ -594,8 +488,8 @@ export default function EventsPage() {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) {
       const timer = window.setTimeout(() => {
-        setEvents(fallbackEvents);
-        setSelectedId(fallbackEvents[0]?.id ?? "");
+        setEvents([]);
+        setSelectedId("");
         setLoading(false);
       }, 0);
       return () => window.clearTimeout(timer);
@@ -609,12 +503,12 @@ export default function EventsPage() {
       .then(({ data, error: queryError }: { data: CollectorEvent[] | null; error: { message: string } | null }) => {
         if (queryError) {
           setError(queryError.message);
-          setEvents(fallbackEvents);
-          setSelectedId(fallbackEvents[0]?.id ?? "");
+          setEvents([]);
+          setSelectedId("");
         } else {
-          const rows = data?.length ? data : fallbackEvents;
-          setEvents(rows as CollectorEvent[]);
-          setSelectedId((rows as CollectorEvent[]).find((event) => event.is_featured)?.id ?? rows[0]?.id ?? "");
+          const rows = (data ?? []) as CollectorEvent[];
+          setEvents(rows);
+          setSelectedId(rows.find((event) => event.is_featured)?.id ?? rows[0]?.id ?? "");
         }
         setLoading(false);
       });
@@ -630,7 +524,7 @@ export default function EventsPage() {
   }, [nowMs, sortedEvents]);
 
   const featuredEvent = useMemo(() => {
-    return upcomingEvents.find((event) => event.is_featured) ?? upcomingEvents[0] ?? sortedEvents[0] ?? fallbackEvents[0];
+    return upcomingEvents.find((event) => event.is_featured) ?? upcomingEvents[0] ?? sortedEvents[0];
   }, [sortedEvents, upcomingEvents]);
 
   const selectedEvent = useMemo(() => {
@@ -734,6 +628,7 @@ export default function EventsPage() {
   return (
     <main className="min-h-dvh bg-[color:var(--bg)] px-4 pb-24 pt-5 text-[color:var(--fg)] md:px-8 lg:px-10">
       <div className="mx-auto max-w-[1360px]">
+        {featuredEvent ? (
         <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
           <div className="relative overflow-hidden rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-3 md:p-4">
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_238px]">
@@ -793,6 +688,7 @@ export default function EventsPage() {
             </div>
           </aside>
         </section>
+        ) : null}
 
         <section className="mt-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_170px]">
           <EventTypeSelect value={filter} onChange={setFilter} />
@@ -949,6 +845,12 @@ export default function EventsPage() {
               <div className="rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4 text-sm text-red-300">
                 {error}
               </div>
+            ) : filteredEvents.length === 0 ? (
+              <div className="rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-8 text-center text-sm text-[color:var(--muted)]">
+                {showSavedOnly
+                  ? "You haven't saved any events yet."
+                  : "No events listed yet — check back soon, or search for events near you above."}
+              </div>
             ) : (
               <>
                 <div className="hidden grid-cols-5 gap-3 md:grid">
@@ -956,7 +858,7 @@ export default function EventsPage() {
                     <EventCard
                       key={event.id}
                       event={event}
-                      selected={selectedEvent.id === event.id}
+                      selected={selectedEvent?.id === event.id}
                       saved={savedIds.has(event.id)}
                       onSelect={() => selectEvent(event.id)}
                       onToggleSave={() => toggleSaved(event.id)}
@@ -996,6 +898,7 @@ export default function EventsPage() {
           </aside>
         </div>
 
+        {selectedEvent ? (
         <section
           ref={detailRef}
           className="mt-5 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4"
@@ -1051,6 +954,7 @@ export default function EventsPage() {
             </div>
           </div>
         </section>
+        ) : null}
       </div>
     </main>
   );
