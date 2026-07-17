@@ -7,6 +7,7 @@ import Link from "next/link";
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { TAXONOMY, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { loadItemsOrSeed, loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
+import { EmptyVault } from "@/components/ui/EmptyVault";
 
 function clamp(n: number) {
   return Number.isFinite(n) ? n : 0;
@@ -70,6 +71,7 @@ function trimNotes(s?: string) {
 
 export default function InsuranceReportPage() {
   const [items, setItems] = useState<ModelItem[]>([]);
+  const [hydrated, setHydrated] = useState(false);
   const [includePhotos, setIncludePhotos] = useState(true);
   const [sortBy, setSortBy] = useState<"value_desc" | "value_asc" | "title_asc" | "gain_desc">("value_desc");
 
@@ -77,6 +79,7 @@ export default function InsuranceReportPage() {
     const seed = toSeedItemsFromDemo();
     const loaded = loadItemsOrSeed(seed);
     setItems(loaded);
+    setHydrated(true);
     let active = true;
     void syncVaultItemsFromSupabase().then(() => {
       if (active) setItems(loadItems());
@@ -114,6 +117,17 @@ export default function InsuranceReportPage() {
   }, [sorted]);
 
   const generatedAt = useMemo(() => Date.now(), []);
+
+  if (hydrated && items.length === 0) {
+    return (
+      <EmptyVault
+        eyebrow="INSURANCE REPORT"
+        glyph="shield"
+        title="No items to report yet"
+        message="Add collectibles to your vault and your insurance report fills in automatically — values, photos, grades, and cert numbers."
+      />
+    );
+  }
 
   return (
     <main className="text-[color:var(--fg)]">
