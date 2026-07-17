@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 
 import Image from "next/image";
+import AlertsBell from "@/components/AlertsBell";
 import CommandPalette from "@/components/CommandPalette";
 import { ThemePicker } from "@/components/ui/ThemePicker";
 import {
@@ -159,16 +160,6 @@ function IconSearch({ className = "h-4 w-4" }: { className?: string }) {
     <svg viewBox="0 0 24 24" fill="none" className={className}>
       <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" strokeWidth="2" />
       <path d="M16.4 16.4 21 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function IconBell() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: "var(--muted2, #A0956B)" }}>
-      <path d="M15 17H9a3 3 0 0 0 6 0Z" stroke="currentColor" strokeWidth="1.75" />
-      <path d="M4 17h16M12 3v1m0 0a7 7 0 0 1 7 7v3.5H5V11a7 7 0 0 1 7-7Z"
-        stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
     </svg>
   );
 }
@@ -552,17 +543,8 @@ function TopNavInner() {
               </div>
             </form>
 
-            {/* Bell */}
-            <div className="group relative hidden md:flex">
-              <Link
-                href="/notifications"
-                className="h-[36px] w-[36px] flex items-center justify-center rounded-full transition"
-                style={{ background: pathname === "/notifications" ? "rgba(245,181,72,0.12)" : "rgba(255,255,255,0.04)", border: `1px solid ${pathname === "/notifications" ? "rgba(245,181,72,0.35)" : "rgba(255,255,255,0.08)"}` }}
-                aria-label="Notifications"
-              >
-                <IconBell />
-              </Link>
-            </div>
+            {/* Alerts bell — visible on mobile + desktop, glows green on new activity */}
+            <AlertsBell profileId={activeProfile?.id} active={pathname === "/notifications"} />
 
             {/* User menu trigger */}
             <div ref={userMenuRef} className="relative">
