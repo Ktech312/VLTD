@@ -91,15 +91,25 @@ const TABS: (Tab | null)[] = [
   { label: "More",     href: MORE_TAB,    icon: (a) => <IconMore active={a} />,         exact: false },
 ];
 
+// Custom line-art glyphs for the More sheet — same style as the nav icons.
+// No emoji / generic icons.
+function Glyph({ paths }: { paths: React.ReactNode }) {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={DIM} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {paths}
+    </svg>
+  );
+}
+
 // The rest of the categories, reachable from the "More" sheet.
-const MORE_LINKS: { label: string; href: string; emoji: string }[] = [
-  { label: "Home",           href: "/dashboard",       emoji: "🏠" },
-  { label: "Insights",       href: "/portfolio",       emoji: "📊" },
-  { label: "Events",         href: "/events",          emoji: "📅" },
-  { label: "Alerts",         href: "/notifications",   emoji: "🔔" },
-  { label: "Command Center", href: "/more",            emoji: "🎛️" },
-  { label: "VLT Lounge",     href: "/community-board", emoji: "🛋️" },
-  { label: "Account",        href: "/account",         emoji: "⚙️" },
+const MORE_LINKS: { label: string; href: string; icon: React.ReactNode }[] = [
+  { label: "Curator Home",   href: "/dashboard",       icon: (<><path d="M4 11.5 12 4l8 7.5" /><path d="M6 10.5V20h12v-9.5" /><path d="M9.7 20v-5h4.6v5" /></>) },
+  { label: "Insights",       href: "/portfolio",       icon: (<><path d="M4 20h16" /><path d="M7.5 20v-4.5M12 20V8.5M16.5 20v-7.5" /></>) },
+  { label: "Events",         href: "/events",          icon: (<><rect x="4" y="5.5" width="16" height="14.5" rx="2" /><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" /></>) },
+  { label: "Alerts",         href: "/notifications",   icon: (<><path d="M6 16v-5a6 6 0 0 1 12 0v5" /><path d="M4.5 16h15" /><path d="M10.4 19a1.7 1.7 0 0 0 3.2 0" /></>) },
+  { label: "Command Center", href: "/more",            icon: (<><path d="M4 8h8M16 8h4M4 16h4M12 16h8" /><circle cx="14" cy="8" r="2" /><circle cx="8" cy="16" r="2" /></>) },
+  { label: "VLT Lounge",     href: "/community-board", icon: (<><path d="M4 14v-2.5A2.5 2.5 0 0 1 6.5 9h11A2.5 2.5 0 0 1 20 11.5V14" /><rect x="3.5" y="13.5" width="17" height="4.5" rx="1.3" /><path d="M6.5 18v1.6M17.5 18v1.6" /></>) },
+  { label: "Account",        href: "/account",         icon: (<><circle cx="12" cy="8" r="3.2" /><path d="M5.8 19.5a6.2 6.2 0 0 1 12.4 0" /></>) },
 ];
 
 function isGuestGalleryRoute(pathname: string) {
@@ -164,8 +174,8 @@ export default function BottomNav() {
                   className="flex flex-col items-center gap-1.5 rounded-2xl py-3.5 active:opacity-70"
                   style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
                 >
-                  <span className="text-2xl leading-none">{l.emoji}</span>
-                  <span className="text-center text-[11px] font-medium" style={{ color: DIM }}>
+                  <Glyph paths={l.icon} />
+                  <span className="text-center text-[11px] font-medium leading-tight" style={{ color: DIM }}>
                     {l.label}
                   </span>
                 </Link>
