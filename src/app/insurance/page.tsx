@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { loadItemsOrSeed, loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+import { Glyph } from "@/components/ui/Glyph";
 
 type Item = ModelItem & {
   storageLocation?: string;
@@ -99,12 +100,14 @@ function saveExcludedIds(ids: Set<string>) {
 export default function InsuranceExportPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     const seed = toSeedItemsFromDemo();
     const loaded = loadItemsOrSeed(seed as any) as any as Item[];
     setItems(loaded);
     setExcludedIds(readExcludedIds());
+    setHydrated(true);
     let active = true;
     void syncVaultItemsFromSupabase().then(() => {
       if (active) setItems(loadItems() as any as Item[]);
@@ -145,6 +148,46 @@ export default function InsuranceExportPage() {
     });
     setExcludedIds(next);
     saveExcludedIds(next);
+  }
+
+  if (hydrated && items.length === 0) {
+    return (
+      <main className="px-4 py-10 text-[color:var(--fg)] sm:px-6">
+        <div className="mx-auto max-w-2xl">
+          <div className="text-[11px] tracking-[0.22em]" style={{ color: "var(--muted2)" }}>INSURANCE</div>
+          <h1 className="mt-2 text-2xl font-semibold">Insurance export</h1>
+          <div
+            className="mt-8 rounded-3xl p-8 text-center"
+            style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", border: "1px solid var(--theme-border, rgba(245,181,72,0.12))" }}
+          >
+            <div className="flex justify-center opacity-40" style={{ color: "var(--theme-gold)" }}>
+              <Glyph name="shield" size={46} />
+            </div>
+            <div className="mt-4 text-lg font-semibold">No items to insure yet</div>
+            <p className="mx-auto mt-2 max-w-md text-sm text-[color:var(--muted)]">
+              Items you add to your vault appear here, ready to export a documented insurance
+              packet — values, photos, grades, and cert numbers.
+            </p>
+            <div className="mt-6 flex justify-center gap-2">
+              <Link
+                href="/capture"
+                className="rounded-full px-5 py-2.5 text-sm font-semibold"
+                style={{ background: "var(--theme-gold, #F5B548)", color: "#0B0B0B" }}
+              >
+                Smart Scan
+              </Link>
+              <Link
+                href="/vault/add"
+                className="rounded-full px-5 py-2.5 text-sm font-semibold"
+                style={{ border: "1px solid var(--border)", color: "var(--fg)" }}
+              >
+                Add manually
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (

@@ -22,7 +22,8 @@ export type GlyphName =
   | "sparkle"
   | "flame"
   | "key"
-  | "cart";
+  | "cart"
+  | "shield";
 
 const PATHS: Record<GlyphName, ReactNode> = {
   bell: (<><path d="M6 16v-5a6 6 0 0 1 12 0v5" /><path d="M4.5 16h15" /><path d="M10.4 19a1.7 1.7 0 0 0 3.2 0" /></>),
@@ -43,6 +44,7 @@ const PATHS: Record<GlyphName, ReactNode> = {
   flame: (<><path d="M12 4c1 3 4 4 4 8a4 4 0 0 1-8 0c0-2 1-3 2-4 .4 1 1 1.6 2 2 0-2-1-4 0-6z" /></>),
   key: (<><circle cx="8" cy="8" r="3.4" /><path d="M10.4 10.4 20 20" /><path d="M16 16l2-2M18.5 18.5l1.5-1.5" /></>),
   cart: (<><path d="M4 5h2l2 10h9l2-7H7" /><circle cx="9" cy="19" r="1.3" /><circle cx="17" cy="19" r="1.3" /></>),
+  shield: (<><path d="M12 3 5 6v5c0 4.4 3 7.4 7 8.9 4-1.5 7-4.5 7-8.9V6z" /><path d="M9.2 12l1.9 1.9 3.7-3.8" /></>),
 };
 
 export function Glyph({
