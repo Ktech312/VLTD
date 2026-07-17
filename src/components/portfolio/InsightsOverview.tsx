@@ -16,6 +16,7 @@ import {
   syncValueHistoryFromSupabase,
 } from "@/lib/valueHistory";
 import type { VaultItem } from "@/lib/vaultModel";
+import { Glyph } from "@/components/ui/Glyph";
 
 type TimeRange = "7d" | "30d" | "90d" | "all";
 
@@ -255,7 +256,7 @@ function ItemThumb({ item, size = 40 }: { item: VaultItem; size?: number }) {
         // eslint-disable-next-line @next/next/no-img-element
         <img src={img} alt="" className="h-full w-full object-cover" draggable={false} />
       ) : (
-        <div className="grid h-full w-full place-items-center text-sm opacity-30">📦</div>
+        <div className="grid h-full w-full place-items-center opacity-30"><Glyph name="box" size={16} /></div>
       )}
     </div>
   );
@@ -437,7 +438,9 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
           <h1 className="mt-2 text-3xl font-semibold">Your collection at a glance</h1>
           <Panel className="mt-8 text-center">
             <div className="py-10">
-              <div className="text-5xl opacity-30">📊</div>
+              <div className="flex justify-center opacity-30" style={{ color: GOLD }}>
+                <Glyph name="chart" size={46} />
+              </div>
               <div className="mt-4 text-lg font-semibold">No items yet</div>
               <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: "var(--muted)" }}>
                 Add your first collectible and Insights will fill in — value over time, category

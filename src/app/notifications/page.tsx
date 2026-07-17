@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getCurrentUser, getStoredActiveProfileId } from "@/lib/auth";
 import { fetchAlerts, timeAgo, type AlertItem } from "@/lib/notificationFeed";
+import { Glyph, type GlyphName } from "@/components/ui/Glyph";
 
 const LAST_SEEN_KEY = "vltd_alerts_last_seen";
 
-function kindIcon(kind: AlertItem["kind"]) {
-  return kind === "bug" ? "🐛" : kind === "message" ? "💬" : "🏛️";
+function kindGlyph(kind: AlertItem["kind"]): GlyphName {
+  return kind === "bug" ? "bug" : kind === "message" ? "message" : "exhibition";
 }
 
 function kindLabel(kind: AlertItem["kind"]) {
@@ -65,7 +66,9 @@ export default function NotificationsPage() {
 
         {!loading && !error && items.length === 0 && (
           <div className="rounded-xl border border-[color:var(--border)] p-10 text-center">
-            <div className="text-3xl mb-3">🔔</div>
+            <div className="mb-3 flex justify-center" style={{ color: "var(--gold, #F5B548)" }}>
+              <Glyph name="bell" size={30} />
+            </div>
             <p className="text-sm font-medium text-[color:var(--fg)]">No activity yet</p>
             <p className="mt-1 text-sm text-[color:var(--muted)]">
               Follows, comments on your exhibitions, and bug reports will show up here.
@@ -82,8 +85,8 @@ export default function NotificationsPage() {
               const inner = (
                 <>
                   {/* Icon */}
-                  <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--gold,#F5B548)]/10 text-lg">
-                    {kindIcon(n.kind)}
+                  <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--gold,#F5B548)]/10" style={{ color: "var(--gold, #F5B548)" }}>
+                    <Glyph name={kindGlyph(n.kind)} size={18} />
                   </div>
 
                   {/* Content */}

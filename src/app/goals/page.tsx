@@ -13,6 +13,7 @@ import {
   type GoalProgress,
 } from "@/lib/collectionGoals";
 import { loadItems } from "@/lib/vaultModel";
+import { Glyph } from "@/components/ui/Glyph";
 import { addWishlistItem } from "@/lib/wishlistModel";
 
 type Sort = "progress" | "alpha" | "recent";
@@ -108,7 +109,7 @@ function CelebrationBanner({ goal }: { goal: GoalProgress }) {
       style={{ background: "var(--theme-gold-subtle, rgba(245,181,72,0.1))", borderColor: "var(--theme-gold-border, rgba(245,181,72,0.35))" }}
     >
       <div className="flex items-center gap-3">
-        <div className="text-3xl">🏆</div>
+        <div style={{ color: "var(--theme-gold)" }}><Glyph name="trophy" size={26} /></div>
         <div>
           <div className="text-sm font-bold" style={{ color: "var(--theme-gold)" }}>Goal complete!</div>
           <div className="text-xs" style={{ color: "var(--fg)" }}>
@@ -240,7 +241,7 @@ export default function GoalsPage() {
             className="rounded-2xl p-10 text-center ring-1 ring-[color:var(--border)]"
             style={{ background: "var(--surface)" }}
           >
-            <div className="text-4xl">🎯</div>
+            <div className="flex justify-center" style={{ color: "var(--theme-gold)" }}><Glyph name="target" size={42} /></div>
             <div className="mt-4 text-base font-semibold" style={{ color: "var(--fg)" }}>No goals yet</div>
             <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
               Set a target — like "complete the 1984 Topps baseball set" or "collect 50 graded cards".

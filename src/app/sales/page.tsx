@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { loadSales, type SaleRecord } from "@/lib/salesHistory";
 import { syncSalesFromSupabase } from "@/lib/salesModel";
 import { loadItems, getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
+import { Glyph } from "@/components/ui/Glyph";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -321,7 +322,7 @@ export default function SalesHistoryPage() {
         {/* Empty state */}
         {sales.length === 0 && (
           <div className="rounded-2xl p-10 text-center ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
-            <div className="text-4xl mb-3">🏷️</div>
+            <div className="mb-3 flex justify-center" style={{ color: "var(--theme-gold)" }}><Glyph name="tag" size={40} /></div>
             <h2 className="text-lg font-semibold mb-1">No sales yet</h2>
             <p className="text-sm mb-5" style={{ color: "var(--muted)" }}>Mark vault items as sold to start tracking your P&L here.</p>
             <Link href="/vault" className="inline-flex items-center rounded-full px-5 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
