@@ -594,8 +594,9 @@ export default function EventsPage() {
   const [savedSuggestionIds, setSavedSuggestionIds] = useState<Set<string>>(() => new Set());
   const [selectedId, setSelectedId] = useState<string>("");
   const [nowMs, setNowMs] = useState(0);
-  const [eventZip, setEventZip] = useState("");
+  const [eventLocation, setEventLocation] = useState("");
   const [eventSearchCategory, setEventSearchCategory] = useState<EventFilter>("convention");
+  const [eventSearchRadius, setEventSearchRadius] = useState("100");
   const [eventSearchRange, setEventSearchRange] = useState("next_90");
   const [eventSearchLoading, setEventSearchLoading] = useState(false);
   const [eventSearchError, setEventSearchError] = useState("");
@@ -714,9 +715,9 @@ export default function EventsPage() {
   };
 
   const searchEvents = async () => {
-    const zip = eventZip.trim();
-    if (!/^\d{5}$/.test(zip)) {
-      setEventSearchError("Enter a valid 5-digit ZIP code.");
+    const location = eventLocation.trim();
+    if (location.length < 2) {
+      setEventSearchError("Enter a city or ZIP code.");
       return;
     }
 
@@ -725,8 +726,9 @@ export default function EventsPage() {
     setEventSearchQuery("");
 
     const params = new URLSearchParams({
-      zip,
+      location,
       category: eventSearchCategory,
+      radius: eventSearchRadius,
       dateRange: eventSearchRange,
     });
 
@@ -739,10 +741,11 @@ export default function EventsPage() {
     }
 
     const payload = (await response.json()) as {
-      query?: string;
-      results?: EventSuggestion[];
-      message?: string;
-    };
+        query?: string;
+        searchArea?: string;
+        results?: EventSuggestion[];
+        message?: string;
+      };
 
     if (!response.ok) {
       setEventSuggestions([]);
@@ -752,8 +755,8 @@ export default function EventsPage() {
     }
 
     const results = payload.results ?? [];
-    setEventSuggestions(results);
-    setEventSearchQuery(payload.query ?? "");
+      setEventSuggestions(results);
+      setEventSearchQuery(payload.searchArea ? `${payload.query ?? ""} - ${payload.searchArea}` : payload.query ?? "");
     if (!results.length) {
       setEventSearchError("No event suggestions found. Try another ZIP or category.");
     }
@@ -871,7 +874,7 @@ export default function EventsPage() {
             <div className="min-w-0 flex-1">
               <div className="text-[11px] font-black uppercase tracking-[0.18em] text-[color:var(--theme-gold)]">Find Events</div>
               <p className="mt-1 text-xs text-[color:var(--muted)]">
-                Search Google Events through SerpApi by collector category and ZIP. Results stay as suggestions until saved or approved later.
+                Search Google Events through SerpApi by collector category, city or ZIP, and range. Range is a Google-guided nearby search, not an exact radius fence.
               </p>
             </div>
             <label className="block min-w-[170px]">
@@ -889,18 +892,30 @@ export default function EventsPage() {
                 <option value="music">Music / Vinyl</option>
               </select>
             </label>
-            <label className="block w-full lg:w-[130px]">
-              <span className="mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted)]">ZIP Code</span>
+            <label className="block w-full lg:w-[170px]">
+              <span className="mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted)]">City or ZIP</span>
               <input
-                value={eventZip}
-                onChange={(event) => setEventZip(event.target.value.replace(/[^\d]/g, "").slice(0, 5))}
+                value={eventLocation}
+                onChange={(event) => setEventLocation(event.target.value.slice(0, 80))}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") void searchEvents();
                 }}
-                inputMode="numeric"
-                placeholder="92101"
+                placeholder="San Diego or 92101"
                 className="h-10 w-full rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] px-3 text-sm font-bold text-[color:var(--fg)] outline-none placeholder:text-[color:var(--muted)]"
               />
+            </label>
+            <label className="block min-w-[130px]">
+              <span className="mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted)]">Range</span>
+              <select
+                value={eventSearchRadius}
+                onChange={(event) => setEventSearchRadius(event.target.value)}
+                className="h-10 w-full rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] px-3 text-sm font-bold text-[color:var(--fg)] outline-none"
+              >
+                <option value="25">25 miles</option>
+                <option value="50">50 miles</option>
+                <option value="100">100 miles</option>
+                <option value="250">250 miles</option>
+              </select>
             </label>
             <label className="block min-w-[150px]">
               <span className="mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted)]">Date</span>
