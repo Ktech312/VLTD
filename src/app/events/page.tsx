@@ -9,7 +9,10 @@ import {
   ChevronRight,
   ExternalLink,
   Globe2,
+  Loader2,
   MapPin,
+  PlusCircle,
+  Search,
   Sparkles,
   Star,
   Ticket,
@@ -44,6 +47,22 @@ type EventCategory = "convention" | "card_show" | "auction" | "drop" | "gallery"
 type EventFilter = "all" | EventCategory;
 
 const SAVED_EVENTS_KEY = "vltd_saved_event_ids_v1";
+const EVENT_SEARCH_SAVED_KEY = "vltd_event_search_saved_v1";
+
+type EventSuggestion = {
+  id: string;
+  title: string;
+  when: string;
+  startDate: string | null;
+  venue: string | null;
+  location: string | null;
+  description: string | null;
+  link: string | null;
+  mapLink: string | null;
+  ticketLink: string | null;
+  thumbnail: string | null;
+  source: string;
+};
 
 const fallbackEvents: CollectorEvent[] = [
   {
@@ -508,14 +527,80 @@ function EventRow({
   );
 }
 
+function EventSuggestionCard({
+  suggestion,
+  saved,
+  onSave,
+}: {
+  suggestion: EventSuggestion;
+  saved: boolean;
+  onSave: () => void;
+}) {
+  return (
+    <div className="grid gap-3 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--theme-card)] p-3 md:grid-cols-[112px_minmax(0,1fr)_auto]">
+      <div
+        className="h-24 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] bg-cover bg-center"
+        style={{
+          backgroundImage: suggestion.thumbnail
+            ? `linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.42)), url(${suggestion.thumbnail})`
+            : "radial-gradient(circle at 70% 18%, rgba(245,181,72,0.24), transparent 30%), linear-gradient(135deg, rgba(14,34,48,0.88), rgba(4,7,10,0.94))",
+        }}
+      />
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="line-clamp-1 text-sm font-black text-[color:var(--fg)]">{suggestion.title}</h3>
+          <span className="rounded-[5px] border border-[color:var(--border)] bg-black/20 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-[color:var(--muted)]">
+            {suggestion.source}
+          </span>
+        </div>
+        <p className="mt-1 text-xs font-bold uppercase tracking-[0.06em] text-[color:var(--theme-gold)]">{suggestion.when}</p>
+        <p className="mt-1 line-clamp-1 text-xs text-[color:var(--muted)]">
+          {[suggestion.venue, suggestion.location].filter(Boolean).join(", ") || "Location not listed"}
+        </p>
+        {suggestion.description && (
+          <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-[color:var(--muted)]">{suggestion.description}</p>
+        )}
+      </div>
+      <div className="flex shrink-0 flex-wrap items-center gap-2 md:flex-col md:items-stretch">
+        <button
+          type="button"
+          onClick={onSave}
+          className="inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border border-[color:var(--theme-gold-border)] bg-[color:var(--pill)] px-3 text-xs font-black text-[color:var(--theme-gold)]"
+        >
+          <PlusCircle size={14} />
+          {saved ? "Saved" : "Save"}
+        </button>
+        {(suggestion.ticketLink || suggestion.link) && (
+          <a
+            href={suggestion.ticketLink ?? suggestion.link ?? "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border border-[color:var(--border)] bg-black/20 px-3 text-xs font-black text-[color:var(--fg)]"
+          >
+            Open <ExternalLink size={13} />
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function EventsPage() {
   const [events, setEvents] = useState<CollectorEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<EventFilter>("all");
   const [savedIds, setSavedIds] = useState<Set<string>>(() => new Set());
+  const [savedSuggestionIds, setSavedSuggestionIds] = useState<Set<string>>(() => new Set());
   const [selectedId, setSelectedId] = useState<string>("");
   const [nowMs, setNowMs] = useState(0);
+  const [eventZip, setEventZip] = useState("");
+  const [eventSearchCategory, setEventSearchCategory] = useState<EventFilter>("convention");
+  const [eventSearchRange, setEventSearchRange] = useState("next_90");
+  const [eventSearchLoading, setEventSearchLoading] = useState(false);
+  const [eventSearchError, setEventSearchError] = useState("");
+  const [eventSearchQuery, setEventSearchQuery] = useState("");
+  const [eventSuggestions, setEventSuggestions] = useState<EventSuggestion[]>([]);
   const detailRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -532,6 +617,20 @@ export default function EventsPage() {
         setSavedIds(new Set(parsed));
       } catch {
         setSavedIds(new Set());
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const stored = window.localStorage.getItem(EVENT_SEARCH_SAVED_KEY);
+      if (!stored) return;
+      try {
+        const parsed = JSON.parse(stored) as string[];
+        setSavedSuggestionIds(new Set(parsed));
+      } catch {
+        setSavedSuggestionIds(new Set());
       }
     }, 0);
     return () => window.clearTimeout(timer);
@@ -602,6 +701,63 @@ export default function EventsPage() {
       window.localStorage.setItem(SAVED_EVENTS_KEY, JSON.stringify(Array.from(next)));
       return next;
     });
+  };
+
+  const toggleSavedSuggestion = (id: string) => {
+    setSavedSuggestionIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      window.localStorage.setItem(EVENT_SEARCH_SAVED_KEY, JSON.stringify(Array.from(next)));
+      return next;
+    });
+  };
+
+  const searchEvents = async () => {
+    const zip = eventZip.trim();
+    if (!/^\d{5}$/.test(zip)) {
+      setEventSearchError("Enter a valid 5-digit ZIP code.");
+      return;
+    }
+
+    setEventSearchLoading(true);
+    setEventSearchError("");
+    setEventSearchQuery("");
+
+    const params = new URLSearchParams({
+      zip,
+      category: eventSearchCategory,
+      dateRange: eventSearchRange,
+    });
+
+    const response = await fetch(`/api/events/search?${params.toString()}`).catch(() => null);
+    if (!response) {
+      setEventSuggestions([]);
+      setEventSearchError("Event search failed. Try again.");
+      setEventSearchLoading(false);
+      return;
+    }
+
+    const payload = (await response.json()) as {
+      query?: string;
+      results?: EventSuggestion[];
+      message?: string;
+    };
+
+    if (!response.ok) {
+      setEventSuggestions([]);
+      setEventSearchError(payload.message ? payload.message : "Event search failed.");
+      setEventSearchLoading(false);
+      return;
+    }
+
+    const results = payload.results ?? [];
+    setEventSuggestions(results);
+    setEventSearchQuery(payload.query ?? "");
+    if (!results.length) {
+      setEventSearchError("No event suggestions found. Try another ZIP or category.");
+    }
+    setEventSearchLoading(false);
   };
 
   const selectEvent = (id: string, scroll = false) => {
@@ -708,6 +864,92 @@ export default function EventsPage() {
             Saved Events
             <span className="rounded bg-black/30 px-1.5 text-[10px] text-[color:var(--muted)]">{savedIds.size}</span>
           </button>
+        </section>
+
+        <section className="mt-4 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] font-black uppercase tracking-[0.18em] text-[color:var(--theme-gold)]">Find Events</div>
+              <p className="mt-1 text-xs text-[color:var(--muted)]">
+                Search Google Events through SerpApi by collector category and ZIP. Results stay as suggestions until saved or approved later.
+              </p>
+            </div>
+            <label className="block min-w-[170px]">
+              <span className="mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted)]">Category</span>
+              <select
+                value={eventSearchCategory}
+                onChange={(event) => setEventSearchCategory(event.target.value as EventFilter)}
+                className="h-10 w-full rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] px-3 text-sm font-bold text-[color:var(--fg)] outline-none"
+              >
+                <option value="convention">Conventions</option>
+                <option value="card_show">Card Shows</option>
+                <option value="auction">Auctions</option>
+                <option value="drop">Drops</option>
+                <option value="gallery">Gallery Events</option>
+                <option value="music">Music / Vinyl</option>
+              </select>
+            </label>
+            <label className="block w-full lg:w-[130px]">
+              <span className="mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted)]">ZIP Code</span>
+              <input
+                value={eventZip}
+                onChange={(event) => setEventZip(event.target.value.replace(/[^\d]/g, "").slice(0, 5))}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") void searchEvents();
+                }}
+                inputMode="numeric"
+                placeholder="92101"
+                className="h-10 w-full rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] px-3 text-sm font-bold text-[color:var(--fg)] outline-none placeholder:text-[color:var(--muted)]"
+              />
+            </label>
+            <label className="block min-w-[150px]">
+              <span className="mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted)]">Date</span>
+              <select
+                value={eventSearchRange}
+                onChange={(event) => setEventSearchRange(event.target.value)}
+                className="h-10 w-full rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] px-3 text-sm font-bold text-[color:var(--fg)] outline-none"
+              >
+                <option value="next_90">Upcoming</option>
+                <option value="this_month">This month</option>
+                <option value="next_week">Next week</option>
+                <option value="today">Today</option>
+              </select>
+            </label>
+            <button
+              type="button"
+              onClick={() => void searchEvents()}
+              disabled={eventSearchLoading}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-[7px] bg-[color:var(--theme-gold)] px-5 text-sm font-black text-black disabled:opacity-60"
+            >
+              {eventSearchLoading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+              Search
+            </button>
+          </div>
+
+          {(eventSearchError || eventSuggestions.length > 0) && (
+            <div className="mt-4 border-t border-[color:var(--border)] pt-4">
+              {eventSearchQuery && (
+                <div className="mb-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--muted)]">
+                  Search: {eventSearchQuery}
+                </div>
+              )}
+              {eventSearchError && (
+                <div className="mb-3 rounded-[7px] border border-[color:var(--border)] bg-black/20 px-3 py-2 text-sm text-[color:var(--muted)]">
+                  {eventSearchError}
+                </div>
+              )}
+              <div className="grid gap-3">
+                {eventSuggestions.map((suggestion) => (
+                  <EventSuggestionCard
+                    key={suggestion.id}
+                    suggestion={suggestion}
+                    saved={savedSuggestionIds.has(suggestion.id)}
+                    onSave={() => toggleSavedSuggestion(suggestion.id)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </section>
 
         <section className="mt-4 md:hidden">
