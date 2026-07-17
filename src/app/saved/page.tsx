@@ -10,6 +10,7 @@ import {
   syncWatchlistFromSupabase,
   type WatchlistItem,
 } from "@/lib/watchlistModel";
+import { Glyph } from "@/components/ui/Glyph";
 
 export default function SavedPage() {
   const router = useRouter();
@@ -83,7 +84,7 @@ export default function SavedPage() {
               border: "1px solid var(--theme-border, rgba(245,181,72,0.12))",
             }}
           >
-            <div className="text-5xl">🃏</div>
+            <div className="flex justify-center" style={{ color: "var(--theme-gold)" }}><Glyph name="cards" size={46} /></div>
             <div>
               <h2 className="text-lg font-black text-text-primary">Nothing saved yet</h2>
               <p className="mt-1 text-sm text-[color:var(--muted)]">
@@ -96,7 +97,7 @@ export default function SavedPage() {
               className="mt-2 inline-flex h-11 items-center rounded-full px-6 text-sm font-black text-[#0B0B0B] transition hover:brightness-105"
               style={{ background: "linear-gradient(135deg, #8B6914 0%, #C8941F 30%, #F5B548 60%, #C8941F 100%)" }}
             >
-              🃏 Open The Flip
+              <Glyph name="cards" size={16} /><span className="ml-2">Open The Flip</span>
             </Link>
           </div>
         )}

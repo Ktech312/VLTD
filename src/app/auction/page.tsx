@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { Glyph } from "@/components/ui/Glyph";
 import {
   fetchActiveAuctions,
   getAuctionCountdown,
@@ -220,7 +221,7 @@ function EmptyState({
 }) {
   return (
     <div className="text-center py-20">
-      <div className="text-5xl mb-4">🔨</div>
+      <div className="mb-4 flex justify-center" style={{ color: "var(--theme-gold)" }}><Glyph name="gavel" size={46} /></div>
       <div className="text-base font-semibold mb-2" style={{ color: "var(--fg)" }}>
         {hasFilters ? "No auctions match your filters" : "No live auctions right now"}
       </div>
