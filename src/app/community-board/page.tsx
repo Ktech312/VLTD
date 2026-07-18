@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { Glyph } from "@/components/ui/Glyph";
 
 // ── Types ───────────────────────────────────────────────────────
 
@@ -334,7 +335,7 @@ export default function VLTLoungePage() {
                 className="flex flex-col items-center gap-3 rounded-[28px] px-6 py-12 text-center"
                 style={{ background: "var(--theme-card)", border: "1px solid var(--theme-border)" }}
               >
-                <div className="text-4xl">🛋️</div>
+                <div className="flex justify-center" style={{ color: "var(--theme-gold)" }}><Glyph name="sofa" size={40} /></div>
                 <div className="text-lg font-black" style={{ color: "var(--theme-text-primary)" }}>
                   No spotlights yet
                 </div>

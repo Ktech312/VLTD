@@ -10,6 +10,7 @@ import DiscoverSwipe from "@/components/DiscoverSwipe";
 import { type UniverseKey, UNIVERSE_KEYS, UNIVERSE_LABEL, isUniverseKey } from "@/lib/taxonomy";
 import { loadItems } from "@/lib/vaultModel";
 import { loadWatchlist } from "@/lib/watchlistModel";
+import { Glyph } from "@/components/ui/Glyph";
 import { buildUserPreferences, sortByPersonalization } from "@/lib/personalization";
 
 const TABS: Array<"All" | UniverseKey> = ["All", ...UNIVERSE_KEYS];
@@ -442,7 +443,7 @@ export default function DiscoverPage() {
             className="group flex flex-col gap-2 rounded-[16px] px-4 py-4 transition hover:-translate-y-0.5 hover:brightness-110"
             style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))", border: "1px solid var(--theme-border, rgba(245,181,72,0.14))" }}
           >
-            <div className="text-2xl">🛋️</div>
+            <div style={{ color: "var(--theme-gold, #F5B548)" }}><Glyph name="sofa" size={26} /></div>
             <div>
               <div className="text-sm font-black" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>VLT Lounge</div>
               <div className="mt-0.5 text-[11px]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
@@ -458,7 +459,7 @@ export default function DiscoverPage() {
             className="group flex flex-col gap-2 rounded-[16px] px-4 py-4 transition hover:-translate-y-0.5 hover:brightness-110"
             style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))", border: "1px solid var(--theme-border, rgba(245,181,72,0.14))" }}
           >
-            <div className="text-2xl">🛒</div>
+            <div style={{ color: "var(--theme-gold, #F5B548)" }}><Glyph name="cart" size={26} /></div>
             <div>
               <div className="text-sm font-black" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>Marketplace</div>
               <div className="mt-0.5 text-[11px]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
