@@ -13,6 +13,7 @@ import { getCollectionValuationScore } from "@/lib/collectionValuationScore";
 import { getCollectorStrength } from "@/lib/collectorStrength";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import SeasonalBanner from "@/components/SeasonalBanner";
+import { Glyph } from "@/components/ui/Glyph";
 
 const FOCUS_LS_KEY = "vltd_primary_focus";
 
@@ -337,7 +338,7 @@ function FeaturedGalleryCard({ galleries }: { galleries: Gallery[] }) {
       <Link href={"/gallery/" + g.id} style={{ display: "block", width: "100%", height: "200px", borderRadius: "10px", border: `2px solid rgba(245,181,72,0.65)`, boxShadow: "0 0 0 1px rgba(245,181,72,0.18), 0 8px 32px rgba(0,0,0,0.45)", background: "rgba(10,18,35,0.9)", overflow: "hidden" }}>
         {g.coverImage
           ? <img src={g.coverImage} alt={g.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px", opacity: 0.2 }}>🖼️</div>}
+          : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px", opacity: 0.2 }}><Glyph name="exhibition" size={22} /></div>}
       </Link>
       <div style={{ marginTop: "9px" }}>
         <div style={{ fontFamily: C.r, fontSize: "15px", fontWeight: 600, color: C.text }}>{g.title || "Untitled"}</div>
@@ -413,7 +414,7 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={g.coverImage} alt={g.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} draggable={false} />
               ) : (
-                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", opacity: 0.2 }}>🖼️</div>
+                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.2 }}><Glyph name="exhibition" size={20} /></div>
               )}
             </button>
           );
@@ -465,7 +466,7 @@ function CollectionsStrip({ galleries }: { galleries: Gallery[] }) {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={g.coverImage} alt={g.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
-              <span style={{ fontSize: "20px", opacity: 0.2 }}>🖼️</span>
+              <span style={{ opacity: 0.2 }}><Glyph name="exhibition" size={20} /></span>
             )}
           </div>
           <div style={{ fontSize: "11px", fontWeight: 500, marginTop: "5px", color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.title}</div>
@@ -577,7 +578,7 @@ function RecentSidebarItems({ items }: { items: VaultItem[] }) {
             {item.imageFrontUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={item.imageFrontUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            ) : "📦"}
+            ) : <span style={{ color: C.muted2 }}><Glyph name="box" size={14} /></span>}
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ fontSize: "12px", fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</div>
@@ -644,7 +645,7 @@ function CuratorStrengthCard({
                       {img ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      ) : "📦"}
+                      ) : <span style={{ color: C.muted2 }}><Glyph name="box" size={14} /></span>}
                     </div>
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontSize: "12px", fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</div>
