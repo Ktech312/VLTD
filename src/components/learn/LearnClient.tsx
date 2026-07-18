@@ -20,9 +20,19 @@ import {
   syncSavedArticlesFromSupabase,
 } from "@/lib/savedArticles";
 
-// Warm-dark page base — covers the app's blue top-left glow on this page.
-const PAGE_BG_COLOR = "#040507";
-const PAGE_BG_IMAGE = "radial-gradient(circle at 22% 0%, rgba(245,181,72,0.05), transparent 46%)";
+// Warm-dark page base — painted on a dedicated absolute layer (a global
+// `main { background !important }` rule overrides an inline bg on <main>, so
+// we cover the blue glow with a child layer instead).
+const PAGE_BG_COLOR = "#0a0806";
+const PAGE_BG_IMAGE = "radial-gradient(circle at 22% 0%, rgba(245,181,72,0.06), transparent 48%)";
+
+// Compact grading reference for the sidebar.
+const GRADING_SCALES = [
+  { label: "CGC / CBCS", range: "10.0 Gem Mint → 0.5", note: "Comics" },
+  { label: "PSA", range: "PSA 10 → PSA 1", note: "Cards & TCG" },
+  { label: "BGS / Beckett", range: "10 Pristine → 1", note: "Cards" },
+  { label: "Raw", range: "Gem Mint → Poor", note: "Ungraded" },
+];
 
 function Thumb({ article, className = "" }: { article: LearnArticle; className?: string }) {
   if (article.image) {
@@ -87,12 +97,14 @@ export default function LearnClient() {
   const featured = FEATURED_ARTICLE;
 
   return (
-    <main
-      className="min-h-screen text-[color:var(--fg)]"
-      style={{ backgroundColor: PAGE_BG_COLOR, backgroundImage: PAGE_BG_IMAGE }}
-    >
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_312px] lg:items-start">
+    <main className="relative min-h-screen text-[color:var(--fg)]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ backgroundColor: PAGE_BG_COLOR, backgroundImage: PAGE_BG_IMAGE, zIndex: 0 }}
+      />
+      <div className="relative z-[1] mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_312px]">
           {/* ── Main column (header lives here so the sidebar rises to the top) ── */}
           <div className="min-w-0">
             <header className="mb-5">
@@ -169,8 +181,8 @@ export default function LearnClient() {
             )}
           </div>
 
-          {/* ── Sidebar ── */}
-          <aside className="space-y-4">
+          {/* ── Sidebar (distributes to fill the column height — no dead space) ── */}
+          <aside className="flex flex-col gap-4 lg:justify-between">
             {/* Collector Playbooks */}
             <section className="rounded-[8px] border border-[color:var(--border)] bg-vault-card p-3.5">
               <h3 className="mb-2.5 flex items-center gap-1.5 text-sm font-black text-text-primary">
@@ -189,6 +201,24 @@ export default function LearnClient() {
               <div className="divide-y divide-[color:var(--border)]">
                 {QUICK_ARTICLES.map((a) => (
                   <SidebarRow key={a.slug} a={a} />
+                ))}
+              </div>
+            </section>
+
+            {/* Grading Scales (quick reference) */}
+            <section className="rounded-[8px] border border-[color:var(--border)] bg-vault-card p-3.5">
+              <h3 className="mb-2.5 flex items-center gap-1.5 text-sm font-black text-text-primary">
+                <Glyph name="check" size={16} /> Grading Scales
+              </h3>
+              <div className="divide-y divide-[color:var(--border)]">
+                {GRADING_SCALES.map((g) => (
+                  <div key={g.label} className="flex items-center justify-between gap-2 py-2 first:pt-0 last:pb-0">
+                    <span className="min-w-0">
+                      <span className="block text-[13px] font-bold leading-tight text-text-primary">{g.label}</span>
+                      <span className="block text-[10px] text-[color:var(--muted2)]">{g.note}</span>
+                    </span>
+                    <span className="shrink-0 text-[11px] font-semibold" style={{ color: "var(--theme-gold,#F5B548)" }}>{g.range}</span>
+                  </div>
                 ))}
               </div>
             </section>

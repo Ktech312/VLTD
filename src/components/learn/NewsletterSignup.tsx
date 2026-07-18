@@ -59,7 +59,7 @@ export default function NewsletterSignup({ source = "learn" }: { source?: string
             if (status === "error") setStatus("idle");
           }}
           placeholder="Your email address"
-          className="min-h-10 flex-1 rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm text-[color:var(--fg)] outline-none placeholder:text-[color:var(--muted2)] focus:border-[color:var(--theme-gold,#F5B548)]"
+          className="min-h-10 w-full min-w-0 flex-1 rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm text-[color:var(--fg)] outline-none placeholder:text-[color:var(--muted2)] focus:border-[color:var(--theme-gold,#F5B548)]"
           aria-label="Email address"
         />
         <button
