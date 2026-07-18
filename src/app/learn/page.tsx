@@ -2,24 +2,12 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { TAXONOMY, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+import { Glyph, universeGlyphName } from "@/components/ui/Glyph";
 
 export const metadata: Metadata = {
   title: "Collector Universe Guide — VLTD",
   description:
     "Learn how VLTD organizes collectibles across Pop Culture, Sports, TCG, Music, Games, Jewelry & Apparel, and Misc. Find your universe and start building your vault.",
-};
-
-const UNIVERSE_ICONS: Record<UniverseKey, string> = {
-  POP_CULTURE: "🎭",
-  SPORTS: "🏆",
-  TCG: "🃏",
-  MUSIC: "🎵",
-  JEWELRY_APPAREL: "💎",
-  GAMES: "🎮",
-  BUILT_BOTANY: "🌿",
-  MISC: "✦",
-  AUTOMOTIVE: "🚗",
-  ART: "🎨",
 };
 
 const UNIVERSE_DESCRIPTIONS: Record<UniverseKey, string> = {
@@ -167,7 +155,7 @@ export default function LearnPage() {
                   style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{UNIVERSE_ICONS[key]}</span>
+                    <span style={{ color: "var(--theme-gold)" }}><Glyph name={universeGlyphName(key)} size={26} /></span>
                     <div>
                       <div className="text-base font-black text-text-primary">{UNIVERSE_LABEL[key]}</div>
                       <div className="text-[11px] text-[color:var(--muted2)]">

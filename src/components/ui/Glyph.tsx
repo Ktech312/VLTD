@@ -24,7 +24,15 @@ export type GlyphName =
   | "key"
   | "cart"
   | "shield"
-  | "cards";
+  | "cards"
+  | "music"
+  | "gem"
+  | "game"
+  | "leaf"
+  | "star"
+  | "car"
+  | "palette"
+  | "burst";
 
 const PATHS: Record<GlyphName, ReactNode> = {
   bell: (<><path d="M6 16v-5a6 6 0 0 1 12 0v5" /><path d="M4.5 16h15" /><path d="M10.4 19a1.7 1.7 0 0 0 3.2 0" /></>),
@@ -47,7 +55,30 @@ const PATHS: Record<GlyphName, ReactNode> = {
   cart: (<><path d="M4 5h2l2 10h9l2-7H7" /><circle cx="9" cy="19" r="1.3" /><circle cx="17" cy="19" r="1.3" /></>),
   shield: (<><path d="M12 3 5 6v5c0 4.4 3 7.4 7 8.9 4-1.5 7-4.5 7-8.9V6z" /><path d="M9.2 12l1.9 1.9 3.7-3.8" /></>),
   cards: (<><rect x="5" y="7" width="9" height="12.5" rx="1.6" /><path d="M8.6 7 15 5l3 11" /><path d="M7.5 11h4M7.5 14h2.5" /></>),
+  music: (<><path d="M9 17V6l10-2v9" /><circle cx="6.5" cy="17" r="2.5" /><circle cx="16.5" cy="15" r="2.5" /></>),
+  gem: (<><path d="M6 4h12l4 5-10 11L2 9z" /><path d="M2 9h20" /><path d="M9 4 12 20 15 4" /></>),
+  game: (<><rect x="3" y="8.5" width="18" height="8" rx="4" /><path d="M7 11.5v3M5.5 13h3" /><circle cx="15.5" cy="12" r="0.9" fill="currentColor" stroke="none" /><circle cx="18" cy="14" r="0.9" fill="currentColor" stroke="none" /></>),
+  leaf: (<><path d="M5 19C5 11 10 6 19 5c1 9-4 15-14 14z" /><path d="M6 18c3-4 6-7 9-8" /></>),
+  star: (<><path d="M12 4l2.3 5.2 5.7.5-4.3 3.8 1.3 5.5L12 16.9 7 19l1.3-5.5L4 9.7l5.7-.5z" /></>),
+  car: (<><path d="M4 15l1.6-5h12.8L20 15" /><path d="M3.5 15h17v3h-2.5v-1.2H6V18H3.5z" /><circle cx="8" cy="16.5" r="1.4" /><circle cx="16" cy="16.5" r="1.4" /></>),
+  palette: (<><path d="M12 4a8 8 0 1 0 0 16c.9 0 1.4-.7 1.4-1.6 0-1.4 1-1.9 2.3-1.9A4 4 0 0 0 20 12a8 8 0 0 0-8-8z" /><circle cx="8.5" cy="10.5" r="1" fill="currentColor" stroke="none" /><circle cx="12" cy="8.5" r="1" fill="currentColor" stroke="none" /><circle cx="15.5" cy="10.5" r="1" fill="currentColor" stroke="none" /></>),
+  burst: (<><path d="M12 3l1.7 3.3 3.5-1.1-.8 3.6 3.6.6-2.5 2.8 2.5 2.8-3.6.6.8 3.6-3.5-1.1L12 21l-1.7-3.3-3.5 1.1.8-3.6-3.6-.6 2.5-2.8-2.5-2.8 3.6-.6-.8-3.6 3.5 1.1z" /></>),
 };
+
+// Map a universe/category key to a themed glyph (replaces the old emoji map).
+export function universeGlyphName(universe: string): GlyphName {
+  const u = (universe || "").toUpperCase();
+  if (u.includes("POP") || u.includes("COMIC")) return "burst";
+  if (u.includes("SPORT")) return "trophy";
+  if (u === "TCG" || u.includes("CARD")) return "cards";
+  if (u.includes("MUSIC") || u.includes("VINYL")) return "music";
+  if (u.includes("JEWEL") || u.includes("APPAREL")) return "gem";
+  if (u.includes("GAME")) return "game";
+  if (u.includes("BOTANY") || u.includes("BUILT")) return "leaf";
+  if (u.includes("AUTO")) return "car";
+  if (u.includes("ART")) return "palette";
+  return "star";
+}
 
 export function Glyph({
   name,

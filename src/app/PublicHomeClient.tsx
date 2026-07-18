@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { Glyph, type GlyphName } from "@/components/ui/Glyph";
 import { useRouter } from "next/navigation";
 import { getCurrentUser, initAuthListener } from "@/lib/auth";
 import { useTheme } from "@/lib/ThemeContext";
@@ -27,7 +28,7 @@ type PublicGalleryCard = {
 };
 
 type UniverseCard = {
-  icon: string;
+  icon: GlyphName;
   title: string;
   meta: string;
   description: string;
@@ -113,43 +114,43 @@ const FEATURE_CARDS: { icon: React.ReactNode; title: string; description: string
 
 const VAULT_UNIVERSES: UniverseCard[] = [
   {
-    icon: "🎭",
+    icon: "burst",
     title: "Pop Culture",
     meta: "Comics · Figures",
     description: "Marvel, DC, manga, figures, and entertainment collectibles.",
   },
   {
-    icon: "🏆",
+    icon: "trophy",
     title: "Sports",
     meta: "Cards · Autos",
     description: "Sports cards, jerseys, autographs, and game-used gear.",
   },
   {
-    icon: "🃏",
+    icon: "cards",
     title: "TCG",
     meta: "Singles · Slabs",
     description: "Pokemon, Magic, Yu-Gi-Oh!, and graded cards.",
   },
   {
-    icon: "🎵",
+    icon: "music",
     title: "Music",
     meta: "Vinyl · Albums",
     description: "Vinyl, signed records, instruments, and artist collectibles.",
   },
   {
-    icon: "💎",
+    icon: "gem",
     title: "Jewelry",
     meta: "Watches · Drops",
     description: "Watches, luxury accessories, apparel, and limited drops.",
   },
   {
-    icon: "🎮",
+    icon: "game",
     title: "Games",
     meta: "Consoles · Sealed",
     description: "Video games, consoles, controllers, and arcade pieces.",
   },
   {
-    icon: "✨",
+    icon: "star",
     title: "Misc",
     meta: "Unique · Mixed",
     description: "Coins, art, oddities, and anything unique.",
@@ -721,7 +722,7 @@ export default function PublicHomeClient() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-sm font-black" style={{ color: 'var(--fg)' }}>
-                    <span className="mr-2">{universe.icon}</span>
+                    <span className="mr-2 inline-flex" style={{ color: "var(--theme-gold, #F5B548)" }}><Glyph name={universe.icon} size={20} /></span>
                     {universe.title}
                   </div>
                   <div className="mt-1 text-[10px] uppercase tracking-[0.22em]" style={{ color: 'var(--muted)' }}>
