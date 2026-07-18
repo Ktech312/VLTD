@@ -4,6 +4,7 @@ import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
 
 import ItemIntelligencePanel from "@/components/ItemIntelligencePanel";
+import { EmptyVault } from "@/components/ui/EmptyVault";
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
@@ -216,6 +217,7 @@ export default function UniverseDrillPage({
   const uKey = normUniverse(key) as UniverseKey;
 
   const [items, setItems] = useState<ModelItem[]>([]);
+  const [hydrated, setHydrated] = useState(false);
   const [rankMode, setRankMode] = useState<RankMode>("gain");
   const [range, setRange] = useState<TimeRange>("30d");
   const [q, setQ] = useState("");
@@ -224,6 +226,7 @@ export default function UniverseDrillPage({
     const seed = toSeedItemsFromDemo();
     const loaded = loadItemsOrSeed(seed);
     setItems(loaded);
+    setHydrated(true);
     let active = true;
     void syncVaultItemsFromSupabase().then(() => {
       if (active) setItems(loadItems());
@@ -462,6 +465,17 @@ export default function UniverseDrillPage({
         : range === "90d"
           ? "Last 90 days"
           : "All time";
+
+  if (hydrated && items.length === 0) {
+    return (
+      <EmptyVault
+        glyph="box"
+        eyebrow={UNIVERSE_LABEL[uKey] ?? "Universe"}
+        title="Nothing in your vault yet"
+        message="Add items to your vault and this universe's insights will appear here automatically."
+      />
+    );
+  }
 
   return (
     <main className="text-[color:var(--fg)]">
