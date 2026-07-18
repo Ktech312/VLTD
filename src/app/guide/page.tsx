@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Glyph, emojiGlyphName } from "@/components/ui/Glyph";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -200,7 +201,7 @@ function CategoryBadge({ category }: { category: Feature["category"] }) {
       className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold ring-1"
       style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
     >
-      {cat?.emoji} {cat?.label}
+      {cat ? <Glyph name={emojiGlyphName(cat.emoji)} size={15} className="mr-1.5 inline align-[-2px]" /> : null}{cat?.label}
     </span>
   );
 }
@@ -232,7 +233,7 @@ function FeatureCard({ feature }: { feature: Feature }) {
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span className="text-3xl">{feature.emoji}</span>
+            <span style={{ color: "var(--theme-gold)" }}><Glyph name={emojiGlyphName(feature.emoji)} size={28} /></span>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-xl font-bold" style={{ color: "var(--fg)" }}>{feature.name}</h2>
@@ -338,7 +339,7 @@ export default function GuidePage() {
                   className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 transition hover:ring-[color:var(--theme-gold)]"
                   style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}
                 >
-                  {cat.emoji} {cat.label}
+                  <Glyph name={emojiGlyphName(cat.emoji)} size={15} className="mr-1.5 inline align-[-2px]" />{cat.label}
                 </a>
               ) : null;
             })}
@@ -364,7 +365,7 @@ export default function GuidePage() {
                 className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition hover:bg-[color:var(--pill)]"
                 style={{ color: "var(--fg)" }}
               >
-                <span>{f.emoji}</span>
+                <span style={{ color: "var(--theme-gold)" }}><Glyph name={emojiGlyphName(f.emoji)} size={18} /></span>
                 <span className="truncate font-medium">{f.name}</span>
               </a>
             ))}

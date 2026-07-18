@@ -32,7 +32,11 @@ export type GlyphName =
   | "star"
   | "car"
   | "palette"
-  | "burst";
+  | "burst"
+  | "users"
+  | "check"
+  | "share"
+  | "clock";
 
 const PATHS: Record<GlyphName, ReactNode> = {
   bell: (<><path d="M6 16v-5a6 6 0 0 1 12 0v5" /><path d="M4.5 16h15" /><path d="M10.4 19a1.7 1.7 0 0 0 3.2 0" /></>),
@@ -63,7 +67,23 @@ const PATHS: Record<GlyphName, ReactNode> = {
   car: (<><path d="M4 15l1.6-5h12.8L20 15" /><path d="M3.5 15h17v3h-2.5v-1.2H6V18H3.5z" /><circle cx="8" cy="16.5" r="1.4" /><circle cx="16" cy="16.5" r="1.4" /></>),
   palette: (<><path d="M12 4a8 8 0 1 0 0 16c.9 0 1.4-.7 1.4-1.6 0-1.4 1-1.9 2.3-1.9A4 4 0 0 0 20 12a8 8 0 0 0-8-8z" /><circle cx="8.5" cy="10.5" r="1" fill="currentColor" stroke="none" /><circle cx="12" cy="8.5" r="1" fill="currentColor" stroke="none" /><circle cx="15.5" cy="10.5" r="1" fill="currentColor" stroke="none" /></>),
   burst: (<><path d="M12 3l1.7 3.3 3.5-1.1-.8 3.6 3.6.6-2.5 2.8 2.5 2.8-3.6.6.8 3.6-3.5-1.1L12 21l-1.7-3.3-3.5 1.1.8-3.6-3.6-.6 2.5-2.8-2.5-2.8 3.6-.6-.8-3.6 3.5 1.1z" /></>),
+  users: (<><circle cx="9" cy="8" r="3" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><path d="M16 5.2a3 3 0 0 1 0 5.6M15.5 13.2a5.5 5.5 0 0 1 5 5.8" /></>),
+  check: (<><circle cx="12" cy="12" r="8.5" /><path d="M8 12l2.6 2.6L16 9.2" /></>),
+  share: (<><path d="M4 12.5V19a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-6.5" /><path d="M12 15V4M8 8l4-4 4 4" /></>),
+  clock: (<><circle cx="12" cy="12" r="8" /><path d="M12 7.5V12l3 2" /></>),
 };
+
+// Map a common emoji to the closest themed glyph (for legacy emoji lookups).
+export function emojiGlyphName(emoji: string): GlyphName {
+  const map: Record<string, GlyphName> = {
+    "👥": "users", "📊": "chart", "📈": "chart", "✅": "check", "🎯": "target",
+    "🏷️": "tag", "🏷": "tag", "🔍": "search", "📤": "share", "🕐": "clock",
+    "🗝️": "key", "🗝": "key", "🛒": "cart", "🃏": "cards", "🏆": "trophy",
+    "🎵": "music", "💎": "gem", "🎮": "game", "🎭": "burst", "🎨": "palette",
+    "🌿": "leaf", "🚗": "car", "🔨": "gavel", "🔔": "bell", "🐛": "bug",
+  };
+  return map[emoji] ?? "star";
+}
 
 // Map a universe/category key to a themed glyph (replaces the old emoji map).
 export function universeGlyphName(universe: string): GlyphName {
