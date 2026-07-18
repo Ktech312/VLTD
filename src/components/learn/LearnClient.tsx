@@ -88,12 +88,12 @@ export default function LearnClient() {
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_312px]">
           {/* ── Main column (header lives here so the sidebar rises to the top) ── */}
           <div className="min-w-0">
-            <header className="mb-5">
+            <div className="mb-5">
               <h1 className="text-[26px] font-black tracking-[-0.03em] text-text-primary">Learn</h1>
               <p className="mt-1 text-sm text-[color:var(--muted)]">
                 Collector knowledge, insurance guidance, and market education.
               </p>
-            </header>
+            </div>
 
             {/* Featured */}
             <Link
@@ -165,8 +165,8 @@ export default function LearnClient() {
           {/* ── Sidebar ── */}
           <aside className="space-y-4">
             {/* Collector Playbooks */}
-            <section className="rounded-[8px] border border-[color:var(--border)] bg-vault-card p-4">
-              <h3 className="mb-3 flex items-center gap-1.5 text-sm font-black text-text-primary">
+            <section className="rounded-[8px] border border-[color:var(--border)] bg-vault-card p-3.5">
+              <h3 className="mb-2.5 flex items-center gap-1.5 text-sm font-black text-text-primary">
                 <Glyph name="cards" size={16} /> Collector Playbooks
               </h3>
               <div className="divide-y divide-[color:var(--border)]">
@@ -177,8 +177,8 @@ export default function LearnClient() {
             </section>
 
             {/* Quick Guides */}
-            <section className="rounded-[8px] border border-[color:var(--border)] bg-vault-card p-4">
-              <h3 className="mb-3 text-sm font-black text-text-primary">Quick Guides</h3>
+            <section className="rounded-[8px] border border-[color:var(--border)] bg-vault-card p-3.5">
+              <h3 className="mb-2.5 text-sm font-black text-text-primary">Quick Guides</h3>
               <div className="divide-y divide-[color:var(--border)]">
                 {QUICK_ARTICLES.map((a) => (
                   <SidebarRow key={a.slug} a={a} />
@@ -187,7 +187,7 @@ export default function LearnClient() {
             </section>
 
             {/* Newsletter */}
-            <section className="rounded-[8px] border border-[color:var(--border)] bg-vault-card p-5">
+            <section className="rounded-[8px] border border-[color:var(--border)] bg-vault-card p-4">
               <div className="mb-3 flex items-start gap-2.5">
                 <span style={{ color: "var(--theme-gold,#F5B548)" }}><Glyph name="message" size={20} /></span>
                 <div>
@@ -232,7 +232,7 @@ function GuideCard({ a, saved, onToggle }: { a: LearnArticle; saved: boolean; on
 
 function SidebarRow({ a }: { a: LearnArticle }) {
   return (
-    <Link href={`/learn/${a.slug}`} className="group flex items-center gap-3 py-4 first:pt-1.5 last:pb-1.5">
+    <Link href={`/learn/${a.slug}`} className="group flex items-center gap-3 py-2 first:pt-1 last:pb-1">
       <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[6px]" style={{ background: "rgba(245,181,72,0.08)", border: "1px solid rgba(245,181,72,0.18)", color: "var(--theme-gold,#F5B548)" }}>
         <Glyph name={a.glyph} size={18} />
       </span>
