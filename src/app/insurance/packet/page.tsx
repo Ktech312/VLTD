@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { loadItemsOrSeed, loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+import { EmptyVault } from "@/components/ui/EmptyVault";
 
 type Item = ModelItem & {
   storageLocation?: string;
@@ -79,12 +80,14 @@ export default function InsurancePacketPage() {
   const [includeImages, setIncludeImages] = useState(false);
   const [pageIndex, setPageIndex] = useState(0);
   const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     const seed = toSeedItemsFromDemo();
     const loaded = loadItemsOrSeed(seed as any) as any as Item[];
     setItems(loaded);
     setExcludedIds(readExcludedIds());
+    setHydrated(true);
     let active = true;
     void syncVaultItemsFromSupabase().then(() => {
       if (active) setItems(loadItems() as any as Item[]);
@@ -112,6 +115,17 @@ export default function InsurancePacketPage() {
   const start = safePageIndex * itemsPerPage;
   const visibleItems = selectedItems.slice(start, start + itemsPerPage);
   const printHref = `/insurance/packet/print?page=${safePageIndex}&images=${includeImages ? "1" : "0"}`;
+
+  if (hydrated && items.length === 0) {
+    return (
+      <EmptyVault
+        eyebrow="INSURANCE PACKET"
+        glyph="shield"
+        title="No items to insure yet"
+        message="Add collectibles to your vault and they show up here, ready to build an insurance packet."
+      />
+    );
+  }
 
   return (
     <main className="px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
