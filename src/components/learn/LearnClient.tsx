@@ -20,20 +20,6 @@ import {
   syncSavedArticlesFromSupabase,
 } from "@/lib/savedArticles";
 
-// Warm-dark page base — painted on a dedicated absolute layer (a global
-// `main { background !important }` rule overrides an inline bg on <main>, so
-// we cover the blue glow with a child layer instead).
-const PAGE_BG_COLOR = "#0a0806";
-const PAGE_BG_IMAGE = "radial-gradient(circle at 22% 0%, rgba(245,181,72,0.06), transparent 48%)";
-
-// Compact grading reference for the sidebar.
-const GRADING_SCALES = [
-  { label: "CGC / CBCS", range: "10.0 Gem Mint → 0.5", note: "Comics" },
-  { label: "PSA", range: "PSA 10 → PSA 1", note: "Cards & TCG" },
-  { label: "BGS / Beckett", range: "10 Pristine → 1", note: "Cards" },
-  { label: "Raw", range: "Gem Mint → Poor", note: "Ungraded" },
-];
-
 function Thumb({ article, className = "" }: { article: LearnArticle; className?: string }) {
   if (article.image) {
     // eslint-disable-next-line @next/next/no-img-element
@@ -97,13 +83,8 @@ export default function LearnClient() {
   const featured = FEATURED_ARTICLE;
 
   return (
-    <main className="relative min-h-screen text-[color:var(--fg)]">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{ backgroundColor: PAGE_BG_COLOR, backgroundImage: PAGE_BG_IMAGE, zIndex: 0 }}
-      />
-      <div className="relative z-[1] mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <main className="text-[color:var(--fg)]">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_312px]">
           {/* ── Main column (header lives here so the sidebar rises to the top) ── */}
           <div className="min-w-0">
@@ -181,11 +162,11 @@ export default function LearnClient() {
             )}
           </div>
 
-          {/* ── Sidebar (distributes to fill the column height — no dead space) ── */}
-          <aside className="flex flex-col gap-4 lg:justify-between">
+          {/* ── Sidebar ── */}
+          <aside className="space-y-4">
             {/* Collector Playbooks */}
-            <section className="rounded-[8px] border border-[color:var(--border)] bg-vault-card p-3.5">
-              <h3 className="mb-2.5 flex items-center gap-1.5 text-sm font-black text-text-primary">
+            <section className="rounded-[8px] border border-[color:var(--border)] bg-vault-card p-4">
+              <h3 className="mb-3 flex items-center gap-1.5 text-sm font-black text-text-primary">
                 <Glyph name="cards" size={16} /> Collector Playbooks
               </h3>
               <div className="divide-y divide-[color:var(--border)]">
@@ -196,8 +177,8 @@ export default function LearnClient() {
             </section>
 
             {/* Quick Guides */}
-            <section className="rounded-[8px] border border-[color:var(--border)] bg-vault-card p-3.5">
-              <h3 className="mb-2.5 text-sm font-black text-text-primary">Quick Guides</h3>
+            <section className="rounded-[8px] border border-[color:var(--border)] bg-vault-card p-4">
+              <h3 className="mb-3 text-sm font-black text-text-primary">Quick Guides</h3>
               <div className="divide-y divide-[color:var(--border)]">
                 {QUICK_ARTICLES.map((a) => (
                   <SidebarRow key={a.slug} a={a} />
@@ -205,31 +186,13 @@ export default function LearnClient() {
               </div>
             </section>
 
-            {/* Grading Scales (quick reference) */}
-            <section className="rounded-[8px] border border-[color:var(--border)] bg-vault-card p-3.5">
-              <h3 className="mb-2.5 flex items-center gap-1.5 text-sm font-black text-text-primary">
-                <Glyph name="check" size={16} /> Grading Scales
-              </h3>
-              <div className="divide-y divide-[color:var(--border)]">
-                {GRADING_SCALES.map((g) => (
-                  <div key={g.label} className="flex items-center justify-between gap-2 py-2 first:pt-0 last:pb-0">
-                    <span className="min-w-0">
-                      <span className="block text-[13px] font-bold leading-tight text-text-primary">{g.label}</span>
-                      <span className="block text-[10px] text-[color:var(--muted2)]">{g.note}</span>
-                    </span>
-                    <span className="shrink-0 text-[11px] font-semibold" style={{ color: "var(--theme-gold,#F5B548)" }}>{g.range}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-
             {/* Newsletter */}
-            <section className="rounded-[8px] border border-[color:var(--border)] bg-vault-card p-4">
-              <div className="mb-2.5 flex items-start gap-2.5">
+            <section className="rounded-[8px] border border-[color:var(--border)] bg-vault-card p-5">
+              <div className="mb-3 flex items-start gap-2.5">
                 <span style={{ color: "var(--theme-gold,#F5B548)" }}><Glyph name="message" size={20} /></span>
                 <div>
                   <h3 className="text-sm font-black text-text-primary">Collector insights, delivered</h3>
-                  <p className="mt-0.5 text-[11px] leading-5 text-[color:var(--muted)]">
+                  <p className="mt-1 text-[11px] leading-5 text-[color:var(--muted)]">
                     New guides, market updates, and tips — straight to your inbox.
                   </p>
                 </div>
@@ -269,13 +232,13 @@ function GuideCard({ a, saved, onToggle }: { a: LearnArticle; saved: boolean; on
 
 function SidebarRow({ a }: { a: LearnArticle }) {
   return (
-    <Link href={`/learn/${a.slug}`} className="group flex items-center gap-2.5 py-2 first:pt-0 last:pb-0">
-      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[6px]" style={{ background: "rgba(245,181,72,0.08)", border: "1px solid rgba(245,181,72,0.18)", color: "var(--theme-gold,#F5B548)" }}>
-        <Glyph name={a.glyph} size={15} />
+    <Link href={`/learn/${a.slug}`} className="group flex items-center gap-3 py-4 first:pt-1.5 last:pb-1.5">
+      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[6px]" style={{ background: "rgba(245,181,72,0.08)", border: "1px solid rgba(245,181,72,0.18)", color: "var(--theme-gold,#F5B548)" }}>
+        <Glyph name={a.glyph} size={18} />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-[13px] font-bold leading-tight text-text-primary">{a.title}</span>
-        <span className="block truncate text-[10px] text-[color:var(--muted2)]">{a.dek}</span>
+        <span className="block truncate text-[11px] text-[color:var(--muted2)]">{a.dek}</span>
       </span>
       <span className="shrink-0 text-[color:var(--muted2)] transition group-hover:text-[color:var(--theme-gold,#F5B548)]">
         <Chevron />
