@@ -109,6 +109,8 @@ const MORE_LINKS: { label: string; href: string; icon: React.ReactNode }[] = [
   { label: "Alerts",         href: "/notifications",   icon: (<><path d="M6 16v-5a6 6 0 0 1 12 0v5" /><path d="M4.5 16h15" /><path d="M10.4 19a1.7 1.7 0 0 0 3.2 0" /></>) },
   { label: "Command Center", href: "/more",            icon: (<><path d="M4 8h8M16 8h4M4 16h4M12 16h8" /><circle cx="14" cy="8" r="2" /><circle cx="8" cy="16" r="2" /></>) },
   { label: "VLT Lounge",     href: "/community-board", icon: (<><path d="M4 14v-2.5A2.5 2.5 0 0 1 6.5 9h11A2.5 2.5 0 0 1 20 11.5V14" /><rect x="3.5" y="13.5" width="17" height="4.5" rx="1.3" /><path d="M6.5 18v1.6M17.5 18v1.6" /></>) },
+  { label: "Activity",       href: "/activity",        icon: (<><path d="M3 12h3.5l2.5-6 4 12 2.5-6H21" /></>) },
+  { label: "Learn",          href: "/learn",           icon: (<><path d="M12 6.5C10 5 6.5 4.8 3.5 5.5v12.5c3-.7 6.5-.5 8.5 1 2-1.5 5.5-1.7 8.5-1V5.5C17.5 4.8 14 5 12 6.5Z" /><path d="M12 6.5V19" /></>) },
   { label: "Account",        href: "/account",         icon: (<><circle cx="12" cy="8" r="3.2" /><path d="M5.8 19.5a6.2 6.2 0 0 1 12.4 0" /></>) },
 ];
 

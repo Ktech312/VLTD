@@ -155,6 +155,26 @@ function IconEvents({ active }: { active: boolean }) {
   );
 }
 
+function IconActivity({ active }: { active: boolean }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
+      <path d="M3 12h3.5l2.5-6 4 12 2.5-6H21"
+        stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconLearn({ active }: { active: boolean }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
+      <path d="M12 6.5C10 5 6.5 4.8 3.5 5.5v12.5c3-.7 6.5-.5 8.5 1 2-1.5 5.5-1.7 8.5-1V5.5C17.5 4.8 14 5 12 6.5Z"
+        stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
+        fill={active ? "rgba(245,181,72,0.12)" : "none"} />
+      <path d="M12 6.5V19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+    </svg>
+  );
+}
+
 function IconSearch({ className = "h-4 w-4" }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className}>
@@ -207,6 +227,14 @@ const MORE_NAV_ITEMS = [
   {
     label: "VLT Lounge", href: "/community-board", icon: IconCommunityBoard, exact: false,
     desc: "Spotlights, MVPs & collector community.",
+  },
+  {
+    label: "Activity", href: "/activity", icon: IconActivity, exact: false,
+    desc: "Recent vault updates, sales and exhibition activity.",
+  },
+  {
+    label: "Learn", href: "/learn", icon: IconLearn, exact: false,
+    desc: "Guides on grading, provenance and getting started.",
   },
 ];
 
