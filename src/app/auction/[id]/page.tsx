@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { Glyph } from "@/components/ui/Glyph";
 import {
   fetchAuctionItem,
   fetchBids,
@@ -122,7 +123,7 @@ function BidRow({ bid, isHighest }: { bid: Bid; isHighest: boolean }) {
     >
       <div className="flex items-center gap-2">
         {isHighest && (
-          <span className="text-xs font-bold" style={{ color: "var(--theme-gold)" }}>👑</span>
+          <Glyph name="trophy" size={13} style={{ color: "var(--theme-gold)" }} />
         )}
         <span className="text-xs" style={{ color: "var(--muted)" }}>
           {bid.bidderDisplayName ?? `Bidder #${bid.bidderId.slice(-4)}`}
@@ -361,7 +362,7 @@ export default function AuctionItemPage() {
   if (notFound || !item) {
     return (
       <div className="flex flex-col items-center justify-center gap-4" style={{ background: "var(--bg)" }}>
-        <div className="text-4xl">🔨</div>
+        <Glyph name="gavel" size={40} style={{ color: "var(--theme-gold)", opacity: 0.7 }} />
         <div className="text-base font-semibold" style={{ color: "var(--fg)" }}>Auction not found</div>
         <Link href="/auction" className="text-sm underline" style={{ color: "var(--theme-gold)" }}>
           Browse all auctions
@@ -415,7 +416,7 @@ export default function AuctionItemPage() {
                   imageClassName="object-contain object-center"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-6xl opacity-20">🏷️</div>
+                <div className="flex h-full w-full items-center justify-center opacity-20"><Glyph name="tag" size={64} /></div>
               )}
             </div>
 

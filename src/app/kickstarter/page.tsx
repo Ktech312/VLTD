@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import Image from "next/image";
 import type { KickstarterProject } from "@/app/api/kickstarter-comics/route";
+import { Glyph } from "@/components/ui/Glyph";
 
 /* ── Kickstarter Campaign Card ───────────────────────────────── */
 
@@ -72,7 +73,7 @@ function CampaignCard({ project }: { project: KickstarterProject }) {
               background: "linear-gradient(145deg,#1a1a2e,#0d0d1a)",
             }}
           >
-            <span style={{ fontSize: "32px", opacity: 0.3 }}>🎨</span>
+            <span style={{ opacity: 0.3 }}><Glyph name="palette" size={32} /></span>
           </div>
         )}
 

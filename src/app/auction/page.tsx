@@ -133,7 +133,7 @@ function AuctionCard({ item, cd }: { item: AuctionItem; cd: CountdownResult }) {
             imageClassName="object-cover object-center transition group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-4xl opacity-30">🏷️</div>
+          <div className="flex h-full w-full items-center justify-center opacity-30"><Glyph name="tag" size={40} /></div>
         )}
 
         {/* Countdown overlay badge */}

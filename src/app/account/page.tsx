@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ThemePicker } from "@/components/ui/ThemePicker";
+import { Glyph } from "@/components/ui/Glyph";
 import { AccountTabs } from "@/components/account/AccountTabs";
 
 import { getOnboardingStatus, updateProfile } from "@/lib/auth";
@@ -695,7 +696,7 @@ export default function AccountPage() {
 
           {watchlist.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-6 text-center">
-              <div className="text-2xl">🃏</div>
+              <Glyph name="cards" size={30} style={{ color: "var(--theme-gold)", opacity: 0.7 }} />
               <p className="text-sm text-[color:var(--muted)]">Nothing saved yet — use The Flip in Discover to save items you like.</p>
             </div>
           ) : (

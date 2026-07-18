@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { fetchSubjectLeaderboard, type LeaderboardEntry } from "@/lib/registryModel";
+import { Glyph } from "@/components/ui/Glyph";
 
 function fmt(n: number) {
   if (n === 0) return "--";
@@ -160,7 +161,7 @@ export default function SubjectCommunityBoardPage({ params }: { params: Promise<
           <div className="text-center py-16 text-sm" style={{ color: "var(--muted)" }}>Loading leaderboard...</div>
         ) : entries.length === 0 ? (
           <div className="text-center py-16">
-            <div className="text-4xl mb-3 opacity-30">🏆</div>
+            <div className="mb-3 flex justify-center opacity-30"><Glyph name="trophy" size={40} style={{ color: "var(--theme-gold)" }} /></div>
             <div className="text-sm" style={{ color: "var(--muted)" }}>No public collectors found for this subject yet.</div>
             <Link href="/community-board" className="mt-4 inline-block text-sm underline" style={{ color: "var(--theme-gold)" }}>
               Browse all subjects
