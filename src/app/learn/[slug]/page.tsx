@@ -49,7 +49,7 @@ function Block({ block }: { block: LearnBlock }) {
       );
     case "callout":
       return (
-        <div className="mt-6 rounded-[14px] border border-[rgba(245,181,72,0.28)] bg-[rgba(245,181,72,0.06)] px-4 py-3 text-[14px] leading-6 text-[color:var(--fg)]">
+        <div className="mt-6 rounded-[8px] border border-[rgba(245,181,72,0.28)] bg-[rgba(245,181,72,0.06)] px-4 py-3 text-[14px] leading-6 text-[color:var(--fg)]">
           {block.text}
         </div>
       );
@@ -62,24 +62,27 @@ export default async function LearnArticlePage({ params }: { params: Promise<{ s
   if (!article) notFound();
 
   return (
-    <main className="text-[color:var(--fg)]">
-      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+    <main
+      className="min-h-screen text-[color:var(--fg)]"
+      style={{ backgroundColor: "#040507", backgroundImage: "radial-gradient(circle at 22% 0%, rgba(245,181,72,0.05), transparent 46%)" }}
+    >
+      <div className="mx-auto max-w-3xl px-4 py-7 sm:px-6 lg:px-8">
         <Link href="/learn" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
           Learn
         </Link>
 
         <header className="mt-5 border-b border-[color:var(--border)] pb-6">
-          <div className="flex items-center gap-3">
-            <span className="grid h-11 w-11 place-items-center rounded-[12px]" style={{ background: "rgba(245,181,72,0.08)", border: "1px solid rgba(245,181,72,0.2)", color: "var(--theme-gold,#F5B548)" }}>
-              <Glyph name={article.glyph} size={22} />
+          <div className="flex items-center gap-2.5">
+            <span className="grid h-9 w-9 place-items-center rounded-[8px]" style={{ background: "rgba(245,181,72,0.08)", border: "1px solid rgba(245,181,72,0.2)", color: "var(--theme-gold,#F5B548)" }}>
+              <Glyph name={article.glyph} size={18} />
             </span>
             <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-[color:var(--accent)]">{article.category}</span>
           </div>
-          <h1 className="mt-4 text-3xl font-black leading-tight tracking-[-0.035em] text-text-primary sm:text-4xl">
+          <h1 className="mt-3.5 text-2xl font-black leading-tight tracking-[-0.03em] text-text-primary sm:text-3xl">
             {article.title}
           </h1>
-          <p className="mt-3 text-base leading-7 text-[color:var(--muted)]">{article.dek}</p>
+          <p className="mt-2.5 text-[15px] leading-7 text-[color:var(--muted)]">{article.dek}</p>
           <div className="mt-5 flex items-center gap-4">
             <span className="inline-flex items-center gap-1.5 text-sm text-[color:var(--muted2)]">
               <Glyph name="clock" size={14} /> {article.readMinutes} min read
@@ -94,12 +97,12 @@ export default async function LearnArticlePage({ params }: { params: Promise<{ s
           ))}
         </article>
 
-        <div className="mt-8 rounded-[18px] border border-[color:var(--border)] bg-vault-card p-6 text-center">
-          <h3 className="text-lg font-black text-text-primary">Put it into practice</h3>
+        <div className="mt-8 rounded-[8px] border border-[color:var(--border)] bg-vault-card p-5 text-center">
+          <h3 className="text-base font-black text-text-primary">Put it into practice</h3>
           <p className="mt-2 text-sm text-[color:var(--muted)]">Document, value, and protect your collection in VLTD.</p>
           <Link
             href="/vault"
-            className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full px-6 text-sm font-bold"
+            className="mt-4 inline-flex min-h-10 items-center justify-center rounded-[6px] px-5 text-sm font-bold"
             style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)", color: "#0B0B0B" }}
           >
             Go to your vault

@@ -40,7 +40,7 @@ export default function NewsletterSignup({ source = "learn" }: { source?: string
 
   if (status === "done") {
     return (
-      <div className="rounded-[12px] border border-[rgba(245,181,72,0.28)] bg-[rgba(245,181,72,0.06)] px-4 py-3 text-sm text-[color:var(--fg)]">
+      <div className="rounded-[8px] border border-[rgba(245,181,72,0.28)] bg-[rgba(245,181,72,0.06)] px-4 py-3 text-sm text-[color:var(--fg)]">
         {message} We&apos;ll send guides and market updates — no spam.
       </div>
     );
@@ -59,13 +59,13 @@ export default function NewsletterSignup({ source = "learn" }: { source?: string
             if (status === "error") setStatus("idle");
           }}
           placeholder="Your email address"
-          className="min-h-11 flex-1 rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-4 text-sm text-[color:var(--fg)] outline-none placeholder:text-[color:var(--muted2)] focus:border-[color:var(--theme-gold,#F5B548)]"
+          className="min-h-10 flex-1 rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm text-[color:var(--fg)] outline-none placeholder:text-[color:var(--muted2)] focus:border-[color:var(--theme-gold,#F5B548)]"
           aria-label="Email address"
         />
         <button
           type="submit"
           disabled={status === "loading"}
-          className="min-h-11 shrink-0 rounded-full px-6 text-sm font-bold disabled:opacity-60"
+          className="min-h-10 shrink-0 rounded-[6px] px-5 text-sm font-bold disabled:opacity-60"
           style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)", color: "#0B0B0B" }}
         >
           {status === "loading" ? "Subscribing…" : "Subscribe"}

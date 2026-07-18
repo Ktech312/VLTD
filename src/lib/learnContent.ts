@@ -23,6 +23,7 @@ export type LearnArticle = {
   readMinutes: number;
   glyph: GlyphName;
   kind: LearnKind;
+  image?: string; // optional cover image under /public (e.g. /learn/insurance-basics.jpg)
   body: LearnBlock[];
 };
 

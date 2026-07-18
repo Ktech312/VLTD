@@ -19,14 +19,20 @@ import {
   syncSavedArticlesFromSupabase,
 } from "@/lib/savedArticles";
 
-function ThumbGlyph({ glyph, className = "" }: { glyph: GlyphName; className?: string }) {
+// Warm-dark page base — covers the app's blue top-left glow on this page.
+const PAGE_BG_COLOR = "#040507";
+const PAGE_BG_IMAGE = "radial-gradient(circle at 22% 0%, rgba(245,181,72,0.05), transparent 46%)";
+const THUMB_BG = "linear-gradient(135deg, rgba(245,181,72,0.12), rgba(0,0,0,0.5))";
+
+function Thumb({ article, className = "" }: { article: LearnArticle; className?: string }) {
+  if (article.image) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={article.image} alt="" className={`h-full w-full object-cover ${className}`} />;
+  }
   return (
-    <div
-      className={`grid place-items-center ${className}`}
-      style={{ background: "linear-gradient(135deg, rgba(245,181,72,0.10), rgba(20,20,28,0.6))" }}
-    >
+    <div className={`grid place-items-center ${className}`} style={{ background: THUMB_BG }}>
       <span style={{ color: "var(--theme-gold,#F5B548)", opacity: 0.85 }}>
-        <Glyph name={glyph} size={40} />
+        <Glyph name={article.glyph} size={30} />
       </span>
     </div>
   );
@@ -42,10 +48,10 @@ function SaveChip({ saved, onToggle }: { saved: boolean; onToggle: () => void })
         onToggle();
       }}
       aria-pressed={saved}
-      className="inline-flex items-center gap-1.5 text-xs font-semibold transition"
+      className="inline-flex items-center gap-1 text-[11px] font-semibold transition"
       style={{ color: saved ? "var(--theme-gold,#F5B548)" : "var(--muted)" }}
     >
-      <svg width="13" height="13" viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1z" />
       </svg>
       {saved ? "Saved" : "Save"}
@@ -55,10 +61,16 @@ function SaveChip({ saved, onToggle }: { saved: boolean; onToggle: () => void })
 
 function ClockRead({ minutes }: { minutes: number }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs text-[color:var(--muted2)]">
-      <Glyph name="clock" size={13} />
+    <span className="inline-flex items-center gap-1 text-[11px] text-[color:var(--muted2)]">
+      <Glyph name="clock" size={12} />
       {minutes} min read
     </span>
+  );
+}
+
+function Chevron() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
   );
 }
 
@@ -81,39 +93,40 @@ export default function LearnClient() {
   const featured = FEATURED_ARTICLE;
 
   return (
-    <main className="text-[color:var(--fg)]">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* ── Header ── */}
-        <header className="mb-8">
-          <h1 className="text-4xl font-black tracking-[-0.04em] text-text-primary">Learn</h1>
-          <p className="mt-2 text-base text-[color:var(--muted)]">
-            Collector knowledge, insurance guidance, and market education.
-          </p>
-        </header>
-
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
-          {/* ── Main column ── */}
+    <main
+      className="min-h-screen text-[color:var(--fg)]"
+      style={{ backgroundColor: PAGE_BG_COLOR, backgroundImage: PAGE_BG_IMAGE }}
+    >
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_312px] lg:items-start">
+          {/* ── Main column (header lives here so the sidebar rises to the top) ── */}
           <div className="min-w-0">
+            <header className="mb-5">
+              <h1 className="text-[26px] font-black tracking-[-0.03em] text-text-primary">Learn</h1>
+              <p className="mt-1 text-sm text-[color:var(--muted)]">
+                Collector knowledge, insurance guidance, and market education.
+              </p>
+            </header>
+
             {/* Featured */}
             <Link
               href={`/learn/${featured.slug}`}
-              className="group block overflow-hidden rounded-[22px] border border-[color:var(--border)] bg-vault-card transition hover:border-[rgba(245,181,72,0.4)]"
-              style={{ boxShadow: "0 12px 40px rgba(0,0,0,0.22)" }}
+              className="group block overflow-hidden rounded-[8px] border border-[color:var(--border)] bg-vault-card transition hover:border-[rgba(245,181,72,0.4)]"
             >
-              <div className="grid md:grid-cols-2">
-                <div className="p-6 sm:p-8">
-                  <span className="inline-flex rounded-full border border-[rgba(245,181,72,0.28)] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--accent)]">
+              <div className="grid md:grid-cols-[1.1fr_0.9fr]">
+                <div className="p-5">
+                  <span className="inline-flex rounded-[5px] border border-[rgba(245,181,72,0.28)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">
                     Featured
                   </span>
-                  <h2 className="mt-4 text-2xl font-black leading-tight tracking-[-0.03em] text-text-primary sm:text-3xl">
+                  <h2 className="mt-3 text-xl font-black leading-tight tracking-[-0.02em] text-text-primary sm:text-2xl">
                     {featured.title}
                   </h2>
-                  <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">{featured.dek}</p>
-                  <div className="mt-6 flex items-center gap-4">
+                  <p className="mt-2 text-[13px] leading-6 text-[color:var(--muted)]">{featured.dek}</p>
+                  <div className="mt-4 flex items-center gap-3">
                     <ClockRead minutes={featured.readMinutes} />
                     {featured.tag && (
-                      <span className="inline-flex items-center gap-1.5 text-xs text-[color:var(--muted2)]">
-                        <Glyph name="tag" size={13} />
+                      <span className="inline-flex items-center gap-1 text-[11px] text-[color:var(--muted2)]">
+                        <Glyph name="tag" size={12} />
                         {featured.tag}
                       </span>
                     )}
@@ -122,13 +135,13 @@ export default function LearnClient() {
                     </span>
                   </div>
                 </div>
-                <ThumbGlyph glyph={featured.glyph} className="min-h-[180px] md:min-h-full" />
+                <Thumb article={featured} className="min-h-[150px] md:min-h-full" />
               </div>
             </Link>
 
             {/* Guides & Articles */}
-            <h2 className="mb-4 mt-10 text-xl font-black tracking-[-0.03em] text-text-primary">Guides &amp; Articles</h2>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <h2 className="mb-3 mt-7 text-base font-black tracking-[-0.02em] text-text-primary">Guides &amp; Articles</h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {GUIDE_ARTICLES.map((a) => (
                 <GuideCard key={a.slug} a={a} saved={isSaved(a.slug)} onToggle={() => toggle(a.slug)} />
               ))}
@@ -137,20 +150,20 @@ export default function LearnClient() {
             {/* Saved guides (only when there are some) */}
             {savedArticles.length > 0 && (
               <>
-                <h2 className="mb-4 mt-10 flex items-center gap-2 text-xl font-black tracking-[-0.03em] text-text-primary">
-                  <Glyph name="star" size={18} /> Saved guides
+                <h2 className="mb-3 mt-7 flex items-center gap-1.5 text-base font-black tracking-[-0.02em] text-text-primary">
+                  <Glyph name="star" size={16} /> Saved guides
                 </h2>
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-2.5 sm:grid-cols-2">
                   {savedArticles.map((a) => (
                     <Link
                       key={a.slug}
                       href={`/learn/${a.slug}`}
-                      className="flex items-center gap-3 rounded-[14px] border border-[color:var(--border)] bg-vault-card px-4 py-3 transition hover:border-[rgba(245,181,72,0.4)]"
+                      className="flex items-center gap-2.5 rounded-[8px] border border-[color:var(--border)] bg-vault-card px-3 py-2.5 transition hover:border-[rgba(245,181,72,0.4)]"
                     >
-                      <span style={{ color: "var(--theme-gold,#F5B548)" }}><Glyph name={a.glyph} size={20} /></span>
+                      <span style={{ color: "var(--theme-gold,#F5B548)" }}><Glyph name={a.glyph} size={18} /></span>
                       <span className="min-w-0">
-                        <span className="block truncate text-sm font-bold text-text-primary">{a.title}</span>
-                        <span className="block text-[11px] text-[color:var(--muted2)]">{a.category}</span>
+                        <span className="block truncate text-[13px] font-bold text-text-primary">{a.title}</span>
+                        <span className="block text-[10px] text-[color:var(--muted2)]">{a.category}</span>
                       </span>
                       <span className="ml-auto shrink-0">
                         <SaveChip saved onToggle={() => toggle(a.slug)} />
@@ -163,11 +176,11 @@ export default function LearnClient() {
           </div>
 
           {/* ── Sidebar ── */}
-          <aside className="space-y-5">
+          <aside className="space-y-4">
             {/* Collector Playbooks */}
-            <section className="rounded-[20px] border border-[color:var(--border)] bg-vault-card p-4">
-              <h3 className="mb-3 flex items-center gap-2 text-base font-black text-text-primary">
-                <Glyph name="cards" size={18} /> Collector Playbooks
+            <section className="rounded-[8px] border border-[color:var(--border)] bg-vault-card p-3.5">
+              <h3 className="mb-2.5 flex items-center gap-1.5 text-sm font-black text-text-primary">
+                <Glyph name="cards" size={16} /> Collector Playbooks
               </h3>
               <div className="divide-y divide-[color:var(--border)]">
                 {PLAYBOOK_ARTICLES.map((a) => (
@@ -177,8 +190,8 @@ export default function LearnClient() {
             </section>
 
             {/* Quick Guides */}
-            <section className="rounded-[20px] border border-[color:var(--border)] bg-vault-card p-4">
-              <h3 className="mb-3 text-base font-black text-text-primary">Quick Guides</h3>
+            <section className="rounded-[8px] border border-[color:var(--border)] bg-vault-card p-3.5">
+              <h3 className="mb-2.5 text-sm font-black text-text-primary">Quick Guides</h3>
               <div className="divide-y divide-[color:var(--border)]">
                 {QUICK_ARTICLES.map((a) => (
                   <SidebarRow key={a.slug} a={a} />
@@ -187,12 +200,12 @@ export default function LearnClient() {
             </section>
 
             {/* Newsletter */}
-            <section className="rounded-[20px] border border-[color:var(--border)] bg-vault-card p-5">
-              <div className="mb-3 flex items-start gap-3">
-                <span style={{ color: "var(--theme-gold,#F5B548)" }}><Glyph name="message" size={22} /></span>
+            <section className="rounded-[8px] border border-[color:var(--border)] bg-vault-card p-4">
+              <div className="mb-2.5 flex items-start gap-2.5">
+                <span style={{ color: "var(--theme-gold,#F5B548)" }}><Glyph name="message" size={20} /></span>
                 <div>
-                  <h3 className="text-base font-black text-text-primary">Collector insights, delivered</h3>
-                  <p className="mt-1 text-xs leading-5 text-[color:var(--muted)]">
+                  <h3 className="text-sm font-black text-text-primary">Collector insights, delivered</h3>
+                  <p className="mt-0.5 text-[11px] leading-5 text-[color:var(--muted)]">
                     New guides, market updates, and tips — straight to your inbox.
                   </p>
                 </div>
@@ -210,18 +223,18 @@ function GuideCard({ a, saved, onToggle }: { a: LearnArticle; saved: boolean; on
   return (
     <Link
       href={`/learn/${a.slug}`}
-      className="group flex flex-col overflow-hidden rounded-[18px] border border-[color:var(--border)] bg-vault-card transition hover:border-[rgba(245,181,72,0.4)]"
+      className="group flex flex-col overflow-hidden rounded-[8px] border border-[color:var(--border)] bg-vault-card transition hover:border-[rgba(245,181,72,0.4)]"
     >
-      <div className="relative">
-        <ThumbGlyph glyph={a.glyph} className="h-28" />
-        <span className="absolute left-3 top-3 rounded-full bg-[rgba(0,0,0,0.55)] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">
+      <div className="relative h-24">
+        <Thumb article={a} className="h-24" />
+        <span className="absolute left-2.5 top-2.5 rounded-[5px] bg-[rgba(0,0,0,0.6)] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.14em] text-[color:var(--accent)]">
           {a.category}
         </span>
       </div>
-      <div className="flex flex-1 flex-col p-4">
-        <h3 className="text-base font-black leading-snug text-text-primary">{a.title}</h3>
-        <p className="mt-1.5 flex-1 text-xs leading-5 text-[color:var(--muted)]">{a.dek}</p>
-        <div className="mt-3 flex items-center justify-between">
+      <div className="flex flex-1 flex-col p-3.5">
+        <h3 className="text-[14px] font-black leading-snug text-text-primary">{a.title}</h3>
+        <p className="mt-1 flex-1 text-[11px] leading-5 text-[color:var(--muted)]">{a.dek}</p>
+        <div className="mt-2.5 flex items-center justify-between">
           <ClockRead minutes={a.readMinutes} />
           <SaveChip saved={saved} onToggle={onToggle} />
         </div>
@@ -232,16 +245,16 @@ function GuideCard({ a, saved, onToggle }: { a: LearnArticle; saved: boolean; on
 
 function SidebarRow({ a }: { a: LearnArticle }) {
   return (
-    <Link href={`/learn/${a.slug}`} className="group flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px]" style={{ background: "rgba(245,181,72,0.08)", border: "1px solid rgba(245,181,72,0.18)", color: "var(--theme-gold,#F5B548)" }}>
-        <Glyph name={a.glyph} size={17} />
+    <Link href={`/learn/${a.slug}`} className="group flex items-center gap-2.5 py-2 first:pt-0 last:pb-0">
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[6px]" style={{ background: "rgba(245,181,72,0.08)", border: "1px solid rgba(245,181,72,0.18)", color: "var(--theme-gold,#F5B548)" }}>
+        <Glyph name={a.glyph} size={15} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-bold text-text-primary">{a.title}</span>
-        <span className="block truncate text-[11px] text-[color:var(--muted2)]">{a.dek}</span>
+        <span className="block text-[13px] font-bold leading-tight text-text-primary">{a.title}</span>
+        <span className="block truncate text-[10px] text-[color:var(--muted2)]">{a.dek}</span>
       </span>
       <span className="shrink-0 text-[color:var(--muted2)] transition group-hover:text-[color:var(--theme-gold,#F5B548)]">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+        <Chevron />
       </span>
     </Link>
   );

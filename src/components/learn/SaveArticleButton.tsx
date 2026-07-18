@@ -20,7 +20,7 @@ export default function SaveArticleButton({ slug }: { slug: string }) {
       type="button"
       onClick={() => setSaved(toggleSavedArticle(slug).includes(slug))}
       aria-pressed={saved}
-      className="inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition"
+      className="inline-flex items-center gap-1.5 rounded-[6px] border px-3.5 py-1.5 text-sm font-semibold transition"
       style={{
         borderColor: saved ? "var(--theme-gold,#F5B548)" : "var(--border)",
         color: saved ? "var(--theme-gold,#F5B548)" : "var(--muted)",
