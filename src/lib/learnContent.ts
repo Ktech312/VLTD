@@ -31,6 +31,7 @@ export const LEARN_ARTICLES: LearnArticle[] = [
   // ── Featured ──────────────────────────────────────────────────────
   {
     slug: "before-you-sell",
+    image: "/learn/before-you-sell.jpg",
     title: "Before You Sell From Your Collection",
     dek: "Smart collectors prepare before they sell. Learn how to document, price, and present your items to get the best outcome — anywhere.",
     category: "Selling Smart",
@@ -61,6 +62,7 @@ export const LEARN_ARTICLES: LearnArticle[] = [
   // ── Guides ────────────────────────────────────────────────────────
   {
     slug: "insurance-basics",
+    image: "/learn/insurance-basics.jpg",
     title: "Insurance Basics for Collectors",
     dek: "What insurers need, common pitfalls, and how to get covered.",
     category: "Insurance",
@@ -88,6 +90,7 @@ export const LEARN_ARTICLES: LearnArticle[] = [
   },
   {
     slug: "pricing-with-confidence",
+    image: "/learn/pricing-with-confidence.jpg",
     title: "Pricing With Confidence",
     dek: "Use data, comps, and condition to set strong, realistic prices.",
     category: "Pricing",
@@ -113,6 +116,7 @@ export const LEARN_ARTICLES: LearnArticle[] = [
   },
   {
     slug: "photographing-items",
+    image: "/learn/photographing-items.jpg",
     title: "Photographing Items Like a Pro",
     dek: "Lighting, angles, and gear tips for clear, insurer-ready photos.",
     category: "Documentation",
@@ -137,6 +141,7 @@ export const LEARN_ARTICLES: LearnArticle[] = [
   },
   {
     slug: "storage-and-labels",
+    image: "/learn/storage-and-labels.jpg",
     title: "Storage & QR Labels",
     dek: "Best practices to protect your collection and stay organized.",
     category: "Storage",
@@ -158,6 +163,7 @@ export const LEARN_ARTICLES: LearnArticle[] = [
   },
   {
     slug: "building-exhibitions",
+    image: "/learn/building-exhibitions.jpg",
     title: "Building Great Exhibitions",
     dek: "Curate compelling rooms that engage your audience.",
     category: "Showcase",
@@ -181,6 +187,7 @@ export const LEARN_ARTICLES: LearnArticle[] = [
   },
   {
     slug: "market-comps",
+    image: "/learn/market-comps.jpg",
     title: "Understanding Market Comps",
     dek: "How comps work and how to read them like a pro.",
     category: "Market Insights",
