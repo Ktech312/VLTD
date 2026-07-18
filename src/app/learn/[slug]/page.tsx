@@ -72,7 +72,7 @@ export default async function LearnArticlePage({ params }: { params: Promise<{ s
           Learn
         </Link>
 
-        <header className="mt-5 border-b border-[color:var(--border)] pb-6">
+        <div className="mt-5 border-b border-[color:var(--border)] pb-6">
           <div className="flex items-center gap-2.5">
             <span className="grid h-9 w-9 place-items-center rounded-[8px]" style={{ background: "rgba(245,181,72,0.08)", border: "1px solid rgba(245,181,72,0.2)", color: "var(--theme-gold,#F5B548)" }}>
               <Glyph name={article.glyph} size={18} />
@@ -89,7 +89,7 @@ export default async function LearnArticlePage({ params }: { params: Promise<{ s
             </span>
             <SaveArticleButton slug={article.slug} />
           </div>
-        </header>
+        </div>
 
         <article className="pb-4">
           {article.body.map((block, i) => (
