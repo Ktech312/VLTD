@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-import { Glyph, type GlyphName } from "@/components/ui/Glyph";
+import { Glyph } from "@/components/ui/Glyph";
+import CoverArt from "@/components/learn/CoverArt";
 import NewsletterSignup from "@/components/learn/NewsletterSignup";
 import {
   FEATURED_ARTICLE,
@@ -22,20 +23,13 @@ import {
 // Warm-dark page base — covers the app's blue top-left glow on this page.
 const PAGE_BG_COLOR = "#040507";
 const PAGE_BG_IMAGE = "radial-gradient(circle at 22% 0%, rgba(245,181,72,0.05), transparent 46%)";
-const THUMB_BG = "linear-gradient(135deg, rgba(245,181,72,0.12), rgba(0,0,0,0.5))";
 
 function Thumb({ article, className = "" }: { article: LearnArticle; className?: string }) {
   if (article.image) {
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={article.image} alt="" className={`h-full w-full object-cover ${className}`} />;
   }
-  return (
-    <div className={`grid place-items-center ${className}`} style={{ background: THUMB_BG }}>
-      <span style={{ color: "var(--theme-gold,#F5B548)", opacity: 0.85 }}>
-        <Glyph name={article.glyph} size={30} />
-      </span>
-    </div>
-  );
+  return <CoverArt slug={article.slug} className={`h-full w-full ${className}`} />;
 }
 
 function SaveChip({ saved, onToggle }: { saved: boolean; onToggle: () => void }) {
