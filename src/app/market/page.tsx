@@ -80,8 +80,8 @@ function MarketCard({ item }: { item: MarketItem }) {
             imageClassName="object-cover object-center transition group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-4xl opacity-30">
-            🗝️
+          <div className="flex h-full w-full items-center justify-center opacity-30">
+            <Glyph name="key" size={34} />
           </div>
         )}
         <div className="absolute top-2 left-2 flex items-center gap-1.5">

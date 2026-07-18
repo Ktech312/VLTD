@@ -103,8 +103,8 @@ function SaleCard({ sale, imageUrl }: { sale: SaleRecord; imageUrl?: string }) {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={imageUrl} alt={sale.title ?? ""} className="h-full w-full object-cover" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-xl" style={{ background: "var(--pill)" }}>
-              🏷️
+            <div className="flex h-full w-full items-center justify-center" style={{ background: "var(--pill)" }}>
+              <Glyph name="tag" size={22} />
             </div>
           )}
         </Link>

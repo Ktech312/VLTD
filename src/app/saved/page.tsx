@@ -115,7 +115,7 @@ export default function SavedPage() {
                 className="text-xs font-semibold transition hover:underline"
                 style={{ color: "var(--theme-gold, #F5B548)" }}
               >
-                🃏 The Flip →
+                <Glyph name="cards" size={14} className="mr-1 inline align-[-2px]" />The Flip →
               </Link>
             </div>
 
@@ -139,7 +139,7 @@ export default function SavedPage() {
                     className="h-16 w-16 shrink-0 rounded-[12px] flex items-center justify-center text-2xl"
                     style={{ background: "rgba(245,181,72,0.08)", border: "1px solid rgba(245,181,72,0.12)" }}
                   >
-                    🎴
+                    <Glyph name="cards" size={24} />
                   </div>
                 )}
 

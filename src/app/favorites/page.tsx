@@ -94,8 +94,8 @@ function FavoriteCard({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={image} alt="" className="h-full w-full object-cover" draggable={false} />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-xl">
-            {isItem ? "🗝️" : "🏛️"}
+          <div className="flex h-full w-full items-center justify-center">
+            {isItem ? <Glyph name="key" size={22} /> : <Glyph name="exhibition" size={22} />}
           </div>
         )}
         {/* type pill */}
