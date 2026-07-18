@@ -162,7 +162,7 @@ function MarketPulse({ galleries, onSelectCategory }: { galleries: PublicGallery
     <section className="mt-6">
       <div className="mb-3 flex items-center justify-between">
         <div className="text-[11px] tracking-[0.22em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
-          📈 MARKET PULSE
+          <Glyph name="chart" size={13} className="mr-1.5 inline align-[-1px]" />MARKET PULSE
         </div>
         <span className="text-[10px]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
           by gallery activity
@@ -404,7 +404,7 @@ export default function DiscoverPage() {
                 className="flex min-h-[44px] items-center gap-1.5 rounded-full px-4 text-sm font-black transition hover:brightness-110 active:scale-95"
                 style={{ background: "linear-gradient(135deg, #8B6914 0%, #C8941F 30%, #F5B548 60%, #C8941F 100%)", color: "#0B0B0B" }}
               >
-                🃏 The Flip
+                <Glyph name="cards" size={16} className="mr-1.5 inline align-[-2px]" />The Flip
               </button>
             </div>
             <p className="mt-1 max-w-xl text-sm leading-6" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
@@ -511,7 +511,7 @@ export default function DiscoverPage() {
         {/* Empty */}
         {isEmpty && (
           <section className="mt-6 rounded-[20px] p-10 text-center" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", border: "1px solid var(--theme-border, rgba(245,181,72,0.12))" }}>
-            <div className="text-3xl">🔍</div>
+            <div className="flex justify-center" style={{ color: "var(--theme-gold)" }}><Glyph name="search" size={34} /></div>
             <h2 className="mt-3 text-lg font-black" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>No galleries match</h2>
             <p className="mt-1 text-sm" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
               {hasActiveFilter ? `No results for${activeTab !== "All" ? ` "${UNIVERSE_LABEL[activeTab]}"` : ""}${query ? ` "${query}"` : ""}.` : "No public galleries yet. Be the first!"}
@@ -530,7 +530,7 @@ export default function DiscoverPage() {
         {!loading && trendingGalleries.length > 0 && (
           <section className="mt-6">
             <div className="mb-3 flex items-center gap-2">
-              <div className="text-[11px] tracking-[0.22em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>🔥 TRENDING</div>
+              <div className="text-[11px] tracking-[0.22em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}><Glyph name="flame" size={13} className="mr-1.5 inline align-[-1px]" />TRENDING</div>
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
               {trendingGalleries.map((gallery, rank) => (
@@ -547,7 +547,7 @@ export default function DiscoverPage() {
                     {gallery.analytics_views > 0 && (
                       <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
                         style={{ background: "rgba(0,0,0,0.55)", color: "rgba(255,255,255,0.75)" }}>
-                        👁 {gallery.analytics_views.toLocaleString()}
+                        <Glyph name="eye" size={12} className="inline align-[-1px]" /> {gallery.analytics_views.toLocaleString()}
                       </div>
                     )}
                   </div>
@@ -614,7 +614,7 @@ export default function DiscoverPage() {
                         <span>{gallery.item_count > 0 ? `${gallery.item_count} items` : "New"}</span>
                         {gallery.analytics_views > 0 && (
                           <span className="flex items-center gap-0.5 normal-case tracking-normal">
-                            <span>👁</span>
+                            <span><Glyph name="eye" size={11} /></span>
                             <span>{gallery.analytics_views.toLocaleString()}</span>
                           </span>
                         )}

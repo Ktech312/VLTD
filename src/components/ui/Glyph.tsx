@@ -36,7 +36,8 @@ export type GlyphName =
   | "users"
   | "check"
   | "share"
-  | "clock";
+  | "clock"
+  | "eye";
 
 const PATHS: Record<GlyphName, ReactNode> = {
   bell: (<><path d="M6 16v-5a6 6 0 0 1 12 0v5" /><path d="M4.5 16h15" /><path d="M10.4 19a1.7 1.7 0 0 0 3.2 0" /></>),
@@ -71,6 +72,7 @@ const PATHS: Record<GlyphName, ReactNode> = {
   check: (<><circle cx="12" cy="12" r="8.5" /><path d="M8 12l2.6 2.6L16 9.2" /></>),
   share: (<><path d="M4 12.5V19a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-6.5" /><path d="M12 15V4M8 8l4-4 4 4" /></>),
   clock: (<><circle cx="12" cy="12" r="8" /><path d="M12 7.5V12l3 2" /></>),
+  eye: (<><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z" /><circle cx="12" cy="12" r="2.6" /></>),
 };
 
 // Map a common emoji to the closest themed glyph (for legacy emoji lookups).
