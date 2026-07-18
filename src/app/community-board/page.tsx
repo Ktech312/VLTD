@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import { Glyph } from "@/components/ui/Glyph";
+import { Glyph, type GlyphName } from "@/components/ui/Glyph";
 
 // ── Types ───────────────────────────────────────────────────────
 
@@ -35,12 +35,10 @@ type UniverseMVP = {
 
 // ── Helpers ─────────────────────────────────────────────────────
 
-const RANK_EMOJI = ["🥇", "🥈", "🥉"];
-
-function typeEmoji(type: Spotlight["type"]) {
-  if (type === "artist") return "🧑‍🎨";
-  if (type === "brand") return "🏢";
-  return "🗝️";
+function typeGlyph(type: Spotlight["type"]): GlyphName {
+  if (type === "artist") return "palette";
+  if (type === "brand") return "building";
+  return "key";
 }
 
 type SpotlightTab = "All" | "Collectors" | "Artists & Brands";
@@ -70,7 +68,7 @@ function SpotlightCard({ s }: { s: Spotlight }) {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={s.image_url} alt={s.name} className="h-full w-full object-cover" />
           ) : (
-            typeEmoji(s.type)
+            <Glyph name={typeGlyph(s.type)} size={26} style={{ color: "var(--theme-gold)" }} />
           )}
         </div>
 
@@ -185,7 +183,7 @@ function MVPsSidebar({ mvps, loading }: { mvps: UniverseMVP[]; loading: boolean 
                     className="flex items-center gap-2 rounded-xl px-3 py-2"
                     style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))" }}
                   >
-                    <span className="text-base shrink-0">{RANK_EMOJI[i] ?? `#${i + 1}`}</span>
+                    <span className="text-sm font-black shrink-0" style={{ color: "var(--theme-gold)" }}>#{i + 1}</span>
                     <span className="text-sm font-semibold flex-1 truncate" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
                       {e.display_name}
                     </span>
