@@ -188,29 +188,16 @@ export default function BottomNav() {
       )}
 
       <div
-        className="relative mx-auto flex max-w-[390px] items-end justify-center overflow-visible px-3 py-2"
+        className="mx-auto max-w-[390px] backdrop-blur-2xl"
         style={{
-          minHeight: 72,
+          background: "linear-gradient(180deg, rgba(9,10,12,0.98), rgba(0,0,0,0.99))",
+          border: "1px solid rgba(217,162,58,0.44)",
+          borderRadius: "30px",
+          boxShadow: "0 18px 46px rgba(0,0,0,0.62), 0 0 0 1px rgba(0,0,0,0.85), inset 0 1px 0 rgba(255,241,168,0.10)",
+          padding: "6px 8px 7px",
         }}
       >
-        <div
-          className="pointer-events-none absolute left-5 right-5 bottom-[10px] h-[52px]"
-          style={{
-            background: "linear-gradient(180deg, rgba(8,8,9,0.99), rgba(0,0,0,0.99))",
-            border: "1px solid rgba(217,162,58,0.54)",
-            borderRadius: "28px",
-            boxShadow: "0 18px 44px rgba(0,0,0,0.64), inset 0 1px 0 rgba(255,241,168,0.08)",
-          }}
-        />
-        <div
-          className="pointer-events-none absolute left-[26%] bottom-[19px] h-[34px] w-[28px] rounded-full bg-black"
-          style={{ boxShadow: "-12px 0 0 #000, 0 0 0 1px rgba(217,162,58,0.28)" }}
-        />
-        <div
-          className="pointer-events-none absolute right-[26%] bottom-[19px] h-[34px] w-[28px] rounded-full bg-black"
-          style={{ boxShadow: "12px 0 0 #000, 0 0 0 1px rgba(217,162,58,0.28)" }}
-        />
-        <div className="relative z-[2] flex w-full items-end justify-between">
+        <div className="flex items-end justify-around gap-1">
           {TABS.map((tab) => {
             /* Centre gold + button */
             if (tab === null) {
@@ -220,16 +207,16 @@ export default function BottomNav() {
                   href="/capture"
                   aria-label="Add item to vault"
                   className="relative flex flex-col items-center"
-                  style={{ marginTop: "-23px", zIndex: 5 }}
+                  style={{ marginTop: "-22px", marginLeft: "2px", marginRight: "2px" }}
                 >
                   <div
-                    className="flex h-[62px] w-[62px] items-center justify-center rounded-full"
+                    className="flex h-[58px] w-[58px] items-center justify-center rounded-full"
                     style={{
                       background:
                         "linear-gradient(145deg, #FFE08A 0%, #F5B548 30%, #C8941F 60%, #8B6914 100%)",
                       boxShadow: [
-                        "0 0 0 4px #050505",
-                        "0 0 0 5px rgba(245,181,72,0.50)",
+                        "0 0 0 3px #0B0B0B",
+                        "0 0 0 4px rgba(245,181,72,0.35)",
                         "0 8px 28px rgba(245,181,72,0.55)",
                         "0 2px 8px rgba(0,0,0,0.60)",
                         "inset 0 1px 0 rgba(255,255,255,0.40)",
@@ -246,7 +233,6 @@ export default function BottomNav() {
             }
 
             const isActive = active(tab);
-            const itemStyle: React.CSSProperties = { width: 66, height: 48, color: isActive ? GOLD : DIM };
 
             /* "More" — toggles the sheet (not a route) */
             if (tab.href === MORE_TAB) {
@@ -256,8 +242,11 @@ export default function BottomNav() {
                   type="button"
                   onClick={() => setMoreOpen((v) => !v)}
                   aria-label="More categories"
-                  className="flex flex-col items-center justify-center gap-[2px] transition-opacity active:opacity-70"
-                  style={itemStyle}
+                  className="flex min-w-[56px] flex-col items-center gap-[2px] rounded-[22px] px-2 py-1.5 transition-opacity active:opacity-70"
+                  style={{
+                    border: isActive ? "1px solid rgba(217,162,58,0.44)" : "1px solid transparent",
+                    background: isActive ? "rgba(245,181,72,0.08)" : "transparent",
+                  }}
                 >
                   {tab.icon(isActive)}
                   <span
@@ -275,8 +264,11 @@ export default function BottomNav() {
               <Link
                 key={tab.href}
                 href={tab.href}
-                className="flex flex-col items-center justify-center gap-[2px] transition-opacity active:opacity-70"
-                style={itemStyle}
+                className="flex min-w-[56px] flex-col items-center gap-[2px] rounded-[22px] px-2 py-1.5 transition-opacity active:opacity-70"
+                style={{
+                  border: isActive ? "1px solid rgba(217,162,58,0.44)" : "1px solid transparent",
+                  background: isActive ? "rgba(245,181,72,0.08)" : "transparent",
+                }}
               >
                 {tab.icon(isActive)}
                 <span
@@ -285,6 +277,12 @@ export default function BottomNav() {
                 >
                   {tab.label}
                 </span>
+                {isActive && (
+                  <div
+                    className="h-[3px] w-[3px] rounded-full"
+                    style={{ background: GOLD, boxShadow: "0 0 6px rgba(245,181,72,0.8)" }}
+                  />
+                )}
               </Link>
             );
           })}
