@@ -341,6 +341,56 @@ function RowItem({
   );
 }
 
+function MoverRow({
+  item,
+  gain,
+  pct,
+  tone,
+}: {
+  item: VaultItem;
+  gain: number;
+  pct: number;
+  tone: string;
+}) {
+  const confidenceBand = itemConfidence(item);
+  const confidenceLabel =
+    confidenceBand === "high" ? "High" : confidenceBand === "medium" ? "Medium" : "Low";
+  const value = itemCurrentValue(item);
+
+  return (
+    <Link
+      href={`/vault/item/${encodeURIComponent(item.id)}`}
+      className="grid min-h-[68px] grid-cols-[42px_minmax(0,1fr)_70px_44px] items-center gap-2 border-b py-1.5 transition last:border-b-0 hover:bg-white/[0.035]"
+      style={{ borderColor: "rgba(184,135,43,0.18)" }}
+    >
+      <ItemThumb item={item} className="h-[54px] w-[38px]" />
+      <div className="min-w-0 pr-1">
+        <div className="line-clamp-2 text-[12px] font-bold leading-[1.12]">{item.title || "Untitled item"}</div>
+        <div className="mt-0.5 truncate text-[9px] leading-tight" style={{ color: MUTED }}>
+          {item.grade || item.universe || "Collectible"} - {(item.comparables?.length ?? 0) || 0} comps
+        </div>
+      </div>
+      <div className="text-right">
+        <div className="text-[12px] font-bold tabular-nums">{formatMoney(value)}</div>
+        <div className="mt-0.5 text-[9px] tabular-nums" style={{ color: tone }}>
+          {gain >= 0 ? "+" : ""}{formatMoney(gain)}
+          <span className="block">{fmtPct(pct, true)}</span>
+        </div>
+      </div>
+      <div
+        className="justify-self-end rounded-[4px] px-1.5 py-0.5 text-[9px] font-bold"
+        style={{
+          border: `1px solid ${confidenceBand === "high" ? "rgba(82,194,122,0.45)" : confidenceBand === "medium" ? "rgba(245,181,72,0.5)" : "rgba(255,112,92,0.45)"}`,
+          color: confidenceBand === "high" ? GREEN : confidenceBand === "medium" ? GOLD : RED,
+          background: "rgba(3,8,14,0.58)",
+        }}
+      >
+        {confidenceLabel}
+      </div>
+    </Link>
+  );
+}
+
 function ReviewCard({ item, reason }: { item: VaultItem; reason: string }) {
   return (
     <Link
@@ -623,37 +673,44 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
           </Panel>
         </div>
 
-        <div className="mt-3 grid gap-3 xl:grid-cols-[minmax(480px,1.28fr)_minmax(320px,0.86fr)_minmax(320px,0.86fr)]">
-          <Panel className="p-4">
+        <div className="mt-3 grid gap-3 xl:grid-cols-[minmax(560px,1.34fr)_minmax(320px,0.83fr)_minmax(320px,0.83fr)]">
+          <Panel className="p-3.5">
             <div className="flex items-center justify-between gap-3">
               <Label>Portfolio Movers</Label>
               <Link href="/vault" className="text-xs font-bold" style={{ color: GOLD }}>View all movers &gt;</Link>
             </div>
-            <div className="mt-4 grid gap-3 2xl:grid-cols-2">
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
               <div>
-                <div className="mb-2 text-xs font-bold uppercase tracking-[0.16em]" style={{ color: GREEN }}>Biggest Gainers</div>
-                <div className="grid gap-1.5">
+                <div className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.14em]" style={{ color: GREEN }}>Biggest Gainers</div>
+                <div>
                   {movers.filter((row) => row.gain >= 0).slice(0, 3).map(({ item, gain, pct }) => (
-                    <RowItem
+                    <MoverRow
                       key={item.id}
                       item={item}
-                      meta={`${item.grade || "No grade"} - ${(item.comparables?.length ?? 0) || 0} comps`}
-                      right={<><div className="font-bold tabular-nums">{formatMoney(itemCurrentValue(item))}</div><div className="text-xs tabular-nums" style={{ color: GREEN }}>+{formatMoney(gain)} {fmtPct(pct, true)}</div></>}
+                      gain={gain}
+                      pct={pct}
+                      tone={GREEN}
                     />
                   ))}
                 </div>
               </div>
-              <div>
-                <div className="mb-2 text-xs font-bold uppercase tracking-[0.16em]" style={{ color: RED }}>Biggest Decliners</div>
-                <div className="grid gap-1.5">
+              <div className="md:border-l md:pl-3" style={{ borderColor: "rgba(184,135,43,0.24)" }}>
+                <div className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.14em]" style={{ color: RED }}>Biggest Decliners</div>
+                <div>
                   {movers.filter((row) => row.gain < 0).slice(0, 3).map(({ item, gain, pct }) => (
-                    <RowItem
+                    <MoverRow
                       key={item.id}
                       item={item}
-                      meta={`${item.grade || "No grade"} - ${(item.comparables?.length ?? 0) || 0} comps`}
-                      right={<><div className="font-bold tabular-nums">{formatMoney(itemCurrentValue(item))}</div><div className="text-xs tabular-nums" style={{ color: RED }}>{formatMoney(gain)} {fmtPct(pct, true)}</div></>}
+                      gain={gain}
+                      pct={pct}
+                      tone={RED}
                     />
                   ))}
+                  {movers.filter((row) => row.gain < 0).length === 0 ? (
+                    <div className="grid min-h-[68px] place-items-center rounded-[7px] text-[11px]" style={{ color: MUTED, border: "1px solid rgba(184,135,43,0.14)" }}>
+                      No decliners in this view
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>
