@@ -53,6 +53,16 @@ function safeTime(value: unknown) {
   return Number.isFinite(n) ? n : 0;
 }
 
+function displayLabel(label: string) {
+  const clean = String(label || "").replace(/_/g, " ").trim();
+  if (!clean) return "Other";
+  if (/^(TCG|MTG|CGC|PSA)$/i.test(clean)) return clean.toUpperCase();
+  return clean
+    .toLowerCase()
+    .replace(/\b(tcg|mtg|cgc|psa)\b/g, (m) => m.toUpperCase())
+    .replace(/\b\w/g, (m) => m.toUpperCase());
+}
+
 function exportItemsCsv(items: VaultItem[]) {
   if (typeof window === "undefined") return;
   const header = ["title", "universe", "category", "grade", "invested", "value", "gain"];
@@ -138,7 +148,7 @@ function HeaderAction({
         color: "var(--fg)",
       };
 
-  const className = "inline-flex h-9 items-center justify-center gap-2 rounded-[7px] px-3 text-xs font-bold transition hover:brightness-110";
+  const className = "inline-flex h-8 items-center justify-center gap-2 rounded-[7px] px-3 text-[11px] font-bold transition hover:brightness-110";
 
   if (href) {
     return (
@@ -171,10 +181,10 @@ function StatCard({
   trend?: number[];
 }) {
   return (
-    <Panel className="min-h-[102px] p-4">
-      <div className="grid h-full grid-cols-[50px_minmax(0,1fr)] items-center gap-3 sm:grid-cols-[58px_minmax(0,1fr)]">
+    <Panel className="min-h-[94px] p-3.5">
+      <div className="grid h-full grid-cols-[46px_minmax(0,1fr)] items-center gap-3 sm:grid-cols-[52px_minmax(0,1fr)]">
         <div
-          className="grid h-12 w-12 place-items-center rounded-full sm:h-14 sm:w-14"
+          className="grid h-11 w-11 place-items-center rounded-full sm:h-12 sm:w-12"
           style={{ border: "1px solid rgba(245,181,72,0.55)", color: GOLD, background: "rgba(245,181,72,0.05)" }}
         >
           {icon}
@@ -184,7 +194,7 @@ function StatCard({
             <Label>{label}</Label>
             <span className="text-[11px]" style={{ color: MUTED2 }}>i</span>
           </div>
-          <div className="mt-1 text-[28px] font-black leading-none tracking-[-0.02em]" style={{ color: tone }}>
+          <div className="mt-1 text-[27px] font-black leading-none tracking-[-0.02em]" style={{ color: tone }}>
             {value}
           </div>
           <div className="mt-1.5 text-xs" style={{ color: MUTED }}>
@@ -360,14 +370,24 @@ function MoverRow({
   return (
     <Link
       href={`/vault/item/${encodeURIComponent(item.id)}`}
-      className="grid min-h-[68px] grid-cols-[42px_minmax(0,1fr)_70px_44px] items-center gap-2 border-b py-1.5 transition last:border-b-0 hover:bg-white/[0.035]"
+      className="grid min-h-[62px] grid-cols-[38px_minmax(0,1fr)_74px] items-center gap-2 border-b py-1.5 transition last:border-b-0 hover:bg-white/[0.035]"
       style={{ borderColor: "rgba(184,135,43,0.18)" }}
     >
-      <ItemThumb item={item} className="h-[54px] w-[38px]" />
+      <ItemThumb item={item} className="h-[52px] w-[36px]" />
       <div className="min-w-0 pr-1">
-        <div className="line-clamp-2 text-[12px] font-bold leading-[1.12]">{item.title || "Untitled item"}</div>
-        <div className="mt-0.5 truncate text-[9px] leading-tight" style={{ color: MUTED }}>
-          {item.grade || item.universe || "Collectible"} - {(item.comparables?.length ?? 0) || 0} comps
+        <div className="max-h-[2.35em] overflow-hidden text-[11px] font-bold leading-[1.16]">{item.title || "Untitled item"}</div>
+        <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[9px] leading-tight" style={{ color: MUTED }}>
+          <span className="truncate">{item.grade || item.universe || "Collectible"} - {(item.comparables?.length ?? 0) || 0} comps</span>
+          <span
+            className="shrink-0 rounded-[4px] px-1 py-[1px] text-[8px] font-bold leading-none"
+            style={{
+              border: `1px solid ${confidenceBand === "high" ? "rgba(82,194,122,0.45)" : confidenceBand === "medium" ? "rgba(245,181,72,0.5)" : "rgba(255,112,92,0.45)"}`,
+              color: confidenceBand === "high" ? GREEN : confidenceBand === "medium" ? GOLD : RED,
+              background: "rgba(3,8,14,0.58)",
+            }}
+          >
+            {confidenceLabel}
+          </span>
         </div>
       </div>
       <div className="text-right">
@@ -377,16 +397,6 @@ function MoverRow({
           <span className="block">{fmtPct(pct, true)}</span>
         </div>
       </div>
-      <div
-        className="justify-self-end rounded-[4px] px-1.5 py-0.5 text-[9px] font-bold"
-        style={{
-          border: `1px solid ${confidenceBand === "high" ? "rgba(82,194,122,0.45)" : confidenceBand === "medium" ? "rgba(245,181,72,0.5)" : "rgba(255,112,92,0.45)"}`,
-          color: confidenceBand === "high" ? GREEN : confidenceBand === "medium" ? GOLD : RED,
-          background: "rgba(3,8,14,0.58)",
-        }}
-      >
-        {confidenceLabel}
-      </div>
     </Link>
   );
 }
@@ -395,15 +405,15 @@ function ReviewCard({ item, reason }: { item: VaultItem; reason: string }) {
   return (
     <Link
       href={`/vault/item/${encodeURIComponent(item.id)}`}
-      className="grid min-w-[210px] grid-cols-[64px_minmax(0,1fr)] gap-3 rounded-[7px] p-3 transition hover:bg-white/[0.035]"
+      className="grid min-w-[210px] grid-cols-[60px_minmax(0,1fr)] gap-3 rounded-[7px] p-2.5 transition hover:bg-white/[0.035]"
       style={{ border: "1px solid rgba(184,135,43,0.34)", background: "rgba(3,8,14,0.58)" }}
     >
-      <ItemThumb item={item} className="h-[86px] w-16" />
+      <ItemThumb item={item} className="h-[78px] w-[58px]" />
       <div className="min-w-0">
         <div className="text-sm font-bold leading-tight">{item.title || "Untitled item"}</div>
         <div className="mt-1 truncate text-xs" style={{ color: MUTED }}>{[item.grade, item.universe].filter(Boolean).join(" - ")}</div>
         <div className="mt-3 text-xs" style={{ color: RED }}>{reason}</div>
-        <div className="mt-3 inline-flex h-8 items-center rounded-[7px] px-5 text-xs font-bold" style={{ border: "1px solid rgba(245,181,72,0.44)", color: GOLD }}>
+        <div className="mt-2.5 inline-flex h-7 items-center rounded-[7px] px-4 text-[11px] font-bold" style={{ border: "1px solid rgba(245,181,72,0.44)", color: GOLD }}>
           Review
         </div>
       </div>
@@ -603,13 +613,13 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
           <StatCard
             label="Total Vault Value"
             value={formatMoney(totalValue)}
-            sub={<><span style={{ color: GREEN }}>▲ {fmtPct(metrics.roi, false)}</span> vs last 30 days</>}
+            sub={<><span style={{ color: GREEN }}>+ {fmtPct(metrics.roi, false)}</span> vs last 30 days</>}
             icon={<Glyph name="box" size={28} />}
           />
           <StatCard
             label="Month Change"
             value={`${monthChange >= 0 ? "+" : ""}${formatMoney(monthChange)}`}
-            sub={<span style={{ color: monthChange >= 0 ? GREEN : RED }}>↗ {fmtPct(monthPct, true)}</span>}
+            sub={<span style={{ color: monthChange >= 0 ? GREEN : RED }}>{fmtPct(monthPct, true)}</span>}
             icon={<Glyph name="chart" size={28} />}
             tone={monthChange >= 0 ? GREEN : RED}
           />
@@ -660,11 +670,11 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
                 {categoryRows.map((row, idx) => {
                   const pct = totalValue > 0 ? (row.value / totalValue) * 100 : 0;
                   return (
-                    <Link key={row.label} href={`/portfolio/universe/${encodeURIComponent(row.label)}`} className="grid grid-cols-[18px_minmax(0,1fr)_auto_auto] items-center gap-2 text-sm">
+                    <Link key={row.label} href={`/portfolio/universe/${encodeURIComponent(row.label)}`} className="grid grid-cols-[14px_minmax(0,1fr)_78px_54px] items-center gap-2 text-xs leading-tight">
                       <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: BREAKDOWN_COLORS[idx % BREAKDOWN_COLORS.length] }} />
-                      <span className="truncate">{row.label}</span>
-                      <span className="tabular-nums" style={{ color: MUTED }}>{formatMoney(row.value)}</span>
-                      <span className="w-14 text-right tabular-nums" style={{ color: MUTED }}>({pct.toFixed(1)}%)</span>
+                      <span className="truncate">{displayLabel(row.label)}</span>
+                      <span className="text-right tabular-nums" style={{ color: MUTED }}>{formatMoney(row.value)}</span>
+                      <span className="text-right tabular-nums" style={{ color: MUTED }}>({pct.toFixed(1)}%)</span>
                     </Link>
                   );
                 })}
@@ -681,7 +691,7 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
             </div>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               <div>
-                <div className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.14em]" style={{ color: GREEN }}>Biggest Gainers</div>
+                <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: GREEN }}>Biggest Gainers</div>
                 <div>
                   {movers.filter((row) => row.gain >= 0).slice(0, 3).map(({ item, gain, pct }) => (
                     <MoverRow
@@ -695,7 +705,7 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
                 </div>
               </div>
               <div className="md:border-l md:pl-3" style={{ borderColor: "rgba(184,135,43,0.24)" }}>
-                <div className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.14em]" style={{ color: RED }}>Biggest Decliners</div>
+                <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: RED }}>Biggest Decliners</div>
                 <div>
                   {movers.filter((row) => row.gain < 0).slice(0, 3).map(({ item, gain, pct }) => (
                     <MoverRow
@@ -707,7 +717,7 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
                     />
                   ))}
                   {movers.filter((row) => row.gain < 0).length === 0 ? (
-                    <div className="grid min-h-[68px] place-items-center rounded-[7px] text-[11px]" style={{ color: MUTED, border: "1px solid rgba(184,135,43,0.14)" }}>
+                    <div className="grid min-h-[62px] place-items-center rounded-[7px] text-[11px]" style={{ color: MUTED, border: "1px solid rgba(184,135,43,0.14)" }}>
                       No decliners in this view
                     </div>
                   ) : null}
@@ -718,14 +728,14 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
 
           <Panel className="p-4">
             <Label>Allocation By Universe</Label>
-            <div className="mt-4 grid gap-2">
+            <div className="mt-4 grid gap-1.5">
               {categoryRows.map((row) => {
                 const pct = totalValue > 0 ? (row.value / totalValue) * 100 : 0;
                 return (
-                  <Link key={row.label} href={`/portfolio/universe/${encodeURIComponent(row.label)}`} className="grid grid-cols-[24px_minmax(0,1fr)_auto_auto] items-center gap-3 rounded-[7px] py-1.5 text-sm hover:bg-white/[0.035]">
+                  <Link key={row.label} href={`/portfolio/universe/${encodeURIComponent(row.label)}`} className="grid grid-cols-[22px_minmax(0,1fr)_78px_52px] items-center gap-2 rounded-[7px] py-1.5 text-xs hover:bg-white/[0.035]">
                     <span style={{ color: GOLD }}><Glyph name={universeGlyphName(row.label)} size={18} /></span>
-                    <span className="truncate">{row.label}</span>
-                    <span className="tabular-nums" style={{ color: MUTED }}>{formatMoney(row.value)}</span>
+                    <span className="truncate font-semibold">{displayLabel(row.label)}</span>
+                    <span className="text-right tabular-nums" style={{ color: MUTED }}>{formatMoney(row.value)}</span>
                     <span className="w-14 text-right tabular-nums" style={{ color: GREEN }}>{pct.toFixed(1)}%</span>
                   </Link>
                 );
@@ -738,17 +748,17 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
               <Label>Value Evidence</Label>
               <Link href="/vault" className="text-xs font-bold" style={{ color: GOLD }}>View all &gt;</Link>
             </div>
-            <div className="mt-5 grid grid-cols-[132px_minmax(0,1fr)] gap-4">
+            <div className="mt-4 grid grid-cols-[112px_minmax(0,1fr)] gap-4">
               <div className="text-center">
-                <div className="mx-auto grid h-28 w-28 place-items-center rounded-full" style={{ background: `conic-gradient(${GREEN} ${confidence.score * 36}deg, rgba(255,255,255,0.12) 0deg)`, boxShadow: "inset 0 0 0 10px rgba(3,8,14,0.96)" }}>
+                <div className="mx-auto grid h-24 w-24 place-items-center rounded-full" style={{ background: `conic-gradient(${GREEN} ${confidence.score * 36}deg, rgba(255,255,255,0.12) 0deg)`, boxShadow: "inset 0 0 0 9px rgba(3,8,14,0.96)" }}>
                   <div>
-                    <div className="text-4xl font-black">{confidence.score.toFixed(1)}</div>
-                    <div className="text-sm" style={{ color: MUTED }}>/10</div>
+                    <div className="text-[32px] font-black leading-none">{confidence.score.toFixed(1)}</div>
+                    <div className="text-xs" style={{ color: MUTED }}>/10</div>
                   </div>
                 </div>
-                <div className="mt-2 text-xs" style={{ color: MUTED }}>{confidence.band} confidence</div>
+                <div className="mt-2 text-[11px]" style={{ color: MUTED }}>{confidence.band} confidence</div>
               </div>
-              <div className="grid gap-2 text-sm">
+              <div className="grid gap-1.5 text-xs">
                 {[
                   ["eBay Sold", Math.max(0, movers.length * 12 + topHoldings.length * 8)],
                   ["Heritage", Math.max(0, topHoldings.length * 5)],
@@ -758,12 +768,12 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
                 ].map(([label, value]) => (
                   <div key={label} className="flex items-center justify-between gap-4">
                     <span style={{ color: MUTED }}>{label}</span>
-                    <span className="tabular-nums">{value}</span>
+                    <span className="tabular-nums" style={{ color: "var(--fg)" }}>{value}</span>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="mt-5 border-t pt-4 text-sm" style={{ borderColor: "rgba(184,135,43,0.26)" }}>
+            <div className="mt-4 border-t pt-3 text-xs" style={{ borderColor: "rgba(184,135,43,0.26)" }}>
               <div className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: MUTED2 }}>Last Updated</div>
               <div className="mt-2 flex items-center justify-between">
                 <span>Today</span>
