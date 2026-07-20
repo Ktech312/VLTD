@@ -154,9 +154,9 @@ function InfoTooltip({ text }: { text: string }) {
 function Stat({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "gold" | "gain" | "loss" }) {
   const color = tone === "gold" ? C.gold : tone === "gain" ? C.green : tone === "loss" ? C.red : C.text;
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-      <span style={{ fontFamily: C.r, fontSize: "25px", fontWeight: 800, lineHeight: 1, color }}>{value}</span>
-      <span style={{ fontSize: "10px", color: C.muted2, letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</span>
+    <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: "94px", padding: "10px 12px", border: `1px solid ${C.bd2}`, borderRadius: "8px", background: "rgba(255,255,255,0.025)" }}>
+      <span style={{ fontFamily: C.r, fontSize: "28px", fontWeight: 800, lineHeight: 1, color }}>{value}</span>
+      <span style={{ fontSize: "10px", color: C.muted2, letterSpacing: "0.10em", textTransform: "uppercase", fontWeight: 800 }}>{label}</span>
     </div>
   );
 }
@@ -306,7 +306,7 @@ function HeroAvatarPanel({ avatarUrl, onClick }: { avatarUrl: string; onClick: (
   const presetImage = avatarPresetSrc(avatarUrl);
 
   return (
-    <button onClick={onClick} style={{ position: "relative", width: "100%", height: "100%", background: preset?.bg ?? "linear-gradient(155deg,#100D06,#0C0A04)", border: "none", cursor: "pointer", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }} className="max-sm:hidden">
+    <button onClick={onClick} style={{ position: "relative", width: "100%", height: "100%", minHeight: "276px", background: preset?.bg ?? "linear-gradient(155deg,#100D06,#0C0A04)", border: "none", cursor: "pointer", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "1px solid rgba(217,162,58,0.16)" }} className="max-md:hidden">
       {/* Ambient glow */}
       <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 10%, rgba(245,181,72,0.18) 0%, transparent 60%)", pointerEvents: "none" }} />
       {/* Decorative wall frames behind */}
@@ -321,7 +321,7 @@ function HeroAvatarPanel({ avatarUrl, onClick }: { avatarUrl: string; onClick: (
         <img src={avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
       ) : presetImage ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={presetImage} alt={preset?.label ?? "avatar"} style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
+        <img src={presetImage} alt={preset?.label ?? "avatar"} style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0, transform: "scale(1.08)" }} />
       ) : (
         <span style={{ fontSize: "18px", color: C.gold, position: "relative", zIndex: 1 }}>VLTD</span>
       )}
@@ -873,36 +873,36 @@ export default function HomeClient() {
         />
       )}
 
-      <div style={{ maxWidth: "1320px", margin: "0 auto" }}
-        className="grid items-start gap-4 px-4 sm:px-5 lg:px-7 py-4 grid-cols-1 xl:[grid-template-columns:minmax(0,1fr)_310px]">
+      <div style={{ maxWidth: "1440px", margin: "0 auto" }}
+        className="grid items-start gap-5 px-4 sm:px-5 lg:px-7 py-5 grid-cols-1 xl:[grid-template-columns:minmax(0,1fr)_340px]">
 
         {/* ── LEFT COLUMN ── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
 
           {/* Seasonal event banner */}
           <SeasonalBanner />
 
           {/* Hero card */}
-          <div style={{ background: "linear-gradient(135deg, rgba(8,14,24,0.98), rgba(3,8,14,0.98) 58%, rgba(0,0,0,0.92))", border: "1px solid rgba(217,162,58,0.30)", borderRadius: "9px", overflow: "hidden", minHeight: "218px", position: "relative", boxShadow: premiumShadow }}
-            className="grid grid-cols-1 sm:[grid-template-columns:minmax(0,1fr)_240px]">
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(245,181,72,0.05), transparent 34%, rgba(82,214,244,0.035))", pointerEvents: "none" }} />
+          <div style={{ background: "linear-gradient(135deg, rgba(8,14,24,0.99), rgba(3,8,14,0.98) 52%, rgba(0,0,0,0.94))", border: "1px solid rgba(217,162,58,0.42)", borderRadius: "10px", overflow: "hidden", minHeight: "276px", position: "relative", boxShadow: "0 24px 78px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,241,168,0.08)" }}
+            className="grid grid-cols-1 md:[grid-template-columns:minmax(0,1fr)_340px]">
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(245,181,72,0.08), transparent 38%, rgba(82,214,244,0.035)), radial-gradient(circle at 78% 40%, rgba(245,181,72,0.12), transparent 34%)", pointerEvents: "none" }} />
 
-            <div style={{ padding: "26px 28px", display: "flex", flexDirection: "column", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
+            <div style={{ padding: "32px 34px", display: "flex", flexDirection: "column", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
               <div>
-                <div style={{ fontSize: "11px", color: C.muted, marginBottom: "2px" }}>
+                <div style={{ fontSize: "11px", color: C.muted, marginBottom: "6px", letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 800 }}>
                   {stats.totalItems === 0 ? "Your vault is ready," : "Welcome back,"}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <h1 style={{ fontFamily: C.r, fontSize: "40px", fontWeight: 700, lineHeight: 1.02, color: C.text }}>{displayName || "Curator"}</h1>
+                  <h1 style={{ fontFamily: C.r, fontSize: "52px", fontWeight: 700, lineHeight: 0.96, color: C.text }}>{displayName || "Curator"}</h1>
                   <Link href="/account" aria-label="Edit profile" title="Edit profile" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 8, background: "rgba(245,181,72,0.10)", border: `1px solid ${C.bd}`, color: C.gold, textDecoration: "none" }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                   </Link>
                 </div>
-                <div style={{ fontSize: "13px", color: C.muted, marginTop: "6px" }}>
+                <div style={{ fontSize: "15px", color: C.muted, marginTop: "10px" }}>
                   {stats.totalItems === 0 ? "Scan your first item to start building a real collection record." : summaryLine}
                 </div>
                 {stats.totalItems > 0 && (
-                  <div style={{ display: "flex", gap: "24px", marginTop: "20px", flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", gap: "10px", marginTop: "24px", flexWrap: "wrap" }}>
                     <Stat label="Items" value={String(stats.totalItems)} />
                     <Stat label="Invested" value={formatMoney(stats.totalCostValue)} />
                     <Stat label="Value" value={formatMoney(stats.totalValue)} tone="gold" />
@@ -911,12 +911,12 @@ export default function HomeClient() {
                   </div>
                 )}
               </div>
-              <div style={{ display: "flex", gap: "10px", marginTop: "20px", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: "12px", marginTop: "24px", flexWrap: "wrap" }}>
                 <div className="relative">
                   <div className="absolute -right-1 -top-1 z-10"><InfoTooltip text="AI-powered item identification — point camera at any collectible." /></div>
-                  <Link href="/capture" style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "var(--theme-gold-gradient, linear-gradient(135deg,#8B6914,#F5B548))", color: "#080808", borderRadius: "7px", padding: "10px 18px", fontSize: "12px", fontWeight: 800, textDecoration: "none", boxShadow: "0 14px 30px rgba(245,181,72,0.18)" }}>Smart Scan</Link>
+                  <Link href="/capture" style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "var(--theme-gold-gradient, linear-gradient(135deg,#8B6914,#F5B548))", color: "#080808", borderRadius: "8px", padding: "12px 22px", fontSize: "13px", fontWeight: 900, textDecoration: "none", boxShadow: "0 16px 36px rgba(245,181,72,0.22)" }}>Smart Scan</Link>
                 </div>
-                <Link href="/vault" style={{ display: "inline-flex", alignItems: "center", background: "rgba(255,255,255,0.025)", color: C.text, border: `1px solid ${C.bd}`, borderRadius: "7px", padding: "9px 16px", fontSize: "12px", fontWeight: 700, textDecoration: "none" }}>Go to Vault</Link>
+                <Link href="/vault" style={{ display: "inline-flex", alignItems: "center", background: "rgba(255,255,255,0.035)", color: C.text, border: `1px solid ${C.bd}`, borderRadius: "8px", padding: "11px 20px", fontSize: "13px", fontWeight: 800, textDecoration: "none" }}>Go to Vault</Link>
               </div>
             </div>
 
@@ -930,7 +930,7 @@ export default function HomeClient() {
           )}
 
           {/* Featured Gallery card (left) + coverflow carousel (right) */}
-          <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-[16px] lg:[grid-template-columns:minmax(0,1.08fr)_minmax(0,0.92fr)]">
             <div style={{ background: panelBg, border: premiumBorder, borderRadius: "8px", overflow: "hidden", boxShadow: premiumShadow }}>
               <CardHd label="Featured Gallery" />
               {galleries.length > 0 ? (
@@ -962,7 +962,7 @@ export default function HomeClient() {
           <ProfileNudge primaryFocus={primaryFocus} />
 
           {/* Quick Actions + Movers */}
-          <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-[16px] lg:grid-cols-2">
             <div style={{ background: panelBg, border: premiumBorder, borderRadius: "8px", overflow: "hidden", boxShadow: premiumShadow }}>
               <CardHd label="Quick Actions" />
               <div className="grid grid-cols-2 gap-[7px] sm:grid-cols-3" style={{ padding: "12px 15px" }}>
