@@ -35,8 +35,8 @@ const C = {
 } as const;
 
 const panelBg = "linear-gradient(180deg, rgba(8,14,20,0.96), rgba(2,8,12,0.98))";
-const premiumBorder = "1px solid rgba(217,162,58,0.24)";
-const premiumShadow = "0 18px 54px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,241,168,0.04)";
+const premiumBorder = "1px solid rgba(217,162,58,0.42)";
+const premiumShadow = "0 22px 66px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,241,168,0.08)";
 
 // ── Social platforms ─────────────────────────────────────────────
 const SOCIAL_DEFS = [
@@ -1016,21 +1016,21 @@ export default function HomeClient() {
             )}
             <svg viewBox="0 0 230 52" width="100%" height="48" style={{ marginTop: "14px" }}>
               <defs>
-                <linearGradient id="vg3" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#52D6F4" stopOpacity=".24"/>
-                  <stop offset="58%" stopColor="#4CAF82" stopOpacity=".12"/>
+                <linearGradient id="dashboardValueArea" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#52D6F4" stopOpacity=".18"/>
+                  <stop offset="58%" stopColor="#4CAF82" stopOpacity=".10"/>
                   <stop offset="100%" stopColor="#52D6F4" stopOpacity="0"/>
                 </linearGradient>
-                <linearGradient id="vg3Line" x1="0" y1="0" x2="1" y2="0">
+                <linearGradient id="dashboardValueLine" x1="0" y1="0" x2="1" y2="0">
                   <stop offset="0%" stopColor="#52D6F4"/>
-                  <stop offset="62%" stopColor="#4CAF82"/>
-                  <stop offset="100%" stopColor="#F5B548"/>
+                  <stop offset="54%" stopColor="#4CAF82"/>
+                  <stop offset="100%" stopColor="#52D6F4"/>
                 </linearGradient>
               </defs>
-              <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2 L230 52 L0 52Z" fill="url(#vg3)"/>
-              <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2" fill="none" stroke="#52D6F4" strokeOpacity=".22" strokeWidth="6" strokeLinecap="round"/>
-              <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2" fill="none" stroke="url(#vg3Line)" strokeWidth="2.2"/>
-              <circle cx="230" cy="2" r="2.5" fill={C.gold}/>
+              <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2 L230 52 L0 52Z" fill="url(#dashboardValueArea)"/>
+              <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2" fill="none" stroke="#52D6F4" strokeOpacity=".24" strokeWidth="6" strokeLinecap="round"/>
+              <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2" fill="none" stroke="url(#dashboardValueLine)" strokeWidth="2.4"/>
+              <circle cx="230" cy="2" r="2.7" fill="#52D6F4"/>
             </svg>
             <Link href="/vault/sold" style={{ display: "block", textAlign: "center", marginTop: "8px", fontSize: "11px", color: C.muted, textDecoration: "none" }}>View analytics →</Link>
           </div>

@@ -188,30 +188,43 @@ export default function SeasonalBanner() {
 
   return (
     <div
-      className="relative overflow-hidden rounded-xl mb-3 select-none"
+      className="relative mb-4 select-none overflow-hidden"
       style={{
-        background: `linear-gradient(135deg, ${secondary}dd, ${accent}22)`,
-        border: `1px solid ${accent}33`,
+        background: "linear-gradient(90deg, rgba(4,10,16,0.98), rgba(7,18,26,0.96) 48%, rgba(3,8,14,0.98))",
+        border: "1px solid rgba(217,162,58,0.42)",
+        borderRadius: 10,
+        boxShadow: "0 18px 46px rgba(0,0,0,0.36), inset 0 1px 0 rgba(255,241,168,0.08)",
         opacity: visible ? 1 : 0,
         transition: "opacity 0.4s ease",
-        minHeight: 44,
+        minHeight: 46,
       }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `linear-gradient(90deg, transparent, ${accent}12 52%, transparent 78%)`,
+          opacity: 0.42,
+        }}
+      />
       {/* Single slim row */}
-      <div className="flex items-center gap-2 px-3 py-2">
+      <div className="relative flex items-center gap-2 px-3 py-2">
 
         {/* Prev arrow */}
         {slides.length > 1 && (
           <button
             onClick={() => jumpTo((idx - 1 + slides.length) % slides.length)}
             aria-label="Previous"
-            className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full"
-            style={{ background: `${accent}22` }}
+            className="flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
+            style={{
+              background: "rgba(255,255,255,0.035)",
+              border: "1px solid rgba(217,162,58,0.30)",
+              borderRadius: 7,
+            }}
           >
             <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
-              <path d="M7.5 2L4 6l3.5 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M7.5 2L4 6l3.5 4" stroke="#E6C46A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
         )}
@@ -231,8 +244,14 @@ export default function SeasonalBanner() {
         {ctaLabel && (
           <Link
             href={ctaHref ?? "#"}
-            className="flex-shrink-0 rounded-full px-3 py-1 text-[11px] font-bold transition hover:opacity-90"
-            style={{ background: accent, color: "#000" }}
+            className="flex-shrink-0 px-3 py-1.5 text-[11px] font-black transition hover:brightness-110"
+            style={{
+              background: "linear-gradient(135deg,#8B6914,#F5B548)",
+              border: "1px solid rgba(255,225,128,0.40)",
+              borderRadius: 7,
+              color: "#080808",
+              boxShadow: "0 10px 24px rgba(245,181,72,0.18)",
+            }}
           >
             {ctaLabel}
           </Link>
@@ -243,11 +262,15 @@ export default function SeasonalBanner() {
           <button
             onClick={() => jumpTo((idx + 1) % slides.length)}
             aria-label="Next"
-            className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full"
-            style={{ background: `${accent}22` }}
+            className="flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
+            style={{
+              background: "rgba(255,255,255,0.035)",
+              border: "1px solid rgba(217,162,58,0.30)",
+              borderRadius: 7,
+            }}
           >
             <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
-              <path d="M4.5 2L8 6l-3.5 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M4.5 2L8 6l-3.5 4" stroke="#E6C46A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
         )}
@@ -260,11 +283,12 @@ export default function SeasonalBanner() {
             <button
               key={i}
               onClick={() => jumpTo(i)}
-              className="rounded-full transition-all duration-300"
+              className="transition-all duration-300"
               style={{
-                width: i === idx ? 12 : 4,
+                width: i === idx ? 14 : 5,
                 height: 3,
-                background: i === idx ? accent : `${accent}44`,
+                background: i === idx ? "#E6C46A" : "rgba(217,162,58,0.24)",
+                borderRadius: 2,
               }}
               aria-label={`Slide ${i + 1}`}
             />
@@ -281,13 +305,13 @@ export default function SeasonalBanner() {
           <div className="flex gap-1.5 flex-shrink-0">
             <button
               onClick={handleAcceptTheme}
-              className="rounded-full px-2 py-0.5 text-[10px] font-bold"
-              style={{ background: accent, color: "#000" }}
+              className="px-2 py-0.5 text-[10px] font-bold"
+              style={{ background: "linear-gradient(135deg,#8B6914,#F5B548)", borderRadius: 6, color: "#000" }}
             >Yes</button>
             <button
               onClick={handleDismissTheme}
-              className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
-              style={{ background: `${accent}22`, color: `${accent}cc` }}
+              className="px-2 py-0.5 text-[10px] font-semibold"
+              style={{ background: "rgba(255,255,255,0.035)", border: "1px solid rgba(217,162,58,0.26)", borderRadius: 6, color: `${accent}cc` }}
             >No</button>
           </div>
         </div>
