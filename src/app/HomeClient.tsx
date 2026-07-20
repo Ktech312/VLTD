@@ -19,9 +19,10 @@ const FOCUS_LS_KEY = "vltd_primary_focus";
 
 // ── Design tokens (home-only, no site-wide leakage) ─────────────
 const C = {
-  card:   "var(--theme-card, rgba(15,25,45,0.90))",
-  bd:     "rgba(255,255,255,0.06)",
-  bd2:    "rgba(255,255,255,0.03)",
+  card:   "var(--theme-card, rgba(3,8,14,0.95))",
+  elevated: "var(--theme-elevated, rgba(6,12,20,0.96))",
+  bd:     "var(--theme-border, rgba(184,135,43,0.22))",
+  bd2:    "rgba(184,135,43,0.12)",
   gold:   "#F5B548",
   goldDim:"rgba(245,181,72,0.08)",
   goldBd: "rgba(245,181,72,0.20)",
@@ -32,6 +33,10 @@ const C = {
   red:    "#E05252",
   r:      "var(--font-serif, 'Cormorant Garamond', Georgia, serif)",
 } as const;
+
+const panelBg = "linear-gradient(180deg, rgba(8,14,20,0.96), rgba(2,8,12,0.98))";
+const premiumBorder = "1px solid rgba(217,162,58,0.24)";
+const premiumShadow = "0 18px 54px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,241,168,0.04)";
 
 // ── Social platforms ─────────────────────────────────────────────
 const SOCIAL_DEFS = [
@@ -150,8 +155,8 @@ function Stat({ label, value, tone = "default" }: { label: string; value: string
   const color = tone === "gold" ? C.gold : tone === "gain" ? C.green : tone === "loss" ? C.red : C.text;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-      <span style={{ fontFamily: C.r, fontSize: "22px", fontWeight: 700, lineHeight: 1, color }}>{value}</span>
-      <span style={{ fontSize: "10px", color: C.muted2, letterSpacing: "0.1px" }}>{label}</span>
+      <span style={{ fontFamily: C.r, fontSize: "25px", fontWeight: 800, lineHeight: 1, color }}>{value}</span>
+      <span style={{ fontSize: "10px", color: C.muted2, letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</span>
     </div>
   );
 }
@@ -159,8 +164,8 @@ function Stat({ label, value, tone = "default" }: { label: string; value: string
 // ── Card header ───────────────────────────────────────────────────
 function CardHd({ label, href, linkText }: { label: string; href?: string; linkText?: string }) {
   return (
-    <div style={{ padding: "11px 15px", borderBottom: `1px solid ${C.bd}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-      <span style={{ fontSize: "10px", letterSpacing: "1.4px", textTransform: "uppercase", color: C.muted2, fontWeight: 600 }}>{label}</span>
+    <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.bd2}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <span style={{ fontSize: "10px", letterSpacing: "1.8px", textTransform: "uppercase", color: C.muted, fontWeight: 800 }}>{label}</span>
       {href && linkText && <Link href={href} style={{ fontSize: "11px", color: C.gold, textDecoration: "none" }}>{linkText}</Link>}
     </div>
   );
@@ -334,14 +339,14 @@ function FeaturedGalleryCard({ galleries }: { galleries: Gallery[] }) {
   const g = galleries[0];
   const itemCount = g.itemIds?.length ?? 0;
   return (
-    <div style={{ padding: "12px 14px" }}>
-      <Link href={"/gallery/" + g.id} style={{ display: "block", width: "100%", height: "200px", borderRadius: "10px", border: `2px solid rgba(245,181,72,0.65)`, boxShadow: "0 0 0 1px rgba(245,181,72,0.18), 0 8px 32px rgba(0,0,0,0.45)", background: "rgba(10,18,35,0.9)", overflow: "hidden" }}>
+    <div style={{ padding: "14px 16px" }}>
+      <Link href={"/gallery/" + g.id} style={{ display: "block", width: "100%", height: "214px", borderRadius: "8px", border: `1px solid rgba(245,181,72,0.58)`, boxShadow: "0 0 0 1px rgba(245,181,72,0.10), 0 16px 42px rgba(0,0,0,0.52)", background: "rgba(4,9,13,0.94)", overflow: "hidden" }}>
         {g.coverImage
           ? <img src={g.coverImage} alt={g.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px", opacity: 0.2 }}><Glyph name="exhibition" size={22} /></div>}
       </Link>
       <div style={{ marginTop: "9px" }}>
-        <div style={{ fontFamily: C.r, fontSize: "15px", fontWeight: 600, color: C.text }}>{g.title || "Untitled"}</div>
+        <div style={{ fontFamily: C.r, fontSize: "18px", fontWeight: 700, color: C.text, lineHeight: 1.1 }}>{g.title || "Untitled"}</div>
         <div style={{ fontSize: "11px", color: C.muted, marginTop: "2px" }}>{itemCount} piece{itemCount !== 1 ? "s" : ""}</div>
         <Link href={"/gallery/" + g.id} style={{ display: "inline-flex", alignItems: "center", marginTop: "8px", borderRadius: "6px", padding: "6px 14px", fontSize: "11px", fontWeight: 700, background: "linear-gradient(135deg,#8B6914,#F5B548)", color: "#0B0B0B", textDecoration: "none" }}>View Gallery →</Link>
       </div>
@@ -503,8 +508,8 @@ function SocialLinksCard({ profileId, bio: initialBio, socialLinks: initialLinks
   if (!editable && !hasAny) return null;
 
   return (
-    <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
-      <div style={{ padding: "11px 15px", borderBottom: `1px solid ${C.bd}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+    <div style={{ background: panelBg, border: premiumBorder, borderRadius: "8px", overflow: "hidden", boxShadow: premiumShadow }}>
+      <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.bd2}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span style={{ fontSize: "10px", letterSpacing: "1.4px", textTransform: "uppercase", color: C.muted2, fontWeight: 600 }}>
           {editable ? "Your Profile" : displayName}
         </span>
@@ -518,7 +523,7 @@ function SocialLinksCard({ profileId, bio: initialBio, socialLinks: initialLinks
           </div>
         )}
       </div>
-      <div style={{ padding: "12px 15px" }}>
+      <div style={{ padding: "14px 16px" }}>
         {editing ? (
           <textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell collectors about yourself…" rows={2}
             style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: `1px solid ${C.goldBd}`, borderRadius: "6px", padding: "8px 10px", fontSize: "12px", color: C.text, resize: "none", outline: "none", fontFamily: "inherit", marginBottom: "12px" }} maxLength={300} />
@@ -605,7 +610,7 @@ function CuratorStrengthCard({
   const roiPrefix = roiPct >= 0 ? "+" : "";
   const pieces = topItems.slice(0, 3);
   return (
-    <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "10px", overflow: "hidden" }}>
+    <div style={{ background: panelBg, border: premiumBorder, borderRadius: "8px", overflow: "hidden", boxShadow: premiumShadow }}>
       <CardHd label="Curator Strength" href="/portfolio" linkText="Full insights →" />
       <div style={{ padding: "14px 16px" }}>
         {/* Score + band + summary */}
@@ -738,14 +743,14 @@ function UpcomingEventsWidget() {
   }
 
   return (
-    <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
-      <div style={{ padding: "11px 15px", borderBottom: `1px solid ${C.bd}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ fontSize: "10px", letterSpacing: "1.4px", textTransform: "uppercase", color: C.muted2, fontWeight: 600 }}>Upcoming Events</span>
+    <div style={{ background: panelBg, border: premiumBorder, borderRadius: "8px", overflow: "hidden", boxShadow: premiumShadow }}>
+      <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.bd2}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ fontSize: "10px", letterSpacing: "1.8px", textTransform: "uppercase", color: C.muted, fontWeight: 800 }}>Upcoming Events</span>
         <Link href="/events" style={{ fontSize: "11px", color: C.gold, textDecoration: "none" }}>See all →</Link>
       </div>
-      <div style={{ padding: "10px 15px", display: "flex", flexDirection: "column", gap: "8px" }}>
+      <div style={{ padding: "12px 16px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "10px" }}>
         {evs.map((ev) => (
-          <Link key={ev.id} href="/events" style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}>
+          <Link key={ev.id} href="/events" style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none", border: `1px solid ${C.bd2}`, borderRadius: "8px", padding: "10px", background: "rgba(255,255,255,0.025)" }}>
             <span style={{ fontSize: "20px", flexShrink: 0 }}>{ev.emoji ?? "🎪"}</span>
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: "12px", fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -868,36 +873,36 @@ export default function HomeClient() {
         />
       )}
 
-      <div style={{ maxWidth: "1200px", margin: "0 auto" }}
-        className="grid items-start px-4 sm:px-5 lg:px-6 py-4 grid-cols-1 lg:[grid-template-columns:1fr_265px]">
+      <div style={{ maxWidth: "1320px", margin: "0 auto" }}
+        className="grid items-start gap-4 px-4 sm:px-5 lg:px-7 py-4 grid-cols-1 xl:[grid-template-columns:minmax(0,1fr)_310px]">
 
         {/* ── LEFT COLUMN ── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "15px" }} className="lg:pr-5">
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
 
           {/* Seasonal event banner */}
           <SeasonalBanner />
 
           {/* Hero card */}
-          <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "10px", overflow: "hidden", minHeight: "190px", position: "relative" }}
-            className="grid grid-cols-1 sm:[grid-template-columns:1fr_180px]">
-            <div style={{ position: "absolute", top: "-60px", left: "-60px", width: "300px", height: "300px", background: "radial-gradient(circle, rgba(245,181,72,0.08) 0%, transparent 65%)", pointerEvents: "none" }} />
+          <div style={{ background: "linear-gradient(135deg, rgba(8,14,24,0.98), rgba(3,8,14,0.98) 58%, rgba(0,0,0,0.92))", border: "1px solid rgba(217,162,58,0.30)", borderRadius: "9px", overflow: "hidden", minHeight: "218px", position: "relative", boxShadow: premiumShadow }}
+            className="grid grid-cols-1 sm:[grid-template-columns:minmax(0,1fr)_240px]">
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(245,181,72,0.05), transparent 34%, rgba(82,214,244,0.035))", pointerEvents: "none" }} />
 
-            <div style={{ padding: "22px 24px", display: "flex", flexDirection: "column", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
+            <div style={{ padding: "26px 28px", display: "flex", flexDirection: "column", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
               <div>
                 <div style={{ fontSize: "11px", color: C.muted, marginBottom: "2px" }}>
                   {stats.totalItems === 0 ? "Your vault is ready," : "Welcome back,"}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <h1 style={{ fontFamily: C.r, fontSize: "34px", fontWeight: 600, lineHeight: 1.04, color: C.text }}>{displayName || "Curator"}</h1>
+                  <h1 style={{ fontFamily: C.r, fontSize: "40px", fontWeight: 700, lineHeight: 1.02, color: C.text }}>{displayName || "Curator"}</h1>
                   <Link href="/account" aria-label="Edit profile" title="Edit profile" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 8, background: "rgba(245,181,72,0.10)", border: `1px solid ${C.bd}`, color: C.gold, textDecoration: "none" }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                   </Link>
                 </div>
-                <div style={{ fontSize: "11.5px", color: C.muted2, marginTop: "4px" }}>
+                <div style={{ fontSize: "13px", color: C.muted, marginTop: "6px" }}>
                   {stats.totalItems === 0 ? "Scan your first item to start building a real collection record." : summaryLine}
                 </div>
                 {stats.totalItems > 0 && (
-                  <div style={{ display: "flex", gap: "22px", marginTop: "16px", flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", gap: "24px", marginTop: "20px", flexWrap: "wrap" }}>
                     <Stat label="Items" value={String(stats.totalItems)} />
                     <Stat label="Invested" value={formatMoney(stats.totalCostValue)} />
                     <Stat label="Value" value={formatMoney(stats.totalValue)} tone="gold" />
@@ -906,12 +911,12 @@ export default function HomeClient() {
                   </div>
                 )}
               </div>
-              <div style={{ display: "flex", gap: "9px", marginTop: "16px" }}>
+              <div style={{ display: "flex", gap: "10px", marginTop: "20px", flexWrap: "wrap" }}>
                 <div className="relative">
                   <div className="absolute -right-1 -top-1 z-10"><InfoTooltip text="AI-powered item identification — point camera at any collectible." /></div>
-                  <Link href="/capture" style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: C.gold, color: "#080808", borderRadius: "6px", padding: "9px 16px", fontSize: "12px", fontWeight: 600, textDecoration: "none" }}>Smart Scan</Link>
+                  <Link href="/capture" style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "var(--theme-gold-gradient, linear-gradient(135deg,#8B6914,#F5B548))", color: "#080808", borderRadius: "7px", padding: "10px 18px", fontSize: "12px", fontWeight: 800, textDecoration: "none", boxShadow: "0 14px 30px rgba(245,181,72,0.18)" }}>Smart Scan</Link>
                 </div>
-                <Link href="/vault" style={{ display: "inline-flex", alignItems: "center", background: "transparent", color: C.text, border: `1px solid ${C.bd}`, borderRadius: "6px", padding: "8px 14px", fontSize: "12px", fontWeight: 500, textDecoration: "none" }}>Go to Vault</Link>
+                <Link href="/vault" style={{ display: "inline-flex", alignItems: "center", background: "rgba(255,255,255,0.025)", color: C.text, border: `1px solid ${C.bd}`, borderRadius: "7px", padding: "9px 16px", fontSize: "12px", fontWeight: 700, textDecoration: "none" }}>Go to Vault</Link>
               </div>
             </div>
 
@@ -926,7 +931,7 @@ export default function HomeClient() {
 
           {/* Featured Gallery card (left) + coverflow carousel (right) */}
           <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2">
-            <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
+            <div style={{ background: panelBg, border: premiumBorder, borderRadius: "8px", overflow: "hidden", boxShadow: premiumShadow }}>
               <CardHd label="Featured Gallery" />
               {galleries.length > 0 ? (
                 <FeaturedGalleryCard galleries={galleries} />
@@ -937,7 +942,7 @@ export default function HomeClient() {
                 </div>
               )}
             </div>
-            <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
+            <div style={{ background: panelBg, border: premiumBorder, borderRadius: "8px", overflow: "hidden", boxShadow: premiumShadow }}>
               <CardHd label="Active Galleries" href="/museum" linkText="All" />
               {galleries.length > 0 ? (
                 <FeaturedGalleryCarousel galleries={galleries} />
@@ -958,7 +963,7 @@ export default function HomeClient() {
 
           {/* Quick Actions + Movers */}
           <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2">
-            <div style={{ background: C.card, border: `1px solid ${C.bd}`, borderRadius: "9px", overflow: "hidden" }}>
+            <div style={{ background: panelBg, border: premiumBorder, borderRadius: "8px", overflow: "hidden", boxShadow: premiumShadow }}>
               <CardHd label="Quick Actions" />
               <div className="grid grid-cols-2 gap-[7px] sm:grid-cols-3" style={{ padding: "12px 15px" }}>
                 {([
@@ -991,25 +996,25 @@ export default function HomeClient() {
         </div>{/* end LEFT */}
 
         {/* ── RIGHT SIDEBAR ── */}
-        <div style={{ display: "flex", flexDirection: "column", borderLeft: `1px solid ${C.bd}` }} className="max-lg:border-l-0 max-lg:border-t max-lg:mt-4">
-          <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-            <div style={{ padding: "13px 15px", borderBottom: `1px solid ${C.bd}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: "10px", letterSpacing: "1.4px", textTransform: "uppercase", color: C.muted2, fontWeight: 600 }}>Recently Added</span>
+        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }} className="max-xl:mt-1">
+          <div style={{ display: "flex", flexDirection: "column", background: panelBg, border: premiumBorder, borderRadius: "8px", overflow: "hidden", boxShadow: premiumShadow }}>
+            <div style={{ padding: "13px 15px", borderBottom: `1px solid ${C.bd2}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: "10px", letterSpacing: "1.8px", textTransform: "uppercase", color: C.muted, fontWeight: 800 }}>Recently Added</span>
               <Link href="/vault" style={{ fontSize: "11px", color: C.gold, textDecoration: "none" }}>View all</Link>
             </div>
             <RecentSidebarItems items={items} />
           </div>
 
-          <div style={{ padding: "14px 15px", borderTop: `1px solid ${C.bd}` }}>
-            <div style={{ fontSize: "10px", letterSpacing: "1.4px", textTransform: "uppercase", color: C.muted2, fontWeight: 600 }}>Collection Value</div>
-            <div style={{ fontFamily: C.r, fontSize: "28px", fontWeight: 700, lineHeight: 1, marginTop: "9px", color: C.gold }}>{formatMoney(stats.totalValue)}</div>
+          <div style={{ padding: "16px", background: panelBg, border: premiumBorder, borderRadius: "8px", boxShadow: premiumShadow }}>
+            <div style={{ fontSize: "10px", letterSpacing: "1.8px", textTransform: "uppercase", color: C.muted, fontWeight: 800 }}>Collection Value</div>
+            <div style={{ fontFamily: C.r, fontSize: "32px", fontWeight: 800, lineHeight: 1, marginTop: "10px", color: C.gold }}>{formatMoney(stats.totalValue)}</div>
             {stats.totalCostValue > 0 && (
               <div style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "5px" }}>
                 <span style={{ fontSize: "12px", fontWeight: 600, color: gainTone === "gain" ? C.green : C.red }}>{gainTone === "gain" ? "▲" : "▼"} {gainPrefix}{stats.gainPct.toFixed(1)}%</span>
                 <span style={{ fontSize: "11px", color: C.muted }}>overall return</span>
               </div>
             )}
-            <svg viewBox="0 0 230 52" width="100%" height="44" style={{ marginTop: "12px" }}>
+            <svg viewBox="0 0 230 52" width="100%" height="48" style={{ marginTop: "14px" }}>
               <defs>
                 <linearGradient id="vg3" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor={C.gold} stopOpacity=".28"/>
