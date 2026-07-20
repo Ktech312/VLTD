@@ -306,7 +306,7 @@ function HeroAvatarPanel({ avatarUrl, onClick }: { avatarUrl: string; onClick: (
   const presetImage = avatarPresetSrc(avatarUrl);
 
   return (
-    <button onClick={onClick} style={{ position: "relative", width: "100%", height: "100%", minHeight: "276px", background: preset?.bg ?? "linear-gradient(155deg,#100D06,#0C0A04)", border: "none", cursor: "pointer", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "1px solid rgba(217,162,58,0.16)" }} className="max-md:hidden">
+    <button onClick={onClick} style={{ position: "relative", width: "100%", height: "100%", background: preset?.bg ?? "linear-gradient(155deg,#100D06,#0C0A04)", border: "none", cursor: "pointer", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "1px solid rgba(217,162,58,0.16)" }} className="max-sm:hidden">
       {/* Ambient glow */}
       <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 10%, rgba(245,181,72,0.18) 0%, transparent 60%)", pointerEvents: "none" }} />
       {/* Decorative wall frames behind */}
@@ -883,8 +883,8 @@ export default function HomeClient() {
           <SeasonalBanner />
 
           {/* Hero card */}
-          <div style={{ background: "linear-gradient(135deg, rgba(8,14,24,0.99), rgba(3,8,14,0.98) 52%, rgba(0,0,0,0.94))", border: "1px solid rgba(217,162,58,0.42)", borderRadius: "10px", overflow: "hidden", minHeight: "276px", position: "relative", boxShadow: "0 24px 78px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,241,168,0.08)" }}
-            className="grid grid-cols-1 md:[grid-template-columns:minmax(0,1fr)_340px]">
+          <div style={{ background: "linear-gradient(135deg, rgba(8,14,24,0.99), rgba(3,8,14,0.98) 52%, rgba(0,0,0,0.94))", border: "1px solid rgba(217,162,58,0.42)", borderRadius: "10px", overflow: "hidden", minHeight: "218px", position: "relative", boxShadow: "0 24px 78px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,241,168,0.08)" }}
+            className="grid grid-cols-1 sm:[grid-template-columns:minmax(0,1fr)_240px]">
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(245,181,72,0.08), transparent 38%, rgba(82,214,244,0.035)), radial-gradient(circle at 78% 40%, rgba(245,181,72,0.12), transparent 34%)", pointerEvents: "none" }} />
 
             <div style={{ padding: "32px 34px", display: "flex", flexDirection: "column", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
@@ -893,7 +893,7 @@ export default function HomeClient() {
                   {stats.totalItems === 0 ? "Your vault is ready," : "Welcome back,"}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <h1 style={{ fontFamily: C.r, fontSize: "52px", fontWeight: 700, lineHeight: 0.96, color: C.text }}>{displayName || "Curator"}</h1>
+                  <h1 style={{ fontFamily: C.r, fontSize: "40px", fontWeight: 700, lineHeight: 1.02, color: C.text }}>{displayName || "Curator"}</h1>
                   <Link href="/account" aria-label="Edit profile" title="Edit profile" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 8, background: "rgba(245,181,72,0.10)", border: `1px solid ${C.bd}`, color: C.gold, textDecoration: "none" }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                   </Link>
@@ -1017,12 +1017,19 @@ export default function HomeClient() {
             <svg viewBox="0 0 230 52" width="100%" height="48" style={{ marginTop: "14px" }}>
               <defs>
                 <linearGradient id="vg3" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={C.gold} stopOpacity=".28"/>
-                  <stop offset="100%" stopColor={C.gold} stopOpacity=".02"/>
+                  <stop offset="0%" stopColor="#52D6F4" stopOpacity=".24"/>
+                  <stop offset="58%" stopColor="#4CAF82" stopOpacity=".12"/>
+                  <stop offset="100%" stopColor="#52D6F4" stopOpacity="0"/>
+                </linearGradient>
+                <linearGradient id="vg3Line" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#52D6F4"/>
+                  <stop offset="62%" stopColor="#4CAF82"/>
+                  <stop offset="100%" stopColor="#F5B548"/>
                 </linearGradient>
               </defs>
               <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2 L230 52 L0 52Z" fill="url(#vg3)"/>
-              <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2" fill="none" stroke={C.gold} strokeWidth="1.8"/>
+              <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2" fill="none" stroke="#52D6F4" strokeOpacity=".22" strokeWidth="6" strokeLinecap="round"/>
+              <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2" fill="none" stroke="url(#vg3Line)" strokeWidth="2.2"/>
               <circle cx="230" cy="2" r="2.5" fill={C.gold}/>
             </svg>
             <Link href="/vault/sold" style={{ display: "block", textAlign: "center", marginTop: "8px", fontSize: "11px", color: C.muted, textDecoration: "none" }}>View analytics →</Link>
