@@ -575,11 +575,11 @@ function RecentSidebarItems({ items }: { items: VaultItem[] }) {
     <div style={{ padding: "12px 15px", fontSize: "11px", color: C.muted, opacity: 0.6 }}>No items yet — scan your first collectible.</div>
   );
   return (
-    <div style={{ flex: 1, overflowY: "auto" }}>
+    <div style={{ flex: 1, overflowY: "auto", padding: "8px", display: "flex", flexDirection: "column", gap: "7px" }}>
       {recent.map((item) => (
         <Link key={item.id} href={"/vault/item/" + item.id}
-          style={{ display: "flex", gap: "9px", padding: "10px 15px", borderBottom: `1px solid ${C.bd2}`, alignItems: "center", textDecoration: "none" }}>
-          <div style={{ width: "32px", height: "32px", flexShrink: 0, borderRadius: "5px", border: `1px solid ${C.bd}`, background: "rgba(10,18,35,0.9)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px" }}>
+          style={{ display: "flex", gap: "10px", padding: "9px", border: premiumBorder, borderRadius: "8px", alignItems: "center", textDecoration: "none", background: "linear-gradient(135deg, rgba(8,14,20,0.84), rgba(3,8,14,0.94))", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.06)" }}>
+          <div style={{ width: "34px", height: "34px", flexShrink: 0, borderRadius: "6px", border: `1px solid rgba(217,162,58,0.34)`, background: "rgba(10,18,35,0.9)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px" }}>
             {item.imageFrontUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={item.imageFrontUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />

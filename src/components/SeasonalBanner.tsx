@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { fetchActiveThemes, type SeasonalTheme } from "@/lib/seasonalTheme";
@@ -67,6 +68,7 @@ function getEventCountdown(event: CollectorEvent): string {
 }
 
 export default function SeasonalBanner() {
+  const router = useRouter();
   const [slides, setSlides] = useState<Slide[]>([]);
   const [idx, setIdx] = useState(0);
   const [visible, setVisible] = useState(true);
@@ -185,6 +187,7 @@ export default function SeasonalBanner() {
   const emoji = slide.type === "theme" ? slide.theme.banner_emoji : slide.event.emoji;
   const ctaLabel = slide.type === "theme" ? slide.theme.banner_cta_label : "Learn More";
   const ctaHref  = slide.type === "theme" ? (slide.theme.banner_cta_href ?? "#") : "/events";
+  const eventHref = slide.type === "event" ? "/events" : null;
 
   return (
     <div
@@ -197,6 +200,19 @@ export default function SeasonalBanner() {
         opacity: visible ? 1 : 0,
         transition: "opacity 0.4s ease",
         minHeight: 46,
+        cursor: eventHref ? "pointer" : "default",
+      }}
+      role={eventHref ? "link" : undefined}
+      tabIndex={eventHref ? 0 : undefined}
+      onClick={() => {
+        if (eventHref) router.push(eventHref);
+      }}
+      onKeyDown={(e) => {
+        if (!eventHref) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          router.push(eventHref);
+        }
       }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
@@ -214,7 +230,10 @@ export default function SeasonalBanner() {
         {/* Prev arrow */}
         {slides.length > 1 && (
           <button
-            onClick={() => jumpTo((idx - 1 + slides.length) % slides.length)}
+            onClick={(e) => {
+              e.stopPropagation();
+              jumpTo((idx - 1 + slides.length) % slides.length);
+            }}
             aria-label="Previous"
             className="flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
             style={{
@@ -244,6 +263,7 @@ export default function SeasonalBanner() {
         {ctaLabel && (
           <Link
             href={ctaHref ?? "#"}
+            onClick={(e) => e.stopPropagation()}
             className="flex-shrink-0 px-3 py-1.5 text-[11px] font-black transition hover:brightness-110"
             style={{
               background: "linear-gradient(135deg,#8B6914,#F5B548)",
@@ -260,7 +280,10 @@ export default function SeasonalBanner() {
         {/* Next arrow */}
         {slides.length > 1 && (
           <button
-            onClick={() => jumpTo((idx + 1) % slides.length)}
+            onClick={(e) => {
+              e.stopPropagation();
+              jumpTo((idx + 1) % slides.length);
+            }}
             aria-label="Next"
             className="flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
             style={{
@@ -282,7 +305,10 @@ export default function SeasonalBanner() {
           {slides.map((_, i) => (
             <button
               key={i}
-              onClick={() => jumpTo(i)}
+              onClick={(e) => {
+                e.stopPropagation();
+                jumpTo(i);
+              }}
               className="transition-all duration-300"
               style={{
                 width: i === idx ? 14 : 5,
@@ -304,12 +330,18 @@ export default function SeasonalBanner() {
           <p className="text-[10px]" style={{ color: `${accent}bb` }}>🎨 Switch app theme?</p>
           <div className="flex gap-1.5 flex-shrink-0">
             <button
-              onClick={handleAcceptTheme}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAcceptTheme();
+              }}
               className="px-2 py-0.5 text-[10px] font-bold"
               style={{ background: "linear-gradient(135deg,#8B6914,#F5B548)", borderRadius: 6, color: "#000" }}
             >Yes</button>
             <button
-              onClick={handleDismissTheme}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDismissTheme();
+              }}
               className="px-2 py-0.5 text-[10px] font-semibold"
               style={{ background: "rgba(255,255,255,0.035)", border: "1px solid rgba(217,162,58,0.26)", borderRadius: 6, color: `${accent}cc` }}
             >No</button>
