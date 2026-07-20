@@ -134,7 +134,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden no-select"
+      className="fixed bottom-0 left-0 right-0 z-50 px-3 pb-[max(env(safe-area-inset-bottom,0px),10px)] md:hidden no-select"
       style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999 }}
       aria-label="Main navigation"
     >
@@ -187,23 +187,17 @@ export default function BottomNav() {
         </>
       )}
 
-      {/* Top separator */}
       <div
-        className="h-px w-full"
+        className="mx-auto max-w-[390px] backdrop-blur-2xl"
         style={{
-          background:
-            "linear-gradient(90deg, transparent, rgba(245,181,72,0.18) 30%, rgba(245,181,72,0.18) 70%, transparent)",
-        }}
-      />
-
-      <div
-        className="backdrop-blur-2xl"
-        style={{
-          background: "rgba(10,10,10,1)",
-          paddingBottom: "max(env(safe-area-inset-bottom, 0px), 8px)",
+          background: "linear-gradient(180deg, rgba(9,10,12,0.98), rgba(0,0,0,0.99))",
+          border: "1px solid rgba(217,162,58,0.44)",
+          borderRadius: "30px",
+          boxShadow: "0 18px 46px rgba(0,0,0,0.62), 0 0 0 1px rgba(0,0,0,0.85), inset 0 1px 0 rgba(255,241,168,0.10)",
+          padding: "6px 8px 7px",
         }}
       >
-        <div className="flex items-end justify-around px-2 pt-2.5 pb-1">
+        <div className="flex items-end justify-around gap-1">
           {TABS.map((tab) => {
             /* Centre gold + button */
             if (tab === null) {
@@ -213,7 +207,7 @@ export default function BottomNav() {
                   href="/capture"
                   aria-label="Add item to vault"
                   className="relative flex flex-col items-center"
-                  style={{ marginTop: "-20px" }}
+                  style={{ marginTop: "-22px", marginLeft: "2px", marginRight: "2px" }}
                 >
                   <div
                     className="flex h-[58px] w-[58px] items-center justify-center rounded-full"
@@ -248,7 +242,11 @@ export default function BottomNav() {
                   type="button"
                   onClick={() => setMoreOpen((v) => !v)}
                   aria-label="More categories"
-                  className="flex min-w-[56px] flex-col items-center gap-[3px] py-1 transition-opacity active:opacity-70"
+                  className="flex min-w-[56px] flex-col items-center gap-[2px] rounded-[22px] px-2 py-1.5 transition-opacity active:opacity-70"
+                  style={{
+                    border: isActive ? "1px solid rgba(217,162,58,0.44)" : "1px solid transparent",
+                    background: isActive ? "rgba(245,181,72,0.08)" : "transparent",
+                  }}
                 >
                   {tab.icon(isActive)}
                   <span
@@ -266,7 +264,11 @@ export default function BottomNav() {
               <Link
                 key={tab.href}
                 href={tab.href}
-                className="flex min-w-[56px] flex-col items-center gap-[3px] py-1 transition-opacity active:opacity-70"
+                className="flex min-w-[56px] flex-col items-center gap-[2px] rounded-[22px] px-2 py-1.5 transition-opacity active:opacity-70"
+                style={{
+                  border: isActive ? "1px solid rgba(217,162,58,0.44)" : "1px solid transparent",
+                  background: isActive ? "rgba(245,181,72,0.08)" : "transparent",
+                }}
               >
                 {tab.icon(isActive)}
                 <span

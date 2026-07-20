@@ -7,11 +7,14 @@ import { getCurrentUser, initAuthListener, onAuthStateChange } from "@/lib/auth"
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 type SubmitState = "idle" | "sending" | "done" | "error";
+const BUG_HELPER_NEVER_KEY = "vltd_bug_helper_never";
+const BUG_HELPER_SESSION_KEY = "vltd_bug_helper_dismissed";
 
 export default function BugReporter() {
   const [signedIn, setSignedIn] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
+  const [showHelper, setShowHelper] = useState(false);
   const [message, setMessage] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [state, setState] = useState<SubmitState>("idle");
@@ -36,6 +39,30 @@ export default function BugReporter() {
       data?.subscription?.unsubscribe?.();
     };
   }, []);
+
+  useEffect(() => {
+    if (!mounted || !signedIn) return;
+    try {
+      const never = localStorage.getItem(BUG_HELPER_NEVER_KEY) === "1";
+      const dismissedThisSession = sessionStorage.getItem(BUG_HELPER_SESSION_KEY) === "1";
+      if (!never && !dismissedThisSession) setShowHelper(true);
+    } catch {
+      setShowHelper(true);
+    }
+  }, [mounted, signedIn]);
+
+  function dismissHelper() {
+    setShowHelper(false);
+    try { sessionStorage.setItem(BUG_HELPER_SESSION_KEY, "1"); } catch { /* noop */ }
+  }
+
+  function neverShowHelper() {
+    setShowHelper(false);
+    try {
+      localStorage.setItem(BUG_HELPER_NEVER_KEY, "1");
+      sessionStorage.setItem(BUG_HELPER_SESSION_KEY, "1");
+    } catch { /* noop */ }
+  }
 
   function reset() {
     setMessage("");
@@ -99,7 +126,10 @@ export default function BugReporter() {
       {/* Floating trigger */}
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          dismissHelper();
+          setOpen(true);
+        }}
         aria-label="Report a bug"
         title="Report a bug"
         className="fixed right-4 bottom-24 z-[60] flex h-12 w-12 items-center justify-center rounded-full transition hover:-translate-y-0.5 sm:right-6 sm:bottom-6"
@@ -128,6 +158,54 @@ export default function BugReporter() {
           <path d="M7.4 10.5 4.3 9M7.4 13.5 4 13.5M7.4 16.5 4.3 18M16.6 10.5 19.7 9M16.6 13.5 20 13.5M16.6 16.5 19.7 18" />
         </svg>
       </button>
+
+      {showHelper && !open && (
+        <div
+          className="fixed right-4 bottom-[9.25rem] z-[61] w-[min(18rem,calc(100vw-2rem))] rounded-[14px] p-3 text-left sm:right-6 sm:bottom-[5.25rem]"
+          style={{
+            position: "fixed",
+            background: "linear-gradient(180deg, rgba(8,14,20,0.98), rgba(2,8,12,0.99))",
+            border: "1px solid var(--theme-gold-border, rgba(217,162,58,0.42))",
+            boxShadow: "0 18px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,241,168,0.08)",
+            color: "var(--fg)",
+          }}
+          role="dialog"
+          aria-label="Bug report helper"
+        >
+          <button
+            type="button"
+            onClick={dismissHelper}
+            aria-label="Close bug helper"
+            className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full text-[13px]"
+            style={{ color: "var(--muted)", background: "rgba(255,255,255,0.035)", border: "1px solid rgba(217,162,58,0.20)" }}
+          >
+            ×
+          </button>
+          <div className="pr-7">
+            <div className="text-[10px] font-black uppercase tracking-[0.22em]" style={{ color: "var(--theme-gold, #F5B548)" }}>Report issues</div>
+            <p className="mt-1 text-sm font-bold leading-tight text-[color:var(--fg)]">See something broken?</p>
+            <p className="mt-1.5 text-xs leading-snug text-[color:var(--muted)]">
+              Tap the bug button to send a quick note and optional screenshot. It helps us fix beta problems faster.
+            </p>
+            <button
+              type="button"
+              onClick={neverShowHelper}
+              className="mt-3 text-[11px] font-semibold"
+              style={{ color: "var(--theme-gold, #F5B548)" }}
+            >
+              Never show again
+            </button>
+          </div>
+          <div
+            className="absolute -bottom-2 right-8 h-4 w-4 rotate-45"
+            style={{
+              background: "rgba(2,8,12,0.99)",
+              borderRight: "1px solid var(--theme-gold-border, rgba(217,162,58,0.42))",
+              borderBottom: "1px solid var(--theme-gold-border, rgba(217,162,58,0.42))",
+            }}
+          />
+        </div>
+      )}
 
       {/* Modal */}
       {open && (

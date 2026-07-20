@@ -84,7 +84,7 @@
   --topnav-h: 72px;
 
   /* Reserve BottomNav height so content clears it on mobile */
-  --bottomnav-h: 120px;
+  --bottomnav-h: 86px;
 
   /* ---------------------------------------------------------
      NAV / SHELL VARS
