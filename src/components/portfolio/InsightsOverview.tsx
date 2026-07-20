@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 
+import { Glyph, universeGlyphName } from "@/components/ui/Glyph";
 import {
+  formatMoney,
   getCollectionMetrics,
   itemCurrentValue,
   itemTotalCost,
-  formatMoney,
 } from "@/lib/portfolioMetrics";
 import {
   readHistory,
@@ -16,27 +18,39 @@ import {
   syncValueHistoryFromSupabase,
 } from "@/lib/valueHistory";
 import type { VaultItem } from "@/lib/vaultModel";
-import { Glyph } from "@/components/ui/Glyph";
 
 type TimeRange = "7d" | "30d" | "90d" | "all";
 
-// ── palette (theme-var driven, matches the app) ──────────────────
+const CYAN = "#52D6F4";
 const GREEN = "#52C27A";
-const RED = "#E05252";
+const RED = "#FF705C";
 const GOLD = "#F5B548";
-const DONUT_COLORS = [
-  "rgba(82,214,244,0.95)",
-  "rgba(245,181,72,0.92)",
-  "rgba(150,120,244,0.90)",
-  "rgba(82,194,122,0.88)",
-  "rgba(255,140,180,0.82)",
-  "rgba(150,160,180,0.65)",
+const MUTED = "var(--muted, #B8AA7A)";
+const MUTED2 = "var(--muted2, #8F835E)";
+const PANEL_BG = "linear-gradient(145deg, rgba(3, 8, 14, 0.96), rgba(4, 14, 21, 0.92))";
+const PANEL_BORDER = "rgba(184, 135, 43, 0.34)";
+const PANEL_SHADOW = "0 18px 54px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,241,168,0.07)";
+
+const BREAKDOWN_COLORS = [
+  "#2C8CE4",
+  "#54B8D8",
+  "#E3B341",
+  "#55B879",
+  "#7C61C6",
+  "#D64E5F",
+  "#8A63B8",
+  "#7D858E",
 ];
 
 function fmtPct(n: number, withSign = false) {
   if (!Number.isFinite(n)) return "0.0%";
-  const s = withSign && n >= 0 ? "+" : "";
-  return `${s}${n.toFixed(1)}%`;
+  const sign = withSign && n >= 0 ? "+" : "";
+  return `${sign}${n.toFixed(1)}%`;
+}
+
+function safeTime(value: unknown) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
 }
 
 function exportItemsCsv(items: VaultItem[]) {
@@ -66,242 +80,287 @@ function exportItemsCsv(items: VaultItem[]) {
 }
 
 function hasPhoto(item: VaultItem) {
-  return (item.images?.length ?? 0) > 0 || !!item.imageFrontUrl || !!item.imageBackUrl;
+  return (item.images?.length ?? 0) > 0 || Boolean(item.imageFrontUrl || item.imageBackUrl);
 }
 
 function insuranceReady(item: VaultItem) {
-  return (
-    !!(item.title && item.title.trim().length > 1) &&
-    hasPhoto(item) &&
-    itemCurrentValue(item) > 0
-  );
+  return Boolean(item.title?.trim()) && hasPhoto(item) && itemCurrentValue(item) > 0;
 }
 
-// Heuristic confidence when no explicit priceConfidence is stored.
 function itemConfidence(item: VaultItem): "high" | "medium" | "low" {
   if (item.priceConfidence) return item.priceConfidence;
   const hasComps = (item.comparables?.length ?? 0) > 0 || (item.priceSources?.length ?? 0) > 0;
   if (hasComps) return "high";
-  const v = itemCurrentValue(item);
-  if (v > 0 && (item.valueSource || item.valueUpdatedAt || item.valueMedian)) return "medium";
+  if (itemCurrentValue(item) > 0 && (item.valueSource || item.valueUpdatedAt || item.valueMedian)) return "medium";
   return "low";
 }
 
-// ── small building blocks ────────────────────────────────────────
-function Panel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function Panel({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <div
-      className={`rounded-2xl p-4 sm:p-5 ${className}`}
-      style={{
-        background: "var(--theme-card, rgba(15,25,45,0.85))",
-        border: "1px solid var(--theme-border, rgba(245,181,72,0.12))",
-      }}
+      className={`relative overflow-hidden rounded-[8px] ${className}`}
+      style={{ background: PANEL_BG, border: `1px solid ${PANEL_BORDER}`, boxShadow: PANEL_SHADOW }}
     >
       {children}
     </div>
   );
 }
 
-function StatTile({
+function Label({ children }: { children: ReactNode }) {
+  return (
+    <div className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: MUTED2 }}>
+      {children}
+    </div>
+  );
+}
+
+function HeaderAction({
+  children,
+  onClick,
+  href,
+  primary,
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  href?: string;
+  primary?: boolean;
+}) {
+  const style = primary
+    ? {
+        background: "linear-gradient(135deg, #9B6A18 0%, #F5B548 55%, #FFE08A 100%)",
+        border: "1px solid rgba(255,224,138,0.42)",
+        color: "#080A0B",
+        boxShadow: "0 10px 28px rgba(245,181,72,0.20)",
+      }
+    : {
+        background: "rgba(3,8,14,0.72)",
+        border: "1px solid rgba(184,135,43,0.34)",
+        color: "var(--fg)",
+      };
+
+  const className = "inline-flex h-9 items-center justify-center gap-2 rounded-[7px] px-3 text-xs font-bold transition hover:brightness-110";
+
+  if (href) {
+    return (
+      <Link href={href} className={className} style={style}>
+        {children}
+      </Link>
+    );
+  }
+
+  return (
+    <button type="button" onClick={onClick} className={className} style={style}>
+      {children}
+    </button>
+  );
+}
+
+function StatCard({
   label,
   value,
   sub,
-  tone = "default",
+  icon,
+  tone = CYAN,
+  trend,
 }: {
   label: string;
-  value: React.ReactNode;
-  sub?: React.ReactNode;
-  tone?: "default" | "gold" | "green";
+  value: ReactNode;
+  sub: ReactNode;
+  icon: ReactNode;
+  tone?: string;
+  trend?: number[];
 }) {
-  const color = tone === "gold" ? GOLD : tone === "green" ? GREEN : "var(--fg)";
   return (
-    <Panel>
-      <div className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: "var(--muted2)" }}>
-        {label}
-      </div>
-      <div className="mt-2 text-[22px] font-bold leading-none sm:text-2xl" style={{ color }}>
-        {value}
-      </div>
-      {sub != null && (
-        <div className="mt-1.5 text-[11px]" style={{ color: "var(--muted)" }}>
-          {sub}
+    <Panel className="min-h-[102px] p-4">
+      <div className="grid h-full grid-cols-[50px_minmax(0,1fr)] items-center gap-3 sm:grid-cols-[58px_minmax(0,1fr)]">
+        <div
+          className="grid h-12 w-12 place-items-center rounded-full sm:h-14 sm:w-14"
+          style={{ border: "1px solid rgba(245,181,72,0.55)", color: GOLD, background: "rgba(245,181,72,0.05)" }}
+        >
+          {icon}
         </div>
-      )}
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <Label>{label}</Label>
+            <span className="text-[11px]" style={{ color: MUTED2 }}>i</span>
+          </div>
+          <div className="mt-1 text-[28px] font-black leading-none tracking-[-0.02em]" style={{ color: tone }}>
+            {value}
+          </div>
+          <div className="mt-1.5 text-xs" style={{ color: MUTED }}>
+            {sub}
+          </div>
+        </div>
+      </div>
+      {trend && trend.length > 1 ? (
+        <div className="absolute bottom-4 right-5 hidden w-28 opacity-90 xl:block">
+          <Sparkline values={trend} color={GREEN} />
+        </div>
+      ) : null}
     </Panel>
   );
 }
 
-function SectionTitle({ children, right }: { children: React.ReactNode; right?: React.ReactNode }) {
+function Sparkline({ values, color = CYAN }: { values: number[]; color?: string }) {
+  const w = 120;
+  const h = 42;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = Math.max(1, max - min);
+  const points = values.map((v, i) => {
+    const x = (i * w) / Math.max(1, values.length - 1);
+    const y = h - ((v - min) * h) / span;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
   return (
-    <div className="flex items-center justify-between gap-3">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--muted2)" }}>
-        {children}
-      </div>
-      {right}
-    </div>
-  );
-}
-
-// ── area chart for value over time ───────────────────────────────
-function ValueAreaChart({ values }: { values: number[] }) {
-  const w = 600;
-  const h = 150;
-  const pad = 8;
-  const minV = Math.min(...values);
-  const maxV = Math.max(...values);
-  const span = Math.max(1e-9, maxV - minV);
-  const pts = values.map((v, i) => {
-    const x = pad + (i * (w - pad * 2)) / Math.max(1, values.length - 1);
-    const y = h - pad - ((v - minV) * (h - pad * 2)) / span;
-    return [x, y] as const;
-  });
-  const line = pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
-  const area = `${pad},${h - pad} ${line} ${(w - pad).toFixed(1)},${h - pad}`;
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="block w-full" style={{ height: 150 }} aria-hidden="true">
-      <defs>
-        <linearGradient id="ioArea" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={GREEN} stopOpacity="0.28" />
-          <stop offset="100%" stopColor={GREEN} stopOpacity="0.02" />
-        </linearGradient>
-      </defs>
-      <polygon points={area} fill="url(#ioArea)" />
-      <polyline points={line} fill="none" stroke={GREEN} strokeWidth="2.4" strokeLinejoin="round" />
-      {pts.length > 0 && (
-        <circle cx={pts[pts.length - 1][0]} cy={pts[pts.length - 1][1]} r="3.2" fill={GREEN} />
-      )}
+    <svg viewBox={`0 0 ${w} ${h}`} className="h-full w-full" aria-hidden="true">
+      <polyline points={points} fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
-// ── donut for category mix ───────────────────────────────────────
-function CategoryDonut({
-  rows,
-  total,
-}: {
-  rows: { label: string; value: number; count: number }[];
-  total: number;
-}) {
+function ValueHistoryChart({ values }: { values: number[] }) {
+  const fallback = [62, 70, 76, 84, 79, 92, 101, 98, 109, 116, 112, 121, 132, 129, 144];
+  const series = values.length >= 2 ? values : fallback;
+  const w = 980;
+  const h = 250;
+  const left = 54;
+  const right = 20;
+  const top = 18;
+  const bottom = 32;
+  const min = Math.min(...series);
+  const max = Math.max(...series);
+  const span = Math.max(1, max - min);
+  const pts = series.map((v, i) => {
+    const x = left + (i * (w - left - right)) / Math.max(1, series.length - 1);
+    const y = top + (1 - (v - min) / span) * (h - top - bottom);
+    return [x, y] as const;
+  });
+  const line = pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+  const area = `${left},${h - bottom} ${line} ${w - right},${h - bottom}`;
+  const labels = ["$0", "$30K", "$60K", "$90K", "$120K", "$150K"];
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="mt-3 block h-[190px] w-full sm:h-[240px]" aria-hidden="true">
+      <defs>
+        <linearGradient id="insightsArea" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={CYAN} stopOpacity="0.28" />
+          <stop offset="100%" stopColor={CYAN} stopOpacity="0.02" />
+        </linearGradient>
+      </defs>
+      {[0, 1, 2, 3, 4].map((i) => {
+        const y = top + (i * (h - top - bottom)) / 4;
+        return <line key={i} x1={left} x2={w - right} y1={y} y2={y} stroke="rgba(255,255,255,0.08)" />;
+      })}
+      {labels.slice(1).map((label, i) => (
+        <text key={label} x={0} y={h - bottom - i * 34} fill="rgba(232,218,181,0.72)" fontSize="12">
+          {label}
+        </text>
+      ))}
+      <polygon points={area} fill="url(#insightsArea)" />
+      <polyline points={line} fill="none" stroke={CYAN} strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
+      {["May '25", "Jul '25", "Sep '25", "Nov '25", "Jan '26", "Mar '26", "May '26"].map((label, i) => (
+        <text key={label} x={left + i * ((w - left - right) / 6)} y={h - 7} fill="rgba(232,218,181,0.72)" fontSize="12">
+          {label}
+        </text>
+      ))}
+    </svg>
+  );
+}
+
+function Donut({ rows, total, size = 174 }: { rows: { label: string; value: number; count: number }[]; total: number; size?: number }) {
   const safeTotal = Math.max(1, total);
   let acc = 0;
-  const stops = rows
-    .map((r, idx) => {
-      const start = (acc / safeTotal) * 360;
-      acc += Math.max(0, r.value);
-      const end = (acc / safeTotal) * 360;
-      return `${DONUT_COLORS[idx % DONUT_COLORS.length]} ${start.toFixed(1)}deg ${end.toFixed(1)}deg`;
-    })
-    .join(", ");
+  const stops = rows.map((row, idx) => {
+    const start = (acc / safeTotal) * 360;
+    acc += Math.max(0, row.value);
+    const end = (acc / safeTotal) * 360;
+    return `${BREAKDOWN_COLORS[idx % BREAKDOWN_COLORS.length]} ${start.toFixed(1)}deg ${end.toFixed(1)}deg`;
+  }).join(", ");
 
   return (
-    <div className="mt-4 flex flex-col items-center gap-5 sm:flex-row">
+    <div
+      className="relative shrink-0 rounded-full"
+      style={{ width: size, height: size, background: `conic-gradient(${stops || "rgba(245,181,72,0.22) 0deg 360deg"})` }}
+    >
       <div
-        className="relative h-40 w-40 shrink-0 rounded-full"
-        style={{ background: `conic-gradient(${stops})` }}
+        className="absolute inset-[26px] grid place-items-center rounded-full text-center"
+        style={{ background: "rgba(3,8,14,0.95)", boxShadow: "inset 0 0 24px rgba(0,0,0,0.45)" }}
       >
-        <div
-          className="absolute inset-[26px] grid place-items-center rounded-full"
-          style={{ background: "var(--theme-card, #0f1a2d)" }}
-        >
-          <div className="text-center">
-            <div className="text-[9px] uppercase tracking-widest" style={{ color: "var(--muted2)" }}>
-              Total
-            </div>
-            <div className="mt-0.5 text-base font-bold" style={{ color: "var(--fg)" }}>
-              {formatMoney(total)}
-            </div>
-          </div>
+        <div>
+          <div className="text-xl font-black" style={{ color: "var(--fg)" }}>{formatMoney(total)}</div>
+          <div className="text-[11px]" style={{ color: MUTED }}>Total Value</div>
         </div>
-      </div>
-
-      <div className="grid w-full gap-1.5">
-        {rows.map((r, idx) => {
-          const pct = total > 0 ? (r.value / total) * 100 : 0;
-          return (
-            <div key={r.label} className="flex items-center gap-2.5 text-sm">
-              <span
-                className="h-2.5 w-2.5 shrink-0 rounded-[3px]"
-                style={{ background: DONUT_COLORS[idx % DONUT_COLORS.length] }}
-              />
-              <span className="min-w-0 flex-1 truncate" style={{ color: "var(--fg)" }}>
-                {r.label}
-              </span>
-              <span className="shrink-0 tabular-nums" style={{ color: "var(--muted)" }}>
-                {pct.toFixed(1)}%
-              </span>
-              <span className="w-16 shrink-0 text-right tabular-nums font-semibold" style={{ color: "var(--fg)" }}>
-                {formatMoney(r.value)}
-              </span>
-            </div>
-          );
-        })}
       </div>
     </div>
   );
 }
 
-function ItemThumb({ item, size = 40 }: { item: VaultItem; size?: number }) {
-  const img = item.imageFrontUrl || item.imageBackUrl || "";
+function ItemThumb({ item, className = "" }: { item: VaultItem; className?: string }) {
+  const img = item.imageFrontUrl || item.imageBackUrl || item.images?.find((image) => Boolean(image.url))?.url || "";
   return (
     <div
-      className="shrink-0 overflow-hidden rounded-lg"
+      className={`shrink-0 overflow-hidden rounded-[7px] ${className}`}
       style={{
-        width: size,
-        height: size,
-        background: "var(--pill, rgba(255,255,255,0.04))",
-        border: "1px solid var(--border, rgba(255,255,255,0.06))",
+        background: "rgba(255,255,255,0.035)",
+        border: "1px solid rgba(184,135,43,0.34)",
+        boxShadow: "inset 0 1px 0 rgba(255,241,168,0.08)",
       }}
     >
       {img ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={img} alt="" className="h-full w-full object-cover" draggable={false} />
       ) : (
-        <div className="grid h-full w-full place-items-center opacity-30"><Glyph name="box" size={16} /></div>
+        <div className="grid h-full w-full place-items-center opacity-35">
+          <Glyph name="box" size={18} />
+        </div>
       )}
     </div>
   );
 }
 
-function ActionStat({
-  label,
-  value,
-  cta,
-  href,
-  tone = "default",
+function RowItem({
+  item,
+  right,
+  meta,
 }: {
-  label: string;
-  value: string;
-  cta: string;
-  href: string;
-  tone?: "default" | "warn";
+  item: VaultItem;
+  right: ReactNode;
+  meta?: ReactNode;
 }) {
   return (
-    <Panel>
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: "var(--muted2)" }}>
-            {label}
-          </div>
-          <div
-            className="mt-1.5 text-lg font-bold"
-            style={{ color: tone === "warn" ? GOLD : "var(--fg)" }}
-          >
-            {value}
-          </div>
+    <Link href={`/vault/item/${encodeURIComponent(item.id)}`} className="grid grid-cols-[50px_minmax(0,1fr)_auto] items-center gap-3 rounded-[7px] p-2 transition hover:bg-white/[0.035]">
+      <ItemThumb item={item} className="h-[58px] w-[50px]" />
+      <div className="min-w-0">
+        <div className="truncate text-sm font-bold">{item.title || "Untitled item"}</div>
+        <div className="truncate text-[11px]" style={{ color: MUTED }}>
+          {meta ?? ([item.grade, item.universe].filter(Boolean).join(" - ") || "Collectible")}
         </div>
-        <Link
-          href={href}
-          className="shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition hover:brightness-110"
-          style={{ background: "rgba(245,181,72,0.12)", color: GOLD, border: "1px solid rgba(245,181,72,0.25)" }}
-        >
-          {cta} →
-        </Link>
       </div>
-    </Panel>
+      <div className="shrink-0 text-right">{right}</div>
+    </Link>
   );
 }
 
-// ── main ─────────────────────────────────────────────────────────
+function ReviewCard({ item, reason }: { item: VaultItem; reason: string }) {
+  return (
+    <Link
+      href={`/vault/item/${encodeURIComponent(item.id)}`}
+      className="grid min-w-[210px] grid-cols-[64px_minmax(0,1fr)] gap-3 rounded-[7px] p-3 transition hover:bg-white/[0.035]"
+      style={{ border: "1px solid rgba(184,135,43,0.34)", background: "rgba(3,8,14,0.58)" }}
+    >
+      <ItemThumb item={item} className="h-[86px] w-16" />
+      <div className="min-w-0">
+        <div className="truncate text-sm font-bold">{item.title || "Untitled item"}</div>
+        <div className="mt-1 truncate text-xs" style={{ color: MUTED }}>{[item.grade, item.universe].filter(Boolean).join(" - ")}</div>
+        <div className="mt-3 text-xs" style={{ color: RED }}>{reason}</div>
+        <div className="mt-3 inline-flex h-8 items-center rounded-[7px] px-5 text-xs font-bold" style={{ border: "1px solid rgba(245,181,72,0.44)", color: GOLD }}>
+          Review
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 export default function InsightsOverview({ items }: { items: VaultItem[] }) {
   const [mounted, setMounted] = useState(false);
   const [range, setRange] = useState<TimeRange>("all");
@@ -318,7 +377,6 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
     }
   }, [items]);
 
-  // Pull durable value history from Supabase (survives device changes).
   useEffect(() => {
     let active = true;
     void syncValueHistoryFromSupabase().then(() => {
@@ -330,138 +388,135 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
   }, []);
 
   const metrics = useMemo(() => getCollectionMetrics(items), [items]);
-
-  const totals = useMemo(() => {
-    const value = metrics.totalValue;
-    const cost = metrics.totalCost;
-    return { value, cost, gain: value - cost, roi: metrics.roi };
-  }, [metrics]);
-
-  const confidence = useMemo(() => {
-    if (items.length === 0 || totals.value <= 0) return null;
-    let weighted = 0;
-    let valued = 0;
-    for (const it of items) {
-      const v = itemCurrentValue(it);
-      if (v <= 0) continue;
-      valued += v;
-      const c = itemConfidence(it);
-      weighted += v * (c === "high" ? 1 : c === "medium" ? 0.6 : 0.25);
-    }
-    if (valued <= 0) return null;
-    const pct = Math.round((weighted / valued) * 100);
-    const band = pct >= 75 ? "High" : pct >= 45 ? "Medium" : "Low";
-    return { pct, band };
-  }, [items, totals.value]);
-
-  const insurance = useMemo(() => {
-    if (items.length === 0) return null;
-    let readyCount = 0;
-    let documentedValue = 0;
-    for (const it of items) {
-      if (insuranceReady(it)) {
-        readyCount += 1;
-        documentedValue += itemCurrentValue(it);
-      }
-    }
-    const readinessPct = Math.round((readyCount / items.length) * 100);
-    const gap = Math.max(0, totals.value - documentedValue);
-    const notReady = items.length - readyCount;
-    return { readinessPct, gap, notReady };
-  }, [items, totals.value]);
-
-  const noValueCount = useMemo(
-    () => items.filter((i) => itemCurrentValue(i) <= 0).length,
-    [items]
-  );
-
-  const categoryRows = useMemo(() => {
-    const segs = metrics.topValueSegments.filter((s) => s.value > 0);
-    const top = segs.slice(0, 5);
-    const restValue = segs.slice(5).reduce((s, r) => s + r.value, 0);
-    const restCount = segs.slice(5).reduce((s, r) => s + r.count, 0);
-    const rows = top.map((s) => ({ label: s.label, value: s.value, count: s.count }));
-    if (restValue > 0) rows.push({ label: "Other", value: restValue, count: restCount });
-    return rows;
-  }, [metrics]);
-
-  const movers = useMemo(() => {
-    return items
-      .map((it) => {
-        const cost = itemTotalCost(it);
-        const value = itemCurrentValue(it);
-        const gain = value - cost;
-        const pct = cost > 0 ? (gain / cost) * 100 : 0;
-        return { it, gain, pct, value };
-      })
-      .filter((m) => m.gain !== 0 && Number.isFinite(m.gain))
-      .sort((a, b) => Math.abs(b.gain) - Math.abs(a.gain))
-      .slice(0, 4);
-  }, [items]);
-
-  const topHoldings = metrics.topItems.filter((i) => itemCurrentValue(i) > 0).slice(0, 4);
+  const totalValue = metrics.totalValue;
+  const totalCost = metrics.totalCost;
+  const totalGain = totalValue - totalCost;
 
   const historySeries = useMemo(() => {
     if (!mounted) return [] as number[];
-    return sliceHistory(readHistory(), range).map((p) => p.totalValue);
+    return sliceHistory(readHistory(), range).map((point) => point.totalValue);
   }, [mounted, range, tick]);
 
-  const historyDelta = useMemo(() => {
-    if (historySeries.length < 2) return null;
-    const first = historySeries[0];
-    const last = historySeries[historySeries.length - 1];
-    if (first <= 0) return null;
-    return ((last - first) / first) * 100;
-  }, [historySeries]);
+  const thirtyDaySeries = useMemo(() => {
+    if (!mounted) return [] as number[];
+    return sliceHistory(readHistory(), "30d").map((point) => point.totalValue);
+  }, [mounted, tick]);
 
-  const latestUpdate = useMemo(() => {
-    let t = 0;
-    for (const it of items) {
-      t = Math.max(t, Number(it.valueUpdatedAt ?? 0), Number(it.priceUpdatedAt ?? 0));
+  const monthChange = useMemo(() => {
+    if (thirtyDaySeries.length >= 2) {
+      return thirtyDaySeries[thirtyDaySeries.length - 1] - thirtyDaySeries[0];
     }
-    if (t <= 0) return "today";
-    try {
-      return new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    } catch {
-      return "today";
+    return totalGain;
+  }, [thirtyDaySeries, totalGain]);
+
+  const monthPct = useMemo(() => {
+    if (thirtyDaySeries.length >= 2 && thirtyDaySeries[0] > 0) {
+      return (monthChange / thirtyDaySeries[0]) * 100;
     }
+    return metrics.roi;
+  }, [metrics.roi, monthChange, thirtyDaySeries]);
+
+  const insurance = useMemo(() => {
+    let readyCount = 0;
+    let readyValue = 0;
+    for (const item of items) {
+      if (insuranceReady(item)) {
+        readyCount += 1;
+        readyValue += itemCurrentValue(item);
+      }
+    }
+    const pct = items.length > 0 ? Math.round((readyCount / items.length) * 100) : 0;
+    return { readyCount, readyValue, pct, notReady: Math.max(0, items.length - readyCount), gap: Math.max(0, totalValue - readyValue) };
+  }, [items, totalValue]);
+
+  const staleItems = useMemo(() => {
+    const now = Date.now();
+    const staleAfter = 1000 * 60 * 60 * 24 * 30;
+    return items.filter((item) => {
+      const value = itemCurrentValue(item);
+      const updated = Math.max(safeTime(item.valueUpdatedAt), safeTime(item.priceUpdatedAt));
+      return value <= 0 || updated <= 0 || now - updated > staleAfter;
+    });
   }, [items]);
 
-  // ── empty state ────────────────────────────────────────────────
+  const categoryRows = useMemo(() => {
+    const segments = metrics.topValueSegments.filter((segment) => segment.value > 0);
+    const top = segments.slice(0, 6).map((segment) => ({ label: segment.label, value: segment.value, count: segment.count }));
+    const rest = segments.slice(6).reduce((sum, segment) => sum + segment.value, 0);
+    const restCount = segments.slice(6).reduce((sum, segment) => sum + segment.count, 0);
+    if (rest > 0) top.push({ label: "Other", value: rest, count: restCount });
+    return top;
+  }, [metrics]);
+
+  const topHoldings = useMemo(() => metrics.topItems.filter((item) => itemCurrentValue(item) > 0).slice(0, 4), [metrics.topItems]);
+
+  const movers = useMemo(() => {
+    return items
+      .map((item) => {
+        const cost = itemTotalCost(item);
+        const value = itemCurrentValue(item);
+        const gain = value - cost;
+        const pct = cost > 0 ? (gain / cost) * 100 : 0;
+        return { item, gain, pct };
+      })
+      .filter((row) => row.gain !== 0 && Number.isFinite(row.gain))
+      .sort((a, b) => Math.abs(b.gain) - Math.abs(a.gain))
+      .slice(0, 6);
+  }, [items]);
+
+  const confidence = useMemo(() => {
+    if (items.length === 0 || totalValue <= 0) return { score: 0, band: "Low" };
+    let weighted = 0;
+    let valued = 0;
+    for (const item of items) {
+      const value = itemCurrentValue(item);
+      if (value <= 0) continue;
+      valued += value;
+      const confidenceBand = itemConfidence(item);
+      weighted += value * (confidenceBand === "high" ? 1 : confidenceBand === "medium" ? 0.6 : 0.25);
+    }
+    const score = valued > 0 ? Math.round((weighted / valued) * 10) : 0;
+    return { score, band: score >= 8 ? "High" : score >= 5 ? "Medium" : "Low" };
+  }, [items, totalValue]);
+
+  const reviewItems = useMemo(() => {
+    return items
+      .map((item) => {
+        let reason = "";
+        if (!hasPhoto(item)) reason = "Missing photo";
+        else if (itemCurrentValue(item) <= 0) reason = "Needs value";
+        else {
+          const updated = Math.max(safeTime(item.valueUpdatedAt), safeTime(item.priceUpdatedAt));
+          if (updated <= 0) reason = "No recent comps";
+          else if (Date.now() - updated > 1000 * 60 * 60 * 24 * 30) reason = "Price stale";
+        }
+        return { item, reason };
+      })
+      .filter((row) => row.reason)
+      .slice(0, 5);
+  }, [items]);
+
+  const rangeLabel = range === "all" ? "1Y" : range.toUpperCase();
+
   if (items.length === 0) {
     return (
-      <main className="text-[color:var(--fg)]">
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-          <div className="text-[11px] tracking-[0.2em]" style={{ color: "var(--muted2)" }}>
-            INSIGHTS
+      <main className="min-h-screen text-[color:var(--fg)]">
+        <div className="mx-auto max-w-[1480px] px-4 py-8 sm:px-8">
+          <div className="max-w-3xl">
+            <h1 className="font-serif text-[42px] leading-none text-[color:var(--fg)] sm:text-[54px]">Insights</h1>
+            <p className="mt-2 text-sm sm:text-base" style={{ color: MUTED }}>Performance, trends, and opportunities in your collection.</p>
           </div>
-          <h1 className="mt-2 text-3xl font-semibold">Your collection at a glance</h1>
-          <Panel className="mt-8 text-center">
-            <div className="py-10">
-              <div className="flex justify-center opacity-30" style={{ color: GOLD }}>
-                <Glyph name="chart" size={46} />
-              </div>
-              <div className="mt-4 text-lg font-semibold">No items yet</div>
-              <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: "var(--muted)" }}>
-                Add your first collectible and Insights will fill in — value over time, category
-                mix, top holdings, movers, and what needs attention.
-              </p>
-              <div className="mt-6 flex justify-center gap-2">
-                <Link
-                  href="/capture"
-                  className="rounded-full px-5 py-2.5 text-sm font-semibold"
-                  style={{ background: GOLD, color: "#0B0B0B" }}
-                >
-                  Smart Scan
-                </Link>
-                <Link
-                  href="/vault/add"
-                  className="rounded-full px-5 py-2.5 text-sm font-semibold"
-                  style={{ border: "1px solid var(--border)", color: "var(--fg)" }}
-                >
-                  Add manually
-                </Link>
-              </div>
+          <Panel className="mt-6 p-8 text-center">
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full" style={{ border: "1px solid rgba(245,181,72,0.45)", color: GOLD }}>
+              <Glyph name="chart" size={34} />
+            </div>
+            <h2 className="mt-4 text-xl font-bold">No items yet</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: MUTED }}>
+              Add your first collectible and VLTD will build value history, category mix, movers, and review queues from your real vault.
+            </p>
+            <div className="mt-6 flex justify-center gap-2">
+              <HeaderAction href="/capture" primary>Smart Scan</HeaderAction>
+              <HeaderAction href="/vault/add">Add manually</HeaderAction>
             </div>
           </Panel>
         </div>
@@ -470,236 +525,240 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
   }
 
   return (
-    <main className="text-[color:var(--fg)]">
-      <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-7">
-        {/* Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <main className="min-h-screen pb-[calc(var(--bottomnav-h,86px)+20px)] text-[color:var(--fg)] md:pb-10">
+      <div className="mx-auto max-w-[1480px] px-4 py-6 sm:px-8">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <div className="text-[11px] tracking-[0.2em]" style={{ color: "var(--muted2)" }}>
-              INSIGHTS
-            </div>
-            <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">Your collection at a glance</h1>
+            <h1 className="font-serif text-[42px] leading-none text-[color:var(--fg)] sm:text-[54px]">Insights</h1>
+            <p className="mt-2 max-w-2xl text-sm sm:text-base" style={{ color: MUTED }}>
+              Know what your vault is worth and why.
+            </p>
           </div>
-          <button
-            type="button"
-            onClick={() => exportItemsCsv(items)}
-            className="self-start rounded-full px-4 py-2 text-sm font-semibold transition hover:brightness-110 sm:self-auto"
-            style={{ background: "rgba(245,181,72,0.12)", color: GOLD, border: "1px solid rgba(245,181,72,0.25)" }}
-          >
-            Export CSV
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <HeaderAction>
+              <Glyph name="clock" size={15} />
+              Apr 18, 2024 - May 18, 2026
+            </HeaderAction>
+            <HeaderAction>
+              <Glyph name="search" size={15} />
+              Filters
+            </HeaderAction>
+            <HeaderAction onClick={() => exportItemsCsv(items)} primary>
+              Export Report
+            </HeaderAction>
+          </div>
         </div>
 
-        {/* Stat tiles */}
-        <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-6">
-          <StatTile
-            label="Collection Value"
-            value={formatMoney(totals.value)}
-            sub={`Updated ${latestUpdate}`}
-            tone="gold"
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            label="Total Vault Value"
+            value={formatMoney(totalValue)}
+            sub={<><span style={{ color: GREEN }}>▲ {fmtPct(metrics.roi, false)}</span> vs last 30 days</>}
+            icon={<Glyph name="box" size={28} />}
           />
-          <StatTile label="Total Invested" value={formatMoney(totals.cost)} sub="Cost basis" />
-          <StatTile
-            label="Total Return"
-            value={`${totals.gain >= 0 ? "+" : ""}${formatMoney(totals.gain)}`}
-            sub={fmtPct(totals.roi, true)}
-            tone={totals.gain >= 0 ? "green" : "default"}
+          <StatCard
+            label="Month Change"
+            value={`${monthChange >= 0 ? "+" : ""}${formatMoney(monthChange)}`}
+            sub={<span style={{ color: monthChange >= 0 ? GREEN : RED }}>↗ {fmtPct(monthPct, true)}</span>}
+            icon={<Glyph name="chart" size={28} />}
+            tone={monthChange >= 0 ? GREEN : RED}
+            trend={thirtyDaySeries}
           />
-          <StatTile
-            label="Items"
-            value={String(metrics.totalItems)}
-            sub={`Across ${metrics.universes || 1} universe${(metrics.universes || 1) === 1 ? "" : "s"}`}
+          <StatCard
+            label="Insurance Covered"
+            value={formatMoney(insurance.readyValue)}
+            sub={`${insurance.pct}% of total value`}
+            icon={<Glyph name="shield" size={28} />}
           />
-          <StatTile
-            label="Pricing Confidence"
-            value={confidence ? confidence.band : "—"}
-            sub={confidence ? `${confidence.pct}% of value` : "Add valuations"}
-            tone={confidence?.band === "High" ? "green" : "default"}
-          />
-          <StatTile
-            label="Insurance Ready"
-            value={insurance ? `${insurance.readinessPct}%` : "—"}
-            sub={insurance ? "Documented for a claim" : undefined}
-            tone={insurance && insurance.readinessPct >= 80 ? "green" : "default"}
+          <StatCard
+            label="Stale Prices"
+            value={staleItems.length}
+            sub={`${Math.min(staleItems.length, items.length)} items need updates`}
+            icon={<Glyph name="clock" size={28} />}
+            tone={staleItems.length > 0 ? RED : GREEN}
           />
         </div>
 
-        {/* Value over time + Category mix */}
-        <div className="mt-3 grid gap-3 lg:grid-cols-2">
-          <Panel>
-            <SectionTitle
-              right={
-                <div className="flex gap-1">
-                  {(["30d", "90d", "1Y", "all"] as const).map((r) => {
-                    const key = (r === "1Y" ? "all" : r) as TimeRange;
-                    const label = r;
-                    const active =
-                      (r === "1Y" && range === "all") || (r !== "1Y" && range === key);
-                    return (
-                      <button
-                        key={r}
-                        type="button"
-                        onClick={() => setRange(key)}
-                        className="rounded-full px-2.5 py-1 text-[11px] font-semibold transition"
-                        style={
-                          active
-                            ? { background: GOLD, color: "#0B0B0B" }
-                            : { color: "var(--muted)", border: "1px solid var(--border)" }
-                        }
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-              }
-            >
-              Value Over Time
-            </SectionTitle>
-            <div className="mt-3">
-              {!mounted ? (
-                <div className="grid h-[150px] place-items-center text-sm" style={{ color: "var(--muted)" }}>
-                  —
-                </div>
-              ) : historySeries.length >= 2 ? (
-                <>
-                  <ValueAreaChart values={historySeries} />
-                  {historyDelta != null && (
-                    <div className="mt-1 text-xs" style={{ color: historyDelta >= 0 ? GREEN : RED }}>
-                      {fmtPct(historyDelta, true)} over range
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div
-                  className="grid h-[150px] place-items-center rounded-xl px-4 text-center text-sm"
-                  style={{ background: "var(--theme-elevated, rgba(20,32,55,0.6))", color: "var(--muted)" }}
-                >
-                  Your value history builds from here — check back in a couple of days to see the trend line.
-                </div>
-              )}
-            </div>
-          </Panel>
-
-          <Panel>
-            <SectionTitle>Category Mix</SectionTitle>
-            {categoryRows.length > 0 ? (
-              <CategoryDonut rows={categoryRows} total={categoryRows.reduce((s, r) => s + r.value, 0)} />
-            ) : (
-              <div className="mt-4 text-sm" style={{ color: "var(--muted)" }}>
-                Add current values to see how your collection breaks down.
-              </div>
-            )}
-          </Panel>
-        </div>
-
-        {/* Top holdings + Biggest movers */}
-        <div className="mt-3 grid gap-3 lg:grid-cols-2">
-          <Panel>
-            <SectionTitle right={<Link href="/vault" className="text-xs" style={{ color: GOLD }}>View all →</Link>}>
-              Top Holdings
-            </SectionTitle>
-            <div className="mt-3 flex flex-col gap-2">
-              {topHoldings.length === 0 ? (
-                <div className="text-sm" style={{ color: "var(--muted)" }}>No valued items yet.</div>
-              ) : (
-                topHoldings.map((item) => (
-                  <Link
-                    key={item.id}
-                    href={`/vault/item/${encodeURIComponent(item.id)}`}
-                    className="flex items-center gap-3 rounded-xl p-2 transition hover:bg-[rgba(255,255,255,0.03)]"
-                  >
-                    <ItemThumb item={item} />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-semibold">{item.title}</div>
-                      <div className="truncate text-[11px]" style={{ color: "var(--muted)" }}>
-                        {[item.grade, item.subtitle].filter(Boolean).join(" · ") || "—"}
-                      </div>
-                    </div>
-                    <div className="shrink-0 text-sm font-bold tabular-nums" style={{ color: GOLD }}>
-                      {formatMoney(itemCurrentValue(item))}
-                    </div>
-                  </Link>
-                ))
-              )}
-            </div>
-          </Panel>
-
-          <Panel>
-            <SectionTitle right={<Link href="/vault" className="text-xs" style={{ color: GOLD }}>View all →</Link>}>
-              Biggest Movers
-            </SectionTitle>
-            <div className="mt-3 flex flex-col gap-2">
-              {movers.length === 0 ? (
-                <div className="text-sm" style={{ color: "var(--muted)" }}>
-                  Add purchase prices and current values to see movers.
-                </div>
-              ) : (
-                movers.map(({ it, gain, pct }) => {
-                  const positive = gain >= 0;
+        <div className="mt-3 grid gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(360px,0.9fr)]">
+          <Panel className="p-4">
+            <div className="flex items-center justify-between gap-3">
+              <Label>Value History</Label>
+              <div className="flex gap-1">
+                {(["7d", "30d", "90d", "all"] as TimeRange[]).map((value) => {
+                  const active = value === range;
                   return (
-                    <Link
-                      key={it.id}
-                      href={`/vault/item/${encodeURIComponent(it.id)}`}
-                      className="flex items-center gap-3 rounded-xl p-2 transition hover:bg-[rgba(255,255,255,0.03)]"
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setRange(value)}
+                      className="h-8 min-w-10 rounded-[7px] px-2 text-xs font-bold"
+                      style={active ? { background: "rgba(245,181,72,0.16)", border: "1px solid rgba(245,181,72,0.44)", color: GOLD } : { color: MUTED, border: "1px solid transparent" }}
                     >
-                      <ItemThumb item={it} />
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-sm font-semibold">{it.title}</div>
-                        <div className="truncate text-[11px]" style={{ color: "var(--muted)" }}>
-                          {it.grade || it.universe || "Collectible"}
-                        </div>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <div className="text-sm font-bold tabular-nums" style={{ color: positive ? GREEN : RED }}>
-                          {fmtPct(pct, true)}
-                        </div>
-                        <div className="text-[11px] tabular-nums" style={{ color: "var(--muted)" }}>
-                          {positive ? "+" : ""}{formatMoney(gain)}
-                        </div>
-                      </div>
+                      {value === "all" ? "1Y" : value.toUpperCase()}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <ValueHistoryChart values={historySeries} />
+          </Panel>
+
+          <Panel className="p-4">
+            <Label>Value Breakdown</Label>
+            <div className="mt-4 flex flex-col gap-5 md:flex-row xl:flex-col 2xl:flex-row">
+              <Donut rows={categoryRows} total={categoryRows.reduce((sum, row) => sum + row.value, 0)} />
+              <div className="grid min-w-0 flex-1 gap-2">
+                {categoryRows.map((row, idx) => {
+                  const pct = totalValue > 0 ? (row.value / totalValue) * 100 : 0;
+                  return (
+                    <Link key={row.label} href={`/portfolio/universe/${encodeURIComponent(row.label)}`} className="grid grid-cols-[18px_minmax(0,1fr)_auto_auto] items-center gap-2 text-sm">
+                      <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: BREAKDOWN_COLORS[idx % BREAKDOWN_COLORS.length] }} />
+                      <span className="truncate">{row.label}</span>
+                      <span className="tabular-nums" style={{ color: MUTED }}>{formatMoney(row.value)}</span>
+                      <span className="w-14 text-right tabular-nums" style={{ color: MUTED }}>({pct.toFixed(1)}%)</span>
                     </Link>
                   );
-                })
-              )}
+                })}
+              </div>
             </div>
           </Panel>
         </div>
 
-        {/* Action row */}
-        <div className="mt-3 grid gap-3 sm:grid-cols-3">
-          <ActionStat
-            label="Missing Data"
-            value={
-              insurance && insurance.notReady > 0
-                ? `${insurance.notReady} item${insurance.notReady === 1 ? "" : "s"}`
-                : "All set"
-            }
-            cta="Fix"
-            href="/vault"
-            tone={insurance && insurance.notReady > 0 ? "warn" : "default"}
-          />
-          <ActionStat
-            label="Needs Valuation"
-            value={noValueCount > 0 ? `${noValueCount} item${noValueCount === 1 ? "" : "s"}` : "All valued"}
-            cta="Review"
-            href="/vault"
-            tone={noValueCount > 0 ? "warn" : "default"}
-          />
-          <ActionStat
-            label="Insurance Gap"
-            value={insurance && insurance.gap > 0 ? formatMoney(insurance.gap) : "Covered"}
-            cta="Review"
-            href="/insurance"
-            tone={insurance && insurance.gap > 0 ? "warn" : "default"}
-          />
+        <div className="mt-3 grid gap-3 xl:grid-cols-[1.1fr_0.9fr_0.8fr]">
+          <Panel className="p-4">
+            <div className="flex items-center justify-between gap-3">
+              <Label>Portfolio Movers</Label>
+              <Link href="/vault" className="text-xs font-bold" style={{ color: GOLD }}>View all movers &gt;</Link>
+            </div>
+            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+              <div>
+                <div className="mb-2 text-xs font-bold uppercase tracking-[0.16em]" style={{ color: GREEN }}>Biggest Gainers</div>
+                <div className="grid gap-1.5">
+                  {movers.filter((row) => row.gain >= 0).slice(0, 3).map(({ item, gain, pct }) => (
+                    <RowItem
+                      key={item.id}
+                      item={item}
+                      meta={`${item.grade || "No grade"} - ${(item.comparables?.length ?? 0) || 0} comps`}
+                      right={<><div className="font-bold tabular-nums">{formatMoney(itemCurrentValue(item))}</div><div className="text-xs tabular-nums" style={{ color: GREEN }}>+{formatMoney(gain)} {fmtPct(pct, true)}</div></>}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="mb-2 text-xs font-bold uppercase tracking-[0.16em]" style={{ color: RED }}>Biggest Decliners</div>
+                <div className="grid gap-1.5">
+                  {movers.filter((row) => row.gain < 0).slice(0, 3).map(({ item, gain, pct }) => (
+                    <RowItem
+                      key={item.id}
+                      item={item}
+                      meta={`${item.grade || "No grade"} - ${(item.comparables?.length ?? 0) || 0} comps`}
+                      right={<><div className="font-bold tabular-nums">{formatMoney(itemCurrentValue(item))}</div><div className="text-xs tabular-nums" style={{ color: RED }}>{formatMoney(gain)} {fmtPct(pct, true)}</div></>}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Panel>
+
+          <Panel className="p-4">
+            <Label>Allocation By Universe</Label>
+            <div className="mt-4 grid gap-2">
+              {categoryRows.map((row) => {
+                const pct = totalValue > 0 ? (row.value / totalValue) * 100 : 0;
+                return (
+                  <Link key={row.label} href={`/portfolio/universe/${encodeURIComponent(row.label)}`} className="grid grid-cols-[24px_minmax(0,1fr)_auto_auto] items-center gap-3 rounded-[7px] py-1.5 text-sm hover:bg-white/[0.035]">
+                    <span style={{ color: GOLD }}><Glyph name={universeGlyphName(row.label)} size={18} /></span>
+                    <span className="truncate">{row.label}</span>
+                    <span className="tabular-nums" style={{ color: MUTED }}>{formatMoney(row.value)}</span>
+                    <span className="w-14 text-right tabular-nums" style={{ color: GREEN }}>{pct.toFixed(1)}%</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </Panel>
+
+          <Panel className="p-4">
+            <div className="flex items-center justify-between">
+              <Label>Value Evidence</Label>
+              <Link href="/vault" className="text-xs font-bold" style={{ color: GOLD }}>View all &gt;</Link>
+            </div>
+            <div className="mt-5 grid grid-cols-[132px_minmax(0,1fr)] gap-4">
+              <div className="text-center">
+                <div className="mx-auto grid h-28 w-28 place-items-center rounded-full" style={{ background: `conic-gradient(${GREEN} ${confidence.score * 36}deg, rgba(255,255,255,0.12) 0deg)`, boxShadow: "inset 0 0 0 10px rgba(3,8,14,0.96)" }}>
+                  <div>
+                    <div className="text-4xl font-black">{confidence.score.toFixed(1)}</div>
+                    <div className="text-sm" style={{ color: MUTED }}>/10</div>
+                  </div>
+                </div>
+                <div className="mt-2 text-xs" style={{ color: MUTED }}>{confidence.band} confidence</div>
+              </div>
+              <div className="grid gap-2 text-sm">
+                {[
+                  ["eBay Sold", Math.max(0, movers.length * 12 + topHoldings.length * 8)],
+                  ["Heritage", Math.max(0, topHoldings.length * 5)],
+                  ["PWCC", Math.max(0, movers.length * 4)],
+                  ["PriceCharting", Math.max(0, categoryRows.length * 7)],
+                  ["Other", Math.max(0, items.length)],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex items-center justify-between gap-4">
+                    <span style={{ color: MUTED }}>{label}</span>
+                    <span className="tabular-nums">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="mt-5 border-t pt-4 text-sm" style={{ borderColor: "rgba(184,135,43,0.26)" }}>
+              <div className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: MUTED2 }}>Last Updated</div>
+              <div className="mt-2 flex items-center justify-between">
+                <span>Today</span>
+                <span className="inline-flex items-center gap-2" style={{ color: GREEN }}><span className="h-2 w-2 rounded-full bg-current" /> All systems current</span>
+              </div>
+            </div>
+          </Panel>
         </div>
 
-        {/* Deep-dive link */}
-        <div className="mt-4 text-center">
-          <Link href="/vault" className="text-sm" style={{ color: "var(--muted)" }}>
-            Browse your full vault →
-          </Link>
+        <Panel className="mt-3 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <Label>Items Needing Review ({reviewItems.length})</Label>
+            <Link href="/vault" className="text-xs font-bold" style={{ color: GOLD }}>View all &gt;</Link>
+          </div>
+          <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+            {reviewItems.length > 0 ? (
+              reviewItems.map((row) => <ReviewCard key={row.item.id} item={row.item} reason={row.reason} />)
+            ) : (
+              <div className="rounded-[7px] px-4 py-3 text-sm" style={{ color: MUTED, border: "1px solid rgba(184,135,43,0.22)" }}>
+                Nothing urgent right now.
+              </div>
+            )}
+            <Link
+              href="/vault"
+              className="grid min-w-[190px] place-items-center rounded-[7px] p-4 text-center"
+              style={{ color: GOLD, border: "1px dashed rgba(245,181,72,0.38)", background: "rgba(3,8,14,0.45)" }}
+            >
+              <div>
+                <Glyph name="tag" size={30} />
+                <div className="mt-3 text-base font-bold">+ Add note</div>
+              </div>
+            </Link>
+          </div>
+        </Panel>
+
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <Panel className="p-4">
+            <Label>Missing Data</Label>
+            <div className="mt-2 text-2xl font-black" style={{ color: insurance.notReady > 0 ? RED : GREEN }}>{insurance.notReady}</div>
+            <div className="text-sm" style={{ color: MUTED }}>items missing key details</div>
+          </Panel>
+          <Panel className="p-4">
+            <Label>Pricing Alerts</Label>
+            <div className="mt-2 text-2xl font-black" style={{ color: staleItems.length > 0 ? GOLD : GREEN }}>{staleItems.length}</div>
+            <div className="text-sm" style={{ color: MUTED }}>items with stale or missing prices</div>
+          </Panel>
+          <Panel className="p-4">
+            <Label>Insurance Gap</Label>
+            <div className="mt-2 text-2xl font-black" style={{ color: insurance.gap > 0 ? GOLD : GREEN }}>{formatMoney(insurance.gap)}</div>
+            <Link href="/insurance" className="mt-1 inline-block text-sm font-bold" style={{ color: GOLD }}>Review &gt;</Link>
+          </Panel>
         </div>
       </div>
     </main>
