@@ -562,7 +562,6 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
             sub={<span style={{ color: monthChange >= 0 ? GREEN : RED }}>↗ {fmtPct(monthPct, true)}</span>}
             icon={<Glyph name="chart" size={28} />}
             tone={monthChange >= 0 ? GREEN : RED}
-            trend={thirtyDaySeries}
           />
           <StatCard
             label="Insurance Covered"

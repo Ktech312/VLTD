@@ -18,7 +18,6 @@ const cormorant = Cormorant_Garamond({
 import "./vltd-design.css";
 import "./vault-pass.css";
 import "./museum-pass.css";
-import "./portfolio-pass.css";
 import "./quick-add-pass.css";
 import "./vault-utility-pass.css";
 import "./vault-directives-pass.css";
