@@ -193,7 +193,7 @@ function StatCard({
         </div>
       </div>
       {trend && trend.length > 1 ? (
-        <div className="absolute bottom-4 right-5 hidden w-28 opacity-90 xl:block">
+        <div className="pointer-events-none absolute bottom-3 right-4 hidden w-24 opacity-55 2xl:block">
           <Sparkline values={trend} color={GREEN} />
         </div>
       ) : null}
@@ -331,7 +331,7 @@ function RowItem({
     <Link href={`/vault/item/${encodeURIComponent(item.id)}`} className="grid grid-cols-[50px_minmax(0,1fr)_auto] items-center gap-3 rounded-[7px] p-2 transition hover:bg-white/[0.035]">
       <ItemThumb item={item} className="h-[58px] w-[50px]" />
       <div className="min-w-0">
-        <div className="truncate text-sm font-bold">{item.title || "Untitled item"}</div>
+        <div className="text-sm font-bold leading-tight">{item.title || "Untitled item"}</div>
         <div className="truncate text-[11px]" style={{ color: MUTED }}>
           {meta ?? ([item.grade, item.universe].filter(Boolean).join(" - ") || "Collectible")}
         </div>
@@ -350,7 +350,7 @@ function ReviewCard({ item, reason }: { item: VaultItem; reason: string }) {
     >
       <ItemThumb item={item} className="h-[86px] w-16" />
       <div className="min-w-0">
-        <div className="truncate text-sm font-bold">{item.title || "Untitled item"}</div>
+        <div className="text-sm font-bold leading-tight">{item.title || "Untitled item"}</div>
         <div className="mt-1 truncate text-xs" style={{ color: MUTED }}>{[item.grade, item.universe].filter(Boolean).join(" - ")}</div>
         <div className="mt-3 text-xs" style={{ color: RED }}>{reason}</div>
         <div className="mt-3 inline-flex h-8 items-center rounded-[7px] px-5 text-xs font-bold" style={{ border: "1px solid rgba(245,181,72,0.44)", color: GOLD }}>
@@ -624,13 +624,13 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
           </Panel>
         </div>
 
-        <div className="mt-3 grid gap-3 xl:grid-cols-[1.1fr_0.9fr_0.8fr]">
+        <div className="mt-3 grid gap-3 xl:grid-cols-[minmax(480px,1.28fr)_minmax(320px,0.86fr)_minmax(320px,0.86fr)]">
           <Panel className="p-4">
             <div className="flex items-center justify-between gap-3">
               <Label>Portfolio Movers</Label>
               <Link href="/vault" className="text-xs font-bold" style={{ color: GOLD }}>View all movers &gt;</Link>
             </div>
-            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            <div className="mt-4 grid gap-3 2xl:grid-cols-2">
               <div>
                 <div className="mb-2 text-xs font-bold uppercase tracking-[0.16em]" style={{ color: GREEN }}>Biggest Gainers</div>
                 <div className="grid gap-1.5">
