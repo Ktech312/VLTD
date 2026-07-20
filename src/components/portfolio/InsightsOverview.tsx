@@ -370,12 +370,12 @@ function MoverRow({
   return (
     <Link
       href={`/vault/item/${encodeURIComponent(item.id)}`}
-      className="grid min-h-[62px] grid-cols-[38px_minmax(0,1fr)_74px] items-center gap-2 border-b py-1.5 transition last:border-b-0 hover:bg-white/[0.035]"
-      style={{ borderColor: "rgba(184,135,43,0.18)" }}
+      className="grid min-h-[62px] grid-cols-[42px_minmax(0,1fr)_82px] items-center gap-2 border-b py-1.5 transition last:border-b-0 hover:bg-white/[0.035]"
+      style={{ borderColor: "rgba(184,135,43,0.18)", color: "var(--fg)" }}
     >
-      <ItemThumb item={item} className="h-[52px] w-[36px]" />
+      <ItemThumb item={item} className="h-[54px] w-[40px]" />
       <div className="min-w-0 pr-1">
-        <div className="max-h-[2.35em] overflow-hidden text-[11px] font-bold leading-[1.16]">{item.title || "Untitled item"}</div>
+        <div className="max-h-[2.25em] overflow-hidden text-[11px] font-bold leading-[1.12]" style={{ color: "var(--fg)" }}>{item.title || "Untitled item"}</div>
         <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[9px] leading-tight" style={{ color: MUTED }}>
           <span className="truncate">{item.grade || item.universe || "Collectible"} - {(item.comparables?.length ?? 0) || 0} comps</span>
           <span
@@ -391,8 +391,8 @@ function MoverRow({
         </div>
       </div>
       <div className="text-right">
-        <div className="text-[12px] font-bold tabular-nums">{formatMoney(value)}</div>
-        <div className="mt-0.5 text-[9px] tabular-nums" style={{ color: tone }}>
+        <div className="text-[11px] font-bold tabular-nums" style={{ color: "var(--fg)" }}>{formatMoney(value)}</div>
+        <div className="mt-0.5 text-[9px] leading-tight tabular-nums" style={{ color: tone }}>
           {gain >= 0 ? "+" : ""}{formatMoney(gain)}
           <span className="block">{fmtPct(pct, true)}</span>
         </div>
@@ -670,7 +670,12 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
                 {categoryRows.map((row, idx) => {
                   const pct = totalValue > 0 ? (row.value / totalValue) * 100 : 0;
                   return (
-                    <Link key={row.label} href={`/portfolio/universe/${encodeURIComponent(row.label)}`} className="grid grid-cols-[14px_minmax(0,1fr)_78px_54px] items-center gap-2 text-xs leading-tight">
+                    <Link
+                      key={row.label}
+                      href={`/portfolio/universe/${encodeURIComponent(row.label)}`}
+                      className="grid grid-cols-[14px_minmax(0,1fr)_78px_54px] items-center gap-2 text-xs leading-tight"
+                      style={{ color: "var(--fg)" }}
+                    >
                       <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: BREAKDOWN_COLORS[idx % BREAKDOWN_COLORS.length] }} />
                       <span className="truncate">{displayLabel(row.label)}</span>
                       <span className="text-right tabular-nums" style={{ color: MUTED }}>{formatMoney(row.value)}</span>
@@ -683,7 +688,7 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
           </Panel>
         </div>
 
-        <div className="mt-3 grid gap-3 xl:grid-cols-[minmax(560px,1.34fr)_minmax(320px,0.83fr)_minmax(320px,0.83fr)]">
+        <div className="mt-3 grid gap-3 xl:grid-cols-[minmax(650px,1.45fr)_minmax(340px,0.82fr)_minmax(340px,0.82fr)]">
           <Panel className="p-3.5">
             <div className="flex items-center justify-between gap-3">
               <Label>Portfolio Movers</Label>
@@ -732,7 +737,12 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
               {categoryRows.map((row) => {
                 const pct = totalValue > 0 ? (row.value / totalValue) * 100 : 0;
                 return (
-                  <Link key={row.label} href={`/portfolio/universe/${encodeURIComponent(row.label)}`} className="grid grid-cols-[22px_minmax(0,1fr)_78px_52px] items-center gap-2 rounded-[7px] py-1.5 text-xs hover:bg-white/[0.035]">
+                  <Link
+                    key={row.label}
+                    href={`/portfolio/universe/${encodeURIComponent(row.label)}`}
+                    className="grid grid-cols-[22px_minmax(0,1fr)_78px_52px] items-center gap-2 rounded-[7px] py-1.5 text-xs hover:bg-white/[0.035]"
+                    style={{ color: "var(--fg)" }}
+                  >
                     <span style={{ color: GOLD }}><Glyph name={universeGlyphName(row.label)} size={18} /></span>
                     <span className="truncate font-semibold">{displayLabel(row.label)}</span>
                     <span className="text-right tabular-nums" style={{ color: MUTED }}>{formatMoney(row.value)}</span>
