@@ -187,8 +187,31 @@ export default function BottomNav() {
         </>
       )}
 
-      <div className="mx-auto flex max-w-[390px] items-end justify-center px-1">
-          {TABS.map((tab, idx) => {
+      <div
+        className="relative mx-auto flex max-w-[390px] items-end justify-center overflow-visible px-3 py-2"
+        style={{
+          minHeight: 72,
+        }}
+      >
+        <div
+          className="pointer-events-none absolute left-5 right-5 bottom-[10px] h-[52px]"
+          style={{
+            background: "linear-gradient(180deg, rgba(8,8,9,0.99), rgba(0,0,0,0.99))",
+            border: "1px solid rgba(217,162,58,0.54)",
+            borderRadius: "28px",
+            boxShadow: "0 18px 44px rgba(0,0,0,0.64), inset 0 1px 0 rgba(255,241,168,0.08)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute left-[26%] bottom-[19px] h-[34px] w-[28px] rounded-full bg-black"
+          style={{ boxShadow: "-12px 0 0 #000, 0 0 0 1px rgba(217,162,58,0.28)" }}
+        />
+        <div
+          className="pointer-events-none absolute right-[26%] bottom-[19px] h-[34px] w-[28px] rounded-full bg-black"
+          style={{ boxShadow: "12px 0 0 #000, 0 0 0 1px rgba(217,162,58,0.28)" }}
+        />
+        <div className="relative z-[2] flex w-full items-end justify-between">
+          {TABS.map((tab) => {
             /* Centre gold + button */
             if (tab === null) {
               return (
@@ -197,7 +220,7 @@ export default function BottomNav() {
                   href="/capture"
                   aria-label="Add item to vault"
                   className="relative flex flex-col items-center"
-                  style={{ marginTop: "-23px", marginLeft: "-8px", marginRight: "-8px", zIndex: 5 }}
+                  style={{ marginTop: "-23px", zIndex: 5 }}
                 >
                   <div
                     className="flex h-[62px] w-[62px] items-center justify-center rounded-full"
@@ -223,20 +246,7 @@ export default function BottomNav() {
             }
 
             const isActive = active(tab);
-            const lobeStyle: React.CSSProperties = {
-              width: 82,
-              height: 60,
-              marginLeft: idx === 0 ? 0 : -10,
-              zIndex: isActive ? 3 : 2,
-              border: `1px solid ${isActive ? "rgba(217,162,58,0.72)" : "rgba(217,162,58,0.38)"}`,
-              borderRadius: 30,
-              background: isActive
-                ? "linear-gradient(180deg, rgba(16,14,10,0.99), rgba(0,0,0,0.99))"
-                : "linear-gradient(180deg, rgba(8,8,9,0.99), rgba(0,0,0,0.99))",
-              boxShadow: isActive
-                ? "0 14px 34px rgba(0,0,0,0.58), inset 0 1px 0 rgba(255,241,168,0.12), inset 0 -1px 0 rgba(217,162,58,0.18)"
-                : "0 12px 30px rgba(0,0,0,0.52), inset 0 1px 0 rgba(255,241,168,0.06)",
-            };
+            const itemStyle: React.CSSProperties = { width: 66, height: 48, color: isActive ? GOLD : DIM };
 
             /* "More" — toggles the sheet (not a route) */
             if (tab.href === MORE_TAB) {
@@ -246,8 +256,8 @@ export default function BottomNav() {
                   type="button"
                   onClick={() => setMoreOpen((v) => !v)}
                   aria-label="More categories"
-                  className="flex flex-col items-center justify-center gap-[2px] px-2 transition-opacity active:opacity-70"
-                  style={lobeStyle}
+                  className="flex flex-col items-center justify-center gap-[2px] transition-opacity active:opacity-70"
+                  style={itemStyle}
                 >
                   {tab.icon(isActive)}
                   <span
@@ -265,8 +275,8 @@ export default function BottomNav() {
               <Link
                 key={tab.href}
                 href={tab.href}
-                className="flex flex-col items-center justify-center gap-[2px] px-2 transition-opacity active:opacity-70"
-                style={lobeStyle}
+                className="flex flex-col items-center justify-center gap-[2px] transition-opacity active:opacity-70"
+                style={itemStyle}
               >
                 {tab.icon(isActive)}
                 <span
@@ -278,6 +288,7 @@ export default function BottomNav() {
               </Link>
             );
           })}
+        </div>
       </div>
     </nav>
   );
