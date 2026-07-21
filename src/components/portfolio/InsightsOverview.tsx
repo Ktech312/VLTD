@@ -237,9 +237,16 @@ function StatCard({
   tone?: string;
   trend?: number[];
 }) {
+  const hasTrend = Boolean(trend && trend.length > 1);
   return (
     <Panel className="min-h-[94px] p-3.5">
-      <div className="grid h-full grid-cols-[46px_minmax(0,1fr)] items-center gap-3 sm:grid-cols-[52px_minmax(0,1fr)]">
+      <div
+        className={`grid h-full items-center gap-3 ${
+          hasTrend
+            ? "grid-cols-[46px_minmax(0,1fr)_102px] sm:grid-cols-[52px_minmax(0,1fr)_118px]"
+            : "grid-cols-[46px_minmax(0,1fr)] sm:grid-cols-[52px_minmax(0,1fr)]"
+        }`}
+      >
         <div
           className="grid h-11 w-11 place-items-center rounded-full sm:h-12 sm:w-12"
           style={{ border: "1px solid rgba(245,181,72,0.55)", color: GOLD, background: "rgba(245,181,72,0.05)" }}
@@ -249,7 +256,7 @@ function StatCard({
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <Label>{label}</Label>
-            <span className="text-[11px]" style={{ color: MUTED2 }}>i</span>
+            <InfoMark />
           </div>
           <div className="mt-1 text-[27px] font-black leading-none tracking-[-0.02em]" style={{ color: tone }}>
             {value}
@@ -258,12 +265,12 @@ function StatCard({
             {sub}
           </div>
         </div>
+        {hasTrend ? (
+          <div className="min-w-0 self-center opacity-95">
+            <Sparkline values={trend ?? []} color={tone === RED ? RED : GREEN} />
+          </div>
+        ) : null}
       </div>
-      {trend && trend.length > 1 ? (
-        <div className="pointer-events-none absolute bottom-3 right-4 hidden w-24 opacity-55 2xl:block">
-          <Sparkline values={trend} color={GREEN} />
-        </div>
-      ) : null}
     </Panel>
   );
 }
@@ -279,8 +286,10 @@ function Sparkline({ values, color = CYAN }: { values: number[]; color?: string 
     const y = h - ((v - min) * h) / span;
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   }).join(" ");
+  const area = `0,${h} ${points} ${w},${h}`;
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="h-full w-full" aria-hidden="true">
+      <polygon points={area} fill={color} opacity="0.16" />
       <polyline points={points} fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -680,6 +689,7 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
             sub={<span style={{ color: monthChange >= 0 ? GREEN : RED }}>{fmtPct(monthPct, true)}</span>}
             icon={<Glyph name="chart" size={28} />}
             tone={monthChange >= 0 ? GREEN : RED}
+            trend={thirtyDaySeries}
           />
           <StatCard
             label="Insurance Covered"
