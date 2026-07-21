@@ -501,10 +501,11 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
 
   const categoryRows = useMemo(() => {
     const segments = metrics.topValueSegments.filter((segment) => segment.value > 0);
-    const top = segments.slice(0, 6).map((segment) => ({ label: segment.label, value: segment.value, count: segment.count }));
+    const top = segments.slice(0, 6).map((segment) => ({ label: segment.label, value: segment.value, cost: segment.cost, count: segment.count }));
     const rest = segments.slice(6).reduce((sum, segment) => sum + segment.value, 0);
+    const restCost = segments.slice(6).reduce((sum, segment) => sum + segment.cost, 0);
     const restCount = segments.slice(6).reduce((sum, segment) => sum + segment.count, 0);
-    if (rest > 0) top.push({ label: "Other", value: rest, count: restCount });
+    if (rest > 0) top.push({ label: "Other", value: rest, cost: restCost, count: restCount });
     return top;
   }, [metrics]);
 
@@ -732,21 +733,39 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
           </Panel>
 
           <Panel className="p-4">
-            <Label>Allocation By Universe</Label>
-            <div className="mt-4 grid gap-1.5">
+            <div className="flex items-center gap-1.5">
+              <Label>Allocation By Universe</Label>
+              <span className="text-[11px]" style={{ color: MUTED2 }}>i</span>
+            </div>
+            <div className="mt-4 grid grid-cols-[26px_minmax(0,1fr)_74px_42px_112px] gap-2 text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: MUTED2 }}>
+              <span />
+              <span>Universe</span>
+              <span className="text-right">Value</span>
+              <span className="text-right">%</span>
+              <span className="text-right">Change (30d)</span>
+            </div>
+            <div className="mt-2 grid">
               {categoryRows.map((row) => {
                 const pct = totalValue > 0 ? (row.value / totalValue) * 100 : 0;
+                const gain = row.value - row.cost;
+                const gainPct = row.cost > 0 ? (gain / row.cost) * 100 : 0;
+                const tone = gain >= 0 ? GREEN : RED;
                 return (
                   <Link
                     key={row.label}
                     href={`/portfolio/universe/${encodeURIComponent(row.label)}`}
-                    className="grid grid-cols-[22px_minmax(0,1fr)_78px_52px] items-center gap-2 rounded-[7px] py-1.5 text-xs hover:bg-white/[0.035]"
-                    style={{ color: "var(--fg)" }}
+                    className="grid grid-cols-[26px_minmax(0,1fr)_74px_42px_112px] items-center gap-2 border-b py-2 text-xs last:border-b-0 hover:bg-white/[0.035]"
+                    style={{ color: "var(--fg)", borderColor: "rgba(184,135,43,0.16)" }}
                   >
                     <span style={{ color: GOLD }}><Glyph name={universeGlyphName(row.label)} size={18} /></span>
                     <span className="truncate font-semibold">{displayLabel(row.label)}</span>
                     <span className="text-right tabular-nums" style={{ color: MUTED }}>{formatMoney(row.value)}</span>
-                    <span className="w-14 text-right tabular-nums" style={{ color: GREEN }}>{pct.toFixed(1)}%</span>
+                    <span className="text-right tabular-nums" style={{ color: MUTED }}>{pct.toFixed(1)}%</span>
+                    <span className="text-right tabular-nums" style={{ color: tone }}>
+                      <span className="mr-1">{gain >= 0 ? "↗" : "↘"}</span>
+                      {gain >= 0 ? "+" : ""}{formatMoney(gain)}
+                      <span className="ml-2">{fmtPct(gainPct, true)}</span>
+                    </span>
                   </Link>
                 );
               })}
@@ -758,17 +777,25 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
               <Label>Value Evidence</Label>
               <Link href="/vault" className="text-xs font-bold" style={{ color: GOLD }}>View all &gt;</Link>
             </div>
-            <div className="mt-4 grid grid-cols-[112px_minmax(0,1fr)] gap-4">
-              <div className="text-center">
-                <div className="mx-auto grid h-24 w-24 place-items-center rounded-full" style={{ background: `conic-gradient(${GREEN} ${confidence.score * 36}deg, rgba(255,255,255,0.12) 0deg)`, boxShadow: "inset 0 0 0 9px rgba(3,8,14,0.96)" }}>
+            <div className="mt-4 grid grid-cols-[minmax(0,0.92fr)_1px_minmax(0,1fr)] gap-5">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: MUTED2 }}>Median Confidence</div>
+                <div className="mt-2 text-2xl font-semibold leading-none" style={{ color: confidence.band === "High" ? GREEN : confidence.band === "Medium" ? GOLD : RED }}>
+                  {confidence.band}
+                </div>
+                <div className="mt-5 grid place-items-center">
+                  <div className="grid h-28 w-28 place-items-center rounded-full" style={{ background: `conic-gradient(${GREEN} ${confidence.score * 36}deg, rgba(255,255,255,0.12) 0deg)`, boxShadow: "inset 0 0 0 10px rgba(3,8,14,0.96)" }}>
                   <div>
-                    <div className="text-[32px] font-black leading-none">{confidence.score.toFixed(1)}</div>
-                    <div className="text-xs" style={{ color: MUTED }}>/10</div>
+                    <div className="text-[34px] font-black leading-none">{confidence.score.toFixed(1)}</div>
+                    <div className="text-sm" style={{ color: MUTED }}>/10</div>
+                  </div>
                   </div>
                 </div>
-                <div className="mt-2 text-[11px]" style={{ color: MUTED }}>{confidence.band} confidence</div>
               </div>
-              <div className="grid gap-1.5 text-xs">
+              <div style={{ background: "rgba(184,135,43,0.22)" }} />
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: MUTED2 }}>Sources (Last 30d)</div>
+                <div className="mt-3 grid gap-2 text-sm">
                 {[
                   ["eBay Sold", Math.max(0, movers.length * 12 + topHoldings.length * 8)],
                   ["Heritage", Math.max(0, topHoldings.length * 5)],
@@ -781,9 +808,10 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
                     <span className="tabular-nums" style={{ color: "var(--fg)" }}>{value}</span>
                   </div>
                 ))}
+                </div>
               </div>
             </div>
-            <div className="mt-4 border-t pt-3 text-xs" style={{ borderColor: "rgba(184,135,43,0.26)" }}>
+            <div className="mt-5 border-t pt-4 text-sm" style={{ borderColor: "rgba(184,135,43,0.26)" }}>
               <div className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: MUTED2 }}>Last Updated</div>
               <div className="mt-2 flex items-center justify-between">
                 <span>Today</span>
