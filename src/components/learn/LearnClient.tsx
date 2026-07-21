@@ -84,12 +84,12 @@ export default function LearnClient() {
 
   return (
     <main className="text-[color:var(--fg)]">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_312px]">
+      <div className="mx-auto max-w-[1480px] px-4 py-7 sm:px-6 lg:px-8">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           {/* ── Main column (header lives here so the sidebar rises to the top) ── */}
           <div className="min-w-0">
             <div className="mb-5">
-              <h1 className="text-[26px] font-black tracking-[-0.03em] text-text-primary">Learn</h1>
+              <h1 className="font-serif text-[44px] leading-none tracking-[-0.03em] text-text-primary">Learn</h1>
               <p className="mt-1 text-sm text-[color:var(--muted)]">
                 Collector knowledge, insurance guidance, and market education.
               </p>
@@ -98,14 +98,14 @@ export default function LearnClient() {
             {/* Featured */}
             <Link
               href={`/learn/${featured.slug}`}
-              className="group block overflow-hidden rounded-[8px] border border-[color:var(--border)] bg-vault-card transition hover:border-[rgba(245,181,72,0.4)]"
+              className="group block overflow-hidden rounded-[8px] border border-[rgba(245,181,72,0.22)] bg-vault-card transition hover:border-[rgba(245,181,72,0.4)]"
             >
-              <div className="grid md:grid-cols-[1.1fr_0.9fr]">
-                <div className="p-5">
+              <div className="grid md:grid-cols-[minmax(0,1fr)_420px]">
+                <div className="p-6">
                   <span className="inline-flex rounded-[5px] border border-[rgba(245,181,72,0.28)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">
                     Featured
                   </span>
-                  <h2 className="mt-3 text-xl font-black leading-tight tracking-[-0.02em] text-text-primary sm:text-2xl">
+                  <h2 className="mt-3 max-w-2xl text-3xl font-black leading-tight tracking-[-0.02em] text-text-primary sm:text-4xl">
                     {featured.title}
                   </h2>
                   <p className="mt-2 text-[13px] leading-6 text-[color:var(--muted)]">{featured.dek}</p>
@@ -122,13 +122,13 @@ export default function LearnClient() {
                     </span>
                   </div>
                 </div>
-                <Thumb article={featured} className="min-h-[150px] md:min-h-full" />
+                <Thumb article={featured} className="min-h-[220px] md:min-h-full" />
               </div>
             </Link>
 
             {/* Guides & Articles */}
             <h2 className="mb-3 mt-7 text-base font-black tracking-[-0.02em] text-text-primary">Guides &amp; Articles</h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {GUIDE_ARTICLES.map((a) => (
                 <GuideCard key={a.slug} a={a} saved={isSaved(a.slug)} onToggle={() => toggle(a.slug)} />
               ))}
@@ -165,7 +165,7 @@ export default function LearnClient() {
           {/* ── Sidebar ── */}
           <aside className="space-y-4">
             {/* Collector Playbooks */}
-            <section className="rounded-[8px] border border-[color:var(--border)] bg-vault-card p-3.5">
+            <section className="rounded-[8px] border border-[rgba(245,181,72,0.22)] bg-vault-card p-4">
               <h3 className="mb-2.5 flex items-center gap-1.5 text-sm font-black text-text-primary">
                 <Glyph name="cards" size={16} /> Collector Playbooks
               </h3>
@@ -177,7 +177,7 @@ export default function LearnClient() {
             </section>
 
             {/* Quick Guides */}
-            <section className="rounded-[8px] border border-[color:var(--border)] bg-vault-card p-3.5">
+            <section className="rounded-[8px] border border-[rgba(245,181,72,0.22)] bg-vault-card p-4">
               <h3 className="mb-2.5 text-sm font-black text-text-primary">Quick Guides</h3>
               <div className="divide-y divide-[color:var(--border)]">
                 {QUICK_ARTICLES.map((a) => (
@@ -187,7 +187,7 @@ export default function LearnClient() {
             </section>
 
             {/* Newsletter */}
-            <section className="rounded-[8px] border border-[color:var(--border)] bg-vault-card p-4">
+            <section className="rounded-[8px] border border-[rgba(245,181,72,0.22)] bg-vault-card p-4">
               <div className="mb-3 flex items-start gap-2.5">
                 <span style={{ color: "var(--theme-gold,#F5B548)" }}><Glyph name="message" size={20} /></span>
                 <div>

@@ -224,6 +224,7 @@ export default function DiscoverPage() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [swipeOpen, setSwipeOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [userPrefs, setUserPrefs] = useState<ReturnType<typeof buildUserPreferences> | null>(null);
   const [signedIn, setSignedIn] = useState(false);
   const [focusedUniverses, setFocusedUniverses] = useState<UniverseKey[]>([]);
@@ -382,6 +383,10 @@ export default function DiscoverPage() {
   // Stats
   const totalViews = useMemo(() => galleries.reduce((sum, g) => sum + g.analytics_views, 0), [galleries]);
   const uniqueCollectors = useMemo(() => new Set(galleries.map((g) => g.profile_id)).size, [galleries]);
+  const selectedGallery = useMemo(
+    () => filtered.find((g) => g.id === selectedId) ?? filtered[0] ?? galleries[0] ?? null,
+    [filtered, galleries, selectedId]
+  );
 
   function coverStyle(gallery: PublicGallery) {
     if (gallery.cover_image) return { background: `url(${gallery.cover_image}) center/cover no-repeat` };
@@ -390,7 +395,7 @@ export default function DiscoverPage() {
 
   return (
     <main className="text-[color:var(--fg)]">
-      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1480px] px-4 py-7 sm:px-6 lg:px-8">
 
         {/* Header */}
         <section className="relative overflow-hidden rounded-[20px] px-5 py-4" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", border: "1px solid var(--theme-border, rgba(245,181,72,0.12))" }}>
@@ -537,7 +542,8 @@ export default function DiscoverPage() {
                 <div key={gallery.id}
                   className="group relative overflow-hidden rounded-[18px] cursor-pointer transition hover:-translate-y-0.5"
                   style={{ background: "var(--surface)", border: "1px solid rgba(245,181,72,0.22)" }}
-                  onClick={() => router.push(`/museum/${gallery.id}/guest`)}>
+                  onClick={() => setSelectedId(gallery.id)}
+                  onDoubleClick={() => router.push(`/museum/${gallery.id}/guest`)}>
                   <div className="relative h-[140px] overflow-hidden rounded-t-[18px]" style={coverStyle(gallery)}>
                     <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-transparent to-transparent" />
                     <div className="absolute left-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-sm font-black"
@@ -596,7 +602,8 @@ export default function DiscoverPage() {
                 <div key={gallery.id}
                   className="group relative overflow-hidden rounded-[18px] transition hover:-translate-y-0.5 cursor-pointer"
                   style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-                  onClick={() => router.push(`/museum/${gallery.id}/guest`)}>
+                  onClick={() => setSelectedId(gallery.id)}
+                  onDoubleClick={() => router.push(`/museum/${gallery.id}/guest`)}>
                   <div className="relative h-[130px] overflow-hidden rounded-t-[18px]" style={coverStyle(gallery)}>
                     <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-transparent to-transparent" />
                     <span className="absolute left-3 top-3 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]"
@@ -636,11 +643,42 @@ export default function DiscoverPage() {
                     </div>
                   </div>
                   <div className="absolute inset-0 flex items-center justify-center rounded-[18px] opacity-0 transition group-hover:opacity-100 pointer-events-none" style={{ background: "rgba(0,0,0,0.55)" }}>
-                    <span className="rounded-full px-4 py-2 text-xs font-bold" style={{ background: "var(--theme-gold, #F5B548)", color: "#0B0B0B" }}>View Gallery</span>
+                    <button type="button" onClick={(e) => { e.stopPropagation(); router.push(`/museum/${gallery.id}/guest`); }} className="rounded-[7px] px-4 py-2 text-xs font-bold" style={{ background: "var(--theme-gold, #F5B548)", color: "#0B0B0B" }}>View Gallery</button>
                   </div>
                 </div>
               ))}
             </div>
+          </section>
+        )}
+
+        {selectedGallery && (
+          <section className="mt-6 rounded-[8px] border border-[rgba(245,181,72,0.22)] bg-[color:var(--theme-card,rgba(15,25,45,0.85))] p-4 xl:fixed xl:right-8 xl:top-[92px] xl:mt-0 xl:w-[360px] xl:max-w-[calc(100vw-32px)]">
+            <div className="text-[11px] font-black uppercase tracking-[0.22em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>Public Exhibition</div>
+            <div className="mt-3 h-44 rounded-[7px] border border-[rgba(245,181,72,0.22)]" style={coverStyle(selectedGallery)} />
+            <h2 className="mt-4 text-xl font-black text-[color:var(--theme-text-primary,#F0EAD6)]">{selectedGallery.title}</h2>
+            <div className="mt-1 flex flex-wrap gap-2 text-[12px]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
+              <span>{selectedGallery.item_count || 0} items</span>
+              <span>{UNIVERSE_LABEL[inferUniverseKey(selectedGallery)]}</span>
+              <span>{selectedGallery.analytics_views.toLocaleString()} views</span>
+            </div>
+            {selectedGallery.description && (
+              <p className="mt-3 line-clamp-3 text-sm leading-6" style={{ color: "var(--theme-text-muted, #A0956B)" }}>{selectedGallery.description}</p>
+            )}
+            <div className="mt-4 flex items-center gap-2 rounded-[7px] border border-[rgba(245,181,72,0.14)] bg-black/10 p-2">
+              {selectedGallery.collector_avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={selectedGallery.collector_avatar_url} alt="" className="h-9 w-9 rounded-full object-cover ring-1 ring-white/15" />
+              ) : (
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-[rgba(245,181,72,0.10)]">{selectedGallery.collector_avatar}</span>
+              )}
+              <div className="min-w-0">
+                <div className="truncate text-sm font-bold text-[color:var(--theme-text-primary,#F0EAD6)]">{selectedGallery.collector_name ?? "Collector"}</div>
+                <Link href={`/v/${selectedGallery.profile_id}`} className="text-[11px] font-semibold" style={{ color: "var(--theme-gold,#F5B548)" }}>View collector</Link>
+              </div>
+            </div>
+            <Link href={`/museum/${selectedGallery.id}/guest`} className="mt-4 flex h-10 items-center justify-center rounded-[7px] text-sm font-black" style={{ background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B" }}>
+              Open exhibition
+            </Link>
           </section>
         )}
 

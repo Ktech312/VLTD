@@ -517,6 +517,7 @@ export default function WishlistPage() {
   const [sort, setSort] = useState<SortMode>("newest");
   const [filterPriority, setFilterPriority] = useState<string>("all");
   const [movingId, setMovingId] = useState<string | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   const [comicItems, setComicItems] = useState<ComicWishlistItem[]>([]);
   const [wishlistIds, setWishlistIds] = useState<Set<number>>(new Set());
@@ -591,25 +592,45 @@ export default function WishlistPage() {
   }, [items, sort, filterPriority]);
 
   const hasAnything = items.length > 0 || comicItems.length > 0;
+  const selectedItem = useMemo(
+    () => sorted.find((item) => item.id === selectedItemId) ?? sorted[0] ?? null,
+    [sorted, selectedItemId]
+  );
+  const selectedComic = comicItems[0] ?? null;
 
   return (
-    <main className="px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-4xl space-y-5">
+    <main className="px-4 py-7 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1480px] space-y-5">
 
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-black tracking-[-0.04em]"
+            <h1 className="font-serif text-[44px] leading-none tracking-[-0.03em]"
               style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>Wishlist</h1>
-            <p className="mt-0.5 text-sm" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
-              Items you&apos;re watching or saving for later
+            <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
+              Items, comics, and price targets you are watching for the right moment.
             </p>
           </div>
-          <Link href="/vault/add" className="rounded-full px-4 py-2 text-sm font-semibold transition"
+          <Link href="/vault/add" className="rounded-[7px] px-4 py-2 text-sm font-semibold transition"
             style={{
               background: "var(--theme-gold-subtle, rgba(245,181,72,0.10))",
               border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.30))",
               color: "var(--theme-gold, #F5B548)",
             }}>+ Add Item</Link>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-4">
+          {[
+            ["Saved Items", items.length, "manual wants"],
+            ["Upcoming Comics", comicItems.length, "Metron saves"],
+            ["High Priority", items.filter((item) => item.priority === "high").length, "top targets"],
+            ["Ready To Move", sorted.length, "visible now"],
+          ].map(([label, value, helper]) => (
+            <div key={label} className="rounded-[8px] border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
+              <div className="text-[11px] font-black uppercase tracking-[0.22em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{label}</div>
+              <div className="mt-2 text-3xl font-black text-[color:var(--info,#52D6F4)]">{value}</div>
+              <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{helper}</div>
+            </div>
+          ))}
         </div>
 
         {/* Comic search panel */}
@@ -661,12 +682,42 @@ export default function WishlistPage() {
                 {sorted.length} item{sorted.length !== 1 ? "s" : ""}
               </span>
             </div>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-4">
               {sorted.map((item) => (
-                <WishlistCard key={item.id} item={item} onMoveToVault={handleMoveToVault} onRemove={handleRemove} />
+                <div key={item.id} onClick={() => setSelectedItemId(item.id)} className="cursor-pointer">
+                  <WishlistCard item={item} onMoveToVault={handleMoveToVault} onRemove={handleRemove} />
+                </div>
               ))}
             </div>
           </>
+        )}
+
+        {(selectedItem || selectedComic) && (
+          <section className="rounded-[8px] border border-[rgba(245,181,72,0.22)] p-4 xl:fixed xl:right-8 xl:top-[92px] xl:w-[360px]" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
+            <div className="text-[11px] font-black uppercase tracking-[0.22em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Watch Detail</div>
+            <h2 className="mt-3 text-2xl font-black leading-tight" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>
+              {selectedItem?.title ?? selectedComic?.series}
+            </h2>
+            <div className="mt-2 text-sm leading-6" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+              {selectedItem ? (
+                <>
+                  <div>{selectedItem.category ?? selectedItem.universe ?? "Saved target"}</div>
+                  {selectedItem.targetPrice != null && <div className="text-[color:var(--info,#52D6F4)]">Target price: ${selectedItem.targetPrice.toLocaleString()}</div>}
+                  {selectedItem.notes && <p className="mt-3 rounded-[7px] border border-[rgba(245,181,72,0.14)] p-3">{selectedItem.notes}</p>}
+                </>
+              ) : (
+                <>
+                  <div>Upcoming comic issue</div>
+                  <div className="text-[color:var(--theme-gold,#F5B548)]">#{selectedComic?.number}</div>
+                  {selectedComic?.storeDate && <div>{formatStoreDate(selectedComic.storeDate, false)}</div>}
+                </>
+              )}
+            </div>
+            <div className="mt-4 grid gap-2">
+              {selectedItem && <button type="button" onClick={() => handleMoveToVault(selectedItem)} className="rounded-[7px] px-4 py-2 text-sm font-black" style={{ background: "linear-gradient(135deg,#8B6914,#F5B548)", color: "#0B0B0B" }}>Move to Vault</button>}
+              <Link href="/vault/add" className="rounded-[7px] border px-4 py-2 text-center text-sm font-bold" style={{ borderColor: "rgba(245,181,72,0.24)", color: "var(--theme-gold,#F5B548)" }}>Add Similar Item</Link>
+            </div>
+          </section>
         )}
 
         {/* Empty state */}
