@@ -125,6 +125,62 @@ function Label({ children }: { children: ReactNode }) {
   );
 }
 
+function InfoMark() {
+  return (
+    <span
+      aria-hidden="true"
+      className="inline-grid h-[15px] w-[15px] place-items-center rounded-full text-[10px] font-black leading-none"
+      style={{ color: MUTED2, border: `1px solid ${MUTED2}` }}
+    >
+      i
+    </span>
+  );
+}
+
+function ConfidenceGauge({ score }: { score: number }) {
+  const safeScore = Math.max(0, Math.min(10, Number.isFinite(score) ? score : 0));
+  const arcLength = 126;
+  const progress = (safeScore / 10) * arcLength;
+
+  return (
+    <div className="relative h-[104px] w-[132px]">
+      <svg viewBox="0 0 132 104" className="h-full w-full" aria-hidden="true">
+        <path
+          d="M22 86 A44 44 0 0 1 110 86"
+          fill="none"
+          stroke="rgba(255,255,255,0.12)"
+          strokeWidth="12"
+          strokeLinecap="round"
+          pathLength={arcLength}
+        />
+        <path
+          d="M22 86 A44 44 0 0 1 110 86"
+          fill="none"
+          stroke="url(#confidenceGaugeGradient)"
+          strokeWidth="12"
+          strokeLinecap="round"
+          pathLength={arcLength}
+          strokeDasharray={`${progress} ${arcLength}`}
+        />
+        <defs>
+          <linearGradient id="confidenceGaugeGradient" x1="20" y1="84" x2="112" y2="30" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#22C6A5" />
+            <stop offset="1" stopColor="#52C27A" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div className="absolute inset-x-0 bottom-2 text-center">
+        <div className="text-[34px] font-black leading-none tracking-normal" style={{ color: "var(--fg)" }}>
+          {safeScore.toFixed(1)}
+        </div>
+        <div className="mt-0.5 text-lg font-semibold leading-none" style={{ color: MUTED }}>
+          /10
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function HeaderAction({
   children,
   onClick,
@@ -736,7 +792,7 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
           <Panel className="p-4">
             <div className="flex items-center gap-1.5">
               <Label>Allocation By Universe</Label>
-              <span className="text-[11px]" style={{ color: MUTED2 }}>i</span>
+              <InfoMark />
             </div>
             <div className="mt-4 grid grid-cols-[26px_minmax(0,1fr)_74px_42px_112px] gap-2 text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: MUTED2 }}>
               <span />
@@ -775,7 +831,10 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
 
           <Panel className="p-4">
             <div className="flex items-center justify-between">
-              <Label>Value Evidence</Label>
+              <div className="flex items-center gap-1.5">
+                <Label>Value Evidence</Label>
+                <InfoMark />
+              </div>
               <Link href="/vault" className="text-xs font-bold" style={{ color: GOLD }}>View all &gt;</Link>
             </div>
             <div className="mt-4 grid grid-cols-[minmax(0,0.92fr)_1px_minmax(0,1fr)] gap-5">
@@ -784,13 +843,8 @@ export default function InsightsOverview({ items }: { items: VaultItem[] }) {
                 <div className="mt-2 text-2xl font-semibold leading-none" style={{ color: confidence.band === "High" ? GREEN : confidence.band === "Medium" ? GOLD : RED }}>
                   {confidence.band}
                 </div>
-                <div className="mt-5 grid place-items-center">
-                  <div className="grid h-28 w-28 place-items-center rounded-full" style={{ background: `conic-gradient(${GREEN} ${confidence.score * 36}deg, rgba(255,255,255,0.12) 0deg)`, boxShadow: "inset 0 0 0 10px rgba(3,8,14,0.96)" }}>
-                  <div>
-                    <div className="text-[34px] font-black leading-none">{confidence.score.toFixed(1)}</div>
-                    <div className="text-sm" style={{ color: MUTED }}>/10</div>
-                  </div>
-                  </div>
+                <div className="mt-3">
+                  <ConfidenceGauge score={confidence.score} />
                 </div>
               </div>
               <div style={{ background: "rgba(184,135,43,0.22)" }} />
