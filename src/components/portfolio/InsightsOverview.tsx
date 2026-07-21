@@ -11,13 +11,14 @@ import {
   itemCurrentValue,
   itemTotalCost,
 } from "@/lib/portfolioMetrics";
+import { getUniverseThumbnail } from "@/lib/universeImages";
 import {
   readHistory,
   sliceHistory,
   takeDailySnapshotIfNeeded,
   syncValueHistoryFromSupabase,
 } from "@/lib/valueHistory";
-import type { VaultItem } from "@/lib/vaultModel";
+import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 
 type TimeRange = "7d" | "30d" | "90d" | "all";
 
@@ -306,7 +307,8 @@ function Donut({ rows, total, size = 174 }: { rows: { label: string; value: numb
 }
 
 function ItemThumb({ item, className = "" }: { item: VaultItem; className?: string }) {
-  const img = item.imageFrontUrl || item.imageBackUrl || item.images?.find((image) => Boolean(image.url))?.url || "";
+  const img = getPrimaryImageUrl(item);
+  const fallback = getUniverseThumbnail(item.universe || item.categoryLabel || item.category);
   return (
     <div
       className={`shrink-0 overflow-hidden rounded-[7px] ${className}`}
@@ -320,9 +322,8 @@ function ItemThumb({ item, className = "" }: { item: VaultItem; className?: stri
         // eslint-disable-next-line @next/next/no-img-element
         <img src={img} alt="" className="h-full w-full object-cover" draggable={false} />
       ) : (
-        <div className="grid h-full w-full place-items-center opacity-35">
-          <Glyph name="box" size={18} />
-        </div>
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={fallback} alt="" className="h-full w-full object-cover opacity-80" draggable={false} />
       )}
     </div>
   );
