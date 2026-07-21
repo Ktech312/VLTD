@@ -53,3 +53,9 @@ data/*.db
 data/*.db.bak
 data/*.zip
 data/*.sqlite
+
+# scratch: dev screenshots, preview renders, local server logs
+/tmp/
+
+# Claude Code local settings (keep launch.json shared)
+.claude/settings.local.json
