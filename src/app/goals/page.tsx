@@ -14,6 +14,7 @@ import {
 import { addWishlistItem } from "@/lib/wishlistModel";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
 import { Glyph } from "@/components/ui/Glyph";
+import { showToast } from "@/lib/toast";
 
 type GoalFilter = "all" | "completion" | "value" | "insurance" | "sell" | "gallery";
 type SortMode = "priority" | "progress" | "recent";
@@ -257,6 +258,7 @@ export default function GoalsPage() {
   const [filter, setFilter] = useState<GoalFilter>("all");
   const [sort, setSort] = useState<SortMode>("priority");
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
+  const [showAllGoalItems, setShowAllGoalItems] = useState(false);
 
   useEffect(() => {
     const onFocus = () => {
@@ -303,6 +305,20 @@ export default function GoalsPage() {
       subject: goal.real.subject,
       priority: goal.real.isAlmostThere ? "high" : "medium",
     });
+  }
+
+  async function shareGoal(goal: GoalView) {
+    const text = [goal.name, goal.pct + "% complete", goal.missing > 0 ? goal.missing + " to go" : "Complete"].filter(Boolean).join(" — ");
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title: goal.name, text });
+        return;
+      }
+      await navigator.clipboard.writeText(text);
+      showToast("Goal copied to clipboard");
+    } catch {
+      showToast("Couldn't share that goal.");
+    }
   }
 
   function handleDeleteGoal(goal: GoalView) {
@@ -449,7 +465,6 @@ export default function GoalsPage() {
                   </div>
                 </div>
               </div>
-              <button type="button" className="text-lg" style={{ color: "var(--theme-gold,#F5B548)" }}>...</button>
             </div>
 
             <div className="mt-5">
@@ -511,28 +526,33 @@ export default function GoalsPage() {
 
             <section className="mt-5">
               <h3 className="mb-3 text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#F5B548)" }}>Suggested Action</h3>
-              <button type="button" className="mb-2 grid w-full grid-cols-[34px_1fr_auto] items-center gap-2 rounded-[7px] border border-[rgba(245,181,72,0.16)] p-3 text-left">
+              <Link
+                href={selectedGoal.type === "insurance" ? "/insurance" : selectedGoal.type === "gallery" ? "/museum" : "/vault"}
+                className="mb-2 grid w-full grid-cols-[34px_1fr_auto] items-center gap-2 rounded-[7px] border border-[rgba(245,181,72,0.16)] p-3 text-left transition hover:border-[rgba(245,181,72,0.4)]"
+              >
                 <Glyph name={selectedGoal.type === "insurance" ? "shield" : selectedGoal.type === "gallery" ? "exhibition" : "target"} size={20} style={{ color: "var(--theme-gold,#F5B548)" }} />
                 <span>
                   <span className="block text-sm font-black" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{selectedGoal.actionLabel}</span>
                   <span className="block text-xs" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Uses the current goal and matching vault items.</span>
                 </span>
                 <span style={{ color: "var(--theme-gold,#F5B548)" }}>›</span>
-              </button>
+              </Link>
             </section>
 
             <section className="mt-5">
               <div className="mb-3 flex justify-between">
                 <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#F5B548)" }}>Items In Goal ({selectedGoal.targetCount})</h3>
-                <button type="button" className="text-xs font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>View all â€º</button>
+                <button type="button" onClick={() => setShowAllGoalItems((v) => !v)} className="text-xs font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>{showAllGoalItems ? "Show less" : "View all"}</button>
               </div>
-              <div className="flex gap-2">
-                {selectedGoal.thumbnails.slice(0, 5).map((src, index) => (
+              <div className="flex flex-wrap gap-2">
+                {(showAllGoalItems ? selectedGoal.thumbnails : selectedGoal.thumbnails.slice(0, 5)).map((src, index) => (
                   <div key={`${src}-${index}`} className="flex h-16 w-16 items-center justify-center rounded-[6px] border border-[rgba(245,181,72,0.22)] bg-black/20">
                     <img src={src} alt="" className="max-h-14 max-w-14 object-contain" />
                   </div>
                 ))}
-                <div className="grid h-16 w-16 place-items-center rounded-[6px] border border-[rgba(245,181,72,0.22)] text-sm font-black" style={{ color: "var(--theme-gold,#F5B548)" }}>+{Math.max(0, selectedGoal.targetCount - 5)}</div>
+                {!showAllGoalItems && selectedGoal.targetCount > 5 && (
+                  <div className="grid h-16 w-16 place-items-center rounded-[6px] border border-[rgba(245,181,72,0.22)] text-sm font-black" style={{ color: "var(--theme-gold,#F5B548)" }}>+{selectedGoal.targetCount - 5}</div>
+                )}
               </div>
             </section>
 
@@ -541,7 +561,7 @@ export default function GoalsPage() {
                 Review items
               </button>
               <div className="grid grid-cols-2 gap-3">
-                <button type="button" className="rounded-[7px] border border-[rgba(245,181,72,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>Share goal</button>
+                <button type="button" onClick={() => shareGoal(selectedGoal)} className="rounded-[7px] border border-[rgba(245,181,72,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>Share goal</button>
                 <button type="button" onClick={() => handleDeleteGoal(selectedGoal)} className="rounded-[7px] border border-red-500/45 px-4 py-3 text-sm font-bold text-red-400">Delete goal</button>
               </div>
             </div>
