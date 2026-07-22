@@ -145,18 +145,23 @@ begin
      where account_code is null
      order by created_at nulls last, id
   loop
-    perform public.assign_account_code(r.id);
+    perform public.assign_account_code(r.id::uuid);
   end loop;
 end $$;
 
+-- vault_items.profile_id is a text column, so cast it to match the function
+-- signature. The regex guard skips any row whose profile_id isn't a real uuid
+-- rather than aborting the whole backfill on one bad value.
 do $$
 declare r record;
 begin
   for r in
     select id, profile_id from public.vault_items
-     where item_code is null and profile_id is not null
+     where item_code is null
+       and profile_id is not null
+       and profile_id::text ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
      order by profile_id, created_at nulls last, id
   loop
-    perform public.assign_item_code(r.profile_id, r.id);
+    perform public.assign_item_code(r.profile_id::uuid, r.id::text);
   end loop;
 end $$;
