@@ -19,6 +19,7 @@ import {
   syncValueHistoryFromSupabase,
 } from "@/lib/valueHistory";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
+import { activeItems } from "@/lib/vaultStats";
 
 type TimeRange = "7d" | "30d" | "90d" | "all";
 
@@ -487,7 +488,11 @@ function ReviewCard({ item, reason }: { item: VaultItem; reason: string }) {
   );
 }
 
-export default function InsightsOverview({ items }: { items: VaultItem[] }) {
+export default function InsightsOverview({ items: allItems }: { items: VaultItem[] }) {
+  // Insights describes what you CURRENTLY OWN. Filter sold items once, here,
+  // so every number on the page (totals, stale prices, breakdown, movers)
+  // agrees with the Vault instead of each block deciding for itself.
+  const items = useMemo(() => activeItems(allItems), [allItems]);
   const [mounted, setMounted] = useState(false);
   const [range, setRange] = useState<TimeRange>("all");
   const [tick, setTick] = useState(0);

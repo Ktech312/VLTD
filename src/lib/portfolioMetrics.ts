@@ -144,9 +144,13 @@ export function getCollectionMetrics(items: VaultItem[]): CollectionMetrics {
       .filter(Boolean)
   ).size;
 
+  // Keep every category. Callers group the tail into "Other" themselves, and
+  // the default limit of 5 silently dropped the rest — which made the Insights
+  // breakdown total less than the vault total it sat next to.
   const topValueSegments = makeSegments(
     safeItems,
-    (item) => String(item.categoryLabel ?? item.category ?? item.universe ?? "Uncategorized")
+    (item) => String(item.categoryLabel ?? item.category ?? item.universe ?? "Uncategorized"),
+    Number.MAX_SAFE_INTEGER
   );
 
   const topSourceSegments = makeSegments(
