@@ -39,14 +39,6 @@ function resolveLayoutType(layout: GalleryLayoutType | string | null | undefined
   return "GRID";
 }
 
-function CommentIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    </svg>
-  );
-}
-
 /* ── Shelf grid — 3-column card layout like reference ─────── */
 function ShelfGrid({ items, hrefPrefix, title }: { items: VaultItem[]; hrefPrefix: string; title?: string }) {
   if (!items.length) {
@@ -139,13 +131,6 @@ function ShelfGrid({ items, hrefPrefix, title }: { items: VaultItem[]; hrefPrefi
                   metadata={favoriteMetadata(item)}
                   compact
                 />
-                <button
-                  type="button"
-                  className="flex h-5 w-5 items-center justify-center rounded-full text-[#A0956B] opacity-50 transition hover:opacity-100"
-                  aria-label="Comment"
-                >
-                  <CommentIcon />
-                </button>
               </div>
             </Link>
           );
@@ -212,9 +197,6 @@ function ThingsbookGrid({ items, hrefPrefix }: { items: VaultItem[]; hrefPrefix:
                 </button>
                 <div className="flex items-center gap-1.5">
                   <FavoriteButton contentType="item" contentId={String(item.id)} metadata={favoriteMetadata(item)} compact />
-                  <button type="button" className="flex h-6 w-6 items-center justify-center rounded-full text-[color:var(--muted)] opacity-50 transition hover:opacity-100" aria-label="Comment">
-                    <CommentIcon />
-                  </button>
                 </div>
               </div>
             );
