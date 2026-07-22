@@ -27,6 +27,8 @@ const UNIVERSE_THUMB: Record<UniverseKey, string> = {
   ART: "/universe-thumbnails/art.png",
 };
 
+type GalleryItemFact = { value: number; imageUrl: string | null; title: string };
+
 type PublicGallery = {
   id: string;
   title: string;
@@ -115,6 +117,7 @@ export default function DiscoverPage() {
   const [sort, setSort] = useState<"recommended" | "views" | "items" | "newest" | "az">("recommended");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [reporting, setReporting] = useState(false);
+  const [itemFactsById, setItemFactsById] = useState<Map<string, GalleryItemFact>>(new Map());
   const [userPrefs, setUserPrefs] = useState<ReturnType<typeof buildUserPreferences> | null>(null);
   const [signedIn, setSignedIn] = useState(false);
 
@@ -172,12 +175,26 @@ export default function DiscoverPage() {
         const allItemIds = [...new Set(mapped.flatMap((gallery) => gallery.itemIds))];
 
         if (allItemIds.length > 0) {
-          const { data: itemRows } = await supabase.from("vault_items").select("id, universe").in("id", allItemIds);
+          // Pull value + image too, so gallery value and featured items are the
+          // real items rather than invented numbers and a repeated cover.
+          const { data: itemRows } = await supabase
+            .from("vault_items")
+            .select("id, universe, current_value, image_front_url, title")
+            .in("id", allItemIds);
           const itemUniverseMap = new Map<string, UniverseKey>();
-          for (const row of itemRows ?? []) {
-            const universe = String((row as Record<string, unknown>).universe ?? "").toUpperCase();
-            if (isUniverseKey(universe)) itemUniverseMap.set(String((row as Record<string, unknown>).id), universe);
+          const itemFacts = new Map<string, GalleryItemFact>();
+          for (const raw of itemRows ?? []) {
+            const row = raw as Record<string, unknown>;
+            const id = String(row.id);
+            const universe = String(row.universe ?? "").toUpperCase();
+            if (isUniverseKey(universe)) itemUniverseMap.set(id, universe);
+            itemFacts.set(id, {
+              value: Number(row.current_value ?? 0) || 0,
+              imageUrl: typeof row.image_front_url === "string" ? row.image_front_url : null,
+              title: String(row.title ?? ""),
+            });
           }
+          setItemFactsById(itemFacts);
           for (const gallery of mapped) gallery.universeKey = computeGalleryUniverse(gallery.itemIds, itemUniverseMap, gallery);
         } else {
           for (const gallery of mapped) gallery.universeKey = inferUniverseKeyFromText(gallery);
@@ -321,7 +338,10 @@ export default function DiscoverPage() {
   }
 
   function galleryValue(gallery: PublicGallery) {
-    return Math.max(0, gallery.analytics_views * 1250 + gallery.item_count * 700);
+    // Real value: sum of what the items in this room are actually worth.
+    // (This used to be views * 1250 + items * 700, which was invented and made
+    // the same room read $58,300 here and $3,940 on Exhibitions.)
+    return gallery.itemIds.reduce((sum, id) => sum + (itemFactsById.get(id)?.value ?? 0), 0);
   }
 
   function openGallery(gallery: PublicGallery) {
@@ -543,24 +563,39 @@ export default function DiscoverPage() {
                 <div className="mt-2 text-[28px] font-black text-[color:var(--info,#52D6F4)]">${galleryValue(selectedGallery).toLocaleString()}</div>
               </div>
               <div className="border-l border-[rgba(245,181,72,0.18)] pl-5">
-                <div className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Exhibition Grade</div>
-                <div className="mt-2 inline-grid h-14 w-14 place-items-center rounded-[7px] border border-[rgba(245,181,72,0.45)] text-xl font-black" style={{ color: "var(--theme-gold,#F5B548)" }}>A+</div>
+                <div className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Room Views</div>
+                <div className="mt-2 text-[28px] font-black" style={{ color: "var(--theme-gold,#F5B548)" }}>{(selectedGallery.analytics_views ?? 0).toLocaleString()}</div>
               </div>
             </div>
             {selectedGallery.description && <p className="mt-4 text-sm leading-6" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{selectedGallery.description}</p>}
             <div className="mt-5">
               <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Featured Items</div>
               <div className="mt-3 flex gap-2 overflow-hidden">
-                {[0, 1, 2, 3].map((item) => <div key={item} className="h-20 flex-1 rounded-[6px] border border-[rgba(245,181,72,0.22)]" style={coverStyle(selectedGallery)} />)}
-                <div className="grid h-20 w-14 place-items-center rounded-[6px] border border-[rgba(245,181,72,0.22)] text-sm font-black" style={{ color: "var(--theme-gold,#F5B548)" }}>+{Math.max(0, selectedGallery.item_count - 4)}</div>
+                {selectedGallery.itemIds.slice(0, 4).map((id) => {
+                  const fact = itemFactsById.get(id);
+                  return (
+                    <div key={id} className="grid h-20 flex-1 place-items-center overflow-hidden rounded-[6px] border border-[rgba(245,181,72,0.22)] bg-black/20">
+                      {fact?.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={fact.imageUrl} alt={fact.title || ""} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="px-1 text-center text-[8px] uppercase tracking-[0.1em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>No photo</span>
+                      )}
+                    </div>
+                  );
+                })}
+                {selectedGallery.item_count > 4 && (
+                  <div className="grid h-20 w-14 place-items-center rounded-[6px] border border-[rgba(245,181,72,0.22)] text-sm font-black" style={{ color: "var(--theme-gold,#F5B548)" }}>+{selectedGallery.item_count - 4}</div>
+                )}
               </div>
             </div>
-            <div className="mt-5 grid grid-cols-4 divide-x divide-[rgba(245,181,72,0.16)] border-y border-[rgba(245,181,72,0.16)] py-3 text-sm">
+            {/* Only stats backed by real data. "Commenting: On" was hardcoded
+                and "Followers" was analytics_views / 4 — both invented. */}
+            <div className="mt-5 grid grid-cols-3 divide-x divide-[rgba(245,181,72,0.16)] border-y border-[rgba(245,181,72,0.16)] py-3 text-sm">
               {[
                 ["Visibility", "Public"],
-                ["Commenting", "On"],
                 ["Items", selectedGallery.item_count || 0],
-                ["Followers", Math.max(1, Math.round(selectedGallery.analytics_views / 4))],
+                ["Views", (selectedGallery.analytics_views ?? 0).toLocaleString()],
               ].map(([label, value]) => (
                 <div key={label} className="px-3 first:pl-0">
                   <div className="text-[10px] uppercase tracking-[0.14em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{label}</div>
