@@ -1,89 +1,103 @@
 # VLTD Rework Punch-List
 
-Audit: 2026-07-18. Dead-control pass completed the same night.
+Dead-control pass: done. Visual audit vs mockups: done 2026-07-18 against the
+live site (`vltd.vercel.app`) while signed in.
 
 ---
 
-## ONE THING TO DO
+## Headline
 
-Run this migration in Supabase (same as you did for the Learn one):
+**The redesign is largely in place.** Every page I could compare matches its
+mockup's structure and styling reasonably well. The real problems are **data
+and consistency**, not layout.
 
-**`supabase/migrations/20260718_activity_events.sql`**
-
-Until it runs, value-change history still works on the device you're using but
-won't sync across devices. Everything else below works right now.
-
----
-
-## Done — every dead control is now wired
-
-A code scan found 21 controls that rendered but did nothing. All are fixed.
-Re-scanning now returns **zero** dead controls (the only two hits left are a
-deliberately disabled paid feature on Account and a theme-toggle placeholder
-that swaps in on load).
-
-### Wishlist (`/wishlist`) — 9 fixed
-- Top filter buttons (Items / Exhibitions / Price Drops) now filter. Removed
-  "Saved Searches" — no such feature exists.
-- Grid/list toggle switches the layout.
-- Detail panel prev/next step through the list; disabled at the ends.
-- Target price is editable and saves.
-- Notes are editable and save.
-- Share shares/copies the item summary.
-- Removed "View all" on Comparable Sales — nothing to show until a pricing
-  source is linked.
-
-### Discover (`/discover`) — 6 fixed
-- Four fake dropdowns replaced with two real controls: Universe filter and
-  Sort (recommended / most viewed / most items / newest / A–Z). Dropped
-  "Value range" and "Exhibition Grade" — galleries carry no value or grade
-  data, so they could only ever be decorative.
-- All three "View all" buttons expand their section.
-- Share shares/copies the room's public link.
-- Report files a real report into the `bug_reports` inbox you already read.
-- Bonus: "Trending", "New This Week", and "Notable Items" were all arbitrary
-  slices of the same list. Now `created_at` is fetched, so they are genuinely
-  sorted by views, last 7 days, and item count.
-
-### Goals (`/goals`) — 4 fixed
-- Suggested Action navigates to the right place for the goal type.
-- "View all" expands the item thumbnails.
-- "Share goal" shares/copies name + progress.
-- Removed the "..." menu — its actions already exist as buttons below it.
-
-### Activity (`/activity`) — 2 fixed + the feature finished
-- "Load more" really pages (20 at a time, shows how many are left).
-- Removed the decorative "Filters" button; the real filter tabs sit below it.
-- **Wrote the missing `activity_events` migration** (it never existed).
-- **Wired the missing write call**: `saveItem()` now logs a real before/after
-  "valued" event whenever an item's value changes. That's the one funnel every
-  save path goes through, so it captures old value, new value, and source.
-
-### Gallery
-- Removed two per-item "Comment" buttons. Comments are exhibition-level only,
-  so item comments could never work; one was also a button nested inside a
-  link (invalid HTML).
-
-### Garbled text fixed
-Seven lines rendered literal junk to users (`â€¹`, `â€º`, `Ã—`, `âŒ•`, `â—`) from
-double-encoded characters, on Wishlist and Goals. All gone; the app now scans
-clean for this.
+The two things that most make the app look unfinished versus the mockups:
+1. **98 of 141 items have no photo** — the mockups are carried by imagery.
+2. **The same numbers disagree from page to page** (below).
 
 ---
 
-## Still open
+## 1. Numbers disagree across pages (most serious)
 
-1. **Visual match to the mockups is unverified.** The 10 desktop mockups in
-   `C:\Users\EK\.codex\generated_images\019e6d3a-5dd3-7ed1-be13-942347ebb5c9\`
-   were reviewed, but the logged-in pages (Vault, Insights, Goals, Capture,
-   Home, Exhibitions) can't be viewed without signing in, so how closely each
-   matches its design hasn't been checked. Learn is the one confirmed done.
+| Thing | Vault | Dashboard | Insights | Database |
+|---|---|---|---|---|
+| Item count | 134 | 139 | — | **141** |
+| Total value | **$19,482** | $20,822 | $20,822 | — |
 
-2. **Naming mismatch.** The mockups and nav say **Watchlist**; the route is
-   **`/wishlist`**, and a separate `watchlistModel.ts` exists. Pick one name.
+Gallery values are worse:
 
-3. **No item-level comments.** If you want collectors to comment on individual
-   items (not just an exhibition), that's a real feature to build.
+| Gallery | Exhibitions page | Discover page |
+|---|---|---|
+| 7/8 Test | **$3,940** | **$58,300** |
+| Grails | **$16** | **$18,000** |
 
-4. **Comparable sales** on the Wishlist detail panel needs a pricing source
-   before it can show anything.
+Same object, wildly different numbers depending on the screen. Until one
+source of truth computes these, any number shown is untrustworthy.
+
+## 2. Insights value-history chart is wrong
+
+The chart's axis runs **$30K–$150K** while the vault is worth **$20,822**, and
+there's a spike-and-crash to near zero around Feb–Mar 2026. The shape does not
+reflect the real vault. Also "Amazing Spider-Man - 300 - May - 1988" is listed
+twice in Biggest Gainers.
+
+## 3. Fake-looking stock art fills in for missing photos
+
+98 items have no photo. The Vault is honest about this ("NO PHOTO"), but:
+- **Watchlist** and **Activity** show generic comic-slab / card artwork chosen
+  by keyword matching, which reads as though it were the real item.
+- **Discover** "Featured items" repeats the same Spider-Man logo 4–5 times.
+
+This is the "no fake data" rule being broken visually rather than numerically.
+Either show real photos or show an honest empty frame like the Vault does.
+
+## 4. Capture doesn't match its mockup
+
+Mockup 10 shows a form-first **"New Vault Item"** screen (Identity, Category,
+Location, Value, Documents, draft items). The live page opens **straight into
+a live camera modal**. The webcam stream also froze the browser renderer hard
+enough that screenshots timed out — worth a performance look.
+
+## 5. Smaller items
+
+- **Exhibitions**: all room cover images are blank.
+- **Test data in production**: "7/8 Test", "Test 6/7", "New Live" (0 items, $0).
+- **Duplicates**: "Magnolia Flower" twice on Watchlist.
+- **`vltd.app` does not load at all** — the custom domain errors in a browser.
+  `vltd.vercel.app` is what works.
+
+---
+
+## Page-by-page
+
+| Mockup | Route | Verdict |
+|---|---|---|
+| Home | `/dashboard` | Matches well. Counts disagree with Vault. |
+| Vault | `/vault` | Matches. Held back by missing photos + wrong totals. |
+| Discover | `/discover` | Matches; controls now real. Gallery values wrong. |
+| Exhibitions | `/museum` | Matches. Blank covers, test galleries. |
+| Insights | `/portfolio` | Matches closely. **Chart data wrong.** |
+| Watchlist | `/wishlist` | Matches; controls now real. Stock art, duplicates. |
+| Goals | `/goals` | Matches. Honest empty state. Clean. |
+| Learn | `/learn` | **Done** — rebuilt to mockup, all controls real. |
+| Activity | `/activity` | Matches; controls now real. Stock art. |
+| Capture | `/capture` | **Differs** — camera-first vs form-first mockup. |
+
+---
+
+## Already fixed (earlier this session)
+
+- All 21 dead controls wired (Wishlist 9, Discover 6, Goals 4, Activity 2).
+- Garbled `â€¹` / `Ã—` characters removed.
+- Discover's "Trending / New This Week / Notable" are real groupings now.
+- `activity_events` table created + `saveItem()` writes real before/after values.
+- **Expired session no longer sends real users to onboarding** — it sends them
+  to login. This one would have hit your testers.
+
+## Open decisions for you
+
+1. **Watchlist vs Wishlist** — mockups and nav say Watchlist; route is
+   `/wishlist`. Pick one.
+2. **Item photos** — the single biggest visual gap. Bulk-add images, or accept
+   honest empty frames everywhere (and strip the keyword stock art).
+3. **Capture** — keep camera-first, or rebuild to the form-first mockup?
