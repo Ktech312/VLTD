@@ -45,7 +45,6 @@ const FILTERS: Array<{ key: ActivityKind | "all"; label: string; icon: GlyphName
   { key: "added", label: "Scans", icon: "eye" },
   { key: "valued", label: "Value Changes", icon: "chart" },
   { key: "exhibition", label: "Exhibitions", icon: "building" },
-  { key: "insurance", label: "Insurance", icon: "shield" },
   { key: "sold", label: "Sales", icon: "tag" },
   { key: "share", label: "Shares", icon: "share" },
 ];
@@ -136,10 +135,6 @@ function buildItemEvents(items: VaultItem[]) {
       actionLabel: "View item record",
       item,
       imageUrl: itemImage(item),
-      newValue: Number(item.currentValue ?? item.estimatedValue ?? item.lastCompValue ?? 0),
-      source: item.valueSource || item.priceSource || "Vault",
-      confidence: confidenceLabel(item),
-      comps: item.comparables?.length ?? item.priceSources?.length ?? 0,
       meta: itemMeta(item),
     }));
 
@@ -265,7 +260,7 @@ function deltaPct(event: ActivityEvent) {
 }
 
 function ActivityThumb({ event, large = false }: { event: ActivityEvent; large?: boolean }) {
-  const size = large ? "h-40 w-32" : "h-20 w-16";
+  const size = large ? "h-[164px] w-[128px]" : "h-[76px] w-[64px]";
   return (
     <div className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-[7px] border border-[rgba(245,181,72,0.28)] bg-black/30`}>
       {event.imageUrl ? (
@@ -279,12 +274,14 @@ function ActivityThumb({ event, large = false }: { event: ActivityEvent; large?:
 
 function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; selected: boolean; onSelect: () => void }) {
   const change = deltaPct(event);
+  const showValue = event.kind === "valued" || event.kind === "sold";
+  const showEvidence = Boolean(event.source || event.confidence || event.comps);
 
   return (
     <button
       type="button"
       onClick={onSelect}
-      className="grid w-full grid-cols-[84px_54px_72px_minmax(0,1fr)_minmax(180px,260px)_190px] items-center gap-5 rounded-[7px] border p-4 text-left transition hover:-translate-y-0.5"
+      className="grid w-full grid-cols-[78px_50px_70px_minmax(0,1fr)_minmax(150px,220px)_150px] items-center gap-4 rounded-[7px] border p-4 text-left transition hover:-translate-y-0.5"
       style={{
         background: "var(--theme-card,rgba(15,25,45,0.88))",
         borderColor: selected ? "var(--theme-gold,#F5B548)" : "rgba(245,181,72,0.22)",
@@ -301,8 +298,8 @@ function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; sele
         <div className="truncate text-base" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{event.title}</div>
         <div className="mt-1 truncate text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{event.detail}</div>
       </div>
-      <div className="min-w-0 border-l border-[rgba(245,181,72,0.16)] pl-6">
-        {event.newValue ? (
+      <div className="min-w-0 border-l border-[rgba(245,181,72,0.16)] pl-5">
+        {showValue && event.newValue ? (
           <div className="text-[22px] font-black text-[color:var(--info,#52D6F4)]">
             {event.previousValue ? `${formatMoney(event.previousValue)} -> ` : ""}
             {formatMoney(event.newValue)}
@@ -316,9 +313,15 @@ function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; sele
           </div>
         )}
       </div>
-      <div className="border-l border-[rgba(245,181,72,0.16)] pl-6 text-right text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
-        <div>{event.confidence ?? "Medium"} confidence</div>
-        <div>{event.source ?? "VLTD"} {event.comps ? `- ${event.comps} comps` : ""}</div>
+      <div className="border-l border-[rgba(245,181,72,0.16)] pl-5 text-right text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+        {showEvidence ? (
+          <>
+            {event.confidence && <div>{event.confidence} confidence</div>}
+            {event.source && <div>{event.source}{event.comps ? ` - ${event.comps} comps` : ""}</div>}
+          </>
+        ) : (
+          <div>{event.meta || event.subtitle}</div>
+        )}
         <div className="mt-2" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{formatClock(event.timestamp)}</div>
       </div>
     </button>
@@ -432,7 +435,9 @@ export default function ActivityPage() {
   }, [allEvents, filter]);
 
   const selected = filteredEvents.find((event) => event.id === selectedId) ?? filteredEvents[0] ?? allEvents[0] ?? null;
-  const totalValue = items.reduce((sum, item) => sum + Number(item.currentValue ?? item.estimatedValue ?? 0), 0);
+  const availableFilters = FILTERS.filter((tab) => tab.key === "all" || allEvents.some((event) => event.kind === tab.key));
+  const showSelectedValue = Boolean(selected && (selected.kind === "valued" || selected.kind === "sold") && selected.newValue);
+  const showSelectedEvidence = Boolean(selected && (selected.source || selected.confidence || selected.comps));
   const grouped = filteredEvents.reduce<Array<{ label: string; events: ActivityEvent[] }>>((groups, event) => {
     const label = dayLabel(event.timestamp);
     const existing = groups.find((group) => group.label === label);
@@ -443,7 +448,7 @@ export default function ActivityPage() {
 
   return (
     <main className="min-h-screen px-4 py-7 text-[color:var(--theme-text-primary,#F0EAD6)] sm:px-6 lg:px-8" style={{ background: "var(--bg)" }}>
-      <div className="mx-auto grid max-w-[1480px] gap-7 xl:grid-cols-[minmax(0,1fr)_470px]">
+      <div className="mx-auto grid max-w-[1420px] gap-5 xl:grid-cols-[minmax(0,1fr)_410px]">
         <section className="min-w-0">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -457,7 +462,7 @@ export default function ActivityPage() {
           </div>
 
           <div className="mt-7 flex flex-wrap gap-2">
-            {FILTERS.map((tab) => (
+            {availableFilters.map((tab) => (
               <button
                 key={tab.key}
                 type="button"
@@ -517,7 +522,7 @@ export default function ActivityPage() {
                 <button type="button" onClick={() => setSelectedId(null)} style={{ color: "var(--theme-gold,#F5B548)" }}>x</button>
               </div>
 
-              <div className="mt-7 grid grid-cols-[138px_1fr] gap-5">
+              <div className="mt-7 grid grid-cols-[128px_1fr] gap-5">
                 <ActivityThumb event={selected} large />
                 <div className="min-w-0">
                   <h3 className="text-[22px] font-black leading-tight">{selected.title}</h3>
@@ -541,43 +546,53 @@ export default function ActivityPage() {
                 <div className="mt-1 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{formatFullDate(selected.timestamp)}</div>
               </div>
 
-              <section className="mt-5 border-b border-[rgba(245,181,72,0.16)] pb-5">
-                <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Value Change</h3>
-                <div className="mt-4 grid grid-cols-3 gap-4">
-                  <div>
-                    <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Previous Value</div>
-                    <div className="mt-1 text-[24px] font-black text-[color:var(--info,#52D6F4)]">{selected.previousValue ? formatMoney(selected.previousValue) : "-"}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>New Value</div>
-                    <div className="mt-1 text-[24px] font-black text-[color:var(--info,#52D6F4)]">{selected.newValue ? formatMoney(selected.newValue) : "-"}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Change</div>
-                    <div className={deltaPct(selected) !== null && Number(deltaPct(selected)) < 0 ? "mt-1 text-[24px] font-black text-red-400" : "mt-1 text-[24px] font-black text-green-400"}>
-                      {deltaPct(selected) !== null ? `${Number(deltaPct(selected)) >= 0 ? "+" : ""}${Number(deltaPct(selected)).toFixed(1)}%` : "-"}
+              {showSelectedValue && (
+                <section className="mt-5 border-b border-[rgba(245,181,72,0.16)] pb-5">
+                  <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Value Change</h3>
+                  <div className="mt-4 grid grid-cols-3 gap-4">
+                    <div>
+                      <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Previous Value</div>
+                      <div className="mt-1 text-[22px] font-black text-[color:var(--info,#52D6F4)]">{selected.previousValue ? formatMoney(selected.previousValue) : "-"}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>New Value</div>
+                      <div className="mt-1 text-[22px] font-black text-[color:var(--info,#52D6F4)]">{formatMoney(selected.newValue)}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Change</div>
+                      <div className={deltaPct(selected) !== null && Number(deltaPct(selected)) < 0 ? "mt-1 text-[22px] font-black text-red-400" : "mt-1 text-[22px] font-black text-green-400"}>
+                        {deltaPct(selected) !== null ? `${Number(deltaPct(selected)) >= 0 ? "+" : ""}${Number(deltaPct(selected)).toFixed(1)}%` : "-"}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </section>
+                </section>
+              )}
 
-              <section className="mt-5 rounded-[7px] border border-[rgba(245,181,72,0.22)] p-4">
-                <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Source & Evidence</h3>
-                <div className="mt-4 grid grid-cols-3 gap-4">
-                  <div>
-                    <div className="text-[24px] font-black text-[color:var(--info,#52D6F4)]">{selected.comps ?? 0}</div>
-                    <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Comparables</div>
+              {showSelectedEvidence && (
+                <section className="mt-5 rounded-[7px] border border-[rgba(245,181,72,0.22)] p-4">
+                  <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Source & Evidence</h3>
+                  <div className="mt-4 grid grid-cols-3 gap-4">
+                    {typeof selected.comps === "number" && selected.comps > 0 && (
+                      <div>
+                        <div className="text-[24px] font-black text-[color:var(--info,#52D6F4)]">{selected.comps}</div>
+                        <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Comparables</div>
+                      </div>
+                    )}
+                    {selected.confidence && (
+                      <div className="border-l border-[rgba(245,181,72,0.16)] pl-4">
+                        <div className={selected.confidence === "High" ? "text-lg font-black text-green-400" : "text-lg font-black text-[color:var(--theme-gold,#F5B548)]"}>{selected.confidence}</div>
+                        <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Confidence</div>
+                      </div>
+                    )}
+                    {selected.source && (
+                      <div className="border-l border-[rgba(245,181,72,0.16)] pl-4">
+                        <div className="font-black">{selected.source}</div>
+                        <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Source</div>
+                      </div>
+                    )}
                   </div>
-                  <div className="border-l border-[rgba(245,181,72,0.16)] pl-4">
-                    <div className={selected.confidence === "High" ? "text-lg font-black text-green-400" : "text-lg font-black text-[color:var(--theme-gold,#F5B548)]"}>{selected.confidence ?? "Medium"}</div>
-                    <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Confidence</div>
-                  </div>
-                  <div className="border-l border-[rgba(245,181,72,0.16)] pl-4">
-                    <div className="font-black">{selected.source ?? "VLTD"}</div>
-                    <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Source</div>
-                  </div>
-                </div>
-              </section>
+                </section>
+              )}
 
               <section className="mt-5 border-b border-[rgba(245,181,72,0.16)] pb-5">
                 <div className="flex items-center justify-between">
