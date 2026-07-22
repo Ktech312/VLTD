@@ -6,6 +6,7 @@ import { Glyph } from "@/components/ui/Glyph";
 import {
   loadWishlist,
   removeWishlistItem,
+  updateWishlistItem,
   syncWishlistFromSupabase,
   type WishlistItem,
 } from "@/lib/wishlistModel";
@@ -70,7 +71,7 @@ function entryFromWishlist(item: WishlistItem): WatchEntry {
     subtitle: item.subject || item.category || item.universe || "Saved target",
     meta: [item.condition && item.condition !== "any" ? item.condition.toUpperCase() : null, item.priority ? `${item.priority} priority` : null]
       .filter(Boolean)
-      .join(" Â· ") || "Target watch",
+      .join(" · ") || "Target watch",
     image: imageForText(item.title, item.universe, item.category),
     currentValue: target ? Math.round(target * 1.18) : 0,
     targetPrice: target,
@@ -235,6 +236,11 @@ export default function WishlistPage() {
   const [sort, setSort] = useState<SortMode>("recent");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [movingId, setMovingId] = useState<string | null>(null);
+  const [view, setView] = useState<"grid" | "list">("grid");
+  const [editingTarget, setEditingTarget] = useState(false);
+  const [targetDraft, setTargetDraft] = useState("");
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notesDraft, setNotesDraft] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -330,6 +336,61 @@ export default function WishlistPage() {
     }
   }
 
+  // Step through the filtered list from the detail panel.
+  const selectedIndex = selected ? filteredEntries.findIndex((entry) => entry.id === selected.id) : -1;
+  const canPrev = selectedIndex > 0;
+  const canNext = selectedIndex >= 0 && selectedIndex < filteredEntries.length - 1;
+  function step(delta: number) {
+    const next = filteredEntries[selectedIndex + delta];
+    if (next) {
+      setSelectedId(next.id);
+      setEditingTarget(false);
+      setEditingNotes(false);
+    }
+  }
+
+  // Target price / notes are stored on wishlist items, so they're editable there.
+  const canEditSelected = selected?.sourceType === "wishlist" && Boolean(selected?.raw);
+
+  function saveTarget() {
+    if (!selected || !canEditSelected) return;
+    const parsed = Number(targetDraft.replace(/[^0-9.]/g, ""));
+    const value = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+    updateWishlistItem(selected.id, { targetPrice: value });
+    setWishlist(loadWishlist());
+    setEditingTarget(false);
+    showToast(value ? `Target price set to ${money(value)}` : "Target price cleared");
+  }
+
+  function saveNotes() {
+    if (!selected || !canEditSelected) return;
+    updateWishlistItem(selected.id, { notes: notesDraft.trim() });
+    setWishlist(loadWishlist());
+    setEditingNotes(false);
+    showToast("Notes saved");
+  }
+
+  async function shareSelected() {
+    if (!selected) return;
+    const parts = [
+      selected.title,
+      selected.subtitle,
+      selected.currentValue ? `Current value ${money(selected.currentValue)}` : "",
+      selected.targetPrice ? `Target ${money(selected.targetPrice)}` : "",
+    ].filter(Boolean);
+    const text = parts.join(" — ");
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title: selected.title, text });
+        return;
+      }
+      await navigator.clipboard.writeText(text);
+      showToast("Copied to clipboard");
+    } catch {
+      showToast("Couldn't share that item.");
+    }
+  }
+
   return (
     <main className="px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto grid max-w-[1480px] gap-6 xl:grid-cols-[minmax(0,1fr)_430px]">
@@ -343,7 +404,7 @@ export default function WishlistPage() {
             </p>
           </div>
 
-          <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_140px_160px_150px_170px]">
+          <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_140px_160px_150px]">
             <label className="flex h-10 items-center gap-2 rounded-[7px] border border-[rgba(245,181,72,0.22)] px-3" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
               <Glyph name="search" size={15} className="opacity-60" />
               <input
@@ -353,12 +414,30 @@ export default function WishlistPage() {
                 className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:opacity-45"
               />
             </label>
-            {["Items", "Exhibitions", "Price Drops", "Saved Searches"].map((label) => (
-              <button key={label} type="button" className="flex h-10 items-center justify-center gap-2 rounded-[7px] border border-[rgba(245,181,72,0.22)] px-3 text-xs font-black" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))", color: "var(--theme-text-primary,#F0EAD6)" }}>
-                <Glyph name={label === "Price Drops" ? "sparkle" : label === "Saved Searches" ? "search" : "cards"} size={14} />
-                {label}
-              </button>
-            ))}
+            {([
+              ["Items", "items", "cards"],
+              ["Exhibitions", "exhibitions", "exhibition"],
+              ["Price Drops", "alerts", "sparkle"],
+            ] as const).map(([label, key, glyph]) => {
+              const active = filter === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setFilter(active ? "all" : key)}
+                  aria-pressed={active}
+                  className="flex h-10 items-center justify-center gap-2 rounded-[7px] border px-3 text-xs font-black transition"
+                  style={{
+                    background: active ? "rgba(245,181,72,0.12)" : "var(--theme-card,rgba(15,25,45,0.85))",
+                    borderColor: active ? "var(--theme-gold,#F5B548)" : "rgba(245,181,72,0.22)",
+                    color: active ? "var(--theme-gold,#F5B548)" : "var(--theme-text-primary,#F0EAD6)",
+                  }}
+                >
+                  <Glyph name={glyph} size={14} />
+                  {label}
+                </button>
+              );
+            })}
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -394,16 +473,40 @@ export default function WishlistPage() {
                 <option value="value">Highest value</option>
                 <option value="target">Target price</option>
               </select>
-              <button type="button" className="grid h-10 w-10 place-items-center rounded-[7px] border border-[rgba(245,181,72,0.28)]" style={{ color: "var(--theme-gold,#F5B548)" }}>
+              <button
+                type="button"
+                onClick={() => setView("grid")}
+                aria-pressed={view === "grid"}
+                aria-label="Grid view"
+                title="Grid view"
+                className="grid h-10 w-10 place-items-center rounded-[7px] border transition"
+                style={{
+                  borderColor: view === "grid" ? "var(--theme-gold,#F5B548)" : "rgba(245,181,72,0.28)",
+                  background: view === "grid" ? "rgba(245,181,72,0.12)" : "transparent",
+                  color: "var(--theme-gold,#F5B548)",
+                }}
+              >
                 <Glyph name="cards" size={16} />
               </button>
-              <button type="button" className="grid h-10 w-10 place-items-center rounded-[7px] border border-[rgba(245,181,72,0.28)]" style={{ color: "var(--theme-gold,#F5B548)" }}>
+              <button
+                type="button"
+                onClick={() => setView("list")}
+                aria-pressed={view === "list"}
+                aria-label="List view"
+                title="List view"
+                className="grid h-10 w-10 place-items-center rounded-[7px] border transition"
+                style={{
+                  borderColor: view === "list" ? "var(--theme-gold,#F5B548)" : "rgba(245,181,72,0.28)",
+                  background: view === "list" ? "rgba(245,181,72,0.12)" : "transparent",
+                  color: "var(--theme-gold,#F5B548)",
+                }}
+              >
                 <Glyph name="box" size={16} />
               </button>
             </div>
           </div>
 
-          <div className="mt-4 grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
+          <div className={`mt-4 grid gap-3 ${view === "grid" ? "lg:grid-cols-2 2xl:grid-cols-3" : "grid-cols-1"}`}>
             {filteredEntries.map((entry) => (
               <WatchCard
                 key={`${entry.sourceType}-${entry.id}`}
@@ -418,7 +521,9 @@ export default function WishlistPage() {
                 <span className="block text-3xl" style={{ color: "var(--theme-gold,#F5B548)" }}>+</span>
                 <span className="mt-2 block text-lg font-black" style={{ color: "var(--theme-gold,#F5B548)" }}>Add Watch</span>
                 <span className="mt-1 block text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Track items or exhibitions you&apos;re watching.</span>
-                <span className="mt-6 block text-4xl" style={{ color: "var(--theme-gold,#F5B548)" }}>âŒ•</span>
+                <span className="mt-6 flex justify-center" style={{ color: "var(--theme-gold,#F5B548)" }}>
+                  <Glyph name="search" size={28} />
+                </span>
               </span>
             </Link>
           </div>
@@ -457,9 +562,38 @@ export default function WishlistPage() {
                 {selected.kind}
               </span>
               <div className="flex items-center gap-2">
-                <button type="button" className="grid h-8 w-8 place-items-center rounded-[6px] border border-[rgba(245,181,72,0.22)]" style={{ color: "var(--theme-gold,#F5B548)" }}>â€¹</button>
-                <button type="button" className="grid h-8 w-8 place-items-center rounded-[6px] border border-[rgba(245,181,72,0.22)]" style={{ color: "var(--theme-gold,#F5B548)" }}>â€º</button>
-                <button type="button" onClick={() => setSelectedId(null)} className="text-xl leading-none" style={{ color: "var(--theme-gold,#F5B548)" }}>Ã—</button>
+                <button
+                  type="button"
+                  onClick={() => step(-1)}
+                  disabled={!canPrev}
+                  aria-label="Previous item"
+                  title="Previous item"
+                  className="grid h-8 w-8 place-items-center rounded-[6px] border border-[rgba(245,181,72,0.22)] transition disabled:opacity-35"
+                  style={{ color: "var(--theme-gold,#F5B548)" }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => step(1)}
+                  disabled={!canNext}
+                  aria-label="Next item"
+                  title="Next item"
+                  className="grid h-8 w-8 place-items-center rounded-[6px] border border-[rgba(245,181,72,0.22)] transition disabled:opacity-35"
+                  style={{ color: "var(--theme-gold,#F5B548)" }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedId(null)}
+                  aria-label="Close details"
+                  title="Close"
+                  className="grid h-8 w-8 place-items-center rounded-[6px] transition"
+                  style={{ color: "var(--theme-gold,#F5B548)" }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                </button>
               </div>
             </div>
 
@@ -473,15 +607,54 @@ export default function WishlistPage() {
                 <p className="text-sm" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{selected.meta}</p>
                 <div className="mt-5 text-xs" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Current Value</div>
                 <div className="text-[30px] font-black text-[color:var(--info,#52D6F4)]">{selected.currentValue ? money(selected.currentValue) : "--"}</div>
-                <div className="mt-3 grid grid-cols-[1fr_104px_36px] overflow-hidden rounded-[7px] border border-[rgba(245,181,72,0.18)]">
-                  <div className="px-3 py-3 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Target Price</div>
-                  <div className="border-l border-[rgba(245,181,72,0.12)] px-3 py-3 text-right text-sm font-bold" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{selected.targetPrice ? money(selected.targetPrice) : "--"}</div>
-                  <button type="button" className="border-l border-[rgba(245,181,72,0.12)]" style={{ color: "var(--theme-gold,#F5B548)" }}>
-                    <Glyph name="tag" size={14} />
-                  </button>
+                <div className="mt-3 overflow-hidden rounded-[7px] border border-[rgba(245,181,72,0.18)]">
+                  {editingTarget && canEditSelected ? (
+                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 p-2">
+                      <input
+                        autoFocus
+                        value={targetDraft}
+                        onChange={(event) => setTargetDraft(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") saveTarget();
+                          if (event.key === "Escape") setEditingTarget(false);
+                        }}
+                        inputMode="decimal"
+                        placeholder="Target price"
+                        className="min-w-0 rounded-[6px] border border-[rgba(245,181,72,0.28)] bg-transparent px-2 py-2 text-sm outline-none"
+                        style={{ color: "var(--theme-text-primary,#F0EAD6)" }}
+                      />
+                      <span className="flex gap-1">
+                        <button type="button" onClick={saveTarget} className="rounded-[6px] px-3 py-2 text-xs font-black" style={{ background: "linear-gradient(135deg,#8B6914,#F5B548)", color: "#0B0B0B" }}>Save</button>
+                        <button type="button" onClick={() => setEditingTarget(false)} className="rounded-[6px] border border-[rgba(245,181,72,0.22)] px-3 py-2 text-xs font-bold" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>Cancel</button>
+                      </span>
+                    </div>
+                  ) : (
+                    <div className={`grid ${canEditSelected ? "grid-cols-[1fr_104px_36px]" : "grid-cols-[1fr_104px]"}`}>
+                      <div className="px-3 py-3 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Target Price</div>
+                      <div className="border-l border-[rgba(245,181,72,0.12)] px-3 py-3 text-right text-sm font-bold" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{selected.targetPrice ? money(selected.targetPrice) : "--"}</div>
+                      {canEditSelected && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTargetDraft(selected.targetPrice ? String(selected.targetPrice) : "");
+                            setEditingTarget(true);
+                          }}
+                          aria-label="Set target price"
+                          title="Set target price"
+                          className="grid place-items-center border-l border-[rgba(245,181,72,0.12)] transition hover:bg-[rgba(245,181,72,0.08)]"
+                          style={{ color: "var(--theme-gold,#F5B548)" }}
+                        >
+                          <Glyph name="tag" size={14} />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="mt-3 rounded-[7px] border border-[rgba(245,181,72,0.18)] p-3 text-sm" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>
-                  <span className={selected.alertActive ? "text-green-400" : "text-[color:var(--theme-text-muted,#A0956B)]"}>â—</span>{" "}
+                  <span
+                    className="mr-2 inline-block h-2 w-2 rounded-full align-middle"
+                    style={{ background: selected.alertActive ? "#4ade80" : "var(--theme-text-muted,#A0956B)" }}
+                  />{" "}
                   {selected.alertActive ? "Alert Active" : "No alert set"}
                 </div>
               </div>
@@ -502,7 +675,6 @@ export default function WishlistPage() {
             <div className="mt-5">
               <div className="mb-2 flex items-center justify-between">
                 <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#F5B548)" }}>Recent Comparable Sales</div>
-                <button type="button" className="text-xs font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>View all â€º</button>
               </div>
               <div className="rounded-[7px] border border-[rgba(245,181,72,0.16)] px-4 py-5 text-sm leading-6" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
                 Comparable sales will appear here after this watched item is linked to a live pricing source.
@@ -512,9 +684,39 @@ export default function WishlistPage() {
             <div className="mt-5 border-t border-[rgba(245,181,72,0.16)] pt-4">
               <div className="mb-2 flex items-center justify-between">
                 <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#F5B548)" }}>Notes</div>
-                <button type="button" className="rounded-[6px] border border-[rgba(245,181,72,0.28)] px-3 py-1 text-xs font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>Edit</button>
+                {canEditSelected && !editingNotes && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNotesDraft(selected.notes ?? "");
+                      setEditingNotes(true);
+                    }}
+                    className="rounded-[6px] border border-[rgba(245,181,72,0.28)] px-3 py-1 text-xs font-bold"
+                    style={{ color: "var(--theme-gold,#F5B548)" }}
+                  >
+                    Edit
+                  </button>
+                )}
               </div>
-              <p className="text-sm leading-6" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{selected.notes}</p>
+              {editingNotes && canEditSelected ? (
+                <div>
+                  <textarea
+                    autoFocus
+                    value={notesDraft}
+                    onChange={(event) => setNotesDraft(event.target.value)}
+                    rows={4}
+                    placeholder="Why you're watching this, condition notes, sellers to check..."
+                    className="w-full rounded-[6px] border border-[rgba(245,181,72,0.28)] bg-transparent p-2 text-sm leading-6 outline-none"
+                    style={{ color: "var(--theme-text-primary,#F0EAD6)" }}
+                  />
+                  <div className="mt-2 flex gap-2">
+                    <button type="button" onClick={saveNotes} className="rounded-[6px] px-3 py-1.5 text-xs font-black" style={{ background: "linear-gradient(135deg,#8B6914,#F5B548)", color: "#0B0B0B" }}>Save</button>
+                    <button type="button" onClick={() => setEditingNotes(false)} className="rounded-[6px] border border-[rgba(245,181,72,0.22)] px-3 py-1.5 text-xs font-bold" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm leading-6" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{selected.notes}</p>
+              )}
               <div className="mt-4 grid grid-cols-3 gap-3 text-[11px]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
                 <div><div className="uppercase tracking-[0.12em]">Added</div><div style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{selected.savedAgo}</div></div>
                 <div><div className="uppercase tracking-[0.12em]">Source</div><div style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{selected.source}</div></div>
@@ -527,9 +729,9 @@ export default function WishlistPage() {
                 + Add to Vault
               </button>
               <button type="button" onClick={() => handleDismiss(selected)} className="rounded-[7px] border border-[rgba(245,181,72,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>
-                Ã— Dismiss
+                Dismiss
               </button>
-              <button type="button" className="rounded-[7px] border border-[rgba(245,181,72,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>
+              <button type="button" onClick={shareSelected} className="rounded-[7px] border border-[rgba(245,181,72,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>
                 Share
               </button>
             </div>

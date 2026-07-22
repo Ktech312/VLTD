@@ -149,6 +149,19 @@ export function addWishlistItem(
   return item;
 }
 
+// Update fields on an existing wishlist item (target price, notes, priority).
+// Persists locally and best-effort to Supabase, same as add/remove.
+export function updateWishlistItem(
+  id: string,
+  patch: Partial<Pick<WishlistItem, "targetPrice" | "notes" | "priority">>
+): WishlistItem[] {
+  const next = loadWishlist().map((item) => (item.id === id ? { ...item, ...patch } : item));
+  saveWishlist(next);
+  const updated = next.find((item) => item.id === id);
+  if (updated) void pushWish(updated);
+  return next;
+}
+
 export function removeWishlistItem(id: string) {
   const next = loadWishlist().filter((i) => i.id !== id);
   saveWishlist(next);
