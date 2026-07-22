@@ -67,12 +67,13 @@ function displayLabel(label: string) {
 
 function exportItemsCsv(items: VaultItem[]) {
   if (typeof window === "undefined") return;
-  const header = ["title", "universe", "category", "grade", "invested", "value", "gain"];
+  const header = ["vault_id", "title", "universe", "category", "grade", "invested", "value", "gain"];
   const esc = (v: unknown) => {
     const s = String(v ?? "");
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const rows = items.map((i) => [
+    i.itemCode ?? "",
     i.title ?? "",
     i.universe ?? "",
     i.categoryLabel ?? i.category ?? "",

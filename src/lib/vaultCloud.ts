@@ -85,6 +85,7 @@ function rowToItem(input: unknown): VaultItem {
   return {
     id: String(row.id),
     profile_id: row.profile_id ?? undefined,
+    itemCode: row.item_code ?? undefined,
     universe: row.universe ?? undefined,
     category: row.category ?? undefined,
     customCategoryLabel: row.custom_category_label ?? undefined,

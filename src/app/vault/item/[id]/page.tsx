@@ -883,6 +883,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                     { label: "Category", value: categoryLabel(item) },
                     { label: "Subcategory", value: detailValue(item.subcategoryLabel) },
                     { label: "Cert #", value: detailValue(item.certNumber) },
+                    { label: "Vault ID", value: detailValue(item.itemCode) },
                     { label: "Added", value: fmtDate(addedAt) },
                   ]}
                 />

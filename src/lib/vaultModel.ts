@@ -27,6 +27,9 @@ export type VaultImage = {
 export type VaultItem = {
   id: string;
   profile_id?: string;
+  /** Permanent internal tracking code, e.g. "260312-0001-000142". Assigned by
+   *  the database; never edited by the client. */
+  itemCode?: string;
   universe?: string;
   category?: string;
   customCategoryLabel?: string;

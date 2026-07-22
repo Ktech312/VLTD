@@ -104,6 +104,7 @@ function itemHtml(item: VaultItem, index: number, opts: InsurancePdfOptions) {
     ${imageHtml}
     <div class="item-details">
       <table class="details-table">
+        ${detailRow("Vault ID", item.itemCode)}
         ${detailRow("Grade / Condition", item.grade)}
         ${detailRow("Condition Notes", conditionNote)}
         ${detailRow("Certification #", item.certNumber)}

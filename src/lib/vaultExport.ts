@@ -2,6 +2,7 @@ import { downloadCsv } from "@/lib/exportCsv";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
 
 const CSV_COLUMNS: (keyof VaultItem)[] = [
+  "itemCode",
   "id",
   "universe",
   "category",
