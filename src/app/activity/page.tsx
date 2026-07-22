@@ -3,191 +3,341 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { Glyph, type GlyphName } from "@/components/ui/Glyph";
+import { listRecentCommentsForExhibitions, type Comment } from "@/lib/comments";
+import { listExhibitionEventsForGalleries, type ExhibitionEvent } from "@/lib/exhibitionEvents";
+import { loadGalleries } from "@/lib/galleryModel";
 import { loadSaleHistory } from "@/lib/historyModel";
+import { fetchPublicProfile } from "@/lib/publicProfile";
 import { loadSales, type SaleRecord as LegacySaleRecord } from "@/lib/salesHistory";
 import { syncSalesFromSupabase } from "@/lib/salesModel";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import type { SaleRecord } from "@/types/vaultLifecycle";
-import { loadGalleries } from "@/lib/galleryModel";
-import { listRecentCommentsForExhibitions, type Comment } from "@/lib/comments";
-import { listExhibitionEventsForGalleries, type ExhibitionEvent } from "@/lib/exhibitionEvents";
-import { fetchPublicProfile } from "@/lib/publicProfile";
 
-type ActivityKind = "added" | "sold" | "valued" | "social";
+type ActivityKind = "added" | "sold" | "valued" | "comment" | "exhibition" | "insurance" | "share";
 
 type RecentComment = Comment & {
   exhibitionTitle: string;
   authorName: string;
 };
 
-function formatRelative(timestamp: number) {
-  if (!timestamp) return "";
-  const minutes = Math.floor((Date.now() - timestamp) / 60000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
-
 type ActivityEvent = {
   id: string;
   kind: ActivityKind;
   title: string;
+  subtitle: string;
   detail: string;
   timestamp: number;
   href?: string;
+  actionLabel?: string;
+  item?: VaultItem;
+  imageUrl?: string;
+  previousValue?: number;
+  newValue?: number;
+  source?: string;
+  confidence?: "Low" | "Medium" | "High";
+  comps?: number;
   meta?: string;
 };
 
-function formatDate(timestamp: number) {
-  if (!timestamp) return "Unknown date";
+const FILTERS: Array<{ key: ActivityKind | "all"; label: string; icon: GlyphName }> = [
+  { key: "all", label: "All", icon: "box" },
+  { key: "added", label: "Scans", icon: "eye" },
+  { key: "valued", label: "Value Changes", icon: "chart" },
+  { key: "exhibition", label: "Exhibitions", icon: "building" },
+  { key: "insurance", label: "Insurance", icon: "shield" },
+  { key: "sold", label: "Sales", icon: "tag" },
+  { key: "share", label: "Shares", icon: "share" },
+];
+
+function formatMoney(value?: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(Number(value ?? 0));
+}
+
+function formatClock(timestamp: number) {
+  if (!timestamp) return "";
   return new Intl.DateTimeFormat(undefined, {
-    month: "short",
-    day: "numeric",
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(timestamp));
 }
 
-function formatMoney(value?: number) {
-  const amount = Number(value ?? 0);
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(amount);
+function formatFullDate(timestamp: number) {
+  if (!timestamp) return "Unknown date";
+  return new Intl.DateTimeFormat(undefined, {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(timestamp));
+}
+
+function dayLabel(timestamp: number) {
+  const date = new Date(timestamp);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  const sameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+  if (sameDay(date, today)) return "Today";
+  if (sameDay(date, yesterday)) return "Yesterday";
+  return new Intl.DateTimeFormat(undefined, { month: "long", day: "numeric", year: "numeric" }).format(date);
 }
 
 function itemTimestamp(item: VaultItem) {
   return Number(item.createdAt ?? item.valueUpdatedAt ?? item.priceUpdatedAt ?? 0);
 }
 
-function itemLabel(item: VaultItem) {
-  return [item.categoryLabel || item.category, item.grade].filter(Boolean).join(" - ");
+function itemMeta(item: VaultItem) {
+  return [item.universe, item.categoryLabel || item.category, item.grade].filter(Boolean).join(" - ");
+}
+
+function itemImage(item?: VaultItem) {
+  if (!item) return undefined;
+  if (item.imageFrontUrl) return item.imageFrontUrl;
+  if (item.images?.[0]?.url) return item.images[0].url;
+
+  const text = [item.title, item.universe, item.category, item.categoryLabel].filter(Boolean).join(" ").toLowerCase();
+  if (text.includes("music") || text.includes("vinyl")) return "/collectibles/vinyl-record.png";
+  if (text.includes("jordan") || text.includes("sports")) return "/collectibles/sports-slab.png";
+  if (text.includes("watch") || text.includes("rolex")) return "/universe-thumbnails/jewelry-apparel.png";
+  if (text.includes("game")) return "/collectibles/vault-intake-sprites.png";
+  return "/collectibles/comic-slab.png";
 }
 
 function saleKey(sale: SaleRecord | LegacySaleRecord) {
-  return [
-    sale.id,
-    sale.itemId,
-    sale.soldAt,
-    sale.title,
-    sale.salePrice,
-  ].join(":");
+  return [sale.id, sale.itemId, sale.soldAt, sale.title, sale.salePrice].join(":");
 }
 
-function buildEvents(items: VaultItem[], sales: Array<SaleRecord | LegacySaleRecord>) {
+function confidenceLabel(item?: VaultItem): "Low" | "Medium" | "High" {
+  const confidence = Number(item?.valueConfidence ?? 0);
+  if (confidence >= 80) return "High";
+  if (confidence >= 50) return "Medium";
+  return item?.currentValue ? "Medium" : "Low";
+}
+
+function buildItemEvents(items: VaultItem[]) {
   const addedEvents: ActivityEvent[] = items
     .filter((item) => itemTimestamp(item) > 0)
     .map((item) => ({
       id: `added-${item.id}`,
       kind: "added",
       title: item.title || "Untitled item",
-      detail: "Added to vault",
+      subtitle: "Item scanned",
+      detail: "Added to inventory",
       timestamp: itemTimestamp(item),
       href: `/vault/item/${item.id}`,
-      meta: itemLabel(item),
+      actionLabel: "View item record",
+      item,
+      imageUrl: itemImage(item),
+      newValue: Number(item.currentValue ?? item.estimatedValue ?? item.lastCompValue ?? 0),
+      source: item.valueSource || item.priceSource || "Vault",
+      confidence: confidenceLabel(item),
+      comps: item.comparables?.length ?? item.priceSources?.length ?? 0,
+      meta: itemMeta(item),
     }));
 
   const valueEvents: ActivityEvent[] = items
     .filter((item) => Number(item.valueUpdatedAt ?? item.priceUpdatedAt ?? 0) > 0)
     .map((item) => {
-      const timestamp = Number(item.valueUpdatedAt ?? item.priceUpdatedAt ?? 0);
+      const newValue = Number(item.currentValue ?? item.estimatedValue ?? item.lastCompValue ?? 0);
+      const previousValue = Number(item.purchasePrice ?? item.valueLow ?? item.lastCompValue ?? 0);
       return {
-        id: `valued-${item.id}-${timestamp}`,
+        id: `valued-${item.id}-${item.valueUpdatedAt ?? item.priceUpdatedAt}`,
         kind: "valued",
         title: item.title || "Untitled item",
-        detail: `Value updated to ${formatMoney(item.currentValue ?? item.estimatedValue ?? item.lastCompValue)}`,
-        timestamp,
+        subtitle: "Value refreshed",
+        detail: `Value updated based on ${item.comparables?.length || item.priceSources?.length || 0} comparables`,
+        timestamp: Number(item.valueUpdatedAt ?? item.priceUpdatedAt ?? 0),
         href: `/vault/item/${item.id}`,
-        meta: item.valueSource || item.priceSource || itemLabel(item),
-      };
+        actionLabel: "View item record",
+        item,
+        imageUrl: itemImage(item),
+        previousValue,
+        newValue,
+        source: item.valueSource || item.priceSource || "Pricing",
+        confidence: confidenceLabel(item),
+        comps: item.comparables?.length ?? item.priceSources?.length ?? 0,
+        meta: itemMeta(item),
+      } satisfies ActivityEvent;
     });
 
-  const seenSales = new Set<string>();
-  const soldEvents: ActivityEvent[] = sales
+  return [...addedEvents, ...valueEvents];
+}
+
+function buildSaleEvents(sales: Array<SaleRecord | LegacySaleRecord>, itemById: Map<string, VaultItem>) {
+  const seen = new Set<string>();
+  return sales
     .filter((sale) => {
       const key = saleKey(sale);
-      if (seenSales.has(key)) return false;
-      seenSales.add(key);
+      if (seen.has(key)) return false;
+      seen.add(key);
       return Number(sale.soldAt ?? 0) > 0;
     })
     .map((sale) => {
-      const profit = Number(sale.salePrice ?? 0) - Number(sale.purchasePrice ?? 0);
+      const item = itemById.get(sale.itemId);
+      const salePrice = Number(sale.salePrice ?? 0);
+      const purchasePrice = Number(sale.purchasePrice ?? item?.purchasePrice ?? 0);
+      const profit = salePrice - purchasePrice;
       return {
         id: `sold-${sale.id}`,
         kind: "sold",
-        title: sale.title || "Untitled item",
-        detail: `Sold for ${formatMoney(sale.salePrice)}`,
+        title: sale.title || item?.title || "Sold item",
+        subtitle: "Listing sold",
+        detail: `Sold for ${formatMoney(salePrice)}`,
         timestamp: Number(sale.soldAt ?? 0),
-        href: sale.itemId ? `/vault/item/${sale.itemId}` : undefined,
+        href: sale.itemId ? `/vault/item/${sale.itemId}` : "/sales",
+        actionLabel: "View sale",
+        item,
+        imageUrl: itemImage(item),
+        previousValue: purchasePrice,
+        newValue: salePrice,
+        source: "Sales ledger",
+        confidence: "High",
+        comps: 1,
         meta: `${profit >= 0 ? "+" : ""}${formatMoney(profit)} net`,
-      };
+      } satisfies ActivityEvent;
     });
-
-  return [...addedEvents, ...valueEvents, ...soldEvents]
-    .sort((a, b) => b.timestamp - a.timestamp)
-    .slice(0, 60);
 }
 
-function KindBadge({ kind }: { kind: ActivityKind }) {
-  const labelByKind: Record<ActivityKind, string> = {
-    added: "Vault",
-    sold: "Sale",
-    valued: "Value",
-    social: "Social",
-  };
+function buildGalleryEvents(events: Array<ExhibitionEvent & { galleryTitle: string }>): ActivityEvent[] {
+  return events.map((event) => ({
+    id: `exhibition-${event.id}`,
+    kind: event.type === "announced" ? "share" : "exhibition",
+    title: event.galleryTitle,
+    subtitle: event.type === "published" ? "Exhibition published" : "Gallery announced",
+    detail: event.type === "published" ? "Public gallery updated" : "Announcement sent",
+    timestamp: event.createdAt,
+    href: `/museum/${event.galleryId}`,
+    actionLabel: event.type === "published" ? "View exhibition" : "Open gallery",
+    imageUrl: "/collectibles/movie-poster.png",
+    source: "Exhibition",
+    confidence: "High",
+    comps: 0,
+  }) satisfies ActivityEvent);
+}
 
+function buildCommentEvents(comments: RecentComment[]): ActivityEvent[] {
+  return comments.map((comment) => ({
+    id: `comment-${comment.id}`,
+    kind: "comment",
+    title: comment.exhibitionTitle,
+    subtitle: "Comment received",
+    detail: `${comment.authorName}: ${comment.body}`,
+    timestamp: comment.createdAt,
+    href: `/museum/${comment.exhibitionId}/guest?comment=${comment.id}`,
+    actionLabel: "View comment",
+    imageUrl: "/collectibles/movie-poster.png",
+    source: "Public gallery",
+    confidence: "High",
+    comps: 0,
+  }) satisfies ActivityEvent);
+}
+
+function iconForKind(kind: ActivityKind): GlyphName {
+  if (kind === "added") return "eye";
+  if (kind === "valued") return "chart";
+  if (kind === "sold") return "tag";
+  if (kind === "comment") return "message";
+  if (kind === "exhibition") return "building";
+  if (kind === "insurance") return "shield";
+  return "share";
+}
+
+function colorForKind(kind: ActivityKind) {
+  if (kind === "added") return "#58D783";
+  if (kind === "comment" || kind === "exhibition") return "#C252F4";
+  if (kind === "share") return "#52D6F4";
+  return "var(--theme-gold,#F5B548)";
+}
+
+function deltaPct(event: ActivityEvent) {
+  const previous = Number(event.previousValue ?? 0);
+  const next = Number(event.newValue ?? 0);
+  if (!previous || !next) return null;
+  return ((next - previous) / previous) * 100;
+}
+
+function ActivityThumb({ event, large = false }: { event: ActivityEvent; large?: boolean }) {
+  const size = large ? "h-40 w-32" : "h-20 w-16";
   return (
-    <span
-      className="inline-flex h-7 items-center rounded-full px-3 text-[11px] font-bold uppercase tracking-[0.18em]"
-      style={{
-        background:
-          kind === "sold"
-            ? "rgba(76,175,130,0.12)"
-            : kind === "valued"
-              ? "rgba(245,181,72,0.12)"
-              : "var(--theme-gold-subtle, rgba(245,181,72,0.08))",
-        border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.20))",
-        color: kind === "sold" ? "#72D09B" : "var(--theme-gold, #F5B548)",
-      }}
-    >
-      {labelByKind[kind]}
-    </span>
-  );
-}
-
-function ActivityRow({ event }: { event: ActivityEvent }) {
-  const content = (
-    <div
-      className="grid gap-3 rounded-[18px] border p-4 transition hover:-translate-y-0.5 sm:grid-cols-[auto_1fr_auto] sm:items-center"
-      style={{
-        background: "var(--theme-card, rgba(15,25,45,0.85))",
-        borderColor: "var(--theme-border, rgba(245,181,72,0.12))",
-      }}
-    >
-      <KindBadge kind={event.kind} />
-      <div className="min-w-0">
-        <div className="truncate text-sm font-bold text-[color:var(--fg)]">{event.title}</div>
-        <div className="mt-1 text-sm text-[color:var(--muted)]">{event.detail}</div>
-        {event.meta ? (
-          <div className="mt-1 truncate text-xs text-[color:var(--muted2)]">{event.meta}</div>
-        ) : null}
-      </div>
-      <div className="text-xs font-semibold text-[color:var(--muted2)] sm:text-right">
-        {formatDate(event.timestamp)}
-      </div>
+    <div className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-[7px] border border-[rgba(245,181,72,0.28)] bg-black/30`}>
+      {event.imageUrl ? (
+        <img src={event.imageUrl} alt="" className="h-full w-full object-contain" />
+      ) : (
+        <Glyph name="box" size={large ? 42 : 24} style={{ color: "var(--theme-text-muted,#A0956B)" }} />
+      )}
     </div>
   );
+}
 
-  if (!event.href) return content;
+function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; selected: boolean; onSelect: () => void }) {
+  const change = deltaPct(event);
 
   return (
-    <Link href={event.href} className="block">
-      {content}
-    </Link>
+    <button
+      type="button"
+      onClick={onSelect}
+      className="grid w-full grid-cols-[84px_54px_72px_minmax(0,1fr)_minmax(180px,260px)_190px] items-center gap-5 rounded-[7px] border p-4 text-left transition hover:-translate-y-0.5"
+      style={{
+        background: "var(--theme-card,rgba(15,25,45,0.88))",
+        borderColor: selected ? "var(--theme-gold,#F5B548)" : "rgba(245,181,72,0.22)",
+        boxShadow: selected ? "0 0 0 1px rgba(245,181,72,0.2), 0 18px 38px rgba(0,0,0,0.28)" : "none",
+      }}
+    >
+      <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{formatClock(event.timestamp)}</div>
+      <div className="grid h-12 w-12 place-items-center rounded-full border" style={{ borderColor: colorForKind(event.kind), color: colorForKind(event.kind), background: "rgba(0,0,0,0.24)" }}>
+        <Glyph name={iconForKind(event.kind)} size={22} />
+      </div>
+      <ActivityThumb event={event} />
+      <div className="min-w-0">
+        <div className="text-lg font-black" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{event.subtitle}</div>
+        <div className="truncate text-base" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{event.title}</div>
+        <div className="mt-1 truncate text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{event.detail}</div>
+      </div>
+      <div className="min-w-0 border-l border-[rgba(245,181,72,0.16)] pl-6">
+        {event.newValue ? (
+          <div className="text-[22px] font-black text-[color:var(--info,#52D6F4)]">
+            {event.previousValue ? `${formatMoney(event.previousValue)} -> ` : ""}
+            {formatMoney(event.newValue)}
+          </div>
+        ) : (
+          <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{event.meta ?? "Recorded"}</div>
+        )}
+        {change !== null && (
+          <div className={change >= 0 ? "text-green-400" : "text-red-400"}>
+            {change >= 0 ? "+" : ""}{change.toFixed(1)}%
+          </div>
+        )}
+      </div>
+      <div className="border-l border-[rgba(245,181,72,0.16)] pl-6 text-right text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+        <div>{event.confidence ?? "Medium"} confidence</div>
+        <div>{event.source ?? "VLTD"} {event.comps ? `- ${event.comps} comps` : ""}</div>
+        <div className="mt-2" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{formatClock(event.timestamp)}</div>
+      </div>
+    </button>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="rounded-[8px] border border-[rgba(245,181,72,0.22)] p-10 text-center" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }}>
+      <Glyph name="chart" size={44} style={{ color: "var(--theme-gold,#F5B548)", marginInline: "auto" }} />
+      <h2 className="mt-4 text-xl font-black" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>No activity yet</h2>
+      <p className="mx-auto mt-2 max-w-md text-sm leading-6" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+        Add items, update prices, publish exhibitions, or log a sale and this page will become your vault timeline.
+      </p>
+      <div className="mt-5 flex justify-center gap-3">
+        <Link href="/vault/add" className="rounded-[7px] px-5 py-2 text-sm font-black" style={{ background: "linear-gradient(135deg,#8B6914,#F5B548)", color: "#0B0B0B" }}>Add item</Link>
+        <Link href="/vault" className="rounded-[7px] border border-[rgba(245,181,72,0.26)] px-5 py-2 text-sm font-black" style={{ color: "var(--theme-gold,#F5B548)" }}>Open vault</Link>
+      </div>
+    </div>
   );
 }
 
@@ -196,7 +346,9 @@ export default function ActivityPage() {
   const [sales, setSales] = useState<Array<SaleRecord | LegacySaleRecord>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [recentComments, setRecentComments] = useState<RecentComment[]>([]);
-  const [exhibitionEvents, setExhibitionEvents] = useState<(ExhibitionEvent & { galleryTitle: string })[]>([]);
+  const [exhibitionEvents, setExhibitionEvents] = useState<Array<ExhibitionEvent & { galleryTitle: string }>>([]);
+  const [filter, setFilter] = useState<ActivityKind | "all">("all");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -206,12 +358,12 @@ export default function ActivityPage() {
       try {
         await syncVaultItemsFromSupabase();
       } catch {
-        // Local activity still gives the page useful history.
+        // Local activity still renders if sync is unavailable.
       }
       try {
         await syncSalesFromSupabase();
       } catch {
-        // Local sales still render.
+        // Local sales still render if sync is unavailable.
       }
 
       if (!isActive) return;
@@ -227,14 +379,14 @@ export default function ActivityPage() {
     };
   }, []);
 
-  // Recent comments + exhibition events for exhibitions this collector owns.
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       const myGalleries = loadGalleries();
       if (myGalleries.length === 0) return;
-      const galleryIds = myGalleries.map((g) => g.id);
-      const titleById = new Map(myGalleries.map((g) => [g.id, g.title || "Exhibition"]));
+
+      const galleryIds = myGalleries.map((gallery) => gallery.id);
+      const titleById = new Map(myGalleries.map((gallery) => [gallery.id, gallery.title || "Exhibition"]));
 
       const [comments, events] = await Promise.all([
         listRecentCommentsForExhibitions(galleryIds),
@@ -243,191 +395,223 @@ export default function ActivityPage() {
       if (cancelled) return;
 
       if (comments.length > 0) {
-        const uniqueAuthorIds = [...new Set(comments.map((c) => c.authorId))];
+        const uniqueAuthorIds = [...new Set(comments.map((comment) => comment.authorId))];
         const profiles = await Promise.all(uniqueAuthorIds.map((id) => fetchPublicProfile(id)));
         if (cancelled) return;
-        const nameById = new Map(uniqueAuthorIds.map((id, i) => [id, profiles[i]?.displayName ?? "Collector"]));
+        const nameById = new Map(uniqueAuthorIds.map((id, index) => [id, profiles[index]?.displayName ?? "Collector"]));
         setRecentComments(
-          comments.map((c) => ({
-            ...c,
-            exhibitionTitle: titleById.get(c.exhibitionId) ?? "Exhibition",
-            authorName: nameById.get(c.authorId) ?? "Collector",
+          comments.map((comment) => ({
+            ...comment,
+            exhibitionTitle: titleById.get(comment.exhibitionId) ?? "Exhibition",
+            authorName: nameById.get(comment.authorId) ?? "Collector",
           }))
         );
       }
 
-      if (events.length > 0) {
-        setExhibitionEvents(
-          events.map((e) => ({
-            ...e,
-            galleryTitle: titleById.get(e.galleryId) ?? "Exhibition",
-          }))
-        );
-      }
+      setExhibitionEvents(events.map((event) => ({ ...event, galleryTitle: titleById.get(event.galleryId) ?? "Exhibition" })));
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const events = useMemo(() => buildEvents(items, sales), [items, sales]);
-  const addedCount = items.length;
-  const soldCount = sales.length;
-  const totalValue = items.reduce((sum, item) => sum + Number(item.currentValue ?? 0), 0);
+  const itemById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
+  const allEvents = useMemo<ActivityEvent[]>(() => {
+    return [
+      ...buildItemEvents(items),
+      ...buildSaleEvents(sales, itemById),
+      ...buildGalleryEvents(exhibitionEvents),
+      ...buildCommentEvents(recentComments),
+    ]
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 60);
+  }, [exhibitionEvents, itemById, items, recentComments, sales]);
+
+  const filteredEvents = useMemo(() => {
+    return filter === "all" ? allEvents : allEvents.filter((event) => event.kind === filter);
+  }, [allEvents, filter]);
+
+  const selected = filteredEvents.find((event) => event.id === selectedId) ?? filteredEvents[0] ?? allEvents[0] ?? null;
+  const totalValue = items.reduce((sum, item) => sum + Number(item.currentValue ?? item.estimatedValue ?? 0), 0);
+  const grouped = filteredEvents.reduce<Array<{ label: string; events: ActivityEvent[] }>>((groups, event) => {
+    const label = dayLabel(event.timestamp);
+    const existing = groups.find((group) => group.label === label);
+    if (existing) existing.events.push(event);
+    else groups.push({ label, events: [event] });
+    return groups;
+  }, []);
 
   return (
-    <main className="px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--muted2)]">
-              Activity
+    <main className="min-h-screen px-4 py-7 text-[color:var(--theme-text-primary,#F0EAD6)] sm:px-6 lg:px-8" style={{ background: "var(--bg)" }}>
+      <div className="mx-auto grid max-w-[1480px] gap-7 xl:grid-cols-[minmax(0,1fr)_470px]">
+        <section className="min-w-0">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h1 className="font-serif text-[48px] font-black leading-none tracking-[-0.02em]">Activity</h1>
+              <p className="mt-2 text-base" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Everything that changed in your vault.</p>
             </div>
-            <h1 className="mt-1 text-3xl font-black tracking-[-0.04em] text-[color:var(--fg)]">
-              Collection Activity
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[color:var(--muted)]">
-              Recent vault updates, sales, and value changes. Comments and exhibition activity appear in the sidebar — Vibes and new followers show up on your public profile.
-            </p>
+            <button type="button" className="inline-flex h-10 items-center gap-2 rounded-[7px] border border-[rgba(245,181,72,0.3)] px-4 text-sm font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>
+              <Glyph name="chart" size={16} />
+              Filters
+            </button>
           </div>
-          <Link
-            href="/vault/add"
-            className="inline-flex h-10 items-center justify-center rounded-full px-4 text-sm font-bold"
-            style={{
-              background: "linear-gradient(135deg, #8B6914, #F5B548)",
-              color: "#0B0B0B",
-              boxShadow: "0 4px 18px rgba(245,181,72,0.22)",
-            }}
-          >
-            Add Item
-          </Link>
-        </div>
 
-        <section className="grid gap-3 sm:grid-cols-3">
-          <div className="rounded-[18px] border p-4" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
-            <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Vault Items</div>
-            <div className="mt-2 text-2xl font-black">{addedCount}</div>
+          <div className="mt-7 flex flex-wrap gap-2">
+            {FILTERS.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setFilter(tab.key)}
+                className="inline-flex h-10 items-center gap-2 rounded-[7px] border px-4 text-sm font-bold"
+                style={{
+                  background: filter === tab.key ? "linear-gradient(135deg,#8B6914,#F5B548)" : "var(--theme-card,rgba(15,25,45,0.86))",
+                  borderColor: filter === tab.key ? "rgba(245,181,72,0.6)" : "rgba(245,181,72,0.24)",
+                  color: filter === tab.key ? "#0B0B0B" : "var(--theme-gold,#F5B548)",
+                }}
+              >
+                <Glyph name={tab.icon} size={16} />
+                {tab.label}
+              </button>
+            ))}
           </div>
-          <div className="rounded-[18px] border p-4" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
-            <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Sales Logged</div>
-            <div className="mt-2 text-2xl font-black">{soldCount}</div>
-          </div>
-          <div className="rounded-[18px] border p-4" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
-            <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Tracked Value</div>
-            <div className="mt-2 text-2xl font-black text-[color:var(--theme-gold)]">{formatMoney(totalValue)}</div>
-          </div>
-        </section>
 
-        <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
-          <section className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-sm font-bold uppercase tracking-[0.22em] text-[color:var(--muted2)]">
-                Timeline
-              </h2>
-              <span className="text-xs text-[color:var(--muted2)]">{events.length} recent events</span>
-            </div>
-
+          <div className="mt-7 space-y-4">
             {isLoading ? (
-              <div className="rounded-[18px] border p-5 text-sm text-[color:var(--muted)]" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
+              <div className="rounded-[8px] border border-[rgba(245,181,72,0.22)] p-6" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))", color: "var(--theme-text-muted,#A0956B)" }}>
                 Loading activity...
               </div>
-            ) : events.length ? (
-              <div className="grid gap-3">
-                {events.map((event) => (
-                  <ActivityRow key={event.id} event={event} />
-                ))}
-              </div>
+            ) : grouped.length ? (
+              grouped.map((group) => (
+                <section key={group.label}>
+                  <h2 className="mb-3 text-base font-black" style={{ color: "var(--theme-gold,#F5B548)" }}>{group.label}</h2>
+                  <div className="relative space-y-3">
+                    <div className="absolute bottom-5 left-[109px] top-5 hidden w-px bg-[rgba(245,181,72,0.26)] sm:block" />
+                    {group.events.map((event) => (
+                      <ActivityRow
+                        key={event.id}
+                        event={event}
+                        selected={selected?.id === event.id}
+                        onSelect={() => setSelectedId(event.id)}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ))
             ) : (
-              <div className="rounded-[24px] border p-8 text-center" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
-                <h2 className="text-xl font-bold">No activity yet</h2>
-                <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[color:var(--muted)]">
-                  Add items, update values, or record a sale and this page will become your collection timeline.
-                </p>
-                <div className="mt-5 flex flex-wrap justify-center gap-3">
-                  <Link href="/vault/add" className="rounded-full px-5 py-2 text-sm font-semibold" style={{ background: "var(--theme-gold, #F5B548)", color: "#0B0B0B" }}>
-                    Add First Item
-                  </Link>
-                  <Link href="/vault" className="rounded-full border px-5 py-2 text-sm font-semibold text-[color:var(--theme-gold)]" style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.30))" }}>
-                    Open Vault
-                  </Link>
-                </div>
-              </div>
+              <EmptyState />
             )}
-          </section>
+          </div>
 
-          <aside className="space-y-3">
-            {recentComments.length > 0 && (
-              <div className="rounded-[18px] border p-4" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
-                <h2 className="text-sm font-bold uppercase tracking-[0.22em] text-[color:var(--muted2)]">
-                  Recent Comments
-                </h2>
-                <div className="mt-4 grid gap-2">
-                  {recentComments.slice(0, 6).map((c) => (
-                    <Link
-                      key={c.id}
-                      href={`/museum/${c.exhibitionId}/guest?comment=${c.id}`}
-                      className="block rounded-[14px] bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold,#F5B548)]"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-semibold text-[color:var(--fg)]">{c.authorName}</span>
-                        <span className="text-[10px] text-[color:var(--muted2)]">{formatRelative(c.createdAt)}</span>
-                      </div>
-                      <div className="mt-0.5 line-clamp-2 text-xs text-[color:var(--muted)]">{c.body}</div>
-                      <div className="mt-1 text-[10px] uppercase tracking-[0.1em] text-[color:var(--muted2)]">on {c.exhibitionTitle}</div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {exhibitionEvents.length > 0 && (
-              <div className="rounded-[18px] border p-4" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
-                <h2 className="text-sm font-bold uppercase tracking-[0.22em] text-[color:var(--muted2)]">
-                  Exhibition Activity
-                </h2>
-                <div className="mt-4 grid gap-2">
-                  {exhibitionEvents.slice(0, 6).map((e) => {
-                    const isPublish = e.type === "published";
-                    const itemCount = typeof e.metadata.itemCount === "number" ? e.metadata.itemCount : null;
-                    return (
-                      <Link
-                        key={e.id}
-                        href={`/museum/${e.galleryId}`}
-                        className="block rounded-[14px] bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold,#F5B548)]"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-semibold text-[color:var(--fg)]">
-                            {isPublish ? "🔓 Published" : "📣 Announced"}
-                          </span>
-                          <span className="text-[10px] text-[color:var(--muted2)]">{formatRelative(e.createdAt)}</span>
-                        </div>
-                        <div className="mt-0.5 truncate text-xs text-[color:var(--muted)]">{e.galleryTitle}</div>
-                        {!isPublish && itemCount !== null && (
-                          <div className="mt-0.5 text-[10px] uppercase tracking-[0.1em] text-[color:var(--muted2)]">{itemCount} items</div>
-                        )}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            <div className="rounded-[18px] border p-4" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: "var(--theme-border, rgba(245,181,72,0.12))" }}>
-              <h2 className="text-sm font-bold uppercase tracking-[0.22em] text-[color:var(--muted2)]">
-                Quick Links
-              </h2>
-              <div className="mt-4 grid gap-2">
-                <Link href="/vault" className="rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">
-                  Vault
-                </Link>
-                <Link href="/museum" className="rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">
-                  Exhibitions
-                </Link>
-                <Link href="/portfolio" className="rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">
-                  Insights
-                </Link>
-              </div>
+          {filteredEvents.length > 8 && (
+            <div className="mt-5 flex justify-center">
+              <button type="button" className="rounded-[7px] border border-[rgba(245,181,72,0.3)] px-14 py-3 text-sm font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>Load more</button>
             </div>
-          </aside>
-        </div>
+          )}
+        </section>
+
+        <aside className="h-fit rounded-[8px] border border-[rgba(245,181,72,0.32)] p-5 xl:sticky xl:top-24" style={{ background: "var(--theme-card,rgba(15,25,45,0.92))", boxShadow: "0 18px 55px rgba(0,0,0,0.26)" }}>
+          {selected ? (
+            <>
+              <div className="flex items-start justify-between gap-4">
+                <h2 className="text-xl font-black">Activity Details</h2>
+                <button type="button" onClick={() => setSelectedId(null)} style={{ color: "var(--theme-gold,#F5B548)" }}>x</button>
+              </div>
+
+              <div className="mt-7 grid grid-cols-[138px_1fr] gap-5">
+                <ActivityThumb event={selected} large />
+                <div className="min-w-0">
+                  <h3 className="text-[22px] font-black leading-tight">{selected.title}</h3>
+                  <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{selected.meta || selected.subtitle}</p>
+                  <div className="mt-4 inline-flex items-center gap-2 text-sm" style={{ color: "var(--theme-gold,#F5B548)" }}>
+                    <Glyph name={selected.item?.isPublic ? "eye" : "key"} size={15} />
+                    {selected.item?.isPublic ? "Public" : "Private"}
+                  </div>
+                  {selected.href && (
+                    <Link href={selected.href} className="mt-5 inline-flex h-10 items-center gap-2 rounded-[7px] border border-[rgba(245,181,72,0.34)] px-5 text-sm font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>
+                      {selected.actionLabel ?? "Open"}
+                      <Glyph name="share" size={15} />
+                    </Link>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-7 border-b border-[rgba(245,181,72,0.16)] pb-5">
+                <div className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Event</div>
+                <div className="mt-2 text-lg font-black">{selected.subtitle}</div>
+                <div className="mt-1 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{formatFullDate(selected.timestamp)}</div>
+              </div>
+
+              <section className="mt-5 border-b border-[rgba(245,181,72,0.16)] pb-5">
+                <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Value Change</h3>
+                <div className="mt-4 grid grid-cols-3 gap-4">
+                  <div>
+                    <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Previous Value</div>
+                    <div className="mt-1 text-[24px] font-black text-[color:var(--info,#52D6F4)]">{selected.previousValue ? formatMoney(selected.previousValue) : "-"}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>New Value</div>
+                    <div className="mt-1 text-[24px] font-black text-[color:var(--info,#52D6F4)]">{selected.newValue ? formatMoney(selected.newValue) : "-"}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Change</div>
+                    <div className={deltaPct(selected) !== null && Number(deltaPct(selected)) < 0 ? "mt-1 text-[24px] font-black text-red-400" : "mt-1 text-[24px] font-black text-green-400"}>
+                      {deltaPct(selected) !== null ? `${Number(deltaPct(selected)) >= 0 ? "+" : ""}${Number(deltaPct(selected)).toFixed(1)}%` : "-"}
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="mt-5 rounded-[7px] border border-[rgba(245,181,72,0.22)] p-4">
+                <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Source & Evidence</h3>
+                <div className="mt-4 grid grid-cols-3 gap-4">
+                  <div>
+                    <div className="text-[24px] font-black text-[color:var(--info,#52D6F4)]">{selected.comps ?? 0}</div>
+                    <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Comparables</div>
+                  </div>
+                  <div className="border-l border-[rgba(245,181,72,0.16)] pl-4">
+                    <div className={selected.confidence === "High" ? "text-lg font-black text-green-400" : "text-lg font-black text-[color:var(--theme-gold,#F5B548)]"}>{selected.confidence ?? "Medium"}</div>
+                    <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Confidence</div>
+                  </div>
+                  <div className="border-l border-[rgba(245,181,72,0.16)] pl-4">
+                    <div className="font-black">{selected.source ?? "VLTD"}</div>
+                    <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Source</div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="mt-5 border-b border-[rgba(245,181,72,0.16)] pb-5">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Notes</h3>
+                  <Link href={selected.href ?? "/vault"} className="rounded-[7px] border border-[rgba(245,181,72,0.34)] px-4 py-2 text-sm font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>Add note</Link>
+                </div>
+                <p className="mt-3 text-sm leading-6" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{selected.detail}</p>
+              </section>
+
+              <section className="mt-5">
+                <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Related Activity</h3>
+                <div className="mt-3 grid gap-2">
+                  {allEvents.filter((event) => event.id !== selected.id && event.item?.id && event.item.id === selected.item?.id).slice(0, 2).map((event) => (
+                    <button key={event.id} type="button" onClick={() => setSelectedId(event.id)} className="flex items-center justify-between rounded-[7px] border border-[rgba(245,181,72,0.16)] px-4 py-3 text-left text-sm">
+                      <span>{event.subtitle}</span>
+                      <span style={{ color: "var(--theme-text-muted,#A0956B)" }}>{formatFullDate(event.timestamp).split(",")[0]}</span>
+                    </button>
+                  ))}
+                  {!allEvents.some((event) => event.id !== selected.id && event.item?.id && event.item.id === selected.item?.id) && (
+                    <div className="rounded-[7px] border border-[rgba(245,181,72,0.16)] px-4 py-3 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>No related activity yet.</div>
+                  )}
+                </div>
+              </section>
+
+              <div className="mt-6 grid grid-cols-3 gap-3">
+                <Link href={selected.href ?? "/vault"} className="rounded-[7px] px-4 py-3 text-center text-sm font-black" style={{ background: "linear-gradient(135deg,#8B6914,#F5B548)", color: "#0B0B0B" }}>Open record</Link>
+                <Link href="/wishlist" className="rounded-[7px] border border-[rgba(245,181,72,0.34)] px-4 py-3 text-center text-sm font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>Add target</Link>
+                <button type="button" onClick={() => setSelectedId(null)} className="rounded-[7px] border border-red-500/45 px-4 py-3 text-sm font-bold text-red-400">Dismiss</button>
+              </div>
+            </>
+          ) : (
+            <div className="py-12 text-center" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Select an activity to see details.</div>
+          )}
+        </aside>
       </div>
     </main>
   );
