@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { getOnboardingStatus } from "@/lib/auth";
 import { syncPublicProfile } from "@/lib/publicProfile";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
+import { computeVaultStats } from "@/lib/vaultStats";
 import { loadGalleries, refreshGalleriesFromSupabase, type Gallery } from "@/lib/galleryModel";
 import { getCollectionMetrics } from "@/lib/portfolioMetrics";
 import { getCollectionValuationScore } from "@/lib/collectionValuationScore";
@@ -818,13 +819,17 @@ export default function HomeClient() {
     void load();
   }, [router]);
 
+  // Shared vault totals — sold items are excluded, so this matches the Vault
+  // and Insights instead of each screen counting differently.
   const stats = useMemo(() => {
-    const totalItems = items.length;
-    const totalCostValue = items.reduce((sum, item) => sum + totalCost(item), 0);
-    const totalValue = items.reduce((sum, item) => sum + Number(item.currentValue ?? 0), 0);
-    const totalGain = totalValue - totalCostValue;
-    const gainPct = totalCostValue > 0 ? (totalGain / totalCostValue) * 100 : 0;
-    return { totalItems, totalCostValue, totalValue, totalGain, gainPct };
+    const s = computeVaultStats(items);
+    return {
+      totalItems: s.itemCount,
+      totalCostValue: s.totalCost,
+      totalValue: s.totalValue,
+      totalGain: s.totalGain,
+      gainPct: s.gainPct,
+    };
   }, [items]);
 
   // Curator Strength glance — folded in from the old Collection Identity page.

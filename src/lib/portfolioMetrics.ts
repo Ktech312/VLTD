@@ -3,6 +3,7 @@ import type {
   Gallery,
 } from "@/lib/galleryModel";
 import type { VaultItem } from "@/lib/vaultModel";
+import { activeItems } from "@/lib/vaultStats";
 
 export type ValueSegment = {
   label: string;
@@ -120,7 +121,10 @@ function makeSegments(
 }
 
 export function getCollectionMetrics(items: VaultItem[]): CollectionMetrics {
-  const safeItems = safeArray(items);
+  // Collection metrics describe what you currently own, so sold items are
+  // excluded — otherwise Insights and the Dashboard report a bigger vault
+  // than the Vault page does. See lib/vaultStats.ts for the shared rule.
+  const safeItems = activeItems(safeArray(items));
 
   const totalItems = safeItems.length;
   const totalCost = safeItems.reduce((sum, item) => sum + itemTotalCost(item), 0);
