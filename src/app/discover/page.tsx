@@ -9,6 +9,7 @@ import { getCurrentUser, getOnboardingStatus } from "@/lib/auth";
 import { buildUserPreferences, sortByPersonalization } from "@/lib/personalization";
 import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { showToast } from "@/lib/toast";
 import { isUniverseKey, type UniverseKey, UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
 import { loadItems } from "@/lib/vaultModel";
 import { loadWatchlist } from "@/lib/watchlistModel";
@@ -38,6 +39,7 @@ type PublicGallery = {
   layout: Record<string, unknown> | null;
   itemIds: string[];
   universeKey: UniverseKey;
+  created_at?: string | null;
   collector_name?: string;
   collector_avatar_url?: string;
 };
@@ -79,6 +81,7 @@ function rowToGallery(row: Record<string, unknown>): PublicGallery {
     layout,
     itemIds,
     universeKey: "MISC",
+    created_at: typeof row.created_at === "string" ? row.created_at : null,
   };
 }
 
@@ -109,6 +112,9 @@ export default function DiscoverPage() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [swipeOpen, setSwipeOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [sort, setSort] = useState<"recommended" | "views" | "items" | "newest" | "az">("recommended");
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [reporting, setReporting] = useState(false);
   const [userPrefs, setUserPrefs] = useState<ReturnType<typeof buildUserPreferences> | null>(null);
   const [signedIn, setSignedIn] = useState(false);
 
@@ -150,7 +156,7 @@ export default function DiscoverPage() {
       try {
         const { data, error } = await supabase
           .from("galleries")
-          .select("id, title, description, cover_image, profile_id, analytics_views, layout")
+          .select("id, title, description, cover_image, profile_id, analytics_views, layout, created_at")
           .eq("visibility", "PUBLIC")
           .eq("state", "ACTIVE")
           .order("analytics_views", { ascending: false })
@@ -245,11 +251,65 @@ export default function DiscoverPage() {
 
   const isEmpty = !loading && filtered.length === 0;
   const hasActiveFilter = activeTab !== "All" || query.trim() !== "";
-  const displayGalleries = filtered.length > 0 ? filtered : galleries;
+  const galleryTime = (gallery: PublicGallery) => (gallery.created_at ? Date.parse(gallery.created_at) : 0);
+  const displayGalleries = (() => {
+    const base = filtered.length > 0 ? filtered : galleries;
+    const list = [...base];
+    if (sort === "views") list.sort((a, b) => (b.analytics_views ?? 0) - (a.analytics_views ?? 0));
+    else if (sort === "items") list.sort((a, b) => (b.item_count ?? 0) - (a.item_count ?? 0));
+    else if (sort === "az") list.sort((a, b) => a.title.localeCompare(b.title));
+    else if (sort === "newest") list.sort((a, b) => galleryTime(b) - galleryTime(a));
+    return list;
+  })();
   const selectedGallery = displayGalleries.find((gallery) => gallery.id === selectedId) ?? displayGalleries[0] ?? null;
-  const trending = displayGalleries.slice(0, 4);
-  const newThisWeek = displayGalleries.slice(4, 8).length > 0 ? displayGalleries.slice(4, 8) : displayGalleries.slice(0, 4);
-  const notableItems = displayGalleries.slice(0, 4);
+
+  // Real groupings rather than arbitrary slices of the same list.
+  const trending = [...displayGalleries].sort((a, b) => (b.analytics_views ?? 0) - (a.analytics_views ?? 0));
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const newThisWeek = displayGalleries.filter((gallery) => galleryTime(gallery) >= weekAgo);
+  const notableItems = [...displayGalleries].sort((a, b) => (b.item_count ?? 0) - (a.item_count ?? 0));
+  const shown = (list: PublicGallery[], key: string) => (expanded[key] ? list : list.slice(0, 4));
+  const toggleSection = (key: string) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  async function shareGallery(gallery: PublicGallery) {
+    const url = `${typeof window !== "undefined" ? window.location.origin : ""}/museum/${gallery.id}/guest`;
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title: gallery.title, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      showToast("Room link copied");
+    } catch {
+      showToast("Couldn't share that room.");
+    }
+  }
+
+  // Content reports go to the same bug_reports inbox the admin already reads.
+  async function reportGallery(gallery: PublicGallery) {
+    if (reporting) return;
+    const reason = typeof window !== "undefined" ? window.prompt(`Report "${gallery.title}" — what's wrong with this room?`) : null;
+    if (!reason || !reason.trim()) return;
+    setReporting(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) throw new Error("offline");
+      const { data: userData } = await supabase.auth.getUser();
+      const { error } = await supabase.from("bug_reports").insert({
+        user_id: userData?.user?.id ?? null,
+        email: userData?.user?.email ?? null,
+        message: `[CONTENT REPORT] Gallery "${gallery.title}" (${gallery.id}) — ${reason.trim().slice(0, 1500)}`,
+        page_path: typeof window !== "undefined" ? window.location.pathname : null,
+        user_agent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 400) : null,
+      });
+      if (error) throw error;
+      showToast("Report sent. Thank you.");
+    } catch {
+      showToast("Couldn't send that report. Try again.");
+    } finally {
+      setReporting(false);
+    }
+  }
   const universeCounts = UNIVERSE_KEYS.map((key) => ({
     key,
     count: galleries.filter((gallery) => gallery.universeKey === key).length,
@@ -314,16 +374,36 @@ export default function DiscoverPage() {
             <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Explore public collections, notable items, and collector rooms.</p>
           </div>
 
-          <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_150px_150px_150px_170px]">
+          <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_200px_200px]">
             <label className="flex h-10 items-center gap-2 rounded-[7px] border border-[rgba(245,181,72,0.22)] px-3" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
               <Glyph name="search" size={15} className="opacity-60" />
               <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search exhibitions, items, and collectors..." className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:opacity-45" />
             </label>
-            {["Universes", "Value range", "Recently added", "Exhibition Grade"].map((label) => (
-              <button key={label} type="button" className="flex h-10 items-center justify-between rounded-[7px] border border-[rgba(245,181,72,0.22)] px-3 text-xs font-semibold" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))", color: "var(--theme-text-primary,#F0EAD6)" }}>
-                {label}<span style={{ color: "var(--theme-gold,#F5B548)" }}>v</span>
-              </button>
-            ))}
+            <select
+              value={activeTab}
+              onChange={(event) => setActiveTab(event.target.value === "All" ? "All" : (event.target.value as UniverseKey))}
+              aria-label="Filter by universe"
+              className="h-10 rounded-[7px] border border-[rgba(245,181,72,0.22)] px-3 text-xs font-semibold outline-none"
+              style={{ background: "var(--theme-card,rgba(15,25,45,0.85))", color: "var(--theme-text-primary,#F0EAD6)" }}
+            >
+              <option value="All">All universes</option>
+              {UNIVERSE_KEYS.map((key) => (
+                <option key={key} value={key}>{UNIVERSE_LABEL[key]}</option>
+              ))}
+            </select>
+            <select
+              value={sort}
+              onChange={(event) => setSort(event.target.value as typeof sort)}
+              aria-label="Sort exhibitions"
+              className="h-10 rounded-[7px] border border-[rgba(245,181,72,0.22)] px-3 text-xs font-semibold outline-none"
+              style={{ background: "var(--theme-card,rgba(15,25,45,0.85))", color: "var(--theme-text-primary,#F0EAD6)" }}
+            >
+              <option value="recommended">Recommended</option>
+              <option value="views">Most viewed</option>
+              <option value="items">Most items</option>
+              <option value="newest">Newest</option>
+              <option value="az">A to Z</option>
+            </select>
           </div>
 
           {fetchError && <div className="mt-3 rounded-[7px] border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">Query error: {fetchError}</div>}
@@ -372,10 +452,10 @@ export default function DiscoverPage() {
             <section className="mt-5">
               <div className="mb-2 flex items-center justify-between">
                 <h2 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#F5B548)" }}>Trending Exhibitions</h2>
-                <button type="button" className="text-xs font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>View all</button>
+                <button type="button" onClick={() => toggleSection("trending")} className="text-xs font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>{expanded.trending ? "Show less" : "View all"}</button>
               </div>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                {trending.map((gallery) => <GalleryCard key={gallery.id} gallery={gallery} />)}
+                {shown(trending, "trending").map((gallery) => <GalleryCard key={gallery.id} gallery={gallery} />)}
               </div>
             </section>
           )}
@@ -384,10 +464,10 @@ export default function DiscoverPage() {
             <section className="mt-5">
               <div className="mb-2 flex items-center justify-between">
                 <h2 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#F5B548)" }}>New This Week</h2>
-                <button type="button" className="text-xs font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>View all</button>
+                <button type="button" onClick={() => toggleSection("newThisWeek")} className="text-xs font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>{expanded.newThisWeek ? "Show less" : "View all"}</button>
               </div>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                {newThisWeek.map((gallery) => <GalleryCard key={gallery.id} gallery={gallery} />)}
+                {shown(newThisWeek, "newThisWeek").map((gallery) => <GalleryCard key={gallery.id} gallery={gallery} />)}
               </div>
             </section>
           )}
@@ -396,10 +476,10 @@ export default function DiscoverPage() {
             <section className="mt-5">
               <div className="mb-2 flex items-center justify-between">
                 <h2 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#F5B548)" }}>Notable Items</h2>
-                <button type="button" className="text-xs font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>View all</button>
+                <button type="button" onClick={() => toggleSection("notableItems")} className="text-xs font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>{expanded.notableItems ? "Show less" : "View all"}</button>
               </div>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                {notableItems.map((gallery) => <GalleryCard key={gallery.id} gallery={gallery} compact />)}
+                {shown(notableItems, "notableItems").map((gallery) => <GalleryCard key={gallery.id} gallery={gallery} compact />)}
               </div>
             </section>
           )}
@@ -492,8 +572,8 @@ export default function DiscoverPage() {
               View room
             </Link>
             <div className="mt-3 grid grid-cols-2 gap-3">
-              <button type="button" className="rounded-[7px] border border-[rgba(245,181,72,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>Share</button>
-              <button type="button" className="rounded-[7px] border border-red-500/45 px-4 py-3 text-sm font-bold text-red-400">Report</button>
+              <button type="button" onClick={() => shareGallery(selectedGallery)} className="rounded-[7px] border border-[rgba(245,181,72,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>Share</button>
+              <button type="button" onClick={() => reportGallery(selectedGallery)} disabled={reporting} className="rounded-[7px] border border-red-500/45 px-4 py-3 text-sm font-bold text-red-400 disabled:opacity-50">{reporting ? "Sending..." : "Report"}</button>
             </div>
           </aside>
         )}
