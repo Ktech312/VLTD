@@ -296,9 +296,23 @@ function Sparkline({ values, color = CYAN }: { values: number[]; color?: string 
   );
 }
 
-function ValueHistoryChart({ values }: { values: number[] }) {
-  const fallback = [62, 70, 76, 84, 79, 92, 101, 98, 109, 116, 112, 121, 132, 129, 144];
-  const series = values.length >= 2 ? values : fallback;
+function compactMoney(value: number) {
+  if (Math.abs(value) >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(value) >= 1_000) return `$${Math.round(value / 1000)}K`;
+  return `$${Math.round(value)}`;
+}
+
+function ValueHistoryChart({ points }: { points: { day: string; totalValue: number }[] }) {
+  // Real data only — no invented fallback series.
+  if (points.length < 2) {
+    return (
+      <div className="mt-3 flex h-[190px] items-center justify-center rounded-[8px] border border-[rgba(245,181,72,0.16)] text-sm sm:h-[240px]" style={{ color: MUTED }}>
+        Not enough history yet — value is recorded once a day.
+      </div>
+    );
+  }
+
+  const series = points.map((p) => p.totalValue);
   const w = 980;
   const h = 250;
   const left = 54;
@@ -315,7 +329,18 @@ function ValueHistoryChart({ values }: { values: number[] }) {
   });
   const line = pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
   const area = `${left},${h - bottom} ${line} ${w - right},${h - bottom}`;
-  const labels = ["$0", "$30K", "$60K", "$90K", "$120K", "$150K"];
+
+  // Axis labels derived from the real data, not hardcoded.
+  const yTicks = [0, 1, 2, 3, 4].map((i) => min + ((max - min) * (4 - i)) / 4);
+  const xLabelFor = (day: string) => {
+    const d = new Date(`${day}T00:00:00Z`);
+    return Number.isNaN(d.getTime())
+      ? day
+      : d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+  };
+  const xIdx = [0, Math.floor((points.length - 1) / 2), points.length - 1].filter(
+    (v, i, arr) => arr.indexOf(v) === i
+  );
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="mt-3 block h-[190px] w-full sm:h-[240px]" aria-hidden="true">
       <defs>
@@ -328,16 +353,23 @@ function ValueHistoryChart({ values }: { values: number[] }) {
         const y = top + (i * (h - top - bottom)) / 4;
         return <line key={i} x1={left} x2={w - right} y1={y} y2={y} stroke="rgba(255,255,255,0.08)" />;
       })}
-      {labels.slice(1).map((label, i) => (
-        <text key={label} x={0} y={h - bottom - i * 34} fill="rgba(232,218,181,0.72)" fontSize="12">
-          {label}
+      {yTicks.map((tick, i) => (
+        <text key={i} x={0} y={top + (i * (h - top - bottom)) / 4 + 4} fill="rgba(232,218,181,0.72)" fontSize="12">
+          {compactMoney(tick)}
         </text>
       ))}
       <polygon points={area} fill="url(#insightsArea)" />
       <polyline points={line} fill="none" stroke={CYAN} strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
-      {["May '25", "Jul '25", "Sep '25", "Nov '25", "Jan '26", "Mar '26", "May '26"].map((label, i) => (
-        <text key={label} x={left + i * ((w - left - right) / 6)} y={h - 7} fill="rgba(232,218,181,0.72)" fontSize="12">
-          {label}
+      {xIdx.map((idx, i) => (
+        <text
+          key={points[idx].day}
+          x={left + (idx * (w - left - right)) / Math.max(1, points.length - 1)}
+          y={h - 7}
+          textAnchor={i === 0 ? "start" : i === xIdx.length - 1 ? "end" : "middle"}
+          fill="rgba(232,218,181,0.72)"
+          fontSize="12"
+        >
+          {xLabelFor(points[idx].day)}
         </text>
       ))}
     </svg>
@@ -523,10 +555,12 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
   const totalCost = metrics.totalCost;
   const totalGain = totalValue - totalCost;
 
-  const historySeries = useMemo(() => {
-    if (!mounted) return [] as number[];
-    return sliceHistory(readHistory(), range).map((point) => point.totalValue);
+  // Keep the day with each value so the chart can label its own axes.
+  const historyPoints = useMemo(() => {
+    if (!mounted) return [] as { day: string; totalValue: number }[];
+    return sliceHistory(readHistory(), range).map((point) => ({ day: point.day, totalValue: point.totalValue }));
   }, [mounted, range, tick]);
+  const historySeries = useMemo(() => historyPoints.map((point) => point.totalValue), [historyPoints]);
 
   const thirtyDaySeries = useMemo(() => {
     if (!mounted) return [] as number[];
@@ -732,7 +766,7 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
                 })}
               </div>
             </div>
-            <ValueHistoryChart values={historySeries} />
+            <ValueHistoryChart points={historyPoints} />
           </Panel>
 
           <Panel className="p-4">
