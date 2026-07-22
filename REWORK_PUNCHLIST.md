@@ -1,108 +1,89 @@
 # VLTD Rework Punch-List
 
-Audit date: 2026-07-18
-
-Two things were checked:
-
-1. **The 10 desktop mockups** in `C:\Users\EK\.codex\generated_images\019e6d3a-5dd3-7ed1-be13-942347ebb5c9\`
-   (`vltd-concept-01..20`, desktop + mobile for each page).
-2. **The code**, scanned for controls that render but do nothing (buttons with no
-   handler, links going nowhere).
-
-The dead-control findings below are **verified from the code** — high confidence.
-The visual match to each mockup is **not** verified (the preview browser isn't
-signed in, so the logged-in pages can't be viewed yet).
+Audit: 2026-07-18. Dead-control pass completed the same night.
 
 ---
 
-## Page status
+## ONE THING TO DO
 
-| # | Mockup | Route | Visual rework | Controls working |
-|---|--------|-------|---------------|------------------|
-| 1 | Home | `/` + `/dashboard` | not verified | not audited |
-| 2 | Vault | `/vault` | not verified | clean in scan |
-| 3 | Discover | `/discover` | not verified | **6 dead** |
-| 4 | Exhibitions | `/museum` | not verified | 2 to verify |
-| 5 | Insights | `/portfolio` | partially done | clean in scan |
-| 6 | Watchlist | **`/wishlist`** (naming mismatch) | not verified | **9 dead** |
-| 7 | Goals | `/goals` | not verified | **4 dead** |
-| 8 | Learn | `/learn` | **DONE** | **all working** |
-| 9 | Activity | `/activity` | not verified | **2 dead + feature unwired** |
-| 10 | Capture | `/capture` | not verified | clean in scan |
+Run this migration in Supabase (same as you did for the Learn one):
+
+**`supabase/migrations/20260718_activity_events.sql`**
+
+Until it runs, value-change history still works on the device you're using but
+won't sync across devices. Everything else below works right now.
 
 ---
 
-## Dead controls (confirmed in code)
+## Done — every dead control is now wired
 
-These render but have no handler — clicking them does nothing.
+A code scan found 21 controls that rendered but did nothing. All are fixed.
+Re-scanning now returns **zero** dead controls (the only two hits left are a
+deliberately disabled paid feature on Account and a theme-toggle placeholder
+that swaps in on load).
 
-### `/wishlist` — 9
-- L357 — filter pills (rendered from a label list, no handler)
-- L397, L400 — two icon buttons (sort / view toggle)
-- L460, L461 — `‹` `›` previous/next arrows
-- L479 — unlabeled icon button
-- L505 — "View all ›"
-- L515 — "Edit"
-- L532 — "Share"
+### Wishlist (`/wishlist`) — 9 fixed
+- Top filter buttons (Items / Exhibitions / Price Drops) now filter. Removed
+  "Saved Searches" — no such feature exists.
+- Grid/list toggle switches the layout.
+- Detail panel prev/next step through the list; disabled at the ends.
+- Target price is editable and saves.
+- Notes are editable and save.
+- Share shares/copies the item summary.
+- Removed "View all" on Comparable Sales — nothing to show until a pricing
+  source is linked.
 
-### `/discover` — 6
-- L323 — category dropdown pill
-- L375, L387, L399 — "View all" (three separate rows)
-- L495 — "Share"
-- L496 — "Report"
+### Discover (`/discover`) — 6 fixed
+- Four fake dropdowns replaced with two real controls: Universe filter and
+  Sort (recommended / most viewed / most items / newest / A–Z). Dropped
+  "Value range" and "Exhibition Grade" — galleries carry no value or grade
+  data, so they could only ever be decorative.
+- All three "View all" buttons expand their section.
+- Share shares/copies the room's public link.
+- Report files a real report into the `bug_reports` inbox you already read.
+- Bonus: "Trending", "New This Week", and "Notable Items" were all arbitrary
+  slices of the same list. Now `created_at` is fetched, so they are genuinely
+  sorted by views, last 7 days, and item count.
 
-### `/goals` — 4
-- L452 — "⋯" row menu
-- L514 — goal row button
-- L527 — "View all ›"
-- L544 — "Share goal"
+### Goals (`/goals`) — 4 fixed
+- Suggested Action navigates to the right place for the goal type.
+- "View all" expands the item thumbnails.
+- "Share goal" shares/copies name + progress.
+- Removed the "..." menu — its actions already exist as buttons below it.
 
-### `/activity` — 2
-- L458 — "Filters"
-- L512 — "Load more"
+### Activity (`/activity`) — 2 fixed + the feature finished
+- "Load more" really pages (20 at a time, shows how many are left).
+- Removed the decorative "Filters" button; the real filter tabs sit below it.
+- **Wrote the missing `activity_events` migration** (it never existed).
+- **Wired the missing write call**: `saveItem()` now logs a real before/after
+  "valued" event whenever an item's value changes. That's the one funnel every
+  save path goes through, so it captures old value, new value, and source.
 
-### To verify (may be intentional)
-- `src/components/gallery/GalleryLayout.tsx` L142, L215 — small icon buttons
+### Gallery
+- Removed two per-item "Comment" buttons. Comments are exhibition-level only,
+  so item comments could never work; one was also a button nested inside a
+  link (invalid HTML).
 
-### Confirmed NOT bugs
-- `src/app/account/page.tsx` L447 — `disabled` on purpose (paid feature)
-- `src/components/ThemeToggle.tsx` L14 — pre-mount placeholder, replaced on mount
-
----
-
-## Half-built feature: value-change activity
-
-`src/lib/activityEvents.ts` exists and `/activity` reads from it, but:
-
-- **No migration** — there is no `activity_events` table in `supabase/migrations/`.
-- **Nothing writes to it** — `addActivityEvent()` is exported but never called.
-
-So the "value refreshed / before → after" activity will always be empty. To make
-it real, three things are needed:
-
-1. A migration creating `activity_events` (owner-only RLS, same convention as
-   `saved_articles` / `wishlist`).
-2. `addActivityEvent()` called at the exact moment a value is refreshed, so old
-   value, new value, source, and confidence are captured.
-3. Nothing else — `/activity` already reads and renders it.
-
----
-
-## Naming mismatch
-
-The mockups and their nav call it **Watchlist**, but the app route is
-**`/wishlist`** (and there is a separate `watchlistModel.ts`). Decide on one name
-so the nav, route, and model agree.
+### Garbled text fixed
+Seven lines rendered literal junk to users (`â€¹`, `â€º`, `Ã—`, `âŒ•`, `â—`) from
+double-encoded characters, on Wishlist and Goals. All gone; the app now scans
+clean for this.
 
 ---
 
-## Suggested order
+## Still open
 
-1. **Wishlist** — most dead controls (9), and it's a core feature.
-2. **Discover** — 6 dead, and it's a main nav destination.
-3. **Goals** — 4 dead.
-4. **Activity** — 2 dead + wire the `activity_events` table and write calls.
-5. Then the visual pass on remaining pages vs their mockups.
+1. **Visual match to the mockups is unverified.** The 10 desktop mockups in
+   `C:\Users\EK\.codex\generated_images\019e6d3a-5dd3-7ed1-be13-942347ebb5c9\`
+   were reviewed, but the logged-in pages (Vault, Insights, Goals, Capture,
+   Home, Exhibitions) can't be viewed without signing in, so how closely each
+   matches its design hasn't been checked. Learn is the one confirmed done.
 
-`/learn` is the reference for "done": rebuilt to its mockup, and every control
-(Save, newsletter, article links) is real and verified.
+2. **Naming mismatch.** The mockups and nav say **Watchlist**; the route is
+   **`/wishlist`**, and a separate `watchlistModel.ts` exists. Pick one name.
+
+3. **No item-level comments.** If you want collectors to comment on individual
+   items (not just an exhibition), that's a real feature to build.
+
+4. **Comparable sales** on the Wishlist detail panel needs a pricing source
+   before it can show anything.
