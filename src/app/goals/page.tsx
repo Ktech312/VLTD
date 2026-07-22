@@ -37,89 +37,6 @@ type GoalView = {
   thumbnails: string[];
 };
 
-const SAMPLE_GOALS: GoalView[] = [
-  {
-    id: "sample-silver-age",
-    name: "Complete 80% of Silver Age set",
-    type: "completion",
-    due: "Due Aug 31, 2025",
-    pct: 72,
-    ownedCount: 64,
-    targetCount: 89,
-    missing: 25,
-    valueImpact: 9500,
-    visibility: "Public",
-    previewLabel: "Recently Added",
-    nextAction: "Find #52",
-    actionLabel: "View set",
-    thumbnails: ["/collectibles/comic-slab.png", "/collectibles/comic-slab.png", "/collectibles/sports-slab.png", "/collectibles/comic-slab.png"],
-  },
-  {
-    id: "sample-insurance",
-    name: "Insurance Ready Top 25",
-    type: "insurance",
-    due: "Due May 30, 2025",
-    pct: 84,
-    ownedCount: 21,
-    targetCount: 25,
-    missing: 4,
-    valueImpact: 105230,
-    visibility: "Private",
-    previewLabel: "Top Items In Goal",
-    nextAction: "Add purchase info",
-    actionLabel: "Review items",
-    thumbnails: ["/universe-thumbnails/jewelry-apparel.png", "/collectibles/sports-slab.png", "/collectibles/comic-slab.png", "/collectibles/vinyl-record.png"],
-  },
-  {
-    id: "sample-value",
-    name: "Reach $50k vault value",
-    type: "value",
-    due: "Due Dec 31, 2025",
-    pct: 58,
-    ownedCount: 28340,
-    targetCount: 50000,
-    missing: 21660,
-    valueImpact: 21660,
-    visibility: "Private",
-    previewLabel: "Value Progress",
-    nextAction: "Add high-impact items",
-    actionLabel: "View suggestions",
-    thumbnails: ["/collectibles/comic-slab.png", "/universe-thumbnails/jewelry-apparel.png", "/collectibles/sports-slab.png"],
-  },
-  {
-    id: "sample-gallery",
-    name: "Build public gallery",
-    type: "gallery",
-    due: "Due Jul 15, 2025",
-    pct: 40,
-    ownedCount: 2,
-    targetCount: 5,
-    missing: 3,
-    valueImpact: 0,
-    visibility: "Public",
-    previewLabel: "Gallery Preview",
-    nextAction: "Create third room",
-    actionLabel: "Create room",
-    thumbnails: ["/collectibles/movie-poster.png", "/collectibles/vinyl-record.png"],
-  },
-  {
-    id: "sample-sell",
-    name: "Sell 10 duplicate items",
-    type: "sell",
-    due: "Due Jun 30, 2025",
-    pct: 20,
-    ownedCount: 2,
-    targetCount: 10,
-    missing: 8,
-    valueImpact: 1240,
-    visibility: "Private",
-    previewLabel: "Duplicates Ready To List",
-    nextAction: "List 3 duplicates",
-    actionLabel: "Review duplicates",
-    thumbnails: ["/collectibles/comic-slab.png", "/collectibles/sports-slab.png", "/collectibles/vinyl-figure.png"],
-  },
-];
-
 function money(value: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -362,7 +279,7 @@ export default function GoalsPage() {
 
   const progress = useMemo(() => computeAllGoalProgress(goals, items), [goals, items]);
   const realGoalViews = useMemo(() => buildGoalViews(progress, items), [items, progress]);
-  const goalViews = realGoalViews.length ? realGoalViews : SAMPLE_GOALS;
+  const goalViews = realGoalViews;
   const visibleGoals = useMemo(() => {
     let list = goalViews.filter((goal) => filter === "all" || goal.type === filter);
     if (sort === "progress") list = [...list].sort((a, b) => b.pct - a.pct);
@@ -371,11 +288,11 @@ export default function GoalsPage() {
     return list;
   }, [filter, goalViews, sort]);
 
-  const selectedGoal = visibleGoals.find((goal) => goal.id === selectedGoalId) ?? visibleGoals[1] ?? visibleGoals[0];
+  const selectedGoal = visibleGoals.find((goal) => goal.id === selectedGoalId) ?? visibleGoals[0] ?? null;
   const averageProgress = Math.round(goalViews.reduce((sum, goal) => sum + goal.pct, 0) / Math.max(1, goalViews.length));
   const goalValueImpact = goalViews.reduce((sum, goal) => sum + goal.valueImpact, 0);
-  const insuranceGoal = goalViews.find((goal) => goal.type === "insurance") ?? selectedGoal;
-  const completed = goalViews.filter((goal) => goal.pct >= 100).length || 5;
+  const insuranceGoal = goalViews.find((goal) => goal.type === "insurance") ?? null;
+  const completed = goalViews.filter((goal) => goal.pct >= 100).length;
 
   function addGoalToWishlist(goal: GoalView) {
     if (!goal.real || goal.real.missing <= 0) return;
@@ -443,21 +360,23 @@ export default function GoalsPage() {
           <div className="mt-5 grid gap-0 overflow-hidden rounded-[7px] border border-[rgba(245,181,72,0.28)] lg:grid-cols-[1.2fr_1.15fr_1fr_1fr]" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }}>
             <StatPanel label="Overall Progress" icon={<Ring pct={averageProgress} size={98} />}>
               <div className="mt-1 text-sm leading-6" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>
-                <strong>{Math.max(8, goalViews.length)}</strong> of <strong>{Math.max(12, goalViews.length + 4)}</strong> goals<br />
-                <span style={{ color: "var(--theme-gold,#F5B548)" }}>2 behind</span><br />
-                <span style={{ color: "var(--theme-text-muted,#A0956B)" }}>2 not started</span>
+                <strong>{goalViews.filter((goal) => goal.pct > 0).length}</strong> of <strong>{goalViews.length}</strong> goals active<br />
+                <span style={{ color: "var(--theme-gold,#F5B548)" }}>{goalViews.filter((goal) => goal.missing > 0).length} need work</span><br />
+                <span style={{ color: "var(--theme-text-muted,#A0956B)" }}>{goalViews.filter((goal) => goal.pct === 0).length} not started</span>
               </div>
             </StatPanel>
             <StatPanel label="Goal Value Impact">
-              <div className="mt-2 text-[32px] font-black text-[color:var(--info,#52D6F4)]">{money(goalValueImpact || 28340)}</div>
+              <div className="mt-2 text-[32px] font-black text-[color:var(--info,#52D6F4)]">{money(goalValueImpact)}</div>
               <div className="flex items-end justify-between gap-2">
                 <p className="text-sm leading-5" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Potential increase across all goals</p>
                 <SparkLine />
               </div>
             </StatPanel>
             <StatPanel label="Insurance Coverage" icon={<Glyph name="shield" size={34} style={{ color: "var(--theme-gold,#F5B548)" }} />}>
-              <div className="text-[32px] font-black text-[color:var(--info,#52D6F4)]">{insuranceGoal?.pct ?? 82}%</div>
-              <p className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>$105,230 of $128,680</p>
+              <div className="text-[32px] font-black text-[color:var(--info,#52D6F4)]">{insuranceGoal?.pct ?? 0}%</div>
+              <p className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+                {insuranceGoal ? `${insuranceGoal.ownedCount} of ${insuranceGoal.targetCount} items` : "No insurance goal yet"}
+              </p>
             </StatPanel>
             <StatPanel label="Completed This Year" icon={<Glyph name="check" size={34} style={{ color: "#8DD35F" }} />}>
               <div className="text-[32px] font-black text-[#8DD35F]">{completed}</div>
@@ -481,6 +400,23 @@ export default function GoalsPage() {
           </div>
 
           <div className="mt-3 space-y-2">
+            {visibleGoals.length === 0 && (
+              <div className="grid min-h-[220px] place-items-center rounded-[7px] border border-[rgba(245,181,72,0.22)] text-center" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }}>
+                <div>
+                  <Glyph name="target" size={42} style={{ color: "var(--theme-gold,#F5B548)" }} />
+                  <h2 className="mt-4 text-xl font-black" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>No goals yet</h2>
+                  <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Create a real target for a set, value, insurance readiness, gallery, or sale plan.</p>
+                  <button
+                    type="button"
+                    onClick={() => setShowAdd(true)}
+                    className="mt-5 rounded-[7px] px-5 py-3 text-sm font-black"
+                    style={{ background: "linear-gradient(135deg,#8B6914,#F5B548)", color: "#0B0B0B" }}
+                  >
+                    + Add your first goal
+                  </button>
+                </div>
+              </div>
+            )}
             {visibleGoals.map((goal) => (
               <GoalRow
                 key={goal.id}
@@ -493,23 +429,10 @@ export default function GoalsPage() {
           </div>
 
           <section className="mt-4 rounded-[7px] border border-[rgba(245,181,72,0.22)] p-4" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }}>
-            <h2 className="mb-3 text-[12px] font-black uppercase tracking-[0.18em]" style={{ color: "var(--theme-gold,#F5B548)" }}>Upcoming Milestones</h2>
-            <div className="grid gap-0 md:grid-cols-5">
-              {[
-                ["May 30", "Insurance Review", "Top 25 items"],
-                ["Jun 15", "Silver Age #50", "Key issue"],
-                ["Jun 30", "5 Duplicates Sold", "Halfway there"],
-                ["Jul 15", "Gallery Room #3", "Share more"],
-                ["Aug 31", "Silver Age 80%", "Goal target"],
-              ].map(([date, title, detail], index) => (
-                <div key={title} className="relative border-t border-[rgba(245,181,72,0.22)] px-4 pt-4">
-                  <span className="absolute -top-2 left-4 h-4 w-4 rounded-full border border-[rgba(245,181,72,0.6)]" style={{ background: index === 0 ? "#56D879" : "var(--bg)" }} />
-                  <div className="text-xs uppercase" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{date}</div>
-                  <div className="mt-1 text-sm font-black" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{title}</div>
-                  <div className="text-xs" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{detail}</div>
-                </div>
-              ))}
-            </div>
+            <h2 className="mb-2 text-[12px] font-black uppercase tracking-[0.18em]" style={{ color: "var(--theme-gold,#F5B548)" }}>Upcoming Milestones</h2>
+            <p className="text-sm leading-6" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+              Milestones will appear here after goal due dates are added to the goal model.
+            </p>
           </section>
         </section>
 
@@ -547,69 +470,61 @@ export default function GoalsPage() {
               </div>
               <div className="border-l border-[rgba(245,181,72,0.18)] pl-5">
                 <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Insurable Value</div>
-                <div className="mt-1 text-[23px] font-black text-[color:var(--info,#52D6F4)]">{money(selectedGoal.valueImpact || 105230)}</div>
-                <div className="text-xs" style={{ color: "var(--theme-text-muted,#A0956B)" }}>82% of vault</div>
+                <div className="mt-1 text-[23px] font-black text-[color:var(--info,#52D6F4)]">{money(selectedGoal.valueImpact)}</div>
+                <div className="text-xs" style={{ color: "var(--theme-text-muted,#A0956B)" }}>From matching vault items</div>
               </div>
             </div>
 
-            <section className="mt-5">
+                        <section className="mt-5">
               <div className="mb-3 flex justify-between">
-                <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#F5B548)" }}>Insurance Checklist</h3>
+                <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#F5B548)" }}>Goal Progress</h3>
                 <span className="text-xs" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{selectedGoal.ownedCount} / {selectedGoal.targetCount}</span>
               </div>
               {[
-                ["Photos (front, back, details)", 25, true],
-                ["Cert / Grade present", 21, true],
-                ["Condition notes", 20, true],
-                ["Purchase info", 21, true],
-                ["Current value", 25, true],
-                ["Storage location", 21, false],
+                ["Ready items", selectedGoal.ownedCount, selectedGoal.ownedCount >= selectedGoal.targetCount],
+                ["Missing to target", selectedGoal.missing, selectedGoal.missing === 0],
+                ["Current progress", selectedGoal.pct, selectedGoal.pct >= 100],
               ].map(([label, count, ok]) => (
-                <div key={String(label)} className="grid grid-cols-[1fr_48px_22px] items-center gap-2 border-b border-[rgba(245,181,72,0.10)] py-2 text-sm">
+                <div key={String(label)} className="grid grid-cols-[1fr_72px_22px] items-center gap-2 border-b border-[rgba(245,181,72,0.10)] py-2 text-sm">
                   <span style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{label}</span>
-                  <span className="text-right" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{count} / 25</span>
-                  <span className={ok ? "text-green-400" : "text-[color:var(--theme-gold,#F5B548)]"}>{ok ? "●" : "!"}</span>
+                  <span className="text-right" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+                    {label === "Current progress" ? `${count}%` : Number(count).toLocaleString()}
+                  </span>
+                  <span className={ok ? "text-green-400" : "text-[color:var(--theme-gold,#F5B548)]"}>{ok ? "ok" : "!"}</span>
                 </div>
               ))}
             </section>
 
             <section className="mt-5">
               <div className="mb-3 flex justify-between">
-                <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#F5B548)" }}>Missing Documents ({Math.max(4, selectedGoal.missing)})</h3>
-                <button type="button" className="text-xs font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>View all ›</button>
+                <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#F5B548)" }}>Next Work ({selectedGoal.missing})</h3>
               </div>
-              {["Rolex Submariner 16610", "Amazing Fantasy #15", "Vintage Poster - Space", "1986 Fleer #57"].map((item, index) => (
-                <div key={item} className="grid grid-cols-[34px_1fr_auto] items-center gap-2 py-1.5 text-xs" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-[5px] border border-[rgba(245,181,72,0.22)] bg-black/20">
-                    <img src={selectedGoal.thumbnails[index % selectedGoal.thumbnails.length]} alt="" className="max-h-7 max-w-7 object-contain" />
-                  </div>
-                  <div>
-                    <div>{item}</div>
-                    <div style={{ color: "var(--theme-text-muted,#A0956B)" }}>{index % 2 ? "Condition notes missing" : "Purchase info missing"}</div>
-                  </div>
-                  <button type="button" className="rounded-[5px] border border-[rgba(245,181,72,0.38)] px-3 py-1 font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>Add</button>
+              <div className="rounded-[7px] border border-[rgba(245,181,72,0.14)] p-3 text-sm" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>
+                <div className="font-black">{selectedGoal.nextAction}</div>
+                <div className="mt-1 text-xs" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+                  {selectedGoal.missing > 0
+                    ? `${selectedGoal.missing} more ${selectedGoal.type === "value" ? "value" : "item"} ${selectedGoal.missing === 1 ? "step is" : "steps are"} needed for this goal.`
+                    : "This goal is complete."}
                 </div>
-              ))}
+              </div>
             </section>
 
             <section className="mt-5">
-              <h3 className="mb-3 text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#F5B548)" }}>Suggested Actions</h3>
-              {["Bulk add purchase info", "Auto value check"].map((action, index) => (
-                <button key={action} type="button" className="mb-2 grid w-full grid-cols-[34px_1fr_auto] items-center gap-2 rounded-[7px] border border-[rgba(245,181,72,0.16)] p-3 text-left">
-                  <Glyph name="shield" size={20} style={{ color: "var(--theme-gold,#F5B548)" }} />
-                  <span>
-                    <span className="block text-sm font-black" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{action}</span>
-                    <span className="block text-xs" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{index === 0 ? "Add data to multiple items at once" : "Refresh values for all items"}</span>
-                  </span>
-                  <span style={{ color: "var(--theme-gold,#F5B548)" }}>›</span>
-                </button>
-              ))}
+              <h3 className="mb-3 text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#F5B548)" }}>Suggested Action</h3>
+              <button type="button" className="mb-2 grid w-full grid-cols-[34px_1fr_auto] items-center gap-2 rounded-[7px] border border-[rgba(245,181,72,0.16)] p-3 text-left">
+                <Glyph name={selectedGoal.type === "insurance" ? "shield" : selectedGoal.type === "gallery" ? "exhibition" : "target"} size={20} style={{ color: "var(--theme-gold,#F5B548)" }} />
+                <span>
+                  <span className="block text-sm font-black" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{selectedGoal.actionLabel}</span>
+                  <span className="block text-xs" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Uses the current goal and matching vault items.</span>
+                </span>
+                <span style={{ color: "var(--theme-gold,#F5B548)" }}>›</span>
+              </button>
             </section>
 
             <section className="mt-5">
               <div className="mb-3 flex justify-between">
                 <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#F5B548)" }}>Items In Goal ({selectedGoal.targetCount})</h3>
-                <button type="button" className="text-xs font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>View all ›</button>
+                <button type="button" className="text-xs font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>View all â€º</button>
               </div>
               <div className="flex gap-2">
                 {selectedGoal.thumbnails.slice(0, 5).map((src, index) => (

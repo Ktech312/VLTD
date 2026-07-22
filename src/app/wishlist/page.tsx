@@ -41,140 +41,9 @@ type WatchEntry = {
   priority: "low" | "medium" | "high";
   alertActive: boolean;
   notes: string;
-  sourceType: "wishlist" | "watchlist" | "comic" | "sample";
+  sourceType: "wishlist" | "watchlist" | "comic";
   raw?: WishlistItem | WatchlistItem | ComicWishlistItem;
 };
-
-const SAMPLE_ENTRIES: WatchEntry[] = [
-  {
-    id: "sample-silver-age",
-    kind: "item",
-    title: "Silver Age Comic #129",
-    subtitle: "Marvel Comics · 1974",
-    meta: "CGC 9.8 · White Pages",
-    image: "/collectibles/comic-slab.png",
-    currentValue: 24750,
-    targetPrice: 20000,
-    source: "PriceCharting",
-    savedAgo: "2h ago",
-    priority: "high",
-    alertActive: true,
-    notes: "Major key issue. High demand and low supply in 9.8. Watching for a dip to or below $20K.",
-    sourceType: "sample",
-  },
-  {
-    id: "sample-rookie",
-    kind: "item",
-    title: "1986 Rookie Card #57",
-    subtitle: "Michael Jordan",
-    meta: "PSA 9.5 · Mint",
-    image: "/collectibles/sports-slab.png",
-    currentValue: 12480,
-    targetPrice: 10000,
-    source: "eBay Sold",
-    savedAgo: "1h ago",
-    priority: "high",
-    alertActive: true,
-    notes: "Watch for clean comps below target before adding to vault.",
-    sourceType: "sample",
-  },
-  {
-    id: "sample-dark-side",
-    kind: "item",
-    title: "The Dark Side of the Moon",
-    subtitle: "Pink Floyd · 1973",
-    meta: "1st Press · NM",
-    image: "/collectibles/vinyl-record.png",
-    currentValue: 2850,
-    targetPrice: 2500,
-    source: "Discogs",
-    savedAgo: "6h ago",
-    priority: "medium",
-    alertActive: true,
-    notes: "Targeting a clean sleeve and strong seller history.",
-    sourceType: "sample",
-  },
-  {
-    id: "sample-rolex",
-    kind: "item",
-    title: "Rolex Submariner 16610",
-    subtitle: "2005 · Full Set",
-    meta: "Excellent Condition",
-    image: "/collectibles/watch.png",
-    currentValue: 8950,
-    targetPrice: 8000,
-    source: "Chrono24",
-    savedAgo: "4h ago",
-    priority: "medium",
-    alertActive: true,
-    notes: "Only move if the box, papers, and serial photos are complete.",
-    sourceType: "sample",
-  },
-  {
-    id: "sample-bearbrick",
-    kind: "item",
-    title: "Bearbrick 400% Gold",
-    subtitle: "Medicom Toy · 2023",
-    meta: "400% · Limited",
-    image: "/collectibles/vinyl-figure.png",
-    currentValue: 1980,
-    targetPrice: 1750,
-    source: "StockX",
-    savedAgo: "3h ago",
-    priority: "low",
-    alertActive: true,
-    notes: "Nice-to-have piece. Do not chase above target.",
-    sourceType: "sample",
-  },
-  {
-    id: "sample-zelda",
-    kind: "item",
-    title: "Zelda: Ocarina of Time",
-    subtitle: "N64 · 1998",
-    meta: "Sealed · WATA 9.8 A++",
-    image: "/collectibles/vault-intake-sprites.png",
-    currentValue: 14230,
-    targetPrice: 13000,
-    source: "Heritage",
-    savedAgo: "5h ago",
-    priority: "high",
-    alertActive: true,
-    notes: "High value only if seal and case condition match the listing.",
-    sourceType: "sample",
-  },
-  {
-    id: "sample-movie-room",
-    kind: "exhibition",
-    title: "Movie Poster Archive",
-    subtitle: "by Cinephile",
-    meta: "Public · 82 items",
-    image: "/collectibles/movie-poster.png",
-    currentValue: 96410,
-    targetPrice: 0,
-    source: "Gallery",
-    savedAgo: "new items",
-    priority: "medium",
-    alertActive: false,
-    notes: "Watch for new public additions and comparable poster values.",
-    sourceType: "sample",
-  },
-  {
-    id: "sample-court-kings",
-    kind: "exhibition",
-    title: "Court Kings",
-    subtitle: "by CardCommander",
-    meta: "Invite only · 37 items",
-    image: "/collectibles/sports-slab.png",
-    currentValue: 198260,
-    targetPrice: 0,
-    source: "Gallery",
-    savedAgo: "6h ago",
-    priority: "medium",
-    alertActive: false,
-    notes: "Follow for sports card room updates.",
-    sourceType: "sample",
-  },
-];
 
 function money(value: number) {
   return new Intl.NumberFormat("en-US", {
@@ -201,7 +70,7 @@ function entryFromWishlist(item: WishlistItem): WatchEntry {
     subtitle: item.subject || item.category || item.universe || "Saved target",
     meta: [item.condition && item.condition !== "any" ? item.condition.toUpperCase() : null, item.priority ? `${item.priority} priority` : null]
       .filter(Boolean)
-      .join(" · ") || "Target watch",
+      .join(" Â· ") || "Target watch",
     image: imageForText(item.title, item.universe, item.category),
     currentValue: target ? Math.round(target * 1.18) : 0,
     targetPrice: target,
@@ -391,7 +260,7 @@ export default function WishlistPage() {
     ];
   }, [comicItems, watchlist, wishlist]);
 
-  const entries = realEntries.length > 0 ? realEntries : SAMPLE_ENTRIES;
+  const entries = realEntries;
 
   const filteredEntries = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -409,13 +278,15 @@ export default function WishlistPage() {
     return list;
   }, [entries, filter, query, sort]);
 
-  const selected = filteredEntries.find((entry) => entry.id === selectedId) ?? filteredEntries[0] ?? entries[0];
+  const selected = filteredEntries.find((entry) => entry.id === selectedId) ?? filteredEntries[0] ?? null;
   const itemCount = entries.filter((entry) => entry.kind === "item" || entry.kind === "comic").length;
   const exhibitionCount = entries.filter((entry) => entry.kind === "exhibition").length;
   const alertCount = entries.filter((entry) => entry.alertActive).length;
   const undecidedCount = entries.filter((entry) => entry.priority === "low").length;
   const totalValue = entries.reduce((sum, entry) => sum + entry.currentValue, 0);
-  const priceDropOpps = entries.filter((entry) => entry.targetPrice > 0 && entry.currentValue <= entry.targetPrice * 1.12).reduce((sum, entry) => sum + Math.max(0, entry.currentValue - entry.targetPrice), 0);
+  const priceDropOpps = entries
+    .filter((entry) => entry.targetPrice > 0 && entry.currentValue > 0 && entry.currentValue <= entry.targetPrice * 1.12)
+    .reduce((sum, entry) => sum + Math.max(0, entry.currentValue - entry.targetPrice), 0);
 
   async function handleMove(entry: WatchEntry) {
     if (entry.sourceType === "wishlist" && entry.raw) {
@@ -436,11 +307,6 @@ export default function WishlistPage() {
 
     if (entry.sourceType === "watchlist") {
       showToast("Open Add Item to finish moving this watched item.");
-      return;
-    }
-
-    if (entry.sourceType === "sample") {
-      showToast("Sample watch item. Add your own watch to move it.");
       return;
     }
 
@@ -552,7 +418,7 @@ export default function WishlistPage() {
                 <span className="block text-3xl" style={{ color: "var(--theme-gold,#F5B548)" }}>+</span>
                 <span className="mt-2 block text-lg font-black" style={{ color: "var(--theme-gold,#F5B548)" }}>Add Watch</span>
                 <span className="mt-1 block text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Track items or exhibitions you&apos;re watching.</span>
-                <span className="mt-6 block text-4xl" style={{ color: "var(--theme-gold,#F5B548)" }}>⌕</span>
+                <span className="mt-6 block text-4xl" style={{ color: "var(--theme-gold,#F5B548)" }}>âŒ•</span>
               </span>
             </Link>
           </div>
@@ -574,7 +440,7 @@ export default function WishlistPage() {
               [alertCount, "Alerts active", "info"],
               [money(totalValue), "Watchlist value", "info"],
               ["-$2,340", "7d change", "danger"],
-              [priceDropOpps ? money(priceDropOpps) : "$18,720", "Price drop opps", "success"],
+              [priceDropOpps ? money(priceDropOpps) : "$0", "Price drop opps", "success"],
             ].map(([value, label, tone]) => (
               <div key={label} className="grid place-items-center border-r border-[rgba(245,181,72,0.12)] p-4 text-center last:border-r-0">
                 <div className={`text-2xl font-black ${tone === "danger" ? "text-red-400" : tone === "success" ? "text-green-400" : "text-[color:var(--info,#52D6F4)]"}`}>{value}</div>
@@ -591,9 +457,9 @@ export default function WishlistPage() {
                 {selected.kind}
               </span>
               <div className="flex items-center gap-2">
-                <button type="button" className="grid h-8 w-8 place-items-center rounded-[6px] border border-[rgba(245,181,72,0.22)]" style={{ color: "var(--theme-gold,#F5B548)" }}>‹</button>
-                <button type="button" className="grid h-8 w-8 place-items-center rounded-[6px] border border-[rgba(245,181,72,0.22)]" style={{ color: "var(--theme-gold,#F5B548)" }}>›</button>
-                <button type="button" onClick={() => setSelectedId(null)} className="text-xl leading-none" style={{ color: "var(--theme-gold,#F5B548)" }}>×</button>
+                <button type="button" className="grid h-8 w-8 place-items-center rounded-[6px] border border-[rgba(245,181,72,0.22)]" style={{ color: "var(--theme-gold,#F5B548)" }}>â€¹</button>
+                <button type="button" className="grid h-8 w-8 place-items-center rounded-[6px] border border-[rgba(245,181,72,0.22)]" style={{ color: "var(--theme-gold,#F5B548)" }}>â€º</button>
+                <button type="button" onClick={() => setSelectedId(null)} className="text-xl leading-none" style={{ color: "var(--theme-gold,#F5B548)" }}>Ã—</button>
               </div>
             </div>
 
@@ -615,7 +481,7 @@ export default function WishlistPage() {
                   </button>
                 </div>
                 <div className="mt-3 rounded-[7px] border border-[rgba(245,181,72,0.18)] p-3 text-sm" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>
-                  <span className={selected.alertActive ? "text-green-400" : "text-[color:var(--theme-text-muted,#A0956B)]"}>●</span>{" "}
+                  <span className={selected.alertActive ? "text-green-400" : "text-[color:var(--theme-text-muted,#A0956B)]"}>â—</span>{" "}
                   {selected.alertActive ? "Alert Active" : "No alert set"}
                 </div>
               </div>
@@ -636,22 +502,10 @@ export default function WishlistPage() {
             <div className="mt-5">
               <div className="mb-2 flex items-center justify-between">
                 <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#F5B548)" }}>Recent Comparable Sales</div>
-                <button type="button" className="text-xs font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>View all ›</button>
+                <button type="button" className="text-xs font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>View all â€º</button>
               </div>
-              <div className="space-y-2 text-xs">
-                {[
-                  ["May 15, 2026", "Heritage Auctions", money(Math.max(selected.currentValue - 750, 0)), "High"],
-                  ["May 7, 2026", "eBay (Sold)", money(Math.max(selected.currentValue - 1250, 0)), "High"],
-                  ["Apr 29, 2026", "MyComicShop", money(Math.max(selected.currentValue - 2100, 0)), "Med"],
-                  ["Apr 18, 2026", "ComicLink", money(Math.max(selected.currentValue - 3000, 0)), "Med"],
-                ].map(([date, source, price, confidence]) => (
-                  <div key={`${date}-${source}`} className="grid grid-cols-[92px_1fr_80px_48px] gap-2 border-b border-[rgba(245,181,72,0.10)] pb-2" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>
-                    <span style={{ color: "var(--theme-text-muted,#A0956B)" }}>{date}</span>
-                    <span>{source}</span>
-                    <span>{selected.currentValue ? price : "--"}</span>
-                    <span className={confidence === "High" ? "text-green-400" : "text-[color:var(--theme-gold,#F5B548)]"}>{confidence}</span>
-                  </div>
-                ))}
+              <div className="rounded-[7px] border border-[rgba(245,181,72,0.16)] px-4 py-5 text-sm leading-6" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+                Comparable sales will appear here after this watched item is linked to a live pricing source.
               </div>
             </div>
 
@@ -673,7 +527,7 @@ export default function WishlistPage() {
                 + Add to Vault
               </button>
               <button type="button" onClick={() => handleDismiss(selected)} className="rounded-[7px] border border-[rgba(245,181,72,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>
-                × Dismiss
+                Ã— Dismiss
               </button>
               <button type="button" className="rounded-[7px] border border-[rgba(245,181,72,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>
                 Share

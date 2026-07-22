@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { Glyph, type GlyphName } from "@/components/ui/Glyph";
+import { loadActivityEvents, syncActivityEventsFromSupabase, type ActivityEventRecord } from "@/lib/activityEvents";
 import { listRecentCommentsForExhibitions, type Comment } from "@/lib/comments";
 import { listExhibitionEventsForGalleries, type ExhibitionEvent } from "@/lib/exhibitionEvents";
 import { loadGalleries } from "@/lib/galleryModel";
@@ -90,7 +91,7 @@ function dayLabel(timestamp: number) {
 }
 
 function itemTimestamp(item: VaultItem) {
-  return Number(item.createdAt ?? item.valueUpdatedAt ?? item.priceUpdatedAt ?? 0);
+  return Number(item.createdAt ?? 0);
 }
 
 function itemMeta(item: VaultItem) {
@@ -114,15 +115,8 @@ function saleKey(sale: SaleRecord | LegacySaleRecord) {
   return [sale.id, sale.itemId, sale.soldAt, sale.title, sale.salePrice].join(":");
 }
 
-function confidenceLabel(item?: VaultItem): "Low" | "Medium" | "High" {
-  const confidence = Number(item?.valueConfidence ?? 0);
-  if (confidence >= 80) return "High";
-  if (confidence >= 50) return "Medium";
-  return item?.currentValue ? "Medium" : "Low";
-}
-
-function buildItemEvents(items: VaultItem[]) {
-  const addedEvents: ActivityEvent[] = items
+function buildItemEvents(items: VaultItem[]): ActivityEvent[] {
+  return items
     .filter((item) => itemTimestamp(item) > 0)
     .map((item) => ({
       id: `added-${item.id}`,
@@ -137,33 +131,6 @@ function buildItemEvents(items: VaultItem[]) {
       imageUrl: itemImage(item),
       meta: itemMeta(item),
     }));
-
-  const valueEvents: ActivityEvent[] = items
-    .filter((item) => Number(item.valueUpdatedAt ?? item.priceUpdatedAt ?? 0) > 0)
-    .map((item) => {
-      const newValue = Number(item.currentValue ?? item.estimatedValue ?? item.lastCompValue ?? 0);
-      const previousValue = Number(item.purchasePrice ?? item.valueLow ?? item.lastCompValue ?? 0);
-      return {
-        id: `valued-${item.id}-${item.valueUpdatedAt ?? item.priceUpdatedAt}`,
-        kind: "valued",
-        title: item.title || "Untitled item",
-        subtitle: "Value refreshed",
-        detail: `Value updated based on ${item.comparables?.length || item.priceSources?.length || 0} comparables`,
-        timestamp: Number(item.valueUpdatedAt ?? item.priceUpdatedAt ?? 0),
-        href: `/vault/item/${item.id}`,
-        actionLabel: "View item record",
-        item,
-        imageUrl: itemImage(item),
-        previousValue,
-        newValue,
-        source: item.valueSource || item.priceSource || "Pricing",
-        confidence: confidenceLabel(item),
-        comps: item.comparables?.length ?? item.priceSources?.length ?? 0,
-        meta: itemMeta(item),
-      } satisfies ActivityEvent;
-    });
-
-  return [...addedEvents, ...valueEvents];
 }
 
 function buildSaleEvents(sales: Array<SaleRecord | LegacySaleRecord>, itemById: Map<string, VaultItem>) {
@@ -233,6 +200,30 @@ function buildCommentEvents(comments: RecentComment[]): ActivityEvent[] {
     confidence: "High",
     comps: 0,
   }) satisfies ActivityEvent);
+}
+
+function buildLoggedEvents(events: ActivityEventRecord[], itemById: Map<string, VaultItem>): ActivityEvent[] {
+  return events.map((event) => {
+    const item = event.itemId ? itemById.get(event.itemId) : undefined;
+    return {
+      id: event.id,
+      kind: event.kind,
+      title: event.title,
+      subtitle: event.subtitle ?? event.kind,
+      detail: event.detail ?? "",
+      timestamp: event.timestamp,
+      href: event.href ?? (event.itemId ? `/vault/item/${event.itemId}` : event.galleryId ? `/museum/${event.galleryId}` : undefined),
+      actionLabel: event.actionLabel,
+      item,
+      imageUrl: event.imageUrl ?? itemImage(item),
+      previousValue: event.previousValue,
+      newValue: event.newValue,
+      source: event.source,
+      confidence: event.confidence,
+      comps: event.comps,
+      meta: event.meta,
+    };
+  });
 }
 
 function iconForKind(kind: ActivityKind): GlyphName {
@@ -347,6 +338,7 @@ function EmptyState() {
 export default function ActivityPage() {
   const [items, setItems] = useState<VaultItem[]>([]);
   const [sales, setSales] = useState<Array<SaleRecord | LegacySaleRecord>>([]);
+  const [loggedEvents, setLoggedEvents] = useState<ActivityEventRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [recentComments, setRecentComments] = useState<RecentComment[]>([]);
   const [exhibitionEvents, setExhibitionEvents] = useState<Array<ExhibitionEvent & { galleryTitle: string }>>([]);
@@ -368,8 +360,15 @@ export default function ActivityPage() {
       } catch {
         // Local sales still render if sync is unavailable.
       }
+      let nextLoggedEvents: ActivityEventRecord[];
+      try {
+        nextLoggedEvents = await syncActivityEventsFromSupabase();
+      } catch {
+        nextLoggedEvents = loadActivityEvents();
+      }
 
       if (!isActive) return;
+      setLoggedEvents(nextLoggedEvents);
       setItems(loadItems());
       setSales([...loadSaleHistory(), ...loadSales()]);
       setIsLoading(false);
@@ -421,6 +420,7 @@ export default function ActivityPage() {
   const itemById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
   const allEvents = useMemo<ActivityEvent[]>(() => {
     return [
+      ...buildLoggedEvents(loggedEvents, itemById),
       ...buildItemEvents(items),
       ...buildSaleEvents(sales, itemById),
       ...buildGalleryEvents(exhibitionEvents),
@@ -428,7 +428,7 @@ export default function ActivityPage() {
     ]
       .sort((a, b) => b.timestamp - a.timestamp)
       .slice(0, 60);
-  }, [exhibitionEvents, itemById, items, recentComments, sales]);
+  }, [exhibitionEvents, itemById, items, loggedEvents, recentComments, sales]);
 
   const filteredEvents = useMemo(() => {
     return filter === "all" ? allEvents : allEvents.filter((event) => event.kind === filter);
