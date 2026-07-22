@@ -20,6 +20,12 @@ create table if not exists public.account_code_counters (
   next_seq integer not null default 1
 );
 
+-- Internal bookkeeping only — no client ever reads or writes this directly.
+-- RLS on with NO policies blocks anon/authenticated entirely; the assign_*
+-- functions below still work because they are SECURITY DEFINER and run as the
+-- table owner.
+alter table public.account_code_counters enable row level security;
+
 -- The account code lives on the profile (a profile == a collection), along
 -- with that collection's own item counter.
 alter table public.profiles
