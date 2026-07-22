@@ -1088,9 +1088,35 @@ export function saveItem(item: VaultItem) {
     saveRawItems([...existing, normalized]);
     return;
   }
+  const previous = existing[idx] as VaultItem | undefined;
   const next = [...existing];
   next[idx] = normalized;
   saveRawItems(next);
+
+  // Log a real before/after value change. This is the single funnel every
+  // save path goes through, so it captures the moment a value actually moves.
+  const prevValue = Number(previous?.currentValue ?? NaN);
+  const newValue = Number(normalized.currentValue ?? NaN);
+  if (Number.isFinite(prevValue) && Number.isFinite(newValue) && prevValue !== newValue) {
+    void import("@/lib/activityEvents")
+      .then(({ addActivityEvent }) =>
+        addActivityEvent({
+          kind: "valued",
+          title: normalized.title || "Item value updated",
+          subtitle: [normalized.universe, normalized.category].filter(Boolean).join(" · ") || undefined,
+          detail: `Value changed from ${prevValue} to ${newValue}`,
+          itemId: String(normalized.id),
+          imageUrl: getPrimaryImageUrl(normalized) || undefined,
+          href: `/vault/${normalized.id}`,
+          previousValue: prevValue,
+          newValue,
+          source: "Manual update",
+        })
+      )
+      .catch(() => {
+        /* activity logging must never block a save */
+      });
+  }
 }
 
 export function loadItemsOrSeed(seed?: VaultItem[]) {

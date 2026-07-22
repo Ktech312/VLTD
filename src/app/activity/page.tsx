@@ -343,6 +343,7 @@ export default function ActivityPage() {
   const [recentComments, setRecentComments] = useState<RecentComment[]>([]);
   const [exhibitionEvents, setExhibitionEvents] = useState<Array<ExhibitionEvent & { galleryTitle: string }>>([]);
   const [filter, setFilter] = useState<ActivityKind | "all">("all");
+  const [visibleCount, setVisibleCount] = useState(20);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -438,7 +439,8 @@ export default function ActivityPage() {
   const availableFilters = FILTERS.filter((tab) => tab.key === "all" || allEvents.some((event) => event.kind === tab.key));
   const showSelectedValue = Boolean(selected && (selected.kind === "valued" || selected.kind === "sold") && selected.newValue);
   const showSelectedEvidence = Boolean(selected && (selected.source || selected.confidence || selected.comps));
-  const grouped = filteredEvents.reduce<Array<{ label: string; events: ActivityEvent[] }>>((groups, event) => {
+  const visibleEvents = filteredEvents.slice(0, visibleCount);
+  const grouped = visibleEvents.reduce<Array<{ label: string; events: ActivityEvent[] }>>((groups, event) => {
     const label = dayLabel(event.timestamp);
     const existing = groups.find((group) => group.label === label);
     if (existing) existing.events.push(event);
@@ -455,10 +457,6 @@ export default function ActivityPage() {
               <h1 className="font-serif text-[48px] font-black leading-none tracking-[-0.02em]">Activity</h1>
               <p className="mt-2 text-base" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Everything that changed in your vault.</p>
             </div>
-            <button type="button" className="inline-flex h-10 items-center gap-2 rounded-[7px] border border-[rgba(245,181,72,0.3)] px-4 text-sm font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>
-              <Glyph name="chart" size={16} />
-              Filters
-            </button>
           </div>
 
           <div className="mt-7 flex flex-wrap gap-2">
@@ -466,7 +464,10 @@ export default function ActivityPage() {
               <button
                 key={tab.key}
                 type="button"
-                onClick={() => setFilter(tab.key)}
+                onClick={() => {
+                  setFilter(tab.key);
+                  setVisibleCount(20);
+                }}
                 className="inline-flex h-10 items-center gap-2 rounded-[7px] border px-4 text-sm font-bold"
                 style={{
                   background: filter === tab.key ? "linear-gradient(135deg,#8B6914,#F5B548)" : "var(--theme-card,rgba(15,25,45,0.86))",
@@ -507,9 +508,16 @@ export default function ActivityPage() {
             )}
           </div>
 
-          {filteredEvents.length > 8 && (
+          {filteredEvents.length > visibleCount && (
             <div className="mt-5 flex justify-center">
-              <button type="button" className="rounded-[7px] border border-[rgba(245,181,72,0.3)] px-14 py-3 text-sm font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>Load more</button>
+              <button
+                type="button"
+                onClick={() => setVisibleCount((count) => count + 20)}
+                className="rounded-[7px] border border-[rgba(245,181,72,0.3)] px-14 py-3 text-sm font-bold"
+                style={{ color: "var(--theme-gold,#F5B548)" }}
+              >
+                Load more ({filteredEvents.length - visibleCount} left)
+              </button>
             </div>
           )}
         </section>
