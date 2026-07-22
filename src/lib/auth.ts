@@ -381,7 +381,9 @@ export async function listMyProfiles() {
     const userId = userResult.data.user?.id;
     if (!userId) {
       profilesPromise = null;
-      return { data: [] as ProfileRow[], error: null };
+      // No signed-in user is an auth problem, not "this account has zero
+      // profiles" — callers must be able to tell those apart.
+      return { data: [] as ProfileRow[], error: new Error("Not authenticated.") };
     }
 
     try {
@@ -548,6 +550,32 @@ export async function getOnboardingStatus() {
   }
 
   const profilesResult = await listMyProfiles();
+
+  // A FAILED profile lookup must never be read as "this user has no profiles".
+  // Otherwise an expired session (PGRST303 "JWT expired") or a blip sends a
+  // real, fully-onboarded user to /onboarding and asks them to recreate their
+  // identity — as if their account had been wiped. Auth failures belong at
+  // /login; anything else should just pass through untouched.
+  if (profilesResult.error) {
+    const message = String(
+      (profilesResult.error as { message?: string })?.message ?? profilesResult.error
+    ).toLowerCase();
+    const isAuthFailure =
+      message.includes("jwt") ||
+      message.includes("expired") ||
+      message.includes("api key") ||
+      message.includes("401") ||
+      message.includes("not authenticated");
+
+    return {
+      isAuthenticated: !isAuthFailure,
+      needsOnboarding: false,
+      profiles: [] as ProfileRow[],
+      activeProfile: null as ProfileRow | null,
+      error: isAuthFailure ? "Your session expired. Please sign in again." : message,
+    };
+  }
+
   const profiles = (profilesResult.data ?? []) as ProfileRow[];
   const storedId = getStoredActiveProfileId();
 
@@ -581,8 +609,6 @@ export async function getOnboardingStatus() {
     needsOnboarding: profiles.length === 0,
     profiles,
     activeProfile,
-    error: profilesResult.error
-      ? String(profilesResult.error.message ?? "Failed to load profiles.")
-      : "",
+    error: "",
   };
 }
