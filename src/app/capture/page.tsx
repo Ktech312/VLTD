@@ -572,7 +572,7 @@ export default function CapturePage() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)]">
-                    Smart Scan
+                    Add Item
                   </div>
                   <h1 className="mt-1 text-2xl font-black leading-tight tracking-[-0.04em] text-text-primary lg:text-3xl">
                     New Vault Item
