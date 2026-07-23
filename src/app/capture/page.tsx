@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import CameraCapturePanel from "@/components/CameraCapturePanel";
-import CaptureCamera from "@/components/CaptureCamera";
 import { analyzeImageWithVision, type VisionAnalysisResult } from "@/lib/ai/openaiVision";
 import { resolveVisionTaxonomy } from "@/lib/visionTaxonomy";
 import { scanBarcodeFromFile } from "@/lib/scanners/barcodeScanner";
@@ -250,7 +249,10 @@ export default function CapturePage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [fields, setFields] = useState<ReviewFields>(EMPTY_FIELDS);
   const [capturedImageFile, setCapturedImageFile] = useState<File | null>(null);
-  const [isCameraPanelOpen, setIsCameraPanelOpen] = useState(true);
+  // The live camera is embedded inline on the Add screen (below), so it no
+  // longer opens as a modal on load. The modal is only used on demand — e.g.
+  // re-scanning a barcode from the review screen.
+  const [isCameraPanelOpen, setIsCameraPanelOpen] = useState(false);
 
   /* ── AI flow triggered by photo capture ── */
   const handleCapture = useCallback(async (file: File) => {
@@ -427,7 +429,7 @@ export default function CapturePage() {
           <div
             className={`relative flex flex-col gap-5 lg:gap-7 ${
               phase === "idle" || phase === "loading"
-                ? "lg:grid lg:grid-cols-[1fr_360px] lg:items-start"
+                ? "lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,480px)] lg:items-start"
                 : ""
             }`}
           >
@@ -512,9 +514,15 @@ export default function CapturePage() {
             {/* Right: camera (idle) or analyzing preview (loading) */}
             {phase === "idle" && (
               <div className="order-first lg:order-none">
-                <CaptureCamera
+                <CameraCapturePanel
+                  variant="inline"
+                  title="Add Item"
+                  description="Point at the item and snap. VLTD fills in the rest."
+                  universe={fields.universe}
                   onCapture={handleCapture}
-                  onOpenCamera={() => setIsCameraPanelOpen(true)}
+                  onBulkCapture={handleBulkCapture}
+                  onClose={() => {}}
+                  onUseFileInstead={() => uploadInputRef.current?.click()}
                 />
               </div>
             )}

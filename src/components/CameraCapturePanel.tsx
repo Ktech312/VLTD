@@ -73,6 +73,7 @@ export default function CameraCapturePanel({
   onBulkCapture,
   onClose,
   onUseFileInstead,
+  variant = "modal",
 }: {
   title: string;
   description: string;
@@ -81,7 +82,11 @@ export default function CameraCapturePanel({
   onBulkCapture?: (file: File, category: string, subcategory: string) => void;
   onClose: () => void;
   onUseFileInstead: () => void;
+  /** "modal" (default) is the full-screen overlay; "inline" embeds the camera
+   *  directly in the page as a normal block (used by the Add screen). */
+  variant?: "modal" | "inline";
 }) {
+  const isInline = variant === "inline";
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const videoContainerRef = useRef<HTMLDivElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -608,12 +613,29 @@ export default function CameraCapturePanel({
   }
 
   return (
-    <div className="fixed inset-0 z-[10000] flex items-start justify-center bg-black/75 p-2 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="flex h-[calc(100dvh-1rem)] w-full max-w-[520px] flex-col overflow-y-auto overscroll-contain rounded-[18px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:h-auto sm:max-h-[calc(100dvh-80px)] sm:absolute sm:top-[68px] sm:left-1/2 sm:-translate-x-1/2 sm:w-[calc(100%-24px)] sm:rounded-[18px]">
+    <div
+      className={
+        isInline
+          ? "relative w-full"
+          : "fixed inset-0 z-[10000] flex items-start justify-center bg-black/75 p-2 backdrop-blur-sm"
+      }
+      role={isInline ? undefined : "dialog"}
+      aria-modal={isInline ? undefined : "true"}
+      aria-label={title}
+    >
+      <div
+        className={
+          isInline
+            ? "flex w-full flex-col rounded-[12px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)]"
+            : "flex h-[calc(100dvh-1rem)] w-full max-w-[520px] flex-col overflow-y-auto overscroll-contain rounded-[18px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:h-auto sm:max-h-[calc(100dvh-80px)] sm:absolute sm:top-[68px] sm:left-1/2 sm:-translate-x-1/2 sm:w-[calc(100%-24px)] sm:rounded-[18px]"
+        }
+      >
         {capturedFile ? (
-          <div className="flex justify-end">
-            <button type="button" onClick={onClose} className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-sm ring-1 ring-[color:var(--border)]">Close</button>
-          </div>
+          isInline ? null : (
+            <div className="flex justify-end">
+              <button type="button" onClick={onClose} className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-sm ring-1 ring-[color:var(--border)]">Close</button>
+            </div>
+          )
         ) : (
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -625,7 +647,9 @@ export default function CameraCapturePanel({
                 </div>
               ) : null}
             </div>
-            <button type="button" onClick={onClose} className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-sm ring-1 ring-[color:var(--border)]">Close</button>
+            {!isInline && (
+              <button type="button" onClick={onClose} className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-sm ring-1 ring-[color:var(--border)]">Close</button>
+            )}
           </div>
         )}
 
