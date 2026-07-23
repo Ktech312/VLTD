@@ -11,6 +11,7 @@ import VaultExportButton from "@/components/VaultExportButton";
 import VaultWallView from "@/components/VaultWallView";
 import { PillButton } from "@/components/ui/PillButton";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
+import { universePlaceholder } from "@/lib/itemPlaceholder";
 import SwipeStack from "@/components/SwipeStack";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
@@ -544,9 +545,12 @@ function VaultCard({
               draggable={false}
             />
           ) : (
-            <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-white/28">
-              <CameraIcon className="h-5 w-5" />
-              <span>No photo</span>
+            <div className="relative h-full w-full">
+              <img src={universePlaceholder(item.universe)} alt="" className="h-full w-full object-cover opacity-[0.22]" draggable={false} />
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-white/45">
+                <CameraIcon className="h-5 w-5" />
+                <span>Add photo</span>
+              </div>
             </div>
           )}
         </Link>
@@ -872,9 +876,12 @@ function VaultSelectionDrawer({
             {image ? (
               <ProgressiveImage src={image} alt={item.title} className="h-full w-full" imageClassName="object-cover object-center" draggable={false} />
             ) : (
-              <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/28">
-                <CameraIcon className="h-5 w-5" />
-                No photo
+              <div className="relative h-full w-full">
+                <img src={universePlaceholder(item.universe)} alt="" className="h-full w-full object-cover opacity-[0.22]" draggable={false} />
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/45">
+                  <CameraIcon className="h-5 w-5" />
+                  Add photo
+                </div>
               </div>
             )}
           </Link>
