@@ -13,6 +13,7 @@ import { fetchPublicProfile } from "@/lib/publicProfile";
 import { loadSales, type SaleRecord as LegacySaleRecord } from "@/lib/salesHistory";
 import { syncSalesFromSupabase } from "@/lib/salesModel";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
+import { itemImageOrPlaceholder } from "@/lib/itemPlaceholder";
 import type { SaleRecord } from "@/types/vaultLifecycle";
 
 type ActivityKind = "added" | "sold" | "valued" | "comment" | "exhibition" | "insurance" | "share";
@@ -98,17 +99,10 @@ function itemMeta(item: VaultItem) {
   return [item.universe, item.categoryLabel || item.category, item.grade].filter(Boolean).join(" - ");
 }
 
+// Real photo if the item has one, else a Universe-matched placeholder — no
+// keyword-guessed stock art that pretends to be the item.
 function itemImage(item?: VaultItem) {
-  if (!item) return undefined;
-  if (item.imageFrontUrl) return item.imageFrontUrl;
-  if (item.images?.[0]?.url) return item.images[0].url;
-
-  const text = [item.title, item.universe, item.category, item.categoryLabel].filter(Boolean).join(" ").toLowerCase();
-  if (text.includes("music") || text.includes("vinyl")) return "/collectibles/vinyl-record.png";
-  if (text.includes("jordan") || text.includes("sports")) return "/collectibles/sports-slab.png";
-  if (text.includes("watch") || text.includes("rolex")) return "/universe-thumbnails/jewelry-apparel.png";
-  if (text.includes("game")) return "/collectibles/vault-intake-sprites.png";
-  return "/collectibles/comic-slab.png";
+  return itemImageOrPlaceholder(item);
 }
 
 function saleKey(sale: SaleRecord | LegacySaleRecord) {
@@ -161,8 +155,6 @@ function buildSaleEvents(sales: Array<SaleRecord | LegacySaleRecord>, itemById: 
         previousValue: purchasePrice,
         newValue: salePrice,
         source: "Sales ledger",
-        confidence: "High",
-        comps: 1,
         meta: `${profit >= 0 ? "+" : ""}${formatMoney(profit)} net`,
       } satisfies ActivityEvent;
     });
@@ -178,10 +170,7 @@ function buildGalleryEvents(events: Array<ExhibitionEvent & { galleryTitle: stri
     timestamp: event.createdAt,
     href: `/museum/${event.galleryId}`,
     actionLabel: event.type === "published" ? "View exhibition" : "Open gallery",
-    imageUrl: "/collectibles/movie-poster.png",
     source: "Exhibition",
-    confidence: "High",
-    comps: 0,
   }) satisfies ActivityEvent);
 }
 
@@ -195,10 +184,7 @@ function buildCommentEvents(comments: RecentComment[]): ActivityEvent[] {
     timestamp: comment.createdAt,
     href: `/museum/${comment.exhibitionId}/guest?comment=${comment.id}`,
     actionLabel: "View comment",
-    imageUrl: "/collectibles/movie-poster.png",
     source: "Public gallery",
-    confidence: "High",
-    comps: 0,
   }) satisfies ActivityEvent);
 }
 
