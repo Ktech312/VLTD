@@ -622,6 +622,7 @@ export default function CameraCapturePanel({
       role={isInline ? undefined : "dialog"}
       aria-modal={isInline ? undefined : "true"}
       aria-label={title}
+      data-no-pull-refresh={isInline || undefined}
     >
       <div
         className={

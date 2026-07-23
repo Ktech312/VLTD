@@ -482,7 +482,8 @@ export default function ScanCropEditor({
       : "block max-h-[min(58dvh,520px)] max-w-full select-none object-contain";
 
   return (
-    <section className={sectionClassName}>
+    <section className={sectionClassName} data-no-pull-refresh>
+
       <button
         type="button"
         onClick={requestCancel}
@@ -529,8 +530,9 @@ export default function ScanCropEditor({
             />
           </div>
 
-          <div className="pointer-events-none absolute inset-0 bg-black/35" />
-
+          {/* No full-image dim scrim — it made the captured photo look darker
+              than the live preview. The crop box below already dims only the
+              area OUTSIDE the selection. */}
           {cropBox ? (
             <div
               className="absolute z-20 border border-white/90 shadow-[0_0_0_9999px_rgba(0,0,0,0.48)] touch-none"

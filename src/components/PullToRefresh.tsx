@@ -19,6 +19,10 @@ export default function PullToRefresh({ children }: { children: React.ReactNode 
   const onTouchStart = useCallback((e: TouchEvent) => {
     const el = scrollRef.current;
     if (!el || el.scrollTop > 2) return;          // only trigger at very top
+    // Don't hijack drags inside opted-out regions (e.g. the crop editor), or
+    // a crop drag reads as a pull-to-refresh and reloads the page.
+    const target = e.target as Element | null;
+    if (target?.closest?.("[data-no-pull-refresh]")) return;
     touchStartY.current = e.touches[0].clientY;
     isPulling.current   = true;
   }, []);
