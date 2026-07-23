@@ -597,33 +597,28 @@ export default function CapturePage() {
                     New Vault Item
                   </h1>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsCameraPanelOpen(true)}
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[color:var(--border)] bg-vault-card px-4 text-xs font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
-                  >
-                    Scan Barcode
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => uploadInputRef.current?.click()}
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[color:var(--border)] bg-vault-card px-4 text-xs font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
-                  >
-                    Import
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFields(EMPTY_FIELDS);
-                      setCapturedImageFile(null);
-                      setPhase("idle");
-                    }}
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[color:var(--border)] bg-vault-card px-4 text-xs font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
-                  >
-                    Clear
-                  </button>
+                <div className="text-left sm:text-right">
+                  <div className="text-sm font-black text-text-primary">Confirm details</div>
+                  <div className="text-[11px] text-[color:var(--muted2)]">Check the fields below, then save.</div>
                 </div>
+              </div>
+
+              {/* Corrections — secondary, only if the scan wasn't right */}
+              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[color:var(--muted2)]">
+                <span className="uppercase tracking-[0.14em]">Not right?</span>
+                <button type="button" onClick={() => setIsCameraPanelOpen(true)} className="font-semibold underline-offset-2 hover:text-text-primary hover:underline">Scan barcode</button>
+                <button type="button" onClick={() => uploadInputRef.current?.click()} className="font-semibold underline-offset-2 hover:text-text-primary hover:underline">Replace photo</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFields(EMPTY_FIELDS);
+                    setCapturedImageFile(null);
+                    setPhase("idle");
+                  }}
+                  className="font-semibold underline-offset-2 hover:text-text-primary hover:underline"
+                >
+                  Start over
+                </button>
               </div>
 
               {/* Two columns: preview | accordion */}
@@ -631,7 +626,7 @@ export default function CapturePage() {
                 {/* Left: image preview */}
                 <div>
                   <div
-                    className="relative flex aspect-[4/5] w-full items-center justify-center overflow-hidden rounded-[26px] border"
+                    className="relative mx-auto flex aspect-[4/5] w-full max-w-[260px] items-center justify-center overflow-hidden rounded-[16px] border sm:max-w-none"
                     style={{
                       borderColor: "var(--theme-gold-border, rgba(245,181,72,0.25))",
                       background: "radial-gradient(circle at 50% 25%, rgba(245,181,72,0.06), rgba(5,11,21,0.65) 72%)",
