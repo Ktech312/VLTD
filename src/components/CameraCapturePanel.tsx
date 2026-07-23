@@ -29,7 +29,7 @@ import {
   removeBackgroundFromFile,
   type BlurAssessment,
 } from "@/components/capture/captureUtils";
-import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
+import { cropImageFile, computeSubjectCrop, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 
 type CameraPermissionState = "granted" | "prompt" | "denied" | "unknown";
 type DetectionState = "idle" | "loading" | "ready" | "unavailable";
@@ -602,7 +602,9 @@ export default function CameraCapturePanel({
       }
       setCapturedFile(nextFile);
       setCapturedPreviewUrl(URL.createObjectURL(nextFile));
-      setCaptureCrop(DEFAULT_CROP);
+      // Fit the crop around the now-isolated item instead of resetting to the
+      // full frame. Still fully adjustable afterward.
+      setCaptureCrop(await computeSubjectCrop(nextFile));
       setIsBackgroundRemoved(true);
       setSelectedBackgroundId("vault");
     } catch {

@@ -5,6 +5,75 @@ export type ScanCropRect = {
   bottom: number;
 };
 
+/**
+ * Fit a crop rect around the visible subject of an image by reading its alpha
+ * channel — used after background removal, where everything outside the item
+ * is transparent. Returns edge insets (0–1); a small margin keeps it from being
+ * razor-tight. Falls back to a full crop if the image can't be read or is empty.
+ */
+export async function computeSubjectCrop(
+  file: File,
+  opts: { alphaThreshold?: number; margin?: number } = {},
+): Promise<ScanCropRect> {
+  const full: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
+  if (typeof document === "undefined") return full;
+  const alphaThreshold = opts.alphaThreshold ?? 24;
+  const margin = opts.margin ?? 0.04;
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error("image load failed"));
+      el.src = url;
+    });
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+    if (!w || !h) return full;
+
+    // Downscale for a fast scan; the bbox is proportional so precision holds.
+    const scale = Math.min(1, 512 / Math.max(w, h));
+    const sw = Math.max(1, Math.round(w * scale));
+    const sh = Math.max(1, Math.round(h * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = sw;
+    canvas.height = sh;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return full;
+    ctx.drawImage(img, 0, 0, sw, sh);
+    const data = ctx.getImageData(0, 0, sw, sh).data;
+
+    let minX = sw;
+    let minY = sh;
+    let maxX = -1;
+    let maxY = -1;
+    for (let y = 0; y < sh; y++) {
+      for (let x = 0; x < sw; x++) {
+        if (data[(y * sw + x) * 4 + 3] > alphaThreshold) {
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+    // Fully transparent (or opaque everywhere) → nothing useful to fit.
+    if (maxX < 0 || maxY < 0) return full;
+
+    const clampInset = (v: number) => Math.min(0.45, Math.max(0, v));
+    return {
+      left: clampInset(minX / sw - margin),
+      top: clampInset(minY / sh - margin),
+      right: clampInset(1 - (maxX + 1) / sw - margin),
+      bottom: clampInset(1 - (maxY + 1) / sh - margin),
+    };
+  } catch {
+    return full;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
