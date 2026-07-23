@@ -634,7 +634,7 @@ function VaultEmptyState({
               Clear Filters
             </PillButton>
             <Link
-              href="/vault/add"
+              href="/capture"
               className="inline-flex min-h-[40px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium ring-1 ring-[color:var(--border)]"
             >
               Add Item
@@ -1463,7 +1463,7 @@ export default function VaultPage() {
                   <p className="mt-2 text-sm text-[color:var(--muted)]">Every item you own, documented and searchable.</p>
                 </div>
                 {/* Mobile Add Item — top-right of the title (hidden on desktop) */}
-                <Link href="/vault/add" className="inline-flex shrink-0 items-center justify-center gap-1 rounded-[8px] px-3 py-1.5 text-sm font-black transition lg:hidden" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}>
+                <Link href="/capture" className="inline-flex shrink-0 items-center justify-center gap-1 rounded-[8px] px-3 py-1.5 text-sm font-black transition lg:hidden" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}>
                   Add Item
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
                 </Link>
@@ -1484,7 +1484,7 @@ export default function VaultPage() {
               <Link href="/vault/sold" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Sold</Link>
               <Link href="/vault/for-sale" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">For Sale</Link>
               {/* Desktop Add Item — with the actions on the right (hidden on mobile) */}
-              <Link href="/vault/add" className="hidden shrink-0 items-center justify-center gap-1 rounded-[8px] px-3 py-1.5 text-sm font-black transition lg:inline-flex" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}>
+              <Link href="/capture" className="hidden shrink-0 items-center justify-center gap-1 rounded-[8px] px-3 py-1.5 text-sm font-black transition lg:inline-flex" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}>
                 Add Item
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
               </Link>

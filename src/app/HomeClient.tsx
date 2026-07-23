@@ -918,8 +918,8 @@ export default function HomeClient() {
               </div>
               <div style={{ display: "flex", gap: "12px", marginTop: "24px", flexWrap: "wrap" }}>
                 <div className="relative">
-                  <div className="absolute -right-1 -top-1 z-10"><InfoTooltip text="AI-powered item identification — point camera at any collectible." /></div>
-                  <Link href="/capture" style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "var(--theme-gold-gradient, linear-gradient(135deg,#8B6914,#F5B548))", color: "#080808", borderRadius: "8px", padding: "12px 22px", fontSize: "13px", fontWeight: 900, textDecoration: "none", boxShadow: "0 16px 36px rgba(245,181,72,0.22)" }}>Smart Scan</Link>
+                  <div className="absolute -right-1 -top-1 z-10"><InfoTooltip text="Snap a photo — VLTD identifies the item and fills in the details." /></div>
+                  <Link href="/capture" style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "var(--theme-gold-gradient, linear-gradient(135deg,#8B6914,#F5B548))", color: "#080808", borderRadius: "8px", padding: "12px 22px", fontSize: "13px", fontWeight: 900, textDecoration: "none", boxShadow: "0 16px 36px rgba(245,181,72,0.22)" }}>Add Item</Link>
                 </div>
                 <Link href="/vault" style={{ display: "inline-flex", alignItems: "center", background: "rgba(255,255,255,0.035)", color: C.text, border: `1px solid ${C.bd}`, borderRadius: "8px", padding: "11px 20px", fontSize: "13px", fontWeight: 800, textDecoration: "none" }}>Go to Vault</Link>
               </div>
@@ -972,9 +972,8 @@ export default function HomeClient() {
               <CardHd label="Quick Actions" />
               <div className="grid grid-cols-2 gap-[7px] sm:grid-cols-3" style={{ padding: "12px 15px" }}>
                 {([
-                  { label: "Smart Scan", href: "/capture",           accent: true,  tip: "AI-powered item identification." },
-                  { label: "Quick Add",  href: "/vault/quick",       accent: false, tip: "Fast manual form — minimal fields." },
-                  { label: "Add Item",   href: "/vault/add",         accent: false, tip: "Full detail entry with all fields." },
+                  { label: "Add Item",   href: "/capture",           accent: true,  tip: "Snap a photo — VLTD identifies it and fills in the details." },
+                  { label: "Quick Add",  href: "/vault/quick",       accent: false, tip: "Snap now, fill in the details later." },
                   { label: "Vault",      href: "/vault",             accent: false, tip: "" },
                   { label: "Galleries",    href: "/museum",            accent: false, tip: "" },
                   { label: "Saved",      href: "/saved", accent: false, tip: "Items saved from The Flip." },
