@@ -434,53 +434,26 @@ export default function CapturePage() {
             {/* Left: header + state-specific content */}
             <div className="order-2 lg:order-none">
               <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)]">
-                Smart Scan
+                Add Item
               </div>
               <h1 className="mt-2 text-2xl font-black leading-tight tracking-[-0.04em] text-text-primary lg:mt-3 lg:text-4xl lg:leading-[0.98] lg:tracking-[-0.055em] lg:text-5xl">
-                Add an item to your VLTD vault.
+                Snap it. We&apos;ll do the rest.
               </h1>
-              <p className="mt-3 hidden max-w-2xl text-base leading-7 text-[color:var(--muted)] lg:block">
-                Capture the item first. VLTD will use the image as the starting point for item
-                identification, valuation, and record building.
+              <p className="mt-2 max-w-xl text-sm leading-6 text-[color:var(--muted)] lg:mt-3 lg:text-base">
+                Point your camera at the item and snap — VLTD identifies it and fills in the details.
               </p>
 
-              {/* ── IDLE: steps + nav links ── */}
+              {/* ── IDLE: the express/pro alternatives, tucked ── */}
               {phase === "idle" && (
-                <>
-                  <div className="mt-4 hidden gap-3 lg:mt-6 lg:grid lg:grid-cols-3">
-                    {[
-                      { n: "1", title: "Capture", desc: "Use camera or upload a photo." },
-                      { n: "2", title: "Identify", desc: "Confirm title, category, and universe." },
-                      { n: "3", title: "Vault", desc: "Save it with value and notes." },
-                    ].map(({ n, title, desc }) => (
-                      <div
-                        key={n}
-                        className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4"
-                      >
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]">
-                          {n}
-                        </div>
-                        <div className="mt-2 text-sm font-black text-text-primary">{title}</div>
-                        <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">{desc}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-4 flex flex-wrap gap-2 lg:mt-6 lg:gap-3">
-                    <Link
-                      href="/vault/quick"
-                      className="inline-flex min-h-9 items-center justify-center rounded-full border border-[color:var(--border)] bg-vault-card px-4 text-xs font-semibold text-[color:var(--muted)] transition hover:text-text-primary lg:min-h-11 lg:px-5 lg:text-sm"
-                    >
-                      Quick Add instead
-                    </Link>
-                    <Link
-                      href="/vault/add"
-                      className="inline-flex min-h-9 items-center justify-center rounded-full border border-[color:var(--border)] bg-vault-card px-4 text-xs font-semibold text-[color:var(--muted)] transition hover:text-text-primary lg:min-h-11 lg:px-5 lg:text-sm"
-                    >
-                      Manual Add
-                    </Link>
-                  </div>
-                </>
+                <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[color:var(--muted2)] lg:mt-6">
+                  <span className="uppercase tracking-[0.14em]">Rather type it?</span>
+                  <Link href="/vault/quick" className="font-semibold underline-offset-2 hover:text-text-primary hover:underline">
+                    Quick Add
+                  </Link>
+                  <Link href="/vault/add" className="font-semibold underline-offset-2 hover:text-text-primary hover:underline">
+                    Full manual entry
+                  </Link>
+                </div>
               )}
 
               {/* ── LOADING state ── */}
@@ -924,8 +897,8 @@ export default function CapturePage() {
 
         {isCameraPanelOpen ? (
           <CameraCapturePanel
-            title="Capture Item Photo"
-            description="Use the guided camera to frame, crop, and improve this item before Smart Scan identifies it."
+            title="Add Item"
+            description="Point at the item and snap. VLTD fills in the rest."
             universe={fields.universe}
             onCapture={handleCapture}
             onBulkCapture={handleBulkCapture}
