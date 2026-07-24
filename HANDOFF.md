@@ -60,8 +60,20 @@ option dumps.
 
 ## 1. CURRENT TASK — Bulk photo upload + AI scan quota
 
-**Status:** design LOCKED with EK (below). Not built. Next: short build plan,
-then implement in safe, committable increments.
+**Status:** design LOCKED with EK (below). Build underway.
+- [x] **Quota migration** (`20260723_bulk_scan_quota.sql`) — EK ran it clean.
+      Per-tier config table + per-user override + atomic status/consume fns,
+      resets on the signup anniversary day.
+- [x] **Admin page + client lib** — `/admin/scan-limits` (embedded in the admin
+      hub as "Scan Limits"): set the monthly limit per plan, plus custom
+      per-account overrides. `src/lib/bulkScanQuota.ts` wraps the DB fns.
+      Verified live (read, save, persist, admin RLS all work).
+- [ ] **Bulk upload UI — Path B** (upload a bundle) ← NEXT
+- [ ] **Camera bulk — Path A** (rapid capture)
+- [ ] **Review grid + "Add all to Vault"** (shared finish line + scan ticker)
+
+EK's OPEN QUESTION is resolved: **per-tier defaults AND per-user overrides**
+(both built into the admin page).
 
 ### Two flows (both end in a review grid; both = ONE Universe per batch)
 
