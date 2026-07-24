@@ -68,9 +68,15 @@ option dumps.
       hub as "Scan Limits"): set the monthly limit per plan, plus custom
       per-account overrides. `src/lib/bulkScanQuota.ts` wraps the DB fns.
       Verified live (read, save, persist, admin RLS all work).
-- [ ] **Bulk upload UI — Path B** (upload a bundle) ← NEXT
-- [ ] **Camera bulk — Path A** (rapid capture)
-- [ ] **Review grid + "Add all to Vault"** (shared finish line + scan ticker)
+- [x] **Bulk upload UI — Path B** (`/vault/bulk`) — pick photos → one Universe →
+      optional AI fill (metered, live ticker) → review grid → "Add all to Vault".
+      Entry point on the Add screen. Verified live: renders, routing correct,
+      ticker reads real quota (500/500 FULL). NOT yet exercised with real files
+      (would add test items to EK's vault) — EK to try the full upload on phone.
+- [ ] **Camera bulk — Path A** (rapid capture) ← NEXT — reuse `/vault/bulk`'s
+      review grid; wire `CameraCapturePanel`'s existing Bulk Add + `bulkAddState`.
+- [ ] **Polish:** per-card "rescan with AI" in the grid; consider drag-drop; the
+      bulk review grid + scan ticker are done (in Path B) and Path A reuses them.
 
 EK's OPEN QUESTION is resolved: **per-tier defaults AND per-user overrides**
 (both built into the admin page).
