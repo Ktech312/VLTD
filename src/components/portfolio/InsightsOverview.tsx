@@ -595,6 +595,26 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
     return { readyCount, readyValue, pct, notReady: Math.max(0, items.length - readyCount), gap: Math.max(0, totalValue - readyValue) };
   }, [items, totalValue]);
 
+  // Real pricing sources: tally each item's actual comparables (by source) and
+  // linked price sources (by platform). No invented counts.
+  const valueSourceRows = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const item of items) {
+      for (const comp of item.comparables ?? []) {
+        const name = String(comp.source ?? "").trim();
+        if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
+      }
+      for (const src of item.priceSources ?? []) {
+        const name = String(src.platform ?? "").trim();
+        if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
+      }
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([label, value]) => ({ label, value }));
+  }, [items]);
+
   const staleItems = useMemo(() => {
     const now = Date.now();
     const staleAfter = 1000 * 60 * 60 * 24 * 30;
@@ -615,7 +635,6 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
     return top;
   }, [metrics]);
 
-  const topHoldings = useMemo(() => metrics.topItems.filter((item) => itemCurrentValue(item) > 0).slice(0, 4), [metrics.topItems]);
 
   const movers = useMemo(() => {
     return items
@@ -899,20 +918,20 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
               </div>
               <div style={{ background: "rgba(184,135,43,0.22)" }} />
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: MUTED2 }}>Sources (Last 30d)</div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: MUTED2 }}>Pricing Sources</div>
                 <div className="mt-3 grid gap-2 text-sm">
-                {[
-                  ["eBay Sold", Math.max(0, movers.length * 12 + topHoldings.length * 8)],
-                  ["Heritage", Math.max(0, topHoldings.length * 5)],
-                  ["PWCC", Math.max(0, movers.length * 4)],
-                  ["PriceCharting", Math.max(0, categoryRows.length * 7)],
-                  ["Other", Math.max(0, items.length)],
-                ].map(([label, value]) => (
-                  <div key={label} className="flex items-center justify-between gap-4">
-                    <span style={{ color: MUTED }}>{label}</span>
-                    <span className="tabular-nums" style={{ color: "var(--fg)" }}>{value}</span>
+                {valueSourceRows.length > 0 ? (
+                  valueSourceRows.map(({ label, value }) => (
+                    <div key={label} className="flex items-center justify-between gap-4">
+                      <span style={{ color: MUTED }}>{label}</span>
+                      <span className="tabular-nums" style={{ color: "var(--fg)" }}>{value}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-xs leading-5" style={{ color: MUTED }}>
+                    No comparable sales linked yet. Add pricing to your items to see where their values come from.
                   </div>
-                ))}
+                )}
                 </div>
               </div>
             </div>
