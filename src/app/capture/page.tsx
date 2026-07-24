@@ -445,17 +445,27 @@ export default function CapturePage() {
                 Point your camera at the item and snap — VLTD identifies it and fills in the details.
               </p>
 
-              {/* ── IDLE: the express/pro alternatives, tucked ── */}
+              {/* ── IDLE: bulk path + the express/pro alternatives, tucked ── */}
               {phase === "idle" && (
-                <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[color:var(--muted2)] lg:mt-6">
-                  <span className="uppercase tracking-[0.14em]">Rather type it?</span>
-                  <Link href="/vault/quick" className="font-semibold underline-offset-2 hover:text-text-primary hover:underline">
-                    Quick Add
+                <>
+                  <Link
+                    href="/vault/bulk"
+                    className="mt-4 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(245,181,72,0.08))] lg:mt-6"
+                    style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.3))" }}
+                  >
+                    <span className="text-sm font-black text-[color:var(--theme-gold,#F5B548)]">+</span>
+                    Adding a lot? Bulk upload photos
                   </Link>
-                  <Link href="/vault/add" className="font-semibold underline-offset-2 hover:text-text-primary hover:underline">
-                    Full manual entry
-                  </Link>
-                </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[color:var(--muted2)]">
+                    <span className="uppercase tracking-[0.14em]">Rather type it?</span>
+                    <Link href="/vault/quick" className="font-semibold underline-offset-2 hover:text-text-primary hover:underline">
+                      Quick Add
+                    </Link>
+                    <Link href="/vault/add" className="font-semibold underline-offset-2 hover:text-text-primary hover:underline">
+                      Full manual entry
+                    </Link>
+                  </div>
+                </>
               )}
 
               {/* ── LOADING state ── */}
