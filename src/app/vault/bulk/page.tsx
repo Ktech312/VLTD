@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import CameraCapturePanel from "@/components/CameraCapturePanel";
-import { analyzeImageWithVision } from "@/lib/ai/openaiVision";
+import { analyzeImageWithVision, type VisionAnalysisResult } from "@/lib/ai/openaiVision";
 import { resolveVisionTaxonomy } from "@/lib/visionTaxonomy";
 import { newId } from "@/lib/id";
 import { appendItems, type VaultImage, type VaultItem } from "@/lib/vaultModel";
@@ -102,6 +102,28 @@ async function persistBulkImage(itemId: string, file: File): Promise<Partial<Vau
   return { images: [image], primaryImageKey: image.storageKey, imageFrontStoragePath: image.storageKey };
 }
 
+/* ── Map an AI vision result onto a draft, constrained to the batch Universe ─ */
+function visionToDraftPatch(vision: VisionAnalysisResult, universe: UniverseKey): Partial<BulkDraft> {
+  const validCats = getCategories(universe);
+  const taxo = resolveVisionTaxonomy({
+    universe,
+    category: vision.categoryLabel || vision.category || "",
+    subcategory: vision.subcategoryLabel || "",
+  });
+  // Keep the batch's chosen Universe; only accept AI category/sub if valid there.
+  const categoryLabel = validCats.includes(taxo.categoryLabel) ? taxo.categoryLabel : "";
+  const subs = categoryLabel ? getSubcategories(universe, categoryLabel) : [];
+  const subcategoryLabel = subs.includes(taxo.subcategoryLabel) ? taxo.subcategoryLabel : "";
+  return {
+    title: vision.title || "",
+    categoryLabel,
+    subcategoryLabel,
+    currentValue: vision.estimatedValue ? String(vision.estimatedValue) : "",
+    scanned: true,
+    confidence: vision.confidence ?? 0,
+  };
+}
+
 /* ── Page ──────────────────────────────────────────────────────── */
 
 export default function BulkUploadPage() {
@@ -114,6 +136,7 @@ export default function BulkUploadPage() {
   const [status, setStatus] = useState("");
   const [committing, setCommitting] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [scanningId, setScanningId] = useState<string | null>(null);
 
   // Quota
   const [remaining, setRemaining] = useState<number | null>(null);
@@ -196,7 +219,6 @@ export default function BulkUploadPage() {
     setScanDone(0);
     setScanTotal(drafts.length);
 
-    const validCats = getCategories(universe);
     let localRemaining = remaining ?? 0;
 
     for (let i = 0; i < drafts.length; i++) {
@@ -226,24 +248,7 @@ export default function BulkUploadPage() {
           }
         }
 
-        const taxo = resolveVisionTaxonomy({
-          universe,
-          category: vision.categoryLabel || vision.category || "",
-          subcategory: vision.subcategoryLabel || "",
-        });
-        // Keep the batch's chosen Universe; only accept AI category/sub if valid there.
-        const categoryLabel = validCats.includes(taxo.categoryLabel) ? taxo.categoryLabel : "";
-        const subs = categoryLabel ? getSubcategories(universe, categoryLabel) : [];
-        const subcategoryLabel = subs.includes(taxo.subcategoryLabel) ? taxo.subcategoryLabel : "";
-
-        patchDraft(draft.id, {
-          title: vision.title || "",
-          categoryLabel,
-          subcategoryLabel,
-          currentValue: vision.estimatedValue ? String(vision.estimatedValue) : "",
-          scanned: true,
-          confidence: vision.confidence ?? 0,
-        });
+        patchDraft(draft.id, visionToDraftPatch(vision, universe));
       } catch (err) {
         console.error("[Bulk] Scan failed for one image:", err);
         // Leave the draft as-is for manual entry.
@@ -258,6 +263,40 @@ export default function BulkUploadPage() {
     if (!universe) return;
     setPhase("review");
   }, [universe]);
+
+  /* ── Rescan a single card (metered) ── */
+  const rescanOne = useCallback(
+    async (draft: BulkDraft) => {
+      if (!universe || !isUniverseKey(universe)) return;
+      if (scanningId) return; // one at a time
+      if (profileId && (remaining ?? 0) <= 0) {
+        setStatus("No AI scans left this cycle — fill this one in by hand.");
+        return;
+      }
+      setScanningId(draft.id);
+      setStatus("");
+      try {
+        const vision = await analyzeImageWithVision(draft.file, { universe });
+        if (profileId) {
+          const res = await consumeBulkScans(profileId, 1);
+          if (res) {
+            setRemaining(res.remaining);
+            if (res.granted === 0) {
+              setStatus("No AI scans left this cycle — fill this one in by hand.");
+              return;
+            }
+          }
+        }
+        patchDraft(draft.id, visionToDraftPatch(vision, universe));
+      } catch (err) {
+        console.error("[Bulk] Rescan failed:", err);
+        setStatus("Couldn't identify that one — try again or fill it in by hand.");
+      } finally {
+        setScanningId(null);
+      }
+    },
+    [universe, scanningId, profileId, remaining, patchDraft]
+  );
 
   /* ── Commit ── */
   const addAllToVault = useCallback(async () => {
@@ -567,11 +606,23 @@ export default function BulkUploadPage() {
                         />
                       </div>
                       <div className="flex items-end justify-between gap-2">
-                        {d.scanned ? (
-                          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
-                            AI-filled
-                          </span>
-                        ) : <span />}
+                        <button
+                          type="button"
+                          disabled={scanningId !== null || (profileId !== "" && (remaining ?? 0) <= 0)}
+                          onClick={() => void rescanOne(d)}
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[color:var(--theme-gold,#F5B548)] underline-offset-2 hover:underline disabled:opacity-40 disabled:no-underline"
+                        >
+                          {scanningId === d.id ? (
+                            <>
+                              <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                              Scanning…
+                            </>
+                          ) : d.scanned ? (
+                            "Rescan"
+                          ) : (
+                            "Scan with AI"
+                          )}
+                        </button>
                         <button
                           type="button"
                           onClick={() => removeDraft(d.id)}
@@ -594,7 +645,7 @@ export default function BulkUploadPage() {
               <div className="sticky bottom-4 mt-5 flex flex-wrap items-center gap-3 rounded-2xl border p-3" style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.25))", background: "var(--theme-elevated, rgba(20,32,55,0.92))" }}>
                 <button
                   type="button"
-                  disabled={committing}
+                  disabled={committing || scanningId !== null}
                   onClick={() => void addAllToVault()}
                   className="inline-flex min-h-12 items-center justify-center rounded-full px-7 text-sm font-black text-[#0B0B0B] disabled:opacity-50"
                   style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
