@@ -137,6 +137,7 @@ export default function BulkUploadPage() {
   const [committing, setCommitting] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [scanningId, setScanningId] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
 
   // Quota
   const [remaining, setRemaining] = useState<number | null>(null);
@@ -402,12 +403,31 @@ export default function BulkUploadPage() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (!dragOver) setDragOver(true);
+                }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragOver(false);
+                  addFiles(Array.from(e.dataTransfer.files));
+                }}
                 className="mt-2 flex min-h-[120px] w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed px-4 py-6 text-sm text-[color:var(--muted)] transition hover:text-text-primary"
-                style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.3))" }}
+                style={{
+                  borderColor: dragOver
+                    ? "var(--theme-gold, #F5B548)"
+                    : "var(--theme-gold-border, rgba(245,181,72,0.3))",
+                  background: dragOver ? "var(--theme-gold-subtle, rgba(245,181,72,0.08))" : undefined,
+                }}
               >
                 <span className="text-2xl font-black text-[color:var(--theme-gold,#F5B548)]">+</span>
                 <span className="font-semibold">
-                  {drafts.length > 0 ? "Add more photos" : "Choose photos from your device"}
+                  {dragOver
+                    ? "Drop photos here"
+                    : drafts.length > 0
+                      ? "Add more photos"
+                      : "Choose photos, or drag them here"}
                 </span>
                 <span className="text-[11px] text-[color:var(--muted2)]">Up to {MAX_FILES} at a time</span>
               </button>
