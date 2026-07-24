@@ -373,28 +373,6 @@ export default function CapturePage() {
     };
   }, [previewUrl]);
 
-  /* ── Bulk capture ── */
-  const handleBulkCapture = useCallback(async (file: File, categoryLabel: string, subcategoryLabel: string) => {
-    try {
-      const id = newId();
-      const imagePatch = await persistCapturedImage(id, file);
-      const item = {
-        id,
-        title: "Bulk Item",
-        categoryLabel: categoryLabel || undefined,
-        subcategoryLabel: subcategoryLabel || undefined,
-        status: "COLLECTION" as const,
-        createdAt: Date.now(),
-        bulkPending: true,
-        ...imagePatch,
-      };
-      await appendItems([item]);
-      emitVaultUpdate();
-    } catch (err) {
-      console.error("[Bulk Capture] Save error:", err);
-    }
-  }, []);
-
   const universeKey = isUniverseKey(fields.universe) ? fields.universe as UniverseKey : null;
   const categoryOptions = universeKey ? getCategories(universeKey) : [];
   const subcategoryOptions = universeKey && fields.categoryLabel
@@ -530,7 +508,7 @@ export default function CapturePage() {
                   description="Point at the item and snap. VLTD fills in the rest."
                   universe={fields.universe}
                   onCapture={handleCapture}
-                  onBulkCapture={handleBulkCapture}
+                  bulkToggle={false}
                   onClose={() => {}}
                   onUseFileInstead={() => uploadInputRef.current?.click()}
                 />
@@ -919,7 +897,7 @@ export default function CapturePage() {
             description="Point at the item and snap. VLTD fills in the rest."
             universe={fields.universe}
             onCapture={handleCapture}
-            onBulkCapture={handleBulkCapture}
+            bulkToggle={false}
             onClose={() => setIsCameraPanelOpen(false)}
             onUseFileInstead={() => {
               setIsCameraPanelOpen(false);

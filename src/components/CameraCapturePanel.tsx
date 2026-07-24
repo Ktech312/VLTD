@@ -74,6 +74,9 @@ export default function CameraCapturePanel({
   onClose,
   onUseFileInstead,
   variant = "modal",
+  initialBulkMode = false,
+  bulkToggle = true,
+  bulkTaxonomy = true,
 }: {
   title: string;
   description: string;
@@ -85,6 +88,13 @@ export default function CameraCapturePanel({
   /** "modal" (default) is the full-screen overlay; "inline" embeds the camera
    *  directly in the page as a normal block (used by the Add screen). */
   variant?: "modal" | "inline";
+  /** Start locked in rapid bulk-capture mode (used by /vault/bulk). */
+  initialBulkMode?: boolean;
+  /** Show the "Bulk Add" on/off toggle. Off = the mode is fixed by the parent. */
+  bulkToggle?: boolean;
+  /** Show the in-panel Universe/Category/Subcategory selectors in bulk mode.
+   *  Off when the parent (e.g. the bulk page) already owns the batch Universe. */
+  bulkTaxonomy?: boolean;
 }) {
   const isInline = variant === "inline";
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -118,7 +128,7 @@ export default function CameraCapturePanel({
   const [selectedFrameId, setSelectedFrameId] = useState("auto");
   const [showFineTune, setShowFineTune] = useState(false);
   // ── Bulk Add mode ──
-  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkMode, setBulkMode] = useState(Boolean(initialBulkMode));
   const [bulkUniverse, setBulkUniverse] = useState<UniverseKey>("MISC");
   const [bulkCategory, setBulkCategory] = useState(() => getCategories("MISC")[0] ?? "");
   const [bulkSubcategory, setBulkSubcategory] = useState("");
@@ -547,7 +557,11 @@ export default function CameraCapturePanel({
         // Bulk mode: quick-save without AI review, then reset camera
         setBulkSaving(true);
         try {
-          onBulkCapture(finishedFile, bulkCategory, bulkSubcategory);
+          onBulkCapture(
+            finishedFile,
+            bulkTaxonomy ? bulkCategory : "",
+            bulkTaxonomy ? bulkSubcategory : ""
+          );
           setBulkSavedCount((n) => n + 1);
           // Reset for next shot
           handleRetakePhoto();
@@ -960,10 +974,11 @@ export default function CameraCapturePanel({
                   </span>
                   {bulkSavedCount > 0 && (
                     <span className="text-[11px] font-semibold text-[color:var(--muted)]">
-                      {bulkSavedCount} saved
+                      {bulkSavedCount} added
                     </span>
                   )}
                 </div>
+                {bulkTaxonomy && (
                 <div className="grid gap-2 grid-cols-3">
                   <div>
                     <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] mb-0.5">Universe</div>
@@ -1010,6 +1025,7 @@ export default function CameraCapturePanel({
                     </select>
                   </div>
                 </div>
+                )}
               </div>
             )}
 
@@ -1068,6 +1084,7 @@ export default function CameraCapturePanel({
             </div>
 
             {/* ── Bulk Add toggle — sleeper feature ── */}
+            {bulkToggle && (
             <div className="mt-3 flex items-center justify-center gap-2">
               <button
                 type="button"
@@ -1088,6 +1105,7 @@ export default function CameraCapturePanel({
                 <span className="text-[10px] text-[color:var(--muted)]">Saving…</span>
               )}
             </div>
+            )}
           </>
         )}
       </div>

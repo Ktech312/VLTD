@@ -13,6 +13,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import CameraCapturePanel from "@/components/CameraCapturePanel";
 import { analyzeImageWithVision } from "@/lib/ai/openaiVision";
 import { resolveVisionTaxonomy } from "@/lib/visionTaxonomy";
 import { newId } from "@/lib/id";
@@ -112,6 +113,7 @@ export default function BulkUploadPage() {
   const [drafts, setDrafts] = useState<BulkDraft[]>([]);
   const [status, setStatus] = useState("");
   const [committing, setCommitting] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
 
   // Quota
   const [remaining, setRemaining] = useState<number | null>(null);
@@ -146,12 +148,10 @@ export default function BulkUploadPage() {
 
   const catOptions = universe && isUniverseKey(universe) ? getCategories(universe) : [];
 
-  /* ── Pick files ── */
-  const onFilesPicked = useCallback((fileList: FileList | null) => {
-    if (!fileList || fileList.length === 0) return;
-    const picked = Array.from(fileList)
-      .filter((f) => f.type.startsWith("image/"))
-      .slice(0, MAX_FILES);
+  /* ── Add files (from the device picker or the camera) ── */
+  const addFiles = useCallback((files: File[]) => {
+    const picked = files.filter((f) => f.type.startsWith("image/")).slice(0, MAX_FILES);
+    if (picked.length === 0) return;
     const next: BulkDraft[] = picked.map((file) => {
       const previewUrl = URL.createObjectURL(file);
       urlsRef.current.push(previewUrl);
@@ -170,6 +170,14 @@ export default function BulkUploadPage() {
     setDrafts((prev) => [...prev, ...next]);
     setStatus("");
   }, []);
+
+  const onFilesPicked = useCallback(
+    (fileList: FileList | null) => {
+      if (!fileList) return;
+      addFiles(Array.from(fileList));
+    },
+    [addFiles]
+  );
 
   const removeDraft = useCallback((id: string) => {
     setDrafts((prev) => prev.filter((d) => d.id !== id));
@@ -364,6 +372,17 @@ export default function BulkUploadPage() {
                 </span>
                 <span className="text-[11px] text-[color:var(--muted2)]">Up to {MAX_FILES} at a time</span>
               </button>
+
+              <div className="mt-2 flex items-center gap-3 text-xs text-[color:var(--muted2)]">
+                <span className="uppercase tracking-[0.14em]">or</span>
+                <button
+                  type="button"
+                  onClick={() => setCameraOpen(true)}
+                  className="font-semibold text-text-primary underline-offset-2 hover:underline"
+                >
+                  Use the camera — snap them one after another
+                </button>
+              </div>
 
               {drafts.length > 0 ? (
                 <div className="mt-4">
@@ -612,6 +631,24 @@ export default function BulkUploadPage() {
             event.currentTarget.value = "";
           }}
         />
+
+        {cameraOpen ? (
+          <CameraCapturePanel
+            title="Bulk camera"
+            description="Snap each item — no waiting. Tap Save after each and they collect below. Close when you're done, then choose how to fill in details."
+            universe={universe || undefined}
+            initialBulkMode
+            bulkToggle={false}
+            bulkTaxonomy={false}
+            onCapture={() => {}}
+            onBulkCapture={(file) => addFiles([file])}
+            onClose={() => setCameraOpen(false)}
+            onUseFileInstead={() => {
+              setCameraOpen(false);
+              fileInputRef.current?.click();
+            }}
+          />
+        ) : null}
       </div>
     </main>
   );
