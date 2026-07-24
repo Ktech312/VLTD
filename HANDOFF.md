@@ -73,10 +73,20 @@ option dumps.
       Entry point on the Add screen. Verified live: renders, routing correct,
       ticker reads real quota (500/500 FULL). NOT yet exercised with real files
       (would add test items to EK's vault) — EK to try the full upload on phone.
-- [ ] **Camera bulk — Path A** (rapid capture) ← NEXT — reuse `/vault/bulk`'s
-      review grid; wire `CameraCapturePanel`'s existing Bulk Add + `bulkAddState`.
-- [ ] **Polish:** per-card "rescan with AI" in the grid; consider drag-drop; the
-      bulk review grid + scan ticker are done (in Path B) and Path A reuses them.
+- [x] **Camera bulk — Path A** — `/vault/bulk` → "Use the camera": rapid capture
+      (locked bulk mode, no per-shot AI) collecting into the same batch/review
+      grid. `CameraCapturePanel` got `initialBulkMode`/`bulkToggle`/`bulkTaxonomy`
+      props. Verified live: opens in "⚡ BULK MODE", no toggle, no in-panel
+      taxonomy (page owns the Universe). Retired the old Add-screen Bulk Add that
+      dumped straight to the vault. NOT exercised through capture→commit (would
+      add test items) — EK to run it on phone.
+- [ ] **Polish (optional):** per-card "rescan with AI" in the grid; drag-drop
+      files; a small note that Path A funnels through the same opt-in AI step
+      as Path B (spec said Path A auto-runs AI — unified to opt-in for scan
+      safety + consistency; easy to switch to auto if EK prefers).
+
+**Bulk feature core is COMPLETE** (migration + admin quota + Path A + Path B +
+review grid + ticker). Remaining is EK's real-device testing + optional polish.
 
 EK's OPEN QUESTION is resolved: **per-tier defaults AND per-user overrides**
 (both built into the admin page).
