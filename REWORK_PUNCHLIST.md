@@ -76,8 +76,12 @@ controls, no garbled text, no fake item art).
    perf pass, but needs on-device testing.
 
 ## Open — smaller / later
-- Insights value-history chart scaling looked off during the audit (axis to
-  $150K on a ~$20K vault) — worth a look.
+- Insights value-history chart: the durable data is CLEAN (34 points, max
+  $22,735, a normal downward trend). The $150K axis seen during the audit was
+  a stale point in the browser's local cache from old testing — the sync keeps
+  local-only days, so it lingers even though the database is fine. Self-heals
+  on a local-cache clear; no code/data fix needed. (Also fixed separately:
+  the fabricated "pricing sources" counts on that page.)
 - The crop/filter step after snapping is one extra tap; could be made
   skippable for the casual path.
 - `vltd.app` domain: intentionally not set up yet (you test on vltd.vercel.app).
