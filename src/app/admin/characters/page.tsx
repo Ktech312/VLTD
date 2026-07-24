@@ -1858,7 +1858,7 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
 }
 
 // ── Main Page ─────────────────────────────────────────────────
-type AdminSection = "characters" | "account-rights" | "coupons" | "admins" | "themes" | "waitlist" | "bugs";
+type AdminSection = "characters" | "account-rights" | "coupons" | "admins" | "themes" | "waitlist" | "bugs" | "scan-limits";
 
 export default function AdminCharactersPage() {
   const [authState, setAuthState] = useState<"loading" | "signed-out" | "unauthorized" | "authorized">("loading");
@@ -1875,6 +1875,7 @@ export default function AdminCharactersPage() {
     themes: false,
     waitlist: false,
     bugs: false,
+    "scan-limits": false,
   });
 
   function selectSection(section: AdminSection) {
@@ -2046,6 +2047,19 @@ export default function AdminCharactersPage() {
               Feedback from beta testers. Opens on the right.
             </p>
           </SidebarSection>
+
+          {/* AI Scan Limits */}
+          <SidebarSection
+            title="Scan Limits"
+            icon="ticket"
+            open={openSections["scan-limits"]}
+            active={activeSection === "scan-limits"}
+            onToggle={() => selectSection("scan-limits")}
+          >
+            <p className="text-[11px] leading-4 text-white/40">
+              Monthly AI-scan allowance per plan, plus custom per-account limits. Opens on the right.
+            </p>
+          </SidebarSection>
         </div>
 
         <div className="shrink-0 p-3 border-t border-white/8 flex items-center justify-between">
@@ -2094,6 +2108,12 @@ export default function AdminCharactersPage() {
           <iframe
             src="/admin/bugs"
             title="Bug Reports"
+            className="h-full w-full border-0"
+          />
+        ) : activeSection === "scan-limits" ? (
+          <iframe
+            src="/admin/scan-limits"
+            title="AI Scan Limits"
             className="h-full w-full border-0"
           />
         ) : (
