@@ -15,6 +15,7 @@ import { addWishlistItem } from "@/lib/wishlistModel";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
 import { Glyph } from "@/components/ui/Glyph";
 import { showToast } from "@/lib/toast";
+import { universePlaceholder } from "@/lib/itemPlaceholder";
 
 type GoalFilter = "all" | "completion" | "value" | "insurance" | "sell" | "gallery";
 type SortMode = "priority" | "progress" | "recent";
@@ -91,13 +92,9 @@ function SparkLine() {
 }
 
 function thumbForItem(item: VaultItem | undefined) {
-  if (item?.imageFrontUrl) return item.imageFrontUrl;
-  const text = [item?.title, item?.universe, item?.category].filter(Boolean).join(" ").toLowerCase();
-  if (text.includes("watch") || text.includes("rolex")) return "/universe-thumbnails/jewelry-apparel.png";
-  if (text.includes("music") || text.includes("vinyl")) return "/collectibles/vinyl-record.png";
-  if (text.includes("sport") || text.includes("jordan")) return "/collectibles/sports-slab.png";
-  if (text.includes("game")) return "/collectibles/vault-intake-sprites.png";
-  return "/collectibles/comic-slab.png";
+  // Real photo when the item has one, else a Universe-matched placeholder — no
+  // keyword-guessed stock art pretending to be the item.
+  return item?.imageFrontUrl || universePlaceholder(item?.universe);
 }
 
 function goalType(goal: GoalProgress): GoalFilter {
@@ -138,7 +135,7 @@ function buildGoalViews(progress: GoalProgress[], items: VaultItem[]): GoalView[
       actionLabel: type === "insurance" ? "Review items" : type === "gallery" ? "Create room" : type === "sell" ? "Review duplicates" : "View set",
       notes: goal.notes,
       real: goal,
-      thumbnails: matching.length ? matching.map((item) => thumbForItem(item)) : ["/collectibles/comic-slab.png", "/collectibles/sports-slab.png", "/collectibles/vinyl-record.png"],
+      thumbnails: matching.length ? matching.map((item) => thumbForItem(item)) : [universePlaceholder(goal.universe)],
     };
   });
 }

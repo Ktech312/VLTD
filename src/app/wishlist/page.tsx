@@ -23,6 +23,7 @@ import {
   type ComicWishlistItem,
 } from "@/lib/comicWishlistModel";
 import { showToast } from "@/lib/toast";
+import { universePlaceholder } from "@/lib/itemPlaceholder";
 
 type WatchKind = "item" | "exhibition" | "comic";
 type FilterKey = "all" | "items" | "exhibitions" | "alerts" | "undecided";
@@ -72,7 +73,7 @@ function entryFromWishlist(item: WishlistItem): WatchEntry {
     meta: [item.condition && item.condition !== "any" ? item.condition.toUpperCase() : null, item.priority ? `${item.priority} priority` : null]
       .filter(Boolean)
       .join(" · ") || "Target watch",
-    image: imageForText(item.title, item.universe, item.category),
+    image: universePlaceholder(item.universe),
     currentValue: target ? Math.round(target * 1.18) : 0,
     targetPrice: target,
     source: "Manual",
@@ -93,7 +94,7 @@ function entryFromWatch(item: WatchlistItem): WatchEntry {
     title: item.title || "Watched item",
     subtitle: item.subtitle || item.collectorName || "Public gallery save",
     meta: item.grade || "Gallery watch",
-    image: item.imageFrontUrl || imageForText(item.title, item.subtitle, item.grade),
+    image: item.imageFrontUrl || universePlaceholder(),
     currentValue,
     targetPrice: currentValue ? Math.round(currentValue * 0.86) : 0,
     source: item.collectorName || "Public Gallery",
@@ -113,7 +114,7 @@ function entryFromComic(item: ComicWishlistItem): WatchEntry {
     title: `${item.series} #${item.number}`,
     subtitle: item.publisher || "Upcoming comic",
     meta: item.storeDate ? `Release ${item.storeDate}` : "Upcoming issue",
-    image: item.imageUrl || "/collectibles/comic-slab.png",
+    image: item.imageUrl || universePlaceholder("POP_CULTURE"),
     currentValue: 0,
     targetPrice: 0,
     source: "Metron",
@@ -137,17 +138,6 @@ function formatAgo(timestamp: number) {
   return `${days}d ago`;
 }
 
-function imageForText(...parts: Array<string | undefined>) {
-  const text = parts.filter(Boolean).join(" ").toLowerCase();
-  if (text.includes("rolex") || text.includes("watch")) return "/collectibles/watch.png";
-  if (text.includes("vinyl") || text.includes("record") || text.includes("pink floyd")) return "/collectibles/vinyl-record.png";
-  if (text.includes("jordan") || text.includes("rookie") || text.includes("sports")) return "/collectibles/sports-slab.png";
-  if (text.includes("poster") || text.includes("movie")) return "/collectibles/movie-poster.png";
-  if (text.includes("guitar") || text.includes("instrument")) return "/collectibles/guitar.png";
-  if (text.includes("zelda") || text.includes("game")) return "/collectibles/vault-intake-sprites.png";
-  if (text.includes("bear") || text.includes("toy") || text.includes("figure")) return "/collectibles/vinyl-figure.png";
-  return "/collectibles/comic-slab.png";
-}
 
 function SparkLine({ tone = "cyan" }: { tone?: "cyan" | "green" }) {
   const stroke = tone === "green" ? "#56D879" : "var(--info,#52D6F4)";
@@ -194,7 +184,7 @@ function WatchCard({
       </div>
       <div className="grid grid-cols-[118px_minmax(0,1fr)] gap-4">
         <div className="relative flex h-[154px] items-center justify-center rounded-[7px] bg-black/25">
-          <img src={entry.image || "/collectibles/comic-slab.png"} alt="" className="max-h-[148px] max-w-[110px] object-contain drop-shadow-[0_18px_22px_rgba(0,0,0,0.5)]" />
+          <img src={entry.image || universePlaceholder()} alt="" className="max-h-[148px] max-w-[110px] object-contain drop-shadow-[0_18px_22px_rgba(0,0,0,0.5)]" />
         </div>
         <div className="min-w-0">
           <div className="line-clamp-2 font-serif text-[17px] font-black leading-tight" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>
@@ -599,7 +589,7 @@ export default function WishlistPage() {
 
             <div className="mt-4 grid gap-5 sm:grid-cols-[170px_minmax(0,1fr)] xl:grid-cols-1 2xl:grid-cols-[170px_minmax(0,1fr)]">
               <div className="flex h-[210px] items-center justify-center rounded-[7px] border border-[rgba(245,181,72,0.18)] bg-black/20">
-                <img src={selected.image || "/collectibles/comic-slab.png"} alt="" className="max-h-[198px] max-w-[150px] object-contain drop-shadow-[0_22px_26px_rgba(0,0,0,0.55)]" />
+                <img src={selected.image || universePlaceholder()} alt="" className="max-h-[198px] max-w-[150px] object-contain drop-shadow-[0_22px_26px_rgba(0,0,0,0.55)]" />
               </div>
               <div>
                 <h2 className="font-serif text-[25px] font-black leading-tight" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{selected.title}</h2>
