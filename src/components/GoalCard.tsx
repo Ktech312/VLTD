@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { GoalProgress } from "@/lib/collectionGoals";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+import { Glyph } from "@/components/ui/Glyph";
 
 function NextMilestoneHint({ goal }: { goal: GoalProgress }) {
   if (goal.isComplete || goal.missing <= 0) return null;
@@ -74,14 +75,14 @@ export default function GoalCard({
               )}
               {goal.isComplete && (
                 <span
-                  className="rounded-full px-2 py-0.5 text-[10px] font-bold ring-1"
+                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1"
                   style={{
                     background: "var(--theme-gold-subtle)",
                     borderColor: "var(--theme-gold-border)",
                     color: "var(--theme-gold)",
                   }}
                 >
-                  🏆 Complete
+                  <Glyph name="trophy" size={11} /> Complete
                 </span>
               )}
             </div>

@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import Image from "next/image";
 import type { PatreonCreator } from "@/app/api/patreon-comics/route";
+import { Glyph } from "@/components/ui/Glyph";
 
 /* ── Creator card ────────────────────────────────────────────── */
 
@@ -65,7 +66,7 @@ function CreatorCard({ creator }: { creator: PatreonCreator }) {
               background: "linear-gradient(145deg,#1a1a2e,#0d0d1a)",
             }}
           >
-            <span style={{ fontSize: "22px", opacity: 0.5 }}>🎨</span>
+            <Glyph name="palette" size={22} style={{ opacity: 0.5, color: "var(--theme-gold, #F5B548)" }} />
           </div>
         )}
       </div>
@@ -434,7 +435,7 @@ export default function PatreonPage() {
               color: "rgba(245,181,72,0.75)",
             }}
           >
-            ℹ️ {note}
+            {note}
           </div>
         )}
 
@@ -447,7 +448,7 @@ export default function PatreonPage() {
               color: "rgba(240,234,214,0.30)",
             }}
           >
-            <div style={{ fontSize: "48px", marginBottom: "14px" }}>🎨</div>
+            <div style={{ marginBottom: "14px", display: "flex", justifyContent: "center" }}><Glyph name="palette" size={48} /></div>
             <div
               style={{
                 fontSize: "16px",

@@ -79,10 +79,10 @@ function SpotlightCard({ s }: { s: Spotlight }) {
             </span>
             {s.is_featured && (
               <span
-                className="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.15em]"
+                className="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.15em]"
                 style={{ background: "rgba(245,181,72,0.18)", color: "#F5B548", border: "1px solid rgba(245,181,72,0.35)" }}
               >
-                ★ Featured
+                <Glyph name="star" size={10} /> Featured
               </span>
             )}
           </div>
@@ -164,8 +164,17 @@ function MVPsSidebar({ mvps, loading }: { mvps: UniverseMVP[]; loading: boolean 
         {loading ? (
           <div className="text-sm" style={{ color: "var(--muted)" }}>Loading MVPs...</div>
         ) : mvps.length === 0 ? (
-          <div className="rounded-2xl p-4 text-center text-sm" style={{ background: "var(--theme-elevated)", color: "var(--muted)" }}>
-            MVPs coming soon as the community grows 🌱
+          <div
+            className="flex flex-col items-center gap-2 rounded-2xl p-5 text-center"
+            style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))", border: "1px solid var(--theme-border, rgba(245,181,72,0.12))" }}
+          >
+            <span style={{ color: "var(--theme-gold, #F5B548)" }}><Glyph name="trophy" size={28} /></span>
+            <div className="text-sm font-black" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
+              MVPs coming soon
+            </div>
+            <p className="text-xs" style={{ color: "var(--muted, #A0956B)" }}>
+              Top collectors appear here as the community grows.
+            </p>
           </div>
         ) : (
           mvps.map((u) => (
@@ -198,8 +207,9 @@ function MVPsSidebar({ mvps, loading }: { mvps: UniverseMVP[]; loading: boolean 
         )}
       </div>
 
-      <p className="mt-5 text-center text-[11px]" style={{ color: "var(--muted2, #A0956B)" }}>
-        Rankings celebrate activity, not competition 🤝
+      <p className="mt-5 flex items-center justify-center gap-1.5 text-center text-[11px]" style={{ color: "var(--muted2, #A0956B)" }}>
+        <Glyph name="heart" size={12} />
+        Rankings celebrate activity, not competition
       </p>
     </div>
   );
@@ -284,9 +294,21 @@ export default function VLTLoungePage() {
           <div className="text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: "var(--muted2, #A0956B)" }}>
             VLTD Community
           </div>
-          <h1 className="mt-2 text-3xl font-black tracking-[-0.04em]" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
-            🛋️ VLT Lounge
-          </h1>
+          <div className="mt-2 flex items-center gap-3">
+            <span
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl"
+              style={{
+                background: "rgba(245,181,72,0.12)",
+                border: "1px solid rgba(245,181,72,0.3)",
+                color: "var(--theme-gold, #F5B548)",
+              }}
+            >
+              <Glyph name="sofa" size={26} />
+            </span>
+            <h1 className="text-3xl font-black tracking-[-0.04em]" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
+              VLT Lounge
+            </h1>
+          </div>
           <p className="mt-1 text-sm" style={{ color: "var(--muted, #A0956B)" }}>
             Community spotlights, featured creators, and VLT MVPs
           </p>

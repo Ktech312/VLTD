@@ -6,6 +6,7 @@ import { addToWatchlist, isWatchlisted, type WatchlistItem } from "@/lib/watchli
 import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
 import { getAppreciationCounts, getAppreciatedSet } from "@/lib/appreciations";
 import { VibeButton } from "@/components/social/VibeButton";
+import { Glyph } from "@/components/ui/Glyph";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 
@@ -125,7 +126,7 @@ function SwipeCard({ card, onSwipe, active, viewerProfileId }: CardProps) {
               draggable={false}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-6xl opacity-30">📦</div>
+            <div className="flex h-full w-full items-center justify-center opacity-30"><Glyph name="box" size={72} /></div>
           )}
 
           {/* Swipe overlays */}
@@ -191,8 +192,8 @@ function SwipeCard({ card, onSwipe, active, viewerProfileId }: CardProps) {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={card.collectorAvatarUrl} alt="" className="h-7 w-7 rounded-full object-cover ring-1 ring-white/20" />
               ) : (
-                <div className="flex h-7 w-7 items-center justify-center rounded-full text-sm"
-                  style={{ background: "var(--pill)" }}>🗝️</div>
+                <div className="flex h-7 w-7 items-center justify-center rounded-full"
+                  style={{ background: "var(--pill)", color: "var(--theme-gold, #F5B548)" }}><Glyph name="key" size={15} /></div>
               )}
               <span className="text-xs truncate" style={{ color: "var(--muted)" }}>{card.collectorName}</span>
             </div>
@@ -365,9 +366,9 @@ export default function DiscoverSwipe({ open, onClose }: Props) {
             </span>
           )}
           {savedIds.size > 0 && (
-            <span className="rounded-full px-2.5 py-1 text-xs font-semibold"
+            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold"
               style={{ background: "rgba(245,181,72,0.14)", color: "var(--theme-gold, #F5B548)", border: "1px solid rgba(245,181,72,0.28)" }}>
-              ♥ {savedIds.size} saved
+              <Glyph name="heart" size={12} /> {savedIds.size} saved
             </span>
           )}
           <button
@@ -389,7 +390,7 @@ export default function DiscoverSwipe({ open, onClose }: Props) {
         {loading && (
           <div className="flex h-full items-center justify-center">
             <div className="text-center">
-              <div className="text-3xl animate-pulse">🃏</div>
+              <div className="flex animate-pulse justify-center" style={{ color: "var(--theme-gold, #F5B548)" }}><Glyph name="cards" size={32} /></div>
               <div className="mt-3 text-sm" style={{ color: "var(--muted)" }}>Loading items…</div>
             </div>
           </div>
@@ -397,7 +398,7 @@ export default function DiscoverSwipe({ open, onClose }: Props) {
 
         {!loading && done && (
           <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
-            <div className="text-4xl">✨</div>
+            <div style={{ color: "var(--theme-gold, #F5B548)" }}><Glyph name="sparkle" size={38} /></div>
             <div className="text-xl font-black" style={{ color: "var(--fg)" }}>You&apos;ve seen it all</div>
             <div className="text-sm" style={{ color: "var(--muted)" }}>
               {savedIds.size > 0
@@ -428,7 +429,7 @@ export default function DiscoverSwipe({ open, onClose }: Props) {
         {!loading && !done && cards.length === 0 && (
           <div className="flex h-full items-center justify-center text-center">
             <div>
-              <div className="text-3xl">📭</div>
+              <div className="flex justify-center" style={{ color: "var(--muted)" }}><Glyph name="box" size={34} /></div>
               <div className="mt-3 text-sm" style={{ color: "var(--muted)" }}>No public items found yet.</div>
             </div>
           </div>

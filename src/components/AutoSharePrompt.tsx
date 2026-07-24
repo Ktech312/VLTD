@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { ShareTrigger } from "@/hooks/useAutoShareTrigger";
 import { getAutoShareEnabled, setAutoShareEnabled } from "@/hooks/useAutoShareTrigger";
 import { fmtUsd } from "@/lib/format";
+import { Glyph, type GlyphName } from "@/components/ui/Glyph";
 
 
 type Props = {
@@ -34,7 +35,7 @@ export default function AutoSharePrompt({ trigger, onShare, onDismiss }: Props) 
   }
 
   const isSold = trigger.kind === "sold";
-  const emoji = isSold ? "🎉" : "🏅";
+  const glyph: GlyphName = isSold ? "sparkle" : "trophy";
   const headline = isSold
     ? `Just Sold${trigger.salePrice ? ` for ${fmtUsd(trigger.salePrice)}` : ""}!`
     : `Just Graded${trigger.grade ? ` — ${trigger.grade}` : ""}!`;
@@ -53,7 +54,7 @@ export default function AutoSharePrompt({ trigger, onShare, onDismiss }: Props) 
       >
         {/* Header */}
         <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 text-3xl leading-none">{emoji}</div>
+          <div className="flex-shrink-0 leading-none" style={{ color: "var(--theme-gold, #F5B548)" }}><Glyph name={glyph} size={30} /></div>
           <div className="flex-1 min-w-0">
             <div className="text-base font-black leading-tight" style={{ color: "var(--fg)" }}>{headline}</div>
             <div className="mt-0.5 truncate text-sm" style={{ color: "var(--muted)" }}>
