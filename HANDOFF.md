@@ -172,9 +172,23 @@ Needs EK / a device:
 - **Capture on a real phone** — EK confirms: crop drag doesn't refresh, photo
   isn't dark, crop auto-fits after background removal.
 - **Background-removal performance** — in-browser ML froze the desktop ~40s;
-  worse on phone. Needs on-device profiling.
+  worse on phone. **Root cause (investigated 2026-07-24):** uses
+  `@imgly/background-removal` (`src/components/capture/captureUtils.ts`
+  `removeBackgroundFromFile`), which runs an ONNX model on the MAIN THREAD via
+  onnxruntime-web WASM → UI freeze. Options for EK to choose (each needs a
+  device eyeball, so NOT shipped yet):
+  1. **Lighter model** — pass a config to `removeBackground(file, { model:
+     'isnet_quint8' })` (quantized; much faster, slightly lower cutout quality).
+     Lowest risk, one line, but EK must confirm cutouts still look good.
+  2. **Multi-threaded WASM** — needs the page cross-origin isolated (COOP/COEP
+     headers in `next.config`); lets onnxruntime use threads. Bigger + can break
+     third-party embeds/images — test broadly.
+  3. Keep as-is but show a clearer "working…" state so the freeze feels
+     intentional (it already has a spinner; the thread block still stutters).
+  Recommend trying #1 first on EK's phone.
 
 Smaller / later:
+- Bulk upload now supports **drag-and-drop** onto the picker (desktop) — done.
 - Crop/filter step after snapping is one extra tap — could be skippable for the
   casual path.
 - `vltd.app`: at launch point it at Vercel AND set `NEXT_PUBLIC_SITE_URL` so
