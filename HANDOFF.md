@@ -80,10 +80,16 @@ option dumps.
       taxonomy (page owns the Universe). Retired the old Add-screen Bulk Add that
       dumped straight to the vault. NOT exercised through capture→commit (would
       add test items) — EK to run it on phone.
-- [ ] **Polish (optional):** per-card "rescan with AI" in the grid; drag-drop
-      files; a small note that Path A funnels through the same opt-in AI step
-      as Path B (spec said Path A auto-runs AI — unified to opt-in for scan
-      safety + consistency; easy to switch to auto if EK prefers).
+- [x] **Per-card "Scan / Rescan with AI"** in the review grid — (re)identify a
+      single card (AI got one wrong, or added without AI). Metered, per-card
+      spinner, disabled when out of scans/mid-scan. Verified live (renders in
+      the grid; not click-tested to avoid spending a real scan).
+- [ ] **Polish (optional):** drag-drop files onto the picker; a note that Path A
+      funnels through the same opt-in AI step as Path B (spec said Path A
+      auto-runs AI — unified to opt-in for scan safety; easy to flip if EK wants).
+      Consider a friendlier pre-warn if a FREE-tier bulk batch would exceed the
+      vault item cap (appendItems checks the cap once, so a big batch can
+      overshoot — pre-existing behavior, low priority).
 
 **Bulk feature core is COMPLETE** (migration + admin quota + Path A + Path B +
 review grid + ticker). Remaining is EK's real-device testing + optional polish.
