@@ -405,16 +405,17 @@ export default function CapturePage() {
   /* ── Render ── */
   return (
     <main className="px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-5xl">
+      <div className={`mx-auto ${phase === "review" ? "max-w-[1400px]" : "max-w-5xl"}`}>
         <section
-          className="relative overflow-hidden rounded-[34px] p-5 sm:p-7"
-          style={{
+          className={phase === "review" ? "relative" : "relative overflow-hidden rounded-[34px] p-5 sm:p-7"}
+          style={phase === "review" ? undefined : {
             background: "var(--theme-elevated, rgba(20,32,55,0.9))",
             border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.25))",
             boxShadow: "0 26px 86px rgba(0,0,0,0.32)",
           }}
         >
           {/* ambient glow */}
+          {phase !== "review" && (
           <div
             className="pointer-events-none absolute inset-0"
             style={{
@@ -422,6 +423,7 @@ export default function CapturePage() {
                 "radial-gradient(circle at 20% 0%, var(--theme-gold-subtle, rgba(245,181,72,0.06)), transparent 30%)",
             }}
           />
+          )}
 
           {/* ── Two-column layout: info + camera (capture states) ── */}
           {phase !== "review" && (
@@ -615,7 +617,7 @@ export default function CapturePage() {
               </div>
 
               {/* Two columns: preview | accordion */}
-              <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,380px)_1fr] lg:items-start">
+              <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,480px)_1fr] lg:items-start">
                 {/* Left: framed image viewer (concept-19) */}
                 <div>
                   <div
