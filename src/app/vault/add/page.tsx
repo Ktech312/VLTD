@@ -3387,6 +3387,7 @@ export default function AddPage() {
             }
             universe={values.universe}
             onCapture={handleCapturedPhoto}
+            bulkToggle={false}
             onClose={() => setIsCameraPanelOpen(false)}
             onUseFileInstead={() => {
               setIsCameraPanelOpen(false);
