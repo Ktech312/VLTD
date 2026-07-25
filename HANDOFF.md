@@ -208,6 +208,34 @@ create); **Universe placeholders** wherever a photo is missing
 "Add Item" = that screen, Quick Add kept, review = "Confirm details");
 expired-session → login fix; repo hygiene (`/tmp/` ignored).
 
+### Visual / design changes to reworked pages
+Of the 10 mockup pages, **Learn** got the full ground-up rebuild; the others
+(Vault, Discover, Exhibitions, Insights, Watchlist, Goals, Activity) already
+matched their mockups structurally, so they got polish rather than a rebuild.
+
+- **Learn (`/learn`) — full rebuild:** old "Seven Universes" marketing page →
+  knowledge hub matching the mockup (Featured article, Guides & Articles photo
+  grid, Collector Playbooks + Quick Guides sidebar, newsletter). Real cover
+  photos cropped from the mockup. Tighter corners (8px cards / 6px inputs —
+  less "Apple pill"), denser scale, sidebar pinned to top, columns balanced.
+  Removed the stray blue box behind the title (a global `<header>` style
+  leaking in); background left as the locked site standard. Reader pages
+  (`/learn/[slug]`) match.
+- **Add / Capture (`/capture`) — rebuild:** decluttered (dropped the 3
+  step-cards + wizard framing); live camera embedded in the page (was a modal);
+  leads with "Snap it. We'll do the rest."; Quick Add + manual demoted to tucked
+  links. Review leads with "Confirm details," old Scan/Import/Clear demoted to a
+  "Not right?" line, fits mobile. Fixed the dark captured photo (removed a 35%
+  dim overlay).
+- **Photoless items (Vault / Activity / Goals / Watchlist):** dimmed
+  Universe-matched image + "Add photo" nudge instead of a blank "NO PHOTO" tile
+  or fake stock art.
+- **Site-wide polish:** remaining emoji → themed line-art glyphs (auction,
+  account, leaderboard, kickstarter, community board, etc.); fixed garbled
+  characters (`â€¹`, `Ã—`) on Wishlist/Goals.
+- **Insights (`/portfolio`):** "Pricing Sources" panel changed from fabricated
+  numbers to real ones.
+
 Memory files (indexed by `MEMORY.md`): vercel-auto-deploys-on-push,
 vltd-curator-vs-collector-language, backend-wiring-standard,
 supabase-migrations-applied-manually, no-emoji-icons,
