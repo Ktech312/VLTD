@@ -159,12 +159,13 @@ function AccordionSection({
 
 /* ── Helpers ────────────────────────────────────────────────────── */
 
-function ActionButton({ label, icon, onClick }: { label: string; icon: ReactNode; onClick: () => void }) {
+function ActionButton({ label, icon, onClick, disabled }: { label: string; icon: ReactNode; onClick: () => void; disabled?: boolean }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-2 rounded-[10px] border px-3.5 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(245,181,72,0.08))]"
+      disabled={disabled}
+      className="inline-flex items-center gap-2 rounded-[10px] border px-3.5 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(245,181,72,0.08))] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
       style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.28))" }}
     >
       <span style={{ color: "var(--theme-gold, #F5B548)" }}>{icon}</span>
@@ -266,7 +267,10 @@ export default function CapturePage() {
   const router = useRouter();
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [phase, setPhase] = useState<Phase>("idle");
+  // Builder-first: the form + image panel is always shown. `analyzing` drives the
+  // AI spinner; `phase` stays "review" so the legacy camera-first block never renders.
+  const [phase, setPhase] = useState<Phase>("review");
+  const [analyzing, setAnalyzing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [fields, setFields] = useState<ReviewFields>(EMPTY_FIELDS);
   const [capturedImageFile, setCapturedImageFile] = useState<File | null>(null);
@@ -279,7 +283,7 @@ export default function CapturePage() {
   const handleCapture = useCallback(async (file: File) => {
     setCapturedImageFile(file);
     setIsCameraPanelOpen(false);
-    setPhase("loading");
+    setAnalyzing(true);
     setErrorMsg("");
 
     try {
@@ -318,7 +322,7 @@ export default function CapturePage() {
       }
 
       setFields(mergeResults(vision, upcData));
-      setPhase("review");
+      setAnalyzing(false);
     } catch (err) {
       console.error("[Capture] Error:", err);
       setErrorMsg(
@@ -326,7 +330,7 @@ export default function CapturePage() {
           ? err.message
           : "Could not identify item. Please fill in details manually."
       );
-      setPhase("error");
+      setAnalyzing(false);
     }
   }, []);
 
@@ -405,25 +409,8 @@ export default function CapturePage() {
   /* ── Render ── */
   return (
     <main className="px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
-      <div className={`mx-auto ${phase === "review" ? "max-w-[1400px]" : "max-w-5xl"}`}>
-        <section
-          className={phase === "review" ? "relative" : "relative overflow-hidden rounded-[34px] p-5 sm:p-7"}
-          style={phase === "review" ? undefined : {
-            background: "var(--theme-elevated, rgba(20,32,55,0.9))",
-            border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.25))",
-            boxShadow: "0 26px 86px rgba(0,0,0,0.32)",
-          }}
-        >
-          {/* ambient glow */}
-          {phase !== "review" && (
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(circle at 20% 0%, var(--theme-gold-subtle, rgba(245,181,72,0.06)), transparent 30%)",
-            }}
-          />
-          )}
+      <div className="mx-auto max-w-[1400px]">
+        <section className="relative">
 
           {/* ── Two-column layout: info + camera (capture states) ── */}
           {phase !== "review" && (
@@ -595,6 +582,7 @@ export default function CapturePage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <ActionButton
                     label="Auto ID"
+                    disabled={!capturedImageFile || analyzing}
                     onClick={() => { if (capturedImageFile) void handleCapture(capturedImageFile); }}
                     icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.4 3.6L17 8l-3.6 1.4L12 13l-1.4-3.6L7 8l3.6-1.4z" /><path d="M5 16l.8 2L8 19l-2.2.8L5 22l-.8-2.2L2 19l2.2-1z" /></svg>}
                   />
@@ -610,7 +598,7 @@ export default function CapturePage() {
                   />
                   <ActionButton
                     label="Clear"
-                    onClick={() => { setFields(EMPTY_FIELDS); setCapturedImageFile(null); setPhase("idle"); }}
+                    onClick={() => { setFields(EMPTY_FIELDS); setCapturedImageFile(null); setErrorMsg(""); }}
                     icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" /></svg>}
                   />
                 </div>
@@ -632,7 +620,17 @@ export default function CapturePage() {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={previewUrl} alt="Captured item" className="max-h-full max-w-full object-contain" />
                       ) : (
-                        <span className="text-sm text-[color:var(--muted)]">No image yet</span>
+                        <div className="flex flex-col items-center gap-3.5 px-6 text-center">
+                          <div className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "rgba(245,181,72,0.10)", border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.3))", color: "var(--theme-gold, #F5B548)" }}>
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
+                          </div>
+                          <div className="text-sm font-semibold text-text-primary">Add a photo — optional</div>
+                          <p className="max-w-[240px] text-xs leading-5 text-[color:var(--muted)]">Snap or upload one and VLTD auto-fills the details. Or just type them in — no photo required.</p>
+                          <div className="flex flex-wrap justify-center gap-2">
+                            <button type="button" onClick={() => setIsCameraPanelOpen(true)} className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold text-[#0B0B0B]" style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}>Take photo</button>
+                            <button type="button" onClick={() => uploadInputRef.current?.click()} className="inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(245,181,72,0.08))]" style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.3))" }}>Upload</button>
+                          </div>
+                        </div>
                       )}
                     </div>
                     {previewUrl ? (
@@ -654,6 +652,13 @@ export default function CapturePage() {
                           1 / 1
                         </span>
                       </>
+                    ) : null}
+                    {analyzing ? (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3" style={{ background: "rgba(2,9,12,0.74)" }}>
+                        <span className="h-8 w-8 rounded-full border-[3px] animate-spin" style={{ borderColor: "rgba(245,181,72,0.25)", borderTopColor: "#F5B548" }} />
+                        <span className="text-sm font-black text-text-primary">Identifying…</span>
+                        <span className="text-xs text-[color:var(--muted)]">Running vision + barcode scan</span>
+                      </div>
                     ) : null}
                   </div>
 
@@ -682,6 +687,11 @@ export default function CapturePage() {
                     </span>
                     <span><b className="font-semibold text-[color:var(--muted)]">Tip:</b> Use good lighting and avoid glare. Clear, straight-on photos work best.</span>
                   </p>
+                  {errorMsg && !analyzing ? (
+                    <p className="mt-2 text-[11px] leading-4 text-[#EF4444]">
+                      {errorMsg} You can still fill it in by hand.
+                    </p>
+                  ) : null}
                 </div>
 
                 {/* Right: numbered accordion */}
@@ -964,13 +974,13 @@ export default function CapturePage() {
 
                   {/* Save bar — concept-19 */}
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-4 border-t pt-4" style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.14))" }}>
-                    <button
-                      type="button"
-                      onClick={() => setPhase("idle")}
-                      className="inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
+                    <Link
+                      href="/vault/bulk"
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-full text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
                     >
-                      ← Rescan
-                    </button>
+                      <span className="text-base font-black text-[color:var(--theme-gold,#F5B548)]">+</span>
+                      Adding a lot? Bulk upload
+                    </Link>
                     <div className="flex flex-col items-end gap-1.5">
                       <button
                         type="button"
