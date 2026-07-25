@@ -39,6 +39,7 @@ type ReviewFields = {
   category: string;
   universe: string;
   grade: string;
+  certCompany: string;
   certNumber: string;
   condition: string;
   description: string;
@@ -57,6 +58,7 @@ const EMPTY_FIELDS: ReviewFields = {
   category: "",
   universe: "",
   grade: "",
+  certCompany: "",
   certNumber: "",
   condition: "",
   description: "",
@@ -76,6 +78,10 @@ const LABEL_CLS =
 const INPUT_CLS =
   "mt-1 w-full rounded-xl border bg-vault-card px-3 py-2 text-sm font-semibold text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]";
 const INPUT_STYLE = { borderColor: "var(--theme-border, rgba(245,181,72,0.12))" } as const;
+const SERIF = "var(--font-serif, 'Cormorant Garamond', Georgia, serif)";
+
+const CERT_COMPANIES = ["PSA", "CGC", "BGS", "SGC", "CBCS", "WATA", "VGA", "Other"];
+const CONDITIONS = ["Mint", "Near Mint", "Excellent", "Very Good", "Good", "Fair", "Poor"];
 
 /* ── Accordion section ─────────────────────────────────────────── */
 
@@ -153,6 +159,20 @@ function AccordionSection({
 
 /* ── Helpers ────────────────────────────────────────────────────── */
 
+function ActionButton({ label, icon, onClick }: { label: string; icon: ReactNode; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center gap-2 rounded-[10px] border px-3.5 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(245,181,72,0.08))]"
+      style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.28))" }}
+    >
+      <span style={{ color: "var(--theme-gold, #F5B548)" }}>{icon}</span>
+      {label}
+    </button>
+  );
+}
+
 function confidenceBadge(c: number) {
   if (c >= 0.75) return { bg: "rgba(34,197,94,0.15)", color: "#22C55E", label: "High confidence" };
   if (c >= 0.45) return { bg: "rgba(245,181,72,0.15)", color: "#F5B548", label: "Medium confidence" };
@@ -176,6 +196,7 @@ function mergeResults(
     category: taxo.categoryLabel || vision?.category || upc?.categoryLabel || "",
     universe: taxo.universe || "",
     grade: vision?.grade || "",
+    certCompany: "",
     certNumber: vision?.certNumber || "",
     condition: vision?.condition || "",
     description: vision?.description || upc?.notes || "",
@@ -323,7 +344,7 @@ export default function CapturePage() {
         subtitle: fields.subtitle || undefined,
         category: fields.category || undefined,
         universe: fields.universe || undefined,
-        grade: fields.grade || undefined,
+        grade: [fields.certCompany, fields.grade].filter(Boolean).join(" ").trim() || undefined,
         certNumber: fields.certNumber || undefined,
         notes: fields.description || undefined,
         number: fields.number || undefined,
@@ -556,68 +577,108 @@ export default function CapturePage() {
           {/* ── REVIEW: record-builder (image left, numbered accordion right) ── */}
           {phase === "review" && (
             <div className="relative">
-              {/* Compact header + actions */}
-              <div className="flex flex-wrap items-start justify-between gap-3">
+              {/* Header — concept-19 */}
+              <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)]">
-                    Add Item
-                  </div>
-                  <h1 className="mt-1 text-2xl font-black leading-tight tracking-[-0.04em] text-text-primary lg:text-3xl">
+                  <h1
+                    className="text-[34px] font-semibold leading-none tracking-[-0.01em] text-text-primary sm:text-[42px]"
+                    style={{ fontFamily: SERIF }}
+                  >
                     New Vault Item
                   </h1>
+                  <p className="mt-2 text-sm text-[color:var(--muted)]">
+                    Capture, identify, and prepare your item for your private vault.
+                  </p>
                 </div>
-                <div className="text-left sm:text-right">
-                  <div className="text-sm font-black text-text-primary">Confirm details</div>
-                  <div className="text-[11px] text-[color:var(--muted2)]">Check the fields below, then save.</div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <ActionButton
+                    label="Auto ID"
+                    onClick={() => { if (capturedImageFile) void handleCapture(capturedImageFile); }}
+                    icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.4 3.6L17 8l-3.6 1.4L12 13l-1.4-3.6L7 8l3.6-1.4z" /><path d="M5 16l.8 2L8 19l-2.2.8L5 22l-.8-2.2L2 19l2.2-1z" /></svg>}
+                  />
+                  <ActionButton
+                    label="Scan Barcode"
+                    onClick={() => setIsCameraPanelOpen(true)}
+                    icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M3 5v14M7 5v14M11 5v14M14 5v14M18 5v14M21 5v14" /></svg>}
+                  />
+                  <ActionButton
+                    label="Import"
+                    onClick={() => uploadInputRef.current?.click()}
+                    icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 16V4M8 8l4-4 4 4M4 20h16" /></svg>}
+                  />
+                  <ActionButton
+                    label="Clear"
+                    onClick={() => { setFields(EMPTY_FIELDS); setCapturedImageFile(null); setPhase("idle"); }}
+                    icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" /></svg>}
+                  />
                 </div>
-              </div>
-
-              {/* Corrections — secondary, only if the scan wasn't right */}
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[color:var(--muted2)]">
-                <span className="uppercase tracking-[0.14em]">Not right?</span>
-                <button type="button" onClick={() => setIsCameraPanelOpen(true)} className="font-semibold underline-offset-2 hover:text-text-primary hover:underline">Scan barcode</button>
-                <button type="button" onClick={() => uploadInputRef.current?.click()} className="font-semibold underline-offset-2 hover:text-text-primary hover:underline">Replace photo</button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFields(EMPTY_FIELDS);
-                    setCapturedImageFile(null);
-                    setPhase("idle");
-                  }}
-                  className="font-semibold underline-offset-2 hover:text-text-primary hover:underline"
-                >
-                  Start over
-                </button>
               </div>
 
               {/* Two columns: preview | accordion */}
               <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,380px)_1fr] lg:items-start">
-                {/* Left: image preview */}
+                {/* Left: framed image viewer (concept-19) */}
                 <div>
                   <div
-                    className="relative mx-auto flex aspect-[4/5] w-full max-w-[260px] items-center justify-center overflow-hidden rounded-[16px] border sm:max-w-none"
+                    className="relative overflow-hidden rounded-[16px] border"
                     style={{
-                      borderColor: "var(--theme-gold-border, rgba(245,181,72,0.25))",
-                      background: "radial-gradient(circle at 50% 25%, rgba(245,181,72,0.06), rgba(5,11,21,0.65) 72%)",
+                      borderColor: "var(--theme-gold-border, rgba(245,181,72,0.28))",
+                      background: "radial-gradient(circle at 50% 22%, rgba(245,181,72,0.06), rgba(2,9,12,0.85) 72%)",
                     }}
                   >
+                    <div className="flex aspect-[4/5] w-full items-center justify-center p-4">
+                      {previewUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={previewUrl} alt="Captured item" className="max-h-full max-w-full object-contain" />
+                      ) : (
+                        <span className="text-sm text-[color:var(--muted)]">No image yet</span>
+                      )}
+                    </div>
                     {previewUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={previewUrl} alt="Captured item" className="h-full w-full object-contain" />
-                    ) : (
-                      <span className="text-sm text-[color:var(--muted)]">No image</span>
-                    )}
+                      <>
+                        <a
+                          href={previewUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="Expand image"
+                          className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-[8px] border"
+                          style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.3))", background: "rgba(2,9,12,0.6)", color: "var(--theme-gold, #F5B548)" }}
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+                        </a>
+                        <span
+                          className="absolute bottom-3 right-3 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                          style={{ background: "rgba(2,9,12,0.7)", color: "var(--muted)", border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.2))" }}
+                        >
+                          1 / 1
+                        </span>
+                      </>
+                    ) : null}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsCameraPanelOpen(true)}
-                    className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-dashed px-4 text-xs font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
-                    style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.3))" }}
-                  >
-                    + Add photos
-                  </button>
-                  <p className="mt-2 text-[11px] leading-4 text-[color:var(--muted2)]">
-                    Tip: good lighting and a straight-on angle produce the best identification.
+
+                  {/* Thumbnail rail */}
+                  <div className="mt-3 grid grid-cols-4 gap-2">
+                    {previewUrl ? (
+                      <div className="aspect-square overflow-hidden rounded-[10px] border" style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.5))" }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={previewUrl} alt="" className="h-full w-full object-cover" />
+                      </div>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => setIsCameraPanelOpen(true)}
+                      className="flex aspect-square flex-col items-center justify-center gap-0.5 rounded-[10px] border border-dashed text-center text-[10px] font-semibold leading-tight text-[color:var(--muted)] transition hover:text-text-primary"
+                      style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.3))" }}
+                    >
+                      <span className="text-base" style={{ color: "var(--theme-gold, #F5B548)" }}>+</span>
+                      Add photos<br />or video
+                    </button>
+                  </div>
+
+                  <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-4 text-[color:var(--muted2)]">
+                    <span className="mt-px shrink-0" style={{ color: "var(--theme-gold, #F5B548)" }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.4 3.6L17 8l-3.6 1.4L12 13l-1.4-3.6L7 8l3.6-1.4z" /></svg>
+                    </span>
+                    <span><b className="font-semibold text-[color:var(--muted)]">Tip:</b> Use good lighting and avoid glare. Clear, straight-on photos work best.</span>
                   </p>
                 </div>
 
@@ -641,7 +702,7 @@ export default function CapturePage() {
                     }
                   >
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="sm:col-span-2">
+                      <div>
                         <label className={LABEL_CLS}>Item Name *</label>
                         <input
                           className={INPUT_CLS}
@@ -662,24 +723,43 @@ export default function CapturePage() {
                         />
                       </div>
                       <div>
-                        <label className={LABEL_CLS}>Number / Edition</label>
+                        <label className={LABEL_CLS}>Set / Series</label>
                         <input
                           className={INPUT_CLS}
                           style={INPUT_STYLE}
                           value={fields.number}
                           onChange={(e) => setFields((p) => ({ ...p, number: e.target.value }))}
-                          placeholder="e.g. #57"
+                          placeholder="e.g. 1986 Fleer Basketball"
                         />
                       </div>
                       <div>
-                        <label className={LABEL_CLS}>Certification #</label>
-                        <input
+                        <label className={LABEL_CLS}>Certification Company</label>
+                        <select
                           className={INPUT_CLS}
                           style={INPUT_STYLE}
-                          value={fields.certNumber}
-                          onChange={(e) => setFields((p) => ({ ...p, certNumber: e.target.value }))}
-                          placeholder="Cert number"
-                        />
+                          value={fields.certCompany}
+                          onChange={(e) => setFields((p) => ({ ...p, certCompany: e.target.value }))}
+                        >
+                          <option value="">—</option>
+                          {CERT_COMPANIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className={LABEL_CLS}>Certification #</label>
+                        <div className="relative">
+                          <input
+                            className={INPUT_CLS}
+                            style={INPUT_STYLE}
+                            value={fields.certNumber}
+                            onChange={(e) => setFields((p) => ({ ...p, certNumber: e.target.value }))}
+                            placeholder="Cert number"
+                          />
+                          {fields.certNumber.trim() ? (
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "#22C55E" }}>
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
@@ -694,24 +774,49 @@ export default function CapturePage() {
                         </div>
                         <div>
                           <label className={LABEL_CLS}>Condition</label>
-                          <input
+                          <select
                             className={INPUT_CLS}
                             style={INPUT_STYLE}
                             value={fields.condition}
                             onChange={(e) => setFields((p) => ({ ...p, condition: e.target.value }))}
-                            placeholder="Mint"
-                          />
+                          >
+                            <option value="">—</option>
+                            {[fields.condition, ...CONDITIONS].filter((v, i, a) => v && a.indexOf(v) === i).map((c) => <option key={c} value={c}>{c}</option>)}
+                          </select>
                         </div>
                       </div>
-                      <div className="sm:col-span-2">
+                      <div>
                         <label className={LABEL_CLS}>Notes</label>
                         <textarea
                           className={INPUT_CLS}
                           style={{ ...INPUT_STYLE, minHeight: 68, resize: "vertical", fontWeight: 400 }}
                           value={fields.description}
+                          maxLength={500}
                           onChange={(e) => setFields((p) => ({ ...p, description: e.target.value }))}
                           placeholder="Add any details about this item…"
                         />
+                        <div className="mt-1 text-right text-[10px] text-[color:var(--muted2)]">{fields.description.length} / 500</div>
+                      </div>
+                      <div>
+                        <label className={LABEL_CLS}>Confidence</label>
+                        <div className="mt-1 grid grid-cols-3 gap-1.5">
+                          {([["Low", 0.3], ["Medium", 0.6], ["High", 0.9]] as const).map(([lbl, val]) => {
+                            const active = lbl === "Low" ? fields.confidence < 0.45 : lbl === "Medium" ? fields.confidence >= 0.45 && fields.confidence < 0.75 : fields.confidence >= 0.75;
+                            return (
+                              <button
+                                key={lbl}
+                                type="button"
+                                onClick={() => setFields((p) => ({ ...p, confidence: val }))}
+                                className="rounded-[8px] border px-2 py-2 text-xs font-semibold transition"
+                                style={active
+                                  ? { borderColor: "var(--theme-gold-border, rgba(245,181,72,0.6))", background: "rgba(245,181,72,0.12)", color: "var(--theme-gold, #F5B548)" }
+                                  : { borderColor: "var(--theme-border, rgba(245,181,72,0.14))", color: "var(--muted)" }}
+                              >
+                                {lbl}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   </AccordionSection>
@@ -855,23 +960,30 @@ export default function CapturePage() {
                     </p>
                   </AccordionSection>
 
-                  {/* Save row */}
-                  <div className="mt-1 flex flex-wrap items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={handleSave}
-                      className="inline-flex min-h-12 items-center justify-center rounded-full px-7 text-sm font-black text-[#0B0B0B]"
-                      style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
-                    >
-                      Save to Vault
-                    </button>
+                  {/* Save bar — concept-19 */}
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-4 border-t pt-4" style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.14))" }}>
                     <button
                       type="button"
                       onClick={() => setPhase("idle")}
-                      className="inline-flex min-h-12 items-center justify-center rounded-full px-4 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
+                      className="inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
                     >
                       ← Rescan
                     </button>
+                    <div className="flex flex-col items-end gap-1.5">
+                      <button
+                        type="button"
+                        onClick={handleSave}
+                        className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[12px] px-9 text-[15px] font-black text-[#0B0B0B]"
+                        style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h12l4 4v12H4z" /><path d="M8 4v6h8" /><path d="M9 15h6" /></svg>
+                        Save to Vault
+                      </button>
+                      <span className="inline-flex items-center gap-1.5 text-[11px] text-[color:var(--muted2)]">
+                        <span style={{ color: "#22C55E" }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg></span>
+                        Private — only you can see your vault
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
