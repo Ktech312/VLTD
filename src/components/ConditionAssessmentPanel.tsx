@@ -138,7 +138,7 @@ export default function ConditionAssessmentPanel({
           <button
             type="button"
             onClick={handleSave}
-            className="h-10 w-full rounded-full bg-[color:var(--theme-gold)] px-4 text-sm font-bold text-black"
+            className="vltd-primary-button h-10 w-full rounded-[4px] px-4 text-sm font-bold"
           >
             Save Grade
           </button>

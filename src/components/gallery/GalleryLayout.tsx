@@ -80,7 +80,7 @@ function ShelfGrid({ items, hrefPrefix, title }: { items: VaultItem[]; hrefPrefi
             <Link
               key={item.id}
               href={hrefPrefix + "/" + item.id}
-              className="flex flex-col overflow-hidden rounded-[14px] border transition-transform duration-150 active:scale-95"
+              className="flex flex-col overflow-hidden rounded-[6px] border transition-transform duration-150 active:scale-95"
               style={{
                 background: "rgba(11,18,34,0.95)",
                 borderColor: "rgba(203,208,213,0.16)",
@@ -152,7 +152,7 @@ function ThingsbookGrid({ items, hrefPrefix }: { items: VaultItem[]; hrefPrefix:
     <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
       <Link
         href={hrefPrefix + "/" + hero.id}
-        className="block shrink-0 overflow-hidden rounded-[26px] bg-[color:var(--surface)] shadow-[0_16px_42px_rgba(0,0,0,0.18)] ring-2 ring-[color:var(--theme-gold,#C8CDD2)] transition hover:-translate-y-0.5 md:w-72"
+        className="block shrink-0 overflow-hidden rounded-[8px] bg-[color:var(--surface)] shadow-[0_16px_42px_rgba(0,0,0,0.18)] ring-2 ring-[#4FD3EE] transition hover:-translate-y-0.5 md:w-72"
       >
         {heroImg ? (
           <img src={heroImg} alt={hero.title} className="aspect-[3/4] w-full object-cover" draggable={false} />
@@ -184,7 +184,7 @@ function ThingsbookGrid({ items, hrefPrefix }: { items: VaultItem[]; hrefPrefix:
                   type="button"
                   onClick={() => setSelectedIdx(idx)}
                   className={"overflow-hidden rounded-xl transition hover:scale-105 active:scale-95 " + (isSelected
-                    ? "ring-2 ring-[color:var(--theme-gold,#C8CDD2)] shadow-[0_6px_18px_rgba(203,208,213,0.3)] opacity-100"
+                    ? "ring-2 ring-[#4FD3EE] shadow-[0_6px_18px_rgba(203,208,213,0.3)] opacity-100"
                     : "ring-1 ring-[color:var(--border)] opacity-60 hover:opacity-100")}
                   style={{ width: 62, height: 84 }}
                   aria-label={item.title}
@@ -227,7 +227,7 @@ export default function GalleryLayout({
           <Link
             key={i.id}
             href={hrefPrefix + "/" + i.id}
-            className="grid items-center gap-8 rounded-[26px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_42px_rgba(0,0,0,0.14)] md:grid-cols-2"
+            className="grid items-center gap-8 rounded-[8px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_42px_rgba(0,0,0,0.14)] md:grid-cols-2"
           >
             {itemImage(i) ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -252,7 +252,7 @@ export default function GalleryLayout({
           <Link
             key={i.id}
             href={hrefPrefix + "/" + i.id}
-            className="flex items-start gap-6 rounded-[22px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
+            className="flex items-start gap-6 rounded-[6px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
           >
             <div className="w-10 shrink-0 text-sm opacity-50">{index + 1}</div>
             <div className="min-w-0">
@@ -272,7 +272,7 @@ export default function GalleryLayout({
           <Link
             key={i.id}
             href={hrefPrefix + "/" + i.id}
-            className="block rounded-[26px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_42px_rgba(0,0,0,0.14)]"
+            className="block rounded-[8px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_42px_rgba(0,0,0,0.14)]"
           >
             {itemImage(i) ? (
               // eslint-disable-next-line @next/next/no-img-element

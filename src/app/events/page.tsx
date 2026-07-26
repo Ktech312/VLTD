@@ -778,7 +778,7 @@ export default function EventsPage() {
               type="button"
               onClick={() => void searchEvents()}
               disabled={eventSearchLoading}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-[7px] bg-[color:var(--theme-gold)] px-5 text-sm font-black text-black disabled:opacity-60"
+              className="vltd-primary-button inline-flex h-10 items-center justify-center gap-2 rounded-[4px] px-5 text-sm font-black disabled:opacity-60"
             >
               {eventSearchLoading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
               Search
