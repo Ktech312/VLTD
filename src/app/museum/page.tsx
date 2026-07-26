@@ -436,11 +436,11 @@ export default function MuseumPage() {
         <div className="min-w-0">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h1 className="text-[42px] leading-none font-bold tracking-[-0.01em] sm:text-[52px]" style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)" }}>Exhibitions</h1>
+              <h1 className="text-[42px] font-extrabold uppercase leading-[0.9] tracking-[-0.03em] sm:text-[52px]">Exhibitions</h1>
               <p className="mt-2 text-sm text-[color:var(--muted)]">Curate public rooms from your private vault.</p>
             </div>
             {/* Mobile Create — next to the title (kept on-screen); desktop version lives in the toolbar */}
-            <Link href="/museum/new" className="inline-flex shrink-0 items-center justify-center gap-1 rounded-[8px] px-3 py-1.5 text-xs font-black transition sm:hidden" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}>+ Create</Link>
+            <Link href="/museum/new" className="inline-flex shrink-0 items-center justify-center gap-1 rounded-[8px] px-3 py-1.5 text-xs font-black transition sm:hidden" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>+ Create</Link>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -452,13 +452,13 @@ export default function MuseumPage() {
             {EXHIBITION_SORTS.map((s) => (<option key={s.key} value={s.key}>{s.label}</option>))}
           </select>
           {/* Desktop Create — with the toolbar */}
-          <Link href="/museum/new" className="hidden min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-[8px] px-4 text-xs font-black transition sm:inline-flex" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}>+ Create Exhibition</Link>
+          <Link href="/museum/new" className="hidden min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-[8px] px-4 text-xs font-black transition sm:inline-flex" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>+ Create Exhibition</Link>
         </div>
       </div>
       {/* Desktop filter pills (mobile uses the inline dropdown above) */}
       <div className="mt-4 hidden flex-wrap gap-2 sm:flex">
         {EXHIBITION_FILTERS.map((f) => (
-          <button key={f.key} type="button" onClick={() => setFilter(f.key)} className={`inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 transition ${filter === f.key ? "bg-[color:var(--theme-gold-subtle)] text-[color:var(--theme-gold)] ring-[color:var(--theme-gold-border)] shadow-[inset_0_1px_0_rgba(237,239,241,0.10)]" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]"}`}>{f.label}</button>
+          <button key={f.key} type="button" onClick={() => setFilter(f.key)} className={`inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 transition ${filter === f.key ? "bg-[rgba(79,211,238,0.10)] text-[#5FDCF3] ring-[rgba(79,211,238,0.5)] shadow-[0_0_14px_rgba(79,211,238,0.22)]" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]"}`}>{f.label}</button>
         ))}
       </div>
     </>
@@ -632,7 +632,7 @@ export default function MuseumPage() {
                     role="button"
                     tabIndex={0}
                     aria-label={`Show details for ${gallery.title}`}
-                    className={`group relative flex w-full cursor-pointer flex-col overflow-hidden rounded-[10px] border bg-[color:var(--theme-card)] shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.30)] ${selectedEntry?.gallery.id === gallery.id ? "border-[color:var(--theme-gold)] ring-1 ring-[color:var(--theme-gold)]" : "border-[color:var(--theme-border)]"}`}
+                    className={`group relative flex w-full cursor-pointer flex-col overflow-hidden rounded-[10px] border bg-[color:var(--theme-card)] shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.30)] ${selectedEntry?.gallery.id === gallery.id ? "border-[#4FD3EE] ring-1 ring-[#4FD3EE]" : "border-[color:var(--theme-border)]"}`}
                   >
                     {/* Cover image with a distinct value shelf below. */}
                     <div className="relative h-[176px] overflow-hidden bg-[color:var(--theme-elevated)]">
@@ -709,8 +709,8 @@ export default function MuseumPage() {
                           event.stopPropagation();
                           openGallery(gallery.id);
                         }}
-                        className="absolute bottom-3 right-3 inline-flex h-8 w-8 items-center justify-center transition hover:text-[color:var(--theme-gold)]"
-                        style={{ color: "var(--theme-gold)" }}
+                        className="absolute bottom-3 right-3 inline-flex h-8 w-8 items-center justify-center transition hover:text-[#5FDCF3]"
+                        style={{ color: "#4FD3EE" }}
                         aria-label={`Open full exhibit page for ${gallery.title}`}
                       >
                         <ExternalOpenIcon />
@@ -727,7 +727,7 @@ export default function MuseumPage() {
                     key={`ghost-${i}`}
                     href="/museum/new"
                     aria-label="Create a new exhibit"
-                    className="group flex min-h-[206px] w-full flex-col items-center justify-center gap-2.5 rounded-[10px] border border-dashed border-[color:var(--theme-border)] transition duration-300 hover:-translate-y-0.5 hover:border-[color:var(--theme-gold)]"
+                    className="group flex min-h-[206px] w-full flex-col items-center justify-center gap-2.5 rounded-[10px] border border-dashed border-[color:var(--theme-border)] transition duration-300 hover:-translate-y-0.5 hover:border-[#4FD3EE]"
                     style={{ background: "rgba(255,255,255,0.015)" }}
                   >
                     <span
@@ -736,7 +736,7 @@ export default function MuseumPage() {
                     >
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
                     </span>
-                    <span className="text-[12px] font-semibold tracking-[0.02em] text-[color:var(--muted)] transition group-hover:text-[color:var(--theme-gold)]">New exhibit</span>
+                    <span className="text-[12px] font-semibold tracking-[0.02em] text-[color:var(--muted)] transition group-hover:text-[#5FDCF3]">New exhibit</span>
                   </Link>
                 ));
               })()}
