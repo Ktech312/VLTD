@@ -1,25 +1,25 @@
 /* Path: src/app/vltd-design.css */
-/* VLTD visual foundation: deep black vault surfaces, gold accent system. */
+/* VLTD visual foundation: brushed graphite console surfaces, platinum/cyan accents. */
 
 :root {
-  --vltd-bg: #0B1320;
-  --vltd-bg-deep: #070E1A;
-  --vltd-surface: rgba(15, 25, 45, 0.88);
-  --vltd-surface-strong: rgba(26, 22, 14, 0.96);
-  --vltd-border: rgba(245, 181, 72, 0.14);
-  --vltd-border-strong: rgba(245, 181, 72, 0.28);
-  --vltd-muted: rgba(160, 149, 107, 0.80);
-  --vltd-muted-2: rgba(90, 80, 64, 0.70);
-  --vltd-cyan: #52d6f4;
-  --vltd-cyan-soft: rgba(82, 214, 244, 0.16);
-  --vltd-gold: #f5b548;
-  --vltd-gold-soft: rgba(245, 181, 72, 0.14);
-  --vltd-green: #4CAF82;
+  --vltd-bg: #1A1D22;
+  --vltd-bg-deep: #131518;
+  --vltd-surface: rgba(28, 31, 36, 0.92);
+  --vltd-surface-strong: rgba(37, 41, 47, 0.96);
+  --vltd-border: rgba(255, 255, 255, 0.10);
+  --vltd-border-strong: rgba(255, 255, 255, 0.18);
+  --vltd-muted: rgba(155, 160, 166, 0.85);
+  --vltd-muted-2: rgba(97, 101, 107, 0.75);
+  --vltd-cyan: #4FD3EE;
+  --vltd-cyan-soft: rgba(79, 211, 238, 0.16);
+  --vltd-gold: #C8CDD2;                    /* platinum (name kept for consumers) */
+  --vltd-gold-soft: rgba(203, 208, 213, 0.14);
+  --vltd-green: #54C98A;
   --vltd-red: #E05252;
 }
 
 body {
-  background-color: #0B0B0B;
+  background-color: #14161A;
 }
 
 .vltd-brand-dot {
@@ -27,48 +27,52 @@ body {
   width: 0.72rem;
   height: 0.72rem;
   border-radius: 999px;
-  background: var(--vltd-gold);
-  box-shadow: 0 0 18px rgba(245, 181, 72, 0.50);
+  background: var(--vltd-cyan);
+  box-shadow: 0 0 14px rgba(79, 211, 238, 0.45);
 }
 
 .vltd-page-depth {
   background:
-    radial-gradient(circle at 50% 12%, rgba(245, 181, 72, 0.07), transparent 32%),
-    radial-gradient(circle at 70% 78%, rgba(245, 181, 72, 0.04), transparent 30%),
+    linear-gradient(120deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0.025) 55%, rgba(255,255,255,0) 82%),
     linear-gradient(180deg, var(--vltd-bg), var(--vltd-bg-deep));
 }
 
 .vltd-page-grid {
   background-image:
-    radial-gradient(circle at 50% 0%, rgba(245, 181, 72, 0.08), transparent 36%),
-    linear-gradient(rgba(245, 181, 72, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(245, 181, 72, 0.03) 1px, transparent 1px);
+    linear-gradient(120deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0) 34%, rgba(255,255,255,0.02) 60%, rgba(255,255,255,0) 88%),
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
   background-size: auto, 28px 28px, 28px 28px;
 }
 
 .vltd-vault-surface {
   background:
-    linear-gradient(180deg, rgba(26, 22, 14, 0.92), rgba(14, 12, 6, 0.92)),
+    linear-gradient(165deg, rgba(42, 46, 52, 0.92), rgba(20, 22, 26, 0.94)),
     var(--vltd-surface);
   border: 1px solid var(--vltd-border);
-  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.40);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 22px 60px rgba(0, 0, 0, 0.40);
 }
 
+/* Primary button — cyan console action (the split-module lives in components/ui) */
 .vltd-primary-button {
-  background: linear-gradient(135deg, #8B6914 0%, #C8941F 25%, #F5B548 50%, #FFE08A 70%, #C8941F 100%);
-  color: #0B0B0B;
-  box-shadow: 0 16px 42px rgba(245, 181, 72, 0.30);
+  background:
+    linear-gradient(115deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 45%, rgba(255,255,255,0.18) 100%),
+    linear-gradient(180deg, #79E7FB 0%, #41C6E4 55%, #2CB1D1 100%);
+  color: #06171d;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 10px rgba(0,0,0,0.4), 0 0 18px rgba(79,211,238,0.22);
 }
 
 .vltd-primary-button:hover {
-  filter: brightness(1.08);
+  filter: brightness(1.06);
   transform: translateY(-1px);
 }
 
 .vltd-input {
-  background: rgba(20, 16, 8, 0.72);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--vltd-border);
-  color: #F0EAD6;
+  color: #ECEDEF;
+  border-radius: 4px;
 }
 
 .vltd-input::placeholder {
@@ -76,22 +80,21 @@ body {
 }
 
 .vltd-input:focus {
-  border-color: rgba(245, 181, 72, 0.50);
+  border-color: rgba(79, 211, 238, 0.5);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(245, 181, 72, 0.12);
+  box-shadow: 0 0 0 3px rgba(79, 211, 238, 0.14);
 }
 
 /* Vault inventory page scoped styles */
 main:has(input[placeholder="Search vault items..."]) {
   background:
-    radial-gradient(circle at 46% 12%, rgba(245, 181, 72, 0.07), transparent 34%),
-    radial-gradient(circle at 82% 26%, rgba(245, 181, 72, 0.04), transparent 26%),
-    linear-gradient(180deg, var(--vltd-bg), var(--vltd-bg-deep)) !important;
+    linear-gradient(120deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0.025) 55%, rgba(255,255,255,0) 82%),
+    linear-gradient(160deg, #202329 0%, #14161A 55%, #1A1D22 100%) !important;
 }
 
 main:has(input[placeholder="Search vault items..."]) section,
 main:has(input[placeholder="Search vault items..."]) [class*="rounded-"] {
-  border-color: rgba(245, 181, 72, 0.16);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 main:has(input[placeholder="Search vault items..."]) section {
@@ -100,25 +103,25 @@ main:has(input[placeholder="Search vault items..."]) section {
 
 main:has(input[placeholder="Search vault items..."]) section:has(h2),
 main:has(input[placeholder="Search vault items..."]) section:has(input[placeholder="Search vault items..."]) {
-  background: var(--theme-card, rgba(15,25,45,0.85)) !important;
+  background: var(--theme-card, rgba(28,31,36,0.94)) !important;
 }
 
 main:has(input[placeholder="Search vault items..."]) section:has(h2) {
-  border-color: rgba(245, 181, 72, 0.22) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
   box-shadow:
-    0 0 0 1px rgba(245, 181, 72, 0.04),
-    0 22px 72px rgba(245, 181, 72, 0.06),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
     0 18px 70px rgba(0, 0, 0, 0.32) !important;
 }
 
 main:has(input[placeholder="Search vault items..."]) div.group.relative {
-  background: var(--theme-card, rgba(15,25,45,0.85)) !important;
-  border-color: rgba(245, 181, 72, 0.12) !important;
+  background: var(--theme-card, rgba(28,31,36,0.94)) !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
 }
 
 main:has(input[placeholder="Search vault items..."]) div.group.relative:hover {
-  border-color: rgba(245, 181, 72, 0.32) !important;
-  box-shadow: 0 14px 38px rgba(245, 181, 72, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.35) !important;
 }
 
 @media (max-width: 640px) {
@@ -131,7 +134,7 @@ main:has(input[placeholder="Search vault items..."]) div.group.relative:hover {
     height: auto !important;
     min-height: 0 !important;
     padding: 10px !important;
-    border-radius: 18px !important;
+    border-radius: 6px !important;
   }
 
   main:has(input[placeholder="Search vault items..."]) div.group.relative > div.grid {
@@ -144,7 +147,7 @@ main:has(input[placeholder="Search vault items..."]) div.group.relative:hover {
   main:has(input[placeholder="Search vault items..."]) div.group.relative > div.grid > a:first-child {
     height: 168px !important;
     width: 100% !important;
-    border-radius: 14px !important;
+    border-radius: 6px !important;
   }
 
   main:has(input[placeholder="Search vault items..."]) div.group.relative > div.grid > div:nth-child(2) {
@@ -165,7 +168,7 @@ main:has(input[placeholder="Search vault items..."]) div.group.relative:hover {
   main:has(input[placeholder="Search vault items..."]) div.group.relative select {
     min-height: 34px !important;
     font-size: 13px !important;
-    border-radius: 10px !important;
+    border-radius: 4px !important;
     padding: 6px 10px !important;
   }
 

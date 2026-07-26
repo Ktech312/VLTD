@@ -16,9 +16,9 @@ const ThemeContext = createContext<ThemeContextValue>({
 })
 
 function getThemeAccent(theme: Theme) {
-  if (theme.id === 'midnight-gradient') return '#52D6F4'
-  if (theme.id === 'steel-light') return '#64748B'
-  if (theme.id === 'cloud-gradient') return '#5B8FB8'
+  // Brushed Console: the base accent is neutral platinum/steel (theme.gold now
+  // holds a platinum value). Cyan is applied deliberately as a status accent,
+  // never as the global accent, so the UI stays calm by default.
   return theme.gold
 }
 

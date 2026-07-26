@@ -1,47 +1,53 @@
 export const tokens = {
   color: {
-    // Backgrounds
-    bgBase: '#000307',
-    bgCard: '#03080E',
-    bgElevated: '#060C14',
-    bgBorder: '#3A2B13',
+    // Backgrounds — brushed graphite
+    bgBase: '#14161A',
+    bgCard: '#1C1F24',
+    bgElevated: '#25292F',
+    bgBorder: 'rgba(255,255,255,0.10)',
 
-    // Gold system
-    gold: '#D9A23A',
-    goldLight: '#FFF1A8',
-    goldDark: '#8B6914',
-    goldMid: '#B8872B',
-    goldSubtle: 'rgba(217,162,58,0.12)',
-    goldBorder: 'rgba(217,162,58,0.42)',
+    // "Gold" system → now platinum/chrome (names kept for consumers)
+    gold: '#C8CDD2',
+    goldLight: '#EDEFF1',
+    goldDark: '#8C9298',
+    goldMid: '#A8AEB4',
+    goldSubtle: 'rgba(203,208,213,0.12)',
+    goldBorder: 'rgba(203,208,213,0.34)',
 
     // Text
-    textPrimary: '#E8D7B8',
-    textSecondary: '#C5B284',
-    textMuted: '#7D7054',
+    textPrimary: '#ECEDEF',
+    textSecondary: '#9BA0A6',
+    textMuted: '#61656B',
 
-    // Data only
-    dataCyan: '#52D6F4',
+    // Data / numbers
+    dataCyan: '#4FD3EE',
 
-    // Status
-    gain: '#4CAF82',
+    // Status accents
+    cyan: '#4FD3EE',   // live / active / value
+    amber: '#F0A23A',  // for sale
+    gain: '#54C98A',
     loss: '#E05252',
   },
   gradient: {
-    gold: 'linear-gradient(135deg, #8B6914 0%, #F5D06F 38%, #B8872B 62%, #FFF1A8 78%, #8B6914 100%)',
-    goldText: 'linear-gradient(135deg, #B8872B, #F5D06F, #FFF1A8)',
-    bgBase: 'radial-gradient(circle at top left, rgba(26,40,62,0.22), transparent 42%), linear-gradient(180deg, #000307 0%, #02050D 100%)',
-    cardOverlay: 'linear-gradient(to top, rgba(2,9,11,0.92) 0%, transparent 60%)',
+    // Brushed platinum (metal accents / primary metal button)
+    gold: 'linear-gradient(112deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 22%, rgba(255,255,255,0.3) 48%, rgba(255,255,255,0) 72%, rgba(255,255,255,0.45) 100%), linear-gradient(135deg, #EDEFF1 0%, #A8AEB4 42%, #D6DADE 66%, #8C9298 100%)',
+    goldText: 'linear-gradient(135deg, #EDEFF1, #C8CDD2, #A8AEB4)',
+    bgBase: 'linear-gradient(120deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0.025) 55%, rgba(255,255,255,0) 82%), linear-gradient(160deg, #202329 0%, #14161A 55%, #1A1D22 100%)',
+    cardOverlay: 'linear-gradient(to top, rgba(10,11,13,0.92) 0%, transparent 60%)',
   },
   shadow: {
-    card: '0 4px 24px rgba(0,0,0,0.66), 0 0 22px rgba(26,40,62,0.10)',
-    gold: '0 0 18px rgba(245,181,72,0.28), 0 0 42px rgba(184,135,43,0.14), inset 0 1px 0 rgba(255,241,168,0.35)',
-    elevated: '0 8px 40px rgba(0,0,0,0.84), 0 0 34px rgba(26,40,62,0.10)',
+    card: '0 4px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)',
+    // machined bevel (was gold glow)
+    gold: 'inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 10px rgba(0,0,0,0.5)',
+    // cyan status glow (opt-in)
+    cyan: '0 0 20px rgba(79,211,238,0.18), 0 0 0 1px rgba(79,211,238,0.22)',
+    elevated: '0 8px 40px rgba(0,0,0,0.72), inset 0 1px 0 rgba(255,255,255,0.06)',
   },
   radius: {
-    sm: '6px',
-    md: '10px',
-    lg: '14px',
-    xl: '20px',
+    sm: '2px',
+    md: '4px',
+    lg: '6px',
+    xl: '8px',
     full: '9999px',
   },
   font: {

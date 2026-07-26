@@ -10,40 +10,46 @@
 ========================================================= */
 
 @theme {
-  /* Gold palette */
-  --color-gold: #D9A23A;
-  --color-gold-light: #FFF1A8;
-  --color-gold-dark: #8B6914;
-  --color-gold-mid: #B8872B;
-  --color-gold-subtle: rgba(217,162,58,0.12);
-  --color-gold-border: rgba(217,162,58,0.42);
+  /* "Gold" palette → now brushed platinum / chrome (names kept for utilities) */
+  --color-gold: #C8CDD2;
+  --color-gold-light: #EDEFF1;
+  --color-gold-dark: #8C9298;
+  --color-gold-mid: #A8AEB4;
+  --color-gold-subtle: rgba(203,208,213,0.12);
+  --color-gold-border: rgba(203,208,213,0.34);
 
-  /* Vault surfaces */
-  --color-vault-base: #000307;
-  --color-vault-card: rgba(3, 8, 14, 0.95);
-  --color-vault-elevated: rgba(6, 12, 20, 0.96);
-  --color-vault-border: rgba(184, 135, 43, 0.22);
+  /* Vault surfaces — brushed graphite */
+  --color-vault-base: #14161A;
+  --color-vault-card: rgba(28, 31, 36, 0.94);
+  --color-vault-elevated: rgba(37, 41, 47, 0.96);
+  --color-vault-border: rgba(255, 255, 255, 0.10);
 
   /* Text scale */
-  --color-text-primary: #E8D7B8;
-  --color-text-secondary: #C5B284;
-  --color-text-muted: #7D7054;
+  --color-text-primary: #ECEDEF;
+  --color-text-secondary: #9BA0A6;
+  --color-text-muted: #61656B;
 
-  /* Data / status — cyan reserved for prices & numbers only */
-  --color-data: #52D6F4;
-  --color-gain: #4CAF82;
+  /* Data / status — cyan = value/live, amber = for-sale, green/red = gain/loss */
+  --color-data: #4FD3EE;
+  --color-cyan: #4FD3EE;
+  --color-amber: #F0A23A;
+  --color-gain: #54C98A;
   --color-loss: #E05252;
 
-  /* Shadows */
-  --shadow-card: 0 4px 24px rgba(0,0,0,0.66), 0 0 22px rgba(26,40,62,0.10);
-  --shadow-gold: 0 0 18px rgba(245,181,72,0.28), 0 0 42px rgba(184,135,43,0.14), inset 0 1px 0 rgba(255,241,168,0.35);
-  --shadow-elevated: 0 8px 40px rgba(0,0,0,0.84), 0 0 34px rgba(26,40,62,0.10);
+  /* Shadows — machined bevel, no gold glow */
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06);
+  --shadow-gold: inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 10px rgba(0,0,0,0.5);
+  --shadow-cyan: 0 0 20px rgba(79,211,238,0.18), 0 0 0 1px rgba(79,211,238,0.22);
+  --shadow-elevated: 0 8px 40px rgba(0,0,0,0.72), inset 0 1px 0 rgba(255,255,255,0.06);
 
-  /* Border radius */
-  --radius-sm: 6px;
-  --radius: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  /* Border radius — squared scale (~4px) */
+  --radius-sm: 2px;
+  --radius: 4px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+  --radius-2xl: 8px;
+  --radius-3xl: 10px;
   --radius-full: 9999px;
 
   /* Typography */
@@ -58,27 +64,27 @@
 ========================================================= */
 
 :root {
-  --radius: 999px;
+  --radius: 4px;
 
   /* =========================================================
      THEME SYSTEM DEFAULTS (deep-vault)
      Overridden at runtime by ThemeProvider via setProperty.
      These ensure SSR and first-paint use the correct defaults.
   ========================================================= */
-  --theme-bg: radial-gradient(circle at 14% 0%, rgba(26,40,62,0.22), transparent 42%), linear-gradient(180deg, #000205 0%, #00060C 50%, #010911 100%);
-  --theme-card: rgba(3, 8, 14, 0.95);
-  --theme-elevated: rgba(6, 12, 20, 0.96);
-  --theme-border: rgba(184, 135, 43, 0.22);
-  --theme-text-primary: #E8D7B8;
-  --theme-text-secondary: #C5B284;
-  --theme-text-muted: #7D7054;
-  --theme-gold: #D9A23A;
-  --theme-gold-gradient: linear-gradient(135deg, #8B6914 0%, #F5D06F 38%, #B8872B 62%, #FFF1A8 78%, #8B6914 100%);
-  --theme-gold-border: rgba(217, 162, 58, 0.42);
-  --theme-gold-glow: 0 0 18px rgba(245,181,72,0.28), 0 0 42px rgba(184,135,43,0.14), inset 0 1px 0 rgba(255,241,168,0.35);
-  --theme-gold-subtle: rgba(217, 162, 58, 0.10);
-  --theme-nav-bg: rgba(2, 5, 10, 0.95);
-  --theme-nav-border: rgba(184, 135, 43, 0.20);
+  --theme-bg: linear-gradient(120deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0.025) 55%, rgba(255,255,255,0) 82%), linear-gradient(160deg, #202329 0%, #14161A 55%, #1A1D22 100%);
+  --theme-card: rgba(28, 31, 36, 0.94);
+  --theme-elevated: rgba(37, 41, 47, 0.96);
+  --theme-border: rgba(255, 255, 255, 0.10);
+  --theme-text-primary: #ECEDEF;
+  --theme-text-secondary: #9BA0A6;
+  --theme-text-muted: #61656B;
+  --theme-gold: #C8CDD2;
+  --theme-gold-gradient: linear-gradient(112deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 22%, rgba(255,255,255,0.3) 48%, rgba(255,255,255,0) 72%, rgba(255,255,255,0.45) 100%), linear-gradient(135deg, #EDEFF1 0%, #A8AEB4 42%, #D6DADE 66%, #8C9298 100%);
+  --theme-gold-border: rgba(203, 208, 213, 0.34);
+  --theme-gold-glow: inset 0 1px 0 rgba(255,255,255,0.10), 0 2px 10px rgba(0,0,0,0.5);
+  --theme-gold-subtle: rgba(203, 208, 213, 0.10);
+  --theme-nav-bg: rgba(16, 18, 21, 0.95);
+  --theme-nav-border: rgba(255, 255, 255, 0.10);
 
   /* ✅ Reserve TopNav height so content never jumps */
   --topnav-h: 72px;
@@ -95,12 +101,16 @@
   /* ---------------------------------------------------------
      PALETTE — Gold System
   --------------------------------------------------------- */
-  --accent: #D9A23A;   /* Gold — primary accent everywhere */
-  --accent-2: #B8872B; /* Dark gold — depth / secondary */
+  --accent: #C8CDD2;   /* Platinum — neutral chrome accent (calm by default) */
+  --accent-2: #9BA0A6; /* Steel — depth / secondary */
 
-  /* Cyan kept ONLY for prices, data values, and market numbers */
-  --data-color: #52d6f4;
-  --warm-gray: #C5B284; /* secondary / muted text */
+  /* Status accents — colour always means state */
+  --data-color: #4FD3EE;   /* cyan — prices, values, live/active */
+  --status-cyan: #4FD3EE;  /* live / active / value */
+  --status-amber: #F0A23A; /* for sale */
+  --status-gain: #54C98A;  /* gain */
+  --status-loss: #E05252;  /* loss / alert */
+  --warm-gray: #9BA0A6; /* secondary / muted text */
 
   /* ---------------------------------------------------------
      LIGHT MODE BASE
@@ -157,16 +167,7 @@
   --table-row-hover: rgba(0, 0, 0, 0.03);
 
   /* Subtle “glow” layer — warm gold depth, not flat */
-  --bg-glow: radial-gradient(
-      ellipse 90% 50% at 50% -8%,
-      color-mix(in srgb, var(--accent) 8%, transparent),
-      transparent 65%
-    ),
-    radial-gradient(
-      ellipse 60% 35% at 80% 110%,
-      color-mix(in srgb, var(--accent-2) 5%, transparent),
-      transparent 60%
-    );
+  --bg-glow: linear-gradient(120deg, rgba(255,255,255,0.03) 0%, transparent 30%, rgba(255,255,255,0.02) 55%, transparent 82%);
 
   /* =========================================================
      MOBILE / TOUCH WINS (global)
@@ -241,9 +242,8 @@
   --table-row-hover: rgba(255, 255, 255, 0.05);
 
   --bg-glow:
-    radial-gradient(circle at 14% 0%, rgba(26, 40, 62, 0.22), transparent 42%),
-    radial-gradient(circle at 78% 8%, rgba(184, 135, 43, 0.08), transparent 30%),
-    linear-gradient(180deg, #000307 0%, #02050D 100%);
+    linear-gradient(120deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0.025) 55%, rgba(255,255,255,0) 82%),
+    linear-gradient(160deg, #202329 0%, #14161A 55%, #1A1D22 100%);
 }
 
 .theme-light {
@@ -287,8 +287,8 @@
 ========================================================= */
 
 .theme-mirror {
-  --accent: #D9A23A;   /* Gold */
-  --accent-2: #B8872B; /* Dark gold */
+  --accent: #C8CDD2;   /* Platinum */
+  --accent-2: #9BA0A6; /* Steel */
 }
 
 /* =========================================================
@@ -296,8 +296,8 @@
 ========================================================= */
 
 .theme-purple {
-  --accent: #E8A820;   /* Deeper gold */
-  --accent-2: #D9A23A; /* Bright gold */
+  --accent: #D6DADE;   /* Bright platinum */
+  --accent-2: #A8AEB4; /* Chrome */
 }
 
 /* =========================================================
@@ -355,13 +355,13 @@ body::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='128' height='128' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
   background-repeat: repeat;
   background-size: 128px 128px;
-  opacity: 0.035;
+  opacity: 0; /* film grain retired — brushed-metal sheen lives in --theme-bg */
   pointer-events: none;
   z-index: 0;
 }
 
 .theme-light body::before {
-  opacity: 0.02;
+  opacity: 0;
 }
 
 /* Ensure all direct children of body stack above the noise layer */
@@ -418,6 +418,85 @@ a:hover {
 ::selection {
   background: color-mix(in srgb, var(--accent) 28%, transparent);
 }
+
+/* =========================================================
+   BRUSHED CONSOLE UTILITIES
+   Machined dark metal surfaces, bevels, and status glow.
+   Metal = smooth gradient sweep (NOT lines/noise).
+========================================================= */
+
+/* Dark brushed gunmetal surface (tiles, hero panels, plates) */
+.vltd-brushed {
+  background:
+    linear-gradient(112deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0.03) 60%, rgba(255,255,255,0) 100%),
+    linear-gradient(165deg, #2A2E34 0%, #191C21 55%, #22262B 100%);
+  border: 1px solid var(--border, rgba(255,255,255,0.10));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 2px 6px rgba(0,0,0,0.4);
+  border-radius: 4px;
+}
+.theme-light .vltd-brushed {
+  background:
+    linear-gradient(112deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0.35) 60%, rgba(255,255,255,0) 100%),
+    linear-gradient(165deg, #FFFFFF 0%, #E9ECEF 55%, #F4F6F8 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 2px 6px rgba(0,0,0,0.10);
+}
+
+/* Light brushed platinum (metal accents / secondary buttons / chips) */
+.vltd-brushed-platinum {
+  background:
+    linear-gradient(112deg, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0) 22%, rgba(255,255,255,0.35) 48%, rgba(255,255,255,0) 70%, rgba(255,255,255,0.5) 100%),
+    linear-gradient(135deg, #EDEFF1 0%, #A8AEB4 42%, #D6DADE 66%, #8C9298 100%);
+  color: #0B0C0E;
+  border: 1px solid rgba(255,255,255,0.4);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 2px 6px rgba(0,0,0,0.45);
+  border-radius: 4px;
+}
+
+/* Machined bevel only (apply over any surface) */
+.vltd-bevel {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* Status: colored hairline border + subtle internal glow. Off by default. */
+.vltd-status-cyan  { border-color: rgba(79,211,238,0.45) !important;  box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 0 0 1px rgba(79,211,238,0.22), 0 0 20px rgba(79,211,238,0.18); }
+.vltd-status-amber { border-color: rgba(240,162,58,0.42) !important;  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 0 16px rgba(240,162,58,0.14); }
+.vltd-status-gain  { border-color: rgba(84,201,138,0.42) !important;  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 0 16px rgba(84,201,138,0.14); }
+.vltd-status-loss  { border-color: rgba(224,82,82,0.42) !important;   box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 0 16px rgba(224,82,82,0.14); }
+.vltd-status-cyan  .vltd-status-num,
+.vltd-num-cyan  { color: #4FD3EE; }
+.vltd-num-amber { color: #F0A23A; }
+.vltd-num-gain  { color: #54C98A; }
+.vltd-num-loss  { color: #E05252; }
+
+/* Split action-module button (the primary CTA shape) */
+.vltd-action-module {
+  display: inline-flex;
+  align-items: stretch;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5), 0 0 18px rgba(79,211,238,0.22), inset 0 1px 0 rgba(255,255,255,0.12);
+}
+.vltd-action-module__plate {
+  padding: 12px 20px;
+  font-size: 13px; font-weight: 800; letter-spacing: 0.11em; text-transform: uppercase;
+  color: #F6F7F8;
+  background:
+    linear-gradient(110deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 24%, rgba(255,255,255,0.06) 52%, rgba(255,255,255,0) 74%, rgba(255,255,255,0.08) 100%),
+    linear-gradient(180deg, #33373D 0%, #20242A 44%, #2A2E34 60%, #15181C 100%);
+}
+.vltd-action-module__block {
+  display: flex; align-items: center; justify-content: center;
+  min-width: 52px; padding: 0 16px;
+  color: #06171d;
+  background:
+    linear-gradient(115deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 40%, rgba(255,255,255,0.25) 100%),
+    linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1);
+  box-shadow: inset 1px 0 0 rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+/* status variants of the action block */
+.vltd-action-module__block--amber { background: linear-gradient(115deg, rgba(255,255,255,0.4), rgba(255,255,255,0) 40%, rgba(255,255,255,0.22)), linear-gradient(180deg, #F7B85A, #EE9C2E); }
 
 /* Optional: consistent hr/dividers */
 hr {
