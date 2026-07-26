@@ -243,7 +243,7 @@ function ActivityThumb({ event, large = false }: { event: ActivityEvent; large?:
       {event.imageUrl ? (
         <img src={event.imageUrl} alt="" className="h-full w-full object-contain" />
       ) : (
-        <Glyph name="box" size={large ? 42 : 24} style={{ color: "var(--theme-text-muted,#A0956B)" }} />
+        <Glyph name="box" size={large ? 42 : 24} style={{ color: "var(--theme-text-muted,#61656B)" }} />
       )}
     </div>
   );
@@ -265,15 +265,15 @@ function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; sele
         boxShadow: selected ? "0 0 0 1px rgba(203,208,213,0.2), 0 18px 38px rgba(0,0,0,0.28)" : "none",
       }}
     >
-      <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{formatClock(event.timestamp)}</div>
-      <div className="grid h-12 w-12 place-items-center rounded-full border" style={{ borderColor: colorForKind(event.kind), color: colorForKind(event.kind), background: "rgba(0,0,0,0.24)" }}>
-        <Glyph name={iconForKind(event.kind)} size={22} />
+      <div className="text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>{formatClock(event.timestamp)}</div>
+      <div className="grid h-11 w-11 place-items-center justify-self-center rounded-full border" style={{ borderColor: colorForKind(event.kind), color: colorForKind(event.kind), background: "rgba(0,0,0,0.24)" }}>
+        <Glyph name={iconForKind(event.kind)} size={19} />
       </div>
       <ActivityThumb event={event} />
       <div className="min-w-0">
         <div className="text-lg font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{event.subtitle}</div>
         <div className="truncate text-base" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{event.title}</div>
-        <div className="mt-1 truncate text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{event.detail}</div>
+        <div className="mt-1 truncate text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>{event.detail}</div>
       </div>
       <div className="min-w-0 border-l border-[rgba(203,208,213,0.16)] pl-5">
         {showValue && event.newValue ? (
@@ -282,7 +282,7 @@ function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; sele
             {formatMoney(event.newValue)}
           </div>
         ) : (
-          <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{event.meta ?? "Recorded"}</div>
+          <div className="text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>{event.meta ?? "Recorded"}</div>
         )}
         {change !== null && (
           <div className={change >= 0 ? "text-green-400" : "text-red-400"}>
@@ -290,7 +290,7 @@ function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; sele
           </div>
         )}
       </div>
-      <div className="border-l border-[rgba(203,208,213,0.16)] pl-5 text-right text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+      <div className="border-l border-[rgba(203,208,213,0.16)] pl-5 text-right text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>
         {showEvidence ? (
           <>
             {event.confidence && <div>{event.confidence} confidence</div>}
@@ -310,7 +310,7 @@ function EmptyState() {
     <div className="rounded-[8px] border border-[rgba(203,208,213,0.22)] p-10 text-center" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }}>
       <Glyph name="chart" size={44} style={{ color: "var(--theme-gold,#C8CDD2)", marginInline: "auto" }} />
       <h2 className="mt-4 text-xl font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>No activity yet</h2>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-6" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+      <p className="mx-auto mt-2 max-w-md text-sm leading-6" style={{ color: "var(--theme-text-muted,#61656B)" }}>
         Add items, update prices, publish exhibitions, or log a sale and this page will become your vault timeline.
       </p>
       <div className="mt-5 flex justify-center gap-3">
@@ -441,7 +441,7 @@ export default function ActivityPage() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <h1 className="font-serif text-[48px] font-black leading-none tracking-[-0.02em]">Activity</h1>
-              <p className="mt-2 text-base" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Everything that changed in your vault.</p>
+              <p className="mt-2 text-base" style={{ color: "var(--theme-text-muted,#61656B)" }}>Everything that changed in your vault.</p>
             </div>
           </div>
 
@@ -469,7 +469,7 @@ export default function ActivityPage() {
 
           <div className="mt-7 space-y-4">
             {isLoading ? (
-              <div className="rounded-[8px] border border-[rgba(203,208,213,0.22)] p-6" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))", color: "var(--theme-text-muted,#A0956B)" }}>
+              <div className="rounded-[8px] border border-[rgba(203,208,213,0.22)] p-6" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))", color: "var(--theme-text-muted,#61656B)" }}>
                 Loading activity...
               </div>
             ) : grouped.length ? (
@@ -520,7 +520,7 @@ export default function ActivityPage() {
                 <ActivityThumb event={selected} large />
                 <div className="min-w-0">
                   <h3 className="text-[22px] font-black leading-tight">{selected.title}</h3>
-                  <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{selected.meta || selected.subtitle}</p>
+                  <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>{selected.meta || selected.subtitle}</p>
                   <div className="mt-4 inline-flex items-center gap-2 text-sm" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
                     <Glyph name={selected.item?.isPublic ? "eye" : "key"} size={15} />
                     {selected.item?.isPublic ? "Public" : "Private"}
@@ -535,25 +535,25 @@ export default function ActivityPage() {
               </div>
 
               <div className="mt-7 border-b border-[rgba(203,208,213,0.16)] pb-5">
-                <div className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Event</div>
+                <div className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Event</div>
                 <div className="mt-2 text-lg font-black">{selected.subtitle}</div>
-                <div className="mt-1 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{formatFullDate(selected.timestamp)}</div>
+                <div className="mt-1 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>{formatFullDate(selected.timestamp)}</div>
               </div>
 
               {showSelectedValue && (
                 <section className="mt-5 border-b border-[rgba(203,208,213,0.16)] pb-5">
-                  <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Value Change</h3>
+                  <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Value Change</h3>
                   <div className="mt-4 grid grid-cols-3 gap-4">
                     <div>
-                      <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Previous Value</div>
+                      <div className="text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Previous Value</div>
                       <div className="mt-1 text-[22px] font-black text-[color:var(--info,#52D6F4)]">{selected.previousValue ? formatMoney(selected.previousValue) : "-"}</div>
                     </div>
                     <div>
-                      <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>New Value</div>
+                      <div className="text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>New Value</div>
                       <div className="mt-1 text-[22px] font-black text-[color:var(--info,#52D6F4)]">{formatMoney(selected.newValue)}</div>
                     </div>
                     <div>
-                      <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Change</div>
+                      <div className="text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Change</div>
                       <div className={deltaPct(selected) !== null && Number(deltaPct(selected)) < 0 ? "mt-1 text-[22px] font-black text-red-400" : "mt-1 text-[22px] font-black text-green-400"}>
                         {deltaPct(selected) !== null ? `${Number(deltaPct(selected)) >= 0 ? "+" : ""}${Number(deltaPct(selected)).toFixed(1)}%` : "-"}
                       </div>
@@ -564,24 +564,24 @@ export default function ActivityPage() {
 
               {showSelectedEvidence && (
                 <section className="mt-5 rounded-[7px] border border-[rgba(203,208,213,0.22)] p-4">
-                  <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Source & Evidence</h3>
+                  <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Source & Evidence</h3>
                   <div className="mt-4 grid grid-cols-3 gap-4">
                     {typeof selected.comps === "number" && selected.comps > 0 && (
                       <div>
                         <div className="text-[24px] font-black text-[color:var(--info,#52D6F4)]">{selected.comps}</div>
-                        <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Comparables</div>
+                        <div className="text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Comparables</div>
                       </div>
                     )}
                     {selected.confidence && (
                       <div className="border-l border-[rgba(203,208,213,0.16)] pl-4">
                         <div className={selected.confidence === "High" ? "text-lg font-black text-green-400" : "text-lg font-black text-[color:var(--theme-gold,#C8CDD2)]"}>{selected.confidence}</div>
-                        <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Confidence</div>
+                        <div className="text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Confidence</div>
                       </div>
                     )}
                     {selected.source && (
                       <div className="border-l border-[rgba(203,208,213,0.16)] pl-4">
                         <div className="font-black">{selected.source}</div>
-                        <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Source</div>
+                        <div className="text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Source</div>
                       </div>
                     )}
                   </div>
@@ -590,23 +590,23 @@ export default function ActivityPage() {
 
               <section className="mt-5 border-b border-[rgba(203,208,213,0.16)] pb-5">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Notes</h3>
+                  <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Notes</h3>
                   <Link href={selected.href ?? "/vault"} className="rounded-[7px] border border-[rgba(203,208,213,0.34)] px-4 py-2 text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Add note</Link>
                 </div>
-                <p className="mt-3 text-sm leading-6" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{selected.detail}</p>
+                <p className="mt-3 text-sm leading-6" style={{ color: "var(--theme-text-muted,#61656B)" }}>{selected.detail}</p>
               </section>
 
               <section className="mt-5">
-                <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Related Activity</h3>
+                <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Related Activity</h3>
                 <div className="mt-3 grid gap-2">
                   {allEvents.filter((event) => event.id !== selected.id && event.item?.id && event.item.id === selected.item?.id).slice(0, 2).map((event) => (
                     <button key={event.id} type="button" onClick={() => setSelectedId(event.id)} className="flex items-center justify-between rounded-[7px] border border-[rgba(203,208,213,0.16)] px-4 py-3 text-left text-sm">
                       <span>{event.subtitle}</span>
-                      <span style={{ color: "var(--theme-text-muted,#A0956B)" }}>{formatFullDate(event.timestamp).split(",")[0]}</span>
+                      <span style={{ color: "var(--theme-text-muted,#61656B)" }}>{formatFullDate(event.timestamp).split(",")[0]}</span>
                     </button>
                   ))}
                   {!allEvents.some((event) => event.id !== selected.id && event.item?.id && event.item.id === selected.item?.id) && (
-                    <div className="rounded-[7px] border border-[rgba(203,208,213,0.16)] px-4 py-3 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>No related activity yet.</div>
+                    <div className="rounded-[7px] border border-[rgba(203,208,213,0.16)] px-4 py-3 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>No related activity yet.</div>
                   )}
                 </div>
               </section>
@@ -618,7 +618,7 @@ export default function ActivityPage() {
               </div>
             </>
           ) : (
-            <div className="py-12 text-center" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Select an activity to see details.</div>
+            <div className="py-12 text-center" style={{ color: "var(--theme-text-muted,#61656B)" }}>Select an activity to see details.</div>
           )}
         </aside>
       </div>

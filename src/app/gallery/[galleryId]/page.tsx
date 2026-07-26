@@ -119,7 +119,7 @@ export default function PublicGalleryPage() {
               >
                 +
               </span>
-              <span className="text-sm font-semibold" style={{ color: "#A0956B" }}>Add first item</span>
+              <span className="text-sm font-semibold" style={{ color: "#61656B" }}>Add first item</span>
             </button>
           ) : galleryMode === "swipe" ? (
             <div className="mx-auto max-w-sm px-4 pt-4">

@@ -650,7 +650,7 @@ export default function EventsPage() {
                     <button
                       type="button"
                       onClick={() => selectEvent(featuredEvent.id, true)}
-                      className="inline-flex h-9 items-center rounded-[7px] bg-[color:var(--theme-gold)] px-5 text-xs font-black text-black"
+                      className="vltd-primary-button inline-flex h-9 items-center rounded-[4px] px-5 text-xs font-black"
                     >
                       View Event
                     </button>

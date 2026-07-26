@@ -154,7 +154,7 @@ function StatPanel({
       <div className="flex h-full items-center gap-4">
         {icon}
         <div className="min-w-0 flex-1">
-          <div className="text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{label}</div>
+          <div className="text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>{label}</div>
           {children}
         </div>
       </div>
@@ -201,15 +201,15 @@ function GoalRow({
       </div>
 
       <div className="min-w-0 border-l border-r border-[rgba(203,208,213,0.16)] px-5">
-        <div className="mb-2 text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{goal.previewLabel}</div>
+        <div className="mb-2 text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>{goal.previewLabel}</div>
         {goal.type === "value" ? (
           <div>
             <div className="h-2 overflow-hidden rounded-full bg-white/10">
               <div className="h-full rounded-full bg-[#56D879]" style={{ width: `${Math.min(100, goal.pct)}%` }} />
             </div>
             <div className="mt-3 grid grid-cols-2 text-sm" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
-              <div><span className="block text-[11px] uppercase tracking-[0.12em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Current value</span>{money(goal.ownedCount)}</div>
-              <div><span className="block text-[11px] uppercase tracking-[0.12em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Target</span>{money(goal.targetCount)}</div>
+              <div><span className="block text-[11px] uppercase tracking-[0.12em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Current value</span>{money(goal.ownedCount)}</div>
+              <div><span className="block text-[11px] uppercase tracking-[0.12em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Target</span>{money(goal.targetCount)}</div>
             </div>
           </div>
         ) : (
@@ -229,9 +229,9 @@ function GoalRow({
       </div>
 
       <div>
-        <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Next Action</div>
+        <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Next Action</div>
         <div className="mt-1 text-lg font-bold leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{goal.nextAction}</div>
-        <div className="text-xs" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{goal.missing > 0 ? `${goal.missing} items missing` : "Ready"}</div>
+        <div className="text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>{goal.missing > 0 ? `${goal.missing} items missing` : "Ready"}</div>
         <button
           type="button"
           onClick={(event) => {
@@ -332,7 +332,7 @@ export default function GoalsPage() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <h1 className="font-serif text-[44px] leading-none tracking-[-0.03em]" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>Goals</h1>
-              <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Turn a collection into a plan.</p>
+              <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Turn a collection into a plan.</p>
             </div>
             <button
               type="button"
@@ -375,25 +375,25 @@ export default function GoalsPage() {
               <div className="mt-1 text-sm leading-6" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
                 <strong>{goalViews.filter((goal) => goal.pct > 0).length}</strong> of <strong>{goalViews.length}</strong> goals active<br />
                 <span style={{ color: "var(--theme-gold,#C8CDD2)" }}>{goalViews.filter((goal) => goal.missing > 0).length} need work</span><br />
-                <span style={{ color: "var(--theme-text-muted,#A0956B)" }}>{goalViews.filter((goal) => goal.pct === 0).length} not started</span>
+                <span style={{ color: "var(--theme-text-muted,#61656B)" }}>{goalViews.filter((goal) => goal.pct === 0).length} not started</span>
               </div>
             </StatPanel>
             <StatPanel label="Goal Value Impact">
               <div className="mt-2 text-[32px] font-black text-[color:var(--info,#52D6F4)]">{money(goalValueImpact)}</div>
               <div className="flex items-end justify-between gap-2">
-                <p className="text-sm leading-5" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Potential increase across all goals</p>
+                <p className="text-sm leading-5" style={{ color: "var(--theme-text-muted,#61656B)" }}>Potential increase across all goals</p>
                 <SparkLine />
               </div>
             </StatPanel>
             <StatPanel label="Insurance Coverage" icon={<Glyph name="shield" size={34} style={{ color: "var(--theme-gold,#C8CDD2)" }} />}>
               <div className="text-[32px] font-black text-[color:var(--info,#52D6F4)]">{insuranceGoal?.pct ?? 0}%</div>
-              <p className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+              <p className="text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>
                 {insuranceGoal ? `${insuranceGoal.ownedCount} of ${insuranceGoal.targetCount} items` : "No insurance goal yet"}
               </p>
             </StatPanel>
             <StatPanel label="Completed This Year" icon={<Glyph name="check" size={34} style={{ color: "#8DD35F" }} />}>
               <div className="text-[32px] font-black text-[#8DD35F]">{completed}</div>
-              <p className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Great job! Keep building momentum.</p>
+              <p className="text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Great job! Keep building momentum.</p>
             </StatPanel>
           </div>
 
@@ -401,7 +401,7 @@ export default function GoalsPage() {
             <h2 className="text-[12px] font-black uppercase tracking-[0.18em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
               Active Goals <span className="ml-2 rounded-full border border-[rgba(203,208,213,0.24)] px-2 py-0.5 text-[11px]">{visibleGoals.length}</span>
             </h2>
-            <div className="flex items-center gap-3 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+            <div className="flex items-center gap-3 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>
               <span>Sort by:</span>
               <select value={sort} onChange={(event) => setSort(event.target.value as SortMode)} className="bg-transparent font-bold outline-none" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
                 <option value="priority">Priority</option>
@@ -418,7 +418,7 @@ export default function GoalsPage() {
                 <div>
                   <Glyph name="target" size={42} style={{ color: "var(--theme-gold,#C8CDD2)" }} />
                   <h2 className="mt-4 text-xl font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>No goals yet</h2>
-                  <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Create a real target for a set, value, insurance readiness, gallery, or sale plan.</p>
+                  <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Create a real target for a set, value, insurance readiness, gallery, or sale plan.</p>
                   <button
                     type="button"
                     onClick={() => setShowAdd(true)}
@@ -443,7 +443,7 @@ export default function GoalsPage() {
 
           <section className="mt-4 rounded-[7px] border border-[rgba(203,208,213,0.22)] p-4" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }}>
             <h2 className="mb-2 text-[12px] font-black uppercase tracking-[0.18em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Upcoming Milestones</h2>
-            <p className="text-sm leading-6" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+            <p className="text-sm leading-6" style={{ color: "var(--theme-text-muted,#61656B)" }}>
               Milestones will appear here after goal due dates are added to the goal model.
             </p>
           </section>
@@ -471,19 +471,19 @@ export default function GoalsPage() {
                 </div>
                 <div className="ml-5 text-[38px] font-black text-[#56D879]">{selectedGoal.pct}%</div>
               </div>
-              <div className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{selectedGoal.ownedCount} of {selectedGoal.targetCount} items ready</div>
+              <div className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>{selectedGoal.ownedCount} of {selectedGoal.targetCount} items ready</div>
             </div>
 
             <div className="mt-5 grid grid-cols-2 border-y border-[rgba(203,208,213,0.18)] py-4">
               <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Target</div>
+                <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Target</div>
                 <div className="mt-1 text-lg font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selectedGoal.targetCount.toLocaleString()} items</div>
-                <div className="text-xs" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Top items by value</div>
+                <div className="text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>Top items by value</div>
               </div>
               <div className="border-l border-[rgba(203,208,213,0.18)] pl-5">
-                <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Insurable Value</div>
+                <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Insurable Value</div>
                 <div className="mt-1 text-[23px] font-black text-[color:var(--info,#52D6F4)]">{money(selectedGoal.valueImpact)}</div>
-                <div className="text-xs" style={{ color: "var(--theme-text-muted,#A0956B)" }}>From matching vault items</div>
+                <div className="text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>From matching vault items</div>
               </div>
             </div>
 
@@ -499,7 +499,7 @@ export default function GoalsPage() {
               ].map(([label, count, ok]) => (
                 <div key={String(label)} className="grid grid-cols-[1fr_72px_22px] items-center gap-2 border-b border-[rgba(203,208,213,0.10)] py-2 text-sm">
                   <span style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{label}</span>
-                  <span className="text-right" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+                  <span className="text-right" style={{ color: "var(--theme-text-muted,#61656B)" }}>
                     {label === "Current progress" ? `${count}%` : Number(count).toLocaleString()}
                   </span>
                   <span className={ok ? "text-green-400" : "text-[color:var(--theme-gold,#C8CDD2)]"}>{ok ? "ok" : "!"}</span>
@@ -513,7 +513,7 @@ export default function GoalsPage() {
               </div>
               <div className="rounded-[7px] border border-[rgba(203,208,213,0.14)] p-3 text-sm" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
                 <div className="font-black">{selectedGoal.nextAction}</div>
-                <div className="mt-1 text-xs" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+                <div className="mt-1 text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>
                   {selectedGoal.missing > 0
                     ? `${selectedGoal.missing} more ${selectedGoal.type === "value" ? "value" : "item"} ${selectedGoal.missing === 1 ? "step is" : "steps are"} needed for this goal.`
                     : "This goal is complete."}
@@ -530,7 +530,7 @@ export default function GoalsPage() {
                 <Glyph name={selectedGoal.type === "insurance" ? "shield" : selectedGoal.type === "gallery" ? "exhibition" : "target"} size={20} style={{ color: "var(--theme-gold,#C8CDD2)" }} />
                 <span>
                   <span className="block text-sm font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selectedGoal.actionLabel}</span>
-                  <span className="block text-xs" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Uses the current goal and matching vault items.</span>
+                  <span className="block text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>Uses the current goal and matching vault items.</span>
                 </span>
                 <span style={{ color: "var(--theme-gold,#C8CDD2)" }}>›</span>
               </Link>

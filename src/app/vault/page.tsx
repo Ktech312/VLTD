@@ -654,7 +654,7 @@ function VaultEmptyState({
         </div>
         <div
           className="mt-3 inline-flex flex-wrap items-center justify-center gap-1.5 rounded-full px-3 py-1 text-xs"
-          style={{ background: "rgba(203,208,213,0.08)", border: "1px solid rgba(203,208,213,0.15)", color: "#A0956B" }}
+          style={{ background: "rgba(203,208,213,0.08)", border: "1px solid rgba(203,208,213,0.15)", color: "#61656B" }}
         >
           <span>Universes:</span>
           <span style={{ color: "#C8CDD2" }}>TCG - Sports - Comics - Music - Games - Jewelry - Misc</span>
@@ -765,7 +765,7 @@ function UniverseOverviewCard({
               draggable={false}
             />
           ) : (
-            <div className="flex h-full flex-col items-center justify-center gap-1 px-2 text-center text-[10px] font-semibold" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
+            <div className="flex h-full flex-col items-center justify-center gap-1 px-2 text-center text-[10px] font-semibold" style={{ color: "var(--theme-text-muted, #61656B)" }}>
               <span className="text-lg leading-none" style={{ color: "var(--theme-gold, #C8CDD2)", opacity: 0.7 }}>+</span>
               <span>{hasItems ? universeDisplayName(category.key) : "Add"}</span>
             </div>
@@ -774,14 +774,14 @@ function UniverseOverviewCard({
 
         {/* Right: label, name, description, item count (no pill border) */}
         <div className="flex min-w-0 flex-col py-0.5 pr-1">
-          <div className="text-[10px] uppercase tracking-[0.18em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>Universe</div>
+          <div className="text-[10px] uppercase tracking-[0.18em]" style={{ color: "var(--theme-text-muted, #61656B)" }}>Universe</div>
           <h2 className="mt-0.5 text-[15px] font-semibold leading-tight" style={{ color: "var(--theme-gold, #C8CDD2)" }}>
             {universeDisplayName(category.key)}
             {isFocus && (
-              <span className="ml-1.5 text-[10px] font-medium" style={{ color: "var(--theme-text-muted, #A0956B)" }}>· Focus</span>
+              <span className="ml-1.5 text-[10px] font-medium" style={{ color: "var(--theme-text-muted, #61656B)" }}>· Focus</span>
             )}
           </h2>
-          <div className="mt-1 line-clamp-2 text-[11px] leading-[1.4]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
+          <div className="mt-1 line-clamp-2 text-[11px] leading-[1.4]" style={{ color: "var(--theme-text-muted, #61656B)" }}>
             {hasItems ? category.description : "No items yet. Tap to start adding."}
           </div>
           {/* Item count — plain text, no pill frame */}
@@ -796,14 +796,14 @@ function UniverseOverviewCard({
         className="mt-2 rounded-[10px] px-2.5 py-1.5"
         style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))", border: "1px solid var(--theme-border, rgba(203,208,213,0.08))" }}
       >
-        <div className="text-[9px] uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>Value</div>
+        <div className="text-[9px] uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted, #61656B)" }}>Value</div>
         <div className="flex items-baseline justify-between gap-2">
           <div className="text-[13px] font-extrabold leading-none" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
             {hasItems ? formatMoney(totalValue) : "—"}
           </div>
           <div
             className="text-right text-[12px] font-bold leading-none"
-            style={{ color: showGain ? (totalGain >= 0 ? "var(--color-gain, #4CAF82)" : "var(--color-loss, #E05252)") : "var(--theme-text-muted, #A0956B)" }}
+            style={{ color: showGain ? (totalGain >= 0 ? "var(--color-gain, #4CAF82)" : "var(--color-loss, #E05252)") : "var(--theme-text-muted, #61656B)" }}
           >
             {showGain ? `${totalGain >= 0 ? "+" : ""}${formatMoney(totalGain)}` : "—"}
           </div>
@@ -1592,12 +1592,12 @@ export default function VaultPage() {
               <div className="mt-1.5 text-xl font-extrabold tracking-[-0.02em] text-[color:var(--data-color)] sm:mt-2.5 sm:text-3xl">{stats.insuranceReadyPct}%</div>
               <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:text-sm">{stats.insuranceReadyCount} of {stats.totalItems} items</div>
             </div>
-            <div className="w-[140px] shrink-0 vltd-brushed vltd-status-amber p-2.5 sm:w-auto sm:p-4">
+            <div className="w-[140px] shrink-0 vltd-brushed p-2.5 sm:w-auto sm:p-4">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
                 Needs Review
               </div>
-              <div className="mt-1.5 text-xl font-extrabold tracking-[-0.02em] text-[color:var(--status-amber)] sm:mt-2.5 sm:text-3xl">{stats.needsReviewCount}</div>
+              <div className="mt-1.5 text-xl font-extrabold tracking-[-0.02em] sm:mt-2.5 sm:text-3xl">{stats.needsReviewCount}</div>
               <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:text-sm">Items missing info</div>
             </div>
           </div>

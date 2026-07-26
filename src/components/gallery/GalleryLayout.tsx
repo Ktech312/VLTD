@@ -45,7 +45,7 @@ function ShelfGrid({ items, hrefPrefix, title }: { items: VaultItem[]; hrefPrefi
     return (
       <div className="flex flex-col items-center gap-3 py-16 text-center">
         <span className="text-4xl opacity-20">&#127963;</span>
-        <p className="text-sm text-[#A0956B]">No items in this gallery yet.</p>
+        <p className="text-sm text-[#61656B]">No items in this gallery yet.</p>
       </div>
     );
   }
@@ -98,7 +98,7 @@ function ShelfGrid({ items, hrefPrefix, title }: { items: VaultItem[]; hrefPrefi
                     draggable={false}
                   />
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 text-[10px] text-[#A0956B]">
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 text-[10px] text-[#61656B]">
                     &#8212;
                   </div>
                 )}
@@ -108,7 +108,7 @@ function ShelfGrid({ items, hrefPrefix, title }: { items: VaultItem[]; hrefPrefi
               <div className="flex flex-col gap-1 px-2 pb-2 pt-2">
                 <p className="line-clamp-2 text-[10px] font-bold leading-snug text-[#ECEDEF]">{item.title}</p>
                 {meta ? (
-                  <p className="truncate text-[8px] leading-tight text-[#A0956B]">{meta}</p>
+                  <p className="truncate text-[8px] leading-tight text-[#61656B]">{meta}</p>
                 ) : null}
                 {val && (
                   <div

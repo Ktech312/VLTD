@@ -27,7 +27,7 @@ const C = {
   gold:   "#C8CDD2",
   goldDim:"rgba(203,208,213,0.08)",
   goldBd: "rgba(203,208,213,0.20)",
-  muted:  "#A0956B",
+  muted:  "#61656B",
   muted2: "#635F59",
   text:   "#EDEBE3",
   green:  "#52C27A",
@@ -694,7 +694,7 @@ function ProfileNudge({ primaryFocus }: { primaryFocus: string }) {
       <span className="text-lg shrink-0">✨</span>
       <div className="flex-1 min-w-0">
         <div style={{ fontSize: "12px", fontWeight: 700, color: "#C8CDD2" }}>Complete your profile</div>
-        <div style={{ fontSize: "11px", color: "#A0956B", marginTop: "1px" }}>
+        <div style={{ fontSize: "11px", color: "#61656B", marginTop: "1px" }}>
           Add your collection focus to personalise your Discover feed.
         </div>
       </div>

@@ -42,8 +42,9 @@ const SWEEP_DARK =
 const PLATINUM_GRADIENT =
   'linear-gradient(112deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 22%, rgba(255,255,255,0.3) 48%, rgba(255,255,255,0) 72%, rgba(255,255,255,0.45) 100%), linear-gradient(135deg, #EDEFF1 0%, #A8AEB4 42%, #D6DADE 66%, #8C9298 100%)'
 // Neutral machined bevel (top highlight + drop) — replaces gold glow.
-const BEVEL_DARK = 'inset 0 1px 0 rgba(255,255,255,0.10), 0 2px 10px rgba(0,0,0,0.5)'
-const BEVEL_LIGHT = 'inset 0 1px 0 rgba(255,255,255,0.8), 0 2px 8px rgba(0,0,0,0.12)'
+// Machined bevel + a subtle cyan (blue) glow — the console's standard highlight.
+const BEVEL_DARK = 'inset 0 1px 0 rgba(255,255,255,0.30), 0 2px 10px rgba(0,0,0,0.45), 0 0 16px rgba(79,211,238,0.20)'
+const BEVEL_LIGHT = 'inset 0 1px 0 rgba(255,255,255,0.8), 0 2px 8px rgba(0,0,0,0.12), 0 0 14px rgba(79,211,238,0.16)'
 
 export const themes: Record<ThemeId, Theme> = {
   'deep-vault': {

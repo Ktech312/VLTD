@@ -196,10 +196,10 @@ function HeaderAction({
 }) {
   const style = primary
     ? {
-        background: "linear-gradient(135deg, #9B6A18 0%, #C8CDD2 55%, #EDEFF1 100%)",
-        border: "1px solid rgba(255,224,138,0.42)",
-        color: "#080A0B",
-        boxShadow: "0 10px 28px rgba(203,208,213,0.20)",
+        background: "linear-gradient(115deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 45%, rgba(255,255,255,0.18) 100%), linear-gradient(180deg, #79E7FB 0%, #41C6E4 55%, #2CB1D1 100%)",
+        border: "1px solid rgba(79,211,238,0.5)",
+        color: "#06171d",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)",
       }
     : {
         background: "rgba(3,8,14,0.72)",

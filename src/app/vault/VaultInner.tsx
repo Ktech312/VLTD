@@ -1254,7 +1254,7 @@ export default function VaultInner() {
 
         {/* Focused universe filter note */}
         {focusedUniverses.length > 0 && uFilter !== "ALL" && (
-          <div className="mt-1.5 flex items-center gap-1.5 text-[11px]" style={{ color: "var(--muted2, #A0956B)" }}>
+          <div className="mt-1.5 flex items-center gap-1.5 text-[11px]" style={{ color: "var(--muted2, #61656B)" }}>
             <span>Showing your focused universes</span>
             <span>·</span>
             <button

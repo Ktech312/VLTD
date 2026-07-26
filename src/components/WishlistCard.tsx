@@ -63,7 +63,7 @@ export default function WishlistCard({
       {(item.category || item.universe) && (
         <div
           className="mt-0.5 text-sm"
-          style={{ color: "var(--theme-text-muted, #A0956B)" }}
+          style={{ color: "var(--theme-text-muted, #61656B)" }}
         >
           {item.category ?? item.universe}
         </div>
@@ -78,7 +78,7 @@ export default function WishlistCard({
       {item.condition && item.condition !== "any" && (
         <div
           className="mt-1.5 text-xs"
-          style={{ color: "var(--theme-text-muted, #A0956B)" }}
+          style={{ color: "var(--theme-text-muted, #61656B)" }}
         >
           Condition: {CONDITION_LABELS[item.condition] ?? item.condition}
         </div>

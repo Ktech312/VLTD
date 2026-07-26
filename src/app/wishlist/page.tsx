@@ -190,9 +190,9 @@ function WatchCard({
           <div className="line-clamp-2 font-serif text-[17px] font-black leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
             {entry.title}
           </div>
-          <div className="mt-1 text-[12px]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{entry.subtitle}</div>
+          <div className="mt-1 text-[12px]" style={{ color: "var(--theme-text-muted,#61656B)" }}>{entry.subtitle}</div>
           <div className="text-[12px]" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{entry.meta}</div>
-          <div className="mt-4 text-[11px]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Current Value</div>
+          <div className="mt-4 text-[11px]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Current Value</div>
           <div className="text-[23px] font-black leading-tight text-[color:var(--info,#52D6F4)]">{entry.currentValue ? money(entry.currentValue) : "--"}</div>
           <div className="mt-1 text-[12px]" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>Target Price</div>
           <div className="text-[17px] font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{entry.targetPrice ? money(entry.targetPrice) : "--"}</div>
@@ -389,7 +389,7 @@ export default function WishlistPage() {
             <h1 className="font-serif text-[44px] leading-none tracking-[-0.03em]" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
               Watchlist
             </h1>
-            <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+            <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>
               Track items, exhibitions, and price targets before they enter your vault.
             </p>
           </div>
@@ -452,7 +452,7 @@ export default function WishlistPage() {
               </button>
             ))}
             <div className="ml-auto flex items-center gap-2">
-              <span className="text-xs" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Sort</span>
+              <span className="text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>Sort</span>
               <select
                 value={sort}
                 onChange={(event) => setSort(event.target.value as SortMode)}
@@ -510,7 +510,7 @@ export default function WishlistPage() {
               <span>
                 <span className="block text-3xl" style={{ color: "var(--theme-gold,#C8CDD2)" }}>+</span>
                 <span className="mt-2 block text-lg font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Add Watch</span>
-                <span className="mt-1 block text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Track items or exhibitions you&apos;re watching.</span>
+                <span className="mt-1 block text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Track items or exhibitions you&apos;re watching.</span>
                 <span className="mt-6 flex justify-center" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
                   <Glyph name="search" size={28} />
                 </span>
@@ -525,7 +525,7 @@ export default function WishlistPage() {
               </div>
               <div>
                 <div className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Pro Tip</div>
-                <p className="text-xs leading-5" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+                <p className="text-xs leading-5" style={{ color: "var(--theme-text-muted,#61656B)" }}>
                   Get the most out of your watchlist by setting target prices and alerts.
                 </p>
               </div>
@@ -539,7 +539,7 @@ export default function WishlistPage() {
             ].map(([value, label, tone]) => (
               <div key={label} className="grid place-items-center border-r border-[rgba(203,208,213,0.12)] p-4 text-center last:border-r-0">
                 <div className={`text-2xl font-black ${tone === "danger" ? "text-red-400" : tone === "success" ? "text-green-400" : "text-[color:var(--info,#52D6F4)]"}`}>{value}</div>
-                <div className="text-xs" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{label}</div>
+                <div className="text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>{label}</div>
               </div>
             ))}
           </div>
@@ -593,9 +593,9 @@ export default function WishlistPage() {
               </div>
               <div>
                 <h2 className="font-serif text-[25px] font-black leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selected.title}</h2>
-                <p className="mt-1 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{selected.subtitle}</p>
+                <p className="mt-1 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>{selected.subtitle}</p>
                 <p className="text-sm" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selected.meta}</p>
-                <div className="mt-5 text-xs" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Current Value</div>
+                <div className="mt-5 text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>Current Value</div>
                 <div className="text-[30px] font-black text-[color:var(--info,#52D6F4)]">{selected.currentValue ? money(selected.currentValue) : "--"}</div>
                 <div className="mt-3 overflow-hidden rounded-[7px] border border-[rgba(203,208,213,0.18)]">
                   {editingTarget && canEditSelected ? (
@@ -620,7 +620,7 @@ export default function WishlistPage() {
                     </div>
                   ) : (
                     <div className={`grid ${canEditSelected ? "grid-cols-[1fr_104px_36px]" : "grid-cols-[1fr_104px]"}`}>
-                      <div className="px-3 py-3 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Target Price</div>
+                      <div className="px-3 py-3 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Target Price</div>
                       <div className="border-l border-[rgba(203,208,213,0.12)] px-3 py-3 text-right text-sm font-bold" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selected.targetPrice ? money(selected.targetPrice) : "--"}</div>
                       {canEditSelected && (
                         <button
@@ -643,7 +643,7 @@ export default function WishlistPage() {
                 <div className="mt-3 rounded-[7px] border border-[rgba(203,208,213,0.18)] p-3 text-sm" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
                   <span
                     className="mr-2 inline-block h-2 w-2 rounded-full align-middle"
-                    style={{ background: selected.alertActive ? "#4ade80" : "var(--theme-text-muted,#A0956B)" }}
+                    style={{ background: selected.alertActive ? "#4ade80" : "var(--theme-text-muted,#61656B)" }}
                   />{" "}
                   {selected.alertActive ? "Alert Active" : "No alert set"}
                 </div>
@@ -653,7 +653,7 @@ export default function WishlistPage() {
             <div className="mt-5">
               <div className="mb-2 flex items-center justify-between">
                 <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Value History</div>
-                <div className="flex gap-3 text-[11px] font-bold" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+                <div className="flex gap-3 text-[11px] font-bold" style={{ color: "var(--theme-text-muted,#61656B)" }}>
                   <span>7D</span><span>30D</span><span>3M</span><span>6M</span><span style={{ color: "var(--theme-gold,#C8CDD2)" }}>1Y</span><span>ALL</span>
                 </div>
               </div>
@@ -666,7 +666,7 @@ export default function WishlistPage() {
               <div className="mb-2 flex items-center justify-between">
                 <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Recent Comparable Sales</div>
               </div>
-              <div className="rounded-[7px] border border-[rgba(203,208,213,0.16)] px-4 py-5 text-sm leading-6" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+              <div className="rounded-[7px] border border-[rgba(203,208,213,0.16)] px-4 py-5 text-sm leading-6" style={{ color: "var(--theme-text-muted,#61656B)" }}>
                 Comparable sales will appear here after this watched item is linked to a live pricing source.
               </div>
             </div>
@@ -705,9 +705,9 @@ export default function WishlistPage() {
                   </div>
                 </div>
               ) : (
-                <p className="text-sm leading-6" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{selected.notes}</p>
+                <p className="text-sm leading-6" style={{ color: "var(--theme-text-muted,#61656B)" }}>{selected.notes}</p>
               )}
-              <div className="mt-4 grid grid-cols-3 gap-3 text-[11px]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+              <div className="mt-4 grid grid-cols-3 gap-3 text-[11px]" style={{ color: "var(--theme-text-muted,#61656B)" }}>
                 <div><div className="uppercase tracking-[0.12em]">Added</div><div style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selected.savedAgo}</div></div>
                 <div><div className="uppercase tracking-[0.12em]">Source</div><div style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selected.source}</div></div>
                 <div><div className="uppercase tracking-[0.12em]">Status</div><div style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selected.alertActive ? "Watching" : "Saved"}</div></div>

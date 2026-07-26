@@ -584,7 +584,7 @@ export default function MuseumPage() {
                 Your museum is waiting
               </h2>
 
-              <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
+              <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed" style={{ color: "var(--theme-text-muted, #61656B)" }}>
                 Create your first gallery and shape a museum-quality story from your collection — public or private.
               </p>
 

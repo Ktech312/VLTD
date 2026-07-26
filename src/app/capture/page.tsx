@@ -176,7 +176,7 @@ function ActionButton({ label, icon, onClick, disabled }: { label: string; icon:
 
 function confidenceBadge(c: number) {
   if (c >= 0.75) return { bg: "rgba(84,201,138,0.10)", color: "#54C98A", glow: "0 0 14px rgba(84,201,138,0.30)", label: "High confidence" };
-  if (c >= 0.45) return { bg: "rgba(240,162,58,0.10)", color: "#F0A23A", glow: "0 0 14px rgba(240,162,58,0.30)", label: "Medium confidence" };
+  if (c >= 0.45) return { bg: "rgba(203,208,213,0.10)", color: "#C8CDD2", glow: "0 0 12px rgba(203,208,213,0.28)", label: "Medium confidence" };
   return { bg: "rgba(224,82,82,0.10)", color: "#E05252", glow: "0 0 14px rgba(224,82,82,0.30)", label: "Low confidence" };
 }
 

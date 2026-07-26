@@ -372,8 +372,8 @@ export default function DiscoverPage() {
           {compact && <div className="-ml-3 -my-3 h-[92px] rounded-l-[7px]" style={coverStyle(gallery)} />}
           <div className="min-w-0">
             <div className="truncate font-serif text-[17px] font-black leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{gallery.title}</div>
-            <div className="mt-0.5 truncate text-[11px]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>by {gallery.collector_name ?? "Collector"}</div>
-            <div className="mt-1 flex flex-wrap gap-2 text-[11px]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+            <div className="mt-0.5 truncate text-[11px]" style={{ color: "var(--theme-text-muted,#61656B)" }}>by {gallery.collector_name ?? "Collector"}</div>
+            <div className="mt-1 flex flex-wrap gap-2 text-[11px]" style={{ color: "var(--theme-text-muted,#61656B)" }}>
               <span>{gallery.item_count || 0} items</span>
               <span>Public</span>
             </div>
@@ -391,7 +391,7 @@ export default function DiscoverPage() {
         <div className="min-w-0">
           <div>
             <h1 className="font-serif text-[44px] leading-none tracking-[-0.03em]" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>Discover</h1>
-            <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Explore public collections, notable items, and collector rooms.</p>
+            <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Explore public collections, notable items, and collector rooms.</p>
           </div>
 
           <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_200px_200px]">
@@ -457,7 +457,7 @@ export default function DiscoverPage() {
             <section className="mt-5 rounded-[7px] border border-[rgba(203,208,213,0.22)] p-10 text-center" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))" }}>
               <div className="flex justify-center" style={{ color: "var(--theme-gold)" }}><Glyph name="search" size={34} /></div>
               <h2 className="mt-3 text-lg font-black" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>No galleries match</h2>
-              <p className="mt-1 text-sm" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
+              <p className="mt-1 text-sm" style={{ color: "var(--theme-text-muted, #61656B)" }}>
                 {hasActiveFilter ? "Clear the search or filters to see more public rooms." : "No public galleries yet. Be the first."}
               </p>
               {hasActiveFilter && (
@@ -516,7 +516,7 @@ export default function DiscoverPage() {
                     <img src={UNIVERSE_THUMB[key]} alt="" className="h-8 w-8 rounded-[5px] object-cover" />
                     <span className="min-w-0">
                       <span className="block truncate text-xs font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{UNIVERSE_LABEL[key]}</span>
-                      <span className="block text-[10px]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{count.toLocaleString()} exhibitions</span>
+                      <span className="block text-[10px]" style={{ color: "var(--theme-text-muted,#61656B)" }}>{count.toLocaleString()} exhibitions</span>
                     </span>
                   </button>
                 ))}
@@ -529,9 +529,9 @@ export default function DiscoverPage() {
 
           {!loading && !signedIn && (
             <section className="mt-6 flex flex-col items-center gap-3 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-6 py-8 text-center" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))" }}>
-              <div className="text-[11px] tracking-[0.22em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>BUILD YOUR OWN</div>
+              <div className="text-[11px] tracking-[0.22em]" style={{ color: "var(--theme-text-muted, #61656B)" }}>BUILD YOUR OWN</div>
               <h2 className="text-xl font-black" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>Create a public gallery</h2>
-              <p className="max-w-sm text-sm leading-6" style={{ color: "var(--theme-text-muted, #A0956B)" }}>Vault your collection, curate a gallery, and share it with one link.</p>
+              <p className="max-w-sm text-sm leading-6" style={{ color: "var(--theme-text-muted, #61656B)" }}>Vault your collection, curate a gallery, and share it with one link.</p>
               <Link href="/museum/new" className="rounded-[7px] px-5 py-2 text-sm font-black transition hover:brightness-105" style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B" }}>
                 Create Gallery
               </Link>
@@ -551,7 +551,7 @@ export default function DiscoverPage() {
               </div>
             </div>
             <h2 className="mt-4 font-serif text-[28px] font-black leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selectedGallery.title}</h2>
-            <div className="mt-2 flex items-center gap-2 text-xs" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+            <div className="mt-2 flex items-center gap-2 text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>
               {selectedGallery.collector_avatar_url && <img src={selectedGallery.collector_avatar_url} alt="" className="h-6 w-6 rounded-full object-cover ring-1 ring-white/15" />}
               <span>by {selectedGallery.collector_name ?? "Collector"}</span>
               <span>-</span>
@@ -559,17 +559,17 @@ export default function DiscoverPage() {
             </div>
             <div className="mt-5 grid grid-cols-2 gap-4 border-y border-[rgba(203,208,213,0.18)] py-4">
               <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Estimated Gallery Value</div>
+                <div className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Estimated Gallery Value</div>
                 <div className="mt-2 text-[28px] font-black text-[color:var(--info,#52D6F4)]">${galleryValue(selectedGallery).toLocaleString()}</div>
               </div>
               <div className="border-l border-[rgba(203,208,213,0.18)] pl-5">
-                <div className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Room Views</div>
+                <div className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Room Views</div>
                 <div className="mt-2 text-[28px] font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>{(selectedGallery.analytics_views ?? 0).toLocaleString()}</div>
               </div>
             </div>
-            {selectedGallery.description && <p className="mt-4 text-sm leading-6" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{selectedGallery.description}</p>}
+            {selectedGallery.description && <p className="mt-4 text-sm leading-6" style={{ color: "var(--theme-text-muted,#61656B)" }}>{selectedGallery.description}</p>}
             <div className="mt-5">
-              <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Featured Items</div>
+              <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Featured Items</div>
               <div className="mt-3 flex gap-2 overflow-hidden">
                 {selectedGallery.itemIds.slice(0, 4).map((id) => {
                   const fact = itemFactsById.get(id);
@@ -579,7 +579,7 @@ export default function DiscoverPage() {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={fact.imageUrl} alt={fact.title || ""} className="h-full w-full object-cover" />
                       ) : (
-                        <span className="px-1 text-center text-[8px] uppercase tracking-[0.1em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>No photo</span>
+                        <span className="px-1 text-center text-[8px] uppercase tracking-[0.1em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>No photo</span>
                       )}
                     </div>
                   );
@@ -598,7 +598,7 @@ export default function DiscoverPage() {
                 ["Views", (selectedGallery.analytics_views ?? 0).toLocaleString()],
               ].map(([label, value]) => (
                 <div key={label} className="px-3 first:pl-0">
-                  <div className="text-[10px] uppercase tracking-[0.14em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{label}</div>
+                  <div className="text-[10px] uppercase tracking-[0.14em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>{label}</div>
                   <div className="mt-1 font-bold text-[color:var(--theme-text-primary,#ECEDEF)]">{value}</div>
                 </div>
               ))}

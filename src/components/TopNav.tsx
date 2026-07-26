@@ -81,7 +81,7 @@ type Parsed = {
 
 function IconVault({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #A0956B)" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }}>
       <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.75"
         fill={active ? "rgba(203,208,213,0.10)" : "none"} />
       <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.75" />
@@ -92,7 +92,7 @@ function IconVault({ active }: { active: boolean }) {
 
 function IconExhibitions({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #A0956B)" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }}>
       <path d="M3 21h18" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
       <path d="M5 21V11M19 21V11" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
       <path d="M2 11h20" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
@@ -105,7 +105,7 @@ function IconExhibitions({ active }: { active: boolean }) {
 
 function IconDiscover({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #A0956B)" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }}>
       <circle cx="11" cy="11" r="7.5" stroke="currentColor" strokeWidth="1.75"
         fill={active ? "rgba(203,208,213,0.10)" : "none"} />
       <path d="M16.5 16.5 21 21" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
@@ -116,7 +116,7 @@ function IconDiscover({ active }: { active: boolean }) {
 
 function IconCommunityBoard({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #A0956B)" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }}>
       {/* Podium / leaderboard */}
       <rect x="2" y="13" width="5" height="8" rx="1" stroke="currentColor" strokeWidth="1.75"
         fill={active ? "rgba(203,208,213,0.16)" : "none"} />
@@ -133,7 +133,7 @@ function IconCommunityBoard({ active }: { active: boolean }) {
 
 function IconInsights({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #A0956B)" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }}>
       <path d="M3 17l4.5-5.5 4 3.5 4.5-6 4.5 3.5"
         stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M3 20h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
@@ -143,7 +143,7 @@ function IconInsights({ active }: { active: boolean }) {
 
 function IconEvents({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #A0956B)" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }}>
       <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="1.75"
         fill={active ? "rgba(203,208,213,0.10)" : "none"} />
       <path d="M3 10h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
@@ -157,7 +157,7 @@ function IconEvents({ active }: { active: boolean }) {
 
 function IconActivity({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #A0956B)" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }}>
       <path d="M3 12h3.5l2.5-6 4 12 2.5-6H21"
         stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
@@ -166,7 +166,7 @@ function IconActivity({ active }: { active: boolean }) {
 
 function IconLearn({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #A0956B)" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }}>
       <path d="M12 6.5C10 5 6.5 4.8 3.5 5.5v12.5c3-.7 6.5-.5 8.5 1 2-1.5 5.5-1.7 8.5-1V5.5C17.5 4.8 14 5 12 6.5Z"
         stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
         fill={active ? "rgba(203,208,213,0.12)" : "none"} />
@@ -482,7 +482,7 @@ function TopNavInner() {
                   style={{ opacity: isMoreActive || moreOpen ? 1 : 0.65 }}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    style={{ color: isMoreActive || moreOpen ? "#C8CDD2" : "var(--muted2, #A0956B)" }}>
+                    style={{ color: isMoreActive || moreOpen ? "#C8CDD2" : "var(--muted2, #61656B)" }}>
                     <circle cx="5" cy="12" r="1.5" fill="currentColor" />
                     <circle cx="12" cy="12" r="1.5" fill="currentColor" />
                     <circle cx="19" cy="12" r="1.5" fill="currentColor" />
@@ -518,7 +518,7 @@ function TopNavInner() {
                 style={{
                   background: guideOpen ? "rgba(203,208,213,0.12)" : "rgba(255,255,255,0.05)",
                   border: `1px solid ${guideOpen ? "rgba(203,208,213,0.35)" : "rgba(255,255,255,0.10)"}`,
-                  color: guideOpen ? "#C8CDD2" : "var(--muted2, #A0956B)",
+                  color: guideOpen ? "#C8CDD2" : "var(--muted2, #61656B)",
                 }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-label="Guide">
@@ -764,7 +764,7 @@ function TopNavInner() {
                 <div className="truncate text-sm font-semibold" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
                   {activeProfile?.display_name || accountEmail || "Guest"}
                 </div>
-                <div className="mt-0.5 truncate text-xs" style={{ color: "var(--muted2, #A0956B)" }}>
+                <div className="mt-0.5 truncate text-xs" style={{ color: "var(--muted2, #61656B)" }}>
                   {accountEmail || "Not signed in"}
                 </div>
               </div>
@@ -790,7 +790,7 @@ function TopNavInner() {
                 ))}
                 {profiles.length > 1 && (
                   <div className="mt-1 pt-2" style={{ borderTop: "1px solid rgba(203,208,213,0.10)" }}>
-                    <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--muted2, #A0956B)" }}>
+                    <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--muted2, #61656B)" }}>
                       Switch Profile
                     </div>
                     {profiles.map((p) => {
@@ -814,7 +814,7 @@ function TopNavInner() {
                             <div className="truncate text-sm font-medium" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
                               {p.display_name}
                             </div>
-                            <div className="truncate text-[11px]" style={{ color: "var(--muted2, #A0956B)" }}>
+                            <div className="truncate text-[11px]" style={{ color: "var(--muted2, #61656B)" }}>
                               @{p.username} · {p.profile_type === "business" ? "Business" : "Personal"}
                             </div>
                           </div>
