@@ -265,7 +265,7 @@ function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; sele
         boxShadow: selected ? "0 0 0 1px rgba(203,208,213,0.2), 0 18px 38px rgba(0,0,0,0.28)" : "none",
       }}
     >
-      <div className="text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>{formatClock(event.timestamp)}</div>
+      <div className="relative text-sm after:content-[''] after:pointer-events-none after:absolute after:top-1/2 after:right-[-10px] after:h-11 after:w-px after:-translate-y-1/2 after:bg-[rgba(203,208,213,0.22)]" style={{ color: "var(--theme-text-muted,#61656B)" }}>{formatClock(event.timestamp)}</div>
       <div className="grid h-11 w-11 place-items-center justify-self-center rounded-full border" style={{ borderColor: colorForKind(event.kind), color: colorForKind(event.kind), background: "rgba(0,0,0,0.24)" }}>
         <Glyph name={iconForKind(event.kind)} size={19} />
       </div>
@@ -275,7 +275,7 @@ function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; sele
         <div className="truncate text-base" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{event.title}</div>
         <div className="mt-1 truncate text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>{event.detail}</div>
       </div>
-      <div className="relative min-w-0 pl-5 before:content-[''] before:pointer-events-none before:absolute before:left-0 before:top-1/2 before:h-9 before:w-px before:-translate-y-1/2 before:bg-[rgba(203,208,213,0.22)]">
+      <div className="relative min-w-0 pl-5 before:content-[''] before:pointer-events-none before:absolute before:left-0 before:top-1/2 before:h-11 before:w-px before:-translate-y-1/2 before:bg-[rgba(203,208,213,0.22)]">
         {showValue && event.newValue ? (
           <div className="text-[22px] font-black text-[color:var(--info,#52D6F4)]">
             {event.previousValue ? `${formatMoney(event.previousValue)} -> ` : ""}
@@ -290,7 +290,7 @@ function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; sele
           </div>
         )}
       </div>
-      <div className="relative pl-5 text-right text-sm before:content-[''] before:pointer-events-none before:absolute before:left-0 before:top-1/2 before:h-9 before:w-px before:-translate-y-1/2 before:bg-[rgba(203,208,213,0.22)]" style={{ color: "var(--theme-text-muted,#61656B)" }}>
+      <div className="relative pl-5 text-right text-sm before:content-[''] before:pointer-events-none before:absolute before:left-0 before:top-1/2 before:h-11 before:w-px before:-translate-y-1/2 before:bg-[rgba(203,208,213,0.22)]" style={{ color: "var(--theme-text-muted,#61656B)" }}>
         {showEvidence ? (
           <>
             {event.confidence && <div>{event.confidence} confidence</div>}
@@ -476,8 +476,7 @@ export default function ActivityPage() {
               grouped.map((group) => (
                 <section key={group.label}>
                   <h2 className="mb-3 text-base font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>{group.label}</h2>
-                  <div className="relative space-y-3">
-                    <div className="absolute bottom-5 left-[109px] top-5 hidden w-px bg-[rgba(203,208,213,0.26)] sm:block" />
+                  <div className="space-y-3">
                     {group.events.map((event) => (
                       <ActivityRow
                         key={event.id}

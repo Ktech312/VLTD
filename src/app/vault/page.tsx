@@ -930,7 +930,7 @@ function VaultSelectionDrawer({
           </Link>
         </div>
 
-        <div className="relative px-4 py-2.5 before:absolute before:bottom-3 before:left-0 before:top-3 before:w-px before:bg-[color:var(--border)]">
+        <div className="relative px-4 py-2.5 before:absolute before:left-0 before:top-1/2 before:h-11 before:w-px before:-translate-y-1/2 before:bg-[color:var(--border)]">
           <div className="text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: "#C8CDD2" }}>Documentation</div>
           <div className="mt-2.5 grid grid-cols-[72px_minmax(0,1fr)] gap-4">
             <div className="flex flex-col items-center gap-0.5">
@@ -958,7 +958,7 @@ function VaultSelectionDrawer({
           </Link>
         </div>
 
-        <div className="relative px-4 py-2.5 before:absolute before:bottom-3 before:left-0 before:top-3 before:w-px before:bg-[color:var(--border)]">
+        <div className="relative px-4 py-2.5 before:absolute before:left-0 before:top-1/2 before:h-11 before:w-px before:-translate-y-1/2 before:bg-[color:var(--border)]">
           <div className="text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: "#C8CDD2" }}>Share / Sell</div>
           <div className="mt-3 flex items-center gap-2 text-[11px]" style={{ color: "#ECEDEF" }}>
             <span className="inline-flex items-center gap-2">
