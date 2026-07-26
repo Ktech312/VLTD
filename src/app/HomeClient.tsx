@@ -28,14 +28,14 @@ const C = {
   goldDim:"rgba(203,208,213,0.08)",
   goldBd: "rgba(203,208,213,0.20)",
   muted:  "#61656B",
-  muted2: "#635F59",
-  text:   "#EDEBE3",
+  muted2: "#61656B",
+  text:   "#ECEDEF",
   green:  "#52C27A",
   red:    "#E05252",
   r:      "var(--font-serif, 'Cormorant Garamond', Georgia, serif)",
 } as const;
 
-const panelBg = "linear-gradient(180deg, rgba(8,14,20,0.96), rgba(2,8,12,0.98))";
+const panelBg = "linear-gradient(165deg, rgba(42,46,52,0.96), rgba(20,22,26,0.97))";
 const premiumBorder = "1px solid rgba(203,208,213,0.42)";
 const premiumShadow = "0 22px 66px rgba(0,0,0,0.38), inset 0 1px 0 rgba(237,239,241,0.08)";
 
@@ -155,8 +155,8 @@ function InfoTooltip({ text }: { text: string }) {
 function Stat({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "gold" | "gain" | "loss" }) {
   const color = tone === "gold" ? C.gold : tone === "gain" ? C.green : tone === "loss" ? C.red : C.text;
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: "94px", padding: "10px 12px", border: `1px solid ${C.bd2}`, borderRadius: "8px", background: "rgba(255,255,255,0.025)" }}>
-      <span style={{ fontFamily: C.r, fontSize: "28px", fontWeight: 800, lineHeight: 1, color }}>{value}</span>
+    <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: "94px", padding: "10px 12px", border: `1px solid ${C.bd2}`, borderRadius: "6px", background: "linear-gradient(165deg, rgba(42,46,52,0.85), rgba(20,22,26,0.9))", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}>
+      <span style={{ fontFamily: C.r, fontSize: "28px", fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1, color }}>{value}</span>
       <span style={{ fontSize: "10px", color: C.muted2, letterSpacing: "0.10em", textTransform: "uppercase", fontWeight: 800 }}>{label}</span>
     </div>
   );
@@ -982,11 +982,12 @@ export default function HomeClient() {
                   <div key={href + label} className="relative">
                     {tip && <div className="absolute -right-1 -top-1 z-10"><InfoTooltip text={tip} /></div>}
                     <Link href={href} style={{
-                      display: "block", width: "100%", borderRadius: "6px",
-                      border: accent ? "1px solid rgba(203,208,213,0.28)" : `1px solid ${C.bd}`,
-                      background: accent ? "rgba(203,208,213,0.09)" : "rgba(255,255,255,0.03)",
-                      color: accent ? C.gold : C.muted,
-                      padding: "9px 6px", textAlign: "center", fontSize: "11px", fontWeight: accent ? 600 : 500, textDecoration: "none"
+                      display: "block", width: "100%", borderRadius: "4px",
+                      border: accent ? "1px solid rgba(79,211,238,0.5)" : `1px solid ${C.bd}`,
+                      background: accent ? "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)" : "rgba(255,255,255,0.03)",
+                      color: accent ? "#06171d" : C.muted,
+                      boxShadow: accent ? "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 14px rgba(79,211,238,0.22)" : "none",
+                      padding: "9px 6px", textAlign: "center", fontSize: "11px", fontWeight: accent ? 800 : 500, textDecoration: "none"
                     }}>{label}</Link>
                   </div>
                 ))}
