@@ -503,11 +503,10 @@ function VaultCard({
   return (
     <div
       className={[
-        "group relative flex flex-col overflow-hidden rounded-[10px] border border-[color:var(--theme-border)] p-3 shadow-[0_16px_38px_rgba(0,0,0,0.26)] ring-1 ring-gold/10 transition hover:-translate-y-0.5 hover:border-[color:var(--theme-gold-border)]",
+        "group relative flex flex-col overflow-hidden rounded-[4px] vltd-brushed p-3 transition hover:-translate-y-0.5",
         displayMode === "shelf" ? "min-h-[264px]" : displayMode === "flip" ? "min-h-[340px] hover:[transform:rotateY(2deg)_translateY(-2px)]" : "min-h-[324px]",
-        marketValue > 0 ? "border-l-2 border-l-emerald-400/55" : "border-l border-l-white/8",
+        marketValue > 0 ? "border-l-2 border-l-[color:var(--status-cyan)]" : "",
       ].join(" ")}
-      style={{ background: "var(--theme-card, rgba(15,25,45,0.85))" }}
     >
       {/* Status badge — top LEFT to avoid colliding with hover action buttons */}
       <span className={["absolute left-2 top-2 z-10 rounded-full px-1.5 py-0.5 text-[8px] font-semibold ring-1", statusClass].join(" ")}>
@@ -1457,15 +1456,15 @@ export default function VaultPage() {
             <div className="min-w-0">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h1 className="text-[2.7rem] font-semibold leading-none sm:text-[3.3rem]" style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)" }}>
+                  <h1 className="text-[2.7rem] font-extrabold uppercase leading-[0.9] tracking-[-0.03em] sm:text-[3.3rem]">
                     Vault
                   </h1>
                   <p className="mt-2 text-sm text-[color:var(--muted)]">Every item you own, documented and searchable.</p>
                 </div>
                 {/* Mobile Add Item — top-right of the title (hidden on desktop) */}
-                <Link href="/capture" className="inline-flex shrink-0 items-center justify-center gap-1 rounded-[8px] px-3 py-1.5 text-sm font-black transition lg:hidden" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}>
-                  Add Item
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                <Link href="/capture" className="vltd-action-module shrink-0 lg:hidden">
+                  <span className="vltd-action-module__plate !px-3 !py-1.5 !text-xs">Add Item</span>
+                  <span className="vltd-action-module__block !min-w-[38px]"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
                 </Link>
               </div>
               {items.length > 0 ? (
@@ -1484,9 +1483,9 @@ export default function VaultPage() {
               <Link href="/vault/sold" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Sold</Link>
               <Link href="/vault/for-sale" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">For Sale</Link>
               {/* Desktop Add Item — with the actions on the right (hidden on mobile) */}
-              <Link href="/capture" className="hidden shrink-0 items-center justify-center gap-1 rounded-[8px] px-3 py-1.5 text-sm font-black transition lg:inline-flex" style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B", boxShadow: "var(--theme-gold-glow)" }}>
-                Add Item
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              <Link href="/capture" className="vltd-action-module hidden shrink-0 lg:inline-flex">
+                <span className="vltd-action-module__plate !py-1.5">Add Item</span>
+                <span className="vltd-action-module__block"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
               </Link>
             </div>
           </div>
@@ -1569,36 +1568,36 @@ export default function VaultPage() {
           </div>
 
           <div className="mt-5 flex gap-2 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:gap-3 sm:overflow-visible xl:grid-cols-4">
-            <div className="w-[140px] shrink-0 rounded-[10px] border p-2.5 sm:w-auto sm:p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
+            <div className="w-[140px] shrink-0 vltd-brushed vltd-status-cyan p-2.5 sm:w-auto sm:p-4">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/></svg>
                 Total Value
               </div>
-              <div className="mt-1.5 text-xl font-semibold text-[color:var(--data-color)] sm:mt-2.5 sm:text-3xl">{formatMoney(stats.totalValue)}</div>
+              <div className="mt-1.5 text-xl font-extrabold tracking-[-0.02em] text-[color:var(--data-color)] sm:mt-2.5 sm:text-3xl">{formatMoney(stats.totalValue)}</div>
               <div className={(stats.totalGain >= 0 ? "text-emerald-300" : "text-red-300") + " mt-0.5 text-[11px] sm:text-sm"}>{stats.totalGain >= 0 ? "+" : ""}{formatMoney(stats.totalGain)}</div>
             </div>
-            <div className="w-[140px] shrink-0 rounded-[10px] border p-2.5 sm:w-auto sm:p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
+            <div className="w-[140px] shrink-0 vltd-brushed p-2.5 sm:w-auto sm:p-4">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
                 Items
               </div>
-              <div className="mt-1.5 text-xl font-semibold sm:mt-2.5 sm:text-3xl">{stats.totalItems}</div>
+              <div className="mt-1.5 text-xl font-extrabold tracking-[-0.02em] sm:mt-2.5 sm:text-3xl">{stats.totalItems}</div>
               <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:text-sm">{stats.universeCount} {stats.universeCount === 1 ? "universe" : "universes"}</div>
             </div>
-            <div className="w-[140px] shrink-0 rounded-[10px] border p-2.5 sm:w-auto sm:p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
+            <div className="w-[140px] shrink-0 vltd-brushed vltd-status-cyan p-2.5 sm:w-auto sm:p-4">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6l8-3z"/></svg>
                 Insurance Ready
               </div>
-              <div className="mt-1.5 text-xl font-semibold text-[color:var(--data-color)] sm:mt-2.5 sm:text-3xl">{stats.insuranceReadyPct}%</div>
+              <div className="mt-1.5 text-xl font-extrabold tracking-[-0.02em] text-[color:var(--data-color)] sm:mt-2.5 sm:text-3xl">{stats.insuranceReadyPct}%</div>
               <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:text-sm">{stats.insuranceReadyCount} of {stats.totalItems} items</div>
             </div>
-            <div className="w-[140px] shrink-0 rounded-[10px] border p-2.5 sm:w-auto sm:p-4" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
+            <div className="w-[140px] shrink-0 vltd-brushed vltd-status-amber p-2.5 sm:w-auto sm:p-4">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
                 Needs Review
               </div>
-              <div className="mt-1.5 text-xl font-semibold text-[color:var(--theme-gold)] sm:mt-2.5 sm:text-3xl">{stats.needsReviewCount}</div>
+              <div className="mt-1.5 text-xl font-extrabold tracking-[-0.02em] text-[color:var(--status-amber)] sm:mt-2.5 sm:text-3xl">{stats.needsReviewCount}</div>
               <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:text-sm">Items missing info</div>
             </div>
           </div>

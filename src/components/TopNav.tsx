@@ -434,7 +434,7 @@ function TopNavInner() {
 
           {/* Logo */}
           <Link href="/" className="shrink-0 flex items-center">
-            <Image src="/brand/vltd-logo.png" alt="VLTD" width={120} height={42} className="h-[42px] w-auto" priority />
+            <Image src="/brand/vltd-logo.png" alt="VLTD" width={120} height={42} className="h-[42px] w-auto" style={{ filter: "grayscale(1) brightness(1.4) contrast(1.05)" }} priority />
           </Link>
 
           {/* Desktop icon nav — centered */}
