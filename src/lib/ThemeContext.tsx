@@ -44,6 +44,9 @@ function applyThemeVars(theme: Theme) {
   root.style.setProperty('--theme-nav-border', theme.navBorder)
   root.classList.remove('theme-dark', 'theme-light')
   root.classList.add(`theme-${theme.mode}`)
+  // Keep the legacy `.dark` class (Tailwind dark: variants) in sync with the
+  // actual selected theme so light mode doesn't get stray dark: styling.
+  root.classList.toggle('dark', theme.mode === 'dark')
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
