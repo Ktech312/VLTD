@@ -275,7 +275,7 @@ function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; sele
         <div className="truncate text-base" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{event.title}</div>
         <div className="mt-1 truncate text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>{event.detail}</div>
       </div>
-      <div className="min-w-0 border-l border-[rgba(203,208,213,0.16)] pl-5">
+      <div className="relative min-w-0 pl-5 before:content-[''] before:pointer-events-none before:absolute before:left-0 before:top-1/2 before:h-9 before:w-px before:-translate-y-1/2 before:bg-[rgba(203,208,213,0.22)]">
         {showValue && event.newValue ? (
           <div className="text-[22px] font-black text-[color:var(--info,#52D6F4)]">
             {event.previousValue ? `${formatMoney(event.previousValue)} -> ` : ""}
@@ -290,7 +290,7 @@ function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; sele
           </div>
         )}
       </div>
-      <div className="border-l border-[rgba(203,208,213,0.16)] pl-5 text-right text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>
+      <div className="relative pl-5 text-right text-sm before:content-[''] before:pointer-events-none before:absolute before:left-0 before:top-1/2 before:h-9 before:w-px before:-translate-y-1/2 before:bg-[rgba(203,208,213,0.22)]" style={{ color: "var(--theme-text-muted,#61656B)" }}>
         {showEvidence ? (
           <>
             {event.confidence && <div>{event.confidence} confidence</div>}

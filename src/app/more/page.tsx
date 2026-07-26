@@ -422,7 +422,7 @@ export default function MorePage() {
       <div className="mx-auto max-w-[1460px]">
         <header className="mb-7 hidden items-center justify-between gap-8 lg:grid lg:grid-cols-[320px_minmax(340px,1fr)_minmax(480px,auto)]">
           <div className="relative h-[136px] overflow-hidden rounded-[10px] border" style={{ borderColor: border, background: "rgba(2,9,12,.88)" }}>
-            <Image src="/brand/vltd-command-vault-medallion.png" alt="" fill className="object-cover" priority />
+            <Image src="/brand/vltd-command-vault-medallion.png" alt="" fill className="object-cover" style={{ filter: "grayscale(1) brightness(1.08) contrast(1.05)" }} priority />
             <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(2,9,12,.04), transparent 48%, rgba(2,9,12,.5))" }} />
           </div>
           <div className="flex items-center gap-7">
@@ -445,7 +445,7 @@ export default function MorePage() {
           <div className="grid grid-cols-[230px_minmax(0,1fr)]">
             <aside className="relative min-h-[690px] border-r p-6" style={{ borderColor: borderSoft }}>
               <div className="relative h-[430px] overflow-hidden rounded-[10px] border" style={{ borderColor: border, background: "rgba(2,9,12,.86)" }}>
-                <Image src="/brand/vltd-command-vault-door.png" alt="" fill className="object-contain" />
+                <Image src="/brand/vltd-command-vault-door.png" alt="" fill className="object-contain" style={{ filter: "grayscale(1) brightness(1.08) contrast(1.05)" }} />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(2,9,12,.04), transparent 54%, rgba(2,9,12,.2))" }} />
               </div>
             </aside>
