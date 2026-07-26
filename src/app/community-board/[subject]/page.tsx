@@ -13,7 +13,7 @@ function fmt(n: number) {
 function RankBadge({ rank }: { rank: number }) {
   if (rank === 1) return (
     <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
-      style={{ background: "linear-gradient(135deg,#f5b548,#e09020)", color: "#000" }}>1</div>
+      style={{ background: "linear-gradient(135deg,#C8CDD2,#e09020)", color: "#000" }}>1</div>
   );
   if (rank === 2) return (
     <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0"

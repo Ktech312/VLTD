@@ -130,7 +130,7 @@ export default function BillingPage() {
           className="relative -mt-px overflow-hidden rounded-[34px] rounded-tl-none p-5 sm:p-7"
           style={{
             background: "var(--theme-elevated, rgba(20,32,55,0.9))",
-            border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.25))",
+            border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.25))",
             boxShadow: "0 26px 86px rgba(0,0,0,0.32)",
           }}
         >
@@ -142,7 +142,7 @@ export default function BillingPage() {
 
         {fromLimit ? (
           <div className="rounded-2xl p-4 ring-1" style={{ background: "var(--pill-active-bg)", borderColor: "var(--frame-ring)" }}>
-            <div className="text-sm font-bold" style={{ color: "var(--theme-gold, #F5B548)" }}>You&apos;ve hit your free item limit</div>
+            <div className="text-sm font-bold" style={{ color: "var(--theme-gold, #C8CDD2)" }}>You&apos;ve hit your free item limit</div>
             <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
               Upgrade to a paid plan below to add unlimited items and unlock everything.
             </div>
@@ -150,7 +150,7 @@ export default function BillingPage() {
         ) : null}
 
         {/* Current plan banner */}
-        <div className="rounded-2xl p-4 ring-1" style={{ background: "var(--theme-gold-subtle, rgba(245,181,72,0.1))", borderColor: "var(--theme-gold-border, rgba(245,181,72,0.3))" }}>
+        <div className="rounded-2xl p-4 ring-1" style={{ background: "var(--theme-gold-subtle, rgba(203,208,213,0.1))", borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}>
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--theme-gold)" }}>Current plan</div>
@@ -176,8 +176,8 @@ export default function BillingPage() {
                   key={plan.key}
                   className="rounded-2xl p-4 ring-1 transition"
                   style={{
-                    background: isCurrent ? "var(--theme-gold-subtle, rgba(245,181,72,0.1))" : "var(--surface)",
-                    borderColor: isCurrent ? "var(--theme-gold-border, rgba(245,181,72,0.3))" : "var(--border)",
+                    background: isCurrent ? "var(--theme-gold-subtle, rgba(203,208,213,0.1))" : "var(--surface)",
+                    borderColor: isCurrent ? "var(--theme-gold-border, rgba(203,208,213,0.3))" : "var(--border)",
                   }}
                 >
                   <div className="flex items-center justify-between gap-2">

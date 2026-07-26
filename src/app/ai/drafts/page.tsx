@@ -21,7 +21,7 @@ const STATUS_LABEL: Record<AIDraftStatus, string> = {
 
 const STATUS_COLOR: Record<AIDraftStatus, { bg: string; color: string }> = {
   READY_FOR_REVIEW: { bg: "rgba(74,222,128,0.12)", color: "#4ade80" },
-  NEEDS_REVIEW:     { bg: "rgba(245,181,72,0.12)",  color: "var(--theme-gold)" },
+  NEEDS_REVIEW:     { bg: "rgba(203,208,213,0.12)",  color: "var(--theme-gold)" },
   APPROVED:         { bg: "rgba(74,222,128,0.2)",   color: "#4ade80" },
   REJECTED:         { bg: "rgba(248,113,113,0.12)", color: "#f87171" },
   CONVERTED:        { bg: "rgba(129,140,248,0.15)", color: "#818cf8" },

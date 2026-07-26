@@ -127,7 +127,7 @@ export default function HaulReviewSheet({ session, onClose, onFinish }: Props) {
               type="button"
               onClick={finish}
               className="flex-1 rounded-2xl py-3 text-sm font-bold"
-              style={{ background: "var(--theme-gold, #F5B548)", color: "#0A0800" }}
+              style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
             >
               Done
             </button>

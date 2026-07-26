@@ -5,9 +5,9 @@ import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { Glyph, type GlyphName } from "@/components/ui/Glyph";
 
 // ── Design tokens (match the Command Center / app style) ─────────
-const gold = "#D6A84F";
-const goldBright = "#F5B548";
-const cream = "#F0EAD6";
+const gold = "#C8CDD2";
+const goldBright = "#C8CDD2";
+const cream = "#ECEDEF";
 const muted = "#B8A978";
 const dim = "#776D4B";
 const panel = "rgba(4,14,18,0.84)";
@@ -65,7 +65,7 @@ function Medallion({ name, size = 40, box = 92 }: { name: GlyphName; size?: numb
         width: box,
         height: box,
         borderColor: border,
-        background: "radial-gradient(circle at 50% 28%, rgba(245,181,72,0.20), rgba(2,9,12,0.92) 72%)",
+        background: "radial-gradient(circle at 50% 28%, rgba(203,208,213,0.20), rgba(2,9,12,0.92) 72%)",
         color: goldBright,
       }}
     >
@@ -82,14 +82,14 @@ function SpotlightCard({ s }: { s: Spotlight }) {
       className="relative flex flex-col gap-3 overflow-hidden rounded-[14px] border p-5 transition hover:brightness-[1.06]"
       style={{
         background: panel,
-        borderColor: s.is_featured ? "rgba(245,181,72,0.55)" : border,
-        boxShadow: s.is_featured ? "0 0 30px rgba(245,181,72,0.14)" : undefined,
+        borderColor: s.is_featured ? "rgba(203,208,213,0.55)" : border,
+        boxShadow: s.is_featured ? "0 0 30px rgba(203,208,213,0.14)" : undefined,
       }}
     >
       {s.is_featured && (
         <div
           className="pointer-events-none absolute inset-0"
-          style={{ background: "radial-gradient(circle at 100% 0%, rgba(245,181,72,0.10), transparent 40%)" }}
+          style={{ background: "radial-gradient(circle at 100% 0%, rgba(203,208,213,0.10), transparent 40%)" }}
         />
       )}
 
@@ -115,7 +115,7 @@ function SpotlightCard({ s }: { s: Spotlight }) {
             {s.is_featured && (
               <span
                 className="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.15em]"
-                style={{ background: "rgba(245,181,72,0.16)", color: goldBright, border: `1px solid ${border}` }}
+                style={{ background: "rgba(203,208,213,0.16)", color: goldBright, border: `1px solid ${border}` }}
               >
                 <Glyph name="star" size={10} /> Featured
               </span>
@@ -147,7 +147,7 @@ function SpotlightCard({ s }: { s: Spotlight }) {
             <span
               key={tag}
               className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold"
-              style={{ background: "rgba(245,181,72,0.10)", color: goldBright, border: `1px solid ${border}` }}
+              style={{ background: "rgba(203,208,213,0.10)", color: goldBright, border: `1px solid ${border}` }}
             >
               {tag}
             </span>
@@ -162,7 +162,7 @@ function SpotlightCard({ s }: { s: Spotlight }) {
           target="_blank"
           rel="noopener noreferrer"
           className="relative inline-flex items-center gap-1.5 self-start rounded-[8px] px-4 py-2 text-xs font-bold transition hover:brightness-110"
-          style={{ background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B" }}
+          style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B" }}
         >
           {s.link_label || "Visit"}
         </a>
@@ -318,7 +318,7 @@ export default function VLTLoungePage() {
         <section className="relative overflow-hidden rounded-[16px] border" style={{ borderColor: border, background: panel }}>
           <div
             className="pointer-events-none absolute inset-0"
-            style={{ background: "radial-gradient(circle at 10% 18%, rgba(245,181,72,0.10), transparent 44%)" }}
+            style={{ background: "radial-gradient(circle at 10% 18%, rgba(203,208,213,0.10), transparent 44%)" }}
           />
           <div className="relative flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:gap-7 sm:p-8">
             <Medallion name="sofa" size={44} box={96} />
@@ -349,7 +349,7 @@ export default function VLTLoungePage() {
                   onClick={() => setTab(t)}
                   className="min-h-[40px] rounded-full px-4 py-2 text-sm font-semibold transition"
                   style={tab === t ? {
-                    background: "linear-gradient(135deg, #8B6914, #F5B548)",
+                    background: "linear-gradient(135deg, #8C9298, #C8CDD2)",
                     color: "#0B0B0B",
                   } : {
                     background: panel2,
@@ -376,7 +376,7 @@ export default function VLTLoungePage() {
               >
                 <div
                   className="pointer-events-none absolute inset-0"
-                  style={{ background: "radial-gradient(circle at 50% 0%, rgba(245,181,72,0.08), transparent 46%)" }}
+                  style={{ background: "radial-gradient(circle at 50% 0%, rgba(203,208,213,0.08), transparent 46%)" }}
                 />
                 <div className="relative"><Medallion name="sofa" size={40} box={88} /></div>
                 <div className="relative text-[26px] font-semibold" style={{ color: cream, fontFamily: serif }}>

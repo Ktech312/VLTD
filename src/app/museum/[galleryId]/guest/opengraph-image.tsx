@@ -98,7 +98,7 @@ export default async function Image({ params }: { params: Promise<{ galleryId: s
             inset: 0,
             background: hasCover
               ? "linear-gradient(90deg, #0B0B0B 45%, rgba(11,11,11,0.7) 65%, rgba(11,11,11,0.15) 100%)"
-              : "radial-gradient(ellipse at 80% 50%, rgba(245,181,72,0.12) 0%, transparent 65%)",
+              : "radial-gradient(ellipse at 80% 50%, rgba(203,208,213,0.12) 0%, transparent 65%)",
           }}
         />
 
@@ -110,7 +110,7 @@ export default async function Image({ params }: { params: Promise<{ galleryId: s
             left: 0,
             right: 0,
             height: "3px",
-            background: "linear-gradient(90deg, transparent, #F5B548 30%, #F5B548 70%, transparent)",
+            background: "linear-gradient(90deg, transparent, #C8CDD2 30%, #C8CDD2 70%, transparent)",
           }}
         />
 
@@ -132,7 +132,7 @@ export default async function Image({ params }: { params: Promise<{ galleryId: s
                 fontSize: "16px",
                 fontWeight: 700,
                 letterSpacing: "0.22em",
-                color: "#F5B548",
+                color: "#C8CDD2",
                 opacity: 0.9,
               }}
             >
@@ -142,10 +142,10 @@ export default async function Image({ params }: { params: Promise<{ galleryId: s
               style={{
                 width: "1px",
                 height: "14px",
-                background: "rgba(245,181,72,0.4)",
+                background: "rgba(203,208,213,0.4)",
               }}
             />
-            <div style={{ fontSize: "13px", color: "rgba(245,181,72,0.6)", letterSpacing: "0.12em" }}>
+            <div style={{ fontSize: "13px", color: "rgba(203,208,213,0.6)", letterSpacing: "0.12em" }}>
               COLLECTOR VAULT
             </div>
           </div>
@@ -157,14 +157,14 @@ export default async function Image({ params }: { params: Promise<{ galleryId: s
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                background: "rgba(245,181,72,0.14)",
-                border: "1px solid rgba(245,181,72,0.32)",
+                background: "rgba(203,208,213,0.14)",
+                border: "1px solid rgba(203,208,213,0.32)",
                 borderRadius: "100px",
                 padding: "5px 14px",
                 fontSize: "11px",
                 fontWeight: 600,
                 letterSpacing: "0.18em",
-                color: "#F5B548",
+                color: "#C8CDD2",
                 width: "fit-content",
               }}
             >
@@ -176,7 +176,7 @@ export default async function Image({ params }: { params: Promise<{ galleryId: s
               style={{
                 fontSize: gallery.title.length > 40 ? "36px" : "48px",
                 fontWeight: 800,
-                color: "#F0EAD6",
+                color: "#ECEDEF",
                 lineHeight: 1.1,
                 letterSpacing: "-0.03em",
                 maxWidth: "480px",
@@ -212,10 +212,10 @@ export default async function Image({ params }: { params: Promise<{ galleryId: s
                       width: "6px",
                       height: "6px",
                       borderRadius: "50%",
-                      background: "#F5B548",
+                      background: "#C8CDD2",
                     }}
                   />
-                  <span style={{ fontSize: "14px", color: "rgba(245,181,72,0.8)", fontWeight: 600 }}>
+                  <span style={{ fontSize: "14px", color: "rgba(203,208,213,0.8)", fontWeight: 600 }}>
                     {itemCount} item{itemCount !== 1 ? "s" : ""}
                   </span>
                 </div>
@@ -240,7 +240,7 @@ export default async function Image({ params }: { params: Promise<{ galleryId: s
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div
               style={{
-                background: "linear-gradient(135deg, #8B6914, #F5B548)",
+                background: "linear-gradient(135deg, #8C9298, #C8CDD2)",
                 borderRadius: "100px",
                 padding: "10px 22px",
                 fontSize: "14px",

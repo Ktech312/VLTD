@@ -127,10 +127,10 @@ export default function InsuranceItemPage() {
       <div className="mx-auto max-w-4xl">
         <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[color:var(--border)] bg-vault-card p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
           <div className="flex flex-wrap items-center gap-2">
-            <Link href="/insurance" className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(245,181,72,0.42)]">
+            <Link href="/insurance" className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(203,208,213,0.42)]">
               ← Back to Report
             </Link>
-            <Link href="/vault" className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(245,181,72,0.42)]">
+            <Link href="/vault" className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(203,208,213,0.42)]">
               Vault
             </Link>
           </div>
@@ -143,7 +143,7 @@ export default function InsuranceItemPage() {
           className="card rounded-[30px] p-5 sm:p-6"
           style={{
             background: 'var(--theme-elevated, rgba(20,32,55,0.9))',
-            border: '1px solid var(--theme-gold-border, rgba(245,181,72,0.25))',
+            border: '1px solid var(--theme-gold-border, rgba(203,208,213,0.25))',
             boxShadow: '0 26px 86px rgba(0,0,0,0.32)',
           }}
         >

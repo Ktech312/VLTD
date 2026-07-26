@@ -75,16 +75,16 @@ export default function AlertsBell({ profileId, active }: { profileId?: string; 
       aria-label={hasUnread ? "Alerts — you have new activity" : "Alerts"}
       className="relative flex h-[36px] w-[36px] items-center justify-center rounded-full transition"
       style={{
-        background: active ? "rgba(245,181,72,0.12)" : "rgba(255,255,255,0.04)",
+        background: active ? "rgba(203,208,213,0.12)" : "rgba(255,255,255,0.04)",
         border: `1px solid ${
           hasUnread
             ? "rgba(82,194,122,0.65)"
             : active
-              ? "rgba(245,181,72,0.35)"
+              ? "rgba(203,208,213,0.35)"
               : "rgba(255,255,255,0.08)"
         }`,
         boxShadow: hasUnread ? "0 0 0 1px rgba(82,194,122,0.35), 0 0 12px rgba(82,194,122,0.55)" : "none",
-        color: "var(--theme-text-primary, #F0EAD6)",
+        color: "var(--theme-text-primary, #ECEDEF)",
       }}
     >
       <IconBell color={hasUnread ? GREEN : "currentColor"} />

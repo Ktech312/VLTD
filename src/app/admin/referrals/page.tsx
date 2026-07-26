@@ -21,7 +21,7 @@ function fmtDate(iso: string) {
 
 function Badge({ children, color = "gray" }: { children: React.ReactNode; color?: "gold" | "green" | "red" | "gray" }) {
   const styles: Record<string, React.CSSProperties> = {
-    gold: { background: "rgba(245,181,72,0.15)", color: "#F5B548" },
+    gold: { background: "rgba(203,208,213,0.15)", color: "#C8CDD2" },
     green: { background: "rgba(74,222,128,0.12)", color: "#4ade80" },
     red: { background: "rgba(248,113,113,0.12)", color: "#f87171" },
     gray: { background: "var(--pill)", color: "var(--muted)" },
@@ -55,7 +55,7 @@ function PerkModal({ initial, adminEmail, onSave, onClose }: PerkModalProps) {
     setSaving(false);
   }
 
-  const inputCls = "w-full rounded-xl px-3 py-2 text-sm ring-1 ring-[color:var(--border)] outline-none focus:ring-[color:rgba(245,181,72,0.5)]";
+  const inputCls = "w-full rounded-xl px-3 py-2 text-sm ring-1 ring-[color:var(--border)] outline-none focus:ring-[color:rgba(203,208,213,0.5)]";
   const inputStyle: React.CSSProperties = { background: "var(--pill)", color: "var(--fg)" };
 
   return (
@@ -105,7 +105,7 @@ function PerkModal({ initial, adminEmail, onSave, onClose }: PerkModalProps) {
             onClick={() => void handleSave()}
             disabled={saving || !userId.trim()}
             style={{
-              flex: 1, background: "rgba(245,181,72,0.15)", color: "#F5B548",
+              flex: 1, background: "rgba(203,208,213,0.15)", color: "#C8CDD2",
               border: "none", borderRadius: 12, padding: "10px", fontSize: 13,
               fontWeight: 700, cursor: saving ? "default" : "pointer",
               opacity: saving || !userId.trim() ? 0.5 : 1,
@@ -227,7 +227,7 @@ export default function AdminReferralsPage() {
         <button
           onClick={() => setPerkModal(true)}
           style={{
-            background: "rgba(245,181,72,0.15)", color: "#F5B548",
+            background: "rgba(203,208,213,0.15)", color: "#C8CDD2",
             border: "none", borderRadius: 12, padding: "8px 16px",
             fontSize: 13, fontWeight: 700, cursor: "pointer",
           }}
@@ -252,8 +252,8 @@ export default function AdminReferralsPage() {
             style={{
               padding: "6px 14px", borderRadius: 100, fontSize: 12, fontWeight: 600,
               border: "1px solid var(--border)", cursor: "pointer",
-              background: activeTab === tab ? "rgba(245,181,72,0.15)" : "var(--pill)",
-              color: activeTab === tab ? "#F5B548" : "var(--muted)",
+              background: activeTab === tab ? "rgba(203,208,213,0.15)" : "var(--pill)",
+              color: activeTab === tab ? "#C8CDD2" : "var(--muted)",
             }}
           >
             {tab === "codes" ? `Referral Codes (${codes.length})` : `User Perks (${perks.length})`}
@@ -282,7 +282,7 @@ export default function AdminReferralsPage() {
               ) : codes.map((c) => (
                 <tr key={c.id}>
                   <td style={cellStyle}>
-                    <span style={{ fontFamily: "monospace", fontSize: 13, color: "#F5B548", fontWeight: 700 }}>{c.code}</span>
+                    <span style={{ fontFamily: "monospace", fontSize: 13, color: "#C8CDD2", fontWeight: 700 }}>{c.code}</span>
                   </td>
                   <td style={{ ...cellStyle, fontFamily: "monospace", fontSize: 11, color: "var(--muted)" }}>
                     {c.user_id.slice(0, 18)}…
@@ -335,7 +335,7 @@ export default function AdminReferralsPage() {
                   <td style={cellStyle}>
                     <button
                       onClick={() => setPerkModal(p)}
-                      style={{ fontSize: 11, color: "#F5B548", background: "none", border: "none", cursor: "pointer", padding: "2px 6px" }}
+                      style={{ fontSize: 11, color: "#C8CDD2", background: "none", border: "none", cursor: "pointer", padding: "2px 6px" }}
                     >
                       Edit
                     </button>

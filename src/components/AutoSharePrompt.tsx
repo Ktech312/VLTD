@@ -50,11 +50,11 @@ export default function AutoSharePrompt({ trigger, onShare, onDismiss }: Props) 
     >
       <div
         className="w-[calc(100vw-32px)] max-w-sm rounded-3xl p-4 shadow-2xl ring-1"
-        style={{ background: "var(--surface, #12121A)", borderColor: "rgba(245,181,72,0.28)" }}
+        style={{ background: "var(--surface, #12121A)", borderColor: "rgba(203,208,213,0.28)" }}
       >
         {/* Header */}
         <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 leading-none" style={{ color: "var(--theme-gold, #F5B548)" }}><Glyph name={glyph} size={30} /></div>
+          <div className="flex-shrink-0 leading-none" style={{ color: "var(--theme-gold, #C8CDD2)" }}><Glyph name={glyph} size={30} /></div>
           <div className="flex-1 min-w-0">
             <div className="text-base font-black leading-tight" style={{ color: "var(--fg)" }}>{headline}</div>
             <div className="mt-0.5 truncate text-sm" style={{ color: "var(--muted)" }}>
@@ -74,7 +74,7 @@ export default function AutoSharePrompt({ trigger, onShare, onDismiss }: Props) 
         <div className="mt-4 flex gap-2">
           <button type="button" onClick={handleShare}
             className="flex-1 rounded-2xl py-2.5 text-sm font-bold"
-            style={{ background: "var(--theme-gold, #F5B548)", color: "#0B0B0B" }}>
+            style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0B0B0B" }}>
             Share Now
           </button>
           <button type="button" onClick={onDismiss}
@@ -91,7 +91,7 @@ export default function AutoSharePrompt({ trigger, onShare, onDismiss }: Props) 
           </span>
           <button type="button" onClick={handleToggleAuto}
             className="relative h-5 w-9 rounded-full transition-colors flex-shrink-0"
-            style={{ background: autoOn ? "var(--theme-gold, #F5B548)" : "var(--pill)" }}>
+            style={{ background: autoOn ? "var(--theme-gold, #C8CDD2)" : "var(--pill)" }}>
             <span className="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform"
               style={{ transform: autoOn ? "translateX(16px)" : "translateX(0)" }} />
           </button>

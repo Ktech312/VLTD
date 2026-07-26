@@ -24,7 +24,7 @@ export function FloatingThemeButton() {
           className="absolute bottom-14 right-0 w-[280px] overflow-hidden rounded-2xl shadow-[0_18px_60px_rgba(0,0,0,0.7)]"
           style={{
             background: 'var(--theme-nav-bg, rgba(11,19,32,0.98))',
-            border: '1px solid var(--theme-nav-border, rgba(245,181,72,0.22))',
+            border: '1px solid var(--theme-nav-border, rgba(203,208,213,0.22))',
             backdropFilter: 'blur(20px)',
           }}
         >
@@ -37,11 +37,11 @@ export function FloatingThemeButton() {
         className="flex h-12 w-12 items-center justify-center rounded-full shadow-[0_8px_28px_rgba(0,0,0,0.5)]"
         style={{
           background: open
-            ? 'var(--theme-gold-gradient, linear-gradient(135deg,#8B6914,#F5B548))'
+            ? 'var(--theme-gold-gradient, linear-gradient(135deg,#8C9298,#C8CDD2))'
             : 'var(--theme-nav-bg, rgba(11,19,32,0.95))',
-          border: '1.5px solid var(--theme-gold-border, rgba(245,181,72,0.35))',
+          border: '1.5px solid var(--theme-gold-border, rgba(203,208,213,0.35))',
           boxShadow: open ? 'var(--theme-gold-glow)' : '0 4px 18px rgba(0,0,0,0.5)',
-          color: open ? '#0B0B0B' : 'var(--theme-gold, #F5B548)',
+          color: open ? '#0B0B0B' : 'var(--theme-gold, #C8CDD2)',
         }}
         aria-label="Change background theme"
       >

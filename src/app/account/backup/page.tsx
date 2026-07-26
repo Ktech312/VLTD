@@ -126,7 +126,7 @@ export default function BackupPage() {
           onClick={handleBackup}
           disabled={busy}
           className="mt-5 flex h-12 w-full items-center justify-center rounded-full text-sm font-bold transition disabled:opacity-40"
-          style={{ background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B", boxShadow: "0 4px 18px rgba(245,181,72,0.28)" }}
+          style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B", boxShadow: "0 4px 18px rgba(203,208,213,0.28)" }}
         >
           {busy ? "Backing up…" : "Back up all items to cloud"}
         </button>

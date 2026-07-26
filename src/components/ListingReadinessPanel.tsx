@@ -211,14 +211,14 @@ export default function ListingReadinessPanel({ item }: { item: VaultItem }) {
     result.level === "ready"
       ? "rgba(74,222,128,0.06)"
       : result.level === "almost"
-      ? "rgba(245,181,72,0.06)"
+      ? "rgba(203,208,213,0.06)"
       : "rgba(248,113,113,0.06)";
 
   const borderColor =
     result.level === "ready"
       ? "rgba(74,222,128,0.22)"
       : result.level === "almost"
-      ? "rgba(245,181,72,0.22)"
+      ? "rgba(203,208,213,0.22)"
       : "rgba(248,113,113,0.22)";
 
   return (

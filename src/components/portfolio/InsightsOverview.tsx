@@ -26,12 +26,12 @@ type TimeRange = "7d" | "30d" | "90d" | "all";
 const CYAN = "#52D6F4";
 const GREEN = "#52C27A";
 const RED = "#FF705C";
-const GOLD = "#F5B548";
+const GOLD = "#C8CDD2";
 const MUTED = "var(--muted, #B8AA7A)";
 const MUTED2 = "var(--muted2, #8F835E)";
 const PANEL_BG = "linear-gradient(145deg, rgba(3, 8, 14, 0.96), rgba(4, 14, 21, 0.92))";
-const PANEL_BORDER = "rgba(184, 135, 43, 0.34)";
-const PANEL_SHADOW = "0 18px 54px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,241,168,0.07)";
+const PANEL_BORDER = "rgba(203,208,213, 0.34)";
+const PANEL_SHADOW = "0 18px 54px rgba(0,0,0,0.32), inset 0 1px 0 rgba(237,239,241,0.07)";
 
 const BREAKDOWN_COLORS = [
   "#2C8CE4",
@@ -196,14 +196,14 @@ function HeaderAction({
 }) {
   const style = primary
     ? {
-        background: "linear-gradient(135deg, #9B6A18 0%, #F5B548 55%, #FFE08A 100%)",
+        background: "linear-gradient(135deg, #9B6A18 0%, #C8CDD2 55%, #EDEFF1 100%)",
         border: "1px solid rgba(255,224,138,0.42)",
         color: "#080A0B",
-        boxShadow: "0 10px 28px rgba(245,181,72,0.20)",
+        boxShadow: "0 10px 28px rgba(203,208,213,0.20)",
       }
     : {
         background: "rgba(3,8,14,0.72)",
-        border: "1px solid rgba(184,135,43,0.34)",
+        border: "1px solid rgba(203,208,213,0.34)",
         color: "var(--fg)",
       };
 
@@ -251,7 +251,7 @@ function StatCard({
       >
         <div
           className="grid h-11 w-11 place-items-center rounded-full sm:h-12 sm:w-12"
-          style={{ border: "1px solid rgba(245,181,72,0.55)", color: GOLD, background: "rgba(245,181,72,0.05)" }}
+          style={{ border: "1px solid rgba(203,208,213,0.55)", color: GOLD, background: "rgba(203,208,213,0.05)" }}
         >
           {icon}
         </div>
@@ -307,7 +307,7 @@ function ValueHistoryChart({ points }: { points: { day: string; totalValue: numb
   // Real data only — no invented fallback series.
   if (points.length < 2) {
     return (
-      <div className="mt-3 flex h-[190px] items-center justify-center rounded-[8px] border border-[rgba(245,181,72,0.16)] text-sm sm:h-[240px]" style={{ color: MUTED }}>
+      <div className="mt-3 flex h-[190px] items-center justify-center rounded-[8px] border border-[rgba(203,208,213,0.16)] text-sm sm:h-[240px]" style={{ color: MUTED }}>
         Not enough history yet — value is recorded once a day.
       </div>
     );
@@ -390,7 +390,7 @@ function Donut({ rows, total, size = 174 }: { rows: { label: string; value: numb
   return (
     <div
       className="relative shrink-0 rounded-full"
-      style={{ width: size, height: size, background: `conic-gradient(${stops || "rgba(245,181,72,0.22) 0deg 360deg"})` }}
+      style={{ width: size, height: size, background: `conic-gradient(${stops || "rgba(203,208,213,0.22) 0deg 360deg"})` }}
     >
       <div
         className="absolute inset-[26px] grid place-items-center rounded-full text-center"
@@ -413,8 +413,8 @@ function ItemThumb({ item, className = "" }: { item: VaultItem; className?: stri
       className={`shrink-0 overflow-hidden rounded-[7px] ${className}`}
       style={{
         background: "rgba(255,255,255,0.035)",
-        border: "1px solid rgba(184,135,43,0.34)",
-        boxShadow: "inset 0 1px 0 rgba(255,241,168,0.08)",
+        border: "1px solid rgba(203,208,213,0.34)",
+        boxShadow: "inset 0 1px 0 rgba(237,239,241,0.08)",
       }}
     >
       {img ? (
@@ -471,7 +471,7 @@ function MoverRow({
     <Link
       href={`/vault/item/${encodeURIComponent(item.id)}`}
       className="grid min-h-[62px] grid-cols-[42px_minmax(0,1fr)_82px] items-center gap-2 border-b py-1.5 transition last:border-b-0 hover:bg-white/[0.035]"
-      style={{ borderColor: "rgba(184,135,43,0.18)", color: "var(--fg)" }}
+      style={{ borderColor: "rgba(203,208,213,0.18)", color: "var(--fg)" }}
     >
       <ItemThumb item={item} className="h-[54px] w-[40px]" />
       <div className="min-w-0 pr-1">
@@ -481,7 +481,7 @@ function MoverRow({
           <span
             className="shrink-0 rounded-[4px] px-1 py-[1px] text-[8px] font-bold leading-none"
             style={{
-              border: `1px solid ${confidenceBand === "high" ? "rgba(82,194,122,0.45)" : confidenceBand === "medium" ? "rgba(245,181,72,0.5)" : "rgba(255,112,92,0.45)"}`,
+              border: `1px solid ${confidenceBand === "high" ? "rgba(82,194,122,0.45)" : confidenceBand === "medium" ? "rgba(203,208,213,0.5)" : "rgba(255,112,92,0.45)"}`,
               color: confidenceBand === "high" ? GREEN : confidenceBand === "medium" ? GOLD : RED,
               background: "rgba(3,8,14,0.58)",
             }}
@@ -506,14 +506,14 @@ function ReviewCard({ item, reason }: { item: VaultItem; reason: string }) {
     <Link
       href={`/vault/item/${encodeURIComponent(item.id)}`}
       className="grid min-w-[210px] grid-cols-[60px_minmax(0,1fr)] gap-3 rounded-[7px] p-2.5 transition hover:bg-white/[0.035]"
-      style={{ border: "1px solid rgba(184,135,43,0.34)", background: "rgba(3,8,14,0.58)" }}
+      style={{ border: "1px solid rgba(203,208,213,0.34)", background: "rgba(3,8,14,0.58)" }}
     >
       <ItemThumb item={item} className="h-[78px] w-[58px]" />
       <div className="min-w-0">
         <div className="text-sm font-bold leading-tight">{item.title || "Untitled item"}</div>
         <div className="mt-1 truncate text-xs" style={{ color: MUTED }}>{[item.grade, item.universe].filter(Boolean).join(" - ")}</div>
         <div className="mt-3 text-xs" style={{ color: RED }}>{reason}</div>
-        <div className="mt-2.5 inline-flex h-7 items-center rounded-[7px] px-4 text-[11px] font-bold" style={{ border: "1px solid rgba(245,181,72,0.44)", color: GOLD }}>
+        <div className="mt-2.5 inline-flex h-7 items-center rounded-[7px] px-4 text-[11px] font-bold" style={{ border: "1px solid rgba(203,208,213,0.44)", color: GOLD }}>
           Review
         </div>
       </div>
@@ -693,7 +693,7 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
             <p className="mt-2 text-sm sm:text-base" style={{ color: MUTED }}>Performance, trends, and opportunities in your collection.</p>
           </div>
           <Panel className="mt-6 p-8 text-center">
-            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full" style={{ border: "1px solid rgba(245,181,72,0.45)", color: GOLD }}>
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full" style={{ border: "1px solid rgba(203,208,213,0.45)", color: GOLD }}>
               <Glyph name="chart" size={34} />
             </div>
             <h2 className="mt-4 text-xl font-bold">No items yet</h2>
@@ -778,7 +778,7 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
                       type="button"
                       onClick={() => setRange(value)}
                       className="h-8 min-w-10 rounded-[7px] px-2 text-xs font-bold"
-                      style={active ? { background: "rgba(245,181,72,0.16)", border: "1px solid rgba(245,181,72,0.44)", color: GOLD } : { color: MUTED, border: "1px solid transparent" }}
+                      style={active ? { background: "rgba(203,208,213,0.16)", border: "1px solid rgba(203,208,213,0.44)", color: GOLD } : { color: MUTED, border: "1px solid transparent" }}
                     >
                       {value === "all" ? "1Y" : value.toUpperCase()}
                     </button>
@@ -836,7 +836,7 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
                   ))}
                 </div>
               </div>
-              <div className="md:border-l md:pl-3" style={{ borderColor: "rgba(184,135,43,0.24)" }}>
+              <div className="md:border-l md:pl-3" style={{ borderColor: "rgba(203,208,213,0.24)" }}>
                 <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: RED }}>Biggest Decliners</div>
                 <div>
                   {movers.filter((row) => row.gain < 0).slice(0, 3).map(({ item, gain, pct }) => (
@@ -849,7 +849,7 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
                     />
                   ))}
                   {movers.filter((row) => row.gain < 0).length === 0 ? (
-                    <div className="grid min-h-[62px] place-items-center rounded-[7px] text-[11px]" style={{ color: MUTED, border: "1px solid rgba(184,135,43,0.14)" }}>
+                    <div className="grid min-h-[62px] place-items-center rounded-[7px] text-[11px]" style={{ color: MUTED, border: "1px solid rgba(203,208,213,0.14)" }}>
                       No decliners in this view
                     </div>
                   ) : null}
@@ -881,7 +881,7 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
                     key={row.label}
                     href={`/portfolio/universe/${encodeURIComponent(row.label)}`}
                     className="grid grid-cols-[26px_minmax(0,1fr)_74px_42px_112px] items-center gap-2 border-b py-2 text-xs last:border-b-0 hover:bg-white/[0.035]"
-                    style={{ color: "var(--fg)", borderColor: "rgba(184,135,43,0.16)" }}
+                    style={{ color: "var(--fg)", borderColor: "rgba(203,208,213,0.16)" }}
                   >
                     <span style={{ color: GOLD }}><Glyph name={universeGlyphName(row.label)} size={18} /></span>
                     <span className="truncate font-semibold">{displayLabel(row.label)}</span>
@@ -916,7 +916,7 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
                   <ConfidenceGauge score={confidence.score} />
                 </div>
               </div>
-              <div style={{ background: "rgba(184,135,43,0.22)" }} />
+              <div style={{ background: "rgba(203,208,213,0.22)" }} />
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: MUTED2 }}>Pricing Sources</div>
                 <div className="mt-3 grid gap-2 text-sm">
@@ -935,7 +935,7 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
                 </div>
               </div>
             </div>
-            <div className="mt-5 border-t pt-4 text-sm" style={{ borderColor: "rgba(184,135,43,0.26)" }}>
+            <div className="mt-5 border-t pt-4 text-sm" style={{ borderColor: "rgba(203,208,213,0.26)" }}>
               <div className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: MUTED2 }}>Last Updated</div>
               <div className="mt-2 flex items-center justify-between">
                 <span>Today</span>
@@ -954,14 +954,14 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
             {reviewItems.length > 0 ? (
               reviewItems.map((row) => <ReviewCard key={row.item.id} item={row.item} reason={row.reason} />)
             ) : (
-              <div className="rounded-[7px] px-4 py-3 text-sm" style={{ color: MUTED, border: "1px solid rgba(184,135,43,0.22)" }}>
+              <div className="rounded-[7px] px-4 py-3 text-sm" style={{ color: MUTED, border: "1px solid rgba(203,208,213,0.22)" }}>
                 Nothing urgent right now.
               </div>
             )}
             <Link
               href="/vault"
               className="grid min-w-[190px] place-items-center rounded-[7px] p-4 text-center"
-              style={{ color: GOLD, border: "1px dashed rgba(245,181,72,0.38)", background: "rgba(3,8,14,0.45)" }}
+              style={{ color: GOLD, border: "1px dashed rgba(203,208,213,0.38)", background: "rgba(3,8,14,0.45)" }}
             >
               <div>
                 <Glyph name="tag" size={30} />

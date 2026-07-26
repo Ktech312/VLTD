@@ -133,7 +133,7 @@ function inputClass(isAiFilled?: boolean) {
   return [
     "h-11 rounded-xl px-3 text-sm focus:outline-none transition-all placeholder:text-[color:var(--muted)] placeholder:italic placeholder:text-xs",
     isAiFilled
-      ? "bg-[rgba(245,181,72,0.18)] ring-2 ring-[rgba(245,181,72,0.7)] text-[#FFE08A] font-semibold"
+      ? "bg-[rgba(203,208,213,0.18)] ring-2 ring-[rgba(203,208,213,0.7)] text-[#EDEFF1] font-semibold"
       : "bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]",
   ].join(" ");
 }
@@ -142,7 +142,7 @@ function selectClass(isAiFilled?: boolean) {
   return [
     "h-11 w-full rounded-xl px-3 text-sm focus:outline-none transition-all",
     isAiFilled
-      ? "bg-[rgba(245,181,72,0.18)] ring-2 ring-[rgba(245,181,72,0.7)] text-[#FFE08A] font-semibold"
+      ? "bg-[rgba(203,208,213,0.18)] ring-2 ring-[rgba(203,208,213,0.7)] text-[#EDEFF1] font-semibold"
       : "bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]",
   ].join(" ");
 }
@@ -151,7 +151,7 @@ function textareaClass(isAiFilled?: boolean) {
   return [
     "min-h-[78px] rounded-xl px-3 py-2.5 text-sm focus:outline-none transition-all placeholder:text-[color:var(--muted)] placeholder:italic placeholder:text-xs",
     isAiFilled
-      ? "bg-[rgba(245,181,72,0.18)] ring-2 ring-[rgba(245,181,72,0.7)] text-[#FFE08A] font-semibold"
+      ? "bg-[rgba(203,208,213,0.18)] ring-2 ring-[rgba(203,208,213,0.7)] text-[#EDEFF1] font-semibold"
       : "bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]",
   ].join(" ");
 }
@@ -293,7 +293,7 @@ function Field({
           title={locked ? "Locked for next item" : "Unlocked for next item"}
         >
           {locked ? (
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: "var(--theme-gold, #F5B548)" }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: "var(--theme-gold, #C8CDD2)" }}>
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
             </svg>
@@ -2115,9 +2115,9 @@ export default function AddPage() {
             className="fixed right-4 z-[60] inline-flex h-11 items-center justify-center rounded-full px-6 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-45"
             style={{
               top: "calc(var(--topnav-h, 64px) + 12px)",
-              background: "linear-gradient(135deg, #8B6914, #F5B548)",
+              background: "linear-gradient(135deg, #8C9298, #C8CDD2)",
               color: "#0B0B0B",
-              boxShadow: "0 6px 22px rgba(245,181,72,0.45)",
+              boxShadow: "0 6px 22px rgba(203,208,213,0.45)",
             }}
           >
             {isSaving ? "Saving..." : "Save"}
@@ -3160,7 +3160,7 @@ export default function AddPage() {
                             setAiFilledFields((prev) => { const n = new Set(prev); n.add("notes"); return n; });
                           }
                         }}
-                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 transition bg-[color:var(--pill)] text-[color:var(--theme-gold,#F5B548)] ring-[color:var(--border)] hover:ring-[color:var(--theme-gold,#F5B548)]"
+                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 transition bg-[color:var(--pill)] text-[color:var(--theme-gold,#C8CDD2)] ring-[color:var(--border)] hover:ring-[color:var(--theme-gold,#C8CDD2)]"
                       >
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3v1M18.364 5.636l-.707.707M21 12h-1M18.364 18.364l-.707-.707M12 21v-1M5.636 18.364l.707-.707M3 12h1M5.636 5.636l.707.707"/><circle cx="12" cy="12" r="4"/></svg>
                         Auto
@@ -3177,7 +3177,7 @@ export default function AddPage() {
                         title={locks.notes ? "Locked for next item" : "Unlocked for next item"}
                       >
                         {locks.notes ? (
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: "var(--theme-gold, #F5B548)" }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: "var(--theme-gold, #C8CDD2)" }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                         ) : (
                           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: "var(--muted)" }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
                         )}
@@ -3354,7 +3354,7 @@ export default function AddPage() {
               type="button"
               onClick={endDrop}
               className="rounded-full px-4 py-2 text-sm font-bold"
-              style={{ background: "var(--theme-gold, #F5B548)", color: "#0A0800" }}
+              style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
             >
               Done · Review
             </button>

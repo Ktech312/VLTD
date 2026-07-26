@@ -63,8 +63,8 @@ function accountTypeCardClass(active: boolean) {
   return [
     "rounded-2xl border p-5 text-left transition cursor-pointer",
     active
-      ? "border-[rgba(245,181,72,0.55)] bg-[rgba(245,181,72,0.10)] text-text-primary shadow-[0_0_0_1px_rgba(245,181,72,0.18)]"
-      : "border-[color:var(--border)] bg-vault-card text-[color:var(--muted)] hover:border-[rgba(245,181,72,0.35)] hover:bg-[rgba(245,181,72,0.06)] hover:text-text-primary",
+      ? "border-[rgba(203,208,213,0.55)] bg-[rgba(203,208,213,0.10)] text-text-primary shadow-[0_0_0_1px_rgba(203,208,213,0.18)]"
+      : "border-[color:var(--border)] bg-vault-card text-[color:var(--muted)] hover:border-[rgba(203,208,213,0.35)] hover:bg-[rgba(203,208,213,0.06)] hover:text-text-primary",
   ].join(" ");
 }
 
@@ -78,8 +78,8 @@ function StepIndicator({ step, total }: { step: number; total: number }) {
           className={[
             "h-1.5 rounded-full transition-all",
             step >= n
-              ? "bg-[#F5B548] shadow-[0_0_12px_rgba(245,181,72,0.4)]"
-              : "bg-[rgba(245,181,72,0.12)]",
+              ? "bg-[#C8CDD2] shadow-[0_0_12px_rgba(203,208,213,0.4)]"
+              : "bg-[rgba(203,208,213,0.12)]",
           ].join(" ")}
         />
       ))}
@@ -282,20 +282,20 @@ export default function OnboardingPage() {
           className="relative overflow-hidden rounded-[34px] p-6 sm:p-8"
           style={{
             background: "var(--theme-elevated, rgba(20,32,55,0.9))",
-            border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.25))",
+            border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.25))",
             boxShadow: "0 26px 86px rgba(0,0,0,0.32)",
           }}
         >
           {/* Ambient glow */}
           <div
             className="pointer-events-none absolute inset-0"
-            style={{ background: "radial-gradient(circle at 18% 0%, var(--theme-gold-subtle, rgba(245,181,72,0.06)), transparent 50%)" }}
+            style={{ background: "radial-gradient(circle at 18% 0%, var(--theme-gold-subtle, rgba(203,208,213,0.06)), transparent 50%)" }}
           />
 
           <div className="relative">
             {/* Header */}
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-[color:var(--theme-gold,#F5B548)]">VLTD</span>
+              <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-[color:var(--theme-gold,#C8CDD2)]">VLTD</span>
               <span className="text-[11px] uppercase tracking-[0.2em] text-[color:var(--muted2)]">/ Setup</span>
             </div>
             <h1 className="mt-3 text-3xl font-black leading-[1] tracking-[-0.05em] text-text-primary sm:text-4xl">
@@ -335,8 +335,8 @@ export default function OnboardingPage() {
                         className={[
                           "flex h-12 w-12 items-center justify-center overflow-hidden rounded-full transition",
                           avatarPreset === id
-                            ? "ring-2 ring-[#F5B548] scale-110"
-                            : "ring-1 ring-[color:var(--border)] opacity-85 hover:scale-105 hover:opacity-100 hover:ring-[rgba(245,181,72,0.5)]",
+                            ? "ring-2 ring-[#C8CDD2] scale-110"
+                            : "ring-1 ring-[color:var(--border)] opacity-85 hover:scale-105 hover:opacity-100 hover:ring-[rgba(203,208,213,0.5)]",
                         ].join(" ")}
                       >
                         <AvatarThumb id={id} />
@@ -356,7 +356,7 @@ export default function OnboardingPage() {
                       if (!username.trim()) setUsername(slugifyUsername(next));
                     }}
                     placeholder="e.g. Jordan Collector"
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
                   />
                 </label>
 
@@ -367,7 +367,7 @@ export default function OnboardingPage() {
                     value={username}
                     onChange={(e) => setUsername(slugifyUsername(e.target.value))}
                     placeholder="e.g. jordan_collects"
-                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
                   />
                   <div className="mt-1.5 text-xs text-[color:var(--muted2)]">
                     Public URL: vltd.app/v/<span className="font-semibold text-[color:var(--muted)]">{slugifyUsername(username) || "username"}</span>
@@ -391,7 +391,7 @@ export default function OnboardingPage() {
                   ] as const).map(({ key, icon, title, desc }) => (
                     <button key={key} type="button" onClick={() => setAccountChoice(key)} className={accountTypeCardClass(accountChoice === key)}>
                       <div className="flex items-center justify-between">
-                        <div className="mb-2 text-[color:var(--theme-gold,#F5B548)]"><UiIcon name={icon} size={22} /></div>
+                        <div className="mb-2 text-[color:var(--theme-gold,#C8CDD2)]"><UiIcon name={icon} size={22} /></div>
                         {accountChoice === key && (
                           <div className="rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.1em] text-[#0B0B0B]" style={{ background: "var(--theme-gold-gradient)" }}>✓</div>
                         )}
@@ -447,7 +447,7 @@ export default function OnboardingPage() {
                   <div className="grid grid-cols-2 gap-2">
                     {VALUE_PROPS.map(({ icon, text }) => (
                       <div key={text} className="flex items-start gap-2 text-sm text-[color:var(--muted)]">
-                        <span className="shrink-0 text-[color:var(--theme-gold,#F5B548)]"><UiIcon name={icon} size={16} /></span>
+                        <span className="shrink-0 text-[color:var(--theme-gold,#C8CDD2)]"><UiIcon name={icon} size={16} /></span>
                         <span>{text}</span>
                       </div>
                     ))}
@@ -482,8 +482,8 @@ export default function OnboardingPage() {
                           className={[
                             "inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold transition ring-1",
                             active
-                              ? "bg-[rgba(245,181,72,0.15)] ring-[rgba(245,181,72,0.55)] text-text-primary"
-                              : "bg-[color:var(--pill)] ring-[color:var(--border)] text-[color:var(--muted)] hover:ring-[rgba(245,181,72,0.35)] hover:text-text-primary",
+                              ? "bg-[rgba(203,208,213,0.15)] ring-[rgba(203,208,213,0.55)] text-text-primary"
+                              : "bg-[color:var(--pill)] ring-[color:var(--border)] text-[color:var(--muted)] hover:ring-[rgba(203,208,213,0.35)] hover:text-text-primary",
                           ].join(" ")}
                         >
                           <span>{UNIVERSE_ICON[key]}</span>

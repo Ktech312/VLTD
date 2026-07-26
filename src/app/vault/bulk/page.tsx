@@ -60,7 +60,7 @@ const MAX_FILES = 60;
 const LABEL_CLS = "text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted2)]";
 const INPUT_CLS =
   "mt-1 w-full rounded-xl border bg-vault-card px-3 py-2 text-sm font-semibold text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]";
-const INPUT_STYLE = { borderColor: "var(--theme-border, rgba(245,181,72,0.12))" } as const;
+const INPUT_STYLE = { borderColor: "var(--theme-border, rgba(203,208,213,0.12))" } as const;
 
 /* ── Image persistence (mirrors the single-item capture flow) ──── */
 
@@ -377,7 +377,7 @@ export default function BulkUploadPage() {
             {/* Step 1: Universe first (tip) */}
             <div
               className="rounded-2xl border p-4"
-              style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.2))", background: "var(--theme-card, rgba(15,25,45,0.6))" }}
+              style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.2))", background: "var(--theme-card, rgba(15,25,45,0.6))" }}
             >
               <label className={LABEL_CLS}>Step 1 — Pick the Universe for this batch</label>
               <select
@@ -416,12 +416,12 @@ export default function BulkUploadPage() {
                 className="mt-2 flex min-h-[120px] w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed px-4 py-6 text-sm text-[color:var(--muted)] transition hover:text-text-primary"
                 style={{
                   borderColor: dragOver
-                    ? "var(--theme-gold, #F5B548)"
-                    : "var(--theme-gold-border, rgba(245,181,72,0.3))",
-                  background: dragOver ? "var(--theme-gold-subtle, rgba(245,181,72,0.08))" : undefined,
+                    ? "var(--theme-gold, #C8CDD2)"
+                    : "var(--theme-gold-border, rgba(203,208,213,0.3))",
+                  background: dragOver ? "var(--theme-gold-subtle, rgba(203,208,213,0.08))" : undefined,
                 }}
               >
-                <span className="text-2xl font-black text-[color:var(--theme-gold,#F5B548)]">+</span>
+                <span className="text-2xl font-black text-[color:var(--theme-gold,#C8CDD2)]">+</span>
                 <span className="font-semibold">
                   {dragOver
                     ? "Drop photos here"
@@ -451,7 +451,7 @@ export default function BulkUploadPage() {
                       <div
                         key={d.id}
                         className="group relative aspect-square overflow-hidden rounded-xl border"
-                        style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.18))" }}
+                        style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.18))" }}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={d.previewUrl} alt="" className="h-full w-full object-cover" />
@@ -474,7 +474,7 @@ export default function BulkUploadPage() {
             {drafts.length > 0 ? (
               <div
                 className="rounded-2xl border p-4"
-                style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.2))", background: "var(--theme-card, rgba(15,25,45,0.6))" }}
+                style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.2))", background: "var(--theme-card, rgba(15,25,45,0.6))" }}
               >
                 <label className={LABEL_CLS}>Step 3 — Fill in details</label>
                 <div className="mt-3 flex flex-wrap gap-3">
@@ -492,7 +492,7 @@ export default function BulkUploadPage() {
                     disabled={!universe}
                     onClick={skipToManual}
                     className="inline-flex min-h-11 items-center justify-center rounded-full border px-6 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary disabled:opacity-40"
-                    style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.3))" }}
+                    style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}
                   >
                     Skip — I&apos;ll fill in by hand
                   </button>
@@ -514,7 +514,7 @@ export default function BulkUploadPage() {
           <section className="mt-8 flex flex-col items-center gap-4 py-10 text-center">
             <span
               className="h-8 w-8 rounded-full border-[3px] animate-spin"
-              style={{ borderColor: "rgba(245,181,72,0.25)", borderTopColor: "#F5B548" }}
+              style={{ borderColor: "rgba(203,208,213,0.25)", borderTopColor: "#C8CDD2" }}
             />
             <div className="text-base font-black text-text-primary">
               Identifying {Math.min(scanDone + 1, scanTotal)} of {scanTotal}…
@@ -527,7 +527,7 @@ export default function BulkUploadPage() {
                 className="h-full rounded-full transition-all"
                 style={{
                   width: `${scanTotal ? (scanDone / scanTotal) * 100 : 0}%`,
-                  background: "var(--theme-gold-gradient, #F5B548)",
+                  background: "var(--theme-gold-gradient, #C8CDD2)",
                 }}
               />
             </div>
@@ -570,9 +570,9 @@ export default function BulkUploadPage() {
                   <div
                     key={d.id}
                     className="flex flex-wrap items-start gap-4 rounded-2xl border p-3 sm:flex-nowrap"
-                    style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.18))", background: "var(--theme-card, rgba(15,25,45,0.5))" }}
+                    style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.18))", background: "var(--theme-card, rgba(15,25,45,0.5))" }}
                   >
-                    <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border" style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.18))" }}>
+                    <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.18))" }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={d.previewUrl} alt="" className="h-full w-full object-cover" />
                     </div>
@@ -630,7 +630,7 @@ export default function BulkUploadPage() {
                           type="button"
                           disabled={scanningId !== null || (profileId !== "" && (remaining ?? 0) <= 0)}
                           onClick={() => void rescanOne(d)}
-                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[color:var(--theme-gold,#F5B548)] underline-offset-2 hover:underline disabled:opacity-40 disabled:no-underline"
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[color:var(--theme-gold,#C8CDD2)] underline-offset-2 hover:underline disabled:opacity-40 disabled:no-underline"
                         >
                           {scanningId === d.id ? (
                             <>
@@ -662,7 +662,7 @@ export default function BulkUploadPage() {
                 Nothing left in this batch. <Link href="/vault" className="underline">Back to Vault</Link>
               </div>
             ) : (
-              <div className="sticky bottom-4 mt-5 flex flex-wrap items-center gap-3 rounded-2xl border p-3" style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.25))", background: "var(--theme-elevated, rgba(20,32,55,0.92))" }}>
+              <div className="sticky bottom-4 mt-5 flex flex-wrap items-center gap-3 rounded-2xl border p-3" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.25))", background: "var(--theme-elevated, rgba(20,32,55,0.92))" }}>
                 <button
                   type="button"
                   disabled={committing || scanningId !== null}

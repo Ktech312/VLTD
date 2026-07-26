@@ -40,13 +40,13 @@ export default function WishlistCard({
       className="rounded-[18px] border p-4 transition hover:brightness-110"
       style={{
         background: "var(--theme-card, rgba(15,25,45,0.85))",
-        borderColor: "var(--theme-border, rgba(245,181,72,0.12))",
+        borderColor: "var(--theme-border, rgba(203,208,213,0.12))",
       }}
     >
       <div className="flex items-start justify-between gap-2">
         <div
           className="text-base font-semibold leading-snug"
-          style={{ color: "var(--theme-text-primary, #F0EAD6)" }}
+          style={{ color: "var(--theme-text-primary, #ECEDEF)" }}
         >
           {item.title}
         </div>

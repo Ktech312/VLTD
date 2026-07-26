@@ -28,7 +28,7 @@ function Block({ block }: { block: LearnBlock }) {
         <ul className="mt-4 space-y-2">
           {block.items.map((it, i) => (
             <li key={i} className="flex gap-2.5 text-[15px] leading-7 text-[color:var(--muted)]">
-              <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "var(--theme-gold,#F5B548)" }} />
+              <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "var(--theme-gold,#C8CDD2)" }} />
               {it}
             </li>
           ))}
@@ -39,7 +39,7 @@ function Block({ block }: { block: LearnBlock }) {
         <ol className="mt-4 space-y-3">
           {block.items.map((it, i) => (
             <li key={i} className="flex gap-3 text-[15px] leading-7 text-[color:var(--muted)]">
-              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-black" style={{ background: "rgba(245,181,72,0.12)", color: "var(--theme-gold,#F5B548)" }}>
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-black" style={{ background: "rgba(203,208,213,0.12)", color: "var(--theme-gold,#C8CDD2)" }}>
                 {i + 1}
               </span>
               <span className="pt-0.5">{it}</span>
@@ -49,7 +49,7 @@ function Block({ block }: { block: LearnBlock }) {
       );
     case "callout":
       return (
-        <div className="mt-6 rounded-[8px] border border-[rgba(245,181,72,0.28)] bg-[rgba(245,181,72,0.06)] px-4 py-3 text-[14px] leading-6 text-[color:var(--fg)]">
+        <div className="mt-6 rounded-[8px] border border-[rgba(203,208,213,0.28)] bg-[rgba(203,208,213,0.06)] px-4 py-3 text-[14px] leading-6 text-[color:var(--fg)]">
           {block.text}
         </div>
       );
@@ -64,7 +64,7 @@ export default async function LearnArticlePage({ params }: { params: Promise<{ s
   return (
     <main
       className="min-h-screen text-[color:var(--fg)]"
-      style={{ backgroundColor: "#040507", backgroundImage: "radial-gradient(circle at 22% 0%, rgba(245,181,72,0.05), transparent 46%)" }}
+      style={{ backgroundColor: "#040507", backgroundImage: "radial-gradient(circle at 22% 0%, rgba(203,208,213,0.05), transparent 46%)" }}
     >
       <div className="mx-auto max-w-3xl px-4 py-7 sm:px-6 lg:px-8">
         <Link href="/learn" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary">
@@ -74,7 +74,7 @@ export default async function LearnArticlePage({ params }: { params: Promise<{ s
 
         <div className="mt-5 border-b border-[color:var(--border)] pb-6">
           <div className="flex items-center gap-2.5">
-            <span className="grid h-9 w-9 place-items-center rounded-[8px]" style={{ background: "rgba(245,181,72,0.08)", border: "1px solid rgba(245,181,72,0.2)", color: "var(--theme-gold,#F5B548)" }}>
+            <span className="grid h-9 w-9 place-items-center rounded-[8px]" style={{ background: "rgba(203,208,213,0.08)", border: "1px solid rgba(203,208,213,0.2)", color: "var(--theme-gold,#C8CDD2)" }}>
               <Glyph name={article.glyph} size={18} />
             </span>
             <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-[color:var(--accent)]">{article.category}</span>

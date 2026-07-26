@@ -276,11 +276,11 @@ function FeatureCard({ feature }: { feature: Feature }) {
           <div
             className="mt-4 rounded-2xl px-4 py-3 ring-1"
             style={{
-              background: "rgba(245,181,72,0.06)",
-              borderColor: "rgba(245,181,72,0.2)",
+              background: "rgba(203,208,213,0.06)",
+              borderColor: "rgba(203,208,213,0.2)",
             }}
           >
-            <div className="text-[10px] font-bold uppercase tracking-[0.18em] mb-1" style={{ color: "rgba(245,181,72,0.7)" }}>
+            <div className="text-[10px] font-bold uppercase tracking-[0.18em] mb-1" style={{ color: "rgba(203,208,213,0.7)" }}>
               Value
             </div>
             <p className="text-sm leading-5 font-medium" style={{ color: "var(--fg)" }}>{feature.value}</p>

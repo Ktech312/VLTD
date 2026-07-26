@@ -575,7 +575,7 @@ export default function SharedGalleryPage() {
         <button
           type="button"
           onClick={() => setShowShare((s) => !s)}
-          className="flex items-center gap-1.5 rounded-full bg-[rgba(245,181,72,0.12)] px-3 py-2 text-xs font-semibold text-[#F5B548] ring-1 ring-[rgba(245,181,72,0.35)] backdrop-blur-sm transition-all hover:bg-[rgba(245,181,72,0.2)]"
+          className="flex items-center gap-1.5 rounded-full bg-[rgba(203,208,213,0.12)] px-3 py-2 text-xs font-semibold text-[#C8CDD2] ring-1 ring-[rgba(203,208,213,0.35)] backdrop-blur-sm transition-all hover:bg-[rgba(203,208,213,0.2)]"
           aria-label="Share this exhibition"
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

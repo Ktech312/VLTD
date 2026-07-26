@@ -151,7 +151,7 @@ export default async function ShareItemPage(
         <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
           <span
             style={{
-              color: "#F5B548",
+              color: "#C8CDD2",
               fontSize: 20,
               fontWeight: 700,
               letterSpacing: "0.28em",
@@ -215,15 +215,15 @@ export default async function ShareItemPage(
               <span
                 style={{
                   display: "inline-block",
-                  background: "rgba(245,181,72,0.12)",
-                  color: "#F5B548",
+                  background: "rgba(203,208,213,0.12)",
+                  color: "#C8CDD2",
                   fontSize: 11,
                   fontWeight: 600,
                   letterSpacing: "0.06em",
                   padding: "3px 10px",
                   borderRadius: 100,
                   marginBottom: 10,
-                  border: "1px solid rgba(245,181,72,0.28)",
+                  border: "1px solid rgba(203,208,213,0.28)",
                 }}
               >
                 {grade}
@@ -259,7 +259,7 @@ export default async function ShareItemPage(
               href="/"
               style={{
                 display: "block",
-                background: "#F5B548",
+                background: "#C8CDD2",
                 color: "#000",
                 textAlign: "center",
                 padding: "12px",
@@ -296,7 +296,7 @@ export default async function ShareItemPage(
                 height: "auto",
                 borderRadius: 12,
                 display: "block",
-                border: "1px solid rgba(245,181,72,0.25)",
+                border: "1px solid rgba(203,208,213,0.25)",
               }}
             />
           </a>
@@ -312,9 +312,9 @@ export default async function ShareItemPage(
               alignItems: "center",
               justifyContent: "center",
               gap: "0.5rem",
-              background: "rgba(245,181,72,0.08)",
-              color: "#F5B548",
-              border: "1px solid rgba(245,181,72,0.35)",
+              background: "rgba(203,208,213,0.08)",
+              color: "#C8CDD2",
+              border: "1px solid rgba(203,208,213,0.35)",
               textAlign: "center",
               padding: "12px",
               borderRadius: 12,

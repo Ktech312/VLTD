@@ -105,9 +105,9 @@ function Pill({ label, active, onClick }: { label: string; active: boolean; onCl
       onClick={onClick}
       className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition"
       style={{
-        background: active ? "rgba(245,181,72,0.18)" : "rgba(255,255,255,0.06)",
-        border: active ? "1px solid rgba(245,181,72,0.58)" : "1px solid rgba(255,255,255,0.12)",
-        color: active ? "#F5B548" : "rgba(255,255,255,0.52)",
+        background: active ? "rgba(203,208,213,0.18)" : "rgba(255,255,255,0.06)",
+        border: active ? "1px solid rgba(203,208,213,0.58)" : "1px solid rgba(255,255,255,0.12)",
+        color: active ? "#C8CDD2" : "rgba(255,255,255,0.52)",
       }}
     >
       {label}
@@ -118,10 +118,10 @@ function Pill({ label, active, onClick }: { label: string; active: boolean; onCl
 function FrameOverlay({ frameType, lockProgress }: { frameType: FrameType; lockProgress: number }) {
   const aspect = FRAME_ASPECT[frameType];
   const isPortrait = aspect < 1;
-  const color = `rgba(245,181,72,${0.2 + lockProgress * 0.8})`;
+  const color = `rgba(203,208,213,${0.2 + lockProgress * 0.8})`;
   const size = 18 + lockProgress * 8;
   const borderWidth = 2 + lockProgress;
-  const glow = lockProgress > 0.55 ? `0 0 ${Math.round(lockProgress * 20)}px rgba(245,181,72,${lockProgress * 0.42})` : "none";
+  const glow = lockProgress > 0.55 ? `0 0 ${Math.round(lockProgress * 20)}px rgba(203,208,213,${lockProgress * 0.42})` : "none";
 
   function cornerStyle(position: "tl" | "tr" | "bl" | "br"): CSSProperties {
     const top = position.includes("t");
@@ -156,7 +156,7 @@ function FrameOverlay({ frameType, lockProgress }: { frameType: FrameType; lockP
           <div
             className="absolute -inset-1 rounded-lg"
             style={{
-              boxShadow: `0 0 0 1px rgba(245,181,72,${(lockProgress - 0.7) * 0.5}), inset 0 0 28px rgba(245,181,72,${(lockProgress - 0.7) * 0.12})`,
+              boxShadow: `0 0 0 1px rgba(203,208,213,${(lockProgress - 0.7) * 0.5}), inset 0 0 28px rgba(203,208,213,${(lockProgress - 0.7) * 0.12})`,
             }}
           />
         ) : null}
@@ -444,9 +444,9 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
             onClick={handleDone}
             className="shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold ring-1 transition"
             style={{
-              background: capturedItems.length ? "rgba(245,181,72,0.16)" : "rgba(255,255,255,0.06)",
-              borderColor: capturedItems.length ? "rgba(245,181,72,0.5)" : "rgba(255,255,255,0.12)",
-              color: capturedItems.length ? "#F5B548" : "rgba(255,255,255,0.5)",
+              background: capturedItems.length ? "rgba(203,208,213,0.16)" : "rgba(255,255,255,0.06)",
+              borderColor: capturedItems.length ? "rgba(203,208,213,0.5)" : "rgba(255,255,255,0.12)",
+              color: capturedItems.length ? "#C8CDD2" : "rgba(255,255,255,0.5)",
             }}
           >
             Done{capturedItems.length ? ` (${capturedItems.length})` : ""}
@@ -471,9 +471,9 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
                 onClick={() => { setUniverse(key); setCategoryLabel(getCategories(key)[0] ?? "Collectors Choice"); }}
                 className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold transition"
                 style={{
-                  background: universe === key ? "rgba(245,181,72,0.18)" : "rgba(255,255,255,0.06)",
-                  border: universe === key ? "1px solid rgba(245,181,72,0.58)" : "1px solid rgba(255,255,255,0.10)",
-                  color: universe === key ? "#F5B548" : "rgba(255,255,255,0.46)",
+                  background: universe === key ? "rgba(203,208,213,0.18)" : "rgba(255,255,255,0.06)",
+                  border: universe === key ? "1px solid rgba(203,208,213,0.58)" : "1px solid rgba(255,255,255,0.10)",
+                  color: universe === key ? "#C8CDD2" : "rgba(255,255,255,0.46)",
                 }}
               >
                 {UNIVERSE_LABEL[key]}
@@ -489,9 +489,9 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
                   onClick={() => setCategoryLabel(category)}
                   className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold transition"
                   style={{
-                    background: categoryLabel === category ? "rgba(245,181,72,0.18)" : "rgba(255,255,255,0.06)",
-                    border: categoryLabel === category ? "1px solid rgba(245,181,72,0.58)" : "1px solid rgba(255,255,255,0.10)",
-                    color: categoryLabel === category ? "#F5B548" : "rgba(255,255,255,0.46)",
+                    background: categoryLabel === category ? "rgba(203,208,213,0.18)" : "rgba(255,255,255,0.06)",
+                    border: categoryLabel === category ? "1px solid rgba(203,208,213,0.58)" : "1px solid rgba(255,255,255,0.10)",
+                    color: categoryLabel === category ? "#C8CDD2" : "rgba(255,255,255,0.46)",
                   }}
                 >
                   {category}
@@ -531,9 +531,9 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
               <div
                 className="rounded-2xl px-5 py-3 text-center backdrop-blur-sm"
-                style={{ background: "rgba(0,0,0,0.72)", border: "1px solid rgba(245,181,72,0.3)" }}
+                style={{ background: "rgba(0,0,0,0.72)", border: "1px solid rgba(203,208,213,0.3)" }}
               >
-                <div className="text-base font-bold text-[#F5B548]">Paused</div>
+                <div className="text-base font-bold text-[#C8CDD2]">Paused</div>
                 <div className="mt-0.5 text-xs text-white/60">{capturedItems.length} captured so far</div>
               </div>
             </div>
@@ -543,7 +543,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
           {capturedItems.length > 0 ? (
             <div
               className="absolute bottom-3 left-3 flex items-center gap-2 rounded-[12px] p-1 pr-2.5 backdrop-blur"
-              style={{ background: "rgba(0,0,0,0.62)", border: "1px solid rgba(245,181,72,0.45)" }}
+              style={{ background: "rgba(0,0,0,0.62)", border: "1px solid rgba(203,208,213,0.45)" }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -564,11 +564,11 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
               className="h-2 w-2 rounded-full transition-all"
               style={{
                 background: lockStatus === "snapped" || lockStatus === "locked"
-                  ? "#F5B548"
+                  ? "#C8CDD2"
                   : lockStatus === "locking"
-                    ? `rgba(245,181,72,${0.35 + lockProgress * 0.65})`
+                    ? `rgba(203,208,213,${0.35 + lockProgress * 0.65})`
                     : "rgba(255,255,255,0.35)",
-                boxShadow: lockStatus === "locked" || lockStatus === "snapped" ? "0 0 12px rgba(245,181,72,0.7)" : "none",
+                boxShadow: lockStatus === "locked" || lockStatus === "snapped" ? "0 0 12px rgba(203,208,213,0.7)" : "none",
               }}
             />
             <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/58">
@@ -579,7 +579,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
                 : "Scanning"}
             </span>
             {capturedItems.length > 0 ? (
-              <span className="ml-1 rounded-full bg-[#F5B548]/20 px-1.5 py-0.5 text-[10px] font-bold text-[#F5B548]">
+              <span className="ml-1 rounded-full bg-[#C8CDD2]/20 px-1.5 py-0.5 text-[10px] font-bold text-[#C8CDD2]">
                 {capturedItems.length}
               </span>
             ) : null}
@@ -596,9 +596,9 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
               disabled={!awaitingChoice || effectiveQuickMode}
               className="rounded-full px-4 py-2 text-xs font-semibold ring-1 transition disabled:opacity-25"
               style={{
-                background: awaitingChoice && !effectiveQuickMode ? "rgba(245,181,72,0.14)" : "rgba(255,255,255,0.05)",
-                borderColor: awaitingChoice && !effectiveQuickMode ? "rgba(245,181,72,0.55)" : "rgba(255,255,255,0.1)",
-                color: awaitingChoice && !effectiveQuickMode ? "#F5B548" : "rgba(255,255,255,0.4)",
+                background: awaitingChoice && !effectiveQuickMode ? "rgba(203,208,213,0.14)" : "rgba(255,255,255,0.05)",
+                borderColor: awaitingChoice && !effectiveQuickMode ? "rgba(203,208,213,0.55)" : "rgba(255,255,255,0.1)",
+                color: awaitingChoice && !effectiveQuickMode ? "#C8CDD2" : "rgba(255,255,255,0.4)",
               }}
             >
               Front Save
@@ -669,9 +669,9 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
                   onClick={() => setBulkPaused((v) => !v)}
                   className="rounded-full px-3 py-1 text-[11px] font-semibold ring-1 transition"
                   style={{
-                    background: bulkPaused ? "rgba(245,181,72,0.16)" : "rgba(239,68,68,0.14)",
-                    borderColor: bulkPaused ? "rgba(245,181,72,0.5)" : "rgba(239,68,68,0.4)",
-                    color: bulkPaused ? "#F5B548" : "#f87171",
+                    background: bulkPaused ? "rgba(203,208,213,0.16)" : "rgba(239,68,68,0.14)",
+                    borderColor: bulkPaused ? "rgba(203,208,213,0.5)" : "rgba(239,68,68,0.4)",
+                    color: bulkPaused ? "#C8CDD2" : "#f87171",
                   }}
                 >
                   {bulkPaused ? "&#x25B6; Resume" : "&#x23F8; Pause"}

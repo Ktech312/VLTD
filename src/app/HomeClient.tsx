@@ -22,11 +22,11 @@ const FOCUS_LS_KEY = "vltd_primary_focus";
 const C = {
   card:   "var(--theme-card, rgba(3,8,14,0.95))",
   elevated: "var(--theme-elevated, rgba(6,12,20,0.96))",
-  bd:     "var(--theme-border, rgba(184,135,43,0.22))",
-  bd2:    "rgba(184,135,43,0.12)",
-  gold:   "#F5B548",
-  goldDim:"rgba(245,181,72,0.08)",
-  goldBd: "rgba(245,181,72,0.20)",
+  bd:     "var(--theme-border, rgba(203,208,213,0.22))",
+  bd2:    "rgba(203,208,213,0.12)",
+  gold:   "#C8CDD2",
+  goldDim:"rgba(203,208,213,0.08)",
+  goldBd: "rgba(203,208,213,0.20)",
   muted:  "#A0956B",
   muted2: "#635F59",
   text:   "#EDEBE3",
@@ -36,8 +36,8 @@ const C = {
 } as const;
 
 const panelBg = "linear-gradient(180deg, rgba(8,14,20,0.96), rgba(2,8,12,0.98))";
-const premiumBorder = "1px solid rgba(217,162,58,0.42)";
-const premiumShadow = "0 22px 66px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,241,168,0.08)";
+const premiumBorder = "1px solid rgba(203,208,213,0.42)";
+const premiumShadow = "0 22px 66px rgba(0,0,0,0.38), inset 0 1px 0 rgba(237,239,241,0.08)";
 
 // ── Social platforms ─────────────────────────────────────────────
 const SOCIAL_DEFS = [
@@ -142,10 +142,10 @@ const BiggestMoversPanel = dynamic(() => import("@/components/BiggestMoversPanel
 function InfoTooltip({ text }: { text: string }) {
   return (
     <span className="group/tip relative inline-flex items-center justify-center">
-      <span className="flex h-3.5 w-3.5 items-center justify-center text-[8px] font-bold leading-none cursor-default select-none" style={{ background: "rgba(245,181,72,0.12)", color: C.muted, border: "1px solid rgba(245,181,72,0.20)", borderRadius: "50%" }}>i</span>
-      <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-52 -translate-x-1/2 px-3 py-2 text-left text-xs leading-snug opacity-0 shadow-xl transition-opacity duration-150 group-hover/tip:opacity-100" style={{ background: "rgba(10,18,35,0.97)", border: "1px solid rgba(245,181,72,0.22)", color: "#D4C9A8", borderRadius: "6px" }}>
+      <span className="flex h-3.5 w-3.5 items-center justify-center text-[8px] font-bold leading-none cursor-default select-none" style={{ background: "rgba(203,208,213,0.12)", color: C.muted, border: "1px solid rgba(203,208,213,0.20)", borderRadius: "50%" }}>i</span>
+      <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-52 -translate-x-1/2 px-3 py-2 text-left text-xs leading-snug opacity-0 shadow-xl transition-opacity duration-150 group-hover/tip:opacity-100" style={{ background: "rgba(10,18,35,0.97)", border: "1px solid rgba(203,208,213,0.22)", color: "#D4C9A8", borderRadius: "6px" }}>
         {text}
-        <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent" style={{ borderTopColor: "rgba(245,181,72,0.22)" }} />
+        <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent" style={{ borderTopColor: "rgba(203,208,213,0.22)" }} />
       </span>
     </span>
   );
@@ -307,13 +307,13 @@ function HeroAvatarPanel({ avatarUrl, onClick }: { avatarUrl: string; onClick: (
   const presetImage = avatarPresetSrc(avatarUrl);
 
   return (
-    <button onClick={onClick} style={{ position: "relative", width: "100%", height: "100%", background: preset?.bg ?? "linear-gradient(155deg,#100D06,#0C0A04)", border: "none", cursor: "pointer", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "1px solid rgba(217,162,58,0.16)" }} className="max-sm:hidden">
+    <button onClick={onClick} style={{ position: "relative", width: "100%", height: "100%", background: preset?.bg ?? "linear-gradient(155deg,#100D06,#0C0A04)", border: "none", cursor: "pointer", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "1px solid rgba(203,208,213,0.16)" }} className="max-sm:hidden">
       {/* Ambient glow */}
-      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 10%, rgba(245,181,72,0.18) 0%, transparent 60%)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 10%, rgba(203,208,213,0.18) 0%, transparent 60%)", pointerEvents: "none" }} />
       {/* Decorative wall frames behind */}
       {!hasCustom && (
         <div style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0, display: "flex", alignItems: "center", gap: "6px", padding: "10px", opacity: 0.18, pointerEvents: "none" }}>
-          {[1,2,3].map((i) => <div key={i} style={{ flex: 1, height: "100%", borderRadius: "4px", background: "linear-gradient(160deg,#1A1610,#241C0C)", border: "1px solid rgba(245,181,72,0.15)" }} />)}
+          {[1,2,3].map((i) => <div key={i} style={{ flex: 1, height: "100%", borderRadius: "4px", background: "linear-gradient(160deg,#1A1610,#241C0C)", border: "1px solid rgba(203,208,213,0.15)" }} />)}
         </div>
       )}
       {/* Avatar display */}
@@ -341,7 +341,7 @@ function FeaturedGalleryCard({ galleries }: { galleries: Gallery[] }) {
   const itemCount = g.itemIds?.length ?? 0;
   return (
     <div style={{ padding: "14px 16px" }}>
-      <Link href={"/gallery/" + g.id} style={{ display: "block", width: "100%", height: "214px", borderRadius: "8px", border: `1px solid rgba(245,181,72,0.58)`, boxShadow: "0 0 0 1px rgba(245,181,72,0.10), 0 16px 42px rgba(0,0,0,0.52)", background: "rgba(4,9,13,0.94)", overflow: "hidden" }}>
+      <Link href={"/gallery/" + g.id} style={{ display: "block", width: "100%", height: "214px", borderRadius: "8px", border: `1px solid rgba(203,208,213,0.58)`, boxShadow: "0 0 0 1px rgba(203,208,213,0.10), 0 16px 42px rgba(0,0,0,0.52)", background: "rgba(4,9,13,0.94)", overflow: "hidden" }}>
         {g.coverImage
           ? <img src={g.coverImage} alt={g.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px", opacity: 0.2 }}><Glyph name="exhibition" size={22} /></div>}
@@ -349,7 +349,7 @@ function FeaturedGalleryCard({ galleries }: { galleries: Gallery[] }) {
       <div style={{ marginTop: "9px" }}>
         <div style={{ fontFamily: C.r, fontSize: "18px", fontWeight: 700, color: C.text, lineHeight: 1.1 }}>{g.title || "Untitled"}</div>
         <div style={{ fontSize: "11px", color: C.muted, marginTop: "2px" }}>{itemCount} piece{itemCount !== 1 ? "s" : ""}</div>
-        <Link href={"/gallery/" + g.id} style={{ display: "inline-flex", alignItems: "center", marginTop: "8px", borderRadius: "6px", padding: "6px 14px", fontSize: "11px", fontWeight: 700, background: "linear-gradient(135deg,#8B6914,#F5B548)", color: "#0B0B0B", textDecoration: "none" }}>View Gallery →</Link>
+        <Link href={"/gallery/" + g.id} style={{ display: "inline-flex", alignItems: "center", marginTop: "8px", borderRadius: "6px", padding: "6px 14px", fontSize: "11px", fontWeight: 700, background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B", textDecoration: "none" }}>View Gallery →</Link>
       </div>
     </div>
   );
@@ -412,7 +412,7 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
               className="absolute overflow-hidden transition-all duration-300"
               style={{ width: "112px", height: "150px", borderRadius: "10px",
                 transform: `translateX(${tx}) scale(${scale})`, opacity, zIndex,
-                border: isActive ? `2px solid rgba(245,181,72,0.55)` : `1px solid rgba(245,181,72,0.14)`,
+                border: isActive ? `2px solid rgba(203,208,213,0.55)` : `1px solid rgba(203,208,213,0.14)`,
                 background: "rgba(10,18,35,0.9)",
                 boxShadow: isActive ? "0 8px 28px rgba(0,0,0,0.55)" : "none",
                 cursor: isActive ? "default" : "pointer" }}>
@@ -428,7 +428,7 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
       </div>
       {/* Bottom row: View Gallery centered, All Galleries right */}
       <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", marginTop: "12px" }}>
-        <Link href={"/gallery/" + current.id} style={{ borderRadius: "6px", padding: "6px 14px", fontSize: "11px", fontWeight: 700, background: `linear-gradient(135deg,#8B6914,#F5B548)`, color: "#0B0B0B", textDecoration: "none" }}>View Gallery ↑</Link>
+        <Link href={"/gallery/" + current.id} style={{ borderRadius: "6px", padding: "6px 14px", fontSize: "11px", fontWeight: 700, background: `linear-gradient(135deg,#8C9298,#C8CDD2)`, color: "#0B0B0B", textDecoration: "none" }}>View Gallery ↑</Link>
         <Link href="/museum" style={{ position: "absolute", right: 0, fontSize: "11px", fontWeight: 600, color: C.gold, textDecoration: "none", opacity: 0.75 }}>All Galleries</Link>
       </div>
     </div>
@@ -579,8 +579,8 @@ function RecentSidebarItems({ items }: { items: VaultItem[] }) {
     <div style={{ flex: 1, overflowY: "auto", padding: "8px", display: "flex", flexDirection: "column", gap: "7px" }}>
       {recent.map((item) => (
         <Link key={item.id} href={"/vault/item/" + item.id}
-          style={{ display: "flex", gap: "10px", padding: "9px", border: premiumBorder, borderRadius: "8px", alignItems: "center", textDecoration: "none", background: "linear-gradient(135deg, rgba(8,14,20,0.84), rgba(3,8,14,0.94))", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.06)" }}>
-          <div style={{ width: "34px", height: "34px", flexShrink: 0, borderRadius: "6px", border: `1px solid rgba(217,162,58,0.34)`, background: "rgba(10,18,35,0.9)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px" }}>
+          style={{ display: "flex", gap: "10px", padding: "9px", border: premiumBorder, borderRadius: "8px", alignItems: "center", textDecoration: "none", background: "linear-gradient(135deg, rgba(8,14,20,0.84), rgba(3,8,14,0.94))", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.06)" }}>
+          <div style={{ width: "34px", height: "34px", flexShrink: 0, borderRadius: "6px", border: `1px solid rgba(203,208,213,0.34)`, background: "rgba(10,18,35,0.9)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px" }}>
             {item.imageFrontUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={item.imageFrontUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -688,19 +688,19 @@ function ProfileNudge({ primaryFocus }: { primaryFocus: string }) {
 
   return (
     <div className="mb-3 flex items-center gap-3 rounded-[10px] px-4 py-3" style={{
-      background: "rgba(245,181,72,0.08)",
-      border: "1px solid rgba(245,181,72,0.22)",
+      background: "rgba(203,208,213,0.08)",
+      border: "1px solid rgba(203,208,213,0.22)",
     }}>
       <span className="text-lg shrink-0">✨</span>
       <div className="flex-1 min-w-0">
-        <div style={{ fontSize: "12px", fontWeight: 700, color: "#F5B548" }}>Complete your profile</div>
+        <div style={{ fontSize: "12px", fontWeight: 700, color: "#C8CDD2" }}>Complete your profile</div>
         <div style={{ fontSize: "11px", color: "#A0956B", marginTop: "1px" }}>
           Add your collection focus to personalise your Discover feed.
         </div>
       </div>
       <a href="/account#profile-setup" style={{
         flexShrink: 0, fontSize: "11px", fontWeight: 700, color: "#0B0B0B", textDecoration: "none",
-        background: "linear-gradient(135deg, #8B6914, #F5B548)", borderRadius: "20px", padding: "5px 12px",
+        background: "linear-gradient(135deg, #8C9298, #C8CDD2)", borderRadius: "20px", padding: "5px 12px",
       }}>Set up</a>
       <button type="button" onClick={dismiss}
         style={{ flexShrink: 0, fontSize: "14px", color: "#635F59", background: "none", border: "none", cursor: "pointer", lineHeight: 1 }}
@@ -888,9 +888,9 @@ export default function HomeClient() {
           <SeasonalBanner />
 
           {/* Hero card */}
-          <div style={{ background: "linear-gradient(135deg, rgba(8,14,24,0.99), rgba(3,8,14,0.98) 52%, rgba(0,0,0,0.94))", border: "1px solid rgba(217,162,58,0.42)", borderRadius: "10px", overflow: "hidden", minHeight: "218px", position: "relative", boxShadow: "0 24px 78px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,241,168,0.08)" }}
+          <div style={{ background: "linear-gradient(135deg, rgba(8,14,24,0.99), rgba(3,8,14,0.98) 52%, rgba(0,0,0,0.94))", border: "1px solid rgba(203,208,213,0.42)", borderRadius: "10px", overflow: "hidden", minHeight: "218px", position: "relative", boxShadow: "0 24px 78px rgba(0,0,0,0.42), inset 0 1px 0 rgba(237,239,241,0.08)" }}
             className="grid grid-cols-1 sm:[grid-template-columns:minmax(0,1fr)_240px]">
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(245,181,72,0.08), transparent 38%, rgba(82,214,244,0.035)), radial-gradient(circle at 78% 40%, rgba(245,181,72,0.12), transparent 34%)", pointerEvents: "none" }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(203,208,213,0.08), transparent 38%, rgba(82,214,244,0.035)), radial-gradient(circle at 78% 40%, rgba(203,208,213,0.12), transparent 34%)", pointerEvents: "none" }} />
 
             <div style={{ padding: "32px 34px", display: "flex", flexDirection: "column", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
               <div>
@@ -899,7 +899,7 @@ export default function HomeClient() {
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                   <h1 style={{ fontFamily: C.r, fontSize: "40px", fontWeight: 700, lineHeight: 1.02, color: C.text }}>{displayName || "Curator"}</h1>
-                  <Link href="/account" aria-label="Edit profile" title="Edit profile" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 8, background: "rgba(245,181,72,0.10)", border: `1px solid ${C.bd}`, color: C.gold, textDecoration: "none" }}>
+                  <Link href="/account" aria-label="Edit profile" title="Edit profile" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 8, background: "rgba(203,208,213,0.10)", border: `1px solid ${C.bd}`, color: C.gold, textDecoration: "none" }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                   </Link>
                 </div>
@@ -919,7 +919,7 @@ export default function HomeClient() {
               <div style={{ display: "flex", gap: "12px", marginTop: "24px", flexWrap: "wrap" }}>
                 <div className="relative">
                   <div className="absolute -right-1 -top-1 z-10"><InfoTooltip text="Snap a photo — VLTD identifies the item and fills in the details." /></div>
-                  <Link href="/capture" style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "var(--theme-gold-gradient, linear-gradient(135deg,#8B6914,#F5B548))", color: "#080808", borderRadius: "8px", padding: "12px 22px", fontSize: "13px", fontWeight: 900, textDecoration: "none", boxShadow: "0 16px 36px rgba(245,181,72,0.22)" }}>Add Item</Link>
+                  <Link href="/capture" style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "var(--theme-gold-gradient, linear-gradient(135deg,#8C9298,#C8CDD2))", color: "#080808", borderRadius: "8px", padding: "12px 22px", fontSize: "13px", fontWeight: 900, textDecoration: "none", boxShadow: "0 16px 36px rgba(203,208,213,0.22)" }}>Add Item</Link>
                 </div>
                 <Link href="/vault" style={{ display: "inline-flex", alignItems: "center", background: "rgba(255,255,255,0.035)", color: C.text, border: `1px solid ${C.bd}`, borderRadius: "8px", padding: "11px 20px", fontSize: "13px", fontWeight: 800, textDecoration: "none" }}>Go to Vault</Link>
               </div>
@@ -943,7 +943,7 @@ export default function HomeClient() {
               ) : (
                 <div style={{ padding: "16px" }}>
                   <div style={{ fontFamily: C.r, fontSize: "15px", fontWeight: 600, color: C.text }}>No galleries yet</div>
-                  <Link href="/museum/new" style={{ display: "inline-flex", alignItems: "center", marginTop: "8px", borderRadius: "6px", padding: "6px 14px", fontSize: "11px", fontWeight: 700, background: "linear-gradient(135deg,#8B6914,#F5B548)", color: "#0B0B0B", textDecoration: "none" }}>Create Gallery →</Link>
+                  <Link href="/museum/new" style={{ display: "inline-flex", alignItems: "center", marginTop: "8px", borderRadius: "6px", padding: "6px 14px", fontSize: "11px", fontWeight: 700, background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B", textDecoration: "none" }}>Create Gallery →</Link>
                 </div>
               )}
             </div>
@@ -983,8 +983,8 @@ export default function HomeClient() {
                     {tip && <div className="absolute -right-1 -top-1 z-10"><InfoTooltip text={tip} /></div>}
                     <Link href={href} style={{
                       display: "block", width: "100%", borderRadius: "6px",
-                      border: accent ? "1px solid rgba(245,181,72,0.28)" : `1px solid ${C.bd}`,
-                      background: accent ? "rgba(245,181,72,0.09)" : "rgba(255,255,255,0.03)",
+                      border: accent ? "1px solid rgba(203,208,213,0.28)" : `1px solid ${C.bd}`,
+                      background: accent ? "rgba(203,208,213,0.09)" : "rgba(255,255,255,0.03)",
                       color: accent ? C.gold : C.muted,
                       padding: "9px 6px", textAlign: "center", fontSize: "11px", fontWeight: accent ? 600 : 500, textDecoration: "none"
                     }}>{label}</Link>

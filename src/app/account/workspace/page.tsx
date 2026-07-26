@@ -197,7 +197,7 @@ export default function WorkspaceSettingsPage() {
           className="relative -mt-px overflow-hidden rounded-[34px] rounded-tl-none p-5 sm:p-7"
           style={{
             background: "var(--theme-elevated, rgba(20,32,55,0.9))",
-            border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.25))",
+            border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.25))",
             boxShadow: "0 26px 86px rgba(0,0,0,0.32)",
           }}
         >
@@ -354,8 +354,8 @@ export default function WorkspaceSettingsPage() {
                     onClick={() => switchTo(p.id)}
                     className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 ring-1 transition text-left"
                     style={{
-                      background: p.id === activeId ? "rgba(245,181,72,0.08)" : "var(--pill)",
-                      borderColor: p.id === activeId ? "rgba(245,181,72,0.4)" : "var(--border)",
+                      background: p.id === activeId ? "rgba(203,208,213,0.08)" : "var(--pill)",
+                      borderColor: p.id === activeId ? "rgba(203,208,213,0.4)" : "var(--border)",
                     }}
                   >
                     <span className="text-xl">{emoji}</span>

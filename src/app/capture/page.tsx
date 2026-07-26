@@ -77,7 +77,7 @@ const LABEL_CLS =
   "text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted2)]";
 const INPUT_CLS =
   "mt-1 w-full rounded-xl border bg-vault-card px-3 py-2 text-sm font-semibold text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]";
-const INPUT_STYLE = { borderColor: "var(--theme-border, rgba(245,181,72,0.12))" } as const;
+const INPUT_STYLE = { borderColor: "var(--theme-border, rgba(203,208,213,0.12))" } as const;
 const SERIF = "var(--font-serif, 'Cormorant Garamond', Georgia, serif)";
 
 const CERT_COMPANIES = ["PSA", "CGC", "BGS", "SGC", "CBCS", "WATA", "VGA", "Other"];
@@ -107,8 +107,8 @@ function AccordionSection({
       className="rounded-2xl border"
       style={{
         borderColor: open
-          ? "var(--theme-gold-border, rgba(245,181,72,0.35))"
-          : "var(--theme-gold-border, rgba(245,181,72,0.16))",
+          ? "var(--theme-gold-border, rgba(203,208,213,0.35))"
+          : "var(--theme-gold-border, rgba(203,208,213,0.16))",
         background: "var(--theme-card, rgba(15,25,45,0.6))",
       }}
     >
@@ -119,7 +119,7 @@ function AccordionSection({
       >
         <span
           className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black"
-          style={{ border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.35))", color: "var(--theme-gold, #F5B548)" }}
+          style={{ border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.35))", color: "var(--theme-gold, #C8CDD2)" }}
         >
           {n}
         </span>
@@ -148,7 +148,7 @@ function AccordionSection({
       {open ? (
         <div
           className="border-t px-4 py-4"
-          style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.12))" }}
+          style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.12))" }}
         >
           {children}
         </div>
@@ -165,10 +165,10 @@ function ActionButton({ label, icon, onClick, disabled }: { label: string; icon:
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex items-center gap-2 rounded-[10px] border px-3.5 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(245,181,72,0.08))] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
-      style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.28))" }}
+      className="inline-flex items-center gap-2 rounded-[10px] border px-3.5 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.08))] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+      style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.28))" }}
     >
-      <span style={{ color: "var(--theme-gold, #F5B548)" }}>{icon}</span>
+      <span style={{ color: "var(--theme-gold, #C8CDD2)" }}>{icon}</span>
       {label}
     </button>
   );
@@ -438,10 +438,10 @@ export default function CapturePage() {
                 <>
                   <Link
                     href="/vault/bulk"
-                    className="mt-4 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(245,181,72,0.08))] lg:mt-6"
-                    style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.3))" }}
+                    className="mt-4 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.08))] lg:mt-6"
+                    style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}
                   >
-                    <span className="text-sm font-black text-[color:var(--theme-gold,#F5B548)]">+</span>
+                    <span className="text-sm font-black text-[color:var(--theme-gold,#C8CDD2)]">+</span>
                     Adding a lot? Bulk upload photos
                   </Link>
                   <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[color:var(--muted2)]">
@@ -463,8 +463,8 @@ export default function CapturePage() {
                     <span
                       className="inline-block h-3 w-3 animate-pulse rounded-full"
                       style={{
-                        background: "var(--theme-gold, #F5B548)",
-                        boxShadow: "0 0 14px rgba(245,181,72,0.6)",
+                        background: "var(--theme-gold, #C8CDD2)",
+                        boxShadow: "0 0 14px rgba(203,208,213,0.6)",
                       }}
                     />
                     <span className="text-base font-black text-text-primary">
@@ -529,8 +529,8 @@ export default function CapturePage() {
                 <div
                   className="relative flex min-h-[260px] w-full flex-col items-center justify-center overflow-hidden rounded-[30px] border"
                   style={{
-                    borderColor: "var(--theme-gold-border, rgba(245,181,72,0.35))",
-                    background: "radial-gradient(circle at 50% 30%, rgba(245,181,72,0.08), rgba(5,11,21,0.72) 70%)",
+                    borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))",
+                    background: "radial-gradient(circle at 50% 30%, rgba(203,208,213,0.08), rgba(5,11,21,0.72) 70%)",
                   }}
                 >
                   {capturedImageFile && (
@@ -545,13 +545,13 @@ export default function CapturePage() {
                     <div
                       className="flex h-14 w-14 items-center justify-center rounded-full"
                       style={{
-                        background: "rgba(245,181,72,0.12)",
-                        border: "1px solid rgba(245,181,72,0.35)",
+                        background: "rgba(203,208,213,0.12)",
+                        border: "1px solid rgba(203,208,213,0.35)",
                       }}
                     >
                       <span
-                        className="h-5 w-5 rounded-full border-[2.5px] border-transparent border-t-[#F5B548] animate-spin"
-                        style={{ borderTopColor: "#F5B548", borderRightColor: "rgba(245,181,72,0.3)" }}
+                        className="h-5 w-5 rounded-full border-[2.5px] border-transparent border-t-[#C8CDD2] animate-spin"
+                        style={{ borderTopColor: "#C8CDD2", borderRightColor: "rgba(203,208,213,0.3)" }}
                       />
                     </div>
                     <div className="text-base font-black text-text-primary">Analyzing…</div>
@@ -608,8 +608,8 @@ export default function CapturePage() {
                   <div
                     className="relative overflow-hidden rounded-[16px] border"
                     style={{
-                      borderColor: "var(--theme-gold-border, rgba(245,181,72,0.28))",
-                      background: "radial-gradient(circle at 50% 22%, rgba(245,181,72,0.06), rgba(2,9,12,0.85) 72%)",
+                      borderColor: "var(--theme-gold-border, rgba(203,208,213,0.28))",
+                      background: "radial-gradient(circle at 50% 22%, rgba(203,208,213,0.06), rgba(2,9,12,0.85) 72%)",
                     }}
                   >
                     <div className="flex aspect-[4/5] w-full items-center justify-center p-4">
@@ -618,14 +618,14 @@ export default function CapturePage() {
                         <img src={previewUrl} alt="Captured item" className="max-h-full max-w-full object-contain" />
                       ) : (
                         <div className="flex flex-col items-center gap-3.5 px-6 text-center">
-                          <div className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "rgba(245,181,72,0.10)", border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.3))", color: "var(--theme-gold, #F5B548)" }}>
+                          <div className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "rgba(203,208,213,0.10)", border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.3))", color: "var(--theme-gold, #C8CDD2)" }}>
                             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
                           </div>
                           <div className="text-sm font-semibold text-text-primary">Add a photo — optional</div>
                           <p className="max-w-[240px] text-xs leading-5 text-[color:var(--muted)]">Snap or upload one and VLTD auto-fills the details. Or just type them in — no photo required.</p>
                           <div className="flex flex-wrap justify-center gap-2">
                             <button type="button" onClick={() => setIsCameraPanelOpen(true)} className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold text-[#0B0B0B]" style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}>Take photo</button>
-                            <button type="button" onClick={() => uploadInputRef.current?.click()} className="inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(245,181,72,0.08))]" style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.3))" }}>Upload</button>
+                            <button type="button" onClick={() => uploadInputRef.current?.click()} className="inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.08))]" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}>Upload</button>
                           </div>
                         </div>
                       )}
@@ -638,13 +638,13 @@ export default function CapturePage() {
                           rel="noopener noreferrer"
                           aria-label="Expand image"
                           className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-[8px] border"
-                          style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.3))", background: "rgba(2,9,12,0.6)", color: "var(--theme-gold, #F5B548)" }}
+                          style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))", background: "rgba(2,9,12,0.6)", color: "var(--theme-gold, #C8CDD2)" }}
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
                         </a>
                         <span
                           className="absolute bottom-3 right-3 rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                          style={{ background: "rgba(2,9,12,0.7)", color: "var(--muted)", border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.2))" }}
+                          style={{ background: "rgba(2,9,12,0.7)", color: "var(--muted)", border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.2))" }}
                         >
                           1 / 1
                         </span>
@@ -652,7 +652,7 @@ export default function CapturePage() {
                     ) : null}
                     {analyzing ? (
                       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3" style={{ background: "rgba(2,9,12,0.74)" }}>
-                        <span className="h-8 w-8 rounded-full border-[3px] animate-spin" style={{ borderColor: "rgba(245,181,72,0.25)", borderTopColor: "#F5B548" }} />
+                        <span className="h-8 w-8 rounded-full border-[3px] animate-spin" style={{ borderColor: "rgba(203,208,213,0.25)", borderTopColor: "#C8CDD2" }} />
                         <span className="text-sm font-black text-text-primary">Identifying…</span>
                         <span className="text-xs text-[color:var(--muted)]">Running vision + barcode scan</span>
                       </div>
@@ -662,7 +662,7 @@ export default function CapturePage() {
                   {/* Thumbnail rail */}
                   <div className="mt-3 grid grid-cols-4 gap-2">
                     {previewUrl ? (
-                      <div className="aspect-square overflow-hidden rounded-[10px] border" style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.5))" }}>
+                      <div className="aspect-square overflow-hidden rounded-[10px] border" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.5))" }}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={previewUrl} alt="" className="h-full w-full object-cover" />
                       </div>
@@ -671,15 +671,15 @@ export default function CapturePage() {
                       type="button"
                       onClick={() => setIsCameraPanelOpen(true)}
                       className="flex aspect-square flex-col items-center justify-center gap-0.5 rounded-[10px] border border-dashed text-center text-[10px] font-semibold leading-tight text-[color:var(--muted)] transition hover:text-text-primary"
-                      style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.3))" }}
+                      style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}
                     >
-                      <span className="text-base" style={{ color: "var(--theme-gold, #F5B548)" }}>+</span>
+                      <span className="text-base" style={{ color: "var(--theme-gold, #C8CDD2)" }}>+</span>
                       Add photos<br />or video
                     </button>
                   </div>
 
                   <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-4 text-[color:var(--muted2)]">
-                    <span className="mt-px shrink-0" style={{ color: "var(--theme-gold, #F5B548)" }}>
+                    <span className="mt-px shrink-0" style={{ color: "var(--theme-gold, #C8CDD2)" }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.4 3.6L17 8l-3.6 1.4L12 13l-1.4-3.6L7 8l3.6-1.4z" /></svg>
                     </span>
                     <span><b className="font-semibold text-[color:var(--muted)]">Tip:</b> Use good lighting and avoid glare. Clear, straight-on photos work best.</span>
@@ -970,12 +970,12 @@ export default function CapturePage() {
                   </AccordionSection>
 
                   {/* Save bar — concept-19 */}
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-4 border-t pt-4" style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.14))" }}>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-4 border-t pt-4" style={{ borderColor: "var(--theme-border, rgba(203,208,213,0.14))" }}>
                     <Link
                       href="/vault/bulk"
                       className="inline-flex min-h-11 items-center gap-1.5 rounded-full text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
                     >
-                      <span className="text-base font-black text-[color:var(--theme-gold,#F5B548)]">+</span>
+                      <span className="text-base font-black text-[color:var(--theme-gold,#C8CDD2)]">+</span>
                       Adding a lot? Bulk upload
                     </Link>
                     <div className="flex flex-col items-end gap-1.5">

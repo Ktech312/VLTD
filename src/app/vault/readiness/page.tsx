@@ -21,7 +21,7 @@ function levelColor(level: string) {
 
 function levelBg(level: string) {
   if (level === "ready") return "rgba(74,222,128,0.12)";
-  if (level === "almost") return "rgba(245,181,72,0.10)";
+  if (level === "almost") return "rgba(203,208,213,0.10)";
   return "rgba(248,113,113,0.10)";
 }
 

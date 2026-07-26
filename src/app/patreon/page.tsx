@@ -19,7 +19,7 @@ function CreatorCard({ creator }: { creator: PatreonCreator }) {
         display: "flex",
         gap: "12px",
         background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(245,181,72,0.10)",
+        border: "1px solid rgba(203,208,213,0.10)",
         borderRadius: "14px",
         padding: "14px",
         textDecoration: "none",
@@ -27,10 +27,10 @@ function CreatorCard({ creator }: { creator: PatreonCreator }) {
         alignItems: "flex-start",
       }}
       onMouseEnter={(e) =>
-        (e.currentTarget.style.borderColor = "rgba(245,181,72,0.30)")
+        (e.currentTarget.style.borderColor = "rgba(203,208,213,0.30)")
       }
       onMouseLeave={(e) =>
-        (e.currentTarget.style.borderColor = "rgba(245,181,72,0.10)")
+        (e.currentTarget.style.borderColor = "rgba(203,208,213,0.10)")
       }
     >
       {/* Avatar */}
@@ -42,7 +42,7 @@ function CreatorCard({ creator }: { creator: PatreonCreator }) {
           borderRadius: "50%",
           overflow: "hidden",
           background: "#1a1a2e",
-          border: "2px solid rgba(245,181,72,0.15)",
+          border: "2px solid rgba(203,208,213,0.15)",
         }}
       >
         {creator.imageUrl && !imgError ? (
@@ -66,7 +66,7 @@ function CreatorCard({ creator }: { creator: PatreonCreator }) {
               background: "linear-gradient(145deg,#1a1a2e,#0d0d1a)",
             }}
           >
-            <Glyph name="palette" size={22} style={{ opacity: 0.5, color: "var(--theme-gold, #F5B548)" }} />
+            <Glyph name="palette" size={22} style={{ opacity: 0.5, color: "var(--theme-gold, #C8CDD2)" }} />
           </div>
         )}
       </div>
@@ -77,7 +77,7 @@ function CreatorCard({ creator }: { creator: PatreonCreator }) {
           style={{
             fontSize: "14px",
             fontWeight: 700,
-            color: "#F0EAD6",
+            color: "#ECEDEF",
             marginBottom: "3px",
           }}
         >
@@ -107,9 +107,9 @@ function CreatorCard({ creator }: { creator: PatreonCreator }) {
               style={{
                 fontSize: "10px",
                 fontWeight: 600,
-                color: "#F5B548",
-                background: "rgba(245,181,72,0.08)",
-                border: "1px solid rgba(245,181,72,0.20)",
+                color: "#C8CDD2",
+                background: "rgba(203,208,213,0.08)",
+                border: "1px solid rgba(203,208,213,0.20)",
                 borderRadius: "100px",
                 padding: "2px 8px",
               }}
@@ -225,7 +225,7 @@ export default function PatreonPage() {
       style={{
         minHeight: "100dvh",
         background: "#0A0A12",
-        color: "#F0EAD6",
+        color: "#ECEDEF",
         paddingTop: "env(safe-area-inset-top, 0px)",
         paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 90px)",
       }}
@@ -238,7 +238,7 @@ export default function PatreonPage() {
           zIndex: 40,
           background: "rgba(10,10,18,0.95)",
           backdropFilter: "blur(12px)",
-          borderBottom: "1px solid rgba(245,181,72,0.08)",
+          borderBottom: "1px solid rgba(203,208,213,0.08)",
           padding: "16px 16px 12px",
         }}
       >
@@ -300,7 +300,7 @@ export default function PatreonPage() {
                   border: "none",
                   cursor: "pointer",
                   transition: "all 0.15s",
-                  background: tab === t ? "#F5B548" : "transparent",
+                  background: tab === t ? "#C8CDD2" : "transparent",
                   color: tab === t ? "#0A0A12" : "rgba(240,234,214,0.55)",
                 }}
               >
@@ -326,11 +326,11 @@ export default function PatreonPage() {
                 style={{
                   flex: 1,
                   background: "rgba(255,255,255,0.06)",
-                  border: "1px solid rgba(245,181,72,0.20)",
+                  border: "1px solid rgba(203,208,213,0.20)",
                   borderRadius: "10px",
                   padding: "11px 14px",
                   fontSize: "15px",
-                  color: "#F0EAD6",
+                  color: "#ECEDEF",
                   outline: "none",
                 }}
               />
@@ -370,11 +370,11 @@ export default function PatreonPage() {
                 style={{
                   flex: 1,
                   background: "rgba(255,255,255,0.06)",
-                  border: "1px solid rgba(245,181,72,0.20)",
+                  border: "1px solid rgba(203,208,213,0.20)",
                   borderRadius: "10px",
                   padding: "11px 14px",
                   fontSize: "15px",
-                  color: "#F0EAD6",
+                  color: "#ECEDEF",
                   outline: "none",
                 }}
               />
@@ -426,13 +426,13 @@ export default function PatreonPage() {
         {note && (
           <div
             style={{
-              background: "rgba(245,181,72,0.06)",
-              border: "1px solid rgba(245,181,72,0.15)",
+              background: "rgba(203,208,213,0.06)",
+              border: "1px solid rgba(203,208,213,0.15)",
               borderRadius: "10px",
               padding: "10px 14px",
               marginBottom: "14px",
               fontSize: "12px",
-              color: "rgba(245,181,72,0.75)",
+              color: "rgba(203,208,213,0.75)",
             }}
           >
             {note}
@@ -481,7 +481,7 @@ export default function PatreonPage() {
                   padding: "14px",
                   borderRadius: "14px",
                   background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(245,181,72,0.06)",
+                  border: "1px solid rgba(203,208,213,0.06)",
                 }}
               >
                 <div
@@ -532,7 +532,7 @@ export default function PatreonPage() {
             <div
               style={{
                 fontSize: "12px",
-                color: "rgba(245,181,72,0.65)",
+                color: "rgba(203,208,213,0.65)",
                 marginBottom: "6px",
               }}
             >
@@ -563,7 +563,7 @@ export default function PatreonPage() {
                 style={{
                   background: "none",
                   border: "none",
-                  color: "#F5B548",
+                  color: "#C8CDD2",
                   cursor: "pointer",
                   fontSize: "12px",
                   padding: 0,

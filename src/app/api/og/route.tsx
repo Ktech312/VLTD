@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
             borderRadius: 18,
             padding: "5px",
             display: "flex",
-            boxShadow: "0 18px 38px rgba(0,0,0,0.52),0 0 0 1px rgba(255,234,174,0.32),0 0 28px rgba(245,181,72,0.22)",
+            boxShadow: "0 18px 38px rgba(0,0,0,0.52),0 0 0 1px rgba(255,234,174,0.32),0 0 28px rgba(203,208,213,0.22)",
           }}
         >
           {/* Inner dark card */}
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
                 width: 20, height: 20, borderRadius: "50%",
                 background: "#131018",
                 border: "1px solid rgba(255,217,120,0.8)",
-                boxShadow: "inset 0 0 0 2px rgba(0,0,0,0.55),0 0 12px rgba(245,181,72,0.35)",
+                boxShadow: "inset 0 0 0 2px rgba(0,0,0,0.55),0 0 12px rgba(203,208,213,0.35)",
                 display: "flex",
               }}
             />
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
                 width: 20, height: 20, borderRadius: "50%",
                 background: "#131018",
                 border: "1px solid rgba(255,217,120,0.8)",
-                boxShadow: "inset 0 0 0 2px rgba(0,0,0,0.55),0 0 12px rgba(245,181,72,0.35)",
+                boxShadow: "inset 0 0 0 2px rgba(0,0,0,0.55),0 0 12px rgba(203,208,213,0.35)",
                 display: "flex",
               }}
             />
@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 4,
-                borderTop: "1px solid rgba(245,181,72,0.65)",
+                borderTop: "1px solid rgba(203,208,213,0.65)",
                 background: "linear-gradient(180deg,rgba(22,20,27,0.99),rgba(8,8,12,0.99))",
                 padding: "0 12px",
                 position: "relative",
@@ -164,7 +164,7 @@ export async function GET(request: NextRequest) {
               </div>
               <div
                 style={{
-                  color: "rgba(245,181,72,0.45)",
+                  color: "rgba(203,208,213,0.45)",
                   fontSize: 12,
                   letterSpacing: "0.22em",
                   fontWeight: 700,

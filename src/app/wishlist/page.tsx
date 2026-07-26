@@ -173,12 +173,12 @@ function WatchCard({
       className="group min-h-[264px] rounded-[7px] border p-3 text-left transition hover:-translate-y-0.5"
       style={{
         background: "var(--theme-card,rgba(15,25,45,0.85))",
-        borderColor: selected ? "var(--theme-gold,#F5B548)" : "rgba(245,181,72,0.28)",
-        boxShadow: selected ? "0 0 0 1px rgba(245,181,72,0.16), 0 16px 44px rgba(0,0,0,0.22)" : "none",
+        borderColor: selected ? "var(--theme-gold,#C8CDD2)" : "rgba(203,208,213,0.28)",
+        boxShadow: selected ? "0 0 0 1px rgba(203,208,213,0.16), 0 16px 44px rgba(0,0,0,0.22)" : "none",
       }}
     >
       <div className="mb-2">
-        <span className="rounded-[4px] border border-[rgba(245,181,72,0.42)] px-1.5 py-0.5 text-[9px] font-black uppercase tracking-[0.12em]" style={{ color: "var(--theme-gold,#F5B548)" }}>
+        <span className="rounded-[4px] border border-[rgba(203,208,213,0.42)] px-1.5 py-0.5 text-[9px] font-black uppercase tracking-[0.12em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
           {entry.kind}
         </span>
       </div>
@@ -187,28 +187,28 @@ function WatchCard({
           <img src={entry.image || universePlaceholder()} alt="" className="max-h-[148px] max-w-[110px] object-contain drop-shadow-[0_18px_22px_rgba(0,0,0,0.5)]" />
         </div>
         <div className="min-w-0">
-          <div className="line-clamp-2 font-serif text-[17px] font-black leading-tight" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>
+          <div className="line-clamp-2 font-serif text-[17px] font-black leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
             {entry.title}
           </div>
           <div className="mt-1 text-[12px]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{entry.subtitle}</div>
-          <div className="text-[12px]" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{entry.meta}</div>
+          <div className="text-[12px]" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{entry.meta}</div>
           <div className="mt-4 text-[11px]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Current Value</div>
           <div className="text-[23px] font-black leading-tight text-[color:var(--info,#52D6F4)]">{entry.currentValue ? money(entry.currentValue) : "--"}</div>
-          <div className="mt-1 text-[12px]" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>Target Price</div>
-          <div className="text-[17px] font-black" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{entry.targetPrice ? money(entry.targetPrice) : "--"}</div>
+          <div className="mt-1 text-[12px]" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>Target Price</div>
+          <div className="text-[17px] font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{entry.targetPrice ? money(entry.targetPrice) : "--"}</div>
         </div>
       </div>
       <div className="mt-4 flex items-end justify-between">
-        <div className="flex items-center gap-4" style={{ color: "var(--theme-gold,#F5B548)" }}>
+        <div className="flex items-center gap-4" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
           <Glyph name="sparkle" size={22} />
           <Glyph name="heart" size={24} />
         </div>
         {entry.kind === "exhibition" ? (
-          <Link href="/discover" onClick={(event) => event.stopPropagation()} className="rounded-[7px] border border-[rgba(245,181,72,0.32)] px-5 py-2 text-xs font-black" style={{ color: "var(--theme-gold,#F5B548)" }}>
+          <Link href="/discover" onClick={(event) => event.stopPropagation()} className="rounded-[7px] border border-[rgba(203,208,213,0.32)] px-5 py-2 text-xs font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
             View Exhibition
           </Link>
         ) : (
-          <button type="button" onClick={(event) => { event.stopPropagation(); onMove(); }} className="rounded-[7px] border border-[rgba(245,181,72,0.32)] px-5 py-2 text-xs font-black" style={{ color: "var(--theme-gold,#F5B548)" }}>
+          <button type="button" onClick={(event) => { event.stopPropagation(); onMove(); }} className="rounded-[7px] border border-[rgba(203,208,213,0.32)] px-5 py-2 text-xs font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
             + Add to Vault
           </button>
         )}
@@ -386,7 +386,7 @@ export default function WishlistPage() {
       <div className="mx-auto grid max-w-[1480px] gap-6 xl:grid-cols-[minmax(0,1fr)_430px]">
         <section className="min-w-0">
           <div>
-            <h1 className="font-serif text-[44px] leading-none tracking-[-0.03em]" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>
+            <h1 className="font-serif text-[44px] leading-none tracking-[-0.03em]" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
               Watchlist
             </h1>
             <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
@@ -395,7 +395,7 @@ export default function WishlistPage() {
           </div>
 
           <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_140px_160px_150px]">
-            <label className="flex h-10 items-center gap-2 rounded-[7px] border border-[rgba(245,181,72,0.22)] px-3" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
+            <label className="flex h-10 items-center gap-2 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-3" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
               <Glyph name="search" size={15} className="opacity-60" />
               <input
                 value={query}
@@ -418,9 +418,9 @@ export default function WishlistPage() {
                   aria-pressed={active}
                   className="flex h-10 items-center justify-center gap-2 rounded-[7px] border px-3 text-xs font-black transition"
                   style={{
-                    background: active ? "rgba(245,181,72,0.12)" : "var(--theme-card,rgba(15,25,45,0.85))",
-                    borderColor: active ? "var(--theme-gold,#F5B548)" : "rgba(245,181,72,0.22)",
-                    color: active ? "var(--theme-gold,#F5B548)" : "var(--theme-text-primary,#F0EAD6)",
+                    background: active ? "rgba(203,208,213,0.12)" : "var(--theme-card,rgba(15,25,45,0.85))",
+                    borderColor: active ? "var(--theme-gold,#C8CDD2)" : "rgba(203,208,213,0.22)",
+                    color: active ? "var(--theme-gold,#C8CDD2)" : "var(--theme-text-primary,#ECEDEF)",
                   }}
                 >
                   <Glyph name={glyph} size={14} />
@@ -444,8 +444,8 @@ export default function WishlistPage() {
                 onClick={() => setFilter(key as FilterKey)}
                 className="border-b-2 px-3 py-2 text-sm font-bold transition"
                 style={{
-                  borderColor: filter === key ? "var(--theme-gold,#F5B548)" : "transparent",
-                  color: filter === key ? "var(--theme-gold,#F5B548)" : "var(--theme-text-primary,#F0EAD6)",
+                  borderColor: filter === key ? "var(--theme-gold,#C8CDD2)" : "transparent",
+                  color: filter === key ? "var(--theme-gold,#C8CDD2)" : "var(--theme-text-primary,#ECEDEF)",
                 }}
               >
                 {label}
@@ -456,8 +456,8 @@ export default function WishlistPage() {
               <select
                 value={sort}
                 onChange={(event) => setSort(event.target.value as SortMode)}
-                className="h-10 rounded-[7px] border border-[rgba(245,181,72,0.22)] bg-transparent px-3 text-sm font-bold outline-none"
-                style={{ color: "var(--theme-text-primary,#F0EAD6)" }}
+                className="h-10 rounded-[7px] border border-[rgba(203,208,213,0.22)] bg-transparent px-3 text-sm font-bold outline-none"
+                style={{ color: "var(--theme-text-primary,#ECEDEF)" }}
               >
                 <option value="recent">Recently added</option>
                 <option value="value">Highest value</option>
@@ -471,9 +471,9 @@ export default function WishlistPage() {
                 title="Grid view"
                 className="grid h-10 w-10 place-items-center rounded-[7px] border transition"
                 style={{
-                  borderColor: view === "grid" ? "var(--theme-gold,#F5B548)" : "rgba(245,181,72,0.28)",
-                  background: view === "grid" ? "rgba(245,181,72,0.12)" : "transparent",
-                  color: "var(--theme-gold,#F5B548)",
+                  borderColor: view === "grid" ? "var(--theme-gold,#C8CDD2)" : "rgba(203,208,213,0.28)",
+                  background: view === "grid" ? "rgba(203,208,213,0.12)" : "transparent",
+                  color: "var(--theme-gold,#C8CDD2)",
                 }}
               >
                 <Glyph name="cards" size={16} />
@@ -486,9 +486,9 @@ export default function WishlistPage() {
                 title="List view"
                 className="grid h-10 w-10 place-items-center rounded-[7px] border transition"
                 style={{
-                  borderColor: view === "list" ? "var(--theme-gold,#F5B548)" : "rgba(245,181,72,0.28)",
-                  background: view === "list" ? "rgba(245,181,72,0.12)" : "transparent",
-                  color: "var(--theme-gold,#F5B548)",
+                  borderColor: view === "list" ? "var(--theme-gold,#C8CDD2)" : "rgba(203,208,213,0.28)",
+                  background: view === "list" ? "rgba(203,208,213,0.12)" : "transparent",
+                  color: "var(--theme-gold,#C8CDD2)",
                 }}
               >
                 <Glyph name="box" size={16} />
@@ -506,25 +506,25 @@ export default function WishlistPage() {
                 onMove={() => handleMove(entry)}
               />
             ))}
-            <Link href="/vault/add" className="grid min-h-[264px] place-items-center rounded-[7px] border border-dashed border-[rgba(245,181,72,0.42)] text-center transition hover:bg-[rgba(245,181,72,0.05)]">
+            <Link href="/vault/add" className="grid min-h-[264px] place-items-center rounded-[7px] border border-dashed border-[rgba(203,208,213,0.42)] text-center transition hover:bg-[rgba(203,208,213,0.05)]">
               <span>
-                <span className="block text-3xl" style={{ color: "var(--theme-gold,#F5B548)" }}>+</span>
-                <span className="mt-2 block text-lg font-black" style={{ color: "var(--theme-gold,#F5B548)" }}>Add Watch</span>
+                <span className="block text-3xl" style={{ color: "var(--theme-gold,#C8CDD2)" }}>+</span>
+                <span className="mt-2 block text-lg font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Add Watch</span>
                 <span className="mt-1 block text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Track items or exhibitions you&apos;re watching.</span>
-                <span className="mt-6 flex justify-center" style={{ color: "var(--theme-gold,#F5B548)" }}>
+                <span className="mt-6 flex justify-center" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
                   <Glyph name="search" size={28} />
                 </span>
               </span>
             </Link>
           </div>
 
-          <div className="mt-4 grid rounded-[7px] border border-[rgba(245,181,72,0.22)] md:grid-cols-[1.8fr_repeat(5,1fr)]" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
-            <div className="flex gap-3 border-r border-[rgba(245,181,72,0.16)] p-4">
-              <div className="grid h-10 w-10 place-items-center rounded-full border border-[rgba(245,181,72,0.34)]" style={{ color: "var(--theme-gold,#F5B548)" }}>
+          <div className="mt-4 grid rounded-[7px] border border-[rgba(203,208,213,0.22)] md:grid-cols-[1.8fr_repeat(5,1fr)]" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
+            <div className="flex gap-3 border-r border-[rgba(203,208,213,0.16)] p-4">
+              <div className="grid h-10 w-10 place-items-center rounded-full border border-[rgba(203,208,213,0.34)]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
                 <Glyph name="target" size={18} />
               </div>
               <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: "var(--theme-gold,#F5B548)" }}>Pro Tip</div>
+                <div className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Pro Tip</div>
                 <p className="text-xs leading-5" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
                   Get the most out of your watchlist by setting target prices and alerts.
                 </p>
@@ -537,7 +537,7 @@ export default function WishlistPage() {
               ["-$2,340", "7d change", "danger"],
               [priceDropOpps ? money(priceDropOpps) : "$0", "Price drop opps", "success"],
             ].map(([value, label, tone]) => (
-              <div key={label} className="grid place-items-center border-r border-[rgba(245,181,72,0.12)] p-4 text-center last:border-r-0">
+              <div key={label} className="grid place-items-center border-r border-[rgba(203,208,213,0.12)] p-4 text-center last:border-r-0">
                 <div className={`text-2xl font-black ${tone === "danger" ? "text-red-400" : tone === "success" ? "text-green-400" : "text-[color:var(--info,#52D6F4)]"}`}>{value}</div>
                 <div className="text-xs" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{label}</div>
               </div>
@@ -546,9 +546,9 @@ export default function WishlistPage() {
         </section>
 
         {selected && (
-          <aside className="h-fit rounded-[8px] border border-[rgba(245,181,72,0.32)] p-4 xl:sticky xl:top-24" style={{ background: "var(--theme-card,rgba(15,25,45,0.92))", boxShadow: "0 18px 55px rgba(0,0,0,0.26)" }}>
+          <aside className="h-fit rounded-[8px] border border-[rgba(203,208,213,0.32)] p-4 xl:sticky xl:top-24" style={{ background: "var(--theme-card,rgba(15,25,45,0.92))", boxShadow: "0 18px 55px rgba(0,0,0,0.26)" }}>
             <div className="flex items-center justify-between">
-              <span className="rounded-[4px] border border-[rgba(245,181,72,0.42)] px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em]" style={{ color: "var(--theme-gold,#F5B548)" }}>
+              <span className="rounded-[4px] border border-[rgba(203,208,213,0.42)] px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
                 {selected.kind}
               </span>
               <div className="flex items-center gap-2">
@@ -558,8 +558,8 @@ export default function WishlistPage() {
                   disabled={!canPrev}
                   aria-label="Previous item"
                   title="Previous item"
-                  className="grid h-8 w-8 place-items-center rounded-[6px] border border-[rgba(245,181,72,0.22)] transition disabled:opacity-35"
-                  style={{ color: "var(--theme-gold,#F5B548)" }}
+                  className="grid h-8 w-8 place-items-center rounded-[6px] border border-[rgba(203,208,213,0.22)] transition disabled:opacity-35"
+                  style={{ color: "var(--theme-gold,#C8CDD2)" }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
                 </button>
@@ -569,8 +569,8 @@ export default function WishlistPage() {
                   disabled={!canNext}
                   aria-label="Next item"
                   title="Next item"
-                  className="grid h-8 w-8 place-items-center rounded-[6px] border border-[rgba(245,181,72,0.22)] transition disabled:opacity-35"
-                  style={{ color: "var(--theme-gold,#F5B548)" }}
+                  className="grid h-8 w-8 place-items-center rounded-[6px] border border-[rgba(203,208,213,0.22)] transition disabled:opacity-35"
+                  style={{ color: "var(--theme-gold,#C8CDD2)" }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
                 </button>
@@ -580,7 +580,7 @@ export default function WishlistPage() {
                   aria-label="Close details"
                   title="Close"
                   className="grid h-8 w-8 place-items-center rounded-[6px] transition"
-                  style={{ color: "var(--theme-gold,#F5B548)" }}
+                  style={{ color: "var(--theme-gold,#C8CDD2)" }}
                 >
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
                 </button>
@@ -588,16 +588,16 @@ export default function WishlistPage() {
             </div>
 
             <div className="mt-4 grid gap-5 sm:grid-cols-[170px_minmax(0,1fr)] xl:grid-cols-1 2xl:grid-cols-[170px_minmax(0,1fr)]">
-              <div className="flex h-[210px] items-center justify-center rounded-[7px] border border-[rgba(245,181,72,0.18)] bg-black/20">
+              <div className="flex h-[210px] items-center justify-center rounded-[7px] border border-[rgba(203,208,213,0.18)] bg-black/20">
                 <img src={selected.image || universePlaceholder()} alt="" className="max-h-[198px] max-w-[150px] object-contain drop-shadow-[0_22px_26px_rgba(0,0,0,0.55)]" />
               </div>
               <div>
-                <h2 className="font-serif text-[25px] font-black leading-tight" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{selected.title}</h2>
+                <h2 className="font-serif text-[25px] font-black leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selected.title}</h2>
                 <p className="mt-1 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{selected.subtitle}</p>
-                <p className="text-sm" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{selected.meta}</p>
+                <p className="text-sm" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selected.meta}</p>
                 <div className="mt-5 text-xs" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Current Value</div>
                 <div className="text-[30px] font-black text-[color:var(--info,#52D6F4)]">{selected.currentValue ? money(selected.currentValue) : "--"}</div>
-                <div className="mt-3 overflow-hidden rounded-[7px] border border-[rgba(245,181,72,0.18)]">
+                <div className="mt-3 overflow-hidden rounded-[7px] border border-[rgba(203,208,213,0.18)]">
                   {editingTarget && canEditSelected ? (
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 p-2">
                       <input
@@ -610,18 +610,18 @@ export default function WishlistPage() {
                         }}
                         inputMode="decimal"
                         placeholder="Target price"
-                        className="min-w-0 rounded-[6px] border border-[rgba(245,181,72,0.28)] bg-transparent px-2 py-2 text-sm outline-none"
-                        style={{ color: "var(--theme-text-primary,#F0EAD6)" }}
+                        className="min-w-0 rounded-[6px] border border-[rgba(203,208,213,0.28)] bg-transparent px-2 py-2 text-sm outline-none"
+                        style={{ color: "var(--theme-text-primary,#ECEDEF)" }}
                       />
                       <span className="flex gap-1">
-                        <button type="button" onClick={saveTarget} className="rounded-[6px] px-3 py-2 text-xs font-black" style={{ background: "linear-gradient(135deg,#8B6914,#F5B548)", color: "#0B0B0B" }}>Save</button>
-                        <button type="button" onClick={() => setEditingTarget(false)} className="rounded-[6px] border border-[rgba(245,181,72,0.22)] px-3 py-2 text-xs font-bold" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>Cancel</button>
+                        <button type="button" onClick={saveTarget} className="rounded-[6px] px-3 py-2 text-xs font-black" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>Save</button>
+                        <button type="button" onClick={() => setEditingTarget(false)} className="rounded-[6px] border border-[rgba(203,208,213,0.22)] px-3 py-2 text-xs font-bold" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>Cancel</button>
                       </span>
                     </div>
                   ) : (
                     <div className={`grid ${canEditSelected ? "grid-cols-[1fr_104px_36px]" : "grid-cols-[1fr_104px]"}`}>
                       <div className="px-3 py-3 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Target Price</div>
-                      <div className="border-l border-[rgba(245,181,72,0.12)] px-3 py-3 text-right text-sm font-bold" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{selected.targetPrice ? money(selected.targetPrice) : "--"}</div>
+                      <div className="border-l border-[rgba(203,208,213,0.12)] px-3 py-3 text-right text-sm font-bold" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selected.targetPrice ? money(selected.targetPrice) : "--"}</div>
                       {canEditSelected && (
                         <button
                           type="button"
@@ -631,8 +631,8 @@ export default function WishlistPage() {
                           }}
                           aria-label="Set target price"
                           title="Set target price"
-                          className="grid place-items-center border-l border-[rgba(245,181,72,0.12)] transition hover:bg-[rgba(245,181,72,0.08)]"
-                          style={{ color: "var(--theme-gold,#F5B548)" }}
+                          className="grid place-items-center border-l border-[rgba(203,208,213,0.12)] transition hover:bg-[rgba(203,208,213,0.08)]"
+                          style={{ color: "var(--theme-gold,#C8CDD2)" }}
                         >
                           <Glyph name="tag" size={14} />
                         </button>
@@ -640,7 +640,7 @@ export default function WishlistPage() {
                     </div>
                   )}
                 </div>
-                <div className="mt-3 rounded-[7px] border border-[rgba(245,181,72,0.18)] p-3 text-sm" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>
+                <div className="mt-3 rounded-[7px] border border-[rgba(203,208,213,0.18)] p-3 text-sm" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
                   <span
                     className="mr-2 inline-block h-2 w-2 rounded-full align-middle"
                     style={{ background: selected.alertActive ? "#4ade80" : "var(--theme-text-muted,#A0956B)" }}
@@ -652,28 +652,28 @@ export default function WishlistPage() {
 
             <div className="mt-5">
               <div className="mb-2 flex items-center justify-between">
-                <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#F5B548)" }}>Value History</div>
+                <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Value History</div>
                 <div className="flex gap-3 text-[11px] font-bold" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
-                  <span>7D</span><span>30D</span><span>3M</span><span>6M</span><span style={{ color: "var(--theme-gold,#F5B548)" }}>1Y</span><span>ALL</span>
+                  <span>7D</span><span>30D</span><span>3M</span><span>6M</span><span style={{ color: "var(--theme-gold,#C8CDD2)" }}>1Y</span><span>ALL</span>
                 </div>
               </div>
-              <div className="h-[150px] rounded-[7px] border border-[rgba(245,181,72,0.12)] bg-black/10 p-2">
+              <div className="h-[150px] rounded-[7px] border border-[rgba(203,208,213,0.12)] bg-black/10 p-2">
                 <SparkLine />
               </div>
             </div>
 
             <div className="mt-5">
               <div className="mb-2 flex items-center justify-between">
-                <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#F5B548)" }}>Recent Comparable Sales</div>
+                <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Recent Comparable Sales</div>
               </div>
-              <div className="rounded-[7px] border border-[rgba(245,181,72,0.16)] px-4 py-5 text-sm leading-6" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+              <div className="rounded-[7px] border border-[rgba(203,208,213,0.16)] px-4 py-5 text-sm leading-6" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
                 Comparable sales will appear here after this watched item is linked to a live pricing source.
               </div>
             </div>
 
-            <div className="mt-5 border-t border-[rgba(245,181,72,0.16)] pt-4">
+            <div className="mt-5 border-t border-[rgba(203,208,213,0.16)] pt-4">
               <div className="mb-2 flex items-center justify-between">
-                <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#F5B548)" }}>Notes</div>
+                <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Notes</div>
                 {canEditSelected && !editingNotes && (
                   <button
                     type="button"
@@ -681,8 +681,8 @@ export default function WishlistPage() {
                       setNotesDraft(selected.notes ?? "");
                       setEditingNotes(true);
                     }}
-                    className="rounded-[6px] border border-[rgba(245,181,72,0.28)] px-3 py-1 text-xs font-bold"
-                    style={{ color: "var(--theme-gold,#F5B548)" }}
+                    className="rounded-[6px] border border-[rgba(203,208,213,0.28)] px-3 py-1 text-xs font-bold"
+                    style={{ color: "var(--theme-gold,#C8CDD2)" }}
                   >
                     Edit
                   </button>
@@ -696,32 +696,32 @@ export default function WishlistPage() {
                     onChange={(event) => setNotesDraft(event.target.value)}
                     rows={4}
                     placeholder="Why you're watching this, condition notes, sellers to check..."
-                    className="w-full rounded-[6px] border border-[rgba(245,181,72,0.28)] bg-transparent p-2 text-sm leading-6 outline-none"
-                    style={{ color: "var(--theme-text-primary,#F0EAD6)" }}
+                    className="w-full rounded-[6px] border border-[rgba(203,208,213,0.28)] bg-transparent p-2 text-sm leading-6 outline-none"
+                    style={{ color: "var(--theme-text-primary,#ECEDEF)" }}
                   />
                   <div className="mt-2 flex gap-2">
-                    <button type="button" onClick={saveNotes} className="rounded-[6px] px-3 py-1.5 text-xs font-black" style={{ background: "linear-gradient(135deg,#8B6914,#F5B548)", color: "#0B0B0B" }}>Save</button>
-                    <button type="button" onClick={() => setEditingNotes(false)} className="rounded-[6px] border border-[rgba(245,181,72,0.22)] px-3 py-1.5 text-xs font-bold" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>Cancel</button>
+                    <button type="button" onClick={saveNotes} className="rounded-[6px] px-3 py-1.5 text-xs font-black" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>Save</button>
+                    <button type="button" onClick={() => setEditingNotes(false)} className="rounded-[6px] border border-[rgba(203,208,213,0.22)] px-3 py-1.5 text-xs font-bold" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>Cancel</button>
                   </div>
                 </div>
               ) : (
                 <p className="text-sm leading-6" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{selected.notes}</p>
               )}
               <div className="mt-4 grid grid-cols-3 gap-3 text-[11px]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
-                <div><div className="uppercase tracking-[0.12em]">Added</div><div style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{selected.savedAgo}</div></div>
-                <div><div className="uppercase tracking-[0.12em]">Source</div><div style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{selected.source}</div></div>
-                <div><div className="uppercase tracking-[0.12em]">Status</div><div style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{selected.alertActive ? "Watching" : "Saved"}</div></div>
+                <div><div className="uppercase tracking-[0.12em]">Added</div><div style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selected.savedAgo}</div></div>
+                <div><div className="uppercase tracking-[0.12em]">Source</div><div style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selected.source}</div></div>
+                <div><div className="uppercase tracking-[0.12em]">Status</div><div style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selected.alertActive ? "Watching" : "Saved"}</div></div>
               </div>
             </div>
 
             <div className="mt-5 grid grid-cols-3 gap-3">
-              <button type="button" onClick={() => handleMove(selected)} className="rounded-[7px] px-4 py-3 text-sm font-black" style={{ background: "linear-gradient(135deg,#8B6914,#F5B548)", color: "#0B0B0B" }}>
+              <button type="button" onClick={() => handleMove(selected)} className="rounded-[7px] px-4 py-3 text-sm font-black" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>
                 + Add to Vault
               </button>
-              <button type="button" onClick={() => handleDismiss(selected)} className="rounded-[7px] border border-[rgba(245,181,72,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>
+              <button type="button" onClick={() => handleDismiss(selected)} className="rounded-[7px] border border-[rgba(203,208,213,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
                 Dismiss
               </button>
-              <button type="button" onClick={shareSelected} className="rounded-[7px] border border-[rgba(245,181,72,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>
+              <button type="button" onClick={shareSelected} className="rounded-[7px] border border-[rgba(203,208,213,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
                 Share
               </button>
             </div>

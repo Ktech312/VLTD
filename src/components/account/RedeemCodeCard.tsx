@@ -70,9 +70,9 @@ export function RedeemCodeCard() {
           disabled={!code.trim() || busy}
           className="h-11 rounded-[10px] px-5 text-sm font-bold transition disabled:opacity-40"
           style={{
-            background: "linear-gradient(135deg, #8B6914, #F5B548)",
+            background: "linear-gradient(135deg, #8C9298, #C8CDD2)",
             color: "#0B0B0B",
-            boxShadow: "0 4px 18px rgba(245,181,72,0.24)",
+            boxShadow: "0 4px 18px rgba(203,208,213,0.24)",
           }}
         >
           {busy ? "Redeeming..." : "Redeem"}

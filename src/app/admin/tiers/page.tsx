@@ -21,7 +21,7 @@ const TIERS: Tier[] = ["FREE", "MID", "FULL"];
 const TIER_COLORS: Record<Tier, { bg: string; border: string; fg: string }> = {
   FREE: { bg: "rgba(255,255,255,0.06)", border: "rgba(255,255,255,0.18)", fg: "rgba(255,255,255,0.7)" },
   MID: { bg: "rgba(96,165,250,0.12)", border: "rgba(96,165,250,0.4)", fg: "#93c5fd" },
-  FULL: { bg: "rgba(245,181,72,0.14)", border: "rgba(245,181,72,0.5)", fg: "#F5B548" },
+  FULL: { bg: "rgba(203,208,213,0.14)", border: "rgba(203,208,213,0.5)", fg: "#C8CDD2" },
 };
 
 export default function AdminTiersPage() {

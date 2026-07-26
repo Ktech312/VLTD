@@ -445,10 +445,10 @@ export default function MuseumPage() {
         </div>
         <div className="flex items-center gap-2">
           {/* Mobile-only filter dropdown, grouped inline with sort */}
-          <select value={filter} onChange={(e) => setFilter(e.target.value as ExhibitionFilter)} className="h-9 w-auto shrink-0 rounded-[8px] border px-2.5 text-xs font-semibold outline-none sm:hidden" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.08)" }}>
+          <select value={filter} onChange={(e) => setFilter(e.target.value as ExhibitionFilter)} className="h-9 w-auto shrink-0 rounded-[8px] border px-2.5 text-xs font-semibold outline-none sm:hidden" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.08)" }}>
             {EXHIBITION_FILTERS.map((f) => (<option key={f.key} value={f.key}>{f.label}</option>))}
           </select>
-          <select value={sortMode} onChange={(e) => setSortMode(e.target.value as ExhibitionSort)} className="h-9 w-auto shrink-0 rounded-[8px] border px-2.5 text-xs font-semibold outline-none sm:px-3" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.08)" }}>
+          <select value={sortMode} onChange={(e) => setSortMode(e.target.value as ExhibitionSort)} className="h-9 w-auto shrink-0 rounded-[8px] border px-2.5 text-xs font-semibold outline-none sm:px-3" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.08)" }}>
             {EXHIBITION_SORTS.map((s) => (<option key={s.key} value={s.key}>{s.label}</option>))}
           </select>
           {/* Desktop Create — with the toolbar */}
@@ -458,7 +458,7 @@ export default function MuseumPage() {
       {/* Desktop filter pills (mobile uses the inline dropdown above) */}
       <div className="mt-4 hidden flex-wrap gap-2 sm:flex">
         {EXHIBITION_FILTERS.map((f) => (
-          <button key={f.key} type="button" onClick={() => setFilter(f.key)} className={`inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 transition ${filter === f.key ? "bg-[color:var(--theme-gold-subtle)] text-[color:var(--theme-gold)] ring-[color:var(--theme-gold-border)] shadow-[inset_0_1px_0_rgba(255,241,168,0.10)]" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]"}`}>{f.label}</button>
+          <button key={f.key} type="button" onClick={() => setFilter(f.key)} className={`inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 transition ${filter === f.key ? "bg-[color:var(--theme-gold-subtle)] text-[color:var(--theme-gold)] ring-[color:var(--theme-gold-border)] shadow-[inset_0_1px_0_rgba(237,239,241,0.10)]" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]"}`}>{f.label}</button>
         ))}
       </div>
     </>
@@ -567,20 +567,20 @@ export default function MuseumPage() {
               className="rounded-[26px] border p-8 text-center"
               style={{
                 background: "var(--theme-card, rgba(15,25,45,0.85))",
-                borderColor: "var(--theme-border, rgba(245,181,72,0.12))",
+                borderColor: "var(--theme-border, rgba(203,208,213,0.12))",
               }}
             >
               <div
                 className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"
                 style={{
-                  background: "var(--theme-gold-subtle, rgba(245,181,72,0.10))",
-                  border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.25))",
+                  background: "var(--theme-gold-subtle, rgba(203,208,213,0.10))",
+                  border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.25))",
                 }}
               >
-                <IconLayoutTemplate size={24} style={{ color: "var(--theme-gold, #F5B548)" }} />
+                <IconLayoutTemplate size={24} style={{ color: "var(--theme-gold, #C8CDD2)" }} />
               </div>
 
-              <h2 className="text-xl font-black" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
+              <h2 className="text-xl font-black" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
                 Your museum is waiting
               </h2>
 
@@ -593,7 +593,7 @@ export default function MuseumPage() {
                   href="/museum/new"
                   className="inline-flex min-h-[40px] items-center justify-center rounded-full px-5 py-2 text-sm font-semibold transition"
                   style={{
-                    background: "linear-gradient(135deg, #8B6914 0%, #C8941F 25%, #F5B548 50%, #FFE08A 70%, #C8941F 100%)",
+                    background: "linear-gradient(135deg, #8C9298 0%, #A8AEB4 25%, #C8CDD2 50%, #EDEFF1 70%, #A8AEB4 100%)",
                     color: "#0B0B0B",
                   }}
                 >
@@ -603,8 +603,8 @@ export default function MuseumPage() {
                   href="/vault"
                   className="inline-flex min-h-[40px] items-center justify-center rounded-full border px-5 py-2 text-sm font-semibold transition"
                   style={{
-                    borderColor: "var(--theme-gold-border, rgba(245,181,72,0.30))",
-                    color: "var(--theme-gold, #F5B548)",
+                    borderColor: "var(--theme-gold-border, rgba(203,208,213,0.30))",
+                    color: "var(--theme-gold, #C8CDD2)",
                   }}
                 >
                   Browse your vault →
@@ -732,7 +732,7 @@ export default function MuseumPage() {
                   >
                     <span
                       className="flex h-12 w-12 items-center justify-center rounded-full border transition group-hover:scale-110"
-                      style={{ borderColor: "var(--theme-gold-border, rgba(245,181,72,0.35))", color: "var(--theme-gold)" }}
+                      style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))", color: "var(--theme-gold)" }}
                     >
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
                     </span>
@@ -763,7 +763,7 @@ export default function MuseumPage() {
                   ];
                   const topPct = Math.max(1, 100 - s.score);
                   return (
-                    <div className="overflow-hidden rounded-[10px] border shadow-[0_18px_46px_rgba(0,0,0,0.24)]" style={{ borderColor: "var(--theme-border)", background: "var(--theme-card)", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.08), 0 18px 46px rgba(0,0,0,0.24)" }}>
+                    <div className="overflow-hidden rounded-[10px] border shadow-[0_18px_46px_rgba(0,0,0,0.24)]" style={{ borderColor: "var(--theme-border)", background: "var(--theme-card)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.08), 0 18px 46px rgba(0,0,0,0.24)" }}>
                       <div className="flex justify-center pt-2 lg:hidden"><span className="h-1 w-10 rounded-full bg-white/20" /></div>
                       <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: "var(--theme-border)" }}>
                         <div className="text-sm font-black">Exhibition Details</div>
@@ -773,14 +773,14 @@ export default function MuseumPage() {
                       </div>
 
                       <div className="px-3 pt-3">
-                        <div className="relative h-40 overflow-hidden rounded-[9px] rounded-bl-[22px] border bg-[color:var(--theme-elevated)]" style={{ borderColor: "var(--theme-gold-border, var(--theme-border))", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.12)" }}>
+                        <div className="relative h-40 overflow-hidden rounded-[9px] rounded-bl-[22px] border bg-[color:var(--theme-elevated)]" style={{ borderColor: "var(--theme-gold-border, var(--theme-border))", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.12)" }}>
                           {cover ? (
                             <ProgressiveImage src={cover} alt={`${g.title} cover`} className="h-full w-full" imageClassName="object-cover object-center" draggable={false} />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center text-[11px] uppercase tracking-[0.18em] text-white/30">No cover</div>
                           )}
                           <button type="button" onClick={() => handleOpenCoverPicker(g)} disabled={isUploadingCover}
-                            className="absolute right-2.5 top-2.5 inline-flex items-center gap-1.5 rounded-[7px] border px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur transition disabled:opacity-50" style={{ borderColor: "var(--theme-gold-border, var(--theme-border))", background: "rgba(3,8,14,0.72)", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.12)" }}>
+                            className="absolute right-2.5 top-2.5 inline-flex items-center gap-1.5 rounded-[7px] border px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur transition disabled:opacity-50" style={{ borderColor: "var(--theme-gold-border, var(--theme-border))", background: "rgba(3,8,14,0.72)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.12)" }}>
                             Edit cover
                           </button>
                         </div>
@@ -808,11 +808,11 @@ export default function MuseumPage() {
                         <div className="mt-1 text-xs text-[color:var(--muted)]">{g.itemIds.length} items · Updated {formatGalleryDate(g.updatedAt)}</div>
 
                         {/* Grade + factors, side by side */}
-                        <div className="mt-4 grid grid-cols-[116px_minmax(0,1fr)] gap-4 rounded-[9px] border p-3" style={{ borderColor: "var(--theme-border)", background: "rgba(3, 8, 14, 0.44)", boxShadow: "inset 0 1px 0 rgba(255,241,168,0.06)" }}>
+                        <div className="mt-4 grid grid-cols-[116px_minmax(0,1fr)] gap-4 rounded-[9px] border p-3" style={{ borderColor: "var(--theme-border)", background: "rgba(3, 8, 14, 0.44)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.06)" }}>
                           <div className="flex flex-col">
                             <div className="text-[9px] font-semibold uppercase tracking-[0.06em] text-[color:var(--muted2)]">Exhibition Grade</div>
                             <div className="relative mt-2 flex h-[72px] w-[72px] items-center justify-center">
-                              <svg viewBox="0 0 76 84" className="absolute inset-0 h-full w-full"><polygon points="38,3 71,22 71,62 38,81 5,62 5,22" fill="transparent" stroke="var(--theme-gold-border, rgba(245,181,72,0.45))" strokeWidth="2"/></svg>
+                              <svg viewBox="0 0 76 84" className="absolute inset-0 h-full w-full"><polygon points="38,3 71,22 71,62 38,81 5,62 5,22" fill="transparent" stroke="var(--theme-gold-border, rgba(203,208,213,0.45))" strokeWidth="2"/></svg>
                               <span className="relative text-3xl font-black" style={{ color: "var(--theme-gold)" }}>{gradeLetter(s.band)}</span>
                             </div>
                             <div className="mt-1.5 text-base font-black" style={{ color: "var(--theme-gold)" }}>{gradeBandLabel(s.band)}</div>
@@ -833,14 +833,14 @@ export default function MuseumPage() {
                                         </>
                                       ) : (
                                         <>
-                                          <circle cx="12" cy="12" r="10" fill="none" stroke="#F5B548" strokeWidth="2" />
-                                          <circle cx="12" cy="12" r="3.2" fill="#F5B548" />
+                                          <circle cx="12" cy="12" r="10" fill="none" stroke="#C8CDD2" strokeWidth="2" />
+                                          <circle cx="12" cy="12" r="3.2" fill="#C8CDD2" />
                                         </>
                                       )}
                                     </svg>
                                     <span className="truncate">{f.name}</span>
                                   </span>
-                                  <span className="shrink-0 whitespace-nowrap font-semibold" style={{ color: f.r.ok ? "#4CAF82" : "#F5B548" }}>{f.r.label}</span>
+                                  <span className="shrink-0 whitespace-nowrap font-semibold" style={{ color: f.r.ok ? "#4CAF82" : "#C8CDD2" }}>{f.r.label}</span>
                                 </div>
                               ))}
                             </div>
@@ -903,7 +903,7 @@ export default function MuseumPage() {
                                     className="block h-[68px] w-[50px] shrink-0 overflow-hidden rounded-[6px] border bg-[color:var(--theme-elevated)] p-[2px]"
                                     style={{
                                       borderColor: "var(--theme-gold-border, var(--theme-border))",
-                                      boxShadow: "inset 0 1px 0 rgba(255,241,168,0.16), inset 0 -10px 18px rgba(0,0,0,0.38), 0 7px 16px rgba(0,0,0,0.34)",
+                                      boxShadow: "inset 0 1px 0 rgba(237,239,241,0.16), inset 0 -10px 18px rgba(0,0,0,0.38), 0 7px 16px rgba(0,0,0,0.34)",
                                     }}
                                   >
                                     {img ? (

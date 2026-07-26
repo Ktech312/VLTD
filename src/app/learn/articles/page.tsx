@@ -78,8 +78,8 @@ export default async function ArticlesPage() {
       {/* ── Hero ── */}
       <section className="border-b border-[color:var(--border)] px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
-          <div className="mx-auto mb-5 inline-flex items-center gap-2 rounded-full border border-[rgba(245,181,72,0.28)] px-4 py-1.5 text-xs font-semibold text-[color:var(--accent)]">
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--theme-gold, #F5B548)" }} />
+          <div className="mx-auto mb-5 inline-flex items-center gap-2 rounded-full border border-[rgba(203,208,213,0.28)] px-4 py-1.5 text-xs font-semibold text-[color:var(--accent)]">
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--theme-gold, #C8CDD2)" }} />
             Articles &amp; Guides
           </div>
           <h1 className="text-4xl font-black leading-[0.96] tracking-[-0.045em] text-text-primary sm:text-5xl">
@@ -99,8 +99,8 @@ export default async function ArticlesPage() {
               <div
                 className="mb-4 grid h-14 w-14 place-items-center rounded-[16px] text-2xl"
                 style={{
-                  background: "var(--theme-gold-subtle, rgba(245,181,72,0.08))",
-                  border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.2))",
+                  background: "var(--theme-gold-subtle, rgba(203,208,213,0.08))",
+                  border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.2))",
                 }}
               >
                 ✦
@@ -116,7 +116,7 @@ export default async function ArticlesPage() {
                 <Link
                   key={article._id}
                   href={`/learn/articles/${article.slug.current}`}
-                  className="group rounded-[22px] border border-[color:var(--border)] bg-vault-card overflow-hidden transition hover:border-[rgba(245,181,72,0.4)]"
+                  className="group rounded-[22px] border border-[color:var(--border)] bg-vault-card overflow-hidden transition hover:border-[rgba(203,208,213,0.4)]"
                   style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}
                 >
                   {article.heroImage ? (
@@ -137,7 +137,7 @@ export default async function ArticlesPage() {
 
                   <div className="p-5">
                     {article.category && (
-                      <span className="inline-flex items-center rounded-full border border-[rgba(245,181,72,0.28)] px-2.5 py-0.5 text-[11px] font-semibold text-[color:var(--accent)]">
+                      <span className="inline-flex items-center rounded-full border border-[rgba(203,208,213,0.28)] px-2.5 py-0.5 text-[11px] font-semibold text-[color:var(--accent)]">
                         {article.category}
                       </span>
                     )}

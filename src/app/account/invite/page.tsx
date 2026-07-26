@@ -145,7 +145,7 @@ export default function InvitePage() {
     <main className="mx-auto max-w-lg px-4 pb-24 pt-8">
       {/* Header */}
       <div className="mb-8 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl ring-1 ring-[color:var(--border)]" style={{ background: "rgba(245,181,72,0.10)", color: "#F5B548" }}>
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl ring-1 ring-[color:var(--border)]" style={{ background: "rgba(203,208,213,0.10)", color: "#C8CDD2" }}>
           <GiftIcon />
         </div>
         <div>
@@ -176,7 +176,7 @@ export default function InvitePage() {
             },
           ].map(({ icon, label, desc }, i) => (
             <div key={i} className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl" style={{ background: "rgba(245,181,72,0.10)", color: "#F5B548" }}>
+              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl" style={{ background: "rgba(203,208,213,0.10)", color: "#C8CDD2" }}>
                 {icon}
               </div>
               <div>
@@ -201,7 +201,7 @@ export default function InvitePage() {
               style={{ background: "var(--pill)", color: "var(--fg)" }}
             >
               <span className="flex-1 truncate text-xs">{referralUrl}</span>
-              <span className="shrink-0 rounded-md px-2 py-0.5 text-xs font-bold" style={{ background: "rgba(245,181,72,0.15)", color: "#F5B548" }}>
+              <span className="shrink-0 rounded-md px-2 py-0.5 text-xs font-bold" style={{ background: "rgba(203,208,213,0.15)", color: "#C8CDD2" }}>
                 {code}
               </span>
             </div>
@@ -214,7 +214,7 @@ export default function InvitePage() {
                 style={
                   copied
                     ? { background: "rgba(74,222,128,0.15)", color: "#4ade80" }
-                    : { background: "rgba(245,181,72,0.15)", color: "#F5B548" }
+                    : { background: "rgba(203,208,213,0.15)", color: "#C8CDD2" }
                 }
               >
                 {copied ? <CheckIcon size={15} /> : <CopyIcon size={15} />}
@@ -224,7 +224,7 @@ export default function InvitePage() {
                 type="button"
                 onClick={handleShare}
                 className={`${goldBtn} flex-1`}
-                style={{ background: "rgba(245,181,72,0.15)", color: "#F5B548" }}
+                style={{ background: "rgba(203,208,213,0.15)", color: "#C8CDD2" }}
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                 Share
@@ -264,7 +264,7 @@ export default function InvitePage() {
             { label: "Total Bonus", value: `+${totalBonus}` },
           ].map(({ label, value }) => (
             <div key={label} className="rounded-2xl p-3 ring-1 ring-[color:var(--border)] text-center" style={{ background: "var(--surface)" }}>
-              <p className="text-2xl font-bold" style={{ color: "#F5B548" }}>{value}</p>
+              <p className="text-2xl font-bold" style={{ color: "#C8CDD2" }}>{value}</p>
               <p className="mt-0.5 text-[10px] leading-tight" style={{ color: "var(--muted)" }}>{label}</p>
             </div>
           ))}

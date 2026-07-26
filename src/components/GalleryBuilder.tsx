@@ -780,7 +780,7 @@ export default function GalleryBuilder({
                 "inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]",
                 quickSaveJustSaved
                   ? ""
-                  : "vltd-pill-main-glow bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[rgba(245,181,72,0.48)]",
+                  : "vltd-pill-main-glow bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[rgba(203,208,213,0.48)]",
               ].join(" ")}
               style={quickSaveJustSaved ? SAVE_FEEDBACK_STYLE : undefined}
             >
@@ -1088,7 +1088,7 @@ export default function GalleryBuilder({
                             position: "fixed", width: "72px", height: "96px",
                             objectFit: "cover", borderRadius: "8px", opacity: "0.88",
                             pointerEvents: "none", zIndex: "9999", transform: "scale(1.1)",
-                            boxShadow: "0 0 0 2px rgba(245,181,72,0.8), 0 8px 24px rgba(0,0,0,0.5)",
+                            boxShadow: "0 0 0 2px rgba(203,208,213,0.8), 0 8px 24px rgba(0,0,0,0.5)",
                           });
                           const touch = e.touches[0];
                           clone.style.left = `${touch.clientX - 36}px`;
@@ -1148,10 +1148,10 @@ export default function GalleryBuilder({
                             background:
                               "linear-gradient(135deg, #fff0a8 0%, #d99a2b 18%, #6f4514 37%, #f7cf72 54%, #3a250d 72%, #ffe7a0 100%)",
                             boxShadow: isDragOver
-                              ? "0 0 0 2px rgba(245,181,72,0.9), 0 0 16px rgba(245,181,72,0.5)"
+                              ? "0 0 0 2px rgba(203,208,213,0.9), 0 0 16px rgba(203,208,213,0.5)"
                               : isBeingDragged
                                 ? "0 0 0 2px rgba(255,255,255,0.2)"
-                                : "0 0 0 1px rgba(255,235,174,0.50), 0 16px 30px rgba(0,0,0,0.45), 0 0 18px rgba(245,181,72,0.22), inset 0 1px 0 rgba(255,255,255,0.38), inset 0 -10px 18px rgba(54,32,8,0.55)",
+                                : "0 0 0 1px rgba(255,235,174,0.50), 0 16px 30px rgba(0,0,0,0.45), 0 0 18px rgba(203,208,213,0.22), inset 0 1px 0 rgba(255,255,255,0.38), inset 0 -10px 18px rgba(54,32,8,0.55)",
                             opacity: isBeingDragged ? 0.35 : 1,
                             cursor: sections.length > 0 ? (canOrganize ? "grab" : "default") : "default",
                             transition: canOrganize ? "none" : "transform 0.1s, box-shadow 0.1s",
@@ -1159,8 +1159,8 @@ export default function GalleryBuilder({
                         >
                           <div className="relative h-full overflow-hidden rounded-[13px] bg-[#090d14] ring-1 ring-black/70">
                           <div className="pointer-events-none absolute inset-[3px] z-10 rounded-[10px] ring-1 ring-[#ffe8a3]/35" />
-                          <div className="pointer-events-none absolute left-1 top-1 z-20 h-4 w-4 rounded-full border border-[#ffd978]/80 bg-[#131018] shadow-[inset_0_0_0_2px_rgba(0,0,0,0.55),0_0_10px_rgba(245,181,72,0.35)]" />
-                          <div className="pointer-events-none absolute right-1 top-1 z-10 h-4 w-4 rounded-full border border-[#ffd978]/80 bg-[#131018] shadow-[inset_0_0_0_2px_rgba(0,0,0,0.55),0_0_10px_rgba(245,181,72,0.35)]" />
+                          <div className="pointer-events-none absolute left-1 top-1 z-20 h-4 w-4 rounded-full border border-[#ffd978]/80 bg-[#131018] shadow-[inset_0_0_0_2px_rgba(0,0,0,0.55),0_0_10px_rgba(203,208,213,0.35)]" />
+                          <div className="pointer-events-none absolute right-1 top-1 z-10 h-4 w-4 rounded-full border border-[#ffd978]/80 bg-[#131018] shadow-[inset_0_0_0_2px_rgba(0,0,0,0.55),0_0_10px_rgba(203,208,213,0.35)]" />
                           <div className="pointer-events-none absolute inset-x-5 top-2 z-10 h-px bg-[linear-gradient(90deg,transparent,#ffdf87,transparent)]" />
                           <div className="pointer-events-none absolute inset-x-4 bottom-[24%] z-10 h-px bg-[linear-gradient(90deg,transparent,#8f5d18,#ffdf87,#8f5d18,transparent)]" />
                           {/* Remove button — hidden while organizing */}
@@ -1184,7 +1184,7 @@ export default function GalleryBuilder({
                           ) : null}
 
                           {/* Image */}
-                          <div className="absolute right-1 top-1 z-30 grid h-[19px] w-[19px] place-items-center rounded-full bg-[#111018] text-[7px] font-black tracking-[0.04em] text-[#f7d979] ring-1 ring-[#F5B548]/80 shadow-[inset_0_0_0_2px_rgba(0,0,0,0.55),0_0_10px_rgba(245,181,72,0.34)]">
+                          <div className="absolute right-1 top-1 z-30 grid h-[19px] w-[19px] place-items-center rounded-full bg-[#111018] text-[7px] font-black tracking-[0.04em] text-[#f7d979] ring-1 ring-[#C8CDD2]/80 shadow-[inset_0_0_0_2px_rgba(0,0,0,0.55),0_0_10px_rgba(203,208,213,0.34)]">
                             {itemCategoryBadge(item)}
                           </div>
 
@@ -1195,7 +1195,7 @@ export default function GalleryBuilder({
                             <div className="absolute inset-x-0 top-0 flex h-[76%] w-full items-center justify-center bg-black/20 text-[9px] text-[color:var(--muted)]">—</div>
                           )}
 
-                          <div className="absolute inset-x-0 bottom-0 flex h-[24%] flex-col justify-center border-t border-[#F5B548]/65 bg-[linear-gradient(180deg,rgba(22,20,27,0.99),rgba(8,8,12,0.99))] px-1.5 text-center shadow-[inset_0_1px_0_rgba(255,233,169,0.22)]">
+                          <div className="absolute inset-x-0 bottom-0 flex h-[24%] flex-col justify-center border-t border-[#C8CDD2]/65 bg-[linear-gradient(180deg,rgba(22,20,27,0.99),rgba(8,8,12,0.99))] px-1.5 text-center shadow-[inset_0_1px_0_rgba(255,233,169,0.22)]">
                             <div className="pointer-events-none absolute inset-x-2 top-1 h-px bg-[linear-gradient(90deg,transparent,rgba(255,234,174,0.85),transparent)]" />
                             <div className="truncate font-serif text-[8px] font-semibold leading-tight text-[#f5d16d] sm:text-[9px]">{item.title}</div>
                             <div className="mt-0.5 truncate text-[6px] uppercase tracking-[0.06em] text-white/62 sm:text-[7px]">
@@ -1211,8 +1211,8 @@ export default function GalleryBuilder({
                           style={{
                             aspectRatio: "3/4",
                             boxShadow: isDragOver
-                              ? "0 0 0 2px rgba(245,181,72,0.9), 0 0 16px rgba(245,181,72,0.5)"
-                              : "0 0 0 1.5px rgba(245,181,72,0.4), 0 0 8px rgba(245,181,72,0.12)",
+                              ? "0 0 0 2px rgba(203,208,213,0.9), 0 0 16px rgba(203,208,213,0.5)"
+                              : "0 0 0 1.5px rgba(203,208,213,0.4), 0 0 8px rgba(203,208,213,0.12)",
                             cursor: canOrganize ? "copy" : "pointer",
                           }}
                           onClick={!canOrganize ? () => {

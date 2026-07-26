@@ -219,7 +219,7 @@ function itemBadges(i: ModelItem) {
           className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold ring-1"
           style={{
             background: "rgba(10,8,0,0.75)",
-            borderColor: "rgba(245,181,72,0.4)",
+            borderColor: "rgba(203,208,213,0.4)",
             color: "var(--theme-gold)",
           }}
         >
@@ -1261,7 +1261,7 @@ export default function VaultInner() {
               type="button"
               onClick={() => { setUFilter("ALL"); setFocusedUniverses([]); pushFilters({ u: "ALL", c: "ALL", s: "ALL" }); }}
               className="font-semibold hover:underline"
-              style={{ color: "var(--theme-gold, #F5B548)" }}
+              style={{ color: "var(--theme-gold, #C8CDD2)" }}
             >
               Show all
             </button>
@@ -1409,7 +1409,7 @@ export default function VaultInner() {
                   className={[
                     "rounded-full px-3 py-1 text-[11px] font-semibold transition",
                     viewMode === "museum"
-                      ? "bg-[color:var(--theme-gold-subtle,rgba(245,181,72,0.12))] text-[color:var(--theme-gold,#F5B548)]"
+                      ? "bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.12))] text-[color:var(--theme-gold,#C8CDD2)]"
                       : "text-[color:var(--muted)]",
                   ].join(" ")}
                 >
@@ -1421,7 +1421,7 @@ export default function VaultInner() {
                   className={[
                     "rounded-full px-3 py-1 text-[11px] font-semibold transition",
                     viewMode === "shelf"
-                      ? "bg-[color:var(--theme-gold-subtle,rgba(245,181,72,0.12))] text-[color:var(--theme-gold,#F5B548)]"
+                      ? "bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.12))] text-[color:var(--theme-gold,#C8CDD2)]"
                       : "text-[color:var(--muted)]",
                   ].join(" ")}
                 >
@@ -1433,7 +1433,7 @@ export default function VaultInner() {
                   className={[
                     "rounded-full px-3 py-1 text-[11px] font-semibold transition",
                     viewMode === "swipe"
-                      ? "bg-[color:var(--theme-gold-subtle,rgba(245,181,72,0.12))] text-[color:var(--theme-gold,#F5B548)]"
+                      ? "bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.12))] text-[color:var(--theme-gold,#C8CDD2)]"
                       : "text-[color:var(--muted)]",
                   ].join(" ")}
                 >

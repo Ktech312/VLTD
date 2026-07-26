@@ -138,7 +138,7 @@ export default function ScanReviewSheet({ items, onClose, onFinish }: Props) {
             onClick={() => onFinish(remaining.map((i) => i.id))}
             disabled={remaining.length === 0}
             className="w-full rounded-2xl py-3 text-sm font-bold disabled:opacity-40"
-            style={{ background: "var(--theme-gold, #F5B548)", color: "#0A0800" }}
+            style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
           >
             {remaining.length > 0
               ? `Add ${remaining.length} item${remaining.length !== 1 ? "s" : ""} to Vault`

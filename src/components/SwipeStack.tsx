@@ -152,9 +152,9 @@ function CardFace({ item, isTop }: { item: ModelItem; isTop: boolean }) {
           <span
             className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] ring-1"
             style={{
-              background: "rgba(245,181,72,0.18)",
-              color: "var(--theme-gold, #F5B548)",
-              borderColor: "rgba(245,181,72,0.45)",
+              background: "rgba(203,208,213,0.18)",
+              color: "var(--theme-gold, #C8CDD2)",
+              borderColor: "rgba(203,208,213,0.45)",
             }}
           >
             ★ Key Item
@@ -165,8 +165,8 @@ function CardFace({ item, isTop }: { item: ModelItem; isTop: boolean }) {
             className="ml-auto rounded-xl px-2.5 py-1 text-[11px] font-bold ring-1"
             style={{
               background: "rgba(10,8,0,0.82)",
-              color: "var(--theme-gold, #F5B548)",
-              borderColor: "rgba(245,181,72,0.45)",
+              color: "var(--theme-gold, #C8CDD2)",
+              borderColor: "rgba(203,208,213,0.45)",
             }}
           >
             {item.grade.length > 12 ? item.grade.slice(0, 12) : item.grade}
@@ -184,7 +184,7 @@ function CardFace({ item, isTop }: { item: ModelItem; isTop: boolean }) {
         </div>
         <div
           className="text-[22px] font-bold leading-tight"
-          style={{ color: "#F0EAD6" }}
+          style={{ color: "#ECEDEF" }}
         >
           {item.title}
         </div>
@@ -203,7 +203,7 @@ function CardFace({ item, isTop }: { item: ModelItem; isTop: boolean }) {
             </div>
             <div
               className="text-[20px] font-bold"
-              style={{ color: "var(--theme-gold, #F5B548)" }}
+              style={{ color: "var(--theme-gold, #C8CDD2)" }}
             >
               {money(value)}
             </div>
@@ -267,7 +267,7 @@ function PreviewFace({ item }: { item: ModelItem }) {
       <div
         className="pointer-events-none absolute inset-0"
         style={{
-          boxShadow: "inset 0 0 0 1px rgba(245,181,72,0.16)",
+          boxShadow: "inset 0 0 0 1px rgba(203,208,213,0.16)",
           background: "linear-gradient(to bottom, rgba(0,0,0,0.08), rgba(0,0,0,0.42))",
         }}
       />
@@ -297,7 +297,7 @@ function VaultFlipFront({ item }: { item: ModelItem }) {
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(circle at 50% 12%, rgba(245,181,72,0.18), transparent 32%), linear-gradient(180deg, rgba(255,255,255,0.06), transparent 18%, rgba(0,0,0,0.34))",
+            "radial-gradient(circle at 50% 12%, rgba(203,208,213,0.18), transparent 32%), linear-gradient(180deg, rgba(255,255,255,0.06), transparent 18%, rgba(0,0,0,0.34))",
         }}
       />
 
@@ -306,9 +306,9 @@ function VaultFlipFront({ item }: { item: ModelItem }) {
           <span
             className="rounded-[10px] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] ring-1"
             style={{
-              background: "rgba(245,181,72,0.17)",
-              color: "var(--theme-gold, #F5B548)",
-              borderColor: "rgba(245,181,72,0.45)",
+              background: "rgba(203,208,213,0.17)",
+              color: "var(--theme-gold, #C8CDD2)",
+              borderColor: "rgba(203,208,213,0.45)",
             }}
           >
             Key Item
@@ -321,8 +321,8 @@ function VaultFlipFront({ item }: { item: ModelItem }) {
             className="rounded-[10px] px-2.5 py-1 text-[11px] font-bold ring-1"
             style={{
               background: "rgba(6,8,9,0.78)",
-              color: "var(--theme-gold, #F5B548)",
-              borderColor: "rgba(245,181,72,0.45)",
+              color: "var(--theme-gold, #C8CDD2)",
+              borderColor: "rgba(203,208,213,0.45)",
             }}
           >
             {item.grade.length > 12 ? item.grade.slice(0, 12) : item.grade}
@@ -337,9 +337,9 @@ function VaultFlipFront({ item }: { item: ModelItem }) {
             borderRadius: objectRadius,
             background:
               profile.frame === "box"
-                ? "linear-gradient(90deg, rgba(245,181,72,0.12), rgba(255,255,255,0.06) 12%, rgba(0,0,0,0.24) 18%, rgba(255,255,255,0.04))"
+                ? "linear-gradient(90deg, rgba(203,208,213,0.12), rgba(255,255,255,0.06) 12%, rgba(0,0,0,0.24) 18%, rgba(255,255,255,0.04))"
                 : "linear-gradient(145deg, rgba(255,255,255,0.08), rgba(0,0,0,0.18))",
-            border: "1px solid rgba(245,181,72,0.24)",
+            border: "1px solid rgba(203,208,213,0.24)",
             boxShadow:
               "0 18px 34px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.06), inset 0 -32px 42px rgba(0,0,0,0.2)",
           }}
@@ -380,7 +380,7 @@ function VaultFlipFront({ item }: { item: ModelItem }) {
         <div className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: "rgba(218,171,74,0.68)" }}>
           {label}
         </div>
-        <div className="mt-1 text-[24px] font-black leading-[1.05]" style={{ color: "#F0EAD6" }}>
+        <div className="mt-1 text-[24px] font-black leading-[1.05]" style={{ color: "#ECEDEF" }}>
           {item.title}
         </div>
         {descriptor ? (
@@ -393,7 +393,7 @@ function VaultFlipFront({ item }: { item: ModelItem }) {
             <div className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: "rgba(240,234,214,0.42)" }}>
               Value
             </div>
-            <div className="text-[22px] font-black" style={{ color: "var(--theme-gold, #F5B548)" }}>
+            <div className="text-[22px] font-black" style={{ color: "var(--theme-gold, #C8CDD2)" }}>
               {money(value)}
             </div>
           </div>
@@ -437,7 +437,7 @@ function VaultFlipBack({ item }: { item: ModelItem }) {
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(circle at 50% 8%, rgba(245,181,72,0.16), transparent 28%), linear-gradient(180deg, rgba(255,255,255,0.05), transparent 22%, rgba(0,0,0,0.35))",
+            "radial-gradient(circle at 50% 8%, rgba(203,208,213,0.16), transparent 28%), linear-gradient(180deg, rgba(255,255,255,0.05), transparent 22%, rgba(0,0,0,0.35))",
         }}
       />
 
@@ -445,7 +445,7 @@ function VaultFlipBack({ item }: { item: ModelItem }) {
         <div className="text-[10px] font-bold uppercase tracking-[0.26em]" style={{ color: "rgba(218,171,74,0.62)" }}>
           Back metadata
         </div>
-        <div className="mt-1 text-[22px] font-black leading-tight" style={{ color: "#F0EAD6" }}>
+        <div className="mt-1 text-[22px] font-black leading-tight" style={{ color: "#ECEDEF" }}>
           {item.title}
         </div>
         <div className="mt-1 text-[12px]" style={{ color: "rgba(240,234,214,0.58)" }}>
@@ -453,7 +453,7 @@ function VaultFlipBack({ item }: { item: ModelItem }) {
         </div>
       </div>
 
-      <div className="relative z-10 mt-5 overflow-hidden rounded-[18px]" style={{ border: "1px solid rgba(245,181,72,0.25)" }}>
+      <div className="relative z-10 mt-5 overflow-hidden rounded-[18px]" style={{ border: "1px solid rgba(203,208,213,0.25)" }}>
         {backSrc ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={backSrc} alt={`${item.title} back`} className="h-36 w-full object-contain bg-black/35 p-2" draggable={false} />
@@ -518,7 +518,7 @@ function SwipeHint({
     color = isRight ? "#4ade80" : "#f87171";
   } else {
     label = isRight ? "NEXT →" : "← PREV";
-    color = "var(--theme-gold, #F5B548)";
+    color = "var(--theme-gold, #C8CDD2)";
   }
 
   return (
@@ -643,9 +643,9 @@ function ActionBar({
         type="button"
         className={`${btnBase} h-11 min-w-14 px-3 ring-2`}
         style={{
-          background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))",
-          borderColor: "var(--theme-gold-border, rgba(245,181,72,0.4))",
-          color: "var(--theme-gold, #F5B548)",
+          background: "var(--theme-gold-subtle, rgba(203,208,213,0.12))",
+          borderColor: "var(--theme-gold-border, rgba(203,208,213,0.4))",
+          color: "var(--theme-gold, #C8CDD2)",
           fontSize: 15,
           fontWeight: 700,
         }}
@@ -686,7 +686,7 @@ function EmptyState({ mode }: { mode: SwipeMode }) {
     >
       <div
         className="text-[36px] font-black"
-        style={{ color: "var(--theme-gold, #F5B548)", opacity: 0.4 }}
+        style={{ color: "var(--theme-gold, #C8CDD2)", opacity: 0.4 }}
       >
         {mode === "gallery" ? "✦" : "∅"}
       </div>
@@ -1133,7 +1133,7 @@ export default function SwipeStack({
                       }}
                       className="absolute right-9 top-[70px] z-40 flex h-8 w-8 items-center justify-center text-[16px] font-black transition hover:scale-110"
                       style={{
-                        color: "var(--theme-gold, #F5B548)",
+                        color: "var(--theme-gold, #C8CDD2)",
                       }}
                       aria-label={isFlipped ? "Show front" : "Show back"}
                     >
@@ -1171,7 +1171,7 @@ export default function SwipeStack({
               type="button"
               onClick={() => currentItem && onOpen?.(currentItem)}
               className="flex h-11 min-w-24 items-center justify-center gap-2 rounded-full px-4 text-[12px] font-bold uppercase tracking-[0.12em] ring-1 transition active:scale-95"
-              style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.1)", color: "#F0EAD6" }}
+              style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.1)", color: "#ECEDEF" }}
             >
               <Eye size={14} strokeWidth={2.5} />
               View

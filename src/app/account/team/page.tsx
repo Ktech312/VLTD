@@ -16,7 +16,7 @@ import {
 } from "@/lib/team";
 
 const ROLE_STYLE: Record<string, { bg: string; fg: string }> = {
-  owner: { bg: "rgba(245,181,72,0.16)", fg: "#F5B548" },
+  owner: { bg: "rgba(203,208,213,0.16)", fg: "#C8CDD2" },
   admin: { bg: "rgba(96,165,250,0.14)", fg: "#93c5fd" },
   member: { bg: "rgba(255,255,255,0.06)", fg: "rgba(255,255,255,0.7)" },
 };
@@ -128,7 +128,7 @@ export default function TeamPage() {
           className="relative -mt-px overflow-hidden rounded-[34px] rounded-tl-none p-5 sm:p-7"
           style={{
             background: "var(--theme-elevated, rgba(20,32,55,0.9))",
-            border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.25))",
+            border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.25))",
             boxShadow: "0 26px 86px rgba(0,0,0,0.32)",
           }}
         >
@@ -172,7 +172,7 @@ export default function TeamPage() {
                   onClick={() => void handleInvite()}
                   disabled={busy || !inviteEmail.trim()}
                   className="rounded-xl px-4 py-2 text-sm font-bold text-black transition disabled:opacity-40"
-                  style={{ background: "linear-gradient(135deg,#8B6914,#F5B548)" }}
+                  style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)" }}
                 >
                   {busy ? "…" : "Add"}
                 </button>

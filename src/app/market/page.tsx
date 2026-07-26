@@ -138,7 +138,7 @@ function MarketCard({ item }: { item: MarketItem }) {
           )}
           {item.certNumber && (
             <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
-              style={{ background: "rgba(245,181,72,0.08)", color: "var(--theme-gold)" }}
+              style={{ background: "rgba(203,208,213,0.08)", color: "var(--theme-gold)" }}
               title={`Cert #${item.certNumber}`}>
               ✓ Certified
             </span>

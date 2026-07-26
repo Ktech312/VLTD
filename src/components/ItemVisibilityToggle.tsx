@@ -91,7 +91,7 @@ export default function ItemVisibilityToggle({
           "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full transition disabled:cursor-not-allowed disabled:opacity-60",
           size === "md" ? "h-9 px-3 text-xs font-semibold" : "h-7 min-w-7 px-2 text-[10px] font-semibold",
           isPublic
-            ? "text-[color:var(--theme-gold,#F5B548)]"
+            ? "text-[color:var(--theme-gold,#C8CDD2)]"
             : "text-white/40 hover:text-white/70",
         ].join(" ")}
       >

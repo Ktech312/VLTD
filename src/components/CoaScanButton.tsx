@@ -57,7 +57,7 @@ export default function CoaScanButton({ onApply }: Props) {
     (result?.confidence ?? 0) >= 0.7
       ? "#22C55E"
       : (result?.confidence ?? 0) >= 0.4
-      ? "#F5B548"
+      ? "#C8CDD2"
       : "#EF4444";
 
   const fields: { label: string; value: string }[] = result
@@ -108,7 +108,7 @@ export default function CoaScanButton({ onApply }: Props) {
         <div className="mt-3 flex items-center gap-2 rounded-2xl bg-[color:var(--theme-elevated)] px-4 py-3 ring-1 ring-[color:var(--theme-border)]">
           <span
             className="h-2.5 w-2.5 animate-pulse rounded-full"
-            style={{ background: "var(--theme-gold, #F5B548)" }}
+            style={{ background: "var(--theme-gold, #C8CDD2)" }}
           />
           <span className="text-xs font-semibold text-[color:var(--muted)]">Reading certificate…</span>
         </div>
@@ -177,7 +177,7 @@ export default function CoaScanButton({ onApply }: Props) {
               type="button"
               onClick={handleApply}
               className="inline-flex h-9 items-center rounded-full px-4 text-xs font-bold text-black"
-              style={{ background: "var(--theme-gold, #F5B548)" }}
+              style={{ background: "var(--theme-gold, #C8CDD2)" }}
             >
               Apply to Item
             </button>

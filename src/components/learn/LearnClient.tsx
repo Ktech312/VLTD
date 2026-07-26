@@ -39,7 +39,7 @@ function SaveChip({ saved, onToggle }: { saved: boolean; onToggle: () => void })
       }}
       aria-pressed={saved}
       className="inline-flex items-center gap-1 text-[11px] font-semibold transition"
-      style={{ color: saved ? "var(--theme-gold,#F5B548)" : "var(--muted)" }}
+      style={{ color: saved ? "var(--theme-gold,#C8CDD2)" : "var(--muted)" }}
     >
       <svg width="12" height="12" viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1z" />
@@ -98,11 +98,11 @@ export default function LearnClient() {
             {/* Featured */}
             <Link
               href={`/learn/${featured.slug}`}
-              className="group block overflow-hidden rounded-[8px] border border-[rgba(245,181,72,0.22)] bg-vault-card transition hover:border-[rgba(245,181,72,0.4)]"
+              className="group block overflow-hidden rounded-[8px] border border-[rgba(203,208,213,0.22)] bg-vault-card transition hover:border-[rgba(203,208,213,0.4)]"
             >
               <div className="grid md:grid-cols-[minmax(0,1fr)_420px]">
                 <div className="p-6">
-                  <span className="inline-flex rounded-[5px] border border-[rgba(245,181,72,0.28)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">
+                  <span className="inline-flex rounded-[5px] border border-[rgba(203,208,213,0.28)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">
                     Featured
                   </span>
                   <h2 className="mt-3 max-w-2xl text-3xl font-black leading-tight tracking-[-0.02em] text-text-primary sm:text-4xl">
@@ -145,9 +145,9 @@ export default function LearnClient() {
                     <Link
                       key={a.slug}
                       href={`/learn/${a.slug}`}
-                      className="flex items-center gap-2.5 rounded-[8px] border border-[color:var(--border)] bg-vault-card px-3 py-2.5 transition hover:border-[rgba(245,181,72,0.4)]"
+                      className="flex items-center gap-2.5 rounded-[8px] border border-[color:var(--border)] bg-vault-card px-3 py-2.5 transition hover:border-[rgba(203,208,213,0.4)]"
                     >
-                      <span style={{ color: "var(--theme-gold,#F5B548)" }}><Glyph name={a.glyph} size={18} /></span>
+                      <span style={{ color: "var(--theme-gold,#C8CDD2)" }}><Glyph name={a.glyph} size={18} /></span>
                       <span className="min-w-0">
                         <span className="block truncate text-[13px] font-bold text-text-primary">{a.title}</span>
                         <span className="block text-[10px] text-[color:var(--muted2)]">{a.category}</span>
@@ -165,7 +165,7 @@ export default function LearnClient() {
           {/* ── Sidebar ── */}
           <aside className="space-y-4">
             {/* Collector Playbooks */}
-            <section className="rounded-[8px] border border-[rgba(245,181,72,0.22)] bg-vault-card p-4">
+            <section className="rounded-[8px] border border-[rgba(203,208,213,0.22)] bg-vault-card p-4">
               <h3 className="mb-2.5 flex items-center gap-1.5 text-sm font-black text-text-primary">
                 <Glyph name="cards" size={16} /> Collector Playbooks
               </h3>
@@ -177,7 +177,7 @@ export default function LearnClient() {
             </section>
 
             {/* Quick Guides */}
-            <section className="rounded-[8px] border border-[rgba(245,181,72,0.22)] bg-vault-card p-4">
+            <section className="rounded-[8px] border border-[rgba(203,208,213,0.22)] bg-vault-card p-4">
               <h3 className="mb-2.5 text-sm font-black text-text-primary">Quick Guides</h3>
               <div className="divide-y divide-[color:var(--border)]">
                 {QUICK_ARTICLES.map((a) => (
@@ -187,9 +187,9 @@ export default function LearnClient() {
             </section>
 
             {/* Newsletter */}
-            <section className="rounded-[8px] border border-[rgba(245,181,72,0.22)] bg-vault-card p-4">
+            <section className="rounded-[8px] border border-[rgba(203,208,213,0.22)] bg-vault-card p-4">
               <div className="mb-3 flex items-start gap-2.5">
-                <span style={{ color: "var(--theme-gold,#F5B548)" }}><Glyph name="message" size={20} /></span>
+                <span style={{ color: "var(--theme-gold,#C8CDD2)" }}><Glyph name="message" size={20} /></span>
                 <div>
                   <h3 className="text-sm font-black text-text-primary">Collector insights, delivered</h3>
                   <p className="mt-1 text-[11px] leading-5 text-[color:var(--muted)]">
@@ -210,7 +210,7 @@ function GuideCard({ a, saved, onToggle }: { a: LearnArticle; saved: boolean; on
   return (
     <Link
       href={`/learn/${a.slug}`}
-      className="group flex flex-col overflow-hidden rounded-[8px] border border-[color:var(--border)] bg-vault-card transition hover:border-[rgba(245,181,72,0.4)]"
+      className="group flex flex-col overflow-hidden rounded-[8px] border border-[color:var(--border)] bg-vault-card transition hover:border-[rgba(203,208,213,0.4)]"
     >
       <div className="relative h-24">
         <Thumb article={a} className="h-24" />
@@ -233,14 +233,14 @@ function GuideCard({ a, saved, onToggle }: { a: LearnArticle; saved: boolean; on
 function SidebarRow({ a }: { a: LearnArticle }) {
   return (
     <Link href={`/learn/${a.slug}`} className="group flex items-center gap-3 py-2 first:pt-1 last:pb-1">
-      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[6px]" style={{ background: "rgba(245,181,72,0.08)", border: "1px solid rgba(245,181,72,0.18)", color: "var(--theme-gold,#F5B548)" }}>
+      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[6px]" style={{ background: "rgba(203,208,213,0.08)", border: "1px solid rgba(203,208,213,0.18)", color: "var(--theme-gold,#C8CDD2)" }}>
         <Glyph name={a.glyph} size={18} />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-[13px] font-bold leading-tight text-text-primary">{a.title}</span>
         <span className="block truncate text-[11px] text-[color:var(--muted2)]">{a.dek}</span>
       </span>
-      <span className="shrink-0 text-[color:var(--muted2)] transition group-hover:text-[color:var(--theme-gold,#F5B548)]">
+      <span className="shrink-0 text-[color:var(--muted2)] transition group-hover:text-[color:var(--theme-gold,#C8CDD2)]">
         <Chevron />
       </span>
     </Link>

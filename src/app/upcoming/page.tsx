@@ -50,7 +50,7 @@ function IssueCard({
       rel="noopener noreferrer"
       style={{
         background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(245,181,72,0.10)",
+        border: "1px solid rgba(203,208,213,0.10)",
         borderRadius: "12px",
         overflow: "hidden",
         display: "flex",
@@ -60,8 +60,8 @@ function IssueCard({
         transition: "border-color 0.15s",
         height: "100%",
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(245,181,72,0.30)")}
-      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(245,181,72,0.10)")}
+      onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(203,208,213,0.30)")}
+      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(203,208,213,0.10)")}
     >
       <div style={{ position: "relative", width: "100%", aspectRatio: "2/3", background: "#111", flexShrink: 0 }}>
         {issue.imageUrl && !imgError ? (
@@ -98,8 +98,8 @@ function IssueCard({
           style={{
             position: "absolute", top: "8px", right: "8px",
             width: "32px", height: "32px", borderRadius: "50%",
-            border: wishlisted ? "1.5px solid #F5B548" : "1.5px solid rgba(255,255,255,0.25)",
-            background: wishlisted ? "rgba(245,181,72,0.20)" : "rgba(0,0,0,0.55)",
+            border: wishlisted ? "1.5px solid #C8CDD2" : "1.5px solid rgba(255,255,255,0.25)",
+            background: wishlisted ? "rgba(203,208,213,0.20)" : "rgba(0,0,0,0.55)",
             backdropFilter: "blur(6px)",
             display: "flex", alignItems: "center", justifyContent: "center",
             cursor: "pointer", transition: "all 0.15s",
@@ -108,8 +108,8 @@ function IssueCard({
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
             <path
               d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-              fill={wishlisted ? "#F5B548" : "none"}
-              stroke={wishlisted ? "#F5B548" : "rgba(255,255,255,0.6)"}
+              fill={wishlisted ? "#C8CDD2" : "none"}
+              stroke={wishlisted ? "#C8CDD2" : "rgba(255,255,255,0.6)"}
               strokeWidth="1.75"
             />
           </svg>
@@ -118,12 +118,12 @@ function IssueCard({
 
       <div style={{ padding: "9px 9px 11px", display: "flex", flexDirection: "column", gap: "3px", flex: 1 }}>
         <div style={{
-          fontSize: "12px", fontWeight: 700, color: "#F0EAD6", lineHeight: 1.3,
+          fontSize: "12px", fontWeight: 700, color: "#ECEDEF", lineHeight: 1.3,
           overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
         }}>
           {issue.series}
         </div>
-        <div style={{ fontSize: "11px", color: "rgba(245,181,72,0.75)", fontWeight: 600 }}>
+        <div style={{ fontSize: "11px", color: "rgba(203,208,213,0.75)", fontWeight: 600 }}>
           #{issue.number}
         </div>
 
@@ -139,7 +139,7 @@ function IssueCard({
 
         <div style={{ marginTop: "auto", paddingTop: "3px", display: "flex", flexDirection: "column", gap: "1px" }}>
           {issue.storeDate && (
-            <div style={{ fontSize: "10px", color: "rgba(245,181,72,0.45)", fontWeight: 500 }}>
+            <div style={{ fontSize: "10px", color: "rgba(203,208,213,0.45)", fontWeight: 500 }}>
               {formatStoreDate(issue.storeDate)}
             </div>
           )}
@@ -268,7 +268,7 @@ export default function UpcomingPage() {
 
   return (
     <div style={{
-      minHeight: "100dvh", background: "#0A0A12", color: "#F0EAD6",
+      minHeight: "100dvh", background: "#0A0A12", color: "#ECEDEF",
       paddingTop: "env(safe-area-inset-top, 0px)",
       paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 90px)",
     }}>
@@ -276,7 +276,7 @@ export default function UpcomingPage() {
       <div style={{
         position: "sticky", top: 0, zIndex: 40,
         background: "rgba(10,10,18,0.95)", backdropFilter: "blur(12px)",
-        borderBottom: "1px solid rgba(245,181,72,0.08)",
+        borderBottom: "1px solid rgba(203,208,213,0.08)",
         padding: "16px 16px 12px",
       }}>
         <div style={{ maxWidth: "900px", margin: "0 auto" }}>
@@ -285,8 +285,8 @@ export default function UpcomingPage() {
             <span style={{ fontSize: "22px", fontWeight: 900, letterSpacing: "-0.02em" }}>Upcoming Comics</span>
             {wishlistIds.size > 0 && (
               <span style={{
-                fontSize: "12px", fontWeight: 700, color: "#F5B548",
-                background: "rgba(245,181,72,0.12)", border: "1px solid rgba(245,181,72,0.25)",
+                fontSize: "12px", fontWeight: 700, color: "#C8CDD2",
+                background: "rgba(203,208,213,0.12)", border: "1px solid rgba(203,208,213,0.25)",
                 borderRadius: "100px", padding: "2px 9px",
               }}>{wishlistIds.size} saved</span>
             )}
@@ -303,7 +303,7 @@ export default function UpcomingPage() {
                 style={{
                   padding: "6px 18px", borderRadius: "8px", fontSize: "13px", fontWeight: 600,
                   border: "none", cursor: "pointer", transition: "all 0.15s",
-                  background: mode === m ? "#F5B548" : "transparent",
+                  background: mode === m ? "#C8CDD2" : "transparent",
                   color: mode === m ? "#0A0A12" : "rgba(240,234,214,0.55)",
                 }}>{m === "creator" ? "By Artist" : "By Series"}</button>
             ))}
@@ -318,13 +318,13 @@ export default function UpcomingPage() {
               placeholder={mode === "creator" ? "Artist name — e.g. Peach Momoko" : "Series title — e.g. Demon Days"}
               style={{
                 flex: 1, background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(245,181,72,0.20)", borderRadius: "10px",
-                padding: "11px 14px", fontSize: "15px", color: "#F0EAD6", outline: "none",
+                border: "1px solid rgba(203,208,213,0.20)", borderRadius: "10px",
+                padding: "11px 14px", fontSize: "15px", color: "#ECEDEF", outline: "none",
               }}
             />
             <button type="submit" disabled={loading}
               style={{
-                background: "#F5B548", border: "none", borderRadius: "10px",
+                background: "#C8CDD2", border: "none", borderRadius: "10px",
                 padding: "11px 18px", fontSize: "14px", fontWeight: 700,
                 color: "#0A0A12", cursor: loading ? "not-allowed" : "pointer",
                 opacity: loading ? 0.6 : 1, whiteSpace: "nowrap",
@@ -337,9 +337,9 @@ export default function UpcomingPage() {
               onClick={() => { setSelectedPubs(new Set()); if (fedResult) handleSearch(1, null); }}
               style={{
                 padding: "5px 12px", borderRadius: "100px", fontSize: "12px", fontWeight: 600,
-                border: selectedPubs.size === 0 ? "1px solid #F5B548" : "1px solid rgba(255,255,255,0.12)",
-                background: selectedPubs.size === 0 ? "rgba(245,181,72,0.12)" : "transparent",
-                color: selectedPubs.size === 0 ? "#F5B548" : "rgba(240,234,214,0.55)",
+                border: selectedPubs.size === 0 ? "1px solid #C8CDD2" : "1px solid rgba(255,255,255,0.12)",
+                background: selectedPubs.size === 0 ? "rgba(203,208,213,0.12)" : "transparent",
+                color: selectedPubs.size === 0 ? "#C8CDD2" : "rgba(240,234,214,0.55)",
                 cursor: "pointer", transition: "all 0.15s",
               }}>All</button>
 
@@ -347,9 +347,9 @@ export default function UpcomingPage() {
               <button key={p.value} onClick={() => togglePub(p.value)}
                 style={{
                   padding: "5px 12px", borderRadius: "100px", fontSize: "12px", fontWeight: 600,
-                  border: selectedPubs.has(p.value) ? "1px solid #F5B548" : "1px solid rgba(255,255,255,0.12)",
-                  background: selectedPubs.has(p.value) ? "rgba(245,181,72,0.12)" : "transparent",
-                  color: selectedPubs.has(p.value) ? "#F5B548" : "rgba(240,234,214,0.55)",
+                  border: selectedPubs.has(p.value) ? "1px solid #C8CDD2" : "1px solid rgba(255,255,255,0.12)",
+                  background: selectedPubs.has(p.value) ? "rgba(203,208,213,0.12)" : "transparent",
+                  color: selectedPubs.has(p.value) ? "#C8CDD2" : "rgba(240,234,214,0.55)",
                   cursor: "pointer", transition: "all 0.15s",
                 }}>{p.label}</button>
             ))}
@@ -359,18 +359,18 @@ export default function UpcomingPage() {
                 <button key={d} onClick={() => { setDays(d); setAllMode(false); }}
                   style={{
                     padding: "5px 10px", borderRadius: "100px", fontSize: "11px", fontWeight: 600,
-                    border: !allMode && days === d ? "1px solid rgba(245,181,72,0.5)" : "1px solid rgba(255,255,255,0.08)",
-                    background: !allMode && days === d ? "rgba(245,181,72,0.08)" : "transparent",
-                    color: !allMode && days === d ? "rgba(245,181,72,0.8)" : "rgba(240,234,214,0.35)",
+                    border: !allMode && days === d ? "1px solid rgba(203,208,213,0.5)" : "1px solid rgba(255,255,255,0.08)",
+                    background: !allMode && days === d ? "rgba(203,208,213,0.08)" : "transparent",
+                    color: !allMode && days === d ? "rgba(203,208,213,0.8)" : "rgba(240,234,214,0.35)",
                     cursor: "pointer",
                   }}>{d}d</button>
               ))}
               <button onClick={() => setAllMode((v) => !v)}
                 style={{
                   padding: "5px 10px", borderRadius: "100px", fontSize: "11px", fontWeight: 600,
-                  border: allMode ? "1px solid rgba(245,181,72,0.5)" : "1px solid rgba(255,255,255,0.08)",
-                  background: allMode ? "rgba(245,181,72,0.08)" : "transparent",
-                  color: allMode ? "rgba(245,181,72,0.8)" : "rgba(240,234,214,0.35)",
+                  border: allMode ? "1px solid rgba(203,208,213,0.5)" : "1px solid rgba(255,255,255,0.08)",
+                  background: allMode ? "rgba(203,208,213,0.08)" : "transparent",
+                  color: allMode ? "rgba(203,208,213,0.8)" : "rgba(240,234,214,0.35)",
                   cursor: "pointer",
                 }}>All</button>
             </div>
@@ -384,11 +384,11 @@ export default function UpcomingPage() {
         {/* Banner */}
         {fedResult && (
           <div style={{
-            background: "rgba(245,181,72,0.06)", border: "1px solid rgba(245,181,72,0.14)",
+            background: "rgba(203,208,213,0.06)", border: "1px solid rgba(203,208,213,0.14)",
             borderRadius: "10px", padding: "10px 14px", marginBottom: "14px",
-            fontSize: "13px", color: "rgba(245,181,72,0.85)",
+            fontSize: "13px", color: "rgba(203,208,213,0.85)",
           }}>
-            {creatorName && <><strong style={{ color: "#F5B548" }}>{creatorName}</strong>{" · "}</>}
+            {creatorName && <><strong style={{ color: "#C8CDD2" }}>{creatorName}</strong>{" · "}</>}
             {selectedPubs.size > 1
               ? <>{shownCount} shown of {totalCount} total</>
               : <>{totalCount} issue{totalCount !== 1 ? "s" : ""}</>}
@@ -420,7 +420,7 @@ export default function UpcomingPage() {
             </div>
             <div style={{ fontSize: "13px", lineHeight: 1.6 }}>
               Search by artist or series — data from{" "}
-              <span style={{ color: "rgba(245,181,72,0.6)" }}>Metron</span>.
+              <span style={{ color: "rgba(203,208,213,0.6)" }}>Metron</span>.
               Variants are detected automatically.
             </div>
           </div>
@@ -446,10 +446,10 @@ export default function UpcomingPage() {
         {!loading && groups.map((group) => (
           <div key={group.year} style={{ marginBottom: "28px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-              <div style={{ fontSize: "14px", fontWeight: 800, color: "#F5B548", letterSpacing: "0.06em" }}>
+              <div style={{ fontSize: "14px", fontWeight: 800, color: "#C8CDD2", letterSpacing: "0.06em" }}>
                 {group.year}
               </div>
-              <div style={{ flex: 1, height: "1px", background: "rgba(245,181,72,0.12)" }} />
+              <div style={{ flex: 1, height: "1px", background: "rgba(203,208,213,0.12)" }} />
               <div style={{ fontSize: "11px", color: "rgba(240,234,214,0.3)" }}>
                 {group.issues.length} issue{group.issues.length !== 1 ? "s" : ""}
               </div>
@@ -474,9 +474,9 @@ export default function UpcomingPage() {
               onClick={() => handleSearch(currentPage + 1)}
               disabled={loadingMore}
               style={{
-                background: "transparent", border: "1px solid rgba(245,181,72,0.30)",
+                background: "transparent", border: "1px solid rgba(203,208,213,0.30)",
                 borderRadius: "10px", padding: "10px 28px",
-                fontSize: "13px", fontWeight: 600, color: "#F5B548",
+                fontSize: "13px", fontWeight: 600, color: "#C8CDD2",
                 cursor: loadingMore ? "not-allowed" : "pointer",
                 opacity: loadingMore ? 0.6 : 1, transition: "all 0.15s",
               }}

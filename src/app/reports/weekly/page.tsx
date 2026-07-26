@@ -108,7 +108,7 @@ function ActionShortcut({ href, label, helper }: { href: string; label: string; 
 }
 
 function HealthBar({ score }: { score: number }) {
-  const color = score >= 80 ? "#4CAF50" : score >= 50 ? "#F5B548" : "#ef4444";
+  const color = score >= 80 ? "#4CAF50" : score >= 50 ? "#C8CDD2" : "#ef4444";
   const label = score >= 80 ? "Great shape" : score >= 50 ? "Needs work" : "Attention required";
   return (
     <div className="rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">

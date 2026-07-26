@@ -1238,12 +1238,12 @@ export default function VaultUniversePage() {
               type="button"
               onClick={() => setGradedOnly((v) => !v)}
               className="inline-flex min-h-[36px] items-center gap-1.5 px-1 text-sm font-medium transition"
-              style={gradedOnly ? { color: "var(--theme-gold, #F5B548)" } : { color: "var(--fg-muted)" }}
+              style={gradedOnly ? { color: "var(--theme-gold, #C8CDD2)" } : { color: "var(--fg-muted)" }}
             >
               <span
                 className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded"
                 style={gradedOnly
-                  ? { background: "var(--theme-gold, #F5B548)" }
+                  ? { background: "var(--theme-gold, #C8CDD2)" }
                   : { border: "1.5px solid var(--border)", background: "transparent" }}
               >
                 {gradedOnly && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
@@ -1255,12 +1255,12 @@ export default function VaultUniversePage() {
               type="button"
               onClick={() => setShowUncategorized((v) => !v)}
               className="inline-flex min-h-[36px] items-center gap-1.5 px-1 text-sm font-medium transition"
-              style={showUncategorized ? { color: "var(--theme-gold, #F5B548)" } : { color: "var(--fg-muted)" }}
+              style={showUncategorized ? { color: "var(--theme-gold, #C8CDD2)" } : { color: "var(--fg-muted)" }}
             >
               <span
                 className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded"
                 style={showUncategorized
-                  ? { background: "var(--theme-gold, #F5B548)" }
+                  ? { background: "var(--theme-gold, #C8CDD2)" }
                   : { border: "1.5px solid var(--border)", background: "transparent" }}
               >
                 {showUncategorized && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
@@ -1287,7 +1287,7 @@ export default function VaultUniversePage() {
                     className="min-h-[30px] rounded-full px-3 py-1 text-[12px] font-semibold transition"
                     style={
                       viewMode === mode
-                        ? { background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))", color: "var(--theme-gold, #F5B548)" }
+                        ? { background: "var(--theme-gold-subtle, rgba(203,208,213,0.12))", color: "var(--theme-gold, #C8CDD2)" }
                         : { background: "transparent", color: "var(--muted)" }
                     }
                   >
@@ -1313,7 +1313,7 @@ export default function VaultUniversePage() {
                   onClick={() => { setSelectMode((v) => !v); setSelectedIds(new Set()); setMoveTargetUniverse(""); setMoveTargetCategory(""); setMoveTargetSubcategory(""); }}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full transition"
                   style={selectMode
-                    ? { background: "rgba(245,181,72,0.18)", color: "#F5B548" }
+                    ? { background: "rgba(203,208,213,0.18)", color: "#C8CDD2" }
                     : { background: "var(--pill)", color: "var(--muted)" }}
                   aria-label="Select items"
                 >
@@ -1402,7 +1402,7 @@ export default function VaultUniversePage() {
                         type="button"
                         onClick={() => void handleMassMove()}
                         className="inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold"
-                        style={{ background: "rgba(245,181,72,0.18)", color: "#F5B548", border: "1px solid rgba(245,181,72,0.4)" }}
+                        style={{ background: "rgba(203,208,213,0.18)", color: "#C8CDD2", border: "1px solid rgba(203,208,213,0.4)" }}
                       >
                         Move
                       </button>
@@ -1478,13 +1478,13 @@ export default function VaultUniversePage() {
                           type="button"
                           onClick={() => toggleSelectItem(item.id)}
                           className="absolute inset-0 z-40 flex items-center justify-center rounded-[14px]"
-                          style={{ background: isSelected ? "rgba(245,181,72,0.18)" : "rgba(0,0,0,0.04)" }}
+                          style={{ background: isSelected ? "rgba(203,208,213,0.18)" : "rgba(0,0,0,0.04)" }}
                         >
                           <span
                             className="flex h-8 w-8 items-center justify-center rounded-full"
                             style={isSelected
-                              ? { background: "#F5B548", boxShadow: "0 0 0 2px rgba(245,181,72,0.5)" }
-                              : { background: "rgba(255,255,255,0.15)", border: "2px solid rgba(245,181,72,0.55)" }}
+                              ? { background: "#C8CDD2", boxShadow: "0 0 0 2px rgba(203,208,213,0.5)" }
+                              : { background: "rgba(255,255,255,0.15)", border: "2px solid rgba(203,208,213,0.55)" }}
                           >
                             {isSelected && (
                               <svg width="14" height="11" viewBox="0 0 14 11" fill="none"><path d="M1 5.5l4 4L13 1" stroke="#1A0F00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>

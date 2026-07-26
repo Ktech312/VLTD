@@ -182,7 +182,7 @@ export default function StreamDisplay({
                 <div
                   className="absolute -top-2 -right-2 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.15em]"
                   style={{
-                    background: showBack ? "rgba(245,181,72,0.9)" : "rgba(255,255,255,0.15)",
+                    background: showBack ? "rgba(203,208,213,0.9)" : "rgba(255,255,255,0.15)",
                     color: showBack ? "#000" : "#fff",
                     opacity: revealed ? 1 : 0,
                     transition: "opacity 0.3s",
@@ -237,9 +237,9 @@ export default function StreamDisplay({
               <div
                 className="font-black"
                 style={{
-                  color: "#F5B548",
+                  color: "#C8CDD2",
                   fontSize: "clamp(28px, 6vw, 52px)",
-                  textShadow: "0 0 40px rgba(245,181,72,0.5)",
+                  textShadow: "0 0 40px rgba(203,208,213,0.5)",
                   transform: revealed ? "scale(1)" : "scale(0.7)",
                   transition: "transform 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.2s",
                 }}
@@ -287,7 +287,7 @@ export default function StreamDisplay({
                   onClick={(e) => { e.stopPropagation(); setAspectMode(mode); resetControlsTimer(); }}
                   className="rounded-full px-3 py-1.5 text-[11px] font-bold"
                   style={{
-                    background: aspectMode === mode ? "rgba(245,181,72,0.9)" : "rgba(255,255,255,0.15)",
+                    background: aspectMode === mode ? "rgba(203,208,213,0.9)" : "rgba(255,255,255,0.15)",
                     color: aspectMode === mode ? "#000" : "#fff",
                   }}
                 >

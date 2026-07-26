@@ -81,9 +81,9 @@ type Parsed = {
 
 function IconVault({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #A0956B)" }}>
       <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.75"
-        fill={active ? "rgba(245,181,72,0.10)" : "none"} />
+        fill={active ? "rgba(203,208,213,0.10)" : "none"} />
       <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.75" />
       <path d="M12 9v-2M12 17v-2M15 12h2M7 12h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
@@ -92,12 +92,12 @@ function IconVault({ active }: { active: boolean }) {
 
 function IconExhibitions({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #A0956B)" }}>
       <path d="M3 21h18" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
       <path d="M5 21V11M19 21V11" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
       <path d="M2 11h20" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
       <path d="M12 4 2 11h20L12 4Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
-        fill={active ? "rgba(245,181,72,0.12)" : "none"} />
+        fill={active ? "rgba(203,208,213,0.12)" : "none"} />
       <path d="M9 21v-5h6v5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
     </svg>
   );
@@ -105,9 +105,9 @@ function IconExhibitions({ active }: { active: boolean }) {
 
 function IconDiscover({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #A0956B)" }}>
       <circle cx="11" cy="11" r="7.5" stroke="currentColor" strokeWidth="1.75"
-        fill={active ? "rgba(245,181,72,0.10)" : "none"} />
+        fill={active ? "rgba(203,208,213,0.10)" : "none"} />
       <path d="M16.5 16.5 21 21" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
       <circle cx="11" cy="11" r="2.5" stroke="currentColor" strokeWidth="1.4" />
     </svg>
@@ -116,24 +116,24 @@ function IconDiscover({ active }: { active: boolean }) {
 
 function IconCommunityBoard({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #A0956B)" }}>
       {/* Podium / leaderboard */}
       <rect x="2" y="13" width="5" height="8" rx="1" stroke="currentColor" strokeWidth="1.75"
-        fill={active ? "rgba(245,181,72,0.16)" : "none"} />
+        fill={active ? "rgba(203,208,213,0.16)" : "none"} />
       <rect x="9.5" y="9" width="5" height="12" rx="1" stroke="currentColor" strokeWidth="1.75"
-        fill={active ? "rgba(245,181,72,0.24)" : "none"} />
+        fill={active ? "rgba(203,208,213,0.24)" : "none"} />
       <rect x="17" y="11" width="5" height="10" rx="1" stroke="currentColor" strokeWidth="1.75"
-        fill={active ? "rgba(245,181,72,0.16)" : "none"} />
+        fill={active ? "rgba(203,208,213,0.16)" : "none"} />
       <path d="M12 6.5l1 2h2l-1.5 1.2.5 2L12 10.7 10 11.7l.5-2L9 8.5h2l1-2Z"
         stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"
-        fill={active ? "rgba(245,181,72,0.30)" : "none"} />
+        fill={active ? "rgba(203,208,213,0.30)" : "none"} />
     </svg>
   );
 }
 
 function IconInsights({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #A0956B)" }}>
       <path d="M3 17l4.5-5.5 4 3.5 4.5-6 4.5 3.5"
         stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M3 20h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
@@ -143,9 +143,9 @@ function IconInsights({ active }: { active: boolean }) {
 
 function IconEvents({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #A0956B)" }}>
       <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="1.75"
-        fill={active ? "rgba(245,181,72,0.10)" : "none"} />
+        fill={active ? "rgba(203,208,213,0.10)" : "none"} />
       <path d="M3 10h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
       <path d="M8 3v4M16 3v4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
       <circle cx="8" cy="15" r="1.2" fill="currentColor" opacity={active ? "1" : "0.6"} />
@@ -157,7 +157,7 @@ function IconEvents({ active }: { active: boolean }) {
 
 function IconActivity({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #A0956B)" }}>
       <path d="M3 12h3.5l2.5-6 4 12 2.5-6H21"
         stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
@@ -166,10 +166,10 @@ function IconActivity({ active }: { active: boolean }) {
 
 function IconLearn({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#F5B548" : "var(--muted2, #A0956B)" }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #A0956B)" }}>
       <path d="M12 6.5C10 5 6.5 4.8 3.5 5.5v12.5c3-.7 6.5-.5 8.5 1 2-1.5 5.5-1.7 8.5-1V5.5C17.5 4.8 14 5 12 6.5Z"
         stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
-        fill={active ? "rgba(245,181,72,0.12)" : "none"} />
+        fill={active ? "rgba(203,208,213,0.12)" : "none"} />
       <path d="M12 6.5V19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
     </svg>
   );
@@ -427,7 +427,7 @@ function TopNavInner() {
     <>
       <div
         className={`fixed top-0 left-0 right-0 w-full backdrop-blur-xl ${userOpen || commandOpen || guideOpen || moreOpen ? "z-[9999]" : "z-[200]"}`}
-        style={{ background: "var(--theme-nav-bg, rgba(11,19,32,0.96))", borderBottom: "1px solid var(--theme-nav-border, rgba(245,181,72,0.15))" }}
+        style={{ background: "var(--theme-nav-bg, rgba(11,19,32,0.96))", borderBottom: "1px solid var(--theme-nav-border, rgba(203,208,213,0.15))" }}
       >
         {/* ── Main nav row ── */}
         <div className="mx-auto flex h-[64px] max-w-[1400px] items-center gap-4 px-4 sm:px-6">
@@ -453,14 +453,14 @@ function TopNavInner() {
                     <Icon active={active} />
                     <span
                       className="text-[11px] font-semibold tracking-[0.04em] leading-none whitespace-nowrap"
-                      style={{ color: active ? "#F5B548" : "var(--muted, #C4B07A)" }}
+                      style={{ color: active ? "#C8CDD2" : "var(--muted, #C4B07A)" }}
                     >
                       {item.label}
                     </span>
                     {active && (
                       <span
                         className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
-                        style={{ background: "linear-gradient(90deg, transparent, #F5B548, transparent)" }}
+                        style={{ background: "linear-gradient(90deg, transparent, #C8CDD2, transparent)" }}
                       />
                     )}
                   </Link>
@@ -482,21 +482,21 @@ function TopNavInner() {
                   style={{ opacity: isMoreActive || moreOpen ? 1 : 0.65 }}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    style={{ color: isMoreActive || moreOpen ? "#F5B548" : "var(--muted2, #A0956B)" }}>
+                    style={{ color: isMoreActive || moreOpen ? "#C8CDD2" : "var(--muted2, #A0956B)" }}>
                     <circle cx="5" cy="12" r="1.5" fill="currentColor" />
                     <circle cx="12" cy="12" r="1.5" fill="currentColor" />
                     <circle cx="19" cy="12" r="1.5" fill="currentColor" />
                   </svg>
                   <span
                     className="text-[11px] font-semibold tracking-[0.04em] leading-none whitespace-nowrap"
-                    style={{ color: isMoreActive || moreOpen ? "#F5B548" : "var(--muted, #C4B07A)" }}
+                    style={{ color: isMoreActive || moreOpen ? "#C8CDD2" : "var(--muted, #C4B07A)" }}
                   >
                     More
                   </span>
                   {isMoreActive && (
                     <span
                       className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
-                      style={{ background: "linear-gradient(90deg, transparent, #F5B548, transparent)" }}
+                      style={{ background: "linear-gradient(90deg, transparent, #C8CDD2, transparent)" }}
                     />
                   )}
                 </button>
@@ -516,18 +516,18 @@ function TopNavInner() {
                 onClick={() => setGuideOpen((v) => !v)}
                 className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold transition"
                 style={{
-                  background: guideOpen ? "rgba(245,181,72,0.12)" : "rgba(255,255,255,0.05)",
-                  border: `1px solid ${guideOpen ? "rgba(245,181,72,0.35)" : "rgba(255,255,255,0.10)"}`,
-                  color: guideOpen ? "#F5B548" : "var(--muted2, #A0956B)",
+                  background: guideOpen ? "rgba(203,208,213,0.12)" : "rgba(255,255,255,0.05)",
+                  border: `1px solid ${guideOpen ? "rgba(203,208,213,0.35)" : "rgba(255,255,255,0.10)"}`,
+                  color: guideOpen ? "#C8CDD2" : "var(--muted2, #A0956B)",
                 }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-label="Guide">
                   <path d="M4 4h7a1 1 0 0 1 1 1v14a1 1 0 0 0-1-1H4V4Z"
                     stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
-                    fill={guideOpen ? "rgba(245,181,72,0.16)" : "rgba(245,181,72,0.06)"} />
+                    fill={guideOpen ? "rgba(203,208,213,0.16)" : "rgba(203,208,213,0.06)"} />
                   <path d="M20 4h-7a1 1 0 0 0-1 1v14a1 1 0 0 1 1-1h7V4Z"
                     stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
-                    fill={guideOpen ? "rgba(245,181,72,0.16)" : "rgba(245,181,72,0.06)"} />
+                    fill={guideOpen ? "rgba(203,208,213,0.16)" : "rgba(203,208,213,0.06)"} />
                   <path d="M12 5v14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
                   <text x="15.5" y="15" textAnchor="middle" fontSize="7" fontWeight="bold" fill="currentColor">?</text>
                 </svg>
@@ -562,7 +562,7 @@ function TopNavInner() {
                   onBlur={() => { if (!input.trim()) setSearchExpanded(false); }}
                   placeholder="Search vault, exhibitions, collectors..."
                   className="min-w-0 flex-1 bg-transparent text-[13px] focus:outline-none"
-                  style={{ color: "var(--theme-text-primary, #F0EAD6)" }}
+                  style={{ color: "var(--theme-text-primary, #ECEDEF)" }}
                 />
                 <span className="shrink-0 hidden lg:inline text-[11px] rounded px-1.5 py-0.5"
                   style={{ background: "rgba(255,255,255,0.07)", color: "var(--muted, #8A7A5A)", fontFamily: "monospace" }}>
@@ -590,7 +590,7 @@ function TopNavInner() {
               >
                 <div
                   className="flex h-[32px] w-[32px] shrink-0 items-center justify-center overflow-hidden rounded-full text-[13px] font-bold"
-                  style={{ background: 'var(--theme-gold-gradient, linear-gradient(135deg,#8B6914,#F5B548))', color: "#0B0B0B" }}
+                  style={{ background: 'var(--theme-gold-gradient, linear-gradient(135deg,#8C9298,#C8CDD2))', color: "#0B0B0B" }}
                 >
                   {avatarImageSrc ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -609,7 +609,7 @@ function TopNavInner() {
         {guideOpen && (
           <div
             className="border-t"
-            style={{ borderColor: "var(--theme-border, rgba(245,181,72,0.10))", background: "var(--theme-nav-bg, rgba(11,11,11,0.98))" }}
+            style={{ borderColor: "var(--theme-border, rgba(203,208,213,0.10))", background: "var(--theme-nav-bg, rgba(11,11,11,0.98))" }}
           >
             <div className="mx-auto max-w-[1400px] px-6 py-3">
               <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.28em]" style={{ color: "var(--muted, #8A7A5A)" }}>
@@ -626,23 +626,23 @@ function TopNavInner() {
                       onClick={() => setGuideOpen(false)}
                       className="group flex min-h-[74px] flex-col gap-1 rounded-xl p-2 transition"
                       style={{
-                        background: active ? "rgba(245,181,72,0.07)" : "rgba(255,255,255,0.02)",
-                        border: `1px solid ${active ? "rgba(245,181,72,0.20)" : "rgba(255,255,255,0.06)"}`,
+                        background: active ? "rgba(203,208,213,0.07)" : "rgba(255,255,255,0.02)",
+                        border: `1px solid ${active ? "rgba(203,208,213,0.20)" : "rgba(255,255,255,0.06)"}`,
                       }}
                       onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLElement).style.background = "rgba(245,181,72,0.07)";
-                        (e.currentTarget as HTMLElement).style.borderColor = "rgba(245,181,72,0.20)";
+                        (e.currentTarget as HTMLElement).style.background = "rgba(203,208,213,0.07)";
+                        (e.currentTarget as HTMLElement).style.borderColor = "rgba(203,208,213,0.20)";
                       }}
                       onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLElement).style.background = active ? "rgba(245,181,72,0.07)" : "rgba(255,255,255,0.02)";
-                        (e.currentTarget as HTMLElement).style.borderColor = active ? "rgba(245,181,72,0.20)" : "rgba(255,255,255,0.06)";
+                        (e.currentTarget as HTMLElement).style.background = active ? "rgba(203,208,213,0.07)" : "rgba(255,255,255,0.02)";
+                        (e.currentTarget as HTMLElement).style.borderColor = active ? "rgba(203,208,213,0.20)" : "rgba(255,255,255,0.06)";
                       }}
                     >
                       <div className="[&_svg]:h-3.5 [&_svg]:w-3.5">
                         <Icon active={active} />
                       </div>
                       <div>
-                        <p className="text-[11px] font-bold leading-none" style={{ color: active ? "#F5B548" : "var(--theme-text-primary, #F0EAD6)" }}>
+                        <p className="text-[11px] font-bold leading-none" style={{ color: active ? "#C8CDD2" : "var(--theme-text-primary, #ECEDEF)" }}>
                           {item.label}
                         </p>
                         <p className="mt-0.5 line-clamp-2 text-[10px] leading-tight" style={{ color: "var(--muted, #8A7A5A)" }}>
@@ -658,25 +658,25 @@ function TopNavInner() {
                   className="col-span-1 flex min-h-[74px] flex-col justify-between rounded-xl p-2"
                   style={{
                     background: "linear-gradient(135deg, rgba(42,36,24,0.90), rgba(26,20,8,0.90))",
-                    border: "1px solid rgba(245,181,72,0.25)",
-                    boxShadow: "0 0 24px rgba(245,181,72,0.08)",
+                    border: "1px solid rgba(203,208,213,0.25)",
+                    boxShadow: "0 0 24px rgba(203,208,213,0.08)",
                   }}
                 >
                   <div
                     className="flex h-7 w-7 items-center justify-center self-end rounded-lg text-sm"
-                    style={{ background: "rgba(245,181,72,0.12)", border: "1px solid rgba(245,181,72,0.25)" }}
+                    style={{ background: "rgba(203,208,213,0.12)", border: "1px solid rgba(203,208,213,0.25)" }}
                   >
                     🏛
                   </div>
                   <div>
-                    <p className="text-[10px] font-black leading-tight" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
+                    <p className="text-[10px] font-black leading-tight" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
                       Your Collection.<br />Your Exhibitions.<br />Your Legacy.
                     </p>
                     <Link
                       href="/guide"
                       onClick={() => setGuideOpen(false)}
                       className="mt-1 inline-block text-[10px] font-semibold leading-tight"
-                      style={{ color: "#F5B548" }}
+                      style={{ color: "#C8CDD2" }}
                     >
                       Learn more about VLTD →
                     </Link>
@@ -701,7 +701,7 @@ function TopNavInner() {
             minWidth: 200,
             zIndex: 9999,
             background: "var(--theme-nav-bg, rgba(11,19,32,0.99))",
-            border: "1px solid var(--theme-nav-border, rgba(245,181,72,0.18))",
+            border: "1px solid var(--theme-nav-border, rgba(203,208,213,0.18))",
             backdropFilter: "blur(20px)",
             borderRadius: "16px",
             overflow: "hidden",
@@ -717,15 +717,15 @@ function TopNavInner() {
                   key={item.href}
                   href={item.href}
                   onClick={() => setMoreOpen(false)}
-                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition hover:bg-[rgba(245,181,72,0.07)]"
-                  style={{ background: active ? "rgba(245,181,72,0.07)" : "transparent" }}
+                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition hover:bg-[rgba(203,208,213,0.07)]"
+                  style={{ background: active ? "rgba(203,208,213,0.07)" : "transparent" }}
                 >
                   <div className="[&_svg]:h-4 [&_svg]:w-4 shrink-0">
                     <Icon active={active} />
                   </div>
                   <span
                     className="text-sm font-semibold"
-                    style={{ color: active ? "#F5B548" : "var(--theme-text-primary, #F0EAD6)" }}
+                    style={{ color: active ? "#C8CDD2" : "var(--theme-text-primary, #ECEDEF)" }}
                   >
                     {item.label}
                   </span>
@@ -747,7 +747,7 @@ function TopNavInner() {
             width: 300,
             zIndex: 9999,
             background: "var(--theme-nav-bg, rgba(11,19,32,0.99))",
-            border: "1px solid var(--theme-nav-border, rgba(245,181,72,0.18))",
+            border: "1px solid var(--theme-nav-border, rgba(203,208,213,0.18))",
             backdropFilter: "blur(20px)",
             borderRadius: "16px",
             overflowX: "hidden",
@@ -758,10 +758,10 @@ function TopNavInner() {
             boxShadow: "0 18px 50px rgba(0,0,0,0.6)",
           }}
         >
-          <div className="px-4 py-3.5" style={{ borderBottom: "1px solid rgba(245,181,72,0.10)" }}>
+          <div className="px-4 py-3.5" style={{ borderBottom: "1px solid rgba(203,208,213,0.10)" }}>
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <div className="truncate text-sm font-semibold" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
+                <div className="truncate text-sm font-semibold" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
                   {activeProfile?.display_name || accountEmail || "Guest"}
                 </div>
                 <div className="mt-0.5 truncate text-xs" style={{ color: "var(--muted2, #A0956B)" }}>
@@ -769,7 +769,7 @@ function TopNavInner() {
                 </div>
               </div>
               <div className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.10em]"
-                style={{ background: "rgba(245,181,72,0.12)", color: "#F5B548", border: "1px solid rgba(245,181,72,0.22)" }}>
+                style={{ background: "rgba(203,208,213,0.12)", color: "#C8CDD2", border: "1px solid rgba(203,208,213,0.22)" }}>
                 {accountTypeLabel}
               </div>
             </div>
@@ -783,13 +783,13 @@ function TopNavInner() {
                   { href: "/account/invite", label: "Invite Friends" },
                 ].map(({ href, label }) => (
                   <Link key={href} href={href} onClick={() => setUserOpen(false)}
-                    className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
-                    style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
+                    className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(203,208,213,0.06)]"
+                    style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
                     {label}
                   </Link>
                 ))}
                 {profiles.length > 1 && (
-                  <div className="mt-1 pt-2" style={{ borderTop: "1px solid rgba(245,181,72,0.10)" }}>
+                  <div className="mt-1 pt-2" style={{ borderTop: "1px solid rgba(203,208,213,0.10)" }}>
                     <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--muted2, #A0956B)" }}>
                       Switch Profile
                     </div>
@@ -805,13 +805,13 @@ function TopNavInner() {
                             setStoredActiveProfileId(p.id);
                             window.location.reload();
                           }}
-                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition hover:bg-[rgba(245,181,72,0.06)] disabled:cursor-default disabled:hover:bg-transparent"
+                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition hover:bg-[rgba(203,208,213,0.06)] disabled:cursor-default disabled:hover:bg-transparent"
                         >
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm" style={{ background: "rgba(245,181,72,0.10)" }}>
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm" style={{ background: "rgba(203,208,213,0.10)" }}>
                             {p.avatar_emoji || (p.profile_type === "business" ? "🏛️" : "👤")}
                           </span>
                           <div className="min-w-0 flex-1">
-                            <div className="truncate text-sm font-medium" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
+                            <div className="truncate text-sm font-medium" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
                               {p.display_name}
                             </div>
                             <div className="truncate text-[11px]" style={{ color: "var(--muted2, #A0956B)" }}>
@@ -821,7 +821,7 @@ function TopNavInner() {
                           {active ? (
                             <span className="shrink-0 text-[9px] font-bold uppercase tracking-wide" style={{ color: "#4ade80" }}>Active</span>
                           ) : (
-                            <span className="shrink-0 text-[10px] font-semibold" style={{ color: "#F5B548" }}>Switch</span>
+                            <span className="shrink-0 text-[10px] font-semibold" style={{ color: "#C8CDD2" }}>Switch</span>
                           )}
                         </button>
                       );
@@ -829,19 +829,19 @@ function TopNavInner() {
                   </div>
                 )}
                 {adminRole && (
-                  <div className="mt-2 pt-2" style={{ borderTop: "1px solid rgba(245,181,72,0.28)" }}>
+                  <div className="mt-2 pt-2" style={{ borderTop: "1px solid rgba(203,208,213,0.28)" }}>
                     <Link href="/admin/characters" onClick={() => setUserOpen(false)}
-                      className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition hover:bg-[rgba(245,181,72,0.08)]"
-                      style={{ color: "#F5B548" }}>
+                      className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition hover:bg-[rgba(203,208,213,0.08)]"
+                      style={{ color: "#C8CDD2" }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.9 }}>
                         <path d="M12 2a5 5 0 1 1 0 10A5 5 0 0 1 12 2Z" stroke="currentColor" strokeWidth="1.75" />
                         <path d="M3 21c0-4.418 4.03-8 9-8s9 3.582 9 8" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                        <circle cx="19" cy="7" r="3" fill="#F5B548" stroke="#0b1320" strokeWidth="1.5" />
+                        <circle cx="19" cy="7" r="3" fill="#C8CDD2" stroke="#0b1320" strokeWidth="1.5" />
                         <path d="M18 7h2M19 6v2" stroke="#0b1320" strokeWidth="1.2" strokeLinecap="round" />
                       </svg>
                       Admin
                       <span className="ml-auto rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide"
-                        style={{ background: "rgba(245,181,72,0.15)", color: "#F5B548", border: "1px solid rgba(245,181,72,0.25)" }}>
+                        style={{ background: "rgba(203,208,213,0.15)", color: "#C8CDD2", border: "1px solid rgba(203,208,213,0.25)" }}>
                         {adminRole}
                       </span>
                     </Link>
@@ -852,19 +852,19 @@ function TopNavInner() {
             ) : (
               <>
                 <Link href="/login" onClick={() => setUserOpen(false)}
-                  className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
-                  style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>Log In</Link>
+                  className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(203,208,213,0.06)]"
+                  style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>Log In</Link>
                 <Link href="/signup" onClick={() => setUserOpen(false)}
-                  className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(245,181,72,0.06)]"
-                  style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>Create Account</Link>
+                  className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(203,208,213,0.06)]"
+                  style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>Create Account</Link>
               </>
             )}
           </div>
-          <div style={{ borderTop: "1px solid rgba(245,181,72,0.10)" }}>
+          <div style={{ borderTop: "1px solid rgba(203,208,213,0.10)" }}>
             <ThemePicker />
           </div>
           {signedIn && (
-            <div className="px-2 py-2" style={{ borderTop: "1px solid rgba(245,181,72,0.10)" }}>
+            <div className="px-2 py-2" style={{ borderTop: "1px solid rgba(203,208,213,0.10)" }}>
               <button type="button" onClick={handleSignOut}
                 className="block w-full rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-[rgba(224,82,82,0.08)]"
                 style={{ color: "#E05252" }}>

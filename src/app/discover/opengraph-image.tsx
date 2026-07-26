@@ -16,11 +16,11 @@ const UNIVERSES = [
   { label: "TCG",          emoji: "🃏", color: "rgba(168,85,247,0.18)",  border: "rgba(168,85,247,0.4)" },
   { label: "Vinyl",        emoji: "🎵", color: "rgba(34,197,94,0.18)",   border: "rgba(34,197,94,0.4)" },
   { label: "Games",        emoji: "🕹", color: "rgba(245,158,11,0.18)",  border: "rgba(245,158,11,0.4)" },
-  { label: "Memorabilia",  emoji: "⭐", color: "rgba(245,181,72,0.18)",  border: "rgba(245,181,72,0.4)" },
+  { label: "Memorabilia",  emoji: "⭐", color: "rgba(203,208,213,0.18)",  border: "rgba(203,208,213,0.4)" },
   { label: "Art",          emoji: "🖼", color: "rgba(20,184,166,0.18)",  border: "rgba(20,184,166,0.4)" },
   { label: "Watches",      emoji: "⌚", color: "rgba(156,163,175,0.18)", border: "rgba(156,163,175,0.4)" },
   { label: "Apparel",      emoji: "👟", color: "rgba(244,114,182,0.18)", border: "rgba(244,114,182,0.4)" },
-  { label: "& More",       emoji: "✦",  color: "rgba(245,181,72,0.10)",  border: "rgba(245,181,72,0.25)" },
+  { label: "& More",       emoji: "✦",  color: "rgba(203,208,213,0.10)",  border: "rgba(203,208,213,0.25)" },
 ];
 
 async function fetchStats(): Promise<{ galleryCount: number; collectorCount: number }> {
@@ -55,18 +55,18 @@ export default async function Image() {
       <div style={{ width: "1200px", height: "630px", display: "flex", flexDirection: "row", background: "#0A0A12", fontFamily: "'Segoe UI', system-ui, sans-serif", overflow: "hidden" }}>
 
         {/* Gold left bar */}
-        <div style={{ position: "absolute", left: 0, top: 0, width: "4px", height: "630px", background: "#F5B548", display: "flex" }} />
+        <div style={{ position: "absolute", left: 0, top: 0, width: "4px", height: "630px", background: "#C8CDD2", display: "flex" }} />
 
         {/* LEFT PANEL */}
         <div style={{ width: "560px", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "52px 48px 52px 60px" }}>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-            <span style={{ fontSize: "24px", fontWeight: 800, letterSpacing: "0.28em", color: "#F5B548" }}>VLTD</span>
-            <span style={{ fontSize: "13px", color: "rgba(245,181,72,0.5)", letterSpacing: "0.2em", fontWeight: 500 }}>COLLECTOR PLATFORM</span>
+            <span style={{ fontSize: "24px", fontWeight: 800, letterSpacing: "0.28em", color: "#C8CDD2" }}>VLTD</span>
+            <span style={{ fontSize: "13px", color: "rgba(203,208,213,0.5)", letterSpacing: "0.2em", fontWeight: 500 }}>COLLECTOR PLATFORM</span>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <div style={{ fontSize: "72px", fontWeight: 900, color: "#F0EAD6", lineHeight: 0.95, letterSpacing: "-0.03em" }}>
+            <div style={{ fontSize: "72px", fontWeight: 900, color: "#ECEDEF", lineHeight: 0.95, letterSpacing: "-0.03em" }}>
               Explore<br />Exhibitions
             </div>
             <div style={{ fontSize: "19px", color: "rgba(240,234,214,0.52)", lineHeight: 1.5 }}>
@@ -76,10 +76,10 @@ export default async function Image() {
 
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             {statLine ? (
-              <span style={{ fontSize: "18px", color: "rgba(245,181,72,0.8)", fontWeight: 600 }}>{statLine}</span>
+              <span style={{ fontSize: "18px", color: "rgba(203,208,213,0.8)", fontWeight: 600 }}>{statLine}</span>
             ) : null}
             <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-              <div style={{ background: "#F5B548", borderRadius: "100px", padding: "12px 28px", fontSize: "16px", fontWeight: 700, color: "#0A0A12", display: "flex" }}>
+              <div style={{ background: "#C8CDD2", borderRadius: "100px", padding: "12px 28px", fontSize: "16px", fontWeight: 700, color: "#0A0A12", display: "flex" }}>
                 Browse Exhibitions
               </div>
               <span style={{ fontSize: "14px", color: "rgba(160,149,107,0.45)" }}>vltd.app/discover</span>
@@ -89,7 +89,7 @@ export default async function Image() {
 
         {/* RIGHT PANEL: universe grid */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "40px 44px 40px 24px", gap: "12px" }}>
-          <div style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.22em", color: "rgba(245,181,72,0.45)", marginBottom: "4px", display: "flex" }}>
+          <div style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.22em", color: "rgba(203,208,213,0.45)", marginBottom: "4px", display: "flex" }}>
             EVERY COLLECTING UNIVERSE
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>

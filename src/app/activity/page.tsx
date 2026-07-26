@@ -226,7 +226,7 @@ function colorForKind(kind: ActivityKind) {
   if (kind === "added") return "#58D783";
   if (kind === "comment" || kind === "exhibition") return "#C252F4";
   if (kind === "share") return "#52D6F4";
-  return "var(--theme-gold,#F5B548)";
+  return "var(--theme-gold,#C8CDD2)";
 }
 
 function deltaPct(event: ActivityEvent) {
@@ -239,7 +239,7 @@ function deltaPct(event: ActivityEvent) {
 function ActivityThumb({ event, large = false }: { event: ActivityEvent; large?: boolean }) {
   const size = large ? "h-[164px] w-[128px]" : "h-[76px] w-[64px]";
   return (
-    <div className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-[7px] border border-[rgba(245,181,72,0.28)] bg-black/30`}>
+    <div className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-[7px] border border-[rgba(203,208,213,0.28)] bg-black/30`}>
       {event.imageUrl ? (
         <img src={event.imageUrl} alt="" className="h-full w-full object-contain" />
       ) : (
@@ -261,8 +261,8 @@ function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; sele
       className="grid w-full grid-cols-[78px_50px_70px_minmax(0,1fr)_minmax(150px,220px)_150px] items-center gap-4 rounded-[7px] border p-4 text-left transition hover:-translate-y-0.5"
       style={{
         background: "var(--theme-card,rgba(15,25,45,0.88))",
-        borderColor: selected ? "var(--theme-gold,#F5B548)" : "rgba(245,181,72,0.22)",
-        boxShadow: selected ? "0 0 0 1px rgba(245,181,72,0.2), 0 18px 38px rgba(0,0,0,0.28)" : "none",
+        borderColor: selected ? "var(--theme-gold,#C8CDD2)" : "rgba(203,208,213,0.22)",
+        boxShadow: selected ? "0 0 0 1px rgba(203,208,213,0.2), 0 18px 38px rgba(0,0,0,0.28)" : "none",
       }}
     >
       <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{formatClock(event.timestamp)}</div>
@@ -271,11 +271,11 @@ function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; sele
       </div>
       <ActivityThumb event={event} />
       <div className="min-w-0">
-        <div className="text-lg font-black" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{event.subtitle}</div>
-        <div className="truncate text-base" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{event.title}</div>
+        <div className="text-lg font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{event.subtitle}</div>
+        <div className="truncate text-base" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{event.title}</div>
         <div className="mt-1 truncate text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{event.detail}</div>
       </div>
-      <div className="min-w-0 border-l border-[rgba(245,181,72,0.16)] pl-5">
+      <div className="min-w-0 border-l border-[rgba(203,208,213,0.16)] pl-5">
         {showValue && event.newValue ? (
           <div className="text-[22px] font-black text-[color:var(--info,#52D6F4)]">
             {event.previousValue ? `${formatMoney(event.previousValue)} -> ` : ""}
@@ -290,7 +290,7 @@ function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; sele
           </div>
         )}
       </div>
-      <div className="border-l border-[rgba(245,181,72,0.16)] pl-5 text-right text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
+      <div className="border-l border-[rgba(203,208,213,0.16)] pl-5 text-right text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
         {showEvidence ? (
           <>
             {event.confidence && <div>{event.confidence} confidence</div>}
@@ -299,7 +299,7 @@ function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; sele
         ) : (
           <div>{event.meta || event.subtitle}</div>
         )}
-        <div className="mt-2" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>{formatClock(event.timestamp)}</div>
+        <div className="mt-2" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{formatClock(event.timestamp)}</div>
       </div>
     </button>
   );
@@ -307,15 +307,15 @@ function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; sele
 
 function EmptyState() {
   return (
-    <div className="rounded-[8px] border border-[rgba(245,181,72,0.22)] p-10 text-center" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }}>
-      <Glyph name="chart" size={44} style={{ color: "var(--theme-gold,#F5B548)", marginInline: "auto" }} />
-      <h2 className="mt-4 text-xl font-black" style={{ color: "var(--theme-text-primary,#F0EAD6)" }}>No activity yet</h2>
+    <div className="rounded-[8px] border border-[rgba(203,208,213,0.22)] p-10 text-center" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }}>
+      <Glyph name="chart" size={44} style={{ color: "var(--theme-gold,#C8CDD2)", marginInline: "auto" }} />
+      <h2 className="mt-4 text-xl font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>No activity yet</h2>
       <p className="mx-auto mt-2 max-w-md text-sm leading-6" style={{ color: "var(--theme-text-muted,#A0956B)" }}>
         Add items, update prices, publish exhibitions, or log a sale and this page will become your vault timeline.
       </p>
       <div className="mt-5 flex justify-center gap-3">
-        <Link href="/vault/add" className="rounded-[7px] px-5 py-2 text-sm font-black" style={{ background: "linear-gradient(135deg,#8B6914,#F5B548)", color: "#0B0B0B" }}>Add item</Link>
-        <Link href="/vault" className="rounded-[7px] border border-[rgba(245,181,72,0.26)] px-5 py-2 text-sm font-black" style={{ color: "var(--theme-gold,#F5B548)" }}>Open vault</Link>
+        <Link href="/vault/add" className="rounded-[7px] px-5 py-2 text-sm font-black" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>Add item</Link>
+        <Link href="/vault" className="rounded-[7px] border border-[rgba(203,208,213,0.26)] px-5 py-2 text-sm font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Open vault</Link>
       </div>
     </div>
   );
@@ -435,7 +435,7 @@ export default function ActivityPage() {
   }, []);
 
   return (
-    <main className="min-h-screen px-4 py-7 text-[color:var(--theme-text-primary,#F0EAD6)] sm:px-6 lg:px-8" style={{ background: "var(--bg)" }}>
+    <main className="min-h-screen px-4 py-7 text-[color:var(--theme-text-primary,#ECEDEF)] sm:px-6 lg:px-8" style={{ background: "var(--bg)" }}>
       <div className="mx-auto grid max-w-[1420px] gap-5 xl:grid-cols-[minmax(0,1fr)_410px]">
         <section className="min-w-0">
           <div className="flex flex-wrap items-end justify-between gap-4">
@@ -456,9 +456,9 @@ export default function ActivityPage() {
                 }}
                 className="inline-flex h-10 items-center gap-2 rounded-[7px] border px-4 text-sm font-bold"
                 style={{
-                  background: filter === tab.key ? "linear-gradient(135deg,#8B6914,#F5B548)" : "var(--theme-card,rgba(15,25,45,0.86))",
-                  borderColor: filter === tab.key ? "rgba(245,181,72,0.6)" : "rgba(245,181,72,0.24)",
-                  color: filter === tab.key ? "#0B0B0B" : "var(--theme-gold,#F5B548)",
+                  background: filter === tab.key ? "linear-gradient(135deg,#8C9298,#C8CDD2)" : "var(--theme-card,rgba(15,25,45,0.86))",
+                  borderColor: filter === tab.key ? "rgba(203,208,213,0.6)" : "rgba(203,208,213,0.24)",
+                  color: filter === tab.key ? "#0B0B0B" : "var(--theme-gold,#C8CDD2)",
                 }}
               >
                 <Glyph name={tab.icon} size={16} />
@@ -469,15 +469,15 @@ export default function ActivityPage() {
 
           <div className="mt-7 space-y-4">
             {isLoading ? (
-              <div className="rounded-[8px] border border-[rgba(245,181,72,0.22)] p-6" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))", color: "var(--theme-text-muted,#A0956B)" }}>
+              <div className="rounded-[8px] border border-[rgba(203,208,213,0.22)] p-6" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))", color: "var(--theme-text-muted,#A0956B)" }}>
                 Loading activity...
               </div>
             ) : grouped.length ? (
               grouped.map((group) => (
                 <section key={group.label}>
-                  <h2 className="mb-3 text-base font-black" style={{ color: "var(--theme-gold,#F5B548)" }}>{group.label}</h2>
+                  <h2 className="mb-3 text-base font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>{group.label}</h2>
                   <div className="relative space-y-3">
-                    <div className="absolute bottom-5 left-[109px] top-5 hidden w-px bg-[rgba(245,181,72,0.26)] sm:block" />
+                    <div className="absolute bottom-5 left-[109px] top-5 hidden w-px bg-[rgba(203,208,213,0.26)] sm:block" />
                     {group.events.map((event) => (
                       <ActivityRow
                         key={event.id}
@@ -499,8 +499,8 @@ export default function ActivityPage() {
               <button
                 type="button"
                 onClick={() => setVisibleCount((count) => count + 20)}
-                className="rounded-[7px] border border-[rgba(245,181,72,0.3)] px-14 py-3 text-sm font-bold"
-                style={{ color: "var(--theme-gold,#F5B548)" }}
+                className="rounded-[7px] border border-[rgba(203,208,213,0.3)] px-14 py-3 text-sm font-bold"
+                style={{ color: "var(--theme-gold,#C8CDD2)" }}
               >
                 Load more ({filteredEvents.length - visibleCount} left)
               </button>
@@ -508,12 +508,12 @@ export default function ActivityPage() {
           )}
         </section>
 
-        <aside className="h-fit rounded-[8px] border border-[rgba(245,181,72,0.32)] p-5 xl:sticky xl:top-24" style={{ background: "var(--theme-card,rgba(15,25,45,0.92))", boxShadow: "0 18px 55px rgba(0,0,0,0.26)" }}>
+        <aside className="h-fit rounded-[8px] border border-[rgba(203,208,213,0.32)] p-5 xl:sticky xl:top-24" style={{ background: "var(--theme-card,rgba(15,25,45,0.92))", boxShadow: "0 18px 55px rgba(0,0,0,0.26)" }}>
           {selected ? (
             <>
               <div className="flex items-start justify-between gap-4">
                 <h2 className="text-xl font-black">Activity Details</h2>
-                <button type="button" onClick={() => setSelectedId(null)} style={{ color: "var(--theme-gold,#F5B548)" }}>x</button>
+                <button type="button" onClick={() => setSelectedId(null)} style={{ color: "var(--theme-gold,#C8CDD2)" }}>x</button>
               </div>
 
               <div className="mt-7 grid grid-cols-[128px_1fr] gap-5">
@@ -521,12 +521,12 @@ export default function ActivityPage() {
                 <div className="min-w-0">
                   <h3 className="text-[22px] font-black leading-tight">{selected.title}</h3>
                   <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{selected.meta || selected.subtitle}</p>
-                  <div className="mt-4 inline-flex items-center gap-2 text-sm" style={{ color: "var(--theme-gold,#F5B548)" }}>
+                  <div className="mt-4 inline-flex items-center gap-2 text-sm" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
                     <Glyph name={selected.item?.isPublic ? "eye" : "key"} size={15} />
                     {selected.item?.isPublic ? "Public" : "Private"}
                   </div>
                   {selected.href && (
-                    <Link href={selected.href} className="mt-5 inline-flex h-10 items-center gap-2 rounded-[7px] border border-[rgba(245,181,72,0.34)] px-5 text-sm font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>
+                    <Link href={selected.href} className="mt-5 inline-flex h-10 items-center gap-2 rounded-[7px] border border-[rgba(203,208,213,0.34)] px-5 text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
                       {selected.actionLabel ?? "Open"}
                       <Glyph name="share" size={15} />
                     </Link>
@@ -534,14 +534,14 @@ export default function ActivityPage() {
                 </div>
               </div>
 
-              <div className="mt-7 border-b border-[rgba(245,181,72,0.16)] pb-5">
+              <div className="mt-7 border-b border-[rgba(203,208,213,0.16)] pb-5">
                 <div className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Event</div>
                 <div className="mt-2 text-lg font-black">{selected.subtitle}</div>
                 <div className="mt-1 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{formatFullDate(selected.timestamp)}</div>
               </div>
 
               {showSelectedValue && (
-                <section className="mt-5 border-b border-[rgba(245,181,72,0.16)] pb-5">
+                <section className="mt-5 border-b border-[rgba(203,208,213,0.16)] pb-5">
                   <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Value Change</h3>
                   <div className="mt-4 grid grid-cols-3 gap-4">
                     <div>
@@ -563,7 +563,7 @@ export default function ActivityPage() {
               )}
 
               {showSelectedEvidence && (
-                <section className="mt-5 rounded-[7px] border border-[rgba(245,181,72,0.22)] p-4">
+                <section className="mt-5 rounded-[7px] border border-[rgba(203,208,213,0.22)] p-4">
                   <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Source & Evidence</h3>
                   <div className="mt-4 grid grid-cols-3 gap-4">
                     {typeof selected.comps === "number" && selected.comps > 0 && (
@@ -573,13 +573,13 @@ export default function ActivityPage() {
                       </div>
                     )}
                     {selected.confidence && (
-                      <div className="border-l border-[rgba(245,181,72,0.16)] pl-4">
-                        <div className={selected.confidence === "High" ? "text-lg font-black text-green-400" : "text-lg font-black text-[color:var(--theme-gold,#F5B548)]"}>{selected.confidence}</div>
+                      <div className="border-l border-[rgba(203,208,213,0.16)] pl-4">
+                        <div className={selected.confidence === "High" ? "text-lg font-black text-green-400" : "text-lg font-black text-[color:var(--theme-gold,#C8CDD2)]"}>{selected.confidence}</div>
                         <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Confidence</div>
                       </div>
                     )}
                     {selected.source && (
-                      <div className="border-l border-[rgba(245,181,72,0.16)] pl-4">
+                      <div className="border-l border-[rgba(203,208,213,0.16)] pl-4">
                         <div className="font-black">{selected.source}</div>
                         <div className="text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Source</div>
                       </div>
@@ -588,10 +588,10 @@ export default function ActivityPage() {
                 </section>
               )}
 
-              <section className="mt-5 border-b border-[rgba(245,181,72,0.16)] pb-5">
+              <section className="mt-5 border-b border-[rgba(203,208,213,0.16)] pb-5">
                 <div className="flex items-center justify-between">
                   <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Notes</h3>
-                  <Link href={selected.href ?? "/vault"} className="rounded-[7px] border border-[rgba(245,181,72,0.34)] px-4 py-2 text-sm font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>Add note</Link>
+                  <Link href={selected.href ?? "/vault"} className="rounded-[7px] border border-[rgba(203,208,213,0.34)] px-4 py-2 text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Add note</Link>
                 </div>
                 <p className="mt-3 text-sm leading-6" style={{ color: "var(--theme-text-muted,#A0956B)" }}>{selected.detail}</p>
               </section>
@@ -600,20 +600,20 @@ export default function ActivityPage() {
                 <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#A0956B)" }}>Related Activity</h3>
                 <div className="mt-3 grid gap-2">
                   {allEvents.filter((event) => event.id !== selected.id && event.item?.id && event.item.id === selected.item?.id).slice(0, 2).map((event) => (
-                    <button key={event.id} type="button" onClick={() => setSelectedId(event.id)} className="flex items-center justify-between rounded-[7px] border border-[rgba(245,181,72,0.16)] px-4 py-3 text-left text-sm">
+                    <button key={event.id} type="button" onClick={() => setSelectedId(event.id)} className="flex items-center justify-between rounded-[7px] border border-[rgba(203,208,213,0.16)] px-4 py-3 text-left text-sm">
                       <span>{event.subtitle}</span>
                       <span style={{ color: "var(--theme-text-muted,#A0956B)" }}>{formatFullDate(event.timestamp).split(",")[0]}</span>
                     </button>
                   ))}
                   {!allEvents.some((event) => event.id !== selected.id && event.item?.id && event.item.id === selected.item?.id) && (
-                    <div className="rounded-[7px] border border-[rgba(245,181,72,0.16)] px-4 py-3 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>No related activity yet.</div>
+                    <div className="rounded-[7px] border border-[rgba(203,208,213,0.16)] px-4 py-3 text-sm" style={{ color: "var(--theme-text-muted,#A0956B)" }}>No related activity yet.</div>
                   )}
                 </div>
               </section>
 
               <div className="mt-6 grid grid-cols-3 gap-3">
-                <Link href={selected.href ?? "/vault"} className="rounded-[7px] px-4 py-3 text-center text-sm font-black" style={{ background: "linear-gradient(135deg,#8B6914,#F5B548)", color: "#0B0B0B" }}>Open record</Link>
-                <Link href="/wishlist" className="rounded-[7px] border border-[rgba(245,181,72,0.34)] px-4 py-3 text-center text-sm font-bold" style={{ color: "var(--theme-gold,#F5B548)" }}>Add target</Link>
+                <Link href={selected.href ?? "/vault"} className="rounded-[7px] px-4 py-3 text-center text-sm font-black" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>Open record</Link>
+                <Link href="/wishlist" className="rounded-[7px] border border-[rgba(203,208,213,0.34)] px-4 py-3 text-center text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Add target</Link>
                 <button type="button" onClick={() => setSelectedId(null)} className="rounded-[7px] border border-red-500/45 px-4 py-3 text-sm font-bold text-red-400">Dismiss</button>
               </div>
             </>

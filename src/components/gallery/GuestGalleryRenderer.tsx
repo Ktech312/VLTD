@@ -80,7 +80,7 @@ function ViewerItemCard({
         className={[
           "relative overflow-hidden rounded-[14px] border bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))] shadow-[0_6px_16px_rgba(0,0,0,0.22)] transition-transform duration-100",
           isDragOver
-            ? "scale-[1.03] border-[#F5B548]/60 shadow-[0_0_0_2px_rgba(245,181,72,0.35),0_6px_16px_rgba(0,0,0,0.22)]"
+            ? "scale-[1.03] border-[#C8CDD2]/60 shadow-[0_0_0_2px_rgba(203,208,213,0.35),0_6px_16px_rgba(0,0,0,0.22)]"
             : "border-white/10",
           isDraggable ? "cursor-grab active:cursor-grabbing" : "",
         ].join(" ")}
@@ -365,7 +365,7 @@ export default function GuestGalleryRenderer({
       const el = document.getElementById(`comment-${focusCommentId}`);
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "center" });
-        el.style.outline = "2px solid var(--theme-gold, #F5B548)";
+        el.style.outline = "2px solid var(--theme-gold, #C8CDD2)";
         el.style.borderRadius = "8px";
         clearInterval(interval);
       } else if (Date.now() - start > 4000) {
@@ -549,7 +549,7 @@ export default function GuestGalleryRenderer({
                           type="button"
                           onClick={() => setBioOpen(true)}
                           className="text-sm font-semibold transition-opacity hover:opacity-80"
-                          style={{ color: "var(--gold, #F5B548)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                          style={{ color: "var(--gold, #C8CDD2)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                         >
                           {owner.displayName}
                         </button>
@@ -566,13 +566,13 @@ export default function GuestGalleryRenderer({
                         <span className="text-[color:var(--muted2)]" aria-hidden="true">·</span>
                       </>
                     ) : null}
-                    <span className="text-sm font-medium" style={{ color: "var(--gold, #F5B548)" }}>
+                    <span className="text-sm font-medium" style={{ color: "var(--gold, #C8CDD2)" }}>
                       {model.galleryItems.length} {model.galleryItems.length === 1 ? "item" : "items"}
                     </span>
                     {sectionViews.length > 0 ? (
                       <>
                         <span className="text-[color:var(--muted2)]" aria-hidden="true">·</span>
-                        <span className="text-sm font-medium" style={{ color: "var(--gold, #F5B548)" }}>
+                        <span className="text-sm font-medium" style={{ color: "var(--gold, #C8CDD2)" }}>
                           {sectionViews.length} {sectionViews.length === 1 ? "exhibit" : "exhibits"}
                         </span>
                       </>
@@ -606,9 +606,9 @@ export default function GuestGalleryRenderer({
                   onClick={() => setSelectedSectionIdx(idx)}
                   className="shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition"
                   style={{
-                    background: idx === selectedSectionIdx ? "rgba(245,181,72,0.18)" : "rgba(255,255,255,0.06)",
-                    color: idx === selectedSectionIdx ? "#F5B548" : "rgba(255,255,255,0.55)",
-                    border: `1px solid ${idx === selectedSectionIdx ? "rgba(245,181,72,0.35)" : "rgba(255,255,255,0.08)"}`,
+                    background: idx === selectedSectionIdx ? "rgba(203,208,213,0.18)" : "rgba(255,255,255,0.06)",
+                    color: idx === selectedSectionIdx ? "#C8CDD2" : "rgba(255,255,255,0.55)",
+                    border: `1px solid ${idx === selectedSectionIdx ? "rgba(203,208,213,0.35)" : "rgba(255,255,255,0.08)"}`,
                   }}
                 >
                   {sv.section.title && sv.section.title !== "Untitled Section" ? sv.section.title : `Exhibit ${idx + 1}`}

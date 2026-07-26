@@ -58,7 +58,7 @@ function getShelfThemeClasses(themePack?: string | null) {
         stageShell: "ring-[#b98b62]/18 bg-[rgba(20,12,8,0.10)]",
         plaque: "bg-[rgba(58,34,20,0.84)] text-[#f2dfc8] ring-[#c79b71]/22",
         tile: "bg-[rgba(42,24,14,0.48)] ring-[#b98b62]/16",
-        frame: "bg-[linear-gradient(180deg,rgba(255,255,255,0.10)_0%,rgba(0,0,0,0.28)_100%)] ring-2 ring-[#F5B548]/55 shadow-[0_14px_32px_rgba(0,0,0,0.55),0_0_0_2px_rgba(245,181,72,0.18),inset_0_1px_0_rgba(255,220,160,0.18)]",
+        frame: "bg-[linear-gradient(180deg,rgba(255,255,255,0.10)_0%,rgba(0,0,0,0.28)_100%)] ring-2 ring-[#C8CDD2]/55 shadow-[0_14px_32px_rgba(0,0,0,0.55),0_0_0_2px_rgba(203,208,213,0.18),inset_0_1px_0_rgba(255,220,160,0.18)]",
         shelfTop: "from-[#c09369] to-[#875a37]",
         shelfFace: "from-[#72482b] to-[#452818]",
         support: "from-[#8a6141] to-[#3d2315]",
@@ -69,7 +69,7 @@ function getShelfThemeClasses(themePack?: string | null) {
         stageShell: "ring-cyan-300/12 bg-vault-card",
         plaque: "bg-vault-card text-cyan-100 ring-cyan-300/16",
         tile: "bg-vault-card ring-cyan-300/12",
-        frame: "bg-[linear-gradient(180deg,rgba(72,98,127,0.22)_0%,rgba(0,0,0,0.55)_100%)] ring-2 ring-[#F5B548]/55 shadow-[0_14px_32px_rgba(0,0,0,0.65),0_0_0_2px_rgba(245,181,72,0.18),inset_0_1px_0_rgba(147,210,255,0.14)]",
+        frame: "bg-[linear-gradient(180deg,rgba(72,98,127,0.22)_0%,rgba(0,0,0,0.55)_100%)] ring-2 ring-[#C8CDD2]/55 shadow-[0_14px_32px_rgba(0,0,0,0.65),0_0_0_2px_rgba(203,208,213,0.18),inset_0_1px_0_rgba(147,210,255,0.14)]",
         shelfTop: "from-[#48627f] to-[#2c425d]",
         shelfFace: "from-[#141414] to-[#141414]",
         support: "from-[#304963] to-[#141414]",
@@ -80,7 +80,7 @@ function getShelfThemeClasses(themePack?: string | null) {
         stageShell: "ring-white/10 bg-vault-card",
         plaque: "bg-vault-card text-stone-100 ring-white/12",
         tile: "bg-vault-card ring-white/10",
-        frame: "bg-[linear-gradient(180deg,rgba(80,84,100,0.30)_0%,rgba(14,14,18,0.70)_100%)] ring-2 ring-[#F5B548]/55 shadow-[0_14px_32px_rgba(0,0,0,0.65),0_0_0_2px_rgba(245,181,72,0.18),inset_0_1px_0_rgba(255,255,255,0.14)]",
+        frame: "bg-[linear-gradient(180deg,rgba(80,84,100,0.30)_0%,rgba(14,14,18,0.70)_100%)] ring-2 ring-[#C8CDD2]/55 shadow-[0_14px_32px_rgba(0,0,0,0.65),0_0_0_2px_rgba(203,208,213,0.18),inset_0_1px_0_rgba(255,255,255,0.14)]",
         shelfTop: "from-[#5f5f69] to-[#3f4048]",
         shelfFace: "from-[#262832] to-[#141414]",
         support: "from-[#4a4d58] to-[#141414]",
@@ -91,7 +91,7 @@ function getShelfThemeClasses(themePack?: string | null) {
         stageShell: "ring-slate-300/20 bg-[rgba(255,255,255,0.06)]",
         plaque: "bg-[rgba(255,255,255,0.82)] text-slate-900 ring-slate-300/40",
         tile: "bg-[rgba(255,255,255,0.44)] ring-slate-300/24",
-        frame: "bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(215,225,240,0.90)_100%)] ring-2 ring-[#F5B548]/60 shadow-[0_14px_32px_rgba(100,120,165,0.26),0_0_0_2px_rgba(245,181,72,0.20),inset_0_1px_0_rgba(255,255,255,1)]",
+        frame: "bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(215,225,240,0.90)_100%)] ring-2 ring-[#C8CDD2]/60 shadow-[0_14px_32px_rgba(100,120,165,0.26),0_0_0_2px_rgba(203,208,213,0.20),inset_0_1px_0_rgba(255,255,255,1)]",
         shelfTop: "from-[#fafbfc] to-[#e0e5eb]",
         shelfFace: "from-[#d6dce3] to-[#aab4bf]",
         support: "from-[#dfe5eb] to-[#97a1ad]",
@@ -103,7 +103,7 @@ function getShelfThemeClasses(themePack?: string | null) {
         stageShell: "ring-white/10 bg-[rgba(14,11,8,0.10)]",
         plaque: "bg-[rgba(26,20,14,0.82)] text-amber-100 ring-amber-100/14",
         tile: "bg-[rgba(24,18,12,0.44)] ring-white/10",
-        frame: "bg-[linear-gradient(180deg,rgba(255,255,255,0.09)_0%,rgba(0,0,0,0.30)_100%)] ring-2 ring-[#F5B548]/55 shadow-[0_14px_32px_rgba(0,0,0,0.58),0_0_0_2px_rgba(245,181,72,0.18),inset_0_1px_0_rgba(255,220,140,0.14)]",
+        frame: "bg-[linear-gradient(180deg,rgba(255,255,255,0.09)_0%,rgba(0,0,0,0.30)_100%)] ring-2 ring-[#C8CDD2]/55 shadow-[0_14px_32px_rgba(0,0,0,0.58),0_0_0_2px_rgba(203,208,213,0.18),inset_0_1px_0_rgba(255,220,140,0.14)]",
         shelfTop: "from-[#9b7352] to-[#755035]",
         shelfFace: "from-[#5a3b25] to-[#311d12]",
         support: "from-[#6e4a32] to-[#301d12]",
@@ -144,15 +144,15 @@ function PremiumDisplayCard({
     <div
       className={[
         "relative aspect-[3/4] w-full overflow-hidden rounded-[16px] bg-[#0b1018] p-[2px] sm:rounded-[18px] sm:p-[5px]",
-        "shadow-[0_18px_38px_rgba(0,0,0,0.52),0_0_0_1px_rgba(255,234,174,0.32),0_0_22px_rgba(245,181,72,0.18),inset_0_1px_0_rgba(255,255,255,0.36),inset_0_-12px_18px_rgba(54,32,8,0.55)]",
+        "shadow-[0_18px_38px_rgba(0,0,0,0.52),0_0_0_1px_rgba(255,234,174,0.32),0_0_22px_rgba(203,208,213,0.18),inset_0_1px_0_rgba(255,255,255,0.36),inset_0_-12px_18px_rgba(54,32,8,0.55)]",
         "before:pointer-events-none before:absolute before:inset-0 before:rounded-[16px] before:bg-[linear-gradient(135deg,#fff0a8_0%,#d99a2b_18%,#6f4514_37%,#f7cf72_54%,#3a250d_72%,#ffe7a0_100%)] sm:before:rounded-[18px]",
         "after:pointer-events-none after:absolute after:inset-[2px] after:rounded-[13px] after:ring-1 after:ring-black/70 sm:after:inset-[5px] sm:after:rounded-[13px]",
       ].join(" ")}
     >
       <div className="relative z-10 h-full overflow-hidden rounded-[13px] bg-[linear-gradient(180deg,rgba(255,255,255,0.10),rgba(0,0,0,0.30))] ring-1 ring-black/70">
         <div className="pointer-events-none absolute inset-[2px] z-10 rounded-[10px] ring-1 ring-[#ffe8a3]/35 sm:inset-[3px] sm:rounded-[12px]" />
-        <div className="pointer-events-none absolute left-1 top-1 z-20 h-4 w-4 rounded-full border border-[#ffd978]/80 bg-[#131018] shadow-[inset_0_0_0_2px_rgba(0,0,0,0.55),0_0_12px_rgba(245,181,72,0.35)] sm:left-1.5 sm:top-1.5 sm:h-5 sm:w-5" />
-        <div className="pointer-events-none absolute right-1 top-1 z-10 h-4 w-4 rounded-full border border-[#ffd978]/80 bg-[#131018] shadow-[inset_0_0_0_2px_rgba(0,0,0,0.55),0_0_12px_rgba(245,181,72,0.35)] sm:right-1.5 sm:top-1.5 sm:h-5 sm:w-5" />
+        <div className="pointer-events-none absolute left-1 top-1 z-20 h-4 w-4 rounded-full border border-[#ffd978]/80 bg-[#131018] shadow-[inset_0_0_0_2px_rgba(0,0,0,0.55),0_0_12px_rgba(203,208,213,0.35)] sm:left-1.5 sm:top-1.5 sm:h-5 sm:w-5" />
+        <div className="pointer-events-none absolute right-1 top-1 z-10 h-4 w-4 rounded-full border border-[#ffd978]/80 bg-[#131018] shadow-[inset_0_0_0_2px_rgba(0,0,0,0.55),0_0_12px_rgba(203,208,213,0.35)] sm:right-1.5 sm:top-1.5 sm:h-5 sm:w-5" />
         <div className="pointer-events-none absolute inset-x-5 top-2 z-10 h-px bg-[linear-gradient(90deg,transparent,#ffdf87,transparent)] sm:inset-x-7 sm:top-3" />
         <div className="absolute inset-x-0 top-0 h-[68%] overflow-hidden bg-[radial-gradient(circle_at_50%_0%,rgba(255,230,160,0.16),rgba(0,0,0,0.18)_45%,rgba(0,0,0,0.40))]">
           {itemImage(item) ? (
@@ -170,11 +170,11 @@ function PremiumDisplayCard({
             </div>
           )}
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_6%,rgba(255,255,255,0.20),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.08),transparent_42%,rgba(0,0,0,0.18))]" />
-          <div className="absolute right-1 top-1 z-30 grid h-5 w-5 place-items-center rounded-full bg-[#111018] text-[7px] font-bold tracking-[0.04em] text-[#f7d979] ring-1 ring-[#F5B548]/80 shadow-[inset_0_0_0_2px_rgba(0,0,0,0.55),0_0_14px_rgba(245,181,72,0.34)] sm:right-1.5 sm:top-1.5 sm:h-6 sm:w-6 sm:text-[8px]">
+          <div className="absolute right-1 top-1 z-30 grid h-5 w-5 place-items-center rounded-full bg-[#111018] text-[7px] font-bold tracking-[0.04em] text-[#f7d979] ring-1 ring-[#C8CDD2]/80 shadow-[inset_0_0_0_2px_rgba(0,0,0,0.55),0_0_14px_rgba(203,208,213,0.34)] sm:right-1.5 sm:top-1.5 sm:h-6 sm:w-6 sm:text-[8px]">
             {itemCategoryBadge(item)}
           </div>
         </div>
-        <div className="absolute inset-x-0 bottom-0 flex h-[32%] flex-col items-center justify-center gap-[1px] border-t border-[#F5B548]/65 bg-[linear-gradient(180deg,rgba(22,20,27,0.99),rgba(8,8,12,0.99))] px-1 text-center shadow-[inset_0_1px_0_rgba(255,233,169,0.22)] sm:px-2">
+        <div className="absolute inset-x-0 bottom-0 flex h-[32%] flex-col items-center justify-center gap-[1px] border-t border-[#C8CDD2]/65 bg-[linear-gradient(180deg,rgba(22,20,27,0.99),rgba(8,8,12,0.99))] px-1 text-center shadow-[inset_0_1px_0_rgba(255,233,169,0.22)] sm:px-2">
           <div className="pointer-events-none absolute inset-x-2 top-1 h-px bg-[linear-gradient(90deg,transparent,rgba(255,234,174,0.85),transparent)]" />
           <div className="w-full truncate font-serif text-[10px] font-semibold leading-tight text-[#f5d16d] sm:text-[11px]">
             {item.title}

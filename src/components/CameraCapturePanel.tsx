@@ -689,7 +689,7 @@ export default function CameraCapturePanel({
                   className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition"
                   style={
                     selectedFilterId === preset.id
-                      ? { background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))", borderColor: "var(--theme-gold-border, rgba(245,181,72,0.38))", color: "var(--theme-gold, #F5B548)" }
+                      ? { background: "var(--theme-gold-subtle, rgba(203,208,213,0.12))", borderColor: "var(--theme-gold-border, rgba(203,208,213,0.38))", color: "var(--theme-gold, #C8CDD2)" }
                       : { background: "var(--pill)", borderColor: "var(--border)", color: "var(--muted)" }
                   }
                 >
@@ -728,9 +728,9 @@ export default function CameraCapturePanel({
                   title="Remove background"
                   className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 transition disabled:opacity-45"
                   style={{
-                    background: isBackgroundRemoved ? "var(--theme-gold-subtle, rgba(245,181,72,0.14))" : "var(--pill)",
-                    borderColor: "var(--theme-gold-border, rgba(245,181,72,0.35))",
-                    color: "var(--theme-gold, #F5B548)",
+                    background: isBackgroundRemoved ? "var(--theme-gold-subtle, rgba(203,208,213,0.14))" : "var(--pill)",
+                    borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))",
+                    color: "var(--theme-gold, #C8CDD2)",
                   }}
                 >
                   {isRemovingBackground ? (
@@ -830,13 +830,13 @@ export default function CameraCapturePanel({
                         className="shrink-0 rounded-xl px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] ring-1"
                         style={{
                           background: selectedBackgroundId === background.id
-                            ? "var(--theme-gold-subtle, rgba(245,181,72,0.12))"
+                            ? "var(--theme-gold-subtle, rgba(203,208,213,0.12))"
                             : "var(--surface)",
                           borderColor: selectedBackgroundId === background.id
-                            ? "var(--theme-gold-border, rgba(245,181,72,0.38))"
+                            ? "var(--theme-gold-border, rgba(203,208,213,0.38))"
                             : "var(--border)",
                           color: selectedBackgroundId === background.id
-                            ? "var(--theme-gold, #F5B548)"
+                            ? "var(--theme-gold, #C8CDD2)"
                             : "var(--muted)",
                         }}
                       >
@@ -892,8 +892,8 @@ export default function CameraCapturePanel({
                       className="absolute left-1/2 top-2 -translate-x-1/2 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] ring-1"
                       style={{
                         background: "rgba(0,0,0,0.48)",
-                        borderColor: "var(--theme-gold-border, rgba(245,181,72,0.35))",
-                        color: "var(--theme-gold, #F5B548)",
+                        borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))",
+                        color: "var(--theme-gold, #C8CDD2)",
                       }}
                     >
                       {selectedFrameId === "auto" ? frame.label : selectedFramePreset?.label}
@@ -966,10 +966,10 @@ export default function CameraCapturePanel({
 
             {/* ── Bulk Mode controls (shown above shutter when bulk on) ── */}
             {bulkMode && (
-              <div className="mt-2 rounded-[14px] bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--theme-gold-border,rgba(245,181,72,0.25))]">
+              <div className="mt-2 rounded-[14px] bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--theme-gold-border,rgba(203,208,213,0.25))]">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.16em]"
-                    style={{ background: "rgba(245,181,72,0.14)", color: "#F5B548" }}>
+                    style={{ background: "rgba(203,208,213,0.14)", color: "#C8CDD2" }}>
                     ⚡ Bulk Mode
                   </span>
                   {bulkSavedCount > 0 && (
@@ -1048,11 +1048,11 @@ export default function CameraCapturePanel({
                 style={{
                   width: 68,
                   height: 68,
-                  background: "linear-gradient(145deg, #FFE08A 0%, #F5B548 30%, #C8941F 60%, #8B6914 100%)",
+                  background: "linear-gradient(145deg, #EDEFF1 0%, #C8CDD2 30%, #A8AEB4 60%, #8C9298 100%)",
                   boxShadow: [
                     "0 0 0 3px #0B0B0B",
-                    "0 0 0 4px rgba(245,181,72,0.30)",
-                    "0 8px 24px rgba(245,181,72,0.50)",
+                    "0 0 0 4px rgba(203,208,213,0.30)",
+                    "0 8px 24px rgba(203,208,213,0.50)",
                     "inset 0 1px 0 rgba(255,255,255,0.38)",
                     "inset 0 -2px 4px rgba(0,0,0,0.28)",
                   ].join(", "),
@@ -1091,13 +1091,13 @@ export default function CameraCapturePanel({
                 onClick={() => setBulkMode((v) => !v)}
                 className="flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-semibold ring-1 transition"
                 style={bulkMode
-                  ? { background: "rgba(245,181,72,0.12)", borderColor: "rgba(245,181,72,0.35)", color: "#F5B548" }
+                  ? { background: "rgba(203,208,213,0.12)", borderColor: "rgba(203,208,213,0.35)", color: "#C8CDD2" }
                   : { background: "var(--pill)", borderColor: "var(--border)", color: "var(--muted2)" }
                 }
               >
                 <span
                   className="inline-block h-2 w-2 rounded-full transition-colors"
-                  style={{ background: bulkMode ? "#F5B548" : "var(--muted2)" }}
+                  style={{ background: bulkMode ? "#C8CDD2" : "var(--muted2)" }}
                 />
                 Bulk Add
               </button>

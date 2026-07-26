@@ -654,17 +654,17 @@ function VaultEmptyState({
         </div>
         <div
           className="mt-3 inline-flex flex-wrap items-center justify-center gap-1.5 rounded-full px-3 py-1 text-xs"
-          style={{ background: "rgba(245,181,72,0.08)", border: "1px solid rgba(245,181,72,0.15)", color: "#A0956B" }}
+          style={{ background: "rgba(203,208,213,0.08)", border: "1px solid rgba(203,208,213,0.15)", color: "#A0956B" }}
         >
           <span>Universes:</span>
-          <span style={{ color: "#F5B548" }}>TCG - Sports - Comics - Music - Games - Jewelry - Misc</span>
+          <span style={{ color: "#C8CDD2" }}>TCG - Sports - Comics - Music - Games - Jewelry - Misc</span>
         </div>
 
         <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <Link
             href="/capture"
             className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full px-6 text-[15px] font-bold transition hover:opacity-90 sm:w-auto"
-            style={{ background: "#F5B548", color: "#0B0B0B" }}
+            style={{ background: "#C8CDD2", color: "#0B0B0B" }}
           >
             <CameraIcon className="h-5 w-5" />
             Scan your first item
@@ -746,7 +746,7 @@ function UniverseOverviewCard({
       className={["group overflow-hidden rounded-[18px] p-2 ring-1 shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5", className].filter(Boolean).join(" ")}
       style={{
         background: "var(--theme-card, rgba(15,25,45,0.85))",
-        borderColor: "var(--theme-border, rgba(245,181,72,0.12))",
+        borderColor: "var(--theme-border, rgba(203,208,213,0.12))",
       }}
     >
       {/* Top section: image + content side by side */}
@@ -754,7 +754,7 @@ function UniverseOverviewCard({
         {/* Image — shorter so value strip has room below */}
         <div
           className="overflow-hidden rounded-[12px]"
-          style={{ height: 88, background: "var(--theme-elevated, rgba(20,32,55,0.9))", border: "1px solid var(--theme-border, rgba(245,181,72,0.08))" }}
+          style={{ height: 88, background: "var(--theme-elevated, rgba(20,32,55,0.9))", border: "1px solid var(--theme-border, rgba(203,208,213,0.08))" }}
         >
           {thumbnailImage ? (
             <ProgressiveImage
@@ -766,7 +766,7 @@ function UniverseOverviewCard({
             />
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-1 px-2 text-center text-[10px] font-semibold" style={{ color: "var(--theme-text-muted, #A0956B)" }}>
-              <span className="text-lg leading-none" style={{ color: "var(--theme-gold, #F5B548)", opacity: 0.7 }}>+</span>
+              <span className="text-lg leading-none" style={{ color: "var(--theme-gold, #C8CDD2)", opacity: 0.7 }}>+</span>
               <span>{hasItems ? universeDisplayName(category.key) : "Add"}</span>
             </div>
           )}
@@ -775,7 +775,7 @@ function UniverseOverviewCard({
         {/* Right: label, name, description, item count (no pill border) */}
         <div className="flex min-w-0 flex-col py-0.5 pr-1">
           <div className="text-[10px] uppercase tracking-[0.18em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>Universe</div>
-          <h2 className="mt-0.5 text-[15px] font-semibold leading-tight" style={{ color: "var(--theme-gold, #F5B548)" }}>
+          <h2 className="mt-0.5 text-[15px] font-semibold leading-tight" style={{ color: "var(--theme-gold, #C8CDD2)" }}>
             {universeDisplayName(category.key)}
             {isFocus && (
               <span className="ml-1.5 text-[10px] font-medium" style={{ color: "var(--theme-text-muted, #A0956B)" }}>· Focus</span>
@@ -785,7 +785,7 @@ function UniverseOverviewCard({
             {hasItems ? category.description : "No items yet. Tap to start adding."}
           </div>
           {/* Item count — plain text, no pill frame */}
-          <div className="mt-auto pt-1 text-[11px] font-semibold" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
+          <div className="mt-auto pt-1 text-[11px] font-semibold" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
             {items.length} {items.length === 1 ? "item" : "items"}
           </div>
         </div>
@@ -794,11 +794,11 @@ function UniverseOverviewCard({
       {/* Bottom value strip — full width, left to right */}
       <div
         className="mt-2 rounded-[10px] px-2.5 py-1.5"
-        style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))", border: "1px solid var(--theme-border, rgba(245,181,72,0.08))" }}
+        style={{ background: "var(--theme-elevated, rgba(20,32,55,0.9))", border: "1px solid var(--theme-border, rgba(203,208,213,0.08))" }}
       >
         <div className="text-[9px] uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted, #A0956B)" }}>Value</div>
         <div className="flex items-baseline justify-between gap-2">
-          <div className="text-[13px] font-extrabold leading-none" style={{ color: "var(--theme-text-primary, #F0EAD6)" }}>
+          <div className="text-[13px] font-extrabold leading-none" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
             {hasItems ? formatMoney(totalValue) : "—"}
           </div>
           <div
@@ -864,7 +864,7 @@ function VaultSelectionDrawer({
         onClick={onClose}
         aria-label="Close item details"
         className="absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-full text-base leading-none transition"
-        style={{ color: "#D6A84F" }}
+        style={{ color: "#C8CDD2" }}
       >
         ×
       </button>
@@ -887,16 +887,16 @@ function VaultSelectionDrawer({
 
           <div className="min-w-0 py-0">
             <div className="flex items-center gap-2">
-              <Link href={detailHref} className="line-clamp-1 text-[18px] font-semibold leading-tight" style={{ color: "#F0EAD6" }}>
+              <Link href={detailHref} className="line-clamp-1 text-[18px] font-semibold leading-tight" style={{ color: "#ECEDEF" }}>
                 {item.title}
               </Link>
               <span className="text-sm leading-none" style={{ color: "#8E835F" }}>⋮</span>
             </div>
             <div className="mt-0.5 line-clamp-1 text-[12px]" style={{ color: "#B9AE86" }}>{itemMeta(item)}</div>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {item.grade ? <span className="rounded-[5px] px-1.5 py-0.5 text-[10px] ring-1 ring-[color:var(--border)]" style={{ color: "#F0EAD6" }}>{item.grade}</span> : null}
-              {item.variant ? <span className="rounded-[5px] px-1.5 py-0.5 text-[10px] ring-1 ring-[color:var(--border)]" style={{ color: "#F0EAD6" }}>{item.variant}</span> : null}
-              <span className="rounded-[5px] px-1.5 py-0.5 text-[10px] ring-1 ring-[color:var(--border)]" style={{ color: "#D6A84F" }}>{item.isPublic ? "Public" : "Private"}</span>
+              {item.grade ? <span className="rounded-[5px] px-1.5 py-0.5 text-[10px] ring-1 ring-[color:var(--border)]" style={{ color: "#ECEDEF" }}>{item.grade}</span> : null}
+              {item.variant ? <span className="rounded-[5px] px-1.5 py-0.5 text-[10px] ring-1 ring-[color:var(--border)]" style={{ color: "#ECEDEF" }}>{item.variant}</span> : null}
+              <span className="rounded-[5px] px-1.5 py-0.5 text-[10px] ring-1 ring-[color:var(--border)]" style={{ color: "#C8CDD2" }}>{item.isPublic ? "Public" : "Private"}</span>
             </div>
             <div className="mt-3 text-[21px] font-bold leading-none" style={{ color: "#44D9F2" }}>{formatMoney(value)}</div>
             <div className="mt-1 text-[11px]" style={{ color: gain >= 0 ? "var(--color-gain, #4CAF82)" : "var(--color-loss, #E05252)" }}>
@@ -907,11 +907,11 @@ function VaultSelectionDrawer({
 
         <div className="grid min-w-0 overflow-hidden rounded-[12px] border border-[color:var(--border)] lg:w-fit lg:grid-cols-[minmax(0,270px)_minmax(0,320px)_auto]">
         <div className="px-4 py-2.5">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: "#D6A84F" }}>Value Evidence</div>
+          <div className="text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: "#C8CDD2" }}>Value Evidence</div>
           <div className="mt-3 grid grid-cols-3 gap-5 text-[11px]">
             <div>
               <div style={{ color: "#9E946E" }}>Low</div>
-              <div className="mt-2 text-[12px] font-semibold" style={{ color: "#F0EAD6" }}>{low > 0 ? formatMoney(low) : "—"}</div>
+              <div className="mt-2 text-[12px] font-semibold" style={{ color: "#ECEDEF" }}>{low > 0 ? formatMoney(low) : "—"}</div>
             </div>
             <div>
               <div style={{ color: "#9E946E" }}>Median</div>
@@ -919,19 +919,19 @@ function VaultSelectionDrawer({
             </div>
             <div>
               <div style={{ color: "#9E946E" }}>High</div>
-              <div className="mt-2 text-[12px] font-semibold" style={{ color: "#F0EAD6" }}>{high > 0 ? formatMoney(high) : "—"}</div>
+              <div className="mt-2 text-[12px] font-semibold" style={{ color: "#ECEDEF" }}>{high > 0 ? formatMoney(high) : "—"}</div>
             </div>
           </div>
           <div className="mt-3 text-[10px]" style={{ color: "#9E946E" }}>
             Confidence: {item.priceConfidence || readiness} · {item.comparables?.length ?? 0} comps
           </div>
-          <Link href={detailHref} className="mt-3 inline-flex items-center gap-2 text-[11px] font-semibold" style={{ color: "#D6A84F" }}>
+          <Link href={detailHref} className="mt-3 inline-flex items-center gap-2 text-[11px] font-semibold" style={{ color: "#C8CDD2" }}>
             View details <span aria-hidden="true">→</span>
           </Link>
         </div>
 
         <div className="relative px-4 py-2.5 before:absolute before:bottom-3 before:left-0 before:top-3 before:w-px before:bg-[color:var(--border)]">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: "#D6A84F" }}>Documentation</div>
+          <div className="text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: "#C8CDD2" }}>Documentation</div>
           <div className="mt-2.5 grid grid-cols-[72px_minmax(0,1fr)] gap-4">
             <div className="flex flex-col items-center gap-0.5">
               <PercentDonut percent={docs.percent} />
@@ -945,40 +945,40 @@ function VaultSelectionDrawer({
                       <span className={["inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold", row.complete ? "bg-emerald-500/80 text-black" : "bg-red-500/90 text-white"].join(" ")}>
                         {row.complete ? "✓" : "!"}
                       </span>
-                      <span className="truncate" style={{ color: "#F0EAD6" }}>{row.label}</span>
+                      <span className="truncate" style={{ color: "#ECEDEF" }}>{row.label}</span>
                     </span>
-                    {!row.complete && row.warn ? <span className="text-[10px]" style={{ color: "#D6A84F" }}>Missing</span> : null}
+                    {!row.complete && row.warn ? <span className="text-[10px]" style={{ color: "#C8CDD2" }}>Missing</span> : null}
                   </div>
                 ))}
               </div>
             </div>
           </div>
-          <Link href={detailHref} className="mt-2 inline-flex items-center gap-2 text-[11px] font-semibold" style={{ color: "#D6A84F" }}>
+          <Link href={detailHref} className="mt-2 inline-flex items-center gap-2 text-[11px] font-semibold" style={{ color: "#C8CDD2" }}>
             View all docs <span aria-hidden="true">→</span>
           </Link>
         </div>
 
         <div className="relative px-4 py-2.5 before:absolute before:bottom-3 before:left-0 before:top-3 before:w-px before:bg-[color:var(--border)]">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: "#D6A84F" }}>Share / Sell</div>
-          <div className="mt-3 flex items-center gap-2 text-[11px]" style={{ color: "#F0EAD6" }}>
+          <div className="text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: "#C8CDD2" }}>Share / Sell</div>
+          <div className="mt-3 flex items-center gap-2 text-[11px]" style={{ color: "#ECEDEF" }}>
             <span className="inline-flex items-center gap-2">
               <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500/20 text-[9px] text-emerald-300 ring-1 ring-emerald-400/50">↗</span>
               Public Gallery
             </span>
             <ItemVisibilityToggle item={item} />
           </div>
-          <Link href={detailHref} className="mt-2 inline-flex items-center gap-2 text-[11px] font-semibold" style={{ color: "#D6A84F" }}>
+          <Link href={detailHref} className="mt-2 inline-flex items-center gap-2 text-[11px] font-semibold" style={{ color: "#C8CDD2" }}>
             View public page <span aria-hidden="true">↗</span>
           </Link>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Link href={detailHref} className="inline-flex min-h-[28px] w-auto items-center justify-center gap-2 rounded-[7px] px-3 text-[11px] font-semibold ring-1 ring-[color:var(--theme-gold-border)]" style={{ color: "#D6A84F" }}>
+            <Link href={detailHref} className="inline-flex min-h-[28px] w-auto items-center justify-center gap-2 rounded-[7px] px-3 text-[11px] font-semibold ring-1 ring-[color:var(--theme-gold-border)]" style={{ color: "#C8CDD2" }}>
               Create Listing
             </Link>
-            <button type="button" onClick={exportItemData} className="inline-flex min-h-[28px] w-auto items-center justify-center gap-2 rounded-[7px] px-3 text-[11px] font-semibold ring-1 ring-[color:var(--theme-gold-border)]" style={{ color: "#D6A84F" }}>
+            <button type="button" onClick={exportItemData} className="inline-flex min-h-[28px] w-auto items-center justify-center gap-2 rounded-[7px] px-3 text-[11px] font-semibold ring-1 ring-[color:var(--theme-gold-border)]" style={{ color: "#C8CDD2" }}>
               Export Data
             </button>
           </div>
-          <Link href={detailHref} className="mt-2.5 inline-flex items-center gap-2 text-[11px] font-semibold" style={{ color: "#D6A84F" }}>
+          <Link href={detailHref} className="mt-2.5 inline-flex items-center gap-2 text-[11px] font-semibold" style={{ color: "#C8CDD2" }}>
             More actions <span aria-hidden="true">⌄</span>
           </Link>
         </div>
@@ -1623,7 +1623,7 @@ export default function VaultPage() {
                       onClick={() => setVaultViewMode(mode)}
                       className="min-h-[30px] rounded-[7px] px-3 py-1 text-[12px] font-semibold transition"
                       style={vaultViewMode === mode
-                        ? { background: "var(--theme-gold-subtle, rgba(245,181,72,0.12))", color: "var(--theme-gold, #F5B548)" }
+                        ? { background: "var(--theme-gold-subtle, rgba(203,208,213,0.12))", color: "var(--theme-gold, #C8CDD2)" }
                         : { background: "transparent", color: "var(--muted)" }}
                     >
                       {label}
@@ -1666,11 +1666,11 @@ export default function VaultPage() {
                 type="button"
                 onClick={() => setGradedOnly((v) => !v)}
                 className="inline-flex min-h-[36px] items-center gap-1.5 px-1 text-sm font-medium transition"
-                style={gradedOnly ? { color: "var(--theme-gold, #F5B548)" } : { color: "var(--fg-muted)" }}
+                style={gradedOnly ? { color: "var(--theme-gold, #C8CDD2)" } : { color: "var(--fg-muted)" }}
               >
                 <span
                   className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded"
-                  style={gradedOnly ? { background: "var(--theme-gold, #F5B548)" } : { border: "1.5px solid var(--border)", background: "transparent" }}
+                  style={gradedOnly ? { background: "var(--theme-gold, #C8CDD2)" } : { border: "1.5px solid var(--border)", background: "transparent" }}
                 >
                   {gradedOnly && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                 </span>
@@ -1680,11 +1680,11 @@ export default function VaultPage() {
                 type="button"
                 onClick={() => setUncategorizedOnly((v) => !v)}
                 className="inline-flex min-h-[36px] items-center gap-1.5 px-1 text-sm font-medium transition"
-                style={uncategorizedOnly ? { color: "var(--theme-gold, #F5B548)" } : { color: "var(--fg-muted)" }}
+                style={uncategorizedOnly ? { color: "var(--theme-gold, #C8CDD2)" } : { color: "var(--fg-muted)" }}
               >
                 <span
                   className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded"
-                  style={uncategorizedOnly ? { background: "var(--theme-gold, #F5B548)" } : { border: "1.5px solid var(--border)", background: "transparent" }}
+                  style={uncategorizedOnly ? { background: "var(--theme-gold, #C8CDD2)" } : { border: "1.5px solid var(--border)", background: "transparent" }}
                 >
                   {uncategorizedOnly && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                 </span>
@@ -1694,11 +1694,11 @@ export default function VaultPage() {
                 type="button"
                 onClick={() => setShowSoldItems((value) => !value)}
                 className="inline-flex min-h-[36px] items-center gap-1.5 px-1 text-sm font-medium transition"
-                style={showSoldItems ? { color: "var(--theme-gold, #F5B548)" } : { color: "var(--fg-muted)" }}
+                style={showSoldItems ? { color: "var(--theme-gold, #C8CDD2)" } : { color: "var(--fg-muted)" }}
               >
                 <span
                   className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded"
-                  style={showSoldItems ? { background: "var(--theme-gold, #F5B548)" } : { border: "1.5px solid var(--border)", background: "transparent" }}
+                  style={showSoldItems ? { background: "var(--theme-gold, #C8CDD2)" } : { border: "1.5px solid var(--border)", background: "transparent" }}
                 >
                   {showSoldItems && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                 </span>
@@ -1713,7 +1713,7 @@ export default function VaultPage() {
                     type="button"
                     onClick={() => { setSelectMode((v) => !v); setSelectedIds(new Set()); setMoveTargetUniverse(""); setMoveTargetCategory(""); setMoveTargetSubcategory(""); setDeleteConfirmPending(false); }}
                     className="inline-flex h-8 w-8 items-center justify-center rounded-full transition"
-                    style={selectMode ? { background: "rgba(245,181,72,0.18)", color: "#F5B548" } : { background: "var(--pill)", color: "var(--muted)" }}
+                    style={selectMode ? { background: "rgba(203,208,213,0.18)", color: "#C8CDD2" } : { background: "var(--pill)", color: "var(--muted)" }}
                     aria-label="Select items"
                   >
                     <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
@@ -1800,7 +1800,7 @@ export default function VaultPage() {
                           type="button"
                           onClick={() => void handleMassMove()}
                           className="inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold"
-                          style={{ background: "rgba(245,181,72,0.18)", color: "#F5B548", border: "1px solid rgba(245,181,72,0.4)" }}
+                          style={{ background: "rgba(203,208,213,0.18)", color: "#C8CDD2", border: "1px solid rgba(203,208,213,0.4)" }}
                         >
                           Move
                         </button>
@@ -1872,13 +1872,13 @@ export default function VaultPage() {
                         type="button"
                         onClick={() => toggleSelectItem(item.id)}
                         className="absolute inset-0 z-40 flex items-center justify-center rounded-[10px]"
-                        style={{ background: isSelected ? "rgba(245,181,72,0.18)" : "rgba(0,0,0,0.04)" }}
+                        style={{ background: isSelected ? "rgba(203,208,213,0.18)" : "rgba(0,0,0,0.04)" }}
                       >
                         <span
                           className="flex h-8 w-8 items-center justify-center rounded-full"
                           style={isSelected
-                            ? { background: "#F5B548", boxShadow: "0 0 0 2px rgba(245,181,72,0.5)" }
-                            : { background: "rgba(255,255,255,0.15)", border: "2px solid rgba(245,181,72,0.55)" }}
+                            ? { background: "#C8CDD2", boxShadow: "0 0 0 2px rgba(203,208,213,0.5)" }
+                            : { background: "rgba(255,255,255,0.15)", border: "2px solid rgba(203,208,213,0.55)" }}
                         >
                           {isSelected && (
                             <svg width="14" height="11" viewBox="0 0 14 11" fill="none"><path d="M1 5.5l4 4L13 1" stroke="#1A0F00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>

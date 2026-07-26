@@ -28,7 +28,7 @@ export function EmptyVault({
           className="mt-8 rounded-3xl p-8 text-center"
           style={{
             background: "var(--theme-card, rgba(15,25,45,0.85))",
-            border: "1px solid var(--theme-border, rgba(245,181,72,0.12))",
+            border: "1px solid var(--theme-border, rgba(203,208,213,0.12))",
           }}
         >
           <div className="flex justify-center opacity-40" style={{ color: "var(--theme-gold)" }}>
@@ -41,7 +41,7 @@ export function EmptyVault({
               <Link
                 href="/capture"
                 className="rounded-full px-5 py-2.5 text-sm font-semibold"
-                style={{ background: "var(--theme-gold, #F5B548)", color: "#0B0B0B" }}
+                style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0B0B0B" }}
               >
                 Smart Scan
               </Link>

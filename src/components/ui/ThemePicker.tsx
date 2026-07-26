@@ -66,24 +66,24 @@ export function ThemePicker() {
                 className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-[12px] font-semibold transition"
                 style={{
                   background: active
-                    ? 'var(--theme-gold-subtle, rgba(245,181,72,0.10))'
+                    ? 'var(--theme-gold-subtle, rgba(203,208,213,0.10))'
                     : 'rgba(255,255,255,0.04)',
                   border: `1.5px solid ${active
-                    ? 'var(--theme-gold-border, rgba(245,181,72,0.35))'
+                    ? 'var(--theme-gold-border, rgba(203,208,213,0.35))'
                     : 'rgba(255,255,255,0.08)'}`,
                   color: active
-                    ? 'var(--theme-gold, #F5B548)'
+                    ? 'var(--theme-gold, #C8CDD2)'
                     : 'var(--theme-text-muted, #5A5040)',
                 }}
               >
-                <span style={{ color: active ? 'var(--theme-gold, #F5B548)' : 'var(--theme-text-muted, #5A5040)' }}>
+                <span style={{ color: active ? 'var(--theme-gold, #C8CDD2)' : 'var(--theme-text-muted, #5A5040)' }}>
                   {mode === 'dark' ? <MoonIcon /> : <SunIcon />}
                 </span>
                 {mode === 'dark' ? 'Dark' : 'Light'}
                 {active && (
                   <span
                     className="ml-auto h-2 w-2 rounded-full"
-                    style={{ background: 'var(--theme-gold, #F5B548)' }}
+                    style={{ background: 'var(--theme-gold, #C8CDD2)' }}
                   />
                 )}
               </button>
@@ -146,7 +146,7 @@ function SwatchButton({
       style={{
         aspectRatio: '16/10',
         background: previews[t.id],
-        border: `1.5px solid ${active ? 'var(--theme-gold, #F5B548)' : 'rgba(128,128,128,0.18)'}`,
+        border: `1.5px solid ${active ? 'var(--theme-gold, #C8CDD2)' : 'rgba(128,128,128,0.18)'}`,
         boxShadow: active ? 'var(--theme-gold-glow)' : 'none',
       }}
       title={t.name}
@@ -165,7 +165,7 @@ function SwatchButton({
       {active && (
         <span
           className="absolute right-1 top-1 h-2 w-2 rounded-full"
-          style={{ background: 'var(--theme-gold, #F5B548)', boxShadow: '0 0 4px var(--frame-glow-mid)' }}
+          style={{ background: 'var(--theme-gold, #C8CDD2)', boxShadow: '0 0 4px var(--frame-glow-mid)' }}
         />
       )}
     </button>

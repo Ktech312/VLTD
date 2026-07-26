@@ -21,7 +21,7 @@ const ASPECT_OPTIONS: { ratio: AspectRatio; label: string; w: number; h: number;
 
 const BG_OPTIONS: { id: string; label: string; value: string }[] = [
   { id: "dark",    label: "Dark",    value: "#0B0B0B" },
-  { id: "gold",    label: "Gold",    value: "#F5B548" },
+  { id: "gold",    label: "Gold",    value: "#C8CDD2" },
   { id: "slate",   label: "Slate",   value: "#1A1F2E" },
   { id: "cream",   label: "Cream",   value: "#F5F0E8" },
   { id: "forest",  label: "Forest",  value: "#1A2E1A" },
@@ -131,7 +131,7 @@ async function exportToCanvas(opts: {
   ctx.fillRect(0, 0, w, h);
 
   const grad = ctx.createRadialGradient(w / 2, 0, 0, w / 2, 0, w * 0.9);
-  grad.addColorStop(0, "rgba(245,181,72,0.07)");
+  grad.addColorStop(0, "rgba(203,208,213,0.07)");
   grad.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, h);
@@ -168,10 +168,10 @@ async function exportToCanvas(opts: {
 
   const lineY = Math.round(contentH * 0.76);
   const lineGrad = ctx.createLinearGradient(Math.round(w * 0.08), 0, Math.round(w * 0.92), 0);
-  lineGrad.addColorStop(0, "rgba(245,181,72,0)");
-  lineGrad.addColorStop(0.2, "#F5B548");
-  lineGrad.addColorStop(0.8, "#F5B548");
-  lineGrad.addColorStop(1, "rgba(245,181,72,0)");
+  lineGrad.addColorStop(0, "rgba(203,208,213,0)");
+  lineGrad.addColorStop(0.2, "#C8CDD2");
+  lineGrad.addColorStop(0.8, "#C8CDD2");
+  lineGrad.addColorStop(1, "rgba(203,208,213,0)");
   ctx.strokeStyle = lineGrad;
   ctx.lineWidth = Math.round(w * 0.0025);
   ctx.beginPath();
@@ -207,7 +207,7 @@ async function exportToCanvas(opts: {
   const metaParts = [item.subtitle, item.grade ? `Grade ${item.grade}` : null].filter(Boolean).join(" • ");
   if (metaParts) {
     ctx.font = `400 ${Math.round(w * 0.028)}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-    ctx.fillStyle = "#F5B548";
+    ctx.fillStyle = "#C8CDD2";
     ctx.fillText(metaParts, w / 2, metaY);
   }
 
@@ -216,10 +216,10 @@ async function exportToCanvas(opts: {
     const valueY = metaParts ? metaY + Math.round(contentH * 0.045) : metaY;
     if (showValue) {
       ctx.font = `800 ${Math.round(w * 0.058)}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-      ctx.fillStyle = "#F5B548";
+      ctx.fillStyle = "#C8CDD2";
       ctx.fillText(fmtUsd(value), w / 2, valueY);
     } else {
-      ctx.fillStyle = "rgba(245,181,72,0.28)";
+      ctx.fillStyle = "rgba(203,208,213,0.28)";
       const bw = Math.round(w * 0.28);
       const bh = Math.round(contentH * 0.045);
       const bx = (w - bw) / 2;
@@ -231,7 +231,7 @@ async function exportToCanvas(opts: {
 
   if (watermark) {
     ctx.font = `700 ${Math.round(w * 0.022)}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-    ctx.fillStyle = "rgba(245,181,72,0.55)";
+    ctx.fillStyle = "rgba(203,208,213,0.55)";
     ctx.textAlign = "right";
     ctx.textBaseline = "bottom";
     ctx.fillText("VLTD", w - Math.round(w * 0.04), contentH - Math.round(contentH * 0.022));
@@ -241,7 +241,7 @@ async function exportToCanvas(opts: {
     const hashText = hashtags.map(t => `#${t}`).join("  ");
     const hashSize = Math.round(w * 0.022);
     ctx.font = `500 ${hashSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-    ctx.fillStyle = bg === "#F5F0E8" ? "rgba(100,80,20,0.7)" : "rgba(245,181,72,0.55)";
+    ctx.fillStyle = bg === "#F5F0E8" ? "rgba(100,80,20,0.7)" : "rgba(203,208,213,0.55)";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     let displayText = hashText;
@@ -270,10 +270,10 @@ async function exportThenVsNow(opts: {
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas not supported");
 
-  const isLight = bg === "#F5F0E8" || bg === "#F5B548";
+  const isLight = bg === "#F5F0E8" || bg === "#C8CDD2";
   const textColor = isLight ? "#1A1A1A" : "#FFFFFF";
   const mutedColor = isLight ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.45)";
-  const GOLD = "#F5B548";
+  const GOLD = "#C8CDD2";
 
   // Background
   ctx.fillStyle = bg;
@@ -342,7 +342,7 @@ async function exportThenVsNow(opts: {
     ctx.fillStyle = GOLD;
     ctx.fillText(fmtUsd(now), halfW + halfW / 2, priceY);
   } else if (!showValues) {
-    ctx.fillStyle = "rgba(245,181,72,0.25)";
+    ctx.fillStyle = "rgba(203,208,213,0.25)";
     ctx.beginPath();
     ctx.roundRect(halfW + halfW / 2 - 80, priceY + 10, 160, 52, 8);
     ctx.fill();
@@ -362,10 +362,10 @@ async function exportThenVsNow(opts: {
   // Horizontal divider
   const hdY = 290;
   const hdGrad = ctx.createLinearGradient(80, 0, S - 80, 0);
-  hdGrad.addColorStop(0, "rgba(245,181,72,0)");
+  hdGrad.addColorStop(0, "rgba(203,208,213,0)");
   hdGrad.addColorStop(0.2, GOLD);
   hdGrad.addColorStop(0.8, GOLD);
-  hdGrad.addColorStop(1, "rgba(245,181,72,0)");
+  hdGrad.addColorStop(1, "rgba(203,208,213,0)");
   ctx.strokeStyle = hdGrad;
   ctx.lineWidth = 1.5;
   ctx.globalAlpha = 0.4;
@@ -459,7 +459,7 @@ async function exportThenVsNow(opts: {
 
   // Watermark
   ctx.font = `700 24px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-  ctx.fillStyle = "rgba(245,181,72,0.50)";
+  ctx.fillStyle = "rgba(203,208,213,0.50)";
   ctx.textAlign = "right";
   ctx.textBaseline = "bottom";
   ctx.fillText("VLTD", S - 40, S - 32);
@@ -479,7 +479,7 @@ async function exportSquareCard(item: VaultItem, bg: string): Promise<string> {
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, S, S);
   const grad = ctx.createRadialGradient(S / 2, 0, 0, S / 2, 0, S * 0.9);
-  grad.addColorStop(0, "rgba(245,181,72,0.07)");
+  grad.addColorStop(0, "rgba(203,208,213,0.07)");
   grad.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, S, S);
@@ -514,10 +514,10 @@ async function exportSquareCard(item: VaultItem, bg: string): Promise<string> {
   // Gold line
   const lineY = Math.round(S * 0.74);
   const lg = ctx.createLinearGradient(80, 0, S - 80, 0);
-  lg.addColorStop(0, "rgba(245,181,72,0)");
-  lg.addColorStop(0.2, "#F5B548");
-  lg.addColorStop(0.8, "#F5B548");
-  lg.addColorStop(1, "rgba(245,181,72,0)");
+  lg.addColorStop(0, "rgba(203,208,213,0)");
+  lg.addColorStop(0.2, "#C8CDD2");
+  lg.addColorStop(0.8, "#C8CDD2");
+  lg.addColorStop(1, "rgba(203,208,213,0)");
   ctx.strokeStyle = lg;
   ctx.lineWidth = 2;
   ctx.beginPath();
@@ -525,7 +525,7 @@ async function exportSquareCard(item: VaultItem, bg: string): Promise<string> {
   ctx.lineTo(S - 80, lineY);
   ctx.stroke();
 
-  const isLight = bg === "#F5F0E8" || bg === "#F5B548";
+  const isLight = bg === "#F5F0E8" || bg === "#C8CDD2";
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
   ctx.font = `700 42px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
@@ -547,12 +547,12 @@ async function exportSquareCard(item: VaultItem, bg: string): Promise<string> {
 
   if (item.grade) {
     ctx.font = `500 28px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-    ctx.fillStyle = "#F5B548";
+    ctx.fillStyle = "#C8CDD2";
     ctx.fillText(`Grade ${item.grade}`, S / 2, ty + 60);
   }
 
   ctx.font = `700 22px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-  ctx.fillStyle = "rgba(245,181,72,0.50)";
+  ctx.fillStyle = "rgba(203,208,213,0.50)";
   ctx.textAlign = "right";
   ctx.textBaseline = "bottom";
   ctx.fillText("VLTD", S - 36, S - 28);
@@ -570,8 +570,8 @@ async function exportAnimatedVideo(item: VaultItem, bg: string): Promise<Blob> {
   if (!ctx) throw new Error("Canvas not available");
   const c = ctx;
 
-  const GOLD = "#F5B548";
-  const isLight = bg === "#F5F0E8" || bg === "#F5B548";
+  const GOLD = "#C8CDD2";
+  const isLight = bg === "#F5F0E8" || bg === "#C8CDD2";
   const textColor = isLight ? "#1A1A1A" : "#FFFFFF";
 
   // Pre-load image
@@ -619,7 +619,7 @@ async function exportAnimatedVideo(item: VaultItem, bg: string): Promise<Blob> {
 
     // Radial overlay
     const bg2 = c.createRadialGradient(S / 2, 0, 0, S / 2, 0, S * 0.9);
-    bg2.addColorStop(0, "rgba(245,181,72,0.07)");
+    bg2.addColorStop(0, "rgba(203,208,213,0.07)");
     bg2.addColorStop(1, "rgba(0,0,0,0)");
     c.fillStyle = bg2;
     c.fillRect(0, 0, S, S);
@@ -653,10 +653,10 @@ async function exportAnimatedVideo(item: VaultItem, bg: string): Promise<Blob> {
       const lineStart = 80;
       const lineEnd = 80 + (S - 160) * lineT;
       const lg = c.createLinearGradient(lineStart, 0, S - 80, 0);
-      lg.addColorStop(0, "rgba(245,181,72,0)");
+      lg.addColorStop(0, "rgba(203,208,213,0)");
       lg.addColorStop(0.1, GOLD);
       lg.addColorStop(0.9, GOLD);
-      lg.addColorStop(1, "rgba(245,181,72,0)");
+      lg.addColorStop(1, "rgba(203,208,213,0)");
       c.save();
       c.globalAlpha = lineT;
       c.strokeStyle = lg;
@@ -925,7 +925,7 @@ function ImageCardTab({ item }: { item: VaultItem }) {
           {allTags.map(tag => (
             <button key={tag} type="button" onClick={() => toggleTag(tag)}
               className="rounded-full px-2.5 py-1 text-[11px] font-medium transition"
-              style={{ background: activeTags.has(tag) ? "rgba(245,181,72,0.18)" : "var(--pill)", color: activeTags.has(tag) ? "#F5B548" : "var(--muted)", border: activeTags.has(tag) ? "1px solid rgba(245,181,72,0.40)" : "1px solid var(--border)" }}>
+              style={{ background: activeTags.has(tag) ? "rgba(203,208,213,0.18)" : "var(--pill)", color: activeTags.has(tag) ? "#C8CDD2" : "var(--muted)", border: activeTags.has(tag) ? "1px solid rgba(203,208,213,0.40)" : "1px solid var(--border)" }}>
               #{tag}
             </button>
           ))}
@@ -1064,7 +1064,7 @@ function ThenVsNowTab({ item }: { item: VaultItem }) {
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-widest" style={{ color: "var(--muted)" }}>Now</div>
-              <div className="mt-1 text-lg font-bold" style={{ color: "var(--theme-gold, #F5B548)" }}>{fmtUsd(now)}</div>
+              <div className="mt-1 text-lg font-bold" style={{ color: "var(--theme-gold, #C8CDD2)" }}>{fmtUsd(now)}</div>
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-widest" style={{ color: "var(--muted)" }}>ROI</div>
@@ -1232,11 +1232,11 @@ function VideoTab({ item }: { item: VaultItem }) {
               type="button"
               onClick={handleReplay}
               className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full shadow-lg transition active:scale-95"
-              style={{ background: "rgba(0,0,0,0.72)", border: "1px solid rgba(245,181,72,0.4)" }}
+              style={{ background: "rgba(0,0,0,0.72)", border: "1px solid rgba(203,208,213,0.4)" }}
               aria-label="Replay video"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <polygon points="6,4 20,12 6,20" fill="#F5B548" />
+                <polygon points="6,4 20,12 6,20" fill="#C8CDD2" />
               </svg>
             </button>
           )}
@@ -1376,7 +1376,7 @@ function CarouselTab({ currentItem }: { currentItem: VaultItem }) {
             return (
               <button key={i.id} type="button" onClick={() => toggleItem(i.id)}
                 className="relative rounded-xl overflow-hidden ring-2 transition aspect-square"
-                style={{ border: isSel ? "2px solid #F5B548" : "2px solid transparent" }}>
+                style={{ border: isSel ? "2px solid #C8CDD2" : "2px solid transparent" }}>
                 {imgUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={imgUrl} alt={i.title} className="h-full w-full object-cover" />
@@ -1388,7 +1388,7 @@ function CarouselTab({ currentItem }: { currentItem: VaultItem }) {
                 )}
                 {isSel && (
                   <div className="absolute top-1 right-1 h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold"
-                    style={{ background: "#F5B548", color: "#0B0B0B" }}>
+                    style={{ background: "#C8CDD2", color: "#0B0B0B" }}>
                     {Array.from(selected).indexOf(i.id) + 1}
                   </div>
                 )}

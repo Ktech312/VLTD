@@ -87,15 +87,15 @@ export default async function Image({ params }: { params: Promise<{ token: strin
 
         {/* ── LEFT: text (400px) ── */}
         <div style={{ width: "400px", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "44px 40px 44px 52px", position: "relative" }}>
-          <div style={{ position: "absolute", left: 0, top: 0, width: "4px", height: "630px", background: "#F5B548" }} />
+          <div style={{ position: "absolute", left: 0, top: 0, width: "4px", height: "630px", background: "#C8CDD2" }} />
 
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-            <span style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "0.28em", color: "#F5B548" }}>VLTD</span>
-            <span style={{ fontSize: "15px", color: "rgba(245,181,72,0.55)", letterSpacing: "0.2em", fontWeight: 500 }}>PUBLIC EXHIBITION</span>
+            <span style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "0.28em", color: "#C8CDD2" }}>VLTD</span>
+            <span style={{ fontSize: "15px", color: "rgba(203,208,213,0.55)", letterSpacing: "0.2em", fontWeight: 500 }}>PUBLIC EXHIBITION</span>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-            <div style={{ fontSize: titleSize, fontWeight: 800, color: "#F0EAD6", lineHeight: 1.05, letterSpacing: "-0.02em" }}>
+            <div style={{ fontSize: titleSize, fontWeight: 800, color: "#ECEDEF", lineHeight: 1.05, letterSpacing: "-0.02em" }}>
               {title}
             </div>
             {description ? (
@@ -110,9 +110,9 @@ export default async function Image({ params }: { params: Promise<{ token: strin
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-            {meta ? <span style={{ fontSize: "19px", color: "rgba(245,181,72,0.85)", fontWeight: 600 }}>{meta}</span> : null}
+            {meta ? <span style={{ fontSize: "19px", color: "rgba(203,208,213,0.85)", fontWeight: 600 }}>{meta}</span> : null}
             <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-              <div style={{ background: "#F5B548", borderRadius: "100px", padding: "11px 26px", fontSize: "16px", fontWeight: 700, color: "#0A0A12" }}>
+              <div style={{ background: "#C8CDD2", borderRadius: "100px", padding: "11px 26px", fontSize: "16px", fontWeight: 700, color: "#0A0A12" }}>
                 View Exhibition
               </div>
               <span style={{ fontSize: "14px", color: "rgba(160,149,107,0.4)" }}>vltd.app</span>
@@ -127,11 +127,11 @@ export default async function Image({ params }: { params: Promise<{ token: strin
           ) : (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "400px", height: "630px" }}>
               <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: "260px", height: "260px" }}>
-                <div style={{ position: "absolute", width: "240px", height: "240px", borderRadius: "50%", border: "1px solid rgba(245,181,72,0.15)", display: "flex" }} />
-                <div style={{ position: "absolute", width: "180px", height: "180px", borderRadius: "50%", border: "1px solid rgba(245,181,72,0.25)", display: "flex" }} />
-                <div style={{ position: "absolute", width: "120px", height: "120px", borderRadius: "50%", border: "1px solid rgba(245,181,72,0.4)", display: "flex" }} />
-                <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "rgba(245,181,72,0.12)", border: "1px solid rgba(245,181,72,0.6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <div style={{ width: "12px", height: "12px", borderRadius: "50%", background: "#F5B548", display: "flex" }} />
+                <div style={{ position: "absolute", width: "240px", height: "240px", borderRadius: "50%", border: "1px solid rgba(203,208,213,0.15)", display: "flex" }} />
+                <div style={{ position: "absolute", width: "180px", height: "180px", borderRadius: "50%", border: "1px solid rgba(203,208,213,0.25)", display: "flex" }} />
+                <div style={{ position: "absolute", width: "120px", height: "120px", borderRadius: "50%", border: "1px solid rgba(203,208,213,0.4)", display: "flex" }} />
+                <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "rgba(203,208,213,0.12)", border: "1px solid rgba(203,208,213,0.6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ width: "12px", height: "12px", borderRadius: "50%", background: "#C8CDD2", display: "flex" }} />
                 </div>
               </div>
             </div>
@@ -140,12 +140,12 @@ export default async function Image({ params }: { params: Promise<{ token: strin
 
         {/* ── RIGHT: items list (400px) ── */}
         <div style={{ width: "400px", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "44px 36px 44px 72px", background: "#0A0A12" }}>
-          <span style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.22em", color: "rgba(245,181,72,0.5)" }}>IN THIS EXHIBITION</span>
+          <span style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.22em", color: "rgba(203,208,213,0.5)" }}>IN THIS EXHIBITION</span>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "16px", flex: 1, marginTop: "28px", marginBottom: "20px" }}>
             {items.length > 0 ? items.map((name, i) => (
               <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
-                <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#F5B548", marginTop: "9px", flexShrink: 0 }} />
+                <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#C8CDD2", marginTop: "9px", flexShrink: 0 }} />
                 <span style={{ fontSize: "19px", color: "rgba(240,234,214,0.85)", fontWeight: 500, lineHeight: 1.3 }}>
                   {name.length > 28 ? name.slice(0, 25) + "…" : name}
                 </span>
@@ -153,7 +153,7 @@ export default async function Image({ params }: { params: Promise<{ token: strin
             )) : (
               [1,2,3,4,5].map((_, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "rgba(245,181,72,0.3)", flexShrink: 0 }} />
+                  <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "rgba(203,208,213,0.3)", flexShrink: 0 }} />
                   <div style={{ height: "14px", width: `${120 - i * 15}px`, borderRadius: "4px", background: "rgba(240,234,214,0.08)", display: "flex" }} />
                 </div>
               ))
@@ -161,7 +161,7 @@ export default async function Image({ params }: { params: Promise<{ token: strin
           </div>
 
           {showMore && (
-            <span style={{ fontSize: "17px", color: "rgba(245,181,72,0.65)", fontWeight: 600, fontStyle: "italic" }}>And many more…</span>
+            <span style={{ fontSize: "17px", color: "rgba(203,208,213,0.65)", fontWeight: 600, fontStyle: "italic" }}>And many more…</span>
           )}
         </div>
 

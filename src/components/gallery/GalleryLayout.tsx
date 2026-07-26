@@ -56,16 +56,16 @@ function ShelfGrid({ items, hrefPrefix, title }: { items: VaultItem[]; hrefPrefi
       {/* Title pill */}
       {title && (
         <div className="flex items-center justify-center gap-3">
-          <div className="h-px flex-1" style={{ background: "linear-gradient(to right, transparent, rgba(245,181,72,0.25))" }} />
+          <div className="h-px flex-1" style={{ background: "linear-gradient(to right, transparent, rgba(203,208,213,0.25))" }} />
           <div
             className="flex items-center gap-1.5 rounded-full border px-4 py-1"
-            style={{ borderColor: "rgba(245,181,72,0.35)", background: "rgba(245,181,72,0.07)" }}
+            style={{ borderColor: "rgba(203,208,213,0.35)", background: "rgba(203,208,213,0.07)" }}
           >
-            <span className="text-[9px] font-black uppercase tracking-[0.38em]" style={{ color: "#F5B548" }}>
+            <span className="text-[9px] font-black uppercase tracking-[0.38em]" style={{ color: "#C8CDD2" }}>
               {title}
             </span>
           </div>
-          <div className="h-px flex-1" style={{ background: "linear-gradient(to left, transparent, rgba(245,181,72,0.25))" }} />
+          <div className="h-px flex-1" style={{ background: "linear-gradient(to left, transparent, rgba(203,208,213,0.25))" }} />
         </div>
       )}
 
@@ -83,7 +83,7 @@ function ShelfGrid({ items, hrefPrefix, title }: { items: VaultItem[]; hrefPrefi
               className="flex flex-col overflow-hidden rounded-[14px] border transition-transform duration-150 active:scale-95"
               style={{
                 background: "rgba(11,18,34,0.95)",
-                borderColor: "rgba(245,181,72,0.16)",
+                borderColor: "rgba(203,208,213,0.16)",
                 boxShadow: "0 4px 16px rgba(0,0,0,0.28)",
               }}
             >
@@ -106,14 +106,14 @@ function ShelfGrid({ items, hrefPrefix, title }: { items: VaultItem[]; hrefPrefi
 
               {/* Info */}
               <div className="flex flex-col gap-1 px-2 pb-2 pt-2">
-                <p className="line-clamp-2 text-[10px] font-bold leading-snug text-[#F0EAD6]">{item.title}</p>
+                <p className="line-clamp-2 text-[10px] font-bold leading-snug text-[#ECEDEF]">{item.title}</p>
                 {meta ? (
                   <p className="truncate text-[8px] leading-tight text-[#A0956B]">{meta}</p>
                 ) : null}
                 {val && (
                   <div
                     className="mt-0.5 rounded-full py-0.5 text-center text-[9px] font-black tracking-wide"
-                    style={{ background: "rgba(245,181,72,0.13)", color: "#F5B548", border: "1px solid rgba(245,181,72,0.22)" }}
+                    style={{ background: "rgba(203,208,213,0.13)", color: "#C8CDD2", border: "1px solid rgba(203,208,213,0.22)" }}
                   >
                     {val}
                   </div>
@@ -123,7 +123,7 @@ function ShelfGrid({ items, hrefPrefix, title }: { items: VaultItem[]; hrefPrefi
               {/* Like + Comment row */}
               <div
                 className="flex items-center justify-center gap-2.5 px-2 py-1.5"
-                style={{ borderTop: "1px solid rgba(245,181,72,0.09)" }}
+                style={{ borderTop: "1px solid rgba(203,208,213,0.09)" }}
               >
                 <FavoriteButton
                   contentType="item"
@@ -152,7 +152,7 @@ function ThingsbookGrid({ items, hrefPrefix }: { items: VaultItem[]; hrefPrefix:
     <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
       <Link
         href={hrefPrefix + "/" + hero.id}
-        className="block shrink-0 overflow-hidden rounded-[26px] bg-[color:var(--surface)] shadow-[0_16px_42px_rgba(0,0,0,0.18)] ring-2 ring-[color:var(--theme-gold,#F5B548)] transition hover:-translate-y-0.5 md:w-72"
+        className="block shrink-0 overflow-hidden rounded-[26px] bg-[color:var(--surface)] shadow-[0_16px_42px_rgba(0,0,0,0.18)] ring-2 ring-[color:var(--theme-gold,#C8CDD2)] transition hover:-translate-y-0.5 md:w-72"
       >
         {heroImg ? (
           <img src={heroImg} alt={hero.title} className="aspect-[3/4] w-full object-cover" draggable={false} />
@@ -184,7 +184,7 @@ function ThingsbookGrid({ items, hrefPrefix }: { items: VaultItem[]; hrefPrefix:
                   type="button"
                   onClick={() => setSelectedIdx(idx)}
                   className={"overflow-hidden rounded-xl transition hover:scale-105 active:scale-95 " + (isSelected
-                    ? "ring-2 ring-[color:var(--theme-gold,#F5B548)] shadow-[0_6px_18px_rgba(245,181,72,0.3)] opacity-100"
+                    ? "ring-2 ring-[color:var(--theme-gold,#C8CDD2)] shadow-[0_6px_18px_rgba(203,208,213,0.3)] opacity-100"
                     : "ring-1 ring-[color:var(--border)] opacity-60 hover:opacity-100")}
                   style={{ width: 62, height: 84 }}
                   aria-label={item.title}

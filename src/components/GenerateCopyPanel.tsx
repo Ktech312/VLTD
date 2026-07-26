@@ -164,17 +164,17 @@ export default function GenerateCopyPanel({
     <div
       className={["rounded-2xl ring-1 overflow-hidden", className].join(" ")}
       style={{
-        background: "rgba(245,181,72,0.04)",
-        borderColor: "rgba(245,181,72,0.25)",
+        background: "rgba(203,208,213,0.04)",
+        borderColor: "rgba(203,208,213,0.25)",
       }}
     >
       {/* Header */}
       <div
         className="flex items-center justify-between gap-3 px-4 py-2.5 border-b"
-        style={{ borderColor: "rgba(245,181,72,0.18)" }}
+        style={{ borderColor: "rgba(203,208,213,0.18)" }}
       >
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-bold uppercase tracking-[0.14em]" style={{ color: "rgba(245,181,72,0.8)" }}>
+          <span className="text-[11px] font-bold uppercase tracking-[0.14em]" style={{ color: "rgba(203,208,213,0.8)" }}>
             AI draft — review before saving
           </span>
           {showConfidence && <ConfidencePip score={confidence} />}

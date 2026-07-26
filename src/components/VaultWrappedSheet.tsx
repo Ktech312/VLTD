@@ -110,8 +110,8 @@ async function renderWrappedCanvas(stats: WrappedStats): Promise<string> {
   ctx.fillRect(0, 0, W, H);
 
   // Noise overlay for texture
-  const GOLD = "#F5B548";
-  const GOLD2 = "rgba(245,181,72,0.65)";
+  const GOLD = "#C8CDD2";
+  const GOLD2 = "rgba(203,208,213,0.65)";
   const WHITE = "#FFFFFF";
   const MUTED = "rgba(255,255,255,0.45)";
 
@@ -119,7 +119,7 @@ async function renderWrappedCanvas(stats: WrappedStats): Promise<string> {
   ctx.save();
   ctx.beginPath();
   ctx.arc(-80, -80, 480, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(245,181,72,0.05)";
+  ctx.fillStyle = "rgba(203,208,213,0.05)";
   ctx.fill();
   ctx.restore();
 
@@ -127,7 +127,7 @@ async function renderWrappedCanvas(stats: WrappedStats): Promise<string> {
   ctx.save();
   ctx.beginPath();
   ctx.arc(W + 60, H - 60, 420, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(245,181,72,0.04)";
+  ctx.fillStyle = "rgba(203,208,213,0.04)";
   ctx.fill();
   ctx.restore();
 
@@ -201,7 +201,7 @@ async function renderWrappedCanvas(stats: WrappedStats): Promise<string> {
     ctx.fill();
 
     // Border
-    ctx.strokeStyle = "rgba(245,181,72,0.18)";
+    ctx.strokeStyle = "rgba(203,208,213,0.18)";
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.roundRect(gx, gy, gridW, gridH, 24);
@@ -309,7 +309,7 @@ async function renderWrappedCanvas(stats: WrappedStats): Promise<string> {
 
   // VLTD footer branding
   ctx.font = `700 28px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-  ctx.fillStyle = "rgba(245,181,72,0.45)";
+  ctx.fillStyle = "rgba(203,208,213,0.45)";
   ctx.fillText("vltd.app", W / 2, H - 72);
 
   return canvas.toDataURL("image/png");
@@ -398,7 +398,7 @@ export default function VaultWrappedSheet({ onClose }: Props) {
               <div key={s.label} className="rounded-2xl p-3 text-center ring-1 ring-[color:var(--border)]"
                 style={{ background: "var(--pill)" }}>
                 <div className="text-[10px] uppercase tracking-widest" style={{ color: "var(--muted)" }}>{s.label}</div>
-                <div className="mt-1 text-xl font-black" style={{ color: "var(--theme-gold, #F5B548)" }}>{s.value}</div>
+                <div className="mt-1 text-xl font-black" style={{ color: "var(--theme-gold, #C8CDD2)" }}>{s.value}</div>
               </div>
             ))}
           </div>

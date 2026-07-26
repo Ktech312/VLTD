@@ -14,13 +14,13 @@ body:has(input[type="file"][accept=".xlsx,.xls,.csv"]) main > div {
 
 body:has(textarea[placeholder^="Paste rows directly"]) main > div > div:first-child,
 body:has(input[type="file"][accept=".xlsx,.xls,.csv"]) main > div > div:first-child {
-  border: 1px solid rgba(245, 181, 72, 0.22);
+  border: 1px solid rgba(203,208,213, 0.22);
   border-radius: 30px;
   background: var(--theme-card, rgba(15,25,45,0.85));
   padding: 18px;
   box-shadow:
-    0 0 0 1px rgba(245, 181, 72, 0.05),
-    0 22px 76px rgba(245, 181, 72, 0.06),
+    0 0 0 1px rgba(203,208,213, 0.05),
+    0 22px 76px rgba(203,208,213, 0.06),
     0 24px 88px rgba(0, 0, 0, 0.50);
 }
 
@@ -32,10 +32,10 @@ body:has(input[type="file"][accept=".xlsx,.xls,.csv"]) h1 {
 
 body:has(textarea[placeholder^="Paste rows directly"]) main div[class*="rounded-[28px]"],
 body:has(input[type="file"][accept=".xlsx,.xls,.csv"]) main div[class*="rounded-[28px]"] {
-  border: 1px solid rgba(245, 181, 72, 0.18) !important;
+  border: 1px solid rgba(203,208,213, 0.18) !important;
   background: var(--theme-card, rgba(15,25,45,0.85)) !important;
   box-shadow:
-    0 0 0 1px rgba(245, 181, 72, 0.04),
+    0 0 0 1px rgba(203,208,213, 0.04),
     0 18px 56px rgba(0, 0, 0, 0.40) !important;
 }
 
@@ -44,8 +44,8 @@ body:has(input[type="file"][accept=".xlsx,.xls,.csv"]) textarea,
 body:has(textarea[placeholder^="Paste rows directly"]) select,
 body:has(input[type="file"][accept=".xlsx,.xls,.csv"]) select {
   background: var(--theme-elevated, rgba(20,32,55,0.9)) !important;
-  border: 1px solid rgba(245, 181, 72, 0.20) !important;
-  color: #F0EAD6 !important;
+  border: 1px solid rgba(203,208,213, 0.20) !important;
+  color: #ECEDEF !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
 }
 
@@ -53,14 +53,14 @@ body:has(textarea[placeholder^="Paste rows directly"]) button,
 body:has(input[type="file"][accept=".xlsx,.xls,.csv"]) button,
 body:has(textarea[placeholder^="Paste rows directly"]) a,
 body:has(input[type="file"][accept=".xlsx,.xls,.csv"]) a {
-  border-color: rgba(245, 181, 72, 0.16);
+  border-color: rgba(203,208,213, 0.16);
 }
 
 body:has(textarea[placeholder^="Paste rows directly"]) button:hover,
 body:has(input[type="file"][accept=".xlsx,.xls,.csv"]) button:hover,
 body:has(textarea[placeholder^="Paste rows directly"]) a:hover,
 body:has(input[type="file"][accept=".xlsx,.xls,.csv"]) a:hover {
-  border-color: rgba(245, 181, 72, 0.38) !important;
+  border-color: rgba(203,208,213, 0.38) !important;
 }
 
 /* Sold page */
@@ -70,11 +70,11 @@ body:has(a[href*="?sold=1"]) main > div {
 
 body:has(a[href*="?sold=1"]) section:first-of-type {
   border-radius: 30px !important;
-  border-color: rgba(245, 181, 72, 0.25) !important;
+  border-color: rgba(203,208,213, 0.25) !important;
   background: var(--theme-card, rgba(15,25,45,0.85)) !important;
   box-shadow:
-    0 0 0 1px rgba(245, 181, 72, 0.06),
-    0 26px 86px rgba(245, 181, 72, 0.06),
+    0 0 0 1px rgba(203,208,213, 0.06),
+    0 26px 86px rgba(203,208,213, 0.06),
     0 24px 88px rgba(0, 0, 0, 0.50) !important;
 }
 
@@ -88,18 +88,18 @@ body:has(a[href*="?sold=1"]) a[href*="?sold=1"] {
   border-radius: 20px !important;
   padding: 10px !important;
   background: var(--theme-card, rgba(15,25,45,0.85)) !important;
-  border-color: rgba(245, 181, 72, 0.20) !important;
+  border-color: rgba(203,208,213, 0.20) !important;
   box-shadow:
-    0 0 0 1px rgba(245, 181, 72, 0.04),
+    0 0 0 1px rgba(203,208,213, 0.04),
     0 16px 46px rgba(0, 0, 0, 0.40) !important;
 }
 
 body:has(a[href*="?sold=1"]) a[href*="?sold=1"]:hover {
   transform: translateY(-1px);
-  border-color: rgba(245, 181, 72, 0.40) !important;
+  border-color: rgba(203,208,213, 0.40) !important;
   box-shadow:
-    0 0 0 1px rgba(245, 181, 72, 0.08),
-    0 18px 48px rgba(245, 181, 72, 0.08),
+    0 0 0 1px rgba(203,208,213, 0.08),
+    0 18px 48px rgba(203,208,213, 0.08),
     0 18px 70px rgba(0, 0, 0, 0.40) !important;
 }
 

@@ -10,9 +10,9 @@ import { loadGalleries, type Gallery } from "@/lib/galleryModel";
 import { isOwnerEmail } from "@/lib/ownerAccess";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
 
-const gold = "#D6A84F";
-const goldBright = "#F5B548";
-const cream = "#F0EAD6";
+const gold = "#C8CDD2";
+const goldBright = "#C8CDD2";
+const cream = "#ECEDEF";
 const muted = "#B8A978";
 const dim = "#776D4B";
 const cyan = "#44D9F2";
@@ -129,7 +129,7 @@ function Icon({ name, size = 30 }: { name: IconName; size?: number }) {
   if (name === "shield") {
     return (
       <svg {...common}>
-        <path d="M12 3.2 19 6v5.2c0 4.4-2.7 7.6-7 9.6-4.3-2-7-5.2-7-9.6V6l7-2.8Z" {...stroke} fill="rgba(245,181,72,.14)" />
+        <path d="M12 3.2 19 6v5.2c0 4.4-2.7 7.6-7 9.6-4.3-2-7-5.2-7-9.6V6l7-2.8Z" {...stroke} fill="rgba(203,208,213,.14)" />
         <path d="M12 8v5M12 16h.01" {...stroke} />
       </svg>
     );
@@ -137,7 +137,7 @@ function Icon({ name, size = 30 }: { name: IconName; size?: number }) {
   if (name === "card") {
     return (
       <svg {...common}>
-        <rect x="3" y="6" width="18" height="12" rx="2" {...stroke} fill="rgba(245,181,72,.12)" />
+        <rect x="3" y="6" width="18" height="12" rx="2" {...stroke} fill="rgba(203,208,213,.12)" />
         <path d="M3 10h18M7 15h4" {...stroke} />
       </svg>
     );
@@ -161,7 +161,7 @@ function Icon({ name, size = 30 }: { name: IconName; size?: number }) {
   if (name === "camera") {
     return (
       <svg {...common}>
-        <path d="M6 8h2l1.4-2h5.2L16 8h2a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Z" {...stroke} fill="rgba(245,181,72,.12)" />
+        <path d="M6 8h2l1.4-2h5.2L16 8h2a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Z" {...stroke} fill="rgba(203,208,213,.12)" />
         <circle cx="12" cy="13.5" r="3" {...stroke} />
       </svg>
     );
@@ -186,7 +186,7 @@ function Icon({ name, size = 30 }: { name: IconName; size?: number }) {
   if (name === "spark") {
     return (
       <svg {...common}>
-        <path d="M12 2.8 14.6 9l6.5 3-6.5 3L12 21.2 9.4 15l-6.5-3 6.5-3L12 2.8Z" {...stroke} fill="rgba(245,181,72,.12)" />
+        <path d="M12 2.8 14.6 9l6.5 3-6.5 3L12 21.2 9.4 15l-6.5-3 6.5-3L12 2.8Z" {...stroke} fill="rgba(203,208,213,.12)" />
       </svg>
     );
   }
@@ -203,7 +203,7 @@ function commandCardStyle(accent: boolean) {
     background: accent
       ? "linear-gradient(150deg, rgba(23,30,25,.96), rgba(6,15,14,.96))"
       : "linear-gradient(150deg, rgba(9,23,31,.92), rgba(3,11,14,.92))",
-    border: `1px solid ${accent ? "rgba(245,181,72,.48)" : border}`,
+    border: `1px solid ${accent ? "rgba(203,208,213,.48)" : border}`,
     boxShadow: accent ? "0 0 30px rgba(214,168,79,.12), inset 0 1px 0 rgba(255,255,255,.045)" : "inset 0 1px 0 rgba(255,255,255,.035)",
   };
 }
@@ -218,7 +218,7 @@ function CommandCard({ icon, title, desc, href, panel: panelKey, cta, accent = f
         className="mt-4 inline-flex items-center rounded-[6px] px-5 py-2 text-[12px] font-semibold"
         style={{
           color: accent ? "#111" : cream,
-          background: accent ? "linear-gradient(135deg,#FFE7A0,#D6A84F 58%,#8F6519)" : "rgba(0,0,0,.18)",
+          background: accent ? "linear-gradient(135deg,#FFE7A0,#C8CDD2 58%,#8F6519)" : "rgba(0,0,0,.18)",
           border: accent ? "1px solid rgba(255,225,139,.5)" : `1px solid ${border}`,
         }}
       >

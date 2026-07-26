@@ -70,7 +70,7 @@ const portableComponents = {
       <p className="mb-4 leading-7 text-[color:var(--muted)]">{children}</p>
     ),
     blockquote: ({ children }: { children?: React.ReactNode }) => (
-      <blockquote className="my-6 border-l-2 border-[rgba(245,181,72,0.5)] pl-5 italic text-[color:var(--muted)]">
+      <blockquote className="my-6 border-l-2 border-[rgba(203,208,213,0.5)] pl-5 italic text-[color:var(--muted)]">
         {children}
       </blockquote>
     ),
@@ -156,7 +156,7 @@ export default async function ArticlePage({ params }: Props) {
       {/* ── Article content ── */}
       <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6 lg:px-8">
         {article.category && (
-          <span className="inline-flex items-center rounded-full border border-[rgba(245,181,72,0.28)] px-3 py-1 text-xs font-semibold text-[color:var(--accent)]">
+          <span className="inline-flex items-center rounded-full border border-[rgba(203,208,213,0.28)] px-3 py-1 text-xs font-semibold text-[color:var(--accent)]">
             {article.category}
           </span>
         )}
@@ -181,7 +181,7 @@ export default async function ArticlePage({ params }: Props) {
         </div>
 
         {/* ── CTA ── */}
-        <div className="mt-14 rounded-[22px] border border-[rgba(245,181,72,0.2)] bg-vault-card p-8 text-center" style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}>
+        <div className="mt-14 rounded-[22px] border border-[rgba(203,208,213,0.2)] bg-vault-card p-8 text-center" style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}>
           <div className="text-xl font-black text-text-primary">Start vaulting your collection.</div>
           <p className="mt-2 text-sm text-[color:var(--muted)]">
             VLTD is free to start — AI scanning, public galleries, and portfolio tracking included.

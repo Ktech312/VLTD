@@ -14,11 +14,11 @@ export default function UpgradeNudge({
   return (
     <div
       className="flex flex-wrap items-center gap-3 rounded-2xl px-4 py-3 ring-1"
-      style={{ background: "rgba(245,181,72,0.10)", borderColor: "rgba(245,181,72,0.4)" }}
+      style={{ background: "rgba(203,208,213,0.10)", borderColor: "rgba(203,208,213,0.4)" }}
     >
       <span className="text-lg" aria-hidden="true">✨</span>
       <div className="min-w-0 flex-1">
-        <div className="text-sm font-semibold" style={{ color: "#F5B548" }}>
+        <div className="text-sm font-semibold" style={{ color: "#C8CDD2" }}>
           You&apos;ve reached your free limit
         </div>
         <div className="text-xs" style={{ color: "var(--muted)" }}>
@@ -28,7 +28,7 @@ export default function UpgradeNudge({
       <Link
         href="/account/billing?reason=vault_limit"
         className="shrink-0 rounded-full px-4 py-2 text-sm font-bold transition active:scale-95"
-        style={{ background: "linear-gradient(135deg,#8B6914,#F5B548)", color: "#0B0B0B" }}
+        style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}
       >
         Upgrade
       </Link>

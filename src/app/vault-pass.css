@@ -6,25 +6,25 @@ body:has(input[placeholder="Search vault items..."]) main > div {
 }
 
 body:has(input[placeholder="Search vault items..."]) section {
-  border-color: rgba(245, 181, 72, 0.18) !important;
+  border-color: rgba(203,208,213, 0.18) !important;
   background: var(--theme-card, rgba(15,25,45,0.85)) !important;
   box-shadow:
-    0 0 0 1px rgba(245, 181, 72, 0.04),
+    0 0 0 1px rgba(203,208,213, 0.04),
     0 22px 72px rgba(0, 0, 0, 0.40) !important;
 }
 
 body:has(input[placeholder="Search vault items..."]) section:first-of-type {
-  border-color: rgba(245, 181, 72, 0.25) !important;
+  border-color: rgba(203,208,213, 0.25) !important;
   box-shadow:
-    0 0 0 1px rgba(245, 181, 72, 0.06),
-    0 26px 86px rgba(245, 181, 72, 0.06),
+    0 0 0 1px rgba(203,208,213, 0.06),
+    0 26px 86px rgba(203,208,213, 0.06),
     0 24px 88px rgba(0, 0, 0, 0.50) !important;
 }
 
 body:has(input[placeholder="Search vault items..."]) input[placeholder="Search vault items..."],
 body:has(input[placeholder="Search vault items..."]) select {
   background: var(--theme-elevated, rgba(20,32,55,0.9)) !important;
-  border: 1px solid rgba(245, 181, 72, 0.18) !important;
+  border: 1px solid rgba(203,208,213, 0.18) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
 }
 
@@ -33,18 +33,18 @@ body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="
   border-radius: 22px !important;
   padding: 10px !important;
   background: var(--theme-card, rgba(15,25,45,0.85)) !important;
-  border-color: rgba(245, 181, 72, 0.16) !important;
+  border-color: rgba(203,208,213, 0.16) !important;
   box-shadow:
-    0 0 0 1px rgba(245, 181, 72, 0.04),
+    0 0 0 1px rgba(203,208,213, 0.04),
     0 16px 46px rgba(0, 0, 0, 0.40) !important;
 }
 
 body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"]:hover {
   transform: translateY(-1px);
-  border-color: rgba(245, 181, 72, 0.38) !important;
+  border-color: rgba(203,208,213, 0.38) !important;
   box-shadow:
-    0 0 0 1px rgba(245, 181, 72, 0.08),
-    0 18px 48px rgba(245, 181, 72, 0.08),
+    0 0 0 1px rgba(203,208,213, 0.08),
+    0 18px 48px rgba(203,208,213, 0.08),
     0 18px 70px rgba(0, 0, 0, 0.40) !important;
 }
 
@@ -55,7 +55,7 @@ body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="
 
 body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"] > div.grid > a:first-child {
   border-radius: 16px !important;
-  background: radial-gradient(circle at top, rgba(245, 181, 72, 0.06), rgba(0, 0, 0, 0.20) 58%, rgba(0, 0, 0, 0.28) 100%) !important;
+  background: radial-gradient(circle at top, rgba(203,208,213, 0.06), rgba(0, 0, 0, 0.20) 58%, rgba(0, 0, 0, 0.28) 100%) !important;
 }
 
 body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"] select {
@@ -65,7 +65,7 @@ body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="
 }
 
 body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="h-[116px]"] [class*="text-gold-light"] {
-  color: #FFE08A !important;
+  color: #EDEFF1 !important;
 }
 
 @media (max-width: 700px) {

@@ -152,7 +152,7 @@ function SwipeCard({ card, onSwipe, active, viewerProfileId }: CardProps) {
           {/* Watchlisted badge */}
           {savedRef.current && (
             <div className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full"
-              style={{ background: "rgba(245,181,72,0.9)" }}>
+              style={{ background: "rgba(203,208,213,0.9)" }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="#0B0B0B">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
               </svg>
@@ -172,7 +172,7 @@ function SwipeCard({ card, onSwipe, active, viewerProfileId }: CardProps) {
             <div className="mt-2 flex flex-wrap gap-2">
               {card.grade && (
                 <span className="rounded-full px-3 py-1 text-xs font-bold ring-1"
-                  style={{ background: "rgba(245,181,72,0.12)", color: "var(--theme-gold, #F5B548)", borderColor: "rgba(245,181,72,0.3)" }}>
+                  style={{ background: "rgba(203,208,213,0.12)", color: "var(--theme-gold, #C8CDD2)", borderColor: "rgba(203,208,213,0.3)" }}>
                   {card.grade}
                 </span>
               )}
@@ -193,7 +193,7 @@ function SwipeCard({ card, onSwipe, active, viewerProfileId }: CardProps) {
                 <img src={card.collectorAvatarUrl} alt="" className="h-7 w-7 rounded-full object-cover ring-1 ring-white/20" />
               ) : (
                 <div className="flex h-7 w-7 items-center justify-center rounded-full"
-                  style={{ background: "var(--pill)", color: "var(--theme-gold, #F5B548)" }}><Glyph name="key" size={15} /></div>
+                  style={{ background: "var(--pill)", color: "var(--theme-gold, #C8CDD2)" }}><Glyph name="key" size={15} /></div>
               )}
               <span className="text-xs truncate" style={{ color: "var(--muted)" }}>{card.collectorName}</span>
             </div>
@@ -357,7 +357,7 @@ export default function DiscoverSwipe({ open, onClose }: Props) {
       <div className="flex shrink-0 items-center justify-between px-5 pt-5 pb-3">
         <div>
           <div className="text-[11px] tracking-[0.22em]" style={{ color: "var(--muted2)" }}>DISCOVER</div>
-          <div className="text-xl font-black" style={{ color: "var(--theme-gold, #F5B548)" }}>THE FLIP</div>
+          <div className="text-xl font-black" style={{ color: "var(--theme-gold, #C8CDD2)" }}>THE FLIP</div>
         </div>
         <div className="flex items-center gap-3">
           {!loading && !done && cards.length > 0 && (
@@ -367,7 +367,7 @@ export default function DiscoverSwipe({ open, onClose }: Props) {
           )}
           {savedIds.size > 0 && (
             <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold"
-              style={{ background: "rgba(245,181,72,0.14)", color: "var(--theme-gold, #F5B548)", border: "1px solid rgba(245,181,72,0.28)" }}>
+              style={{ background: "rgba(203,208,213,0.14)", color: "var(--theme-gold, #C8CDD2)", border: "1px solid rgba(203,208,213,0.28)" }}>
               <Glyph name="heart" size={12} /> {savedIds.size} saved
             </span>
           )}
@@ -390,7 +390,7 @@ export default function DiscoverSwipe({ open, onClose }: Props) {
         {loading && (
           <div className="flex h-full items-center justify-center">
             <div className="text-center">
-              <div className="flex animate-pulse justify-center" style={{ color: "var(--theme-gold, #F5B548)" }}><Glyph name="cards" size={32} /></div>
+              <div className="flex animate-pulse justify-center" style={{ color: "var(--theme-gold, #C8CDD2)" }}><Glyph name="cards" size={32} /></div>
               <div className="mt-3 text-sm" style={{ color: "var(--muted)" }}>Loading items…</div>
             </div>
           </div>
@@ -398,7 +398,7 @@ export default function DiscoverSwipe({ open, onClose }: Props) {
 
         {!loading && done && (
           <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
-            <div style={{ color: "var(--theme-gold, #F5B548)" }}><Glyph name="sparkle" size={38} /></div>
+            <div style={{ color: "var(--theme-gold, #C8CDD2)" }}><Glyph name="sparkle" size={38} /></div>
             <div className="text-xl font-black" style={{ color: "var(--fg)" }}>You&apos;ve seen it all</div>
             <div className="text-sm" style={{ color: "var(--muted)" }}>
               {savedIds.size > 0
@@ -418,7 +418,7 @@ export default function DiscoverSwipe({ open, onClose }: Props) {
                 type="button"
                 onClick={onClose}
                 className="rounded-full px-5 py-2.5 text-sm font-semibold transition"
-                style={{ background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B" }}
+                style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B" }}
               >
                 Done
               </button>
@@ -476,7 +476,7 @@ export default function DiscoverSwipe({ open, onClose }: Props) {
             type="button"
             onClick={() => handleButton("right")}
             className="grid h-[60px] w-[60px] place-items-center rounded-full ring-2 transition active:scale-95"
-            style={{ background: "rgba(245,181,72,0.12)", borderColor: "rgba(245,181,72,0.45)", color: "#F5B548" }}
+            style={{ background: "rgba(203,208,213,0.12)", borderColor: "rgba(203,208,213,0.45)", color: "#C8CDD2" }}
             aria-label="Save to watchlist"
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">

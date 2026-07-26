@@ -20,7 +20,7 @@ export default function SignupPage() {
               <div className="text-2xl font-black tracking-[0.08em]">VLTD <span className="align-super text-[9px] text-[color:var(--muted2)]">TM</span></div>
             </div>
 
-            <div className="mt-8 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: "#F5B548", borderColor: "rgba(245,181,72,0.32)", background: "rgba(245,181,72,0.07)" }}>
+            <div className="mt-8 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: "#C8CDD2", borderColor: "rgba(203,208,213,0.32)", background: "rgba(203,208,213,0.07)" }}>
               Private Beta
             </div>
             <h1 className="mt-4 text-4xl font-black tracking-[-0.04em]">VLTD is invite-only.</h1>

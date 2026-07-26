@@ -81,7 +81,7 @@ export default function SavedPage() {
             className="flex flex-col items-center gap-4 rounded-[24px] px-6 py-14 text-center"
             style={{
               background: "var(--theme-elevated, rgba(20,32,55,0.9))",
-              border: "1px solid var(--theme-border, rgba(245,181,72,0.12))",
+              border: "1px solid var(--theme-border, rgba(203,208,213,0.12))",
             }}
           >
             <div className="flex justify-center" style={{ color: "var(--theme-gold)" }}><Glyph name="cards" size={46} /></div>
@@ -95,7 +95,7 @@ export default function SavedPage() {
             <Link
               href="/discover"
               className="mt-2 inline-flex h-11 items-center rounded-full px-6 text-sm font-black text-[#0B0B0B] transition hover:brightness-105"
-              style={{ background: "linear-gradient(135deg, #8B6914 0%, #C8941F 30%, #F5B548 60%, #C8941F 100%)" }}
+              style={{ background: "linear-gradient(135deg, #8C9298 0%, #A8AEB4 30%, #C8CDD2 60%, #A8AEB4 100%)" }}
             >
               <Glyph name="cards" size={16} /><span className="ml-2">Open The Flip</span>
             </Link>
@@ -113,7 +113,7 @@ export default function SavedPage() {
               <Link
                 href="/discover"
                 className="text-xs font-semibold transition hover:underline"
-                style={{ color: "var(--theme-gold, #F5B548)" }}
+                style={{ color: "var(--theme-gold, #C8CDD2)" }}
               >
                 <Glyph name="cards" size={14} className="mr-1 inline align-[-2px]" />The Flip →
               </Link>
@@ -137,7 +137,7 @@ export default function SavedPage() {
                 ) : (
                   <div
                     className="h-16 w-16 shrink-0 rounded-[12px] flex items-center justify-center text-2xl"
-                    style={{ background: "rgba(245,181,72,0.08)", border: "1px solid rgba(245,181,72,0.12)" }}
+                    style={{ background: "rgba(203,208,213,0.08)", border: "1px solid rgba(203,208,213,0.12)" }}
                   >
                     <Glyph name="cards" size={24} />
                   </div>
@@ -153,7 +153,7 @@ export default function SavedPage() {
                     {item.grade && (
                       <span
                         className="rounded px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.1em]"
-                        style={{ background: "rgba(245,181,72,0.18)", color: "var(--theme-gold, #F5B548)" }}
+                        style={{ background: "rgba(203,208,213,0.18)", color: "var(--theme-gold, #C8CDD2)" }}
                       >
                         {item.grade}
                       </span>
@@ -189,9 +189,9 @@ export default function SavedPage() {
                 href="/discover"
                 className="inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition hover:brightness-110"
                 style={{
-                  borderColor: "rgba(245,181,72,0.28)",
-                  color: "var(--theme-gold, #F5B548)",
-                  background: "rgba(245,181,72,0.06)",
+                  borderColor: "rgba(203,208,213,0.28)",
+                  color: "var(--theme-gold, #C8CDD2)",
+                  background: "rgba(203,208,213,0.06)",
                 }}
               >
                 🃏 Find more in The Flip

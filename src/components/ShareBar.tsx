@@ -168,7 +168,7 @@ export default function ShareBar({ title, shareUrl, itemId, compact = false }: S
   const iconBtn = "flex shrink-0 items-center justify-center transition-all hover:opacity-70 active:scale-90";
 
   const iconStyle: React.CSSProperties = {
-    color: "var(--theme-gold, #F5B548)",
+    color: "var(--theme-gold, #C8CDD2)",
     background: "none",
     border: "none",
     boxShadow: "none",

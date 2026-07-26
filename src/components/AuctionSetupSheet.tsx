@@ -29,7 +29,7 @@ export function AuctionCountdownChip({ item }: { item: VaultItem }) {
   );
   return (
     <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ring-1 ring-amber-400/40"
-      style={{ background: "rgba(245,181,72,0.15)", color: "var(--theme-gold)" }}>
+      style={{ background: "rgba(203,208,213,0.15)", color: "var(--theme-gold)" }}>
       ⏱ {label}
     </span>
   );
@@ -166,7 +166,7 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
           {isActive && endsAtLabel && (
             <div
               className="rounded-2xl px-4 py-3 ring-1 ring-amber-400/30"
-              style={{ background: "rgba(245,181,72,0.1)" }}
+              style={{ background: "rgba(203,208,213,0.1)" }}
             >
               <div className="text-xs font-semibold" style={{ color: "var(--theme-gold)" }}>
                 🔴 LIVE — Ends {endsAtLabel}

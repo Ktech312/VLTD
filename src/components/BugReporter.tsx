@@ -140,9 +140,9 @@ export default function BugReporter() {
           top: "auto",
           left: "auto",
           background: "var(--theme-elevated, rgba(12,18,30,0.96))",
-          border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.4))",
+          border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.4))",
           boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
-          color: "var(--theme-gold, #F5B548)",
+          color: "var(--theme-gold, #C8CDD2)",
         }}
       >
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -165,8 +165,8 @@ export default function BugReporter() {
           style={{
             position: "fixed",
             background: "linear-gradient(180deg, rgba(8,14,20,0.98), rgba(2,8,12,0.99))",
-            border: "1px solid var(--theme-gold-border, rgba(217,162,58,0.42))",
-            boxShadow: "0 18px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,241,168,0.08)",
+            border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.42))",
+            boxShadow: "0 18px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(237,239,241,0.08)",
             color: "var(--fg)",
           }}
           role="dialog"
@@ -177,12 +177,12 @@ export default function BugReporter() {
             onClick={dismissHelper}
             aria-label="Close bug helper"
             className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full text-[13px]"
-            style={{ color: "var(--muted)", background: "rgba(255,255,255,0.035)", border: "1px solid rgba(217,162,58,0.20)" }}
+            style={{ color: "var(--muted)", background: "rgba(255,255,255,0.035)", border: "1px solid rgba(203,208,213,0.20)" }}
           >
             ×
           </button>
           <div className="pr-7">
-            <div className="text-[10px] font-black uppercase tracking-[0.22em]" style={{ color: "var(--theme-gold, #F5B548)" }}>Report issues</div>
+            <div className="text-[10px] font-black uppercase tracking-[0.22em]" style={{ color: "var(--theme-gold, #C8CDD2)" }}>Report issues</div>
             <p className="mt-1 text-sm font-bold leading-tight text-[color:var(--fg)]">See something broken?</p>
             <p className="mt-1.5 text-xs leading-snug text-[color:var(--muted)]">
               Tap the bug button to send a quick note and optional screenshot. It helps us fix beta problems faster.
@@ -191,7 +191,7 @@ export default function BugReporter() {
               type="button"
               onClick={neverShowHelper}
               className="mt-3 text-[11px] font-semibold"
-              style={{ color: "var(--theme-gold, #F5B548)" }}
+              style={{ color: "var(--theme-gold, #C8CDD2)" }}
             >
               Never show again
             </button>
@@ -200,8 +200,8 @@ export default function BugReporter() {
             className="absolute -bottom-2 right-8 h-4 w-4 rotate-45"
             style={{
               background: "rgba(2,8,12,0.99)",
-              borderRight: "1px solid var(--theme-gold-border, rgba(217,162,58,0.42))",
-              borderBottom: "1px solid var(--theme-gold-border, rgba(217,162,58,0.42))",
+              borderRight: "1px solid var(--theme-gold-border, rgba(203,208,213,0.42))",
+              borderBottom: "1px solid var(--theme-gold-border, rgba(203,208,213,0.42))",
             }}
           />
         </div>
@@ -220,7 +220,7 @@ export default function BugReporter() {
             className="w-full max-w-md rounded-[24px] p-6"
             style={{
               background: "var(--theme-elevated, rgba(12,18,30,0.98))",
-              border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.28))",
+              border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.28))",
               boxShadow: "0 28px 90px rgba(0,0,0,0.5)",
             }}
           >
@@ -243,7 +243,7 @@ export default function BugReporter() {
                   onChange={(e) => setMessage(e.target.value)}
                   rows={4}
                   placeholder="What happened? What did you expect?"
-                  className="mt-4 w-full resize-none rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 py-3 text-sm text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(245,181,72,0.12)]"
+                  className="mt-4 w-full resize-none rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 py-3 text-sm text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
                 />
 
                 <label className="mt-3 flex cursor-pointer items-center gap-3 rounded-2xl border border-[color:var(--border)] bg-[rgba(255,255,255,0.02)] px-4 py-3 text-sm text-[color:var(--muted)] transition hover:text-text-primary">

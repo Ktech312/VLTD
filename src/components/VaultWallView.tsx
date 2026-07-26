@@ -224,7 +224,7 @@ export default function VaultWallView({ items, saleMap }: VaultWallViewProps) {
         className="sticky top-0 z-20 rounded-[14px] px-3 py-2.5 mb-3"
         style={{
           background: "var(--theme-card, rgba(10,18,36,0.96))",
-          border: "1px solid var(--theme-border, rgba(245,181,72,0.12))",
+          border: "1px solid var(--theme-border, rgba(203,208,213,0.12))",
           backdropFilter: "blur(12px)",
         }}
       >

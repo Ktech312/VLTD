@@ -332,7 +332,7 @@ function RecentItemCard({ item }: { item: SavedItemPreview }) {
         onClick={handleShare}
         title={copied ? "Copied!" : "Copy share link"}
         className="ml-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--surface)]"
-        style={{ color: copied ? "var(--theme-gold, #F5B548)" : "var(--muted)" }}
+        style={{ color: copied ? "var(--theme-gold, #C8CDD2)" : "var(--muted)" }}
       >
         {copied ? (
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -773,7 +773,7 @@ export default function QuickAddClient() {
               style={{
                 minHeight: 170,
                 background: "rgba(12,20,38,0.7)",
-                border: "1.5px dashed rgba(245,181,72,0.28)",
+                border: "1.5px dashed rgba(203,208,213,0.28)",
                 backdropFilter: "blur(8px)",
               }}
             >
@@ -782,19 +782,19 @@ export default function QuickAddClient() {
                 style={{
                   width: 54,
                   height: 54,
-                  background: "rgba(245,181,72,0.10)",
-                  border: "1.5px solid rgba(245,181,72,0.30)",
-                  boxShadow: "0 0 20px rgba(245,181,72,0.12)",
+                  background: "rgba(203,208,213,0.10)",
+                  border: "1.5px solid rgba(203,208,213,0.30)",
+                  boxShadow: "0 0 20px rgba(203,208,213,0.12)",
                 }}
               >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5B548" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C8CDD2" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                   <circle cx="12" cy="13" r="4"/>
                 </svg>
               </div>
 
               <div>
-                <div className="text-center text-base font-bold" style={{ color: "var(--theme-gold, #F5B548)" }}>
+                <div className="text-center text-base font-bold" style={{ color: "var(--theme-gold, #C8CDD2)" }}>
                   Tap to scan
                 </div>
                 <div className="mt-1 text-center text-[12px]" style={{ color: "rgba(160,149,107,0.6)" }}>
@@ -959,7 +959,7 @@ export default function QuickAddClient() {
               {showMoreFields ? "Hide extra fields" : "More fields — Category, Quantity, Notes"}
             </span>
             {universe || categoryLabel ? (
-              <span className="max-w-[160px] truncate text-right text-[11px]" style={{ color: "var(--theme-gold, #F5B548)" }}>
+              <span className="max-w-[160px] truncate text-right text-[11px]" style={{ color: "var(--theme-gold, #C8CDD2)" }}>
                 {[universe ? UNIVERSE_LABEL[universe] : "", categoryLabel].filter(Boolean).join(" › ")}
               </span>
             ) : null}
@@ -1054,7 +1054,7 @@ export default function QuickAddClient() {
               onClick={() => void saveQuickAdd()}
               disabled={!canSave || isPreparingImage}
               className="flex w-full items-center justify-center rounded-full py-3.5 text-sm font-bold transition disabled:opacity-40 active:scale-[0.98]"
-              style={{ background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B", boxShadow: "0 4px 18px rgba(245,181,72,0.28)" }}
+              style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B", boxShadow: "0 4px 18px rgba(203,208,213,0.28)" }}
             >
               {isSaving ? "Saving..." : "Save Item"}
             </button>

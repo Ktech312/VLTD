@@ -97,7 +97,7 @@ function CountdownChip({ cd }: { cd: CountdownResult }) {
   const urgent = cd.days === 0 && cd.hours === 0;
   const soon = cd.days === 0 && cd.hours < 4;
   const color = urgent ? "#f87171" : soon ? "#fb923c" : "var(--theme-gold)";
-  const bg    = urgent ? "rgba(239,68,68,0.12)" : soon ? "rgba(251,146,60,0.12)" : "rgba(245,181,72,0.10)";
+  const bg    = urgent ? "rgba(239,68,68,0.12)" : soon ? "rgba(251,146,60,0.12)" : "rgba(203,208,213,0.10)";
 
   return (
     <span

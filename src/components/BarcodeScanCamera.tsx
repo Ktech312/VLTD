@@ -140,25 +140,25 @@ export default function BarcodeScanCamera({
             ].map((cls, i) => (
               <div
                 key={i}
-                className={`absolute w-8 h-8 border-[#F5B548] ${cls}`}
+                className={`absolute w-8 h-8 border-[#C8CDD2] ${cls}`}
               />
             ))}
             {/* Animated sweep line */}
             {!scanned && (
               <div
-                className="absolute left-2 right-2 h-0.5 bg-[#F5B548]/70"
+                className="absolute left-2 right-2 h-0.5 bg-[#C8CDD2]/70"
                 style={{ animation: "barcode-sweep 1.8s ease-in-out infinite" }}
               />
             )}
             {/* Success state */}
             {scanned && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F5B548]">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#C8CDD2]">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                 </div>
-                <span className="rounded-full bg-black/70 px-3 py-1 text-xs font-bold text-[#F5B548]">
+                <span className="rounded-full bg-black/70 px-3 py-1 text-xs font-bold text-[#C8CDD2]">
                   {scannedCode}
                 </span>
               </div>
@@ -202,7 +202,7 @@ export default function BarcodeScanCamera({
             className="flex flex-col items-center gap-0.5 rounded-2xl bg-black/50 px-3 py-2 ring-1 ring-white/20 backdrop-blur-sm disabled:opacity-40"
             title="Tap to scan now"
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={manualFeedback === "none" ? "#ef4444" : "#F5B548"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={manualFeedback === "none" ? "#ef4444" : "#C8CDD2"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <rect x="1" y="1" width="4" height="22" rx="1" />
               <rect x="7" y="1" width="1" height="22" rx="0.5" />
               <rect x="10" y="1" width="3" height="22" rx="0.5" />

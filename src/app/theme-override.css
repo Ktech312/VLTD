@@ -28,7 +28,7 @@
 [data-vltd-theme] body .vltd-panel-main,
 [data-vltd-theme] body .vltd-panel-soft {
   background: var(--surface, var(--theme-card, rgba(3,8,14,0.95))) !important;
-  border-color: var(--frame-ring, var(--theme-gold-border, rgba(217,162,58,0.42))) !important;
+  border-color: var(--frame-ring, var(--theme-gold-border, rgba(203,208,213,0.42))) !important;
   color: var(--theme-text-primary, #E8D7B8) !important;
 }
 
@@ -36,7 +36,7 @@
 [data-vltd-theme] body .vault-card,
 [data-vltd-theme] body .vault-card-gold {
   background: var(--surface, var(--theme-card, rgba(3,8,14,0.95))) !important;
-  border-color: var(--border, var(--theme-border, rgba(184,135,43,0.22))) !important;
+  border-color: var(--border, var(--theme-border, rgba(203,208,213,0.22))) !important;
 }
 
 /* ── NAVIGATION ── */
@@ -44,7 +44,7 @@
 [data-vltd-theme] body header,
 [data-vltd-theme] body [role="navigation"] {
   background: var(--theme-nav-bg, rgba(3,9,11,0.94)) !important;
-  border-color: var(--theme-nav-border, rgba(245,181,72,0.15)) !important;
+  border-color: var(--theme-nav-border, rgba(203,208,213,0.15)) !important;
 }
 
 /* ── INPUTS ── */
@@ -52,7 +52,7 @@
 [data-vltd-theme] body textarea,
 [data-vltd-theme] body select {
   background: var(--theme-elevated, rgba(7,13,22,0.96)) !important;
-  border-color: var(--theme-border, rgba(184,135,43,0.22)) !important;
+  border-color: var(--theme-border, rgba(203,208,213,0.22)) !important;
   color: var(--theme-text-primary, #E8D7B8) !important;
 }
 [data-vltd-theme] body input::placeholder,
@@ -62,8 +62,8 @@
 [data-vltd-theme] body input:focus,
 [data-vltd-theme] body textarea:focus,
 [data-vltd-theme] body select:focus {
-  border-color: var(--frame-ring, var(--theme-gold-border, rgba(217,162,58,0.42))) !important;
-  box-shadow: 0 0 0 2px var(--accent-soft, var(--theme-gold-subtle, rgba(245,181,72,0.08))) !important;
+  border-color: var(--frame-ring, var(--theme-gold-border, rgba(203,208,213,0.42))) !important;
+  box-shadow: 0 0 0 2px var(--accent-soft, var(--theme-gold-subtle, rgba(203,208,213,0.08))) !important;
   outline: none !important;
 }
 
@@ -88,21 +88,21 @@
 [data-vltd-theme] body [class*="text-blue-"],
 [data-vltd-theme] body [class*="text-indigo-"],
 [data-vltd-theme] body [class*="text-cyan-"]:not([class*="keep-cyan"]) {
-  color: var(--theme-gold, #D9A23A) !important;
+  color: var(--theme-gold, #C8CDD2) !important;
 }
 
 /* Blue backgrounds → theme subtle */
 [data-vltd-theme] body [class*="bg-blue-"]:not(button):not(a),
 [data-vltd-theme] body [class*="bg-indigo-"]:not(button):not(a),
 [data-vltd-theme] body [class*="bg-cyan-"]:not(button):not(a):not([class*="keep-cyan"]) {
-  background-color: var(--theme-gold-subtle, rgba(245,181,72,0.08)) !important;
+  background-color: var(--theme-gold-subtle, rgba(203,208,213,0.08)) !important;
 }
 
 /* Blue borders → theme gold border */
 [data-vltd-theme] body [class*="border-blue-"],
 [data-vltd-theme] body [class*="border-indigo-"],
 [data-vltd-theme] body [class*="border-cyan-"]:not([class*="keep-cyan"]) {
-  border-color: var(--theme-gold-border, rgba(217,162,58,0.42)) !important;
+  border-color: var(--theme-gold-border, rgba(203,208,213,0.42)) !important;
 }
 
 /* Blue buttons → gold */
@@ -218,7 +218,7 @@
 [data-vltd-theme] body [class*="rounded-full"][class*="px-"][class*="py-"],
 [data-vltd-theme] body [class*="badge"],
 [data-vltd-theme] body [class*="pill"] {
-  border-color: var(--theme-gold-border, rgba(217,162,58,0.42)) !important;
+  border-color: var(--theme-gold-border, rgba(203,208,213,0.42)) !important;
 }
 
 [data-vltd-theme] body [class*="rounded-full"][class*="px-"],
@@ -284,4 +284,4 @@
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--theme-card, #03080E); }
 ::-webkit-scrollbar-thumb { background: var(--theme-border, #3A2B13); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--theme-gold-border, rgba(245,181,72,0.4)); }
+::-webkit-scrollbar-thumb:hover { background: var(--theme-gold-border, rgba(203,208,213,0.4)); }

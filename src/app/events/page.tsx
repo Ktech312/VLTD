@@ -121,7 +121,7 @@ function categoryLabel(category: EventCategory): string {
 
 function categoryColor(category: EventCategory): string {
   const colors: Record<EventCategory, string> = {
-    convention: "#f5b548",
+    convention: "#C8CDD2",
     card_show: "#58d8f6",
     auction: "#f07ab6",
     drop: "#5dd892",
@@ -136,15 +136,15 @@ function eventArtStyle(event: CollectorEvent): React.CSSProperties {
   const accent = categoryColor(category);
   const overlays: Record<EventCategory, string> = {
     convention:
-      "radial-gradient(circle at 78% 18%, rgba(245,181,72,0.38), transparent 24%), linear-gradient(135deg, rgba(23,39,64,0.92), rgba(6,10,14,0.62)), repeating-linear-gradient(90deg, rgba(245,181,72,0.16) 0 2px, transparent 2px 46px)",
+      "radial-gradient(circle at 78% 18%, rgba(203,208,213,0.38), transparent 24%), linear-gradient(135deg, rgba(23,39,64,0.92), rgba(6,10,14,0.62)), repeating-linear-gradient(90deg, rgba(203,208,213,0.16) 0 2px, transparent 2px 46px)",
     card_show:
-      "radial-gradient(circle at 72% 24%, rgba(88,216,246,0.26), transparent 26%), linear-gradient(135deg, rgba(11,31,48,0.92), rgba(5,9,13,0.72)), repeating-linear-gradient(125deg, rgba(245,181,72,0.14) 0 1px, transparent 1px 34px)",
+      "radial-gradient(circle at 72% 24%, rgba(88,216,246,0.26), transparent 26%), linear-gradient(135deg, rgba(11,31,48,0.92), rgba(5,9,13,0.72)), repeating-linear-gradient(125deg, rgba(203,208,213,0.14) 0 1px, transparent 1px 34px)",
     auction:
-      "radial-gradient(circle at 78% 22%, rgba(240,122,182,0.28), transparent 22%), linear-gradient(135deg, rgba(50,18,31,0.9), rgba(5,9,13,0.74)), repeating-linear-gradient(0deg, rgba(245,181,72,0.14) 0 1px, transparent 1px 40px)",
+      "radial-gradient(circle at 78% 22%, rgba(240,122,182,0.28), transparent 22%), linear-gradient(135deg, rgba(50,18,31,0.9), rgba(5,9,13,0.74)), repeating-linear-gradient(0deg, rgba(203,208,213,0.14) 0 1px, transparent 1px 40px)",
     drop:
       "radial-gradient(circle at 72% 18%, rgba(93,216,146,0.30), transparent 25%), linear-gradient(135deg, rgba(9,35,29,0.92), rgba(5,9,13,0.72)), repeating-linear-gradient(135deg, rgba(93,216,146,0.12) 0 1px, transparent 1px 36px)",
     gallery:
-      "radial-gradient(circle at 76% 22%, rgba(185,137,255,0.30), transparent 24%), linear-gradient(135deg, rgba(33,22,48,0.92), rgba(5,9,13,0.75)), repeating-linear-gradient(90deg, rgba(245,181,72,0.12) 0 1px, transparent 1px 42px)",
+      "radial-gradient(circle at 76% 22%, rgba(185,137,255,0.30), transparent 24%), linear-gradient(135deg, rgba(33,22,48,0.92), rgba(5,9,13,0.75)), repeating-linear-gradient(90deg, rgba(203,208,213,0.12) 0 1px, transparent 1px 42px)",
     music:
       "radial-gradient(circle at 74% 20%, rgba(224,180,74,0.34), transparent 25%), linear-gradient(135deg, rgba(45,30,10,0.92), rgba(5,9,13,0.75)), repeating-linear-gradient(115deg, rgba(224,180,74,0.14) 0 1px, transparent 1px 38px)",
   };
@@ -319,7 +319,7 @@ function EventCard({
       style={{
         background: "var(--theme-card)",
         borderColor: selected ? "var(--theme-gold)" : "var(--border)",
-        boxShadow: selected ? "0 0 0 1px rgba(245,181,72,0.18)" : "none",
+        boxShadow: selected ? "0 0 0 1px rgba(203,208,213,0.18)" : "none",
       }}
     >
       <div className="relative">
@@ -389,7 +389,7 @@ function EventSuggestionCard({
         style={{
           backgroundImage: suggestion.thumbnail
             ? `linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.42)), url(${suggestion.thumbnail})`
-            : "radial-gradient(circle at 70% 18%, rgba(245,181,72,0.24), transparent 30%), linear-gradient(135deg, rgba(14,34,48,0.88), rgba(4,7,10,0.94))",
+            : "radial-gradient(circle at 70% 18%, rgba(203,208,213,0.24), transparent 30%), linear-gradient(135deg, rgba(14,34,48,0.88), rgba(4,7,10,0.94))",
         }}
       />
       <div className="min-w-0">

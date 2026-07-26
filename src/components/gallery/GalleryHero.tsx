@@ -124,9 +124,9 @@ export default function GalleryHero({
             style={
               galleryMode === "swipe"
                 ? {
-                    background: "var(--theme-gold-subtle, rgba(245,181,72,0.20))",
-                    border: "1px solid rgba(245,181,72,0.5)",
-                    color: "#F5B548",
+                    background: "var(--theme-gold-subtle, rgba(203,208,213,0.20))",
+                    border: "1px solid rgba(203,208,213,0.5)",
+                    color: "#C8CDD2",
                   }
                 : {
                     background: "rgba(0,0,0,0.45)",
@@ -144,9 +144,9 @@ export default function GalleryHero({
             style={
               galleryMode === "grid"
                 ? {
-                    background: "var(--theme-gold-subtle, rgba(245,181,72,0.20))",
-                    border: "1px solid rgba(245,181,72,0.5)",
-                    color: "#F5B548",
+                    background: "var(--theme-gold-subtle, rgba(203,208,213,0.20))",
+                    border: "1px solid rgba(203,208,213,0.5)",
+                    color: "#C8CDD2",
                   }
                 : {
                     background: "rgba(0,0,0,0.45)",
@@ -166,9 +166,9 @@ export default function GalleryHero({
             onClick={onAdd}
             className="flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-sm transition hover:scale-105 active:scale-95"
             style={{
-              background: "var(--theme-gold-subtle, rgba(245,181,72,0.18))",
-              border: "1px solid rgba(245,181,72,0.45)",
-              color: "#F5B548",
+              background: "var(--theme-gold-subtle, rgba(203,208,213,0.18))",
+              border: "1px solid rgba(203,208,213,0.45)",
+              color: "#C8CDD2",
               fontSize: "20px",
               fontWeight: 300,
             }}

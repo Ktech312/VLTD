@@ -183,7 +183,7 @@ const RIGHTS_TIERS: Tier[] = ["FREE", "MID", "FULL"];
 const TIER_STYLE: Record<Tier, { bg: string; border: string; fg: string }> = {
   FREE: { bg: "rgba(255,255,255,0.06)", border: "rgba(255,255,255,0.18)", fg: "rgba(255,255,255,0.7)" },
   MID: { bg: "rgba(96,165,250,0.14)", border: "rgba(96,165,250,0.45)", fg: "#93c5fd" },
-  FULL: { bg: "rgba(245,181,72,0.16)", border: "rgba(245,181,72,0.55)", fg: "#F5B548" },
+  FULL: { bg: "rgba(203,208,213,0.16)", border: "rgba(203,208,213,0.55)", fg: "#C8CDD2" },
 };
 
 function AccountRightsPanel() {
@@ -520,10 +520,10 @@ function CouponsPanel({ adminEmail }: { adminEmail: string }) {
               const exhausted = used && c.times_redeemed >= (c.max_redemptions ?? 0);
               return (
                 <div key={c.id} className={`flex flex-wrap items-center gap-3 rounded-2xl px-4 py-3 ring-1 ${c.active && !exhausted ? "bg-white/[0.04] ring-white/10" : "bg-white/[0.02] ring-white/5 opacity-60"}`}>
-                  <button type="button" onClick={() => void copy(c.code)} className="font-mono text-sm font-bold text-[#F5B548] hover:underline" title="Copy code">
+                  <button type="button" onClick={() => void copy(c.code)} className="font-mono text-sm font-bold text-[#C8CDD2] hover:underline" title="Copy code">
                     {copied === c.code ? "Copied!" : c.code}
                   </button>
-                  <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "rgba(245,181,72,0.14)", color: "#F5B548" }}>{c.tier}</span>
+                  <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "rgba(203,208,213,0.14)", color: "#C8CDD2" }}>{c.tier}</span>
                   <span className="text-[11px] text-white/50">{durationLabel(c.duration_months)}</span>
                   <span className="text-[11px] text-white/40">
                     {c.times_redeemed}{used ? ` / ${c.max_redemptions}` : ""} used
@@ -604,7 +604,7 @@ function SidebarSection({
         className={`flex w-full items-center justify-between px-4 py-3 text-left transition ${active ? "bg-white/[0.06]" : "hover:bg-white/[0.04]"}`}
       >
         <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-white/70">
-          <span className="shrink-0" style={{ color: "var(--theme-gold, #F5B548)" }}>
+          <span className="shrink-0" style={{ color: "var(--theme-gold, #C8CDD2)" }}>
             <AdminIcon name={icon} />
           </span>
           {title}
@@ -1771,7 +1771,7 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
 
               return (
                 <div key={g.id} className="overflow-hidden rounded-2xl ring-1 ring-white/8"
-                  style={{ background: isOpen ? "rgba(245,181,72,0.03)" : "rgba(255,255,255,0.03)" }}>
+                  style={{ background: isOpen ? "rgba(203,208,213,0.03)" : "rgba(255,255,255,0.03)" }}>
 
                   {/* Header */}
                   <div className="flex items-center gap-3 p-4">

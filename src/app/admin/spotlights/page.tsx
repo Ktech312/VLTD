@@ -34,7 +34,7 @@ const EMPTY_FORM: Omit<Spotlight, "id"> = {
 };
 
 function inputCls() {
-  return "w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-sm text-[color:var(--fg)] outline-none focus:border-[rgba(245,181,72,0.5)] focus:ring-2 focus:ring-[rgba(245,181,72,0.12)]";
+  return "w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-sm text-[color:var(--fg)] outline-none focus:border-[rgba(203,208,213,0.5)] focus:ring-2 focus:ring-[rgba(203,208,213,0.12)]";
 }
 
 export default function AdminSpotlightsPage() {
@@ -143,7 +143,7 @@ export default function AdminSpotlightsPage() {
             type="button"
             onClick={startNew}
             className="rounded-full px-5 py-2.5 text-sm font-black text-[#0B0B0B] transition hover:brightness-110"
-            style={{ background: "linear-gradient(135deg, #8B6914, #F5B548)" }}
+            style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)" }}
           >
             + Add Spotlight
           </button>
@@ -159,7 +159,7 @@ export default function AdminSpotlightsPage() {
         {showForm && (
           <div
             className="mb-6 rounded-[24px] p-5"
-            style={{ background: "var(--theme-elevated)", border: "1px solid rgba(245,181,72,0.25)" }}
+            style={{ background: "var(--theme-elevated)", border: "1px solid rgba(203,208,213,0.25)" }}
           >
             <h2 className="mb-4 text-base font-black" style={{ color: "var(--fg)" }}>
               {editingId ? "Edit Spotlight" : "New Spotlight"}
@@ -302,7 +302,7 @@ export default function AdminSpotlightsPage() {
                 onClick={() => void handleSave()}
                 disabled={saving || !form.name.trim()}
                 className="rounded-full px-6 py-2.5 text-sm font-black text-[#0B0B0B] transition hover:brightness-110 disabled:opacity-50"
-                style={{ background: "linear-gradient(135deg, #8B6914, #F5B548)" }}
+                style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)" }}
               >
                 {saving ? "Saving…" : editingId ? "Update" : "Create"}
               </button>
@@ -331,7 +331,7 @@ export default function AdminSpotlightsPage() {
               <div
                 key={s.id}
                 className="flex items-center gap-4 rounded-[20px] px-4 py-3"
-                style={{ background: "var(--theme-card)", border: s.is_featured ? "1px solid rgba(245,181,72,0.35)" : "1px solid var(--border)" }}
+                style={{ background: "var(--theme-card)", border: s.is_featured ? "1px solid rgba(203,208,213,0.35)" : "1px solid var(--border)" }}
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl text-xl"
                   style={{ background: "var(--theme-elevated)" }}>

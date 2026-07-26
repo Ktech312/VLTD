@@ -1106,7 +1106,7 @@ export default function GalleryPage() {
                         type="button"
                         onClick={() => void saveDraft()}
                         disabled={!isDirty}
-                        className="vltd-pill-main-glow inline-flex min-h-[30px] min-w-[104px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-3 py-1 text-[10px] font-semibold text-[color:var(--fg)] ring-1 ring-[rgba(245,181,72,0.48)] transition hover:opacity-95"
+                        className="vltd-pill-main-glow inline-flex min-h-[30px] min-w-[104px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-3 py-1 text-[10px] font-semibold text-[color:var(--fg)] ring-1 ring-[rgba(203,208,213,0.48)] transition hover:opacity-95"
                       >
                         Save Changes
                       </button>

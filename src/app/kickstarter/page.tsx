@@ -30,17 +30,17 @@ function CampaignCard({ project }: { project: KickstarterProject }) {
         display: "flex",
         flexDirection: "column",
         background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(245,181,72,0.10)",
+        border: "1px solid rgba(203,208,213,0.10)",
         borderRadius: "14px",
         overflow: "hidden",
         textDecoration: "none",
         transition: "border-color 0.15s",
       }}
       onMouseEnter={(e) =>
-        (e.currentTarget.style.borderColor = "rgba(245,181,72,0.30)")
+        (e.currentTarget.style.borderColor = "rgba(203,208,213,0.30)")
       }
       onMouseLeave={(e) =>
-        (e.currentTarget.style.borderColor = "rgba(245,181,72,0.10)")
+        (e.currentTarget.style.borderColor = "rgba(203,208,213,0.10)")
       }
     >
       {/* Cover image */}
@@ -111,7 +111,7 @@ function CampaignCard({ project }: { project: KickstarterProject }) {
               padding: "2px 8px",
               fontSize: "10px",
               fontWeight: 700,
-              color: daysLeft <= 3 ? "#FF6B6B" : "#F0EAD6",
+              color: daysLeft <= 3 ? "#FF6B6B" : "#ECEDEF",
             }}
           >
             {daysLeft === 0 ? "Last day!" : `${daysLeft}d left`}
@@ -133,7 +133,7 @@ function CampaignCard({ project }: { project: KickstarterProject }) {
           style={{
             fontSize: "13px",
             fontWeight: 700,
-            color: "#F0EAD6",
+            color: "#ECEDEF",
             lineHeight: 1.35,
             overflow: "hidden",
             display: "-webkit-box",
@@ -144,7 +144,7 @@ function CampaignCard({ project }: { project: KickstarterProject }) {
           {project.name}
         </div>
 
-        <div style={{ fontSize: "11px", color: "rgba(245,181,72,0.65)" }}>
+        <div style={{ fontSize: "11px", color: "rgba(203,208,213,0.65)" }}>
           by {project.creator}
         </div>
 
@@ -177,7 +177,7 @@ function CampaignCard({ project }: { project: KickstarterProject }) {
                 width: `${Math.min(100, project.percentFunded)}%`,
                 background: isFunded
                   ? "linear-gradient(90deg,#50C850,#80E880)"
-                  : "linear-gradient(90deg,#F5B548,#FFE08A)",
+                  : "linear-gradient(90deg,#C8CDD2,#EDEFF1)",
                 borderRadius: "2px",
                 transition: "width 0.3s",
               }}
@@ -194,7 +194,7 @@ function CampaignCard({ project }: { project: KickstarterProject }) {
               style={{
                 fontSize: "10px",
                 fontWeight: 700,
-                color: isFunded ? "#50C850" : "#F5B548",
+                color: isFunded ? "#50C850" : "#C8CDD2",
               }}
             >
               {project.percentFunded.toLocaleString()}% funded
@@ -273,7 +273,7 @@ export default function KickstarterPage() {
       style={{
         minHeight: "100dvh",
         background: "#0A0A12",
-        color: "#F0EAD6",
+        color: "#ECEDEF",
         paddingTop: "env(safe-area-inset-top, 0px)",
         paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 90px)",
       }}
@@ -286,7 +286,7 @@ export default function KickstarterPage() {
           zIndex: 40,
           background: "rgba(10,10,18,0.95)",
           backdropFilter: "blur(12px)",
-          borderBottom: "1px solid rgba(245,181,72,0.08)",
+          borderBottom: "1px solid rgba(203,208,213,0.08)",
           padding: "16px 16px 12px",
         }}
       >
@@ -336,11 +336,11 @@ export default function KickstarterPage() {
               style={{
                 flex: 1,
                 background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(245,181,72,0.20)",
+                border: "1px solid rgba(203,208,213,0.20)",
                 borderRadius: "10px",
                 padding: "11px 14px",
                 fontSize: "15px",
-                color: "#F0EAD6",
+                color: "#ECEDEF",
                 outline: "none",
               }}
             />
@@ -420,7 +420,7 @@ export default function KickstarterPage() {
           <div
             style={{
               fontSize: "12px",
-              color: "rgba(245,181,72,0.7)",
+              color: "rgba(203,208,213,0.7)",
               marginBottom: "14px",
             }}
           >
@@ -488,7 +488,7 @@ export default function KickstarterPage() {
                   borderRadius: "14px",
                   overflow: "hidden",
                   background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(245,181,72,0.06)",
+                  border: "1px solid rgba(203,208,213,0.06)",
                 }}
               >
                 <div

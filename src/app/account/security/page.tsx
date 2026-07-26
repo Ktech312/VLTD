@@ -95,7 +95,7 @@ export default function SecurityPage() {
           className="relative -mt-px overflow-hidden rounded-[34px] rounded-tl-none p-5 sm:p-7"
           style={{
             background: "var(--theme-elevated, rgba(20,32,55,0.9))",
-            border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.25))",
+            border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.25))",
             boxShadow: "0 26px 86px rgba(0,0,0,0.32)",
           }}
         >

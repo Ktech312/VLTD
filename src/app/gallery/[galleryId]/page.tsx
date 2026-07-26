@@ -93,7 +93,7 @@ export default function PublicGalleryPage() {
         />
 
         {reportSent && (
-          <div className="mt-3 rounded-2xl px-4 py-3 text-sm text-center" style={{ background: "rgba(245,181,72,0.08)", border: "1px solid rgba(245,181,72,0.2)", color: "#F5B548" }}>
+          <div className="mt-3 rounded-2xl px-4 py-3 text-sm text-center" style={{ background: "rgba(203,208,213,0.08)", border: "1px solid rgba(203,208,213,0.2)", color: "#C8CDD2" }}>
             Report submitted — thank you.
           </div>
         )}
@@ -109,13 +109,13 @@ export default function PublicGalleryPage() {
               style={{
                 aspectRatio: "2/3",
                 background: "rgba(15,25,45,0.6)",
-                border: "1.5px dashed rgba(245,181,72,0.35)",
-                color: "#F5B548",
+                border: "1.5px dashed rgba(203,208,213,0.35)",
+                color: "#C8CDD2",
               }}
             >
               <span
                 className="flex h-12 w-12 items-center justify-center rounded-full"
-                style={{ background: "rgba(245,181,72,0.12)", border: "1px solid rgba(245,181,72,0.3)", fontSize: "24px", fontWeight: 300 }}
+                style={{ background: "rgba(203,208,213,0.12)", border: "1px solid rgba(203,208,213,0.3)", fontSize: "24px", fontWeight: 300 }}
               >
                 +
               </span>

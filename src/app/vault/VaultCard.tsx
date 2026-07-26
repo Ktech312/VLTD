@@ -86,13 +86,13 @@ export default function VaultCard({
         ref={tiltRef}
         className={`relative rounded-2xl vltd-panel-soft p-2.5 sm:p-3 ${frame.card} transition-transform duration-200`}
         style={isBulkPending ? {
-          boxShadow: "0 0 0 2px rgba(245,181,72,0.60), 0 0 22px rgba(245,181,72,0.35), 0 0 48px rgba(245,181,72,0.15)",
+          boxShadow: "0 0 0 2px rgba(203,208,213,0.60), 0 0 22px rgba(203,208,213,0.35), 0 0 48px rgba(203,208,213,0.15)",
           animation: "bulk-glow-pulse 2s ease-in-out infinite",
         } : undefined}
       >
         {isBulkPending && (
           <div className="absolute -top-1.5 left-3 z-20 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.18em]"
-            style={{ background: "rgba(245,181,72,0.95)", color: "#1A0F00" }}>
+            style={{ background: "rgba(203,208,213,0.95)", color: "#1A0F00" }}>
             Tap to complete
           </div>
         )}

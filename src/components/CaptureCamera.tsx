@@ -70,21 +70,21 @@ export default function CaptureCamera({ onCapture, onOpenCamera }: CaptureCamera
         }}
         className="group relative flex min-h-[260px] w-full flex-col items-center justify-center overflow-hidden rounded-[24px] border border-dashed px-5 text-center transition hover:-translate-y-0.5"
         style={{
-          borderColor: "var(--theme-gold-border, rgba(245,181,72,0.35))",
-          background: "radial-gradient(circle at 50% 0%, var(--theme-gold-subtle, rgba(245,181,72,0.08)), rgba(5,11,21,0.62) 100%)",
+          borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))",
+          background: "radial-gradient(circle at 50% 0%, var(--theme-gold-subtle, rgba(203,208,213,0.08)), rgba(5,11,21,0.62) 100%)",
         }}
       >
         <div
           className="absolute inset-x-8 top-8 h-24 rounded-full blur-3xl transition"
-          style={{ background: "var(--theme-gold-subtle, rgba(245,181,72,0.10))" }}
+          style={{ background: "var(--theme-gold-subtle, rgba(203,208,213,0.10))" }}
         />
         <div
           className="relative grid h-20 w-20 place-items-center rounded-[24px]"
           style={{
-            border: "1px solid var(--theme-gold-border, rgba(245,181,72,0.25))",
-            background: "var(--theme-gold-subtle, rgba(245,181,72,0.08))",
-            boxShadow: "0 18px 42px rgba(245,181,72,0.10)",
-            color: "var(--theme-gold, #F5B548)",
+            border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.25))",
+            background: "var(--theme-gold-subtle, rgba(203,208,213,0.08))",
+            boxShadow: "0 18px 42px rgba(203,208,213,0.10)",
+            color: "var(--theme-gold, #C8CDD2)",
           }}
         >
           <CameraIcon />

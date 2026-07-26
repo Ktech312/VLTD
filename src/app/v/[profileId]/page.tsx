@@ -126,7 +126,7 @@ function FeaturedCard({ item, onClick }: { item: VaultItem; onClick?: (item: Vau
           {item.grade && (
             <>
               <span>·</span>
-              <span className="font-semibold text-[color:var(--theme-gold,#F5B548)]">
+              <span className="font-semibold text-[color:var(--theme-gold,#C8CDD2)]">
                 Grade {item.grade}
               </span>
             </>
@@ -225,7 +225,7 @@ function ProfileItemModal({
                 {[singleItem.subtitle, singleItem.number, singleItem.grade ? `Grade ${singleItem.grade}` : null].filter(Boolean).join(" · ") || (singleItem.universe ?? singleItem.category ?? "")}
               </div>
               {typeof singleItem.currentValue === "number" && singleItem.currentValue > 0 && (
-                <div style={{ marginTop: 8, display: "inline-flex", borderRadius: 999, padding: "5px 14px", fontSize: 13, fontWeight: 700, background: "var(--pill)", color: "var(--theme-gold, #F5B548)" }}>
+                <div style={{ marginTop: 8, display: "inline-flex", borderRadius: 999, padding: "5px 14px", fontSize: 13, fontWeight: 700, background: "var(--pill)", color: "var(--theme-gold, #C8CDD2)" }}>
                   {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(singleItem.currentValue)}
                 </div>
               )}
@@ -443,7 +443,7 @@ export default function PublicVaultPage({
             </button>
             <Link
               href="/"
-              className="inline-flex h-8 items-center rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-bold tracking-[0.16em] text-[color:var(--theme-gold,#F5B548)] ring-1 ring-[color:var(--border)]"
+              className="inline-flex h-8 items-center rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-bold tracking-[0.16em] text-[color:var(--theme-gold,#C8CDD2)] ring-1 ring-[color:var(--border)]"
             >
               VLTD
             </Link>
@@ -578,13 +578,13 @@ export default function PublicVaultPage({
 
         {/* ── Footer CTA ── */}
         <div className="mb-12 rounded-2xl bg-[color:var(--surface)] p-6 text-center ring-1 ring-[color:var(--border)]">
-          <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-[color:var(--theme-gold,#F5B548)] mb-1">VLTD</div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-[color:var(--theme-gold,#C8CDD2)] mb-1">VLTD</div>
           <h3 className="font-semibold mb-1">Track your collection</h3>
           <p className="text-sm text-[color:var(--muted)] mb-4">Vault, grade, value, and share your collectibles.</p>
           <Link
             href="/signup"
             className="inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-bold"
-            style={{ background: "#F5B548", color: "#0B0B0B" }}
+            style={{ background: "#C8CDD2", color: "#0B0B0B" }}
           >
             Start your vault →
           </Link>

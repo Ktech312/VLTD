@@ -309,7 +309,7 @@ function PublicGalleryTile({ gallery }: { gallery: PublicGalleryCard }) {
       className="group overflow-hidden rounded-2xl transition hover:-translate-y-1"
       style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
     >
-      <div className="relative aspect-[16/10] overflow-hidden bg-[radial-gradient(circle_at_35%_20%,rgba(255,255,255,0.12),rgba(245,181,72,0.04)_34%,rgba(0,0,0,0.22)_100%)] p-3">
+      <div className="relative aspect-[16/10] overflow-hidden bg-[radial-gradient(circle_at_35%_20%,rgba(255,255,255,0.12),rgba(203,208,213,0.04)_34%,rgba(0,0,0,0.22)_100%)] p-3">
         <img
           src={gallery.image}
           alt={gallery.title}
@@ -526,9 +526,9 @@ export default function PublicHomeClient() {
       </section>
 
       {/* ── Beta invite / early access ────────────────────────── */}
-      <section id="early-access" className="scroll-mt-24 border-b" style={{ borderColor: 'var(--border)', background: 'linear-gradient(135deg, rgba(245,181,72,0.06) 0%, var(--bg) 60%)' }}>
+      <section id="early-access" className="scroll-mt-24 border-b" style={{ borderColor: 'var(--border)', background: 'linear-gradient(135deg, rgba(203,208,213,0.06) 0%, var(--bg) 60%)' }}>
         <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(245,181,72,0.32)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] mb-4" style={{ color: '#F5B548', background: 'rgba(245,181,72,0.07)' }}>
+          <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(203,208,213,0.32)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] mb-4" style={{ color: '#C8CDD2', background: 'rgba(203,208,213,0.07)' }}>
             Beta Access
           </div>
           <h2 className="text-2xl font-black tracking-[-0.04em] text-text-primary sm:text-3xl">
@@ -555,7 +555,7 @@ export default function PublicHomeClient() {
                 placeholder="your@email.com"
                 value={waitlistEmail}
                 onChange={(e) => setWaitlistEmail(e.target.value)}
-                className="h-12 flex-1 max-w-sm rounded-full border px-5 text-sm outline-none transition focus:ring-2 focus:ring-[rgba(245,181,72,0.4)]"
+                className="h-12 flex-1 max-w-sm rounded-full border px-5 text-sm outline-none transition focus:ring-2 focus:ring-[rgba(203,208,213,0.4)]"
                 style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--fg)' }}
                 disabled={waitlistStatus === "loading"}
               />
@@ -588,11 +588,11 @@ export default function PublicHomeClient() {
             className="w-full max-w-md rounded-[26px] p-6 sm:p-7"
             style={{
               background: 'var(--theme-elevated, rgba(12,18,30,0.98))',
-              border: '1px solid var(--theme-gold-border, rgba(245,181,72,0.28))',
+              border: '1px solid var(--theme-gold-border, rgba(203,208,213,0.28))',
               boxShadow: '0 28px 90px rgba(0,0,0,0.5)',
             }}
           >
-            <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: '#F5B548', borderColor: 'rgba(245,181,72,0.32)', background: 'rgba(245,181,72,0.07)' }}>
+            <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: '#C8CDD2', borderColor: 'rgba(203,208,213,0.32)', background: 'rgba(203,208,213,0.07)' }}>
               Beta Access
             </div>
             <h3 className="mt-4 text-xl font-black tracking-[-0.02em] text-text-primary">VLTD Beta Access</h3>
@@ -612,7 +612,7 @@ export default function PublicHomeClient() {
                 type="checkbox"
                 checked={consentAgreed}
                 onChange={(e) => setConsentAgreed(e.target.checked)}
-                className="mt-0.5 h-5 w-5 shrink-0 accent-[#F5B548]"
+                className="mt-0.5 h-5 w-5 shrink-0 accent-[#C8CDD2]"
               />
               <span className="text-sm font-semibold text-text-primary">
                 I have read and agree to the Beta Testing Terms.
@@ -647,11 +647,11 @@ export default function PublicHomeClient() {
             <div key={feature.title} className="px-2 py-7 md:px-6">
               <div
                 className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl border"
-                style={{ borderColor: 'var(--theme-gold-border, rgba(245,181,72,0.3))', background: 'rgba(245,181,72,0.08)', color: 'var(--theme-gold, #F5B548)' }}
+                style={{ borderColor: 'var(--theme-gold-border, rgba(203,208,213,0.3))', background: 'rgba(203,208,213,0.08)', color: 'var(--theme-gold, #C8CDD2)' }}
               >
                 {feature.icon}
               </div>
-              <div className="text-[13px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--theme-gold, #F5B548)' }}>
+              <div className="text-[13px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--theme-gold, #C8CDD2)' }}>
                 {feature.title}
               </div>
               <p className="mt-2 text-sm leading-6" style={{ color: 'var(--muted)' }}>
@@ -681,7 +681,7 @@ export default function PublicHomeClient() {
             >
               <div
                 className="flex h-9 w-9 items-center justify-center rounded-full border text-sm font-black"
-                style={{ borderColor: 'var(--theme-gold-border, rgba(245,181,72,0.4))', color: 'var(--theme-gold, #F5B548)' }}
+                style={{ borderColor: 'var(--theme-gold-border, rgba(203,208,213,0.4))', color: 'var(--theme-gold, #C8CDD2)' }}
               >
                 {step.n}
               </div>
@@ -722,7 +722,7 @@ export default function PublicHomeClient() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-sm font-black" style={{ color: 'var(--fg)' }}>
-                    <span className="mr-2 inline-flex" style={{ color: "var(--theme-gold, #F5B548)" }}><Glyph name={universe.icon} size={20} /></span>
+                    <span className="mr-2 inline-flex" style={{ color: "var(--theme-gold, #C8CDD2)" }}><Glyph name={universe.icon} size={20} /></span>
                     {universe.title}
                   </div>
                   <div className="mt-1 text-[10px] uppercase tracking-[0.22em]" style={{ color: 'var(--muted)' }}>
@@ -738,7 +738,7 @@ export default function PublicHomeClient() {
           ))}
           <Link
             href="/signup"
-            className="flex min-h-[150px] flex-col items-center justify-center rounded-2xl border border-dashed border-[rgba(245,181,72,0.34)] p-5 text-center text-[color:var(--accent)] transition hover:bg-[rgba(245,181,72,0.06)]"
+            className="flex min-h-[150px] flex-col items-center justify-center rounded-2xl border border-dashed border-[rgba(203,208,213,0.34)] p-5 text-center text-[color:var(--accent)] transition hover:bg-[rgba(203,208,213,0.06)]"
             style={{ background: 'var(--surface)' }}
           >
             <span className="text-2xl">+</span>
@@ -751,11 +751,11 @@ export default function PublicHomeClient() {
       {/* ── Scanner callout — Drop Mode ──────────────────────────── */}
       <section className="border-b" style={{ borderColor: 'var(--border)' }}>
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-          <div className="overflow-hidden rounded-3xl" style={{ background: 'linear-gradient(135deg, rgba(139,105,20,0.18) 0%, rgba(15,25,45,0.92) 50%, rgba(10,18,38,0.98) 100%)', border: '1px solid rgba(245,181,72,0.22)', boxShadow: '0 0 60px rgba(245,181,72,0.06)' }}>
+          <div className="overflow-hidden rounded-3xl" style={{ background: 'linear-gradient(135deg, rgba(139,105,20,0.18) 0%, rgba(15,25,45,0.92) 50%, rgba(10,18,38,0.98) 100%)', border: '1px solid rgba(203,208,213,0.22)', boxShadow: '0 0 60px rgba(203,208,213,0.06)' }}>
             <div className="grid gap-0 lg:grid-cols-2">
               {/* Left — copy */}
               <div className="flex flex-col justify-center px-8 py-10 lg:py-14">
-                <div className="mb-3 inline-flex w-fit items-center gap-2 rounded-full border border-[rgba(245,181,72,0.28)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: '#F5B548', background: 'rgba(245,181,72,0.07)' }}>
+                <div className="mb-3 inline-flex w-fit items-center gap-2 rounded-full border border-[rgba(203,208,213,0.28)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: '#C8CDD2', background: 'rgba(203,208,213,0.07)' }}>
                   ⟳ Drop Mode
                 </div>
                 <h2 className="text-3xl font-black tracking-[-0.04em] text-text-primary sm:text-4xl">
@@ -768,13 +768,13 @@ export default function PublicHomeClient() {
                   <Link href="/signup" className="vltd-primary-button inline-flex h-11 items-center justify-center rounded-full px-6 text-sm font-black transition">
                     Start scanning — free
                   </Link>
-                  <Link href="/learn" className="inline-flex h-11 items-center justify-center rounded-full border border-[rgba(245,181,72,0.28)] px-6 text-sm font-semibold transition hover:bg-[rgba(245,181,72,0.06)]" style={{ color: '#F5B548' }}>
+                  <Link href="/learn" className="inline-flex h-11 items-center justify-center rounded-full border border-[rgba(203,208,213,0.28)] px-6 text-sm font-semibold transition hover:bg-[rgba(203,208,213,0.06)]" style={{ color: '#C8CDD2' }}>
                     Learn more →
                   </Link>
                 </div>
               </div>
               {/* Right — feature list */}
-              <div className="flex flex-col justify-center gap-4 border-t border-[rgba(245,181,72,0.12)] px-8 py-10 lg:border-l lg:border-t-0 lg:py-14">
+              <div className="flex flex-col justify-center gap-4 border-t border-[rgba(203,208,213,0.12)] px-8 py-10 lg:border-l lg:border-t-0 lg:py-14">
                 {[
                   { icon: "◎", title: "Auto-Lock Scanner", desc: "Captures the sharpest frame automatically. No tapping, no blur, no retakes." },
                   { icon: "⟳", title: "Stream Mode", desc: "Scanner stays live between items. Continuous flow for large drops." },
@@ -782,7 +782,7 @@ export default function PublicHomeClient() {
                   { icon: "↗", title: "Instant Portfolio Update", desc: "Every scanned item updates your P&L in real time." },
                 ].map(({ icon, title, desc }) => (
                   <div key={title} className="flex items-start gap-4">
-                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[rgba(245,181,72,0.22)] bg-[rgba(245,181,72,0.08)] text-base" style={{ color: '#F5B548' }}>
+                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[rgba(203,208,213,0.22)] bg-[rgba(203,208,213,0.08)] text-base" style={{ color: '#C8CDD2' }}>
                       {icon}
                     </div>
                     <div>
@@ -830,7 +830,7 @@ export default function PublicHomeClient() {
               { stat: "1 link", label: "To share your gallery", sub: "Private vault, public showcase" },
             ].map(({ stat, label, sub }) => (
               <div key={label} className="flex flex-col items-center justify-center py-10 text-center" style={{ background: cardBg }}>
-                <div className="text-5xl font-black tracking-[-0.05em]" style={{ color: '#F5B548' }}>{stat}</div>
+                <div className="text-5xl font-black tracking-[-0.05em]" style={{ color: '#C8CDD2' }}>{stat}</div>
                 <div className="mt-2 text-sm font-black text-text-primary">{label}</div>
                 <div className="mt-1 text-xs text-[color:var(--muted2)]">{sub}</div>
               </div>
@@ -854,10 +854,10 @@ export default function PublicHomeClient() {
 
         <div className="mx-auto mt-8 max-w-3xl overflow-hidden rounded-2xl border border-[color:var(--border)] text-left" style={{ background: cardBg }}>
           {/* Header row */}
-          <div className="grid grid-cols-[1fr_110px_110px] border-b border-[color:var(--border)] bg-[rgba(245,181,72,0.06)]">
+          <div className="grid grid-cols-[1fr_110px_110px] border-b border-[color:var(--border)] bg-[rgba(203,208,213,0.06)]">
             <div className="px-5 py-3 text-[11px] font-bold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Feature</div>
             <div className="px-5 py-3 text-center text-[11px] font-bold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Others</div>
-            <div className="bg-[rgba(245,181,72,0.10)] px-5 py-3 text-center text-[11px] font-black uppercase tracking-[0.22em] text-[color:var(--accent)]">
+            <div className="bg-[rgba(203,208,213,0.10)] px-5 py-3 text-center text-[11px] font-black uppercase tracking-[0.22em] text-[color:var(--accent)]">
               VLTD
             </div>
           </div>
@@ -870,7 +870,7 @@ export default function PublicHomeClient() {
               <div className="px-5 py-3.5 text-center text-sm text-[color:var(--muted2)]">
                 {others}
               </div>
-              <div className="bg-[rgba(245,181,72,0.04)] px-5 py-3.5 text-center text-sm font-semibold text-[color:var(--vltd-green)]">
+              <div className="bg-[rgba(203,208,213,0.04)] px-5 py-3.5 text-center text-sm font-semibold text-[color:var(--vltd-green)]">
                 {vltd}
               </div>
             </div>

@@ -117,7 +117,7 @@ function BidRow({ bid, isHighest }: { bid: Bid; isHighest: boolean }) {
     <div
       className="flex items-center justify-between px-3 py-2 rounded-xl"
       style={{
-        background: isHighest ? "rgba(245,181,72,0.07)" : "transparent",
+        background: isHighest ? "rgba(203,208,213,0.07)" : "transparent",
         borderBottom: "1px solid var(--border)",
       }}
     >
@@ -275,7 +275,7 @@ function PlaceBidPanel({
               setMsg({ text: result.error, ok: false });
             }
           }}
-          className="w-full rounded-xl py-2 text-sm font-semibold ring-1 ring-[color:var(--theme-gold)] transition hover:bg-[rgba(245,181,72,0.08)]"
+          className="w-full rounded-xl py-2 text-sm font-semibold ring-1 ring-[color:var(--theme-gold)] transition hover:bg-[rgba(203,208,213,0.08)]"
           style={{ color: "var(--theme-gold)" }}
         >
           Buy Now — {fmt(item.buyItNowPrice)}
@@ -470,7 +470,7 @@ export default function AuctionItemPage() {
                 {item.certNumber && (
                   <span
                     className="rounded-full px-3 py-1 text-xs font-semibold"
-                    style={{ background: "rgba(245,181,72,0.08)", color: "var(--theme-gold)" }}
+                    style={{ background: "rgba(203,208,213,0.08)", color: "var(--theme-gold)" }}
                   >
                     ✓ Certified · {item.certNumber}
                   </span>

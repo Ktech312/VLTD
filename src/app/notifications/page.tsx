@@ -66,14 +66,14 @@ export default function NotificationsPage() {
 
         {!loading && !error && items.length === 0 && (
           <div className="rounded-xl border border-[color:var(--border)] p-10 text-center">
-            <div className="mb-3 flex justify-center" style={{ color: "var(--gold, #F5B548)" }}>
+            <div className="mb-3 flex justify-center" style={{ color: "var(--gold, #C8CDD2)" }}>
               <Glyph name="bell" size={30} />
             </div>
             <p className="text-sm font-medium text-[color:var(--fg)]">No activity yet</p>
             <p className="mt-1 text-sm text-[color:var(--muted)]">
               Follows, comments on your exhibitions, and bug reports will show up here.
             </p>
-            <Link href="/discover" className="mt-4 inline-block text-sm font-semibold text-[color:var(--gold,#F5B548)] underline-offset-2 hover:underline">
+            <Link href="/discover" className="mt-4 inline-block text-sm font-semibold text-[color:var(--gold,#C8CDD2)] underline-offset-2 hover:underline">
               Browse Discover
             </Link>
           </div>
@@ -85,14 +85,14 @@ export default function NotificationsPage() {
               const inner = (
                 <>
                   {/* Icon */}
-                  <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--gold,#F5B548)]/10" style={{ color: "var(--gold, #F5B548)" }}>
+                  <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--gold,#C8CDD2)]/10" style={{ color: "var(--gold, #C8CDD2)" }}>
                     <Glyph name={kindGlyph(n.kind)} size={18} />
                   </div>
 
                   {/* Content */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[11px] font-bold uppercase tracking-widest text-[color:var(--gold,#F5B548)]/70">
+                      <span className="text-[11px] font-bold uppercase tracking-widest text-[color:var(--gold,#C8CDD2)]/70">
                         {kindLabel(n.kind)}
                       </span>
                       <span className="text-[11px] text-[color:var(--muted)]">· {n.title}</span>
@@ -108,7 +108,7 @@ export default function NotificationsPage() {
               );
 
               const cls =
-                "group flex items-start gap-4 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4 transition hover:border-[color:var(--gold,#F5B548)]/40";
+                "group flex items-start gap-4 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4 transition hover:border-[color:var(--gold,#C8CDD2)]/40";
 
               return n.href ? (
                 <Link key={n.id} href={n.href} className={`${cls} hover:-translate-y-0.5`}>

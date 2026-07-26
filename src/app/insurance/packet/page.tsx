@@ -131,7 +131,7 @@ export default function InsurancePacketPage() {
     <main className="px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <div className="packet-shell mx-auto max-w-6xl">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[color:var(--border)] bg-vault-card p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
-          <Link href="/insurance" className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(245,181,72,0.42)]">
+          <Link href="/insurance" className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(203,208,213,0.42)]">
             ← Back to Insurance
           </Link>
           <div className="flex flex-wrap items-center gap-3">
@@ -140,7 +140,7 @@ export default function InsurancePacketPage() {
                 type="checkbox"
                 checked={includeImages}
                 onChange={(event) => setIncludeImages(event.target.checked)}
-                className="h-4 w-4 accent-[#F5B548]"
+                className="h-4 w-4 accent-[#C8CDD2]"
               />
               Include images ({includeImages ? "5" : "25"}/page)
             </label>
@@ -176,7 +176,7 @@ export default function InsurancePacketPage() {
           className="rounded-[30px] p-5 sm:p-6"
           style={{
             background: 'var(--theme-elevated, rgba(20,32,55,0.9))',
-            border: '1px solid var(--theme-gold-border, rgba(245,181,72,0.25))',
+            border: '1px solid var(--theme-gold-border, rgba(203,208,213,0.25))',
             boxShadow: '0 26px 86px rgba(0,0,0,0.32)',
           }}
         >
@@ -185,7 +185,7 @@ export default function InsurancePacketPage() {
           <div className="mt-2 text-sm text-[color:var(--muted)]">
             Generated {new Date().toLocaleString()} • Included {selectedItems.length} of {items.length} items • Total Value {fmtMoney(totals.value)} • Page {safePageIndex + 1} of {totalPages} • Showing {visibleItems.length} items
           </div>
-          <div className="mt-3 rounded-2xl border border-[rgba(245,181,72,0.18)] bg-[rgba(245,181,72,0.06)] px-4 py-3 text-sm text-[color:var(--muted)]">
+          <div className="mt-3 rounded-2xl border border-[rgba(203,208,213,0.18)] bg-[rgba(203,208,213,0.06)] px-4 py-3 text-sm text-[color:var(--muted)]">
             Use Open Printable Page to generate the PDF from a lightweight print-only route. Without images: 25 items per page. With images: 5 items per page.
           </div>
         </section>

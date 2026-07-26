@@ -15,7 +15,7 @@ type Tab = {
 
 /* ── Icon helpers ──────────────────────────────────────── */
 
-const GOLD  = "#F5B548";
+const GOLD  = "#C8CDD2";
 const DIM   = "rgba(240,226,198,0.94)";   // light warm cream — legible on the black nav
 
 function sz(active: boolean) { return active ? 2.2 : 1.75; }
@@ -157,7 +157,7 @@ export default function BottomNav() {
               right: 0,
               zIndex: 2,
               background: "rgba(14,14,16,0.98)",
-              borderTop: "1px solid rgba(245,181,72,0.20)",
+              borderTop: "1px solid rgba(203,208,213,0.20)",
               borderTopLeftRadius: "24px",
               borderTopRightRadius: "24px",
               padding: "16px",
@@ -191,9 +191,9 @@ export default function BottomNav() {
         className="mx-auto max-w-[390px] backdrop-blur-2xl"
         style={{
           background: "linear-gradient(180deg, rgba(9,10,12,0.98), rgba(0,0,0,0.99))",
-          border: "1px solid rgba(217,162,58,0.44)",
+          border: "1px solid rgba(203,208,213,0.44)",
           borderRadius: "30px",
-          boxShadow: "0 18px 46px rgba(0,0,0,0.62), 0 0 0 1px rgba(0,0,0,0.85), inset 0 1px 0 rgba(255,241,168,0.10)",
+          boxShadow: "0 18px 46px rgba(0,0,0,0.62), 0 0 0 1px rgba(0,0,0,0.85), inset 0 1px 0 rgba(237,239,241,0.10)",
           padding: "6px 8px 7px",
         }}
       >
@@ -213,11 +213,11 @@ export default function BottomNav() {
                     className="flex h-[58px] w-[58px] items-center justify-center rounded-full"
                     style={{
                       background:
-                        "linear-gradient(145deg, #FFE08A 0%, #F5B548 30%, #C8941F 60%, #8B6914 100%)",
+                        "linear-gradient(145deg, #EDEFF1 0%, #C8CDD2 30%, #A8AEB4 60%, #8C9298 100%)",
                       boxShadow: [
                         "0 0 0 3px #0B0B0B",
-                        "0 0 0 4px rgba(245,181,72,0.35)",
-                        "0 8px 28px rgba(245,181,72,0.55)",
+                        "0 0 0 4px rgba(203,208,213,0.35)",
+                        "0 8px 28px rgba(203,208,213,0.55)",
                         "0 2px 8px rgba(0,0,0,0.60)",
                         "inset 0 1px 0 rgba(255,255,255,0.40)",
                         "inset 0 -2px 4px rgba(0,0,0,0.30)",
@@ -244,8 +244,8 @@ export default function BottomNav() {
                   aria-label="More categories"
                   className="flex min-w-[56px] flex-col items-center gap-[2px] rounded-[22px] px-2 py-1.5 transition-opacity active:opacity-70"
                   style={{
-                    border: isActive ? "1px solid rgba(217,162,58,0.44)" : "1px solid transparent",
-                    background: isActive ? "rgba(245,181,72,0.08)" : "transparent",
+                    border: isActive ? "1px solid rgba(203,208,213,0.44)" : "1px solid transparent",
+                    background: isActive ? "rgba(203,208,213,0.08)" : "transparent",
                   }}
                 >
                   {tab.icon(isActive)}
@@ -266,8 +266,8 @@ export default function BottomNav() {
                 href={tab.href}
                 className="flex min-w-[56px] flex-col items-center gap-[2px] rounded-[22px] px-2 py-1.5 transition-opacity active:opacity-70"
                 style={{
-                  border: isActive ? "1px solid rgba(217,162,58,0.44)" : "1px solid transparent",
-                  background: isActive ? "rgba(245,181,72,0.08)" : "transparent",
+                  border: isActive ? "1px solid rgba(203,208,213,0.44)" : "1px solid transparent",
+                  background: isActive ? "rgba(203,208,213,0.08)" : "transparent",
                 }}
               >
                 {tab.icon(isActive)}
@@ -280,7 +280,7 @@ export default function BottomNav() {
                 {isActive && (
                   <div
                     className="h-[3px] w-[3px] rounded-full"
-                    style={{ background: GOLD, boxShadow: "0 0 6px rgba(245,181,72,0.8)" }}
+                    style={{ background: GOLD, boxShadow: "0 0 6px rgba(203,208,213,0.8)" }}
                   />
                 )}
               </Link>

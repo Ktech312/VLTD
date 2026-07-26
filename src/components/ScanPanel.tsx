@@ -85,7 +85,7 @@ export default function ScanPanel({
           onChange={(e) => onTitleChange(e.target.value)}
           placeholder="Name this item to save it…"
           className="h-11 w-full rounded-2xl bg-[color:var(--pill)] px-4 text-sm ring-1 focus:outline-none"
-          style={{ borderColor: titleValue.trim() ? "var(--border)" : "rgba(245,181,72,0.5)", boxShadow: titleValue.trim() ? undefined : "0 0 0 1px rgba(245,181,72,0.4)" }}
+          style={{ borderColor: titleValue.trim() ? "var(--border)" : "rgba(203,208,213,0.5)", boxShadow: titleValue.trim() ? undefined : "0 0 0 1px rgba(203,208,213,0.4)" }}
         />
       </div>
 
@@ -152,7 +152,7 @@ export default function ScanPanel({
           >
             <span
               className="pointer-events-none relative z-10 flex items-center justify-center rounded-full p-3 transition"
-              style={{ background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B" }}
+              style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B" }}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
@@ -185,7 +185,7 @@ export default function ScanPanel({
                   </linearGradient>
                   <linearGradient id="spFolder" x1="0.2" y1="0" x2="0.8" y2="1">
                     <stop offset="0%" stopColor="#FFE080" />
-                    <stop offset="55%" stopColor="#F5B548" />
+                    <stop offset="55%" stopColor="#C8CDD2" />
                     <stop offset="100%" stopColor="#8B6010" />
                   </linearGradient>
                   <linearGradient id="spShine" x1="0" y1="0" x2="0.7" y2="0.7">
@@ -215,7 +215,7 @@ export default function ScanPanel({
             className="flex w-full items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-bold transition disabled:opacity-60"
             style={
               hasImage
-                ? { background: "linear-gradient(135deg, #8B6914, #F5B548)", color: "#0B0B0B", boxShadow: "0 4px 18px rgba(245,181,72,0.28)" }
+                ? { background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B", boxShadow: "0 4px 18px rgba(203,208,213,0.28)" }
                 : { background: "var(--pill)", color: "var(--muted)", border: "1px solid var(--border)" }
             }
           >

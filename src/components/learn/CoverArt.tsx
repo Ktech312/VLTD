@@ -3,10 +3,10 @@
 // topical scene: gold line-art with soft fills, a spotlight, and a ground
 // shadow so cards read as finished editorial covers, not floating icons.
 
-const GOLD = "#F5B548";
+const GOLD = "#C8CDD2";
 const GOLD_DIM = "#B8873B";
-const FILL = "rgba(245,181,72,0.10)";
-const FILL_SOFT = "rgba(245,181,72,0.05)";
+const FILL = "rgba(203,208,213,0.10)";
+const FILL_SOFT = "rgba(203,208,213,0.05)";
 
 function Frame({ id, children }: { id: string; children: React.ReactNode }) {
   return (
@@ -18,8 +18,8 @@ function Frame({ id, children }: { id: string; children: React.ReactNode }) {
           <stop offset="100%" stopColor="#0c0805" />
         </linearGradient>
         <radialGradient id={`${id}-spot`} cx="0.5" cy="0.42" r="0.62">
-          <stop offset="0%" stopColor="rgba(245,181,72,0.22)" />
-          <stop offset="60%" stopColor="rgba(245,181,72,0.05)" />
+          <stop offset="0%" stopColor="rgba(203,208,213,0.22)" />
+          <stop offset="60%" stopColor="rgba(203,208,213,0.05)" />
           <stop offset="100%" stopColor="rgba(0,0,0,0)" />
         </radialGradient>
         <radialGradient id={`${id}-vig`} cx="0.5" cy="0.5" r="0.75">
@@ -27,8 +27,8 @@ function Frame({ id, children }: { id: string; children: React.ReactNode }) {
           <stop offset="100%" stopColor="rgba(0,0,0,0.5)" />
         </radialGradient>
         <linearGradient id={`${id}-bar`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="rgba(245,181,72,0.28)" />
-          <stop offset="100%" stopColor="rgba(245,181,72,0.04)" />
+          <stop offset="0%" stopColor="rgba(203,208,213,0.28)" />
+          <stop offset="100%" stopColor="rgba(203,208,213,0.04)" />
         </linearGradient>
       </defs>
       <rect width="400" height="200" fill={`url(#${id}-bg)`} />

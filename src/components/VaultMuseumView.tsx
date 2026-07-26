@@ -91,7 +91,7 @@ function SpotlightCard({ item, onItemClick }: { item: ModelItem; onItemClick?: (
                     className="absolute inset-0 overflow-hidden rounded-[16px] ring-1"
                     style={{
                       background: "var(--pill)",
-                      borderColor: "rgba(245,181,72,0.18)",
+                      borderColor: "rgba(203,208,213,0.18)",
                       boxShadow: "0 8px 22px rgba(0,0,0,0.28)",
                       opacity: i === 0 ? 0.62 : 0.38,
                       transform: `translate(${(i + 1) * 10}px, ${-(i + 1) * 7}px) rotate(${(i + 1) * 2}deg)`,
@@ -113,7 +113,7 @@ function SpotlightCard({ item, onItemClick }: { item: ModelItem; onItemClick?: (
                 className="relative z-10 flex h-full w-full items-center justify-center overflow-hidden rounded-[16px] ring-1"
                 style={{
                   background: "rgba(10,16,30,0.72)",
-                  borderColor: "var(--theme-gold-border, rgba(245,181,72,0.35))",
+                  borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))",
                   boxShadow: "0 16px 40px rgba(0,0,0,0.36)",
                 }}
               >
@@ -149,9 +149,9 @@ function SpotlightCard({ item, onItemClick }: { item: ModelItem; onItemClick?: (
           <div
             className="absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] ring-1"
             style={{
-              background: "var(--theme-gold-subtle, rgba(245,181,72,0.15))",
-              borderColor: "var(--theme-gold-border, rgba(245,181,72,0.4))",
-              color: "var(--theme-gold, #F5B548)",
+              background: "var(--theme-gold-subtle, rgba(203,208,213,0.15))",
+              borderColor: "var(--theme-gold-border, rgba(203,208,213,0.4))",
+              color: "var(--theme-gold, #C8CDD2)",
             }}
           >
             Key Item
@@ -167,8 +167,8 @@ function SpotlightCard({ item, onItemClick }: { item: ModelItem; onItemClick?: (
             className="absolute right-3 top-3 rounded-lg px-2.5 py-1 text-[11px] font-bold ring-1"
             style={{
               background: "rgba(10,8,0,0.8)",
-              borderColor: "var(--theme-gold-border, rgba(245,181,72,0.45))",
-              color: "var(--theme-gold, #F5B548)",
+              borderColor: "var(--theme-gold-border, rgba(203,208,213,0.45))",
+              color: "var(--theme-gold, #C8CDD2)",
             }}
           >
             {grade}
@@ -184,7 +184,7 @@ function SpotlightCard({ item, onItemClick }: { item: ModelItem; onItemClick?: (
                 aria-label={`Show image ${i + 1}`}
                 onClick={() => setImgIndex(i)}
                 style={{
-                  background: i === imgIndex ? "#F5B548" : "rgba(255,255,255,0.35)",
+                  background: i === imgIndex ? "#C8CDD2" : "rgba(255,255,255,0.35)",
                   border: "none",
                   borderRadius: 99,
                   cursor: "pointer",
@@ -203,7 +203,7 @@ function SpotlightCard({ item, onItemClick }: { item: ModelItem; onItemClick?: (
             <div className="text-[10px] uppercase tracking-[0.18em]" style={{ color: "rgba(255,255,255,0.55)" }}>
               {label}
             </div>
-            <div className="mt-0.5 truncate text-lg font-bold leading-tight" style={{ color: "#F0EAD6" }}>
+            <div className="mt-0.5 truncate text-lg font-bold leading-tight" style={{ color: "#ECEDEF" }}>
               {item.title}
             </div>
           </div>
@@ -211,7 +211,7 @@ function SpotlightCard({ item, onItemClick }: { item: ModelItem; onItemClick?: (
             <div className="text-[10px] uppercase tracking-[0.18em]" style={{ color: "rgba(255,255,255,0.55)" }}>
               Value
             </div>
-            <div className="text-xl font-bold" style={{ color: "var(--theme-gold, #F5B548)" }}>
+            <div className="text-xl font-bold" style={{ color: "var(--theme-gold, #C8CDD2)" }}>
               {fmtUsdOrDash(value)}
             </div>
           </div>
@@ -248,7 +248,7 @@ function SpotlightCard({ item, onItemClick }: { item: ModelItem; onItemClick?: (
             <div className="text-[9px] uppercase tracking-[0.18em]" style={{ color: "var(--muted2)" }}>
               Notable
             </div>
-            <div className="mt-0.5 text-xs" style={{ color: "var(--theme-gold, #F5B548)" }}>
+            <div className="mt-0.5 text-xs" style={{ color: "var(--theme-gold, #C8CDD2)" }}>
               {reason}
             </div>
           </div>
@@ -285,7 +285,7 @@ function SpotlightCard({ item, onItemClick }: { item: ModelItem; onItemClick?: (
             type="button"
             onClick={onItemClick ? () => onItemClick(item) : undefined}
             className="text-[11px] font-semibold transition-opacity hover:opacity-80"
-            style={{ color: "var(--theme-gold, #F5B548)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+            style={{ color: "var(--theme-gold, #C8CDD2)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
           >
             View details →
           </button>
@@ -327,10 +327,10 @@ function MuseumCard({
         style={{
           background: "var(--surface)",
           borderColor: isActive
-            ? "var(--theme-gold-border, rgba(245,181,72,0.55))"
+            ? "var(--theme-gold-border, rgba(203,208,213,0.55))"
             : "var(--border)",
           boxShadow: isActive
-            ? "0 0 0 2px rgba(245,181,72,0.75), 0 4px 28px rgba(245,181,72,0.45)"
+            ? "0 0 0 2px rgba(203,208,213,0.75), 0 4px 28px rgba(203,208,213,0.45)"
             : "none",
         }}
       >
@@ -369,9 +369,9 @@ function MuseumCard({
             <div
               className="absolute left-1.5 top-1.5 rounded-md px-1.5 py-0.5 text-[9px] font-bold ring-1"
               style={{
-                background: "rgba(245,181,72,0.15)",
-                borderColor: "rgba(245,181,72,0.4)",
-                color: "var(--theme-gold, #F5B548)",
+                background: "rgba(203,208,213,0.15)",
+                borderColor: "rgba(203,208,213,0.4)",
+                color: "var(--theme-gold, #C8CDD2)",
               }}
             >
               Key
@@ -387,8 +387,8 @@ function MuseumCard({
               className="absolute right-1.5 top-1.5 rounded-md px-1.5 py-0.5 text-[9px] font-bold ring-1"
               style={{
                 background: "rgba(10,8,0,0.82)",
-                borderColor: "rgba(245,181,72,0.4)",
-                color: "var(--theme-gold, #F5B548)",
+                borderColor: "rgba(203,208,213,0.4)",
+                color: "var(--theme-gold, #C8CDD2)",
               }}
             >
               {grade}
@@ -399,9 +399,9 @@ function MuseumCard({
             <div
               className="absolute bottom-1.5 left-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1"
               style={{
-                background: "rgba(245,181,72,0.18)",
-                borderColor: "rgba(245,181,72,0.45)",
-                color: "var(--theme-gold, #F5B548)",
+                background: "rgba(203,208,213,0.18)",
+                borderColor: "rgba(203,208,213,0.45)",
+                color: "var(--theme-gold, #C8CDD2)",
               }}
             >
               {fmtUsdOrDash(value)}
@@ -537,7 +537,7 @@ function UniverseSection({
         <div className="flex items-center gap-2">
           <div
             className="h-1.5 w-1.5 rounded-full"
-            style={{ background: "var(--theme-gold, #F5B548)", opacity: 0.7 }}
+            style={{ background: "var(--theme-gold, #C8CDD2)", opacity: 0.7 }}
           />
           <span className="text-[13px] font-semibold" style={{ color: "var(--fg)" }}>
             {label}
@@ -549,9 +549,9 @@ function UniverseSection({
             <span
               className="rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1"
               style={{
-                background: "var(--theme-gold-subtle, rgba(245,181,72,0.08))",
-                borderColor: "var(--theme-gold-border, rgba(245,181,72,0.25))",
-                color: "var(--theme-gold, #F5B548)",
+                background: "var(--theme-gold-subtle, rgba(203,208,213,0.08))",
+                borderColor: "var(--theme-gold-border, rgba(203,208,213,0.25))",
+                color: "var(--theme-gold, #C8CDD2)",
               }}
             >
               {fmtUsdOrDash(totalValue)}
@@ -596,7 +596,7 @@ function UniverseSection({
             type="button"
             onClick={() => onViewAll(universeKey)}
             className="text-[11px] transition-opacity hover:opacity-80"
-            style={{ color: "var(--theme-gold, #F5B548)" }}
+            style={{ color: "var(--theme-gold, #C8CDD2)" }}
           >
             See all →
           </button>
@@ -688,7 +688,7 @@ export default function VaultMuseumView({
           <div className="mb-3 flex items-center gap-2 px-0.5">
             <div
               className="h-1.5 w-1.5 rounded-full"
-              style={{ background: "var(--theme-gold, #F5B548)" }}
+              style={{ background: "var(--theme-gold, #C8CDD2)" }}
             />
             <span className="text-[13px] font-semibold" style={{ color: "var(--fg)" }}>
               Spotlight
@@ -697,9 +697,9 @@ export default function VaultMuseumView({
               <span
                 className="rounded-full px-2 py-0.5 text-[10px] font-bold ring-1"
                 style={{
-                  background: "var(--theme-gold-subtle, rgba(245,181,72,0.1))",
-                  borderColor: "var(--theme-gold-border, rgba(245,181,72,0.35))",
-                  color: "var(--theme-gold, #F5B548)",
+                  background: "var(--theme-gold-subtle, rgba(203,208,213,0.1))",
+                  borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))",
+                  color: "var(--theme-gold, #C8CDD2)",
                 }}
               >
                 Key Item

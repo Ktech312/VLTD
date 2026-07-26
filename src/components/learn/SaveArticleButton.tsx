@@ -22,9 +22,9 @@ export default function SaveArticleButton({ slug }: { slug: string }) {
       aria-pressed={saved}
       className="inline-flex items-center gap-1.5 rounded-[6px] border px-3.5 py-1.5 text-sm font-semibold transition"
       style={{
-        borderColor: saved ? "var(--theme-gold,#F5B548)" : "var(--border)",
-        color: saved ? "var(--theme-gold,#F5B548)" : "var(--muted)",
-        background: saved ? "rgba(245,181,72,0.08)" : "transparent",
+        borderColor: saved ? "var(--theme-gold,#C8CDD2)" : "var(--border)",
+        color: saved ? "var(--theme-gold,#C8CDD2)" : "var(--muted)",
+        background: saved ? "rgba(203,208,213,0.08)" : "transparent",
         opacity: hydrated ? 1 : 0.6,
       }}
     >

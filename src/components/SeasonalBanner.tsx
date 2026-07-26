@@ -16,7 +16,7 @@ const EVENT_COLOR_MAP: Record<string, { accent: string; secondary: string }> = {
   "san-diego-comic-con-2026":                  { accent: "#c084fc", secondary: "#160d26" },
   "namm-show-2026":                            { accent: "#2DD4BF", secondary: "#061a19" },
 };
-const DEFAULT_EVENT_COLORS = { accent: "#F5B548", secondary: "#1a1200" };
+const DEFAULT_EVENT_COLORS = { accent: "#C8CDD2", secondary: "#1a1200" };
 
 type CollectorEvent = {
   id: string;
@@ -194,9 +194,9 @@ export default function SeasonalBanner() {
       className="relative mb-4 select-none overflow-hidden"
       style={{
         background: "linear-gradient(90deg, rgba(4,10,16,0.98), rgba(7,18,26,0.96) 48%, rgba(3,8,14,0.98))",
-        border: "1px solid rgba(217,162,58,0.42)",
+        border: "1px solid rgba(203,208,213,0.42)",
         borderRadius: 10,
-        boxShadow: "0 18px 46px rgba(0,0,0,0.36), inset 0 1px 0 rgba(255,241,168,0.08)",
+        boxShadow: "0 18px 46px rgba(0,0,0,0.36), inset 0 1px 0 rgba(237,239,241,0.08)",
         opacity: visible ? 1 : 0,
         transition: "opacity 0.4s ease",
         minHeight: 46,
@@ -238,7 +238,7 @@ export default function SeasonalBanner() {
             className="flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
             style={{
               background: "rgba(255,255,255,0.035)",
-              border: "1px solid rgba(217,162,58,0.30)",
+              border: "1px solid rgba(203,208,213,0.30)",
               borderRadius: 7,
             }}
           >
@@ -266,11 +266,11 @@ export default function SeasonalBanner() {
             onClick={(e) => e.stopPropagation()}
             className="flex-shrink-0 px-3 py-1.5 text-[11px] font-black transition hover:brightness-110"
             style={{
-              background: "linear-gradient(135deg,#8B6914,#F5B548)",
+              background: "linear-gradient(135deg,#8C9298,#C8CDD2)",
               border: "1px solid rgba(255,225,128,0.40)",
               borderRadius: 7,
               color: "#080808",
-              boxShadow: "0 10px 24px rgba(245,181,72,0.18)",
+              boxShadow: "0 10px 24px rgba(203,208,213,0.18)",
             }}
           >
             {ctaLabel}
@@ -288,7 +288,7 @@ export default function SeasonalBanner() {
             className="flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
             style={{
               background: "rgba(255,255,255,0.035)",
-              border: "1px solid rgba(217,162,58,0.30)",
+              border: "1px solid rgba(203,208,213,0.30)",
               borderRadius: 7,
             }}
           >
@@ -313,7 +313,7 @@ export default function SeasonalBanner() {
               style={{
                 width: i === idx ? 14 : 5,
                 height: 3,
-                background: i === idx ? "#E6C46A" : "rgba(217,162,58,0.24)",
+                background: i === idx ? "#E6C46A" : "rgba(203,208,213,0.24)",
                 borderRadius: 2,
               }}
               aria-label={`Slide ${i + 1}`}
@@ -335,7 +335,7 @@ export default function SeasonalBanner() {
                 handleAcceptTheme();
               }}
               className="px-2 py-0.5 text-[10px] font-bold"
-              style={{ background: "linear-gradient(135deg,#8B6914,#F5B548)", borderRadius: 6, color: "#000" }}
+              style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", borderRadius: 6, color: "#000" }}
             >Yes</button>
             <button
               onClick={(e) => {
@@ -343,7 +343,7 @@ export default function SeasonalBanner() {
                 handleDismissTheme();
               }}
               className="px-2 py-0.5 text-[10px] font-semibold"
-              style={{ background: "rgba(255,255,255,0.035)", border: "1px solid rgba(217,162,58,0.26)", borderRadius: 6, color: `${accent}cc` }}
+              style={{ background: "rgba(255,255,255,0.035)", border: "1px solid rgba(203,208,213,0.26)", borderRadius: 6, color: `${accent}cc` }}
             >No</button>
           </div>
         </div>
