@@ -8,12 +8,12 @@ import { Glyph, type GlyphName } from "@/components/ui/Glyph";
 const gold = "#C8CDD2";
 const goldBright = "#C8CDD2";
 const cream = "#ECEDEF";
-const muted = "#B8A978";
-const dim = "#776D4B";
+const muted = "var(--muted, #9BA0A6)";
+const dim = "var(--muted2, #61656B)";
 const panel = "rgba(4,14,18,0.84)";
 const panel2 = "rgba(8,20,27,0.72)";
-const border = "rgba(214,168,79,0.24)";
-const borderSoft = "rgba(214,168,79,0.14)";
+const border = "var(--theme-border, rgba(255,255,255,0.10))";
+const borderSoft = "var(--divider, rgba(255,255,255,0.08))";
 const serif = "var(--font-serif, 'Cormorant Garamond', Georgia, serif)";
 
 // ── Types ───────────────────────────────────────────────────────
