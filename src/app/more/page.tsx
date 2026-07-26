@@ -12,16 +12,16 @@ import { loadItems, type VaultItem } from "@/lib/vaultModel";
 
 const gold = "#C8CDD2";
 const goldBright = "#C8CDD2";
-const cream = "#ECEDEF";
-const muted = "#B8A978";
-const dim = "#776D4B";
+const cream = "var(--fg)";
+const muted = "var(--muted)";
+const dim = "var(--muted2)";
 const cyan = "#44D9F2";
 const green = "#4FD486";
-const bg = "#02090C";
-const panel = "rgba(4,14,18,0.84)";
-const panel2 = "rgba(8,20,27,0.72)";
-const border = "rgba(214,168,79,0.24)";
-const borderSoft = "rgba(214,168,79,0.14)";
+const bg = "var(--bg)";
+const panel = "var(--theme-card, rgba(28,31,36,0.94))";
+const panel2 = "var(--theme-elevated, rgba(37,41,47,0.96))";
+const border = "var(--theme-border, rgba(255,255,255,0.10))";
+const borderSoft = "var(--divider, rgba(255,255,255,0.08))";
 const serif = "var(--font-serif, 'Cormorant Garamond', Georgia, serif)";
 
 type ProfileSummary = {
@@ -201,10 +201,10 @@ function Icon({ name, size = 30 }: { name: IconName; size?: number }) {
 function commandCardStyle(accent: boolean) {
   return {
     background: accent
-      ? "linear-gradient(150deg, rgba(23,30,25,.96), rgba(6,15,14,.96))"
-      : "linear-gradient(150deg, rgba(9,23,31,.92), rgba(3,11,14,.92))",
-    border: `1px solid ${accent ? "rgba(203,208,213,.48)" : border}`,
-    boxShadow: accent ? "0 0 30px rgba(214,168,79,.12), inset 0 1px 0 rgba(255,255,255,.045)" : "inset 0 1px 0 rgba(255,255,255,.035)",
+      ? "var(--surface-strong, var(--theme-elevated, rgba(37,41,47,0.96)))"
+      : "var(--theme-card, rgba(28,31,36,0.94))",
+    border: `1px solid ${accent ? "rgba(79,211,238,.5)" : border}`,
+    boxShadow: accent ? "0 0 22px rgba(79,211,238,.18), inset 0 1px 0 rgba(255,255,255,.08)" : "inset 0 1px 0 rgba(255,255,255,.05)",
   };
 }
 
@@ -217,9 +217,9 @@ function CommandCard({ icon, title, desc, href, panel: panelKey, cta, accent = f
       <span
         className="mt-4 inline-flex items-center rounded-[6px] px-5 py-2 text-[12px] font-semibold"
         style={{
-          color: accent ? "#111" : cream,
-          background: accent ? "linear-gradient(135deg,#FFE7A0,#C8CDD2 58%,#8F6519)" : "rgba(0,0,0,.18)",
-          border: accent ? "1px solid rgba(255,225,139,.5)" : `1px solid ${border}`,
+          color: accent ? "#06171d" : cream,
+          background: accent ? "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)" : "var(--pill, rgba(255,255,255,.05))",
+          border: accent ? "1px solid rgba(79,211,238,.5)" : `1px solid ${border}`,
         }}
       >
         {cta ?? (href ? "Open page" : "Open panel")}
@@ -418,7 +418,7 @@ export default function MorePage() {
   ];
 
   return (
-    <main className="min-h-screen px-4 pb-[calc(var(--bottomnav-h,0px)+32px)] pt-6 text-white sm:px-6 lg:px-8" style={{ background: `radial-gradient(circle at 16% 12%, rgba(20,58,76,.38), transparent 34%), ${bg}` }}>
+    <main className="min-h-screen px-4 pb-[calc(var(--bottomnav-h,0px)+32px)] pt-6 text-[color:var(--fg)] sm:px-6 lg:px-8" style={{ background: `radial-gradient(circle at 16% 12%, rgba(79,211,238,.10), transparent 34%), ${bg}` }}>
       <div className="mx-auto max-w-[1460px]">
         <header className="mb-7 hidden items-center justify-between gap-8 lg:grid lg:grid-cols-[320px_minmax(340px,1fr)_minmax(480px,auto)]">
           <div className="relative h-[136px] overflow-hidden rounded-[10px] border" style={{ borderColor: border, background: "rgba(2,9,12,.88)" }}>
@@ -441,7 +441,7 @@ export default function MorePage() {
           </div>
         </header>
 
-        <section className="hidden rounded-[10px] border lg:block" style={{ borderColor: border, background: "rgba(2,9,12,.74)" }}>
+        <section className="hidden rounded-[10px] border lg:block" style={{ borderColor: border, background: "var(--theme-card, rgba(28,31,36,0.9))" }}>
           <div className="grid grid-cols-[230px_minmax(0,1fr)]">
             <aside className="relative min-h-[690px] border-r p-6" style={{ borderColor: borderSoft }}>
               <div className="relative h-[430px] overflow-hidden rounded-[10px] border" style={{ borderColor: border, background: "rgba(2,9,12,.86)" }}>
@@ -458,7 +458,7 @@ export default function MorePage() {
                       <p className="text-[13px]" style={{ color: cream }}>Welcome back,</p>
                       <div className="mt-1 flex items-center gap-3">
                         <h2 className="text-[40px] font-semibold leading-none" style={{ color: cream, fontFamily: serif }}>{profile.displayName}</h2>
-                        <button type="button" onClick={() => setActivePanel("account")} className="grid h-8 w-8 place-items-center rounded-[6px]" style={{ color: goldBright, border: `1px solid ${border}`, background: "rgba(214,168,79,.08)" }}>Edit</button>
+                        <button type="button" onClick={() => setActivePanel("account")} className="grid h-8 w-8 place-items-center rounded-[6px]" style={{ color: goldBright, border: `1px solid ${border}`, background: "rgba(79,211,238,.08)" }}>Edit</button>
                       </div>
                       <p className="mt-2 text-[17px] font-semibold" style={{ color: cream }}>{profile.profileType === "business" ? "Business command tools" : "Curator command tools"}</p>
                       <p className="mt-2 max-w-[430px] text-[12px] leading-[1.55]" style={{ color: muted }}>Panels keep common actions here. Deep workflows still open as full pages when they need room.</p>
@@ -558,20 +558,20 @@ export default function MorePage() {
             <div className="px-4 pb-5 pt-4">
               <h2 className="text-[15px] font-semibold" style={{ color: cream }}>Tools</h2>
               <p className="mt-1 text-[11px]" style={{ color: muted }}>Common actions open here. Larger workflows still use full pages.</p>
-              <div className="mt-4 overflow-hidden rounded-[8px] border" style={{ borderColor: border, background: "rgba(3,12,16,.82)" }}>
+              <div className="mt-4 overflow-hidden rounded-[8px] border" style={{ borderColor: border, background: "var(--theme-card, rgba(28,31,36,0.94))" }}>
                 <MobileRow icon="user" title="Account & Profile" panel="account" onPanel={setActivePanel} />
                 {isBusiness ? <MobileRow icon="vault" title="Workspace Settings" href="/account/workspace" onPanel={setActivePanel} /> : null}
                 {isBusiness ? <MobileRow icon="team" title="Team & Access" href="/account/team" onPanel={setActivePanel} /> : null}
                 <MobileRow icon="shield" title="Security" panel="security" onPanel={setActivePanel} />
                 <MobileRow icon="card" title="Billing & Plans" panel="billing" onPanel={setActivePanel} />
               </div>
-              <div className="mt-4 overflow-hidden rounded-[8px] border" style={{ borderColor: border, background: "rgba(3,12,16,.82)" }}>
+              <div className="mt-4 overflow-hidden rounded-[8px] border" style={{ borderColor: border, background: "var(--theme-card, rgba(28,31,36,0.94))" }}>
                 <MobileRow icon="cloud" title="Import & Export" panel="importExport" onPanel={setActivePanel} />
                 {canUseOwnerTools ? <MobileRow icon="cloud" title="Backup & Restore" panel="backup" onPanel={setActivePanel} /> : null}
                 <MobileRow icon="globe" title="Public Profile & Share" panel="publicProfile" onPanel={setActivePanel} />
                 <MobileRow icon="camera" title="Scan & Capture" href="/capture" onPanel={setActivePanel} />
               </div>
-              <div className="mt-4 overflow-hidden rounded-[8px] border" style={{ borderColor: border, background: "rgba(3,12,16,.82)" }}>
+              <div className="mt-4 overflow-hidden rounded-[8px] border" style={{ borderColor: border, background: "var(--theme-card, rgba(28,31,36,0.94))" }}>
                 <MobileRow icon="status" title="Activity" panel="activity" onPanel={setActivePanel} />
                 <MobileRow icon="spark" title="Help & Learning" panel="help" onPanel={setActivePanel} />
               </div>
