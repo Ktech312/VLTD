@@ -203,8 +203,10 @@ function commandCardStyle(accent: boolean) {
     background: accent
       ? "var(--surface-strong, var(--theme-elevated, rgba(37,41,47,0.96)))"
       : "var(--theme-card, rgba(28,31,36,0.94))",
-    border: `1px solid ${accent ? "rgba(79,211,238,.5)" : border}`,
-    boxShadow: accent ? "0 0 22px rgba(79,211,238,.18), inset 0 1px 0 rgba(255,255,255,.08)" : "inset 0 1px 0 rgba(255,255,255,.05)",
+    border: `1px solid rgba(79,211,238,${accent ? ".5" : ".26"})`,
+    boxShadow: accent
+      ? "0 0 22px rgba(79,211,238,.20), inset 0 1px 0 rgba(255,255,255,.08)"
+      : "0 0 14px rgba(79,211,238,.10), inset 0 1px 0 rgba(255,255,255,.05)",
   };
 }
 

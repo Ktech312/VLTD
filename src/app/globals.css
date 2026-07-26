@@ -143,10 +143,10 @@
   /* Active pill stays readable and neutral, glow comes from outline */
   --pill-active-bg: color-mix(in srgb, var(--surface) 97%, var(--accent) 3%);
   --pill-active-fg: var(--fg);
-  --pill-active-ring: color-mix(in srgb, var(--accent) 82%, transparent);
-  --pill-glow-soft: color-mix(in srgb, var(--accent) 28%, transparent);
-  --pill-glow-mid: color-mix(in srgb, var(--accent) 40%, transparent);
-  --pill-glow-strong: color-mix(in srgb, var(--accent) 56%, transparent);
+  --pill-active-ring: rgba(79,211,238,0.55);
+  --pill-glow-soft: rgba(79,211,238,0.20);
+  --pill-glow-mid: rgba(79,211,238,0.36);
+  --pill-glow-strong: rgba(79,211,238,0.55);
 
   /* Major frame glow */
   --frame-glow-soft: color-mix(in srgb, var(--accent) 16%, transparent);
@@ -222,10 +222,10 @@
   --pill-fg-muted: rgba(197, 178, 132, 0.72);
   --pill-active-bg: color-mix(in srgb, var(--surface) 94%, var(--accent) 6%);
   --pill-active-fg: var(--fg);
-  --pill-active-ring: color-mix(in srgb, var(--accent) 86%, transparent);
-  --pill-glow-soft: color-mix(in srgb, var(--accent) 34%, transparent);
-  --pill-glow-mid: color-mix(in srgb, var(--accent) 48%, transparent);
-  --pill-glow-strong: color-mix(in srgb, var(--accent) 64%, transparent);
+  --pill-active-ring: rgba(79,211,238,0.6);
+  --pill-glow-soft: rgba(79,211,238,0.26);
+  --pill-glow-mid: rgba(79,211,238,0.44);
+  --pill-glow-strong: rgba(79,211,238,0.62);
 
   --frame-glow-soft: color-mix(in srgb, var(--accent) 22%, transparent);
   --frame-glow-mid: color-mix(in srgb, var(--accent) 32%, transparent);
@@ -520,9 +520,8 @@ hr {
   border-color: var(--pill-active-ring) !important;
   box-shadow:
     0 0 0 1px var(--pill-active-ring),
-    0 0 0 3px var(--pill-glow-soft),
-    0 0 18px var(--pill-glow-mid),
-    0 0 36px var(--pill-glow-soft) !important;
+    0 0 16px var(--pill-glow-mid),
+    inset 0 0 22px var(--pill-glow-soft) !important;
 }
 
 .vltd-pill-main-glow:hover {
@@ -887,9 +886,8 @@ main {
   border-color: var(--pill-active-ring) !important;
   box-shadow:
     0 0 0 1px var(--pill-active-ring),
-    0 0 0 3px var(--pill-glow-soft),
-    0 0 18px var(--pill-glow-mid),
-    0 0 36px var(--pill-glow-soft) !important;
+    0 0 16px var(--pill-glow-mid),
+    inset 0 0 22px var(--pill-glow-soft) !important;
 }
 
 .vltd-selection-glow:hover {
@@ -909,9 +907,8 @@ main {
   border-color: var(--pill-active-ring) !important;
   box-shadow:
     0 0 0 1px var(--pill-active-ring),
-    0 0 0 3px var(--pill-glow-soft),
-    0 0 18px var(--pill-glow-mid),
-    0 0 36px var(--pill-glow-soft) !important;
+    0 0 16px var(--pill-glow-mid),
+    inset 0 0 22px var(--pill-glow-soft) !important;
 }
 
 
@@ -944,9 +941,8 @@ main {
   border-color: var(--pill-active-ring) !important;
   box-shadow:
     0 0 0 1px var(--pill-active-ring),
-    0 0 0 3px var(--pill-glow-soft),
-    0 0 18px var(--pill-glow-mid),
-    0 0 36px var(--pill-glow-soft) !important;
+    0 0 16px var(--pill-glow-mid),
+    inset 0 0 22px var(--pill-glow-soft) !important;
 }
 
 .vltd-selected:hover,
