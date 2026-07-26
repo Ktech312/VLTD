@@ -175,9 +175,9 @@ function ActionButton({ label, icon, onClick, disabled }: { label: string; icon:
 }
 
 function confidenceBadge(c: number) {
-  if (c >= 0.75) return { bg: "rgba(34,197,94,0.15)", color: "#22C55E", label: "High confidence" };
-  if (c >= 0.45) return { bg: "rgba(245,181,72,0.15)", color: "#F5B548", label: "Medium confidence" };
-  return { bg: "rgba(239,68,68,0.15)", color: "#EF4444", label: "Low confidence" };
+  if (c >= 0.75) return { bg: "rgba(84,201,138,0.10)", color: "#54C98A", glow: "0 0 14px rgba(84,201,138,0.30)", label: "High confidence" };
+  if (c >= 0.45) return { bg: "rgba(240,162,58,0.10)", color: "#F0A23A", glow: "0 0 14px rgba(240,162,58,0.30)", label: "Medium confidence" };
+  return { bg: "rgba(224,82,82,0.10)", color: "#E05252", glow: "0 0 14px rgba(224,82,82,0.30)", label: "Low confidence" };
 }
 
 function mergeResults(
@@ -569,10 +569,7 @@ export default function CapturePage() {
               {/* Header — concept-19 */}
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <h1
-                    className="text-[34px] font-semibold leading-none tracking-[-0.01em] text-text-primary sm:text-[42px]"
-                    style={{ fontFamily: SERIF }}
-                  >
+                  <h1 className="text-[34px] font-extrabold uppercase leading-[0.9] tracking-[-0.03em] text-text-primary sm:text-[42px]">
                     New Vault Item
                   </h1>
                   <p className="mt-2 text-sm text-[color:var(--muted)]">
@@ -705,8 +702,8 @@ export default function CapturePage() {
                     onToggle={() => toggleSection(1)}
                     badge={
                       <span
-                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em]"
-                        style={{ background: badge.bg, color: badge.color }}
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-[4px] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em]"
+                        style={{ background: badge.bg, color: badge.color, border: `1px solid ${badge.color}`, boxShadow: badge.glow }}
                       >
                         <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: badge.color }} />
                         {badge.label}
@@ -821,8 +818,8 @@ export default function CapturePage() {
                                 onClick={() => setFields((p) => ({ ...p, confidence: val }))}
                                 className="rounded-[8px] border px-2 py-2 text-xs font-semibold transition"
                                 style={active
-                                  ? { borderColor: "var(--theme-gold-border, rgba(245,181,72,0.6))", background: "rgba(245,181,72,0.12)", color: "var(--theme-gold, #F5B548)" }
-                                  : { borderColor: "var(--theme-border, rgba(245,181,72,0.14))", color: "var(--muted)" }}
+                                  ? { borderColor: "#4FD3EE", background: "rgba(79,211,238,0.10)", color: "#5FDCF3", boxShadow: "0 0 16px rgba(79,211,238,0.28), inset 0 1px 0 rgba(255,255,255,0.08)" }
+                                  : { borderColor: "var(--border)", color: "var(--muted)" }}
                               >
                                 {lbl}
                               </button>
@@ -985,8 +982,8 @@ export default function CapturePage() {
                       <button
                         type="button"
                         onClick={handleSave}
-                        className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[12px] px-9 text-[15px] font-black text-[#0B0B0B]"
-                        style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
+                        className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[4px] px-9 text-[15px] font-black text-[#06171d]"
+                        style={{ background: "linear-gradient(115deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 45%, rgba(255,255,255,0.18) 100%), linear-gradient(180deg, #79E7FB 0%, #41C6E4 55%, #2CB1D1 100%)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 10px rgba(0,0,0,0.4), 0 0 18px rgba(79,211,238,0.25)" }}
                       >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h12l4 4v12H4z" /><path d="M8 4v6h8" /><path d="M9 15h6" /></svg>
                         Save to Vault
