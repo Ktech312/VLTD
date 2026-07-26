@@ -337,7 +337,7 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
                   onClick={handleStart}
                   disabled={saving}
                   className="flex-1 rounded-2xl py-3 text-sm font-bold transition"
-                  style={{ background: "var(--theme-gold)", color: "#0B0B0B", opacity: saving ? 0.6 : 1 }}
+                  style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d", opacity: saving ? 0.6 : 1 }}
                 >
                   {saving ? "Starting\u2026" : "Start Auction"}
                 </button>

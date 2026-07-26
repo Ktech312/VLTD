@@ -669,7 +669,7 @@ export default function SoldPage() {
                       onClick={() => setUniverseFilter(u)}
                       className="h-9 rounded-full px-3 text-xs font-semibold ring-1 transition"
                       style={universeFilter === u
-                        ? { background: "var(--theme-gold)", color: "#0B0B0B", borderColor: "transparent" }
+                        ? { background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d", borderColor: "transparent" }
                         : { background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }
                       }
                     >

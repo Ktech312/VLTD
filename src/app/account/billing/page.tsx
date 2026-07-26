@@ -183,7 +183,7 @@ export default function BillingPage() {
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-sm font-bold" style={{ color: "var(--fg)" }}>{plan.name}</div>
                     {isCurrent && (
-                      <span className="rounded-full px-2 py-0.5 text-[9px] font-bold" style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}>Active</span>
+                      <span className="rounded-full px-2 py-0.5 text-[9px] font-bold" style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>Active</span>
                     )}
                   </div>
                   <div className="mt-1 text-base font-black" style={{ color: isCurrent ? "var(--theme-gold)" : "var(--fg)" }}>{plan.price}</div>

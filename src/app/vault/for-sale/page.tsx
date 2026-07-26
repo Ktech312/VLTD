@@ -397,7 +397,7 @@ export default function ForSalePage() {
             <div className="text-4xl">🏷️</div>
             <div className="mt-4 text-base font-semibold" style={{ color: "var(--fg)" }}>No items marked for sale</div>
             <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>Open any vault item and change its status to "For Sale" to see it here.</p>
-            <Link href="/vault" className="mt-6 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold" style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}>
+            <Link href="/vault" className="mt-6 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold" style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>
               Go to Vault →
             </Link>
           </div>
@@ -417,7 +417,7 @@ export default function ForSalePage() {
                       className="rounded-xl p-2.5 text-center transition ring-1"
                       style={
                         platform === key
-                          ? { background: "var(--theme-gold)", color: "#0B0B0B", borderColor: "transparent" }
+                          ? { background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d", borderColor: "transparent" }
                           : { background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }
                       }
                     >

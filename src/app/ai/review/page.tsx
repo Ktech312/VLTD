@@ -295,7 +295,7 @@ function ReviewInner() {
             type="button"
             onClick={handleApproveAndSave}
             className="flex-1 rounded-full py-3 text-sm font-bold transition sm:flex-none sm:px-8"
-            style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}
+            style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}
           >
             ✓ Approve & save to vault
           </button>
@@ -323,7 +323,7 @@ function ReviewInner() {
           <Link
             href="/vault"
             className="flex-1 rounded-full py-3 text-center text-sm font-bold"
-            style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}
+            style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}
           >
             View vault →
           </Link>

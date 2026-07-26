@@ -244,7 +244,7 @@ function PlaceBidPanel({
           onClick={handleBid}
           disabled={busy}
           className="rounded-xl px-5 py-2 text-sm font-bold transition active:scale-95 disabled:opacity-50"
-          style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}
+          style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}
         >
           {busy ? "…" : "Bid"}
         </button>

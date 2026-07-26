@@ -969,7 +969,7 @@ function ImageCardTab({ item }: { item: VaultItem }) {
         {!preview ? (
           <button type="button" onClick={() => void handleExport()} disabled={exporting}
             className="flex-1 rounded-2xl py-3 text-sm font-bold transition"
-            style={{ background: "var(--theme-gold)", color: "#0B0B0B", opacity: exporting ? 0.6 : 1 }}>
+            style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d", opacity: exporting ? 0.6 : 1 }}>
             {exporting ? "Generating…" : `Preview ${specLabel?.desc ?? ratio}`}
           </button>
         ) : (
@@ -988,7 +988,7 @@ function ImageCardTab({ item }: { item: VaultItem }) {
             )}
             <button type="button" onClick={handleDownload}
               className="flex-1 rounded-2xl py-3 text-sm font-bold"
-              style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}>
+              style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>
               Download PNG
             </button>
           </>
@@ -1108,7 +1108,7 @@ function ThenVsNowTab({ item }: { item: VaultItem }) {
         {!preview ? (
           <button type="button" onClick={() => void handleGenerate()} disabled={exporting || !hasBoth}
             className="flex-1 rounded-2xl py-3 text-sm font-bold transition"
-            style={{ background: "var(--theme-gold)", color: "#0B0B0B", opacity: (exporting || !hasBoth) ? 0.5 : 1 }}>
+            style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d", opacity: (exporting || !hasBoth) ? 0.5 : 1 }}>
             {exporting ? "Generating…" : "Preview Card"}
           </button>
         ) : (
@@ -1127,7 +1127,7 @@ function ThenVsNowTab({ item }: { item: VaultItem }) {
             )}
             <button type="button" onClick={handleDownload}
               className="flex-1 rounded-2xl py-3 text-sm font-bold"
-              style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}>
+              style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>
               Download PNG
             </button>
           </>
@@ -1247,7 +1247,7 @@ function VideoTab({ item }: { item: VaultItem }) {
         {!videoUrl ? (
           <button type="button" onClick={() => void handleRecord()} disabled={recording}
             className="flex-1 rounded-2xl py-3 text-sm font-bold transition"
-            style={{ background: "var(--theme-gold)", color: "#0B0B0B", opacity: recording ? 0.6 : 1 }}>
+            style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d", opacity: recording ? 0.6 : 1 }}>
             {recording ? "Generating… (~5 sec)" : "Generate Video"}
           </button>
         ) : (
@@ -1260,13 +1260,13 @@ function VideoTab({ item }: { item: VaultItem }) {
             {canShare ? (
               <button type="button" onClick={() => void handleShare()}
                 className="flex-1 rounded-2xl py-3 text-sm font-bold"
-                style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}>
+                style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>
                 Share
               </button>
             ) : (
               <button type="button" onClick={handleDownload}
                 className="flex-1 rounded-2xl py-3 text-sm font-bold"
-                style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}>
+                style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>
                 Save .webm
               </button>
             )}

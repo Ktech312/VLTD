@@ -244,8 +244,8 @@ export default function WorkspaceSettingsPage() {
               type="button"
               onClick={() => void handleSaveProfile()}
               disabled={saving}
-              className="rounded-full px-4 py-2 text-sm font-semibold transition"
-              style={{ background: "var(--theme-gold)", color: "#0B0B0B", opacity: saving ? 0.6 : 1 }}
+              className="vltd-primary-button rounded-[4px] px-4 py-2 text-sm font-semibold transition"
+              style={{ opacity: saving ? 0.6 : 1 }}
             >
               {saving ? "Saving…" : "Save profile"}
             </button>
@@ -261,9 +261,9 @@ export default function WorkspaceSettingsPage() {
                 type="button"
                 onClick={() => void navigator.clipboard?.writeText(publicUrl)}
                 className="shrink-0 px-3 py-2.5 text-xs font-semibold"
-                style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}
+                style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}
               >Copy</button>
-              <Link href={publicUrl} target="_blank" className="shrink-0 px-3 py-2.5 text-xs font-semibold" style={{ color: "var(--theme-gold)" }}>
+              <Link href={publicUrl} target="_blank" className="shrink-0 px-3 py-2.5 text-xs font-semibold" style={{ color: "#2CB1D1" }}>
                 Visit →
               </Link>
             </div>

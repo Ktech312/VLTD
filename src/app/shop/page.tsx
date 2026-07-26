@@ -376,7 +376,7 @@ function ProductCard({ product }: { product: Product }) {
         {product.badge && (
           <span
             className="self-start rounded-full px-2 py-0.5 text-[10px] font-bold"
-            style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}
+            style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}
           >
             {product.badge}
           </span>

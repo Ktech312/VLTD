@@ -248,7 +248,7 @@ export default function FavoritesPage() {
             <Link
               href="/discover"
               className="mt-6 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold"
-              style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}
+              style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}
             >
               Explore Discover →
             </Link>
@@ -269,7 +269,7 @@ export default function FavoritesPage() {
                     className="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
                     style={
                       filter === t.key
-                        ? { background: "var(--theme-gold)", color: "#0B0B0B" }
+                        ? { background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }
                         : { color: "var(--muted)" }
                     }
                   >

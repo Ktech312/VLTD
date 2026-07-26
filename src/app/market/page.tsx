@@ -86,7 +86,7 @@ function MarketCard({ item }: { item: MarketItem }) {
         )}
         <div className="absolute top-2 left-2 flex items-center gap-1.5">
           <span className="rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide"
-            style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}>
+            style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>
             FOR SALE
           </span>
           {listingAge(item.createdAt) && (

@@ -424,7 +424,7 @@ export default function VaultWrappedSheet({ onClose }: Props) {
             {!preview ? (
               <button type="button" onClick={() => void handleGenerate()} disabled={exporting || items.length === 0}
                 className="flex-1 rounded-2xl py-3 text-sm font-bold"
-                style={{ background: "var(--theme-gold)", color: "#0B0B0B", opacity: (exporting || items.length === 0) ? 0.5 : 1 }}>
+                style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d", opacity: (exporting || items.length === 0) ? 0.5 : 1 }}>
                 {exporting ? "Generating…" : items.length === 0 ? "No items in vault" : "Generate Wrapped Card"}
               </button>
             ) : (
@@ -443,7 +443,7 @@ export default function VaultWrappedSheet({ onClose }: Props) {
                 )}
                 <button type="button" onClick={handleDownload}
                   className="flex-1 rounded-2xl py-3 text-sm font-bold"
-                  style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}>
+                  style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>
                   Download
                 </button>
               </>

@@ -49,22 +49,29 @@ function applyThemeVars(theme: Theme) {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [themeId, setThemeId] = useState<ThemeId>(defaultTheme)
 
+  // Track hydration so the initial default-theme render does NOT overwrite the
+  // saved preference before we've read it back (that bug reverted every refresh
+  // to the dark default).
+  const [hydrated, setHydrated] = useState(false)
+
   useEffect(() => {
-    const themeTimer = window.setTimeout(() => {
-      try {
-        const saved = localStorage.getItem(THEME_LS_KEY) as ThemeId | null
-        if (saved && themes[saved]) setThemeId(saved)
-      } catch {}
-    }, 0)
-    return () => window.clearTimeout(themeTimer)
+    try {
+      const saved = localStorage.getItem(THEME_LS_KEY) as ThemeId | null
+      if (saved && themes[saved]) setThemeId(saved)
+    } catch {}
+    setHydrated(true)
   }, [])
 
   useEffect(() => {
     applyThemeVars(themes[themeId])
-    try {
-      localStorage.setItem(THEME_LS_KEY, themeId)
-    } catch {}
-  }, [themeId])
+    // Only persist once we've restored the saved value, so the first-paint
+    // default can't clobber the user's last selected theme.
+    if (hydrated) {
+      try {
+        localStorage.setItem(THEME_LS_KEY, themeId)
+      } catch {}
+    }
+  }, [themeId, hydrated])
 
   return (
     <ThemeContext.Provider value={{ themeId, theme: themes[themeId], setTheme: setThemeId }}>

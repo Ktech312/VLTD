@@ -392,7 +392,7 @@ export default function GuidePage() {
             <Link
               href="/vault"
               className="inline-flex items-center rounded-full px-5 py-2.5 text-sm font-bold transition hover:-translate-y-0.5"
-              style={{ background: "var(--theme-gold)", color: "#0B0B0B" }}
+              style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}
             >
               Go to Vault &rarr;
             </Link>
