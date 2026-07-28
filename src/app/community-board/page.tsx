@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 /* =========================================================================
    VLT LOUNGE — the collector clubhouse.
@@ -28,31 +29,25 @@ const HOT = [
   { t: "Top 5 albums every collection needs", n: 31 },
 ];
 
-const MVP = [
-  { rank: 1, name: "VaultCouncil", pts: 24680 },
-  { rank: 2, name: "GraphiteOG", pts: 18540 },
-  { rank: 3, name: "PressPlay", pts: 15320 },
-  { rank: 4, name: "CardKing", pts: 12875 },
-  { rank: 5, name: "Vinyl.Vet", pts: 11210 },
-];
+/* Real leaderboard/member types (wired from Supabase below). */
+type MvpRow = { profile_id: string; name: string; items: number };
+type UniverseRow = { subject: string; collectors: number };
+type MemberRow = { name: string; joined: string };
+
+function titleCase(s: string) {
+  return s.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+function joinedLabel(iso: string) {
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  if (!Number.isFinite(days) || days <= 0) return "Joined today";
+  if (days === 1) return "Joined yesterday";
+  if (days < 30) return `Joined ${days}d ago`;
+  return `Joined ${Math.floor(days / 30)}mo ago`;
+}
 
 const DROPS = [
   { title: "1957 Topps PSA 9 Run — Group Break", date: "MAY 18", time: "8:00 PM ET" },
   { title: "Vintage Guitar Hour w/ Special Guest", date: "MAY 21", time: "7:00 PM ET" },
-];
-
-const UNIVERSES = [
-  { name: "Comic Universe", members: 2341 },
-  { name: "Card Universe", members: 1892 },
-  { name: "Vinyl Universe", members: 1276 },
-  { name: "Vintage Guitar Universe", members: 642 },
-];
-
-const NEW_MEMBERS = [
-  { name: "RookCollector", lvl: 1 },
-  { name: "AnalogAddict", lvl: 1 },
-  { name: "GridironGoat", lvl: 1 },
-  { name: "SilverAgeSam", lvl: 1 },
 ];
 
 /* ── Shared bits ─────────────────────────────────────────────── */
@@ -135,6 +130,59 @@ function fmt(n: number) {
 /* ── Page ────────────────────────────────────────────────────── */
 export default function VltLoungePage() {
   const [tab, setTab] = useState<(typeof LIVE_TABS)[number]>("All Activity");
+  const [mvp, setMvp] = useState<MvpRow[] | null>(null);
+  const [universes, setUniverses] = useState<UniverseRow[] | null>(null);
+  const [members, setMembers] = useState<MemberRow[] | null>(null);
+
+  // Real leaderboard / universe / member data from Supabase (item-count based).
+  useEffect(() => {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) { setMvp([]); setUniverses([]); setMembers([]); return; }
+    let alive = true;
+    (async () => {
+      try {
+        const { data: subjects } = await supabase.rpc("get_top_subjects", { p_limit: 12 });
+        const subs = (subjects ?? []) as Array<{ subject: string; collector_count: number; total_items: number }>;
+        if (alive) setUniverses(subs.slice(0, 6).map((s) => ({ subject: titleCase(s.subject), collectors: Number(s.collector_count ?? 0) })));
+
+        // Aggregate per-subject leaderboards → overall top collectors by items.
+        const agg = new Map<string, { name: string; items: number }>();
+        await Promise.all(
+          subs.slice(0, 8).map(async (s) => {
+            const { data: board } = await supabase.rpc("get_subject_leaderboard", { p_subject: s.subject, p_limit: 25 });
+            (board ?? []).forEach((r: Record<string, unknown>) => {
+              const id = String(r.profile_id ?? "");
+              if (!id) return;
+              const name = String(r.display_name || r.username || "Collector");
+              const cur = agg.get(id) ?? { name, items: 0 };
+              cur.items += Number(r.item_count ?? 0);
+              cur.name = name;
+              agg.set(id, cur);
+            });
+          })
+        );
+        const top = [...agg.entries()]
+          .map(([profile_id, v]) => ({ profile_id, name: v.name, items: v.items }))
+          .sort((a, b) => b.items - a.items)
+          .slice(0, 5);
+        if (alive) setMvp(top);
+
+        const { data: recent } = await supabase
+          .from("profiles")
+          .select("display_name, username, created_at")
+          .eq("is_public", true)
+          .order("created_at", { ascending: false })
+          .limit(4);
+        if (alive) setMembers((recent ?? []).map((m: Record<string, unknown>) => ({
+          name: String(m.display_name || m.username || "Collector"),
+          joined: joinedLabel(String(m.created_at ?? "")),
+        })));
+      } catch {
+        if (alive) { setMvp((v) => v ?? []); setUniverses((v) => v ?? []); setMembers((v) => v ?? []); }
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
 
   return (
     <main className="mx-auto w-full max-w-[1440px] px-4 pb-16 pt-6 sm:px-6 lg:px-8">
@@ -253,14 +301,20 @@ export default function VltLoungePage() {
               <More />
             </div>
             <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4">
-              {NEW_MEMBERS.map((m) => (
-                <div key={m.name} className="flex flex-col items-center gap-2 rounded-[7px] p-3 text-center" style={{ border: "1px solid var(--border)" }}>
-                  <Avatar name={m.name} size={44} />
-                  <div className="text-[12px] font-bold leading-tight">{m.name}</div>
-                  <div className="text-[10px]" style={{ color: "var(--muted2)" }}>Joined today</div>
-                  <span className="rounded-[4px] px-2 py-0.5 text-[10px] font-black" style={{ background: "rgba(79,211,238,0.10)", color: CYAN, border: `1px solid rgba(79,211,238,0.35)` }}>LVL {m.lvl}</span>
-                </div>
-              ))}
+              {members === null ? (
+                <div className="col-span-full py-6 text-center text-[12px]" style={{ color: "var(--muted2)" }}>Loading…</div>
+              ) : members.length === 0 ? (
+                <div className="col-span-full py-6 text-center text-[12px]" style={{ color: "var(--muted2)" }}>No new members yet.</div>
+              ) : (
+                members.map((m) => (
+                  <div key={m.name} className="flex flex-col items-center gap-2 rounded-[7px] p-3 text-center" style={{ border: "1px solid var(--border)" }}>
+                    <Avatar name={m.name} size={44} />
+                    <div className="text-[12px] font-bold leading-tight">{m.name}</div>
+                    <div className="text-[10px]" style={{ color: "var(--muted2)" }}>{m.joined}</div>
+                    <span className="rounded-[4px] px-2 py-0.5 text-[10px] font-black" style={{ background: "rgba(79,211,238,0.10)", color: CYAN, border: `1px solid rgba(79,211,238,0.35)` }}>New</span>
+                  </div>
+                ))
+              )}
             </div>
           </section>
         </div>
@@ -270,18 +324,24 @@ export default function VltLoungePage() {
           <section className="rounded-[8px]" style={CARD}>
             <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
               <span className="flex items-center gap-1.5"><Label>MVP Table</Label><Info /></span>
-              <span className="text-[11px]" style={{ color: "var(--muted2)" }}>This Month</span>
+              <span className="text-[11px]" style={{ color: "var(--muted2)" }}>By items</span>
             </div>
-            <ul>
-              {MVP.map((m) => (
-                <li key={m.name} className="flex items-center gap-3 px-4 py-2.5" style={{ borderBottom: "1px solid var(--border)" }}>
-                  <span className="grid h-6 w-6 place-items-center rounded-[5px] text-[11px] font-black" style={{ background: m.rank <= 3 ? "linear-gradient(165deg,#EDEFF1,#A8AEB4)" : "var(--pill)", color: m.rank <= 3 ? "#0B0C0E" : "var(--muted)" }}>{m.rank}</span>
-                  <Avatar name={m.name} size={26} />
-                  <span className="min-w-0 flex-1 truncate text-[13px] font-bold">{m.name}</span>
-                  <span className="text-[13px] font-black" style={{ color: CYAN }}>{fmt(m.pts)}</span>
-                </li>
-              ))}
-            </ul>
+            {mvp === null ? (
+              <div className="px-4 py-6 text-center text-[12px]" style={{ color: "var(--muted2)" }}>Loading…</div>
+            ) : mvp.length === 0 ? (
+              <div className="px-4 py-6 text-center text-[12px]" style={{ color: "var(--muted2)" }}>No ranked collectors yet.</div>
+            ) : (
+              <ul>
+                {mvp.map((m, i) => (
+                  <li key={m.profile_id} className="flex items-center gap-3 px-4 py-2.5" style={{ borderBottom: "1px solid var(--border)" }}>
+                    <span className="grid h-6 w-6 place-items-center rounded-[5px] text-[11px] font-black" style={{ background: i < 3 ? "linear-gradient(165deg,#EDEFF1,#A8AEB4)" : "var(--pill)", color: i < 3 ? "#0B0C0E" : "var(--muted)" }}>{i + 1}</span>
+                    <Avatar name={m.name} size={26} />
+                    <span className="min-w-0 flex-1 truncate text-[13px] font-bold">{m.name}</span>
+                    <span className="text-[13px] font-black" style={{ color: CYAN }}>{fmt(m.items)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
             <button type="button" className="w-full px-4 py-3 text-left text-[12px] font-bold" style={{ color: CYAN }}>View full leaderboard →</button>
           </section>
 
@@ -327,14 +387,20 @@ export default function VltLoungePage() {
               <Label>Universe Tables</Label>
               <More />
             </div>
-            <ul>
-              {UNIVERSES.map((u) => (
-                <li key={u.name} className="flex items-center justify-between gap-3 px-4 py-2.5 text-[12.5px]" style={{ borderBottom: "1px solid var(--border)" }}>
-                  <span className="flex items-center gap-2.5"><Avatar name={u.name} size={22} /><span className="font-bold">{u.name}</span></span>
-                  <span className="flex items-center gap-2" style={{ color: "var(--muted)" }}>{fmt(u.members)} members<span className="h-1.5 w-1.5 rounded-full" style={{ background: GREEN }} /></span>
-                </li>
-              ))}
-            </ul>
+            {universes === null ? (
+              <div className="px-4 py-6 text-center text-[12px]" style={{ color: "var(--muted2)" }}>Loading…</div>
+            ) : universes.length === 0 ? (
+              <div className="px-4 py-6 text-center text-[12px]" style={{ color: "var(--muted2)" }}>No universes yet.</div>
+            ) : (
+              <ul>
+                {universes.map((u) => (
+                  <li key={u.subject} className="flex items-center justify-between gap-3 px-4 py-2.5 text-[12.5px]" style={{ borderBottom: "1px solid var(--border)" }}>
+                    <span className="flex items-center gap-2.5"><Avatar name={u.subject} size={22} /><span className="font-bold">{u.subject}</span></span>
+                    <span className="flex items-center gap-2" style={{ color: "var(--muted)" }}>{fmt(u.collectors)} collectors<span className="h-1.5 w-1.5 rounded-full" style={{ background: GREEN }} /></span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         </div>
       </div>

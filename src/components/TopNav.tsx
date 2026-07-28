@@ -17,6 +17,8 @@ import {
   signOut,
 } from "@/lib/auth";
 import { getMyAdminRole, type AdminRole } from "@/lib/adminAuth";
+import { loadMyCollectorLevel, type CollectorLevelInfo } from "@/lib/collectorLevel";
+import { subscribeVaultUpdate } from "@/lib/vaultEvents";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 const AVATAR_PRESET_SRCS: Record<string, string> = {
@@ -297,6 +299,7 @@ function TopNavInner() {
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [activeProfileId, setActiveProfileId] = useState("");
   const [adminRole, setAdminRole] = useState<AdminRole>(null);
+  const [levelInfo, setLevelInfo] = useState<CollectorLevelInfo | null>(null);
 
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
@@ -314,6 +317,14 @@ function TopNavInner() {
   );
 
   useEffect(() => { setInput(sp.get("q") ?? ""); }, [sp]);
+
+  // Collector level — recompute from the curator's items + exhibits on mount,
+  // on profile switch, and whenever the vault changes.
+  useEffect(() => {
+    const refresh = () => setLevelInfo(loadMyCollectorLevel());
+    refresh();
+    return subscribeVaultUpdate(refresh);
+  }, [activeProfileId]);
 
   // ⌘K / Ctrl+K opens the command palette (profile switching lives in the
   // account menu now; this is for search + quick actions).
@@ -602,12 +613,13 @@ function TopNavInner() {
                 className="flex items-center gap-2 rounded-full p-1 transition"
                 style={{ background: "transparent", border: "none" }}
               >
-                {/* Collector level — placeholder for the visual pass; real level
-                    (from items / exhibits / activity) wired in the backend pass. */}
-                <span className="hidden text-right leading-tight sm:block">
-                  <span className="block text-[8px] font-bold uppercase tracking-[0.16em]" style={{ color: "var(--muted2)" }}>Collector</span>
-                  <span className="block text-[11px] font-black" style={{ color: "#4FD3EE" }}>Level 7</span>
-                </span>
+                {/* Collector level — real, from the curator's items + exhibits. */}
+                {signedIn && (
+                  <span className="hidden text-right leading-tight sm:block">
+                    <span className="block text-[8px] font-bold uppercase tracking-[0.16em]" style={{ color: "var(--muted2)" }}>{levelInfo?.title ?? "Collector"}</span>
+                    <span className="block text-[11px] font-black" style={{ color: "#4FD3EE" }}>Level {levelInfo?.level ?? 1}</span>
+                  </span>
+                )}
                 <div
                   className="flex h-[32px] w-[32px] shrink-0 items-center justify-center overflow-hidden rounded-full text-[13px] font-bold"
                   style={{ background: 'var(--theme-gold-gradient, linear-gradient(135deg,#8C9298,#C8CDD2))', color: "#0B0B0B" }}
