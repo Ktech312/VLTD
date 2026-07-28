@@ -45,10 +45,23 @@ function joinedLabel(iso: string) {
   return `Joined ${Math.floor(days / 30)}mo ago`;
 }
 
-const DROPS = [
-  { title: "1957 Topps PSA 9 Run — Group Break", date: "MAY 18", time: "8:00 PM ET" },
-  { title: "Vintage Guitar Hour w/ Special Guest", date: "MAY 21", time: "7:00 PM ET" },
-];
+type DropRow = { name: string; date: string; time: string };
+type RoomRow = { title: string; desc: string; image: string | null; linkUrl: string | null; linkLabel: string; tags: string[] };
+type Signals = { pulse: number; volume: number; listings: number; sales: number };
+
+function money(n: number) {
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `$${(n / 1e3).toFixed(1)}K`;
+  return `$${Math.round(n)}`;
+}
+function dropDate(iso: string) {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase();
+}
+function dropTime(iso: string) {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+}
 
 /* ── Shared bits ─────────────────────────────────────────────── */
 const CARD: React.CSSProperties = {
@@ -133,6 +146,9 @@ export default function VltLoungePage() {
   const [mvp, setMvp] = useState<MvpRow[] | null>(null);
   const [universes, setUniverses] = useState<UniverseRow[] | null>(null);
   const [members, setMembers] = useState<MemberRow[] | null>(null);
+  const [signals, setSignals] = useState<Signals | null>(null);
+  const [drops, setDrops] = useState<DropRow[] | null>(null);
+  const [room, setRoom] = useState<RoomRow | null | undefined>(undefined); // undefined = loading
 
   // Real leaderboard / universe / member data from Supabase (item-count based).
   useEffect(() => {
@@ -177,8 +193,54 @@ export default function VltLoungePage() {
           name: String(m.display_name || m.username || "Collector"),
           joined: joinedLabel(String(m.created_at ?? "")),
         })));
+
+        // Collector Signals — aggregate RPC (needs the 20260728_collector_signals migration).
+        try {
+          const { data: sig } = await supabase.rpc("get_collector_signals");
+          const row = (Array.isArray(sig) ? sig[0] : sig) as Record<string, unknown> | undefined;
+          if (alive) setSignals(row ? {
+            pulse: Number(row.pulse_pct ?? 0),
+            volume: Number(row.volume_7d ?? 0),
+            listings: Number(row.active_listings ?? 0),
+            sales: Number(row.sales_7d ?? 0),
+          } : null);
+        } catch { if (alive) setSignals(null); }
+
+        // Upcoming Lounge Drops — from the Events system.
+        const { data: ev } = await supabase
+          .from("collector_events")
+          .select("name, starts_at")
+          .eq("enabled", true)
+          .gte("starts_at", new Date().toISOString())
+          .order("starts_at", { ascending: true })
+          .limit(3);
+        if (alive) setDrops((ev ?? []).map((e: Record<string, unknown>) => ({
+          name: String(e.name ?? "Event"),
+          date: dropDate(String(e.starts_at ?? "")),
+          time: dropTime(String(e.starts_at ?? "")),
+        })));
+
+        // Room of the Night — featured spotlight.
+        const { data: sp } = await supabase
+          .from("spotlights")
+          .select("name, tagline, bio, image_url, link_url, link_label, universe_tags")
+          .eq("is_featured", true)
+          .order("sort_order", { ascending: true })
+          .limit(1);
+        const spot = (Array.isArray(sp) ? sp[0] : sp) as Record<string, unknown> | undefined;
+        if (alive) setRoom(spot ? {
+          title: String(spot.name ?? "Featured Room"),
+          desc: String(spot.bio || spot.tagline || ""),
+          image: (typeof spot.image_url === "string" && spot.image_url) ? spot.image_url : null,
+          linkUrl: (typeof spot.link_url === "string" && spot.link_url) ? spot.link_url : null,
+          linkLabel: (typeof spot.link_label === "string" && spot.link_label) ? spot.link_label : "View Room",
+          tags: Array.isArray(spot.universe_tags) ? (spot.universe_tags as string[]) : [],
+        } : null);
       } catch {
-        if (alive) { setMvp((v) => v ?? []); setUniverses((v) => v ?? []); setMembers((v) => v ?? []); }
+        if (alive) {
+          setMvp((v) => v ?? []); setUniverses((v) => v ?? []); setMembers((v) => v ?? []);
+          setSignals(null); setDrops((v) => v ?? []); setRoom((r) => (r === undefined ? null : r));
+        }
       }
     })();
     return () => { alive = false; };
@@ -273,26 +335,33 @@ export default function VltLoungePage() {
             </div>
             <div className="relative">
               <Tile hue={220} className="min-h-[300px] w-full">
-                <div className="relative z-10 max-w-[52%] p-6">
-                  <h2 className="text-[34px] font-extrabold leading-[0.95] tracking-[-0.02em]" style={{ color: "#F3F4F5" }}>Icons Only.<br />One Room.</h2>
-                  <p className="mt-3 text-[13px] leading-snug" style={{ color: "rgba(240,241,242,0.72)" }}>
-                    A nightly spotlight on legendary pieces that moved the market, broke records, or defined the culture.
+                {room && room.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={room.image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" />
+                ) : null}
+                <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(3,6,10,0.72), rgba(3,6,10,0.2) 62%, transparent)" }} />
+                <div className="relative z-10 max-w-[62%] p-6">
+                  <h2 className="text-[30px] font-extrabold leading-[1.02] tracking-[-0.02em]" style={{ color: "#F3F4F5" }}>
+                    {room === undefined ? "Loading…" : room ? room.title : "Room of the Night"}
+                  </h2>
+                  <p className="mt-3 line-clamp-4 text-[13px] leading-snug" style={{ color: "rgba(240,241,242,0.78)" }}>
+                    {room === undefined ? "" : (room && room.desc) ? room.desc : "A nightly spotlight on legendary pieces that moved the market, broke records, or defined the culture. No featured room tonight."}
                   </p>
-                  <button type="button" className="vltd-primary-button mt-4 inline-flex rounded-[6px] px-4 py-2 text-[12px] font-black">View Room</button>
-                </div>
-                {/* placeholder showcase blocks (real display art added later) */}
-                <div className="pointer-events-none absolute inset-y-6 right-5 hidden items-end gap-3 sm:flex">
-                  {[92, 74, 60].map((h, i) => (
-                    <div key={i} className="w-16 rounded-[6px]" style={{ height: `${h}%`, background: "linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02))", border: "1px solid rgba(255,255,255,0.10)" }} />
-                  ))}
+                  {room && room.linkUrl ? (
+                    <a href={room.linkUrl} target="_blank" rel="noopener noreferrer" className="vltd-primary-button mt-4 inline-flex rounded-[6px] px-4 py-2 text-[12px] font-black">{room.linkLabel}</a>
+                  ) : (
+                    <button type="button" className="vltd-primary-button mt-4 inline-flex rounded-[6px] px-4 py-2 text-[12px] font-black">View Room</button>
+                  )}
                 </div>
               </Tile>
             </div>
-            <div className="grid grid-cols-3 divide-x px-2 py-3 text-center" style={{ borderColor: "var(--border)", borderTop: "1px solid var(--border)" }}>
-              <div><div className="text-[10px] uppercase tracking-[0.14em]" style={{ color: "var(--muted2)" }}>Total Value</div><div className="mt-0.5 text-[20px] font-black" style={{ color: CYAN }}>$2.78M</div></div>
-              <div><div className="text-[10px] uppercase tracking-[0.14em]" style={{ color: "var(--muted2)" }}>7D Change</div><div className="mt-0.5 text-[20px] font-black" style={{ color: GREEN }}>+18.6%</div></div>
-              <div><div className="text-[10px] uppercase tracking-[0.14em]" style={{ color: "var(--muted2)" }}>Assets</div><div className="mt-0.5 text-[20px] font-black">4</div></div>
-            </div>
+            {room && room.tags.length > 0 ? (
+              <div className="flex flex-wrap gap-2 px-5 py-3" style={{ borderTop: "1px solid var(--border)" }}>
+                {room.tags.map((t) => (
+                  <span key={t} className="rounded-[4px] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em]" style={{ background: "var(--pill)", color: "var(--muted)" }}>{titleCase(t.replace(/_/g, " "))}</span>
+                ))}
+              </div>
+            ) : null}
           </section>
 
           <section className="rounded-[8px]" style={CARD}>
@@ -352,10 +421,10 @@ export default function VltLoungePage() {
             </div>
             <div className="grid grid-cols-2 gap-px" style={{ background: "var(--border)" }}>
               {[
-                { label: "Market Pulse (7D)", value: "+12.4%", tone: GREEN, chart: <Spark /> },
-                { label: "Volume (7D)", value: "$48.7M", tone: CYAN, chart: <Bars /> },
-                { label: "Active Listings", value: "24,381", tone: "var(--fg)", chart: null },
-                { label: "Sales (7D)", value: "1,284", tone: CYAN, chart: null },
+                { label: "Market Pulse (7D)", value: signals ? `${signals.pulse >= 0 ? "+" : ""}${signals.pulse}%` : "—", tone: signals && signals.pulse < 0 ? "#E05252" : GREEN, chart: <Spark color={signals && signals.pulse < 0 ? "#E05252" : GREEN} /> },
+                { label: "Volume (7D)", value: signals ? money(signals.volume) : "—", tone: CYAN, chart: <Bars /> },
+                { label: "Active Listings", value: signals ? fmt(signals.listings) : "—", tone: "var(--fg)", chart: null },
+                { label: "Sales (7D)", value: signals ? fmt(signals.sales) : "—", tone: CYAN, chart: null },
               ].map((s) => (
                 <div key={s.label} className="p-3.5" style={{ background: "var(--surface)" }}>
                   <div className="text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--muted2)" }}>{s.label}</div>
@@ -370,15 +439,21 @@ export default function VltLoungePage() {
 
           <section className="rounded-[8px]" style={CARD}>
             <div className="flex items-center gap-1.5 px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}><Label>Upcoming Lounge Drops</Label><Info /></div>
-            <ul>
-              {DROPS.map((d) => (
-                <li key={d.title} className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
-                  <Tile hue={40} className="h-11 w-11 shrink-0 rounded-[6px]" />
-                  <div className="min-w-0 flex-1"><p className="truncate text-[12.5px] font-bold">{d.title}</p></div>
-                  <div className="shrink-0 text-right"><div className="text-[11px] font-black" style={{ color: CYAN }}>{d.date}</div><div className="text-[10px]" style={{ color: "var(--muted2)" }}>{d.time}</div></div>
-                </li>
-              ))}
-            </ul>
+            {drops === null ? (
+              <div className="px-4 py-6 text-center text-[12px]" style={{ color: "var(--muted2)" }}>Loading…</div>
+            ) : drops.length === 0 ? (
+              <div className="px-4 py-6 text-center text-[12px]" style={{ color: "var(--muted2)" }}>No upcoming drops.</div>
+            ) : (
+              <ul>
+                {drops.map((d) => (
+                  <li key={d.name + d.date} className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
+                    <Tile hue={40} className="h-11 w-11 shrink-0 rounded-[6px]" />
+                    <div className="min-w-0 flex-1"><p className="truncate text-[12.5px] font-bold">{d.name}</p></div>
+                    <div className="shrink-0 text-right"><div className="text-[11px] font-black" style={{ color: CYAN }}>{d.date}</div><div className="text-[10px]" style={{ color: "var(--muted2)" }}>{d.time}</div></div>
+                  </li>
+                ))}
+              </ul>
+            )}
             <button type="button" className="w-full px-4 py-3 text-left text-[12px] font-bold" style={{ color: CYAN }}>View all drops →</button>
           </section>
 
