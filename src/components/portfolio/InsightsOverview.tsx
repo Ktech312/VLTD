@@ -26,10 +26,10 @@ type TimeRange = "7d" | "30d" | "90d" | "all";
 const CYAN = "#52D6F4";
 const GREEN = "#52C27A";
 const RED = "#FF705C";
-const GOLD = "#C8CDD2";
-const MUTED = "var(--muted, #B8AA7A)";
-const MUTED2 = "var(--muted2, #8F835E)";
-const PANEL_BG = "linear-gradient(145deg, rgba(3, 8, 14, 0.96), rgba(4, 14, 21, 0.92))";
+const GOLD = "var(--accent, #C8CDD2)";
+const MUTED = "var(--muted, #9BA0A6)";
+const MUTED2 = "var(--muted2, #61656B)";
+const PANEL_BG = "var(--surface, rgba(28,31,36,0.94))";
 const PANEL_BORDER = "rgba(203,208,213, 0.34)";
 const PANEL_SHADOW = "0 18px 54px rgba(0,0,0,0.32), inset 0 1px 0 rgba(237,239,241,0.07)";
 
@@ -202,7 +202,7 @@ function HeaderAction({
         boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)",
       }
     : {
-        background: "rgba(3,8,14,0.72)",
+        background: "var(--surface)",
         border: "1px solid rgba(203,208,213,0.34)",
         color: "var(--fg)",
       };
@@ -394,7 +394,7 @@ function Donut({ rows, total, size = 174 }: { rows: { label: string; value: numb
     >
       <div
         className="absolute inset-[26px] grid place-items-center rounded-full text-center"
-        style={{ background: "rgba(3,8,14,0.95)", boxShadow: "inset 0 0 24px rgba(0,0,0,0.45)" }}
+        style={{ background: "var(--surface)", boxShadow: "inset 0 0 24px rgba(0,0,0,0.45)" }}
       >
         <div>
           <div className="text-xl font-black" style={{ color: "var(--fg)" }}>{formatMoney(total)}</div>
@@ -483,7 +483,7 @@ function MoverRow({
             style={{
               border: `1px solid ${confidenceBand === "high" ? "rgba(82,194,122,0.45)" : confidenceBand === "medium" ? "rgba(203,208,213,0.5)" : "rgba(255,112,92,0.45)"}`,
               color: confidenceBand === "high" ? GREEN : confidenceBand === "medium" ? GOLD : RED,
-              background: "rgba(3,8,14,0.58)",
+              background: "var(--surface)",
             }}
           >
             {confidenceLabel}
@@ -506,7 +506,7 @@ function ReviewCard({ item, reason }: { item: VaultItem; reason: string }) {
     <Link
       href={`/vault/item/${encodeURIComponent(item.id)}`}
       className="grid min-w-[210px] grid-cols-[60px_minmax(0,1fr)] gap-3 rounded-[7px] p-2.5 transition hover:bg-white/[0.035]"
-      style={{ border: "1px solid rgba(203,208,213,0.34)", background: "rgba(3,8,14,0.58)" }}
+      style={{ border: "1px solid rgba(203,208,213,0.34)", background: "var(--surface)" }}
     >
       <ItemThumb item={item} className="h-[78px] w-[58px]" />
       <div className="min-w-0">
@@ -961,7 +961,7 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
             <Link
               href="/vault"
               className="grid min-w-[190px] place-items-center rounded-[7px] p-4 text-center"
-              style={{ color: GOLD, border: "1px dashed rgba(203,208,213,0.38)", background: "rgba(3,8,14,0.45)" }}
+              style={{ color: GOLD, border: "1px dashed rgba(203,208,213,0.38)", background: "var(--surface)" }}
             >
               <div>
                 <Glyph name="tag" size={30} />

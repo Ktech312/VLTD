@@ -357,17 +357,17 @@ export default function DiscoverPage() {
         className="group overflow-hidden rounded-[7px] border text-left transition hover:-translate-y-0.5"
         style={{
           background: "var(--theme-card, rgba(15,25,45,0.85))",
-          borderColor: selectedGallery?.id === gallery.id ? "var(--theme-gold,#C8CDD2)" : "rgba(203,208,213,0.22)",
+          borderColor: selectedGallery?.id === gallery.id ? "#4FD3EE" : "rgba(203,208,213,0.22)",
         }}
       >
-        <div className={`relative ${compact ? "h-[84px]" : "h-[128px]"}`} style={coverStyle(gallery)}>
-          <div className="absolute inset-0 bg-gradient-to-t from-[#030809] via-black/20 to-transparent" />
-          {!compact && (
+        {!compact && (
+          <div className="relative h-[128px]" style={coverStyle(gallery)}>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#030809] via-black/20 to-transparent" />
             <span className="absolute left-3 top-3 rounded-[5px] border border-[rgba(203,208,213,0.28)] bg-black/50 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
               {UNIVERSE_LABEL[gallery.universeKey]}
             </span>
-          )}
-        </div>
+          </div>
+        )}
         <div className={compact ? "grid grid-cols-[72px_minmax(0,1fr)_auto] gap-3 p-3" : "p-3"}>
           {compact && <div className="-ml-3 -my-3 h-[92px] rounded-l-[7px]" style={coverStyle(gallery)} />}
           <div className="min-w-0">

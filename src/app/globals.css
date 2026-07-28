@@ -499,8 +499,13 @@ a:hover {
     linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1);
   box-shadow: inset 1px 0 0 rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.6);
 }
-/* status variants of the action block */
-.vltd-action-module__block--amber { background: linear-gradient(115deg, rgba(255,255,255,0.4), rgba(255,255,255,0) 40%, rgba(255,255,255,0.22)), linear-gradient(180deg, #F7B85A, #EE9C2E); }
+/* Light mode: the plate goes light with dark text (dark plate looks wrong on a light page) */
+.theme-light .vltd-action-module__plate {
+  color: #14161A;
+  background:
+    linear-gradient(110deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0.35) 60%, rgba(255,255,255,0) 100%),
+    linear-gradient(180deg, #FFFFFF 0%, #E9ECEF 60%, #F4F6F8 100%);
+}
 
 /* Optional: consistent hr/dividers */
 hr {
