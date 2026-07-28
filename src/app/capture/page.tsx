@@ -280,9 +280,19 @@ export default function CapturePage() {
   const [isCameraPanelOpen, setIsCameraPanelOpen] = useState(false);
 
   /* ── AI flow triggered by photo capture ── */
-  const handleCapture = useCallback(async (file: File) => {
+  // Capture-first: attach the photo instantly. AI identify is opt-in (the
+  // "Identify with AI" / "Auto ID" buttons), so taking a photo never blocks
+  // on the vision call or spends a scan you didn't ask for.
+  const handleCapture = useCallback((file: File) => {
     setCapturedImageFile(file);
     setIsCameraPanelOpen(false);
+    setErrorMsg("");
+  }, []);
+
+  // Opt-in AI: identify + fill fields on demand from the captured photo.
+  const runAiIdentify = useCallback(async (fileArg?: File) => {
+    const file = fileArg ?? capturedImageFile;
+    if (!file || analyzing) return;
     setAnalyzing(true);
     setErrorMsg("");
 
@@ -321,7 +331,17 @@ export default function CapturePage() {
         throw new Error("Could not identify item. Please fill in details manually.");
       }
 
-      setFields(mergeResults(vision, upcData));
+      // Only fill fields the AI actually returned — never wipe what you typed.
+      const merged = mergeResults(vision, upcData);
+      setFields((prev) => {
+        const next: ReviewFields = { ...prev };
+        (Object.keys(merged) as (keyof ReviewFields)[]).forEach((k) => {
+          const v = merged[k] as unknown;
+          const has = typeof v === "string" ? v.trim() !== "" : v != null;
+          if (has) (next as Record<string, unknown>)[k] = v;
+        });
+        return next;
+      });
       setAnalyzing(false);
     } catch (err) {
       console.error("[Capture] Error:", err);
@@ -332,7 +352,7 @@ export default function CapturePage() {
       );
       setAnalyzing(false);
     }
-  }, []);
+  }, [capturedImageFile, analyzing]);
 
   /* ── Save to vault ── */
   const handleSave = useCallback(async () => {
@@ -580,7 +600,7 @@ export default function CapturePage() {
                   <ActionButton
                     label="Auto ID"
                     disabled={!capturedImageFile || analyzing}
-                    onClick={() => { if (capturedImageFile) void handleCapture(capturedImageFile); }}
+                    onClick={() => void runAiIdentify()}
                     icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.4 3.6L17 8l-3.6 1.4L12 13l-1.4-3.6L7 8l3.6-1.4z" /><path d="M5 16l.8 2L8 19l-2.2.8L5 22l-.8-2.2L2 19l2.2-1z" /></svg>}
                   />
                   <ActionButton
@@ -622,7 +642,7 @@ export default function CapturePage() {
                             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
                           </div>
                           <div className="text-sm font-semibold text-text-primary">Add a photo — optional</div>
-                          <p className="max-w-[240px] text-xs leading-5 text-[color:var(--muted)]">Snap or upload one and VLTD auto-fills the details. Or just type them in — no photo required.</p>
+                          <p className="max-w-[240px] text-xs leading-5 text-[color:var(--muted)]">Snap or upload one — then tap <b className="font-semibold text-[color:var(--fg)]">Identify with AI</b> to auto-fill, or just type the details in. No photo required.</p>
                           <div className="flex flex-wrap justify-center gap-2">
                             <button type="button" onClick={() => setIsCameraPanelOpen(true)} className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold text-[#0B0B0B]" style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}>Take photo</button>
                             <button type="button" onClick={() => uploadInputRef.current?.click()} className="inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.08))]" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}>Upload</button>
@@ -658,6 +678,17 @@ export default function CapturePage() {
                       </div>
                     ) : null}
                   </div>
+
+                  {/* Opt-in AI identify — capture first, let AI fill it in after */}
+                  {previewUrl && !analyzing ? (
+                    <button
+                      type="button"
+                      onClick={() => void runAiIdentify()}
+                      className="vltd-primary-button mt-3 w-full rounded-[6px] py-2.5 text-sm font-black"
+                    >
+                      Identify with AI
+                    </button>
+                  ) : null}
 
                   {/* Thumbnail rail */}
                   <div className="mt-3 grid grid-cols-4 gap-2">
