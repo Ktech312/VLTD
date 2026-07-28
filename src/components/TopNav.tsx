@@ -571,6 +571,20 @@ function TopNavInner() {
               </div>
             </form>
 
+            {/* Messages / inbox — DM alert surfaced in the top-right notices cluster.
+                Links to the stubbed Messages page; real DM system wired later. */}
+            <Link
+              href="/messages"
+              aria-label="Messages"
+              className="relative grid h-9 w-9 place-items-center rounded-full transition hover:opacity-90"
+              style={{ color: "var(--muted)" }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H8l-4 3V6a1 1 0 0 1 1-1z" />
+              </svg>
+              <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-[16px] place-items-center rounded-full px-1 text-[9px] font-black" style={{ background: "#4FD3EE", color: "#06171d" }}>3</span>
+            </Link>
+
             {/* Alerts bell — visible on mobile + desktop, glows green on new activity */}
             <AlertsBell profileId={activeProfile?.id} active={pathname === "/notifications"} />
 
@@ -585,9 +599,15 @@ function TopNavInner() {
                   }
                   setUserOpen((v) => !v);
                 }}
-                className="flex items-center gap-1 rounded-full p-1 transition"
+                className="flex items-center gap-2 rounded-full p-1 transition"
                 style={{ background: "transparent", border: "none" }}
               >
+                {/* Collector level — placeholder for the visual pass; real level
+                    (from items / exhibits / activity) wired in the backend pass. */}
+                <span className="hidden text-right leading-tight sm:block">
+                  <span className="block text-[8px] font-bold uppercase tracking-[0.16em]" style={{ color: "var(--muted2)" }}>Collector</span>
+                  <span className="block text-[11px] font-black" style={{ color: "#4FD3EE" }}>Level 7</span>
+                </span>
                 <div
                   className="flex h-[32px] w-[32px] shrink-0 items-center justify-center overflow-hidden rounded-full text-[13px] font-bold"
                   style={{ background: 'var(--theme-gold-gradient, linear-gradient(135deg,#8C9298,#C8CDD2))', color: "#0B0B0B" }}

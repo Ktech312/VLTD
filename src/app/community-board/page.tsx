@@ -1,402 +1,341 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import { Glyph, type GlyphName } from "@/components/ui/Glyph";
+import { useState } from "react";
 
-// ── Design tokens (match the Command Center / app style) ─────────
-const gold = "#C8CDD2";
-const goldBright = "#C8CDD2";
-const cream = "#ECEDEF";
-const muted = "var(--muted, #9BA0A6)";
-const dim = "var(--muted2, #61656B)";
-const panel = "rgba(4,14,18,0.84)";
-const panel2 = "rgba(8,20,27,0.72)";
-const border = "var(--theme-border, rgba(255,255,255,0.10))";
-const borderSoft = "var(--divider, rgba(255,255,255,0.08))";
-const serif = "var(--font-serif, 'Cormorant Garamond', Georgia, serif)";
+/* =========================================================================
+   VLT LOUNGE — the collector clubhouse.
+   Visual pass (Brushed Console theme, mock data). Backend + real links wired
+   in a later pass. No sidebar; full-width 3-column clubhouse.
+========================================================================= */
 
-// ── Types ───────────────────────────────────────────────────────
+const CYAN = "#4FD3EE";
+const GREEN = "#54C98A";
 
-type Spotlight = {
-  id: string;
-  type: "collector" | "artist" | "brand";
-  name: string;
-  tagline: string | null;
-  bio: string | null;
-  image_url: string | null;
-  universe_tags: string[] | null;
-  link_url: string | null;
-  link_label: string | null;
-  is_featured: boolean;
-  sort_order: number;
+/* ── Mock data ───────────────────────────────────────────────── */
+const LIVE_TABS = ["All Activity", "Discussions", "Collector Q&A", "Item Chatter"] as const;
+
+const FEED = [
+  { tag: "Discussion", time: "18m ago", title: "Silver Age vs Bronze Age: where's the smart money in 2024?", replies: 23, views: 142, hue: 8 },
+  { tag: "Collector Q&A", time: "42m ago", title: "Thoughts on this 1986 Fleer Jordan PSA 9?", replies: 12, views: 85, hue: 212 },
+  { tag: "Item Chatter", time: "1h ago", title: "First press UK vinyl — tiny stamper marks, big sound?", replies: 9, views: 63, hue: 260 },
+  { tag: "Market Watch", time: "2h ago", title: "Hulk #181 continuing to climb", replies: 7, views: 111, hue: 130 },
+];
+
+const HOT = [
+  { t: "Best comic pickups under $500 right now?", n: 56 },
+  { t: "Are modern comics finally having their moment?", n: 38 },
+  { t: "Which rookie cards are you buying now?", n: 42 },
+  { t: "Top 5 albums every collection needs", n: 31 },
+];
+
+const MVP = [
+  { rank: 1, name: "VaultCouncil", pts: 24680 },
+  { rank: 2, name: "GraphiteOG", pts: 18540 },
+  { rank: 3, name: "PressPlay", pts: 15320 },
+  { rank: 4, name: "CardKing", pts: 12875 },
+  { rank: 5, name: "Vinyl.Vet", pts: 11210 },
+];
+
+const DROPS = [
+  { title: "1957 Topps PSA 9 Run — Group Break", date: "MAY 18", time: "8:00 PM ET" },
+  { title: "Vintage Guitar Hour w/ Special Guest", date: "MAY 21", time: "7:00 PM ET" },
+];
+
+const UNIVERSES = [
+  { name: "Comic Universe", members: 2341 },
+  { name: "Card Universe", members: 1892 },
+  { name: "Vinyl Universe", members: 1276 },
+  { name: "Vintage Guitar Universe", members: 642 },
+];
+
+const NEW_MEMBERS = [
+  { name: "RookCollector", lvl: 1 },
+  { name: "AnalogAddict", lvl: 1 },
+  { name: "GridironGoat", lvl: 1 },
+  { name: "SilverAgeSam", lvl: 1 },
+];
+
+/* ── Shared bits ─────────────────────────────────────────────── */
+const CARD: React.CSSProperties = {
+  background: "var(--surface)",
+  border: "1px solid var(--border)",
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05), 0 2px 10px rgba(0,0,0,0.16)",
 };
 
-type MVPEntry = {
-  rank: number;
-  profile_id: string;
-  display_name: string;
-  avatar_emoji: string;
-  item_count: number;
-};
-
-type UniverseMVP = {
-  subject: string;
-  entries: MVPEntry[];
-};
-
-// ── Helpers ─────────────────────────────────────────────────────
-
-function typeGlyph(type: Spotlight["type"]): GlyphName {
-  if (type === "artist") return "palette";
-  if (type === "brand") return "building";
-  return "key";
+function Label({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--muted)" }}>
+      {children}
+    </span>
+  );
 }
 
-type SpotlightTab = "All" | "Collectors" | "Artists & Brands";
-
-// ── Gold-glow medallion (the app's icon treatment) ──────────────
-
-function Medallion({ name, size = 40, box = 92 }: { name: GlyphName; size?: number; box?: number }) {
+function Info() {
   return (
-    <div
-      className="relative flex shrink-0 items-center justify-center rounded-[16px] border"
+    <span className="inline-grid h-3.5 w-3.5 place-items-center rounded-full text-[8px] font-black" style={{ border: "1px solid var(--border-strong, rgba(255,255,255,0.2))", color: "var(--muted2)" }}>i</span>
+  );
+}
+
+function More({ children = "View all" }: { children?: React.ReactNode }) {
+  return <button type="button" className="text-[11px] font-bold" style={{ color: CYAN }}>{children}</button>;
+}
+
+/* Placeholder avatar — no images/emoji in the visual pass. */
+function Avatar({ name, size = 34, ring = "var(--border-strong, rgba(255,255,255,0.18))" }: { name: string; size?: number; ring?: string }) {
+  const initials = name.replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase();
+  return (
+    <span
+      className="inline-grid shrink-0 place-items-center rounded-[7px] font-black"
       style={{
-        width: box,
-        height: box,
-        borderColor: border,
-        background: "radial-gradient(circle at 50% 28%, rgba(203,208,213,0.20), rgba(2,9,12,0.92) 72%)",
-        color: goldBright,
+        width: size, height: size, fontSize: size * 0.36, color: "var(--fg)",
+        background: "linear-gradient(165deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02))",
+        border: `1px solid ${ring}`,
       }}
     >
-      <Glyph name={name} size={size} />
+      {initials}
+    </span>
+  );
+}
+
+/* Placeholder media tile for feed thumbnails / room display. */
+function Tile({ hue = 220, className = "", children }: { hue?: number; className?: string; children?: React.ReactNode }) {
+  return (
+    <div
+      className={`relative overflow-hidden ${className}`}
+      style={{ background: `linear-gradient(150deg, hsl(${hue} 22% 20%), hsl(${hue} 24% 9%))`, border: "1px solid var(--border)" }}
+    >
+      {children}
     </div>
   );
 }
 
-// ── Spotlight Card ───────────────────────────────────────────────
-
-function SpotlightCard({ s }: { s: Spotlight }) {
+function Spark({ color = GREEN }: { color?: string }) {
   return (
-    <div
-      className="relative flex flex-col gap-3 overflow-hidden rounded-[14px] border p-5 transition hover:brightness-[1.06]"
-      style={{
-        background: panel,
-        borderColor: s.is_featured ? "rgba(203,208,213,0.55)" : border,
-        boxShadow: s.is_featured ? "0 0 30px rgba(203,208,213,0.14)" : undefined,
-      }}
-    >
-      {s.is_featured && (
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{ background: "radial-gradient(circle at 100% 0%, rgba(203,208,213,0.10), transparent 40%)" }}
-        />
-      )}
+    <svg viewBox="0 0 60 20" className="h-5 w-16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 15 L10 12 L18 14 L26 8 L34 10 L42 5 L50 7 L59 2" />
+    </svg>
+  );
+}
 
-      {/* Header row */}
-      <div className="relative flex items-start gap-3">
-        <div
-          className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[14px] border"
-          style={{ background: panel2, borderColor: border, color: goldBright }}
-        >
-          {s.image_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={s.image_url} alt={s.name} className="h-full w-full object-cover" />
-          ) : (
-            <Glyph name={typeGlyph(s.type)} size={28} />
-          )}
+function Bars({ color = CYAN }: { color?: string }) {
+  const h = [7, 11, 6, 13, 9, 15, 12];
+  return (
+    <svg viewBox="0 0 60 20" className="h-5 w-16">
+      {h.map((v, i) => (
+        <rect key={i} x={i * 8.4} y={20 - v} width="5.4" height={v} rx="1" fill={color} opacity={0.55 + i * 0.06} />
+      ))}
+    </svg>
+  );
+}
+
+function fmt(n: number) {
+  return n.toLocaleString("en-US");
+}
+
+/* ── Page ────────────────────────────────────────────────────── */
+export default function VltLoungePage() {
+  const [tab, setTab] = useState<(typeof LIVE_TABS)[number]>("All Activity");
+
+  return (
+    <main className="mx-auto w-full max-w-[1440px] px-4 pb-16 pt-6 sm:px-6 lg:px-8">
+      {/* Header */}
+      <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-wrap items-end gap-x-5 gap-y-1">
+          <h1 className="text-[38px] font-extrabold uppercase leading-[0.9] tracking-[-0.03em] sm:text-[46px]">VLT Lounge</h1>
+          <p className="pb-1 text-sm leading-tight" style={{ color: "var(--muted)" }}>
+            The collector clubhouse.<br className="hidden sm:block" /> Trusted talk. Real knowledge.
+          </p>
         </div>
+        <div className="flex shrink-0 items-center gap-2.5">
+          <button type="button" className="inline-flex items-center gap-2 rounded-[6px] px-4 py-2.5 text-sm font-bold" style={{ ...CARD, color: "var(--fg)" }}>
+            <span aria-hidden style={{ color: CYAN }}>?</span> Ask the Lounge
+          </button>
+          <button type="button" className="vltd-primary-button inline-flex items-center gap-2 rounded-[6px] px-4 py-2.5 text-sm font-black">
+            Post Update
+          </button>
+        </div>
+      </header>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[22px] font-semibold leading-none" style={{ color: cream, fontFamily: serif }}>
-              {s.name}
-            </span>
-            {s.is_featured && (
-              <span
-                className="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.15em]"
-                style={{ background: "rgba(203,208,213,0.16)", color: goldBright, border: `1px solid ${border}` }}
-              >
-                <Glyph name="star" size={10} /> Featured
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)_minmax(0,340px)]">
+        {/* ── LEFT: Lounge Live + Hot Threads ── */}
+        <div className="flex flex-col gap-4">
+          <section className="rounded-[8px]" style={CARD}>
+            <div className="flex items-center gap-2 px-4 pt-3.5">
+              <Label>Lounge Live</Label>
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold" style={{ color: GREEN }}>
+                <span className="h-1.5 w-1.5 rounded-full" style={{ background: GREEN, boxShadow: `0 0 8px ${GREEN}` }} />128 online
               </span>
-            )}
-          </div>
-          {s.tagline && (
-            <p className="mt-1 text-sm" style={{ color: gold }}>{s.tagline}</p>
-          )}
-          <span
-            className="mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize"
-            style={{ background: "rgba(255,255,255,0.04)", color: muted, border: `1px solid ${borderSoft}` }}
-          >
-            {s.type}
-          </span>
-        </div>
-      </div>
-
-      {/* Bio */}
-      {s.bio && (
-        <p className="relative line-clamp-2 text-sm leading-relaxed" style={{ color: muted }}>
-          {s.bio}
-        </p>
-      )}
-
-      {/* Universe tags */}
-      {s.universe_tags && s.universe_tags.length > 0 && (
-        <div className="relative flex flex-wrap gap-1.5">
-          {s.universe_tags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold"
-              style={{ background: "rgba(203,208,213,0.10)", color: goldBright, border: `1px solid ${border}` }}
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* Link */}
-      {s.link_url && (
-        <a
-          href={s.link_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="relative inline-flex items-center gap-1.5 self-start rounded-[8px] px-4 py-2 text-xs font-bold transition hover:brightness-110"
-          style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B" }}
-        >
-          {s.link_label || "Visit"}
-        </a>
-      )}
-    </div>
-  );
-}
-
-// ── MVPs Sidebar ─────────────────────────────────────────────────
-
-function MVPsSidebar({ mvps, loading }: { mvps: UniverseMVP[]; loading: boolean }) {
-  return (
-    <div className="rounded-[14px] border p-5" style={{ background: panel, borderColor: border }}>
-      <div className="text-[11px] font-bold uppercase tracking-[0.25em]" style={{ color: dim }}>
-        VLT MVPs
-      </div>
-      <h2 className="mt-1 text-[26px] font-semibold leading-none" style={{ color: cream, fontFamily: serif }}>
-        Top Collectors
-      </h2>
-      <p className="mt-1.5 text-xs" style={{ color: muted }}>
-        Most active collectors by universe
-      </p>
-
-      <div className="mt-4 flex flex-col gap-5">
-        {loading ? (
-          <div className="text-sm" style={{ color: muted }}>Loading MVPs…</div>
-        ) : mvps.length === 0 ? (
-          <div
-            className="flex flex-col items-center gap-3 rounded-[12px] border p-6 text-center"
-            style={{ background: panel2, borderColor: borderSoft }}
-          >
-            <Medallion name="trophy" size={26} box={64} />
-            <div className="text-[18px] font-semibold" style={{ color: cream, fontFamily: serif }}>
-              MVPs coming soon
             </div>
-            <p className="text-xs leading-relaxed" style={{ color: muted }}>
-              Top collectors appear here as the community grows.
-            </p>
-          </div>
-        ) : (
-          mvps.map((u) => (
-            <div key={u.subject}>
-              <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: goldBright }}>
-                {u.subject}
-              </div>
-              <div className="flex flex-col gap-1.5">
-                {u.entries.map((e, i) => (
-                  <div
-                    key={e.profile_id}
-                    className="flex items-center gap-2.5 rounded-[10px] border px-3 py-2"
-                    style={{ background: panel2, borderColor: borderSoft }}
-                  >
-                    <span className="w-5 shrink-0 text-[17px] font-semibold leading-none" style={{ color: goldBright, fontFamily: serif }}>
-                      {i + 1}
-                    </span>
-                    <span className="flex-1 truncate text-sm font-semibold" style={{ color: cream }}>
-                      {e.display_name}
-                    </span>
-                    <span className="shrink-0 text-xs tabular-nums" style={{ color: muted }}>
-                      {e.item_count}
-                    </span>
+            <div className="mt-2.5 flex gap-4 overflow-x-auto px-4 no-scrollbar" style={{ borderBottom: "1px solid var(--border)" }}>
+              {LIVE_TABS.map((t) => {
+                const active = t === tab;
+                return (
+                  <button key={t} type="button" onClick={() => setTab(t)} className="relative whitespace-nowrap pb-2.5 text-[12px] font-bold transition" style={{ color: active ? CYAN : "var(--muted)" }}>
+                    {t}
+                    {active && <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full" style={{ background: CYAN, boxShadow: `0 0 8px ${CYAN}` }} />}
+                  </button>
+                );
+              })}
+            </div>
+            <ul className="divide-y" style={{ borderColor: "var(--border)" }}>
+              {FEED.map((f) => (
+                <li key={f.title} className="flex gap-3 px-4 py-3.5">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: CYAN }}>{f.tag}</span>
+                      <span className="text-[10px]" style={{ color: "var(--muted2)" }}>{f.time}</span>
+                    </div>
+                    <p className="mt-1 text-[13.5px] font-bold leading-snug">{f.title}</p>
+                    <div className="mt-1.5 flex gap-3 text-[11px]" style={{ color: "var(--muted2)" }}>
+                      <span>{f.replies} replies</span>
+                      <span>{f.views} views</span>
+                    </div>
                   </div>
-                ))}
-              </div>
+                  <Tile hue={f.hue} className="h-14 w-14 shrink-0 rounded-[6px]" />
+                </li>
+              ))}
+            </ul>
+            <button type="button" className="w-full px-4 py-3 text-left text-[12px] font-bold" style={{ color: CYAN, borderTop: "1px solid var(--border)" }}>
+              View all activity →
+            </button>
+          </section>
+
+          <section className="rounded-[8px]" style={CARD}>
+            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
+              <Label>Hot Threads</Label>
+              <More />
             </div>
-          ))
-        )}
-      </div>
+            <ul>
+              {HOT.map((h) => (
+                <li key={h.t} className="flex items-center justify-between gap-3 px-4 py-2.5 text-[12.5px]" style={{ borderBottom: "1px solid var(--border)" }}>
+                  <span className="min-w-0 truncate font-semibold" style={{ color: "var(--fg)" }}>{h.t}</span>
+                  <span className="shrink-0 rounded-[4px] px-1.5 py-0.5 text-[11px] font-bold" style={{ background: "var(--pill)", color: "var(--muted)" }}>{h.n}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
 
-      <p className="mt-5 flex items-center justify-center gap-1.5 text-center text-[11px]" style={{ color: dim }}>
-        <Glyph name="heart" size={12} />
-        Rankings celebrate activity, not competition
-      </p>
-    </div>
-  );
-}
-
-// ── Main Page ────────────────────────────────────────────────────
-
-export default function VLTLoungePage() {
-  const [spotlights, setSpotlights] = useState<Spotlight[]>([]);
-  const [spotlightsLoading, setSpotlightsLoading] = useState(true);
-  const [mvps, setMvps] = useState<UniverseMVP[]>([]);
-  const [mvpsLoading, setMvpsLoading] = useState(true);
-  const [tab, setTab] = useState<SpotlightTab>("All");
-
-  // Fetch spotlights
-  useEffect(() => {
-    async function load() {
-      const supabase = getSupabaseBrowserClient();
-      if (!supabase) { setSpotlightsLoading(false); return; }
-      const { data, error } = await supabase
-        .from("spotlights")
-        .select("*")
-        .eq("enabled", true)
-        .order("is_featured", { ascending: false })
-        .order("sort_order", { ascending: true });
-      if (!error && data) {
-        setSpotlights(data as Spotlight[]);
-      }
-      setSpotlightsLoading(false);
-    }
-    void load();
-  }, []);
-
-  // Fetch MVP data (top subjects → top 3 per subject)
-  useEffect(() => {
-    async function load() {
-      const supabase = getSupabaseBrowserClient();
-      if (!supabase) { setMvpsLoading(false); return; }
-      try {
-        const { data: subjects } = await supabase.rpc("get_top_subjects", { p_limit: 5 });
-        if (!subjects || subjects.length === 0) { setMvpsLoading(false); return; }
-
-        const results: UniverseMVP[] = [];
-        for (const s of subjects as Array<{ subject: string }>) {
-          const { data: board } = await supabase.rpc("get_subject_leaderboard", {
-            subject_name: s.subject,
-            p_limit: 3,
-          });
-          if (board && board.length > 0) {
-            results.push({
-              subject: s.subject,
-              entries: (board as Array<Record<string, unknown>>).map((r, i) => ({
-                rank: i + 1,
-                profile_id: String(r.profile_id ?? ""),
-                display_name: String(r.display_name ?? "Collector"),
-                avatar_emoji: String(r.avatar_emoji ?? ""),
-                item_count: Number(r.item_count ?? 0),
-              })),
-            });
-          }
-        }
-        setMvps(results);
-      } catch { /* silent */ }
-      setMvpsLoading(false);
-    }
-    void load();
-  }, []);
-
-  const TABS: SpotlightTab[] = ["All", "Collectors", "Artists & Brands"];
-
-  const filtered = spotlights.filter((s) => {
-    if (tab === "All") return true;
-    if (tab === "Collectors") return s.type === "collector";
-    return s.type === "artist" || s.type === "brand";
-  });
-
-  return (
-    <main className="min-h-dvh px-4 py-6 sm:px-6 lg:px-8" style={{ background: "var(--bg)" }}>
-      <div className="mx-auto max-w-6xl">
-        {/* ── Hero header ── */}
-        <section className="relative overflow-hidden rounded-[16px] border" style={{ borderColor: border, background: panel }}>
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{ background: "radial-gradient(circle at 10% 18%, rgba(203,208,213,0.10), transparent 44%)" }}
-          />
-          <div className="relative flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:gap-7 sm:p-8">
-            <Medallion name="sofa" size={44} box={96} />
-            <div className="min-w-0">
-              <p className="text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: dim }}>
-                VLTD Community
-              </p>
-              <h1 className="mt-2 text-[40px] font-semibold leading-none sm:text-[46px]" style={{ color: cream, fontFamily: serif }}>
-                VLT Lounge
-              </h1>
-              <p className="mt-2.5 max-w-xl text-[15px]" style={{ color: cream }}>
-                Community spotlights, featured creators, and VLT MVPs.
-              </p>
+        {/* ── CENTER: Room of the Night + New Members ── */}
+        <div className="flex flex-col gap-4">
+          <section className="rounded-[8px] overflow-hidden" style={CARD}>
+            <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
+              <Label>Room of the Night</Label>
+              <span className="text-[11px]" style={{ color: "var(--muted2)" }}>Curated by <span className="font-bold" style={{ color: "var(--fg)" }}>Vault Council</span></span>
             </div>
-          </div>
-        </section>
+            <div className="relative">
+              <Tile hue={220} className="min-h-[300px] w-full">
+                <div className="relative z-10 max-w-[52%] p-6">
+                  <h2 className="text-[34px] font-extrabold leading-[0.95] tracking-[-0.02em]" style={{ color: "#F3F4F5" }}>Icons Only.<br />One Room.</h2>
+                  <p className="mt-3 text-[13px] leading-snug" style={{ color: "rgba(240,241,242,0.72)" }}>
+                    A nightly spotlight on legendary pieces that moved the market, broke records, or defined the culture.
+                  </p>
+                  <button type="button" className="vltd-primary-button mt-4 inline-flex rounded-[6px] px-4 py-2 text-[12px] font-black">View Room</button>
+                </div>
+                {/* placeholder showcase blocks (real display art added later) */}
+                <div className="pointer-events-none absolute inset-y-6 right-5 hidden items-end gap-3 sm:flex">
+                  {[92, 74, 60].map((h, i) => (
+                    <div key={i} className="w-16 rounded-[6px]" style={{ height: `${h}%`, background: "linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02))", border: "1px solid rgba(255,255,255,0.10)" }} />
+                  ))}
+                </div>
+              </Tile>
+            </div>
+            <div className="grid grid-cols-3 divide-x px-2 py-3 text-center" style={{ borderColor: "var(--border)", borderTop: "1px solid var(--border)" }}>
+              <div><div className="text-[10px] uppercase tracking-[0.14em]" style={{ color: "var(--muted2)" }}>Total Value</div><div className="mt-0.5 text-[20px] font-black" style={{ color: CYAN }}>$2.78M</div></div>
+              <div><div className="text-[10px] uppercase tracking-[0.14em]" style={{ color: "var(--muted2)" }}>7D Change</div><div className="mt-0.5 text-[20px] font-black" style={{ color: GREEN }}>+18.6%</div></div>
+              <div><div className="text-[10px] uppercase tracking-[0.14em]" style={{ color: "var(--muted2)" }}>Assets</div><div className="mt-0.5 text-[20px] font-black">4</div></div>
+            </div>
+          </section>
 
-        {/* ── Body ── */}
-        <div className="mt-7 grid gap-7 lg:grid-cols-[1fr_330px]">
-          {/* Left: Spotlights */}
-          <div>
-            {/* Tab bar */}
-            <div className="mb-5 flex flex-wrap gap-2">
-              {TABS.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setTab(t)}
-                  className="min-h-[40px] rounded-full px-4 py-2 text-sm font-semibold transition"
-                  style={tab === t ? {
-                    background: "linear-gradient(135deg, #8C9298, #C8CDD2)",
-                    color: "#0B0B0B",
-                  } : {
-                    background: panel2,
-                    color: muted,
-                    border: `1px solid ${border}`,
-                  }}
-                >
-                  {t}
-                </button>
+          <section className="rounded-[8px]" style={CARD}>
+            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
+              <Label>New Members</Label>
+              <More />
+            </div>
+            <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4">
+              {NEW_MEMBERS.map((m) => (
+                <div key={m.name} className="flex flex-col items-center gap-2 rounded-[7px] p-3 text-center" style={{ border: "1px solid var(--border)" }}>
+                  <Avatar name={m.name} size={44} />
+                  <div className="text-[12px] font-bold leading-tight">{m.name}</div>
+                  <div className="text-[10px]" style={{ color: "var(--muted2)" }}>Joined today</div>
+                  <span className="rounded-[4px] px-2 py-0.5 text-[10px] font-black" style={{ background: "rgba(79,211,238,0.10)", color: CYAN, border: `1px solid rgba(79,211,238,0.35)` }}>LVL {m.lvl}</span>
+                </div>
               ))}
             </div>
+          </section>
+        </div>
 
-            {/* Spotlights grid */}
-            {spotlightsLoading ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-48 animate-pulse rounded-[14px] border" style={{ background: panel, borderColor: borderSoft }} />
-                ))}
-              </div>
-            ) : filtered.length === 0 ? (
-              <div
-                className="relative flex flex-col items-center gap-4 overflow-hidden rounded-[16px] border px-6 py-16 text-center"
-                style={{ background: panel, borderColor: border }}
-              >
-                <div
-                  className="pointer-events-none absolute inset-0"
-                  style={{ background: "radial-gradient(circle at 50% 0%, rgba(203,208,213,0.08), transparent 46%)" }}
-                />
-                <div className="relative"><Medallion name="sofa" size={40} box={88} /></div>
-                <div className="relative text-[26px] font-semibold" style={{ color: cream, fontFamily: serif }}>
-                  No spotlights yet
+        {/* ── RIGHT: MVP + Signals + Drops + Universe Tables ── */}
+        <div className="flex flex-col gap-4">
+          <section className="rounded-[8px]" style={CARD}>
+            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
+              <span className="flex items-center gap-1.5"><Label>MVP Table</Label><Info /></span>
+              <span className="text-[11px]" style={{ color: "var(--muted2)" }}>This Month</span>
+            </div>
+            <ul>
+              {MVP.map((m) => (
+                <li key={m.name} className="flex items-center gap-3 px-4 py-2.5" style={{ borderBottom: "1px solid var(--border)" }}>
+                  <span className="grid h-6 w-6 place-items-center rounded-[5px] text-[11px] font-black" style={{ background: m.rank <= 3 ? "linear-gradient(165deg,#EDEFF1,#A8AEB4)" : "var(--pill)", color: m.rank <= 3 ? "#0B0C0E" : "var(--muted)" }}>{m.rank}</span>
+                  <Avatar name={m.name} size={26} />
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-bold">{m.name}</span>
+                  <span className="text-[13px] font-black" style={{ color: CYAN }}>{fmt(m.pts)}</span>
+                </li>
+              ))}
+            </ul>
+            <button type="button" className="w-full px-4 py-3 text-left text-[12px] font-bold" style={{ color: CYAN }}>View full leaderboard →</button>
+          </section>
+
+          <section className="rounded-[8px]" style={CARD}>
+            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
+              <span className="flex items-center gap-1.5"><Label>Collector Signals</Label><Info /></span>
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold" style={{ color: GREEN }}><span className="h-1.5 w-1.5 rounded-full" style={{ background: GREEN }} />Live</span>
+            </div>
+            <div className="grid grid-cols-2 gap-px" style={{ background: "var(--border)" }}>
+              {[
+                { label: "Market Pulse (7D)", value: "+12.4%", tone: GREEN, chart: <Spark /> },
+                { label: "Volume (7D)", value: "$48.7M", tone: CYAN, chart: <Bars /> },
+                { label: "Active Listings", value: "24,381", tone: "var(--fg)", chart: null },
+                { label: "Sales (7D)", value: "1,284", tone: CYAN, chart: null },
+              ].map((s) => (
+                <div key={s.label} className="p-3.5" style={{ background: "var(--surface)" }}>
+                  <div className="text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--muted2)" }}>{s.label}</div>
+                  <div className="mt-1.5 flex items-center justify-between gap-2">
+                    <span className="text-[18px] font-black" style={{ color: s.tone }}>{s.value}</span>
+                    {s.chart}
+                  </div>
                 </div>
-                <p className="relative max-w-sm text-sm leading-relaxed" style={{ color: muted }}>
-                  Check back soon — we feature collectors, artists, and brands from across the VLTD community.
-                </p>
-              </div>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {filtered.map((s) => <SpotlightCard key={s.id} s={s} />)}
-              </div>
-            )}
-          </div>
+              ))}
+            </div>
+          </section>
 
-          {/* Right: MVPs */}
-          <div>
-            <MVPsSidebar mvps={mvps} loading={mvpsLoading} />
-          </div>
+          <section className="rounded-[8px]" style={CARD}>
+            <div className="flex items-center gap-1.5 px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}><Label>Upcoming Lounge Drops</Label><Info /></div>
+            <ul>
+              {DROPS.map((d) => (
+                <li key={d.title} className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
+                  <Tile hue={40} className="h-11 w-11 shrink-0 rounded-[6px]" />
+                  <div className="min-w-0 flex-1"><p className="truncate text-[12.5px] font-bold">{d.title}</p></div>
+                  <div className="shrink-0 text-right"><div className="text-[11px] font-black" style={{ color: CYAN }}>{d.date}</div><div className="text-[10px]" style={{ color: "var(--muted2)" }}>{d.time}</div></div>
+                </li>
+              ))}
+            </ul>
+            <button type="button" className="w-full px-4 py-3 text-left text-[12px] font-bold" style={{ color: CYAN }}>View all drops →</button>
+          </section>
+
+          <section className="rounded-[8px]" style={CARD}>
+            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
+              <Label>Universe Tables</Label>
+              <More />
+            </div>
+            <ul>
+              {UNIVERSES.map((u) => (
+                <li key={u.name} className="flex items-center justify-between gap-3 px-4 py-2.5 text-[12.5px]" style={{ borderBottom: "1px solid var(--border)" }}>
+                  <span className="flex items-center gap-2.5"><Avatar name={u.name} size={22} /><span className="font-bold">{u.name}</span></span>
+                  <span className="flex items-center gap-2" style={{ color: "var(--muted)" }}>{fmt(u.members)} members<span className="h-1.5 w-1.5 rounded-full" style={{ background: GREEN }} /></span>
+                </li>
+              ))}
+            </ul>
+          </section>
         </div>
       </div>
     </main>
