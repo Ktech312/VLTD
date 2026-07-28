@@ -161,9 +161,10 @@ export default function BugReporter() {
 
       {showHelper && !open && (
         <div
-          className="fixed right-4 bottom-[9.25rem] z-[61] w-[min(18rem,calc(100vw-2rem))] rounded-[14px] p-3 text-left sm:right-6 sm:bottom-[5.25rem]"
+          className="fixed right-4 bottom-[9.25rem] z-[10000] w-[min(18rem,calc(100vw-2rem))] rounded-[14px] p-3 text-left sm:right-6 sm:bottom-[5.25rem]"
           style={{
             position: "fixed",
+            zIndex: 10000,
             background: "linear-gradient(180deg, rgba(8,14,20,0.98), rgba(2,8,12,0.99))",
             border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.42))",
             boxShadow: "0 18px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(237,239,241,0.08)",
@@ -210,14 +211,16 @@ export default function BugReporter() {
       {/* Modal */}
       {open && (
         <div
-          className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto px-4 pt-4 sm:items-center sm:pt-0"
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+          className="fixed inset-0 z-[10001] flex items-start justify-center overflow-y-auto px-4 pt-4 sm:items-center sm:pt-0"
+          style={{ position: "fixed", inset: 0, zIndex: 10001, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
           role="dialog"
           aria-modal="true"
           aria-label="Report a bug"
+          onClick={() => { setOpen(false); reset(); }}
         >
           <div
             className="w-full max-w-md rounded-[24px] p-6"
+            onClick={(e) => e.stopPropagation()}
             style={{
               background: "var(--theme-elevated, rgba(12,18,30,0.98))",
               border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.28))",
