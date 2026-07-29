@@ -281,6 +281,13 @@ export default function CapturePage() {
   // re-scanning a barcode from the review screen.
   const [isCameraPanelOpen, setIsCameraPanelOpen] = useState(false);
 
+  // Camera-first (option 1): open the live camera on arrival. Closing it reveals
+  // the builder for manual entry, so no one is trapped without a photo.
+  useEffect(() => {
+    setIsCameraPanelOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   /* ── AI flow triggered by photo capture ── */
   // Capture-first: attach the photo instantly. AI identify is opt-in (the
   // "Identify with AI" / "Auto ID" buttons), so taking a photo never blocks
