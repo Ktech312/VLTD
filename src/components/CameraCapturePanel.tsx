@@ -970,7 +970,7 @@ export default function CameraCapturePanel({
                 <div className="flex items-center gap-2 mb-2">
                   <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.16em]"
                     style={{ background: "rgba(203,208,213,0.14)", color: "#C8CDD2" }}>
-                    ⚡ Bulk Mode
+                    Quick Add
                   </span>
                   {bulkSavedCount > 0 && (
                     <span className="text-[11px] font-semibold text-[color:var(--muted)]">
@@ -1099,7 +1099,7 @@ export default function CameraCapturePanel({
                   className="inline-block h-2 w-2 rounded-full transition-colors"
                   style={{ background: bulkMode ? "#C8CDD2" : "var(--muted2)" }}
                 />
-                Bulk Add
+                Quick Add
               </button>
               {bulkSaving && (
                 <span className="text-[10px] text-[color:var(--muted)]">Saving…</span>
