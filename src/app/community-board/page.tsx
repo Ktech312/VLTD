@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { resolveAvatarSrc } from "@/lib/avatarResolve";
 
 /* =========================================================================
    VLT LOUNGE — the collector clubhouse.
@@ -30,9 +32,9 @@ const HOT = [
 ];
 
 /* Real leaderboard/member types (wired from Supabase below). */
-type MvpRow = { profile_id: string; name: string; items: number };
-type UniverseRow = { subject: string; collectors: number };
-type MemberRow = { name: string; joined: string };
+type MvpRow = { profile_id: string; name: string; username: string; avatarEmoji: string; items: number };
+type UniverseRow = { subject: string; raw: string; collectors: number };
+type MemberRow = { name: string; username: string; joined: string; src: string | null };
 
 function titleCase(s: string) {
   return s.replace(/\b\w/g, (c) => c.toUpperCase());
@@ -84,23 +86,31 @@ function Info() {
   );
 }
 
-function More({ children = "View all" }: { children?: React.ReactNode }) {
-  return <button type="button" className="text-[11px] font-bold" style={{ color: CYAN }}>{children}</button>;
+function More({ children = "View all", href }: { children?: React.ReactNode; href?: string }) {
+  const cls = "text-[11px] font-bold";
+  return href
+    ? <Link href={href} className={cls} style={{ color: CYAN }}>{children}</Link>
+    : <button type="button" className={cls} style={{ color: CYAN }}>{children}</button>;
 }
 
-/* Placeholder avatar — no images/emoji in the visual pass. */
-function Avatar({ name, size = 34, ring = "var(--border-strong, rgba(255,255,255,0.18))" }: { name: string; size?: number; ring?: string }) {
+/* Avatar — real profile image when available, initials otherwise. */
+function Avatar({ name, size = 34, src, ring = "var(--border-strong, rgba(255,255,255,0.18))" }: { name: string; size?: number; src?: string | null; ring?: string }) {
   const initials = name.replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase();
   return (
     <span
-      className="inline-grid shrink-0 place-items-center rounded-[7px] font-black"
+      className="inline-grid shrink-0 place-items-center overflow-hidden rounded-[7px] font-black"
       style={{
         width: size, height: size, fontSize: size * 0.36, color: "var(--fg)",
         background: "linear-gradient(165deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02))",
         border: `1px solid ${ring}`,
       }}
     >
-      {initials}
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt="" className="h-full w-full object-cover" />
+      ) : (
+        initials
+      )}
     </span>
   );
 }
@@ -159,10 +169,10 @@ export default function VltLoungePage() {
       try {
         const { data: subjects } = await supabase.rpc("get_top_subjects", { p_limit: 12 });
         const subs = (subjects ?? []) as Array<{ subject: string; collector_count: number; total_items: number }>;
-        if (alive) setUniverses(subs.slice(0, 6).map((s) => ({ subject: titleCase(s.subject), collectors: Number(s.collector_count ?? 0) })));
+        if (alive) setUniverses(subs.slice(0, 6).map((s) => ({ subject: titleCase(s.subject), raw: s.subject, collectors: Number(s.collector_count ?? 0) })));
 
         // Aggregate per-subject leaderboards → overall top collectors by items.
-        const agg = new Map<string, { name: string; items: number }>();
+        const agg = new Map<string, { name: string; username: string; avatarEmoji: string; items: number }>();
         await Promise.all(
           subs.slice(0, 8).map(async (s) => {
             const { data: board } = await supabase.rpc("get_subject_leaderboard", { p_subject: s.subject, p_limit: 25 });
@@ -170,28 +180,39 @@ export default function VltLoungePage() {
               const id = String(r.profile_id ?? "");
               if (!id) return;
               const name = String(r.display_name || r.username || "Collector");
-              const cur = agg.get(id) ?? { name, items: 0 };
+              const username = String(r.username ?? "");
+              const avatarEmoji = String(r.avatar_emoji ?? "");
+              const cur = agg.get(id) ?? { name, username, avatarEmoji, items: 0 };
               cur.items += Number(r.item_count ?? 0);
               cur.name = name;
+              if (username) cur.username = username;
+              if (avatarEmoji) cur.avatarEmoji = avatarEmoji;
               agg.set(id, cur);
             });
           })
         );
         const top = [...agg.entries()]
-          .map(([profile_id, v]) => ({ profile_id, name: v.name, items: v.items }))
+          .map(([profile_id, v]) => ({ profile_id, name: v.name, username: v.username, avatarEmoji: v.avatarEmoji, items: v.items }))
           .sort((a, b) => b.items - a.items)
           .slice(0, 5);
         if (alive) setMvp(top);
 
         const { data: recent } = await supabase
           .from("profiles")
-          .select("display_name, username, created_at")
+          .select("id, display_name, username, avatar_url, avatar_emoji, created_at")
           .eq("is_public", true)
           .order("created_at", { ascending: false })
           .limit(4);
         if (alive) setMembers((recent ?? []).map((m: Record<string, unknown>) => ({
           name: String(m.display_name || m.username || "Collector"),
+          username: String(m.username ?? ""),
           joined: joinedLabel(String(m.created_at ?? "")),
+          src: resolveAvatarSrc({
+            avatarUrl: (m.avatar_url as string) ?? null,
+            avatarEmoji: (m.avatar_emoji as string) ?? null,
+            profileId: String(m.id ?? ""),
+            displayName: String(m.display_name ?? ""),
+          }),
         })));
 
         // Collector Signals — aggregate RPC (needs the 20260728_collector_signals migration).
@@ -367,7 +388,7 @@ export default function VltLoungePage() {
           <section className="rounded-[8px]" style={CARD}>
             <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
               <Label>New Members</Label>
-              <More />
+              <More href="/discover" />
             </div>
             <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4">
               {members === null ? (
@@ -375,13 +396,13 @@ export default function VltLoungePage() {
               ) : members.length === 0 ? (
                 <div className="col-span-full py-6 text-center text-[12px]" style={{ color: "var(--muted2)" }}>No new members yet.</div>
               ) : (
-                members.map((m) => (
-                  <div key={m.name} className="flex flex-col items-center gap-2 rounded-[7px] p-3 text-center" style={{ border: "1px solid var(--border)" }}>
-                    <Avatar name={m.name} size={44} />
+                members.map((m, i) => (
+                  <Link key={m.username || `${m.name}-${i}`} href={m.username ? `/u/${m.username}` : "/discover"} className="flex flex-col items-center gap-2 rounded-[7px] p-3 text-center transition hover:-translate-y-0.5" style={{ border: "1px solid var(--border)" }}>
+                    <Avatar name={m.name} size={44} src={m.src} />
                     <div className="text-[12px] font-bold leading-tight">{m.name}</div>
                     <div className="text-[10px]" style={{ color: "var(--muted2)" }}>{m.joined}</div>
                     <span className="rounded-[4px] px-2 py-0.5 text-[10px] font-black" style={{ background: "rgba(79,211,238,0.10)", color: CYAN, border: `1px solid rgba(79,211,238,0.35)` }}>New</span>
-                  </div>
+                  </Link>
                 ))
               )}
             </div>
@@ -402,16 +423,18 @@ export default function VltLoungePage() {
             ) : (
               <ul>
                 {mvp.map((m, i) => (
-                  <li key={m.profile_id} className="flex items-center gap-3 px-4 py-2.5" style={{ borderBottom: "1px solid var(--border)" }}>
-                    <span className="grid h-6 w-6 place-items-center rounded-[5px] text-[11px] font-black" style={{ background: i < 3 ? "linear-gradient(165deg,#EDEFF1,#A8AEB4)" : "var(--pill)", color: i < 3 ? "#0B0C0E" : "var(--muted)" }}>{i + 1}</span>
-                    <Avatar name={m.name} size={26} />
-                    <span className="min-w-0 flex-1 truncate text-[13px] font-bold">{m.name}</span>
-                    <span className="text-[13px] font-black" style={{ color: CYAN }}>{fmt(m.items)}</span>
+                  <li key={m.profile_id} style={{ borderBottom: "1px solid var(--border)" }}>
+                    <Link href={m.username ? `/u/${m.username}` : "/discover"} className="flex items-center gap-3 px-4 py-2.5 transition hover:bg-[color:var(--table-row-hover)]">
+                      <span className="grid h-6 w-6 place-items-center rounded-[5px] text-[11px] font-black" style={{ background: i < 3 ? "linear-gradient(165deg,#EDEFF1,#A8AEB4)" : "var(--pill)", color: i < 3 ? "#0B0C0E" : "var(--muted)" }}>{i + 1}</span>
+                      <Avatar name={m.name} size={26} src={resolveAvatarSrc({ avatarEmoji: m.avatarEmoji, profileId: m.profile_id, displayName: m.name })} />
+                      <span className="min-w-0 flex-1 truncate text-[13px] font-bold">{m.name}</span>
+                      <span className="text-[13px] font-black" style={{ color: CYAN }}>{fmt(m.items)}</span>
+                    </Link>
                   </li>
                 ))}
               </ul>
             )}
-            <button type="button" className="w-full px-4 py-3 text-left text-[12px] font-bold" style={{ color: CYAN }}>View full leaderboard →</button>
+            <Link href="/discover" className="block w-full px-4 py-3 text-left text-[12px] font-bold" style={{ color: CYAN }}>View full leaderboard →</Link>
           </section>
 
           <section className="rounded-[8px]" style={CARD}>
@@ -446,21 +469,23 @@ export default function VltLoungePage() {
             ) : (
               <ul>
                 {drops.map((d) => (
-                  <li key={d.name + d.date} className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
-                    <Tile hue={40} className="h-11 w-11 shrink-0 rounded-[6px]" />
-                    <div className="min-w-0 flex-1"><p className="truncate text-[12.5px] font-bold">{d.name}</p></div>
-                    <div className="shrink-0 text-right"><div className="text-[11px] font-black" style={{ color: CYAN }}>{d.date}</div><div className="text-[10px]" style={{ color: "var(--muted2)" }}>{d.time}</div></div>
+                  <li key={d.name + d.date} style={{ borderBottom: "1px solid var(--border)" }}>
+                    <Link href="/events" className="flex items-center gap-3 px-4 py-3 transition hover:bg-[color:var(--table-row-hover)]">
+                      <Tile hue={40} className="h-11 w-11 shrink-0 rounded-[6px]" />
+                      <div className="min-w-0 flex-1"><p className="truncate text-[12.5px] font-bold">{d.name}</p></div>
+                      <div className="shrink-0 text-right"><div className="text-[11px] font-black" style={{ color: CYAN }}>{d.date}</div><div className="text-[10px]" style={{ color: "var(--muted2)" }}>{d.time}</div></div>
+                    </Link>
                   </li>
                 ))}
               </ul>
             )}
-            <button type="button" className="w-full px-4 py-3 text-left text-[12px] font-bold" style={{ color: CYAN }}>View all drops →</button>
+            <Link href="/events" className="block w-full px-4 py-3 text-left text-[12px] font-bold" style={{ color: CYAN }}>View all drops →</Link>
           </section>
 
           <section className="rounded-[8px]" style={CARD}>
             <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
               <Label>Universe Tables</Label>
-              <More />
+              <More href="/discover" />
             </div>
             {universes === null ? (
               <div className="px-4 py-6 text-center text-[12px]" style={{ color: "var(--muted2)" }}>Loading…</div>
@@ -469,9 +494,11 @@ export default function VltLoungePage() {
             ) : (
               <ul>
                 {universes.map((u) => (
-                  <li key={u.subject} className="flex items-center justify-between gap-3 px-4 py-2.5 text-[12.5px]" style={{ borderBottom: "1px solid var(--border)" }}>
-                    <span className="flex items-center gap-2.5"><Avatar name={u.subject} size={22} /><span className="font-bold">{u.subject}</span></span>
-                    <span className="flex items-center gap-2" style={{ color: "var(--muted)" }}>{fmt(u.collectors)} collectors<span className="h-1.5 w-1.5 rounded-full" style={{ background: GREEN }} /></span>
+                  <li key={u.subject} style={{ borderBottom: "1px solid var(--border)" }}>
+                    <Link href={`/registry/${encodeURIComponent(u.raw)}`} className="flex items-center justify-between gap-3 px-4 py-2.5 text-[12.5px] transition hover:bg-[color:var(--table-row-hover)]">
+                      <span className="flex items-center gap-2.5"><Avatar name={u.subject} size={22} /><span className="font-bold">{u.subject}</span></span>
+                      <span className="flex items-center gap-2" style={{ color: "var(--muted)" }}>{fmt(u.collectors)} collectors<span className="h-1.5 w-1.5 rounded-full" style={{ background: GREEN }} /></span>
+                    </Link>
                   </li>
                 ))}
               </ul>
