@@ -271,6 +271,8 @@ export default function CapturePage() {
   // AI spinner; `phase` stays "review" so the legacy camera-first block never renders.
   const [phase, setPhase] = useState<Phase>("review");
   const [analyzing, setAnalyzing] = useState(false);
+  // True only after an AI identify has actually run — gates the confidence badge.
+  const [identified, setIdentified] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [fields, setFields] = useState<ReviewFields>(EMPTY_FIELDS);
   const [capturedImageFile, setCapturedImageFile] = useState<File | null>(null);
@@ -287,6 +289,7 @@ export default function CapturePage() {
     setCapturedImageFile(file);
     setIsCameraPanelOpen(false);
     setErrorMsg("");
+    setIdentified(false); // fresh photo, no AI result yet
   }, []);
 
   // Opt-in AI: identify + fill fields on demand from the captured photo.
@@ -342,6 +345,7 @@ export default function CapturePage() {
         });
         return next;
       });
+      setIdentified(true);
       setAnalyzing(false);
     } catch (err) {
       console.error("[Capture] Error:", err);
@@ -598,12 +602,6 @@ export default function CapturePage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <ActionButton
-                    label="Auto ID"
-                    disabled={!capturedImageFile || analyzing}
-                    onClick={() => void runAiIdentify()}
-                    icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.4 3.6L17 8l-3.6 1.4L12 13l-1.4-3.6L7 8l3.6-1.4z" /><path d="M5 16l.8 2L8 19l-2.2.8L5 22l-.8-2.2L2 19l2.2-1z" /></svg>}
-                  />
-                  <ActionButton
                     label="Scan Barcode"
                     onClick={() => setIsCameraPanelOpen(true)}
                     icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M3 5v14M7 5v14M11 5v14M14 5v14M18 5v14M21 5v14" /></svg>}
@@ -615,7 +613,7 @@ export default function CapturePage() {
                   />
                   <ActionButton
                     label="Clear"
-                    onClick={() => { setFields(EMPTY_FIELDS); setCapturedImageFile(null); setErrorMsg(""); }}
+                    onClick={() => { setFields(EMPTY_FIELDS); setCapturedImageFile(null); setErrorMsg(""); setIdentified(false); }}
                     icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" /></svg>}
                   />
                 </div>
@@ -731,7 +729,7 @@ export default function CapturePage() {
                     hint={fields.title || "Name, cert, and grade"}
                     open={openSections.has(1)}
                     onToggle={() => toggleSection(1)}
-                    badge={
+                    badge={identified ? (
                       <span
                         className="inline-flex shrink-0 items-center gap-1.5 rounded-[4px] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em]"
                         style={{ background: badge.bg, color: badge.color, border: `1px solid ${badge.color}`, boxShadow: badge.glow }}
@@ -739,7 +737,7 @@ export default function CapturePage() {
                         <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: badge.color }} />
                         {badge.label}
                       </span>
-                    }
+                    ) : null}
                   >
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div>
@@ -836,27 +834,6 @@ export default function CapturePage() {
                           placeholder="Add any details about this item…"
                         />
                         <div className="mt-1 text-right text-[10px] text-[color:var(--muted2)]">{fields.description.length} / 500</div>
-                      </div>
-                      <div>
-                        <label className={LABEL_CLS}>Confidence</label>
-                        <div className="mt-1 grid grid-cols-3 gap-1.5">
-                          {([["Low", 0.3], ["Medium", 0.6], ["High", 0.9]] as const).map(([lbl, val]) => {
-                            const active = lbl === "Low" ? fields.confidence < 0.45 : lbl === "Medium" ? fields.confidence >= 0.45 && fields.confidence < 0.75 : fields.confidence >= 0.75;
-                            return (
-                              <button
-                                key={lbl}
-                                type="button"
-                                onClick={() => setFields((p) => ({ ...p, confidence: val }))}
-                                className="rounded-[8px] border px-2 py-2 text-xs font-semibold transition"
-                                style={active
-                                  ? { borderColor: "#4FD3EE", background: "rgba(79,211,238,0.10)", color: "#5FDCF3", boxShadow: "0 0 16px rgba(79,211,238,0.28), inset 0 1px 0 rgba(255,255,255,0.08)" }
-                                  : { borderColor: "var(--border)", color: "var(--muted)" }}
-                              >
-                                {lbl}
-                              </button>
-                            );
-                          })}
-                        </div>
                       </div>
                     </div>
                   </AccordionSection>

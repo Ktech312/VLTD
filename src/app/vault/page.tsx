@@ -1461,11 +1461,6 @@ export default function VaultPage() {
                   </h1>
                   <p className="mt-2 text-sm text-[color:var(--muted)]">Every item you own, documented and searchable.</p>
                 </div>
-                {/* Mobile Add Item — top-right of the title (hidden on desktop) */}
-                <Link href="/capture" className="vltd-action-module shrink-0 lg:hidden">
-                  <span className="vltd-action-module__plate !px-3 !py-1.5 !text-xs">Add Item</span>
-                  <span className="vltd-action-module__block !min-w-[38px]"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
-                </Link>
               </div>
               {items.length > 0 ? (
                 <div className="mt-3 hidden flex-wrap gap-2 text-xs text-[color:var(--muted)] sm:flex">
@@ -1482,8 +1477,8 @@ export default function VaultPage() {
               <Link href="/vault/import" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Import</Link>
               <Link href="/vault/sold" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Sold</Link>
               <Link href="/vault/for-sale" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">For Sale</Link>
-              {/* Desktop Add Item — with the actions on the right (hidden on mobile) */}
-              <Link href="/capture" className="vltd-action-module hidden shrink-0 lg:inline-flex">
+              {/* Add Item — the single primary add on the page */}
+              <Link href="/capture" className="vltd-action-module shrink-0">
                 <span className="vltd-action-module__plate !py-1.5">Add Item</span>
                 <span className="vltd-action-module__block"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
               </Link>
