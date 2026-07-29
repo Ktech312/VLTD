@@ -33,7 +33,6 @@ as $$
     from public.vault_items
     where status = 'FOR_SALE'
       and is_public = true
-      and (is_deleted is null or is_deleted = false)
   )
   select
     (select c from listings)                                             as active_listings,
