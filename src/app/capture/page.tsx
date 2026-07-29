@@ -601,21 +601,38 @@ export default function CapturePage() {
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <ActionButton
-                    label="Scan Barcode"
-                    onClick={() => setIsCameraPanelOpen(true)}
-                    icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M3 5v14M7 5v14M11 5v14M14 5v14M18 5v14M21 5v14" /></svg>}
-                  />
-                  <ActionButton
-                    label="Import"
-                    onClick={() => uploadInputRef.current?.click()}
-                    icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 16V4M8 8l4-4 4 4M4 20h16" /></svg>}
-                  />
-                  <ActionButton
-                    label="Clear"
-                    onClick={() => { setFields(EMPTY_FIELDS); setCapturedImageFile(null); setErrorMsg(""); setIdentified(false); }}
-                    icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" /></svg>}
-                  />
+                  {capturedImageFile ? (
+                    // A photo is already taken — offer Retake + Identify (not
+                    // pills that would silently discard the shot).
+                    <>
+                      <ActionButton
+                        label="Retake"
+                        onClick={() => { setCapturedImageFile(null); setIdentified(false); setErrorMsg(""); setIsCameraPanelOpen(true); }}
+                        icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 2.6-6.3L3 8" /><path d="M3 3v5h5" /></svg>}
+                      />
+                      <ActionButton
+                        label={analyzing ? "Identifying…" : "Identify"}
+                        disabled={analyzing}
+                        onClick={() => void runAiIdentify()}
+                        icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.4 3.6L17 8l-3.6 1.4L12 13l-1.4-3.6L7 8l3.6-1.4z" /><path d="M5 16l.8 2L8 19l-2.2.8L5 22l-.8-2.2L2 19l2.2-1z" /></svg>}
+                      />
+                    </>
+                  ) : (
+                    // No photo yet — barcode scan + import are valid entry points
+                    // (barcode also detects live on the camera lens).
+                    <>
+                      <ActionButton
+                        label="Scan Barcode"
+                        onClick={() => setIsCameraPanelOpen(true)}
+                        icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M3 5v14M7 5v14M11 5v14M14 5v14M18 5v14M21 5v14" /></svg>}
+                      />
+                      <ActionButton
+                        label="Import"
+                        onClick={() => uploadInputRef.current?.click()}
+                        icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 16V4M8 8l4-4 4 4M4 20h16" /></svg>}
+                      />
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -640,7 +657,7 @@ export default function CapturePage() {
                             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
                           </div>
                           <div className="text-sm font-semibold text-text-primary">Add a photo — optional</div>
-                          <p className="max-w-[240px] text-xs leading-5 text-[color:var(--muted)]">Snap or upload one — then tap <b className="font-semibold text-[color:var(--fg)]">Identify with AI</b> to auto-fill, or just type the details in. No photo required.</p>
+                          <p className="max-w-[240px] text-xs leading-5 text-[color:var(--muted)]">Snap or upload one — then tap <b className="font-semibold text-[color:var(--fg)]">Identify</b> to auto-fill, or just type the details in. No photo required.</p>
                           <div className="flex flex-wrap justify-center gap-2">
                             <button type="button" onClick={() => setIsCameraPanelOpen(true)} className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold text-[#0B0B0B]" style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}>Take photo</button>
                             <button type="button" onClick={() => uploadInputRef.current?.click()} className="inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.08))]" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}>Upload</button>
@@ -676,17 +693,6 @@ export default function CapturePage() {
                       </div>
                     ) : null}
                   </div>
-
-                  {/* Opt-in AI identify — capture first, let AI fill it in after */}
-                  {previewUrl && !analyzing ? (
-                    <button
-                      type="button"
-                      onClick={() => void runAiIdentify()}
-                      className="vltd-primary-button mt-3 w-full rounded-[6px] py-2.5 text-sm font-black"
-                    >
-                      Identify with AI
-                    </button>
-                  ) : null}
 
                   {/* Thumbnail rail */}
                   <div className="mt-3 grid grid-cols-4 gap-2">
