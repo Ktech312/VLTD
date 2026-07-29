@@ -11,7 +11,7 @@ import {
 export type BarcodeScanResult = {
   rawValue: string;
   digits: string;
-  format: "UPC_A" | "UPC_E" | "EAN_13" | "EAN_8" | "UNKNOWN";
+  format: "UPC_A" | "UPC_E" | "EAN_13" | "EAN_8" | "QR" | "CODE_128" | "CODE_39" | "UNKNOWN";
   region: string;
 };
 
@@ -77,6 +77,11 @@ function createReader() {
     BarcodeFormat.UPC_E,
     BarcodeFormat.EAN_13,
     BarcodeFormat.EAN_8,
+    // Graded-slab codes (CGC/PSA/BGS): QR + Code 128/39 cert barcodes.
+    BarcodeFormat.QR_CODE,
+    BarcodeFormat.CODE_128,
+    BarcodeFormat.CODE_39,
+    BarcodeFormat.DATA_MATRIX,
   ]);
 
   hints.set(DecodeHintType.TRY_HARDER, true);
@@ -92,6 +97,9 @@ function normalizeFormatName(rawFormat: unknown): BarcodeScanResult["format"] {
   if (text.includes("UPC_E")) return "UPC_E";
   if (text.includes("EAN_13")) return "EAN_13";
   if (text.includes("EAN_8")) return "EAN_8";
+  if (text.includes("QR")) return "QR";
+  if (text.includes("CODE_128")) return "CODE_128";
+  if (text.includes("CODE_39")) return "CODE_39";
 
   return "UNKNOWN";
 }

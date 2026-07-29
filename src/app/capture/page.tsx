@@ -617,22 +617,7 @@ export default function CapturePage() {
                         icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.4 3.6L17 8l-3.6 1.4L12 13l-1.4-3.6L7 8l3.6-1.4z" /><path d="M5 16l.8 2L8 19l-2.2.8L5 22l-.8-2.2L2 19l2.2-1z" /></svg>}
                       />
                     </>
-                  ) : (
-                    // No photo yet — barcode scan + import are valid entry points
-                    // (barcode also detects live on the camera lens).
-                    <>
-                      <ActionButton
-                        label="Scan Barcode"
-                        onClick={() => setIsCameraPanelOpen(true)}
-                        icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M3 5v14M7 5v14M11 5v14M14 5v14M18 5v14M21 5v14" /></svg>}
-                      />
-                      <ActionButton
-                        label="Import"
-                        onClick={() => uploadInputRef.current?.click()}
-                        icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 16V4M8 8l4-4 4 4M4 20h16" /></svg>}
-                      />
-                    </>
-                  )}
+                  ) : null}
                 </div>
               </div>
 
