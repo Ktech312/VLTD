@@ -37,6 +37,7 @@ type DetectionBox = { x: number; y: number; width: number; height: number };
 
 const DEFAULT_CROP: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
 const BULK_UNIVERSES = getUniverses();
+const CAMERA_PREF_KEY = "vltd_camera_device_id";
 
 const FRAME_PRESETS: Array<{ id: string; label: string; frame: CaptureFrame }> = [
   {
@@ -166,6 +167,15 @@ export default function CameraCapturePanel({
     let isActive = true;
     let permissionStatus: PermissionStatus | null = null;
 
+    // Restore the last camera the user picked so it stops resetting every shot.
+    if (typeof window !== "undefined") {
+      const savedId = window.localStorage.getItem(CAMERA_PREF_KEY);
+      if (savedId) {
+        preferredDeviceIdRef.current = savedId;
+        selectedDeviceIdRef.current = savedId;
+      }
+    }
+
     async function refreshVideoDevices() {
       if (!navigator.mediaDevices?.enumerateDevices) return;
 
@@ -181,7 +191,16 @@ export default function CameraCapturePanel({
           return;
         }
 
-        setSelectedDeviceId(cameras[0]?.deviceId ?? "");
+        // Prefer the saved camera; fall back to the first available.
+        const savedId = typeof window !== "undefined" ? window.localStorage.getItem(CAMERA_PREF_KEY) : null;
+        const nextId = savedId && cameras.some((c) => c.deviceId === savedId)
+          ? savedId
+          : cameras[0]?.deviceId ?? "";
+        if (nextId) {
+          preferredDeviceIdRef.current = nextId;
+          selectedDeviceIdRef.current = nextId;
+        }
+        setSelectedDeviceId(nextId);
       } catch {
         if (isActive) {
           setVideoDevices([]);
@@ -655,14 +674,22 @@ export default function CameraCapturePanel({
           )
         ) : (
           <div className="flex items-start justify-between gap-3">
-            <div>
+            <div className="min-w-0">
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">LIVE CAMERA</div>
-              <div className="mt-1 text-sm font-semibold text-[color:var(--fg)]">{title}</div>
-              {description ? (
-                <div className="mt-0.5 text-xs leading-5 text-[color:var(--muted)]">
-                  {description}
-                </div>
-              ) : null}
+              <div className="mt-1 flex items-center gap-1.5">
+                <span className="text-sm font-semibold text-[color:var(--fg)]">{title}</span>
+                {description ? (
+                  <button
+                    type="button"
+                    title={description}
+                    aria-label={description}
+                    className="inline-grid h-4 w-4 shrink-0 place-items-center rounded-full text-[9px] font-black leading-none"
+                    style={{ border: "1px solid var(--border)", color: "var(--muted2)" }}
+                  >
+                    i
+                  </button>
+                ) : null}
+              </div>
             </div>
             {!isInline && (
               <button type="button" onClick={onClose} className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-sm ring-1 ring-[color:var(--border)]">Close</button>
@@ -950,6 +977,7 @@ export default function CameraCapturePanel({
                   const nextDeviceId = event.target.value;
                   selectedDeviceIdRef.current = nextDeviceId;
                   preferredDeviceIdRef.current = nextDeviceId;
+                  if (typeof window !== "undefined") window.localStorage.setItem(CAMERA_PREF_KEY, nextDeviceId);
                   setSelectedDeviceId(nextDeviceId);
                   setRetryCount((count) => count + 1);
                 }}
@@ -1033,14 +1061,6 @@ export default function CameraCapturePanel({
             <div className="mt-3 mb-1 flex items-center justify-center gap-8">
               <button
                 type="button"
-                onClick={() => setRetryCount((count) => count + 1)}
-                className="text-xs font-medium text-[color:var(--muted)] transition hover:text-[color:var(--fg)]"
-              >
-                Retry
-              </button>
-
-              <button
-                type="button"
                 onClick={() => void handleCapture()}
                 disabled={Boolean(cameraError) || !cameraReady || isCapturing}
                 aria-label="Capture photo"
@@ -1079,7 +1099,7 @@ export default function CameraCapturePanel({
                 onClick={onUseFileInstead}
                 className="text-xs font-medium text-[color:var(--muted)] transition hover:text-[color:var(--fg)]"
               >
-                File
+                Upload
               </button>
             </div>
 
