@@ -886,7 +886,8 @@ export default function CameraCapturePanel({
               <button
                 type="button"
                 onClick={onUseFileInstead}
-                className="text-xs font-medium text-[color:var(--muted)] transition hover:text-[color:var(--fg)]"
+                className="inline-flex h-8 items-center rounded-[10px] px-3 text-xs font-semibold ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
+                style={{ background: "var(--pill)", color: "var(--muted)" }}
               >
                 Upload
               </button>
@@ -895,7 +896,7 @@ export default function CameraCapturePanel({
                 <button
                   type="button"
                   onClick={() => setBulkMode((v) => !v)}
-                  className="flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-semibold ring-1 transition"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-[10px] px-3 text-xs font-semibold ring-1 transition"
                   style={bulkMode
                     ? { background: "rgba(203,208,213,0.12)", borderColor: "rgba(203,208,213,0.35)", color: "#C8CDD2" }
                     : { background: "var(--pill)", borderColor: "var(--border)", color: "var(--muted2)" }
@@ -917,7 +918,7 @@ export default function CameraCapturePanel({
                     setSelectedDeviceId(nextDeviceId);
                     setRetryCount((count) => count + 1);
                   }}
-                  className="h-7 max-w-[46%] rounded-full bg-[color:var(--pill)] px-2.5 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+                  className="h-8 max-w-[46%] rounded-[10px] bg-[color:var(--pill)] px-2.5 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
                   aria-label="Select camera"
                 >
                   {videoDevices.map((device, index) => (
