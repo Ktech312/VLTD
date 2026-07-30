@@ -282,12 +282,6 @@ export default function CapturePage() {
   // re-scanning a barcode from the review screen.
   const [isCameraPanelOpen, setIsCameraPanelOpen] = useState(false);
 
-  // Camera-first (option 1): open the live camera on arrival. Closing it reveals
-  // the builder for manual entry, so no one is trapped without a photo.
-  useEffect(() => {
-    setIsCameraPanelOpen(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   /* ── AI flow triggered by photo capture ── */
   // Capture-first: attach the photo instantly. AI identify is opt-in (the
@@ -636,7 +630,7 @@ export default function CapturePage() {
                     <>
                       <ActionButton
                         label="Retake"
-                        onClick={() => { setCapturedImageFile(null); setIdentified(false); setErrorMsg(""); setIsCameraPanelOpen(true); }}
+                        onClick={() => { setCapturedImageFile(null); setIdentified(false); setErrorMsg(""); }}
                         icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 2.6-6.3L3 8" /><path d="M3 3v5h5" /></svg>}
                       />
                       <ActionButton
@@ -654,6 +648,7 @@ export default function CapturePage() {
               <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,480px)_1fr] lg:items-start">
                 {/* Left: framed image viewer (concept-19) */}
                 <div>
+                  {previewUrl ? (
                   <div
                     className="relative overflow-hidden rounded-[16px] border"
                     style={{
@@ -707,6 +702,21 @@ export default function CapturePage() {
                       </div>
                     ) : null}
                   </div>
+                  ) : (
+                    // Camera is live right inside the box (no separate modal).
+                    <CameraCapturePanel
+                      variant="inline"
+                      title="Add Item"
+                      description="Point at the item and snap — or switch to Quick Add to capture many and sort later."
+                      universe={fields.universe}
+                      onCapture={handleCapture}
+                      bulkToggle={true}
+                      bulkTaxonomy={false}
+                      onBulkCapture={(file) => void handleQuickAddCapture(file)}
+                      onClose={() => {}}
+                      onUseFileInstead={() => uploadInputRef.current?.click()}
+                    />
+                  )}
 
                   {/* Thumbnail rail */}
                   <div className="mt-3 grid grid-cols-4 gap-2">
