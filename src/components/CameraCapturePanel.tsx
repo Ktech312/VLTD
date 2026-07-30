@@ -881,6 +881,54 @@ export default function CameraCapturePanel({
           </div>
         ) : (
           <>
+            {/* Top control row — Upload (left) · Quick Add (center) · camera picker (right, compact) */}
+            <div className="mt-1 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={onUseFileInstead}
+                className="text-xs font-medium text-[color:var(--muted)] transition hover:text-[color:var(--fg)]"
+              >
+                Upload
+              </button>
+
+              {bulkToggle ? (
+                <button
+                  type="button"
+                  onClick={() => setBulkMode((v) => !v)}
+                  className="flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-semibold ring-1 transition"
+                  style={bulkMode
+                    ? { background: "rgba(203,208,213,0.12)", borderColor: "rgba(203,208,213,0.35)", color: "#C8CDD2" }
+                    : { background: "var(--pill)", borderColor: "var(--border)", color: "var(--muted2)" }
+                  }
+                >
+                  <span className="inline-block h-2 w-2 rounded-full transition-colors" style={{ background: bulkMode ? "#C8CDD2" : "var(--muted2)" }} />
+                  Quick Add
+                </button>
+              ) : <span />}
+
+              {videoDevices.length >= 1 ? (
+                <select
+                  value={selectedDeviceId}
+                  onChange={(event) => {
+                    const nextDeviceId = event.target.value;
+                    selectedDeviceIdRef.current = nextDeviceId;
+                    preferredDeviceIdRef.current = nextDeviceId;
+                    if (typeof window !== "undefined") window.localStorage.setItem(CAMERA_PREF_KEY, nextDeviceId);
+                    setSelectedDeviceId(nextDeviceId);
+                    setRetryCount((count) => count + 1);
+                  }}
+                  className="h-7 max-w-[46%] rounded-full bg-[color:var(--pill)] px-2.5 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+                  aria-label="Select camera"
+                >
+                  {videoDevices.map((device, index) => (
+                    <option key={device.deviceId || index} value={device.deviceId}>
+                      {device.label || `Camera ${index + 1}`}
+                    </option>
+                  ))}
+                </select>
+              ) : <span />}
+            </div>
+
             <div className="mt-2 overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-1.5 ring-1 ring-[color:var(--border)]">
               <div
                   ref={videoContainerRef}
@@ -969,28 +1017,6 @@ export default function CameraCapturePanel({
                 ) : null}
               </div>
             </div>
-
-            {videoDevices.length >= 1 ? (
-              <select
-                value={selectedDeviceId}
-                onChange={(event) => {
-                  const nextDeviceId = event.target.value;
-                  selectedDeviceIdRef.current = nextDeviceId;
-                  preferredDeviceIdRef.current = nextDeviceId;
-                  if (typeof window !== "undefined") window.localStorage.setItem(CAMERA_PREF_KEY, nextDeviceId);
-                  setSelectedDeviceId(nextDeviceId);
-                  setRetryCount((count) => count + 1);
-                }}
-                className="mt-2 w-full h-8 rounded-xl bg-[color:var(--pill)] px-3 text-xs text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
-                aria-label="Select camera"
-              >
-                {videoDevices.map((device, index) => (
-                  <option key={device.deviceId || index} value={device.deviceId}>
-                    {device.label || `Camera ${index + 1}`}
-                  </option>
-                ))}
-              </select>
-            ) : null}
 
             {/* ── Bulk Mode controls (shown above shutter when bulk on) ── */}
             {bulkMode && (
@@ -1093,38 +1119,10 @@ export default function CameraCapturePanel({
                   </svg>
                 )}
               </button>
-
-              <button
-                type="button"
-                onClick={onUseFileInstead}
-                className="text-xs font-medium text-[color:var(--muted)] transition hover:text-[color:var(--fg)]"
-              >
-                Upload
-              </button>
             </div>
 
-            {/* ── Bulk Add toggle — sleeper feature ── */}
-            {bulkToggle && (
-            <div className="mt-3 flex items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => setBulkMode((v) => !v)}
-                className="flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-semibold ring-1 transition"
-                style={bulkMode
-                  ? { background: "rgba(203,208,213,0.12)", borderColor: "rgba(203,208,213,0.35)", color: "#C8CDD2" }
-                  : { background: "var(--pill)", borderColor: "var(--border)", color: "var(--muted2)" }
-                }
-              >
-                <span
-                  className="inline-block h-2 w-2 rounded-full transition-colors"
-                  style={{ background: bulkMode ? "#C8CDD2" : "var(--muted2)" }}
-                />
-                Quick Add
-              </button>
-              {bulkSaving && (
-                <span className="text-[10px] text-[color:var(--muted)]">Saving…</span>
-              )}
-            </div>
+            {bulkSaving && (
+              <div className="mt-2 text-center text-[10px] text-[color:var(--muted)]">Saving…</div>
             )}
           </>
         )}
