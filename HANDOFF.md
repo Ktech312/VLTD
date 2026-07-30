@@ -94,6 +94,31 @@ clobber each other.** The FULL tier color was also changed to silver `#C8CDD2`
 
 ## 2. What's LEFT to do (prioritized)
 
+### NEW from EK 2026-07-25 (capture, after pass 1+2 shipped)
+Pass 1 (info-i, drop Retry, File→Upload, remember camera) and pass 2 (Upload ·
+Quick Add · camera picker in one top row; standardized slightly-square pills)
+are shipped. Remaining:
+- **Quick Add → its own fullscreen popup.** EK: it should be a dedicated camera
+  that snaps and jumps straight to the next shot — **no crop, no AI, no thinking,
+  like a normal fast camera.** GOOD NEWS: a fullscreen rapid camera already
+  exists — `src/components/ScanCapturePanel.tsx` (auto-lock "Haul/Scan" camera;
+  `LockStatus` scanning/locking/locked/snapped). Wire Quick Add to open that
+  (stripped to snap→next, no AI/crop) instead of the inline bulk-mode toggle.
+- **Field "locks" on the capture builder.** EK wants per-field locks on the
+  Identity/Category fields (Item Name, Alt Name, Set/Series, Cert Company,
+  Category…) so shared values carry to the next item. The lock system already
+  exists — `src/lib/bulkAddState.ts` + the `/vault/add` manual screen use it.
+  Port that onto the capture builder fields.
+- **Performance:** capture feels slower. Likely culprit = the **live object-
+  detection ML** (TF.js + coco-ssd) in `CameraCapturePanel.tsx` that runs the
+  moving "guide" box every ~900ms while the camera is open (pre-existing, not
+  from the tighten passes). Throttle heavily or make it opt-in to speed the
+  camera up.
+- **The "Syncing…" chip** EK circled = `src/components/VaultSyncStatusChip.tsx`
+  (vault cloud-backup status; "Syncing…/Synced/Details"). Legit feature; looks
+  cramped/unreadable in the header — tidy its styling if EK wants.
+
+
 ### A. Capture panel — tighten & rearrange (EK's Image 2/3 notes, 2026-07-25)
 Mobile capture is too bulky. **Rearrange only — do NOT change pill/frame shapes
 or sizes.** Re-read the current file first (parallel-edited).
