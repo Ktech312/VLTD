@@ -38,6 +38,10 @@ type DetectionBox = { x: number; y: number; width: number; height: number };
 const DEFAULT_CROP: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
 const BULK_UNIVERSES = getUniverses();
 const CAMERA_PREF_KEY = "vltd_camera_device_id";
+// Live object-detection (TF.js + coco-ssd) ran every ~900ms just to draw a
+// cosmetic guide box — heavy and not wired to anything. Off for speed; the
+// fixed frame guide stays. Flip to true to re-enable (consider throttling).
+const ENABLE_OBJECT_DETECTION = false;
 
 const FRAME_PRESETS: Array<{ id: string; label: string; frame: CaptureFrame }> = [
   {
@@ -325,7 +329,7 @@ export default function CameraCapturePanel({
   }, [capturedFile, retryCount]);
 
   useEffect(() => {
-    if (capturedFile || cameraError || !cameraReady) {
+    if (!ENABLE_OBJECT_DETECTION || capturedFile || cameraError || !cameraReady) {
       setDetectionBox(null);
       return;
     }
