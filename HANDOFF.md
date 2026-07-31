@@ -193,6 +193,11 @@ the capture-screen "Auto ID" single button — apply the same metering there too
     (subtitle/number/year/grade/condition/certNumber, `notes`=AI description) so the
     item page is populated like a normal single scan.
   - Camera-page counters (ghost badge, `Finished (N)`, thumb) read the **kept** count.
+  - **Legacy manual Quick Add form DELETED.** `src/app/vault/quick/QuickAddClient.tsx`
+    is now a ~25-line launcher that just mounts the scanner and routes to `/vault`
+    on close (cancel or after save). The old "Image first. Save fast." hand-entry
+    form / Recent Saves / crop editor / AI-Assist that used to live there is gone —
+    it was orphaned once the scanner replaced it. File uploads live in Bulk (`/vault/bulk`).
 - Bulk upload + scan quota (migration + admin + lib + `/vault/bulk`) — verified live.
 - Emoji→glyph on user-facing pages (Discover/Goals/AutoShare/Patreon).
 
