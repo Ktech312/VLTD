@@ -98,12 +98,18 @@ clobber each other.** The FULL tier color was also changed to silver `#C8CDD2`
 Pass 1 (info-i, drop Retry, File→Upload, remember camera) and pass 2 (Upload ·
 Quick Add · camera picker in one top row; standardized slightly-square pills)
 are shipped. Remaining:
-- **Quick Add → its own fullscreen popup.** EK: it should be a dedicated camera
-  that snaps and jumps straight to the next shot — **no crop, no AI, no thinking,
-  like a normal fast camera.** GOOD NEWS: a fullscreen rapid camera already
-  exists — `src/components/ScanCapturePanel.tsx` (auto-lock "Haul/Scan" camera;
-  `LockStatus` scanning/locking/locked/snapped). Wire Quick Add to open that
-  (stripped to snap→next, no AI/crop) instead of the inline bulk-mode toggle.
+- **Quick Add fullscreen scanner — REBUILT to EK's spec 2026-07-25**
+  (`src/components/ScanCapturePanel.tsx`, full rewrite). Manual-only shutter
+  (removed auto-lock + Front/Back/Next + Quick/Bulk); 3 slightly-square dropdown
+  pills (Universe / Frame / Camera, titles constant); Done→Finished; removed the
+  upload icon; rear-camera default + Camera picker (fixes stuck-on-front);
+  top-left ghost counter; last-shot thumbnail by the shutter; light-blue frame
+  corners that brighten on capture; soft ghost-green capture flash; panel z-index
+  above the bottom nav. Category is not selectable here (defaults per universe;
+  refine in the review sheet). NOT yet verified on a real device — EK to test on
+  phone (needs a real rear camera; desktop can't). ⚠ LESSON: EK was upset that a
+  prior pass removed the Universe selector WITHOUT ASKING — **confirm before
+  removing any feature.**
 - **Field "locks" on the capture builder.** EK wants per-field locks on the
   Identity/Category fields (Item Name, Alt Name, Set/Series, Cert Company,
   Category…) so shared values carry to the next item. The lock system already
