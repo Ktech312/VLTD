@@ -415,7 +415,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
   const effectiveQuickMode = quickMode || bulkMode;
 
   return (
-    <div className="fixed inset-0 z-[10000] flex items-stretch justify-center bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100000] flex items-stretch justify-center bg-black/60 backdrop-blur-sm">
       <div className="flex w-full max-w-[540px] flex-col overflow-hidden bg-[#060c1a] text-white" style={{ height: "100dvh" }}>
         <canvas ref={analysisCanvasRef} className="hidden" />
         <canvas ref={captureCanvasRef} className="hidden" />
@@ -459,46 +459,6 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
           >
             &#x2715;
           </button>
-        </div>
-
-        {/* Universe / Category — compact strip, no labels to save vertical space */}
-        <div className="shrink-0 border-b border-white/5 bg-[#0a0f1e] px-3 py-1.5">
-          <div className="flex gap-1 overflow-x-auto [scrollbar-width:none]">
-            {UNIVERSES.map((key) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => { setUniverse(key); setCategoryLabel(getCategories(key)[0] ?? "Collectors Choice"); }}
-                className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold transition"
-                style={{
-                  background: universe === key ? "rgba(203,208,213,0.18)" : "rgba(255,255,255,0.06)",
-                  border: universe === key ? "1px solid rgba(203,208,213,0.58)" : "1px solid rgba(255,255,255,0.10)",
-                  color: universe === key ? "#C8CDD2" : "rgba(255,255,255,0.46)",
-                }}
-              >
-                {UNIVERSE_LABEL[key]}
-              </button>
-            ))}
-          </div>
-          {categories.length ? (
-            <div className="mt-1 flex gap-1 overflow-x-auto [scrollbar-width:none]">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  type="button"
-                  onClick={() => setCategoryLabel(category)}
-                  className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold transition"
-                  style={{
-                    background: categoryLabel === category ? "rgba(203,208,213,0.18)" : "rgba(255,255,255,0.06)",
-                    border: categoryLabel === category ? "1px solid rgba(203,208,213,0.58)" : "1px solid rgba(255,255,255,0.10)",
-                    color: categoryLabel === category ? "#C8CDD2" : "rgba(255,255,255,0.46)",
-                  }}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-          ) : null}
         </div>
 
         {/* Camera viewport — fills all space between the filter strips and the controls */}
