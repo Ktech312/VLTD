@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ChangeEvent, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 import ScanReviewSheet, { type StagedItem } from "@/components/ScanReviewSheet";
 import { newId } from "@/lib/id";
@@ -15,21 +15,14 @@ import {
 import { getCategories, UNIVERSE_KEYS, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 
 type FrameType = "card" | "book" | "jewelry" | "art";
-type LockStatus = "scanning" | "locking" | "locked" | "snapped";
 
 type CapturedItem = {
   id: string;
   universe: UniverseKey;
   categoryLabel: string;
   frontBlob: Blob;
-  backBlob?: Blob;
   frontObjectUrl: string;
-  backObjectUrl?: string;
 };
-
-const BLUR_THRESHOLD = 80;
-const LOCK_REQUIRED_MS = 700;
-const BULK_COOLDOWN_MS = 2200;
 
 const FRAME_ASPECT: Record<FrameType, number> = {
   card: 3 / 4,
@@ -45,46 +38,14 @@ const FRAME_LABELS: Record<FrameType, string> = {
   art: "Art",
 };
 
-// Scan universes derived from taxonomy (BUILT_BOTANY excluded — scan AI not tuned for it)
+// Scan universes derived from taxonomy (BUILT_BOTANY excluded — scan AI not tuned for it).
 const UNIVERSES = UNIVERSE_KEYS.filter((k) => k !== "BUILT_BOTANY");
 
 function categoryCode(label: string) {
   return (
-    label
-      .trim()
-      .toUpperCase()
-      .replace(/[^A-Z0-9]+/g, "_")
-      .replace(/^_+|_+$/g, "") || "COLLECTORS_CHOICE"
+    label.trim().toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "") ||
+    "COLLECTORS_CHOICE"
   );
-}
-
-function computeBlurScore(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  if (!ctx || !video.videoWidth || !video.videoHeight) return 0;
-  const width = 160;
-  const height = Math.max(90, Math.round(width * (video.videoHeight / video.videoWidth)));
-  canvas.width = width;
-  canvas.height = height;
-  ctx.drawImage(video, 0, 0, width, height);
-  const { data } = ctx.getImageData(0, 0, width, height);
-  const gray = new Float32Array(width * height);
-  for (let i = 0, p = 0; i < data.length; i += 4, p += 1) {
-    gray[p] = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-  }
-  let sum = 0, sumSq = 0, count = 0;
-  for (let y = 1; y < height - 1; y += 2) {
-    for (let x = 1; x < width - 1; x += 2) {
-      const idx = y * width + x;
-      const lap =
-        -gray[idx - width - 1] - gray[idx - width] - gray[idx - width + 1] -
-        gray[idx - 1] + 8 * gray[idx] - gray[idx + 1] -
-        gray[idx + width - 1] - gray[idx + width] - gray[idx + width + 1];
-      sum += lap; sumSq += lap * lap; count += 1;
-    }
-  }
-  const mean = count > 0 ? sum / count : 0;
-  const variance = count > 0 ? sumSq / count - mean * mean : 0;
-  return Math.sqrt(Math.max(variance, 0));
 }
 
 async function captureFrame(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
@@ -98,30 +59,69 @@ async function captureFrame(video: HTMLVideoElement, canvas: HTMLCanvasElement) 
   });
 }
 
-function Pill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+// ── Dropdown pill — title stays constant; the pick is highlighted in the menu ──
+function DropdownPill({
+  title,
+  value,
+  options,
+  onSelect,
+}: {
+  title: string;
+  value: string;
+  options: { value: string; label: string }[];
+  onSelect: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition"
-      style={{
-        background: active ? "rgba(203,208,213,0.18)" : "rgba(255,255,255,0.06)",
-        border: active ? "1px solid rgba(203,208,213,0.58)" : "1px solid rgba(255,255,255,0.12)",
-        color: active ? "#C8CDD2" : "rgba(255,255,255,0.52)",
-      }}
-    >
-      {label}
-    </button>
+    <div className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="inline-flex h-8 items-center gap-1 rounded-[9px] px-3 text-xs font-semibold ring-1 transition"
+        style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.16)", color: "rgba(255,255,255,0.85)" }}
+      >
+        {title}
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+      </button>
+      {open ? (
+        <>
+          <div className="fixed inset-0 z-[1]" onClick={() => setOpen(false)} />
+          <div
+            className="absolute left-0 top-full z-[2] mt-1 max-h-[52vh] w-[190px] overflow-y-auto rounded-[10px] p-1 ring-1"
+            style={{ background: "#0a0f1e", borderColor: "rgba(255,255,255,0.16)", boxShadow: "0 12px 34px rgba(0,0,0,0.55)" }}
+          >
+            {options.length === 0 ? (
+              <div className="px-3 py-2 text-xs text-white/40">None available</div>
+            ) : (
+              options.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => { onSelect(opt.value); setOpen(false); }}
+                  className="block w-full truncate rounded-[7px] px-3 py-1.5 text-left text-xs font-semibold transition"
+                  style={value === opt.value
+                    ? { background: "rgba(96,165,250,0.18)", color: "#93c5fd" }
+                    : { color: "rgba(255,255,255,0.72)" }}
+                >
+                  {opt.label}
+                </button>
+              ))
+            )}
+          </div>
+        </>
+      ) : null}
+    </div>
   );
 }
 
-function FrameOverlay({ frameType, lockProgress }: { frameType: FrameType; lockProgress: number }) {
+// ── Frame overlay — light-blue corners, brighter while capturing ──
+function FrameOverlay({ frameType, capturing }: { frameType: FrameType; capturing: boolean }) {
   const aspect = FRAME_ASPECT[frameType];
   const isPortrait = aspect < 1;
-  const color = `rgba(203,208,213,${0.2 + lockProgress * 0.8})`;
-  const size = 18 + lockProgress * 8;
-  const borderWidth = 2 + lockProgress;
-  const glow = lockProgress > 0.55 ? `0 0 ${Math.round(lockProgress * 20)}px rgba(203,208,213,${lockProgress * 0.42})` : "none";
+  const color = capturing ? "rgba(150,205,255,1)" : "rgba(120,190,255,0.82)";
+  const size = capturing ? 26 : 22;
+  const borderWidth = capturing ? 3 : 2.5;
+  const glow = capturing ? "0 0 16px rgba(120,190,255,0.6)" : "0 0 8px rgba(120,190,255,0.25)";
 
   function cornerStyle(position: "tl" | "tr" | "bl" | "br"): CSSProperties {
     const top = position.includes("t");
@@ -130,20 +130,21 @@ function FrameOverlay({ frameType, lockProgress }: { frameType: FrameType; lockP
       position: "absolute",
       [top ? "top" : "bottom"]: 0,
       [left ? "left" : "right"]: 0,
-      width: size, height: size,
+      width: size,
+      height: size,
       borderTop: top ? `${borderWidth}px solid ${color}` : undefined,
       borderBottom: !top ? `${borderWidth}px solid ${color}` : undefined,
       borderLeft: left ? `${borderWidth}px solid ${color}` : undefined,
       borderRight: !left ? `${borderWidth}px solid ${color}` : undefined,
       borderRadius: top && left ? "4px 0 0 0" : top ? "0 4px 0 0" : left ? "0 0 0 4px" : "0 0 4px 0",
       boxShadow: glow,
-      transition: "all 140ms ease-out",
+      transition: "all 120ms ease-out",
     };
   }
 
   const frameStyle: CSSProperties = isPortrait
-    ? { aspectRatio: String(aspect), height: "82%", maxHeight: "88%", maxWidth: "88%", width: "auto" }
-    : { aspectRatio: String(aspect), width: "82%", maxWidth: "88%", maxHeight: "88%", height: "auto" };
+    ? { aspectRatio: String(aspect), height: "82%", maxHeight: "92%", maxWidth: "92%", width: "auto" }
+    : { aspectRatio: String(aspect), width: "82%", maxWidth: "92%", maxHeight: "92%", height: "auto" };
 
   return (
     <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
@@ -152,14 +153,6 @@ function FrameOverlay({ frameType, lockProgress }: { frameType: FrameType; lockP
         <div style={cornerStyle("tr")} />
         <div style={cornerStyle("bl")} />
         <div style={cornerStyle("br")} />
-        {lockProgress > 0.7 ? (
-          <div
-            className="absolute -inset-1 rounded-lg"
-            style={{
-              boxShadow: `0 0 0 1px rgba(203,208,213,${(lockProgress - 0.7) * 0.5}), inset 0 0 28px rgba(203,208,213,${(lockProgress - 0.7) * 0.12})`,
-            }}
-          />
-        ) : null}
       </div>
     </div>
   );
@@ -167,201 +160,94 @@ function FrameOverlay({ frameType, lockProgress }: { frameType: FrameType; lockP
 
 export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const analysisCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const captureCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const lockStartRef = useRef<number | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const frontBlobRef = useRef<Blob | null>(null);
-  const cooldownUntilRef = useRef<number>(0);
-  const captureCountRef = useRef<number>(0);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const [frameType, setFrameType] = useState<FrameType>("card");
   const [universe, setUniverse] = useState<UniverseKey>("TCG");
   const [categoryLabel, setCategoryLabel] = useState(getCategories("TCG")[0] ?? "Pokemon");
-  const [quickMode, setQuickMode] = useState(false);
-  const [bulkMode, setBulkMode] = useState(false);
-  const [bulkPaused, setBulkPaused] = useState(false);
-  const [bulkConfirmCount, setBulkConfirmCount] = useState<number | null>(null);
-  const [showBulkInfo, setShowBulkInfo] = useState(false);
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
   const [flashVisible, setFlashVisible] = useState(false);
-  const [lockProgress, setLockProgress] = useState(0);
-  const [lockStatus, setLockStatus] = useState<LockStatus>("scanning");
-  const [awaitingChoice, setAwaitingChoice] = useState(false);
-  const [capturingBack, setCapturingBack] = useState(false);
-  const [activeItemId, setActiveItemId] = useState<string | null>(null);
+  const [capturing, setCapturing] = useState(false);
   const [capturedItems, setCapturedItems] = useState<CapturedItem[]>([]);
   const [showReview, setShowReview] = useState(false);
 
+  // Start / restart the camera (rear by default; a chosen deviceId when picked).
   useEffect(() => {
     let active = true;
-    let stream: MediaStream | null = null;
-    async function startCamera() {
+    async function start() {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        streamRef.current?.getTracks().forEach((t) => t.stop());
+        const constraints: MediaStreamConstraints = selectedDeviceId
+          ? { video: { deviceId: { exact: selectedDeviceId } }, audio: false }
+          : { video: { facingMode: { ideal: "environment" } }, audio: false };
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         if (!active) { stream.getTracks().forEach((t) => t.stop()); return; }
+        streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play().catch(() => undefined);
         }
-      } catch { setLockStatus("scanning"); }
-    }
-    void startCamera();
-    return () => { active = false; stream?.getTracks().forEach((t) => t.stop()); };
-  }, []);
-
-  useEffect(() => {
-    if (awaitingChoice || lockStatus === "snapped" || bulkPaused) return;
-    const timer = window.setInterval(() => {
-      const video = videoRef.current;
-      const canvas = analysisCanvasRef.current;
-      if (!video || !canvas || video.readyState < 2) return;
-      if (Date.now() < cooldownUntilRef.current) return;
-      const score = computeBlurScore(video, canvas);
-      if (score > BLUR_THRESHOLD) {
-        if (!lockStartRef.current) lockStartRef.current = Date.now();
-        const progress = Math.min((Date.now() - lockStartRef.current) / LOCK_REQUIRED_MS, 1);
-        setLockProgress(progress);
-        setLockStatus(progress >= 1 ? "locked" : "locking");
-        if (progress >= 1) { window.clearInterval(timer); void handleAutoSnap(); }
-      } else {
-        lockStartRef.current = null;
-        setLockProgress(0);
-        setLockStatus("scanning");
+        // Camera labels are only available after permission is granted.
+        const list = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "videoinput");
+        if (active) setDevices(list);
+      } catch {
+        /* camera unavailable — user can still Finish/close */
       }
-    }, 80);
-    return () => window.clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [awaitingChoice, lockStatus, capturingBack, quickMode, bulkMode, bulkPaused, activeItemId]);
+    }
+    void start();
+    return () => {
+      active = false;
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+    };
+  }, [selectedDeviceId]);
 
-  // Revoke object URLs ONLY when the panel unmounts. Using [capturedItems] here
-  // would revoke earlier captures' URLs every time a new item is added, which
-  // broke the first item's thumbnail. A ref keeps the latest list for cleanup.
+  // Revoke object URLs on unmount.
   const capturedItemsRef = useRef(capturedItems);
   capturedItemsRef.current = capturedItems;
   useEffect(() => {
     return () => {
-      capturedItemsRef.current.forEach((item) => {
-        URL.revokeObjectURL(item.frontObjectUrl);
-        if (item.backObjectUrl) URL.revokeObjectURL(item.backObjectUrl);
-      });
+      capturedItemsRef.current.forEach((item) => URL.revokeObjectURL(item.frontObjectUrl));
     };
   }, []);
 
-  function triggerFlash() {
-    setFlashVisible(true);
-    window.setTimeout(() => setFlashVisible(false), 350);
-  }
-
-  function resetScanner() {
-    lockStartRef.current = null;
-    setLockProgress(0);
-    setLockStatus("scanning");
-    setAwaitingChoice(false);
-  }
-
-  function addCapturedItem(frontBlob: Blob, backBlob?: Blob | null) {
-    const id = activeItemId ?? newId();
-    const item: CapturedItem = {
-      id, universe, categoryLabel, frontBlob,
-      backBlob: backBlob ?? undefined,
-      frontObjectUrl: URL.createObjectURL(frontBlob),
-      backObjectUrl: backBlob ? URL.createObjectURL(backBlob) : undefined,
-    };
-    captureCountRef.current += 1;
-    setCapturedItems((prev) => [...prev, item]);
-    setActiveItemId(null);
-    frontBlobRef.current = null;
-  }
-
-  async function handleAutoSnap() {
+  async function handleCapture() {
     const video = videoRef.current;
     const canvas = captureCanvasRef.current;
-    if (!video || !canvas) return;
+    if (!video || !canvas || video.readyState < 2) return;
+    setCapturing(true);
     const blob = await captureFrame(video, canvas);
-    if (!blob) { resetScanner(); return; }
-
-    triggerFlash();
-    setLockStatus("snapped");
-    setLockProgress(1);
-
-    if (capturingBack && frontBlobRef.current) {
-      addCapturedItem(frontBlobRef.current, blob);
-      setCapturingBack(false);
-      cooldownUntilRef.current = Date.now() + 1500;
-      resetScanner();
-      return;
+    if (blob) {
+      const item: CapturedItem = {
+        id: newId(),
+        universe,
+        categoryLabel,
+        frontBlob: blob,
+        frontObjectUrl: URL.createObjectURL(blob),
+      };
+      setCapturedItems((prev) => [...prev, item]);
+      // Soft ghost-green "got it" flash.
+      setFlashVisible(true);
+      window.setTimeout(() => setFlashVisible(false), 220);
     }
-
-    if (quickMode || bulkMode) {
-      addCapturedItem(blob, null);
-      const count = captureCountRef.current;
-      cooldownUntilRef.current = Date.now() + BULK_COOLDOWN_MS;
-      setBulkConfirmCount(count);
-      window.setTimeout(() => setBulkConfirmCount(null), BULK_COOLDOWN_MS - 300);
-      resetScanner();
-      return;
-    }
-
-    frontBlobRef.current = blob;
-    setActiveItemId(newId());
-    setAwaitingChoice(true);
-  }
-
-  function handleFileUpload(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (file && file.type.startsWith("image/")) {
-      addCapturedItem(file, null);
-    }
-    event.target.value = "";
-  }
-
-  function handleFrontSave() {
-    if (frontBlobRef.current) addCapturedItem(frontBlobRef.current, null);
-    cooldownUntilRef.current = Date.now() + 1500;
-    setCapturingBack(false);
-    resetScanner();
-  }
-
-  function handleBackSave() {
-    if (!frontBlobRef.current) return;
-    setCapturingBack(true);
-    resetScanner();
-  }
-
-  function handleNextCard() {
-    frontBlobRef.current = null;
-    setActiveItemId(null);
-    setCapturingBack(false);
-    cooldownUntilRef.current = Date.now() + 1500;
-    resetScanner();
+    window.setTimeout(() => setCapturing(false), 160);
   }
 
   async function capturedItemToVaultItem(item: CapturedItem, index: number): Promise<VaultItem> {
-    const images: VaultImage[] = [];
     const frontBlob = await prepareImageBlob(item.frontBlob as File).catch(() => item.frontBlob);
     const frontKey = generateVaultImageKey(item.id, 0);
     await saveImageBlobToIndexedDb(frontBlob, frontKey);
-    images.push({
-      id: `${item.id}_img_0`,
-      storageKey: frontKey,
-      url: item.frontObjectUrl,
-      order: 0,
-      localOnly: true,
-      role: "primary",
-    });
-    if (item.backBlob) {
-      const backBlob = await prepareImageBlob(item.backBlob as File).catch(() => item.backBlob as Blob);
-      const backKey = generateVaultImageKey(item.id, 1);
-      await saveImageBlobToIndexedDb(backBlob, backKey);
-      images.push({
-        id: `${item.id}_img_1`,
-        storageKey: backKey,
-        url: item.backObjectUrl,
-        order: 1,
+    const images: VaultImage[] = [
+      {
+        id: `${item.id}_img_0`,
+        storageKey: frontKey,
+        url: item.frontObjectUrl,
+        order: 0,
         localOnly: true,
-        role: "detail",
-      });
-    }
+        role: "primary",
+      },
+    ];
     return {
       id: item.id,
       title: `Untitled scan ${index + 1}`,
@@ -378,7 +264,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     };
   }
 
-  function handleDone() {
+  function handleFinished() {
     if (capturedItems.length === 0) { onClose(); return; }
     setShowReview(true);
   }
@@ -398,7 +284,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     const staged: StagedItem[] = capturedItems.map((item) => ({
       id: item.id,
       frontObjectUrl: item.frontObjectUrl,
-      backObjectUrl: item.backObjectUrl,
+      backObjectUrl: undefined,
       categoryLabel: item.categoryLabel,
       universe: item.universe,
     }));
@@ -411,45 +297,48 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     );
   }
 
-  const categories = getCategories(universe);
-  const effectiveQuickMode = quickMode || bulkMode;
+  const lastThumb = capturedItems.length ? capturedItems[capturedItems.length - 1].frontObjectUrl : null;
+  const cameraOptions = devices.map((d, i) => ({ value: d.deviceId, label: d.label || `Camera ${i + 1}` }));
 
   return (
     <div className="fixed inset-0 z-[100000] flex items-stretch justify-center bg-black/60 backdrop-blur-sm">
       <div className="flex w-full max-w-[540px] flex-col overflow-hidden bg-[#060c1a] text-white" style={{ height: "100dvh" }}>
-        <canvas ref={analysisCanvasRef} className="hidden" />
         <canvas ref={captureCanvasRef} className="hidden" />
 
-        {/* Header */}
+        {/* Header — Universe · Frame · Camera dropdown pills + Finished + close */}
         <div className="flex shrink-0 items-center gap-1.5 border-b border-white/5 bg-[#060c1a]/95 px-3 py-2.5">
-          {(Object.keys(FRAME_LABELS) as FrameType[]).map((key) => (
-            <Pill key={key} label={FRAME_LABELS[key]} active={frameType === key} onClick={() => setFrameType(key)} />
-          ))}
-          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+          <DropdownPill
+            title="Universe"
+            value={universe}
+            options={UNIVERSES.map((k) => ({ value: k, label: UNIVERSE_LABEL[k] }))}
+            onSelect={(v) => {
+              setUniverse(v as UniverseKey);
+              setCategoryLabel(getCategories(v as UniverseKey)[0] ?? "Collectors Choice");
+            }}
+          />
+          <DropdownPill
+            title="Frame"
+            value={frameType}
+            options={(Object.keys(FRAME_LABELS) as FrameType[]).map((k) => ({ value: k, label: FRAME_LABELS[k] }))}
+            onSelect={(v) => setFrameType(v as FrameType)}
+          />
+          <DropdownPill
+            title="Camera"
+            value={selectedDeviceId}
+            options={cameraOptions}
+            onSelect={(v) => setSelectedDeviceId(v)}
+          />
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="ml-auto inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/8 text-white/60"
-            aria-label="Upload from file"
-            title="Upload from file"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="17 8 12 3 7 8"/>
-              <line x1="12" y1="3" x2="12" y2="15"/>
-            </svg>
-          </button>
-          <button
-            type="button"
-            onClick={handleDone}
-            className="shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold ring-1 transition"
+            onClick={handleFinished}
+            className="ml-auto shrink-0 rounded-[9px] px-3.5 py-1.5 text-xs font-bold ring-1 transition"
             style={{
               background: capturedItems.length ? "rgba(203,208,213,0.16)" : "rgba(255,255,255,0.06)",
               borderColor: capturedItems.length ? "rgba(203,208,213,0.5)" : "rgba(255,255,255,0.12)",
               color: capturedItems.length ? "#C8CDD2" : "rgba(255,255,255,0.5)",
             }}
           >
-            Done{capturedItems.length ? ` (${capturedItems.length})` : ""}
+            Finished{capturedItems.length ? ` (${capturedItems.length})` : ""}
           </button>
           <button
             type="button"
@@ -461,200 +350,58 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {/* Camera viewport — fills all space between the filter strips and the controls */}
-        <div className="relative w-full min-h-[200px] flex-1 bg-[#040912]" style={{ overflow: "hidden" }}>
+        {/* Camera viewport */}
+        <div className="relative w-full flex-1 bg-[#040912]" style={{ overflow: "hidden" }}>
           <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />
-          <FrameOverlay frameType={frameType} lockProgress={lockProgress} />
+          <FrameOverlay frameType={frameType} capturing={capturing} />
 
-          {/* Capture flash */}
+          {/* Ghost counter — top-left */}
+          <div
+            className="absolute left-3 top-3 grid h-9 w-9 place-items-center rounded-full text-sm font-black backdrop-blur"
+            style={{ background: "rgba(0,0,0,0.42)", color: "rgba(255,255,255,0.9)", border: "1px solid rgba(255,255,255,0.25)" }}
+          >
+            {capturedItems.length}
+          </div>
+
+          {/* Ghost-green capture flash */}
           {flashVisible ? (
-            <div className="pointer-events-none absolute inset-0" style={{ background: "rgba(255,255,255,0.45)" }} />
+            <div className="pointer-events-none absolute inset-0" style={{ background: "rgba(74,222,128,0.32)" }} />
           ) : null}
-
-          {/* Bulk capture confirmation banner */}
-          {bulkConfirmCount !== null ? (
-            <div className="pointer-events-none absolute inset-x-0 top-3 flex items-center justify-center px-4">
-              <div
-                className="flex items-center gap-2 rounded-full px-4 py-2 backdrop-blur-sm"
-                style={{ background: "rgba(0,0,0,0.75)", border: "1px solid rgba(74,222,128,0.4)" }}
-              >
-                <span className="text-sm font-bold" style={{ color: "#4ade80" }}>&#x2713;</span>
-                <span className="text-xs font-semibold text-white">
-                  Item {bulkConfirmCount} captured &mdash; move to next
-                </span>
-              </div>
-            </div>
-          ) : null}
-
-          {/* Bulk paused banner */}
-          {bulkMode && bulkPaused ? (
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <div
-                className="rounded-2xl px-5 py-3 text-center backdrop-blur-sm"
-                style={{ background: "rgba(0,0,0,0.72)", border: "1px solid rgba(203,208,213,0.3)" }}
-              >
-                <div className="text-base font-bold text-[#C8CDD2]">Paused</div>
-                <div className="mt-0.5 text-xs text-white/60">{capturedItems.length} captured so far</div>
-              </div>
-            </div>
-          ) : null}
-
-          {/* Last-saved snapshot — always shows the most recent capture so you know it landed */}
-          {capturedItems.length > 0 ? (
-            <div
-              className="absolute bottom-3 left-3 flex items-center gap-2 rounded-[12px] p-1 pr-2.5 backdrop-blur"
-              style={{ background: "rgba(0,0,0,0.62)", border: "1px solid rgba(203,208,213,0.45)" }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={capturedItems[capturedItems.length - 1].frontObjectUrl}
-                alt="Last saved capture"
-                className="h-12 w-9 rounded-[8px] object-cover"
-              />
-              <div>
-                <div className="text-[10px] font-bold" style={{ color: "#4ade80" }}>&#x2713; Saved</div>
-                <div className="text-[10px] font-semibold text-white/65">{capturedItems.length} total</div>
-              </div>
-            </div>
-          ) : null}
-
-          {/* Lock status bar */}
-          <div className="absolute bottom-3 right-3 flex items-center gap-2 rounded-full bg-black/38 px-3 py-1.5 ring-1 ring-white/10 backdrop-blur">
-            <span
-              className="h-2 w-2 rounded-full transition-all"
-              style={{
-                background: lockStatus === "snapped" || lockStatus === "locked"
-                  ? "#C8CDD2"
-                  : lockStatus === "locking"
-                    ? `rgba(203,208,213,${0.35 + lockProgress * 0.65})`
-                    : "rgba(255,255,255,0.35)",
-                boxShadow: lockStatus === "locked" || lockStatus === "snapped" ? "0 0 12px rgba(203,208,213,0.7)" : "none",
-              }}
-            />
-            <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/58">
-              {lockStatus === "snapped" || lockStatus === "locked" ? "Locked"
-                : lockStatus === "locking" ? "Locking..."
-                : capturingBack ? "Back shot"
-                : bulkPaused ? "Paused"
-                : "Scanning"}
-            </span>
-            {capturedItems.length > 0 ? (
-              <span className="ml-1 rounded-full bg-[#C8CDD2]/20 px-1.5 py-0.5 text-[10px] font-bold text-[#C8CDD2]">
-                {capturedItems.length}
-              </span>
-            ) : null}
-          </div>
         </div>
 
-        {/* Action controls */}
-        <div className="shrink-0 bg-[#0a0f1e] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
-          {/* 3 compact action pills */}
-          <div className="flex items-center justify-center gap-2">
+        {/* Bottom bar — shutter + last-shot thumbnail */}
+        <div className="shrink-0 bg-[#0a0f1e] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+          <div className="relative flex items-center justify-center">
             <button
               type="button"
-              onClick={handleFrontSave}
-              disabled={!awaitingChoice || effectiveQuickMode}
-              className="rounded-full px-4 py-2 text-xs font-semibold ring-1 transition disabled:opacity-25"
+              onClick={() => void handleCapture()}
+              aria-label="Take picture"
+              className="flex items-center justify-center rounded-full transition-transform active:scale-95"
               style={{
-                background: awaitingChoice && !effectiveQuickMode ? "rgba(203,208,213,0.14)" : "rgba(255,255,255,0.05)",
-                borderColor: awaitingChoice && !effectiveQuickMode ? "rgba(203,208,213,0.55)" : "rgba(255,255,255,0.1)",
-                color: awaitingChoice && !effectiveQuickMode ? "#C8CDD2" : "rgba(255,255,255,0.4)",
+                width: 68,
+                height: 68,
+                background: "linear-gradient(145deg, #EDEFF1 0%, #C8CDD2 30%, #A8AEB4 60%, #8C9298 100%)",
+                boxShadow: "0 0 0 3px #0B0B0B, 0 0 0 4px rgba(203,208,213,0.30), 0 8px 24px rgba(0,0,0,0.5)",
               }}
             >
-              Front Save
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" stroke="#1A0F00" strokeWidth="1.6" strokeLinejoin="round" fill="rgba(26,15,0,0.12)" />
+                <circle cx="12" cy="13" r="4" stroke="#1A0F00" strokeWidth="1.6" />
+              </svg>
             </button>
-            <button
-              type="button"
-              onClick={handleBackSave}
-              disabled={!awaitingChoice || effectiveQuickMode}
-              className="rounded-full px-4 py-2 text-xs font-semibold ring-1 transition disabled:opacity-25"
-              style={{
-                background: awaitingChoice && !effectiveQuickMode ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.05)",
-                borderColor: awaitingChoice && !effectiveQuickMode ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.1)",
-                color: awaitingChoice && !effectiveQuickMode ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
-              }}
-            >
-              Back Save
-            </button>
-            <button
-              type="button"
-              onClick={handleNextCard}
-              disabled={!awaitingChoice}
-              className="rounded-full px-4 py-2 text-xs font-semibold ring-1 transition disabled:opacity-25"
-              style={{
-                background: awaitingChoice ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.04)",
-                borderColor: awaitingChoice ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.08)",
-                color: awaitingChoice ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.35)",
-              }}
-            >
-              Next Card
-            </button>
-          </div>
 
-          {/* Quick scan + Bulk scan row */}
-          <div className="mt-2 flex items-center gap-3">
-            <label className="flex cursor-pointer items-center gap-1.5 text-xs text-white/50">
-              <input
-                type="checkbox"
-                checked={effectiveQuickMode}
-                onChange={(e) => { setQuickMode(e.target.checked); if (!e.target.checked) setBulkMode(false); }}
-                className="h-3.5 w-3.5 rounded accent-[color:var(--theme-gold)]"
-              />
-              Quick scan only
-            </label>
-
-            <div className="relative ml-auto flex items-center gap-1.5">
-              {showBulkInfo ? (
-                <div
-                  className="absolute bottom-full right-0 mb-2 w-56 rounded-[14px] bg-[#0d1525] p-3 text-[11px] text-white/70 ring-1 ring-white/10 shadow-xl"
-                  onClick={() => setShowBulkInfo(false)}
-                >
-                  <div className="mb-1 font-semibold text-white/90">Bulk Scan</div>
-                  Scans automatically. After each capture you have {Math.round(BULK_COOLDOWN_MS / 1000)} seconds to move to the next item before it snaps again. Use Pause to take a break.
-                </div>
-              ) : null}
-
-              <button
-                onClick={() => setShowBulkInfo((v) => !v)}
-                className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white/40 ring-1 ring-white/15 transition hover:ring-white/30"
-                aria-label="Bulk scan info"
-              >
-                i
-              </button>
-
-              {/* Pause button — only shown when bulk is active */}
-              {bulkMode ? (
-                <button
-                  type="button"
-                  onClick={() => setBulkPaused((v) => !v)}
-                  className="rounded-full px-3 py-1 text-[11px] font-semibold ring-1 transition"
-                  style={{
-                    background: bulkPaused ? "rgba(203,208,213,0.16)" : "rgba(239,68,68,0.14)",
-                    borderColor: bulkPaused ? "rgba(203,208,213,0.5)" : "rgba(239,68,68,0.4)",
-                    color: bulkPaused ? "#C8CDD2" : "#f87171",
-                  }}
-                >
-                  {bulkPaused ? "&#x25B6; Resume" : "&#x23F8; Pause"}
-                </button>
-              ) : null}
-
-              <button
-                type="button"
-                onClick={() => { setBulkMode((v) => !v); if (!bulkMode) { setQuickMode(true); setBulkPaused(false); } else { setBulkPaused(false); } }}
-                className="rounded-full px-3 py-1 text-[11px] font-semibold ring-1 transition"
-                style={{
-                  background: bulkMode ? "rgba(34,197,94,0.18)" : "rgba(255,255,255,0.06)",
-                  borderColor: bulkMode ? "rgba(34,197,94,0.55)" : "rgba(255,255,255,0.14)",
-                  color: bulkMode ? "#4ade80" : "rgba(255,255,255,0.55)",
-                  boxShadow: bulkMode ? "0 0 14px rgba(34,197,94,0.22)" : "none",
-                }}
-              >
-                {bulkMode ? "Bulk Active" : "Start Bulk Scan"}
-              </button>
+            {/* Last shot — so you know which was your most recent */}
+            <div className="absolute right-2 flex flex-col items-center gap-0.5">
+              <div className="h-12 w-12 overflow-hidden rounded-[10px] ring-1 ring-white/20" style={{ background: "rgba(255,255,255,0.05)" }}>
+                {lastThumb ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={lastThumb} alt="" className="h-full w-full object-cover" />
+                ) : null}
+              </div>
+              <span className="text-[9px] font-semibold text-white/40">Last</span>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );
