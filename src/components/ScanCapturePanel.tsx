@@ -455,7 +455,16 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
 
       try {
         const file = new File([source.frontBlob], `${draft.id}.jpg`, { type: "image/jpeg" });
-        const vision = await withTimeout(analyzeImageWithVision(file, { universe: draft.universe }), AI_SCAN_TIMEOUT_MS);
+        // Pass the Universe as a soft HINT, not the formal `universe` param: the API
+      // treats `universe` as "pre-classified" and then refuses to return category/
+      // subcategory. As a hint, the AI still returns the full classification (incl.
+      // subcategory), which we then match within the curator's chosen Universe.
+      const vision = await withTimeout(
+        analyzeImageWithVision(file, {
+          hints: `The collector says this item's Universe is "${UNIVERSE_LABEL[draft.universe]}". Identify the specific game/set/franchise and include category and subcategory.`,
+        }),
+        AI_SCAN_TIMEOUT_MS
+      );
 
         // Only charge the quota when a scan actually produced a result.
         if (metered) {
@@ -493,7 +502,16 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     setVerifyStatus("");
     try {
       const file = new File([source.frontBlob], `${id}.jpg`, { type: "image/jpeg" });
-      const vision = await withTimeout(analyzeImageWithVision(file, { universe: draft.universe }), AI_SCAN_TIMEOUT_MS);
+      // Pass the Universe as a soft HINT, not the formal `universe` param: the API
+      // treats `universe` as "pre-classified" and then refuses to return category/
+      // subcategory. As a hint, the AI still returns the full classification (incl.
+      // subcategory), which we then match within the curator's chosen Universe.
+      const vision = await withTimeout(
+        analyzeImageWithVision(file, {
+          hints: `The collector says this item's Universe is "${UNIVERSE_LABEL[draft.universe]}". Identify the specific game/set/franchise and include category and subcategory.`,
+        }),
+        AI_SCAN_TIMEOUT_MS
+      );
       let charged = true;
       if (metered) {
         const res = await consumeBulkScans(profileId, 1);
