@@ -88,7 +88,7 @@ function DropdownPill({
           <div className="fixed inset-0 z-[1]" onClick={() => setOpen(false)} />
           <div
             className="absolute left-0 top-full z-[2] mt-1 max-h-[52vh] w-[190px] overflow-y-auto rounded-[10px] p-1 ring-1"
-            style={{ background: "#0a0f1e", borderColor: "rgba(255,255,255,0.16)", boxShadow: "0 12px 34px rgba(0,0,0,0.55)" }}
+            style={{ background: "var(--surface)", borderColor: "var(--border)", boxShadow: "0 12px 34px rgba(0,0,0,0.55)" }}
           >
             {options.length === 0 ? (
               <div className="px-3 py-2 text-xs text-white/40">None available</div>
@@ -280,33 +280,24 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     onClose();
   }
 
-  if (showReview) {
-    const staged: StagedItem[] = capturedItems.map((item) => ({
-      id: item.id,
-      frontObjectUrl: item.frontObjectUrl,
-      backObjectUrl: undefined,
-      categoryLabel: item.categoryLabel,
-      universe: item.universe,
-    }));
-    return (
-      <ScanReviewSheet
-        items={staged}
-        onClose={() => setShowReview(false)}
-        onFinish={(approvedIds) => { void handleFinishReview(approvedIds); }}
-      />
-    );
-  }
-
   const lastThumb = capturedItems.length ? capturedItems[capturedItems.length - 1].frontObjectUrl : null;
   const cameraOptions = devices.map((d, i) => ({ value: d.deviceId, label: d.label || `Camera ${i + 1}` }));
+  const staged: StagedItem[] = capturedItems.map((item) => ({
+    id: item.id,
+    frontObjectUrl: item.frontObjectUrl,
+    backObjectUrl: undefined,
+    categoryLabel: item.categoryLabel,
+    universe: item.universe,
+  }));
 
   return (
+    <>
     <div className="fixed inset-0 z-[100000] flex items-start justify-center bg-black/60 backdrop-blur-sm">
-      <div className="flex w-full max-w-[540px] flex-col overflow-hidden bg-[#060c1a] text-white" style={{ height: "calc(100dvh - var(--bottomnav-h, 86px))" }}>
+      <div className="flex w-full max-w-[540px] flex-col overflow-hidden bg-[color:var(--bg)] text-[color:var(--fg)]" style={{ height: "calc(100dvh - var(--bottomnav-h, 86px))" }}>
         <canvas ref={captureCanvasRef} className="hidden" />
 
         {/* Header — Universe · Frame · Camera dropdown pills + Finished + close */}
-        <div className="flex shrink-0 items-center gap-1.5 border-b border-white/5 bg-[#060c1a]/95 px-3 py-2.5">
+        <div className="flex shrink-0 items-center gap-1.5 border-b border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2.5">
           <DropdownPill
             title="Universe"
             value={universe}
@@ -352,7 +343,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Camera viewport */}
-        <div className="relative w-full flex-1 bg-[#040912]" style={{ overflow: "hidden" }}>
+        <div className="relative w-full flex-1 bg-[color:var(--bg)]" style={{ overflow: "hidden" }}>
           <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />
           <FrameOverlay frameType={frameType} capturing={capturing} />
 
@@ -371,7 +362,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Bottom bar — shutter + last-shot thumbnail */}
-        <div className="shrink-0 bg-[#0a0f1e] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+        <div className="shrink-0 bg-[color:var(--surface)] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
           <div className="relative flex items-center justify-center">
             <button
               type="button"
@@ -391,19 +382,33 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
               </svg>
             </button>
 
-            {/* Last shot — so you know which was your most recent */}
-            <div className="absolute left-2 flex flex-col items-center gap-0.5">
-              <div className="h-12 w-12 overflow-hidden rounded-[10px] ring-1 ring-white/20" style={{ background: "rgba(255,255,255,0.05)" }}>
+            {/* Last shot — tap to review captures (retake decisions) */}
+            <button
+              type="button"
+              onClick={() => { if (capturedItems.length) setShowReview(true); }}
+              disabled={!capturedItems.length}
+              aria-label="Review captured items"
+              className="absolute left-2 flex flex-col items-center gap-0.5 transition active:scale-95 disabled:opacity-50"
+            >
+              <div className="h-12 w-12 overflow-hidden rounded-[10px] ring-1 ring-white/25" style={{ background: "rgba(255,255,255,0.05)" }}>
                 {lastThumb ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={lastThumb} alt="" className="h-full w-full object-cover" />
                 ) : null}
               </div>
-              <span className="text-[9px] font-semibold text-white/40">Last</span>
-            </div>
+              <span className="text-[9px] font-semibold text-white/55">{capturedItems.length ? "Review" : "Last"}</span>
+            </button>
           </div>
         </div>
       </div>
     </div>
+    {showReview ? (
+      <ScanReviewSheet
+        items={staged}
+        onClose={() => setShowReview(false)}
+        onFinish={(approvedIds) => { void handleFinishReview(approvedIds); }}
+      />
+    ) : null}
+    </>
   );
 }
