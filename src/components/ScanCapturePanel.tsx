@@ -172,6 +172,8 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
   const [capturing, setCapturing] = useState(false);
   const [capturedItems, setCapturedItems] = useState<CapturedItem[]>([]);
   const [showReview, setShowReview] = useState(false);
+  // Removals live here (not in the review sheet) so they persist when it's closed/reopened.
+  const [removed, setRemoved] = useState<Set<string>>(new Set());
 
   // Start / restart the camera (rear by default; a chosen deviceId when picked).
   useEffect(() => {
@@ -405,6 +407,9 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     {showReview ? (
       <ScanReviewSheet
         items={staged}
+        removed={removed}
+        onRemove={(id) => setRemoved((p) => new Set([...p, id]))}
+        onUndo={(id) => setRemoved((p) => { const n = new Set(p); n.delete(id); return n; })}
         onClose={() => setShowReview(false)}
         onFinish={(approvedIds) => { void handleFinishReview(approvedIds); }}
       />

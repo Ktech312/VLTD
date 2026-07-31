@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 export type StagedItem = {
   id: string;
   frontObjectUrl: string;
@@ -12,26 +10,15 @@ export type StagedItem = {
 
 type Props = {
   items: StagedItem[];
+  removed: Set<string>;
+  onRemove: (id: string) => void;
+  onUndo: (id: string) => void;
   onClose: () => void;
   onFinish: (approvedIds: string[]) => void;
 };
 
-export default function ScanReviewSheet({ items, onClose, onFinish }: Props) {
-  const [removed, setRemoved] = useState<Set<string>>(new Set());
-
+export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onClose, onFinish }: Props) {
   const remaining = items.filter((item) => !removed.has(item.id));
-
-  function removeItem(id: string) {
-    setRemoved((prev) => new Set([...prev, id]));
-  }
-
-  function undoRemove(id: string) {
-    setRemoved((prev) => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
-  }
 
   return (
     <div
@@ -110,7 +97,7 @@ export default function ScanReviewSheet({ items, onClose, onFinish }: Props) {
                     {isRemoved ? (
                       <button
                         type="button"
-                        onClick={() => undoRemove(item.id)}
+                        onClick={() => onUndo(item.id)}
                         className="shrink-0 rounded-full px-3 py-1.5 text-xs ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
                       >
                         Undo
@@ -118,7 +105,7 @@ export default function ScanReviewSheet({ items, onClose, onFinish }: Props) {
                     ) : (
                       <button
                         type="button"
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => onRemove(item.id)}
                         className="shrink-0 rounded-full px-3 py-1.5 text-xs text-red-400 ring-1 ring-red-400/30 transition hover:bg-red-500/10"
                       >
                         Remove
