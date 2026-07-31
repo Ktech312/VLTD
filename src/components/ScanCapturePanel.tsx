@@ -282,7 +282,10 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     onClose();
   }
 
-  const lastThumb = capturedItems.length ? capturedItems[capturedItems.length - 1].frontObjectUrl : null;
+  // Kept = captured minus removals. This is what actually gets vaulted, so it drives every count.
+  const keptItems = capturedItems.filter((item) => !removed.has(item.id));
+  const keptCount = keptItems.length;
+  const lastThumb = keptItems.length ? keptItems[keptItems.length - 1].frontObjectUrl : null;
   const cameraOptions = devices.map((d, i) => ({ value: d.deviceId, label: d.label || `Camera ${i + 1}` }));
   const staged: StagedItem[] = capturedItems.map((item) => ({
     id: item.id,
@@ -329,10 +332,10 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
               background: "linear-gradient(145deg, #EDEFF1 0%, #C8CDD2 30%, #A8AEB4 60%, #8C9298 100%)",
               color: "#171717",
               boxShadow: "inset 0 1px 0 rgba(255,255,255,0.45), 0 2px 6px rgba(0,0,0,0.35)",
-              opacity: capturedItems.length ? 1 : 0.55,
+              opacity: keptCount ? 1 : 0.55,
             }}
           >
-            Finished{capturedItems.length ? ` (${capturedItems.length})` : ""}
+            Finished{keptCount ? ` (${keptCount})` : ""}
           </button>
           <button
             type="button"
@@ -354,7 +357,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
             className="absolute left-3 top-3 grid h-9 w-9 place-items-center rounded-full text-sm font-black backdrop-blur"
             style={{ background: "rgba(0,0,0,0.42)", color: "rgba(255,255,255,0.9)", border: "1px solid rgba(255,255,255,0.25)" }}
           >
-            {capturedItems.length}
+            {keptCount}
           </div>
 
           {/* Ghost-green capture flash */}

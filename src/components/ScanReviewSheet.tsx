@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 export type StagedItem = {
   id: string;
   frontObjectUrl: string;
@@ -19,6 +21,13 @@ type Props = {
 
 export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onClose, onFinish }: Props) {
   const remaining = items.filter((item) => !removed.has(item.id));
+  const [preview, setPreview] = useState<{ front: string; back?: string; label: string } | null>(null);
+
+  // Keep original capture order as a stable "Item N" label, then sink removed items
+  // to the bottom (Array.sort is stable, so within-group order is preserved).
+  const ordered = items
+    .map((item, i) => ({ item, num: i + 1, isRemoved: removed.has(item.id) }))
+    .sort((a, b) => Number(a.isRemoved) - Number(b.isRemoved));
 
   return (
     <div
@@ -35,7 +44,7 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
           <div>
             <div className="text-sm font-bold">Review your Drop</div>
             <div className="text-xs text-[color:var(--muted)]">
-              {remaining.length} of {items.length} items ready to vault — remove any bad captures
+              {remaining.length} item{remaining.length !== 1 ? "s" : ""} ready to vault — remove any bad captures
             </div>
           </div>
           <button
@@ -47,7 +56,7 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
           </button>
         </div>
 
-        {/* Item list — ~5 visible, then scroll */}
+        {/* Item list — ~5 visible, then scroll. Removed items sink to the bottom. */}
         <div className="overflow-y-auto px-3 py-3" style={{ maxHeight: "25rem" }}>
           {items.length === 0 ? (
             <div className="rounded-2xl bg-[color:var(--pill)] p-5 text-center text-sm text-[color:var(--muted)]">
@@ -55,65 +64,70 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
             </div>
           ) : (
             <div className="space-y-2">
-              {items.map((item, index) => {
-                const isRemoved = removed.has(item.id);
-                return (
-                  <div
-                    key={item.id}
-                    className="flex items-center gap-3 rounded-2xl p-2.5 ring-1 transition"
-                    style={{
-                      background: isRemoved ? "rgba(239,68,68,0.06)" : "var(--pill, rgba(255,255,255,0.06))",
-                      borderColor: isRemoved ? "rgba(239,68,68,0.28)" : "var(--border, rgba(255,255,255,0.1))",
-                      opacity: isRemoved ? 0.55 : 1,
-                    }}
+              {ordered.map(({ item, num, isRemoved }) => (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3 rounded-2xl p-2.5 ring-1 transition"
+                  style={{
+                    background: isRemoved ? "rgba(239,68,68,0.06)" : "var(--pill, rgba(255,255,255,0.06))",
+                    borderColor: isRemoved ? "rgba(239,68,68,0.28)" : "var(--border, rgba(255,255,255,0.1))",
+                    opacity: isRemoved ? 0.55 : 1,
+                  }}
+                >
+                  {/* Thumbnail — tap to enlarge */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      item.frontObjectUrl &&
+                      setPreview({ front: item.frontObjectUrl, back: item.backObjectUrl, label: `Item ${num}` })
+                    }
+                    className="relative shrink-0 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--theme-gold,#C8CDD2)]"
+                    aria-label={`Enlarge Item ${num}`}
                   >
-                    {/* Thumbnail with optional back peek */}
-                    <div className="relative shrink-0">
-                      {item.frontObjectUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item.frontObjectUrl} alt={`Item ${index + 1}`} className="h-14 w-10 rounded-xl object-cover" />
-                      ) : (
-                        <div className="h-14 w-10 rounded-xl bg-[color:var(--surface)]" />
-                      )}
-                      {item.backObjectUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item.backObjectUrl} alt="back" className="absolute -bottom-1 -right-2 h-9 w-6 rounded-lg object-cover ring-2 ring-[color:var(--surface)]" />
-                      ) : null}
-                    </div>
-
-                    {/* Info */}
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-semibold">
-                        Item {index + 1}
-                        {isRemoved ? <span className="ml-1.5 text-xs font-normal text-red-400">removed</span> : null}
-                      </div>
-                      <div className="mt-0.5 truncate text-xs text-[color:var(--muted)]">
-                        {item.categoryLabel || item.universe}
-                        {item.backObjectUrl ? " · Front + Back" : " · Front only"}
-                      </div>
-                    </div>
-
-                    {/* Action */}
-                    {isRemoved ? (
-                      <button
-                        type="button"
-                        onClick={() => onUndo(item.id)}
-                        className="shrink-0 rounded-full px-3 py-1.5 text-xs ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
-                      >
-                        Undo
-                      </button>
+                    {item.frontObjectUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={item.frontObjectUrl} alt={`Item ${num}`} className="h-14 w-10 rounded-xl object-cover" />
                     ) : (
-                      <button
-                        type="button"
-                        onClick={() => onRemove(item.id)}
-                        className="shrink-0 rounded-full px-3 py-1.5 text-xs text-red-400 ring-1 ring-red-400/30 transition hover:bg-red-500/10"
-                      >
-                        Remove
-                      </button>
+                      <div className="h-14 w-10 rounded-xl bg-[color:var(--surface)]" />
                     )}
+                    {item.backObjectUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={item.backObjectUrl} alt="back" className="absolute -bottom-1 -right-2 h-9 w-6 rounded-lg object-cover ring-2 ring-[color:var(--surface)]" />
+                    ) : null}
+                  </button>
+
+                  {/* Info */}
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-semibold">
+                      Item {num}
+                      {isRemoved ? <span className="ml-1.5 text-xs font-normal text-red-400">removed</span> : null}
+                    </div>
+                    <div className="mt-0.5 truncate text-xs text-[color:var(--muted)]">
+                      {item.categoryLabel || item.universe}
+                      {item.backObjectUrl ? " · Front + Back" : " · Front only"}
+                    </div>
                   </div>
-                );
-              })}
+
+                  {/* Action */}
+                  {isRemoved ? (
+                    <button
+                      type="button"
+                      onClick={() => onUndo(item.id)}
+                      className="shrink-0 rounded-full px-3 py-1.5 text-xs ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+                    >
+                      Undo
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => onRemove(item.id)}
+                      className="shrink-0 rounded-full px-3 py-1.5 text-xs text-red-400 ring-1 ring-red-400/30 transition hover:bg-red-500/10"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -133,6 +147,35 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
           </button>
         </div>
       </div>
+
+      {/* Enlarged preview overlay */}
+      {preview ? (
+        <div
+          className="fixed inset-0 z-[100001] flex flex-col items-center justify-center gap-3 bg-black/85 px-4 py-[max(1rem,env(safe-area-inset-top))] backdrop-blur-sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            setPreview(null);
+          }}
+        >
+          <div className="text-xs font-medium text-white/70">{preview.label} — tap anywhere to close</div>
+          <div className="flex max-h-[75dvh] items-center justify-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={preview.front}
+              alt={preview.label}
+              className="max-h-[75dvh] w-auto max-w-full rounded-2xl object-contain shadow-2xl ring-1 ring-white/10"
+            />
+            {preview.back ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={preview.back}
+                alt={`${preview.label} back`}
+                className="max-h-[75dvh] w-auto max-w-full rounded-2xl object-contain shadow-2xl ring-1 ring-white/10"
+              />
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

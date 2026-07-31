@@ -1,227 +1,192 @@
-# VLTD — Session Handoff (updated 2026-07-25)
+# VLTD — Session Handoff (updated 2026-07-30)
 
-Read this top to bottom, then start on **§2 "What's left."** Prior handoff
-history is in git.
+Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
+brand-new chat can pick up with no prior context.
 
 ---
 
-## 0. How to work here (rules — follow exactly)
+## 0. RULES — follow exactly (this is the source of truth)
 
-**Who you're working with:** EK, the founder. **Non-programmer** — explain in
-plain language, never jargon ("state", "props", etc.). Give recommendations,
-not option dumps. When something can't be done or is risky, say so plainly.
+Rules also live in the auto-memory index `MEMORY.md` (loaded each session) and the
+`memory/*.md` files it points to. If this handoff and a memory ever disagree,
+ask EK.
 
-**Hard product rules (also in auto-memory `MEMORY.md`):**
-- **No fake data.** Numbers, descriptions, counts, images come from real
-  sources. No invented formulas presented as data, no keyword-guessed stock art
-  for real items, no fake "autosaved" claims. (Whole sessions were spent
-  ripping fake data out.)
-- **No emoji / generic icons in the UI.** Use the themed line-art `Glyph`
-  component (`src/components/ui/Glyph.tsx`) or inline stroke SVGs matching the
-  nav style. Exceptions that are NOT violations: the `✦` four-point brand star,
-  `✓`/`✕` UI affordances, and the user-chosen **avatar-emoji feature**.
-- **Background is locked to the site standard.** Never add a per-page
-  full-page background/overlay. Card/panel backgrounds are fine.
+**Who you're working with:** EK, the founder. **Non-programmer.** Explain in plain
+language, never jargon. Give a recommendation, not an option-dump. If something
+is risky or can't be done, say so plainly.
+
+**Hard product rules:**
+- **No fake data.** Numbers/descriptions/counts/images come from real sources.
+  No invented data, no stock-art stand-ins, no fake "autosaved" claims.
+- **No emoji / generic icons in the UI.** Use the themed `Glyph` component
+  (`src/components/ui/Glyph.tsx`) or inline stroke SVGs. NOT violations: the `✦`
+  brand star, `✓`/`✕` affordances, and the user-chosen avatar-emoji feature.
+- **Background locked to the site standard.** No per-page full backgrounds. Use
+  the theme vars (`--bg`, `--surface`, `--border`, `--fg`, `--pill`, `--muted`).
 - **"Curator" = the individual user; "collectors" = the community/market.**
-- **Internal ID system is permanent** — `260312-0001-000142`
-  (`YYMMDD-account-item`). Don't change the format.
-- **When rearranging a screen EK gave pixel notes on: do NOT change pill/frame
-  shapes or sizes** unless asked — rearrange and tighten only.
+- **Internal ID system is permanent** — `260312-0001-000142` (`YYMMDD-account-item`).
+- **⚠ ASK BEFORE REMOVING A FEATURE.** EK was (rightly) upset when a pass removed
+  the Universe selector to "simplify" without asking. Rearrange/restyle freely;
+  **confirm before deleting functionality.**
+- When EK gives pixel notes, **don't change pill/frame/button sizes** unless asked.
 
 **Deploy / infra:**
 - **Vercel auto-deploys on push to `main`.** Never tell EK to redeploy.
-  **Deploys are SLOW this period — 3–5 min, and queue behind each other.** Be
-  patient; don't declare "live" until you've re-checked the deployed page.
-- **Supabase migrations run MANUALLY by EK** (no CI). Write the idempotent
-  `.sql`, ask EK to run it, wait for "ran clean." New table columns that don't
-  exist yet will make `vault_items` upserts throw — never add a column to the
-  cloud row map (`src/lib/vaultCloud.ts`) without the migration.
-- Live site: `https://vltd.vercel.app` (EK's test site). `vltd.app` intentionally
-  not set up yet.
-- Windows + Git Bash.
+  **Deploys are SLOW right now (3–5 min, queue up).** Don't call something "live"
+  until you re-checked the deployed page.
+- **Supabase migrations run MANUALLY by EK** (no CI). Write idempotent `.sql`,
+  ask EK to run it. **Never add a new column to the cloud row map
+  (`src/lib/vaultCloud.ts`) without the migration** — unknown columns make the
+  `vault_items` upsert throw.
+- Live site: `https://vltd.vercel.app`. `vltd.app` intentionally not set up yet.
+- Windows + Git Bash. Commit trailer:
+  `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
 
-**Verifying (do this — hard-won):**
+**Verifying (hard-won — do this):**
 - EK does NOT run localhost. Verify on the LIVE site via **Claude in Chrome**
   (`mcp__claude-in-chrome__*`, load via ToolSearch).
-- **SCREENSHOTS WORK** via `mcp__claude-in-chrome__computer` `{action:"screenshot"}`
-  (optionally `save_to_disk:true`). They were timing out earlier in the session,
-  then started working — always try. **Verify VISUALLY, not just by checking DOM
-  elements exist.** "The elements are present" ≠ "it looks like the mockup." EK
-  lost trust because structure-checks were reported as visual confirmation.
-- **Iterate fast without waiting for deploys:** apply CSS-only changes live via
-  `javascript_tool` (set styles / gridTemplateColumns on the real page) and
-  screenshot to preview a layout fix before committing.
-- To reach the capture **review/builder with data** for a screenshot without a
-  real card: on `/capture`, build a canvas image in-page, wrap in a File, set it
-  on the hidden `input[type=file]` via DataTransfer, dispatch `change` → the AI
-  runs and fills the builder. Nothing saves until "Save to Vault."
+- **Screenshots work** (`computer {action:"screenshot"}`). **Verify VISUALLY, not
+  just that DOM elements exist** — "elements present" ≠ "looks right." That gap
+  cost trust earlier.
+- **Mobile:** resize the browser (`resize_window` ~414×896) to see the phone
+  layout EK annotates — but the true test (rear camera, etc.) is EK's own phone.
+- Iterate fast without waiting on deploys: apply CSS-only tweaks live via
+  `javascript_tool` and screenshot to preview a layout fix before committing.
 - Always `npx tsc --noEmit` + `npx eslint <files>` + `npm run build` before push.
-- Commit trailer: `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
 
-**⚠ PARALLEL EDITING — important.** Another tool (Codex) is editing some files
-outside this chat. Confirmed: **`src/app/community-board/page.tsx`** was rewritten
-into a "VLT LOUNGE clubhouse" (mock data, 3-column) — NOT this chat's work; leave
-it alone unless EK says otherwise. The **capture panel** also shows text/buttons
-this chat didn't write (an inline camera + "Quick Add"). **Re-read any file
-before editing it, and confirm with EK who owns a screen, so the two agents don't
-clobber each other.** The FULL tier color was also changed to silver `#C8CDD2`
-(seen in `admin/scan-limits`).
+**⚠ PARALLEL EDITING.** Another tool (Codex) edits some files outside the chat.
+Confirmed edited by it: `src/app/community-board/page.tsx` (rewritten into a "VLT
+LOUNGE clubhouse" — leave it alone) and the capture screen. **Re-read any file
+before editing it, and confirm with EK who owns a screen.** EK is aware of this.
 
 ---
 
 ## 1. Where things stand (screens)
 
-- **Add / Capture (`/capture`)** — this chat made it **builder-first**: opens as
-  the form + an image panel ("Add a photo — optional / Take photo / Upload"),
-  photo optional, camera on demand (modal), AI runs on capture with an in-panel
-  spinner. Layout matches the approved mockup `concept-19` (serif "New Vault
-  Item", full-width, Auto ID / Scan Barcode / Import / Clear, image viewer,
-  Identity card, gold Save bar). **BUT a parallel edit has changed this screen**
-  (EK's latest screenshots show an inline camera + "Quick Add" + different copy).
-  **Re-read `src/app/capture/page.tsx` before touching it.** Mockups live at
+- **Add / Capture (`src/app/capture/page.tsx`)** — currently **camera-first**
+  ("New Vault Item" with an inline live camera, Quick Add, builder form below).
+  This chat's earlier "builder-first" version was overwritten by the parallel
+  editor — **re-read the file before editing.** Approved mockups live at
   `C:\Users\EK\.codex\generated_images\019e6d3a-5dd3-7ed1-be13-942347ebb5c9\`
-  (`vltd-concept-19-capture-desktop.png`, etc.).
-- **Bulk upload (`/vault/bulk`)** — DONE: pick photos OR camera → one Universe →
-  optional AI (metered, live ticker) → review grid (per-card Scan/Rescan) → Add
-  all. Drag-drop supported. `src/lib/bulkScanQuota.ts` + migration
-  `supabase/migrations/20260723_bulk_scan_quota.sql` (EK ran it).
-- **Admin → Scan Limits (`/admin/scan-limits`)** — DONE: per-tier limits +
-  per-user overrides. In the admin hub (`/admin/characters`).
-- **VLT Lounge (`/community-board`)** — rewritten by the parallel editor into a
-  clubhouse. Not this chat's.
+  (`vltd-concept-19-capture-desktop.png` = the builder/review layout).
+- **Quick Add scanner (`src/components/ScanCapturePanel.tsx`)** — REBUILT to EK's
+  spec (see §4). Opens from the capture screen's Quick Add. Manual fast camera.
+- **Review sheet (`src/components/ScanReviewSheet.tsx`)** — top-anchored, ~5
+  scrollable items, controlled removals (state lives in the scanner).
+- **Bulk upload (`src/app/vault/bulk/page.tsx`)** — DONE (device + camera → one
+  Universe → optional AI, metered → review grid → Add all).
+- **Admin → Scan Limits (`src/app/admin/scan-limits/page.tsx`)** — DONE (per-tier
+  + per-user AI-scan limits). Migration `supabase/migrations/20260723_bulk_scan_quota.sql`
+  (EK ran it). Lib: `src/lib/bulkScanQuota.ts`.
+- **VLT Lounge (`src/app/community-board/page.tsx`)** — clubhouse redesign by the
+  parallel editor; not this chat's.
 
 ---
 
 ## 2. What's LEFT to do (prioritized)
 
-### NEW from EK 2026-07-25 (capture, after pass 1+2 shipped)
-Pass 1 (info-i, drop Retry, File→Upload, remember camera) and pass 2 (Upload ·
-Quick Add · camera picker in one top row; standardized slightly-square pills)
-are shipped. Remaining:
-- **Quick Add fullscreen scanner — REBUILT to EK's spec 2026-07-25**
-  (`src/components/ScanCapturePanel.tsx`, full rewrite). Manual-only shutter
-  (removed auto-lock + Front/Back/Next + Quick/Bulk); 3 slightly-square dropdown
-  pills (Universe / Frame / Camera, titles constant); Done→Finished; removed the
-  upload icon; rear-camera default + Camera picker (fixes stuck-on-front);
-  top-left ghost counter; last-shot thumbnail by the shutter; light-blue frame
-  corners that brighten on capture; soft ghost-green capture flash; panel z-index
-  above the bottom nav. Category is not selectable here (defaults per universe;
-  refine in the review sheet). NOT yet verified on a real device — EK to test on
-  phone (needs a real rear camera; desktop can't). ⚠ LESSON: EK was upset that a
-  prior pass removed the Universe selector WITHOUT ASKING — **confirm before
-  removing any feature.**
-- **Field "locks" on the capture builder.** EK wants per-field locks on the
-  Identity/Category fields (Item Name, Alt Name, Set/Series, Cert Company,
-  Category…) so shared values carry to the next item. The lock system already
-  exists — `src/lib/bulkAddState.ts` + the `/vault/add` manual screen use it.
-  Port that onto the capture builder fields.
-- **Performance:** capture feels slower. Likely culprit = the **live object-
-  detection ML** (TF.js + coco-ssd) in `CameraCapturePanel.tsx` that runs the
-  moving "guide" box every ~900ms while the camera is open (pre-existing, not
-  from the tighten passes). Throttle heavily or make it opt-in to speed the
-  camera up.
-- **The "Syncing…" chip** EK circled = `src/components/VaultSyncStatusChip.tsx`
-  (vault cloud-backup status; "Syncing…/Synced/Details"). Legit feature; looks
-  cramped/unreadable in the header — tidy its styling if EK wants.
+### A. Field "locks" on the capture builder ← NEXT (EK's #5, not started)
+Let a user **lock a field's value so it carries to the next item** (entering many
+items that share info). EK marked these fields: Item Name, Alternate Name,
+Set/Series, Certification Company, Category, etc. **The lock system already
+exists** — `src/lib/bulkAddState.ts` + the `/vault/add` manual screen use it
+(look for `toggleBulkAddLock` / `BulkAddLocks`). Port that pattern onto the
+capture builder's Identity/Category fields (a small lock toggle per field).
 
+### B. Quick Add scanner — final device verification + any tweaks
+Rebuilt to spec and iterated (§4). EK is testing on their phone. Likely-remaining
+polish surfaces as EK tests: 5-item review height, flash timing, corner boldness,
+spacing. Verify removal-persistence + camera-returns-after-review on a real device.
 
-### A. Capture panel — tighten & rearrange (EK's Image 2/3 notes, 2026-07-25)
-Mobile capture is too bulky. **Rearrange only — do NOT change pill/frame shapes
-or sizes.** Re-read the current file first (parallel-edited).
-1. The descriptive line ("Point at the item and snap — or switch to Quick Add
-   to capture many and sort later") → collapse into an **info "i" icon next to
-   "Add Item"** (frees top space). (There's an `Info()` pattern in
-   `community-board/page.tsx` for reference styling.)
-2. **Camera selector** (the "Webcam (…)" dropdown): shrink to as small as
-   possible, move to the **top**, and **persist the last-used camera**
-   (localStorage) so it doesn't reset every photo. Switching cameras each shot
-   is the pain point.
-3. **Delete "Retry"** from that row — there's no photo yet to retry.
-4. **Move "Quick Add"** to the **top, centered, just under "Add Item."**
-5. **"File"** button: we don't use the word "File" elsewhere — switch to
-   **"Upload"** or the file icon; move it **top-left, just under "Add Item."**
-6. Once the top is cleared, **move the "Add photo(s)/video" tile next to the
-   camera (shutter) button** (see Image 3).
-
-### B. Barcode / QR not detected (BUG)
-Slab QR/Code128 barcodes still aren't being read on capture. Investigate
+### C. Barcode / QR not detected (BUG)
+Slab QR/Code128 still not read on capture. Investigate
 `src/lib/scanners/barcodeScanner.ts` (`scanBarcodeFromVideoFrame`,
-`scanBarcodeFromFile`) and how `/capture` calls them. Test with the Pokémon slab
-in EK's screenshots (has a QR + a Code128).
+`scanBarcodeFromFile`) and how the capture flow calls it.
 
-### C. DOCUMENTS (Identity accordion §5) — make it real
-Currently a placeholder ("after saving, open the item…"). EK wants it functional:
-an **Upload file** and **Take photo** control, and those document images default
-to **private & locked — never shared** (separate from the item's public photos).
-Needs the files staged until Save, then persisted with a private flag.
+### D. DOCUMENTS (capture builder §5 accordion) — make it real
+Currently a placeholder. EK wants an **Upload file / Take photo** control, and
+those document images **private & locked — never shared** (separate from the
+item's public photos). Files staged until Save, persisted with a private flag.
 
-### D. Crop bugs
-- **Auto-crop only works after background removal** — `computeSubjectCrop`
-  (`src/lib/scanners/cropImageFile.ts`) reads the alpha channel, so on a normal
-  photo it keeps the whole frame. The camera DOES detect the card (coco-ssd
-  `detectionBox` in `CameraCapturePanel.tsx`) but that box is only a visual
-  guide — it's **not wired to crop.** Fix: use the detected card box to
-  auto-crop on capture.
-- **Manual crop "didn't stick"** — reproduce the exact camera → crop → save path
-  and confirm where the crop is dropped before claiming a fix.
+### E. Crop bugs
+- Auto-crop only works AFTER background removal (`computeSubjectCrop` reads alpha
+  in `src/lib/scanners/cropImageFile.ts`); on a normal photo it keeps the whole
+  frame. The camera's detected object box is NOT wired to crop. Fix: use the
+  detected card box to auto-crop on capture.
+- Manual crop "didn't stick" — reproduce the capture→crop→save path and confirm.
 
-### E. Single-item AI metering — DECISION NEEDED
-Single-item "Auto ID" on `/capture` is **currently UNMETERED** (unlimited); only
-the bulk flow counts scans. EK asked "what happens when they run out of credits?"
-— today, nothing. **Decision:** meter single captures against the same monthly
-quota (`consume_bulk_scan`), grey out Auto ID when out (manual entry stays free)?
-Waiting on EK yes/no.
+### F. Single-item AI metering — DECISION NEEDED
+Single "Auto ID" on the capture screen is **unmetered** (only bulk counts scans).
+EK to decide: meter single captures against the same monthly quota
+(`consume_bulk_scan`), grey out Auto ID when out (manual entry stays free)?
 
-### F. Small polish
-- Identity header shows "MEDIUM CONFIDENCE" on a blank form (from the default
-  `confidence 0.45`). Hide the badge until there's an actual AI result.
+### G. Small polish
+- Capture Identity header shows "MEDIUM CONFIDENCE" on a blank form — hide the
+  badge until there's an actual AI result.
+- The "Syncing…" chip EK circled = `src/components/VaultSyncStatusChip.tsx` (vault
+  cloud-backup status). Legit; tidy its header styling if EK wants.
 
----
-
-## 3. Options / decisions pending from EK
-- **Single-capture metering** (2E): yes / no.
-- **"File" label** (2A.5): "Upload" text vs file icon — EK leaning either.
-- Everything else in §2 is a go; just needs building.
+### H. Bigger / later
+- **Background-removal freeze** — `@imgly/background-removal` runs ONNX on the
+  main thread (`src/components/capture/captureUtils.ts`). Options: simplest is
+  `removeBackground(file, { model: 'isnet_quint8' })`. Needs EK's device eyeball.
+- **Watchlist vs Wishlist naming** — EK to pick before renaming (route `/wishlist`
+  vs `watchlistModel`).
 
 ---
 
-## 4. Locked designs / specs (don't re-litigate)
-- **Bulk upload + scan quota** — built; monthly per tier, resets on each user's
-  signup-anniversary day; per-tier AND per-user overrides. See
-  `bulk-upload-scan-quota` memory.
-- **Capture screen target** = mockup `concept-19` (builder layout), plus EK's
-  builder-first + tightening notes above.
-- Cert Company + Set/Series on capture currently map onto existing fields (cert
-  company folds into `grade` as "PSA 9"; Set/Series → `number`) to avoid a
-  migration. If EK wants them as separate saved fields, that's a small migration.
+## 3. Options / decisions waiting on EK
+- **Single-capture metering** (2F): yes / no.
+- **Watchlist vs Wishlist** name (2H).
+- Everything else in §2 is a go; just needs building/verifying.
 
 ---
 
-## 5. Done this session (don't redo)
-- Bulk scan quota: migration + `/admin/scan-limits` + `bulkScanQuota.ts`
-  (per-tier + per-user; verified live).
-- Bulk upload `/vault/bulk`: Path B (upload) + Path A (camera) + review grid +
-  per-card Scan/Rescan + live ticker + drag-drop. Verified live (render + quota);
-  NOT exercised through a real commit (would add test items) — EK to try on phone.
-- Emoji → themed glyphs on user-facing pages: Discover swipe, Goals "Complete"
-  badge, auto-share prompt, Patreon. (Lounge was later rewritten by the parallel
-  editor.)
-- Capture rebuilt to match `concept-19` (serif title, top action buttons, framed
-  image viewer, Identity fields incl. Certification Company dropdown + Confidence
-  segmented, gold Save bar), then made **full-width** (removed the boxed wrapper),
-  then **builder-first** (form + optional photo, camera on demand). Retired the
-  dead "Bulk Add" toggle on `/capture` and `/vault/add`.
-- Background-removal freeze root-caused (`@imgly/background-removal` runs ONNX on
-  the main thread) — options written up here previously; not shipped (needs EK's
-  device eyeball). Simplest: pass `{ model: 'isnet_quint8' }`.
+## 4. Done recently (don't redo)
+- **Capture panel tighten** (`CameraCapturePanel.tsx`): remembers last-used camera
+  (localStorage); description → info "i"; removed "Retry"; "File" → "Upload";
+  Upload/Quick Add/camera-picker moved into one compact top row with squared pills.
+- **Perf:** turned OFF the live object-detection ML (TF.js + coco-ssd) that ran
+  every ~900ms in `CameraCapturePanel.tsx` (flag `ENABLE_OBJECT_DETECTION=false`).
+  The fixed frame guide + barcode scan are unaffected.
+- **Quick Add scanner rebuilt to EK's spec** (`ScanCapturePanel.tsx`, full rewrite):
+  manual-only shutter (removed auto-lock + Front/Back/Next + Quick/Bulk); **3
+  squared dropdown pills — Universe / Frame / Camera** (titles stay constant,
+  pick highlights in the menu); **Done → Finished** (brushed look); removed the
+  upload icon; **rear-camera default + Camera picker** (fixes stuck-on-front);
+  **top-left ghost counter**; **last-shot thumbnail on the LEFT, tap it = Review**;
+  **light-blue frame corners** (bold, dark outline so they don't wash out on
+  holo cards) that brighten on capture; **soft ghost-green capture flash**;
+  panel sits **above the bottom nav** (`100dvh − var(--bottomnav-h)`);
+  **app-theme background** (`--bg/--surface/--border/--fg`).
+- **Review sheet** (`ScanReviewSheet.tsx`): top-anchored above the nav; ~5 items
+  then scrolls; **removals persist** (state lifted to the scanner; sheet is now
+  controlled via `removed/onRemove/onUndo`); camera stays live behind it (review
+  is an overlay) so closing it (X) returns to the camera to keep adding.
+- Bulk upload + scan quota (migration + admin + lib + `/vault/bulk`) — verified live.
+- Emoji→glyph on user-facing pages (Discover/Goals/AutoShare/Patreon).
 
 ---
 
-## 6. First moves for the next session
-1. Read this + confirm with EK **who owns `/capture` right now** (this chat vs the
-   parallel Codex edits) before editing it — avoid clobbering.
-2. Re-read `src/app/capture/page.tsx` fresh (it's been edited outside this chat).
-3. Do §2A capture tightening (rearrange only, keep sizes), then §2B barcode,
-   §2C documents, §2D crop. Verify each VISUALLY on `vltd.vercel.app` (screenshot),
-   not just by DOM checks. `tsc`/`eslint`/`build` before push. Deploys are slow —
-   preview CSS-only tweaks via live JS injection to iterate.
+## 5. Key files
+- Capture screen: `src/app/capture/page.tsx`
+- Inline camera panel: `src/components/CameraCapturePanel.tsx`
+- Quick Add fast scanner: `src/components/ScanCapturePanel.tsx`
+- Scan review sheet: `src/components/ScanReviewSheet.tsx`
+- Field-lock system to port: `src/lib/bulkAddState.ts` (used by `src/app/vault/add/page.tsx`)
+- Barcode: `src/lib/scanners/barcodeScanner.ts` · Crop: `src/lib/scanners/cropImageFile.ts`
+- Cloud save (column map): `src/lib/vaultCloud.ts` · Vault model: `src/lib/vaultModel.ts`
+- AI vision: `src/lib/ai/openaiVision.ts` · Scan quota: `src/lib/bulkScanQuota.ts`
+- Theme vars + `--bottomnav-h`: `src/app/globals.css`
+- Approved mockups: `C:\Users\EK\.codex\generated_images\019e6d3a-5dd3-7ed1-be13-942347ebb5c9\`
+
+---
+
+## 6. First moves for the new chat
+1. Read this + `MEMORY.md`. Confirm with EK **who owns `/capture` right now**
+   (this chat vs the parallel Codex edits) before editing capture files.
+2. Start on **§2A — field locks** (port `bulkAddState` locks onto the capture
+   builder fields). Then §2C barcode, §2D documents, §2E crop.
+3. Verify each **visually** on `vltd.vercel.app` (screenshot; resize for mobile).
+   `tsc`/`eslint`/`build` before every push. Deploys are slow — preview CSS-only
+   tweaks via live JS injection to iterate faster.
