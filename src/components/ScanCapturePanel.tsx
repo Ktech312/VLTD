@@ -77,7 +77,7 @@ function DropdownPill({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="inline-flex h-8 items-center gap-1 rounded-[9px] px-3 text-xs font-semibold ring-1 transition"
+        className="inline-flex h-8 items-center gap-1 rounded-md px-3 text-xs font-semibold ring-1 transition"
         style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.16)", color: "rgba(255,255,255,0.85)" }}
       >
         {title}
@@ -118,10 +118,10 @@ function DropdownPill({
 function FrameOverlay({ frameType, capturing }: { frameType: FrameType; capturing: boolean }) {
   const aspect = FRAME_ASPECT[frameType];
   const isPortrait = aspect < 1;
-  const color = capturing ? "rgba(150,205,255,1)" : "rgba(120,190,255,0.82)";
-  const size = capturing ? 26 : 22;
-  const borderWidth = capturing ? 3 : 2.5;
-  const glow = capturing ? "0 0 16px rgba(120,190,255,0.6)" : "0 0 8px rgba(120,190,255,0.25)";
+  const color = capturing ? "rgba(96,175,255,1)" : "rgba(74,155,255,0.98)";
+  const size = capturing ? 30 : 26;
+  const borderWidth = capturing ? 4 : 3.5;
+  const glow = capturing ? "0 0 18px rgba(74,155,255,0.8)" : "0 0 12px rgba(74,155,255,0.5)";
 
   function cornerStyle(position: "tl" | "tr" | "bl" | "br"): CSSProperties {
     const top = position.includes("t");
@@ -148,7 +148,7 @@ function FrameOverlay({ frameType, capturing }: { frameType: FrameType; capturin
 
   return (
     <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-      <div className="relative" style={frameStyle}>
+      <div className="relative" style={{ ...frameStyle, filter: "drop-shadow(0 0 2.5px rgba(0,0,0,0.8))" }}>
         <div style={cornerStyle("tl")} />
         <div style={cornerStyle("tr")} />
         <div style={cornerStyle("bl")} />
@@ -301,8 +301,8 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
   const cameraOptions = devices.map((d, i) => ({ value: d.deviceId, label: d.label || `Camera ${i + 1}` }));
 
   return (
-    <div className="fixed inset-0 z-[100000] flex items-stretch justify-center bg-black/60 backdrop-blur-sm">
-      <div className="flex w-full max-w-[540px] flex-col overflow-hidden bg-[#060c1a] text-white" style={{ height: "100dvh" }}>
+    <div className="fixed inset-0 z-[100000] flex items-start justify-center bg-black/60 backdrop-blur-sm">
+      <div className="flex w-full max-w-[540px] flex-col overflow-hidden bg-[#060c1a] text-white" style={{ height: "calc(100dvh - var(--bottomnav-h, 86px))" }}>
         <canvas ref={captureCanvasRef} className="hidden" />
 
         {/* Header — Universe · Frame · Camera dropdown pills + Finished + close */}
@@ -331,7 +331,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={handleFinished}
-            className="ml-auto shrink-0 rounded-[9px] px-3.5 py-1.5 text-xs font-bold ring-1 transition"
+            className="ml-auto shrink-0 rounded-md px-3.5 py-1.5 text-xs font-bold ring-1 transition"
             style={{
               background: capturedItems.length ? "rgba(203,208,213,0.16)" : "rgba(255,255,255,0.06)",
               borderColor: capturedItems.length ? "rgba(203,208,213,0.5)" : "rgba(255,255,255,0.12)",
