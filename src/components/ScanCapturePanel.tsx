@@ -18,6 +18,7 @@ import { analyzeImageWithVision, type VisionAnalysisResult } from "@/lib/ai/open
 import { matchVisionCategory, matchVisionSubcategory, matchVisionUniverse } from "@/lib/visionTaxonomy";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { getBulkScanStatus, consumeBulkScans } from "@/lib/bulkScanQuota";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import {
   getCategories,
   getDefaultCategory,
@@ -220,6 +221,14 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
   // Only signed-in curators are metered; anonymous/local use isn't charged.
   const metered = Boolean(profileId);
 
+  // Warn before leaving (bottom nav, back button, refresh) once there's work at
+  // risk — captured photos or drafts that haven't been saved to the Vault yet.
+  const hasWorkInProgress = capturedItems.length > 0 || drafts.length > 0;
+  useUnsavedChangesGuard(
+    hasWorkInProgress,
+    "Leave Quick Add? Your captured items haven't been saved to your Vault yet."
+  );
+
   // Load the curator's remaining AI scans (per-plan quota) for the ticker + gating.
   useEffect(() => {
     const pid = getStoredActiveProfileId();
@@ -342,6 +351,14 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     };
   }
 
+  // Fully release the camera. Called once the batch is committed to scanning —
+  // there's no path back to the live camera after that, so it shouldn't keep running.
+  function stopCamera() {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+  }
+
   function handleFinished() {
     if (capturedItems.length === 0) { onClose(); return; }
     setShowReview(true);
@@ -408,6 +425,8 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
 
     if (initial.length === 0) { onClose(); return; }
 
+    // Committed to this batch — release the camera (no return to live view after this).
+    stopCamera();
     setDrafts(initial);
     setShowReview(false);
     setVerifyStatus("");
