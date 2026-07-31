@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 
+import type { VisionAnalysisResult } from "@/lib/ai/openaiVision";
 import {
   getCategories,
   getSubcategories,
+  getDefaultCategory,
   UNIVERSE_LABEL,
   isUniverseKey,
   type UniverseKey,
@@ -22,6 +24,10 @@ export type ScanDraft = {
   currentValue: string;
   scanned: boolean;
   confidence: number; // 0–1 from the vision model
+  // AI hint that the chosen Universe may be wrong (differs from what AI detected).
+  aiUniverse?: UniverseKey;
+  // Full AI result, carried through so extra fields (grade, notes, etc.) get saved.
+  vision?: VisionAnalysisResult;
 };
 
 type Props = {
@@ -42,6 +48,9 @@ type Props = {
 function confidenceColor(pct: number) {
   return pct >= 80 ? "#4ade80" : pct >= 60 ? "var(--theme-gold, #C8CDD2)" : "#f87171";
 }
+
+const FIELD_CLS =
+  "h-8 w-full rounded-lg bg-[color:var(--surface)] px-2.5 text-[13px] ring-1 ring-[color:var(--border)]";
 
 export default function ScanVerifySheet({
   drafts,
@@ -71,10 +80,10 @@ export default function ScanVerifySheet({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[color:var(--border)] px-4 py-3">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[color:var(--border)] px-4 py-2.5">
           <div className="min-w-0">
             <div className="text-sm font-bold">Verify your Drop</div>
-            <div className="truncate text-xs text-[color:var(--muted)]">
+            <div className="truncate text-[11px] text-[color:var(--muted)]">
               AI filled these in — fix anything it got wrong, then save.
             </div>
           </div>
@@ -96,13 +105,13 @@ export default function ScanVerifySheet({
         </div>
 
         {/* Draft list */}
-        <div className="overflow-y-auto px-3 py-3" style={{ maxHeight: "28rem" }}>
+        <div className="overflow-y-auto px-3 py-2.5" style={{ maxHeight: "30rem" }}>
           {drafts.length === 0 ? (
             <div className="rounded-2xl bg-[color:var(--pill)] p-5 text-center text-sm text-[color:var(--muted)]">
               Nothing left to add.
             </div>
           ) : (
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {drafts.map((d, index) => {
                 const cats = isUniverseKey(d.universe) ? getCategories(d.universe) : [];
                 const subs =
@@ -112,97 +121,115 @@ export default function ScanVerifySheet({
                 return (
                   <div
                     key={d.id}
-                    className="rounded-2xl p-2.5 ring-1"
+                    className="flex items-stretch gap-2.5 rounded-xl p-2 ring-1"
                     style={{ background: "var(--pill, rgba(255,255,255,0.06))", borderColor: "var(--border, rgba(255,255,255,0.1))" }}
                   >
-                    <div className="flex items-start gap-3">
-                      {/* Thumbnail — tap to enlarge */}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          d.frontObjectUrl &&
-                          setPreview({ front: d.frontObjectUrl, back: d.backObjectUrl, label: `Item ${index + 1}` })
-                        }
-                        className="relative shrink-0 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--theme-gold,#C8CDD2)]"
-                        aria-label={`Enlarge Item ${index + 1}`}
-                      >
-                        {d.frontObjectUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={d.frontObjectUrl} alt={`Item ${index + 1}`} className="h-20 w-14 rounded-xl object-cover" />
-                        ) : (
-                          <div className="h-20 w-14 rounded-xl bg-[color:var(--surface)]" />
-                        )}
-                      </button>
+                    {/* Thumbnail — tap to enlarge */}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        d.frontObjectUrl &&
+                        setPreview({ front: d.frontObjectUrl, back: d.backObjectUrl, label: `Item ${index + 1}` })
+                      }
+                      className="relative shrink-0 self-start rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--theme-gold,#C8CDD2)]"
+                      aria-label={`Enlarge Item ${index + 1}`}
+                    >
+                      {d.frontObjectUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={d.frontObjectUrl} alt={`Item ${index + 1}`} className="h-[68px] w-12 rounded-lg object-cover" />
+                      ) : (
+                        <div className="h-[68px] w-12 rounded-lg bg-[color:var(--surface)]" />
+                      )}
+                    </button>
 
-                      {/* Editable fields */}
-                      <div className="min-w-0 flex-1 space-y-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">
-                            Item {index + 1}
-                            {isUniverseKey(d.universe) ? ` · ${UNIVERSE_LABEL[d.universe]}` : ""}
+                    {/* Editable fields */}
+                    <div className="min-w-0 flex-1 space-y-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
+                          Item {index + 1}
+                          {isUniverseKey(d.universe) ? ` · ${UNIVERSE_LABEL[d.universe]}` : ""}
+                        </span>
+                        {d.scanned ? (
+                          <span className="shrink-0 text-[10px] font-bold" style={{ color: confidenceColor(pct) }}>
+                            {pct}% AI
                           </span>
-                          {d.scanned ? (
-                            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ color: confidenceColor(pct) }}>
-                              {pct}% AI
-                            </span>
-                          ) : null}
-                        </div>
+                        ) : null}
+                      </div>
 
+                      {/* Universe-mismatch flag */}
+                      {d.aiUniverse && isUniverseKey(d.aiUniverse) ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onPatch(d.id, {
+                              universe: d.aiUniverse!,
+                              categoryLabel: getDefaultCategory(d.aiUniverse!),
+                              subcategoryLabel: "",
+                              aiUniverse: undefined,
+                            })
+                          }
+                          className="flex w-full items-center gap-1.5 rounded-lg px-2 py-1 text-left text-[11px] font-medium"
+                          style={{ background: "rgba(245,158,11,0.12)", color: "#f59e0b" }}
+                        >
+                          <span aria-hidden>⚑</span>
+                          AI thinks this is {UNIVERSE_LABEL[d.aiUniverse]} — tap to switch
+                        </button>
+                      ) : null}
+
+                      <input
+                        value={d.title}
+                        onChange={(e) => onPatch(d.id, { title: e.target.value })}
+                        placeholder="Item name"
+                        className={FIELD_CLS}
+                      />
+
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <select
+                          value={d.categoryLabel}
+                          onChange={(e) => onPatch(d.id, { categoryLabel: e.target.value, subcategoryLabel: "" })}
+                          className={`${FIELD_CLS} appearance-none`}
+                        >
+                          <option value="">Category</option>
+                          {cats.map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
+                        <select
+                          value={d.subcategoryLabel}
+                          onChange={(e) => onPatch(d.id, { subcategoryLabel: e.target.value })}
+                          disabled={subs.length === 0}
+                          className={`${FIELD_CLS} appearance-none disabled:opacity-40`}
+                        >
+                          <option value="">Subcategory</option>
+                          {subs.map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="flex items-center gap-2">
                         <input
-                          value={d.title}
-                          onChange={(e) => onPatch(d.id, { title: e.target.value })}
-                          placeholder="Item name"
-                          className="h-10 w-full rounded-xl bg-[color:var(--surface)] px-3 text-sm ring-1 ring-[color:var(--border)]"
+                          value={d.currentValue}
+                          onChange={(e) => onPatch(d.id, { currentValue: e.target.value })}
+                          placeholder="Value ($)"
+                          inputMode="decimal"
+                          className={`${FIELD_CLS} w-24`}
                         />
-
-                        <div className="grid grid-cols-2 gap-2">
-                          <select
-                            value={d.categoryLabel}
-                            onChange={(e) => onPatch(d.id, { categoryLabel: e.target.value, subcategoryLabel: "" })}
-                            className="h-10 w-full appearance-none rounded-xl bg-[color:var(--surface)] px-3 text-sm ring-1 ring-[color:var(--border)]"
-                          >
-                            <option value="">Category</option>
-                            {cats.map((c) => (
-                              <option key={c} value={c}>{c}</option>
-                            ))}
-                          </select>
-                          <select
-                            value={d.subcategoryLabel}
-                            onChange={(e) => onPatch(d.id, { subcategoryLabel: e.target.value })}
-                            disabled={subs.length === 0}
-                            className="h-10 w-full appearance-none rounded-xl bg-[color:var(--surface)] px-3 text-sm ring-1 ring-[color:var(--border)] disabled:opacity-40"
-                          >
-                            <option value="">Subcategory</option>
-                            {subs.map((s) => (
-                              <option key={s} value={s}>{s}</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <input
-                            value={d.currentValue}
-                            onChange={(e) => onPatch(d.id, { currentValue: e.target.value })}
-                            placeholder="Value ($)"
-                            inputMode="decimal"
-                            className="h-10 w-28 rounded-xl bg-[color:var(--surface)] px-3 text-sm ring-1 ring-[color:var(--border)]"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => onRescan(d.id)}
-                            disabled={scanningId !== null || outOfScans}
-                            className="ml-auto shrink-0 text-xs font-semibold text-[color:var(--theme-gold,#C8CDD2)] underline-offset-2 hover:underline disabled:opacity-40 disabled:no-underline"
-                          >
-                            {isScanning ? "Scanning…" : d.scanned ? "Rescan" : "Scan with AI"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => onRemove(d.id)}
-                            className="shrink-0 text-xs font-semibold text-[color:var(--muted)] transition hover:text-red-400 hover:underline"
-                          >
-                            Remove
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => onRescan(d.id)}
+                          disabled={scanningId !== null || outOfScans}
+                          className="ml-auto shrink-0 text-[11px] font-semibold text-[color:var(--theme-gold,#C8CDD2)] underline-offset-2 hover:underline disabled:opacity-40 disabled:no-underline"
+                        >
+                          {isScanning ? "Scanning…" : d.scanned ? "Rescan" : "Scan with AI"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onRemove(d.id)}
+                          className="shrink-0 text-[11px] font-semibold text-[color:var(--muted)] transition hover:text-red-400 hover:underline"
+                        >
+                          Remove
+                        </button>
                       </div>
                     </div>
                   </div>

@@ -39,6 +39,9 @@ is risky or can't be done, say so plainly.
   (`src/lib/vaultCloud.ts`) without the migration** — unknown columns make the
   `vault_items` upsert throw.
 - Live site: `https://vltd.vercel.app`. `vltd.app` intentionally not set up yet.
+- **AI vision is LIVE.** `ANTHROPIC_API_KEY` has been set in Vercel for months;
+  `/api/ai/analyze-item` (AI Assist, bulk scan, Quick Add scan) all use it. Don't
+  tell EK to set it or hedge that it "might not be configured."
 - Windows + Git Bash. Commit trailer:
   `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
 
@@ -171,18 +174,25 @@ the capture-screen "Auto ID" single button — apply the same metering there too
   is an overlay) so closing it (X) returns to the camera to keep adding.
   **Removed items now sink to the bottom** (Undo kept, stable "Item N" number);
   **tap a thumbnail to enlarge** (front + back).
-- **Quick Add AI-fill + verify flow (LOCKED)** — `ScanCapturePanel` + new
-  `ScanVerifySheet`. Flow: capture many → review/remove → **"Add N to Vault"** →
-  **AI identifies each kept photo (metered: 1 scan/image, per-plan quota via
-  `getBulkScanStatus`/`consumeBulkScans`)** → progress overlay → **verify sheet**
-  (edit name/category/subcategory/value, per-item Rescan, confidence chip, ticker)
-  → **"Save N to Vault"** commits (local IndexedDb + sync queue) and closes.
-  **No camera after saving.** Reuses the bulk pattern (`visionToDraftPatch` +
-  `resolveVisionTaxonomy`, keeping each item's captured Universe). The camera-page
-  counters (ghost badge, `Finished (N)`, thumb) now read the **kept** count, not
-  raw captures. KNOWN GAP: capturing MORE after escaping the verify sheet (X →
-  back to camera) then hitting Finish reopens the *existing* verify list without
-  the new shots (avoids double-charging); revisit if EK wants append-after-verify.
+- **Quick Add AI-fill + verify flow (LOCKED)** — `ScanCapturePanel` + `ScanVerifySheet`.
+  Flow: capture many → review/remove → **"Add N to Vault"** (this is the commit
+  point — AI ONLY runs here, not during capture) → **AI identifies each kept photo
+  (metered: 1 scan/image, per-plan quota via `getBulkScanStatus`/`consumeBulkScans`)**
+  → progress overlay → **verify sheet** (compact rows: name/category/subcategory/
+  value, per-item Rescan, confidence chip, ticker, tap-thumb to enlarge) →
+  **"Save N to Vault"** commits (IndexedDb + sync queue) and **routes to `/vault`**.
+  **No camera after saving; the group is LOCKED once you hit Add** — to add more you
+  start a new group (no append-after-commit, by EK's decision).
+  - Category mapping: curator's chosen Universe wins; AI category matched within it,
+    and the game/type the AI calls a "category" is matched into the **Subcategory**
+    (e.g. TCG has one category "TCG / CCG"; Pokemon/Magic/etc. are subcategories) —
+    `visionToDraftPatch` never wipes a valid category to blank. If AI clearly detects
+    a *different* Universe it shows an amber **flag** ("AI thinks this is X — tap to
+    switch"), it doesn't silently discard it.
+  - Full AI result rides on the draft (`vision`) and is saved onto the item
+    (subtitle/number/year/grade/condition/certNumber, `notes`=AI description) so the
+    item page is populated like a normal single scan.
+  - Camera-page counters (ghost badge, `Finished (N)`, thumb) read the **kept** count.
 - Bulk upload + scan quota (migration + admin + lib + `/vault/bulk`) — verified live.
 - Emoji→glyph on user-facing pages (Discover/Goals/AutoShare/Patreon).
 

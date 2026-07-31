@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useRouter } from "next/navigation";
 
 import ScanReviewSheet, { type StagedItem } from "@/components/ScanReviewSheet";
 import ScanVerifySheet, { type ScanDraft } from "@/components/ScanVerifySheet";
@@ -14,12 +15,12 @@ import {
   saveImageBlobToIndexedDb,
 } from "@/lib/vaultImageStore";
 import { analyzeImageWithVision, type VisionAnalysisResult } from "@/lib/ai/openaiVision";
-import { resolveVisionTaxonomy } from "@/lib/visionTaxonomy";
+import { matchVisionCategory, matchVisionSubcategory, matchVisionUniverse } from "@/lib/visionTaxonomy";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { getBulkScanStatus, consumeBulkScans } from "@/lib/bulkScanQuota";
 import {
   getCategories,
-  getSubcategories,
+  getDefaultCategory,
   UNIVERSE_KEYS,
   UNIVERSE_LABEL,
   type UniverseKey,
@@ -170,6 +171,7 @@ function FrameOverlay({ frameType, capturing }: { frameType: FrameType; capturin
 }
 
 export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
+  const router = useRouter();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const captureCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -292,6 +294,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       },
     ];
     const categoryLabel = draft.categoryLabel || source?.categoryLabel || "";
+    const v = draft.vision;
     return {
       id: draft.id,
       title: draft.title.trim() || "Untitled Item",
@@ -300,6 +303,15 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       categoryLabel: categoryLabel || undefined,
       subcategoryLabel: draft.subcategoryLabel || undefined,
       currentValue: draft.currentValue ? Number(draft.currentValue) || undefined : undefined,
+      // AI-detected details, carried through so the item page is populated like a normal scan.
+      subtitle: v?.subtitle || undefined,
+      number: v?.number || undefined,
+      year: v?.year || undefined,
+      grade: v?.grade || undefined,
+      condition: v?.condition || undefined,
+      conditionReason: v?.conditionReason || undefined,
+      certNumber: v?.certNumber || undefined,
+      notes: v?.description || undefined,
       primaryImageKey: frontKey,
       imageFrontUrl: draft.frontObjectUrl,
       imageFrontStoragePath: frontKey,
@@ -312,24 +324,38 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
   }
 
   function handleFinished() {
-    // Already scanned this batch (returned from verify) — go back to the verify list,
-    // don't re-run AI and re-charge scans.
-    if (drafts.length > 0) { setFlowPhase("verify"); return; }
     if (capturedItems.length === 0) { onClose(); return; }
     setShowReview(true);
   }
 
-  // Keep the batch's chosen Universe; only accept AI's category/sub if valid there.
-  function visionToDraftPatch(vision: VisionAnalysisResult, u: UniverseKey): Partial<ScanDraft> {
+  // Map an AI result onto a draft. The curator's chosen Universe wins; category/
+  // subcategory are matched within it (and, like the normal Add flow, the game/type
+  // the AI reports as "category" is matched into the Subcategory — e.g. TCG has one
+  // category, and Pokemon/Magic/etc. are subcategories). If AI clearly detects a
+  // different Universe, we flag it instead of silently discarding the mismatch.
+  function visionToDraftPatch(
+    vision: VisionAnalysisResult,
+    u: UniverseKey,
+    existingCategory: string
+  ): Partial<ScanDraft> {
     const validCats = getCategories(u);
-    const taxo = resolveVisionTaxonomy({
-      universe: u,
-      category: vision.categoryLabel || vision.category || "",
-      subcategory: vision.subcategoryLabel || "",
-    });
-    const categoryLabel = validCats.includes(taxo.categoryLabel) ? taxo.categoryLabel : "";
-    const subs = categoryLabel ? getSubcategories(u, categoryLabel) : [];
-    const subcategoryLabel = subs.includes(taxo.subcategoryLabel) ? taxo.subcategoryLabel : "";
+    const aiCategoryText = vision.categoryLabel || vision.category || "";
+
+    // Category: valid AI match → keep curator's current pick → the universe default.
+    let categoryLabel = matchVisionCategory(u, aiCategoryText);
+    if (!categoryLabel) categoryLabel = validCats.includes(existingCategory) ? existingCategory : "";
+    if (!categoryLabel) categoryLabel = getDefaultCategory(u);
+
+    // Subcategory: try the AI subcategory, then fall back to the AI category/title
+    // text (that's where the specific game/type usually lands).
+    const subcategoryLabel =
+      matchVisionSubcategory(u, categoryLabel, vision.subcategoryLabel || "") ||
+      matchVisionSubcategory(u, categoryLabel, aiCategoryText) ||
+      matchVisionSubcategory(u, categoryLabel, vision.title || "");
+
+    const detected = matchVisionUniverse(vision.universe);
+    const aiUniverse = detected && detected !== u ? detected : undefined;
+
     return {
       title: vision.title || "",
       categoryLabel,
@@ -337,25 +363,31 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       currentValue: vision.estimatedValue ? String(vision.estimatedValue) : "",
       scanned: true,
       confidence: vision.confidence ?? 0,
+      aiUniverse,
+      vision,
     };
   }
 
-  // Finish → build drafts from the kept captures, run AI to fill them in (metered), then verify.
+  // Finish/Add commits the batch: build a draft per kept capture, AI-scan them all
+  // (metered), then verify. Once this runs the group is locked — no going back to
+  // the camera to append; the curator starts a new group instead.
   async function handleFinishReview(approvedIds: string[]) {
-    const approved = capturedItems.filter((item) => approvedIds.includes(item.id));
-    if (approved.length === 0) { onClose(); return; }
+    const approvedSet = new Set(approvedIds);
+    const initial: ScanDraft[] = capturedItems
+      .filter((item) => approvedSet.has(item.id))
+      .map((item) => ({
+        id: item.id,
+        frontObjectUrl: item.frontObjectUrl,
+        title: "",
+        universe: item.universe,
+        categoryLabel: item.categoryLabel || "",
+        subcategoryLabel: "",
+        currentValue: "",
+        scanned: false,
+        confidence: 0,
+      }));
 
-    const initial: ScanDraft[] = approved.map((item) => ({
-      id: item.id,
-      frontObjectUrl: item.frontObjectUrl,
-      title: "",
-      universe: item.universe,
-      categoryLabel: item.categoryLabel || "",
-      subcategoryLabel: "",
-      currentValue: "",
-      scanned: false,
-      confidence: 0,
-    }));
+    if (initial.length === 0) { onClose(); return; }
 
     setDrafts(initial);
     setShowReview(false);
@@ -400,7 +432,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
           }
         }
 
-        const patch = visionToDraftPatch(vision, draft.universe);
+        const patch = visionToDraftPatch(vision, draft.universe, draft.categoryLabel);
         setDrafts((prev) => prev.map((d) => (d.id === draft.id ? { ...d, ...patch } : d)));
       } catch {
         // Leave this draft blank for manual entry.
@@ -436,7 +468,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         }
       }
       if (charged) {
-        const patch = visionToDraftPatch(vision, draft.universe);
+        const patch = visionToDraftPatch(vision, draft.universe, draft.categoryLabel);
         setDrafts((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)));
       }
     } catch {
@@ -454,7 +486,9 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       items.forEach((item) => enqueueVaultItemSync(item.id));
       emitVaultUpdate();
       void processVaultSyncQueue();
-      onClose();
+      // Land in the Vault so the curator sees what they just added (not the old
+      // Quick Add form that hosts this scanner).
+      router.push("/vault");
     } catch {
       setVerifyStatus("Something went wrong saving. Please try again.");
       setCommitting(false);
@@ -569,10 +603,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
             {/* Last shot — tap to review captures (retake decisions) */}
             <button
               type="button"
-              onClick={() => {
-                if (drafts.length > 0) { setFlowPhase("verify"); return; }
-                if (capturedItems.length) setShowReview(true);
-              }}
+              onClick={() => { if (capturedItems.length) setShowReview(true); }}
               disabled={!capturedItems.length}
               aria-label="Review captured items"
               className="absolute left-2 flex flex-col items-center gap-0.5 transition active:scale-95 disabled:opacity-50"
@@ -635,7 +666,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         onRemove={(id) => setDrafts((prev) => prev.filter((d) => d.id !== id))}
         onRescan={(id) => void rescanOne(id)}
         onSave={() => void handleSaveVerified()}
-        onClose={() => setFlowPhase("capture")}
+        onClose={onClose}
       />
     ) : null}
     </>
