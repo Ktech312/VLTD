@@ -53,11 +53,29 @@ const FRAME_LABELS: Record<FrameType, string> = {
 // Scan universes derived from taxonomy (BUILT_BOTANY excluded — scan AI not tuned for it).
 const UNIVERSES = UNIVERSE_KEYS.filter((k) => k !== "BUILT_BOTANY");
 
+// Guard the AI call so a stalled network can't freeze the scanning overlay forever;
+// a timeout just leaves that item blank for manual entry.
+const AI_SCAN_TIMEOUT_MS = 60000;
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error("AI scan timed out")), ms)),
+  ]);
+}
+
 function categoryCode(label: string) {
   return (
     label.trim().toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "") ||
     "COLLECTORS_CHOICE"
   );
+}
+
+// Parse a money string that may include $ / commas (curator-typed or AI value).
+function parseValue(input: string): number | undefined {
+  const cleaned = input.replace(/[^0-9.]/g, "").trim();
+  if (!cleaned) return undefined;
+  const n = Number(cleaned);
+  return Number.isFinite(n) && n > 0 ? n : undefined;
 }
 
 async function captureFrame(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
@@ -302,7 +320,8 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       category: categoryLabel ? categoryCode(categoryLabel) : undefined,
       categoryLabel: categoryLabel || undefined,
       subcategoryLabel: draft.subcategoryLabel || undefined,
-      currentValue: draft.currentValue ? Number(draft.currentValue) || undefined : undefined,
+      currentValue: parseValue(draft.currentValue),
+      status: "COLLECTION",
       // AI-detected details, carried through so the item page is populated like a normal scan.
       subtitle: v?.subtitle || undefined,
       number: v?.number || undefined,
@@ -417,7 +436,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
 
       try {
         const file = new File([source.frontBlob], `${draft.id}.jpg`, { type: "image/jpeg" });
-        const vision = await analyzeImageWithVision(file, { universe: draft.universe });
+        const vision = await withTimeout(analyzeImageWithVision(file, { universe: draft.universe }), AI_SCAN_TIMEOUT_MS);
 
         // Only charge the quota when a scan actually produced a result.
         if (metered) {
@@ -455,7 +474,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     setVerifyStatus("");
     try {
       const file = new File([source.frontBlob], `${id}.jpg`, { type: "image/jpeg" });
-      const vision = await analyzeImageWithVision(file, { universe: draft.universe });
+      const vision = await withTimeout(analyzeImageWithVision(file, { universe: draft.universe }), AI_SCAN_TIMEOUT_MS);
       let charged = true;
       if (metered) {
         const res = await consumeBulkScans(profileId, 1);

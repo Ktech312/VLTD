@@ -72,12 +72,12 @@ export default function ScanVerifySheet({
   return (
     <div
       className="fixed inset-0 z-[100000] flex items-start justify-center bg-black/60 px-2 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm"
-      onClick={onClose}
     >
+      {/* No backdrop-tap-to-close here: these drafts cost AI scans, so only the
+          ✕ or Save should leave — a stray tap must not discard the work. */}
       <div
         className="flex w-full max-w-[540px] flex-col overflow-hidden rounded-[22px] bg-[color:var(--surface)] text-[color:var(--fg)] shadow-2xl ring-1 ring-[color:var(--border)]"
         style={{ maxHeight: "calc(100dvh - var(--bottomnav-h, 86px) - 1.5rem)" }}
-        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[color:var(--border)] px-4 py-2.5">
