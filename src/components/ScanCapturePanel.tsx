@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 import ScanReviewSheet, { type StagedItem } from "@/components/ScanReviewSheet";
+import ScanVerifySheet, { type ScanDraft } from "@/components/ScanVerifySheet";
 import { newId } from "@/lib/id";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
 import { appendItems, type VaultImage, type VaultItem } from "@/lib/vaultModel";
@@ -12,7 +13,17 @@ import {
   prepareImageBlob,
   saveImageBlobToIndexedDb,
 } from "@/lib/vaultImageStore";
-import { getCategories, UNIVERSE_KEYS, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+import { analyzeImageWithVision, type VisionAnalysisResult } from "@/lib/ai/openaiVision";
+import { resolveVisionTaxonomy } from "@/lib/visionTaxonomy";
+import { getStoredActiveProfileId } from "@/lib/auth";
+import { getBulkScanStatus, consumeBulkScans } from "@/lib/bulkScanQuota";
+import {
+  getCategories,
+  getSubcategories,
+  UNIVERSE_KEYS,
+  UNIVERSE_LABEL,
+  type UniverseKey,
+} from "@/lib/taxonomy";
 
 type FrameType = "card" | "book" | "jewelry" | "art";
 
@@ -175,6 +186,34 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
   // Removals live here (not in the review sheet) so they persist when it's closed/reopened.
   const [removed, setRemoved] = useState<Set<string>>(new Set());
 
+  // ── Finish → metered AI fill → verify page → save ──
+  const [flowPhase, setFlowPhase] = useState<"capture" | "scanning" | "verify">("capture");
+  const [drafts, setDrafts] = useState<ScanDraft[]>([]);
+  const [profileId, setProfileId] = useState("");
+  const [scanRemaining, setScanRemaining] = useState<number | null>(null);
+  const [scanLimit, setScanLimit] = useState<number | null>(null);
+  const [scanDone, setScanDone] = useState(0);
+  const [scanTotal, setScanTotal] = useState(0);
+  const [scanningId, setScanningId] = useState<string | null>(null);
+  const [committing, setCommitting] = useState(false);
+  const [verifyStatus, setVerifyStatus] = useState("");
+  // Only signed-in curators are metered; anonymous/local use isn't charged.
+  const metered = Boolean(profileId);
+
+  // Load the curator's remaining AI scans (per-plan quota) for the ticker + gating.
+  useEffect(() => {
+    const pid = getStoredActiveProfileId();
+    setProfileId(pid);
+    if (!pid) return;
+    void (async () => {
+      const s = await getBulkScanStatus(pid);
+      if (s) {
+        setScanRemaining(s.remaining);
+        setScanLimit(s.scanLimit);
+      }
+    })();
+  }, []);
+
   // Start / restart the camera (rear by default; a chosen deviceId when picked).
   useEffect(() => {
     let active = true;
@@ -236,50 +275,190 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     window.setTimeout(() => setCapturing(false), 160);
   }
 
-  async function capturedItemToVaultItem(item: CapturedItem, index: number): Promise<VaultItem> {
-    const frontBlob = await prepareImageBlob(item.frontBlob as File).catch(() => item.frontBlob);
-    const frontKey = generateVaultImageKey(item.id, 0);
+  async function draftToVaultItem(draft: ScanDraft, index: number): Promise<VaultItem> {
+    const source = capturedItems.find((c) => c.id === draft.id);
+    const rawBlob = source?.frontBlob ?? new Blob();
+    const frontBlob = await prepareImageBlob(rawBlob as File).catch(() => rawBlob);
+    const frontKey = generateVaultImageKey(draft.id, 0);
     await saveImageBlobToIndexedDb(frontBlob, frontKey);
     const images: VaultImage[] = [
       {
-        id: `${item.id}_img_0`,
+        id: `${draft.id}_img_0`,
         storageKey: frontKey,
-        url: item.frontObjectUrl,
+        url: draft.frontObjectUrl,
         order: 0,
         localOnly: true,
         role: "primary",
       },
     ];
+    const categoryLabel = draft.categoryLabel || source?.categoryLabel || "";
     return {
-      id: item.id,
-      title: `Untitled scan ${index + 1}`,
-      universe: item.universe,
-      category: categoryCode(item.categoryLabel),
-      categoryLabel: item.categoryLabel,
+      id: draft.id,
+      title: draft.title.trim() || "Untitled Item",
+      universe: draft.universe,
+      category: categoryLabel ? categoryCode(categoryLabel) : undefined,
+      categoryLabel: categoryLabel || undefined,
+      subcategoryLabel: draft.subcategoryLabel || undefined,
+      currentValue: draft.currentValue ? Number(draft.currentValue) || undefined : undefined,
       primaryImageKey: frontKey,
-      imageFrontUrl: item.frontObjectUrl,
+      imageFrontUrl: draft.frontObjectUrl,
       imageFrontStoragePath: frontKey,
       images,
       createdAt: Date.now() + index,
       isNew: true,
       isPublic: false,
+      conditionSource: draft.scanned ? "ai" : undefined,
     };
   }
 
   function handleFinished() {
+    // Already scanned this batch (returned from verify) — go back to the verify list,
+    // don't re-run AI and re-charge scans.
+    if (drafts.length > 0) { setFlowPhase("verify"); return; }
     if (capturedItems.length === 0) { onClose(); return; }
     setShowReview(true);
   }
 
+  // Keep the batch's chosen Universe; only accept AI's category/sub if valid there.
+  function visionToDraftPatch(vision: VisionAnalysisResult, u: UniverseKey): Partial<ScanDraft> {
+    const validCats = getCategories(u);
+    const taxo = resolveVisionTaxonomy({
+      universe: u,
+      category: vision.categoryLabel || vision.category || "",
+      subcategory: vision.subcategoryLabel || "",
+    });
+    const categoryLabel = validCats.includes(taxo.categoryLabel) ? taxo.categoryLabel : "";
+    const subs = categoryLabel ? getSubcategories(u, categoryLabel) : [];
+    const subcategoryLabel = subs.includes(taxo.subcategoryLabel) ? taxo.subcategoryLabel : "";
+    return {
+      title: vision.title || "",
+      categoryLabel,
+      subcategoryLabel,
+      currentValue: vision.estimatedValue ? String(vision.estimatedValue) : "",
+      scanned: true,
+      confidence: vision.confidence ?? 0,
+    };
+  }
+
+  // Finish → build drafts from the kept captures, run AI to fill them in (metered), then verify.
   async function handleFinishReview(approvedIds: string[]) {
     const approved = capturedItems.filter((item) => approvedIds.includes(item.id));
     if (approved.length === 0) { onClose(); return; }
-    const items = await Promise.all(approved.map((item, i) => capturedItemToVaultItem(item, i)));
-    appendItems(items);
-    items.forEach((item) => enqueueVaultItemSync(item.id));
-    emitVaultUpdate();
-    void processVaultSyncQueue();
-    onClose();
+
+    const initial: ScanDraft[] = approved.map((item) => ({
+      id: item.id,
+      frontObjectUrl: item.frontObjectUrl,
+      title: "",
+      universe: item.universe,
+      categoryLabel: item.categoryLabel || "",
+      subcategoryLabel: "",
+      currentValue: "",
+      scanned: false,
+      confidence: 0,
+    }));
+
+    setDrafts(initial);
+    setShowReview(false);
+    setVerifyStatus("");
+    setFlowPhase("scanning");
+    await runAiScan(initial);
+    setFlowPhase("verify");
+  }
+
+  async function runAiScan(list: ScanDraft[]) {
+    setScanTotal(list.length);
+    setScanDone(0);
+    let localRemaining: number | null = scanRemaining;
+
+    for (let i = 0; i < list.length; i += 1) {
+      setScanDone(i);
+      const draft = list[i];
+      const source = capturedItems.find((c) => c.id === draft.id);
+      if (!source) continue;
+
+      // Only stop early when we KNOW the cycle is spent; if the quota hasn't
+      // loaded yet (null), let the server's atomic consume decide.
+      if (metered && localRemaining !== null && localRemaining <= 0) {
+        setVerifyStatus("You've used all your AI scans for this cycle — fill the rest in by hand.");
+        break;
+      }
+
+      try {
+        const file = new File([source.frontBlob], `${draft.id}.jpg`, { type: "image/jpeg" });
+        const vision = await analyzeImageWithVision(file, { universe: draft.universe });
+
+        // Only charge the quota when a scan actually produced a result.
+        if (metered) {
+          const res = await consumeBulkScans(profileId, 1);
+          if (res) {
+            localRemaining = res.remaining;
+            setScanRemaining(res.remaining);
+            if (res.granted === 0) {
+              setVerifyStatus("You've used all your AI scans for this cycle — fill the rest in by hand.");
+              break;
+            }
+          }
+        }
+
+        const patch = visionToDraftPatch(vision, draft.universe);
+        setDrafts((prev) => prev.map((d) => (d.id === draft.id ? { ...d, ...patch } : d)));
+      } catch {
+        // Leave this draft blank for manual entry.
+      }
+    }
+
+    setScanDone(list.length);
+  }
+
+  async function rescanOne(id: string) {
+    if (scanningId) return;
+    const draft = drafts.find((d) => d.id === id);
+    const source = capturedItems.find((c) => c.id === id);
+    if (!draft || !source) return;
+    if (metered && scanRemaining !== null && scanRemaining <= 0) {
+      setVerifyStatus("No AI scans left this cycle — fill this one in by hand.");
+      return;
+    }
+    setScanningId(id);
+    setVerifyStatus("");
+    try {
+      const file = new File([source.frontBlob], `${id}.jpg`, { type: "image/jpeg" });
+      const vision = await analyzeImageWithVision(file, { universe: draft.universe });
+      let charged = true;
+      if (metered) {
+        const res = await consumeBulkScans(profileId, 1);
+        if (res) {
+          setScanRemaining(res.remaining);
+          if (res.granted === 0) {
+            setVerifyStatus("No AI scans left this cycle — fill this one in by hand.");
+            charged = false;
+          }
+        }
+      }
+      if (charged) {
+        const patch = visionToDraftPatch(vision, draft.universe);
+        setDrafts((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)));
+      }
+    } catch {
+      setVerifyStatus("Couldn't identify that one — try again or fill it in by hand.");
+    }
+    setScanningId(null);
+  }
+
+  async function handleSaveVerified() {
+    if (drafts.length === 0) { onClose(); return; }
+    setCommitting(true);
+    try {
+      const items = await Promise.all(drafts.map((d, i) => draftToVaultItem(d, i)));
+      appendItems(items);
+      items.forEach((item) => enqueueVaultItemSync(item.id));
+      emitVaultUpdate();
+      void processVaultSyncQueue();
+      onClose();
+    } catch {
+      setVerifyStatus("Something went wrong saving. Please try again.");
+      setCommitting(false);
+    }
   }
 
   // Kept = captured minus removals. This is what actually gets vaulted, so it drives every count.
@@ -390,7 +569,10 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
             {/* Last shot — tap to review captures (retake decisions) */}
             <button
               type="button"
-              onClick={() => { if (capturedItems.length) setShowReview(true); }}
+              onClick={() => {
+                if (drafts.length > 0) { setFlowPhase("verify"); return; }
+                if (capturedItems.length) setShowReview(true);
+              }}
               disabled={!capturedItems.length}
               aria-label="Review captured items"
               className="absolute left-2 flex flex-col items-center gap-0.5 transition active:scale-95 disabled:opacity-50"
@@ -415,6 +597,45 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         onUndo={(id) => setRemoved((p) => { const n = new Set(p); n.delete(id); return n; })}
         onClose={() => setShowReview(false)}
         onFinish={(approvedIds) => { void handleFinishReview(approvedIds); }}
+      />
+    ) : null}
+
+    {flowPhase === "scanning" ? (
+      <div className="fixed inset-0 z-[100000] flex flex-col items-center justify-center gap-4 bg-black/80 px-6 text-center backdrop-blur-sm">
+        <span
+          className="h-9 w-9 animate-spin rounded-full border-[3px]"
+          style={{ borderColor: "rgba(203,208,213,0.25)", borderTopColor: "#C8CDD2" }}
+        />
+        <div className="text-base font-black text-white">
+          Identifying {Math.min(scanDone + 1, scanTotal)} of {scanTotal}…
+        </div>
+        <div className="text-xs text-white/60">AI is filling in your items.</div>
+        {metered && scanRemaining !== null ? (
+          <div className="text-xs text-white/50">{scanRemaining} AI scans left this cycle</div>
+        ) : null}
+        <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-white/10">
+          <div
+            className="h-full rounded-full transition-all"
+            style={{ width: `${scanTotal ? (scanDone / scanTotal) * 100 : 0}%`, background: "var(--theme-gold, #C8CDD2)" }}
+          />
+        </div>
+      </div>
+    ) : null}
+
+    {flowPhase === "verify" ? (
+      <ScanVerifySheet
+        drafts={drafts}
+        scanningId={scanningId}
+        committing={committing}
+        remaining={scanRemaining}
+        scanLimit={scanLimit}
+        metered={metered}
+        status={verifyStatus}
+        onPatch={(id, patch) => setDrafts((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)))}
+        onRemove={(id) => setDrafts((prev) => prev.filter((d) => d.id !== id))}
+        onRescan={(id) => void rescanOne(id)}
+        onSave={() => void handleSaveVerified()}
+        onClose={() => setFlowPhase("capture")}
       />
     ) : null}
     </>

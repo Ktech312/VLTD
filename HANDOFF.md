@@ -71,8 +71,13 @@ before editing it, and confirm with EK who owns a screen.** EK is aware of this.
   (`vltd-concept-19-capture-desktop.png` = the builder/review layout).
 - **Quick Add scanner (`src/components/ScanCapturePanel.tsx`)** — REBUILT to EK's
   spec (see §4). Opens from the capture screen's Quick Add. Manual fast camera.
+  **Finish → metered AI fill → verify sheet → Save** (see §4, the locked flow).
 - **Review sheet (`src/components/ScanReviewSheet.tsx`)** — top-anchored, ~5
-  scrollable items, controlled removals (state lives in the scanner).
+  scrollable items, controlled removals; **removed items sink to the bottom**
+  (Undo kept); tap a thumbnail to enlarge.
+- **Verify sheet (`src/components/ScanVerifySheet.tsx`)** — the AI-fill review
+  grid the scanner lands on after Finish (name/category/subcategory/value per
+  item, per-item Rescan, confidence chip, scan ticker).
 - **Bulk upload (`src/app/vault/bulk/page.tsx`)** — DONE (device + camera → one
   Universe → optional AI, metered → review grid → Add all).
 - **Admin → Scan Limits (`src/app/admin/scan-limits/page.tsx`)** — DONE (per-tier
@@ -115,10 +120,10 @@ item's public photos). Files staged until Save, persisted with a private flag.
   detected card box to auto-crop on capture.
 - Manual crop "didn't stick" — reproduce the capture→crop→save path and confirm.
 
-### F. Single-item AI metering — DECISION NEEDED
-Single "Auto ID" on the capture screen is **unmetered** (only bulk counts scans).
-EK to decide: meter single captures against the same monthly quota
-(`consume_bulk_scan`), grey out Auto ID when out (manual entry stays free)?
+### F. Single-item AI metering — DECIDED (Quick Add) / capture screen still open
+**Quick Add scanner AI is now metered at 1 scan per image** (`consume_bulk_scan`),
+same quota as bulk. Manual/typed **Add stays free** (slower by design). Still open:
+the capture-screen "Auto ID" single button — apply the same metering there too.
 
 ### G. Small polish
 - Capture Identity header shows "MEDIUM CONFIDENCE" on a blank form — hide the
@@ -136,7 +141,8 @@ EK to decide: meter single captures against the same monthly quota
 ---
 
 ## 3. Options / decisions waiting on EK
-- **Single-capture metering** (2F): yes / no.
+- **Capture-screen "Auto ID" metering** (2F): apply the same 1-scan/image metering
+  to the capture screen's single Auto ID button (Quick Add is already decided/done).
 - **Watchlist vs Wishlist** name (2H).
 - Everything else in §2 is a go; just needs building/verifying.
 
@@ -163,6 +169,20 @@ EK to decide: meter single captures against the same monthly quota
   then scrolls; **removals persist** (state lifted to the scanner; sheet is now
   controlled via `removed/onRemove/onUndo`); camera stays live behind it (review
   is an overlay) so closing it (X) returns to the camera to keep adding.
+  **Removed items now sink to the bottom** (Undo kept, stable "Item N" number);
+  **tap a thumbnail to enlarge** (front + back).
+- **Quick Add AI-fill + verify flow (LOCKED)** — `ScanCapturePanel` + new
+  `ScanVerifySheet`. Flow: capture many → review/remove → **"Add N to Vault"** →
+  **AI identifies each kept photo (metered: 1 scan/image, per-plan quota via
+  `getBulkScanStatus`/`consumeBulkScans`)** → progress overlay → **verify sheet**
+  (edit name/category/subcategory/value, per-item Rescan, confidence chip, ticker)
+  → **"Save N to Vault"** commits (local IndexedDb + sync queue) and closes.
+  **No camera after saving.** Reuses the bulk pattern (`visionToDraftPatch` +
+  `resolveVisionTaxonomy`, keeping each item's captured Universe). The camera-page
+  counters (ghost badge, `Finished (N)`, thumb) now read the **kept** count, not
+  raw captures. KNOWN GAP: capturing MORE after escaping the verify sheet (X →
+  back to camera) then hitting Finish reopens the *existing* verify list without
+  the new shots (avoids double-charging); revisit if EK wants append-after-verify.
 - Bulk upload + scan quota (migration + admin + lib + `/vault/bulk`) — verified live.
 - Emoji→glyph on user-facing pages (Discover/Goals/AutoShare/Patreon).
 
