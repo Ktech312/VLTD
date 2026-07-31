@@ -35,12 +35,12 @@ export default function ScanReviewSheet({ items, onClose, onFinish }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[100000] flex items-start justify-center bg-black/60 px-2 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="flex w-full max-w-[540px] flex-col overflow-hidden rounded-t-[22px] bg-[color:var(--surface)] text-[color:var(--fg)] shadow-2xl ring-1 ring-[color:var(--border)]"
-        style={{ maxHeight: "80dvh" }}
+        className="flex w-full max-w-[540px] flex-col overflow-hidden rounded-[22px] bg-[color:var(--surface)] text-[color:var(--fg)] shadow-2xl ring-1 ring-[color:var(--border)]"
+        style={{ maxHeight: "calc(100dvh - var(--bottomnav-h, 86px) - 1.5rem)" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -60,8 +60,8 @@ export default function ScanReviewSheet({ items, onClose, onFinish }: Props) {
           </button>
         </div>
 
-        {/* Item list */}
-        <div className="flex-1 overflow-y-auto px-3 py-3">
+        {/* Item list — ~5 visible, then scroll */}
+        <div className="overflow-y-auto px-3 py-3" style={{ maxHeight: "25rem" }}>
           {items.length === 0 ? (
             <div className="rounded-2xl bg-[color:var(--pill)] p-5 text-center text-sm text-[color:var(--muted)]">
               No items captured.

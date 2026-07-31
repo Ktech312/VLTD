@@ -331,11 +331,12 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={handleFinished}
-            className="ml-auto shrink-0 rounded-md px-3.5 py-1.5 text-xs font-bold ring-1 transition"
+            className="ml-auto shrink-0 rounded-md px-3.5 py-1.5 text-xs font-bold transition active:scale-95"
             style={{
-              background: capturedItems.length ? "rgba(203,208,213,0.16)" : "rgba(255,255,255,0.06)",
-              borderColor: capturedItems.length ? "rgba(203,208,213,0.5)" : "rgba(255,255,255,0.12)",
-              color: capturedItems.length ? "#C8CDD2" : "rgba(255,255,255,0.5)",
+              background: "linear-gradient(145deg, #EDEFF1 0%, #C8CDD2 30%, #A8AEB4 60%, #8C9298 100%)",
+              color: "#171717",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.45), 0 2px 6px rgba(0,0,0,0.35)",
+              opacity: capturedItems.length ? 1 : 0.55,
             }}
           >
             Finished{capturedItems.length ? ` (${capturedItems.length})` : ""}
@@ -391,7 +392,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
             </button>
 
             {/* Last shot — so you know which was your most recent */}
-            <div className="absolute right-2 flex flex-col items-center gap-0.5">
+            <div className="absolute left-2 flex flex-col items-center gap-0.5">
               <div className="h-12 w-12 overflow-hidden rounded-[10px] ring-1 ring-white/20" style={{ background: "rgba(255,255,255,0.05)" }}>
                 {lastThumb ? (
                   // eslint-disable-next-line @next/next/no-img-element
