@@ -193,6 +193,11 @@ the capture-screen "Auto ID" single button — apply the same metering there too
     (subtitle/number/year/grade/condition/certNumber, `notes`=AI description) so the
     item page is populated like a normal single scan.
   - Camera-page counters (ghost badge, `Finished (N)`, thumb) read the **kept** count.
+  - Hardening (32b479b): 60s timeout per AI call (stall → manual entry), items saved
+    with `status:"COLLECTION"`, `parseValue()` strips $/commas, verify sheet won't
+    close on a backdrop tap (drafts cost scans). NOTE: `vaultCloud` is an allow-list —
+    AI `year`/`condition`/`conditionReason` are NOT columns, so they stay local-only
+    (grade/subtitle/number/cert/notes/category/value/status DO sync). No upsert throw.
   - **Legacy manual Quick Add form DELETED.** `src/app/vault/quick/QuickAddClient.tsx`
     is now a ~25-line launcher that just mounts the scanner and routes to `/vault`
     on close (cancel or after save). The old "Image first. Save fast." hand-entry
