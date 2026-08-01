@@ -262,6 +262,51 @@ async function persistCapturedImage(itemId: string, file: File) {
   };
 }
 
+// Persist a whole set of photos for one item. images[0] is the cover (primary);
+// the rest are stored as "detail" shots. Only the cover is ever sent to AI.
+async function persistCapturedImages(itemId: string, files: File[]) {
+  const images: VaultImage[] = [];
+  let imageFrontUrl: string | undefined;
+  let imageFrontStoragePath: string | undefined;
+
+  for (let i = 0; i < files.length; i += 1) {
+    const durableBlob = await prepareImageBlob(files[i]);
+    const fileName = files[i].name || `capture_${i}.jpg`;
+    const role: VaultImage["role"] = i === 0 ? "primary" : "detail";
+
+    let image: VaultImage | null = null;
+
+    if (navigator.onLine && hasSupabaseEnv()) {
+      try {
+        const uploaded = await uploadVaultImageToSupabase({ itemId, file: durableBlob, fileName });
+        image = { id: `${itemId}_img_${i}`, storageKey: uploaded.path, url: uploaded.publicUrl, order: i, localOnly: false, role };
+        if (i === 0) {
+          imageFrontUrl = uploaded.publicUrl;
+          imageFrontStoragePath = uploaded.path;
+        }
+      } catch (error) {
+        console.error("[Capture] Supabase image upload failed, using local fallback:", error);
+      }
+    }
+
+    if (!image) {
+      const storageKey = generateVaultImageKey(itemId, i);
+      await saveImageBlobToIndexedDb(durableBlob, storageKey);
+      image = { id: `${itemId}_img_${i}`, storageKey, order: i, localOnly: true, role };
+      if (i === 0) imageFrontStoragePath = storageKey;
+    }
+
+    images.push(image);
+  }
+
+  return {
+    images,
+    primaryImageKey: images[0]?.storageKey,
+    imageFrontUrl,
+    imageFrontStoragePath,
+  };
+}
+
 /* ── Page ───────────────────────────────────────────────────────── */
 
 export default function CapturePage() {
@@ -276,7 +321,9 @@ export default function CapturePage() {
   const [identified, setIdentified] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [fields, setFields] = useState<ReviewFields>(EMPTY_FIELDS);
-  const [capturedImageFile, setCapturedImageFile] = useState<File | null>(null);
+  // All photos for this item. capturedImages[0] is the cover (the only one AI reads);
+  // the rest are extra angles/back shots stored with the item.
+  const [capturedImages, setCapturedImages] = useState<File[]>([]);
   // The live camera is embedded inline on the Add screen (below), so it no
   // longer opens as a modal on load. The modal is only used on demand — e.g.
   // re-scanning a barcode from the review screen.
@@ -288,10 +335,28 @@ export default function CapturePage() {
   // "Identify with AI" / "Auto ID" buttons), so taking a photo never blocks
   // on the vision call or spends a scan you didn't ask for.
   const handleCapture = useCallback((file: File) => {
-    setCapturedImageFile(file);
+    // Append (never overwrite). First photo becomes the cover; the rest are angles.
+    setCapturedImages((prev) => [...prev, file]);
     setIsCameraPanelOpen(false);
     setErrorMsg("");
-    setIdentified(false); // fresh photo, no AI result yet
+  }, []);
+
+  // Remove one photo. Removing the cover clears any AI result (a new cover needs re-ID).
+  const removeImageAt = useCallback((index: number) => {
+    setCapturedImages((prev) => prev.filter((_, i) => i !== index));
+    if (index === 0) setIdentified(false);
+  }, []);
+
+  // Promote an angle to cover. The cover changed, so clear the stale AI result.
+  const makeCover = useCallback((index: number) => {
+    setCapturedImages((prev) => {
+      if (index <= 0 || index >= prev.length) return prev;
+      const next = [...prev];
+      const [picked] = next.splice(index, 1);
+      next.unshift(picked);
+      return next;
+    });
+    setIdentified(false);
   }, []);
 
   // Quick Add: each shot saves a draft item instantly (no forced AI/review).
@@ -317,7 +382,8 @@ export default function CapturePage() {
 
   // Opt-in AI: identify + fill fields on demand from the captured photo.
   const runAiIdentify = useCallback(async (fileArg?: File) => {
-    const file = fileArg ?? capturedImageFile;
+    // AI only ever reads the COVER photo (capturedImages[0]); extra angles are never scanned.
+    const file = fileArg ?? capturedImages[0];
     if (!file || analyzing) return;
     setAnalyzing(true);
     setErrorMsg("");
@@ -379,14 +445,14 @@ export default function CapturePage() {
       );
       setAnalyzing(false);
     }
-  }, [capturedImageFile, analyzing]);
+  }, [capturedImages, analyzing]);
 
   /* ── Save to vault ── */
   const handleSave = useCallback(async () => {
     try {
       const id = newId();
-      const imagePatch = capturedImageFile
-        ? await persistCapturedImage(id, capturedImageFile)
+      const imagePatch = capturedImages.length
+        ? await persistCapturedImages(id, capturedImages)
         : {};
 
       const item = {
@@ -421,7 +487,7 @@ export default function CapturePage() {
       }
       console.error("[Capture] Save error:", err);
     }
-  }, [capturedImageFile, fields, router]);
+  }, [capturedImages, fields, router]);
 
   // Accordion open state — Identity open by default, like the record builder.
   const [openSections, setOpenSections] = useState<Set<number>>(() => new Set([1]));
@@ -434,16 +500,20 @@ export default function CapturePage() {
     });
   }, []);
 
-  // Object URL for the large preview in the review layout (revoked on change/unmount).
-  const previewUrl = useMemo(
-    () => (capturedImageFile ? URL.createObjectURL(capturedImageFile) : ""),
-    [capturedImageFile]
+  // Cover file (first photo) — kept for the JSX that still refers to a single image.
+  const capturedImageFile = capturedImages[0] ?? null;
+
+  // Object URLs for every photo (thumbnail rail + cover preview); revoked on change.
+  const previewUrls = useMemo(
+    () => capturedImages.map((f) => URL.createObjectURL(f)),
+    [capturedImages]
   );
   useEffect(() => {
     return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      previewUrls.forEach((u) => URL.revokeObjectURL(u));
     };
-  }, [previewUrl]);
+  }, [previewUrls]);
+  const previewUrl = previewUrls[0] ?? "";
 
   const universeKey = isUniverseKey(fields.universe) ? fields.universe as UniverseKey : null;
   const categoryOptions = universeKey ? getCategories(universeKey) : [];
@@ -630,7 +700,7 @@ export default function CapturePage() {
                     <>
                       <ActionButton
                         label="Retake"
-                        onClick={() => { setCapturedImageFile(null); setIdentified(false); setErrorMsg(""); }}
+                        onClick={() => { setCapturedImages([]); setIdentified(false); setErrorMsg(""); }}
                         icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 2.6-6.3L3 8" /><path d="M3 3v5h5" /></svg>}
                       />
                       <ActionButton
@@ -690,7 +760,7 @@ export default function CapturePage() {
                           className="absolute bottom-3 right-3 rounded-full px-2.5 py-1 text-[11px] font-semibold"
                           style={{ background: "rgba(2,9,12,0.7)", color: "var(--muted)", border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.2))" }}
                         >
-                          1 / 1
+                          Cover{previewUrls.length > 1 ? ` · ${previewUrls.length} photos` : ""}
                         </span>
                       </>
                     ) : null}
@@ -718,14 +788,42 @@ export default function CapturePage() {
                     />
                   )}
 
-                  {/* Thumbnail rail */}
+                  {/* Thumbnail rail — cover first, then extra angles; tap an angle to make it the cover */}
                   <div className="mt-3 grid grid-cols-4 gap-2">
-                    {previewUrl ? (
-                      <div className="aspect-square overflow-hidden rounded-[10px] border" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.5))" }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={previewUrl} alt="" className="h-full w-full object-cover" />
+                    {previewUrls.map((url, i) => (
+                      <div
+                        key={url}
+                        className="group relative aspect-square overflow-hidden rounded-[10px] border"
+                        style={{ borderColor: i === 0 ? "var(--theme-gold, #C8CDD2)" : "var(--theme-gold-border, rgba(203,208,213,0.35))" }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => (i === 0 ? undefined : makeCover(i))}
+                          className="block h-full w-full"
+                          title={i === 0 ? "Cover photo" : "Make this the cover"}
+                          aria-label={i === 0 ? "Cover photo" : "Make this the cover"}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={url} alt="" className="h-full w-full object-cover" />
+                        </button>
+                        {i === 0 ? (
+                          <span
+                            className="pointer-events-none absolute left-1 top-1 rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide"
+                            style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0B0B0B" }}
+                          >
+                            Cover
+                          </span>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={() => removeImageAt(i)}
+                          aria-label="Remove photo"
+                          className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-[11px] text-white"
+                        >
+                          &#x2715;
+                        </button>
                       </div>
-                    ) : null}
+                    ))}
                     <button
                       type="button"
                       onClick={() => setIsCameraPanelOpen(true)}
