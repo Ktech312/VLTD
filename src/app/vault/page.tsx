@@ -1473,10 +1473,11 @@ export default function VaultPage() {
             {/* Actions — below the title on mobile, right-aligned on the title row on desktop */}
             <div className="flex flex-wrap items-center gap-2 lg:shrink-0 lg:justify-end">
               <VaultExportButton />
-              <Link href="/vault/quick" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill-active-bg)] px-3 py-1 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]">Quick Add</Link>
+              <Link href="/vault/for-sale" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">For Sale</Link>
               <Link href="/vault/import" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Import</Link>
               <Link href="/vault/sold" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Sold</Link>
-              <Link href="/vault/for-sale" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">For Sale</Link>
+              {/* Quick Add sits next to Add Item — the two "add" actions grouped together */}
+              <Link href="/vault/quick" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill-active-bg)] px-3 py-1 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]">Quick Add</Link>
               {/* Add Item — the single primary add on the page */}
               <Link href="/capture" className="vltd-action-module shrink-0">
                 <span className="vltd-action-module__plate !py-1.5">Add Item</span>

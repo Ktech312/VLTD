@@ -120,7 +120,7 @@ export default function VaultExportButton() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex min-h-[38px] items-center justify-center rounded-[8px] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:brightness-110"
+        className="inline-flex items-center justify-center rounded-[7px] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:brightness-110"
         style={{ background: "var(--pill)", color: "var(--muted)" }}
       >
         {isZipping ? zipStatus : "Export"}

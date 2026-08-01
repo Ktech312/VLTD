@@ -782,7 +782,7 @@ export default function CapturePage() {
                       description="Point at the item and snap — or switch to Quick Add to capture many and sort later."
                       universe={fields.universe}
                       onCapture={handleCapture}
-                      bulkToggle={true}
+                      bulkToggle={false}
                       bulkTaxonomy={false}
                       onBulkCapture={(file) => void handleQuickAddCapture(file)}
                       onClose={() => {}}
@@ -1159,9 +1159,8 @@ export default function CapturePage() {
             description="Snap one to add now, or switch to Quick Add to capture many and sort later."
             universe={fields.universe}
             onCapture={handleCapture}
-            bulkToggle={true}
+            bulkToggle={false}
             bulkTaxonomy={false}
-            onBulkCapture={(file) => void handleQuickAddCapture(file)}
             onClose={() => {
               setIsCameraPanelOpen(false);
               const n = quickAddCountRef.current;

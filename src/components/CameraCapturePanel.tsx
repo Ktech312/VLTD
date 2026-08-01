@@ -717,7 +717,7 @@ export default function CameraCapturePanel({
                 value={selectedFilterId}
                 onChange={(event) => setSelectedFilterId(event.target.value)}
                 aria-label="Photo filter"
-                className="h-8 w-auto rounded-full bg-[color:var(--pill)] pl-3 pr-2 text-[12px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]"
+                className="h-8 w-auto rounded-[7px] bg-[color:var(--pill)] pl-3 pr-2 text-[12px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]"
               >
                 {CAPTURE_FILTER_PRESETS.map((preset) => (
                   <option key={preset.id} value={preset.id}>{preset.label}</option>
@@ -726,7 +726,7 @@ export default function CameraCapturePanel({
               <button
                 type="button"
                 onClick={() => { setSelectedFilterId("original"); setAdjustments(DEFAULT_CAPTURE_ADJUSTMENTS); }}
-                className="shrink-0 rounded-full bg-[color:var(--pill)] px-2.5 py-1.5 text-[11px] ring-1 ring-[color:var(--border)]"
+                className="inline-flex h-8 shrink-0 items-center rounded-[7px] bg-[color:var(--pill)] px-2.5 text-[11px] font-semibold ring-1 ring-[color:var(--border)]"
               >
                 Reset
               </button>
@@ -886,10 +886,16 @@ export default function CameraCapturePanel({
               <button
                 type="button"
                 onClick={onUseFileInstead}
-                className="inline-flex h-8 items-center rounded-[10px] px-3 text-xs font-semibold ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
+                title="Upload from file"
+                aria-label="Upload from file"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
                 style={{ background: "var(--pill)", color: "var(--muted)" }}
               >
-                Upload
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
               </button>
 
               {bulkToggle ? (
