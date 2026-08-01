@@ -714,10 +714,12 @@ export default function CapturePage() {
                 </div>
               </div>
 
-              {/* Two columns: preview | accordion */}
-              <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,480px)_1fr] lg:items-start">
+              {/* Two columns: preview | accordion. grid-cols-1 on mobile so the
+                  single column fills the screen width (minmax(0,1fr)) instead of
+                  sizing to its widest child, which overflowed the viewport. */}
+              <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,480px)_1fr] lg:items-start">
                 {/* Left: framed image viewer (concept-19) */}
-                <div>
+                <div className="min-w-0">
                   {previewUrl ? (
                   <div
                     className="relative overflow-hidden rounded-[16px] border"
@@ -849,7 +851,7 @@ export default function CapturePage() {
                 </div>
 
                 {/* Right: numbered accordion */}
-                <div className="flex flex-col gap-3">
+                <div className="flex min-w-0 flex-col gap-3">
                   {/* 1 — IDENTITY */}
                   <AccordionSection
                     n={1}
