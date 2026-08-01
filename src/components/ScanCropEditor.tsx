@@ -198,12 +198,36 @@ export default function ScanCropEditor({
 
   const resetVisualFromCrop = useCallback((nextCrop: ScanCropRect) => {
     const base = getBaseBox();
-    if (!base) return;
+    const viewport = viewportRef.current;
+    if (!base || !viewport) return;
     const normalized = normalizeCrop(nextCrop);
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-    const nextBox = scaleBox(base, normalized);
-    setCropBox(nextBox);
+
+    const vpW = viewport.clientWidth;
+    const vpH = viewport.clientHeight;
+    const cw = Math.max(0.02, 1 - normalized.left - normalized.right);
+    const ch = Math.max(0.02, 1 - normalized.top - normalized.bottom);
+
+    // Phone-style: zoom so the selected region fills the viewport (with a small
+    // margin) and centre it, instead of showing the whole frame small. A full
+    // crop lands at zoom 1 (nothing to zoom into).
+    const fitZoom = Math.min(vpW / (base.width * cw), vpH / (base.height * ch)) * 0.94;
+    const z = clamp(fitZoom, MIN_ZOOM, MAX_ZOOM);
+
+    const fx = normalized.left + cw / 2; // fractional centre of the crop within the image
+    const fy = normalized.top + ch / 2;
+    const panX = vpW / 2 - base.left + ((z - 1) * base.width) / 2 - base.width * z * fx;
+    const panY = vpH / 2 - base.top + ((z - 1) * base.height) / 2 - base.height * z * fy;
+
+    const rendered: CropBox = {
+      left: base.left + panX - ((z - 1) * base.width) / 2,
+      top: base.top + panY - ((z - 1) * base.height) / 2,
+      width: base.width * z,
+      height: base.height * z,
+    };
+
+    setZoom(z);
+    setPan({ x: panX, y: panY });
+    setCropBox(scaleBox(rendered, normalized));
     setCurrentCrop(normalized);
   }, [getBaseBox]);
 
