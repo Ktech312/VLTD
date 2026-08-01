@@ -210,7 +210,7 @@ export default function ScanCropEditor({
     // Phone-style: zoom so the selected region fills the viewport (with a small
     // margin) and centre it, instead of showing the whole frame small. A full
     // crop lands at zoom 1 (nothing to zoom into).
-    const fitZoom = Math.min(vpW / (base.width * cw), vpH / (base.height * ch)) * 0.94;
+    const fitZoom = Math.min(vpW / (base.width * cw), vpH / (base.height * ch)) * 0.86;
     const z = clamp(fitZoom, MIN_ZOOM, MAX_ZOOM);
 
     const fx = normalized.left + cw / 2; // fractional centre of the crop within the image
@@ -497,13 +497,13 @@ export default function ScanCropEditor({
     : compact
       ? compactViewport === "short"
         ? "relative flex h-[min(24dvh,190px)] min-h-[132px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
-        : "relative flex h-[min(58dvh,520px)] min-h-[260px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
+        : "relative flex h-[min(46dvh,440px)] min-h-[220px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
       : "relative flex h-[min(62dvh,600px)] min-h-[300px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none";
   const imageClassName = viewportFixed
     ? "block max-h-[min(54dvh,420px)] max-w-full select-none object-contain"
     : compact && compactViewport === "short"
       ? "block max-h-[min(24dvh,190px)] max-w-full select-none object-contain"
-      : "block max-h-[min(58dvh,520px)] max-w-full select-none object-contain";
+      : "block max-h-[min(46dvh,440px)] max-w-full select-none object-contain";
 
   return (
     <section className={sectionClassName} data-no-pull-refresh>

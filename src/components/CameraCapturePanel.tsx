@@ -710,27 +710,23 @@ export default function CameraCapturePanel({
                 <span className="text-[11px] text-[color:var(--muted)]">Retake for sharper label detail.</span>
               </div>
             ) : null}
-            {/* Filter strip — moved above the image */}
-            <div className="mb-1.5 flex items-center gap-1.5 overflow-x-auto py-1 pl-1 [scrollbar-width:none]">
-              {CAPTURE_FILTER_PRESETS.map((preset) => (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() => setSelectedFilterId(preset.id)}
-                  className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition"
-                  style={
-                    selectedFilterId === preset.id
-                      ? { background: "var(--theme-gold-subtle, rgba(203,208,213,0.12))", borderColor: "var(--theme-gold-border, rgba(203,208,213,0.38))", color: "var(--theme-gold, #C8CDD2)" }
-                      : { background: "var(--pill)", borderColor: "var(--border)", color: "var(--muted)" }
-                  }
-                >
-                  {preset.label}
-                </button>
-              ))}
+            {/* Filter — dropdown (was a scrolling pill strip) */}
+            <div className="mb-1.5 flex items-center gap-2 py-1 pl-1">
+              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Filter</span>
+              <select
+                value={selectedFilterId}
+                onChange={(event) => setSelectedFilterId(event.target.value)}
+                aria-label="Photo filter"
+                className="h-8 min-w-0 flex-1 rounded-full bg-[color:var(--pill)] px-3 text-[12px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]"
+              >
+                {CAPTURE_FILTER_PRESETS.map((preset) => (
+                  <option key={preset.id} value={preset.id}>{preset.label}</option>
+                ))}
+              </select>
               <button
                 type="button"
                 onClick={() => { setSelectedFilterId("original"); setAdjustments(DEFAULT_CAPTURE_ADJUSTMENTS); }}
-                className="ml-auto shrink-0 rounded-full bg-[color:var(--pill)] px-2.5 py-1 text-[11px] ring-1 ring-[color:var(--border)]"
+                className="shrink-0 rounded-full bg-[color:var(--pill)] px-2.5 py-1.5 text-[11px] ring-1 ring-[color:var(--border)]"
               >
                 Reset
               </button>
