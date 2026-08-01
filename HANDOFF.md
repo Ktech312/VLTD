@@ -29,6 +29,10 @@ is risky or can't be done, say so plainly.
   the Universe selector to "simplify" without asking. Rearrange/restyle freely;
   **confirm before deleting functionality.**
 - When EK gives pixel notes, **don't change pill/frame/button sizes** unless asked.
+- **NEVER stretch pills / dropdowns / small buttons to fill width** (no `w-full`/
+  `flex-1` when the label is short). Size them to their content (`w-auto`). EK has
+  flagged this 20+ times — a "Vivid" dropdown should be ~as wide as the word, not a
+  full-row box. Full-width is only for a genuine primary CTA. See [[no-full-width-pills]].
 
 **Deploy / infra:**
 - **Vercel auto-deploys on push to `main`.** Never tell EK to redeploy.
