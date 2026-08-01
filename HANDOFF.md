@@ -59,8 +59,11 @@ is risky or can't be done, say so plainly.
 
 **⚠ PARALLEL EDITING.** Another tool (Codex) edits some files outside the chat.
 Confirmed edited by it: `src/app/community-board/page.tsx` (rewritten into a "VLT
-LOUNGE clubhouse" — leave it alone) and the capture screen. **Re-read any file
-before editing it, and confirm with EK who owns a screen.** EK is aware of this.
+LOUNGE clubhouse" — leave it alone). **Re-read any file before editing it, and
+confirm with EK who owns a screen.** EK is aware of this.
+- **`/capture` (normal Add) is THIS chat's now** — EK confirmed 2026-07-31 that
+  Codex isn't on it; this chat added multi-photo + crop-zoom there. Still re-read
+  before editing in case that changes.
 
 ---
 
@@ -117,11 +120,15 @@ those document images **private & locked — never shared** (separate from the
 item's public photos). Files staged until Save, persisted with a private flag.
 
 ### E. Crop bugs
-- Auto-crop only works AFTER background removal (`computeSubjectCrop` reads alpha
-  in `src/lib/scanners/cropImageFile.ts`); on a normal photo it keeps the whole
-  frame. The camera's detected object box is NOT wired to crop. Fix: use the
-  detected card box to auto-crop on capture.
-- Manual crop "didn't stick" — reproduce the capture→crop→save path and confirm.
+- DONE (a67af29): crop-stays-small — the shared `ScanCropEditor` now opens
+  **zoomed into the selection (phone-style)** so the item fills the view;
+  full-photo crop still lands at zoom 1. Verify on-device across frames.
+- DONE (cc4f29e): normal Add "new photo overwrote the old one" — `/capture` now
+  supports **multi-photo per item** (cover + angles); AI reads only the cover.
+- STILL OPEN: auto-crop only works AFTER background removal (`computeSubjectCrop`
+  reads alpha in `src/lib/scanners/cropImageFile.ts`); on a normal photo it keeps
+  the whole frame. The camera's detected object box is NOT wired to crop. Fix:
+  use the detected card box to auto-crop on capture.
 
 ### F. Single-item AI metering — DECIDED (Quick Add) / capture screen still open
 **Quick Add scanner AI is now metered at 1 scan per image** (`consume_bulk_scan`),
