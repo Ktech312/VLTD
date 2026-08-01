@@ -710,14 +710,14 @@ export default function CameraCapturePanel({
                 <span className="text-[11px] text-[color:var(--muted)]">Retake for sharper label detail.</span>
               </div>
             ) : null}
-            {/* Filter — dropdown (was a scrolling pill strip) */}
+            {/* Filter — dropdown, sized to its content (not stretched to fill the row) */}
             <div className="mb-1.5 flex items-center gap-2 py-1 pl-1">
               <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Filter</span>
               <select
                 value={selectedFilterId}
                 onChange={(event) => setSelectedFilterId(event.target.value)}
                 aria-label="Photo filter"
-                className="h-8 min-w-0 flex-1 rounded-full bg-[color:var(--pill)] px-3 text-[12px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]"
+                className="h-8 w-auto rounded-full bg-[color:var(--pill)] pl-3 pr-2 text-[12px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]"
               >
                 {CAPTURE_FILTER_PRESETS.map((preset) => (
                   <option key={preset.id} value={preset.id}>{preset.label}</option>

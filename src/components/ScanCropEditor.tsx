@@ -198,36 +198,12 @@ export default function ScanCropEditor({
 
   const resetVisualFromCrop = useCallback((nextCrop: ScanCropRect) => {
     const base = getBaseBox();
-    const viewport = viewportRef.current;
-    if (!base || !viewport) return;
+    if (!base) return;
     const normalized = normalizeCrop(nextCrop);
-
-    const vpW = viewport.clientWidth;
-    const vpH = viewport.clientHeight;
-    const cw = Math.max(0.02, 1 - normalized.left - normalized.right);
-    const ch = Math.max(0.02, 1 - normalized.top - normalized.bottom);
-
-    // Phone-style: zoom so the selected region fills the viewport (with a small
-    // margin) and centre it, instead of showing the whole frame small. A full
-    // crop lands at zoom 1 (nothing to zoom into).
-    const fitZoom = Math.min(vpW / (base.width * cw), vpH / (base.height * ch)) * 0.86;
-    const z = clamp(fitZoom, MIN_ZOOM, MAX_ZOOM);
-
-    const fx = normalized.left + cw / 2; // fractional centre of the crop within the image
-    const fy = normalized.top + ch / 2;
-    const panX = vpW / 2 - base.left + ((z - 1) * base.width) / 2 - base.width * z * fx;
-    const panY = vpH / 2 - base.top + ((z - 1) * base.height) / 2 - base.height * z * fy;
-
-    const rendered: CropBox = {
-      left: base.left + panX - ((z - 1) * base.width) / 2,
-      top: base.top + panY - ((z - 1) * base.height) / 2,
-      width: base.width * z,
-      height: base.height * z,
-    };
-
-    setZoom(z);
-    setPan({ x: panX, y: panY });
-    setCropBox(scaleBox(rendered, normalized));
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+    const nextBox = scaleBox(base, normalized);
+    setCropBox(nextBox);
     setCurrentCrop(normalized);
   }, [getBaseBox]);
 
@@ -497,13 +473,13 @@ export default function ScanCropEditor({
     : compact
       ? compactViewport === "short"
         ? "relative flex h-[min(24dvh,190px)] min-h-[132px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
-        : "relative flex h-[min(46dvh,440px)] min-h-[220px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
+        : "relative flex h-[min(58dvh,520px)] min-h-[260px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
       : "relative flex h-[min(62dvh,600px)] min-h-[300px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none";
   const imageClassName = viewportFixed
     ? "block max-h-[min(54dvh,420px)] max-w-full select-none object-contain"
     : compact && compactViewport === "short"
       ? "block max-h-[min(24dvh,190px)] max-w-full select-none object-contain"
-      : "block max-h-[min(46dvh,440px)] max-w-full select-none object-contain";
+      : "block max-h-[min(58dvh,520px)] max-w-full select-none object-contain";
 
   return (
     <section className={sectionClassName} data-no-pull-refresh>
