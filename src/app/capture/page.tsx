@@ -790,24 +790,17 @@ export default function CapturePage() {
                     />
                   )}
 
-                  {/* Thumbnail rail — cover first, then extra angles; tap an angle to make it the cover */}
+                  {/* Thumbnail rail — cover is always the first one. Photos DON'T move
+                      when clicked; use the "Set cover" button to deliberately promote one. */}
                   <div className="mt-3 grid grid-cols-4 gap-2">
                     {previewUrls.map((url, i) => (
                       <div
                         key={url}
-                        className="group relative aspect-square overflow-hidden rounded-[10px] border"
+                        className="relative aspect-square overflow-hidden rounded-[10px] border"
                         style={{ borderColor: i === 0 ? "var(--theme-gold, #C8CDD2)" : "var(--theme-gold-border, rgba(203,208,213,0.35))" }}
                       >
-                        <button
-                          type="button"
-                          onClick={() => (i === 0 ? undefined : makeCover(i))}
-                          className="block h-full w-full"
-                          title={i === 0 ? "Cover photo" : "Make this the cover"}
-                          aria-label={i === 0 ? "Cover photo" : "Make this the cover"}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={url} alt="" className="h-full w-full object-cover" />
-                        </button>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt="" className="h-full w-full object-cover" />
                         {i === 0 ? (
                           <span
                             className="pointer-events-none absolute left-1 top-1 rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide"
@@ -815,7 +808,17 @@ export default function CapturePage() {
                           >
                             Cover
                           </span>
-                        ) : null}
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => makeCover(i)}
+                            title="Make this the cover photo"
+                            className="absolute bottom-1 left-1 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ring-1"
+                            style={{ background: "rgba(2,9,12,0.78)", color: "var(--theme-gold, #C8CDD2)", borderColor: "var(--theme-gold-border, rgba(203,208,213,0.45))" }}
+                          >
+                            Set cover
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => removeImageAt(i)}
