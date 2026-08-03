@@ -12,7 +12,6 @@ import { lookupUpcItem } from "@/lib/upcLookup";
 import { newId } from "@/lib/id";
 import { appendItems, type VaultImage } from "@/lib/vaultModel";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
-import { showToast } from "@/lib/toast";
 import { hasSupabaseEnv, uploadVaultImageToSupabase } from "@/lib/vaultCloud";
 import {
   generateVaultImageKey,
@@ -263,56 +262,6 @@ function mergeResults(
   };
 }
 
-async function persistCapturedImage(itemId: string, file: File) {
-  const durableBlob = await prepareImageBlob(file);
-  const fileName = file.name || "capture.jpg";
-
-  if (navigator.onLine && hasSupabaseEnv()) {
-    try {
-      const uploaded = await uploadVaultImageToSupabase({
-        itemId,
-        file: durableBlob,
-        fileName,
-      });
-
-      const image: VaultImage = {
-        id: `${itemId}_img_0`,
-        storageKey: uploaded.path,
-        url: uploaded.publicUrl,
-        order: 0,
-        localOnly: false,
-        role: "primary",
-      };
-
-      return {
-        images: [image],
-        primaryImageKey: image.storageKey,
-        imageFrontUrl: image.url,
-        imageFrontStoragePath: image.storageKey,
-      };
-    } catch (error) {
-      console.error("[Capture] Supabase image upload failed, using local fallback:", error);
-    }
-  }
-
-  const storageKey = generateVaultImageKey(itemId, 0);
-  await saveImageBlobToIndexedDb(durableBlob, storageKey);
-
-  const image: VaultImage = {
-    id: `${itemId}_img_0`,
-    storageKey,
-    order: 0,
-    localOnly: true,
-    role: "primary",
-  };
-
-  return {
-    images: [image],
-    primaryImageKey: image.storageKey,
-    imageFrontStoragePath: image.storageKey,
-  };
-}
-
 // Persist a whole set of photos for one item. images[0] is the cover (primary);
 // the rest are stored as "detail" shots. Only the cover is ever sent to AI.
 async function persistCapturedImages(itemId: string, files: File[]) {
@@ -435,27 +384,6 @@ export default function CapturePage() {
       return next;
     });
     setIdentified(false);
-  }, []);
-
-  // Quick Add: each shot saves a draft item instantly (no forced AI/review).
-  // Reviewed later from the Vault's Needs Review queue on any device.
-  const quickAddCountRef = useRef(0);
-  const handleQuickAddCapture = useCallback(async (file: File) => {
-    try {
-      const id = newId();
-      const imagePatch = await persistCapturedImage(id, file);
-      await appendItems([{
-        id,
-        title: "Untitled Item",
-        status: "COLLECTION" as const,
-        createdAt: Date.now(),
-        ...imagePatch,
-      }]);
-      emitVaultUpdate();
-      quickAddCountRef.current += 1;
-    } catch (err) {
-      console.error("[QuickAdd] save error:", err);
-    }
   }, []);
 
   // Opt-in AI: identify + fill fields on demand from the captured photo.
@@ -862,7 +790,6 @@ export default function CapturePage() {
                       onCapture={handleCapture}
                       bulkToggle={false}
                       bulkTaxonomy={false}
-                      onBulkCapture={(file) => void handleQuickAddCapture(file)}
                       onClose={() => {}}
                       onUseFileInstead={() => uploadInputRef.current?.click()}
                     />
@@ -1239,15 +1166,7 @@ export default function CapturePage() {
             onCapture={handleCapture}
             bulkToggle={false}
             bulkTaxonomy={false}
-            onClose={() => {
-              setIsCameraPanelOpen(false);
-              const n = quickAddCountRef.current;
-              if (n > 0) {
-                quickAddCountRef.current = 0;
-                showToast(`${n} item${n === 1 ? "" : "s"} added to Needs Review`);
-                router.push("/vault");
-              }
-            }}
+            onClose={() => setIsCameraPanelOpen(false)}
             onUseFileInstead={() => {
               setIsCameraPanelOpen(false);
               uploadInputRef.current?.click();
