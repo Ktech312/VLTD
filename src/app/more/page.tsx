@@ -516,7 +516,7 @@ export default function MorePage() {
                   <section className="rounded-[8px] border p-4" style={{ borderColor: border, background: panel }}>
                     <h3 className="text-[15px] font-semibold" style={{ color: cream }}>More Tools</h3>
                     <div className="mt-3 grid gap-2">
-                      <MiniTool title="Watchlist" desc="Saved pieces and follows." href="/wishlist" onPanel={setActivePanel} />
+                      <MiniTool title="Watchlist" desc="Saved pieces and follows." href="/watchlist" onPanel={setActivePanel} />
                       <MiniTool title="Goals" desc="Collection targets." href="/goals" onPanel={setActivePanel} />
                       <MiniTool title="Marketplace" desc="Browse collector listings." href="/market" onPanel={setActivePanel} />
                       <MiniTool title="Help & Support" desc="Guides and support links." panel="help" onPanel={setActivePanel} />

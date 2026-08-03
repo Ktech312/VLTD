@@ -6,7 +6,7 @@ import { showToast } from "@/lib/toast";
 export default function AddToWishlistButton({ title }: { title: string }) {
   function add() {
     addWishlistItem({ title });
-    showToast("Added to wishlist");
+    showToast("Added to watchlist");
   }
 
   return (
@@ -14,7 +14,7 @@ export default function AddToWishlistButton({ title }: { title: string }) {
       onClick={add}
       className="rounded-full px-4 py-2 text-sm ring-1 ring-white/20 hover:bg-white/10"
     >
-      Add to Wishlist
+      Add to Watchlist
     </button>
   );
 }

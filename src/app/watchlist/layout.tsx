@@ -5,6 +5,6 @@ export const metadata: Metadata = {
   description: "Items on your watchlist",
 };
 
-export default function WishlistLayout({ children }: { children: React.ReactNode }) {
+export default function WatchlistLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }

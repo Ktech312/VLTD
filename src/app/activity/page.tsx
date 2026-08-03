@@ -612,7 +612,7 @@ export default function ActivityPage() {
 
               <div className="mt-6 grid grid-cols-3 gap-3">
                 <Link href={selected.href ?? "/vault"} className="rounded-[7px] px-4 py-3 text-center text-sm font-black" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>Open record</Link>
-                <Link href="/wishlist" className="rounded-[7px] border border-[rgba(203,208,213,0.34)] px-4 py-3 text-center text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Add target</Link>
+                <Link href="/watchlist" className="rounded-[7px] border border-[rgba(203,208,213,0.34)] px-4 py-3 text-center text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Add target</Link>
                 <button type="button" onClick={() => setSelectedId(null)} className="rounded-[7px] border border-red-500/45 px-4 py-3 text-sm font-bold text-red-400">Dismiss</button>
               </div>
             </>

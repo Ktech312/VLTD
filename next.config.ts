@@ -1,6 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+      async redirects() {
+        return [
+          {
+            source: "/wishlist",
+            destination: "/watchlist",
+            permanent: true,
+          },
+        ];
+      },
       turbopack: {
               root: __dirname,
       },

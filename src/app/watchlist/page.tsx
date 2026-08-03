@@ -217,7 +217,7 @@ function WatchCard({
   );
 }
 
-export default function WishlistPage() {
+export default function WatchlistPage() {
   const [wishlist, setWishlist] = useState<WishlistItem[]>(() => loadWishlist());
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>(() => loadWatchlist());
   const [comicItems, setComicItems] = useState<ComicWishlistItem[]>([]);
