@@ -38,6 +38,10 @@ type DetectionBox = { x: number; y: number; width: number; height: number };
 const DEFAULT_CROP: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
 const BULK_UNIVERSES = getUniverses();
 const CAMERA_PREF_KEY = "vltd_camera_device_id";
+// Some phones stream well past 3000px on the long edge. The filter/crop/
+// upload pipeline doesn't need more than this for a sharp vault photo, and
+// capping it keeps captures fast on high-res devices.
+const MAX_CAPTURE_LONG_EDGE = 2200;
 // Live object-detection (TF.js + coco-ssd) ran every ~900ms just to draw a
 // cosmetic guide box — heavy and not wired to anything. Off for speed; the
 // fixed frame guide stays. Flip to true to re-enable (consider throttling).
@@ -515,14 +519,19 @@ export default function CameraCapturePanel({
     setIsCapturing(true);
 
     try {
+      const longEdge = Math.max(width, height);
+      const outputScale = longEdge > MAX_CAPTURE_LONG_EDGE ? MAX_CAPTURE_LONG_EDGE / longEdge : 1;
+      const outputWidth = Math.round(width * outputScale);
+      const outputHeight = Math.round(height * outputScale);
+
       const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
+      canvas.width = outputWidth;
+      canvas.height = outputHeight;
 
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Canvas is not available.");
 
-      ctx.drawImage(video, 0, 0, width, height);
+      ctx.drawImage(video, 0, 0, width, height, 0, 0, outputWidth, outputHeight);
       setBlurAssessment(assessCanvasBlur(canvas));
 
       const blob = await new Promise<Blob | null>((resolve) => {
