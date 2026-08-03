@@ -1337,7 +1337,7 @@ export default function VaultUniversePage() {
                           type="button"
                           onClick={() => void confirmMassDelete()}
                           disabled={isDeleting}
-                          className="inline-flex h-8 items-center rounded-full px-3 text-xs font-bold text-white"
+                          className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-bold text-white"
                           style={{ background: "#dc2626", opacity: isDeleting ? 0.6 : 1 }}
                         >
                           {isDeleting ? "Deleting…" : "Yes, Delete"}
@@ -1346,7 +1346,7 @@ export default function VaultUniversePage() {
                           type="button"
                           onClick={() => setDeleteConfirmPending(false)}
                           disabled={isDeleting}
-                          className="inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold ring-1 ring-[color:var(--border)]"
+                          className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-semibold ring-1 ring-[color:var(--border)]"
                           style={{ background: "var(--pill)", color: "var(--muted)" }}
                         >
                           Cancel
@@ -1356,7 +1356,7 @@ export default function VaultUniversePage() {
                       <button
                         type="button"
                         onClick={handleMassDelete}
-                        className="inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold text-white"
+                        className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-semibold text-white"
                         style={{ background: "#dc2626" }}
                       >
                         Delete {selectedIds.size}
@@ -1365,7 +1365,7 @@ export default function VaultUniversePage() {
                     <select
                       value={moveTargetUniverse}
                       onChange={(e) => { setMoveTargetUniverse(e.target.value); setMoveTargetCategory(""); setMoveTargetSubcategory(""); }}
-                      className="h-8 rounded-full bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
+                      className="h-8 rounded-[7px] bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
                       style={{ color: moveTargetUniverse ? "var(--fg)" : "var(--muted)" }}
                     >
                       <option value="">Move {selectedIds.size} to…</option>
@@ -1376,7 +1376,7 @@ export default function VaultUniversePage() {
                     <select
                       value={moveTargetCategory}
                       onChange={(e) => { setMoveTargetCategory(e.target.value); setMoveTargetSubcategory(""); }}
-                      className="h-8 rounded-full bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
+                      className="h-8 rounded-[7px] bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
                       style={{ color: moveTargetCategory ? "var(--fg)" : "var(--muted)" }}
                       disabled={!moveTargetUniverse}
                     >
@@ -1388,7 +1388,7 @@ export default function VaultUniversePage() {
                     <select
                       value={moveTargetSubcategory}
                       onChange={(e) => setMoveTargetSubcategory(e.target.value)}
-                      className="h-8 rounded-full bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
+                      className="h-8 rounded-[7px] bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
                       style={{ color: moveTargetSubcategory ? "var(--fg)" : "var(--muted)" }}
                       disabled={!moveTargetCategory}
                     >
@@ -1401,7 +1401,7 @@ export default function VaultUniversePage() {
                       <button
                         type="button"
                         onClick={() => void handleMassMove()}
-                        className="inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold"
+                        className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-semibold"
                         style={{ background: "rgba(203,208,213,0.18)", color: "#C8CDD2", border: "1px solid rgba(203,208,213,0.4)" }}
                       >
                         Move
@@ -1417,7 +1417,7 @@ export default function VaultUniversePage() {
                             void handleMoveToProfile(p.id);
                           }
                         }}
-                        className="inline-flex h-8 items-center gap-1 rounded-full px-3 text-xs font-semibold"
+                        className="inline-flex h-8 items-center gap-1 rounded-[7px] px-3 text-xs font-semibold"
                         style={{ background: "rgba(96,165,250,0.14)", color: "#93c5fd", border: "1px solid rgba(96,165,250,0.4)" }}
                         title={`Move selected items to your ${p.profile_type} profile`}
                       >

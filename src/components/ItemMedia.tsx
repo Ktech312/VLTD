@@ -685,7 +685,7 @@ export default function ItemMedia({
                         setPreviewOpen(false);
                         onRemoveBackground(activeVisibleEntry.originalIndex);
                       }}
-                      className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]"
+                      className="inline-flex h-10 items-center gap-1.5 rounded-[8px] bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]"
                     >
                       Remove BG
                     </button>
@@ -693,7 +693,7 @@ export default function ItemMedia({
                   <button
                     type="button"
                     onClick={() => onDeleteImage(activeVisibleEntry.originalIndex)}
-                    className="inline-flex h-10 items-center gap-1.5 rounded-full bg-red-600/80 px-4 text-sm font-medium text-white ring-1 ring-red-500/40"
+                    className="inline-flex h-10 items-center gap-1.5 rounded-[8px] bg-red-600/80 px-4 text-sm font-medium text-white ring-1 ring-red-500/40"
                   >
                     Delete
                   </button>

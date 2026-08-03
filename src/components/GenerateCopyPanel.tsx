@@ -215,7 +215,7 @@ export default function GenerateCopyPanel({
           type="button"
           onClick={handleAccept}
           disabled={!draft.trim()}
-          className="rounded-full px-4 py-2 text-xs font-bold transition hover:-translate-y-0.5 disabled:opacity-40"
+          className="rounded-[8px] px-4 py-2 text-xs font-bold transition hover:-translate-y-0.5 disabled:opacity-40"
           style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}
         >
           Accept — apply to item

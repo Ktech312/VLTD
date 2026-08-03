@@ -154,7 +154,7 @@ export default function ExportListingButton({ item }: { item: VaultItem }) {
         <button
           type="button"
           onClick={() => void handleCopy()}
-          className="inline-flex h-10 items-center justify-center rounded-full bg-gold/15 px-4 text-sm font-medium text-cyan-100 ring-1 ring-gold/25"
+          className="inline-flex h-10 items-center justify-center rounded-[8px] bg-gold/15 px-4 text-sm font-medium text-cyan-100 ring-1 ring-gold/25"
         >
           Copy Listing
         </button>

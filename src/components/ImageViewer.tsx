@@ -189,7 +189,7 @@ export default function ImageViewer({
           <button
             type="button"
             onClick={() => onEdit(current)}
-            className="rounded-full bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
+            className="rounded-[8px] bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
           >
             Edit Photo
           </button>
@@ -198,7 +198,7 @@ export default function ImageViewer({
           <button
             type="button"
             onClick={() => onDelete(current)}
-            className="rounded-full bg-red-600/75 px-3 py-2 text-sm text-text-primary ring-1 ring-red-400/35 backdrop-blur"
+            className="rounded-[8px] bg-red-600/75 px-3 py-2 text-sm text-text-primary ring-1 ring-red-400/35 backdrop-blur"
           >
             Delete
           </button>

@@ -176,7 +176,7 @@ export default function CoaScanButton({ onApply }: Props) {
             <button
               type="button"
               onClick={handleApply}
-              className="inline-flex h-9 items-center rounded-full px-4 text-xs font-bold text-black"
+              className="inline-flex h-9 items-center rounded-[7px] px-4 text-xs font-bold text-black"
               style={{ background: "var(--theme-gold, #C8CDD2)" }}
             >
               Apply to Item
@@ -184,7 +184,7 @@ export default function CoaScanButton({ onApply }: Props) {
             <button
               type="button"
               onClick={reset}
-              className="inline-flex h-9 items-center rounded-full px-3 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
+              className="inline-flex h-9 items-center rounded-[7px] px-3 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
             >
               Discard
             </button>

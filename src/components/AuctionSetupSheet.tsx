@@ -308,7 +308,7 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 rounded-2xl py-3 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                  className="flex-1 rounded-[8px] py-3 text-sm font-semibold ring-1 ring-[color:var(--border)]"
                   style={{ background: "var(--pill)", color: "var(--fg)" }}
                 >
                   Keep Running
@@ -316,7 +316,7 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
                 <button
                   type="button"
                   onClick={handleCancel}
-                  className="rounded-2xl px-5 py-3 text-sm font-bold ring-1 ring-red-400/30"
+                  className="rounded-[8px] px-5 py-3 text-sm font-bold ring-1 ring-red-400/30"
                   style={{ background: "rgba(239,68,68,0.15)", color: "rgb(252,165,165)" }}
                 >
                   Cancel Auction
@@ -327,7 +327,7 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-2xl px-4 py-3 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                  className="rounded-[8px] px-4 py-3 text-sm font-semibold ring-1 ring-[color:var(--border)]"
                   style={{ background: "var(--pill)", color: "var(--fg)" }}
                 >
                   Cancel
@@ -336,7 +336,7 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
                   type="button"
                   onClick={handleStart}
                   disabled={saving}
-                  className="flex-1 rounded-2xl py-3 text-sm font-bold transition"
+                  className="flex-1 rounded-[8px] py-3 text-sm font-bold transition"
                   style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d", opacity: saving ? 0.6 : 1 }}
                 >
                   {saving ? "Starting\u2026" : "Start Auction"}

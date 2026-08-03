@@ -1749,7 +1749,7 @@ export default function VaultInner() {
                     onClick={saveNewItem}
                     disabled={!newTitle.trim()}
                     className={[
-                      "min-h-[44px] rounded-xl px-4 py-2 text-[16px] font-semibold sm:text-sm",
+                      "min-h-[44px] rounded-[8px] px-4 py-2 text-[16px] font-semibold sm:text-sm",
                       newTitle.trim()
                         ? "bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)] hover:opacity-95"
                         : "cursor-not-allowed bg-[color:var(--pill)] text-[color:var(--muted2)] ring-1 ring-[color:var(--border)]",

@@ -171,7 +171,7 @@ export default function TeamPage() {
                   type="button"
                   onClick={() => void handleInvite()}
                   disabled={busy || !inviteEmail.trim()}
-                  className="rounded-xl px-4 py-2 text-sm font-bold text-black transition disabled:opacity-40"
+                  className="rounded-[8px] px-4 py-2 text-sm font-bold text-black transition disabled:opacity-40"
                   style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)" }}
                 >
                   {busy ? "…" : "Add"}
@@ -251,7 +251,7 @@ export default function TeamPage() {
                 type="button"
                 onClick={() => void handleTransfer()}
                 disabled={transferring || !transferEmail.trim() || transferConfirm.trim() !== profile.display_name}
-                className="mt-3 w-full rounded-xl px-4 py-2.5 text-sm font-bold transition disabled:opacity-40"
+                className="mt-3 w-full rounded-[8px] px-4 py-2.5 text-sm font-bold transition disabled:opacity-40"
                 style={{ background: "rgba(248,113,113,0.15)", color: "#f87171", border: "1px solid rgba(248,113,113,0.4)" }}
               >
                 {transferring ? "Transferring…" : "Transfer ownership"}

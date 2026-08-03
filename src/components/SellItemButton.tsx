@@ -87,7 +87,7 @@ export default function SellItemButton({ item }: { item: VaultItem }) {
       type="button"
       onClick={() => void handleSell()}
       disabled={loading}
-      className="inline-flex min-h-7 items-center justify-center rounded-full bg-red-500/15 px-3 py-1 text-xs font-semibold text-red-200 ring-1 ring-red-400/25 transition hover:bg-red-500/25 disabled:opacity-50"
+      className="inline-flex min-h-7 items-center justify-center rounded-[7px] bg-red-500/15 px-3 py-1 text-xs font-semibold text-red-200 ring-1 ring-red-400/25 transition hover:bg-red-500/25 disabled:opacity-50"
     >
       {loading ? "Selling..." : "Sell"}
     </button>

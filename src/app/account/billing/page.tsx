@@ -199,7 +199,7 @@ export default function BillingPage() {
                       type="button"
                       onClick={() => handleUpgrade(plan.key)}
                       disabled={busyPlan !== null}
-                      className="mt-4 w-full rounded-full py-2 text-xs font-semibold ring-1 disabled:opacity-50"
+                      className="mt-4 w-full rounded-[8px] py-2 text-xs font-semibold ring-1 disabled:opacity-50"
                       style={{
                         background: plan.key === "business" ? "var(--theme-gold)" : "var(--pill)",
                         color: plan.key === "business" ? "#0B0B0B" : "var(--fg)",
@@ -214,7 +214,7 @@ export default function BillingPage() {
                       type="button"
                       onClick={openBillingPortal}
                       disabled={busyPortal}
-                      className="mt-4 w-full rounded-full py-2 text-xs font-semibold ring-1 disabled:opacity-50"
+                      className="mt-4 w-full rounded-[8px] py-2 text-xs font-semibold ring-1 disabled:opacity-50"
                       style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}
                     >
                       Downgrade
