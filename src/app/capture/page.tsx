@@ -36,6 +36,8 @@ import {
   type CaptureFieldKey,
   type CaptureFieldLocks,
 } from "@/lib/captureAddState";
+import { getStoredActiveProfileId } from "@/lib/auth";
+import { getBulkScanStatus, consumeBulkScans } from "@/lib/bulkScanQuota";
 
 /* ── Types ─────────────────────────────────────────────────────── */
 
@@ -320,6 +322,22 @@ export default function CapturePage() {
   // True only after an AI identify has actually run — gates the confidence badge.
   const [identified, setIdentified] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  // AI-scan metering for the single "Identify" button, same quota Quick Add
+  // already uses. Only signed-in curators are metered; anonymous/local use
+  // isn't charged. The real limit (per-tier) lives server-side.
+  const [profileId, setProfileId] = useState("");
+  const [scanRemaining, setScanRemaining] = useState<number | null>(null);
+  const metered = Boolean(profileId);
+
+  useEffect(() => {
+    const pid = getStoredActiveProfileId();
+    setProfileId(pid);
+    if (!pid) return;
+    void (async () => {
+      const status = await getBulkScanStatus(pid);
+      if (status) setScanRemaining(status.remaining);
+    })();
+  }, []);
   const [fields, setFields] = useState<ReviewFields>(EMPTY_FIELDS);
   // Field locks — carry a value to the next item for batches of similar items
   // (e.g. a stack of the same-grader, same-universe cards). Same UX as the
@@ -394,16 +412,28 @@ export default function CapturePage() {
     setAnalyzing(true);
     setErrorMsg("");
 
+    const scanExhausted = metered && scanRemaining !== null && scanRemaining <= 0;
+
     try {
-      // Run vision analysis and barcode scan in parallel
+      // Run vision analysis and barcode scan in parallel. Barcode/UPC lookup is
+      // free (local decode, no AI call) so it still runs even once AI scans are
+      // exhausted for this cycle -- only the vision call is metered/skipped.
       const [visionSettled, barcodeSettled] = await Promise.allSettled([
-        analyzeImageWithVision(file),
+        scanExhausted ? Promise.resolve(null) : analyzeImageWithVision(file),
         scanBarcodeFromFile(file),
       ]);
 
-      const vision = visionSettled.status === "fulfilled" ? visionSettled.value : null;
+      let vision = visionSettled.status === "fulfilled" ? visionSettled.value : null;
       if (visionSettled.status === "rejected") {
         console.error("[Capture] Vision error:", visionSettled.reason);
+      }
+
+      if (vision && metered) {
+        const res = await consumeBulkScans(profileId, 1);
+        if (res) {
+          setScanRemaining(res.remaining);
+          if (res.granted === 0) vision = null;
+        }
       }
 
       // UPC lookup if a barcode was detected
@@ -422,6 +452,12 @@ export default function CapturePage() {
         } catch (upcErr) {
           console.error("[Capture] UPC lookup error:", upcErr);
         }
+      }
+
+      if (scanExhausted && !upcData) {
+        setErrorMsg("You've used all your AI scans for this cycle — fill it in by hand.");
+        setAnalyzing(false);
+        return;
       }
 
       if (!vision && !upcData) {
@@ -854,6 +890,10 @@ export default function CapturePage() {
                   {errorMsg && !analyzing ? (
                     <p className="mt-2 text-[11px] leading-4 text-[#EF4444]">
                       {errorMsg} You can still fill it in by hand.
+                    </p>
+                  ) : metered && scanRemaining !== null && capturedImageFile ? (
+                    <p className="mt-2 text-[11px] leading-4 text-[color:var(--muted2)]">
+                      {scanRemaining} AI scan{scanRemaining === 1 ? "" : "s"} left this cycle.
                     </p>
                   ) : null}
                 </div>
