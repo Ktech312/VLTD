@@ -197,6 +197,7 @@ function buildRegions(width: number, height: number): ScanRegion[] {
       h: height,
       scale: 2,
     },
+    // Bottom regions: where a retail UPC is typically printed on a box/product.
     {
       name: "bottom_half",
       x: 0,
@@ -225,6 +226,43 @@ function buildRegions(width: number, height: number): ScanRegion[] {
       name: "bottom_band",
       x: Math.floor(width * 0.1),
       y: Math.floor(height * 0.72),
+      w: Math.floor(width * 0.8),
+      h: Math.floor(height * 0.2),
+      scale: 2.8,
+    },
+    // Top regions: graded-slab labels (PSA/CGC/BGS/SGC) put their cert QR /
+    // Code128 barcode at the TOP of the holder, not the bottom — the
+    // bottom-only regions above were tuned for retail UPCs and would never
+    // reach enough effective resolution on a small top-of-slab code (a
+    // low-scale full-frame pass can't add detail that isn't in the source).
+    {
+      name: "top_half",
+      x: 0,
+      y: 0,
+      w: width,
+      h: Math.floor(height * 0.5),
+      scale: 2,
+    },
+    {
+      name: "top_right",
+      x: Math.floor(width * 0.55),
+      y: 0,
+      w: Math.floor(width * 0.45),
+      h: Math.floor(height * 0.45),
+      scale: 2.6,
+    },
+    {
+      name: "top_left",
+      x: 0,
+      y: 0,
+      w: Math.floor(width * 0.45),
+      h: Math.floor(height * 0.45),
+      scale: 2.6,
+    },
+    {
+      name: "top_band",
+      x: Math.floor(width * 0.1),
+      y: Math.floor(height * 0.08),
       w: Math.floor(width * 0.8),
       h: Math.floor(height * 0.2),
       scale: 2.8,
