@@ -34,7 +34,7 @@ export function loadDrafts(): AICatalogDraft[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return seedDemos();
+    if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     return Array.isArray(parsed) ? (parsed as AICatalogDraft[]) : [];
   } catch {
@@ -64,71 +64,6 @@ export function deleteDraft(id: string) {
 
 export function getDraft(id: string): AICatalogDraft | undefined {
   return loadDrafts().find((d) => d.id === id);
-}
-
-function seedDemos(): AICatalogDraft[] {
-  const demos: AICatalogDraft[] = [
-    {
-      id: "demo_1",
-      workspaceId: "default",
-      createdByLabel: "Camera Capture",
-      status: "READY_FOR_REVIEW",
-      confidenceLabel: "High",
-      confidenceScore: 91,
-      title: "1986 Fleer Michael Jordan Rookie Card",
-      subtitle: "Chicago Bulls",
-      category: "SPORTS",
-      categoryLabel: "Sports Cards",
-      universe: "SPORTS",
-      number: "57",
-      grade: "PSA 7",
-      certNumber: "12345678",
-      subject: "Michael Jordan",
-      currentValue: 3800,
-      missingFields: ["Purchase price", "Storage location"],
-      createdAt: new Date(Date.now() - 2 * 3600000).toISOString(),
-    },
-    {
-      id: "demo_2",
-      workspaceId: "default",
-      createdByLabel: "Barcode Scan",
-      status: "NEEDS_REVIEW",
-      confidenceLabel: "Good",
-      confidenceScore: 68,
-      title: "Amazing Spider-Man #300",
-      subtitle: "First appearance of Venom",
-      category: "COMICS",
-      categoryLabel: "Comics",
-      universe: "POP_CULTURE",
-      number: "300",
-      grade: "VF/NM 9.0",
-      subject: "Venom",
-      missingFields: ["Publisher variant", "Cert number", "Purchase price"],
-      notes: "Publisher uncertain — could be direct or newsstand edition.",
-      createdAt: new Date(Date.now() - 86400000).toISOString(),
-    },
-    {
-      id: "demo_3",
-      workspaceId: "default",
-      createdByLabel: "Photo Upload",
-      status: "READY_FOR_REVIEW",
-      confidenceLabel: "Good",
-      confidenceScore: 74,
-      title: "1st Edition Charizard Base Set",
-      subtitle: "Pokémon TCG",
-      category: "TCG",
-      categoryLabel: "Trading Card Game",
-      universe: "TCG",
-      number: "4",
-      grade: "",
-      subject: "Charizard",
-      currentValue: 12000,
-      missingFields: ["Condition / grade", "Purchase price"],
-      createdAt: new Date(Date.now() - 3 * 3600000).toISOString(),
-    },
-  ];
-  saveDrafts(demos);
-  return demos;
 }
 
 // Legacy compat
