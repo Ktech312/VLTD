@@ -567,15 +567,16 @@ export default function CameraCapturePanel({
     }
   }
 
-  async function handleUseCapturedPhoto() {
+  async function handleUseCapturedPhoto(cropOverride?: ScanCropRect) {
     if (!capturedFile) return;
 
+    const cropToApply = cropOverride ?? captureCrop;
     setIsApplyingCrop(true);
 
     try {
-      const croppedFile = isDefaultCrop(captureCrop)
+      const croppedFile = isDefaultCrop(cropToApply)
         ? capturedFile
-        : await cropImageFile(capturedFile, captureCrop);
+        : await cropImageFile(capturedFile, cropToApply);
 
       const finalFile = isOriginalCaptureTreatment(activeFilter, adjustments)
         ? croppedFile
@@ -792,6 +793,18 @@ export default function CameraCapturePanel({
               >
                 ↩ Retake
               </button>
+              {!isDefaultCrop(captureCrop) ? (
+                <button
+                  type="button"
+                  onClick={() => void handleUseCapturedPhoto(DEFAULT_CROP)}
+                  disabled={isApplyingCrop}
+                  title="Skip cropping and use the full photo"
+                  className="rounded-full px-5 py-2.5 text-sm font-semibold ring-1 ring-[color:var(--border)] disabled:opacity-40"
+                  style={{ background: "var(--pill)", color: "var(--muted)" }}
+                >
+                  Use as-is
+                </button>
+              ) : null}
               <button
                 type="button"
                 onClick={() => void handleUseCapturedPhoto()}
