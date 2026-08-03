@@ -27,6 +27,16 @@ import {
   isUniverseKey,
   type UniverseKey,
 } from "@/lib/taxonomy";
+import {
+  DEFAULT_CAPTURE_LOCKS,
+  applyCaptureLockedValues,
+  buildCaptureRememberedValues,
+  readCaptureAddState,
+  toggleCaptureFieldLock,
+  writeCaptureAddState,
+  type CaptureFieldKey,
+  type CaptureFieldLocks,
+} from "@/lib/captureAddState";
 
 /* ── Types ─────────────────────────────────────────────────────── */
 
@@ -154,6 +164,47 @@ function AccordionSection({
           {children}
         </div>
       ) : null}
+    </div>
+  );
+}
+
+/* ── Lockable field label — carries a value to the next item when locked ── */
+
+function LockableLabel({
+  label,
+  locked,
+  onToggleLock,
+}: {
+  label: string;
+  locked: boolean;
+  onToggleLock: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <label className={LABEL_CLS}>{label}</label>
+      <button
+        type="button"
+        onClick={onToggleLock}
+        className={[
+          "inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 transition",
+          locked
+            ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[color:var(--pill-active-bg)]"
+            : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]",
+        ].join(" ")}
+        title={locked ? "Locked for next item" : "Unlocked for next item"}
+      >
+        {locked ? (
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: "var(--theme-gold, #C8CDD2)" }}>
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        ) : (
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: "var(--muted)" }}>
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+          </svg>
+        )}
+      </button>
     </div>
   );
 }
@@ -321,6 +372,14 @@ export default function CapturePage() {
   const [identified, setIdentified] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [fields, setFields] = useState<ReviewFields>(EMPTY_FIELDS);
+  // Field locks — carry a value to the next item for batches of similar items
+  // (e.g. a stack of the same-grader, same-universe cards). Same UX as the
+  // /vault/add manual screen's lock system (src/lib/bulkAddState.ts), scoped
+  // to its own storage key (see src/lib/captureAddState.ts for why).
+  const [locks, setLocks] = useState<CaptureFieldLocks>({ ...DEFAULT_CAPTURE_LOCKS });
+  const toggleFieldLock = useCallback((key: CaptureFieldKey) => {
+    setLocks((prev) => toggleCaptureFieldLock(prev, key));
+  }, []);
   // All photos for this item. capturedImages[0] is the cover (the only one AI reads);
   // the rest are extra angles/back shots stored with the item.
   const [capturedImages, setCapturedImages] = useState<File[]>([]);
@@ -329,6 +388,25 @@ export default function CapturePage() {
   // re-scanning a barcode from the review screen.
   const [isCameraPanelOpen, setIsCameraPanelOpen] = useState(false);
 
+
+  // Load remembered locks/values once on mount, and pre-fill any locked fields.
+  useEffect(() => {
+    const state = readCaptureAddState();
+    setLocks(state.locks);
+    const locked = applyCaptureLockedValues(state.rememberedValues, state.locks);
+    if (Object.keys(locked).length) {
+      setFields((prev) => ({ ...prev, ...locked }));
+    }
+  }, []);
+
+  // Persist locks + the current value of any locked field, so it carries to
+  // the next item (this session or a fresh /capture visit later).
+  useEffect(() => {
+    writeCaptureAddState({
+      locks,
+      rememberedValues: buildCaptureRememberedValues(fields, locks),
+    });
+  }, [locks, fields]);
 
   /* ── AI flow triggered by photo capture ── */
   // Capture-first: attach the photo instantly. AI identify is opt-in (the
@@ -874,7 +952,7 @@ export default function CapturePage() {
                   >
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div>
-                        <label className={LABEL_CLS}>Item Name *</label>
+                        <LockableLabel label="Item Name *" locked={locks.title} onToggleLock={() => toggleFieldLock("title")} />
                         <input
                           className={INPUT_CLS}
                           style={INPUT_STYLE}
@@ -884,7 +962,7 @@ export default function CapturePage() {
                         />
                       </div>
                       <div>
-                        <label className={LABEL_CLS}>Alternate Name</label>
+                        <LockableLabel label="Alternate Name" locked={locks.subtitle} onToggleLock={() => toggleFieldLock("subtitle")} />
                         <input
                           className={INPUT_CLS}
                           style={INPUT_STYLE}
@@ -894,7 +972,7 @@ export default function CapturePage() {
                         />
                       </div>
                       <div>
-                        <label className={LABEL_CLS}>Set / Series</label>
+                        <LockableLabel label="Set / Series" locked={locks.number} onToggleLock={() => toggleFieldLock("number")} />
                         <input
                           className={INPUT_CLS}
                           style={INPUT_STYLE}
@@ -904,7 +982,7 @@ export default function CapturePage() {
                         />
                       </div>
                       <div>
-                        <label className={LABEL_CLS}>Certification Company</label>
+                        <LockableLabel label="Certification Company" locked={locks.certCompany} onToggleLock={() => toggleFieldLock("certCompany")} />
                         <select
                           className={INPUT_CLS}
                           style={INPUT_STYLE}
@@ -985,7 +1063,7 @@ export default function CapturePage() {
                   >
                     <div className="grid gap-3 sm:grid-cols-3">
                       <div>
-                        <label className={LABEL_CLS}>Universe</label>
+                        <LockableLabel label="Universe" locked={locks.universe} onToggleLock={() => toggleFieldLock("universe")} />
                         <select
                           className={INPUT_CLS}
                           style={INPUT_STYLE}
@@ -1003,7 +1081,7 @@ export default function CapturePage() {
                         </select>
                       </div>
                       <div>
-                        <label className={LABEL_CLS}>Category</label>
+                        <LockableLabel label="Category" locked={locks.categoryLabel} onToggleLock={() => toggleFieldLock("categoryLabel")} />
                         <select
                           className={INPUT_CLS}
                           style={INPUT_STYLE}
@@ -1020,7 +1098,7 @@ export default function CapturePage() {
                         </select>
                       </div>
                       <div>
-                        <label className={LABEL_CLS}>Subcategory</label>
+                        <LockableLabel label="Subcategory" locked={locks.subcategoryLabel} onToggleLock={() => toggleFieldLock("subcategoryLabel")} />
                         <select
                           className={INPUT_CLS}
                           style={INPUT_STYLE}
@@ -1043,7 +1121,7 @@ export default function CapturePage() {
                     open={openSections.has(3)}
                     onToggle={() => toggleSection(3)}
                   >
-                    <label className={LABEL_CLS}>Storage location</label>
+                    <LockableLabel label="Storage location" locked={locks.storageLocation} onToggleLock={() => toggleFieldLock("storageLocation")} />
                     <input
                       className={INPUT_CLS}
                       style={INPUT_STYLE}
