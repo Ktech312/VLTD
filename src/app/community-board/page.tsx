@@ -7,29 +7,16 @@ import { resolveAvatarSrc } from "@/lib/avatarResolve";
 
 /* =========================================================================
    VLT LOUNGE — the collector clubhouse.
-   Visual pass (Brushed Console theme, mock data). Backend + real links wired
-   in a later pass. No sidebar; full-width 3-column clubhouse.
+   Brushed Console theme. Most sections are wired to Supabase (MVP, Universe,
+   New Members, Collector Signals, Drops, Room of the Night). Lounge Live /
+   Hot Threads still need a discussions/posts backend — honest empty states
+   until that exists. No sidebar; full-width 3-column clubhouse.
 ========================================================================= */
 
 const CYAN = "#4FD3EE";
 const GREEN = "#54C98A";
 
-/* ── Mock data ───────────────────────────────────────────────── */
 const LIVE_TABS = ["All Activity", "Discussions", "Collector Q&A", "Item Chatter"] as const;
-
-const FEED = [
-  { tag: "Discussion", time: "18m ago", title: "Silver Age vs Bronze Age: where's the smart money in 2024?", replies: 23, views: 142, hue: 8 },
-  { tag: "Collector Q&A", time: "42m ago", title: "Thoughts on this 1986 Fleer Jordan PSA 9?", replies: 12, views: 85, hue: 212 },
-  { tag: "Item Chatter", time: "1h ago", title: "First press UK vinyl — tiny stamper marks, big sound?", replies: 9, views: 63, hue: 260 },
-  { tag: "Market Watch", time: "2h ago", title: "Hulk #181 continuing to climb", replies: 7, views: 111, hue: 130 },
-];
-
-const HOT = [
-  { t: "Best comic pickups under $500 right now?", n: 56 },
-  { t: "Are modern comics finally having their moment?", n: 38 },
-  { t: "Which rookie cards are you buying now?", n: 42 },
-  { t: "Top 5 albums every collection needs", n: 31 },
-];
 
 /* Real leaderboard/member types (wired from Supabase below). */
 type MvpRow = { profile_id: string; name: string; username: string; avatarEmoji: string; items: number };
@@ -293,9 +280,6 @@ export default function VltLoungePage() {
           <section className="rounded-[8px]" style={CARD}>
             <div className="flex items-center gap-2 px-4 pt-3.5">
               <Label>Lounge Live</Label>
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold" style={{ color: GREEN }}>
-                <span className="h-1.5 w-1.5 rounded-full" style={{ background: GREEN, boxShadow: `0 0 8px ${GREEN}` }} />128 online
-              </span>
             </div>
             <div className="mt-2.5 flex gap-4 overflow-x-auto px-4 no-scrollbar" style={{ borderBottom: "1px solid var(--border)" }}>
               {LIVE_TABS.map((t) => {
@@ -308,27 +292,9 @@ export default function VltLoungePage() {
                 );
               })}
             </div>
-            <ul className="divide-y" style={{ borderColor: "var(--border)" }}>
-              {FEED.map((f) => (
-                <li key={f.title} className="flex gap-3 px-4 py-3.5">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: CYAN }}>{f.tag}</span>
-                      <span className="text-[10px]" style={{ color: "var(--muted2)" }}>{f.time}</span>
-                    </div>
-                    <p className="mt-1 text-[13.5px] font-bold leading-snug">{f.title}</p>
-                    <div className="mt-1.5 flex gap-3 text-[11px]" style={{ color: "var(--muted2)" }}>
-                      <span>{f.replies} replies</span>
-                      <span>{f.views} views</span>
-                    </div>
-                  </div>
-                  <Tile hue={f.hue} className="h-14 w-14 shrink-0 rounded-[6px]" />
-                </li>
-              ))}
-            </ul>
-            <button type="button" className="w-full px-4 py-3 text-left text-[12px] font-bold" style={{ color: CYAN, borderTop: "1px solid var(--border)" }}>
-              View all activity →
-            </button>
+            <div className="px-4 py-6 text-center text-[12px]" style={{ color: "var(--muted2)" }}>
+              No live activity yet. Discussions are coming to the Lounge soon.
+            </div>
           </section>
 
           <section className="rounded-[8px]" style={CARD}>
@@ -336,14 +302,9 @@ export default function VltLoungePage() {
               <Label>Hot Threads</Label>
               <More />
             </div>
-            <ul>
-              {HOT.map((h) => (
-                <li key={h.t} className="flex items-center justify-between gap-3 px-4 py-2.5 text-[12.5px]" style={{ borderBottom: "1px solid var(--border)" }}>
-                  <span className="min-w-0 truncate font-semibold" style={{ color: "var(--fg)" }}>{h.t}</span>
-                  <span className="shrink-0 rounded-[4px] px-1.5 py-0.5 text-[11px] font-bold" style={{ background: "var(--pill)", color: "var(--muted)" }}>{h.n}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="px-4 py-6 text-center text-[12px]" style={{ color: "var(--muted2)" }}>
+              No hot threads yet.
+            </div>
           </section>
         </div>
 

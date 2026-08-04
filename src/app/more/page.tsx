@@ -9,6 +9,8 @@ import { getCurrentUser, getOnboardingStatus } from "@/lib/auth";
 import { loadGalleries, type Gallery } from "@/lib/galleryModel";
 import { isOwnerEmail } from "@/lib/ownerAccess";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
+import { getFollowerCount } from "@/lib/follows";
+import { readHistory, sliceHistory } from "@/lib/valueHistory";
 
 const gold = "#C8CDD2";
 const goldBright = "#C8CDD2";
@@ -317,12 +319,26 @@ function PanelLink({ href, children }: { href: string; children: ReactNode }) {
   );
 }
 
-function StatStrip({ value, items, galleries, memberSince }: { value: number; items: number; galleries: number; memberSince: string }) {
+function StatStrip({
+  value,
+  items,
+  galleries,
+  memberSince,
+  gainPct,
+  followers,
+}: {
+  value: number;
+  items: number;
+  galleries: number;
+  memberSince: string;
+  gainPct: number | null;
+  followers: number | null;
+}) {
   const stats = [
-    { label: "Collection Value", value: money(value), sub: "+12.6% (30D)", tone: "cyan" },
+    { label: "Collection Value", value: money(value), sub: gainPct === null ? "30D" : `${gainPct >= 0 ? "+" : ""}${gainPct.toFixed(1)}% (30D)`, tone: "cyan" },
     { label: "Items", value: String(items), sub: "Total" },
     { label: "Exhibitions", value: String(galleries), sub: "Public" },
-    { label: "Followers", value: "276", sub: "Total" },
+    { label: "Followers", value: followers === null ? "--" : String(followers), sub: "Total" },
     { label: "Member Since", value: memberSince, sub: "1 year" },
   ];
   return (
@@ -353,6 +369,7 @@ export default function MorePage() {
     profileType: "personal",
   });
   const [canUseOwnerTools, setCanUseOwnerTools] = useState(false);
+  const [followerCount, setFollowerCount] = useState<number | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -374,6 +391,9 @@ export default function MorePage() {
           const profileGalleries = loadGalleries({ profileId });
           setItems(profileItems.length > 0 ? profileItems : loadItems({ includeAllProfiles: true }));
           setGalleries(profileGalleries.length > 0 ? profileGalleries : loadGalleries({ includeAllProfiles: true }));
+          void getFollowerCount(profileId).then((count) => {
+            if (active) setFollowerCount(count);
+          });
           return;
         }
       } catch {
@@ -390,7 +410,14 @@ export default function MorePage() {
 
   const totalValue = useMemo(() => items.reduce((sum, item) => sum + itemValue(item), 0), [items]);
   const totalCost = useMemo(() => items.reduce((sum, item) => sum + itemCost(item), 0), [items]);
-  const gain = totalCost > 0 ? ((totalValue - totalCost) / totalCost) * 100 : 12.6;
+  const thirtyDaySeries = useMemo(() => sliceHistory(readHistory(), "30d").map((point) => point.totalValue), [items]);
+  const gainPct = useMemo(() => {
+    if (thirtyDaySeries.length >= 2 && thirtyDaySeries[0] > 0) {
+      return ((thirtyDaySeries[thirtyDaySeries.length - 1] - thirtyDaySeries[0]) / thirtyDaySeries[0]) * 100;
+    }
+    if (totalCost > 0) return ((totalValue - totalCost) / totalCost) * 100;
+    return null;
+  }, [thirtyDaySeries, totalCost, totalValue]);
   const publicGalleries = galleries.filter((gallery) => gallery.visibility === "PUBLIC").length || galleries.length;
   const isBusiness = profile.profileType === "business";
 
@@ -466,7 +493,7 @@ export default function MorePage() {
                       <p className="mt-2 max-w-[430px] text-[12px] leading-[1.55]" style={{ color: muted }}>Panels keep common actions here. Deep workflows still open as full pages when they need room.</p>
                     </div>
                     <div className="w-full max-w-[690px]">
-                      <StatStrip value={totalValue} items={items.length} galleries={publicGalleries} memberSince={profile.memberSince} />
+                      <StatStrip value={totalValue} items={items.length} galleries={publicGalleries} memberSince={profile.memberSince} gainPct={gainPct} followers={followerCount} />
                     </div>
                   </div>
 
@@ -543,7 +570,7 @@ export default function MorePage() {
               <div className="p-3">
                 <div className="text-[9px] uppercase" style={{ color: dim }}>Value</div>
                 <div className="text-[20px] font-semibold" style={{ color: cyan }}>{money(totalValue)}</div>
-                <div className="text-[10px]" style={{ color: green }}>+{gain.toFixed(1)}% (30D)</div>
+                <div className="text-[10px]" style={{ color: green }}>{gainPct === null ? "30D" : `${gainPct >= 0 ? "+" : ""}${gainPct.toFixed(1)}% (30D)`}</div>
               </div>
               <div className="border-l p-3" style={{ borderColor: borderSoft }}>
                 <div className="text-[9px] uppercase" style={{ color: dim }}>Items</div>

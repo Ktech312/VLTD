@@ -518,7 +518,7 @@ export default function WatchlistPage() {
             </Link>
           </div>
 
-          <div className="mt-4 grid rounded-[7px] border border-[rgba(203,208,213,0.22)] md:grid-cols-[1.8fr_repeat(5,1fr)]" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
+          <div className="mt-4 grid rounded-[7px] border border-[rgba(203,208,213,0.22)] md:grid-cols-[1.8fr_repeat(4,1fr)]" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
             <div className="flex gap-3 border-r border-[rgba(203,208,213,0.16)] p-4">
               <div className="grid h-10 w-10 place-items-center rounded-full border border-[rgba(203,208,213,0.34)]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
                 <Glyph name="target" size={18} />
@@ -534,7 +534,6 @@ export default function WatchlistPage() {
               [entries.length, "Watching", "info"],
               [alertCount, "Alerts active", "info"],
               [money(totalValue), "Watchlist value", "info"],
-              ["-$2,340", "7d change", "danger"],
               [priceDropOpps ? money(priceDropOpps) : "$0", "Price drop opps", "success"],
             ].map(([value, label, tone]) => (
               <div key={label} className="grid place-items-center border-r border-[rgba(203,208,213,0.12)] p-4 text-center last:border-r-0">
