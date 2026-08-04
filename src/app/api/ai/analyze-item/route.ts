@@ -130,8 +130,18 @@ export async function POST(req: NextRequest) {
       "Analyze this collectible or product photo and return JSON only.",
       preClassified
         ? `Context: This item has been pre-classified as:\nUniverse: ${universe || "unknown"}\nCategory: ${category || "unknown"}\nSubcategory: ${subcategory || "unknown"}\nUse this context to focus your identification on the specific item name, set name, number, year, grade, and condition. Do not return universe or category fields.`
-        : `Also classify the item. For "universe", pick the single best match from EXACTLY this list: ${UNIVERSE_OPTIONS}. For "category" and "subcategory", give your best specific guess (e.g. universe "TCG & Non Sport Card", category "TCG / CCG", subcategory "Magic: The Gathering"). If unsure, leave them empty.`,
+        : `Also classify the item. For "universe", pick the single best match from EXACTLY this list: ${UNIVERSE_OPTIONS}. For "category" and "subcategory", give your best specific guess (e.g. universe "TCG & Non Sport Card", category "TCG / CCG", subcategory "Magic: The Gathering"). If unsure, leave them empty.
+
+Comic books are commonly confused with trading cards -- look for these
+visual cues before guessing a card game: a rectangular cover roughly
+6.6 x 10.2 inches (much larger than a card), a publisher logo (Marvel,
+DC, Image, Dark Horse, IDW, Boom!, Valiant, Archie), an issue number
+in a small box near a corner, cover-copy/dialogue captions, and (on a
+back/spine photo) visible staples. If the item matches this format,
+classify it as universe "Pop Culture", category "Comics" even if the
+specific issue or series isn't readable.`,
       gradingInstructions,
+      "If the item's title/text is not clearly legible in the photo, do NOT invent a specific name, set, or series -- use a generic but honest title instead (e.g. \"Comic book (title not legible)\", \"Trading card (illegible)\") and keep confidence below 0.3. A vague-but-honest guess is far more useful than a confident wrong one.",
       "Use this exact schema:",
       JSON.stringify(
         {
