@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { PillButton } from "@/components/ui/PillButton";
+import { Glyph } from "@/components/ui/Glyph";
 import { showToast } from "@/lib/toast";
 import { useSaveFeedback } from "@/lib/useSaveFeedback";
 import {
@@ -344,7 +345,9 @@ export default function UserProfilePage() {
                   @{profile.username || "collector"}
                 </div>
                 <div className="mt-2 text-sm text-[color:var(--muted)]">
-                  {profile.ageVerified ? "Age verified ✅" : "Age not verified"}
+                  {profile.ageVerified ? (
+                    <span className="inline-flex items-center gap-1">Age verified <Glyph name="check" size={13} /></span>
+                  ) : "Age not verified"}
                   {mounted && age !== null ? ` • Age ${age}` : ""}
                 </div>
               </div>
@@ -563,7 +566,9 @@ export default function UserProfilePage() {
                     }}
                     disabled={!canVerify}
                   >
-                    {profile.ageVerified ? "Verified ✅" : "Verify Age"}
+                    {profile.ageVerified ? (
+                      <span className="inline-flex items-center gap-1">Verified <Glyph name="check" size={13} /></span>
+                    ) : "Verify Age"}
                   </PillButton>
 
                   {profile.ageVerified ? (

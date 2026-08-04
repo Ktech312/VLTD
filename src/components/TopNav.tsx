@@ -8,6 +8,7 @@ import Image from "next/image";
 import AlertsBell from "@/components/AlertsBell";
 import CommandPalette from "@/components/CommandPalette";
 import { ThemePicker } from "@/components/ui/ThemePicker";
+import { Glyph } from "@/components/ui/Glyph";
 import {
   getCurrentUser,
   initAuthListener,
@@ -698,7 +699,7 @@ function TopNavInner() {
                     className="flex h-7 w-7 items-center justify-center self-end rounded-lg text-sm"
                     style={{ background: "rgba(203,208,213,0.12)", border: "1px solid rgba(203,208,213,0.25)" }}
                   >
-                    🏛
+                    <Glyph name="exhibition" size={16} />
                   </div>
                   <div>
                     <p className="text-[10px] font-black leading-tight" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>

@@ -12,6 +12,7 @@ import InsurancePdfButton from "@/components/InsurancePdfButton";
 import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
 import ItemMedia from "@/components/ItemMedia";
 import DocumentsSection from "@/components/DocumentsSection";
+import { Glyph } from "@/components/ui/Glyph";
 import NotableBadge from "@/components/NotableBadge";
 import PricingMvpCard from "@/components/PricingMvpCard";
 import { PillButton } from "@/components/ui/PillButton";
@@ -795,7 +796,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                   className="mt-2 inline-flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
                   style={{ background: "var(--pill)", color: "var(--fg)" }}
                 >
-                  <span>📲</span> Export for Social
+                  <Glyph name="share" size={13} /> Export for Social
                 </button>
                 <button
                   type="button"
@@ -803,7 +804,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                   className="mt-1 inline-flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
                   style={{ background: "var(--pill)", color: "var(--fg)" }}
                 >
-                  <span>🔨</span>
+                  <Glyph name="gavel" size={13} />
                   {item.auctionStatus === "ACTIVE" ? "Manage Auction" : "Start Auction"}
                   {item.auctionStatus === "ACTIVE" && <AuctionCountdownChip item={item} />}
                 </button>
@@ -1234,7 +1235,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                     className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold ring-1 hover:ring-[color:var(--theme-gold)] transition"
                     style={{ background: "var(--pill)", borderColor: "var(--border)", color: "var(--muted)" }}
                   >
-                    <span>👥 {registryEntry.collectorCount} collector{registryEntry.collectorCount !== 1 ? "s" : ""} tracking</span>
+                    <span className="inline-flex items-center gap-1"><Glyph name="users" size={12} /> {registryEntry.collectorCount} collector{registryEntry.collectorCount !== 1 ? "s" : ""} tracking</span>
                     <span style={{ color: "var(--border)" }}>·</span>
                     <span style={{ color: "var(--theme-gold)" }}>View on Community Board →</span>
                   </Link>

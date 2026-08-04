@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { computeReadiness } from "@/components/ListingReadinessPanel";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
+import { Glyph } from "@/components/ui/Glyph";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -62,7 +63,7 @@ function ItemRow({ item }: { item: VaultItem }) {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={imageUrl} alt="" className="h-full w-full object-cover" draggable={false} />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-xl opacity-30">🗝️</div>
+              <div className="flex h-full w-full items-center justify-center opacity-30"><Glyph name="frame" size={20} /></div>
             )}
           </div>
         </Link>
@@ -203,7 +204,7 @@ export default function ReadinessPage() {
             className="rounded-2xl px-6 py-14 text-center ring-1"
             style={{ background: "var(--surface)", borderColor: "var(--border)" }}
           >
-            <div className="text-4xl">🏷️</div>
+            <div className="flex justify-center opacity-60"><Glyph name="tag" size={36} /></div>
             <div className="mt-4 text-base font-semibold" style={{ color: "var(--fg)" }}>
               No for-sale listings yet
             </div>

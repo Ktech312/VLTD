@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Glyph } from "@/components/ui/Glyph";
 
 import type { VisionAnalysisResult } from "@/lib/ai/openaiVision";
 import {
@@ -176,7 +177,7 @@ export default function ScanVerifySheet({
                           className="flex w-full items-center gap-1.5 rounded-lg px-2 py-1 text-left text-[11px] font-medium"
                           style={{ background: "rgba(245,158,11,0.12)", color: "#f59e0b" }}
                         >
-                          <span aria-hidden>⚑</span>
+                          <Glyph name="warning" size={12} />
                           AI thinks this is {UNIVERSE_LABEL[d.aiUniverse]} — tap to switch
                         </button>
                       ) : null}

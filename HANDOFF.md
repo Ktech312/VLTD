@@ -327,12 +327,24 @@ write that migration blind since it's payment-adjacent data.
     `onboarding/page.tsx` (the three remaining raw `UNIVERSE_ICON[key]`
     sites), `ai/drafts`/`ai/review` missing-fields warning chip, the museum
     Announce button, `ThemeToggle`, `CameraCapturePanel`'s soft-image
-    warning, the auction countdown chip, and the public profile's
-    vault-not-found lock icon. Still open: a longer tail of lower-priority/
-    more speculative emoji sites (shop.tsx product icons, HomeClient social
-    platform icons, SeasonalBanner decorative icons, the v/[profileId]
-    UNIVERSE_EMOJI map) — flagged for a session with visual verification
-    available, not fixed blind.
+    warning, the auction countdown chip, the public profile's
+    vault-not-found lock icon, `vault/readiness` (missing-thumbnail + empty-
+    state icons), `TopNav`'s museum nav-card icon, the public `share/[itemId]`
+    missing-image placeholder, `account/billing`'s plan-star icon,
+    `ScanVerifySheet`'s AI-disagreement flag, `user/profile`'s two "age
+    verified ✅" chips, and `vault/item/[id]`'s Export-for-Social/
+    Start-Auction/Registry-collector-count icons (+ updated `guide/page.tsx`'s
+    doc text that quoted the old raw emoji). Deliberately left alone:
+    `vault/frames/page.tsx`'s "⭐ Key Item"/"🔥 HOT" stickers — that screen
+    rasterizes the live DOM to a downloadable PNG via html2canvas, so
+    swapping to an SVG glyph risks a compositing regression in the exported
+    image I can't verify without opening a browser; needs a visual pass, not
+    a blind edit. Also not touched: `kickstarter/page.tsx`'s 🚀 (no themed
+    glyph is a good semantic match for "rocket" yet), and the longer tail of
+    more speculative/design-heavy sites (shop.tsx's ~34 product icons,
+    HomeClient's social-platform brand icons, SeasonalBanner's decorative
+    seasonal icons, v/[profileId]'s expanded UNIVERSE_EMOJI map) — all need
+    real visual judgment, not a mechanical swap.
   - **Documents (§2C) — built, see that section.** EK's answer ("everything
     should be private unless shared") was a clear enough steer to build
     local-only rather than a decision that needed a Supabase dashboard call.
