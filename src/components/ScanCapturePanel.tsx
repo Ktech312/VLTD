@@ -22,6 +22,7 @@ import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import {
   getCategories,
   getDefaultCategory,
+  isUniverseKey,
   UNIVERSE_KEYS,
   UNIVERSE_LABEL,
   type UniverseKey,
@@ -53,6 +54,20 @@ const FRAME_LABELS: Record<FrameType, string> = {
 
 // Scan universes derived from taxonomy (BUILT_BOTANY excluded — scan AI not tuned for it).
 const UNIVERSES = UNIVERSE_KEYS.filter((k) => k !== "BUILT_BOTANY");
+
+// Remembers the last Universe picked here (mirrors CAMERA_PREF_KEY below). A
+// hardcoded default was a real footgun: leaving it on a stale Universe from a
+// prior session silently mis-hints the AI ("the collector says this is X") and
+// nothing catches the mismatch when the AI just goes along with a wrong hint.
+const SCAN_UNIVERSE_PREF_KEY = "vltd_scan_universe_v1";
+
+function readStoredScanUniverse(): UniverseKey | null {
+  if (typeof window === "undefined") return null;
+  const stored = window.localStorage.getItem(SCAN_UNIVERSE_PREF_KEY);
+  return stored && isUniverseKey(stored) && (UNIVERSES as string[]).includes(stored)
+    ? (stored as UniverseKey)
+    : null;
+}
 
 // Guard the AI call so a stalled network can't freeze the scanning overlay forever;
 // a timeout just leaves that item blank for manual entry.
@@ -196,8 +211,8 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
   const streamRef = useRef<MediaStream | null>(null);
 
   const [frameType, setFrameType] = useState<FrameType>("card");
-  const [universe, setUniverse] = useState<UniverseKey>("TCG");
-  const [categoryLabel, setCategoryLabel] = useState(getCategories("TCG")[0] ?? "Pokemon");
+  const [universe, setUniverse] = useState<UniverseKey>(() => readStoredScanUniverse() ?? "TCG");
+  const [categoryLabel, setCategoryLabel] = useState(() => getCategories(readStoredScanUniverse() ?? "TCG")[0] ?? "Pokemon");
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
   const [flashVisible, setFlashVisible] = useState(false);
@@ -461,7 +476,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       // subcategory), which we then match within the curator's chosen Universe.
       const vision = await withTimeout(
         analyzeImageWithVision(file, {
-          hints: `The collector says this item's Universe is "${UNIVERSE_LABEL[draft.universe]}". Identify the specific game/set/franchise and include category and subcategory.`,
+          hints: `The collector has "${UNIVERSE_LABEL[draft.universe]}" selected for this batch, but batches can contain mixed items -- trust what you actually see in the photo over that selection. If the item clearly is NOT ${UNIVERSE_LABEL[draft.universe]} (e.g. it's a comic book, a different card game, etc.), report the universe you actually observe instead of forcing it into ${UNIVERSE_LABEL[draft.universe]}. Identify the specific game/set/franchise and include category and subcategory.`,
         }),
         AI_SCAN_TIMEOUT_MS
       );
@@ -508,7 +523,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       // subcategory), which we then match within the curator's chosen Universe.
       const vision = await withTimeout(
         analyzeImageWithVision(file, {
-          hints: `The collector says this item's Universe is "${UNIVERSE_LABEL[draft.universe]}". Identify the specific game/set/franchise and include category and subcategory.`,
+          hints: `The collector has "${UNIVERSE_LABEL[draft.universe]}" selected for this batch, but batches can contain mixed items -- trust what you actually see in the photo over that selection. If the item clearly is NOT ${UNIVERSE_LABEL[draft.universe]} (e.g. it's a comic book, a different card game, etc.), report the universe you actually observe instead of forcing it into ${UNIVERSE_LABEL[draft.universe]}. Identify the specific game/set/franchise and include category and subcategory.`,
         }),
         AI_SCAN_TIMEOUT_MS
       );
@@ -579,6 +594,9 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
             onSelect={(v) => {
               setUniverse(v as UniverseKey);
               setCategoryLabel(getCategories(v as UniverseKey)[0] ?? "Collectors Choice");
+              if (typeof window !== "undefined") {
+                window.localStorage.setItem(SCAN_UNIVERSE_PREF_KEY, v as string);
+              }
             }}
           />
           <DropdownPill
