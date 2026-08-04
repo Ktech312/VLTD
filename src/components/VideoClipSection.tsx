@@ -126,7 +126,7 @@ export default function VideoClipSection({ item, userEmail, onSave }: Props) {
               type="button"
               onClick={() => void handleDelete()}
               disabled={deleting}
-              className="rounded-full px-3 py-1 text-[11px] font-semibold ring-1 transition hover:opacity-70"
+              className="rounded-[7px] px-3 py-1 text-[11px] font-semibold ring-1 transition hover:opacity-70"
               style={{
                 background: "transparent",
                 color: "#f87171",

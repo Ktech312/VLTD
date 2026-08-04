@@ -631,7 +631,7 @@ export default function PublicHomeClient() {
               <button
                 type="button"
                 onClick={() => setShowConsent(false)}
-                className="h-12 rounded-full border px-6 text-sm font-semibold transition"
+                className="h-12 rounded-[8px] border px-6 text-sm font-semibold transition"
                 style={{ borderColor: 'var(--border)', background: 'var(--pill)', color: 'var(--muted)' }}
               >
                 Cancel

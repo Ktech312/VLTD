@@ -7,6 +7,7 @@ import { createProfile, getOnboardingStatus, setStoredActiveProfileId } from "@/
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL, UNIVERSE_ICON } from "@/lib/taxonomy";
 import { clearOnboardingDraft, loadOnboardingDraft, saveOnboardingDraft } from "@/lib/onboardingDraft";
+import { PillButton } from "@/components/ui/PillButton";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 // Realistic preset avatars — the same illustrated set the app renders elsewhere
@@ -101,7 +102,7 @@ function GoldButton({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="inline-flex h-12 items-center rounded-full px-6 text-sm font-black text-[#0B0B0B] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+      className="inline-flex h-12 items-center rounded-[8px] px-6 text-sm font-black text-[#0B0B0B] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
       style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
     >
       {children}
@@ -116,15 +117,7 @@ function GhostButton({
   children: React.ReactNode;
   onClick?: () => void;
 }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex h-12 items-center rounded-full border border-[color:var(--border)] bg-vault-card px-6 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
-    >
-      {children}
-    </button>
-  );
+  return <PillButton onClick={onClick}>{children}</PillButton>;
 }
 
 function AvatarThumb({ id, size = 40 }: { id: string; size?: number }) {

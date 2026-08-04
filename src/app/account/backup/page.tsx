@@ -8,6 +8,7 @@ import { getAllLocalItems } from "@/lib/vaultModel";
 import { syncAllItemsToCloud, restoreLocalVaultFromCloud } from "@/lib/vaultSyncQueue";
 import { fetchVaultItemsFromSupabase } from "@/lib/vaultCloud";
 import { hasSupabaseEnv } from "@/lib/vaultCloud";
+import { PillButton } from "@/components/ui/PillButton";
 
 export default function BackupPage() {
   const [access, setAccess] = useState<"checking" | "allowed" | "blocked">("checking");
@@ -157,8 +158,7 @@ export default function BackupPage() {
             Replaces this device&apos;s copy of the <b>active profile</b> with what&apos;s in the cloud.
             Use this if items look mis-assigned. Switch to the profile you want to restore first.
           </p>
-          <button
-            type="button"
+          <PillButton
             onClick={async () => {
               if (busy) return;
               if (!window.confirm("Replace this device's local copy of the active profile with the cloud version?")) return;
@@ -175,11 +175,10 @@ export default function BackupPage() {
               }
             }}
             disabled={busy}
-            className="mt-3 flex h-10 w-full items-center justify-center rounded-full text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)] disabled:opacity-40"
-            style={{ color: "var(--fg)" }}
+            className="mt-3 w-full"
           >
             Restore active profile from cloud
-          </button>
+          </PillButton>
         </div>
 
         <div className="mt-6 text-center">

@@ -105,7 +105,7 @@ function ItemRow({ item }: { item: VaultItem }) {
             <Link
               key={c.key}
               href={c.actionHref ?? `/vault/item/${item.id}`}
-              className="rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 transition hover:brightness-110"
+              className="rounded-[7px] px-2 py-0.5 text-[10px] font-semibold ring-1 transition hover:brightness-110"
               style={{ background: "rgba(248,113,113,0.10)", color: "#f87171", borderColor: "rgba(248,113,113,0.25)" }}
             >
               + {c.label}
@@ -115,7 +115,7 @@ function ItemRow({ item }: { item: VaultItem }) {
             <Link
               key={c.key}
               href={c.actionHref ?? `/vault/item/${item.id}`}
-              className="rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 transition hover:brightness-110"
+              className="rounded-[7px] px-2 py-0.5 text-[10px] font-semibold ring-1 transition hover:brightness-110"
               style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
             >
               + {c.label}

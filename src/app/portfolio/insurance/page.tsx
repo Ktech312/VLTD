@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
+import { PillButton } from "@/components/ui/PillButton";
 
 function clamp(n: number) {
   return Number.isFinite(n) ? n : 0;
@@ -59,20 +60,14 @@ export default function InsuranceReportPage() {
             >
               ← Back to Portfolio
             </Link>
-            <Link
-              href="/vault"
-              className="inline-flex h-10 items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]"
-            >
+            <PillButton href="/vault">
               Open Exhibitions
-            </Link>
+            </PillButton>
           </div>
 
-          <button
-            onClick={onPrint}
-            className="inline-flex h-10 items-center rounded-full bg-[color:var(--pill-active-bg)] px-4 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)] hover:opacity-95"
-          >
+          <PillButton variant="active" onClick={onPrint}>
             Print / Save PDF
-          </button>
+          </PillButton>
         </div>
 
         {/* Report header */}

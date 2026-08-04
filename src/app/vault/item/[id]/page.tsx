@@ -13,6 +13,7 @@ import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
 import ItemMedia from "@/components/ItemMedia";
 import NotableBadge from "@/components/NotableBadge";
 import PricingMvpCard from "@/components/PricingMvpCard";
+import { PillButton } from "@/components/ui/PillButton";
 import ShareBar from "@/components/ShareBar";
 import SocialExportSheet from "@/components/SocialExportSheet";
 import AutoSharePrompt from "@/components/AutoSharePrompt";
@@ -790,7 +791,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 <button
                   type="button"
                   onClick={() => setSocialExportOpen(true)}
-                  className="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
                   style={{ background: "var(--pill)", color: "var(--fg)" }}
                 >
                   <span>📲</span> Export for Social
@@ -798,7 +799,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 <button
                   type="button"
                   onClick={() => setAuctionOpen(true)}
-                  className="mt-1 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
+                  className="mt-1 inline-flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
                   style={{ background: "var(--pill)", color: "var(--fg)" }}
                 >
                   <span>🔨</span>
@@ -822,13 +823,9 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
             {displayedSale ? (
               <div className="mt-2">
-                <button
-                  type="button"
-                  onClick={() => void handleReturnToVault()}
-                  className="inline-flex h-10 items-center rounded-full bg-gold/15 px-4 text-sm font-medium text-cyan-100 ring-1 ring-gold/25"
-                >
+                <PillButton onClick={() => void handleReturnToVault()} style={{ background: 'rgba(203,208,213,0.15)', color: '#67E8F9' }}>
                   Return to Vault
-                </button>
+                </PillButton>
               </div>
             ) : null}
 
@@ -1119,13 +1116,9 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => void handleSaveBasicRecord()}
-                className="inline-flex h-10 items-center rounded-full bg-gold/15 px-4 text-sm font-medium text-cyan-100 ring-1 ring-gold/25"
-              >
+              <PillButton onClick={() => void handleSaveBasicRecord()} style={{ background: 'rgba(203,208,213,0.15)', color: '#67E8F9' }}>
                 Save basic record
-              </button>
+              </PillButton>
               {recordMessage ? <div className="text-sm text-[color:var(--muted)]">{recordMessage}</div> : null}
             </div>
           </Section>
@@ -1375,25 +1368,19 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               This will permanently remove the item from your vault. This cannot be undone.
             </p>
             <div className="mt-5 flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setDeleteConfirm(false)}
-                className="flex-1 rounded-full py-2.5 text-sm font-semibold ring-1 transition"
-                style={{ background: "var(--pill)", borderColor: "var(--border)", color: "var(--fg)" }}
-              >
+              <PillButton onClick={() => setDeleteConfirm(false)} className="flex-1">
                 Cancel
-              </button>
-              <button
-                type="button"
+              </PillButton>
+              <PillButton
                 onClick={() => {
                   deleteVaultItem(item.id);
                   router.replace("/vault");
                 }}
-                className="flex-1 rounded-full py-2.5 text-sm font-semibold transition"
-                style={{ background: "rgba(248,113,113,0.15)", color: "rgb(248,113,113)", border: "1px solid rgba(248,113,113,0.35)" }}
+                className="flex-1"
+                style={{ background: "rgba(248,113,113,0.15)", color: "rgb(248,113,113)" }}
               >
                 Delete Forever
-              </button>
+              </PillButton>
             </div>
           </div>
         </div>

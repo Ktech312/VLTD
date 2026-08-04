@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import CameraCapturePanel from "@/components/CameraCapturePanel";
+import { PillButton } from "@/components/ui/PillButton";
 import { analyzeImageWithVision, type VisionAnalysisResult } from "@/lib/ai/openaiVision";
 import { resolveVisionTaxonomy } from "@/lib/visionTaxonomy";
 import { scanBarcodeFromFile } from "@/lib/scanners/barcodeScanner";
@@ -646,16 +647,12 @@ export default function CapturePage() {
                     {errorMsg || "The image may be unclear or the item is unrecognized."}
                   </p>
                   <div className="mt-5 flex flex-wrap gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setPhase("idle")}
-                      className="inline-flex min-h-10 items-center justify-center rounded-full border border-[color:var(--border)] bg-vault-card px-5 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
-                    >
+                    <PillButton onClick={() => setPhase("idle")}>
                       ← Try again
-                    </button>
+                    </PillButton>
                     <Link
                       href="/vault/add"
-                      className="inline-flex min-h-10 items-center justify-center rounded-full px-5 text-sm font-black text-[#0B0B0B]"
+                      className="inline-flex min-h-10 items-center justify-center rounded-[8px] px-5 text-sm font-black text-[#0B0B0B]"
                       style={{
                         background: "var(--theme-gold-gradient)",
                         boxShadow: "var(--theme-gold-glow)",
@@ -782,8 +779,8 @@ export default function CapturePage() {
                           <div className="text-sm font-semibold text-text-primary">Add a photo — optional</div>
                           <p className="max-w-[240px] text-xs leading-5 text-[color:var(--muted)]">Snap or upload one — then tap <b className="font-semibold text-[color:var(--fg)]">Identify</b> to auto-fill, or just type the details in. No photo required.</p>
                           <div className="flex flex-wrap justify-center gap-2">
-                            <button type="button" onClick={() => setIsCameraPanelOpen(true)} className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold text-[#0B0B0B]" style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}>Take photo</button>
-                            <button type="button" onClick={() => uploadInputRef.current?.click()} className="inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.08))]" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}>Upload</button>
+                            <button type="button" onClick={() => setIsCameraPanelOpen(true)} className="inline-flex items-center gap-1.5 rounded-[8px] px-4 py-2 text-xs font-bold text-[#0B0B0B]" style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}>Take photo</button>
+                            <button type="button" onClick={() => uploadInputRef.current?.click()} className="inline-flex items-center gap-1.5 rounded-[8px] border px-4 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.08))]" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}>Upload</button>
                           </div>
                         </div>
                       )}

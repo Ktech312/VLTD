@@ -2,7 +2,6 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import UniverseRail from "@/components/UniverseRail";
 import SwipeStack from "@/components/SwipeStack";
@@ -1222,15 +1221,14 @@ export default function VaultInner() {
 
             {hasApplied ? <PillButton onClick={clearApplied}>Clear</PillButton> : null}
 
-            <Link
+            <PillButton
               href="/vault/add"
               onClick={() => {
                 window.localStorage.setItem("vltd_drop_autostart_v1", "1");
               }}
-              className="inline-flex min-h-[44px] items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-semibold ring-1 ring-[color:var(--border)]"
             >
               Drop Mode
-            </Link>
+            </PillButton>
 
             <PillButton variant="primary" onClick={goQuickAdd}>
               + Quick Add
@@ -1745,19 +1743,13 @@ export default function VaultInner() {
                     <div className="hidden text-xs text-[color:var(--muted2)] sm:block">Bulk mode: stays open after save</div>
                   )}
 
-                  <button
+                  <PillButton
                     onClick={saveNewItem}
                     disabled={!newTitle.trim()}
-                    className={[
-                      "min-h-[44px] rounded-[8px] px-4 py-2 text-[16px] font-semibold sm:text-sm",
-                      newTitle.trim()
-                        ? "bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)] hover:opacity-95"
-                        : "cursor-not-allowed bg-[color:var(--pill)] text-[color:var(--muted2)] ring-1 ring-[color:var(--border)]",
-                    ].join(" ")}
-                    type="button"
+                    variant={newTitle.trim() ? "active" : "default"}
                   >
                     {bulkAllowed && bulkEnabled ? "Save + Next" : "Save Item"}
-                  </button>
+                  </PillButton>
                 </div>
               </div>
             </div>

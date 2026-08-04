@@ -482,7 +482,7 @@ export default function BulkUploadPage() {
                     type="button"
                     disabled={!universe || (profileId !== "" && remaining === 0)}
                     onClick={() => void runScan()}
-                    className="inline-flex min-h-11 items-center justify-center rounded-full px-6 text-sm font-black text-[#0B0B0B] disabled:opacity-40"
+                    className="inline-flex min-h-11 items-center justify-center rounded-[8px] px-6 text-sm font-black text-[#0B0B0B] disabled:opacity-40"
                     style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
                   >
                     Scan with AI to fill details
@@ -491,7 +491,7 @@ export default function BulkUploadPage() {
                     type="button"
                     disabled={!universe}
                     onClick={skipToManual}
-                    className="inline-flex min-h-11 items-center justify-center rounded-full border px-6 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary disabled:opacity-40"
+                    className="inline-flex min-h-11 items-center justify-center rounded-[8px] border px-6 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary disabled:opacity-40"
                     style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}
                   >
                     Skip — I&apos;ll fill in by hand
@@ -667,7 +667,7 @@ export default function BulkUploadPage() {
                   type="button"
                   disabled={committing || scanningId !== null}
                   onClick={() => void addAllToVault()}
-                  className="inline-flex min-h-12 items-center justify-center rounded-full px-7 text-sm font-black text-[#0B0B0B] disabled:opacity-50"
+                  className="inline-flex min-h-12 items-center justify-center rounded-[8px] px-7 text-sm font-black text-[#0B0B0B] disabled:opacity-50"
                   style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
                 >
                   {committing ? "Adding…" : `Add all ${drafts.length} to Vault`}
@@ -676,7 +676,7 @@ export default function BulkUploadPage() {
                   type="button"
                   disabled={committing}
                   onClick={() => setPhase("pick")}
-                  className="inline-flex min-h-12 items-center justify-center rounded-full px-4 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
+                  className="inline-flex min-h-12 items-center justify-center rounded-[8px] px-4 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
                 >
                   ← Back
                 </button>

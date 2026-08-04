@@ -621,7 +621,7 @@ export default function SpreadsheetImportClient() {
                   type="button"
                   onClick={handleUndoLastImport}
                   disabled={importHistory.length === 0 || isImporting}
-                  className="shrink-0 rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] disabled:opacity-50"
+                  className="shrink-0 rounded-[7px] bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] disabled:opacity-50"
                 >
                   Undo last
                 </button>

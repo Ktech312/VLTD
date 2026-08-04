@@ -973,7 +973,7 @@ export default function GalleryPage() {
                   <button
                     type="button"
                     onClick={handleRegeneratePublicLink}
-                    className="vltd-selectable inline-flex min-h-[30px] items-center justify-center rounded-full bg-[color:var(--pill)] px-2 py-1 text-[9px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] xl:min-h-[28px]"
+                    className="vltd-selectable inline-flex min-h-[30px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-2 py-1 text-[9px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] xl:min-h-[28px]"
                   >
                     Regenerate
                   </button>
@@ -1097,7 +1097,7 @@ export default function GalleryPage() {
                           onClick={() => void handleAnnounce()}
                           disabled={announcing || announced}
                           title="Let your followers know you&#39;ve updated this exhibition"
-                          className="inline-flex min-h-[30px] items-center justify-center gap-1 rounded-full bg-[color:var(--pill)] px-3 py-1 text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-60"
+                          className="inline-flex min-h-[30px] items-center justify-center gap-1 rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-60"
                         >
                           {announced ? "✓ Announced" : announcing ? "Announcing…" : "📣 Announce"}
                         </button>
@@ -1114,7 +1114,7 @@ export default function GalleryPage() {
                         type="button"
                         onClick={cancelChanges}
                         disabled={!isDirty}
-                        className="inline-flex min-h-[30px] min-w-[104px] items-center justify-center rounded-full bg-[color:var(--pill)] px-3 py-1 text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-60"
+                        className="inline-flex min-h-[30px] min-w-[104px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-60"
                       >
                         Cancel Changes
                       </button>
@@ -1273,7 +1273,7 @@ export default function GalleryPage() {
                           <button
                             type="button"
                             onClick={() => handleDisableInviteToken(entry.token)}
-                            className="inline-flex min-h-[28px] shrink-0 items-center justify-center rounded-full bg-[color:var(--pill)] px-2.5 py-1 text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                            className="inline-flex min-h-[28px] shrink-0 items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-2.5 py-1 text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
                           >
                             Disable
                           </button>

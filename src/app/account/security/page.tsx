@@ -48,7 +48,7 @@ function Row({ label, value, action, actionLabel }: { label: string; value: stri
         <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>{value}</div>
       </div>
       {action && (
-        <button type="button" onClick={action} className="shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
+        <button type="button" onClick={action} className="shrink-0 rounded-[7px] px-4 py-1.5 text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
           {actionLabel ?? "Change"}
         </button>
       )}
@@ -149,7 +149,7 @@ export default function SecurityPage() {
                 <button
                   type="button"
                   onClick={async () => { await signOut(); window.location.href = "/login"; }}
-                  className="shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold ring-1"
+                  className="shrink-0 rounded-[7px] px-4 py-1.5 text-xs font-semibold ring-1"
                   style={{ background: "rgba(248,113,113,0.1)", color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}
                 >
                   Sign out all

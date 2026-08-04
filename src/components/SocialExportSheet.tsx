@@ -909,7 +909,7 @@ function ImageCardTab({ item }: { item: VaultItem }) {
           <div className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>Hashtags</div>
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => void copyHashtags()}
-              className="rounded-full px-2.5 py-1 text-[10px] font-semibold ring-1 transition"
+              className="rounded-[7px] px-2.5 py-1 text-[10px] font-semibold ring-1 transition"
               style={{ background: "var(--pill)", color: hashtagsCopied ? "#52C27A" : "var(--muted)", borderColor: hashtagsCopied ? "#52C27A" : "var(--border)" }}>
               {hashtagsCopied ? "✓ Copied" : "Copy all"}
             </button>

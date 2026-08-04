@@ -8,6 +8,7 @@ import {
   hasConfirmedAdultContent,
   type ReportContentType,
 } from "@/lib/publicSafety";
+import { PillButton } from "@/components/ui/PillButton";
 
 const REPORT_REASONS = [
   "Inappropriate content",
@@ -40,16 +41,12 @@ export function AdultContentGate({
             The owner marked this gallery as intended for adults. Confirm that you are 18 or older to continue.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <button
-              type="button"
-              onClick={handleConfirm}
-              className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)]"
-            >
+            <PillButton variant="active" onClick={handleConfirm}>
               I am 18+ — Continue
-            </button>
+            </PillButton>
             <a
               href="/"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[color:var(--pill)] px-5 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-[8px] bg-[color:var(--pill)] px-5 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
             >
               Leave
             </a>
@@ -124,7 +121,7 @@ export function ReportContentButton({
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="inline-flex min-h-[34px] items-center justify-center rounded-full bg-black/45 px-3 py-1 text-xs font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] backdrop-blur transition hover:bg-black/65"
+        className="inline-flex min-h-[34px] items-center justify-center rounded-[7px] bg-black/45 px-3 py-1 text-xs font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] backdrop-blur transition hover:bg-black/65"
       >
         {label}
       </button>
@@ -165,7 +162,7 @@ export function ReportContentButton({
             type="button"
             onClick={() => void submitReport()}
             disabled={isSubmitting}
-            className="mt-3 inline-flex min-h-[38px] w-full items-center justify-center rounded-full bg-red-500/15 px-4 text-sm font-semibold text-red-100 ring-1 ring-red-400/30 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-3 inline-flex min-h-[38px] w-full items-center justify-center rounded-[8px] bg-red-500/15 px-4 text-sm font-semibold text-red-100 ring-1 ring-red-400/30 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSubmitting ? "Submitting..." : "Submit Report"}
           </button>

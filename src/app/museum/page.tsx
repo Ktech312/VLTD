@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { type ChangeEvent, type PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { PillButton } from "@/components/ui/PillButton";
 function IconLayoutTemplate({ size = 24, style }: { size?: number; style?: Record<string, string | number> }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
@@ -961,23 +962,17 @@ export default function MuseumPage() {
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <button
-                type="button"
+              <PillButton
                 onClick={handleConfirmDelete}
                 disabled={isDeleting}
-                className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-[rgba(145,20,20,0.92)] px-5 py-2 text-sm font-semibold text-text-primary ring-1 ring-red-400/30 transition hover:bg-[rgba(170,24,24,1)] disabled:cursor-not-allowed disabled:opacity-60"
+                style={{ background: 'rgba(145,20,20,0.92)' }}
               >
                 {isDeleting ? "Deleting..." : "Yes Delete FOREVER"}
-              </button>
+              </PillButton>
 
-              <button
-                type="button"
-                onClick={handleCancelDelete}
-                disabled={isDeleting}
-                className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:cursor-not-allowed disabled:opacity-60"
-              >
+              <PillButton onClick={handleCancelDelete} disabled={isDeleting}>
                 Cancel, keep My Exhibit
-              </button>
+              </PillButton>
             </div>
           </div>
         </div>
@@ -1025,20 +1020,15 @@ export default function MuseumPage() {
             </select>
 
             <div className="mt-5 grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setGallerySettings(null)}
-                className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
-              >
+              <PillButton onClick={() => setGallerySettings(null)}>
                 Cancel
-              </button>
-              <button
-                type="button"
+              </PillButton>
+              <PillButton
                 onClick={handleSaveGallerySettings}
-                className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-gold/16 px-4 py-2 text-sm font-semibold text-cyan-100 ring-1 ring-cyan-300/30"
+                style={{ background: 'rgba(203,208,213,0.16)', color: '#67E8F9' }}
               >
                 Save
-              </button>
+              </PillButton>
             </div>
           </div>
         </div>

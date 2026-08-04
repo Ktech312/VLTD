@@ -409,7 +409,7 @@ export default function DiscoverSwipe({ open, onClose }: Props) {
               <button
                 type="button"
                 onClick={() => { setIndex(0); setDone(false); setLastAction(null); }}
-                className="rounded-full px-5 py-2.5 text-sm font-semibold ring-1 transition"
+                className="rounded-[8px] px-5 py-2.5 text-sm font-semibold ring-1 transition"
                 style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--fg)" }}
               >
                 Flip Again
@@ -417,7 +417,7 @@ export default function DiscoverSwipe({ open, onClose }: Props) {
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-full px-5 py-2.5 text-sm font-semibold transition"
+                className="rounded-[8px] px-5 py-2.5 text-sm font-semibold transition"
                 style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B" }}
               >
                 Done

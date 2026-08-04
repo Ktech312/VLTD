@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { Glyph, type GlyphName } from "@/components/ui/Glyph";
+import { PillButton } from "@/components/ui/PillButton";
 
 // A friendly "you haven't added anything yet" screen. Same look everywhere:
 // dark panel, themed glyph, a short message, and buttons to add an item.
@@ -38,20 +38,18 @@ export function EmptyVault({
           <p className="mx-auto mt-2 max-w-md text-sm text-[color:var(--muted)]">{message}</p>
           {showAddButtons ? (
             <div className="mt-6 flex justify-center gap-2">
-              <Link
+              <PillButton
                 href="/capture"
-                className="rounded-full px-5 py-2.5 text-sm font-semibold"
                 style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0B0B0B" }}
               >
                 Smart Scan
-              </Link>
-              <Link
+              </PillButton>
+              <PillButton
                 href="/vault/add"
-                className="rounded-full px-5 py-2.5 text-sm font-semibold"
-                style={{ border: "1px solid var(--border)", color: "var(--fg)" }}
+                style={{ background: "transparent", border: "1px solid var(--border)", color: "var(--fg)", boxShadow: "none" }}
               >
                 Add manually
-              </Link>
+              </PillButton>
             </div>
           ) : null}
         </div>

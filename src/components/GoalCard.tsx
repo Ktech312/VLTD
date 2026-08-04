@@ -181,7 +181,7 @@ export default function GoalCard({
           <button
             type="button"
             onClick={onAddToWishlist}
-            className="flex-1 rounded-full py-2 text-[12px] font-semibold ring-1 transition hover:brightness-110"
+            className="flex-1 rounded-[7px] py-2 text-[12px] font-semibold ring-1 transition hover:brightness-110"
             style={{
               background: "var(--surface)",
               borderColor: "var(--border)",
@@ -193,7 +193,7 @@ export default function GoalCard({
         )}
         <Link
           href={vaultBrowseHref}
-          className="rounded-full px-3 py-2 text-[12px] font-semibold ring-1 transition hover:brightness-110"
+          className="rounded-[7px] px-3 py-2 text-[12px] font-semibold ring-1 transition hover:brightness-110"
           style={{
             background: "var(--surface)",
             borderColor: "var(--border)",
@@ -205,7 +205,7 @@ export default function GoalCard({
         <button
           type="button"
           onClick={onDelete}
-          className="rounded-full px-3 py-2 text-[12px] ring-1 transition"
+          className="rounded-[7px] px-3 py-2 text-[12px] ring-1 transition"
           style={{
             background: "var(--surface)",
             borderColor: "var(--border)",

@@ -277,7 +277,7 @@ function ItemCard({
         </div>
         <Link
           href={`/vault/item/${encodeURIComponent(item.id)}`}
-          className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]"
+          className="inline-flex items-center gap-1 rounded-[7px] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]"
           style={{ background: "var(--pill)", color: "var(--fg)" }}
         >
           Edit item
@@ -285,7 +285,7 @@ function ItemCard({
         <button
           type="button"
           onClick={() => onMarkSold(item)}
-          className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition"
+          className="inline-flex items-center gap-1 rounded-[7px] px-3 py-1.5 text-xs font-semibold transition"
           style={{ background: "rgba(74,222,128,0.12)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.25)" }}
         >
           Mark sold

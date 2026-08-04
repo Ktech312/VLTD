@@ -58,7 +58,7 @@ export default function GalleryHero({
           <button
             type="button"
             onClick={onDelete}
-            className="rounded-full px-3 py-1.5 text-[11px] font-semibold backdrop-blur-sm transition hover:bg-red-500/20 hover:text-red-400"
+            className="rounded-[7px] px-3 py-1.5 text-[11px] font-semibold backdrop-blur-sm transition hover:bg-red-500/20 hover:text-red-400"
             style={{
               background: "rgba(0,0,0,0.45)",
               border: "1px solid rgba(255,255,255,0.12)",
@@ -71,7 +71,7 @@ export default function GalleryHero({
           <button
             type="button"
             onClick={onReport}
-            className="rounded-full px-3 py-1.5 text-[11px] font-semibold backdrop-blur-sm transition hover:bg-white/10"
+            className="rounded-[7px] px-3 py-1.5 text-[11px] font-semibold backdrop-blur-sm transition hover:bg-white/10"
             style={{
               background: "rgba(0,0,0,0.45)",
               border: "1px solid rgba(255,255,255,0.12)",
