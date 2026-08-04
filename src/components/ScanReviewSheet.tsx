@@ -1,6 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import {
+  getCategories,
+  getDefaultCategory,
+  isUniverseKey,
+  UNIVERSE_KEYS,
+  UNIVERSE_LABEL,
+  type UniverseKey,
+} from "@/lib/taxonomy";
+
+// Same set the scanner offers (BUILT_BOTANY excluded — scan AI not tuned for it).
+const REVIEW_UNIVERSES = UNIVERSE_KEYS.filter((k) => k !== "BUILT_BOTANY");
 
 export type StagedItem = {
   id: string;
@@ -8,6 +19,7 @@ export type StagedItem = {
   backObjectUrl?: string;
   categoryLabel: string;
   universe: string;
+  skipAi?: boolean;
 };
 
 type Props = {
@@ -17,9 +29,10 @@ type Props = {
   onUndo: (id: string) => void;
   onClose: () => void;
   onFinish: (approvedIds: string[]) => void;
+  onPatch: (id: string, patch: { universe?: UniverseKey; categoryLabel?: string; skipAi?: boolean }) => void;
 };
 
-export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onClose, onFinish }: Props) {
+export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onClose, onFinish, onPatch }: Props) {
   const remaining = items.filter((item) => !removed.has(item.id));
   const [preview, setPreview] = useState<{ front: string; back?: string; label: string } | null>(null);
 
@@ -98,22 +111,69 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
 
                   {/* Info */}
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold">
-                      Item {num}
-                      {isRemoved ? <span className="ml-1.5 text-xs font-normal text-red-400">removed</span> : null}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="truncate text-sm font-semibold">
+                        Item {num}
+                        {isRemoved ? <span className="ml-1.5 text-xs font-normal text-red-400">removed</span> : null}
+                      </div>
+                      <div className="shrink-0 text-[10px] text-[color:var(--muted)]">
+                        {item.backObjectUrl ? "Front + Back" : "Front only"}
+                      </div>
                     </div>
-                    <div className="mt-0.5 truncate text-xs text-[color:var(--muted)]">
-                      {item.categoryLabel || item.universe}
-                      {item.backObjectUrl ? " · Front + Back" : " · Front only"}
-                    </div>
+                    {!isRemoved ? (
+                      <div className="mt-1 grid grid-cols-2 gap-1.5">
+                        <select
+                          value={isUniverseKey(item.universe) ? item.universe : ""}
+                          onChange={(e) => {
+                            const nextUniverse = e.target.value as UniverseKey;
+                            onPatch(item.id, {
+                              universe: nextUniverse,
+                              categoryLabel: getDefaultCategory(nextUniverse),
+                            });
+                          }}
+                          className="h-7 rounded-md bg-[color:var(--surface)] px-1.5 text-[11px] ring-1 ring-[color:var(--border)] focus:outline-none"
+                        >
+                          {REVIEW_UNIVERSES.map((u) => (
+                            <option key={u} value={u}>{UNIVERSE_LABEL[u]}</option>
+                          ))}
+                        </select>
+                        <select
+                          value={item.categoryLabel}
+                          onChange={(e) => onPatch(item.id, { categoryLabel: e.target.value })}
+                          className="h-7 rounded-md bg-[color:var(--surface)] px-1.5 text-[11px] ring-1 ring-[color:var(--border)] focus:outline-none"
+                        >
+                          {isUniverseKey(item.universe) &&
+                            getCategories(item.universe).map((c) => (
+                              <option key={c} value={c}>{c}</option>
+                            ))}
+                        </select>
+                      </div>
+                    ) : (
+                      <div className="mt-0.5 truncate text-xs text-[color:var(--muted)]">
+                        {item.categoryLabel || item.universe}
+                      </div>
+                    )}
                   </div>
+
+                  {/* Skip AI — opposite side of the thumbnail */}
+                  {!isRemoved ? (
+                    <label className="flex shrink-0 flex-col items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(item.skipAi)}
+                        onChange={(e) => onPatch(item.id, { skipAi: e.target.checked })}
+                        className="h-4 w-4 accent-[color:var(--theme-gold,#C8CDD2)]"
+                      />
+                      Skip AI
+                    </label>
+                  ) : null}
 
                   {/* Action */}
                   {isRemoved ? (
                     <button
                       type="button"
                       onClick={() => onUndo(item.id)}
-                      className="shrink-0 rounded-full px-3 py-1.5 text-xs ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+                      className="shrink-0 rounded-[7px] px-3 py-1.5 text-xs ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
                     >
                       Undo
                     </button>
@@ -121,7 +181,7 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
                     <button
                       type="button"
                       onClick={() => onRemove(item.id)}
-                      className="shrink-0 rounded-full px-3 py-1.5 text-xs text-red-400 ring-1 ring-red-400/30 transition hover:bg-red-500/10"
+                      className="shrink-0 rounded-[7px] px-3 py-1.5 text-xs text-red-400 ring-1 ring-red-400/30 transition hover:bg-red-500/10"
                     >
                       Remove
                     </button>

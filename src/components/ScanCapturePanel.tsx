@@ -36,6 +36,7 @@ type CapturedItem = {
   categoryLabel: string;
   frontBlob: Blob;
   frontObjectUrl: string;
+  skipAi?: boolean;
 };
 
 const FRAME_ASPECT: Record<FrameType, number> = {
@@ -461,6 +462,10 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       const source = capturedItems.find((c) => c.id === draft.id);
       if (!source) continue;
 
+      // Curator already knows AI won't get this one — skip the call entirely,
+      // no scan spent, leave it blank for manual entry.
+      if (source.skipAi) continue;
+
       // Only stop early when we KNOW the cycle is spent; if the quota hasn't
       // loaded yet (null), let the server's atomic consume decide.
       if (metered && localRemaining !== null && localRemaining <= 0) {
@@ -577,7 +582,12 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     backObjectUrl: undefined,
     categoryLabel: item.categoryLabel,
     universe: item.universe,
+    skipAi: item.skipAi,
   }));
+
+  function handlePatchStaged(id: string, patch: { universe?: UniverseKey; categoryLabel?: string; skipAi?: boolean }) {
+    setCapturedItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+  }
 
   return (
     <>
@@ -702,6 +712,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         onUndo={(id) => setRemoved((p) => { const n = new Set(p); n.delete(id); return n; })}
         onClose={() => setShowReview(false)}
         onFinish={(approvedIds) => { void handleFinishReview(approvedIds); }}
+        onPatch={handlePatchStaged}
       />
     ) : null}
 
