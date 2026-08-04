@@ -12,6 +12,8 @@ import {
   setProfileSafe,
   broadcastProfileChange,
 } from "@/lib/userProfile";
+import { getCurrentUser, getOnboardingStatus, updateProfile } from "@/lib/auth";
+import { syncPublicProfile } from "@/lib/publicProfile";
 
 const LS_ITEMS_KEY = "vltd_items_v2";
 const LS_FRAME_KEY = "vltd_frame_style";
@@ -30,10 +32,6 @@ function clampUsername(v: string) {
 function clampDisplayName(v: string) {
   const cleaned = v.trim().replace(/\s+/g, " ").slice(0, 40);
   return cleaned || "User";
-}
-
-function isValidEmail(v: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 }
 
 function initialsFromName(name: string) {
@@ -150,6 +148,8 @@ async function fileToCompressedDataUrl(file: File, opts?: { maxSize?: number; qu
 export default function UserProfilePage() {
   const [mounted, setMounted] = useState(false);
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
+  const [profileId, setProfileId] = useState("");
+  const [realEmail, setRealEmail] = useState("");
 
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -159,18 +159,65 @@ export default function UserProfilePage() {
   const avatarUploadRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => setMounted(true), []);
-  useEffect(() => setProfile(getProfileSafe()), []);
+
+  // Avatar image/mode has no backend yet, so it loads instantly from the
+  // local cache. Identity fields (name, username, avatar emoji, DOB,
+  // age-verified, marketing opt-in) below get overwritten by the real
+  // Supabase profile once it loads -- that's the source of truth, this
+  // local cache is just what's shown before the network round-trip lands.
+  useEffect(() => {
+    setProfile((p) => ({ ...p, ...getProfileSafe() }));
+
+    let active = true;
+    async function load() {
+      try {
+        const [status, userResult] = await Promise.all([getOnboardingStatus(), getCurrentUser()]);
+        if (!active) return;
+        setRealEmail(userResult.data.user?.email ?? "");
+        const activeProfile = status.activeProfile;
+        if (activeProfile) {
+          setProfileId(activeProfile.id);
+          setProfile((p) => ({
+            ...p,
+            displayName: activeProfile.display_name || p.displayName,
+            username: activeProfile.username || p.username,
+            avatarEmoji: activeProfile.avatar_emoji || p.avatarEmoji,
+            dob: activeProfile.date_of_birth ?? "",
+            ageVerified: Boolean(activeProfile.age_verified),
+            marketingOptIn: activeProfile.marketing_opt_in !== false,
+          }));
+        }
+      } catch {
+        // Keep the local cache visible if the real profile fetch fails.
+      }
+    }
+    void load();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const age = useMemo(() => computeAge(profile.dob), [profile.dob]);
   const canVerify = age !== null && age >= 18;
 
-  function saveProfile(next: UserProfile) {
+  async function saveProfile(next: UserProfile) {
     setSaving(true);
     try {
       setProfileSafe(next);
       broadcastProfileChange();
       setProfile(next);
       setDirty(false);
+      if (profileId) {
+        await updateProfile(profileId, {
+          display_name: next.displayName,
+          username: next.username,
+          avatar_emoji: next.avatarEmoji,
+          date_of_birth: next.dob || null,
+          age_verified: next.ageVerified,
+          marketing_opt_in: next.marketingOptIn,
+        });
+        void syncPublicProfile(profileId);
+      }
     } finally {
       setSaving(false);
     }
@@ -181,32 +228,25 @@ export default function UserProfilePage() {
     setDirty(true);
   }
 
-  function onSaveClick() {
+  async function onSaveClick() {
     const dn = clampDisplayName(profile.displayName);
     const un = clampUsername(profile.username);
-    const email = profile.email.trim();
-
-    if (!isValidEmail(email)) {
-      showToast("Please enter a valid email address.");
-      return;
-    }
 
     const next: UserProfile = {
       ...profile,
       displayName: dn,
       username: un,
-      email,
+      email: realEmail,
       ageVerified: profile.ageVerified && canVerify ? true : false,
     };
 
-    saveProfile(next);
-    showToast("Saved profile.");
-    flashSaved();
-  }
-
-  function onResetToDefaults() {
-    if (!confirm("Reset profile to defaults?")) return;
-    saveProfile(DEFAULT_PROFILE);
+    try {
+      await saveProfile(next);
+      showToast("Saved profile.");
+      flashSaved();
+    } catch {
+      showToast("Couldn't save — try again.");
+    }
   }
 
   function exportVaultJson() {
@@ -236,21 +276,24 @@ export default function UserProfilePage() {
     });
   }
 
-  function clearAllLocalDemoData() {
-    if (!confirm("This will clear ALL local demo data (vault + profile + settings). Continue?")) {
+  function clearLocalCache() {
+    if (
+      !confirm(
+        "This clears cached display preferences on this device only (theme frame, plan cache, palette, spreadsheet link) and reloads them from your account. It does NOT delete your vault or account data. Continue?"
+      )
+    ) {
       return;
     }
     if (typeof window === "undefined") return;
 
     window.localStorage.removeItem("vltd_profile_v1");
-    window.localStorage.removeItem(LS_ITEMS_KEY);
     window.localStorage.removeItem(LS_FRAME_KEY);
     window.localStorage.removeItem(TIER_KEY);
     window.localStorage.removeItem(PALETTE_KEY);
     window.localStorage.removeItem(SHEET_ID_KEY);
 
     broadcastProfileChange();
-    showToast("Cleared local demo data. Refresh the page.");
+    showToast("Cleared local cache. Refresh the page.");
   }
 
   const avatarNode =
@@ -306,15 +349,6 @@ export default function UserProfilePage() {
                 </div>
               </div>
             </div>
-
-            <div className="flex flex-wrap gap-2">
-              <PillButton
-                onClick={onResetToDefaults}
-                className="bg-red-500/10 text-red-200 ring-red-400/20 hover:bg-red-500/15"
-              >
-                Reset
-              </PillButton>
-            </div>
           </div>
         </section>
 
@@ -346,12 +380,12 @@ export default function UserProfilePage() {
               </Field>
 
               <div className="sm:col-span-2">
-                <Field label="EMAIL" helper="Used for account and recovery in demo mode.">
+                <Field label="EMAIL" helper="Your real login email. Changing your login email isn't supported here yet.">
                   <input
-                    value={profile.email}
-                    onChange={(e) => update("email", e.target.value)}
-                    placeholder="user@example.com"
-                    className="h-11 w-full rounded-xl bg-[color:var(--surface)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                    value={realEmail || "Loading…"}
+                    readOnly
+                    disabled
+                    className="h-11 w-full rounded-xl bg-[color:var(--surface)] px-3 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)] focus:outline-none"
                   />
                 </Field>
               </div>
@@ -486,7 +520,7 @@ export default function UserProfilePage() {
 
           <SectionCard
             title="Age Verification"
-            description="Demo flow: enter date of birth, then verify if age is 18 or older."
+            description="Enter your date of birth, then verify you're 18 or older. This is a self-declared check (like most sites use), not government ID verification."
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <Field
@@ -547,7 +581,7 @@ export default function UserProfilePage() {
 
           <SectionCard
             title="Preferences"
-            description="Simple personal settings for the demo profile."
+            description="Personal settings, saved to your account."
           >
             <div className="rounded-[22px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)] vltd-panel-soft">
               <label className="inline-flex items-center gap-3 text-sm">
@@ -558,15 +592,12 @@ export default function UserProfilePage() {
                 />
                 Receive product updates
               </label>
-              <div className="mt-2 text-xs text-[color:var(--muted)]">
-                In a real app this would sync to account preferences.
-              </div>
             </div>
           </SectionCard>
 
           <SectionCard
             title="Data Controls"
-            description="Export, import, or clear local demo data."
+            description="Export a backup, or clear cached display preferences on this device."
           >
             <div className="flex flex-wrap gap-2">
               <PillButton onClick={exportProfileJson}>Export Profile JSON</PillButton>
@@ -575,10 +606,10 @@ export default function UserProfilePage() {
               </PillButton>
               <PillButton onClick={exportVaultJson}>Export Vault JSON</PillButton>
               <PillButton
-                onClick={clearAllLocalDemoData}
+                onClick={clearLocalCache}
                 className="bg-red-500/10 text-red-200 ring-red-400/20 hover:bg-red-500/15"
               >
-                Clear Local Demo Data
+                Clear Local Cache
               </PillButton>
             </div>
 

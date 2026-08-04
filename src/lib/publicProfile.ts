@@ -1,6 +1,5 @@
 "use client";
 
-import { getProfileSafe } from "@/lib/userProfile";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
@@ -136,10 +135,12 @@ export async function syncPublicProfile(profileId = getStoredActiveProfileId()) 
   const cleanProfileId = String(profileId ?? "").trim();
   if (!supabase || !cleanProfileId) return null;
 
-  // Fetch full profile row to check is_public and get bio
+  // Fetch full profile row to check is_public and get the REAL identity
+  // fields (this used to fetch display_name/username here and then ignore
+  // them below in favor of a stale local-only copy -- fixed 2026-08-03).
   const { data: profileRow } = await supabase
     .from("profiles")
-    .select("is_public, bio, display_name, username, avatar_url")
+    .select("is_public, bio, display_name, username, avatar_url, avatar_emoji")
     .eq("id", cleanProfileId)
     .maybeSingle();
 
@@ -149,15 +150,14 @@ export async function syncPublicProfile(profileId = getStoredActiveProfileId()) 
     return null;
   }
 
-  const profile = getProfileSafe();
   function validName(s?: string | null) {
     const t = s?.trim() ?? "";
     return t && t.toLowerCase() !== "user" ? t : "";
   }
   const payload: Record<string, unknown> = {
     profile_id: cleanProfileId,
-    display_name: validName(profile.displayName) || validName(profile.username) || "Collector",
-    avatar_emoji: profile.avatarEmoji?.trim() || "🗝️",
+    display_name: validName(profileRow?.display_name) || validName(profileRow?.username) || "Collector",
+    avatar_emoji: profileRow?.avatar_emoji?.trim() || "🗝️",
     updated_at: new Date().toISOString(),
   };
 

@@ -30,6 +30,10 @@ export type ProfileRow = {
   state?: string | null;
   zip?: string | null;
   country?: string | null;
+  // Identity settings edited on /user/profile
+  date_of_birth?: string | null;
+  age_verified?: boolean | null;
+  marketing_opt_in?: boolean | null;
 };
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
@@ -495,6 +499,10 @@ export async function updateProfile(profileId: string, patch: Partial<ProfileRow
   for (const field of contactFields) {
     if (field in patch) payload[field] = typeof patch[field] === "string" ? (patch[field] as string).trim() || null : null;
   }
+  if (typeof patch.avatar_emoji === "string") payload.avatar_emoji = patch.avatar_emoji.trim() || null;
+  if ("date_of_birth" in patch) payload.date_of_birth = patch.date_of_birth || null;
+  if (typeof patch.age_verified === "boolean") payload.age_verified = patch.age_verified;
+  if (typeof patch.marketing_opt_in === "boolean") payload.marketing_opt_in = patch.marketing_opt_in;
 
   const result = await withTimeout(
     supabase
