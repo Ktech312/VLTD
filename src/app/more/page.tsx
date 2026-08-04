@@ -623,7 +623,7 @@ function PanelContent({ activePanel, profile, items, galleries }: { activePanel:
       title: "Account & Profile",
       intro: "Fast account summary without leaving the command center.",
       bullets: [`Display: ${profile.displayName}`, `Handle: @${profile.username}`, `Account type: ${profile.profileType === "business" ? "Business" : "Curator"}`],
-      links: [["Open account settings", "/account"], ["Edit public profile", "/user/profile"]],
+      links: [["Open account settings", "/account"]],
     },
     security: {
       title: "Security",
@@ -653,7 +653,7 @@ function PanelContent({ activePanel, profile, items, galleries }: { activePanel:
       title: "Public Profile & Share",
       intro: "Control how your collector identity appears when you choose to share.",
       bullets: [`Public exhibitions: ${galleries.length}`, "Profile presentation", "Share-ready public links"],
-      links: [["Edit public profile", "/user/profile"], ["View exhibitions", "/museum"]],
+      links: [["Edit profile", "/account"], ["View exhibitions", "/museum"]],
     },
     activity: {
       title: "Activity",

@@ -1,7 +1,7 @@
 "use client";
 // NOTE: primaryFocus uses taxonomy universe keys for personalisation
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ThemePicker } from "@/components/ui/ThemePicker";
 import { PillButton } from "@/components/ui/PillButton";
@@ -15,6 +15,8 @@ import { processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { syncVaultItemsFromSupabase } from "@/lib/vaultModel";
 import { loadWatchlist, removeFromWatchlist, type WatchlistItem } from "@/lib/watchlistModel";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL, UNIVERSE_ICON, isUniverseKey } from "@/lib/taxonomy";
+import { getProfileSafe, setProfileSafe, broadcastProfileChange } from "@/lib/userProfile";
+import { showToast } from "@/lib/toast";
 
 /** Normalize a stored focus value — treats the literal string "null" as empty. */
 function normalizeFocus(value: unknown): string {
@@ -22,6 +24,46 @@ function normalizeFocus(value: unknown): string {
   return s && s.toLowerCase() !== "null" ? s : "";
 }
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
+
+function computeAge(dobStr: string) {
+  if (!dobStr) return null;
+  const d = new Date(dobStr);
+  if (Number.isNaN(d.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+  if (age < 0 || age > 120) return null;
+  return age;
+}
+
+async function fileToCompressedDataUrl(file: File, opts?: { maxSize?: number; quality?: number }) {
+  const maxSize = opts?.maxSize ?? 256;
+  const quality = opts?.quality ?? 0.85;
+  const blobUrl = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    img.src = blobUrl;
+    await new Promise<void>((res, rej) => {
+      img.onload = () => res();
+      img.onerror = () => rej(new Error("Failed to load image"));
+    });
+    const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+    const tw = Math.max(1, Math.round(img.width * scale));
+    const th = Math.max(1, Math.round(img.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = tw;
+    canvas.height = th;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas not supported");
+    ctx.drawImage(img, 0, 0, tw, th);
+    let data = canvas.toDataURL("image/webp", quality);
+    if (!data.startsWith("data:image/webp")) data = canvas.toDataURL("image/jpeg", quality);
+    return data;
+  } finally {
+    URL.revokeObjectURL(blobUrl);
+  }
+}
 
 export default function AccountPage() {
   const router = useRouter();
@@ -56,6 +98,16 @@ export default function AccountPage() {
   const [showAllUniverses, setShowAllUniverses] = useState(false);
   const [universeFocusSaving, setUniverseFocusSaving] = useState(false);
   const [universeFocusSuccess, setUniverseFocusSuccess] = useState("");
+  // Avatar (emoji is real/synced; image upload is local-only, no backend yet)
+  const [avatarMode, setAvatarMode] = useState<"EMOJI" | "IMAGE">("EMOJI");
+  const [avatarEmoji, setAvatarEmoji] = useState("🗝️");
+  const [avatarImageDataUrl, setAvatarImageDataUrl] = useState("");
+  // Age verification (self-declared, not government ID) + marketing opt-in
+  const [dob, setDob] = useState("");
+  const [ageVerified, setAgeVerified] = useState(false);
+  const [marketingOptIn, setMarketingOptIn] = useState(true);
+  const [identitySaving, setIdentitySaving] = useState(false);
+  const [identitySuccess, setIdentitySuccess] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -97,6 +149,17 @@ export default function AccountPage() {
             : [];
         setFocusedUniverses(seeded);
         setShowAllUniverses(!Array.isArray(fu) || (fu as string[]).length === 0);
+
+        // Avatar image/mode has no backend yet -- local cache only.
+        const localProfile = getProfileSafe();
+        setAvatarMode(localProfile.avatarMode);
+        setAvatarImageDataUrl(localProfile.avatarImageDataUrl);
+        // Avatar emoji + DOB/age/marketing ARE real (profiles table) -- the
+        // real value wins over whatever the local cache had.
+        setAvatarEmoji(status.activeProfile.avatar_emoji || localProfile.avatarEmoji || "🗝️");
+        setDob(status.activeProfile.date_of_birth ?? "");
+        setAgeVerified(Boolean(status.activeProfile.age_verified));
+        setMarketingOptIn(status.activeProfile.marketing_opt_in !== false);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load account.");
       } finally {
@@ -223,6 +286,69 @@ export default function AccountPage() {
       setUniverseFocusSaving(false);
       setTimeout(() => setUniverseFocusSuccess(""), 3000);
     }
+  }
+
+  const age = useMemo(() => computeAge(dob), [dob]);
+  const canVerifyAge = age !== null && age >= 18;
+  const avatarUploadRef = useRef<HTMLInputElement | null>(null);
+
+  async function handleIdentitySave() {
+    if (!profileId) return;
+    setIdentitySaving(true);
+    setIdentitySuccess("");
+    try {
+      const nextAgeVerified = ageVerified && canVerifyAge;
+      // Avatar image/mode has no backend yet -- keep it in the local cache
+      // alongside whatever real values are already there.
+      setProfileSafe({ ...getProfileSafe(), avatarMode, avatarImageDataUrl, avatarEmoji });
+      broadcastProfileChange();
+      await updateProfile(profileId, {
+        avatar_emoji: avatarEmoji,
+        date_of_birth: dob || null,
+        age_verified: nextAgeVerified,
+        marketing_opt_in: marketingOptIn,
+      });
+      setAgeVerified(nextAgeVerified);
+      void syncPublicProfile(profileId);
+      setIdentitySuccess("Saved.");
+    } catch (err) {
+      setIdentitySuccess(err instanceof Error ? err.message : "Failed to save.");
+    } finally {
+      setIdentitySaving(false);
+      setTimeout(() => setIdentitySuccess(""), 3000);
+    }
+  }
+
+  function clearLocalCache() {
+    if (
+      !confirm(
+        "This clears cached display preferences on this device only (theme frame, plan cache, palette, spreadsheet link, avatar image) and reloads them from your account. It does NOT delete your vault or account data. Continue?"
+      )
+    ) {
+      return;
+    }
+    if (typeof window === "undefined") return;
+    window.localStorage.removeItem("vltd_profile_v1");
+    window.localStorage.removeItem("vltd_frame_style");
+    window.localStorage.removeItem("vltd_tier");
+    window.localStorage.removeItem("vltd_palette");
+    window.localStorage.removeItem("vltd_google_sheet_id_v1");
+    broadcastProfileChange();
+    showToast("Cleared local cache. Refresh the page.");
+  }
+
+  function exportVaultJson() {
+    if (typeof window === "undefined") return;
+    const raw = window.localStorage.getItem("vltd_items_v2") || "[]";
+    const blob = new Blob([raw], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "vltd_vault_export.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   }
 
   if (loading) {
@@ -420,6 +546,165 @@ export default function AccountPage() {
                 </div>
               </div>
             </aside>
+          </div>
+        </section>
+
+        {/* Avatar */}
+        <section className="mt-6 rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
+          <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-4">
+            Avatar
+          </div>
+          <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setAvatarMode("EMOJI")}
+                className="rounded-full px-3 py-1.5 text-xs font-semibold ring-1"
+                style={avatarMode === "EMOJI"
+                  ? { background: "var(--pill-active-bg)", color: "var(--theme-gold, #C8CDD2)", borderColor: "var(--frame-ring)" }
+                  : { background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
+              >
+                Emoji
+              </button>
+              <button
+                type="button"
+                onClick={() => setAvatarMode("IMAGE")}
+                className="rounded-full px-3 py-1.5 text-xs font-semibold ring-1"
+                style={avatarMode === "IMAGE"
+                  ? { background: "var(--pill-active-bg)", color: "var(--theme-gold, #C8CDD2)", borderColor: "var(--frame-ring)" }
+                  : { background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
+              >
+                Image upload
+              </button>
+            </div>
+
+            {avatarMode === "EMOJI" ? (
+              <div className="mt-4 flex items-center gap-3">
+                <input
+                  value={avatarEmoji}
+                  onChange={(e) => setAvatarEmoji(e.target.value.slice(0, 4))}
+                  placeholder="🗝️"
+                  className="h-11 w-24 rounded-xl px-3 text-center text-lg ring-1 ring-[color:var(--border)] focus:outline-none"
+                  style={{ background: "var(--theme-card)" }}
+                />
+                <div className="grid h-12 w-12 place-items-center rounded-2xl text-xl ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
+                  {avatarEmoji || "🗝️"}
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4 flex items-center gap-3">
+                {avatarImageDataUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={avatarImageDataUrl} alt="Avatar preview" className="h-12 w-12 rounded-2xl object-cover ring-1 ring-[color:var(--border)]" />
+                ) : (
+                  <div className="grid h-12 w-12 place-items-center rounded-2xl text-sm ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
+                    {(displayName || "U").slice(0, 1).toUpperCase()}
+                  </div>
+                )}
+                <PillButton onClick={() => avatarUploadRef.current?.click()}>Choose Image</PillButton>
+                {avatarImageDataUrl ? (
+                  <PillButton onClick={() => setAvatarImageDataUrl("")} className="bg-red-500/10 text-red-200 ring-red-400/20 hover:bg-red-500/15">
+                    Remove
+                  </PillButton>
+                ) : null}
+                <input
+                  ref={avatarUploadRef}
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    try {
+                      const dataUrl = await fileToCompressedDataUrl(f, { maxSize: 256, quality: 0.85 });
+                      setAvatarImageDataUrl(dataUrl);
+                    } catch (err) {
+                      showToast(err instanceof Error ? err.message : "Failed to process image.");
+                    } finally {
+                      if (avatarUploadRef.current) avatarUploadRef.current.value = "";
+                    }
+                  }}
+                />
+              </div>
+            )}
+            <div className="mt-3 text-xs" style={{ color: "var(--muted)" }}>
+              {avatarMode === "IMAGE" ? "Image uploads are stored on this device only for now — they don't sync across devices yet." : "Shown across the app."}
+            </div>
+          </div>
+        </section>
+
+        {/* Identity & Security (self-declared age check, not government ID verification) */}
+        <section className="mt-6 rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
+          <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-1">
+            Identity &amp; Security
+          </div>
+          <p className="px-1 mb-4 text-xs text-[color:var(--muted)]">
+            Age verification is self-declared (you enter your birthdate) — not government ID verification.
+          </p>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block">
+              <span className="text-sm font-semibold text-text-primary">Date of birth</span>
+              <input
+                type="date"
+                value={dob}
+                onChange={(e) => {
+                  setDob(e.target.value);
+                  const nextAge = computeAge(e.target.value);
+                  if (nextAge === null || nextAge < 18) setAgeVerified(false);
+                }}
+                className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
+                style={{ background: "var(--theme-card)" }}
+              />
+              <span className="mt-1 block text-xs text-[color:var(--muted2)]">
+                {age === null ? "Enter a valid date." : `Computed age: ${age}`}
+              </span>
+            </label>
+
+            <div>
+              <span className="text-sm font-semibold text-text-primary">Age verification</span>
+              <p className="mt-0.5 text-xs text-[color:var(--muted2)]">
+                {canVerifyAge ? "Eligible to verify." : "Not eligible yet — enter a valid DOB and be 18+."}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <PillButton
+                  variant={canVerifyAge ? "active" : "default"}
+                  onClick={() => {
+                    if (!canVerifyAge) {
+                      showToast("Must be 18+ with a valid DOB to verify.");
+                      return;
+                    }
+                    setAgeVerified(true);
+                  }}
+                  disabled={!canVerifyAge}
+                >
+                  {ageVerified ? "Verified ✅" : "Verify Age"}
+                </PillButton>
+                {ageVerified ? (
+                  <PillButton onClick={() => setAgeVerified(false)} className="bg-red-500/10 text-red-200 ring-red-400/20 hover:bg-red-500/15">
+                    Remove Verification
+                  </PillButton>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
+          <label className="mt-5 flex items-center gap-3 text-sm">
+            <input type="checkbox" checked={marketingOptIn} onChange={(e) => setMarketingOptIn(e.target.checked)} />
+            Receive product updates
+          </label>
+
+          <div className="mt-5 flex items-center gap-4">
+            <button
+              type="button"
+              disabled={identitySaving}
+              onClick={() => void handleIdentitySave()}
+              className="inline-flex h-12 items-center rounded-[8px] px-6 text-sm font-black text-[#0B0B0B] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
+            >
+              {identitySaving ? "Saving..." : "Save identity settings"}
+            </button>
+            {identitySuccess && <span className="text-sm text-emerald-400">{identitySuccess}</span>}
           </div>
         </section>
 
@@ -669,6 +954,22 @@ export default function AccountPage() {
             {universeFocusSuccess && (
               <span className="text-sm text-emerald-400">{universeFocusSuccess}</span>
             )}
+          </div>
+        </section>
+
+        {/* Data Controls */}
+        <section className="mt-6 rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
+          <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-1">
+            Data Controls
+          </div>
+          <p className="px-1 mb-4 text-xs text-[color:var(--muted)]">
+            Export a backup, or clear cached display preferences on this device.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <PillButton onClick={exportVaultJson}>Export Vault JSON</PillButton>
+            <PillButton onClick={clearLocalCache} className="bg-red-500/10 text-red-200 ring-red-400/20 hover:bg-red-500/15">
+              Clear Local Cache
+            </PillButton>
           </div>
         </section>
 

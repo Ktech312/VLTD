@@ -42,12 +42,10 @@ is risky or can't be done, say so plainly.
   ask EK to run it. **Never add a new column to the cloud row map
   (`src/lib/vaultCloud.ts`) without the migration** — unknown columns make the
   `vault_items` upsert throw.
-  **⚠ TWO PENDING NOW:**
-  - `supabase/migrations/20260803_saved_events.sql` (adds the `saved_events`
-    table for §2F Events sync).
-  - `supabase/migrations/20260803_profile_identity_fields.sql` (adds
-    `profiles.date_of_birth`/`age_verified`/`marketing_opt_in` for §2H).
-  Neither has been run yet — ask EK.
+  No migrations pending right now — `20260803_saved_events.sql` and
+  `20260803_profile_identity_fields.sql` were both confirmed run by EK
+  (2026-08-04 night). Check here for new ones before assuming this is still
+  true.
 - Live site: `https://vltd.vercel.app`. `vltd.app` intentionally not set up yet.
 - **AI vision is LIVE.** `ANTHROPIC_API_KEY` has been set in Vercel for months;
   `/api/ai/analyze-item` (AI Assist, bulk scan, Quick Add scan) all use it. Don't
@@ -170,44 +168,55 @@ now reads `display_name`/`avatar_emoji` straight off the real `profiles` row
 it already fetches, instead of the stale local copy. Removed the now-unused
 `getProfileSafe` import from `publicProfile.ts`.
 
-### H. `/user/profile` — was a local-only duplicate of `/account`, now wired to the real profile (DOB/age/marketing real fields, per EK's "true app, real security" call)
-EK's call: yes, build DOB/age-verification/marketing-opt-in as real, saved
-fields (self-declared age check — user types their birthdate, same kind of
-gate most consumer sites use; **not** government ID verification, flagged
-that distinction to EK). Kept the two settings pages separate for now
-(merging `/user/profile` into `/account` is still a bigger call, not made).
+### H. `/user/profile` merged into `/account`, real email-change flow added — DONE (2026-08-04 night, both migrations confirmed RUN by EK)
+EK's call (given twice): (1) build DOB/age-verification/marketing-opt-in as
+real, saved fields (self-declared age check — user types their birthdate,
+same kind of gate most consumer sites use; **not** government ID
+verification, flagged that distinction to EK); (2) yes, merge the two
+settings pages into one, and build a real email-change flow. Both migrations
+(`20260803_saved_events.sql`, `20260803_profile_identity_fields.sql`) came
+back "Successful" from EK directly — no longer pending, the ⚠ note in §0 is
+stale as of this pass, safe to ignore/remove next time this file is edited.
+
 Shipped:
-- **Migration** `supabase/migrations/20260803_profile_identity_fields.sql`
-  adds `profiles.date_of_birth`, `age_verified`, `marketing_opt_in`. **Not
-  run yet — ask EK** (see the ⚠ note in §0).
 - `updateProfile()`'s allow-list (`src/lib/auth.ts`) now accepts
   `avatar_emoji`/`date_of_birth`/`age_verified`/`marketing_opt_in`.
-- `/user/profile` now loads display name / username / avatar emoji / DOB /
-  age-verified / marketing-opt-in from the **real** Supabase profile on
-  mount (local cache still shows instantly, then gets overwritten by the
-  real values), and Save now calls `updateProfile()` + `syncPublicProfile()`
-  — same real backend `/account` uses, no more divergent duplicate.
-- **Email field is now read-only**, showing the real Supabase Auth login
-  email (`getCurrentUser()`) instead of an editable box that saved a fake
-  value nowhere real. A true email-change flow needs Supabase Auth's
-  `updateUser({ email })` with its own confirmation step — bigger,
-  security-sensitive, not attempted tonight; the field just stopped lying.
-- **Removed the top-level "Reset" button** that used to reset the *entire*
-  profile (including the now-real, cloud-synced fields) back to defaults in
-  one click with a single generic confirm — that became a real data-loss
-  risk once these fields went live, not just a cosmetic reset. The
-  avatar-image-specific "Remove Image" button (inside the Avatar section)
-  still covers the one thing that's still genuinely local-only.
-- **"Clear Local Demo Data" renamed to "Clear Local Cache"** and **stopped
-  wiping the local vault-items cache** (`vltd_items_v2`) — that was never
-  actually "demo" data for a signed-in user and clearing it looked like it
-  deleted real vault items (it would've re-synced from Supabase, but the
-  momentary "empty vault" flash and scary confirm-text weren't honest about
-  what real risk existed). Now only clears device-local display prefs
-  (theme frame, plan cache, palette, spreadsheet link) with an accurate
-  confirm message.
-- Reworded all remaining "demo"/"in a real app this would..." copy on the
-  page now that the fields behind it are real.
+- **`/account` is now the one real settings page.** Added three sections
+  merged from the old `/user/profile`: **Avatar** (emoji is real/synced via
+  `avatar_emoji`; image upload stays local-only/device-only, no storage
+  bucket wired yet — said so in the UI), **Identity & Security** (DOB + Verify
+  Age button + marketing opt-in checkbox, one combined save calling
+  `updateProfile()` + `syncPublicProfile()`), and **Data Controls** (Export
+  Vault JSON, Clear Local Cache). All load real values from
+  `getOnboardingStatus()` on mount, same pattern the rest of the page
+  already used for display name/username/bio/contact info.
+- **`/user/profile` is now a redirect to `/account`** (`router.replace`,
+  not deleted outright) — so a bookmarked or externally-linked
+  `/user/profile` URL still lands somewhere real instead of 404ing. Updated
+  the two "Edit public profile" links on `/more` to point at `/account`.
+- **Real email-change flow, added to `/account/security`** (not `/account`
+  itself — matches where the existing password-reset flow already lives,
+  under "Login credentials"). Click "Change" on the Email row → type a new
+  address → "Send confirmation" calls `supabase.auth.updateUser({ email })`
+  → Supabase emails a confirmation link to the new address; the login email
+  does NOT change until that link is clicked. No new secrets/services
+  needed — this is Supabase Auth's own built-in flow, same mechanism the
+  password-reset email already used.
+- Removed the top-level "Reset" button that used to reset the *entire*
+  profile (including cloud-synced fields) to defaults in one click — real
+  data-loss risk once these fields went live. The avatar-image-specific
+  "Remove" button (inside Avatar) still covers the one thing that's
+  genuinely local-only.
+- "Clear Local Demo Data" became "Clear Local Cache" and stopped wiping the
+  local vault-items cache (`vltd_items_v2`) — that was never actually demo
+  data for a signed-in user.
+- Reworded all "demo"/"in a real app this would..." copy — the fields
+  behind it are real now.
+
+**Not done, still open:** avatar image upload has no backend (device-only,
+said so honestly in the UI) — would need a real storage bucket + upload
+flow, a separate ask if EK wants it. Two-factor auth card on `/account/security`
+(`TwoFactorAuthCard`) wasn't touched/audited this pass.
 
 ### I. Billing plan — smaller fix than expected, SHIPPED tonight
 `/account/billing` was hardcoding `currentPlan = "free"` for every user, with
@@ -265,11 +274,10 @@ write that migration blind since it's payment-adjacent data.
 
 ## 3. Options / decisions waiting on EK
 - **Profile/avatar sync bug** (2G) — DONE 2026-08-03 night, no longer open.
-- **`/user/profile` real DOB/age/marketing fields** (2H) — DONE 2026-08-03
-  night per EK's "true app, real security" call; migration pending (§0 ⚠).
-  Still open: merge `/user/profile` into `/account` into one page? Build a
-  real email-change flow (Supabase Auth `updateUser`)? Neither started —
-  email field just went from fake-editable to honest-read-only for now.
+- **`/user/profile` real DOB/age/marketing fields, merge into `/account`,
+  real email-change flow** (2H) — ALL DONE 2026-08-04 night, no longer open.
+  Both migrations confirmed run by EK. Only leftover: avatar image upload
+  is still device-only (no storage bucket wired) — separate ask if wanted.
 - **Capture-screen "Auto ID" metering** — DONE 2026-08-03 (see §4), no longer open.
 - **Watchlist vs Wishlist** name — DONE 2026-08-03, renamed to `/watchlist`, no longer open.
 - **PillButton-everywhere migration** (2F) — say "use PillButton everywhere" to green-light it.
@@ -334,6 +342,14 @@ write that migration blind since it's payment-adjacent data.
     this ran: a "Vision prompt" commit, then a 3-commit "Pill sweep"/
     "PillButton everywhere" migration) — both merges were clean fast-forwards
     with no conflicts, `tsc` verified after each.
+- **Follow-up (2026-08-04 night), after EK ran both pending migrations and
+  said yes to merging the profile pages + building real email-change:** see
+  the rewritten §2H above for full detail — `/user/profile` merged into
+  `/account` (Avatar/Identity & Security/Data Controls sections added),
+  `/user/profile` now redirects to `/account`, real email-change flow added
+  to `/account/security` via `supabase.auth.updateUser({ email })`. `tsc` +
+  `eslint` clean (only pre-existing React Compiler try/finally advisories,
+  same shape already present elsewhere in these files).
 - **Overnight pass (2026-08-03), while EK slept:**
   - **Field locks on the capture builder** (was §2A) — ported the `/vault/add`
     lock UX onto capture's Identity/Category fields, own storage module

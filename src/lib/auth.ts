@@ -30,7 +30,7 @@ export type ProfileRow = {
   state?: string | null;
   zip?: string | null;
   country?: string | null;
-  // Identity settings edited on /user/profile
+  // Identity settings edited on /account
   date_of_birth?: string | null;
   age_verified?: boolean | null;
   marketing_opt_in?: boolean | null;

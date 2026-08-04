@@ -56,11 +56,19 @@ function Row({ label, value, action, actionLabel }: { label: string; value: stri
   );
 }
 
+function isValidEmail(v: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+}
+
 export default function SecurityPage() {
   const [email, setEmail] = useState("");
   const [toast, setToast] = useState("");
   const [pwSent, setPwSent] = useState(false);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [changingEmail, setChangingEmail] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailChangeSaving, setEmailChangeSaving] = useState(false);
+  const [emailChangeSent, setEmailChangeSent] = useState(false);
 
   useEffect(() => {
     getCurrentUser().then(({ data }) => setEmail(data.user?.email ?? ""));
@@ -87,6 +95,31 @@ export default function SecurityPage() {
     }
   }
 
+  async function handleChangeEmail() {
+    const supabase = getSupabaseBrowserClient();
+    const trimmed = newEmail.trim();
+    if (!supabase) return;
+    if (!isValidEmail(trimmed)) {
+      showToast("Enter a valid email address.");
+      return;
+    }
+    if (trimmed.toLowerCase() === email.toLowerCase()) {
+      showToast("That's already your current email.");
+      return;
+    }
+    setEmailChangeSaving(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ email: trimmed });
+      if (error) throw error;
+      setEmailChangeSent(true);
+      showToast("Confirmation email sent — check your inbox to finish the change.");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Couldn't start the email change.");
+    } finally {
+      setEmailChangeSaving(false);
+    }
+  }
+
   return (
     <main className="px-4 py-6" style={{ background: "var(--bg)", color: "var(--fg)" }}>
       <div className="mx-auto max-w-5xl">
@@ -109,7 +142,47 @@ export default function SecurityPage() {
 
             <div className="rounded-2xl p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
               <div className="mb-3 text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>Login credentials</div>
-              <Row label="Email address" value={email || "-"} />
+              {changingEmail ? (
+                <div className="border-b border-[color:var(--border)] py-3">
+                  <div className="text-sm font-semibold" style={{ color: "var(--fg)" }}>Email address</div>
+                  {emailChangeSent ? (
+                    <div className="mt-2 text-xs" style={{ color: "var(--muted)" }}>
+                      Confirmation sent to {newEmail}. Click the link in that email to finish the
+                      change — your login email stays {email} until you do.
+                    </div>
+                  ) : (
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <input
+                        type="email"
+                        value={newEmail}
+                        onChange={(e) => setNewEmail(e.target.value)}
+                        placeholder="new@email.com"
+                        className="h-9 min-w-0 flex-1 rounded-[7px] bg-[color:var(--input)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                        style={{ color: "var(--fg)" }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void handleChangeEmail()}
+                        disabled={emailChangeSaving}
+                        className="shrink-0 rounded-[7px] px-4 py-1.5 text-xs font-semibold ring-1 disabled:opacity-50"
+                        style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}
+                      >
+                        {emailChangeSaving ? "Sending…" : "Send confirmation"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setChangingEmail(false); setNewEmail(""); }}
+                        className="shrink-0 rounded-[7px] px-3 py-1.5 text-xs font-semibold"
+                        style={{ color: "var(--muted)" }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Row label="Email address" value={email || "-"} action={() => setChangingEmail(true)} actionLabel="Change" />
+              )}
               <Row
                 label="Password"
                 value={pwSent ? "Reset email sent - check your inbox." : "Last changed: unknown"}
