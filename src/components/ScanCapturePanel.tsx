@@ -345,6 +345,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       category: categoryLabel ? categoryCode(categoryLabel) : undefined,
       categoryLabel: categoryLabel || undefined,
       subcategoryLabel: draft.subcategoryLabel || undefined,
+      purchasePrice: parseValue(draft.purchasePrice),
       currentValue: parseValue(draft.currentValue),
       status: "COLLECTION",
       // AI-detected details, carried through so the item page is populated like a normal scan.
@@ -434,6 +435,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         universe: item.universe,
         categoryLabel: item.categoryLabel || "",
         subcategoryLabel: "",
+        purchasePrice: "",
         currentValue: "",
         scanned: false,
         confidence: 0,

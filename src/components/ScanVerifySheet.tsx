@@ -25,6 +25,7 @@ export type ScanDraft = {
   universe: UniverseKey;
   categoryLabel: string;
   subcategoryLabel: string;
+  purchasePrice: string;
   currentValue: string;
   scanned: boolean;
   confidence: number; // 0–1 from the vision model
@@ -231,11 +232,18 @@ export default function ScanVerifySheet({
 
                       <div className="flex items-center gap-2">
                         <input
+                          value={d.purchasePrice}
+                          onChange={(e) => onPatch(d.id, { purchasePrice: e.target.value })}
+                          placeholder="Cost ($)"
+                          inputMode="decimal"
+                          className={`${FIELD_CLS} w-16`}
+                        />
+                        <input
                           value={d.currentValue}
                           onChange={(e) => onPatch(d.id, { currentValue: e.target.value })}
                           placeholder="Value ($)"
                           inputMode="decimal"
-                          className={`${FIELD_CLS} w-24`}
+                          className={`${FIELD_CLS} w-16`}
                         />
                         <button
                           type="button"
