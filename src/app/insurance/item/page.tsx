@@ -1,7 +1,6 @@
 // src/app/insurance/item/page.tsx
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -9,6 +8,7 @@ import { DEMO_ITEMS } from "@/lib/demoVault";
 import { loadItemsOrSeed, loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { EmptyVault } from "@/components/ui/EmptyVault";
+import { PillButton } from "@/components/ui/PillButton";
 
 type Item = ModelItem & {
   storageLocation?: string;
@@ -127,12 +127,12 @@ export default function InsuranceItemPage() {
       <div className="mx-auto max-w-4xl">
         <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[color:var(--border)] bg-vault-card p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
           <div className="flex flex-wrap items-center gap-2">
-            <Link href="/insurance" className="rounded-[8px] border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(203,208,213,0.42)]">
+            <PillButton href="/insurance">
               ← Back to Report
-            </Link>
-            <Link href="/vault" className="rounded-[8px] border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(203,208,213,0.42)]">
+            </PillButton>
+            <PillButton href="/vault">
               Vault
-            </Link>
+            </PillButton>
           </div>
           <button onClick={() => window.print()} className="rounded-[8px] px-4 py-2 text-sm font-black text-[#0B0B0B]" style={{ background: 'var(--theme-gold-gradient)', boxShadow: 'var(--theme-gold-glow)' }}>
             Print / Save as PDF

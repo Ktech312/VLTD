@@ -8,6 +8,7 @@ import { DEMO_ITEMS } from "@/lib/demoVault";
 import { TAXONOMY, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { loadItemsOrSeed, loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { EmptyVault } from "@/components/ui/EmptyVault";
+import { PillButton } from "@/components/ui/PillButton";
 
 function clamp(n: number) {
   return Number.isFinite(n) ? n : 0;
@@ -198,12 +199,9 @@ export default function InsuranceReportPage() {
               <option value="title_asc">Sort: Title (A → Z)</option>
             </select>
 
-            <button
-              onClick={() => window.print()}
-              className="rounded-[8px] bg-[color:var(--pill-active-bg)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] shadow-[var(--shadow-pill)] hover:opacity-95"
-            >
+            <PillButton variant="active" onClick={() => window.print()}>
               Print / Save PDF
-            </button>
+            </PillButton>
           </div>
         </div>
 

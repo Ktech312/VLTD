@@ -632,12 +632,9 @@ function VaultEmptyState({
             <PillButton variant="primary" onClick={onClearFilters}>
               Clear Filters
             </PillButton>
-            <Link
-              href="/capture"
-              className="inline-flex min-h-[40px] items-center justify-center rounded-[8px] bg-[color:var(--pill)] px-4 py-2 text-sm font-medium ring-1 ring-[color:var(--border)]"
-            >
+            <PillButton href="/capture">
               Add Item
-            </Link>
+            </PillButton>
           </div>
         </div>
       </section>
@@ -661,36 +658,24 @@ function VaultEmptyState({
         </div>
 
         <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-          <Link
+          <PillButton
             href="/capture"
-            className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-[8px] px-6 text-[15px] font-bold transition hover:opacity-90 sm:w-auto"
+            className="w-full gap-2 sm:w-auto"
             style={{ background: "#C8CDD2", color: "#0B0B0B" }}
           >
             <CameraIcon className="h-5 w-5" />
             Scan your first item
-          </Link>
+          </PillButton>
           <div className="flex flex-wrap justify-center gap-2">
-            <Link
-              href="/vault/quick"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-[8px] px-5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
-              style={{ color: "var(--fg)" }}
-            >
+            <PillButton href="/vault/quick">
               Quick Add
-            </Link>
-            <Link
-              href="/vault/add"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-[8px] px-5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
-              style={{ color: "var(--fg)" }}
-            >
+            </PillButton>
+            <PillButton href="/vault/add">
               Add manually
-            </Link>
-            <Link
-              href="/vault/import"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-[8px] px-5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
-              style={{ color: "var(--fg)" }}
-            >
+            </PillButton>
+            <PillButton href="/vault/import">
               Import
-            </Link>
+            </PillButton>
           </div>
         </div>
 

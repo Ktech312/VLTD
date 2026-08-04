@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ThemePicker } from "@/components/ui/ThemePicker";
+import { PillButton } from "@/components/ui/PillButton";
 import { Glyph } from "@/components/ui/Glyph";
 import { AccountTabs } from "@/components/account/AccountTabs";
 
@@ -465,22 +466,12 @@ export default function AccountPage() {
             Vault Maintenance
           </div>
           <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => void handleSyncNow()}
-              disabled={isSyncing || isMigrating}
-              className="inline-flex h-10 items-center rounded-[8px] border border-[color:var(--border)] bg-[color:var(--surface)] px-5 text-sm font-semibold text-[color:var(--fg)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
-            >
+            <PillButton onClick={() => void handleSyncNow()} disabled={isSyncing || isMigrating}>
               {isSyncing ? "Syncing..." : "Sync Now"}
-            </button>
-            <button
-              type="button"
-              onClick={() => void handleRepairMigrate()}
-              disabled={isSyncing || isMigrating}
-              className="inline-flex h-10 items-center rounded-[8px] border border-[color:var(--border)] bg-[color:var(--surface)] px-5 text-sm font-semibold text-[color:var(--fg)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
-            >
+            </PillButton>
+            <PillButton onClick={() => void handleRepairMigrate()} disabled={isSyncing || isMigrating}>
               {isMigrating ? "Migrating..." : "Repair / Migrate Images"}
-            </button>
+            </PillButton>
           </div>
           {syncStatus ? (
             <p className="mt-3 text-sm text-[color:var(--muted)]">{syncStatus}</p>

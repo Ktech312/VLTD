@@ -1,8 +1,24 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 
-type Variant = "default" | "active" | "primary" | "success";
+type Variant = "default" | "active" | "primary" | "success" | "danger";
+
+type PillButtonProps = {
+  children: React.ReactNode;
+  variant?: Variant;
+  onClick?: () => void;
+  disabled?: boolean;
+  title?: string;
+  type?: "button" | "submit" | "reset";
+  className?: string;
+  /** Renders as a Next.js Link instead of a <button> -- for nav-style pills. */
+  href?: string;
+  /** Inline style passthrough -- for bespoke colors a variant doesn't cover.
+   *  Inline styles win over the variant's background/color classes. */
+  style?: React.CSSProperties;
+};
 
 export function PillButton({
   children,
@@ -12,15 +28,9 @@ export function PillButton({
   title,
   type = "button",
   className = "",
-}: {
-  children: React.ReactNode;
-  variant?: Variant;
-  onClick?: () => void;
-  disabled?: boolean;
-  title?: string;
-  type?: "button" | "submit" | "reset";
-  className?: string;
-}) {
+  href,
+  style,
+}: PillButtonProps) {
   const base = [
     "inline-flex items-center justify-center",
     "h-11 sm:h-10",
@@ -41,6 +51,14 @@ export function PillButton({
           "ring-emerald-400/60",
           "font-semibold",
           "hover:bg-emerald-500",
+        ].join(" ")
+      : variant === "danger"
+      ? [
+          "bg-red-500/10",
+          "text-red-400",
+          "ring-red-400/30",
+          "font-semibold",
+          "hover:bg-red-500/15",
         ].join(" ")
       : variant === "active"
       ? [
@@ -71,15 +89,36 @@ export function PillButton({
     ? "opacity-60 cursor-not-allowed active:scale-100"
     : "";
 
+  const fullClassName = [base, styles, disabledStyles, className]
+    .filter(Boolean)
+    .join(" ");
+
+  if (href) {
+    return (
+      <Link
+        href={disabled ? "#" : href}
+        onClick={(e) => {
+          if (disabled) { e.preventDefault(); return; }
+          onClick?.();
+        }}
+        aria-disabled={disabled || undefined}
+        title={title}
+        className={fullClassName}
+        style={style}
+      >
+        {children}
+      </Link>
+    );
+  }
+
   return (
     <button
       type={type}
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
       title={title}
-      className={[base, styles, disabledStyles, className]
-        .filter(Boolean)
-        .join(" ")}
+      className={fullClassName}
+      style={style}
     >
       {children}
     </button>

@@ -3226,13 +3226,9 @@ export default function AddPage() {
                   <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ITEM PHOTO</div>
                   <h2 className="mt-1 text-lg font-semibold text-[color:var(--fg)]">Photo Options</h2>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedMediaImageId("")}
-                  className="rounded-[8px] bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
-                >
+                <PillButton onClick={() => setSelectedMediaImageId("")}>
                   Close
-                </button>
+                </PillButton>
               </div>
 
               <div className="mt-3 min-h-0 overflow-hidden rounded-[16px] bg-[color:var(--theme-card)] p-2 ring-1 ring-[color:var(--border)]">
@@ -3298,13 +3294,9 @@ export default function AddPage() {
                           {cropEditorTarget === "media" ? "Adjust Item Photo" : "Adjust Identify Picture"}
                         </h2>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setIsCropEditorOpen(false)}
-                        className="rounded-[8px] bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
-                      >
+                      <PillButton onClick={() => setIsCropEditorOpen(false)}>
                         Close
-                      </button>
+                      </PillButton>
                     </div>
                     <div className="min-h-0 overflow-auto">
                       <ScanCropEditor
@@ -3350,14 +3342,9 @@ export default function AddPage() {
                   : ""}
               </div>
             </div>
-            <button
-              type="button"
-              onClick={endDrop}
-              className="rounded-[8px] px-4 py-2 text-sm font-bold"
-              style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
-            >
+            <PillButton onClick={endDrop} style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}>
               Done · Review
-            </button>
+            </PillButton>
           </div>
         ) : null}
 

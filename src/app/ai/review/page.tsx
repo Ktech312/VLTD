@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { PillButton } from "@/components/ui/PillButton";
 import { Suspense, useEffect, useState } from "react";
 import {
   deleteDraft,
@@ -299,22 +300,15 @@ function ReviewInner() {
           >
             ✓ Approve & save to vault
           </button>
-          <button
-            type="button"
-            onClick={() => handleSaveDraft("NEEDS_REVIEW")}
-            className="rounded-[8px] px-5 py-3 text-sm font-semibold ring-1"
-            style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}
-          >
+          <PillButton onClick={() => handleSaveDraft("NEEDS_REVIEW")}>
             Flag: needs more info
-          </button>
-          <button
-            type="button"
+          </PillButton>
+          <PillButton
             onClick={handleReject}
-            className="rounded-[8px] px-4 py-3 text-sm"
-            style={{ color: "#f87171" }}
+            style={{ background: "transparent", color: "#f87171", boxShadow: "none" }}
           >
             Reject
-          </button>
+          </PillButton>
         </div>
       )}
 

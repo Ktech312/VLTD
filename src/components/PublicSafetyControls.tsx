@@ -8,6 +8,7 @@ import {
   hasConfirmedAdultContent,
   type ReportContentType,
 } from "@/lib/publicSafety";
+import { PillButton } from "@/components/ui/PillButton";
 
 const REPORT_REASONS = [
   "Inappropriate content",
@@ -40,13 +41,9 @@ export function AdultContentGate({
             The owner marked this gallery as intended for adults. Confirm that you are 18 or older to continue.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <button
-              type="button"
-              onClick={handleConfirm}
-              className="inline-flex min-h-[44px] items-center justify-center rounded-[8px] bg-[color:var(--pill-active-bg)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)]"
-            >
+            <PillButton variant="active" onClick={handleConfirm}>
               I am 18+ — Continue
-            </button>
+            </PillButton>
             <a
               href="/"
               className="inline-flex min-h-[44px] items-center justify-center rounded-[8px] bg-[color:var(--pill)] px-5 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"

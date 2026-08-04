@@ -8,6 +8,7 @@ import { DEMO_ITEMS } from "@/lib/demoVault";
 import { loadItemsOrSeed, loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { Glyph } from "@/components/ui/Glyph";
+import { PillButton } from "@/components/ui/PillButton";
 
 type Item = ModelItem & {
   storageLocation?: string;
@@ -235,15 +236,18 @@ export default function InsuranceExportPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button onClick={includeAll} className="rounded-[8px] border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)]">
+            <PillButton onClick={includeAll}>
               Include all
-            </button>
-            <button onClick={excludeZeroValue} className="rounded-[8px] border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)]">
+            </PillButton>
+            <PillButton onClick={excludeZeroValue}>
               Exclude $0 value
-            </button>
-            <Link href="/insurance/packet" className="rounded-[8px] border border-[rgba(203,208,213,0.42)] bg-[rgba(203,208,213,0.10)] px-4 py-2 text-sm font-black" style={{ color: 'var(--theme-gold, #C8CDD2)' }}>
+            </PillButton>
+            <PillButton
+              href="/insurance/packet"
+              style={{ background: 'rgba(203,208,213,0.10)', color: 'var(--theme-gold, #C8CDD2)' }}
+            >
               Policy Packet (PDF)
-            </Link>
+            </PillButton>
             <button onClick={() => window.print()} className="rounded-[8px] px-4 py-2 text-sm font-black text-[#0B0B0B]" style={{ background: 'var(--theme-gold-gradient)', boxShadow: 'var(--theme-gold-glow)' }}>
               Print Inventory PDF
             </button>

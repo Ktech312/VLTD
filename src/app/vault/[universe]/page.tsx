@@ -560,12 +560,9 @@ function VaultEmptyState({
             <PillButton variant="primary" onClick={onClearFilters}>
               Clear Filters
             </PillButton>
-            <Link
-              href="/vault/add"
-              className="inline-flex min-h-[40px] items-center justify-center rounded-[8px] bg-[color:var(--pill)] px-4 py-2 text-sm font-medium ring-1 ring-[color:var(--border)]"
-            >
+            <PillButton href="/vault/add">
               Add Item
-            </Link>
+            </PillButton>
           </div>
         </div>
       </section>
@@ -582,24 +579,15 @@ function VaultEmptyState({
         </div>
 
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <Link
-            href="/vault/quick"
-            className="inline-flex min-h-[42px] items-center justify-center rounded-[8px] bg-[color:var(--pill-active-bg)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]"
-          >
+          <PillButton href="/vault/quick" variant="active">
             Quick Add
-          </Link>
-          <Link
-            href="/vault/add"
-            className="vltd-selectable inline-flex min-h-[42px] items-center justify-center rounded-[8px] bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] transition"
-          >
+          </PillButton>
+          <PillButton href="/vault/add">
             Add Item
-          </Link>
-          <Link
-            href="/vault/import"
-            className="vltd-selectable inline-flex min-h-[42px] items-center justify-center rounded-[8px] bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] transition"
-          >
+          </PillButton>
+          <PillButton href="/vault/import">
             Import
-          </Link>
+          </PillButton>
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-3">

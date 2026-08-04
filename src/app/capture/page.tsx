@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import CameraCapturePanel from "@/components/CameraCapturePanel";
+import { PillButton } from "@/components/ui/PillButton";
 import { analyzeImageWithVision, type VisionAnalysisResult } from "@/lib/ai/openaiVision";
 import { resolveVisionTaxonomy } from "@/lib/visionTaxonomy";
 import { scanBarcodeFromFile } from "@/lib/scanners/barcodeScanner";
@@ -646,13 +647,9 @@ export default function CapturePage() {
                     {errorMsg || "The image may be unclear or the item is unrecognized."}
                   </p>
                   <div className="mt-5 flex flex-wrap gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setPhase("idle")}
-                      className="inline-flex min-h-10 items-center justify-center rounded-[8px] border border-[color:var(--border)] bg-vault-card px-5 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
-                    >
+                    <PillButton onClick={() => setPhase("idle")}>
                       ← Try again
-                    </button>
+                    </PillButton>
                     <Link
                       href="/vault/add"
                       className="inline-flex min-h-10 items-center justify-center rounded-[8px] px-5 text-sm font-black text-[#0B0B0B]"

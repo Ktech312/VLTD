@@ -18,6 +18,7 @@ import {
   type PriceConfidence,
   type PricingMvpFields,
 } from "@/lib/pricingMvp";
+import { PillButton } from "@/components/ui/PillButton";
 
 function inputClass() {
   return "h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none";
@@ -34,21 +35,20 @@ function selectClass() {
 function ActionButton({
   children,
   primary = false,
-  ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { primary?: boolean }) {
+  onClick,
+  disabled,
+  className,
+}: {
+  children: React.ReactNode;
+  primary?: boolean;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+}) {
   return (
-    <button
-      {...props}
-      className={[
-        "inline-flex h-10 items-center justify-center rounded-[8px] px-4 text-sm font-medium ring-1 transition disabled:opacity-40",
-        primary
-          ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[color:var(--pill-active-bg)]"
-          : "bg-[color:var(--pill)] text-[color:var(--fg)] ring-[color:var(--border)]",
-        props.className || "",
-      ].join(" ")}
-    >
+    <PillButton variant={primary ? "active" : "default"} onClick={onClick} disabled={disabled} className={className}>
       {children}
-    </button>
+    </PillButton>
   );
 }
 
