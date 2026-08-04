@@ -7,10 +7,14 @@ import {
   getCategories,
   getSubcategories,
   getDefaultCategory,
+  UNIVERSE_KEYS,
   UNIVERSE_LABEL,
   isUniverseKey,
   type UniverseKey,
 } from "@/lib/taxonomy";
+
+// Same set the scanner offers (BUILT_BOTANY excluded — scan AI not tuned for it).
+const SCAN_UNIVERSES = UNIVERSE_KEYS.filter((k) => k !== "BUILT_BOTANY");
 
 // One item on its way to the vault, pre-filled by AI and editable by the curator.
 export type ScanDraft = {
@@ -21,6 +25,7 @@ export type ScanDraft = {
   universe: UniverseKey;
   categoryLabel: string;
   subcategoryLabel: string;
+  purchasePrice: string;
   currentValue: string;
   scanned: boolean;
   confidence: number; // 0–1 from the vision model
@@ -183,7 +188,25 @@ export default function ScanVerifySheet({
                         className={FIELD_CLS}
                       />
 
-                      <div className="grid grid-cols-2 gap-1.5">
+                      <div className="grid grid-cols-3 gap-1.5">
+                        <select
+                          value={isUniverseKey(d.universe) ? d.universe : ""}
+                          onChange={(e) => {
+                            const nextUniverse = e.target.value as UniverseKey;
+                            onPatch(d.id, {
+                              universe: nextUniverse,
+                              categoryLabel: getDefaultCategory(nextUniverse),
+                              subcategoryLabel: "",
+                              aiUniverse: undefined,
+                            });
+                          }}
+                          className={`${FIELD_CLS} appearance-none`}
+                          title="Universe — the AI can get this wrong; change it here if so"
+                        >
+                          {SCAN_UNIVERSES.map((u) => (
+                            <option key={u} value={u}>{UNIVERSE_LABEL[u]}</option>
+                          ))}
+                        </select>
                         <select
                           value={d.categoryLabel}
                           onChange={(e) => onPatch(d.id, { categoryLabel: e.target.value, subcategoryLabel: "" })}
@@ -209,11 +232,18 @@ export default function ScanVerifySheet({
 
                       <div className="flex items-center gap-2">
                         <input
+                          value={d.purchasePrice}
+                          onChange={(e) => onPatch(d.id, { purchasePrice: e.target.value })}
+                          placeholder="Cost ($)"
+                          inputMode="decimal"
+                          className={`${FIELD_CLS} w-16`}
+                        />
+                        <input
                           value={d.currentValue}
                           onChange={(e) => onPatch(d.id, { currentValue: e.target.value })}
                           placeholder="Value ($)"
                           inputMode="decimal"
-                          className={`${FIELD_CLS} w-24`}
+                          className={`${FIELD_CLS} w-16`}
                         />
                         <button
                           type="button"

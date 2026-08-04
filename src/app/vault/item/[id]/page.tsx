@@ -166,10 +166,21 @@ function detailValue(value?: string | number | null) {
   return String(value);
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  action,
+  children,
+}: {
+  title: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <section className="rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-      <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">{title}</div>
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">{title}</div>
+        {action}
+      </div>
       <div className="mt-4">{children}</div>
     </section>
   );
@@ -210,6 +221,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   const { trigger: shareTrigger, dismiss: dismissShareTrigger } = useAutoShareTrigger();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [notesDraft, setNotesDraft] = useState("");
   const router = useRouter();
   const [registryEntry, setRegistryEntry] = useState<import("@/lib/registryModel").RegistrySubject | null>(null);
 
@@ -1257,18 +1270,81 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
         </div>
 
         <div className="mt-5">
-          <Section title="NOTES">
-            <div className="whitespace-pre-wrap text-sm leading-6 mb-3">
-              {item.notes?.trim() ? item.notes : (
-                <span style={{ color: "var(--muted2)" }}>No notes yet.</span>
-              )}
-            </div>
-            <GenerateCopyPanel
-              item={item}
-              mode="description"
-              onAccept={(text) => void persist({ ...item, notes: text })}
-              triggerLabel={item.notes?.trim() ? "\u2728 Regenerate description" : "\u2728 Generate description"}
-            />
+          <Section
+            title="NOTES"
+            action={
+              !isEditingNotes ? (
+                <button
+                  type="button"
+                  onClick={() => { setNotesDraft(item.notes ?? ""); setIsEditingNotes(true); }}
+                  aria-label="Edit notes"
+                  title="Edit notes"
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+                  style={{ color: "var(--muted)" }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
+                </button>
+              ) : null
+            }
+          >
+            {isEditingNotes ? (
+              <div>
+                <textarea
+                  autoFocus
+                  value={notesDraft}
+                  onChange={(e) => setNotesDraft(e.target.value)}
+                  rows={4}
+                  className="w-full resize-none rounded-xl px-3 py-2.5 text-sm leading-6 ring-1 focus:outline-none"
+                  style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}
+                />
+                <div className="mt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { void persist({ ...item, notes: notesDraft.trim() }); setIsEditingNotes(false); }}
+                    className="rounded-[8px] px-4 py-1.5 text-xs font-bold transition"
+                    style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingNotes(false)}
+                    className="rounded-[8px] px-4 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]"
+                    style={{ color: "var(--muted)" }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="whitespace-pre-wrap text-sm leading-6 mb-3">
+                  {item.notes?.trim() ? item.notes : (
+                    <span style={{ color: "var(--muted2)" }}>No notes yet.</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <GenerateCopyPanel
+                    item={item}
+                    mode="description"
+                    onAccept={(text) => void persist({ ...item, notes: text })}
+                    triggerLabel={item.notes?.trim() ? "\u2728 Regenerate description" : "\u2728 Generate description"}
+                  />
+                  {item.notes?.trim() ? (
+                    <button
+                      type="button"
+                      onClick={() => void persist({ ...item, notes: "" })}
+                      className="rounded-[7px] px-3 py-1.5 text-xs font-semibold text-red-400 ring-1 ring-red-400/30 transition hover:bg-red-500/10"
+                    >
+                      Clear
+                    </button>
+                  ) : null}
+                </div>
+              </>
+            )}
           </Section>
         </div>
       </div>
