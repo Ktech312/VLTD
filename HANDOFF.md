@@ -42,6 +42,8 @@ is risky or can't be done, say so plainly.
   ask EK to run it. **Never add a new column to the cloud row map
   (`src/lib/vaultCloud.ts`) without the migration** — unknown columns make the
   `vault_items` upsert throw.
+  **⚠ ONE PENDING NOW: `supabase/migrations/20260803_saved_events.sql`**
+  (adds the `saved_events` table for §2F Events sync). Not run yet — ask EK.
 - Live site: `https://vltd.vercel.app`. `vltd.app` intentionally not set up yet.
 - **AI vision is LIVE.** `ANTHROPIC_API_KEY` has been set in Vercel for months;
   `/api/ai/analyze-item` (AI Assist, bulk scan, Quick Add scan) all use it. Don't
@@ -227,9 +229,26 @@ write that migration blind since it's payment-adjacent data.
   patterns coexist; specific offenders got fixed as they came up (Export sizing,
   filter dropdown, this session's barcode/crop work touched none), but a full
   migration to one component needs your one-line "go" first.
-- Events: category is still keyword-guessed (no real DB column), saved events
-  are still localStorage-only (not synced) — both need a Supabase migration
-  only you can run. See `THEME_SWEEP.md`/punchlist re-verification below.
+- **Events saved-list sync — DONE 2026-08-03 (night), needs your migration run.**
+  Saved events (`/events`) were localStorage-only (per-device). Added
+  `supabase/migrations/20260803_saved_events.sql` (owner-only RLS, mirrors the
+  wishlist/watchlist convention) + `src/lib/savedEventsModel.ts` (same
+  local-cache + best-effort-sync pattern as wishlistModel.ts) and wired
+  `/events` to it. **Please run `20260803_saved_events.sql` in Supabase** —
+  until you do, saves still work (falls back to local-only, same as every
+  other model here before its migration lands), they just won't sync across
+  devices yet.
+  Event **category is still keyword-guessed** (`categoryFor()` in
+  `events/page.tsx` — guesses from real event name/description text). Left
+  this alone: it's a real classification of real events, not fabricated data
+  like everything else in tonight's sweep, and a real "category" column would
+  need someone to actually assign correct categories to existing events
+  (a content/ops task, not just a schema change) — didn't want to guess at
+  that data blind. Also left `savedSuggestionIds` (saved *search results* from
+  the Google Events/SerpApi lookup, key `vltd_event_search_saved_v1`) local-only
+  — those aren't real DB rows, syncing them would need storing a full snapshot
+  per save (like watchlist does for external items), lower priority than the
+  curated-events list above.
 
 ---
 
@@ -284,6 +303,9 @@ write that migration blind since it's payment-adjacent data.
     a guess, before I touch them.
   - Verified insurance report/packet/item pages (EK flagged via a suggested-
     task chip) — already correctly guarded, false alarm, no change needed.
+  - **Events saved-list sync** (§2F) — added the `saved_events` migration +
+    `savedEventsModel.ts` + wired `/events`. Migration not yet run — see the
+    ⚠ note in §0.
   - Merged `main` in twice mid-session (other work landed on `main` while
     this ran: a "Vision prompt" commit, then a 3-commit "Pill sweep"/
     "PillButton everywhere" migration) — both merges were clean fast-forwards

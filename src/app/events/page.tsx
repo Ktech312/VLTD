@@ -13,6 +13,7 @@ import {
   Ticket,
 } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { loadSavedEventIds, syncSavedEventIdsFromSupabase, toggleSavedEvent } from "@/lib/savedEventsModel";
 
 type EventType = "local" | "national" | "international";
 
@@ -41,7 +42,6 @@ type CollectorEvent = {
 type EventCategory = "convention" | "card_show" | "auction" | "drop" | "gallery" | "music";
 type EventFilter = "all" | EventCategory;
 
-const SAVED_EVENTS_KEY = "vltd_saved_event_ids_v1";
 const EVENT_SEARCH_SAVED_KEY = "vltd_event_search_saved_v1";
 
 type EventSuggestion = {
@@ -457,17 +457,15 @@ export default function EventsPage() {
   }, []);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      const stored = window.localStorage.getItem(SAVED_EVENTS_KEY);
-      if (!stored) return;
-      try {
-        const parsed = JSON.parse(stored) as string[];
-        setSavedIds(new Set(parsed));
-      } catch {
-        setSavedIds(new Set());
-      }
-    }, 0);
-    return () => window.clearTimeout(timer);
+    let active = true;
+    const timer = window.setTimeout(() => setSavedIds(new Set(loadSavedEventIds())), 0);
+    void syncSavedEventIdsFromSupabase().then((ids) => {
+      if (active) setSavedIds(new Set(ids));
+    });
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
   }, []);
 
   useEffect(() => {
@@ -542,13 +540,7 @@ export default function EventsPage() {
   }, [savedIds, sortedEvents]);
 
   const toggleSaved = (id: string) => {
-    setSavedIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      window.localStorage.setItem(SAVED_EVENTS_KEY, JSON.stringify(Array.from(next)));
-      return next;
-    });
+    setSavedIds(new Set(toggleSavedEvent(id)));
   };
 
   const toggleSavedSuggestion = (id: string) => {
