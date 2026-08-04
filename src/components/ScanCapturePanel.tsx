@@ -595,8 +595,8 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       <div className="flex w-full max-w-[540px] flex-col overflow-hidden bg-[color:var(--bg)] text-[color:var(--fg)]" style={{ height: "calc(100dvh - var(--bottomnav-h, 86px))" }}>
         <canvas ref={captureCanvasRef} className="hidden" />
 
-        {/* Header — Universe · Frame · Camera dropdown pills + Finished + close */}
-        <div className="flex shrink-0 items-center gap-1.5 border-b border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2.5">
+        {/* Header — Universe · Category · Frame · Camera dropdown pills + Finished + close */}
+        <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2.5">
           <DropdownPill
             title="Universe"
             value={universe}
@@ -608,6 +608,12 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
                 window.localStorage.setItem(SCAN_UNIVERSE_PREF_KEY, v as string);
               }
             }}
+          />
+          <DropdownPill
+            title="Category"
+            value={categoryLabel}
+            options={getCategories(universe).map((c) => ({ value: c, label: c }))}
+            onSelect={(v) => setCategoryLabel(v)}
           />
           <DropdownPill
             title="Frame"
