@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ThemePicker } from "@/components/ui/ThemePicker";
 import { PillButton } from "@/components/ui/PillButton";
-import { Glyph } from "@/components/ui/Glyph";
+import { Glyph, universeGlyphName } from "@/components/ui/Glyph";
 import { AccountTabs } from "@/components/account/AccountTabs";
 
 import { getOnboardingStatus, updateProfile } from "@/lib/auth";
@@ -14,7 +14,7 @@ import { syncPublicProfile } from "@/lib/publicProfile";
 import { processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { syncVaultItemsFromSupabase } from "@/lib/vaultModel";
 import { loadWatchlist, removeFromWatchlist, type WatchlistItem } from "@/lib/watchlistModel";
-import { UNIVERSE_KEYS, UNIVERSE_LABEL, UNIVERSE_ICON, isUniverseKey } from "@/lib/taxonomy";
+import { UNIVERSE_KEYS, UNIVERSE_LABEL, isUniverseKey } from "@/lib/taxonomy";
 
 /** Normalize a stored focus value — treats the literal string "null" as empty. */
 function normalizeFocus(value: unknown): string {
@@ -357,7 +357,7 @@ export default function AccountPage() {
                             color: "var(--muted)",
                           }}
                         >
-                          <span>{UNIVERSE_ICON[key]}</span>
+                          <Glyph name={universeGlyphName(key)} size={16} />
                           <span>{UNIVERSE_LABEL[key]}</span>
                         </button>
                       );
@@ -648,7 +648,7 @@ export default function AccountPage() {
                       color: "var(--muted)",
                     }}
                   >
-                    <span>{UNIVERSE_ICON[key]}</span>
+                    <Glyph name={universeGlyphName(key)} size={16} />
                     <span>{UNIVERSE_LABEL[key]}</span>
                   </button>
                 );

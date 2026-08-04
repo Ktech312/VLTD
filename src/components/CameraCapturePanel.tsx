@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import ScanCropEditor from "@/components/ScanCropEditor";
+import { Glyph } from "@/components/ui/Glyph";
 import { scanBarcodeFromVideoFrame, type BarcodeScanResult } from "@/lib/scanners/barcodeScanner";
 import {
   getUniverses,
@@ -716,7 +717,7 @@ export default function CameraCapturePanel({
             {/* Blur badge — only shown when the shot is soft */}
             {blurAssessment?.isBlurry ? (
               <div className="mb-1.5 flex items-center gap-2 rounded-[10px] bg-red-500/10 px-3 py-1.5 ring-1 ring-red-500/20">
-                <span className="text-[11px] font-semibold text-red-300">⚠ Soft image</span>
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-300"><Glyph name="warning" size={11} /> Soft image</span>
                 <span className="text-[11px] text-[color:var(--muted)]">Retake for sharper label detail.</span>
               </div>
             ) : null}

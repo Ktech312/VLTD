@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import ShareBar from "@/components/ShareBar";
+import { Glyph } from "@/components/ui/Glyph";
 
 import {
   loadGalleries,
@@ -1099,7 +1100,9 @@ export default function GalleryPage() {
                           title="Let your followers know you&#39;ve updated this exhibition"
                           className="inline-flex min-h-[30px] items-center justify-center gap-1 rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-60"
                         >
-                          {announced ? "✓ Announced" : announcing ? "Announcing…" : "📣 Announce"}
+                          {announced ? "✓ Announced" : announcing ? "Announcing…" : (
+                            <span className="inline-flex items-center gap-1"><Glyph name="megaphone" size={12} /> Announce</span>
+                          )}
                         </button>
                       )}
                       <button
