@@ -24,7 +24,6 @@ type GoalView = {
   id: string;
   name: string;
   type: GoalFilter;
-  due: string;
   pct: number;
   ownedCount: number;
   targetCount: number;
@@ -123,7 +122,6 @@ function buildGoalViews(progress: GoalProgress[], items: VaultItem[]): GoalView[
       id: goal.id,
       name: goal.name,
       type,
-      due: index === 0 ? "Due Aug 31, 2025" : index === 1 ? "Due May 30, 2025" : "Due Dec 31, 2025",
       pct: goal.pct,
       ownedCount: goal.ownedCount,
       targetCount: goal.targetCount,
@@ -193,7 +191,6 @@ function GoalRow({
           {goal.type === "value" && <Glyph name="chart" size={17} style={{ color: "var(--theme-gold,#C8CDD2)" }} />}
           {goal.type === "gallery" && <Glyph name="exhibition" size={17} style={{ color: "var(--theme-gold,#C8CDD2)" }} />}
         </div>
-        <div className="mt-2 text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>{goal.due}</div>
         <div className="mt-2 flex flex-wrap gap-5 text-sm" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
           <span>{goal.ownedCount.toLocaleString()} of {goal.targetCount.toLocaleString()} {goal.type === "value" ? "value" : "items"}</span>
           <span>{goal.visibility === "Private" ? "Private" : "Public"}</span>
@@ -458,7 +455,6 @@ export default function GoalsPage() {
                   <h2 className="font-serif text-[25px] font-black leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selectedGoal.name}</h2>
                   <div className="mt-2 flex gap-2 text-xs">
                     <span className="rounded-[4px] border border-[rgba(203,208,213,0.22)] px-2 py-1" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selectedGoal.visibility}</span>
-                    <span className="rounded-[4px] border border-[rgba(203,208,213,0.22)] px-2 py-1" style={{ color: "var(--theme-gold,#C8CDD2)" }}>{selectedGoal.due.replace("Due ", "")}</span>
                   </div>
                 </div>
               </div>

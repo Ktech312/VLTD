@@ -722,10 +722,6 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
           </div>
           <div className="flex flex-wrap gap-2">
             <HeaderAction>
-              <Glyph name="clock" size={15} />
-              Apr 18, 2024 - May 18, 2026
-            </HeaderAction>
-            <HeaderAction>
               <Glyph name="search" size={15} />
               Filters
             </HeaderAction>
@@ -739,7 +735,7 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
           <StatCard
             label="Total Vault Value"
             value={formatMoney(totalValue)}
-            sub={<><span style={{ color: GREEN }}>+ {fmtPct(metrics.roi, false)}</span> vs last 30 days</>}
+            sub={<><span style={{ color: metrics.roi >= 0 ? GREEN : RED }}>{fmtPct(metrics.roi, true)}</span> all-time</>}
             icon={<Glyph name="box" size={28} />}
           />
           <StatCard

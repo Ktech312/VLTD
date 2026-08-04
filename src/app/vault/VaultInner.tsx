@@ -1480,7 +1480,7 @@ export default function VaultInner() {
               <PillButton onClick={goQuickAdd}>+ Quick Add</PillButton>
             </div>
 
-            <div className="mt-4 text-xs text-[color:var(--muted2)]">Tip: Existing demo items may not have subcategories yet.</div>
+            <div className="mt-4 text-xs text-[color:var(--muted2)]">Tip: Older items may not have subcategories yet.</div>
           </div>
         )}
 
