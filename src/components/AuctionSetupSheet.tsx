@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { saveItem, type VaultItem } from "@/lib/vaultModel";
+import { Glyph } from "@/components/ui/Glyph";
 import { upsertVaultItemToSupabase } from "@/lib/vaultCloud";
 
 // ─── Countdown helper ─────────────────────────────────────────────────────────
@@ -24,13 +25,13 @@ export function AuctionCountdownChip({ item }: { item: VaultItem }) {
   if (!label) return (
     <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ring-1 ring-red-400/40"
       style={{ background: "rgba(239,68,68,0.15)", color: "rgb(252,165,165)" }}>
-      ⏰ ENDED
+      <Glyph name="clock" size={10} /> ENDED
     </span>
   );
   return (
     <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ring-1 ring-amber-400/40"
       style={{ background: "rgba(203,208,213,0.15)", color: "var(--theme-gold)" }}>
-      ⏱ {label}
+      <Glyph name="clock" size={10} /> {label}
     </span>
   );
 }
@@ -168,8 +169,9 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
               className="rounded-2xl px-4 py-3 ring-1 ring-amber-400/30"
               style={{ background: "rgba(203,208,213,0.1)" }}
             >
-              <div className="text-xs font-semibold" style={{ color: "var(--theme-gold)" }}>
-                🔴 LIVE — Ends {endsAtLabel}
+              <div className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: "var(--theme-gold)" }}>
+                <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                LIVE — Ends {endsAtLabel}
               </div>
               {item.auctionStartingBid != null && (
                 <div className="mt-1 text-xs" style={{ color: "var(--muted)" }}>
