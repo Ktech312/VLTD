@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated 2026-08-03, overnight autonomous pass)
+# VLTD — Session Handoff (updated 2026-08-03, second overnight pass — EK asleep again)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -100,10 +100,11 @@ confirm with EK who owns a screen.** EK is aware of this.
 
 ## 2. What's LEFT to do (prioritized)
 
-### A. Quick Add scanner — final device verification + any tweaks
-Rebuilt to spec and iterated (§4). EK is testing on their phone. Likely-remaining
-polish surfaces as EK tests: 5-item review height, flash timing, corner boldness,
-spacing. Verify removal-persistence + camera-returns-after-review on a real device.
+### A. Quick Add scanner — needs device re-test after real bugs got fixed
+EK tested live and found a real bug: the scanner's Universe dropdown hardcoded a
+default of "TCG", so unless manually changed, everything got tagged/AI-hinted as
+TCG — comics scanned as "Magic: The Gathering" etc. Fixed 2026-08-03 (see §4).
+Still want confirmation the fix actually holds up on a real batch of mixed items.
 
 ### B. Barcode / QR not detected on graded slabs — FIX ATTEMPTED, needs device test
 Slab QR/Code128 wasn't read on capture. `buildRegions()` in
@@ -158,33 +159,97 @@ call, not just a UI build.
 - **Background-removal freeze** — `@imgly/background-removal` runs ONNX on the
   main thread (`src/components/capture/captureUtils.ts`). Needs EK's device
   eyeball before picking a fix (lighter model vs. worker offload).
-- **Watchlist vs Wishlist naming** — EK to pick before renaming (route `/wishlist`
-  vs `watchlistModel`).
-- **Capture-screen "Auto ID" metering** — apply the same 1-scan/image metering
-  used by Quick Add to the capture screen's single Auto ID button. Not started
-  (this is a real behavior change to a paid-tier limit, wanted your OK first).
-- **PillButton-everywhere migration** — see `THEME_SWEEP.md` §2. Two pill
-  patterns coexist; specific offenders got fixed as they came up (Export sizing,
-  filter dropdown, this session's barcode/crop work touched none), but a full
-  migration to one component needs your one-line "go" first.
 - Events: category is still keyword-guessed (no real DB column), saved events
   are still localStorage-only (not synced) — both need a Supabase migration
-  only you can run. See `THEME_SWEEP.md`/punchlist re-verification below.
+  only you can run.
+- Two more possible improvements EK raised, not started: (a) AI comic-book ID
+  accuracy — added visual-cue guidance to the vision prompt 2026-08-03 (§4),
+  needs a real test against the same comics that triggered the original bug;
+  (b) a Subcategory-level pre-set pill next to Category on the scanner screen —
+  EK asked for "another box" after picking Category; only added the Category
+  pill so far (§4), didn't add a 3rd Subcategory pill since it wasn't clear
+  that's literally what was meant vs. just wanting the Category pill. Ask
+  before building a 3rd cascading pill.
 
 ---
 
 ## 3. Options / decisions waiting on EK
-- **Capture-screen "Auto ID" metering** (2F).
-- **Watchlist vs Wishlist** name (2F).
-- **PillButton-everywhere migration** (2F) — say "use PillButton everywhere" to green-light it.
+- **Documents (§2C)** — local-only vs. a real private Supabase bucket.
 - **ai/review + ai/drafts cyan color** — NOT a decision anymore: confirmed
   2026-08-03 this is the app's actual primary-CTA standard
   (`.vltd-action-module__block`, 25 files), not an off-brand mistake. No change made.
+- **/admin/\* visual skin** — confirmed 2026-08-03 it's a deliberately separate
+  internal-tool look (own dark bg, amber accents, emoji icons), not drift. Left
+  alone. Say so if you actually want it reskinned to match the main app — bigger
+  job, not started.
 - Everything else in §2 is a go; just needs building/verifying/a migration.
 
 ---
 
 ## 4. Done recently (don't redo)
+- **Second overnight/late-night pass (2026-08-03), after EK woke up and tested live:**
+  - **Rename `/wishlist` → `/watchlist`** (EK's decision) — moved the route,
+    fixed the two `href="/wishlist"` links, added a permanent redirect from the
+    old path, updated `AddToWishlistButton`'s visible copy. Left the underlying
+    `wishlistModel.ts`/`watchlistModel.ts`/`comicWishlistModel.ts` library files
+    alone — three genuinely different data sources the Watchlist page merges
+    into one list, not a naming collision.
+  - **Real bug found + fixed: Quick Add locked items into the wrong Universe.**
+    `ScanCapturePanel.tsx`'s Universe dropdown hardcoded a default of "TCG" —
+    EK scanned 3 comics, they came back as "Magic: The Gathering..." at low
+    confidence, and there was no way to fix the Universe in Verify (only an
+    auto-flag that fires when the AI disagrees with itself, which didn't fire
+    since the AI was hinted "the collector says this is TCG" and just complied).
+    Three fixes: (1) Universe dropdown now remembers your last pick
+    (`localStorage`, `SCAN_UNIVERSE_PREF_KEY`) instead of resetting to TCG,
+    (2) added a real Universe dropdown to `ScanVerifySheet` so you can always
+    fix it manually, (3) softened the AI hint wording to explicitly favor what
+    it sees over the stated Universe.
+  - **Review sheet (`ScanReviewSheet.tsx`) can now edit Universe/Category
+    per item AND has a "Skip AI" checkbox** (opposite the thumbnail) — skipping
+    doesn't spend a scan, item stays blank for manual entry. Both wired through
+    a new `onPatch` prop that updates the source `capturedItems` state directly.
+  - **Added a Category pill next to Universe** on the scanner screen
+    (`categoryLabel` state already existed, just had no control) — EK wanted
+    the whole batch pre-settable, not just Universe. See §2F for the
+    Subcategory-pill follow-up question.
+  - **Verify sheet: split Value into Cost ($) + Value ($)** — `purchasePrice`
+    was silently dropped before; now threaded through the draft → saved item.
+  - **Item Notes: pencil-icon direct edit + Clear button** next to
+    Regenerate (`vault/item/[id]/page.tsx`) — `Section` component now takes an
+    optional `action` slot for this. Regenerate itself (`generateItemCopy.ts`)
+    was already deterministic/field-based, not random — just needed more
+    fields filled in for a better result, not a code fix.
+  - **Vision prompt: added comic-vs-card visual cues**
+    (`api/ai/analyze-item/route.ts`) — cover size, publisher logos, staples —
+    and told the model to give an honest vague title instead of a confident
+    wrong one when text isn't legible. Prompt-only, needs a real test.
+  - **Capture-screen "Auto ID" is now metered** the same as Quick Add
+    (1 scan/image, `consumeBulkScans`) — EK's call: "any AI scan should be
+    limited" on the free tier. Barcode/UPC lookup stays free (local decode).
+  - **Pill sweep, actually finished this time.** ~55 files total across two
+    passes: every genuine `rounded-full` straggler (a real action button in the
+    wrong shape) app-wide. Confirmed NOT violations and left alone: `/admin/*`
+    (separate internal-tool skin), toggles/chips/badges/avatars/icon-only
+    buttons, and anything using `vltd-pill-main-glow`/`vltd-primary-button`/
+    `.vltd-action-module__block` (verified some of these against their actual
+    CSS, not just the class name, before ruling them out).
+  - **PillButton-everywhere, actually migrated** (not just shape-matched).
+    Extended `src/components/ui/PillButton.tsx` with `href` (renders as
+    `next/link`), a `danger` variant, and a `style` passthrough for bespoke
+    colors — then migrated every standard-sized (h-10/11/12, text-sm) action
+    button/nav-pill onto the literal component across ~20 files. Deliberately
+    NOT migrated: glossy gradient primary CTAs (their own established tier),
+    the compact toolbar/mass-select-bar tier (~38px, smaller text — forcing
+    PillButton's fixed 44/40px in would risk row overflow), and per-item
+    micro-chips in dense rows (Review/Verify sheet rows, card action rows).
+    These three tiers are already correctly shaped, just not literally
+    PillButton, which was never sized for them.
+  - Investigated and ruled out two more suspected fake-data bugs: the insurance
+    report pages' `DEMO_ITEMS` (via `loadItemsOrSeed()`) only shows demo data to
+    logged-out marketing visitors, never a signed-in user's real (possibly
+    empty) vault — correctly guarded, not a bug. Same for the "+X% (30D)" stat
+    on `/more` — real computed value-history data, not hardcoded.
 - **Overnight pass (2026-08-03), while EK slept:**
   - **Field locks on the capture builder** (was §2A) — ported the `/vault/add`
     lock UX onto capture's Identity/Category fields, own storage module
@@ -286,10 +351,12 @@ call, not just a UI build.
 ## 6. First moves for the new chat
 1. Read this + `MEMORY.md`. Confirm with EK **who owns `/capture` right now**
    (this chat vs the parallel Codex edits) before editing capture files.
-2. Ask EK: did the barcode top-region fix (§2B) actually catch a graded slab's
-   QR/Code128 on their phone? That's the one overnight change that couldn't be
-   verified without a device.
-3. Then §2C documents, or whichever §3 decision EK wants to make first.
+2. Ask EK what they found testing overnight: did the Universe-lock fix (§2A),
+   barcode top-region fix (§2B), and comic-ID prompt fix (§2F) actually hold up
+   on real devices/items? None of those three could be verified without a
+   device/real API call.
+3. Then §2C documents (needs EK's local-only-vs-private-bucket call), or
+   whichever §3 decision EK wants to make first.
 4. Verify each **visually** on `vltd.vercel.app` (screenshot; resize for mobile).
    `tsc`/`eslint`/`build` before every push. Deploys are slow — preview CSS-only
    tweaks via live JS injection to iterate faster.
