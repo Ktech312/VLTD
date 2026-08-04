@@ -562,7 +562,7 @@ function VaultEmptyState({
             </PillButton>
             <Link
               href="/vault/add"
-              className="inline-flex min-h-[40px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium ring-1 ring-[color:var(--border)]"
+              className="inline-flex min-h-[40px] items-center justify-center rounded-[8px] bg-[color:var(--pill)] px-4 py-2 text-sm font-medium ring-1 ring-[color:var(--border)]"
             >
               Add Item
             </Link>
@@ -584,19 +584,19 @@ function VaultEmptyState({
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/vault/quick"
-            className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]"
+            className="inline-flex min-h-[42px] items-center justify-center rounded-[8px] bg-[color:var(--pill-active-bg)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]"
           >
             Quick Add
           </Link>
           <Link
             href="/vault/add"
-            className="vltd-selectable inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] transition"
+            className="vltd-selectable inline-flex min-h-[42px] items-center justify-center rounded-[8px] bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] transition"
           >
             Add Item
           </Link>
           <Link
             href="/vault/import"
-            className="vltd-selectable inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] transition"
+            className="vltd-selectable inline-flex min-h-[42px] items-center justify-center rounded-[8px] bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] transition"
           >
             Import
           </Link>
@@ -1138,31 +1138,31 @@ export default function VaultUniversePage() {
               <div className="shrink-0 flex flex-wrap gap-2">
                 <Link
                   href="/vault"
-                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                  className="inline-flex min-h-[38px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
                 >
                   All Universes
                 </Link>
                 <Link
                   href="/vault/add"
-                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                  className="inline-flex min-h-[38px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
                 >
                   Add
                 </Link>
                 <Link
                   href="/vault/quick"
-                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]"
+                  className="inline-flex min-h-[38px] items-center justify-center rounded-[7px] bg-[color:var(--pill-active-bg)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]"
                 >
                   Quick Add
                 </Link>
                 <Link
                   href="/vault/import"
-                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                  className="inline-flex min-h-[38px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
                 >
                   Import
                 </Link>
                 <Link
                   href="/vault/sold"
-                  className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                  className="inline-flex min-h-[38px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
                 >
                   Sold
                 </Link>
@@ -1170,7 +1170,7 @@ export default function VaultUniversePage() {
                 <button
                   type="button"
                   onClick={() => setWrappedOpen(true)}
-                  className="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
+                  className="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-[7px] bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
                 >
                   ✦ Wrapped
                 </button>
@@ -1301,7 +1301,7 @@ export default function VaultUniversePage() {
             <PillButton
               variant={showSoldItems ? "active" : "default"}
               onClick={() => setShowSoldItems((value) => !value)}
-              className="min-h-[36px] rounded-full px-4 py-2 text-sm font-medium text-[color:var(--fg)]"
+              className="min-h-[36px] px-4 py-2 text-sm font-medium text-[color:var(--fg)]"
             >
               {showSoldItems ? `Hide Sold Items (${soldCount})` : `Show Sold Items (${soldCount})`}
             </PillButton>
@@ -1430,7 +1430,7 @@ export default function VaultUniversePage() {
                   <button
                     type="button"
                     onClick={() => { setSelectMode(false); setSelectedIds(new Set()); setMoveTargetUniverse(""); setMoveTargetCategory(""); setMoveTargetSubcategory(""); setDeleteConfirmPending(false); }}
-                    className="inline-flex h-8 items-center rounded-full px-3 text-xs font-medium ring-1 ring-[color:var(--border)]"
+                    className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-medium ring-1 ring-[color:var(--border)]"
                     style={{ background: "var(--pill)", color: "var(--muted)" }}
                   >
                     Cancel

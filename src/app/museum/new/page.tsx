@@ -325,14 +325,14 @@ export default function NewMuseumGalleryPage() {
               type="button"
               onClick={handleCreate}
               disabled={!canCreate || !safeTrim(title) || submitting}
-              className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-[42px] items-center justify-center rounded-[8px] bg-[color:var(--pill-active-bg)] px-5 py-2 text-sm font-semibold text-[color:var(--fg)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? "Creating..." : "Create Exhibition"}
             </button>
 
             <Link
               href="/museum"
-              className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-5 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
+              className="inline-flex min-h-[42px] items-center justify-center rounded-[8px] bg-[color:var(--pill)] px-5 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
             >
               Cancel
             </Link>

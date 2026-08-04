@@ -489,7 +489,7 @@ function SoldCard({
             event.stopPropagation();
             onReturnToVault(item);
           }}
-          className="shrink-0 rounded-full bg-gold/14 px-2.5 py-1.5 text-[10px] font-semibold text-cyan-100 ring-1 ring-cyan-300/25 transition hover:bg-gold/22"
+          className="shrink-0 rounded-[7px] bg-gold/14 px-2.5 py-1.5 text-[10px] font-semibold text-cyan-100 ring-1 ring-cyan-300/25 transition hover:bg-gold/22"
         >
           Return
         </button>
@@ -713,7 +713,7 @@ export default function SoldPage() {
           <span className="relative block max-h-[88vh] w-full max-w-4xl rounded-[24px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.5)]">
             <span className="mb-3 flex items-center justify-between gap-3">
               <span className="line-clamp-1 text-left text-sm font-semibold text-text-primary">{imagePreview.title}</span>
-              <span className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-cyan-100 ring-1 ring-[color:var(--border)]">
+              <span className="rounded-[7px] bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-cyan-100 ring-1 ring-[color:var(--border)]">
                 Close
               </span>
             </span>

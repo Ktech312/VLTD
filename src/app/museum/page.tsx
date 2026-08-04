@@ -965,7 +965,7 @@ export default function MuseumPage() {
                 type="button"
                 onClick={handleConfirmDelete}
                 disabled={isDeleting}
-                className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-[rgba(145,20,20,0.92)] px-5 py-2 text-sm font-semibold text-text-primary ring-1 ring-red-400/30 transition hover:bg-[rgba(170,24,24,1)] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex min-h-[46px] items-center justify-center rounded-[8px] bg-[rgba(145,20,20,0.92)] px-5 py-2 text-sm font-semibold text-text-primary ring-1 ring-red-400/30 transition hover:bg-[rgba(170,24,24,1)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isDeleting ? "Deleting..." : "Yes Delete FOREVER"}
               </button>
@@ -974,7 +974,7 @@ export default function MuseumPage() {
                 type="button"
                 onClick={handleCancelDelete}
                 disabled={isDeleting}
-                className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex min-h-[46px] items-center justify-center rounded-[8px] bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel, keep My Exhibit
               </button>
@@ -1028,14 +1028,14 @@ export default function MuseumPage() {
               <button
                 type="button"
                 onClick={() => setGallerySettings(null)}
-                className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                className="inline-flex min-h-[42px] items-center justify-center rounded-[8px] bg-[color:var(--pill)] px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleSaveGallerySettings}
-                className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-gold/16 px-4 py-2 text-sm font-semibold text-cyan-100 ring-1 ring-cyan-300/30"
+                className="inline-flex min-h-[42px] items-center justify-center rounded-[8px] bg-gold/16 px-4 py-2 text-sm font-semibold text-cyan-100 ring-1 ring-cyan-300/30"
               >
                 Save
               </button>

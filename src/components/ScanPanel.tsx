@@ -212,7 +212,7 @@ export default function ScanPanel({
             type="button"
             onClick={onScanAutofill}
             disabled={!hasImage || isIdentifying}
-            className="flex w-full items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-bold transition disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-[8px] px-3 py-2 text-sm font-bold transition disabled:opacity-60"
             style={
               hasImage
                 ? { background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B", boxShadow: "0 4px 18px rgba(203,208,213,0.28)" }

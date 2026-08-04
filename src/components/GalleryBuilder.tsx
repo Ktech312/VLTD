@@ -674,7 +674,7 @@ export default function GalleryBuilder({
                   return syncSectionsAndLayout(current, nextSections);
                 })
               }
-              className="vltd-selectable rounded-full bg-[color:var(--surface)] px-4 py-2 text-xs font-semibold ring-1 ring-[color:var(--border)]"
+              className="vltd-selectable rounded-[7px] bg-[color:var(--surface)] px-4 py-2 text-xs font-semibold ring-1 ring-[color:var(--border)]"
             >
               Add Exhibit
             </button>
@@ -726,7 +726,7 @@ export default function GalleryBuilder({
             <button
               type="button"
               onClick={() => { setPreviewSectionIdx(0); setPreviewExpanded(true); }}
-              className="vltd-pill-micro shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold transition hover:opacity-90"
+              className="vltd-pill-micro shrink-0 rounded-[7px] border px-3 py-1 text-[11px] font-semibold transition hover:opacity-90"
             >
               Preview ↗
             </button>
@@ -804,7 +804,7 @@ export default function GalleryBuilder({
             {/* Upload Background — uniform pill */}
             <label
               htmlFor={`shelf-upload-${gallery.id}`}
-              className="vltd-selectable inline-flex min-h-[28px] cursor-pointer items-center justify-center rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all select-none"
+              className="vltd-selectable inline-flex min-h-[28px] cursor-pointer items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all select-none"
             >
               Upload Background
             </label>
@@ -816,7 +816,7 @@ export default function GalleryBuilder({
                   setBackgroundUploadError("");
                   onGalleryChange((current) => ({ ...current, shelfBackground: "" }));
                 }}
-                className="vltd-selectable inline-flex min-h-[28px] items-center justify-center rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all"
+                className="vltd-selectable inline-flex min-h-[28px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all"
               >
                 Remove BG
               </button>
@@ -837,7 +837,7 @@ export default function GalleryBuilder({
                       onOpenPicker?.();
                     }
                   }}
-                  className="inline-flex min-h-[28px] items-center justify-center rounded-full bg-[color:var(--surface)] px-3 text-[11px] font-black tracking-wide text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition-all hover:opacity-90 active:scale-[0.98]"
+                  className="inline-flex min-h-[28px] items-center justify-center rounded-[7px] bg-[color:var(--surface)] px-3 text-[11px] font-black tracking-wide text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition-all hover:opacity-90 active:scale-[0.98]"
                 >
                   {editCount === 0 ? "Edit Selection" : `Edit (${editCount})`}
                 </button>
@@ -1331,7 +1331,7 @@ export default function GalleryBuilder({
                       <button
                         type="button"
                         onClick={() => onGalleryChange((current) => syncSectionsAndLayout(current, getGallerySections(current).filter((entry) => entry.id !== section.id)))}
-                        className="inline-flex items-center rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                        className="inline-flex items-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
                       >
                         Remove Exhibit
                       </button>
@@ -1457,7 +1457,7 @@ export default function GalleryBuilder({
                                   <button
                                     type="button"
                                     onClick={() => removeItemFromSection(section.id, item.id)}
-                                    className="inline-flex items-center rounded-full bg-red-500/10 px-2.5 py-1 text-[11px] font-semibold text-red-100 ring-1 ring-red-400/20"
+                                    className="inline-flex items-center rounded-[7px] bg-red-500/10 px-2.5 py-1 text-[11px] font-semibold text-red-100 ring-1 ring-red-400/20"
                                   >
                                     Remove
                                   </button>

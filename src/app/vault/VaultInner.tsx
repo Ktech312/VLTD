@@ -1227,7 +1227,7 @@ export default function VaultInner() {
               onClick={() => {
                 window.localStorage.setItem("vltd_drop_autostart_v1", "1");
               }}
-              className="inline-flex min-h-[44px] items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+              className="inline-flex min-h-[44px] items-center rounded-[8px] bg-[color:var(--pill)] px-4 text-sm font-semibold ring-1 ring-[color:var(--border)]"
             >
               Drop Mode
             </Link>

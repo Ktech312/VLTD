@@ -634,7 +634,7 @@ function VaultEmptyState({
             </PillButton>
             <Link
               href="/capture"
-              className="inline-flex min-h-[40px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium ring-1 ring-[color:var(--border)]"
+              className="inline-flex min-h-[40px] items-center justify-center rounded-[8px] bg-[color:var(--pill)] px-4 py-2 text-sm font-medium ring-1 ring-[color:var(--border)]"
             >
               Add Item
             </Link>
@@ -663,7 +663,7 @@ function VaultEmptyState({
         <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <Link
             href="/capture"
-            className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full px-6 text-[15px] font-bold transition hover:opacity-90 sm:w-auto"
+            className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-[8px] px-6 text-[15px] font-bold transition hover:opacity-90 sm:w-auto"
             style={{ background: "#C8CDD2", color: "#0B0B0B" }}
           >
             <CameraIcon className="h-5 w-5" />
@@ -672,21 +672,21 @@ function VaultEmptyState({
           <div className="flex flex-wrap justify-center gap-2">
             <Link
               href="/vault/quick"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-full px-5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-[8px] px-5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
               style={{ color: "var(--fg)" }}
             >
               Quick Add
             </Link>
             <Link
               href="/vault/add"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-full px-5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-[8px] px-5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
               style={{ color: "var(--fg)" }}
             >
               Add manually
             </Link>
             <Link
               href="/vault/import"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-full px-5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-[8px] px-5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
               style={{ color: "var(--fg)" }}
             >
               Import
@@ -1731,7 +1731,7 @@ export default function VaultPage() {
                             type="button"
                             onClick={() => void confirmMassDelete()}
                             disabled={isDeleting}
-                            className="inline-flex h-8 items-center rounded-full px-3 text-xs font-bold text-white"
+                            className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-bold text-white"
                             style={{ background: "#dc2626", opacity: isDeleting ? 0.6 : 1 }}
                           >
                             {isDeleting ? "Deleting…" : "Yes, Delete"}
@@ -1740,7 +1740,7 @@ export default function VaultPage() {
                             type="button"
                             onClick={() => setDeleteConfirmPending(false)}
                             disabled={isDeleting}
-                            className="inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold ring-1 ring-[color:var(--border)]"
+                            className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-semibold ring-1 ring-[color:var(--border)]"
                             style={{ background: "var(--pill)", color: "var(--muted)" }}
                           >
                             Cancel
@@ -1750,7 +1750,7 @@ export default function VaultPage() {
                         <button
                           type="button"
                           onClick={handleMassDelete}
-                          className="inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold text-white"
+                          className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-semibold text-white"
                           style={{ background: "#dc2626" }}
                         >
                           Delete {selectedIds.size}
@@ -1759,7 +1759,7 @@ export default function VaultPage() {
                       <select
                         value={moveTargetUniverse}
                         onChange={(e) => { setMoveTargetUniverse(e.target.value); setMoveTargetCategory(""); setMoveTargetSubcategory(""); }}
-                        className="h-8 rounded-full bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
+                        className="h-8 rounded-[7px] bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
                         style={{ color: moveTargetUniverse ? "var(--fg)" : "var(--muted)" }}
                       >
                         <option value="">Move {selectedIds.size} to…</option>
@@ -1770,7 +1770,7 @@ export default function VaultPage() {
                       <select
                         value={moveTargetCategory}
                         onChange={(e) => { setMoveTargetCategory(e.target.value); setMoveTargetSubcategory(""); }}
-                        className="h-8 rounded-full bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
+                        className="h-8 rounded-[7px] bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
                         style={{ color: moveTargetCategory ? "var(--fg)" : "var(--muted)" }}
                         disabled={!moveTargetUniverse}
                       >
@@ -1782,7 +1782,7 @@ export default function VaultPage() {
                       <select
                         value={moveTargetSubcategory}
                         onChange={(e) => setMoveTargetSubcategory(e.target.value)}
-                        className="h-8 rounded-full bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
+                        className="h-8 rounded-[7px] bg-[color:var(--pill)] px-3 text-xs font-medium ring-1 ring-[color:var(--border)] focus:outline-none"
                         style={{ color: moveTargetSubcategory ? "var(--fg)" : "var(--muted)" }}
                         disabled={!moveTargetCategory}
                       >
@@ -1795,7 +1795,7 @@ export default function VaultPage() {
                         <button
                           type="button"
                           onClick={() => void handleMassMove()}
-                          className="inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold"
+                          className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-semibold"
                           style={{ background: "rgba(203,208,213,0.18)", color: "#C8CDD2", border: "1px solid rgba(203,208,213,0.4)" }}
                         >
                           Move
@@ -1807,7 +1807,7 @@ export default function VaultPage() {
                     <button
                       type="button"
                       onClick={() => { setSelectMode(false); setSelectedIds(new Set()); setMoveTargetUniverse(""); setMoveTargetCategory(""); setMoveTargetSubcategory(""); setDeleteConfirmPending(false); }}
-                      className="inline-flex h-8 items-center rounded-full px-3 text-xs font-medium ring-1 ring-[color:var(--border)]"
+                      className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-medium ring-1 ring-[color:var(--border)]"
                       style={{ background: "var(--pill)", color: "var(--muted)" }}
                     >
                       Cancel

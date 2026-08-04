@@ -200,7 +200,7 @@ export default function InsuranceReportPage() {
 
             <button
               onClick={() => window.print()}
-              className="rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] shadow-[var(--shadow-pill)] hover:opacity-95"
+              className="rounded-[8px] bg-[color:var(--pill-active-bg)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] shadow-[var(--shadow-pill)] hover:opacity-95"
             >
               Print / Save PDF
             </button>

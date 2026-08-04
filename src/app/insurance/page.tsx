@@ -235,16 +235,16 @@ export default function InsuranceExportPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button onClick={includeAll} className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)]">
+            <button onClick={includeAll} className="rounded-[8px] border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)]">
               Include all
             </button>
-            <button onClick={excludeZeroValue} className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)]">
+            <button onClick={excludeZeroValue} className="rounded-[8px] border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)]">
               Exclude $0 value
             </button>
-            <Link href="/insurance/packet" className="rounded-full border border-[rgba(203,208,213,0.42)] bg-[rgba(203,208,213,0.10)] px-4 py-2 text-sm font-black" style={{ color: 'var(--theme-gold, #C8CDD2)' }}>
+            <Link href="/insurance/packet" className="rounded-[8px] border border-[rgba(203,208,213,0.42)] bg-[rgba(203,208,213,0.10)] px-4 py-2 text-sm font-black" style={{ color: 'var(--theme-gold, #C8CDD2)' }}>
               Policy Packet (PDF)
             </Link>
-            <button onClick={() => window.print()} className="rounded-full px-4 py-2 text-sm font-black text-[#0B0B0B]" style={{ background: 'var(--theme-gold-gradient)', boxShadow: 'var(--theme-gold-glow)' }}>
+            <button onClick={() => window.print()} className="rounded-[8px] px-4 py-2 text-sm font-black text-[#0B0B0B]" style={{ background: 'var(--theme-gold-gradient)', boxShadow: 'var(--theme-gold-glow)' }}>
               Print Inventory PDF
             </button>
           </div>

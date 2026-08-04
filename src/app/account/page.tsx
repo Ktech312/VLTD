@@ -477,7 +477,7 @@ export default function AccountPage() {
               type="button"
               onClick={() => void handleRepairMigrate()}
               disabled={isSyncing || isMigrating}
-              className="inline-flex h-10 items-center rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-5 text-sm font-semibold text-[color:var(--fg)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-10 items-center rounded-[8px] border border-[color:var(--border)] bg-[color:var(--surface)] px-5 text-sm font-semibold text-[color:var(--fg)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isMigrating ? "Migrating..." : "Repair / Migrate Images"}
             </button>
@@ -591,7 +591,7 @@ export default function AccountPage() {
               type="button"
               disabled={contactSaving}
               onClick={() => void handleContactSave()}
-              className="inline-flex h-12 items-center rounded-full px-6 text-sm font-black text-[#0B0B0B] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-12 items-center rounded-[8px] px-6 text-sm font-black text-[#0B0B0B] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
               style={{ background: 'var(--theme-gold-gradient)', boxShadow: 'var(--theme-gold-glow)' }}
             >
               {contactSaving ? "Saving..." : "Save contact info"}
@@ -670,7 +670,7 @@ export default function AccountPage() {
               type="button"
               disabled={universeFocusSaving}
               onClick={() => void handleUniverseFocusSave()}
-              className="inline-flex h-12 items-center rounded-full px-6 text-sm font-black text-[#0B0B0B] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-12 items-center rounded-[8px] px-6 text-sm font-black text-[#0B0B0B] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
               style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
             >
               {universeFocusSaving ? "Saving..." : "Save focus"}

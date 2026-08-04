@@ -107,7 +107,7 @@ export default function GenerateCopyPanel({
         type="button"
         onClick={handleGenerate}
         className={[
-          "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 transition",
+          "inline-flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-xs font-semibold ring-1 transition",
           "hover:ring-[color:var(--theme-gold)] hover:text-[color:var(--theme-gold)]",
           className,
         ].join(" ")}
@@ -223,7 +223,7 @@ export default function GenerateCopyPanel({
         <button
           type="button"
           onClick={handleGenerate}
-          className="rounded-full px-3 py-2 text-xs font-semibold ring-1 transition hover:ring-[color:var(--theme-gold)]"
+          className="rounded-[7px] px-3 py-2 text-xs font-semibold ring-1 transition hover:ring-[color:var(--theme-gold)]"
           style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
         >
           Regenerate

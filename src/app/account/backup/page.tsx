@@ -175,7 +175,7 @@ export default function BackupPage() {
               }
             }}
             disabled={busy}
-            className="mt-3 flex h-10 w-full items-center justify-center rounded-full text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)] disabled:opacity-40"
+            className="mt-3 flex h-10 w-full items-center justify-center rounded-[8px] text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)] disabled:opacity-40"
             style={{ color: "var(--fg)" }}
           >
             Restore active profile from cloud

@@ -40,7 +40,7 @@ function ActionButton({
     <button
       {...props}
       className={[
-        "inline-flex h-10 items-center justify-center rounded-full px-4 text-sm font-medium ring-1 transition disabled:opacity-40",
+        "inline-flex h-10 items-center justify-center rounded-[8px] px-4 text-sm font-medium ring-1 transition disabled:opacity-40",
         primary
           ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[color:var(--pill-active-bg)]"
           : "bg-[color:var(--pill)] text-[color:var(--fg)] ring-[color:var(--border)]",
@@ -399,7 +399,7 @@ export default function PricingMvpCard({
                     <button
                       type="button"
                       onClick={() => applyCompAsValue(comp)}
-                      className="rounded-full bg-[color:var(--surface)] px-3 py-1.5 text-[11px] font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)]"
+                      className="rounded-[7px] bg-[color:var(--surface)] px-3 py-1.5 text-[11px] font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)]"
                     >
                       Use as current value
                     </button>

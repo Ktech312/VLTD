@@ -236,7 +236,7 @@ export default function BillingPage() {
                 type="button"
                 onClick={openBillingPortal}
                 disabled={busyPortal}
-                className="rounded-full px-3 py-1.5 text-xs ring-1 disabled:opacity-50"
+                className="rounded-[7px] px-3 py-1.5 text-xs ring-1 disabled:opacity-50"
                 style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
               >
                 {busyPortal ? "Opening…" : "Manage"}
@@ -262,7 +262,7 @@ export default function BillingPage() {
               type="button"
               onClick={openBillingPortal}
               disabled={busyPortal}
-              className="rounded-full px-4 py-1.5 text-xs font-semibold ring-1 disabled:opacity-50"
+              className="rounded-[7px] px-4 py-1.5 text-xs font-semibold ring-1 disabled:opacity-50"
               style={{ background: "rgba(248,113,113,0.08)", color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}
             >
               {busyPortal ? "Opening…" : "Cancel plan"}

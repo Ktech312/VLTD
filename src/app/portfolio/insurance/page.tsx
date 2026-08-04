@@ -69,7 +69,7 @@ export default function InsuranceReportPage() {
 
           <button
             onClick={onPrint}
-            className="inline-flex h-10 items-center rounded-full bg-[color:var(--pill-active-bg)] px-4 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)] hover:opacity-95"
+            className="inline-flex h-10 items-center rounded-[8px] bg-[color:var(--pill-active-bg)] px-4 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)] hover:opacity-95"
           >
             Print / Save PDF
           </button>

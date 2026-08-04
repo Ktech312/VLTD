@@ -87,7 +87,7 @@ function LoginInner() {
 
               <div className="flex items-center gap-4 text-sm text-[color:var(--muted2)]"><span className="h-px flex-1 bg-[color:var(--border)]" />or<span className="h-px flex-1 bg-[color:var(--border)]" /></div>
 
-              <button type="button" disabled={googleSubmitting} onClick={() => void handleGoogleLogin()} className="inline-flex h-14 items-center justify-center gap-3 rounded-full border border-[color:var(--border)] bg-[color:var(--pill)] px-6 text-base font-semibold text-[color:var(--muted)] transition hover:bg-[color:var(--pill-hover)] hover:text-[color:var(--fg)] disabled:opacity-45">
+              <button type="button" disabled={googleSubmitting} onClick={() => void handleGoogleLogin()} className="inline-flex h-14 items-center justify-center gap-3 rounded-[8px] border border-[color:var(--border)] bg-[color:var(--pill)] px-6 text-base font-semibold text-[color:var(--muted)] transition hover:bg-[color:var(--pill-hover)] hover:text-[color:var(--fg)] disabled:opacity-45">
                 <span className="text-xl font-black text-[color:var(--accent)]">G</span>
                 {googleSubmitting ? "Redirecting..." : "Continue with Google"}
               </button>

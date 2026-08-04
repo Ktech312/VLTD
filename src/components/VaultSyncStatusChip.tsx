@@ -139,7 +139,7 @@ export default function VaultSyncStatusChip() {
         <div className="flex shrink-0 items-center gap-2">
           <Link
             href="/vault/sync"
-            className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]"
+            className="rounded-[8px] bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]"
           >
             Details
           </Link>
@@ -148,7 +148,7 @@ export default function VaultSyncStatusChip() {
               type="button"
               onClick={() => void handleRetrySync()}
               disabled={isSyncing}
-              className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] disabled:opacity-50"
+              className="rounded-[8px] bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] disabled:opacity-50"
             >
               {isSyncing ? "Syncing" : "Retry sync"}
             </button>

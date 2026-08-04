@@ -27,7 +27,7 @@ export default function UpgradeNudge({
       </div>
       <Link
         href="/account/billing?reason=vault_limit"
-        className="shrink-0 rounded-full px-4 py-2 text-sm font-bold transition active:scale-95"
+        className="shrink-0 rounded-[8px] px-4 py-2 text-sm font-bold transition active:scale-95"
         style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}
       >
         Upgrade

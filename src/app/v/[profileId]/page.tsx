@@ -437,7 +437,7 @@ export default function PublicVaultPage({
           <div className="ml-auto flex items-center gap-2">
             <button
               onClick={handleCopyLink}
-              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[color:var(--pill)] px-3 text-xs font-semibold ring-1 ring-[color:var(--border)]"
+              className="inline-flex h-8 items-center gap-1.5 rounded-[8px] bg-[color:var(--pill)] px-3 text-xs font-semibold ring-1 ring-[color:var(--border)]"
             >
               {copied ? "✓ Copied" : "Share"}
             </button>

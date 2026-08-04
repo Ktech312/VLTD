@@ -790,7 +790,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 <button
                   type="button"
                   onClick={() => setSocialExportOpen(true)}
-                  className="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
                   style={{ background: "var(--pill)", color: "var(--fg)" }}
                 >
                   <span>📲</span> Export for Social
@@ -798,7 +798,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 <button
                   type="button"
                   onClick={() => setAuctionOpen(true)}
-                  className="mt-1 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
+                  className="mt-1 inline-flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
                   style={{ background: "var(--pill)", color: "var(--fg)" }}
                 >
                   <span>🔨</span>
@@ -825,7 +825,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 <button
                   type="button"
                   onClick={() => void handleReturnToVault()}
-                  className="inline-flex h-10 items-center rounded-full bg-gold/15 px-4 text-sm font-medium text-cyan-100 ring-1 ring-gold/25"
+                  className="inline-flex h-10 items-center rounded-[8px] bg-gold/15 px-4 text-sm font-medium text-cyan-100 ring-1 ring-gold/25"
                 >
                   Return to Vault
                 </button>
@@ -1122,7 +1122,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               <button
                 type="button"
                 onClick={() => void handleSaveBasicRecord()}
-                className="inline-flex h-10 items-center rounded-full bg-gold/15 px-4 text-sm font-medium text-cyan-100 ring-1 ring-gold/25"
+                className="inline-flex h-10 items-center rounded-[8px] bg-gold/15 px-4 text-sm font-medium text-cyan-100 ring-1 ring-gold/25"
               >
                 Save basic record
               </button>
@@ -1378,7 +1378,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               <button
                 type="button"
                 onClick={() => setDeleteConfirm(false)}
-                className="flex-1 rounded-full py-2.5 text-sm font-semibold ring-1 transition"
+                className="flex-1 rounded-[8px] py-2.5 text-sm font-semibold ring-1 transition"
                 style={{ background: "var(--pill)", borderColor: "var(--border)", color: "var(--fg)" }}
               >
                 Cancel
@@ -1389,7 +1389,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                   deleteVaultItem(item.id);
                   router.replace("/vault");
                 }}
-                className="flex-1 rounded-full py-2.5 text-sm font-semibold transition"
+                className="flex-1 rounded-[8px] py-2.5 text-sm font-semibold transition"
                 style={{ background: "rgba(248,113,113,0.15)", color: "rgb(248,113,113)", border: "1px solid rgba(248,113,113,0.35)" }}
               >
                 Delete Forever

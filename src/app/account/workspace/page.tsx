@@ -315,7 +315,7 @@ export default function WorkspaceSettingsPage() {
                 <button
                   type="button"
                   onClick={handleGoogleDisconnect}
-                  className="vltd-pill-neutral rounded-full px-3 py-1.5 text-xs font-semibold transition"
+                  className="vltd-pill-neutral rounded-[8px] px-3 py-1.5 text-xs font-semibold transition"
                   style={{ background: "var(--pill)", border: "none", cursor: "pointer" }}
                 >
                   Disconnect
@@ -325,7 +325,7 @@ export default function WorkspaceSettingsPage() {
               <button
                 type="button"
                 onClick={() => void startGoogleConnect()}
-                className="rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]"
+                className="rounded-[8px] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]"
                 style={{ background: "var(--pill)", color: "var(--fg)" }}
               >
                 Connect
@@ -333,7 +333,7 @@ export default function WorkspaceSettingsPage() {
             )}
           </Row>
           <Row label="CSV export" sub="Download your vault as a spreadsheet">
-            <Link href="/vault?export=csv" className="rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)", color: "var(--fg)" }}>
+            <Link href="/vault?export=csv" className="rounded-[8px] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)", color: "var(--fg)" }}>
               Export
             </Link>
           </Row>

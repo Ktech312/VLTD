@@ -330,7 +330,7 @@ export default function StreamDisplay({
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setRevealed(false); resetControlsTimer(); }}
-                className="rounded-full border border-white/15 bg-white/10 px-5 py-2 text-xs font-semibold tracking-[0.05em] text-white/70"
+                className="rounded-[8px] border border-white/15 bg-white/10 px-5 py-2 text-xs font-semibold tracking-[0.05em] text-white/70"
               >
                 Reset
               </button>

@@ -2112,7 +2112,7 @@ export default function AddPage() {
             type="button"
             onClick={() => void saveForm(false)}
             disabled={!canSave}
-            className="fixed right-4 z-[60] inline-flex h-11 items-center justify-center rounded-full px-6 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-45"
+            className="fixed right-4 z-[60] inline-flex h-11 items-center justify-center rounded-[8px] px-6 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-45"
             style={{
               top: "calc(var(--topnav-h, 64px) + 12px)",
               background: "linear-gradient(135deg, #8C9298, #C8CDD2)",
@@ -2163,7 +2163,7 @@ export default function AddPage() {
                     type="button"
                     onClick={resetUnlockedFields}
                     disabled={isSaving}
-                    className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 text-[10px] ring-1 ring-[color:var(--border)] disabled:opacity-40"
+                    className="rounded-[7px] bg-[color:var(--pill)] px-2.5 py-1 text-[10px] ring-1 ring-[color:var(--border)] disabled:opacity-40"
                   >
                     Unlock All
                   </button>
@@ -3160,7 +3160,7 @@ export default function AddPage() {
                             setAiFilledFields((prev) => { const n = new Set(prev); n.add("notes"); return n; });
                           }
                         }}
-                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 transition bg-[color:var(--pill)] text-[color:var(--theme-gold,#C8CDD2)] ring-[color:var(--border)] hover:ring-[color:var(--theme-gold,#C8CDD2)]"
+                        className="inline-flex items-center gap-1 rounded-[7px] px-2 py-0.5 text-[10px] font-semibold ring-1 transition bg-[color:var(--pill)] text-[color:var(--theme-gold,#C8CDD2)] ring-[color:var(--border)] hover:ring-[color:var(--theme-gold,#C8CDD2)]"
                       >
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3v1M18.364 5.636l-.707.707M21 12h-1M18.364 18.364l-.707-.707M12 21v-1M5.636 18.364l.707-.707M3 12h1M5.636 5.636l.707.707"/><circle cx="12" cy="12" r="4"/></svg>
                         Auto
@@ -3229,7 +3229,7 @@ export default function AddPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedMediaImageId("")}
-                  className="rounded-full bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
+                  className="rounded-[8px] bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
                 >
                   Close
                 </button>
@@ -3301,7 +3301,7 @@ export default function AddPage() {
                       <button
                         type="button"
                         onClick={() => setIsCropEditorOpen(false)}
-                        className="rounded-full bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
+                        className="rounded-[8px] bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]"
                       >
                         Close
                       </button>
@@ -3353,7 +3353,7 @@ export default function AddPage() {
             <button
               type="button"
               onClick={endDrop}
-              className="rounded-full px-4 py-2 text-sm font-bold"
+              className="rounded-[8px] px-4 py-2 text-sm font-bold"
               style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
             >
               Done · Review

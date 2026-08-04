@@ -126,7 +126,7 @@ export default function InvitePage() {
     }
   }
 
-  const goldBtn = "inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition active:scale-95";
+  const goldBtn = "inline-flex items-center gap-2 rounded-[8px] px-5 py-2.5 text-sm font-bold transition active:scale-95";
 
   const shareMessage = `Join me on VLTD — the collector's vault app. Grab ${REFERRED_BONUS_GALLERIES} free Exhibition${REFERRED_BONUS_GALLERIES !== 1 ? "s" : ""} with my invite:`;
   const enc = encodeURIComponent;

@@ -204,7 +204,7 @@ export default function TeamPage() {
                       <button
                         type="button"
                         onClick={() => void handleRole(m, m.role === "admin" ? "member" : "admin")}
-                        className="rounded-full px-2.5 py-1 text-[10px] font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+                        className="rounded-[7px] px-2.5 py-1 text-[10px] font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
                         style={{ color: "var(--muted)" }}
                       >
                         {m.role === "admin" ? "Make member" : "Make admin"}
@@ -212,7 +212,7 @@ export default function TeamPage() {
                       <button
                         type="button"
                         onClick={() => void handleRemove(m)}
-                        className="rounded-full px-2.5 py-1 text-[10px] font-semibold ring-1 ring-red-400/30 transition hover:bg-red-500/10"
+                        className="rounded-[7px] px-2.5 py-1 text-[10px] font-semibold ring-1 ring-red-400/30 transition hover:bg-red-500/10"
                         style={{ color: "#f87171" }}
                       >
                         Remove
