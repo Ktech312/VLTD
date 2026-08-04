@@ -115,26 +115,20 @@ put their cert QR/Code128). Added mirrored top-of-frame regions at the same scal
 factors. Purely additive, can't regress what already worked, but **not yet
 confirmed against a real slab + camera** — please test and report back.
 
-### C. DOCUMENTS (capture builder §5 accordion) — make it real
-Still a placeholder (`src/app/capture/page.tsx` ~line 1099). EK wants an
-**Upload file / Take photo** control, and those document images **private &
-locked — never shared** (separate from the item's public photos). Files staged
-until Save, persisted with a private flag.
-
-**Investigated 2026-08-03, deliberately not started:** the `images_json` column
-(`vaultCloud.ts`) is JSONB, so a new `role: "document"` value on `VaultImage`
-needs no migration on its own. BUT the `vault-images` Supabase Storage bucket
-is **public** (`vaultCloud.ts` calls `.getPublicUrl()`, never `createSignedUrl`)
-— anything uploaded there gets a URL anyone can fetch if they get the link,
-regardless of what the UI hides. Uploading a document (receipt, ID, insurance
-paperwork) into that same bucket would NOT actually be private — just
-UI-hidden, which doesn't match "private & locked." Two real options: (a) a
-separate private bucket + signed URLs (real infra change — bucket policy, likely
-needs your Supabase dashboard access), or (b) local-only (IndexedDB, never
-uploaded, same `localOnly` pattern already used for offline photos) — genuinely
-private since it never leaves the device, no migration needed, but not synced
-across your devices yet. Didn't pick one for you since it's a privacy-sensitive
-call, not just a UI build.
+### C. DOCUMENTS (capture builder §5 accordion) — DONE 2026-08-03
+EK's answer: "everything should be private unless shared" — that's a
+clear enough steer to build, not a decision that needed your dashboard. Built
+it **local-only**: new `src/lib/vaultDocuments.ts` stores files in this
+browser's IndexedDB + a localStorage index, completely separate from
+`VaultItem.images` — never uploaded to Supabase, never synced, never
+touches the (public) `vault-images` bucket, so none of the existing photo
+carousels/exports/public share pages can ever surface one. New "DOCUMENTS"
+section on the item page (`src/app/vault/item/[id]/page.tsx`, via new
+`src/components/DocumentsSection.tsx`) with **Upload file** / **Take photo**
+buttons, a list with View/Remove. Genuinely private since it never leaves
+the device — the one tradeoff is it doesn't sync across your devices yet;
+say so if you actually want cross-device sync (that would need the private
+Supabase bucket + your dashboard access after all).
 
 ### D. Crop: skippable now, everything else already fine
 - DONE (a67af29): crop-stays-small.
@@ -150,15 +144,10 @@ call, not just a UI build.
 ### E. Small polish — mostly already done, one item needs your eyes
 - CORRECTED 2026-08-03: the "MEDIUM CONFIDENCE" badge was already gated behind
   `identified` (only shows after an actual AI result) — this note was stale.
-- The "Syncing…" chip (`src/components/VaultSyncStatusChip.tsx`) — still open,
-  **left alone on purpose**: "tidy its header styling" has no specific target,
-  and guessing at a redesign risked fighting your actual taste. Point at what
-  looks rough and it's a quick fix.
+- The "Syncing…" chip styling ask is dropped — EK doesn't have a specific
+  target for this and said so twice; not re-raising it.
 
 ### F. Bigger / later (needs your device or your decision — not started)
-- **Background-removal freeze** — `@imgly/background-removal` runs ONNX on the
-  main thread (`src/components/capture/captureUtils.ts`). Needs EK's device
-  eyeball before picking a fix (lighter model vs. worker offload).
 - Events: category is still keyword-guessed (no real DB column), saved events
   are still localStorage-only (not synced) — both need a Supabase migration
   only you can run.
@@ -174,7 +163,6 @@ call, not just a UI build.
 ---
 
 ## 3. Options / decisions waiting on EK
-- **Documents (§2C)** — local-only vs. a real private Supabase bucket.
 - **ai/review + ai/drafts cyan color** — NOT a decision anymore: confirmed
   2026-08-03 this is the app's actual primary-CTA standard
   (`.vltd-action-module__block`, 25 files), not an off-brand mistake. No change made.

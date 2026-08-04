@@ -11,6 +11,7 @@ import ExportListingButton from "@/components/ExportListingButton";
 import InsurancePdfButton from "@/components/InsurancePdfButton";
 import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
 import ItemMedia from "@/components/ItemMedia";
+import DocumentsSection from "@/components/DocumentsSection";
 import NotableBadge from "@/components/NotableBadge";
 import PricingMvpCard from "@/components/PricingMvpCard";
 import { PillButton } from "@/components/ui/PillButton";
@@ -879,6 +880,12 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                   userEmail={userEmail}
                   onSave={(clip: VideoClip | null) => void persist({ ...item, videoClip: clip ?? undefined })}
                 />
+              </Section>
+            </div>
+
+            <div className="mt-4">
+              <Section title="DOCUMENTS">
+                <DocumentsSection itemId={item.id} />
               </Section>
             </div>
 
