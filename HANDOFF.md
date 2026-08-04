@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated 2026-08-03, overnight autonomous pass)
+# VLTD — Session Handoff (updated 2026-08-03, second overnight autonomous pass)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -154,6 +154,66 @@ call, not just a UI build.
   and guessing at a redesign risked fighting your actual taste. Point at what
   looks rough and it's a quick fix.
 
+### G. Profile/avatar sync bug found tonight — NOT fixed, needs your decision first
+Found while scoping the "fake profile editor" item below. `src/lib/publicProfile.ts`
+`syncPublicProfile()` writes the `public_profiles.display_name` that's shown to
+OTHER users (Lounge MVP/leaderboards, `/u/[username]`, museum pages) from
+`getProfileSafe().displayName` — the **local-only** `/user/profile` store —
+and never uses the real `profiles.display_name` you set on the real, Supabase-
+wired `/account` settings page (it fetches that row but only reads `.bio`/
+`.avatar_url` from it, ignoring `.display_name`). **Concretely: if you only
+ever set your display name on `/account`, everyone else sees "Collector"
+instead, unless you separately also typed the same name into the obscure
+`/user/profile` page on that same device.** This is a live bug affecting
+public identity display for every user, not just cosmetic copy — I did not
+touch it tonight because a mistake here changes what every user's name/avatar
+shows to everyone else in the app, and I wanted your eyes on the intended fix
+first. Likely right fix: make `syncPublicProfile()` read `profileRow.display_name`
+(already fetched, just unused) instead of the local store, and stop writing
+`public_profiles.display_name`/`avatar_emoji` from `userProfile.ts` at all —
+but confirm with you before I touch the identity-sync path live.
+
+### H. `/user/profile` ("Edit public profile," linked from `/more`) is a local-only duplicate of `/account`
+Entirely `localStorage`-only (`src/lib/userProfile.ts`) — no Supabase sync in
+either direction, so it doesn't survive a device switch, and it self-labels
+several sections "demo" (Age Verification, Preferences, Data Controls). It
+duplicates fields the REAL `/account` page already owns (display name,
+username) via a totally separate storage key, which is the direct cause of
+§2G above. Three real fields have **no backend column at all**: date of
+birth, age-verified flag, marketing opt-in. The email field accepts any typed
+value and saves it locally — it's never actually connected to your Supabase
+Auth login email, so editing it silently does nothing real.
+Did NOT touch this tonight — per the "ask before removing a feature" rule,
+and because this needs a product decision, not just a UI fix:
+1. Should `/user/profile` be merged into `/account` (one real editor, wired
+   to `profiles`), or kept separate for a reason I'm not seeing?
+2. Do you still want DOB/age-verification/marketing-opt-in as real, saved
+   fields? If yes, that's a migration (`profiles.date_of_birth`,
+   `age_verified`, `marketing_opt_in`) I can write for you to run — didn't
+   write one blind since DOB/age-verification touches compliance-adjacent
+   data and I didn't want to guess your intent.
+3. Real email changes need Supabase Auth's `updateUser({ email })` flow
+   (with its own confirmation step) — a bigger, security-sensitive build
+   than swapping a copy string, not attempted tonight.
+
+### I. Billing plan — smaller fix than expected, SHIPPED tonight
+`/account/billing` was hardcoding `currentPlan = "free"` for every user, with
+a comment claiming the Stripe webhook wasn't built. **That comment was
+stale — the webhook (`src/app/api/billing/webhook/route.ts`) already exists
+and already keeps `profiles.tier` in sync**, and `src/lib/subscription.ts`
+(`getTierSafe()`) already mirrors that real tier locally — it's used
+elsewhere (scan quotas). Fixed: the billing page now reads the real tier via
+`getOnboardingStatus()` + `getTierSafe()` instead of a hardcoded literal. No
+migration needed, nothing new to configure.
+**One real gap left, not fixed:** the Stripe `customerId` is only cached in
+that device's `localStorage` (`billingClient.ts`), never persisted
+server-side. A real paying user opening billing on a NEW device will now see
+the correct plan (tier is server-synced) but the Payment method/Invoice
+history/Cancel sections stay hidden until they revisit the device they
+checked out from. Needs a `stripe_customer_id` column on `profiles`
+(migration) populated by the webhook + checkout/session routes — didn't
+write that migration blind since it's payment-adjacent data.
+
 ### F. Bigger / later (needs your device or your decision — not started)
 - **Background-removal freeze** — `@imgly/background-removal` runs ONNX on the
   main thread (`src/components/capture/captureUtils.ts`). Needs EK's device
@@ -174,9 +234,17 @@ call, not just a UI build.
 ---
 
 ## 3. Options / decisions waiting on EK
-- **Capture-screen "Auto ID" metering** (2F).
-- **Watchlist vs Wishlist** name (2F).
+- **Profile/avatar sync bug** (2G) — confirm the fix direction before I touch
+  live identity-sync code (affects what every user's name shows to others).
+- **`/user/profile` vs `/account`** (2H) — merge into one real editor? Keep
+  DOB/age-verification/marketing-opt-in as real fields (needs a migration) or
+  drop them? Real email-change flow, or remove the fake email field?
+- **Capture-screen "Auto ID" metering** — DONE 2026-08-03 (see §4), no longer open.
+- **Watchlist vs Wishlist** name — DONE 2026-08-03, renamed to `/watchlist`, no longer open.
 - **PillButton-everywhere migration** (2F) — say "use PillButton everywhere" to green-light it.
+  (Note: commits titled "Pill sweep"/"PillButton everywhere" landed on `main`
+  from elsewhere while this chat was working tonight — check current state
+  before assuming this is still un-started.)
 - **ai/review + ai/drafts cyan color** — NOT a decision anymore: confirmed
   2026-08-03 this is the app's actual primary-CTA standard
   (`.vltd-action-module__block`, 25 files), not an off-brand mistake. No change made.
@@ -185,6 +253,41 @@ call, not just a UI build.
 ---
 
 ## 4. Done recently (don't redo)
+- **Second overnight pass (2026-08-03 night), while EK slept — production-readiness
+  fake-data sweep, prompted by EK asking to check the whole app:**
+  - Watchlist "7d change" (`-$2,340`, always shown even empty) — removed, no
+    value-history tracking exists for watchlist items.
+  - `/more` StatStrip — `"+12.6% (30D)"` and `"276"` followers were static
+    literals on every visit (both desktop + mobile stat strips). Now real:
+    30D change from `valueHistory.ts` (same fallback pattern
+    `InsightsOverview.tsx` uses), followers from `lib/follows.getFollowerCount`.
+  - VLT Lounge (`community-board/page.tsx`) — `"128 online"` + the "Lounge
+    Live"/"Hot Threads" mock arrays were static, shown to every signed-in user
+    with zero backend behind them. Replaced with honest empty states.
+  - `goals/page.tsx` — GoalRow "due dates" (`"Due Aug 31, 2025"` etc.) were
+    assigned by array index; `GoalProgress` has no due-date field. Removed.
+  - `InsightsOverview.tsx` (`/portfolio`) — removed a fake, non-functional
+    date-range button (`"Apr 18, 2024 - May 18, 2026"`, no onClick) next to
+    the real KPIs; fixed the Total Vault Value card's sub-stat, which
+    hardcoded a `+`/green regardless of actual ROI sign and mislabeled
+    all-time ROI as "vs last 30 days."
+  - `VaultInner.tsx` — reworded a leftover "Existing demo items may not have
+    subcategories yet" tip shown to real users with real (non-demo) vaults.
+  - `/account/billing` — fixed the hardcoded Free-plan display; see §2I.
+  - Ran a parallel Explore-agent sweep across every route in the app (~46
+    directories) for the same two bug shapes (hardcoded stat/list literal
+    next to real data; demo-seed calls bypassing the `getActiveProfileId()`
+    guard). Confirmed clean elsewhere — see git commit messages for the
+    full per-directory rundown if you want it.
+  - Investigated but deliberately NOT fixed — see §2G, §2H, and the
+    `stripe_customer_id` gap noted in §2I. All three need your decision, not
+    a guess, before I touch them.
+  - Verified insurance report/packet/item pages (EK flagged via a suggested-
+    task chip) — already correctly guarded, false alarm, no change needed.
+  - Merged `main` in twice mid-session (other work landed on `main` while
+    this ran: a "Vision prompt" commit, then a 3-commit "Pill sweep"/
+    "PillButton everywhere" migration) — both merges were clean fast-forwards
+    with no conflicts, `tsc` verified after each.
 - **Overnight pass (2026-08-03), while EK slept:**
   - **Field locks on the capture builder** (was §2A) — ported the `/vault/add`
     lock UX onto capture's Identity/Category fields, own storage module
