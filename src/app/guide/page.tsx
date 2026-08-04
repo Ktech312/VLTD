@@ -32,7 +32,7 @@ const FEATURES: Feature[] = [
     what: [
       "Fetches live registry data for the item's subject tag",
       "Shows a clickable pill linking to the full registry leaderboard",
-      "Displays a collector count: '👥 X collectors tracking'",
+      "Displays a collector count next to a people icon: 'X collectors tracking'",
     ],
     value: "Social proof and market context at a glance — know whether you are holding something rare or widely collected.",
     category: "vault",

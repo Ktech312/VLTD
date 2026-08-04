@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
+import { Glyph } from "@/components/ui/Glyph";
 
 export default function ThemeToggle() {
   const { theme, setTheme, systemTheme } = useTheme();
@@ -32,7 +33,7 @@ export default function ThemeToggle() {
       aria-label="Toggle theme"
       title={isDark ? "Switch to Light" : "Switch to Dark"}
     >
-      <span className="text-sm">{isDark ? "🌙" : "☀️"}</span>
+      <Glyph name={isDark ? "moon" : "sun"} size={18} />
     </button>
   );
 }

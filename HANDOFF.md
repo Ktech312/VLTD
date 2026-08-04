@@ -104,10 +104,11 @@ confirm with EK who owns a screen.** EK is aware of this.
 
 ## 2. What's LEFT to do (prioritized)
 
-### A. Quick Add scanner — final device verification + any tweaks
-Rebuilt to spec and iterated (§4). EK is testing on their phone. Likely-remaining
-polish surfaces as EK tests: 5-item review height, flash timing, corner boldness,
-spacing. Verify removal-persistence + camera-returns-after-review on a real device.
+### A. Quick Add scanner — needs device re-test after real bugs got fixed
+EK tested live and found a real bug: the scanner's Universe dropdown hardcoded a
+default of "TCG", so unless manually changed, everything got tagged/AI-hinted as
+TCG — comics scanned as "Magic: The Gathering" etc. Fixed 2026-08-03 (see §4).
+Still want confirmation the fix actually holds up on a real batch of mixed items.
 
 ### B. Barcode / QR not detected on graded slabs — FIX ATTEMPTED, needs device test
 Slab QR/Code128 wasn't read on capture. `buildRegions()` in
@@ -118,26 +119,20 @@ put their cert QR/Code128). Added mirrored top-of-frame regions at the same scal
 factors. Purely additive, can't regress what already worked, but **not yet
 confirmed against a real slab + camera** — please test and report back.
 
-### C. DOCUMENTS (capture builder §5 accordion) — make it real
-Still a placeholder (`src/app/capture/page.tsx` ~line 1099). EK wants an
-**Upload file / Take photo** control, and those document images **private &
-locked — never shared** (separate from the item's public photos). Files staged
-until Save, persisted with a private flag.
-
-**Investigated 2026-08-03, deliberately not started:** the `images_json` column
-(`vaultCloud.ts`) is JSONB, so a new `role: "document"` value on `VaultImage`
-needs no migration on its own. BUT the `vault-images` Supabase Storage bucket
-is **public** (`vaultCloud.ts` calls `.getPublicUrl()`, never `createSignedUrl`)
-— anything uploaded there gets a URL anyone can fetch if they get the link,
-regardless of what the UI hides. Uploading a document (receipt, ID, insurance
-paperwork) into that same bucket would NOT actually be private — just
-UI-hidden, which doesn't match "private & locked." Two real options: (a) a
-separate private bucket + signed URLs (real infra change — bucket policy, likely
-needs your Supabase dashboard access), or (b) local-only (IndexedDB, never
-uploaded, same `localOnly` pattern already used for offline photos) — genuinely
-private since it never leaves the device, no migration needed, but not synced
-across your devices yet. Didn't pick one for you since it's a privacy-sensitive
-call, not just a UI build.
+### C. DOCUMENTS (capture builder §5 accordion) — DONE 2026-08-03
+EK's answer: "everything should be private unless shared" — that's a
+clear enough steer to build, not a decision that needed your dashboard. Built
+it **local-only**: new `src/lib/vaultDocuments.ts` stores files in this
+browser's IndexedDB + a localStorage index, completely separate from
+`VaultItem.images` — never uploaded to Supabase, never synced, never
+touches the (public) `vault-images` bucket, so none of the existing photo
+carousels/exports/public share pages can ever surface one. New "DOCUMENTS"
+section on the item page (`src/app/vault/item/[id]/page.tsx`, via new
+`src/components/DocumentsSection.tsx`) with **Upload file** / **Take photo**
+buttons, a list with View/Remove. Genuinely private since it never leaves
+the device — the one tradeoff is it doesn't sync across your devices yet;
+say so if you actually want cross-device sync (that would need the private
+Supabase bucket + your dashboard access after all).
 
 ### D. Crop: skippable now, everything else already fine
 - DONE (a67af29): crop-stays-small.
@@ -153,10 +148,8 @@ call, not just a UI build.
 ### E. Small polish — mostly already done, one item needs your eyes
 - CORRECTED 2026-08-03: the "MEDIUM CONFIDENCE" badge was already gated behind
   `identified` (only shows after an actual AI result) — this note was stale.
-- The "Syncing…" chip (`src/components/VaultSyncStatusChip.tsx`) — still open,
-  **left alone on purpose**: "tidy its header styling" has no specific target,
-  and guessing at a redesign risked fighting your actual taste. Point at what
-  looks rough and it's a quick fix.
+- The "Syncing…" chip styling ask is dropped — EK doesn't have a specific
+  target for this and said so twice; not re-raising it.
 
 ### G. Profile/avatar sync bug — FIXED tonight (EK confirmed the fix direction)
 Was: `src/lib/publicProfile.ts` `syncPublicProfile()` wrote the
@@ -237,18 +230,6 @@ checked out from. Needs a `stripe_customer_id` column on `profiles`
 write that migration blind since it's payment-adjacent data.
 
 ### F. Bigger / later (needs your device or your decision — not started)
-- **Background-removal freeze** — `@imgly/background-removal` runs ONNX on the
-  main thread (`src/components/capture/captureUtils.ts`). Needs EK's device
-  eyeball before picking a fix (lighter model vs. worker offload).
-- **Watchlist vs Wishlist naming** — EK to pick before renaming (route `/wishlist`
-  vs `watchlistModel`).
-- **Capture-screen "Auto ID" metering** — apply the same 1-scan/image metering
-  used by Quick Add to the capture screen's single Auto ID button. Not started
-  (this is a real behavior change to a paid-tier limit, wanted your OK first).
-- **PillButton-everywhere migration** — see `THEME_SWEEP.md` §2. Two pill
-  patterns coexist; specific offenders got fixed as they came up (Export sizing,
-  filter dropdown, this session's barcode/crop work touched none), but a full
-  migration to one component needs your one-line "go" first.
 - **Events saved-list sync — DONE 2026-08-03 (night), needs your migration run.**
   Saved events (`/events`) were localStorage-only (per-device). Added
   `supabase/migrations/20260803_saved_events.sql` (owner-only RLS, mirrors the
@@ -260,15 +241,23 @@ write that migration blind since it's payment-adjacent data.
   devices yet.
   Event **category is still keyword-guessed** (`categoryFor()` in
   `events/page.tsx` — guesses from real event name/description text). Left
-  this alone: it's a real classification of real events, not fabricated data
-  like everything else in tonight's sweep, and a real "category" column would
-  need someone to actually assign correct categories to existing events
-  (a content/ops task, not just a schema change) — didn't want to guess at
-  that data blind. Also left `savedSuggestionIds` (saved *search results* from
-  the Google Events/SerpApi lookup, key `vltd_event_search_saved_v1`) local-only
-  — those aren't real DB rows, syncing them would need storing a full snapshot
-  per save (like watchlist does for external items), lower priority than the
-  curated-events list above.
+  this alone: it's a real classification of real events, not fabricated data,
+  and a real "category" column would need someone to actually assign correct
+  categories to existing events (a content/ops task, not just a schema
+  change) — didn't want to guess at that data blind. Also left
+  `savedSuggestionIds` (saved *search results* from the Google Events/SerpApi
+  lookup, key `vltd_event_search_saved_v1`) local-only — those aren't real DB
+  rows, syncing them would need storing a full snapshot per save (like
+  watchlist does for external items), lower priority than the curated-events
+  list above.
+- Two more possible improvements EK raised, not started: (a) AI comic-book ID
+  accuracy — added visual-cue guidance to the vision prompt 2026-08-03 (§4),
+  needs a real test against the same comics that triggered the original bug;
+  (b) a Subcategory-level pre-set pill next to Category on the scanner screen —
+  EK asked for "another box" after picking Category; only added the Category
+  pill so far (§4), didn't add a 3rd Subcategory pill since it wasn't clear
+  that's literally what was meant vs. just wanting the Category pill. Ask
+  before building a 3rd cascading pill.
 
 ---
 
@@ -280,13 +269,16 @@ write that migration blind since it's payment-adjacent data.
   is still device-only (no storage bucket wired) — separate ask if wanted.
 - **Capture-screen "Auto ID" metering** — DONE 2026-08-03 (see §4), no longer open.
 - **Watchlist vs Wishlist** name — DONE 2026-08-03, renamed to `/watchlist`, no longer open.
-- **PillButton-everywhere migration** (2F) — say "use PillButton everywhere" to green-light it.
-  (Note: commits titled "Pill sweep"/"PillButton everywhere" landed on `main`
-  from elsewhere while this chat was working tonight — check current state
-  before assuming this is still un-started.)
+- **PillButton-everywhere migration** (2F) — landed on `main` via "Pill sweep"/
+  "PillButton everywhere" commits from elsewhere; no longer open, check
+  current code rather than assuming a green-light is still needed.
 - **ai/review + ai/drafts cyan color** — NOT a decision anymore: confirmed
   2026-08-03 this is the app's actual primary-CTA standard
   (`.vltd-action-module__block`, 25 files), not an off-brand mistake. No change made.
+- **/admin/\* visual skin** — confirmed 2026-08-03 it's a deliberately separate
+  internal-tool look (own dark bg, amber accents, emoji icons), not drift. Left
+  alone. Say so if you actually want it reskinned to match the main app — bigger
+  job, not started.
 - Everything else in §2 is a go; just needs building/verifying/a migration.
 
 ---
@@ -320,7 +312,7 @@ write that migration blind since it's payment-adjacent data.
     full per-directory rundown if you want it.
   - Investigated but deliberately NOT fixed — see §2G, §2H, and the
     `stripe_customer_id` gap noted in §2I. All three need your decision, not
-    a guess, before I touch them.
+    a guess, before touching them.
   - Verified insurance report/packet/item pages (EK flagged via a suggested-
     task chip) — already correctly guarded, false alarm, no change needed.
   - **Events saved-list sync** (§2F) — added the `saved_events` migration +
@@ -349,7 +341,115 @@ write that migration blind since it's payment-adjacent data.
   `/user/profile` now redirects to `/account`, real email-change flow added
   to `/account/security` via `supabase.auth.updateUser({ email })`. `tsc` +
   `eslint` clean (only pre-existing React Compiler try/finally advisories,
-  same shape already present elsewhere in these files).
+  same shape already present elsewhere in these files). Also matched the
+  concurrent emoji-sweep pass below: swapped the one "Verified ✅" chip
+  copied into `/account`'s new Age Verification section for the themed
+  `Glyph` (`check`) treatment.
+- **Third overnight pass (2026-08-03, after the above two), EK asleep again —
+  emoji sweep + Documents feature:**
+  - **Emoji sweep**: replaced raw emoji glyphs with the themed `Glyph`
+    component across `UniverseRail.tsx`, `account/page.tsx`,
+    `onboarding/page.tsx` (the three remaining raw `UNIVERSE_ICON[key]`
+    sites), `ai/drafts`/`ai/review` missing-fields warning chip, the museum
+    Announce button, `ThemeToggle`, `CameraCapturePanel`'s soft-image
+    warning, the auction countdown chip, the public profile's
+    vault-not-found lock icon, `vault/readiness` (missing-thumbnail + empty-
+    state icons), `TopNav`'s museum nav-card icon, the public `share/[itemId]`
+    missing-image placeholder, `account/billing`'s plan-star icon,
+    `ScanVerifySheet`'s AI-disagreement flag, `user/profile`'s two "age
+    verified ✅" chips, and `vault/item/[id]`'s Export-for-Social/
+    Start-Auction/Registry-collector-count icons (+ updated `guide/page.tsx`'s
+    doc text that quoted the old raw emoji). Deliberately left alone:
+    `vault/frames/page.tsx`'s "⭐ Key Item"/"🔥 HOT" stickers — that screen
+    rasterizes the live DOM to a downloadable PNG via html2canvas, so
+    swapping to an SVG glyph risks a compositing regression in the exported
+    image I can't verify without opening a browser; needs a visual pass, not
+    a blind edit. Also not touched: `kickstarter/page.tsx`'s 🚀 (no themed
+    glyph is a good semantic match for "rocket" yet), and the longer tail of
+    more speculative/design-heavy sites (shop.tsx's ~34 product icons,
+    HomeClient's social-platform brand icons, SeasonalBanner's decorative
+    seasonal icons, v/[profileId]'s expanded UNIVERSE_EMOJI map) — all need
+    real visual judgment, not a mechanical swap.
+  - **Documents (§2C) — built, see that section.** EK's answer ("everything
+    should be private unless shared") was a clear enough steer to build
+    local-only rather than a decision that needed a Supabase dashboard call.
+  - Dropped two recurring asks per EK's explicit feedback: the
+    background-removal-freeze device check and the "Syncing…" chip styling
+    ask — EK said twice they don't know what these mean; not re-raising them.
+  - **Full-width pill/dropdown sweep — the 4 known offenders, fixed:**
+    `EventTypeSelect` (`events/page.tsx`) was stretched via a
+    `grid-cols-[minmax(0,1fr)_170px]` container next to the fixed-width
+    "Saved Events" button — switched the container to `flex flex-wrap` and
+    the select to `w-auto`. `WishlistCard`'s "Move to Vault" and
+    `GoalCard`'s "Add N to Want List" both had `flex-1` while their sibling
+    buttons didn't — dropped `flex-1`, added matching padding. Checked and
+    ruled out a 5th suspected site: `VaultWallView.tsx`'s Advanced-filters
+    Status `<select>` — its `w-full` matches every sibling text input in
+    the same filter grid (Grade/Category/Storage/Source), a genuine
+    uniform filter-form pattern, not a stretched pill. Left alone.
+- **Second overnight/late-night pass (2026-08-03), after EK woke up and tested live:**
+  - **Rename `/wishlist` → `/watchlist`** (EK's decision) — moved the route,
+    fixed the two `href="/wishlist"` links, added a permanent redirect from the
+    old path, updated `AddToWishlistButton`'s visible copy. Left the underlying
+    `wishlistModel.ts`/`watchlistModel.ts`/`comicWishlistModel.ts` library files
+    alone — three genuinely different data sources the Watchlist page merges
+    into one list, not a naming collision.
+  - **Real bug found + fixed: Quick Add locked items into the wrong Universe.**
+    `ScanCapturePanel.tsx`'s Universe dropdown hardcoded a default of "TCG" —
+    EK scanned 3 comics, they came back as "Magic: The Gathering..." at low
+    confidence, and there was no way to fix the Universe in Verify (only an
+    auto-flag that fires when the AI disagrees with itself, which didn't fire
+    since the AI was hinted "the collector says this is TCG" and just complied).
+    Three fixes: (1) Universe dropdown now remembers your last pick
+    (`localStorage`, `SCAN_UNIVERSE_PREF_KEY`) instead of resetting to TCG,
+    (2) added a real Universe dropdown to `ScanVerifySheet` so you can always
+    fix it manually, (3) softened the AI hint wording to explicitly favor what
+    it sees over the stated Universe.
+  - **Review sheet (`ScanReviewSheet.tsx`) can now edit Universe/Category
+    per item AND has a "Skip AI" checkbox** (opposite the thumbnail) — skipping
+    doesn't spend a scan, item stays blank for manual entry. Both wired through
+    a new `onPatch` prop that updates the source `capturedItems` state directly.
+  - **Added a Category pill next to Universe** on the scanner screen
+    (`categoryLabel` state already existed, just had no control) — EK wanted
+    the whole batch pre-settable, not just Universe. See §2F for the
+    Subcategory-pill follow-up question.
+  - **Verify sheet: split Value into Cost ($) + Value ($)** — `purchasePrice`
+    was silently dropped before; now threaded through the draft → saved item.
+  - **Item Notes: pencil-icon direct edit + Clear button** next to
+    Regenerate (`vault/item/[id]/page.tsx`) — `Section` component now takes an
+    optional `action` slot for this. Regenerate itself (`generateItemCopy.ts`)
+    was already deterministic/field-based, not random — just needed more
+    fields filled in for a better result, not a code fix.
+  - **Vision prompt: added comic-vs-card visual cues**
+    (`api/ai/analyze-item/route.ts`) — cover size, publisher logos, staples —
+    and told the model to give an honest vague title instead of a confident
+    wrong one when text isn't legible. Prompt-only, needs a real test.
+  - **Capture-screen "Auto ID" is now metered** the same as Quick Add
+    (1 scan/image, `consumeBulkScans`) — EK's call: "any AI scan should be
+    limited" on the free tier. Barcode/UPC lookup stays free (local decode).
+  - **Pill sweep, actually finished this time.** ~55 files total across two
+    passes: every genuine `rounded-full` straggler (a real action button in the
+    wrong shape) app-wide. Confirmed NOT violations and left alone: `/admin/*`
+    (separate internal-tool skin), toggles/chips/badges/avatars/icon-only
+    buttons, and anything using `vltd-pill-main-glow`/`vltd-primary-button`/
+    `.vltd-action-module__block` (verified some of these against their actual
+    CSS, not just the class name, before ruling them out).
+  - **PillButton-everywhere, actually migrated** (not just shape-matched).
+    Extended `src/components/ui/PillButton.tsx` with `href` (renders as
+    `next/link`), a `danger` variant, and a `style` passthrough for bespoke
+    colors — then migrated every standard-sized (h-10/11/12, text-sm) action
+    button/nav-pill onto the literal component across ~20 files. Deliberately
+    NOT migrated: glossy gradient primary CTAs (their own established tier),
+    the compact toolbar/mass-select-bar tier (~38px, smaller text — forcing
+    PillButton's fixed 44/40px in would risk row overflow), and per-item
+    micro-chips in dense rows (Review/Verify sheet rows, card action rows).
+    These three tiers are already correctly shaped, just not literally
+    PillButton, which was never sized for them.
+  - Investigated and ruled out two more suspected fake-data bugs: the insurance
+    report pages' `DEMO_ITEMS` (via `loadItemsOrSeed()`) only shows demo data to
+    logged-out marketing visitors, never a signed-in user's real (possibly
+    empty) vault — correctly guarded, not a bug. Same for the "+X% (30D)" stat
+    on `/more` — real computed value-history data, not hardcoded.
 - **Overnight pass (2026-08-03), while EK slept:**
   - **Field locks on the capture builder** (was §2A) — ported the `/vault/add`
     lock UX onto capture's Identity/Category fields, own storage module
@@ -451,10 +551,12 @@ write that migration blind since it's payment-adjacent data.
 ## 6. First moves for the new chat
 1. Read this + `MEMORY.md`. Confirm with EK **who owns `/capture` right now**
    (this chat vs the parallel Codex edits) before editing capture files.
-2. Ask EK: did the barcode top-region fix (§2B) actually catch a graded slab's
-   QR/Code128 on their phone? That's the one overnight change that couldn't be
-   verified without a device.
-3. Then §2C documents, or whichever §3 decision EK wants to make first.
+2. Ask EK what they found testing overnight: did the Universe-lock fix (§2A),
+   barcode top-region fix (§2B), and comic-ID prompt fix (§2F) actually hold up
+   on real devices/items? None of those three could be verified without a
+   device/real API call.
+3. Then §2C documents (needs EK's local-only-vs-private-bucket call), or
+   whichever §3 decision EK wants to make first.
 4. Verify each **visually** on `vltd.vercel.app` (screenshot; resize for mobile).
    `tsc`/`eslint`/`build` before every push. Deploys are slow — preview CSS-only
    tweaks via live JS injection to iterate faster.

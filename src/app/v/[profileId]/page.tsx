@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { Glyph } from "@/components/ui/Glyph";
 
 import VaultMuseumView from "@/components/VaultMuseumView";
 import {
@@ -408,7 +409,7 @@ export default function PublicVaultPage({
     return (
       <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
         <div className="mx-auto max-w-lg px-4 py-20 text-center">
-          <div className="text-4xl mb-4">🔒</div>
+          <div className="mb-4 flex justify-center"><Glyph name="lock" size={40} /></div>
           <h1 className="text-xl font-semibold mb-2">Vault not found</h1>
           <p className="text-sm text-[color:var(--muted)] mb-6">{error}</p>
           <Link href="/" className="rounded-full bg-[color:var(--pill)] px-5 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">

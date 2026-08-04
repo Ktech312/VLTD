@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { Glyph } from "@/components/ui/Glyph";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 // Service role key bypasses RLS — server-only, never sent to browser
@@ -205,7 +206,7 @@ export default async function ShareItemPage(
                 fontSize: 48,
               }}
             >
-              📦
+              <Glyph name="frame" size={40} />
             </div>
           )}
 

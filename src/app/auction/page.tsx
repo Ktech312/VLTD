@@ -104,7 +104,7 @@ function CountdownChip({ cd }: { cd: CountdownResult }) {
       className="rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums"
       style={{ background: bg, color }}
     >
-      ⏱ {cd.label}
+      <span className="inline-flex items-center gap-1"><Glyph name="clock" size={10} /> {cd.label}</span>
     </span>
   );
 }

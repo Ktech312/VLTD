@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 
 import { createProfile, getOnboardingStatus, setStoredActiveProfileId } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import { UNIVERSE_KEYS, UNIVERSE_LABEL, UNIVERSE_ICON } from "@/lib/taxonomy";
+import { UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
+import { Glyph, universeGlyphName } from "@/components/ui/Glyph";
 import { clearOnboardingDraft, loadOnboardingDraft, saveOnboardingDraft } from "@/lib/onboardingDraft";
 import { PillButton } from "@/components/ui/PillButton";
 
@@ -479,7 +480,7 @@ export default function OnboardingPage() {
                               : "bg-[color:var(--pill)] ring-[color:var(--border)] text-[color:var(--muted)] hover:ring-[rgba(203,208,213,0.35)] hover:text-text-primary",
                           ].join(" ")}
                         >
-                          <span>{UNIVERSE_ICON[key]}</span>
+                          <Glyph name={universeGlyphName(key)} size={16} />
                           <span>{UNIVERSE_LABEL[key]}</span>
                         </button>
                       );

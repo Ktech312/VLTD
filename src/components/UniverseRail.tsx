@@ -2,7 +2,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { UNIVERSE_ICON, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+import { Glyph, universeGlyphName } from "@/components/ui/Glyph";
 
 export default function UniverseRail({
   value,
@@ -100,7 +101,7 @@ export default function UniverseRail({
           {universes.map((u) => {
             const active = value === u;
             const label = u === "ALL" ? "All" : UNIVERSE_LABEL[u];
-            const icon = u === "ALL" ? "✨" : UNIVERSE_ICON[u];
+            const glyphName = u === "ALL" ? "sparkle" : universeGlyphName(u);
             const count = u === "ALL" ? undefined : counts?.[u];
 
             return (
@@ -125,7 +126,7 @@ export default function UniverseRail({
                   "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30",
                 ].join(" ")}
               >
-                <span className="text-base leading-none">{icon}</span>
+                <Glyph name={glyphName} size={16} />
                 <span className="font-medium">{label}</span>
 
                 {typeof count === "number" && (

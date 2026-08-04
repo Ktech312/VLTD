@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ThemePicker } from "@/components/ui/ThemePicker";
 import { PillButton } from "@/components/ui/PillButton";
-import { Glyph } from "@/components/ui/Glyph";
+import { Glyph, universeGlyphName } from "@/components/ui/Glyph";
 import { AccountTabs } from "@/components/account/AccountTabs";
 
 import { getOnboardingStatus, updateProfile } from "@/lib/auth";
@@ -14,7 +14,7 @@ import { syncPublicProfile } from "@/lib/publicProfile";
 import { processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { syncVaultItemsFromSupabase } from "@/lib/vaultModel";
 import { loadWatchlist, removeFromWatchlist, type WatchlistItem } from "@/lib/watchlistModel";
-import { UNIVERSE_KEYS, UNIVERSE_LABEL, UNIVERSE_ICON, isUniverseKey } from "@/lib/taxonomy";
+import { UNIVERSE_KEYS, UNIVERSE_LABEL, isUniverseKey } from "@/lib/taxonomy";
 import { getProfileSafe, setProfileSafe, broadcastProfileChange } from "@/lib/userProfile";
 import { showToast } from "@/lib/toast";
 
@@ -483,7 +483,7 @@ export default function AccountPage() {
                             color: "var(--muted)",
                           }}
                         >
-                          <span>{UNIVERSE_ICON[key]}</span>
+                          <Glyph name={universeGlyphName(key)} size={16} />
                           <span>{UNIVERSE_LABEL[key]}</span>
                         </button>
                       );
@@ -678,7 +678,7 @@ export default function AccountPage() {
                   }}
                   disabled={!canVerifyAge}
                 >
-                  {ageVerified ? "Verified ✅" : "Verify Age"}
+                  {ageVerified ? <span className="inline-flex items-center gap-1">Verified <Glyph name="check" size={13} /></span> : "Verify Age"}
                 </PillButton>
                 {ageVerified ? (
                   <PillButton onClick={() => setAgeVerified(false)} className="bg-red-500/10 text-red-200 ring-red-400/20 hover:bg-red-500/15">
@@ -933,7 +933,7 @@ export default function AccountPage() {
                       color: "var(--muted)",
                     }}
                   >
-                    <span>{UNIVERSE_ICON[key]}</span>
+                    <Glyph name={universeGlyphName(key)} size={16} />
                     <span>{UNIVERSE_LABEL[key]}</span>
                   </button>
                 );

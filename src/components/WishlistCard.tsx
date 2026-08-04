@@ -102,7 +102,7 @@ export default function WishlistCard({
             <button
               type="button"
               onClick={() => onMoveToVault(item)}
-              className="vltd-pill-main-glow flex-1 rounded-full px-3 py-2 text-xs font-bold transition"
+              className="vltd-pill-main-glow rounded-full px-3 py-2 text-xs font-bold transition"
               style={{ background: "var(--pill-active-bg)", border: "none", cursor: "pointer" }}
             >
               Move to Vault

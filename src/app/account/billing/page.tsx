@@ -7,6 +7,7 @@ import { showToast } from "@/lib/toast";
 import { getCurrentUser, getOnboardingStatus, getStoredActiveProfileId } from "@/lib/auth";
 import { getStoredStripeCustomerId, setStoredStripeCustomerId } from "@/lib/billingClient";
 import { getTierSafe, onTierChange, type Tier } from "@/lib/subscription";
+import { Glyph } from "@/components/ui/Glyph";
 
 type Plan = "free" | "pro" | "business";
 
@@ -182,7 +183,7 @@ export default function BillingPage() {
                 {currentPlan === "free" ? "Upgrade to unlock more features" : "Cancel anytime"}
               </div>
             </div>
-            <div className="text-3xl">⭐</div>
+            <div style={{ color: "var(--theme-gold)" }}><Glyph name="star" size={30} /></div>
           </div>
         </div>
 

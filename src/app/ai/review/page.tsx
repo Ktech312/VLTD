@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PillButton } from "@/components/ui/PillButton";
+import { Glyph } from "@/components/ui/Glyph";
 import { Suspense, useEffect, useState } from "react";
 import {
   deleteDraft,
@@ -249,7 +250,7 @@ function ReviewInner() {
                   className="rounded-full px-2 py-0.5 text-[10px]"
                   style={{ background: "rgba(248,113,113,0.1)", color: "#f87171", border: "1px solid rgba(248,113,113,0.2)" }}
                 >
-                  ⚠ {f}
+                  <span className="inline-flex items-center gap-1"><Glyph name="warning" size={10} /> {f}</span>
                 </span>
               ))}
             </div>

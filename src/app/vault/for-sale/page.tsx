@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { Glyph } from "@/components/ui/Glyph";
 
 import {
   generateEbayListing,
@@ -211,8 +212,8 @@ function ItemCard({
           {activePlatformGaps.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
               {activePlatformGaps.slice(0, 3).map(g => (
-                <span key={g} className="rounded-full px-2 py-0.5 text-[10px]" style={{ background: "rgba(248,113,113,0.1)", color: "#f87171", border: "1px solid rgba(248,113,113,0.2)" }}>
-                  ⚠ {g}
+                <span key={g} className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px]" style={{ background: "rgba(248,113,113,0.1)", color: "#f87171", border: "1px solid rgba(248,113,113,0.2)" }}>
+                  <Glyph name="warning" size={10} /> {g}
                 </span>
               ))}
               {activePlatformGaps.length > 3 && (
@@ -394,7 +395,7 @@ export default function ForSalePage() {
 
         {items.length === 0 ? (
           <div className="rounded-2xl px-6 py-14 text-center ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
-            <div className="text-4xl">🏷️</div>
+            <div className="flex justify-center opacity-60"><Glyph name="tag" size={36} /></div>
             <div className="mt-4 text-base font-semibold" style={{ color: "var(--fg)" }}>No items marked for sale</div>
             <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>Open any vault item and change its status to "For Sale" to see it here.</p>
             <Link href="/vault" className="mt-6 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold" style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>

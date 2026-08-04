@@ -38,7 +38,14 @@ export type GlyphName =
   | "share"
   | "clock"
   | "eye"
-  | "building";
+  | "building"
+  | "warning"
+  | "lock"
+  | "megaphone"
+  | "camera"
+  | "moon"
+  | "sun"
+  | "frame";
 
 const PATHS: Record<GlyphName, ReactNode> = {
   bell: (<><path d="M6 16v-5a6 6 0 0 1 12 0v5" /><path d="M4.5 16h15" /><path d="M10.4 19a1.7 1.7 0 0 0 3.2 0" /></>),
@@ -75,6 +82,13 @@ const PATHS: Record<GlyphName, ReactNode> = {
   clock: (<><circle cx="12" cy="12" r="8" /><path d="M12 7.5V12l3 2" /></>),
   eye: (<><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z" /><circle cx="12" cy="12" r="2.6" /></>),
   building: (<><path d="M5 20V7l7-3 7 3v13" /><path d="M3 20h18" /><path d="M9 10h1M14 10h1M9 13.5h1M14 13.5h1" /><path d="M10.5 20v-3.5h3V20" /></>),
+  warning: (<><path d="M12 3.5 21 19H3z" /><path d="M12 9.5v4.5M12 16.8h.01" /></>),
+  lock: (<><rect x="4.5" y="11" width="15" height="9.5" rx="1.8" /><path d="M7.5 11V7.5a4.5 4.5 0 0 1 9 0V11" /></>),
+  megaphone: (<><path d="M3 10v4a1 1 0 0 0 1 1h2l9 4.5V4.5L6 9H4a1 1 0 0 0-1 1z" /><path d="M17 9.5a3.5 3.5 0 0 1 0 5" /></>),
+  camera: (<><path d="M4 8h2.5l1.3-2h8.4l1.3 2H20a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" /><circle cx="12" cy="13" r="3.2" /></>),
+  moon: (<><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" /></>),
+  sun: (<><circle cx="12" cy="12" r="4.2" /><path d="M12 3v2.2M12 18.8V21M4.2 12H3M21 12h-1.2M5.9 5.9l1.5 1.5M16.6 16.6l1.5 1.5M5.9 18.1l1.5-1.5M16.6 7.4l1.5-1.5" /></>),
+  frame: (<><rect x="4" y="4" width="16" height="16" rx="1.5" /><path d="m7.5 15.5 3-3.5 2.5 2.5 3.5-4.5 2.5 3.5" /></>),
 };
 
 // Map a common emoji to the closest themed glyph (for legacy emoji lookups).
@@ -85,6 +99,10 @@ export function emojiGlyphName(emoji: string): GlyphName {
     "🗝️": "key", "🗝": "key", "🛒": "cart", "🃏": "cards", "🏆": "trophy",
     "🎵": "music", "💎": "gem", "🎮": "game", "🎭": "burst", "🎨": "palette",
     "🌿": "leaf", "🚗": "car", "🔨": "gavel", "🔔": "bell", "🐛": "bug",
+    "⚠": "warning", "⚠️": "warning", "🔒": "lock", "🔐": "lock", "📣": "megaphone",
+    "📷": "camera", "📸": "camera", "🎬": "camera", "🌙": "moon", "☀️": "sun",
+    "🖼": "frame", "🖼️": "frame", "⭐": "star", "🔥": "flame", "👁": "eye",
+    "👁️": "eye", "⏱": "clock", "⏱️": "clock", "⏰": "clock", "📲": "share",
   };
   return map[emoji] ?? "star";
 }
