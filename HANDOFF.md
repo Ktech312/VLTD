@@ -339,6 +339,17 @@ write that migration blind since it's payment-adjacent data.
   - Dropped two recurring asks per EK's explicit feedback: the
     background-removal-freeze device check and the "Syncing…" chip styling
     ask — EK said twice they don't know what these mean; not re-raising them.
+  - **Full-width pill/dropdown sweep — the 4 known offenders, fixed:**
+    `EventTypeSelect` (`events/page.tsx`) was stretched via a
+    `grid-cols-[minmax(0,1fr)_170px]` container next to the fixed-width
+    "Saved Events" button — switched the container to `flex flex-wrap` and
+    the select to `w-auto`. `WishlistCard`'s "Move to Vault" and
+    `GoalCard`'s "Add N to Want List" both had `flex-1` while their sibling
+    buttons didn't — dropped `flex-1`, added matching padding. Checked and
+    ruled out a 5th suspected site: `VaultWallView.tsx`'s Advanced-filters
+    Status `<select>` — its `w-full` matches every sibling text input in
+    the same filter grid (Grade/Category/Storage/Source), a genuine
+    uniform filter-form pattern, not a stretched pill. Left alone.
 - **Second overnight/late-night pass (2026-08-03), after EK woke up and tested live:**
   - **Rename `/wishlist` → `/watchlist`** (EK's decision) — moved the route,
     fixed the two `href="/wishlist"` links, added a permanent redirect from the

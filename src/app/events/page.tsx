@@ -244,14 +244,14 @@ function EventTypeSelect({
   onChange: (value: EventFilter) => void;
 }) {
   return (
-    <label className="relative block">
+    <label className="relative inline-block">
       <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[color:var(--muted)]">
         <CalendarDays size={14} />
       </span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value as EventFilter)}
-        className="h-9 w-full appearance-none rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] pl-9 pr-8 text-xs font-bold text-[color:var(--fg)] outline-none"
+        className="h-9 w-auto appearance-none rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] pl-9 pr-8 text-xs font-bold text-[color:var(--fg)] outline-none"
       >
         <option value="all">All Event Types</option>
         <option value="convention">Conventions</option>
@@ -682,7 +682,7 @@ export default function EventsPage() {
         </section>
         ) : null}
 
-        <section className="mt-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_170px]">
+        <section className="mt-4 flex flex-wrap items-center gap-2">
           <EventTypeSelect value={filter} onChange={setFilter} />
           <button
             type="button"
