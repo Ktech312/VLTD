@@ -4,10 +4,17 @@ import { useEffect, useState } from "react";
 import { AccountTabs } from "@/components/account/AccountTabs";
 import { RedeemCodeCard } from "@/components/account/RedeemCodeCard";
 import { showToast } from "@/lib/toast";
-import { getCurrentUser, getStoredActiveProfileId } from "@/lib/auth";
+import { getCurrentUser, getOnboardingStatus, getStoredActiveProfileId } from "@/lib/auth";
 import { getStoredStripeCustomerId, setStoredStripeCustomerId } from "@/lib/billingClient";
+import { getTierSafe, onTierChange, type Tier } from "@/lib/subscription";
 
 type Plan = "free" | "pro" | "business";
+
+function planForTier(tier: Tier): Plan {
+  if (tier === "FULL") return "business";
+  if (tier === "MID") return "pro";
+  return "free";
+}
 
 const PLANS: { key: Plan; name: string; price: string; features: string[] }[] = [
   {
@@ -30,12 +37,21 @@ const PLANS: { key: Plan; name: string; price: string; features: string[] }[] = 
   },
 ];
 
-// Plan and invoice state requires a Stripe webhook syncing subscription
-// events to a profile record. Until that's built, we show the free plan
-// and hide payment/invoice/cancel sections until a customerId exists.
+// profiles.tier is the source of truth (kept in sync by the Stripe webhook at
+// src/app/api/billing/webhook/route.ts). getOnboardingStatus() pulls the real
+// tier from Supabase and mirrors it into subscription.ts's local cache, which
+// getTierSafe() reads here.
+//
+// Known gap (not fixed here): the Stripe customerId is only cached in this
+// device's localStorage (billingClient.ts), never persisted server-side. A
+// real paying user opening this page on a new device will see the correct
+// plan (tier is server-synced) but the Payment method/Invoice history/Cancel
+// sections below will stay hidden until they open billing on the device they
+// originally checked out from. Fixing that needs a stripe_customer_id column
+// on profiles (a migration) populated by the webhook + checkout/session routes.
 
 export default function BillingPage() {
-  const currentPlan: Plan = "free";
+  const [currentPlan, setCurrentPlan] = useState<Plan>(() => planForTier(getTierSafe()));
   const [email, setEmail] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [busyPlan, setBusyPlan] = useState<Plan | null>(null);
@@ -45,6 +61,8 @@ export default function BillingPage() {
   useEffect(() => {
     getCurrentUser().then(({ data }) => setEmail(data.user?.email ?? ""));
     setCustomerId(getStoredStripeCustomerId());
+    void getOnboardingStatus().then(() => setCurrentPlan(planForTier(getTierSafe())));
+    const unsubscribe = onTierChange((tier) => setCurrentPlan(planForTier(tier)));
 
     const params = new URLSearchParams(window.location.search);
     const billingStatus = params.get("billing");
@@ -64,10 +82,13 @@ export default function BillingPage() {
         .catch(() => {})
         .finally(() => {
           window.history.replaceState({}, "", "/account/billing");
+          void getOnboardingStatus().then(() => setCurrentPlan(planForTier(getTierSafe())));
         });
     } else if (billingStatus === "cancelled") {
       window.history.replaceState({}, "", "/account/billing");
     }
+
+    return unsubscribe;
   }, []);
 
   async function handleUpgrade(plan: Plan) {

@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated 2026-08-03, second overnight pass — EK asleep again)
+# VLTD — Session Handoff (updated 2026-08-03, second overnight autonomous pass)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -42,6 +42,8 @@ is risky or can't be done, say so plainly.
   ask EK to run it. **Never add a new column to the cloud row map
   (`src/lib/vaultCloud.ts`) without the migration** — unknown columns make the
   `vault_items` upsert throw.
+  **⚠ ONE PENDING NOW: `supabase/migrations/20260803_saved_events.sql`**
+  (adds the `saved_events` table for §2F Events sync). Not run yet — ask EK.
 - Live site: `https://vltd.vercel.app`. `vltd.app` intentionally not set up yet.
 - **AI vision is LIVE.** `ANTHROPIC_API_KEY` has been set in Vercel for months;
   `/api/ai/analyze-item` (AI Assist, bulk scan, Quick Add scan) all use it. Don't
@@ -147,10 +149,87 @@ Supabase bucket + your dashboard access after all).
 - The "Syncing…" chip styling ask is dropped — EK doesn't have a specific
   target for this and said so twice; not re-raising it.
 
+### G. Profile/avatar sync bug found tonight — NOT fixed, needs your decision first
+Found while scoping the "fake profile editor" item below. `src/lib/publicProfile.ts`
+`syncPublicProfile()` writes the `public_profiles.display_name` that's shown to
+OTHER users (Lounge MVP/leaderboards, `/u/[username]`, museum pages) from
+`getProfileSafe().displayName` — the **local-only** `/user/profile` store —
+and never uses the real `profiles.display_name` you set on the real, Supabase-
+wired `/account` settings page (it fetches that row but only reads `.bio`/
+`.avatar_url` from it, ignoring `.display_name`). **Concretely: if you only
+ever set your display name on `/account`, everyone else sees "Collector"
+instead, unless you separately also typed the same name into the obscure
+`/user/profile` page on that same device.** This is a live bug affecting
+public identity display for every user, not just cosmetic copy — I did not
+touch it tonight because a mistake here changes what every user's name/avatar
+shows to everyone else in the app, and I wanted your eyes on the intended fix
+first. Likely right fix: make `syncPublicProfile()` read `profileRow.display_name`
+(already fetched, just unused) instead of the local store, and stop writing
+`public_profiles.display_name`/`avatar_emoji` from `userProfile.ts` at all —
+but confirm with you before I touch the identity-sync path live.
+
+### H. `/user/profile` ("Edit public profile," linked from `/more`) is a local-only duplicate of `/account`
+Entirely `localStorage`-only (`src/lib/userProfile.ts`) — no Supabase sync in
+either direction, so it doesn't survive a device switch, and it self-labels
+several sections "demo" (Age Verification, Preferences, Data Controls). It
+duplicates fields the REAL `/account` page already owns (display name,
+username) via a totally separate storage key, which is the direct cause of
+§2G above. Three real fields have **no backend column at all**: date of
+birth, age-verified flag, marketing opt-in. The email field accepts any typed
+value and saves it locally — it's never actually connected to your Supabase
+Auth login email, so editing it silently does nothing real.
+Did NOT touch this tonight — per the "ask before removing a feature" rule,
+and because this needs a product decision, not just a UI fix:
+1. Should `/user/profile` be merged into `/account` (one real editor, wired
+   to `profiles`), or kept separate for a reason I'm not seeing?
+2. Do you still want DOB/age-verification/marketing-opt-in as real, saved
+   fields? If yes, that's a migration (`profiles.date_of_birth`,
+   `age_verified`, `marketing_opt_in`) I can write for you to run — didn't
+   write one blind since DOB/age-verification touches compliance-adjacent
+   data and I didn't want to guess your intent.
+3. Real email changes need Supabase Auth's `updateUser({ email })` flow
+   (with its own confirmation step) — a bigger, security-sensitive build
+   than swapping a copy string, not attempted tonight.
+
+### I. Billing plan — smaller fix than expected, SHIPPED tonight
+`/account/billing` was hardcoding `currentPlan = "free"` for every user, with
+a comment claiming the Stripe webhook wasn't built. **That comment was
+stale — the webhook (`src/app/api/billing/webhook/route.ts`) already exists
+and already keeps `profiles.tier` in sync**, and `src/lib/subscription.ts`
+(`getTierSafe()`) already mirrors that real tier locally — it's used
+elsewhere (scan quotas). Fixed: the billing page now reads the real tier via
+`getOnboardingStatus()` + `getTierSafe()` instead of a hardcoded literal. No
+migration needed, nothing new to configure.
+**One real gap left, not fixed:** the Stripe `customerId` is only cached in
+that device's `localStorage` (`billingClient.ts`), never persisted
+server-side. A real paying user opening billing on a NEW device will now see
+the correct plan (tier is server-synced) but the Payment method/Invoice
+history/Cancel sections stay hidden until they revisit the device they
+checked out from. Needs a `stripe_customer_id` column on `profiles`
+(migration) populated by the webhook + checkout/session routes — didn't
+write that migration blind since it's payment-adjacent data.
+
 ### F. Bigger / later (needs your device or your decision — not started)
-- Events: category is still keyword-guessed (no real DB column), saved events
-  are still localStorage-only (not synced) — both need a Supabase migration
-  only you can run.
+- **Events saved-list sync — DONE 2026-08-03 (night), needs your migration run.**
+  Saved events (`/events`) were localStorage-only (per-device). Added
+  `supabase/migrations/20260803_saved_events.sql` (owner-only RLS, mirrors the
+  wishlist/watchlist convention) + `src/lib/savedEventsModel.ts` (same
+  local-cache + best-effort-sync pattern as wishlistModel.ts) and wired
+  `/events` to it. **Please run `20260803_saved_events.sql` in Supabase** —
+  until you do, saves still work (falls back to local-only, same as every
+  other model here before its migration lands), they just won't sync across
+  devices yet.
+  Event **category is still keyword-guessed** (`categoryFor()` in
+  `events/page.tsx` — guesses from real event name/description text). Left
+  this alone: it's a real classification of real events, not fabricated data,
+  and a real "category" column would need someone to actually assign correct
+  categories to existing events (a content/ops task, not just a schema
+  change) — didn't want to guess at that data blind. Also left
+  `savedSuggestionIds` (saved *search results* from the Google Events/SerpApi
+  lookup, key `vltd_event_search_saved_v1`) local-only — those aren't real DB
+  rows, syncing them would need storing a full snapshot per save (like
+  watchlist does for external items), lower priority than the curated-events
+  list above.
 - Two more possible improvements EK raised, not started: (a) AI comic-book ID
   accuracy — added visual-cue guidance to the vision prompt 2026-08-03 (§4),
   needs a real test against the same comics that triggered the original bug;
@@ -163,6 +242,11 @@ Supabase bucket + your dashboard access after all).
 ---
 
 ## 3. Options / decisions waiting on EK
+- **Profile/avatar sync bug** (2G) — confirm the fix direction before touching
+  live identity-sync code (affects what every user's name shows to others).
+- **`/user/profile` vs `/account`** (2H) — merge into one real editor? Keep
+  DOB/age-verification/marketing-opt-in as real fields (needs a migration) or
+  drop them? Real email-change flow, or remove the fake email field?
 - **ai/review + ai/drafts cyan color** — NOT a decision anymore: confirmed
   2026-08-03 this is the app's actual primary-CTA standard
   (`.vltd-action-module__block`, 25 files), not an off-brand mistake. No change made.
@@ -175,6 +259,63 @@ Supabase bucket + your dashboard access after all).
 ---
 
 ## 4. Done recently (don't redo)
+- **Second overnight pass (2026-08-03 night), while EK slept — production-readiness
+  fake-data sweep, prompted by EK asking to check the whole app:**
+  - Watchlist "7d change" (`-$2,340`, always shown even empty) — removed, no
+    value-history tracking exists for watchlist items.
+  - `/more` StatStrip — `"+12.6% (30D)"` and `"276"` followers were static
+    literals on every visit (both desktop + mobile stat strips). Now real:
+    30D change from `valueHistory.ts` (same fallback pattern
+    `InsightsOverview.tsx` uses), followers from `lib/follows.getFollowerCount`.
+  - VLT Lounge (`community-board/page.tsx`) — `"128 online"` + the "Lounge
+    Live"/"Hot Threads" mock arrays were static, shown to every signed-in user
+    with zero backend behind them. Replaced with honest empty states.
+  - `goals/page.tsx` — GoalRow "due dates" (`"Due Aug 31, 2025"` etc.) were
+    assigned by array index; `GoalProgress` has no due-date field. Removed.
+  - `InsightsOverview.tsx` (`/portfolio`) — removed a fake, non-functional
+    date-range button (`"Apr 18, 2024 - May 18, 2026"`, no onClick) next to
+    the real KPIs; fixed the Total Vault Value card's sub-stat, which
+    hardcoded a `+`/green regardless of actual ROI sign and mislabeled
+    all-time ROI as "vs last 30 days."
+  - `VaultInner.tsx` — reworded a leftover "Existing demo items may not have
+    subcategories yet" tip shown to real users with real (non-demo) vaults.
+  - `/account/billing` — fixed the hardcoded Free-plan display; see §2I.
+  - Ran a parallel Explore-agent sweep across every route in the app (~46
+    directories) for the same two bug shapes (hardcoded stat/list literal
+    next to real data; demo-seed calls bypassing the `getActiveProfileId()`
+    guard). Confirmed clean elsewhere — see git commit messages for the
+    full per-directory rundown if you want it.
+  - Investigated but deliberately NOT fixed — see §2G, §2H, and the
+    `stripe_customer_id` gap noted in §2I. All three need your decision, not
+    a guess, before touching them.
+  - Verified insurance report/packet/item pages (EK flagged via a suggested-
+    task chip) — already correctly guarded, false alarm, no change needed.
+  - **Events saved-list sync** (§2F) — added the `saved_events` migration +
+    `savedEventsModel.ts` + wired `/events`. Migration not yet run — see the
+    ⚠ note in §0.
+  - Merged `main` in twice mid-session (other work landed on `main` while
+    this ran: a "Vision prompt" commit, then a 3-commit "Pill sweep"/
+    "PillButton everywhere" migration) — both merges were clean fast-forwards
+    with no conflicts, `tsc` verified after each.
+- **Third overnight pass (2026-08-03, after the above two), EK asleep again —
+  emoji sweep + Documents feature:**
+  - **Emoji sweep**: replaced raw emoji glyphs with the themed `Glyph`
+    component across `UniverseRail.tsx`, `account/page.tsx`,
+    `onboarding/page.tsx` (the three remaining raw `UNIVERSE_ICON[key]`
+    sites), `ai/drafts`/`ai/review` missing-fields warning chip, the museum
+    Announce button, `ThemeToggle`, `CameraCapturePanel`'s soft-image
+    warning, the auction countdown chip, and the public profile's
+    vault-not-found lock icon. Still open: a longer tail of lower-priority/
+    more speculative emoji sites (shop.tsx product icons, HomeClient social
+    platform icons, SeasonalBanner decorative icons, the v/[profileId]
+    UNIVERSE_EMOJI map) — flagged for a session with visual verification
+    available, not fixed blind.
+  - **Documents (§2C) — built, see that section.** EK's answer ("everything
+    should be private unless shared") was a clear enough steer to build
+    local-only rather than a decision that needed a Supabase dashboard call.
+  - Dropped two recurring asks per EK's explicit feedback: the
+    background-removal-freeze device check and the "Syncing…" chip styling
+    ask — EK said twice they don't know what these mean; not re-raising them.
 - **Second overnight/late-night pass (2026-08-03), after EK woke up and tested live:**
   - **Rename `/wishlist` → `/watchlist`** (EK's decision) — moved the route,
     fixed the two `href="/wishlist"` links, added a permanent redirect from the
