@@ -270,26 +270,27 @@ export default function CameraCapturePanel({
       try {
         let stream: MediaStream;
         const preferredDeviceId = preferredDeviceIdRef.current;
-        // Request a real resolution instead of letting the browser pick its
-        // (often low, e.g. 640x480) default -- this was the main reason the
-        // live preview and captured photos looked soft and small barcodes
-        // (graded-slab QR/Code128) were unreadable even though a native
-        // camera app aimed at the same subject looked sharp.
-        //
         // Every constraint here is `ideal`/soft, deliberately -- an `exact`
         // constraint (e.g. a remembered deviceId that's since gone stale)
         // can force the browser to try and fail before falling back, and on
         // some phones that failure isn't fast. A single all-ideal request
         // negotiates once and can't reject for being unsatisfiable.
-        // ~8.3MP (4K-equivalent) -- still well under a 12MP phone sensor, but
-        // the barcode-scan loop is now throttled to 2 crops/tick (see
-        // barcodeScanner.ts), so there's headroom to ask for real sharpness
-        // without reintroducing the per-tick CPU cost that caused the
-        // original slowdown. `ideal` still lets a weaker camera/device fall
-        // back gracefully instead of failing.
+        //
+        // Only `width` is set, not an explicit width+height pair -- forcing
+        // an exact landscape pair (e.g. 3840x2160) can bias the browser
+        // toward a landscape-shaped stream even when the phone is held in
+        // portrait, which showed up as a squeezed/wrong-aspect preview.
+        // Leaving height unconstrained lets the browser pick whatever
+        // height matches the device's own natural (portrait) orientation.
+        // Kept modest (not pushing toward 4K) after two rounds of raising it
+        // didn't measurably improve sharpness and coincided with the
+        // preview looking worse and capture staying slow -- web camera
+        // capture has a real ceiling below what a native camera app can do
+        // (no HDR/multi-frame fusion), so further tuning this number isn't
+        // the lever to keep pulling.
         const requestedDevice = preferredDeviceId
-          ? { deviceId: { ideal: preferredDeviceId }, width: { ideal: 3840 }, height: { ideal: 2160 } }
-          : { facingMode: { ideal: "environment" }, width: { ideal: 3840 }, height: { ideal: 2160 } };
+          ? { deviceId: { ideal: preferredDeviceId }, width: { ideal: 1280 } }
+          : { facingMode: { ideal: "environment" }, width: { ideal: 1280 } };
 
         try {
           stream = await navigator.mediaDevices.getUserMedia({
@@ -739,28 +740,6 @@ export default function CameraCapturePanel({
                 <span className="text-[11px] text-[color:var(--muted)]">Retake for sharper label detail.</span>
               </div>
             ) : null}
-            {/* Filter — dropdown, sized to its content (not stretched to fill the row) */}
-            <div className="mb-1.5 flex items-center gap-2 py-1 pl-1">
-              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Filter</span>
-              <select
-                value={selectedFilterId}
-                onChange={(event) => setSelectedFilterId(event.target.value)}
-                aria-label="Photo filter"
-                className="h-8 w-auto rounded-[7px] bg-[color:var(--pill)] pl-3 pr-2 text-[12px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]"
-              >
-                {CAPTURE_FILTER_PRESETS.map((preset) => (
-                  <option key={preset.id} value={preset.id}>{preset.label}</option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => { setSelectedFilterId("original"); setAdjustments(DEFAULT_CAPTURE_ADJUSTMENTS); }}
-                className="inline-flex h-8 shrink-0 items-center rounded-[7px] bg-[color:var(--pill)] px-2.5 text-[11px] font-semibold ring-1 ring-[color:var(--border)]"
-              >
-                Reset
-              </button>
-            </div>
-
             <ScanCropEditor
               imageUrl={capturedPreviewUrl}
               crop={captureCrop}
@@ -774,6 +753,7 @@ export default function CameraCapturePanel({
               imageFilter={imageFilter}
               isApplying={isApplyingCrop}
               compact
+              compactViewport="tall"
               hideActionButtons
               zoomRowRight={
                 <button
@@ -806,15 +786,6 @@ export default function CameraCapturePanel({
               <PillButton onClick={handleRetakePhoto} disabled={isApplyingCrop}>
                 ↩ Retake
               </PillButton>
-              {!isDefaultCrop(captureCrop) ? (
-                <PillButton
-                  onClick={() => void handleUseCapturedPhoto(DEFAULT_CROP)}
-                  disabled={isApplyingCrop}
-                  title="Skip cropping and use the full photo"
-                >
-                  Use Full Photo
-                </PillButton>
-              ) : null}
               <PillButton
                 onClick={() => void handleUseCapturedPhoto()}
                 disabled={isApplyingCrop}
@@ -825,13 +796,24 @@ export default function CameraCapturePanel({
             </div>
 
             <div className="mt-2 rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]">
-              <button
-                type="button"
-                onClick={() => setShowFineTune((value) => !value)}
-                className="rounded-[7px] bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
-              >
-                {showFineTune ? "Hide Fine Tune" : "Show Fine Tune"}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowFineTune((value) => !value)}
+                  className="rounded-[7px] bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
+                >
+                  {showFineTune ? "Hide Fine Tune" : "Show Fine Tune"}
+                </button>
+                {showFineTune ? (
+                  <button
+                    type="button"
+                    onClick={() => setAdjustments(DEFAULT_CAPTURE_ADJUSTMENTS)}
+                    className="rounded-[7px] bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
+                  >
+                    Reset
+                  </button>
+                ) : null}
+              </div>
 
               {showFineTune ? (
                 <div className="mt-2 grid gap-1.5 sm:grid-cols-3">

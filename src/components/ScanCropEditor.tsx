@@ -135,7 +135,7 @@ export default function ScanCropEditor({
   description?: string;
   applyLabel?: string;
   compact?: boolean;
-  compactViewport?: "default" | "short";
+  compactViewport?: "default" | "short" | "tall";
   viewportFixed?: boolean;
   hideActionButtons?: boolean;
   zoomRowRight?: React.ReactNode;
@@ -461,13 +461,17 @@ export default function ScanCropEditor({
     : compact
       ? compactViewport === "short"
         ? "relative flex h-[min(24dvh,190px)] min-h-[132px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
-        : "relative flex h-[min(44dvh,420px)] min-h-[220px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
+        : compactViewport === "tall"
+          ? "relative flex h-[min(56dvh,520px)] min-h-[260px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
+          : "relative flex h-[min(44dvh,420px)] min-h-[220px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none"
       : "relative flex h-[min(62dvh,600px)] min-h-[300px] items-center justify-center overflow-hidden rounded-[12px] bg-black/60 touch-none";
   const imageClassName = viewportFixed
     ? "block max-h-[min(54dvh,420px)] max-w-full select-none object-contain"
     : compact && compactViewport === "short"
       ? "block max-h-[min(24dvh,190px)] max-w-full select-none object-contain"
-      : "block max-h-[min(44dvh,420px)] max-w-full select-none object-contain";
+      : compact && compactViewport === "tall"
+        ? "block max-h-[min(56dvh,520px)] max-w-full select-none object-contain"
+        : "block max-h-[min(44dvh,420px)] max-w-full select-none object-contain";
 
   return (
     <section className={sectionClassName} data-no-pull-refresh>
