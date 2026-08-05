@@ -1195,6 +1195,7 @@ export default function CapturePage() {
           ref={uploadInputRef}
           type="file"
           accept="image/*"
+          capture="environment"
           className="hidden"
           onChange={(event) => {
             const file = event.currentTarget.files?.[0];

@@ -128,6 +128,10 @@ export default function CameraCapturePanel({
   const [selectedFilterId, setSelectedFilterId] = useState("original");
   const [adjustments, setAdjustments] = useState<CaptureAdjustments>(DEFAULT_CAPTURE_ADJUSTMENTS);
   const [blurAssessment, setBlurAssessment] = useState<BlurAssessment | null>(null);
+  // Temporary, visible-on-screen timing readout for the still-open "capture
+  // takes ~10s" report -- shows exactly which step is slow instead of
+  // guessing again. Remove once that's diagnosed and fixed for real.
+  const [captureTiming, setCaptureTiming] = useState("");
   const [detectionState, setDetectionState] = useState<DetectionState>("idle");
   const [detectionBox, setDetectionBox] = useState<DetectionBox | null>(null);
   const [liveBarcode, setLiveBarcode] = useState<BarcodeScanResult | null>(null);
@@ -537,6 +541,12 @@ export default function CameraCapturePanel({
     }
 
     setIsCapturing(true);
+    // Real timing instead of another guess -- EK reported the delay is
+    // between the shutter tap and the photo appearing, which is this whole
+    // function. Logging each step (and showing it on-screen) tells us
+    // exactly which one is slow instead of speculating about camera
+    // startup/negotiation, which was wrong twice already.
+    const t0 = performance.now();
 
     try {
       const longEdge = Math.max(width, height);
@@ -552,11 +562,14 @@ export default function CameraCapturePanel({
       if (!ctx) throw new Error("Canvas is not available.");
 
       ctx.drawImage(video, 0, 0, width, height, 0, 0, outputWidth, outputHeight);
+      const tDraw = performance.now();
       setBlurAssessment(assessCanvasBlur(canvas));
+      const tBlur = performance.now();
 
       const blob = await new Promise<Blob | null>((resolve) => {
         canvas.toBlob(resolve, "image/jpeg", 0.9);
       });
+      const tBlob = performance.now();
 
       if (!blob) {
         throw new Error("Failed to capture photo.");
@@ -580,6 +593,11 @@ export default function CameraCapturePanel({
       setIsBackgroundRemoved(false);
       setSelectedBackgroundId("transparent");
       stopCameraStream();
+
+      const ms = (n: number) => Math.round(n);
+      setCaptureTiming(
+        `${outputWidth}x${outputHeight}px · draw ${ms(tDraw - t0)}ms · blur-check ${ms(tBlur - tDraw)}ms · encode ${ms(tBlob - tBlur)}ms · total ${ms(performance.now() - t0)}ms`
+      );
     } catch (error) {
       setCameraError(error instanceof Error ? error.message : "Failed to capture photo.");
     } finally {
@@ -642,6 +660,7 @@ export default function CameraCapturePanel({
     setCameraError("");
     setCameraReady(false);
     setBlurAssessment(null);
+    setCaptureTiming("");
     liveBarcodeRef.current = null;
     setLiveBarcode(null);
     setSelectedFilterId("original");
@@ -738,6 +757,12 @@ export default function CameraCapturePanel({
               <div className="mb-1.5 flex items-center gap-2 rounded-[10px] bg-red-500/10 px-3 py-1.5 ring-1 ring-red-500/20">
                 <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-300"><Glyph name="warning" size={11} /> Soft image</span>
                 <span className="text-[11px] text-[color:var(--muted)]">Retake for sharper label detail.</span>
+              </div>
+            ) : null}
+            {/* Temporary timing readout — see the captureTiming state comment. */}
+            {captureTiming ? (
+              <div className="mb-1.5 rounded-[10px] bg-[color:var(--pill)] px-3 py-1.5 text-[10px] font-semibold text-[color:var(--muted2)] ring-1 ring-[color:var(--border)]">
+                {captureTiming}
               </div>
             ) : null}
             <ScanCropEditor
