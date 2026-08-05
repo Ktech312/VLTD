@@ -44,6 +44,13 @@ const CAMERA_PREF_KEY = "vltd_camera_device_id";
 // upload pipeline doesn't need more than this for a sharp vault photo, and
 // capping it keeps captures fast on high-res devices.
 const MAX_CAPTURE_LONG_EDGE = 2200;
+// One practical, one-tap fix for a dim shot -- replaced the 7-preset Filter
+// dropdown (all subtle ~10% color tweaks that looked identical on a phone
+// screen). This is meaningfully brighter, not another subtle variant.
+const BRIGHTEN_ADJUSTMENTS: CaptureAdjustments = { ...DEFAULT_CAPTURE_ADJUSTMENTS, brightness: 132, contrast: 110 };
+function isBrightenActive(adjustments: CaptureAdjustments) {
+  return adjustments.brightness === BRIGHTEN_ADJUSTMENTS.brightness && adjustments.contrast === BRIGHTEN_ADJUSTMENTS.contrast;
+}
 // Live object-detection (TF.js + coco-ssd) ran every ~900ms just to draw a
 // cosmetic guide box — heavy and not wired to anything. Off for speed; the
 // fixed frame guide stays. Flip to true to re-enable (consider throttling).
@@ -781,29 +788,48 @@ export default function CameraCapturePanel({
               compactViewport="tall"
               hideActionButtons
               zoomRowRight={
-                <button
-                  type="button"
-                  onClick={() => void handleRemoveBackground()}
-                  disabled={isRemovingBackground || !capturedFile}
-                  aria-label={isBackgroundRemoved ? "Remove background again" : "Remove background"}
-                  title="Remove background"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 transition disabled:opacity-45"
-                  style={{
-                    background: isBackgroundRemoved ? "var(--theme-gold-subtle, rgba(203,208,213,0.14))" : "var(--pill)",
-                    borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))",
-                    color: "var(--theme-gold, #C8CDD2)",
-                  }}
-                >
-                  {isRemovingBackground ? (
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  ) : (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAdjustments(isBrightenActive(adjustments) ? DEFAULT_CAPTURE_ADJUSTMENTS : BRIGHTEN_ADJUSTMENTS)}
+                    aria-pressed={isBrightenActive(adjustments)}
+                    title="Brighten a dim photo"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 transition"
+                    style={{
+                      background: isBrightenActive(adjustments) ? "var(--theme-gold-subtle, rgba(203,208,213,0.14))" : "var(--pill)",
+                      borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))",
+                      color: "var(--theme-gold, #C8CDD2)",
+                    }}
+                  >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21" />
-                      <path d="M22 21H7" />
-                      <path d="m5 11 9 9" />
+                      <circle cx="12" cy="12" r="4" />
+                      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
                     </svg>
-                  )}
-                </button>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleRemoveBackground()}
+                    disabled={isRemovingBackground || !capturedFile}
+                    aria-label={isBackgroundRemoved ? "Remove background again" : "Remove background"}
+                    title="Remove background"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 transition disabled:opacity-45"
+                    style={{
+                      background: isBackgroundRemoved ? "var(--theme-gold-subtle, rgba(203,208,213,0.14))" : "var(--pill)",
+                      borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))",
+                      color: "var(--theme-gold, #C8CDD2)",
+                    }}
+                  >
+                    {isRemovingBackground ? (
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21" />
+                        <path d="M22 21H7" />
+                        <path d="m5 11 9 9" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               }
             />
 
