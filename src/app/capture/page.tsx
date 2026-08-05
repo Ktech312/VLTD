@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import CameraCapturePanel from "@/components/CameraCapturePanel";
+import ScanCropEditor from "@/components/ScanCropEditor";
 import { PillButton } from "@/components/ui/PillButton";
+import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 import { analyzeImageWithVision, type VisionAnalysisResult } from "@/lib/ai/openaiVision";
 import { resolveVisionTaxonomy } from "@/lib/visionTaxonomy";
 import { scanBarcodeFromFile } from "@/lib/scanners/barcodeScanner";
@@ -312,9 +314,24 @@ async function persistCapturedImages(itemId: string, files: File[]) {
 
 /* ── Page ───────────────────────────────────────────────────────── */
 
+const DEFAULT_NATIVE_CROP: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
+function isDefaultNativeCrop(crop: ScanCropRect) {
+  return !crop.left && !crop.top && !crop.right && !crop.bottom;
+}
+
 export default function CapturePage() {
   const router = useRouter();
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
+  const nativeCameraInputRef = useRef<HTMLInputElement | null>(null);
+  // "Take Real Photo" hands off to the phone's actual native camera app (via
+  // capture="environment" on a dedicated input, kept separate from the plain
+  // "Upload" input so choosing an existing file from your drive/gallery still
+  // works) -- then routes the result through the same crop step the in-app
+  // camera already gets, before it's added as a photo.
+  const [pendingNativeFile, setPendingNativeFile] = useState<File | null>(null);
+  const [pendingNativeUrl, setPendingNativeUrl] = useState("");
+  const [pendingNativeCrop, setPendingNativeCrop] = useState<ScanCropRect>(DEFAULT_NATIVE_CROP);
+  const [isApplyingNativeCrop, setIsApplyingNativeCrop] = useState(false);
 
   // Builder-first: the form + image panel is always shown. `analyzing` drives the
   // AI spinner; `phase` stays "review" so the legacy camera-first block never renders.
@@ -387,10 +404,45 @@ export default function CapturePage() {
     setErrorMsg("");
   }, []);
 
+  // A photo just came back from the native camera app -- open the crop step
+  // before it's added, instead of appending it straight away.
+  function handleNativeCameraFile(file: File) {
+    setPendingNativeFile(file);
+    setPendingNativeUrl(URL.createObjectURL(file));
+    setPendingNativeCrop(DEFAULT_NATIVE_CROP);
+  }
+
+  function closeNativeCropEditor() {
+    if (pendingNativeUrl) URL.revokeObjectURL(pendingNativeUrl);
+    setPendingNativeFile(null);
+    setPendingNativeUrl("");
+    setPendingNativeCrop(DEFAULT_NATIVE_CROP);
+  }
+
+  async function applyNativeCropEditor() {
+    if (!pendingNativeFile) return;
+    setIsApplyingNativeCrop(true);
+    try {
+      const finalFile = isDefaultNativeCrop(pendingNativeCrop)
+        ? pendingNativeFile
+        : await cropImageFile(pendingNativeFile, pendingNativeCrop);
+      handleCapture(finalFile);
+      closeNativeCropEditor();
+    } catch {
+      setErrorMsg("Couldn't crop that photo — try again.");
+    } finally {
+      setIsApplyingNativeCrop(false);
+    }
+  }
+
   // Remove one photo. Removing the cover clears any AI result (a new cover needs re-ID).
   const removeImageAt = useCallback((index: number) => {
     setCapturedImages((prev) => prev.filter((_, i) => i !== index));
     if (index === 0) setIdentified(false);
+    setSelectedPreviewIndex((current) => {
+      if (index === current) return 0;
+      return index < current ? current - 1 : current;
+    });
   }, []);
 
   // Promote an angle to cover. The cover changed, so clear the stale AI result.
@@ -403,6 +455,7 @@ export default function CapturePage() {
       return next;
     });
     setIdentified(false);
+    setSelectedPreviewIndex(0);
   }, []);
 
   // Opt-in AI: identify + fill fields on demand from the captured photo.
@@ -557,6 +610,16 @@ export default function CapturePage() {
     };
   }, [previewUrls]);
   const previewUrl = previewUrls[0] ?? "";
+
+  // Which thumbnail is currently shown in the big preview box. Tapping any
+  // thumbnail selects it (and glows its border) -- separate from "cover",
+  // which only changes when you deliberately make one. Clamped back to the
+  // cover whenever the list shrinks past the current selection.
+  const [selectedPreviewIndex, setSelectedPreviewIndex] = useState(0);
+  useEffect(() => {
+    if (selectedPreviewIndex >= previewUrls.length) setSelectedPreviewIndex(0);
+  }, [previewUrls.length, selectedPreviewIndex]);
+  const displayedPreviewUrl = previewUrls[selectedPreviewIndex] ?? previewUrl;
 
   const universeKey = isUniverseKey(fields.universe) ? fields.universe as UniverseKey : null;
   const categoryOptions = universeKey ? getCategories(universeKey) : [];
@@ -722,24 +785,15 @@ export default function CapturePage() {
           {/* ── REVIEW: record-builder (image left, numbered accordion right) ── */}
           {phase === "review" && (
             <div className="relative">
-              {/* Header — concept-19 */}
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <h1 className="text-[34px] font-extrabold uppercase leading-[0.9] tracking-[-0.03em] text-text-primary sm:text-[42px]">
-                    New Vault Item
-                  </h1>
-                  {/* Hidden while the live camera is up (no photo yet) -- this
-                      copy is redundant with the camera's own frame-guide hint,
-                      and every extra line of chrome here pushes the shutter
-                      button further down, forcing a scroll to reach it on
-                      mobile. Still shown once a photo exists (accordion phase,
-                      no shutter-visibility race anymore). */}
-                  {capturedImageFile ? (
-                    <p className="mt-2 text-sm text-[color:var(--muted)]">
-                      Capture, identify, and prepare your item for your private vault.
-                    </p>
-                  ) : null}
-                </div>
+              {/* Header — concept-19. Subtitle removed (was pure orientation
+                  copy, redundant with the camera's own frame-guide hint and
+                  the "New Vault Item" heading) -- every extra line here
+                  pushed real controls further down, forcing a scroll on
+                  mobile before you could reach them. */}
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <h1 className="text-[34px] font-extrabold uppercase leading-[0.9] tracking-[-0.03em] text-text-primary sm:text-[42px]">
+                  New Vault Item
+                </h1>
                 <div className="flex flex-wrap items-center gap-2">
                   {capturedImageFile ? (
                     // A photo is already taken — offer Retake + Identify (not
@@ -764,7 +818,7 @@ export default function CapturePage() {
               {/* Two columns: preview | accordion. grid-cols-1 on mobile so the
                   single column fills the screen width (minmax(0,1fr)) instead of
                   sizing to its widest child, which overflowed the viewport. */}
-              <div className={`grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,480px)_1fr] lg:items-start ${capturedImageFile ? "mt-6" : "mt-3"}`}>
+              <div className="mt-3 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,480px)_1fr] lg:items-start">
                 {/* Left: framed image viewer (concept-19) */}
                 <div className="min-w-0">
                   {previewUrl ? (
@@ -778,7 +832,7 @@ export default function CapturePage() {
                     <div className="flex aspect-[4/5] w-full items-center justify-center p-4">
                       {previewUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={previewUrl} alt="Captured item" className="max-h-full max-w-full object-contain" />
+                        <img src={displayedPreviewUrl} alt="Captured item" className="max-h-full max-w-full object-contain" />
                       ) : (
                         <div className="flex flex-col items-center gap-3.5 px-6 text-center">
                           <div className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "rgba(203,208,213,0.10)", border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.3))", color: "var(--theme-gold, #C8CDD2)" }}>
@@ -788,6 +842,7 @@ export default function CapturePage() {
                           <p className="max-w-[240px] text-xs leading-5 text-[color:var(--muted)]">Snap or upload one — then tap <b className="font-semibold text-[color:var(--fg)]">Identify</b> to auto-fill, or just type the details in. No photo required.</p>
                           <div className="flex flex-wrap justify-center gap-2">
                             <button type="button" onClick={() => setIsCameraPanelOpen(true)} className="inline-flex items-center gap-1.5 rounded-[8px] px-4 py-2 text-xs font-bold text-[#0B0B0B]" style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}>Take photo</button>
+                            <button type="button" onClick={() => nativeCameraInputRef.current?.click()} title="Uses your phone's own camera app for the sharpest quality" className="inline-flex items-center gap-1.5 rounded-[8px] border px-4 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.08))]" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}>Take Real Photo</button>
                             <button type="button" onClick={() => uploadInputRef.current?.click()} className="inline-flex items-center gap-1.5 rounded-[8px] border px-4 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.08))]" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}>Upload</button>
                           </div>
                         </div>
@@ -796,7 +851,7 @@ export default function CapturePage() {
                     {previewUrl ? (
                       <>
                         <a
-                          href={previewUrl}
+                          href={displayedPreviewUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           aria-label="Expand image"
@@ -805,12 +860,26 @@ export default function CapturePage() {
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
                         </a>
-                        <span
-                          className="absolute bottom-3 right-3 rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                          style={{ background: "rgba(2,9,12,0.7)", color: "var(--muted)", border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.2))" }}
-                        >
-                          Cover{previewUrls.length > 1 ? ` · ${previewUrls.length} photos` : ""}
-                        </span>
+                        <div className="absolute bottom-3 right-3 flex items-center gap-2">
+                          {selectedPreviewIndex !== 0 ? (
+                            <button
+                              type="button"
+                              onClick={() => makeCover(selectedPreviewIndex)}
+                              className="rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                              style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B" }}
+                            >
+                              Make Cover
+                            </button>
+                          ) : null}
+                          <span
+                            className="rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                            style={{ background: "rgba(2,9,12,0.7)", color: "var(--muted)", border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.2))" }}
+                          >
+                            {selectedPreviewIndex === 0
+                              ? `Cover${previewUrls.length > 1 ? ` · ${previewUrls.length} photos` : ""}`
+                              : `Photo ${selectedPreviewIndex + 1} of ${previewUrls.length}`}
+                          </span>
+                        </div>
                       </>
                     ) : null}
                     {analyzing ? (
@@ -836,45 +905,47 @@ export default function CapturePage() {
                     />
                   )}
 
-                  {/* Thumbnail rail — cover is always the first one. Photos DON'T move
-                      when clicked; use the "Set cover" button to deliberately promote one. */}
+                  {/* Thumbnail rail — tap any photo to preview it above (its border
+                      glows so it's clear which one you're looking at). Cover only
+                      changes via the deliberate "Make Cover" action near the big
+                      preview, never by just tapping a thumbnail. */}
                   <div className="mt-3 grid grid-cols-4 gap-2">
-                    {previewUrls.map((url, i) => (
-                      <div
-                        key={url}
-                        className="relative aspect-square overflow-hidden rounded-[10px] border"
-                        style={{ borderColor: i === 0 ? "var(--theme-gold, #C8CDD2)" : "var(--theme-gold-border, rgba(203,208,213,0.35))" }}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={url} alt="" className="h-full w-full object-cover" />
-                        {i === 0 ? (
-                          <span
-                            className="pointer-events-none absolute left-1 top-1 rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide"
-                            style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0B0B0B" }}
-                          >
-                            Cover
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => makeCover(i)}
-                            title="Make this the cover photo"
-                            className="absolute bottom-1 left-1 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ring-1"
-                            style={{ background: "rgba(2,9,12,0.78)", color: "var(--theme-gold, #C8CDD2)", borderColor: "var(--theme-gold-border, rgba(203,208,213,0.45))" }}
-                          >
-                            Set cover
-                          </button>
-                        )}
+                    {previewUrls.map((url, i) => {
+                      const isSelected = i === selectedPreviewIndex;
+                      return (
                         <button
                           type="button"
-                          onClick={() => removeImageAt(i)}
-                          aria-label="Remove photo"
-                          className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-[11px] text-white"
+                          key={url}
+                          onClick={() => setSelectedPreviewIndex(i)}
+                          aria-label={i === 0 ? "Cover photo" : `Photo ${i + 1}`}
+                          aria-pressed={isSelected}
+                          className="relative aspect-square overflow-hidden rounded-[10px] border transition"
+                          style={{
+                            borderColor: isSelected ? "var(--theme-gold, #C8CDD2)" : "var(--theme-gold-border, rgba(203,208,213,0.35))",
+                            boxShadow: isSelected ? "0 0 0 2px var(--theme-gold, #C8CDD2), 0 0 14px rgba(203,208,213,0.45)" : "none",
+                          }}
                         >
-                          &#x2715;
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={url} alt="" className="h-full w-full object-cover" />
+                          <span
+                            className="pointer-events-none absolute left-1 top-1 rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide"
+                            style={{ background: i === 0 ? "var(--theme-gold, #C8CDD2)" : "rgba(2,9,12,0.72)", color: i === 0 ? "#0B0B0B" : "var(--theme-gold, #C8CDD2)" }}
+                          >
+                            {i === 0 ? "Cover" : i + 1}
+                          </span>
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(event) => { event.stopPropagation(); removeImageAt(i); }}
+                            onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.stopPropagation(); removeImageAt(i); } }}
+                            aria-label="Remove photo"
+                            className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-[11px] text-white"
+                          >
+                            &#x2715;
+                          </span>
                         </button>
-                      </div>
-                    ))}
+                      );
+                    })}
                     <button
                       type="button"
                       onClick={() => setIsCameraPanelOpen(true)}
@@ -1191,11 +1262,13 @@ export default function CapturePage() {
           )}
         </section>
 
+        {/* Plain file picker — for choosing an existing photo from your
+            device/drive, not the camera. Keep this free of `capture` so it
+            doesn't get hijacked into launching the camera app. */}
         <input
           ref={uploadInputRef}
           type="file"
           accept="image/*"
-          capture="environment"
           className="hidden"
           onChange={(event) => {
             const file = event.currentTarget.files?.[0];
@@ -1203,6 +1276,51 @@ export default function CapturePage() {
             if (file) void handleCapture(file);
           }}
         />
+
+        {/* Native camera app hand-off — genuinely native photo quality (HDR,
+            multi-frame processing) that getUserMedia can't reach. Routes
+            through the crop step below instead of adding the raw shot straight
+            away. */}
+        <input
+          ref={nativeCameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(event) => {
+            const file = event.currentTarget.files?.[0];
+            event.currentTarget.value = "";
+            if (file) handleNativeCameraFile(file);
+          }}
+        />
+
+        {pendingNativeFile && pendingNativeUrl ? (
+          <div
+            className="fixed inset-0 z-[220] flex h-[100dvh] w-[100dvw] items-start justify-center overflow-y-auto bg-black/75 px-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-sm sm:px-4 sm:py-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Adjust photo"
+          >
+            <div className="w-full max-w-3xl">
+              <div className="flex max-h-[calc(100dvh-1rem)] flex-col overflow-hidden rounded-[18px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:p-4">
+                <ScanCropEditor
+                  imageUrl={pendingNativeUrl}
+                  crop={pendingNativeCrop}
+                  onChange={setPendingNativeCrop}
+                  title="ADJUST PHOTO"
+                  description="Move or resize the crop box, or drag to reposition."
+                  applyLabel="Save"
+                  onApply={() => void applyNativeCropEditor()}
+                  onReset={() => setPendingNativeCrop(DEFAULT_NATIVE_CROP)}
+                  onCancel={closeNativeCropEditor}
+                  isApplying={isApplyingNativeCrop}
+                  compact
+                  compactViewport="tall"
+                />
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {isCameraPanelOpen ? (
           <CameraCapturePanel
