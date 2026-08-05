@@ -315,16 +315,16 @@ function ReviewInner() {
 
       {isConverted && (
         <div className="mt-4 flex gap-3">
-          <Link
+          <PillButton
             href="/vault"
-            className="flex-1 rounded-full py-3 text-center text-sm font-bold"
+            className="flex-1"
             style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}
           >
             View vault →
-          </Link>
-          <Link href="/ai/drafts" className="rounded-full px-5 py-3 text-sm ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
+          </PillButton>
+          <PillButton href="/ai/drafts">
             Back to queue
-          </Link>
+          </PillButton>
         </div>
       )}
     </div>

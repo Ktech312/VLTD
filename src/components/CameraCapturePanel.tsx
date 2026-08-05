@@ -729,7 +729,7 @@ export default function CameraCapturePanel({
         {capturedFile ? (
           isInline ? null : (
             <div className="flex justify-end">
-              <button type="button" onClick={onClose} className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-sm ring-1 ring-[color:var(--border)]">Close</button>
+              <PillButton onClick={onClose}>Close</PillButton>
             </div>
           )
         ) : isInline ? null : (
@@ -752,7 +752,7 @@ export default function CameraCapturePanel({
               </div>
             </div>
             {!isInline && (
-              <button type="button" onClick={onClose} className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-sm ring-1 ring-[color:var(--border)]">Close</button>
+              <PillButton onClick={onClose}>Close</PillButton>
             )}
           </div>
         )}

@@ -865,7 +865,7 @@ export default function CapturePage() {
                             <button
                               type="button"
                               onClick={() => makeCover(selectedPreviewIndex)}
-                              className="rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                              className="rounded-[7px] px-2.5 py-1 text-[11px] font-semibold"
                               style={{ background: "var(--theme-gold-gradient)", color: "#0B0B0B" }}
                             >
                               Make Cover
