@@ -273,15 +273,22 @@ export default function CameraCapturePanel({
         // (often low, e.g. 640x480) default -- this was the main reason the
         // live preview and captured photos looked soft and small barcodes
         // (graded-slab QR/Code128) were unreadable even though a native
-        // camera app aimed at the same subject looked sharp. `ideal` lets
-        // the browser fall back gracefully on devices that can't hit it.
-        const resolutionConstraints = {
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        };
+        // camera app aimed at the same subject looked sharp.
+        //
+        // Every constraint here is `ideal`/soft, deliberately -- an `exact`
+        // constraint (e.g. a remembered deviceId that's since gone stale)
+        // can force the browser to try and fail before falling back, and on
+        // some phones that failure isn't fast. A single all-ideal request
+        // negotiates once and can't reject for being unsatisfiable.
+        // ~8.3MP (4K-equivalent) -- still well under a 12MP phone sensor, but
+        // the barcode-scan loop is now throttled to 2 crops/tick (see
+        // barcodeScanner.ts), so there's headroom to ask for real sharpness
+        // without reintroducing the per-tick CPU cost that caused the
+        // original slowdown. `ideal` still lets a weaker camera/device fall
+        // back gracefully instead of failing.
         const requestedDevice = preferredDeviceId
-          ? { deviceId: { exact: preferredDeviceId }, ...resolutionConstraints }
-          : { facingMode: { ideal: "environment" }, ...resolutionConstraints };
+          ? { deviceId: { ideal: preferredDeviceId }, width: { ideal: 3840 }, height: { ideal: 2160 } }
+          : { facingMode: { ideal: "environment" }, width: { ideal: 3840 }, height: { ideal: 2160 } };
 
         try {
           stream = await navigator.mediaDevices.getUserMedia({
@@ -289,17 +296,10 @@ export default function CameraCapturePanel({
             audio: false,
           });
         } catch {
-          try {
-            stream = await navigator.mediaDevices.getUserMedia({
-              video: resolutionConstraints,
-              audio: false,
-            });
-          } catch {
-            stream = await navigator.mediaDevices.getUserMedia({
-              video: true,
-              audio: false,
-            });
-          }
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false,
+          });
         }
 
         if (!isActive) {
