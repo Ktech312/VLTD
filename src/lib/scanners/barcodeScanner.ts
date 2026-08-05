@@ -270,8 +270,21 @@ function buildRegions(width: number, height: number): ScanRegion[] {
   ];
 }
 
+// Per-video rotation cursor for scanBarcodeFromVideoFrame's round-robin (see
+// below). Keyed by video element so two live camera instances never share
+// state, cleared automatically when the video element is garbage collected.
+const scanCursorByVideo = new WeakMap<HTMLVideoElement, number>();
+const REGIONS_PER_TICK = 2;
+
 /** Decode one frame from a live <video> element synchronously.
- *  Call this inside a rAF / setInterval loop for continuous scanning. */
+ *  Call this inside a rAF / setInterval loop for continuous scanning.
+ *
+ *  Only scans a rotating slice of `buildRegions()` per call (not all of
+ *  them) -- trying every region x every decode variant on every tick pegged
+ *  the main thread hard enough to make the whole app feel sluggish while the
+ *  live camera was open. A stationary code still gets caught within a few
+ *  ticks as the rotation cycles through all regions, just spread out instead
+ *  of crammed into one synchronous burst every tick. */
 export function scanBarcodeFromVideoFrame(
   video: HTMLVideoElement
 ): BarcodeScanResult | null {
@@ -280,8 +293,10 @@ export function scanBarcodeFromVideoFrame(
   if (!width || !height) return null;
 
   const regions = buildRegions(width, height);
+  const startIndex = scanCursorByVideo.get(video) ?? 0;
 
-  for (const region of regions) {
+  for (let i = 0; i < REGIONS_PER_TICK; i++) {
+    const region = regions[(startIndex + i) % regions.length];
     if (region.w < 40 || region.h < 40) continue;
 
     const canvas = makeCanvas(region.w * (region.scale ?? 1), region.h * (region.scale ?? 1));
@@ -294,9 +309,13 @@ export function scanBarcodeFromVideoFrame(
     );
 
     const result = tryDecodeVariants(canvas, region.name);
-    if (result) return result;
+    if (result) {
+      scanCursorByVideo.delete(video);
+      return result;
+    }
   }
 
+  scanCursorByVideo.set(video, (startIndex + REGIONS_PER_TICK) % regions.length);
   return null;
 }
 

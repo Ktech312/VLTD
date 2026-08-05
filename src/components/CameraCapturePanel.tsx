@@ -269,9 +269,19 @@ export default function CameraCapturePanel({
       try {
         let stream: MediaStream;
         const preferredDeviceId = preferredDeviceIdRef.current;
+        // Request a real resolution instead of letting the browser pick its
+        // (often low, e.g. 640x480) default -- this was the main reason the
+        // live preview and captured photos looked soft and small barcodes
+        // (graded-slab QR/Code128) were unreadable even though a native
+        // camera app aimed at the same subject looked sharp. `ideal` lets
+        // the browser fall back gracefully on devices that can't hit it.
+        const resolutionConstraints = {
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        };
         const requestedDevice = preferredDeviceId
-          ? { deviceId: { exact: preferredDeviceId } }
-          : true;
+          ? { deviceId: { exact: preferredDeviceId }, ...resolutionConstraints }
+          : { facingMode: { ideal: "environment" }, ...resolutionConstraints };
 
         try {
           stream = await navigator.mediaDevices.getUserMedia({
@@ -279,10 +289,17 @@ export default function CameraCapturePanel({
             audio: false,
           });
         } catch {
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-            audio: false,
-          });
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: resolutionConstraints,
+              audio: false,
+            });
+          } catch {
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: true,
+              audio: false,
+            });
+          }
         }
 
         if (!isActive) {
@@ -687,7 +704,7 @@ export default function CameraCapturePanel({
               <button type="button" onClick={onClose} className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-sm ring-1 ring-[color:var(--border)]">Close</button>
             </div>
           )
-        ) : (
+        ) : isInline ? null : (
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">LIVE CAMERA</div>

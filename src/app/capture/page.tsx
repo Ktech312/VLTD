@@ -728,9 +728,17 @@ export default function CapturePage() {
                   <h1 className="text-[34px] font-extrabold uppercase leading-[0.9] tracking-[-0.03em] text-text-primary sm:text-[42px]">
                     New Vault Item
                   </h1>
-                  <p className="mt-2 text-sm text-[color:var(--muted)]">
-                    Capture, identify, and prepare your item for your private vault.
-                  </p>
+                  {/* Hidden while the live camera is up (no photo yet) -- this
+                      copy is redundant with the camera's own frame-guide hint,
+                      and every extra line of chrome here pushes the shutter
+                      button further down, forcing a scroll to reach it on
+                      mobile. Still shown once a photo exists (accordion phase,
+                      no shutter-visibility race anymore). */}
+                  {capturedImageFile ? (
+                    <p className="mt-2 text-sm text-[color:var(--muted)]">
+                      Capture, identify, and prepare your item for your private vault.
+                    </p>
+                  ) : null}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   {capturedImageFile ? (
@@ -756,7 +764,7 @@ export default function CapturePage() {
               {/* Two columns: preview | accordion. grid-cols-1 on mobile so the
                   single column fills the screen width (minmax(0,1fr)) instead of
                   sizing to its widest child, which overflowed the viewport. */}
-              <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,480px)_1fr] lg:items-start">
+              <div className={`grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,480px)_1fr] lg:items-start ${capturedImageFile ? "mt-6" : "mt-3"}`}>
                 {/* Left: framed image viewer (concept-19) */}
                 <div className="min-w-0">
                   {previewUrl ? (
