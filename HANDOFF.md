@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated 2026-08-03, second overnight autonomous pass)
+# VLTD — Session Handoff (updated 2026-08-05, third overnight autonomous pass)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -279,11 +279,116 @@ write that migration blind since it's payment-adjacent data.
   internal-tool look (own dark bg, amber accents, emoji icons), not drift. Left
   alone. Say so if you actually want it reskinned to match the main app — bigger
   job, not started.
+- **~55 orphaned component/lib files found tonight (2026-08-05), NOT deleted —
+  your call.** See §4's dead-code entry for the full list and why. Short
+  version: several of these look like half-built features (a comic-barcode
+  scan pipeline, a multi-workspace-switching system, a scaffolded analytics/
+  repo-abstraction layer, a cluster of dashboard chart widgets) rather than
+  simple leftover cruft, so per the standing "ask before removing a feature"
+  rule I only deleted the ones with a confirmed, currently-live replacement
+  already doing that job (8 files) and left the rest for you to say either
+  "finish these" or "delete them."
 - Everything else in §2 is a go; just needs building/verifying/a migration.
 
 ---
 
 ## 4. Done recently (don't redo)
+- **Third overnight pass (2026-08-05 night), while EK slept — camera fixes,
+  pill sweep #2, dead-code cleanup:**
+  - **Camera capture (`CameraCapturePanel.tsx`, `capture/page.tsx`,
+    `barcodeScanner.ts`, `ScanCropEditor.tsx`)** — a long back-and-forth with
+    EK over several rounds (their phone vs. the app's camera, side-by-side
+    screenshots). Landed on: (1) throttled the live barcode-scan loop from
+    checking all 10 regions x 3 decode variants EVERY ~450ms tick down to a
+    round-robin of 2 regions/tick (this was almost certainly the "everything
+    feels slow" cause — up to 30 synchronous ZXing decodes every half-second,
+    continuously, while the camera was open); (2) found and fixed a real
+    regression I introduced earlier the same night: a `deviceId: {exact:...}`
+    hard constraint in `getUserMedia()` that could hang for seconds on a
+    stale device id before falling back — switched everything to soft
+    `ideal` constraints; (3) reverted an ill-advised resolution bump (tried
+    1080p then ~4K "ideal" — neither measurably helped sharpness and the 4K
+    attempt likely caused a reported "longer than wide" aspect issue by
+    requesting an explicit landscape pair); (4) added a dedicated "Take Real
+    Photo" button (separate from "Upload", which stayed a plain file/drive
+    picker) that hands off to the phone's actual native camera app via
+    `capture="environment"`, then routes the result through the same
+    ScanCropEditor crop step the in-app camera gets — this is the *honest*
+    answer to "why does the photo look worse than my phone's camera": web
+    `getUserMedia` structurally cannot reach HDR/multi-frame processing a
+    native camera app uses, no constraint tuning closes that; (5) removed the
+    7-preset Filter dropdown (all ~5-10% CSS tweaks, indistinguishable from
+    each other — confirmed real, just too subtle) and replaced it with one
+    real one-tap "Brighten" toggle (sun icon, meaningfully brighter, next to
+    the existing background-removal button); Fine Tune sliders stay for
+    manual control; (6) fixed the multi-photo thumbnail rail in
+    `capture/page.tsx` — tapping a non-cover photo used to do nothing but
+    show a tiny "Set cover" button; now tapping ANY thumbnail previews it
+    big above with a glowing border, and "Make Cover" is its own explicit
+    action shown only when a non-cover photo is selected; (7) trimmed
+    repeated "still have to scroll" complaints across several rounds:
+    removed the page subtitle entirely, removed CameraCapturePanel's
+    duplicate internal header when inline, tightened header-to-content
+    margins. Left a temporary on-screen capture-timing readout
+    (`captureTiming` state in `CameraCapturePanel.tsx`) in case the ~10s
+    complaint isn't actually fully resolved — remove once confirmed fixed.
+  - **Pill sweep #2** — ran a fresh Explore-agent sweep (the "finished"
+    claims from earlier same-night work + a concurrent session's own "Pill
+    sweep"/"PillButton-everywhere" commits were both wrong). Verified before
+    touching: confirmed `vltd-primary-button` + `rounded-full` combos
+    (login/signup/PublicHomeClient/BugReporter) are NOT bugs -- `vltd-
+    primary-button`'s `border-radius:4px` lives in an unlayered stylesheet
+    (`vltd-design.css`, plain `import` in `layout.tsx`, not routed through
+    Tailwind's `@layer`), which always wins over Tailwind's layered
+    `rounded-full` utility per the CSS cascade-layers spec regardless of
+    source order -- those already render squared. Fixed 4 real ones: two
+    "Close" buttons in `CameraCapturePanel.tsx` (missed by the same night's
+    earlier Retake/Save fix), the new "Make Cover" button, 4 Link-styled
+    CTAs in `insurance/page.tsx` ("Smart Scan"/"Add manually"/"Back to
+    Vault"/"Portfolio"), and 2 in `ai/review/page.tsx` ("View vault"/"Back
+    to queue"). If a THIRD sweep ever seems needed, don't just re-trust
+    whatever the last "done" claim says -- grep it yourself.
+  - **Dead-code cleanup** — ran an Explore-agent sweep for orphaned files
+    (zero import references anywhere in the repo) under `src/components/**`
+    and `src/lib/**`. It found ~65 candidates and claimed 5 were "old code
+    superseded by a live replacement" -- I verified each claim myself before
+    deleting anything, and 2 of the 5 turned out to be **wrong**: the
+    claimed "live replacement" (`src/lib/analytics/portfolio.ts` and
+    `src/lib/repo/vaultRepo.ts`) had zero importers either, so those weren't
+    simple old-vs-new swaps. Only deleted what I could personally confirm
+    had a real, currently-used replacement:
+    - `src/lib/vaultIntelligence.ts` (real replacement: `itemIntelligence.ts`,
+      confirmed used in 8+ files)
+    - `src/lib/vaultBackup.ts` (real replacement: `RestoreVaultButton.tsx`/
+      `VaultExportButton.tsx`, confirmed used in vault pages)
+    - `src/lib/sellItem.ts` (real replacement: `vaultActions.ts`/
+      `salesModel.ts`, confirmed used in `activity`/`sales`/drop-review flows)
+    - `src/lib/vaultRepo.ts`, `vaultRepo.local.ts`, `vaultRepo.api.ts`,
+      `vaultRepo.index.ts` (a self-contained 4-file cluster that only
+      referenced each other, zero external callers -- deleted the whole
+      cluster together; did NOT delete `src/lib/portfolioAnalytics.ts` or
+      `src/lib/repo/vaultRepo.ts` since their "replacements" turned out to
+      also be unused, so calling either direction "superseded" wasn't
+      actually true)
+    `npx tsc --noEmit` stayed clean after every deletion -- a real safety
+    net here: if any of these had a live importer I'd missed, the build
+    would have failed immediately with "cannot find module."
+    **NOT deleted, flagged for EK's decision (see §3):** ~55 more orphaned
+    files the sweep found, plus a short list of unused exported functions
+    inside otherwise-live files (`signUpWithPassword` in `auth.ts`,
+    `redeemReferralCode` in `referral.ts`, `removeSaleById` in
+    `salesModel.ts`, `getPublicVaultUrl` in `publicProfile.ts`,
+    `effectivePricingValue` in `pricingMvp.ts`, and the entire
+    multi-workspace-switching surface in `workspaces.ts` which nothing calls
+    except `getRoleDefaults`). Several of the orphaned files read as
+    scaffolded, never-wired features rather than leftover cruft --
+    `comicBarcode.ts` (~380 lines, a whole comic-barcode-scan pipeline),
+    `workspaces.ts`'s switching UI, a cluster of dashboard chart/widget
+    components (`NeonBarChart`, `NeonDonut`, `MiniSparklines`, `TiltCard`,
+    `SubjectRankingsWidget`, `CollectionValuationScoreCard`,
+    `PortfolioIntelligencePanel`, etc.) -- didn't want to guess whether these
+    are intentional WIP or genuinely abandoned, so left them alone per the
+    "ask before removing a feature" rule rather than assume either way.
 - **Second overnight pass (2026-08-03 night), while EK slept — production-readiness
   fake-data sweep, prompted by EK asking to check the whole app:**
   - Watchlist "7d change" (`-$2,340`, always shown even empty) — removed, no
