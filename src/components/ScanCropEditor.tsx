@@ -381,18 +381,6 @@ export default function ScanCropEditor({
     onChange(nextCrop);
   }
 
-  function setZoomTo(nextZoom: number) {
-    const box = cropBox;
-    const viewport = viewportRef.current;
-    if (!box || !viewport) return;
-    const viewportRect = viewport.getBoundingClientRect();
-    zoomAround(
-      viewportRect.left + box.left + box.width / 2,
-      viewportRect.top + box.top + box.height / 2,
-      nextZoom
-    );
-  }
-
   function handleWheel(event: ReactWheelEvent<HTMLDivElement>) {
     event.preventDefault();
     const zoomDelta = -event.deltaY * WHEEL_ZOOM_SPEED;
@@ -558,18 +546,15 @@ export default function ScanCropEditor({
         </div>
       </div>
 
-      {/* Zoom slider — centered under the image, with an optional right-side slot */}
-      <div className={compact ? "mt-2 flex items-center gap-3 px-1" : "mt-3 flex items-center gap-3"}>
-        <span className="w-9 shrink-0 text-[11px] font-semibold tabular-nums text-[color:var(--muted)]">{zoomLabel}%</span>
-        <input
-          type="range"
-          min={Math.round(MIN_ZOOM * 100)}
-          max={Math.round(MAX_ZOOM * 100)}
-          value={zoomLabel}
-          onChange={(event) => setZoomTo(Number(event.target.value) / 100)}
-          className="h-1.5 flex-1 accent-[color:var(--theme-gold)]"
-          aria-label="Zoom"
-        />
+      {/* Pinch (touch) or scroll-wheel zoom is handled directly on the image
+          viewport above -- no slider needed; it just duplicated a gesture
+          people already use and nobody reached for it. Still show the zoom
+          level once you've actually zoomed, and keep the optional right-side
+          slot (e.g. CameraCapturePanel's background-removal button). */}
+      <div className={compact ? "mt-2 flex items-center justify-between gap-3 px-1" : "mt-3 flex items-center justify-between gap-3"}>
+        <span className="text-[11px] text-[color:var(--muted)]">
+          {zoom > 1.01 ? <span className="font-semibold tabular-nums">{zoomLabel}% zoom</span> : "Pinch or scroll to zoom"}
+        </span>
         {zoomRowRight ? <div className="shrink-0">{zoomRowRight}</div> : null}
       </div>
 

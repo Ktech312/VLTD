@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import ScanCropEditor from "@/components/ScanCropEditor";
 import { Glyph } from "@/components/ui/Glyph";
+import { PillButton } from "@/components/ui/PillButton";
 import { scanBarcodeFromVideoFrame, type BarcodeScanResult } from "@/lib/scanners/barcodeScanner";
 import {
   getUniverses,
@@ -801,44 +802,33 @@ export default function CameraCapturePanel({
               }
             />
 
-            <div className="mt-2 flex items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={handleRetakePhoto}
-                disabled={isApplyingCrop}
-                className="rounded-full px-5 py-2.5 text-sm font-semibold ring-1 ring-[color:var(--border)] disabled:opacity-40"
-                style={{ background: "var(--pill)", color: "var(--muted)" }}
-              >
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+              <PillButton onClick={handleRetakePhoto} disabled={isApplyingCrop}>
                 ↩ Retake
-              </button>
+              </PillButton>
               {!isDefaultCrop(captureCrop) ? (
-                <button
-                  type="button"
+                <PillButton
                   onClick={() => void handleUseCapturedPhoto(DEFAULT_CROP)}
                   disabled={isApplyingCrop}
                   title="Skip cropping and use the full photo"
-                  className="rounded-full px-5 py-2.5 text-sm font-semibold ring-1 ring-[color:var(--border)] disabled:opacity-40"
-                  style={{ background: "var(--pill)", color: "var(--muted)" }}
                 >
-                  Use as-is
-                </button>
+                  Use Full Photo
+                </PillButton>
               ) : null}
-              <button
-                type="button"
+              <PillButton
                 onClick={() => void handleUseCapturedPhoto()}
                 disabled={isApplyingCrop}
-                className="rounded-full px-8 py-2.5 text-sm font-bold disabled:opacity-40"
                 style={{ background: "var(--pill-active-bg)", color: "var(--fg)" }}
               >
                 {isApplyingCrop ? "Saving..." : "Save"}
-              </button>
+              </PillButton>
             </div>
 
             <div className="mt-2 rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]">
               <button
                 type="button"
                 onClick={() => setShowFineTune((value) => !value)}
-                className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
+                className="rounded-[7px] bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
               >
                 {showFineTune ? "Hide Fine Tune" : "Show Fine Tune"}
               </button>
