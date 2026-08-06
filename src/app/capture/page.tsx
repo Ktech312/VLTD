@@ -12,6 +12,8 @@ import { analyzeImageWithVision, type VisionAnalysisResult } from "@/lib/ai/open
 import { resolveVisionTaxonomy } from "@/lib/visionTaxonomy";
 import { scanBarcodeFromFile } from "@/lib/scanners/barcodeScanner";
 import { scanComicRegionsFromFile, parseComicBarcode, buildComicScanNotes } from "@/lib/comicBarcode";
+import { scanTcgCardRegionsFromFile } from "@/lib/scanners/tcgCardParser";
+import { lookupMtgCard, lookupPokemonCard, type CardLookupResult } from "@/lib/cardLookup";
 import { lookupUpcItem } from "@/lib/upcLookup";
 import { newId } from "@/lib/id";
 import { appendItems, type VaultImage } from "@/lib/vaultModel";
@@ -320,6 +322,33 @@ function isDefaultNativeCrop(crop: ScanCropRect) {
   return !crop.left && !crop.top && !crop.right && !crop.bottom;
 }
 
+/** Real-database identification for a raw TCG card — the same idea as the
+ *  comic OCR above, but for cards: only Magic (Scryfall) and Pokemon
+ *  (Pokemon TCG API) have a free public database wired in, so this returns
+ *  null for anything else and the generic AI vision guess is all that runs. */
+async function lookupTcgCardFromFile(
+  file: File,
+  game: "mtg" | "pokemon"
+): Promise<CardLookupResult | null> {
+  const regionScan = await scanTcgCardRegionsFromFile(file);
+  const titleGuess = regionScan.titleText;
+  const numberGuess = regionScan.collectorNumber;
+  if (!titleGuess) return null;
+
+  if (game === "mtg") {
+    if (regionScan.setCodeGuess && numberGuess) {
+      const bySetNumber = await lookupMtgCard({
+        set: regionScan.setCodeGuess,
+        number: numberGuess,
+      }).catch(() => null);
+      if (bySetNumber) return bySetNumber;
+    }
+    return lookupMtgCard({ name: titleGuess }).catch(() => null);
+  }
+
+  return lookupPokemonCard({ name: titleGuess, number: numberGuess || undefined }).catch(() => null);
+}
+
 export default function CapturePage() {
   const router = useRouter();
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
@@ -474,16 +503,28 @@ export default function CapturePage() {
     // you've told the app it's a comic (Pop Culture > Comics), so everyone
     // else's Identify stays fast.
     const isComicContext = fields.universe === "POP_CULTURE" && fields.categoryLabel === "Comics";
+    // Cards analog of the comic scan above — only Magic/Pokemon have a free
+    // public card database wired in (see cardLookup.ts), so this stays null
+    // (falls back to plain AI vision) for any other TCG/Sports card.
+    const tcgGame: "mtg" | "pokemon" | null =
+      fields.universe === "TCG"
+        ? fields.subcategoryLabel === "Magic: The Gathering"
+          ? "mtg"
+          : fields.subcategoryLabel === "Pokemon"
+            ? "pokemon"
+            : null
+        : null;
 
     try {
-      // Run vision analysis, barcode scan, and (comics only) the comic-specific
-      // scan in parallel. Barcode/UPC lookup is free (local decode, no AI call)
-      // so it still runs even once AI scans are exhausted for this cycle --
-      // only the vision call is metered/skipped.
-      const [visionSettled, barcodeSettled, comicSettled] = await Promise.allSettled([
+      // Run vision analysis, barcode scan, and (comics/TCG-cards only) the
+      // respective specific scan in parallel. Barcode/UPC lookup is free
+      // (local decode, no AI call) so it still runs even once AI scans are
+      // exhausted for this cycle -- only the vision call is metered/skipped.
+      const [visionSettled, barcodeSettled, comicSettled, cardSettled] = await Promise.allSettled([
         scanExhausted ? Promise.resolve(null) : analyzeImageWithVision(file),
         scanBarcodeFromFile(file),
         isComicContext ? scanComicRegionsFromFile(file) : Promise.resolve(null),
+        tcgGame ? lookupTcgCardFromFile(file, tcgGame) : Promise.resolve(null),
       ]);
 
       let vision = visionSettled.status === "fulfilled" ? visionSettled.value : null;
@@ -494,6 +535,11 @@ export default function CapturePage() {
       const comicScan = comicSettled.status === "fulfilled" ? comicSettled.value : null;
       if (comicSettled.status === "rejected") {
         console.error("[Capture] Comic scan error:", comicSettled.reason);
+      }
+
+      const cardResult = cardSettled.status === "fulfilled" ? cardSettled.value : null;
+      if (cardSettled.status === "rejected") {
+        console.error("[Capture] Card lookup error:", cardSettled.reason);
       }
 
       if (vision && metered) {
@@ -523,14 +569,15 @@ export default function CapturePage() {
       }
 
       const comicHasResult = Boolean(comicScan && (comicScan.barcode || comicScan.titleText || comicScan.issueText));
+      const cardHasResult = Boolean(cardResult);
 
-      if (scanExhausted && !upcData && !comicHasResult) {
+      if (scanExhausted && !upcData && !comicHasResult && !cardHasResult) {
         setErrorMsg("You've used all your AI scans for this cycle — fill it in by hand.");
         setAnalyzing(false);
         return;
       }
 
-      if (!vision && !upcData && !comicHasResult) {
+      if (!vision && !upcData && !comicHasResult && !cardHasResult) {
         // Both failed completely — show error
         throw new Error("Could not identify item. Please fill in details manually.");
       }
@@ -555,6 +602,22 @@ export default function CapturePage() {
         }
       }
 
+      // Real Scryfall/Pokemon TCG API match — a confirmed real card beats a
+      // vision guess, same fallback-only merge rule as comics above.
+      if (cardHasResult && cardResult) {
+        if (!merged.title.trim()) merged.title = cardResult.name;
+        if (!merged.subtitle.trim()) merged.subtitle = cardResult.setName;
+        if (!merged.number.trim()) merged.number = cardResult.number;
+        const cardNotes = [
+          `Matched via ${tcgGame === "mtg" ? "Scryfall" : "Pokemon TCG API"}: ${cardResult.sourceUrl}`,
+          cardResult.rarity ? `Rarity: ${cardResult.rarity}` : "",
+          cardResult.priceUsd ? `Market price: $${cardResult.priceUsd}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n");
+        merged.description = [merged.description, cardNotes].filter(Boolean).join("\n\n");
+      }
+
       setFields((prev) => {
         const next: ReviewFields = { ...prev };
         (Object.keys(merged) as (keyof ReviewFields)[]).forEach((k) => {
@@ -575,7 +638,7 @@ export default function CapturePage() {
       );
       setAnalyzing(false);
     }
-  }, [capturedImages, analyzing, fields.universe, fields.categoryLabel]);
+  }, [capturedImages, analyzing, fields.universe, fields.categoryLabel, fields.subcategoryLabel]);
 
   /* ── Save to vault ── */
   const handleSave = useCallback(async () => {

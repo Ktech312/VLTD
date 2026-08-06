@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated 2026-08-06 — READ §2B FIRST: live camera bug + EK's next priority)
+# VLTD — Session Handoff (updated 2026-08-06 night — READ §2B FIRST: barcode fix shipped + please test)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -110,65 +110,104 @@ default of "TCG", so unless manually changed, everything got tagged/AI-hinted as
 TCG — comics scanned as "Magic: The Gathering" etc. Fixed 2026-08-03 (see §4).
 Still want confirmation the fix actually holds up on a real batch of mixed items.
 
-### B. Barcode / QR live detection — EK (2026-08-06): "no option or it doesn't pop up when looking at a QR or barcode" — READ THIS FIRST
-This is the SAME feature as the old note below, now a step further along and
-apparently regressed. Timeline:
+### B. Barcode / QR live detection — ROOT CAUSE FOUND + FIXED 2026-08-06 night, please test on a real device
+History (kept for context, all superseded by the fix below):
 1. Original bug (pre-2026-08-05): slab QR/Code128 wasn't read because
-   `buildRegions()` in `src/lib/scanners/barcodeScanner.ts` only scanned
-   bottom-biased crops (tuned for retail UPCs) — never enough resolution on a
-   small code near the TOP of a graded holder (PSA/CGC/BGS/SGC put their cert
-   QR/Code128 there). Added mirrored top-of-frame regions. Never confirmed
-   on a real device.
-2. 2026-08-05 night: EK reported the app "running super slow again" — up to
-   30 synchronous ZXing decode passes (10 regions x 3 variants) every ~450ms
-   tick, continuously, while the live camera was open. Fixed by throttling to
-   a **round-robin of 2 regions per tick**, cycling through all 10 across
-   successive ticks (`scanBarcodeFromVideoFrame` in `barcodeScanner.ts`,
-   `REGIONS_PER_TICK = 2`). This traded detection *latency* for lower CPU
-   cost: a code sitting late in the fixed rotation order (`full`, `full_2x`,
-   `bottom_half`, `bottom_right`, `bottom_right_tight`, `bottom_band`,
-   `top_half`, `top_right`, `top_left`, `top_band`) can now take 4-5 ticks
-   (~2+ seconds of holding the camera dead still) before it's even checked.
-3. **2026-08-06: EK reports the live "Barcode ####" badge (the
-   `liveBarcode` state in `CameraCapturePanel.tsx`, shown while aiming,
-   before capture) never seems to appear at all when pointing at a real QR
-   or barcode.** Not independently confirmed or re-tested by this session —
-   passing this along as the most likely explanation, not a diagnosed root
-   cause: **the round-robin throttle from step 2 is the prime suspect.** It
-   was a deliberate speed/reliability trade-off and it's plausible it went
-   too far the other way. Concrete things to try, roughly in order of
-   effort: (a) reorder `buildRegions()`'s region list so the most likely
-   position for the CURRENT context goes first (e.g. top regions first when
-   scanning a graded slab, since that's where step 1 says the code usually
-   is) instead of the current fixed bottom-then-top order; (b) bump
-   `REGIONS_PER_TICK` back up somewhat (e.g. 3-4 instead of 2) as a middle
-   ground between the original all-10 and the current 2; (c) check whether
-   the round-robin cursor logic itself has a bug (the `WeakMap`-per-video
-   cursor in `scanBarcodeFromVideoFrame`) rather than assuming it's purely a
-   tuning problem — worth adding a temporary visible counter (same pattern
-   as the `captureTiming` debug readout already in `CameraCapturePanel.tsx`)
-   showing which region index is currently being checked, so this can
-   actually be observed on EK's phone instead of guessed at again.
-   **Do not guess-tune this a fourth time without confirming which of (a)/
-   (b)/(c) is actually true first** — three rounds of blind constraint/
-   resolution tuning already happened this week without a confirmed fix.
+   `buildRegions()` only scanned bottom-biased crops (tuned for retail UPCs).
+   Added top-of-frame regions.
+2. 2026-08-05 night: app ran slow with the camera open (30 sync ZXing decode
+   passes every ~450ms tick). Fixed with a round-robin throttle
+   (`REGIONS_PER_TICK = 2` in `scanBarcodeFromVideoFrame`).
+3. 2026-08-06: EK reported the live badge "no option, doesn't pop up when
+   looking at a QR or barcode" — at the time this was guessed to be the
+   round-robin throttle from step 2 being too aggressive. **That guess was
+   wrong — didn't need to guess-tune a fourth time, found the actual bug by
+   reading the code:** `decodeCanvas()` in `barcodeScanner.ts` discarded
+   *every* successful ZXing decode whose payload had zero digit characters
+   (`if (!digits) return null`, where `digits = rawValue.replace(/\D/g,"")`).
+   QR codes commonly encode letters-only text — a slab's shortlink cert URL
+   (e.g. `psa.io/xY9kP`), a plain website QR, a WiFi QR, anything without a
+   number in it — so any of those got silently dropped before ever reaching
+   the UI, independent of the throttle. That's almost certainly why it could
+   look like it "never" fires rather than just being slow.
+   **Fixed:** `decodeCanvas()` now gates on the decoded `rawValue` instead of
+   its digit-only subset. `digits` is still returned/available for callers
+   that specifically need a numeric code (UPC/EAN/PSA cert lookups) — it's
+   just no longer a requirement for the decode to count as a hit. Also fixed
+   the live badge text (`CameraCapturePanel.tsx`) and the dedicated scan
+   camera's success badge (`BarcodeScanCamera.tsx`) to show the raw decoded
+   text instead of going blank when there are no digits.
+   **Not yet confirmed on a real device/camera — please test** (see the
+   checklist below). If it's *still* not firing after this, the round-robin
+   throttle from step 2 becomes the next real suspect (see the three
+   concrete options that were queued up for that, still valid, in the git
+   history of this file) — but don't jump back to guess-tuning that blind;
+   confirm first whether the badge fires at all now vs. fires-but-slow.
+4. **Deployed:** this fix + everything else that had piled up unmerged on
+   `claude/focused-mendel-94fdc9` (dead-code sweep, comic scanner wiring, the
+   camera speed/shutter fixes from earlier this week — see §4) all got
+   merged to `main` and pushed together tonight, per EK's explicit go-ahead.
+   **Backup tag `backup/main-pre-focused-mendel-merge`** points at exactly
+   where `main` was right before that merge, in case anything in that batch
+   needs to be rolled back.
 
-**Also from EK, same night, likely related or downstream of the above fully
-working:**
-- **This should also work for Cards**, not just the graded-slab/comics cases
-  already covered. Worth checking exactly what "this" refers to before
-  building anything — could mean (i) the generic live barcode/QR badge
-  should reliably fire when aiming at a trading card's barcode (if cards
-  have one printed on them/their packaging), or (ii) EK wants a Cards-
-  specific auto-parse feature analogous to what `comicBarcode.ts` does for
-  comics (reads a barcode + falls back to OCR for structured fields) — ask
-  EK to clarify which before scoping real work here.
-- **Quick Add's camera (`ScanCapturePanel.tsx`) now looks noticeably better
-  than the regular Add Item camera (`CameraCapturePanel.tsx`)**, per EK
-  directly. EK's own instruction: **fix the QR/barcode detection above
-  FIRST, then make the regular Add camera visually match Quick Add's look.**
-  Don't start the visual unification before the detection fix is confirmed
-  working — that's the explicit order EK gave.
+**Please test on your phone once the deploy finishes (3-5 min after push) —**
+**here's what to look for:**
+- Open regular Add (`/vault/add`) or Quick Add, aim at ANY real QR code or
+  barcode (not just a slab) — the green "QR code read"/"Barcode read" badge
+  should now pop up. Try more than one kind (a slab if you have one, a
+  retail UPC, a random QR like a WiFi/website one) since different payloads
+  exercise different code paths.
+- If it still doesn't fire, note roughly how long you held still aiming at
+  it — "instant," "a couple seconds," or "never" — that one detail tells the
+  next chat whether to look at the throttle (step 2) or something else.
+- Scan a real physical comic via Identify (Universe=Pop Culture,
+  Category=Comics) and see if the issue number/title come out right — this
+  was wired in tonight too (§4) and has never been tested against a real
+  comic.
+- General sanity check on a few other screens (portfolio, vault, item pages)
+  — last night's batch deleted ~55 files as confirmed-dead code; nothing
+  *should* look different, but flag anything that looks broken or missing.
+
+### B2. "Should also work with Cards" — built tonight as a new feature (EK's call: option (ii), not just detection)
+EK confirmed this meant a real Cards-specific auto-fill analogous to what
+comics get from Metron/GCD, not just "make the badge fire on a card." Built:
+- **Only Magic: The Gathering and Pokemon are covered** — the two TCGs with a
+  free, keyless public card database (Scryfall for Magic, the Pokemon TCG
+  API for Pokemon). Yu-Gi-Oh/Lorcana/One Piece/Sports/etc. intentionally
+  still fall back to the old generic-OCR-guess behavior — no fake match gets
+  invented for games without a real database wired in.
+- Raw (ungraded) singles mostly don't have a printed barcode, so this
+  doesn't reuse the barcode scanner — new `src/lib/scanners/tcgCardParser.ts`
+  OCRs the name-plate + bottom-corner collector-number regions (mirrors
+  `comicParser.ts`'s region-crop approach), then `src/lib/cardLookup.ts` +
+  `src/app/api/card-lookup/route.ts` look that up against the real Scryfall
+  / Pokemon TCG API and fill title/set/number/rarity from the actual match —
+  same pattern as `metronLookup.ts`/`psaLookup.ts`.
+- Wired into **both** Add flows' identify pipelines, same gating (Universe=TCG
+  + Subcategory exactly "Magic: The Gathering" or "Pokemon"): `vault/add/page.tsx`
+  (`runTcgCardLookupForFile`, in the Auto-Identify pipeline) and
+  `capture/page.tsx` (`lookupTcgCardFromFile`, running alongside vision/
+  barcode/comic scans in `runAiIdentify`'s `Promise.allSettled`, same
+  fallback-only merge rule as the existing comic enhancement there — a
+  confirmed real card fills blank fields, never overwrites a vision answer).
+  Graded slabs still go through the existing PSA cert-lookup path — untouched.
+- **Not yet tested against a real Magic or Pokemon card — please test** once
+  you have one on hand: Universe=TCG, Subcategory=Magic (or Pokemon),
+  Identify, see if it matches and fills real set/number/rarity.
+- **Separately worth checking:** the graded-card path (`runPSALookupForCode`
+  → `/api/psa-lookup`) needs a `PSA_TOKEN` env var in Vercel to work at all —
+  wasn't touched tonight, didn't verify whether that's set. If you've never
+  gotten a PSA slab to auto-fill, that's the first thing to check, separate
+  from anything above.
+
+### B3. Regular Add camera should visually match Quick Add's — NEXT, once B/B2 above are confirmed
+EK's own instruction, explicit ordering: **fix barcode/Cards first (done
+tonight, pending your test), THEN make the regular Add camera
+(`CameraCapturePanel.tsx`) visually match Quick Add's look
+(`ScanCapturePanel.tsx`)** — the squared dropdown pills, frame corners, flash,
+ghost counter, thumbnail placement, etc. described in §4's Quick Add rebuild
+notes. Not started — waiting on B/B2 confirmation per EK's ordering.
 
 ### C. DOCUMENTS (capture builder §5 accordion) — DONE 2026-08-03
 EK's answer: "everything should be private unless shared" — that's a
