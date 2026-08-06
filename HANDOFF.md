@@ -228,6 +228,17 @@ real code bugs were found and fixed on the way:
    through instead.
 - **EK's action item, not code**: check/regenerate the PSA token at the link
   above, or say if graded-slab lookup isn't a priority right now.
+- **Update:** EK confirmed `PSA_TOKEN` had been sitting in Vercel since **Jul
+  4** — over a month old, almost certainly just expired, not a setup mistake.
+  Regenerated a fresh one from the PSA developer portal and updated the
+  Vercel env var. **Still returned the same 403 right after** — Vercel env
+  var edits don't apply to already-running serverless functions until the
+  next deploy; updating the value alone (no git push) doesn't trigger one.
+  Pushed this doc edit specifically to force that redeploy. **Please
+  re-test a real PSA slab once this deploy finishes** — if it's still 403
+  after an actual new deploy, the fresh token itself may be bad (wrong
+  scope, wrong account) rather than a deploy-timing issue, worth knowing
+  which before troubleshooting further.
 
 ### B4. Regular Add camera should visually match Quick Add's — STILL NEXT, once B/B2 above are confirmed
 EK's own instruction, explicit ordering: **fix barcode/Cards first, THEN**
