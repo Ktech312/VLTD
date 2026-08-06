@@ -1,82 +1,19 @@
 // src/lib/workspaces.ts
-
-export type WorkspaceType = "PERSONAL" | "BUSINESS";
-
-export type Workspace = {
-  id: string;
-  name: string;
-  type: WorkspaceType;
-  createdAt: number;
-};
-
-let cachedWorkspaces: Workspace[] | null = null;
-let currentWorkspaceId: string | null = null;
-
-const listeners = new Set<(workspace: Workspace) => void>();
-
-export function loadWorkspaces(): Workspace[] {
-  if (cachedWorkspaces) return cachedWorkspaces;
-
-  cachedWorkspaces = [
-    {
-      id: "personal",
-      name: "Personal Vault",
-      type: "PERSONAL",
-      createdAt: Date.now(),
-    },
-  ];
-
-  currentWorkspaceId = cachedWorkspaces[0].id;
-
-  return cachedWorkspaces;
-}
-
-export function getCurrentWorkspace(): Workspace {
-  const workspaces = loadWorkspaces();
-  return workspaces.find((w) => w.id === currentWorkspaceId) ?? workspaces[0];
-}
-
-export function switchWorkspace(id: string) {
-  const workspaces = loadWorkspaces();
-  const ws = workspaces.find((w) => w.id === id);
-  if (!ws) return;
-
-  currentWorkspaceId = ws.id;
-  listeners.forEach((fn) => fn(ws));
-}
-
-export function onWorkspaceChange(fn: (workspace: Workspace) => void) {
-  listeners.add(fn);
-  return () => listeners.delete(fn);
-}
-
-export function getWorkspaceName(): string {
-  return getCurrentWorkspace().name;
-}
-
-export type WorkspaceSummary = {
-  id: string;
-  name: string;
-  slug: string;
-  subtitle: string;
-  type: "personal" | "business";
-  logoText: string;
-};
+//
+// The multi-workspace-switching system that used to live in this file
+// (loadWorkspaces/getCurrentWorkspace/switchWorkspace/placeholderMembers)
+// was local-only mock data -- a single hardcoded "Personal Vault" entry,
+// never wired to Supabase -- and has been fully superseded by the real,
+// live multi-profile system (src/lib/auth.ts's getOnboardingStatus()/
+// activeProfile, used throughout /account, /more, etc.). Removed 2026-08-05.
+// Only the role-permission mapping below is real and still used
+// (src/app/account/roles/page.tsx).
 
 export type WorkspaceRole =
   | "OWNER"
   | "ADMIN"
   | "INVENTORY_MANAGER"
   | "VIEWER";
-
-export type WorkspaceMember = {
-  id: string;
-  name: string;
-  role: WorkspaceRole;
-  status: "ACTIVE" | "INVITED" | "DISABLED";
-  email?: string;
-  note?: string;
-};
 
 export type WorkspaceRoleDefaults = {
   addItem: boolean;
@@ -86,35 +23,6 @@ export type WorkspaceRoleDefaults = {
   manageMembers: boolean;
   billingAccess: boolean;
 };
-
-export function toWorkspaceSummary(profile: any): WorkspaceSummary {
-  const type = profile?.profile_type === "business" ? "business" : "personal";
-
-  return {
-    id: profile?.id ?? "personal",
-    name: profile?.display_name ?? "Personal Vault",
-    slug: profile?.username ?? "personal",
-    subtitle: type === "business" ? "Business Workspace" : "Personal Workspace",
-    type,
-    logoText: (profile?.display_name ?? "P").slice(0, 1).toUpperCase(),
-  };
-}
-
-export function placeholderMembers(
-  _workspace?: WorkspaceSummary | Workspace | null,
-  email?: string | null
-): WorkspaceMember[] {
-  return [
-    {
-      id: "owner",
-      name: "You",
-      role: "OWNER",
-      status: "ACTIVE",
-      email: email ?? undefined,
-      note: "Primary owner account",
-    },
-  ];
-}
 
 export function getRoleDefaults(role: WorkspaceRole): WorkspaceRoleDefaults {
   switch (role) {
