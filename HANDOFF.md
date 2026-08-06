@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated 2026-08-05, third overnight autonomous pass)
+# VLTD — Session Handoff (updated 2026-08-06 — READ §2B FIRST: live camera bug + EK's next priority)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -110,14 +110,65 @@ default of "TCG", so unless manually changed, everything got tagged/AI-hinted as
 TCG — comics scanned as "Magic: The Gathering" etc. Fixed 2026-08-03 (see §4).
 Still want confirmation the fix actually holds up on a real batch of mixed items.
 
-### B. Barcode / QR not detected on graded slabs — FIX ATTEMPTED, needs device test
-Slab QR/Code128 wasn't read on capture. `buildRegions()` in
-`src/lib/scanners/barcodeScanner.ts` only scanned bottom-biased crops (tuned for
-retail UPCs) plus two low-scale full-frame passes — never enough effective
-resolution on a small code near the TOP of a graded holder (where PSA/CGC/BGS/SGC
-put their cert QR/Code128). Added mirrored top-of-frame regions at the same scale
-factors. Purely additive, can't regress what already worked, but **not yet
-confirmed against a real slab + camera** — please test and report back.
+### B. Barcode / QR live detection — EK (2026-08-06): "no option or it doesn't pop up when looking at a QR or barcode" — READ THIS FIRST
+This is the SAME feature as the old note below, now a step further along and
+apparently regressed. Timeline:
+1. Original bug (pre-2026-08-05): slab QR/Code128 wasn't read because
+   `buildRegions()` in `src/lib/scanners/barcodeScanner.ts` only scanned
+   bottom-biased crops (tuned for retail UPCs) — never enough resolution on a
+   small code near the TOP of a graded holder (PSA/CGC/BGS/SGC put their cert
+   QR/Code128 there). Added mirrored top-of-frame regions. Never confirmed
+   on a real device.
+2. 2026-08-05 night: EK reported the app "running super slow again" — up to
+   30 synchronous ZXing decode passes (10 regions x 3 variants) every ~450ms
+   tick, continuously, while the live camera was open. Fixed by throttling to
+   a **round-robin of 2 regions per tick**, cycling through all 10 across
+   successive ticks (`scanBarcodeFromVideoFrame` in `barcodeScanner.ts`,
+   `REGIONS_PER_TICK = 2`). This traded detection *latency* for lower CPU
+   cost: a code sitting late in the fixed rotation order (`full`, `full_2x`,
+   `bottom_half`, `bottom_right`, `bottom_right_tight`, `bottom_band`,
+   `top_half`, `top_right`, `top_left`, `top_band`) can now take 4-5 ticks
+   (~2+ seconds of holding the camera dead still) before it's even checked.
+3. **2026-08-06: EK reports the live "Barcode ####" badge (the
+   `liveBarcode` state in `CameraCapturePanel.tsx`, shown while aiming,
+   before capture) never seems to appear at all when pointing at a real QR
+   or barcode.** Not independently confirmed or re-tested by this session —
+   passing this along as the most likely explanation, not a diagnosed root
+   cause: **the round-robin throttle from step 2 is the prime suspect.** It
+   was a deliberate speed/reliability trade-off and it's plausible it went
+   too far the other way. Concrete things to try, roughly in order of
+   effort: (a) reorder `buildRegions()`'s region list so the most likely
+   position for the CURRENT context goes first (e.g. top regions first when
+   scanning a graded slab, since that's where step 1 says the code usually
+   is) instead of the current fixed bottom-then-top order; (b) bump
+   `REGIONS_PER_TICK` back up somewhat (e.g. 3-4 instead of 2) as a middle
+   ground between the original all-10 and the current 2; (c) check whether
+   the round-robin cursor logic itself has a bug (the `WeakMap`-per-video
+   cursor in `scanBarcodeFromVideoFrame`) rather than assuming it's purely a
+   tuning problem — worth adding a temporary visible counter (same pattern
+   as the `captureTiming` debug readout already in `CameraCapturePanel.tsx`)
+   showing which region index is currently being checked, so this can
+   actually be observed on EK's phone instead of guessed at again.
+   **Do not guess-tune this a fourth time without confirming which of (a)/
+   (b)/(c) is actually true first** — three rounds of blind constraint/
+   resolution tuning already happened this week without a confirmed fix.
+
+**Also from EK, same night, likely related or downstream of the above fully
+working:**
+- **This should also work for Cards**, not just the graded-slab/comics cases
+  already covered. Worth checking exactly what "this" refers to before
+  building anything — could mean (i) the generic live barcode/QR badge
+  should reliably fire when aiming at a trading card's barcode (if cards
+  have one printed on them/their packaging), or (ii) EK wants a Cards-
+  specific auto-parse feature analogous to what `comicBarcode.ts` does for
+  comics (reads a barcode + falls back to OCR for structured fields) — ask
+  EK to clarify which before scoping real work here.
+- **Quick Add's camera (`ScanCapturePanel.tsx`) now looks noticeably better
+  than the regular Add Item camera (`CameraCapturePanel.tsx`)**, per EK
+  directly. EK's own instruction: **fix the QR/barcode detection above
+  FIRST, then make the regular Add camera visually match Quick Add's look.**
+  Don't start the visual unification before the detection fix is confirmed
+  working — that's the explicit order EK gave.
 
 ### C. DOCUMENTS (capture builder §5 accordion) — DONE 2026-08-03
 EK's answer: "everything should be private unless shared" — that's a
