@@ -279,20 +279,54 @@ write that migration blind since it's payment-adjacent data.
   internal-tool look (own dark bg, amber accents, emoji icons), not drift. Left
   alone. Say so if you actually want it reskinned to match the main app — bigger
   job, not started.
-- **~55 orphaned component/lib files found tonight (2026-08-05), NOT deleted —
-  your call.** See §4's dead-code entry for the full list and why. Short
-  version: several of these look like half-built features (a comic-barcode
-  scan pipeline, a multi-workspace-switching system, a scaffolded analytics/
-  repo-abstraction layer, a cluster of dashboard chart widgets) rather than
-  simple leftover cruft, so per the standing "ask before removing a feature"
-  rule I only deleted the ones with a confirmed, currently-live replacement
-  already doing that job (8 files) and left the rest for you to say either
-  "finish these" or "delete them."
+- **~55 orphaned component/lib files found 2026-08-05 — 3 of the 4 flagged
+  clusters resolved same night, per EK's "do all A/B/C" call:**
+  - **Comic barcode/OCR scanner** — real feature, finished wiring it in. See
+    §4.
+  - **Multi-workspace switching** — confirmed dead/superseded, deleted. See §4.
+  - **Dashboard chart widgets** (PortfolioIntelligencePanel,
+    CollectionValuationScoreCard, GoalsProgressWidget, SubjectRankingsWidget)
+    — real, all reading data already live elsewhere; placed on `/portfolio`
+    Insights. See §4.
+  - **Still open, no decision yet:** the scaffolded analytics/repo-abstraction
+    layer (`src/lib/analytics/portfolio.ts`, `src/lib/repo/vaultRepo.ts` —
+    NOT the deleted old versions, these are the newer ones, still unused by
+    anything) and the other ~50 orphaned files from the original sweep (see
+    the 2026-08-05 dead-code entry in §4 for categories: `NeonBarChart`/
+    `NeonDonut`/`MiniSparklines`/`TiltCard` primitives not otherwise pulled
+    in, plus a long tail of smaller one-off components/lib files). Nothing
+    urgent — these just sit there unused, not causing harm.
 - Everything else in §2 is a go; just needs building/verifying/a migration.
 
 ---
 
 ## 4. Done recently (don't redo)
+- **Follow-up (2026-08-05 night), after EK reviewed the orphaned-files report
+  and said "do all A/B/C":**
+  - **A. Comic barcode/OCR scanner wired in** — `runAiIdentify()` in
+    `capture/page.tsx` now runs `scanComicRegionsFromFile()` (from
+    `comicBarcode.ts`) in parallel with the existing vision+barcode calls,
+    gated on Universe=Pop Culture + Category=Comics already being selected
+    (the OCR pass is real CPU cost, shouldn't run on every capture). Results
+    merge additively -- comic-derived title/issue number only fill blank
+    fields, never overwrite vision's answer; the parsed issue/cover/printing
+    breakdown always gets appended to notes. **Not verified against a real
+    comic cover** -- please test and report back on accuracy.
+  - **B. Dead multi-workspace-switching code removed** — `workspaces.ts`
+    trimmed to just `getRoleDefaults` (the one real, used piece);
+    `WorkspaceMembersPanel.tsx` + `MemberRoleBadge.tsx` deleted (both fake
+    data, zero other importers, confirmed by `tsc` staying clean).
+  - **C. Analytics widgets placed on `/portfolio` Insights** — added a new
+    "Collection Intelligence" section at the bottom of
+    `InsightsOverview.tsx`: `PortfolioIntelligencePanel` +
+    `CollectionValuationScoreCard` (both driven by the same `metrics` object
+    the page already computes), `GoalsProgressWidget` (added a `goals` state
+    + `syncGoalsFromSupabase()` load, this page never touched goals before),
+    `SubjectRankingsWidget` (computed straight from the page's existing real
+    `items`). All 4 already handle their own empty states.
+  - Still open, no decision made: the analytics/repo-abstraction layer
+    (`src/lib/analytics/portfolio.ts`, `src/lib/repo/vaultRepo.ts`) and
+    ~50 more orphaned files from the original sweep -- see §3.
 - **Third overnight pass (2026-08-05 night), while EK slept — camera fixes,
   pill sweep #2, dead-code cleanup:**
   - **Camera capture (`CameraCapturePanel.tsx`, `capture/page.tsx`,
