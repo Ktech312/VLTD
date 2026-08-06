@@ -81,16 +81,31 @@ export async function GET(req: NextRequest) {
 
     clearTimeout(timeout);
 
+    // Per PSA's own error-code docs (https://www.psacard.com/publicapi):
+    // 500 usually means bad credentials (though could be their own server
+    // error); 4xx usually means the request path/format itself is wrong,
+    // NOT credentials; 204 means empty request data. None of that is
+    // "401/403 = bad token," which was this route's original (wrong) guess
+    // — that assumption sent EK to regenerate a token that was never the
+    // real problem once, when the actual cause turned out to be the
+    // account's daily call quota being exhausted. Always read PSA's actual
+    // error text first; only fall back to a status-code-based guess (using
+    // PSA's documented meanings, not an assumption) if that body is empty.
+    if (res.status === 204) {
+      return NextResponse.json({ result: null, message: "Empty request — no cert number reached PSA." });
+    }
+
     if (!res.ok) {
-      // 401/403 almost always means the token is invalid/expired/revoked, not
-      // that this specific cert lookup failed — PSA's public API requires a
-      // developer account + access token from https://www.psacard.com/publicapi,
-      // it's not something that "just works" once PSA_TOKEN is set once and
-      // forgotten. Say that plainly instead of a bare status code.
-      const message =
-        res.status === 401 || res.status === 403
-          ? "PSA_TOKEN is set but PSA rejected it (expired/invalid/revoked). Get a fresh token from https://www.psacard.com/publicapi and update it in Vercel."
-          : `PSA API ${res.status}`;
+      const bodyText = await res.text().catch(() => "");
+      const psaMessage = bodyText.replace(/^"|"$/g, "").trim(); // PSA wraps some errors in a bare JSON string
+
+      const message = psaMessage
+        ? /quota/i.test(psaMessage)
+          ? `PSA API daily quota exceeded: "${psaMessage}" — this resets on PSA's own schedule (their message says "per Day"), or email collectors-apis@collectors.com to raise the limit. Not a token problem.`
+          : `PSA API rejected the request: "${psaMessage}"`
+        : res.status === 500
+          ? "PSA API returned a server error (500) — per PSA's docs this usually means the token/credentials are bad, but could also be a PSA-side server issue. Worth a retry before assuming the token."
+          : `PSA API rejected the request (${res.status}) — per PSA's docs this range usually means the request path/format itself is invalid, not necessarily the token.`;
       return NextResponse.json({ error: message }, { status: 502 });
     }
 

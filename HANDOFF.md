@@ -204,41 +204,51 @@ correct anything.
   update to the real match, and that the Rarity field on `/capture` shows up
   and holds a value.
 
-### B3. PSA graded-card lookup — DIAGNOSED: token is set but PSA is rejecting it (403)
+### B3. PSA graded-card lookup — REAL CAUSE: daily API quota exhausted, NOT a bad token (previous notes below were a wrong diagnosis)
 EK: "if this isn't free, then we don't have it yet or it doesn't work" — hit
-`/api/psa-lookup` directly (no login needed, it's a public API route):
-returned `403`, not the "token not configured" message. **That means
-`PSA_TOKEN` IS set in Vercel, but PSA's own API is rejecting it** — expired,
-revoked, or possibly never a real approved token to begin with. PSA's public
-API (`api.psacard.com/publicapi`) needs a developer account + an access
-token from **https://www.psacard.com/publicapi** — it's not a config value
-that "just works" once set; whoever set it may need to log into PSA's
-developer portal and check/regenerate it.
-**This isn't a code bug and I can't fix the credential itself** — but two
-real code bugs were found and fixed on the way:
-1. The route's error message for a 401/403 now says exactly this (get a
-   fresh token from the PSA developer portal) instead of a bare
-   `PSA API 403`.
-2. `lookupPSACert()` (the client wrapper) was **silently swallowing every
-   error and returning `null`** on any non-OK response — so even before this
-   pass, an invalid-token 403 and a genuine "cert not found" looked
-   identical to the UI, both showing "PSA cert not found. Check the number
-   and try again." That was actively misleading for a working-token/wrong-
-   cert case too, not just this one. Fixed to throw the real error message
-   through instead.
-- **EK's action item, not code**: check/regenerate the PSA token at the link
-  above, or say if graded-slab lookup isn't a priority right now.
-- **Update:** EK confirmed `PSA_TOKEN` had been sitting in Vercel since **Jul
-  4** — over a month old, almost certainly just expired, not a setup mistake.
-  Regenerated a fresh one from the PSA developer portal and updated the
-  Vercel env var. **Still returned the same 403 right after** — Vercel env
-  var edits don't apply to already-running serverless functions until the
-  next deploy; updating the value alone (no git push) doesn't trigger one.
-  Pushed this doc edit specifically to force that redeploy. **Please
-  re-test a real PSA slab once this deploy finishes** — if it's still 403
-  after an actual new deploy, the fresh token itself may be bad (wrong
-  scope, wrong account) rather than a deploy-timing issue, worth knowing
-  which before troubleshooting further.
+`/api/psa-lookup` directly, got a `403`. **First guess (wrong): assumed
+403 = bad/expired token,** since that's a common convention — sent EK to
+regenerate a fresh `PSA_TOKEN` from https://www.psacard.com/publicapi and
+update Vercel. **Still failed after a real redeploy with the fresh token.**
+Had EK test PSA's API directly (their own curl/PowerShell sample, bypassing
+our app) to isolate the problem — that returned PSA's actual error text for
+the first time:
+> `"API calls quota exceeded! maximum admitted 100 per Day. Please contact collectors-apis@collectors.com"`
+
+**The token was never bad.** PSA's account has a hard 100-calls/day cap, and
+it was exhausted — almost certainly by this session's own repeated live
+testing (direct curl checks + a couple of polling loops used to verify the
+earlier "fixed" deploys), not by EK (confirmed: "I haven't tested anything
+today or in the last month"). The original `/api/psa-lookup` code only ever
+checked `res.status` and GUESSED what it meant (401/403 = bad token) instead
+of reading PSA's actual response body — which is also flatly wrong per PSA's
+own documented error codes (https://www.psacard.com/publicapi): **500**
+usually means bad credentials, **4xx** usually means the request
+path/format itself is invalid, neither is "401/403 = token." That wrong
+guess is what sent EK on a pointless "regenerate the token" detour.
+**Fixed properly this time:**
+- `/api/psa-lookup/route.ts` now reads PSA's actual response body text on
+  any non-OK status and surfaces it directly, instead of guessing from the
+  status code alone. A quota message gets its own clear callout (resets on
+  PSA's own daily schedule, or email `collectors-apis@collectors.com` to
+  raise the limit); anything else states PSA's exact wording rather than a
+  made-up explanation. Falls back to a **status-code-accurate** guess (per
+  PSA's real docs, not the old assumption) only if PSA's body is empty.
+- Added a `204` (empty request) case so that doesn't crash trying to parse
+  an empty body as JSON.
+- `lookupPSACert()` (client wrapper) still throws the real message through
+  instead of silently swallowing every error into `null` (from the earlier
+  pass) — now that message is actually accurate.
+- **⚠ A live PSA token was pasted into this chat session** (EK ran the
+  direct-test command with the real value substituted, and it echoed back
+  in the terminal paste). Flagged to EK as exposed; recommended treating it
+  as compromised. **If the next chat sees PSA lookups failing again, check
+  whether that token was ever rotated after this — it should be.**
+- **Not yet retested — please test again once the quota resets** (give it a
+  day; PSA's message says "per Day," exact reset time unknown). **Nobody
+  should hammer `/api/psa-lookup` repeatedly while checking this** — the
+  100/day cap is real and shared across every call, including diagnostic
+  ones. Test once, deliberately, not in a loop.
 
 ### B4. Regular Add camera should visually match Quick Add's — STILL NEXT, once B/B2 above are confirmed
 EK's own instruction, explicit ordering: **fix barcode/Cards first, THEN**
