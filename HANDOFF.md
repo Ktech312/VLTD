@@ -869,6 +869,13 @@ write that migration blind since it's payment-adjacent data.
 - AI vision: `src/lib/ai/openaiVision.ts` · Scan quota: `src/lib/bulkScanQuota.ts`
 - Theme vars + `--bottomnav-h`: `src/app/globals.css`
 - Approved mockups: `C:\Users\EK\.codex\generated_images\019e6d3a-5dd3-7ed1-be13-942347ebb5c9\`
+- **`GRADING_AND_PRICING_APIS.md`** (repo root) — living reference (not a
+  handoff note, keep it updated) for which grading companies/categories have
+  a real cert-lookup or pricing API wired in vs. free-text-only, and what's
+  being explored (CardHedge for cards) vs. ruled out (CGC's own dealer-only
+  API, Apify scrapers). **CGC-graded comics are explicitly unaddressed** —
+  don't let that get lost; PSA never covered comics to begin with (they
+  don't grade comics), so it's not something the PSA work already solved.
 
 ---
 
