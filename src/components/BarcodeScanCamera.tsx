@@ -64,7 +64,9 @@ export default function BarcodeScanCamera({
       if (hasScannedRef.current) return;
       hasScannedRef.current = true;
       setScanned(true);
-      setScannedCode(result.digits);
+      // A letters-only QR payload (e.g. a shortlink) has no digits -- show the
+      // raw decoded text instead of leaving the success badge blank.
+      setScannedCode(result.digits || result.rawValue);
       // Haptic feedback if available
       try { navigator.vibrate?.(80); } catch { /* ignore */ }
       // Brief success flash, then hand off

@@ -117,9 +117,17 @@ function decodeCanvas(canvas: HTMLCanvasElement, region: string): BarcodeScanRes
   try {
     const result = reader.decode(bitmap);
     const rawValue = String(result.getText?.() ?? "");
-    const digits = digitsOnly(rawValue);
 
-    if (!digits) return null;
+    // A successful decode is a successful decode -- don't discard it just
+    // because the payload has no digit characters. QR codes commonly encode
+    // letters-only URLs/shortlinks (e.g. a slab's "psa.io/xY9kP" cert link, a
+    // plain website QR); requiring `digits` here silently dropped every one
+    // of those, which is why the live "Barcode" badge could look like it
+    // "never pops up" for a real QR/barcode even though ZXing found it fine.
+    // `digits` stays available for callers that specifically want a numeric
+    // code (UPC/EAN/cert-number lookups) -- it's just no longer a gate here.
+    if (!rawValue) return null;
+    const digits = digitsOnly(rawValue);
 
     return {
       rawValue,

@@ -1057,7 +1057,8 @@ export default function CameraCapturePanel({
                   >
                     <span className="text-sm font-bold" style={{ color: "#4ade80" }}>&#x2713;</span>
                     <span className="text-[11px] font-semibold text-white">
-                      Barcode {liveBarcode.digits}
+                      {liveBarcode.format === "QR" ? "QR code" : "Barcode"} read
+                      {liveBarcode.digits ? `: ${liveBarcode.digits}` : ""}
                     </span>
                   </div>
                 ) : null}
