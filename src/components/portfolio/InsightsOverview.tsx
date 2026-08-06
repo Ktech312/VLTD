@@ -20,6 +20,12 @@ import {
 } from "@/lib/valueHistory";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import { activeItems } from "@/lib/vaultStats";
+import { loadGoals, syncGoalsFromSupabase, type CollectionGoal } from "@/lib/collectionGoals";
+import { getCollectionValuationScore } from "@/lib/collectionValuationScore";
+import PortfolioIntelligencePanel from "@/components/PortfolioIntelligencePanel";
+import CollectionValuationScoreCard from "@/components/CollectionValuationScoreCard";
+import GoalsProgressWidget from "@/components/GoalsProgressWidget";
+import SubjectRankingsWidget from "@/components/SubjectRankingsWidget";
 
 type TimeRange = "7d" | "30d" | "90d" | "all";
 
@@ -551,10 +557,22 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
     };
   }, []);
 
+  const [goals, setGoals] = useState<CollectionGoal[]>(() => loadGoals());
+  useEffect(() => {
+    let active = true;
+    void syncGoalsFromSupabase().then((synced) => {
+      if (active) setGoals(synced);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const metrics = useMemo(() => getCollectionMetrics(items), [items]);
   const totalValue = metrics.totalValue;
   const totalCost = metrics.totalCost;
   const totalGain = totalValue - totalCost;
+  const valuationScore = useMemo(() => getCollectionValuationScore(metrics), [metrics]);
 
   // Keep the day with each value so the chart can label its own axes.
   const historyPoints = useMemo(() => {
@@ -983,6 +1001,23 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
             <div className="mt-2 text-2xl font-black" style={{ color: insurance.gap > 0 ? GOLD : GREEN }}>{formatMoney(insurance.gap)}</div>
             <Link href="/insurance" className="mt-1 inline-block text-sm font-bold" style={{ color: GOLD }}>Review &gt;</Link>
           </Panel>
+        </div>
+
+        {/* Collection Intelligence -- deeper analysis beyond the stat cards
+            above: concentration risk, a single strength score, goal
+            progress, and top subjects. These read real data (same metrics
+            object as the cards above; goals/items are the same real,
+            synced sources used elsewhere in the app) but were built and
+            never actually placed on a page until now. */}
+        <div className="mt-3">
+          <PortfolioIntelligencePanel metrics={metrics} />
+        </div>
+        <div className="mt-3 grid gap-3 lg:grid-cols-2">
+          <CollectionValuationScoreCard score={valuationScore} />
+          <GoalsProgressWidget goals={goals} items={items} />
+        </div>
+        <div className="mt-3">
+          <SubjectRankingsWidget items={items} />
         </div>
       </div>
     </main>
