@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { scanBarcodeFromVideoFrame, type BarcodeScanResult } from "@/lib/scanners/barcodeScanner";
+import type { BarcodeScanResult } from "@/lib/scanners/barcodeScanner";
+import { decodeBarcodeOnceFromVideo, startLiveBarcodeScan } from "@/lib/scanners/liveBarcodeReader";
 
 /** Dedicated live-barcode-scan camera.
  *  Scans every 350ms automatically (like a native phone scanner).
@@ -16,7 +17,6 @@ export default function BarcodeScanCamera({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const intervalRef = useRef<number | null>(null);
   const hasScannedRef = useRef(false);
 
   const [cameraReady, setCameraReady] = useState(false);
@@ -75,27 +75,27 @@ export default function BarcodeScanCamera({
     [onScan]
   );
 
-  // Continuous auto-scan loop
+  // Continuous auto-scan loop — ZXing's own continuous-video-decode loop,
+  // see liveBarcodeReader.ts for why this replaced the old per-tick
+  // region-cropping approach.
   useEffect(() => {
     if (!cameraReady || scanned) return;
+    const video = videoRef.current;
+    if (!video) return;
 
-    intervalRef.current = window.setInterval(() => {
-      const video = videoRef.current;
-      if (!video || hasScannedRef.current) return;
-      const result = scanBarcodeFromVideoFrame(video);
-      if (result) fireSuccess(result);
-    }, 350);
+    const stop = startLiveBarcodeScan(video, (result) => {
+      if (hasScannedRef.current) return;
+      fireSuccess(result);
+    });
 
-    return () => {
-      if (intervalRef.current !== null) window.clearInterval(intervalRef.current);
-    };
+    return stop;
   }, [cameraReady, scanned, fireSuccess]);
 
   // Manual scan button handler
   function handleManualScan() {
     const video = videoRef.current;
     if (!video) return;
-    const result = scanBarcodeFromVideoFrame(video);
+    const result = decodeBarcodeOnceFromVideo(video);
     if (result) {
       fireSuccess(result);
     } else {

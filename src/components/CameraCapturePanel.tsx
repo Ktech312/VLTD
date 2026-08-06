@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import ScanCropEditor from "@/components/ScanCropEditor";
 import { Glyph } from "@/components/ui/Glyph";
 import { PillButton } from "@/components/ui/PillButton";
-import { scanBarcodeFromVideoFrame, type BarcodeScanResult } from "@/lib/scanners/barcodeScanner";
+import type { BarcodeScanResult } from "@/lib/scanners/barcodeScanner";
+import { startLiveBarcodeScan } from "@/lib/scanners/liveBarcodeReader";
 import {
   getUniverses,
   getCategories,
@@ -446,22 +447,22 @@ export default function CameraCapturePanel({
 
   // Live barcode read on the preview — like a native camera app. Stops after
   // the first hit; the detected code is passed through on capture for identify.
+  // Uses ZXing's own continuous-video-decode loop (see liveBarcodeReader.ts)
+  // rather than the old hand-rolled per-tick region-cropping approach, which
+  // went through three rounds of tuning without reliably firing on a device.
   useEffect(() => {
     if (capturedFile || cameraError || !cameraReady) return;
+    const video = videoRef.current;
+    if (!video) return;
 
-    const timer = window.setInterval(() => {
+    const stop = startLiveBarcodeScan(video, (result) => {
       if (liveBarcodeRef.current) return;
-      const video = videoRef.current;
-      if (!video || video.readyState < 2 || !video.videoWidth) return;
-      const result = scanBarcodeFromVideoFrame(video);
-      if (result) {
-        liveBarcodeRef.current = result;
-        setLiveBarcode(result);
-        try { navigator.vibrate?.(60); } catch { /* ignore */ }
-      }
-    }, 450);
+      liveBarcodeRef.current = result;
+      setLiveBarcode(result);
+      try { navigator.vibrate?.(60); } catch { /* ignore */ }
+    });
 
-    return () => window.clearInterval(timer);
+    return stop;
   }, [capturedFile, cameraError, cameraReady, retryCount]);
 
   const permissionLabel =

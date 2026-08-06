@@ -90,8 +90,16 @@ function createReader() {
   return reader;
 }
 
-function normalizeFormatName(rawFormat: unknown): BarcodeScanResult["format"] {
-  const text = String(rawFormat ?? "").toUpperCase();
+export function normalizeFormatName(rawFormat: unknown): BarcodeScanResult["format"] {
+  // BarcodeFormat is a numeric enum (QR_CODE = 11, etc.) with reverse-mapping
+  // baked in by the TS compiler -- `BarcodeFormat[11] === "QR_CODE"`. A plain
+  // `String(rawFormat)` just stringifies the number ("11"), so every one of
+  // the `.includes(...)` checks below silently never matched anything and
+  // this always returned "UNKNOWN". Reverse-index into the enum instead.
+  const text =
+    typeof rawFormat === "number"
+      ? String((BarcodeFormat as unknown as Record<number, string>)[rawFormat] ?? "")
+      : String(rawFormat ?? "").toUpperCase();
 
   if (text.includes("UPC_A")) return "UPC_A";
   if (text.includes("UPC_E")) return "UPC_E";

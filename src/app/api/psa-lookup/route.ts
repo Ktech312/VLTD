@@ -82,7 +82,16 @@ export async function GET(req: NextRequest) {
     clearTimeout(timeout);
 
     if (!res.ok) {
-      return NextResponse.json({ error: `PSA API ${res.status}` }, { status: 502 });
+      // 401/403 almost always means the token is invalid/expired/revoked, not
+      // that this specific cert lookup failed — PSA's public API requires a
+      // developer account + access token from https://www.psacard.com/publicapi,
+      // it's not something that "just works" once PSA_TOKEN is set once and
+      // forgotten. Say that plainly instead of a bare status code.
+      const message =
+        res.status === 401 || res.status === 403
+          ? "PSA_TOKEN is set but PSA rejected it (expired/invalid/revoked). Get a fresh token from https://www.psacard.com/publicapi and update it in Vercel."
+          : `PSA API ${res.status}`;
+      return NextResponse.json({ error: message }, { status: 502 });
     }
 
     const data: PSAResponse = await res.json();

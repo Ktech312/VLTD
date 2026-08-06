@@ -1107,14 +1107,14 @@ export default function AddPage() {
    *  "Cards" analog of runComicLookupForFile above. Only wired for the two
    *  games with a free public card database (Magic via Scryfall, Pokemon via
    *  the Pokemon TCG API); anything else (Yu-Gi-Oh, Lorcana, One Piece, etc.)
-   *  falls through to the existing generic OCR guess — no fake match. */
+   *  falls through to the existing generic OCR guess — no fake match.
+   *
+   *  Deliberately does NOT require the exact game to already be picked in
+   *  Subcategory first — the whole point of Identify is to figure out what
+   *  it is. Tries both Magic and Pokemon off the same OCR'd title/number and
+   *  auto-corrects Category/Subcategory to whichever one actually matches
+   *  (same "confirmed match overrides a blank/wrong pick" rule comics use). */
   async function runTcgCardLookupForFile(file: File) {
-    const subcat = (values.subcategoryLabel || "").trim();
-    const game: "mtg" | "pokemon" | null =
-      subcat === "Magic: The Gathering" ? "mtg" : subcat === "Pokemon" ? "pokemon" : null;
-
-    if (!game) return false;
-
     setIsCardLookupRunning(true);
     setScanSession((prev) => markScanSessionScanning(prev));
 
@@ -1129,21 +1129,31 @@ export default function AddPage() {
 
       let dbResult: CardLookupResult | null = null;
 
-      if (game === "mtg") {
-        if (regionScan.setCodeGuess && numberGuess) {
-          dbResult = await lookupMtgCard({ set: regionScan.setCodeGuess, number: numberGuess }).catch(() => null);
-        }
-        if (!dbResult && titleGuess) {
-          dbResult = await lookupMtgCard({ name: titleGuess }).catch(() => null);
-        }
-      } else if (titleGuess) {
-        dbResult = await lookupPokemonCard({ name: titleGuess, number: numberGuess || undefined }).catch(() => null);
+      if (regionScan.setCodeGuess && numberGuess) {
+        dbResult = await lookupMtgCard({ set: regionScan.setCodeGuess, number: numberGuess }).catch(() => null);
       }
+
+      if (!dbResult && titleGuess) {
+        // Try both games off the same title guess — cheap (both APIs are
+        // free/keyless) and lets Identify actually figure out which TCG this
+        // is instead of requiring it to already be selected.
+        const [mtgResult, pokemonResult] = await Promise.all([
+          lookupMtgCard({ name: titleGuess }).catch(() => null),
+          lookupPokemonCard({ name: titleGuess, number: numberGuess || undefined }).catch(() => null),
+        ]);
+        dbResult = mtgResult || pokemonResult;
+      }
+
+      const game: "mtg" | "pokemon" | null = dbResult?.game ?? null;
 
       const fields = {
         title: dbResult?.name || titleGuess || undefined,
         subtitle: dbResult?.setName || undefined,
         number: dbResult?.number || numberGuess || undefined,
+        universe: game ? "TCG" : undefined,
+        category: game ? categoryCode("TCG / CCG") : undefined,
+        categoryLabel: game ? "TCG / CCG" : undefined,
+        subcategoryLabel: game === "mtg" ? "Magic: The Gathering" : game === "pokemon" ? "Pokemon" : undefined,
         notes: dbResult
           ? `Matched via ${game === "mtg" ? "Scryfall" : "Pokemon TCG API"}: ${dbResult.sourceUrl}${
               dbResult.priceUsd ? ` (market $${dbResult.priceUsd})` : ""
@@ -1155,7 +1165,7 @@ export default function AddPage() {
       const warnings = dbResult
         ? []
         : titleGuess
-          ? ["Couldn't confirm this card against the database — check the title/number."]
+          ? ["Couldn't confirm this card against the Magic/Pokemon databases — check the title/number, or it may be a different TCG that isn't wired up yet."]
           : ["Couldn't read a title or collector number off this card."];
 
       setScanSession((prev) =>
@@ -1190,9 +1200,11 @@ export default function AddPage() {
 
       setStatus(
         dbResult
-          ? `Matched in the ${game === "mtg" ? "Scryfall" : "Pokemon TCG"} database: ${dbResult.name}.`
+          ? `Matched in the ${game === "mtg" ? "Scryfall" : "Pokemon TCG"} database: ${dbResult.name}. Category/Subcategory set to TCG / ${
+              game === "mtg" ? "Magic: The Gathering" : "Pokemon"
+            }.`
           : titleGuess
-            ? "Read a title off the card but couldn't confirm it in the database."
+            ? "Read a title off the card but couldn't confirm it in the Magic/Pokemon databases."
             : "Couldn't read this card clearly. Try a tighter, straighter photo."
       );
 

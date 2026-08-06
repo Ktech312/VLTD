@@ -27,9 +27,16 @@ export async function lookupPSACert(certNumber: string): Promise<PSACertResult |
   if (!digits) return null;
 
   const res = await fetch(`/api/psa-lookup?cert=${encodeURIComponent(digits)}`);
-  if (!res.ok) return null;
+  const payload = (await res.json().catch(() => ({}))) as { result?: PSACertResult | null; error?: string };
 
-  const payload = (await res.json()) as { result?: PSACertResult | null; error?: string };
+  if (!res.ok) {
+    // Throw instead of silently returning null -- an invalid/expired
+    // PSA_TOKEN (401/403) was previously indistinguishable from a genuine
+    // "cert not found," which showed the wrong message ("check the number
+    // and try again") for what's actually a token problem only EK can fix.
+    throw new Error(payload.error || `PSA lookup failed (${res.status}).`);
+  }
+
   return payload.result ?? null;
 }
 

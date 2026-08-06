@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated 2026-08-06 night — READ §2B FIRST: barcode fix shipped + please test)
+# VLTD — Session Handoff (updated 2026-08-06, second pass — READ §2B FIRST: real device test came back, root-caused further + reshipped)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -110,104 +110,133 @@ default of "TCG", so unless manually changed, everything got tagged/AI-hinted as
 TCG — comics scanned as "Magic: The Gathering" etc. Fixed 2026-08-03 (see §4).
 Still want confirmation the fix actually holds up on a real batch of mixed items.
 
-### B. Barcode / QR live detection — ROOT CAUSE FOUND + FIXED 2026-08-06 night, please test on a real device
-History (kept for context, all superseded by the fix below):
-1. Original bug (pre-2026-08-05): slab QR/Code128 wasn't read because
-   `buildRegions()` only scanned bottom-biased crops (tuned for retail UPCs).
-   Added top-of-frame regions.
-2. 2026-08-05 night: app ran slow with the camera open (30 sync ZXing decode
-   passes every ~450ms tick). Fixed with a round-robin throttle
-   (`REGIONS_PER_TICK = 2` in `scanBarcodeFromVideoFrame`).
-3. 2026-08-06: EK reported the live badge "no option, doesn't pop up when
-   looking at a QR or barcode" — at the time this was guessed to be the
-   round-robin throttle from step 2 being too aggressive. **That guess was
-   wrong — didn't need to guess-tune a fourth time, found the actual bug by
-   reading the code:** `decodeCanvas()` in `barcodeScanner.ts` discarded
-   *every* successful ZXing decode whose payload had zero digit characters
-   (`if (!digits) return null`, where `digits = rawValue.replace(/\D/g,"")`).
-   QR codes commonly encode letters-only text — a slab's shortlink cert URL
-   (e.g. `psa.io/xY9kP`), a plain website QR, a WiFi QR, anything without a
-   number in it — so any of those got silently dropped before ever reaching
-   the UI, independent of the throttle. That's almost certainly why it could
-   look like it "never" fires rather than just being slow.
-   **Fixed:** `decodeCanvas()` now gates on the decoded `rawValue` instead of
-   its digit-only subset. `digits` is still returned/available for callers
-   that specifically need a numeric code (UPC/EAN/PSA cert lookups) — it's
-   just no longer a requirement for the decode to count as a hit. Also fixed
-   the live badge text (`CameraCapturePanel.tsx`) and the dedicated scan
-   camera's success badge (`BarcodeScanCamera.tsx`) to show the raw decoded
-   text instead of going blank when there are no digits.
-   **Not yet confirmed on a real device/camera — please test** (see the
-   checklist below). If it's *still* not firing after this, the round-robin
-   throttle from step 2 becomes the next real suspect (see the three
-   concrete options that were queued up for that, still valid, in the git
-   history of this file) — but don't jump back to guess-tuning that blind;
-   confirm first whether the badge fires at all now vs. fires-but-slow.
-4. **Deployed:** this fix + everything else that had piled up unmerged on
-   `claude/focused-mendel-94fdc9` (dead-code sweep, comic scanner wiring, the
-   camera speed/shutter fixes from earlier this week — see §4) all got
-   merged to `main` and pushed together tonight, per EK's explicit go-ahead.
-   **Backup tag `backup/main-pre-focused-mendel-merge`** points at exactly
-   where `main` was right before that merge, in case anything in that batch
-   needs to be rolled back.
+### B. Barcode / QR live detection — the digits-gate fix (previous pass) did NOT fix it; REPLACED THE SCAN MECHANISM ENTIRELY, please test again
+EK tested the previous fix live: **still didn't work, on both Quick Add AND
+regular Add.** That confirmed the digits-gate bug (real, and still worth
+having fixed) wasn't the whole story. Two more real things found:
 
-**Please test on your phone once the deploy finishes (3-5 min after push) —**
-**here's what to look for:**
-- Open regular Add (`/vault/add`) or Quick Add, aim at ANY real QR code or
-  barcode (not just a slab) — the green "QR code read"/"Barcode read" badge
-  should now pop up. Try more than one kind (a slab if you have one, a
-  retail UPC, a random QR like a WiFi/website one) since different payloads
-  exercise different code paths.
-- If it still doesn't fire, note roughly how long you held still aiming at
-  it — "instant," "a couple seconds," or "never" — that one detail tells the
-  next chat whether to look at the throttle (step 2) or something else.
-- Scan a real physical comic via Identify (Universe=Pop Culture,
-  Category=Comics) and see if the issue number/title come out right — this
-  was wired in tonight too (§4) and has never been tested against a real
-  comic.
-- General sanity check on a few other screens (portfolio, vault, item pages)
-  — last night's batch deleted ~55 files as confirmed-dead code; nothing
-  *should* look different, but flag anything that looks broken or missing.
+1. **Quick Add (`ScanCapturePanel.tsx`) never had ANY barcode detection code
+   at all** — grepped the file, zero matches. So "either way it doesn't
+   work" was literally true for Quick Add: there was no badge to fire,
+   period. **Added it tonight**, matching the regular Add camera's badge.
+2. **The regular Add camera's mechanism itself was the deeper problem.**
+   `CameraCapturePanel.tsx`/`BarcodeScanCamera.tsx` both hand-rolled their own
+   loop: crop 10 regions of the video frame to a canvas every ~450ms tick,
+   try 3 contrast variants on each. That's the thing that went through THREE
+   rounds of tuning this week (bottom-only region → added top regions →
+   round-robin throttle) and apparently still didn't reliably decode a real
+   frame even with the digits-gate bug fixed. Rather than guess-tune a fourth
+   time, **replaced it with ZXing's own supported continuous-video-decode
+   API** (`BrowserMultiFormatReader.decodeContinuously` — new
+   `src/lib/scanners/liveBarcodeReader.ts`), which decodes the WHOLE frame
+   each attempt using the library's own internal canvas/pacing instead of our
+   bespoke region system. This is the standard way this library expects live
+   video to be scanned; worth trying as a different mechanism before tuning
+   the old one a fourth time.
+   - Gotcha found and worked around: ZXing's higher-level
+     `decodeFromVideoElementContinuously()` wrapper waits for the video's
+     `'playing'` event before starting — which **never fires** for a video
+     that was already playing before the reader attaches (our case, always —
+     the camera panel starts its own stream first). That would have silently
+     hung forever. Used the low-level `decodeContinuously()` instead, which
+     starts immediately with no such wait.
+   - Also fixed a real, separate, previously-unnoticed bug while in here:
+     `BarcodeFormat` is a numeric enum (`QR_CODE = 11`), so the old
+     `normalizeFormatName()`'s `String(rawFormat).includes("QR")` was
+     stringifying the *number* (`"11"`) — that check could never match
+     anything, so the `.format` field was silently always `"UNKNOWN"` on
+     every real scan, ever. Fixed to reverse-index into the enum properly.
+   - `CameraCapturePanel.tsx`, `BarcodeScanCamera.tsx`, and the new Quick Add
+     badge all now go through this shared module. The old per-tick region
+     system (`scanBarcodeFromVideoFrame` in `barcodeScanner.ts`) is
+     untouched and still used for the STILL-IMAGE paths (`scanBarcodeFromFile`
+     — after a photo's already taken, comics' addon-code decode, etc.) —
+     those aren't what was reported broken and don't have the same
+     already-playing-video timing issue.
+   - **Not yet confirmed on a real device — please test again.** This is a
+     bigger, more fundamental change than the digits-gate fix, so it needs a
+     fresh real test, not an assumption the previous "fixed" note still
+     holds.
 
-### B2. "Should also work with Cards" — built tonight as a new feature (EK's call: option (ii), not just detection)
-EK confirmed this meant a real Cards-specific auto-fill analogous to what
-comics get from Metron/GCD, not just "make the badge fire on a card." Built:
-- **Only Magic: The Gathering and Pokemon are covered** — the two TCGs with a
-  free, keyless public card database (Scryfall for Magic, the Pokemon TCG
-  API for Pokemon). Yu-Gi-Oh/Lorcana/One Piece/Sports/etc. intentionally
-  still fall back to the old generic-OCR-guess behavior — no fake match gets
-  invented for games without a real database wired in.
-- Raw (ungraded) singles mostly don't have a printed barcode, so this
-  doesn't reuse the barcode scanner — new `src/lib/scanners/tcgCardParser.ts`
-  OCRs the name-plate + bottom-corner collector-number regions (mirrors
-  `comicParser.ts`'s region-crop approach), then `src/lib/cardLookup.ts` +
-  `src/app/api/card-lookup/route.ts` look that up against the real Scryfall
-  / Pokemon TCG API and fill title/set/number/rarity from the actual match —
-  same pattern as `metronLookup.ts`/`psaLookup.ts`.
-- Wired into **both** Add flows' identify pipelines, same gating (Universe=TCG
-  + Subcategory exactly "Magic: The Gathering" or "Pokemon"): `vault/add/page.tsx`
-  (`runTcgCardLookupForFile`, in the Auto-Identify pipeline) and
-  `capture/page.tsx` (`lookupTcgCardFromFile`, running alongside vision/
-  barcode/comic scans in `runAiIdentify`'s `Promise.allSettled`, same
-  fallback-only merge rule as the existing comic enhancement there — a
-  confirmed real card fills blank fields, never overwrites a vision answer).
-  Graded slabs still go through the existing PSA cert-lookup path — untouched.
-- **Not yet tested against a real Magic or Pokemon card — please test** once
-  you have one on hand: Universe=TCG, Subcategory=Magic (or Pokemon),
-  Identify, see if it matches and fills real set/number/rarity.
-- **Separately worth checking:** the graded-card path (`runPSALookupForCode`
-  → `/api/psa-lookup`) needs a `PSA_TOKEN` env var in Vercel to work at all —
-  wasn't touched tonight, didn't verify whether that's set. If you've never
-  gotten a PSA slab to auto-fill, that's the first thing to check, separate
-  from anything above.
+**Please test again once the deploy finishes (3-5 min after push):**
+- Quick Add AND regular Add, aim at a real QR/barcode (slab, retail UPC,
+  random QR) — does the badge pop up now, and roughly how fast?
+- If it's *still* broken, the next thing to check (not yet tried) is whether
+  it's a camera-permissions/resolution issue specific to your phone, since
+  the scanning mechanism itself has now been swapped for the library's own
+  supported path rather than our bespoke one — say exactly what you see
+  (nothing at all vs. a delay vs. an error) so the next pass doesn't have to
+  guess between "still not firing" and "a new, different problem."
 
-### B3. Regular Add camera should visually match Quick Add's — NEXT, once B/B2 above are confirmed
-EK's own instruction, explicit ordering: **fix barcode/Cards first (done
-tonight, pending your test), THEN make the regular Add camera
-(`CameraCapturePanel.tsx`) visually match Quick Add's look
-(`ScanCapturePanel.tsx`)** — the squared dropdown pills, frame corners, flash,
-ghost counter, thumbnail placement, etc. described in §4's Quick Add rebuild
-notes. Not started — waiting on B/B2 confirmation per EK's ordering.
+### B2. Cards auto-fill — real bug found + fixed: Pokemon match wasn't setting Category/Subcategory
+EK tested: **it read the title, matched a real card, correctly put the match
+info in the description — but never set Category/Subcategory to "Pokemon."**
+Real cause: the lookup was gated on Subcategory **already being exactly**
+"Magic: The Gathering" or "Pokemon" *before* scanning — which defeats the
+point of Identify (you're scanning *because* you don't know what it is yet).
+Since that gate was never satisfied, the DB match's own fields (which never
+included Category/Subcategory in the first place) never got a chance to
+correct anything.
+**Fixed both:**
+- Gate is now just **Universe = TCG** (no exact-subcategory requirement).
+  `runTcgCardLookupForFile` (`vault/add/page.tsx`) and `lookupTcgCardFromFile`
+  (`capture/page.tsx`) now try **both** Magic (Scryfall) and Pokemon (Pokemon
+  TCG API) off the same OCR'd title/number — cheap since both APIs are
+  free/keyless — and use whichever one actually matches.
+- On a match, Category/Subcategory now get **explicitly set** to `"TCG / CCG"`
+  / `"Magic: The Gathering"` or `"Pokemon"` (not just filled if blank — same
+  "confirmed match corrects a wrong/blank pick" rule the comic scanner
+  already uses), so the dropdowns actually update instead of only the notes
+  text mentioning it.
+- **Rarity field**: EK also couldn't find a Rarity field on `/capture` at
+  all. Real reason: `/capture`'s builder form has **no per-universe fields
+  whatsoever** (unlike `/vault/add`, which has full TCG/Sports/etc. sections)
+  — every universe just gets the same generic title/subtitle/number/grade
+  fields, so a matched card's rarity only ever landed in the description
+  text, never in its own field. **Added one** — a plain text input labeled
+  "Rarity," shown only when Universe=TCG, right next to
+  Subcategory. Wired to save via `VaultItem.tcgRarity` (already a real,
+  existing, local-only field — same one `/vault/add` uses — no migration
+  needed since it was never a synced Supabase column to begin with).
+- **Not yet retested — please test again**: scan a real Magic or Pokemon
+  card via either Add flow with Universe=TCG selected (Subcategory can be
+  blank or wrong now, that's the point), confirm Category/Subcategory both
+  update to the real match, and that the Rarity field on `/capture` shows up
+  and holds a value.
+
+### B3. PSA graded-card lookup — DIAGNOSED: token is set but PSA is rejecting it (403)
+EK: "if this isn't free, then we don't have it yet or it doesn't work" — hit
+`/api/psa-lookup` directly (no login needed, it's a public API route):
+returned `403`, not the "token not configured" message. **That means
+`PSA_TOKEN` IS set in Vercel, but PSA's own API is rejecting it** — expired,
+revoked, or possibly never a real approved token to begin with. PSA's public
+API (`api.psacard.com/publicapi`) needs a developer account + an access
+token from **https://www.psacard.com/publicapi** — it's not a config value
+that "just works" once set; whoever set it may need to log into PSA's
+developer portal and check/regenerate it.
+**This isn't a code bug and I can't fix the credential itself** — but two
+real code bugs were found and fixed on the way:
+1. The route's error message for a 401/403 now says exactly this (get a
+   fresh token from the PSA developer portal) instead of a bare
+   `PSA API 403`.
+2. `lookupPSACert()` (the client wrapper) was **silently swallowing every
+   error and returning `null`** on any non-OK response — so even before this
+   pass, an invalid-token 403 and a genuine "cert not found" looked
+   identical to the UI, both showing "PSA cert not found. Check the number
+   and try again." That was actively misleading for a working-token/wrong-
+   cert case too, not just this one. Fixed to throw the real error message
+   through instead.
+- **EK's action item, not code**: check/regenerate the PSA token at the link
+  above, or say if graded-slab lookup isn't a priority right now.
+
+### B4. Regular Add camera should visually match Quick Add's — STILL NEXT, once B/B2 above are confirmed
+EK's own instruction, explicit ordering: **fix barcode/Cards first, THEN**
+make the regular Add camera (`CameraCapturePanel.tsx`) visually match Quick
+Add's look (`ScanCapturePanel.tsx`) — the squared dropdown pills, frame
+corners, flash, ghost counter, thumbnail placement, etc. described in §4's
+Quick Add rebuild notes. Not started — still waiting on B/B2 holding up on a
+real device per EK's explicit ordering (two rounds of "fixed" on B haven't
+held up yet, so don't start B4 on a third unconfirmed round either).
 
 ### C. DOCUMENTS (capture builder §5 accordion) — DONE 2026-08-03
 EK's answer: "everything should be private unless shared" — that's a

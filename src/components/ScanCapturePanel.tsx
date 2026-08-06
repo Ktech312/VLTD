@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import ScanReviewSheet, { type StagedItem } from "@/components/ScanReviewSheet";
 import ScanVerifySheet, { type ScanDraft } from "@/components/ScanVerifySheet";
+import { startLiveBarcodeScan, type LiveBarcodeResult } from "@/lib/scanners/liveBarcodeReader";
 import { newId } from "@/lib/id";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
 import { appendItems, type VaultImage, type VaultItem } from "@/lib/vaultModel";
@@ -210,6 +211,8 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const captureCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const stopBarcodeScanRef = useRef<(() => void) | null>(null);
+  const [liveBarcode, setLiveBarcode] = useState<LiveBarcodeResult | null>(null);
 
   const [frameType, setFrameType] = useState<FrameType>("card");
   const [universe, setUniverse] = useState<UniverseKey>(() => readStoredScanUniverse() ?? "TCG");
@@ -278,6 +281,17 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         // Camera labels are only available after permission is granted.
         const list = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "videoinput");
         if (active) setDevices(list);
+
+        // Live barcode/QR badge while framing — like the regular Add camera.
+        // Runs continuously (not "stop after first hit") since Quick Add
+        // takes many photos in a row; handleCapture() clears the badge so
+        // the next item starts fresh instead of showing a stale code.
+        if (active && videoRef.current) {
+          stopBarcodeScanRef.current?.();
+          stopBarcodeScanRef.current = startLiveBarcodeScan(videoRef.current, (result) => {
+            setLiveBarcode((prev) => (prev?.rawValue === result.rawValue ? prev : result));
+          });
+        }
       } catch {
         /* camera unavailable — user can still Finish/close */
       }
@@ -285,6 +299,8 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     void start();
     return () => {
       active = false;
+      stopBarcodeScanRef.current?.();
+      stopBarcodeScanRef.current = null;
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
   }, [selectedDeviceId]);
@@ -316,6 +332,8 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       // Soft ghost-green "got it" flash.
       setFlashVisible(true);
       window.setTimeout(() => setFlashVisible(false), 220);
+      // Next item starts fresh — don't keep showing this one's code.
+      setLiveBarcode(null);
     }
     window.setTimeout(() => setCapturing(false), 160);
   }
@@ -664,6 +682,20 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
           >
             {keptCount}
           </div>
+
+          {/* Live barcode/QR badge — top-right, mirrors the regular Add camera */}
+          {liveBarcode ? (
+            <div
+              className="pointer-events-none absolute right-3 top-3 flex items-center gap-1.5 rounded-full px-3 py-1.5 backdrop-blur"
+              style={{ background: "rgba(0,0,0,0.72)", border: "1px solid rgba(74,222,128,0.5)" }}
+            >
+              <span className="text-sm font-bold" style={{ color: "#4ade80" }}>&#x2713;</span>
+              <span className="text-[11px] font-semibold text-white">
+                {liveBarcode.format === "QR" ? "QR code" : "Barcode"} read
+                {liveBarcode.digits ? `: ${liveBarcode.digits}` : ""}
+              </span>
+            </div>
+          ) : null}
 
           {/* Ghost-green capture flash */}
           {flashVisible ? (

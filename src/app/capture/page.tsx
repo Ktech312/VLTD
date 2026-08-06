@@ -68,6 +68,7 @@ type ReviewFields = {
   currentValue: string;
   purchasePrice: string;
   confidence: number;
+  tcgRarity: string;
 };
 
 const EMPTY_FIELDS: ReviewFields = {
@@ -87,6 +88,7 @@ const EMPTY_FIELDS: ReviewFields = {
   currentValue: "",
   purchasePrice: "",
   confidence: 0.45,
+  tcgRarity: "",
 };
 
 /* ── Shared styles ─────────────────────────────────────────────── */
@@ -267,6 +269,7 @@ function mergeResults(
     currentValue: "",
     purchasePrice: "",
     confidence: vision?.confidence ?? 0.45,
+    tcgRarity: "",
   };
 }
 
@@ -325,28 +328,32 @@ function isDefaultNativeCrop(crop: ScanCropRect) {
 /** Real-database identification for a raw TCG card — the same idea as the
  *  comic OCR above, but for cards: only Magic (Scryfall) and Pokemon
  *  (Pokemon TCG API) have a free public database wired in, so this returns
- *  null for anything else and the generic AI vision guess is all that runs. */
-async function lookupTcgCardFromFile(
-  file: File,
-  game: "mtg" | "pokemon"
-): Promise<CardLookupResult | null> {
+ *  null for anything else and the generic AI vision guess is all that runs.
+ *
+ *  Doesn't require the specific game to already be picked — tries both off
+ *  the same OCR'd title/number (both APIs are free/keyless, so this is
+ *  cheap) and returns whichever one actually matches; the caller uses the
+ *  result's `.game` to set Category/Subcategory itself. */
+async function lookupTcgCardFromFile(file: File): Promise<CardLookupResult | null> {
   const regionScan = await scanTcgCardRegionsFromFile(file);
   const titleGuess = regionScan.titleText;
   const numberGuess = regionScan.collectorNumber;
   if (!titleGuess) return null;
 
-  if (game === "mtg") {
-    if (regionScan.setCodeGuess && numberGuess) {
-      const bySetNumber = await lookupMtgCard({
-        set: regionScan.setCodeGuess,
-        number: numberGuess,
-      }).catch(() => null);
-      if (bySetNumber) return bySetNumber;
-    }
-    return lookupMtgCard({ name: titleGuess }).catch(() => null);
+  if (regionScan.setCodeGuess && numberGuess) {
+    const bySetNumber = await lookupMtgCard({
+      set: regionScan.setCodeGuess,
+      number: numberGuess,
+    }).catch(() => null);
+    if (bySetNumber) return bySetNumber;
   }
 
-  return lookupPokemonCard({ name: titleGuess, number: numberGuess || undefined }).catch(() => null);
+  const [mtgResult, pokemonResult] = await Promise.all([
+    lookupMtgCard({ name: titleGuess }).catch(() => null),
+    lookupPokemonCard({ name: titleGuess, number: numberGuess || undefined }).catch(() => null),
+  ]);
+
+  return mtgResult || pokemonResult;
 }
 
 export default function CapturePage() {
@@ -504,16 +511,12 @@ export default function CapturePage() {
     // else's Identify stays fast.
     const isComicContext = fields.universe === "POP_CULTURE" && fields.categoryLabel === "Comics";
     // Cards analog of the comic scan above — only Magic/Pokemon have a free
-    // public card database wired in (see cardLookup.ts), so this stays null
-    // (falls back to plain AI vision) for any other TCG/Sports card.
-    const tcgGame: "mtg" | "pokemon" | null =
-      fields.universe === "TCG"
-        ? fields.subcategoryLabel === "Magic: The Gathering"
-          ? "mtg"
-          : fields.subcategoryLabel === "Pokemon"
-            ? "pokemon"
-            : null
-        : null;
+    // public card database wired in (see cardLookup.ts), so this stays a
+    // no-op (falls back to plain AI vision) for anything else. Only needs
+    // Universe=TCG already picked, NOT the specific game/Subcategory too --
+    // Identify tries both Magic and Pokemon itself and sets Subcategory to
+    // whichever one actually matches (see the merge below).
+    const isTcgCardContext = fields.universe === "TCG";
 
     try {
       // Run vision analysis, barcode scan, and (comics/TCG-cards only) the
@@ -524,7 +527,7 @@ export default function CapturePage() {
         scanExhausted ? Promise.resolve(null) : analyzeImageWithVision(file),
         scanBarcodeFromFile(file),
         isComicContext ? scanComicRegionsFromFile(file) : Promise.resolve(null),
-        tcgGame ? lookupTcgCardFromFile(file, tcgGame) : Promise.resolve(null),
+        isTcgCardContext ? lookupTcgCardFromFile(file) : Promise.resolve(null),
       ]);
 
       let vision = visionSettled.status === "fulfilled" ? visionSettled.value : null;
@@ -603,13 +606,20 @@ export default function CapturePage() {
       }
 
       // Real Scryfall/Pokemon TCG API match — a confirmed real card beats a
-      // vision guess, same fallback-only merge rule as comics above.
+      // vision guess for title/subtitle/number (same fallback-only rule as
+      // comics above), but Category/Subcategory get SET (not just filled if
+      // blank) to whichever game actually matched -- that's the one part
+      // Identify is supposed to figure out, not something to leave stale.
       if (cardHasResult && cardResult) {
         if (!merged.title.trim()) merged.title = cardResult.name;
         if (!merged.subtitle.trim()) merged.subtitle = cardResult.setName;
         if (!merged.number.trim()) merged.number = cardResult.number;
+        merged.category = "TCG / CCG";
+        merged.categoryLabel = "TCG / CCG";
+        merged.subcategoryLabel = cardResult.game === "mtg" ? "Magic: The Gathering" : "Pokemon";
+        if (cardResult.rarity) merged.tcgRarity = cardResult.rarity;
         const cardNotes = [
-          `Matched via ${tcgGame === "mtg" ? "Scryfall" : "Pokemon TCG API"}: ${cardResult.sourceUrl}`,
+          `Matched via ${cardResult.game === "mtg" ? "Scryfall" : "Pokemon TCG API"}: ${cardResult.sourceUrl}`,
           cardResult.rarity ? `Rarity: ${cardResult.rarity}` : "",
           cardResult.priceUsd ? `Market price: $${cardResult.priceUsd}` : "",
         ]
@@ -661,6 +671,7 @@ export default function CapturePage() {
         categoryLabel: fields.categoryLabel || undefined,
         subcategoryLabel: fields.subcategoryLabel || undefined,
         condition: fields.condition || undefined,
+        tcgRarity: fields.tcgRarity || undefined,
         storageLocation: fields.storageLocation.trim() || undefined,
         currentValue: fields.currentValue ? Number(fields.currentValue) : undefined,
         purchasePrice: fields.purchasePrice ? Number(fields.purchasePrice) : undefined,
@@ -1250,6 +1261,18 @@ export default function CapturePage() {
                           {subcategoryOptions.map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
                       </div>
+                      {fields.universe === "TCG" ? (
+                        <div>
+                          <label className={LABEL_CLS}>Rarity</label>
+                          <input
+                            className={INPUT_CLS}
+                            style={INPUT_STYLE}
+                            value={fields.tcgRarity}
+                            onChange={(e) => setFields((p) => ({ ...p, tcgRarity: e.target.value }))}
+                            placeholder="e.g. Rare, Holo Rare, Mythic"
+                          />
+                        </div>
+                      ) : null}
                     </div>
                   </AccordionSection>
 
