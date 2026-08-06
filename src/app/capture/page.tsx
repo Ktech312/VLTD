@@ -11,6 +11,7 @@ import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 import { analyzeImageWithVision, type VisionAnalysisResult } from "@/lib/ai/openaiVision";
 import { resolveVisionTaxonomy } from "@/lib/visionTaxonomy";
 import { scanBarcodeFromFile } from "@/lib/scanners/barcodeScanner";
+import { scanComicRegionsFromFile, parseComicBarcode, buildComicScanNotes } from "@/lib/comicBarcode";
 import { lookupUpcItem } from "@/lib/upcLookup";
 import { newId } from "@/lib/id";
 import { appendItems, type VaultImage } from "@/lib/vaultModel";
@@ -467,19 +468,32 @@ export default function CapturePage() {
     setErrorMsg("");
 
     const scanExhausted = metered && scanRemaining !== null && scanRemaining <= 0;
+    // Comic-specific scan (barcode addon code + cover OCR) is local/free like
+    // the generic barcode scan, but it also runs OCR (Tesseract), which is
+    // slow enough that it shouldn't run on every single capture -- only when
+    // you've told the app it's a comic (Pop Culture > Comics), so everyone
+    // else's Identify stays fast.
+    const isComicContext = fields.universe === "POP_CULTURE" && fields.categoryLabel === "Comics";
 
     try {
-      // Run vision analysis and barcode scan in parallel. Barcode/UPC lookup is
-      // free (local decode, no AI call) so it still runs even once AI scans are
-      // exhausted for this cycle -- only the vision call is metered/skipped.
-      const [visionSettled, barcodeSettled] = await Promise.allSettled([
+      // Run vision analysis, barcode scan, and (comics only) the comic-specific
+      // scan in parallel. Barcode/UPC lookup is free (local decode, no AI call)
+      // so it still runs even once AI scans are exhausted for this cycle --
+      // only the vision call is metered/skipped.
+      const [visionSettled, barcodeSettled, comicSettled] = await Promise.allSettled([
         scanExhausted ? Promise.resolve(null) : analyzeImageWithVision(file),
         scanBarcodeFromFile(file),
+        isComicContext ? scanComicRegionsFromFile(file) : Promise.resolve(null),
       ]);
 
       let vision = visionSettled.status === "fulfilled" ? visionSettled.value : null;
       if (visionSettled.status === "rejected") {
         console.error("[Capture] Vision error:", visionSettled.reason);
+      }
+
+      const comicScan = comicSettled.status === "fulfilled" ? comicSettled.value : null;
+      if (comicSettled.status === "rejected") {
+        console.error("[Capture] Comic scan error:", comicSettled.reason);
       }
 
       if (vision && metered) {
@@ -508,19 +522,39 @@ export default function CapturePage() {
         }
       }
 
-      if (scanExhausted && !upcData) {
+      const comicHasResult = Boolean(comicScan && (comicScan.barcode || comicScan.titleText || comicScan.issueText));
+
+      if (scanExhausted && !upcData && !comicHasResult) {
         setErrorMsg("You've used all your AI scans for this cycle — fill it in by hand.");
         setAnalyzing(false);
         return;
       }
 
-      if (!vision && !upcData) {
+      if (!vision && !upcData && !comicHasResult) {
         // Both failed completely — show error
         throw new Error("Could not identify item. Please fill in details manually.");
       }
 
       // Only fill fields the AI actually returned — never wipe what you typed.
       const merged = mergeResults(vision, upcData);
+
+      // Comic scan is more precise than generic vision for the fields it can
+      // read directly off a real comic's barcode/cover -- but only as a
+      // fallback for title/number (never overwrite a vision-provided value),
+      // and always append the structured issue/cover/printing breakdown to
+      // notes since that's genuinely new info vision doesn't extract.
+      if (comicHasResult && comicScan) {
+        const parsedComic = parseComicBarcode(comicScan.barcode, comicScan.addon);
+        if (!merged.title.trim() && comicScan.titleText) merged.title = comicScan.titleText;
+        if (!merged.number.trim()) {
+          merged.number = parsedComic?.issueNumber || comicScan.issueText || merged.number;
+        }
+        const comicNotes = buildComicScanNotes(parsedComic);
+        if (comicNotes) {
+          merged.description = [merged.description, comicNotes].filter(Boolean).join("\n\n");
+        }
+      }
+
       setFields((prev) => {
         const next: ReviewFields = { ...prev };
         (Object.keys(merged) as (keyof ReviewFields)[]).forEach((k) => {
@@ -541,7 +575,7 @@ export default function CapturePage() {
       );
       setAnalyzing(false);
     }
-  }, [capturedImages, analyzing]);
+  }, [capturedImages, analyzing, fields.universe, fields.categoryLabel]);
 
   /* ── Save to vault ── */
   const handleSave = useCallback(async () => {
