@@ -279,23 +279,18 @@ write that migration blind since it's payment-adjacent data.
   internal-tool look (own dark bg, amber accents, emoji icons), not drift. Left
   alone. Say so if you actually want it reskinned to match the main app — bigger
   job, not started.
-- **~55 orphaned component/lib files found 2026-08-05 — 3 of the 4 flagged
-  clusters resolved same night, per EK's "do all A/B/C" call:**
-  - **Comic barcode/OCR scanner** — real feature, finished wiring it in. See
-    §4.
+- **~55 orphaned component/lib files found 2026-08-05 — FULLY RESOLVED same
+  night, per EK's "do all A/B/C" then "delete the rest" calls:**
+  - **Comic barcode/OCR scanner** — real feature, finished wiring it in.
+    **Not yet tested against a real comic cover — do that first.** See §4.
   - **Multi-workspace switching** — confirmed dead/superseded, deleted. See §4.
   - **Dashboard chart widgets** (PortfolioIntelligencePanel,
     CollectionValuationScoreCard, GoalsProgressWidget, SubjectRankingsWidget)
     — real, all reading data already live elsewhere; placed on `/portfolio`
     Insights. See §4.
-  - **Still open, no decision yet:** the scaffolded analytics/repo-abstraction
-    layer (`src/lib/analytics/portfolio.ts`, `src/lib/repo/vaultRepo.ts` —
-    NOT the deleted old versions, these are the newer ones, still unused by
-    anything) and the other ~50 orphaned files from the original sweep (see
-    the 2026-08-05 dead-code entry in §4 for categories: `NeonBarChart`/
-    `NeonDonut`/`MiniSparklines`/`TiltCard` primitives not otherwise pulled
-    in, plus a long tail of smaller one-off components/lib files). Nothing
-    urgent — these just sit there unused, not causing harm.
+  - **Everything else (~55 more files, including the analytics/repo-
+    abstraction layer)** — deleted. `tsc` clean. See §4's "D." entry.
+  - **No more open dead-code items from this sweep.**
 - Everything else in §2 is a go; just needs building/verifying/a migration.
 
 ---
@@ -324,9 +319,21 @@ write that migration blind since it's payment-adjacent data.
     + `syncGoalsFromSupabase()` load, this page never touched goals before),
     `SubjectRankingsWidget` (computed straight from the page's existing real
     `items`). All 4 already handle their own empty states.
-  - Still open, no decision made: the analytics/repo-abstraction layer
-    (`src/lib/analytics/portfolio.ts`, `src/lib/repo/vaultRepo.ts`) and
-    ~50 more orphaned files from the original sweep -- see §3.
+  - **D. Everything else deleted too** — EK's follow-up call ("just delete
+    all of them, same logic as workspace cleanup"): removed the remaining
+    ~55 files from the original orphan sweep, including
+    `src/lib/analytics/portfolio.ts` and `src/lib/repo/vaultRepo.ts` (the
+    "still open" pair above). Before deleting, re-verified the list against
+    the CURRENT repo state (not the stale pre-A/B/C sweep) so nothing from
+    A/C got caught by mistake, and caught 7 false-positive "still
+    referenced" hits from an initial basename grep (generic words like
+    "index"/"tokens"/"portfolio" matching unrelated code, not real imports)
+    — re-verified each with a precise import-path grep before touching
+    anything. Also found one more genuine orphan the original sweep only
+    mentioned in passing (`VirtualizedVaultGrid.tsx`). `tsc --noEmit`
+    stayed clean after all 55 deletions — nothing referenced any of them.
+    **This closes out the entire dead-code review from tonight — nothing
+    left flagged.**
 - **Third overnight pass (2026-08-05 night), while EK slept — camera fixes,
   pill sweep #2, dead-code cleanup:**
   - **Camera capture (`CameraCapturePanel.tsx`, `capture/page.tsx`,
