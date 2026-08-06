@@ -1,11 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
 const PSA_BASE = "https://api.psacard.com/publicapi";
+
+// Leave real headroom below PSA's actual 100/day cap -- if some other call
+// (a webhook retry, a second developer testing, etc.) nudges the real count
+// up, the app still stops itself before PSA ever has to say no.
+const SAFE_DAILY_CAP = 90;
 
 function getAuth(): string | null {
   const token = process.env.PSA_TOKEN?.trim() ?? "";
   if (!token) return null;
   return `bearer ${token}`;
+}
+
+function getServiceClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
 }
 
 export type PSACertResult = {
@@ -66,6 +79,38 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Provide ?cert=<certNumber>" }, { status: 400 });
   }
 
+  const supabase = getServiceClient();
+
+  // ── 1. Permanent cache -- a PSA cert's data never changes once issued,
+  // so once ANY user/dev has looked it up, we never ask PSA again, ever.
+  // Zero real PSA calls for a repeat lookup of the same cert. ──
+  if (supabase) {
+    const { data: cached } = await supabase.rpc("psa_cache_get", { p_cert: cert });
+    if (cached) {
+      return NextResponse.json({ result: cached as PSACertResult, cached: true });
+    }
+  }
+
+  // ── 2. Hard internal daily budget, enforced BEFORE calling PSA -- stops
+  // short of PSA's real 100/day, and short-circuits instantly for the rest
+  // of the day the moment PSA itself has said no once (see step 4 below). ──
+  if (supabase) {
+    const { data: reserved } = await supabase.rpc("psa_usage_try_reserve", {
+      p_safe_cap: SAFE_DAILY_CAP,
+    });
+    const row = Array.isArray(reserved) ? reserved[0] : reserved;
+    if (row && !row.allowed) {
+      return NextResponse.json(
+        {
+          error:
+            "PSA lookups are paused for today — the shared daily call budget is used up (this protects against exceeding PSA's own 100/day account cap). Fill this item in by hand, or try again tomorrow.",
+          budgetPaused: true,
+        },
+        { status: 503 }
+      );
+    }
+  }
+
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
@@ -98,6 +143,13 @@ export async function GET(req: NextRequest) {
     if (!res.ok) {
       const bodyText = await res.text().catch(() => "");
       const psaMessage = bodyText.replace(/^"|"$/g, "").trim(); // PSA wraps some errors in a bare JSON string
+
+      // ── 4. PSA itself said no -- mark today exhausted immediately so
+      // every OTHER call the rest of today short-circuits at step 2 above
+      // instead of spending another real call to find out the same way. ──
+      if (supabase && /quota/i.test(psaMessage)) {
+        await supabase.rpc("psa_usage_mark_exhausted");
+      }
 
       const message = psaMessage
         ? /quota/i.test(psaMessage)
@@ -133,6 +185,11 @@ export async function GET(req: NextRequest) {
       isDna: c.IsPSADNA ?? false,
       variety: c["Variety/Label"] || null,
     };
+
+    // Cache the real result -- this cert never needs to hit PSA again.
+    if (supabase) {
+      await supabase.rpc("psa_cache_put", { p_cert: cert, p_result: result });
+    }
 
     return NextResponse.json({ result });
   } catch (error) {

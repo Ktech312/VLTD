@@ -42,10 +42,14 @@ is risky or can't be done, say so plainly.
   ask EK to run it. **Never add a new column to the cloud row map
   (`src/lib/vaultCloud.ts`) without the migration** — unknown columns make the
   `vault_items` upsert throw.
-  No migrations pending right now — `20260803_saved_events.sql` and
-  `20260803_profile_identity_fields.sql` were both confirmed run by EK
-  (2026-08-04 night). Check here for new ones before assuming this is still
-  true.
+  **⚠ ONE PENDING NOW:** `supabase/migrations/20260806_psa_api_guard.sql`
+  (adds the PSA cert-cache + daily-call-budget guard, see §B3) — **not run
+  yet, ask EK.** Until it's run, `/api/psa-lookup` silently skips the guard
+  entirely (checks `if (supabase)` and falls through to the old
+  call-PSA-directly behavior if the service client can't be built) — no
+  crash, but zero protection against burning PSA's 100/day again.
+  (`20260803_saved_events.sql` and `20260803_profile_identity_fields.sql`
+  were both confirmed run by EK on 2026-08-04 night — still fine.)
 - Live site: `https://vltd.vercel.app`. `vltd.app` intentionally not set up yet.
 - **AI vision is LIVE.** `ANTHROPIC_API_KEY` has been set in Vercel for months;
   `/api/ai/analyze-item` (AI Assist, bulk scan, Quick Add scan) all use it. Don't
@@ -249,6 +253,40 @@ guess is what sent EK on a pointless "regenerate the token" detour.
   should hammer `/api/psa-lookup` repeatedly while checking this** — the
   100/day cap is real and shared across every call, including diagnostic
   ones. Test once, deliberately, not in a loop.
+
+### B3b. PSA quota guard — built same night, so this can't happen again (⚠ migration not run yet)
+Two real gaps this exposed, both fixed now:
+1. **Nothing was caching cert lookups.** A PSA cert's grade/subject/etc.
+   never changes once issued — every repeat lookup of the same cert
+   (someone re-scanning, two users with the same card, or diagnostic
+   testing) was a wasted real PSA call. Added a **permanent** cache
+   (`psa_cert_cache` table) — once any cert has been looked up once, ever,
+   it never touches PSA again.
+2. **Nothing stopped the app before PSA had to say no.** Added a hard
+   internal daily budget (`psa_api_usage` table + `psa_usage_try_reserve()`)
+   capped at **90** (leaving real headroom under PSA's actual 100), checked
+   *before* every PSA call. The moment PSA itself does reject a call as
+   quota-exceeded, `psa_usage_mark_exhausted()` flips a flag so every other
+   call the rest of that day short-circuits instantly with a friendly
+   "paused for today" message instead of spending another real call (and
+   getting another rejection) to find out the same thing again.
+   Both live in `supabase/migrations/20260806_psa_api_guard.sql`.
+   **⚠ NOT RUN YET — ask EK** (see §0). Until it's run, `/api/psa-lookup`
+   degrades safely (checks `if (supabase)` before touching either table,
+   falls through to the old unguarded behavior if the RPC calls aren't
+   available) rather than crashing, but the actual protection isn't live
+   until this migration runs.
+
+**⚠ Bigger, unsolved problem — flagged, not fixed:** PSA's public API is
+explicitly a developer/test tier (100 calls/day, shared across the WHOLE
+app, not per-user). **This does not scale to a real subscriber base** — even
+a few dozen active users scanning graded slabs would exhaust it same-day,
+guard or no guard; the guard only stops today's diagnostic-testing failure
+mode from recurring, it doesn't create real capacity. Getting graded-slab
+lookup to actually work for paying subscribers needs EK to contact PSA about
+their commercial/paid API tier (higher volume) — that's a cost/business
+decision for EK to make with PSA directly, not something the next chat can
+code around. Worth raising proactively if EK hasn't brought it up.
 
 ### B4. Regular Add camera should visually match Quick Add's — STILL NEXT, once B/B2 above are confirmed
 EK's own instruction, explicit ordering: **fix barcode/Cards first, THEN**
