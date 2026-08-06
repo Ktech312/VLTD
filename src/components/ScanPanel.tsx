@@ -15,6 +15,7 @@ export default function ScanPanel({
   isScanning,
   isBookLookupRunning,
   isComicLookupRunning,
+  isCardLookupRunning = false,
   isUpcLookupRunning = false,
   isVisionLookupRunning = false,
   saveScanAsPhoto,
@@ -35,6 +36,7 @@ export default function ScanPanel({
   isScanning: boolean;
   isBookLookupRunning: boolean;
   isComicLookupRunning: boolean;
+  isCardLookupRunning?: boolean;
   isUpcLookupRunning?: boolean;
   isVisionLookupRunning?: boolean;
   saveScanAsPhoto: boolean;
@@ -59,7 +61,12 @@ export default function ScanPanel({
   const hasImage = Boolean(previewUrl);
   const review = session.review;
   const isIdentifying =
-    isScanning || isBookLookupRunning || isComicLookupRunning || isUpcLookupRunning || isVisionLookupRunning;
+    isScanning ||
+    isBookLookupRunning ||
+    isComicLookupRunning ||
+    isCardLookupRunning ||
+    isUpcLookupRunning ||
+    isVisionLookupRunning;
 
   return (
     <section className="rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">

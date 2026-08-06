@@ -33,7 +33,7 @@ export type ScanSessionParsedFieldKey =
 export type ScanSessionFields = Partial<Record<ScanSessionParsedFieldKey, string>>;
 
 export type ScanSessionReview = {
-  source: "ocr" | "book_lookup" | "comic_lookup" | "barcode_lookup" | "vision" | "manual";
+  source: "ocr" | "book_lookup" | "comic_lookup" | "card_lookup" | "barcode_lookup" | "vision" | "manual";
   confidence: "low" | "medium" | "high";
   score: number;
   safeToAutofill: boolean;
@@ -174,6 +174,7 @@ function sanitizeReview(value: unknown): ScanSessionReview | null {
     input.source === "ocr" ||
     input.source === "book_lookup" ||
     input.source === "comic_lookup" ||
+    input.source === "card_lookup" ||
     input.source === "barcode_lookup" ||
     input.source === "vision" ||
     input.source === "manual"

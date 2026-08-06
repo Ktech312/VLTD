@@ -40,6 +40,8 @@ import { buildPricingPatch, type PricingMvpFields } from "@/lib/pricingMvp";
 import { parseComicScanResult, scanComicRegionsFromFile } from "@/lib/scanners/comicParser";
 import { lookupComicByUpc, lookupComicBySeries, formatComicCoverDate } from "@/lib/metronLookup";
 import { lookupComicByBarcode, lookupComicBySeriesIssue } from "@/lib/gcdLookup";
+import { scanTcgCardRegionsFromFile } from "@/lib/scanners/tcgCardParser";
+import { lookupMtgCard, lookupPokemonCard, type CardLookupResult } from "@/lib/cardLookup";
 import { lookupVinylByBarcode, lookupVinylByText } from "@/lib/discogLookup";
 import { lookupPSACert, looksLikePSACert, extractPSACertFromUrl, formatPSAGrade, formatPSASet } from "@/lib/psaLookup";
 import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
@@ -351,6 +353,7 @@ export default function AddPage() {
   const [isScanning, setIsScanning] = useState(false);
   const [isBookLookupRunning, setIsBookLookupRunning] = useState(false);
   const [isComicLookupRunning, setIsComicLookupRunning] = useState(false);
+  const [isCardLookupRunning, setIsCardLookupRunning] = useState(false);
   const [isUpcLookupRunning, setIsUpcLookupRunning] = useState(false);
   const [isVisionLookupRunning, setIsVisionLookupRunning] = useState(false);
   const [aiFilledFields, setAiFilledFields] = useState<Set<keyof FormValues>>(new Set());
@@ -1100,6 +1103,110 @@ export default function AddPage() {
     }
   }
 
+  /** Real-database identification for a raw (ungraded) TCG single — the
+   *  "Cards" analog of runComicLookupForFile above. Only wired for the two
+   *  games with a free public card database (Magic via Scryfall, Pokemon via
+   *  the Pokemon TCG API); anything else (Yu-Gi-Oh, Lorcana, One Piece, etc.)
+   *  falls through to the existing generic OCR guess — no fake match. */
+  async function runTcgCardLookupForFile(file: File) {
+    const subcat = (values.subcategoryLabel || "").trim();
+    const game: "mtg" | "pokemon" | null =
+      subcat === "Magic: The Gathering" ? "mtg" : subcat === "Pokemon" ? "pokemon" : null;
+
+    if (!game) return false;
+
+    setIsCardLookupRunning(true);
+    setScanSession((prev) => markScanSessionScanning(prev));
+
+    try {
+      const [regionScan, fallbackOcr] = await Promise.all([
+        scanTcgCardRegionsFromFile(file),
+        runImageScanAutofill(file, "card"),
+      ]);
+
+      const titleGuess = regionScan.titleText || fallbackOcr.fields.title || "";
+      const numberGuess = regionScan.collectorNumber || fallbackOcr.fields.number || "";
+
+      let dbResult: CardLookupResult | null = null;
+
+      if (game === "mtg") {
+        if (regionScan.setCodeGuess && numberGuess) {
+          dbResult = await lookupMtgCard({ set: regionScan.setCodeGuess, number: numberGuess }).catch(() => null);
+        }
+        if (!dbResult && titleGuess) {
+          dbResult = await lookupMtgCard({ name: titleGuess }).catch(() => null);
+        }
+      } else if (titleGuess) {
+        dbResult = await lookupPokemonCard({ name: titleGuess, number: numberGuess || undefined }).catch(() => null);
+      }
+
+      const fields = {
+        title: dbResult?.name || titleGuess || undefined,
+        subtitle: dbResult?.setName || undefined,
+        number: dbResult?.number || numberGuess || undefined,
+        notes: dbResult
+          ? `Matched via ${game === "mtg" ? "Scryfall" : "Pokemon TCG API"}: ${dbResult.sourceUrl}${
+              dbResult.priceUsd ? ` (market $${dbResult.priceUsd})` : ""
+            }`
+          : undefined,
+      };
+
+      const confidence: "low" | "medium" | "high" = dbResult ? "high" : titleGuess ? "medium" : "low";
+      const warnings = dbResult
+        ? []
+        : titleGuess
+          ? ["Couldn't confirm this card against the database — check the title/number."]
+          : ["Couldn't read a title or collector number off this card."];
+
+      setScanSession((prev) =>
+        setScanSessionReview(prev, {
+          source: "card_lookup",
+          confidence,
+          score: dbResult ? 92 : titleGuess ? 55 : 15,
+          safeToAutofill: confidence !== "low",
+          warnings,
+          rawText: [
+            dbResult ? `DB match: ${dbResult.name} — ${dbResult.setName} #${dbResult.number}` : "",
+            regionScan.titleText,
+            regionScan.numberRegionText,
+          ]
+            .filter(Boolean)
+            .join("\n\n"),
+          fields,
+        })
+      );
+
+      if (confidence !== "low") {
+        applyScanFieldsToEmpty(fields);
+        if (dbResult?.rarity) {
+          setValues((prev) => {
+            if (prev.tcgRarity?.trim()) return prev;
+            setHasDraftChanges(true);
+            return { ...prev, tcgRarity: dbResult.rarity ?? "" };
+          });
+        }
+        setScanSession((prev) => markScanSessionApplied(prev));
+      }
+
+      setStatus(
+        dbResult
+          ? `Matched in the ${game === "mtg" ? "Scryfall" : "Pokemon TCG"} database: ${dbResult.name}.`
+          : titleGuess
+            ? "Read a title off the card but couldn't confirm it in the database."
+            : "Couldn't read this card clearly. Try a tighter, straighter photo."
+      );
+
+      return confidence !== "low";
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Card lookup failed.";
+      setScanSession((prev) => markScanSessionFailed(prev, message));
+      setStatus(message);
+      return false;
+    } finally {
+      setIsCardLookupRunning(false);
+    }
+  }
+
   async function runPSALookupForCode(certRaw: string) {
     const certNumber = extractPSACertFromUrl(certRaw) ?? certRaw.replace(/\D/g, "").trim();
     if (!certNumber) return false;
@@ -1551,6 +1658,13 @@ export default function AddPage() {
     }
 
     if (scanType === "card") {
+      // Real-database match for the TCGs we have a free public card DB for
+      // (Magic/Pokemon) — tried first since it's an actual confirmed card,
+      // not an OCR guess. Falls through untouched for Sports/other TCGs.
+      if (values.universe === "TCG") {
+        const cardMatched = await runTcgCardLookupForFile(file);
+        if (cardMatched) return;
+      }
       const ocrMatched = await runOcrAutofillForFile(file, scanType);
       if (ocrMatched) return;
       await runVisionLookupForFile(file, scanType);
@@ -2132,6 +2246,7 @@ export default function AddPage() {
                 isScanning={isScanning}
                 isBookLookupRunning={isBookLookupRunning}
                 isComicLookupRunning={isComicLookupRunning}
+                isCardLookupRunning={isCardLookupRunning}
                 isUpcLookupRunning={isUpcLookupRunning}
                 isVisionLookupRunning={isVisionLookupRunning}
                 saveScanAsPhoto={saveScanAsPhoto}
