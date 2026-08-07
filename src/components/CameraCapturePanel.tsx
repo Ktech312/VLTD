@@ -1050,6 +1050,18 @@ export default function CameraCapturePanel({
                   </div>
                 ) : null}
 
+                {/* Live scan indicator — tells the curator the camera is actively
+                    scanning and what to do, before any code is read. */}
+                {!cameraError && !liveBarcode ? (
+                  <div
+                    className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 flex items-center gap-2 rounded-full px-3 py-1.5 backdrop-blur"
+                    style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.14)" }}
+                  >
+                    <span className="h-2 w-2 shrink-0 animate-pulse rounded-full" style={{ background: "#4ade80" }} />
+                    <span className="text-[11px] font-semibold text-white/85">Point at a QR or barcode to scan</span>
+                  </div>
+                ) : null}
+
                 {/* Live barcode badge — shows the moment a code is read off the feed */}
                 {!cameraError && liveBarcode ? (
                   <div

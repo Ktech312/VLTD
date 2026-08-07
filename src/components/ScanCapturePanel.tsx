@@ -683,6 +683,17 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
             {keptCount}
           </div>
 
+          {/* Live scan hint — shows the camera is scanning + what to do, until a code is read */}
+          {!liveBarcode ? (
+            <div
+              className="pointer-events-none absolute right-3 top-3 flex items-center gap-1.5 rounded-full px-3 py-1.5 backdrop-blur"
+              style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.14)" }}
+            >
+              <span className="h-2 w-2 shrink-0 animate-pulse rounded-full" style={{ background: "#4ade80" }} />
+              <span className="text-[11px] font-semibold text-white/85">Point at a QR or barcode</span>
+            </div>
+          ) : null}
+
           {/* Live barcode/QR badge — top-right, mirrors the regular Add camera */}
           {liveBarcode ? (
             <div
