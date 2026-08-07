@@ -2519,12 +2519,26 @@ export default function AddPage() {
               </Field>
 
               <Field label="Cert #" locked={locks.certNumber} onToggleLock={() => handleToggleLock("certNumber")}>
-                <input
-                  className={inputClass(aiFilledFields.has("certNumber"))}
-                  value={values.certNumber}
-                  onChange={(e) => { setAiFilledFields(prev => { const n = new Set(prev); n.delete("certNumber"); return n; }); setField("certNumber", e.target.value); }}
-                  placeholder="Certification number"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    className={`${inputClass(aiFilledFields.has("certNumber"))} min-w-0 flex-1`}
+                    value={values.certNumber}
+                    onChange={(e) => { setAiFilledFields(prev => { const n = new Set(prev); n.delete("certNumber"); return n; }); setField("certNumber", e.target.value); }}
+                    placeholder="Certification number"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void runPSALookupForCode(values.certNumber)}
+                    disabled={!values.certNumber.trim() || isComicLookupRunning}
+                    title="Look up this PSA cert number"
+                    className="inline-flex h-10 shrink-0 items-center rounded-[8px] bg-[color:var(--pill)] px-3 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-40"
+                  >
+                    {isComicLookupRunning ? "Looking up…" : "Look up"}
+                  </button>
+                </div>
+                <p className="mt-1 text-[11px]" style={{ color: "var(--muted2)" }}>
+                  PSA graded card? Type the cert number from the slab label and tap Look up.
+                </p>
               </Field>
 
               <Field label="Serial #" locked={locks.serialNumber} onToggleLock={() => handleToggleLock("serialNumber")}>
