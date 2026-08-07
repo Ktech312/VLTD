@@ -111,7 +111,19 @@ default of "TCG", so unless manually changed, everything got tagged/AI-hinted as
 TCG — comics scanned as "Magic: The Gathering" etc. Fixed 2026-08-03 (see §4).
 Still want confirmation the fix actually holds up on a real batch of mixed items.
 
-### B. Barcode / QR live detection — the digits-gate fix (previous pass) did NOT fix it; REPLACED THE SCAN MECHANISM ENTIRELY, please test again
+### B. Barcode / QR live detection — TURNED OFF (EK's call, c0fb750). Revisit with native BarcodeDetector, NOT a JS loop.
+**STATUS 2026-08-07: live scanning is DISABLED** via `ENABLE_LIVE_BARCODE = false`
+in both `CameraCapturePanel.tsx` and `ScanCapturePanel.tsx`. After ~8 rounds the
+JS/ZXing decode loop (a) never reliably read a code on EK's device and (b)
+**overheated the phone** — the ZXing retry delay defaulted to 0ms so it pinned
+the CPU, and a resolution bump made it worse. EK's own steer: a normal camera app
+scans without heating up, so the correct path when revisited is the **browser-
+native `BarcodeDetector` API** (hardware-accelerated), not a JavaScript decode
+loop. Do NOT just flip the flag back on — rebuild it on BarcodeDetector, gated to
+where it's supported, ideally as a deliberate tap-to-scan burst (not always-on).
+Meanwhile: AI photo identification works, and the manual "Look up" cert button on
+`/vault/add` covers PSA slabs without needing a scan. The scanner code below is
+kept for reference but is dormant. ~~Original notes:~~
 EK tested the previous fix live: **still didn't work, on both Quick Add AND
 regular Add.** That confirmed the digits-gate bug (real, and still worth
 having fixed) wasn't the whole story. Two more real things found:
