@@ -5,7 +5,7 @@ import ScanCropEditor from "@/components/ScanCropEditor";
 import { Glyph } from "@/components/ui/Glyph";
 import { PillButton } from "@/components/ui/PillButton";
 import type { BarcodeScanResult } from "@/lib/scanners/barcodeScanner";
-import { startLiveBarcodeScan } from "@/lib/scanners/liveBarcodeReader";
+import { startLiveBarcodeScan, type ScanDiagnostic } from "@/lib/scanners/liveBarcodeReader";
 import {
   getUniverses,
   getCategories,
@@ -144,6 +144,7 @@ export default function CameraCapturePanel({
   const [detectionBox, setDetectionBox] = useState<DetectionBox | null>(null);
   const [liveBarcode, setLiveBarcode] = useState<BarcodeScanResult | null>(null);
   const liveBarcodeRef = useRef<BarcodeScanResult | null>(null);
+  const [scanDiag, setScanDiag] = useState<ScanDiagnostic | null>(null);
   const [isRemovingBackground, setIsRemovingBackground] = useState(false);
   const [backgroundError, setBackgroundError] = useState("");
   const [isBackgroundRemoved, setIsBackgroundRemoved] = useState(false);
@@ -455,12 +456,16 @@ export default function CameraCapturePanel({
     const video = videoRef.current;
     if (!video) return;
 
-    const stop = startLiveBarcodeScan(video, (result) => {
-      if (liveBarcodeRef.current) return;
-      liveBarcodeRef.current = result;
-      setLiveBarcode(result);
-      try { navigator.vibrate?.(60); } catch { /* ignore */ }
-    });
+    const stop = startLiveBarcodeScan(
+      video,
+      (result) => {
+        if (liveBarcodeRef.current) return;
+        liveBarcodeRef.current = result;
+        setLiveBarcode(result);
+        try { navigator.vibrate?.(60); } catch { /* ignore */ }
+      },
+      { onDiagnostic: setScanDiag }
+    );
 
     return stop;
   }, [capturedFile, cameraError, cameraReady, retryCount]);
@@ -1059,6 +1064,16 @@ export default function CameraCapturePanel({
                   >
                     <span className="h-2 w-2 shrink-0 animate-pulse rounded-full" style={{ background: "#4ade80" }} />
                     <span className="text-[11px] font-semibold text-white/85">Point at a QR or barcode to scan</span>
+                  </div>
+                ) : null}
+
+                {/* TEMP diagnostic readout — remove once barcode is confirmed working. */}
+                {!cameraError && scanDiag ? (
+                  <div
+                    className="pointer-events-none absolute bottom-2 left-2 rounded-md px-2 py-1 font-mono text-[10px] leading-tight text-white/90"
+                    style={{ background: "rgba(0,0,0,0.7)", border: "1px solid rgba(255,255,255,0.18)" }}
+                  >
+                    cam {scanDiag.videoW}×{scanDiag.videoH} · rs{scanDiag.readyState} · {scanDiag.phase} · tries {scanDiag.attempts} · {scanDiag.lastError || "—"}
                   </div>
                 ) : null}
 

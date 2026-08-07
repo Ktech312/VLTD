@@ -34,6 +34,19 @@ import { normalizeFormatName, type BarcodeScanResult } from "./barcodeScanner";
 
 export type LiveBarcodeResult = BarcodeScanResult;
 
+/** On-screen diagnostic so a real-device failure can be read out without a
+ *  console. Reports whether we're still waiting for the video, or actively
+ *  decoding, plus the true video size, how many decode attempts have run, and
+ *  the last error kind (NotFound = normal "no code in frame this time"). */
+export type ScanDiagnostic = {
+  phase: "waiting" | "decoding";
+  videoW: number;
+  videoH: number;
+  readyState: number;
+  attempts: number;
+  lastError: string;
+};
+
 function digitsOnly(value: string) {
   return String(value ?? "").replace(/\D/g, "");
 }
@@ -61,24 +74,44 @@ function buildHints() {
 export function startLiveBarcodeScan(
   video: HTMLVideoElement,
   onResult: (result: LiveBarcodeResult) => void,
-  timeBetweenScansMillis = 300
+  opts: { timeBetweenScansMillis?: number; onDiagnostic?: (d: ScanDiagnostic) => void } = {}
 ): () => void {
+  const { timeBetweenScansMillis = 300, onDiagnostic } = opts;
   const reader = new BrowserMultiFormatReader(buildHints(), timeBetweenScansMillis);
   let stopped = false;
   let started = false;
   let waitTimer: ReturnType<typeof setTimeout> | undefined;
+  let attempts = 0;
+  let lastError = "";
+
+  function emit(phase: ScanDiagnostic["phase"]) {
+    if (!onDiagnostic || stopped) return;
+    onDiagnostic({
+      phase,
+      videoW: video.videoWidth,
+      videoH: video.videoHeight,
+      readyState: video.readyState,
+      attempts,
+      lastError,
+    });
+  }
 
   function beginDecoding() {
     if (stopped || started) return;
     started = true;
     try {
       reader.decodeContinuously(video, (result, error) => {
-        if (stopped || !result) return;
-        // NotFoundException etc. come through as `error` with `result` null --
-        // already filtered by the `!result` check above; it just means this
-        // particular frame had nothing decodable in it.
-        void error;
+        if (stopped) return;
+        attempts += 1;
+        if (error) {
+          lastError = (error as { name?: string })?.name || error.constructor?.name || "err";
+        }
+        // Report roughly a few times/sec so a stuck state is visible on screen.
+        if (attempts % 3 === 0) emit("decoding");
 
+        if (!result) return;
+        // NotFoundException etc. come through as `error` with `result` null --
+        // already handled above; it just means this frame had nothing decodable.
         const rawValue = String(result.getText?.() ?? "");
         if (!rawValue) return;
 
@@ -89,9 +122,9 @@ export function startLiveBarcodeScan(
           region: "live",
         });
       });
-    } catch {
-      // Shouldn't happen for a valid, sized video element, but don't take the
-      // camera down over the scanner failing to start.
+    } catch (e) {
+      lastError = "start:" + ((e as { name?: string })?.name || "err");
+      emit("decoding");
     }
   }
 
@@ -102,11 +135,12 @@ export function startLiveBarcodeScan(
   // scans. So wait until the video actually has real pixels before starting.
   function waitForVideoReady() {
     if (stopped || started) return;
+    emit("waiting");
     if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
       beginDecoding();
       return;
     }
-    waitTimer = setTimeout(waitForVideoReady, 120);
+    waitTimer = setTimeout(waitForVideoReady, 250);
   }
   waitForVideoReady();
 
