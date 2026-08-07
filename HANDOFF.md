@@ -859,6 +859,11 @@ write that migration blind since it's payment-adjacent data.
 ---
 
 ## 5. Key files
+- **`CHECKLIST.md`** (repo root) — scannable done/pending list of everything
+  from the 55-file dead-code sweep through tonight's barcode/Cards/PSA/
+  Discogs work, plus a clear "what needs EK's action right now" list at the
+  bottom. Update this alongside HANDOFF when a checklist item's status
+  changes — it's meant to stay a quick scan, not prose.
 - Capture screen: `src/app/capture/page.tsx`
 - Inline camera panel: `src/components/CameraCapturePanel.tsx`
 - Quick Add fast scanner: `src/components/ScanCapturePanel.tsx`
