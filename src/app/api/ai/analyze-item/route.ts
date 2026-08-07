@@ -139,7 +139,17 @@ DC, Image, Dark Horse, IDW, Boom!, Valiant, Archie), an issue number
 in a small box near a corner, cover-copy/dialogue captions, and (on a
 back/spine photo) visible staples. If the item matches this format,
 classify it as universe "Pop Culture", category "Comics" even if the
-specific issue or series isn't readable.`,
+specific issue or series isn't readable.
+
+Sports cards vs. game cards: if the card shows a REAL athlete or team
+(soccer/football, basketball, baseball, hockey, etc.), a club crest or
+league logo (UEFA, Champions League, Premier League, NBA, NFL, MLB, FIFA,
+Panini, Topps, Prizm), a photo of a person in a uniform, or real-world
+stats, classify it as universe "Sports" -- NOT "TCG & Non Sport Card".
+Only use "TCG & Non Sport Card" for game cards with play mechanics on them
+(mana/energy symbols, HP, attack/defense numbers, ability rules text), e.g.
+Pokemon, Magic, Yu-Gi-Oh, Lorcana. A slabbed/graded card is still a sports
+card if it pictures an athlete.`,
       gradingInstructions,
       "If the item's title/text is not clearly legible in the photo, do NOT invent a specific name, set, or series -- use a generic but honest title instead (e.g. \"Comic book (title not legible)\", \"Trading card (illegible)\") and keep confidence below 0.3. A vague-but-honest guess is far more useful than a confident wrong one.",
       "Use this exact schema:",

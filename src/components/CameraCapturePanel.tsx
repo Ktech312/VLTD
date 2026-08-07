@@ -41,6 +41,10 @@ type DetectionBox = { x: number; y: number; width: number; height: number };
 const DEFAULT_CROP: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
 const BULK_UNIVERSES = getUniverses();
 const CAMERA_PREF_KEY = "vltd_camera_device_id";
+// Live barcode/QR scanning is OFF. The JS decode loop cooked the phone and never
+// reliably read a code. When revisited, use the browser-native BarcodeDetector
+// API (hardware-accelerated, like a normal camera app) instead of a JS loop.
+const ENABLE_LIVE_BARCODE = false;
 // Some phones stream well past 3000px on the long edge. The filter/crop/
 // upload pipeline doesn't need more than this for a sharp vault photo, and
 // capping it keeps captures fast on high-res devices.
@@ -451,6 +455,7 @@ export default function CameraCapturePanel({
   // rather than the old hand-rolled per-tick region-cropping approach, which
   // went through three rounds of tuning without reliably firing on a device.
   useEffect(() => {
+    if (!ENABLE_LIVE_BARCODE) return; // live scanning disabled — see flag note above
     if (capturedFile || cameraError || !cameraReady) return;
     const video = videoRef.current;
     if (!video) return;
@@ -1050,9 +1055,8 @@ export default function CameraCapturePanel({
                   </div>
                 ) : null}
 
-                {/* Live scan indicator — tells the curator the camera is actively
-                    scanning and what to do, before any code is read. */}
-                {!cameraError && !liveBarcode ? (
+                {/* Live scan indicator — only while live barcode scanning is enabled. */}
+                {ENABLE_LIVE_BARCODE && !cameraError && !liveBarcode ? (
                   <div
                     className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 flex items-center gap-2 rounded-full px-3 py-1.5 backdrop-blur"
                     style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.14)" }}

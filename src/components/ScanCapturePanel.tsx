@@ -56,6 +56,9 @@ const FRAME_LABELS: Record<FrameType, string> = {
 
 // Scan universes derived from taxonomy (BUILT_BOTANY excluded — scan AI not tuned for it).
 const UNIVERSES = UNIVERSE_KEYS.filter((k) => k !== "BUILT_BOTANY");
+// Live barcode/QR scanning is OFF (overheated the phone, never reliable). Revisit
+// with the browser-native BarcodeDetector API instead of a JS decode loop.
+const ENABLE_LIVE_BARCODE = false;
 
 // Remembers the last Universe picked here (mirrors CAMERA_PREF_KEY below). A
 // hardcoded default was a real footgun: leaving it on a stale Universe from a
@@ -282,11 +285,10 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         const list = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "videoinput");
         if (active) setDevices(list);
 
-        // Live barcode/QR badge while framing — like the regular Add camera.
-        // Runs continuously (not "stop after first hit") since Quick Add
-        // takes many photos in a row; handleCapture() clears the badge so
-        // the next item starts fresh instead of showing a stale code.
-        if (active && videoRef.current) {
+        // Live barcode/QR scanning is OFF (see ENABLE_LIVE_BARCODE) — the JS
+        // decode loop overheated the phone and never reliably read a code.
+        // Revisit with the browser-native BarcodeDetector API instead.
+        if (ENABLE_LIVE_BARCODE && active && videoRef.current) {
           stopBarcodeScanRef.current?.();
           stopBarcodeScanRef.current = startLiveBarcodeScan(videoRef.current, (result) => {
             setLiveBarcode((prev) => (prev?.rawValue === result.rawValue ? prev : result));
@@ -683,8 +685,8 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
             {keptCount}
           </div>
 
-          {/* Live scan hint — shows the camera is scanning + what to do, until a code is read */}
-          {!liveBarcode ? (
+          {/* Live scan hint — only while live barcode scanning is enabled. */}
+          {ENABLE_LIVE_BARCODE && !liveBarcode ? (
             <div
               className="pointer-events-none absolute right-3 top-3 flex items-center gap-1.5 rounded-full px-3 py-1.5 backdrop-blur"
               style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.14)" }}
