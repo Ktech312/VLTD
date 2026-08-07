@@ -28,9 +28,17 @@ export async function lookupVinylByBarcode(barcode: string): Promise<VinylLookup
   if (!digits) return null;
 
   const res = await fetch(`/api/vinyl-lookup?barcode=${encodeURIComponent(digits)}`);
-  if (!res.ok) return null;
+  const payload = (await res.json().catch(() => ({}))) as { result?: DiscogsReleaseResult | null; error?: string };
 
-  const payload = (await res.json()) as { result?: DiscogsReleaseResult | null; error?: string };
+  // Throw instead of silently returning null on a non-OK response -- same
+  // bug class fixed in psaLookup.ts: a bad/missing DISCOGS_TOKEN, a rate
+  // limit, or a real Discogs outage all looked identical to "this barcode
+  // just isn't in Discogs" to the UI. Callers that only care about a
+  // best-effort match can still `.catch(() => null)` this same as before.
+  if (!res.ok) {
+    throw new Error(payload.error || `Discogs lookup failed (${res.status}).`);
+  }
+
   return normalizeResult(payload.result ?? null);
 }
 
@@ -45,9 +53,12 @@ export async function lookupVinylByText(
   if (album?.trim()) params.set("album", album.trim());
 
   const res = await fetch(`/api/vinyl-lookup?${params}`);
-  if (!res.ok) return null;
+  const payload = (await res.json().catch(() => ({}))) as { result?: DiscogsReleaseResult | null; error?: string };
 
-  const payload = (await res.json()) as { result?: DiscogsReleaseResult | null; error?: string };
+  if (!res.ok) {
+    throw new Error(payload.error || `Discogs lookup failed (${res.status}).`);
+  }
+
   return normalizeResult(payload.result ?? null);
 }
 

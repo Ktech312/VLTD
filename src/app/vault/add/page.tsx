@@ -1305,12 +1305,21 @@ export default function AddPage() {
 
     try {
       const effectiveBarcode = barcodeDigits?.replace(/\D/g, "").trim() ?? "";
+      // Discogs lookups now throw on a real failure (bad/missing token, rate
+      // limit, outage) instead of silently returning null -- capture that so
+      // "Discogs isn't working" and "this genuinely isn't in Discogs" don't
+      // both show the same "No vinyl match found" message.
+      let lookupError: string | null = null;
+      const captureError = (err: unknown) => {
+        lookupError = err instanceof Error ? err.message : "Discogs lookup failed.";
+        return null;
+      };
 
       // Run OCR and Discogs lookup in parallel
       const [fallbackOcr, discogsResult] = await Promise.all([
         runImageScanAutofill(file, "auto"),
         effectiveBarcode.length >= 12
-          ? lookupVinylByBarcode(effectiveBarcode).catch(() => null)
+          ? lookupVinylByBarcode(effectiveBarcode).catch(captureError)
           : Promise.resolve(null),
       ]);
 
@@ -1322,14 +1331,17 @@ export default function AddPage() {
           ? await lookupVinylByText(
               fallbackOcr.fields?.title ?? "",
               fallbackOcr.fields?.subtitle ?? ""
-            ).catch(() => null)
+            ).catch(captureError)
           : null;
 
       const best = discogsResult ?? textResult;
 
       if (!best) {
-        setScanSession((prev) => markScanSessionFailed(prev, "No vinyl match found."));
-        setStatus("No vinyl match found — try image identify.");
+        const message = lookupError
+          ? `Discogs lookup failed: ${lookupError}`
+          : "No vinyl match found — try image identify.";
+        setScanSession((prev) => markScanSessionFailed(prev, message));
+        setStatus(message);
         return false;
       }
 
