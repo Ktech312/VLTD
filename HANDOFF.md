@@ -257,11 +257,16 @@ guess is what sent EK on a pointless "regenerate the token" detour.
   in the terminal paste). Flagged to EK as exposed; recommended treating it
   as compromised. **If the next chat sees PSA lookups failing again, check
   whether that token was ever rotated after this — it should be.**
-- **Not yet retested — please test again once the quota resets** (give it a
-  day; PSA's message says "per Day," exact reset time unknown). **Nobody
-  should hammer `/api/psa-lookup` repeatedly while checking this** — the
-  100/day cap is real and shared across every call, including diagnostic
-  ones. Test once, deliberately, not in a loop.
+- **Retested once, deliberately (not a loop), after EK confirmed the quota
+  had reset and the guard migration (§B3b) was run. Got a THIRD, different
+  rejection:** `"Access to this API is limited to approved customers."` Not
+  a bad token, not quota-exceeded — PSA is saying the account itself isn't
+  approved for API access at all, even with a syntactically valid, freshly
+  generated token. Generating a token via PSA's portal apparently doesn't
+  by itself grant usable API access. **This needs PSA support directly**
+  (`collectors-apis@collectors.com`) to clarify what "approved customer"
+  status requires and whether this account has/had it — not a token refresh
+  or redeploy problem. **EK's action item now.**
 
 ### B3b. PSA quota guard — built same night, so this can't happen again (⚠ migration not run yet)
 Two real gaps this exposed, both fixed now:

@@ -126,9 +126,16 @@ specifics, see `GRADING_AND_PRICING_APIS.md`.
   a real subscriber base** (even a few dozen active users scanning slabs
   would exhaust it same-day) — needs EK to contact PSA about their paid
   commercial tier. Not something code can solve.
-- ⬜ **Ready to retest** — EK confirmed the daily quota has reset and the guard
-  migration is run. Needs ONE deliberate real-slab test (not a loop) to confirm
-  a graded-card lookup now succeeds + gets cached. Not done yet.
+- ⚠️ **Retested once, deliberately (not a loop), after EK confirmed quota
+  reset + migration run.** Got a THIRD distinct rejection, different from
+  both earlier ones: `"Access to this API is limited to approved
+  customers."` Not a bad token, not quota-exceeded — PSA is saying the
+  account itself isn't approved for API access, even with a valid token.
+  Generating a token via their portal apparently doesn't equal being
+  granted usable access. **This needs PSA support directly**
+  (`collectors-apis@collectors.com`) to clarify what "approved customer"
+  actually requires and whether this account has/had it — not something a
+  token refresh or redeploy can fix.
 
 ## CGC / other grading + pricing research (this session)
 - ✅ Researched CGC alternatives per EK's ask: ruled out CGC's own API
@@ -170,10 +177,12 @@ specifics, see `GRADING_AND_PRICING_APIS.md`.
 ---
 
 ## What actually needs YOUR action right now, in order
-1. Check/fix the `DISCOGS_TOKEN` value in Vercel (empty or bad — vinyl
+1. Email `collectors-apis@collectors.com` about the "Access to this API is
+   limited to approved customers" rejection — ask directly whether this
+   account has approved API access, and if not, how to get it. A fresh
+   token alone didn't fix it.
+2. Check/fix the `DISCOGS_TOKEN` value in Vercel (empty or bad — vinyl
    lookup has never worked because of this).
-2. Once PSA's quota resets, test a real graded slab once (not repeatedly)
-   to confirm the guard didn't break anything.
 3. Test the barcode/QR badge again on a real phone (Quick Add + regular
    Add) — the scanning mechanism changed significantly tonight.
 4. Test a real Magic or Pokemon card via Identify — confirm Category/
