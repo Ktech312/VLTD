@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
+import { TAXONOMY, UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
 
 const UNIVERSE_OPTIONS = UNIVERSE_KEYS.map((k) => UNIVERSE_LABEL[k]).join(", ");
+
+// The app's real Universe -> Category -> [Subcategories] tree, built straight from
+// the source of truth so it can never drift. Given to the model so it classifies
+// EVERY item type into valid options instead of guessing free-text.
+const TAXONOMY_GUIDE = UNIVERSE_KEYS.map((k) => {
+  const cats = Object.entries(TAXONOMY[k])
+    .map(([cat, subs]) => `${cat} [${subs.join(", ")}]`)
+    .join("; ");
+  return `- ${UNIVERSE_LABEL[k]}: ${cats}`;
+}).join("\n");
 
 type VisionRouteResult = {
   detectedTitle: string;
@@ -130,7 +140,10 @@ export async function POST(req: NextRequest) {
       "Analyze this collectible or product photo and return JSON only.",
       preClassified
         ? `Context: This item has been pre-classified as:\nUniverse: ${universe || "unknown"}\nCategory: ${category || "unknown"}\nSubcategory: ${subcategory || "unknown"}\nUse this context to focus your identification on the specific item name, set name, number, year, grade, and condition. Do not return universe or category fields.`
-        : `Also classify the item. For "universe", pick the single best match from EXACTLY this list: ${UNIVERSE_OPTIONS}. For "category" and "subcategory", give your best specific guess (e.g. universe "TCG & Non Sport Card", category "TCG / CCG", subcategory "Magic: The Gathering"). If unsure, leave them empty.
+        : `Also classify the item. Pick "universe", "category", and "subcategory" using EXACTLY the names from this taxonomy (do not invent your own — copy the label verbatim, and only pick a category/subcategory that belongs to the universe you chose):
+${TAXONOMY_GUIDE}
+
+Universe must be one of: ${UNIVERSE_OPTIONS}. If you can identify the universe and category but not the exact subcategory, fill those two and leave subcategory empty rather than guessing.
 
 Comic books are commonly confused with trading cards -- look for these
 visual cues before guessing a card game: a rectangular cover roughly
