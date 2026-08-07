@@ -5,7 +5,7 @@ import ScanCropEditor from "@/components/ScanCropEditor";
 import { Glyph } from "@/components/ui/Glyph";
 import { PillButton } from "@/components/ui/PillButton";
 import type { BarcodeScanResult } from "@/lib/scanners/barcodeScanner";
-import { startLiveBarcodeScan, type ScanDiagnostic } from "@/lib/scanners/liveBarcodeReader";
+import { startLiveBarcodeScan } from "@/lib/scanners/liveBarcodeReader";
 import {
   getUniverses,
   getCategories,
@@ -144,7 +144,6 @@ export default function CameraCapturePanel({
   const [detectionBox, setDetectionBox] = useState<DetectionBox | null>(null);
   const [liveBarcode, setLiveBarcode] = useState<BarcodeScanResult | null>(null);
   const liveBarcodeRef = useRef<BarcodeScanResult | null>(null);
-  const [scanDiag, setScanDiag] = useState<ScanDiagnostic | null>(null);
   const [isRemovingBackground, setIsRemovingBackground] = useState(false);
   const [backgroundError, setBackgroundError] = useState("");
   const [isBackgroundRemoved, setIsBackgroundRemoved] = useState(false);
@@ -301,12 +300,9 @@ export default function CameraCapturePanel({
         // capture has a real ceiling below what a native camera app can do
         // (no HDR/multi-frame fusion), so further tuning this number isn't
         // the lever to keep pulling.
-        // Request a higher-res stream (single dimension only — never a fixed
-        // width×height pair, which forced landscape on portrait phones before).
-        // More real pixels give a barcode/QR enough detail to actually decode.
         const requestedDevice = preferredDeviceId
-          ? { deviceId: { ideal: preferredDeviceId }, width: { ideal: 1920 } }
-          : { facingMode: { ideal: "environment" }, width: { ideal: 1920 } };
+          ? { deviceId: { ideal: preferredDeviceId }, width: { ideal: 1280 } }
+          : { facingMode: { ideal: "environment" }, width: { ideal: 1280 } };
 
         try {
           stream = await navigator.mediaDevices.getUserMedia({
@@ -323,20 +319,6 @@ export default function CameraCapturePanel({
         if (!isActive) {
           stream.getTracks().forEach((track) => track.stop());
           return;
-        }
-
-        // Ask the camera to keep continuously autofocusing when supported — a
-        // blurry close-up is the other big reason a barcode won't decode.
-        try {
-          const track = stream.getVideoTracks()[0];
-          const caps = track?.getCapabilities?.() as { focusMode?: string[] } | undefined;
-          if (track && caps?.focusMode?.includes("continuous")) {
-            await track.applyConstraints({
-              advanced: [{ focusMode: "continuous" }],
-            } as unknown as MediaTrackConstraints);
-          }
-        } catch {
-          // focus control not supported on this device/browser — ignore
         }
 
         streamRef.current = stream;
@@ -473,16 +455,12 @@ export default function CameraCapturePanel({
     const video = videoRef.current;
     if (!video) return;
 
-    const stop = startLiveBarcodeScan(
-      video,
-      (result) => {
-        if (liveBarcodeRef.current) return;
-        liveBarcodeRef.current = result;
-        setLiveBarcode(result);
-        try { navigator.vibrate?.(60); } catch { /* ignore */ }
-      },
-      { onDiagnostic: setScanDiag }
-    );
+    const stop = startLiveBarcodeScan(video, (result) => {
+      if (liveBarcodeRef.current) return;
+      liveBarcodeRef.current = result;
+      setLiveBarcode(result);
+      try { navigator.vibrate?.(60); } catch { /* ignore */ }
+    });
 
     return stop;
   }, [capturedFile, cameraError, cameraReady, retryCount]);
@@ -1084,15 +1062,6 @@ export default function CameraCapturePanel({
                   </div>
                 ) : null}
 
-                {/* TEMP diagnostic readout — remove once barcode is confirmed working. */}
-                {!cameraError && scanDiag ? (
-                  <div
-                    className="pointer-events-none absolute bottom-2 left-2 rounded-md px-2 py-1 font-mono text-[10px] leading-tight text-white/90"
-                    style={{ background: "rgba(0,0,0,0.7)", border: "1px solid rgba(255,255,255,0.18)" }}
-                  >
-                    cam {scanDiag.videoW}×{scanDiag.videoH} · sharp {scanDiag.sharpness} · {scanDiag.phase} · tries {scanDiag.attempts} · {scanDiag.lastError || "—"}
-                  </div>
-                ) : null}
 
                 {/* Live barcode badge — shows the moment a code is read off the feed */}
                 {!cameraError && liveBarcode ? (
