@@ -42,12 +42,9 @@ is risky or can't be done, say so plainly.
   ask EK to run it. **Never add a new column to the cloud row map
   (`src/lib/vaultCloud.ts`) without the migration** — unknown columns make the
   `vault_items` upsert throw.
-  **⚠ ONE PENDING NOW:** `supabase/migrations/20260806_psa_api_guard.sql`
-  (adds the PSA cert-cache + daily-call-budget guard, see §B3) — **not run
-  yet, ask EK.** Until it's run, `/api/psa-lookup` silently skips the guard
-  entirely (checks `if (supabase)` and falls through to the old
-  call-PSA-directly behavior if the service client can't be built) — no
-  crash, but zero protection against burning PSA's 100/day again.
+  **✅ NO MIGRATIONS PENDING.** `supabase/migrations/20260806_psa_api_guard.sql`
+  (PSA cert-cache + daily-call-budget guard, see §B3) was **confirmed run by EK**
+  — the guard (permanent cert cache + 90/day internal budget) is now LIVE.
   (`20260803_saved_events.sql` and `20260803_profile_identity_fields.sql`
   were both confirmed run by EK on 2026-08-04 night — still fine.)
 - Live site: `https://vltd.vercel.app`. `vltd.app` intentionally not set up yet.
@@ -271,11 +268,8 @@ Two real gaps this exposed, both fixed now:
    "paused for today" message instead of spending another real call (and
    getting another rejection) to find out the same thing again.
    Both live in `supabase/migrations/20260806_psa_api_guard.sql`.
-   **⚠ NOT RUN YET — ask EK** (see §0). Until it's run, `/api/psa-lookup`
-   degrades safely (checks `if (supabase)` before touching either table,
-   falls through to the old unguarded behavior if the RPC calls aren't
-   available) rather than crashing, but the actual protection isn't live
-   until this migration runs.
+   **✅ RUN — confirmed by EK.** The cert cache + 90/day budget guard are now
+   live and protecting every `/api/psa-lookup` call.
 
 **⚠ Bigger, unsolved problem — flagged, not fixed:** PSA's public API is
 explicitly a developer/test tier (100 calls/day, shared across the WHOLE

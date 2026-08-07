@@ -126,8 +126,9 @@ specifics, see `GRADING_AND_PRICING_APIS.md`.
   a real subscriber base** (even a few dozen active users scanning slabs
   would exhaust it same-day) — needs EK to contact PSA about their paid
   commercial tier. Not something code can solve.
-- ⬜ **Not yet retested since the guard shipped** — quota needs to reset on
-  PSA's own schedule first.
+- ⬜ **Ready to retest** — EK confirmed the daily quota has reset and the guard
+  migration is run. Needs ONE deliberate real-slab test (not a loop) to confirm
+  a graded-card lookup now succeeds + gets cached. Not done yet.
 
 ## CGC / other grading + pricing research (this session)
 - ✅ Researched CGC alternatives per EK's ask: ruled out CGC's own API
