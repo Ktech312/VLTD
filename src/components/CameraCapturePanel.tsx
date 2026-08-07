@@ -301,9 +301,12 @@ export default function CameraCapturePanel({
         // capture has a real ceiling below what a native camera app can do
         // (no HDR/multi-frame fusion), so further tuning this number isn't
         // the lever to keep pulling.
+        // Request a higher-res stream (single dimension only — never a fixed
+        // width×height pair, which forced landscape on portrait phones before).
+        // More real pixels give a barcode/QR enough detail to actually decode.
         const requestedDevice = preferredDeviceId
-          ? { deviceId: { ideal: preferredDeviceId }, width: { ideal: 1280 } }
-          : { facingMode: { ideal: "environment" }, width: { ideal: 1280 } };
+          ? { deviceId: { ideal: preferredDeviceId }, width: { ideal: 1920 } }
+          : { facingMode: { ideal: "environment" }, width: { ideal: 1920 } };
 
         try {
           stream = await navigator.mediaDevices.getUserMedia({
@@ -320,6 +323,20 @@ export default function CameraCapturePanel({
         if (!isActive) {
           stream.getTracks().forEach((track) => track.stop());
           return;
+        }
+
+        // Ask the camera to keep continuously autofocusing when supported — a
+        // blurry close-up is the other big reason a barcode won't decode.
+        try {
+          const track = stream.getVideoTracks()[0];
+          const caps = track?.getCapabilities?.() as { focusMode?: string[] } | undefined;
+          if (track && caps?.focusMode?.includes("continuous")) {
+            await track.applyConstraints({
+              advanced: [{ focusMode: "continuous" }],
+            } as unknown as MediaTrackConstraints);
+          }
+        } catch {
+          // focus control not supported on this device/browser — ignore
         }
 
         streamRef.current = stream;
@@ -1073,7 +1090,7 @@ export default function CameraCapturePanel({
                     className="pointer-events-none absolute bottom-2 left-2 rounded-md px-2 py-1 font-mono text-[10px] leading-tight text-white/90"
                     style={{ background: "rgba(0,0,0,0.7)", border: "1px solid rgba(255,255,255,0.18)" }}
                   >
-                    cam {scanDiag.videoW}×{scanDiag.videoH} · rs{scanDiag.readyState} · {scanDiag.phase} · tries {scanDiag.attempts} · {scanDiag.lastError || "—"}
+                    cam {scanDiag.videoW}×{scanDiag.videoH} · sharp {scanDiag.sharpness} · {scanDiag.phase} · tries {scanDiag.attempts} · {scanDiag.lastError || "—"}
                   </div>
                 ) : null}
 

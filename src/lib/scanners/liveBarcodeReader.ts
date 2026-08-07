@@ -45,10 +45,46 @@ export type ScanDiagnostic = {
   readyState: number;
   attempts: number;
   lastError: string;
+  /** Rough frame edge-energy: high = sharp/in-focus, low (< ~10) = blurry. */
+  sharpness: number;
 };
 
 function digitsOnly(value: string) {
   return String(value ?? "").replace(/\D/g, "");
+}
+
+// Cheap focus/blur gauge on a downscaled frame: average neighbour-pixel
+// luminance difference. A sharp, in-focus code scores high; a blurry one low.
+let _sharpCanvas: HTMLCanvasElement | null = null;
+function frameSharpness(video: HTMLVideoElement): number {
+  try {
+    if (typeof document === "undefined" || !video.videoWidth) return 0;
+    const w = 160;
+    const h = 120;
+    if (!_sharpCanvas) {
+      _sharpCanvas = document.createElement("canvas");
+      _sharpCanvas.width = w;
+      _sharpCanvas.height = h;
+    }
+    const ctx = _sharpCanvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return 0;
+    ctx.drawImage(video, 0, 0, w, h);
+    const data = ctx.getImageData(0, 0, w, h).data;
+    const lum = (i: number) => data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+    let total = 0;
+    let n = 0;
+    for (let y = 1; y < h - 1; y += 2) {
+      for (let x = 1; x < w - 1; x += 2) {
+        const i = (y * w + x) * 4;
+        const c = lum(i);
+        total += Math.abs(c - lum(i + 4)) + Math.abs(c - lum(i + w * 4));
+        n += 1;
+      }
+    }
+    return n ? Math.round(total / n) : 0;
+  } catch {
+    return 0;
+  }
 }
 
 function buildHints() {
@@ -83,6 +119,7 @@ export function startLiveBarcodeScan(
   let waitTimer: ReturnType<typeof setTimeout> | undefined;
   let attempts = 0;
   let lastError = "";
+  let sharpness = 0;
 
   function emit(phase: ScanDiagnostic["phase"]) {
     if (!onDiagnostic || stopped) return;
@@ -93,6 +130,7 @@ export function startLiveBarcodeScan(
       readyState: video.readyState,
       attempts,
       lastError,
+      sharpness,
     });
   }
 
@@ -106,8 +144,12 @@ export function startLiveBarcodeScan(
         if (error) {
           lastError = (error as { name?: string })?.name || error.constructor?.name || "err";
         }
-        // Report roughly a few times/sec so a stuck state is visible on screen.
-        if (attempts % 3 === 0) emit("decoding");
+        // Report roughly a few times/sec so a stuck state is visible on screen;
+        // recompute the (cheap) sharpness gauge on the same cadence.
+        if (attempts % 3 === 0) {
+          sharpness = frameSharpness(video);
+          emit("decoding");
+        }
 
         if (!result) return;
         // NotFoundException etc. come through as `error` with `result` null --
