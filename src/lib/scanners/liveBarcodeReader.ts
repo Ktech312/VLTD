@@ -65,38 +65,59 @@ export function startLiveBarcodeScan(
 ): () => void {
   const reader = new BrowserMultiFormatReader(buildHints(), timeBetweenScansMillis);
   let stopped = false;
+  let started = false;
+  let waitTimer: ReturnType<typeof setTimeout> | undefined;
 
-  try {
-    reader.decodeContinuously(video, (result, error) => {
-      if (stopped || !result) return;
-      // NotFoundException etc. come through as `error` with `result` null --
-      // already filtered by the `!result` check above, nothing to log here;
-      // it just means this particular frame had nothing decodable in it.
-      void error;
+  function beginDecoding() {
+    if (stopped || started) return;
+    started = true;
+    try {
+      reader.decodeContinuously(video, (result, error) => {
+        if (stopped || !result) return;
+        // NotFoundException etc. come through as `error` with `result` null --
+        // already filtered by the `!result` check above; it just means this
+        // particular frame had nothing decodable in it.
+        void error;
 
-      const rawValue = String(result.getText?.() ?? "");
-      if (!rawValue) return;
+        const rawValue = String(result.getText?.() ?? "");
+        if (!rawValue) return;
 
-      onResult({
-        rawValue,
-        digits: digitsOnly(rawValue),
-        format: normalizeFormatName(result.getBarcodeFormat?.()),
-        region: "live",
+        onResult({
+          rawValue,
+          digits: digitsOnly(rawValue),
+          format: normalizeFormatName(result.getBarcodeFormat?.()),
+          region: "live",
+        });
       });
-    });
-  } catch {
-    // Shouldn't happen (decodeContinuously doesn't throw synchronously for a
-    // valid video element), but don't take the camera down over a scanner
-    // failing to start.
+    } catch {
+      // Shouldn't happen for a valid, sized video element, but don't take the
+      // camera down over the scanner failing to start.
+    }
   }
+
+  // CRITICAL: ZXing sizes its capture canvas from `video.videoWidth/Height` on
+  // the FIRST decode and caches it permanently. On mobile (esp. iOS) the
+  // `canplay` event can fire while videoWidth is still 0, which would cache a
+  // 0x0 canvas forever -> every frame decodes a blank image -> nothing ever
+  // scans. So wait until the video actually has real pixels before starting.
+  function waitForVideoReady() {
+    if (stopped || started) return;
+    if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+      beginDecoding();
+      return;
+    }
+    waitTimer = setTimeout(waitForVideoReady, 120);
+  }
+  waitForVideoReady();
 
   return () => {
     if (stopped) return;
     stopped = true;
+    if (waitTimer) clearTimeout(waitTimer);
     try {
       reader.stopContinuousDecode();
     } catch {
-      // already stopped / reader in a bad state -- nothing more to do
+      // already stopped / never started -- nothing more to do
     }
   };
 }
