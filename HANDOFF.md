@@ -42,11 +42,10 @@ is risky or can't be done, say so plainly.
   ask EK to run it. **Never add a new column to the cloud row map
   (`src/lib/vaultCloud.ts`) without the migration** — unknown columns make the
   `vault_items` upsert throw.
-  **⚠ ONE PENDING NOW:** `supabase/migrations/20260806_vault_item_tags.sql`
+  **✅ NO MIGRATIONS PENDING.** `supabase/migrations/20260806_vault_item_tags.sql`
   (adds `vault_items.tags text[]` + a GIN index, for the Halls search/tags
-  rebuild — see §B5) — **not run yet, ask EK.** Degrades safely if not run
-  (same graceful-fallback pattern as the PSA guard columns), but tags won't
-  persist to Supabase until it is.
+  rebuild — see §B5) — **confirmed run by EK.** Tags now persist to Supabase
+  for real.
   (`supabase/migrations/20260806_psa_api_guard.sql` — PSA cert-cache +
   daily-call-budget guard, see §B3 — **confirmed run by EK**, that guard is
   live. `20260803_saved_events.sql` and `20260803_profile_identity_fields.sql`
@@ -272,7 +271,7 @@ guess is what sent EK on a pointless "regenerate the token" detour.
   status requires and whether this account has/had it — not a token refresh
   or redeploy problem. **EK's action item now.**
 
-### B3b. PSA quota guard — built same night, so this can't happen again (⚠ migration not run yet)
+### B3b. PSA quota guard — built same night, so this can't happen again (migration confirmed run)
 Two real gaps this exposed, both fixed now:
 1. **Nothing was caching cert lookups.** A PSA cert's grade/subject/etc.
    never changes once issued — every repeat lookup of the same cert
@@ -348,10 +347,10 @@ saved, searchable field.
   saved Hall is just the existing `/museum/[galleryId]` page now, no
   separate route needed.
 - **Real `tags` field added to `VaultItem`**, synced to Supabase
-  (`supabase/migrations/20260806_vault_item_tags.sql` — **not run yet**, see
-  §0 ⚠) with the same graceful-fallback-if-column-missing pattern
-  `vaultCloud.ts` already uses for other optional columns, so saves don't
-  break before the migration lands.
+  (`supabase/migrations/20260806_vault_item_tags.sql` — **confirmed run by
+  EK**) with the same graceful-fallback-if-column-missing pattern
+  `vaultCloud.ts` already uses for other optional columns (belt-and-
+  suspenders now that it's live).
 - `src/lib/generateHashtags.ts` — extracted `SocialExportSheet`'s
   universe/category/title-keyword hashtag suggestion logic into a shared
   module (was duplicated nowhere else, but would have started drifting the
