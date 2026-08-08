@@ -30,6 +30,7 @@ type ProfileSummary = {
   displayName: string;
   username: string;
   memberSince: string;
+  memberSinceRaw?: string;
   profileType: "personal" | "business";
 };
 
@@ -92,6 +93,24 @@ function monthYear(value: unknown) {
   const date = value ? new Date(String(value)) : null;
   if (!date || Number.isNaN(date.getTime())) return "Apr 2024";
   return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+}
+
+/** Real elapsed time since signup, replacing what used to be a hardcoded
+ *  "1 year" for every account regardless of actual tenure. */
+function tenureFrom(value: unknown): string {
+  const date = value ? new Date(String(value)) : null;
+  if (!date || Number.isNaN(date.getTime())) return "";
+  const months = Math.max(
+    0,
+    (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24 * 30.44)
+  );
+  if (months < 1) return "New";
+  if (months < 24) {
+    const m = Math.round(months);
+    return `${m} month${m === 1 ? "" : "s"}`;
+  }
+  const years = Math.round(months / 12);
+  return `${years} year${years === 1 ? "" : "s"}`;
 }
 
 function Icon({ name, size = 30 }: { name: IconName; size?: number }) {
@@ -324,6 +343,7 @@ function StatStrip({
   items,
   galleries,
   memberSince,
+  memberSinceRaw,
   gainPct,
   followers,
 }: {
@@ -331,6 +351,7 @@ function StatStrip({
   items: number;
   galleries: number;
   memberSince: string;
+  memberSinceRaw?: string;
   gainPct: number | null;
   followers: number | null;
 }) {
@@ -339,7 +360,7 @@ function StatStrip({
     { label: "Items", value: String(items), sub: "Total" },
     { label: "Exhibitions", value: String(galleries), sub: "Public" },
     { label: "Followers", value: followers === null ? "--" : String(followers), sub: "Total" },
-    { label: "Member Since", value: memberSince, sub: "1 year" },
+    { label: "Member Since", value: memberSince, sub: tenureFrom(memberSinceRaw) || "—" },
   ];
   return (
     <div className="grid rounded-[9px] border" style={{ borderColor: border, background: panel }}>
@@ -385,6 +406,7 @@ export default function MorePage() {
             displayName: status.activeProfile.display_name || "EK's Collection",
             username: status.activeProfile.username || "collection",
             memberSince: monthYear((status.activeProfile as Record<string, unknown>).created_at),
+            memberSinceRaw: String((status.activeProfile as Record<string, unknown>).created_at ?? ""),
             profileType: status.activeProfile.profile_type === "business" ? "business" : "personal",
           });
           const profileItems = loadItems({ profileId });
@@ -493,7 +515,7 @@ export default function MorePage() {
                       <p className="mt-2 max-w-[430px] text-[12px] leading-[1.55]" style={{ color: muted }}>Panels keep common actions here. Deep workflows still open as full pages when they need room.</p>
                     </div>
                     <div className="w-full max-w-[690px]">
-                      <StatStrip value={totalValue} items={items.length} galleries={publicGalleries} memberSince={profile.memberSince} gainPct={gainPct} followers={followerCount} />
+                      <StatStrip value={totalValue} items={items.length} galleries={publicGalleries} memberSince={profile.memberSince} memberSinceRaw={profile.memberSinceRaw} gainPct={gainPct} followers={followerCount} />
                     </div>
                   </div>
 

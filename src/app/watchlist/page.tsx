@@ -139,22 +139,6 @@ function formatAgo(timestamp: number) {
 }
 
 
-function SparkLine({ tone = "cyan" }: { tone?: "cyan" | "green" }) {
-  const stroke = tone === "green" ? "#56D879" : "var(--info,#52D6F4)";
-  return (
-    <svg viewBox="0 0 420 156" className="h-full w-full" role="img" aria-label="Value history">
-      <defs>
-        <linearGradient id={`watch-fill-${tone}`} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor={stroke} stopOpacity="0.28" />
-          <stop offset="100%" stopColor={stroke} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d="M0 128 L28 118 L54 104 L78 111 L105 86 L132 92 L160 68 L190 72 L218 61 L248 69 L279 48 L310 53 L338 40 L366 35 L396 18 L420 5 L420 156 L0 156 Z" fill={`url(#watch-fill-${tone})`} />
-      <path d="M0 128 L28 118 L54 104 L78 111 L105 86 L132 92 L160 68 L190 72 L218 61 L248 69 L279 48 L310 53 L338 40 L366 35 L396 18 L420 5" fill="none" stroke={stroke} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function WatchCard({
   entry,
   selected,
@@ -652,12 +636,9 @@ export default function WatchlistPage() {
             <div className="mt-5">
               <div className="mb-2 flex items-center justify-between">
                 <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Value History</div>
-                <div className="flex gap-3 text-[11px] font-bold" style={{ color: "var(--theme-text-muted,#61656B)" }}>
-                  <span>7D</span><span>30D</span><span>3M</span><span>6M</span><span style={{ color: "var(--theme-gold,#C8CDD2)" }}>1Y</span><span>ALL</span>
-                </div>
               </div>
-              <div className="h-[150px] rounded-[7px] border border-[rgba(203,208,213,0.12)] bg-black/10 p-2">
-                <SparkLine />
+              <div className="rounded-[7px] border border-[rgba(203,208,213,0.16)] px-4 py-5 text-sm leading-6" style={{ color: "var(--theme-text-muted,#61656B)" }}>
+                No value-history tracking exists yet for watched items — this will show a real chart once that's built.
               </div>
             </div>
 

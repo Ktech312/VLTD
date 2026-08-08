@@ -75,21 +75,6 @@ function Ring({ pct, size = 92 }: { pct: number; size?: number }) {
   );
 }
 
-function SparkLine() {
-  return (
-    <svg viewBox="0 0 170 74" className="h-16 w-36" aria-label="Goal value graph">
-      <defs>
-        <linearGradient id="goalSpark" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="#56D879" stopOpacity="0.34" />
-          <stop offset="100%" stopColor="#56D879" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d="M8 62 L28 52 L42 46 L55 35 L70 42 L86 24 L101 30 L118 14 L133 21 L148 10 L162 16 L162 74 L8 74 Z" fill="url(#goalSpark)" />
-      <path d="M8 62 L28 52 L42 46 L55 35 L70 42 L86 24 L101 30 L118 14 L133 21 L148 10 L162 16" fill="none" stroke="#56D879" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function thumbForItem(item: VaultItem | undefined) {
   // Real photo when the item has one, else a Universe-matched placeholder — no
   // keyword-guessed stock art pretending to be the item.
@@ -377,10 +362,7 @@ export default function GoalsPage() {
             </StatPanel>
             <StatPanel label="Goal Value Impact">
               <div className="mt-2 text-[32px] font-black text-[color:var(--info,#52D6F4)]">{money(goalValueImpact)}</div>
-              <div className="flex items-end justify-between gap-2">
-                <p className="text-sm leading-5" style={{ color: "var(--theme-text-muted,#61656B)" }}>Potential increase across all goals</p>
-                <SparkLine />
-              </div>
+              <p className="text-sm leading-5" style={{ color: "var(--theme-text-muted,#61656B)" }}>Potential increase across all goals</p>
             </StatPanel>
             <StatPanel label="Insurance Coverage" icon={<Glyph name="shield" size={34} style={{ color: "var(--theme-gold,#C8CDD2)" }} />}>
               <div className="text-[32px] font-black text-[color:var(--info,#52D6F4)]">{insuranceGoal?.pct ?? 0}%</div>
