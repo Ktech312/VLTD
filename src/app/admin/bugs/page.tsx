@@ -13,6 +13,8 @@ type BugRow = {
   user_agent: string | null;
   status: string;
   created_at: string | null;
+  admin_reply: string | null;
+  admin_replied_at: string | null;
 };
 
 function formatDateTime(value: string | null) {
@@ -37,6 +39,8 @@ export default function AdminBugsPage() {
   const [rows, setRows] = useState<BugRow[]>([]);
   const [status, setStatus] = useState("");
   const [filter, setFilter] = useState<"open" | "all">("open");
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [sendingId, setSendingId] = useState<string | null>(null);
 
   const loadRows = useCallback(async () => {
     setStatus("Loading…");
@@ -72,6 +76,27 @@ export default function AdminBugsPage() {
       if (res.ok) await loadRows();
     } catch {
       /* no-op */
+    }
+  }
+
+  async function sendReply(id: string) {
+    const reply = (drafts[id] ?? "").trim();
+    if (!reply) return;
+    setSendingId(id);
+    try {
+      const res = await fetch("/api/admin/bugs", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...(await authHeader()) },
+        body: JSON.stringify({ id, reply }),
+      });
+      if (res.ok) {
+        setDrafts((prev) => ({ ...prev, [id]: "" }));
+        await loadRows();
+      }
+    } catch {
+      /* no-op */
+    } finally {
+      setSendingId(null);
     }
   }
 
@@ -163,6 +188,33 @@ export default function AdminBugsPage() {
                     <img src={r.screenshot_url} alt="screenshot" className="max-h-48 rounded-xl border border-[color:var(--border)]" />
                   </a>
                 )}
+
+                {r.admin_reply && (
+                  <div className="mt-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--pill)] p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-widest text-[color:var(--muted2)]">
+                      Your reply{r.admin_replied_at ? ` · ${formatDateTime(r.admin_replied_at)}` : ""}
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-[color:var(--fg)]">{r.admin_reply}</p>
+                  </div>
+                )}
+
+                <div className="mt-3 flex items-end gap-2">
+                  <textarea
+                    value={drafts[r.id] ?? ""}
+                    onChange={(e) => setDrafts((prev) => ({ ...prev, [r.id]: e.target.value }))}
+                    placeholder={r.admin_reply ? "Update your reply…" : "Reply to the reporter — they'll see this in their Alerts…"}
+                    rows={2}
+                    className="flex-1 resize-none rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-sm text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void sendReply(r.id)}
+                    disabled={sendingId === r.id || !(drafts[r.id] ?? "").trim()}
+                    className="h-9 shrink-0 rounded-full border border-[color:var(--border)] bg-[color:var(--pill)] px-4 text-sm font-semibold text-[color:var(--fg)] transition hover:brightness-110 disabled:opacity-50"
+                  >
+                    {sendingId === r.id ? "Sending…" : "Reply"}
+                  </button>
+                </div>
               </div>
             ))
           )}

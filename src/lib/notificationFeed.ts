@@ -205,6 +205,41 @@ export async function fetchAlerts(currentProfileId: string): Promise<AlertItem[]
     /* ignore */
   }
 
+  // 4. Your own bug reports — a reply or resolution from the admin. Every
+  // reporter is a signed-in user, so this reads their own rows directly
+  // (RLS: "read own bug_reports", user_id = auth.uid()) — works for anyone,
+  // not just admins.
+  try {
+    if (supabase) {
+      const { data: authData } = await supabase.auth.getUser();
+      const uid = authData?.user?.id;
+      if (uid) {
+        const { data: mine } = await supabase
+          .from("bug_reports")
+          .select("id, message, status, admin_reply, admin_replied_at, updated_at, created_at")
+          .eq("user_id", uid)
+          .order("updated_at", { ascending: false })
+          .limit(20);
+        for (const b of (mine ?? []) as {
+          id: string; message: string; status: string; admin_reply: string | null;
+          admin_replied_at: string | null; updated_at: string | null; created_at: string;
+        }[]) {
+          if (b.status !== "resolved" && !b.admin_reply) continue; // nothing to tell them yet
+          const snippet = (b.admin_reply ?? b.message ?? "").slice(0, 70) + ((b.admin_reply ?? b.message ?? "").length > 70 ? "…" : "");
+          out.push({
+            id: `mybug-${b.id}`,
+            kind: "bug",
+            title: b.admin_reply ? "Reply to your bug report" : "Your bug report was resolved",
+            subtitle: snippet,
+            createdAt: new Date(b.admin_replied_at || b.updated_at || b.created_at).getTime(),
+          });
+        }
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+
   return out.sort((a, b) => b.createdAt - a.createdAt).slice(0, 50);
 }
 
