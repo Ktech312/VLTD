@@ -14,6 +14,7 @@ export default function PWAInstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [show, setShow] = useState(false);
+  const [iosExpanded, setIosExpanded] = useState(false);
 
   useEffect(() => {
     // Already installed as PWA
@@ -107,18 +108,31 @@ export default function PWAInstallBanner() {
     );
   }
 
-  // iOS Safari — manual instructions
+  // iOS Safari — no install API exists, so tapping opens clear step-by-step
+  // instructions instead of silently doing nothing.
   if (isIOS) {
     return (
       <div
         style={pillStyle}
-        className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-[#12101C]/95 px-2 py-1.5 shadow-xl backdrop-blur-xl"
+        className="flex flex-col gap-1.5 rounded-xl border border-white/10 bg-[#12101C]/95 px-2 py-1.5 shadow-xl backdrop-blur-xl"
       >
-        <img src="/icons/icon-96x96.png" alt="VLTD" className="h-6 w-6 rounded-lg flex-shrink-0" />
-        <p className="text-[11px] font-semibold text-white whitespace-nowrap">
-          Tap <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline align-middle text-white/60"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> → Add to Home Screen
-        </p>
-        <XButton />
+        <div className="flex items-center gap-1.5">
+          <img src="/icons/icon-96x96.png" alt="VLTD" className="h-6 w-6 rounded-lg flex-shrink-0" />
+          <button
+            type="button"
+            onClick={() => setIosExpanded((v) => !v)}
+            className="flex-1 text-left text-[11px] font-semibold text-white whitespace-nowrap"
+          >
+            Tap <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline align-middle text-white/60"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> → Add to Home Screen
+          </button>
+          <XButton />
+        </div>
+        {iosExpanded && (
+          <p className="max-w-[240px] text-[10px] leading-snug text-white/70">
+            1. Tap the Share icon in Safari&apos;s toolbar.<br />
+            2. Scroll down and tap &quot;Add to Home Screen.&quot;
+          </p>
+        )}
       </div>
     );
   }
