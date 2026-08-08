@@ -44,9 +44,11 @@ import {
   markItemViewed,
   reorderImages,
   saveItem,
+  normalizeTags,
   type VaultImage,
   type VaultItem,
 } from "@/lib/vaultModel";
+import { generateHashtags } from "@/lib/generateHashtags";
 import {
   generateVaultImageKey,
   prepareImageBlob,
@@ -186,6 +188,79 @@ function Section({
       </div>
       <div className="mt-4">{children}</div>
     </section>
+  );
+}
+
+function TagsEditor({ item, onSave }: { item: VaultItem; onSave: (tags: string[]) => void }) {
+  const [draft, setDraft] = useState("");
+  const tags = item.tags ?? [];
+
+  const suggestions = useMemo(
+    () => generateHashtags(item).filter((t) => !tags.includes(t.toLowerCase())),
+    [item, tags]
+  );
+
+  function addTag(raw: string) {
+    const next = normalizeTags([...tags, raw]);
+    if (next) onSave(next);
+    setDraft("");
+  }
+
+  function removeTag(tag: string) {
+    onSave(tags.filter((t) => t !== tag));
+  }
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-2">
+        {tags.map((tag) => (
+          <span
+            key={tag}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-semibold ring-1"
+            style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}
+          >
+            #{tag}
+            <button onClick={() => removeTag(tag)} aria-label={`Remove ${tag}`} className="opacity-60 hover:opacity-100">
+              &#x2715;
+            </button>
+          </span>
+        ))}
+        <input
+          type="text"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if ((e.key === "Enter" || e.key === ",") && draft.trim()) {
+              e.preventDefault();
+              addTag(draft);
+            }
+          }}
+          placeholder={tags.length ? "Add another tag…" : "Add a tag…"}
+          className="min-w-[120px] flex-1 rounded-full px-3 py-1 text-[12px] outline-none ring-1 focus:ring-[color:var(--theme-gold)]"
+          style={{ background: "transparent", color: "var(--fg)", borderColor: "var(--border)" }}
+        />
+      </div>
+
+      {suggestions.length > 0 && (
+        <div className="mt-3">
+          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-[color:var(--muted2)]">
+            Suggested
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {suggestions.slice(0, 8).map((tag) => (
+              <button
+                key={tag}
+                onClick={() => addTag(tag)}
+                className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold ring-1 transition hover:bg-[color:var(--pill)]"
+                style={{ color: "var(--muted)", borderColor: "var(--border)" }}
+              >
+                + {tag}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1346,6 +1421,12 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 </div>
               </>
             )}
+          </Section>
+        </div>
+
+        <div className="mt-5">
+          <Section title="TAGS">
+            <TagsEditor item={item} onSave={(tags) => void persist({ ...item, tags })} />
           </Section>
         </div>
       </div>

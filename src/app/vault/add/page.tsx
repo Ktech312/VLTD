@@ -69,6 +69,7 @@ import {
   type VaultImage,
   type VaultItem,
 } from "@/lib/vaultModel";
+import { suggestAutoTags } from "@/lib/generateHashtags";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { hasSupabaseEnv, uploadVaultImageToSupabase } from "@/lib/vaultCloud";
 import {
@@ -2145,6 +2146,10 @@ export default function AddPage() {
         createdAt: now,
         isNew: true,
       };
+      // Auto-tag with a few real, searchable tags (same suggestion engine
+      // SocialExportSheet already used for caption hashtags) so this item
+      // shows up in Halls search from the start, not just after a manual edit.
+      item.tags = suggestAutoTags(item);
 
       appendItems([item]);
       enqueueVaultItemSync(item.id);

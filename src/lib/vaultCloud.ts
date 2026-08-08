@@ -115,6 +115,7 @@ function rowToItem(input: unknown): VaultItem {
     storageLocation: row.storage_location ?? undefined,
     certNumber: row.cert_number ?? undefined,
     serialNumber: row.serial_number ?? undefined,
+    tags: Array.isArray(row.tags) ? row.tags : undefined,
     valueSource: row.value_source ?? undefined,
     valueUpdatedAt: row.value_updated_at ?? undefined,
     valueConfidence: row.value_confidence ?? undefined,
@@ -301,6 +302,7 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
     storage_location: item.storageLocation ?? null,
     cert_number: item.certNumber ?? null,
     serial_number: item.serialNumber ?? null,
+    tags: item.tags ?? [],
     value_source: item.valueSource ?? null,
     value_updated_at: item.valueUpdatedAt ?? null,
     value_confidence: item.valueConfidence ?? null,
@@ -356,8 +358,10 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
     const missingVideoColumns =
       message.toLowerCase().includes("video_clip_url") ||
       message.toLowerCase().includes("video_clip_duration");
+    const missingTagsColumn = message.toLowerCase().includes("tags");
 
-    const isRecoverable = missingGalleryColumns || missingSoldColumns || missingVisibilityColumn || missingVideoColumns;
+    const isRecoverable =
+      missingGalleryColumns || missingSoldColumns || missingVisibilityColumn || missingVideoColumns || missingTagsColumn;
 
     if (!isRecoverable) {
       // Unrecognised error — log and surface it
@@ -392,6 +396,10 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
     if (missingVideoColumns) {
       delete fallbackRow.video_clip_url;
       delete fallbackRow.video_clip_duration;
+    }
+
+    if (missingTagsColumn) {
+      delete fallbackRow.tags;
     }
 
     const { error: fallbackError } = await supabase.from(VAULT_ITEMS_TABLE).upsert(fallbackRow);

@@ -70,6 +70,9 @@ export type VaultItem = {
   storageLocation?: string;
   certNumber?: string;
   serialNumber?: string;
+  /** Free-form user tags — used for the cross-category search/Halls builder
+   *  and for social-export hashtag suggestions. Stored lowercase, no "#". */
+  tags?: string[];
   subject?: string;
   edition?: string;
   variant?: string;
@@ -294,6 +297,22 @@ function sanitizePriceConfidence(value: unknown): PriceConfidence | undefined {
   return undefined;
 }
 
+/** Lowercase, trim, drop empties/dupes, strip a leading "#" (users may paste
+ *  hashtag-style). Order preserved (first-seen wins). */
+export function normalizeTags(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of value) {
+    if (typeof raw !== "string") continue;
+    const tag = raw.trim().replace(/^#/, "").toLowerCase();
+    if (!tag || seen.has(tag)) continue;
+    seen.add(tag);
+    out.push(tag);
+  }
+  return out.length ? out : undefined;
+}
+
 function sanitizeVaultStatus(value: unknown): VaultItem["status"] {
   if (value === "COLLECTION" || value === "FOR_SALE" || value === "SOLD" || value === "WISHLIST" || value === "AUCTION") return value;
   return undefined;
@@ -510,6 +529,7 @@ function normalizeOne(input: unknown): VaultItem | null {
     storageLocation: raw.storageLocation ?? undefined,
     certNumber: raw.certNumber ?? undefined,
     serialNumber: raw.serialNumber ?? undefined,
+    tags: normalizeTags(raw.tags),
     subject:
       typeof raw.subject === "string" && raw.subject.trim()
         ? raw.subject.trim()

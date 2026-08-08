@@ -10,6 +10,7 @@ import SellItemButton from "@/components/SellItemButton";
 import VaultExportButton from "@/components/VaultExportButton";
 import VaultWallView from "@/components/VaultWallView";
 import { PillButton } from "@/components/ui/PillButton";
+import { Glyph } from "@/components/ui/Glyph";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { universePlaceholder } from "@/lib/itemPlaceholder";
 import SwipeStack from "@/components/SwipeStack";
@@ -1458,6 +1459,7 @@ export default function VaultPage() {
             {/* Actions — below the title on mobile, right-aligned on the title row on desktop */}
             <div className="flex flex-wrap items-center gap-2 lg:shrink-0 lg:justify-end">
               <VaultExportButton />
+              <Link href="/vault/halls" className="inline-flex items-center justify-center gap-1.5 rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]"><Glyph name="building" size={14} />Halls</Link>
               <Link href="/vault/for-sale" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">For Sale</Link>
               <Link href="/vault/import" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Import</Link>
               <Link href="/vault/sold" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Sold</Link>

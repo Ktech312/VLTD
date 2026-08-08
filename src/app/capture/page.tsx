@@ -16,7 +16,8 @@ import { scanTcgCardRegionsFromFile } from "@/lib/scanners/tcgCardParser";
 import { lookupMtgCard, lookupPokemonCard, type CardLookupResult } from "@/lib/cardLookup";
 import { lookupUpcItem } from "@/lib/upcLookup";
 import { newId } from "@/lib/id";
-import { appendItems, type VaultImage } from "@/lib/vaultModel";
+import { appendItems, type VaultImage, type VaultItem } from "@/lib/vaultModel";
+import { suggestAutoTags } from "@/lib/generateHashtags";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
 import { hasSupabaseEnv, uploadVaultImageToSupabase } from "@/lib/vaultCloud";
 import {
@@ -658,7 +659,7 @@ export default function CapturePage() {
         ? await persistCapturedImages(id, capturedImages)
         : {};
 
-      const item = {
+      const item: Partial<VaultItem> & { id: string; title: string } = {
         id,
         title: fields.title.trim() || "Untitled Item",
         subtitle: fields.subtitle || undefined,
@@ -679,7 +680,13 @@ export default function CapturePage() {
         createdAt: Date.now(),
         ...imagePatch,
       };
-      await appendItems([item]);
+      // Auto-tag with a few real, searchable tags so this item shows up in
+      // Halls search from the start, not just after someone manually tags
+      // it -- same suggestion engine SocialExportSheet already used for
+      // caption hashtags, now saved as real data instead of computed fresh
+      // each time. Only applied on create, never overwrites a later edit.
+      item.tags = suggestAutoTags(item as VaultItem);
+      await appendItems([item as VaultItem]);
       emitVaultUpdate();
       router.push("/vault");
     } catch (err) {
