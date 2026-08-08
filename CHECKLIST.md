@@ -174,6 +174,49 @@ specifics, see `GRADING_AND_PRICING_APIS.md`.
   PSA/CGC) and update the same Vercel field.
 - ⬜ **Not yet retested** — waiting on the token check above.
 
+## Vault Halls rebuild (this session — replaced a leftover dead-session draft with EK's actual spec)
+A previous session died mid-work on a "Halls" feature: a hardcoded list of
+~40 pop-culture franchises (Marvel, DC, Star Wars, etc.) auto-tagging items
+by keyword match, with raw emoji as hall icons. EK's real spec was
+different and bigger — read it back to confirm, then built that instead:
+- ✅ **Real cross-category search engine** (`src/lib/vaultSearch.ts`): type a
+  term, matches appear selected by default; type another term and ITS
+  matches get ADDED to the set (OR, not narrowing AND) — "Marvel" +
+  "Spiderman" catches everything either finds. Searches title, subtitle,
+  subject, category, universe, and every manufacturer/brand field across
+  every universe (not just pop-culture) plus tags. Universe/Category
+  dropdowns narrow (AND) on top. Spelling variants ("Spider-Man"/"Spider
+  Man"/"Spiderman") match automatically via text normalization — no
+  hand-curated list needed.
+- ✅ **`/vault/halls` fully rewritten** — deselect what you don't want, name
+  the rest, save as a private exhibition (the existing gallery/Museum
+  system — a saved Hall is just a real gallery you can later share).
+  Deleted the old franchise-registry version and the now-unnecessary
+  `[franchise]` detail route + `franchiseDetect.ts` — viewing a saved Hall
+  is just the existing `/museum/[galleryId]` page.
+- ✅ **Real `tags` field added to `VaultItem`**, synced to Supabase (new
+  migration, cache-guard-style graceful fallback if it's not run yet) — the
+  persistent half of hashtags EK's spec wanted for both search AND social
+  sharing. `SocialExportSheet` already generated hashtag suggestions on the
+  fly for captions but never saved them; extracted that logic into
+  `src/lib/generateHashtags.ts` (shared, no more drift between two copies).
+- ✅ **New items auto-tag themselves** on creation (both `/capture` and
+  `/vault/add`) with a few of those generated suggestions, so search has
+  real data to find from day one instead of depending on manual tagging.
+- ✅ **Tags editor added to the item detail page** (chips + one-tap
+  suggestions) for adding/removing tags on any item, including everything
+  already in your vault from before this feature existed.
+- ⬜ **Migration not run yet**: `supabase/migrations/20260806_vault_item_tags.sql`
+  — ask EK.
+- ⬜ **Not tested live at all** — needs a real login. Try: search a term you
+  know matches something, confirm results + pre-selection behave as
+  described, save a Hall, add/remove a tag on an item page.
+- ⬜ **Suggested next, not started**: a "browse existing tags" chip row in
+  the Halls search bar (so you're picking from what's already tagged
+  instead of guessing spellings), and bulk-tagging for items added before
+  this feature existed (they all currently have zero tags unless
+  auto-generated retroactively, which hasn't been done).
+
 ---
 
 ## What actually needs YOUR action right now, in order
@@ -183,11 +226,14 @@ specifics, see `GRADING_AND_PRICING_APIS.md`.
    token alone didn't fix it.
 2. Check/fix the `DISCOGS_TOKEN` value in Vercel (empty or bad — vinyl
    lookup has never worked because of this).
-3. Test the barcode/QR badge again on a real phone (Quick Add + regular
+3. Run the new `20260806_vault_item_tags.sql` migration for the Halls/tags
+   rebuild, then actually try building a Hall and tagging an item — this
+   whole feature has never been tested logged-in.
+4. Test the barcode/QR badge again on a real phone (Quick Add + regular
    Add) — the scanning mechanism changed significantly tonight.
-4. Test a real Magic or Pokemon card via Identify — confirm Category/
+5. Test a real Magic or Pokemon card via Identify — confirm Category/
    Subcategory now update and the Rarity field shows up on `/capture`.
-5. Whenever you hear back from CardHedge, bring their answer (especially on
+6. Whenever you hear back from CardHedge, bring their answer (especially on
    comics coverage) back here.
-6. Once 3–4 above are confirmed working, the regular Add camera's visual
+7. Once 4–5 above are confirmed working, the regular Add camera's visual
    match to Quick Add is next in line — not started yet.

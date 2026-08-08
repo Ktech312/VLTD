@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated 2026-08-06, second pass — READ §2B FIRST: real device test came back, root-caused further + reshipped)
+# VLTD — Session Handoff (updated 2026-08-06, third pass — see §2B for barcode/PSA/Discogs status, §B5 for the new Halls/tags rebuild)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -42,10 +42,14 @@ is risky or can't be done, say so plainly.
   ask EK to run it. **Never add a new column to the cloud row map
   (`src/lib/vaultCloud.ts`) without the migration** — unknown columns make the
   `vault_items` upsert throw.
-  **✅ NO MIGRATIONS PENDING.** `supabase/migrations/20260806_psa_api_guard.sql`
-  (PSA cert-cache + daily-call-budget guard, see §B3) was **confirmed run by EK**
-  — the guard (permanent cert cache + 90/day internal budget) is now LIVE.
-  (`20260803_saved_events.sql` and `20260803_profile_identity_fields.sql`
+  **⚠ ONE PENDING NOW:** `supabase/migrations/20260806_vault_item_tags.sql`
+  (adds `vault_items.tags text[]` + a GIN index, for the Halls search/tags
+  rebuild — see §B5) — **not run yet, ask EK.** Degrades safely if not run
+  (same graceful-fallback pattern as the PSA guard columns), but tags won't
+  persist to Supabase until it is.
+  (`supabase/migrations/20260806_psa_api_guard.sql` — PSA cert-cache +
+  daily-call-budget guard, see §B3 — **confirmed run by EK**, that guard is
+  live. `20260803_saved_events.sql` and `20260803_profile_identity_fields.sql`
   were both confirmed run by EK on 2026-08-04 night — still fine.)
 - Live site: `https://vltd.vercel.app`. `vltd.app` intentionally not set up yet.
 - **AI vision is LIVE.** `ANTHROPIC_API_KEY` has been set in Vercel for months;
@@ -307,6 +311,66 @@ corners, flash, ghost counter, thumbnail placement, etc. described in §4's
 Quick Add rebuild notes. Not started — still waiting on B/B2 holding up on a
 real device per EK's explicit ordering (two rounds of "fixed" on B haven't
 held up yet, so don't start B4 on a third unconfirmed round either).
+
+### B5. Vault Halls — a dead-session draft got replaced with EK's actual spec; new cross-category search + real tags built
+A previous session died mid-work on `src/app/vault/halls/` — found it
+uncommitted, asked EK what direction it was going. The draft: a hardcoded
+list of ~40 pop-culture franchises (Marvel, DC, Star Wars, etc.), auto-
+tagging items by keyword match, raw emoji as hall icons (fixed the page
+chrome's emoji first, then EK clarified the REAL spec was different and
+bigger — read it back twice to confirm before building):
+
+**EK's actual spec:** pick your own search terms; each term's matches get
+ADDED to a working result set (OR, not a narrowing AND) — search "Marvel"
+then "Spiderman" and both sets show up together, even a non-Marvel-branded
+Spider-Man item. Everything found is selected by default; deselect what you
+don't want; name and save the rest. Has to work for every universe (Music,
+plants, bar items, everything), not just pop-culture. "Spider-Man"/"Spider
+Man"/"Spiderman" need to match as one term automatically, no manual
+spelling list. Hashtags matter for BOTH this search AND social sharing (EK's
+original spec) — confirmed hashtags already existed for sharing
+(`SocialExportSheet.tsx` generates them fresh each export) but never as a
+saved, searchable field.
+
+**Built:**
+- `src/lib/vaultSearch.ts` — the search engine. Normalizes text (strips
+  punctuation/case) so spelling variants match without a curated list;
+  searches title/subtitle/subject/category/universe/every manufacturer-ish
+  field per universe (comic publisher, toy brand, vinyl label, watch brand,
+  sports team, etc.)/tags. Universe+Category filter narrows (AND) on top of
+  the OR'd terms.
+- `src/app/vault/halls/page.tsx` — full rewrite. Term-chip search box, live
+  results (all pre-selected, tap to deselect), Universe/Category dropdowns,
+  name + "Save as Hall" → reuses the existing gallery/exhibition system (a
+  saved Hall is a real private gallery, shareable later the same way any
+  exhibition is). **Deleted** the old franchise-registry version, the
+  `[franchise]` detail route, and `src/lib/franchiseDetect.ts` — viewing a
+  saved Hall is just the existing `/museum/[galleryId]` page now, no
+  separate route needed.
+- **Real `tags` field added to `VaultItem`**, synced to Supabase
+  (`supabase/migrations/20260806_vault_item_tags.sql` — **not run yet**, see
+  §0 ⚠) with the same graceful-fallback-if-column-missing pattern
+  `vaultCloud.ts` already uses for other optional columns, so saves don't
+  break before the migration lands.
+- `src/lib/generateHashtags.ts` — extracted `SocialExportSheet`'s
+  universe/category/title-keyword hashtag suggestion logic into a shared
+  module (was duplicated nowhere else, but would have started drifting the
+  moment a second consumer needed it). New items now auto-save a few of
+  these as real tags on creation (`/capture` and `/vault/add` both) — so
+  Halls search has real data from day one instead of depending on everyone
+  remembering to tag manually.
+- Added a Tags editor (chips + one-tap suggestions pulled from the same
+  generator) to the item detail page, for editing tags on any item —
+  including the entire existing vault, which has zero tags today since this
+  field didn't exist before tonight.
+- `tsc`/`eslint`/`npm run build` all clean; verified via local dev server
+  that `/vault/halls` compiles and server-renders without error. **Not
+  tested with a real login at all** — the whole flow (search behavior,
+  save-as-Hall, tag editor) needs a real device/account test.
+- **Suggested, not started:** a "browse existing tags" chip row in the
+  search bar (pick from what's already tagged instead of guessing
+  spellings), and retroactive tagging for pre-existing items (they all have
+  zero tags right now — auto-tagging only runs on NEW items going forward).
 
 ### C. DOCUMENTS (capture builder §5 accordion) — DONE 2026-08-03
 EK's answer: "everything should be private unless shared" — that's a
