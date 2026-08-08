@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { Glyph } from "@/components/ui/Glyph";
+import { Glyph, universeGlyphName } from "@/components/ui/Glyph";
 
 import VaultMuseumView from "@/components/VaultMuseumView";
 import {
@@ -82,16 +82,10 @@ function Stat({ value, label }: { value: string | number; label: string }) {
 }
 
 // ─── Universe chip ────────────────────────────────────────────────────────────
-const UNIVERSE_EMOJI: Record<string, string> = {
-  TCG: "🃏", Sports: "⚾", Vinyl: "💿", Comics: "📚", Art: "🎨",
-  Toys: "🧸", Books: "📖", Coins: "🪙", Stamps: "📮", Film: "🎬",
-  Games: "🎮", Fashion: "👟", Watches: "⌚", Jewelry: "💎",
-};
 function UniverseChip({ universe, count }: { universe: string; count: number }) {
-  const emoji = UNIVERSE_EMOJI[universe] ?? "📦";
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]">
-      <span>{emoji}</span>
+      <Glyph name={universeGlyphName(universe)} size={13} />
       <span>{universe}</span>
       <span className="opacity-50">·</span>
       <span className="opacity-70">{count}</span>
@@ -117,7 +111,7 @@ function FeaturedCard({ item, onClick }: { item: VaultItem; onClick?: (item: Vau
             className="h-full w-full object-contain"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-4xl opacity-20">🖼</div>
+          <div className="flex h-full items-center justify-center opacity-20"><Glyph name="frame" size={40} /></div>
         )}
       </div>
       <div className="p-3">
@@ -217,7 +211,7 @@ function ProfileItemModal({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={getPrimaryImageUrl(singleItem)} alt={singleItem.title ?? ""} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
               ) : (
-                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40, opacity: 0.25 }}>🖼</div>
+                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.25 }}><Glyph name="frame" size={40} /></div>
               )}
             </div>
             <div style={{ marginTop: 14, textAlign: "center" }}>
@@ -279,12 +273,13 @@ function GalleryCard({ gallery, profileId }: { gallery: PublicGallery; profileId
           // eslint-disable-next-line @next/next/no-img-element
           <img src={gallery.coverImage} alt={gallery.title} className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full items-center justify-center text-3xl opacity-20">🏛️</div>
+          <div className="flex h-full items-center justify-center opacity-20"><Glyph name="building" size={28} /></div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         {gallery.views > 0 && (
           <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/50 px-2 py-0.5 text-[10px] text-white/80">
-            👁 {gallery.views.toLocaleString()}
+            <Glyph name="eye" size={11} />
+            {gallery.views.toLocaleString()}
           </div>
         )}
       </div>
@@ -508,7 +503,7 @@ export default function PublicVaultPage({
         {/* ── Empty state ── */}
         {items.length === 0 && (
           <div className="rounded-2xl bg-[color:var(--surface)] p-10 text-center ring-1 ring-[color:var(--border)] mb-10">
-            <div className="text-4xl mb-3">📦</div>
+            <div className="mb-3 flex justify-center"><Glyph name="box" size={36} /></div>
             <h2 className="text-lg font-semibold mb-1">Nothing public yet</h2>
             <p className="text-sm text-[color:var(--muted)] mb-5">
               {displayName} hasn&apos;t made any items public. Items are private by default.

@@ -438,7 +438,9 @@ export default function KickstarterPage() {
               color: "rgba(240,234,214,0.30)",
             }}
           >
-            <div style={{ fontSize: "48px", marginBottom: "14px" }}>🚀</div>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: "14px" }}>
+              <Glyph name="rocket" size={44} />
+            </div>
             <div
               style={{
                 fontSize: "16px",

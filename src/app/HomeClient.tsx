@@ -8,13 +8,14 @@ import { getOnboardingStatus } from "@/lib/auth";
 import { syncPublicProfile } from "@/lib/publicProfile";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { computeVaultStats } from "@/lib/vaultStats";
+import { readHistory, sliceHistory } from "@/lib/valueHistory";
 import { loadGalleries, refreshGalleriesFromSupabase, type Gallery } from "@/lib/galleryModel";
 import { getCollectionMetrics } from "@/lib/portfolioMetrics";
 import { getCollectionValuationScore } from "@/lib/collectionValuationScore";
 import { getCollectorStrength } from "@/lib/collectorStrength";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import SeasonalBanner from "@/components/SeasonalBanner";
-import { Glyph } from "@/components/ui/Glyph";
+import { Glyph, type GlyphName } from "@/components/ui/Glyph";
 
 const FOCUS_LS_KEY = "vltd_primary_focus";
 
@@ -40,17 +41,79 @@ const premiumBorder = "1px solid rgba(203,208,213,0.42)";
 const premiumShadow = "0 22px 66px rgba(0,0,0,0.38), inset 0 1px 0 rgba(237,239,241,0.08)";
 
 // ── Social platforms ─────────────────────────────────────────────
+// icon: a GlyphName renders as the themed line-art icon. The two plain-text
+// symbols (X's wordmark, a play triangle) are simple monochrome characters
+// rather than colorful emoji, so they're left as text same as the ✓/✕/★
+// affordances used elsewhere in the app.
 const SOCIAL_DEFS = [
-  { key: "instagram",  label: "Instagram",  icon: "📸", prefix: "https://instagram.com/" },
+  { key: "instagram",  label: "Instagram",  icon: "camera" as GlyphName, prefix: "https://instagram.com/" },
   { key: "twitter",    label: "X / Twitter",icon: "𝕏",  prefix: "https://x.com/" },
-  { key: "tiktok",     label: "TikTok",     icon: "🎵", prefix: "https://tiktok.com/@" },
+  { key: "tiktok",     label: "TikTok",     icon: "music" as GlyphName, prefix: "https://tiktok.com/@" },
   { key: "youtube",    label: "YouTube",    icon: "▶️", prefix: "https://youtube.com/@" },
-  { key: "facebook",   label: "Facebook",   icon: "👥", prefix: "https://facebook.com/" },
-  { key: "whatnot",    label: "Whatnot",    icon: "🔨", prefix: "https://whatnot.com/user/" },
-  { key: "ebay",       label: "eBay Store", icon: "🛒", prefix: "https://ebay.com/usr/" },
-  { key: "website",    label: "Website",    icon: "🌐", prefix: "" },
-  { key: "linktree",   label: "Linktree",   icon: "🌿", prefix: "https://linktr.ee/" },
+  { key: "facebook",   label: "Facebook",   icon: "users" as GlyphName, prefix: "https://facebook.com/" },
+  { key: "whatnot",    label: "Whatnot",    icon: "gavel" as GlyphName, prefix: "https://whatnot.com/user/" },
+  { key: "ebay",       label: "eBay Store", icon: "cart" as GlyphName, prefix: "https://ebay.com/usr/" },
+  { key: "website",    label: "Website",    icon: "globe" as GlyphName, prefix: "" },
+  { key: "linktree",   label: "Linktree",   icon: "leaf" as GlyphName, prefix: "https://linktr.ee/" },
 ] as const;
+
+// Compact sidebar value-history chart — real data only, same rule
+// InsightsOverview.tsx already follows for the full-size version ("Real data
+// only — no invented fallback series"). Previously this rendered a fixed,
+// hardcoded "steady climb" SVG path regardless of the user's actual history.
+function CollectionValueSparkline({ points }: { points: { day: string; totalValue: number }[] }) {
+  if (points.length < 2) {
+    return (
+      <div style={{ marginTop: "14px", fontSize: "11px", color: "#61656B" }}>
+        Value history builds up daily — check back soon.
+      </div>
+    );
+  }
+
+  const series = points.map((p) => p.totalValue);
+  const w = 230;
+  const h = 52;
+  const min = Math.min(...series);
+  const max = Math.max(...series);
+  const span = Math.max(1, max - min);
+  const pts = series.map((v, i) => {
+    const x = (i * w) / Math.max(1, series.length - 1);
+    const y = 2 + (1 - (v - min) / span) * (h - 6);
+    return [x, y] as const;
+  });
+  const line = pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+  const area = `0,${h} ${line} ${w},${h}`;
+  const [lastX, lastY] = pts[pts.length - 1];
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} width="100%" height="48" style={{ marginTop: "14px" }}>
+      <defs>
+        <linearGradient id="dashboardValueArea" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#52D6F4" stopOpacity=".18" />
+          <stop offset="58%" stopColor="#4CAF82" stopOpacity=".10" />
+          <stop offset="100%" stopColor="#52D6F4" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="dashboardValueLine" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#52D6F4" />
+          <stop offset="54%" stopColor="#4CAF82" />
+          <stop offset="100%" stopColor="#52D6F4" />
+        </linearGradient>
+      </defs>
+      <polygon points={area} fill="url(#dashboardValueArea)" />
+      <polyline points={line} fill="none" stroke="#52D6F4" strokeOpacity=".24" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+      <polyline points={line} fill="none" stroke="url(#dashboardValueLine)" strokeWidth="2.4" strokeLinejoin="round" />
+      <circle cx={lastX} cy={lastY} r="2.7" fill="#52D6F4" />
+    </svg>
+  );
+}
+
+function SocialIcon({ icon, size = 13 }: { icon: string; size?: number }) {
+  const glyphNames: string[] = ["camera", "music", "users", "gavel", "cart", "globe", "leaf"];
+  if (glyphNames.includes(icon)) {
+    return <Glyph name={icon as GlyphName} size={size} style={{ display: "inline-block", verticalAlign: "middle" }} />;
+  }
+  return <>{icon}</>;
+}
 type SocialKey = typeof SOCIAL_DEFS[number]["key"];
 type SocialLinks = Partial<Record<SocialKey, string>>;
 
@@ -280,8 +343,8 @@ function AvatarPickerModal({
           {/* Upload */}
           <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleUpload} />
           <button onClick={() => fileInputRef.current?.click()}
-            style={{ width: "100%", padding: "9px", borderRadius: "6px", border: `1px dashed ${C.goldBd}`, background: "none", color: C.muted, fontSize: "12px", cursor: "pointer", marginBottom: "14px" }}>
-            {uploading ? "Uploading…" : "📷  Upload your own photo"}
+            style={{ width: "100%", padding: "9px", borderRadius: "6px", border: `1px dashed ${C.goldBd}`, background: "none", color: C.muted, fontSize: "12px", cursor: "pointer", marginBottom: "14px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+            {uploading ? "Uploading…" : (<><Glyph name="camera" size={13} />Upload your own photo</>)}
           </button>
 
           {/* Save / Cancel */}
@@ -537,7 +600,7 @@ function SocialLinksCard({ profileId, bio: initialBio, socialLinks: initialLinks
           <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
             {SOCIAL_DEFS.map((def) => (
               <div key={def.key} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontSize: "13px", width: "18px", textAlign: "center", flexShrink: 0 }}>{def.icon}</span>
+                <span style={{ fontSize: "13px", width: "18px", textAlign: "center", flexShrink: 0, display: "inline-flex", justifyContent: "center" }}><SocialIcon icon={def.icon} /></span>
                 <span style={{ fontSize: "11px", color: C.muted, width: "72px", flexShrink: 0 }}>{def.label}</span>
                 <input value={links[def.key] ?? ""} onChange={(e) => setLinks((prev) => ({ ...prev, [def.key]: e.target.value }))}
                   placeholder={def.key === "website" ? "https://yoursite.com" : "username"}
@@ -553,7 +616,7 @@ function SocialLinksCard({ profileId, bio: initialBio, socialLinks: initialLinks
               return (
                 <a key={def.key} href={url} target="_blank" rel="noopener noreferrer"
                   style={{ display: "inline-flex", alignItems: "center", gap: "5px", borderRadius: "4px", border: `1px solid ${C.goldBd}`, background: C.goldDim, padding: "4px 8px", fontSize: "11px", color: "#C8BFA8", textDecoration: "none" }}>
-                  <span style={{ fontSize: "12px" }}>{def.icon}</span><span>{def.label}</span>
+                  <span style={{ fontSize: "12px", display: "inline-flex" }}><SocialIcon icon={def.icon} size={12} /></span><span>{def.label}</span>
                 </a>
               );
             })}
@@ -691,7 +754,7 @@ function ProfileNudge({ primaryFocus }: { primaryFocus: string }) {
       background: "rgba(203,208,213,0.08)",
       border: "1px solid rgba(203,208,213,0.22)",
     }}>
-      <span className="text-lg shrink-0">✨</span>
+      <Glyph name="sparkle" size={20} className="shrink-0" style={{ color: "#C8CDD2" }} />
       <div className="flex-1 min-w-0">
         <div style={{ fontSize: "12px", fontWeight: 700, color: "#C8CDD2" }}>Complete your profile</div>
         <div style={{ fontSize: "11px", color: "#61656B", marginTop: "1px" }}>
@@ -785,6 +848,7 @@ export default function HomeClient() {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [items, setItems] = useState<VaultItem[]>([]);
   const [galleries, setGalleries] = useState<Gallery[]>([]);
+  const [valuePoints, setValuePoints] = useState<{ day: string; totalValue: number }[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -808,6 +872,7 @@ export default function HomeClient() {
         await syncVaultItemsFromSupabase();
         void syncPublicProfile(profile?.id ?? undefined);
         setItems(loadItems());
+        setValuePoints(sliceHistory(readHistory(), "30d").map((p) => ({ day: p.day, totalValue: p.totalValue })));
         void refreshGalleriesFromSupabase(true).then(() => {
           setGalleries(loadGalleries().filter((g) => g.state === "ACTIVE" && g.visibility === "PUBLIC"));
         });
@@ -1019,24 +1084,7 @@ export default function HomeClient() {
                 <span style={{ fontSize: "11px", color: C.muted }}>overall return</span>
               </div>
             )}
-            <svg viewBox="0 0 230 52" width="100%" height="48" style={{ marginTop: "14px" }}>
-              <defs>
-                <linearGradient id="dashboardValueArea" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#52D6F4" stopOpacity=".18"/>
-                  <stop offset="58%" stopColor="#4CAF82" stopOpacity=".10"/>
-                  <stop offset="100%" stopColor="#52D6F4" stopOpacity="0"/>
-                </linearGradient>
-                <linearGradient id="dashboardValueLine" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#52D6F4"/>
-                  <stop offset="54%" stopColor="#4CAF82"/>
-                  <stop offset="100%" stopColor="#52D6F4"/>
-                </linearGradient>
-              </defs>
-              <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2 L230 52 L0 52Z" fill="url(#dashboardValueArea)"/>
-              <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2" fill="none" stroke="#52D6F4" strokeOpacity=".24" strokeWidth="6" strokeLinecap="round"/>
-              <path d="M0 46 C20 44 35 40 55 35 C75 30 90 26 110 22 C130 18 150 12 170 9 C190 6 210 4 230 2" fill="none" stroke="url(#dashboardValueLine)" strokeWidth="2.4"/>
-              <circle cx="230" cy="2" r="2.7" fill="#52D6F4"/>
-            </svg>
+            <CollectionValueSparkline points={valuePoints} />
             <Link href="/vault/sold" style={{ display: "block", textAlign: "center", marginTop: "8px", fontSize: "11px", color: C.muted, textDecoration: "none" }}>View analytics →</Link>
           </div>
 

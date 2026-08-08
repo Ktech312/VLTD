@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { fetchActiveThemes, type SeasonalTheme } from "@/lib/seasonalTheme";
+import { Glyph } from "@/components/ui/Glyph";
 
 const ROTATE_MS = 35_000;
 const THEME_PREF_KEY = "vltd_theme_overrides";
@@ -327,7 +328,10 @@ export default function SeasonalBanner() {
         <div
           className="flex items-center justify-between gap-2 px-3 pb-2"
         >
-          <p className="text-[10px]" style={{ color: `${accent}bb` }}>🎨 Switch app theme?</p>
+          <p className="flex items-center gap-1 text-[10px]" style={{ color: `${accent}bb` }}>
+            <Glyph name="palette" size={11} />
+            Switch app theme?
+          </p>
           <div className="flex gap-1.5 flex-shrink-0">
             <button
               onClick={(e) => {

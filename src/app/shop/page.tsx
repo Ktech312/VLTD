@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Glyph, type GlyphName } from "@/components/ui/Glyph";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,15 +29,15 @@ type Product = {
   badge?: string;
 };
 
-const CATEGORIES: { key: ProductCategory; label: string; emoji: string }[] = [
-  { key: "all",     label: "All",          emoji: "🛍️" },
-  { key: "sleeves", label: "Card Sleeves",  emoji: "🃏" },
-  { key: "slabs",   label: "Slabs & Cases", emoji: "🔲" },
-  { key: "display", label: "Display Cases", emoji: "🏛️" },
-  { key: "storage", label: "Storage Boxes", emoji: "📦" },
-  { key: "binders", label: "Binders",       emoji: "📒" },
-  { key: "tools",   label: "Tools",         emoji: "🔧" },
-  { key: "grading", label: "Grading Prep",  emoji: "⭐" },
+const CATEGORIES: { key: ProductCategory; label: string; glyph: GlyphName }[] = [
+  { key: "all",     label: "All",          glyph: "cart" },
+  { key: "sleeves", label: "Card Sleeves",  glyph: "cards" },
+  { key: "slabs",   label: "Slabs & Cases", glyph: "frame" },
+  { key: "display", label: "Display Cases", glyph: "building" },
+  { key: "storage", label: "Storage Boxes", glyph: "box" },
+  { key: "binders", label: "Binders",       glyph: "book" },
+  { key: "tools",   label: "Tools",         glyph: "wrench" },
+  { key: "grading", label: "Grading Prep",  glyph: "star" },
 ];
 
 const PRODUCTS: Product[] = [
@@ -490,7 +491,7 @@ export default function ShopPage() {
                     color: category === c.key ? "#0B0B0B" : "var(--fg)",
                   }}
                 >
-                  <span>{c.emoji}</span>
+                  <Glyph name={c.glyph} size={13} />
                   <span>{c.label}</span>
                   <span className="text-[10px] opacity-60">({count})</span>
                 </button>
@@ -504,7 +505,7 @@ export default function ShopPage() {
       <div className="mx-auto max-w-6xl px-4 py-8">
         {displayed.length === 0 ? (
           <div className="text-center py-20">
-            <div className="text-4xl mb-3">🔍</div>
+            <div className="mb-3 flex justify-center"><Glyph name="search" size={36} /></div>
             <div className="text-sm" style={{ color: "var(--muted)" }}>No products match your search.</div>
             <button
               onClick={() => { setSearch(""); setCategory("all"); }}
