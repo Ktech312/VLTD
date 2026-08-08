@@ -7,22 +7,19 @@ emoji/pill sweeps). For the full narrative detail behind any line here, see
 `HANDOFF.md`; for grading/pricing API specifics, see
 `GRADING_AND_PRICING_APIS.md`.
 
-## ⚠ NEWEST — fresh iPhone bug report, not investigated yet (see HANDOFF.md §B7)
-EK tested live on iPhone Safari, Light Mode, right as this chat ran out of
-room — reported with a screenshot, zero investigation done yet:
-- ⬜ **Text unreadable in Light Mode** — home dashboard hero card heading/body
-  text and "Featured Gallery" section text render at very low contrast
-  (dark-mode text color seemingly not switching for light mode). Buttons
-  were fine, plain text next to them wasn't.
-- ⬜ **"Add to Home Screen" prompt banner doesn't work on iPhone** — tapping
-  it does nothing. Possibly assumes an Android-only install-prompt API that
-  doesn't exist in iOS Safari.
-- ⬜ **Top-left VLTD logo washed out in Light Mode** — likely same root cause
-  family as the text-contrast bug.
-- **Next session starts here.** Check `ThemeContext.tsx`/`src/lib/themes.ts`
-  (confirmed real and in use) for how light-mode values are applied; resize
-  browser preview to mobile + toggle light mode to reproduce before
-  touching anything.
+## iPhone bug report (see HANDOFF.md §B7) — all 3 FIXED
+EK tested live on iPhone Safari, Light Mode, reported with a screenshot:
+- ✅ **Text unreadable in Light Mode** — hero card's muted text color
+  (`HomeClient.tsx`'s `C.muted`) was too dark for its own always-dark panel
+  background (~2.5:1 contrast). Bumped to a lighter gray already used
+  elsewhere in the app's dark theme (~6:1 contrast).
+- ✅ **"Add to Home Screen" prompt banner doesn't work on iPhone** —
+  `PWAInstallBanner.tsx`'s iOS branch had no tap handler at all (iOS has no
+  install API to call). Tapping it now expands real step-by-step
+  instructions instead of no-oping.
+- ✅ **Top-left VLTD logo washed out in Light Mode** — `TopNav.tsx` had a
+  hardcoded `brightness(1.4)` filter tuned only for a dark navbar. Removed
+  it; the logo's own dark+gold art is legible either way.
 
 ---
 
