@@ -42,7 +42,10 @@ is risky or can't be done, say so plainly.
   ask EK to run it. **Never add a new column to the cloud row map
   (`src/lib/vaultCloud.ts`) without the migration** — unknown columns make the
   `vault_items` upsert throw.
-  **✅ NO MIGRATIONS PENDING.** `supabase/migrations/20260806_vault_item_tags.sql`
+  **⚠ ONE PENDING NOW: `supabase/migrations/20260808_bug_report_replies.sql`**
+  (adds `admin_reply`/`admin_replied_at`/`updated_at` to `bug_reports`, for
+  the reporter-notification feature below). Not run yet — ask EK.
+  `supabase/migrations/20260806_vault_item_tags.sql`
   (adds `vault_items.tags text[]` + a GIN index, for the Halls search/tags
   rebuild — see §B5) — **confirmed run by EK.** Tags now persist to Supabase
   for real.
@@ -649,6 +652,17 @@ write that migration blind since it's payment-adjacent data.
 ---
 
 ## 4. Done recently (don't redo)
+- **2026-08-08 — bug-report two-way communication.** EK: resolving a bug
+  report should tell the reporter, and EK should be able to reply, not just
+  flip a status pill. Built in-app only (EK's explicit call — email would
+  need a new third-party service, deferred for now, may revisit later).
+  Migration `20260808_bug_report_replies.sql` (⚠ not yet run, see §0) adds
+  `admin_reply`/`admin_replied_at`/`updated_at` to `bug_reports`. Admin bugs
+  page (`/admin/bugs`) now shows any existing reply + a reply composer per
+  report. `notificationFeed.ts` gained a new source that reads the
+  *reporter's own* rows (RLS already allowed this — `user_id = auth.uid()`,
+  wasn't being used) and surfaces a "resolved" or "reply" alert via the
+  existing Alerts bell once you resolve or reply.
 - **Follow-up (2026-08-05 night), after EK reviewed the orphaned-files report
   and said "do all A/B/C":**
   - **A. Comic barcode/OCR scanner wired in** — `runAiIdentify()` in
