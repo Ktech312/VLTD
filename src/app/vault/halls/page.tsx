@@ -22,11 +22,14 @@ import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { universePlaceholder } from "@/lib/itemPlaceholder";
 import {
   loadItems,
+  saveItems,
   syncVaultItemsFromSupabase,
   getPrimaryImageUrl,
   type VaultItem,
 } from "@/lib/vaultModel";
+import { syncAllItemsToCloud } from "@/lib/vaultSyncQueue";
 import { searchVaultItems } from "@/lib/vaultSearch";
+import { suggestAutoTags } from "@/lib/generateHashtags";
 import { getUniverses, getCategories, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { createGallery, updateGallery, setGalleryItemIds, loadGalleries, type Gallery } from "@/lib/galleryModel";
 
@@ -243,6 +246,8 @@ export default function VaultHallsPage() {
   const [deselectedIds, setDeselectedIds] = useState<Set<string>>(new Set());
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [backfilling, setBackfilling] = useState(false);
+  const [backfillStatus, setBackfillStatus] = useState("");
 
   function refresh() {
     setItems(loadItems());
@@ -273,6 +278,50 @@ export default function VaultHallsPage() {
 
   const categoryOptions = universe ? getCategories(universe) : [];
   const hasSearch = terms.length > 0;
+
+  // Every tag actually in use across the vault, most-used first -- lets
+  // people search by picking a real tag instead of guessing a spelling.
+  const popularTags = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const item of items) {
+      for (const tag of item.tags ?? []) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([tag]) => tag)
+      .filter((tag) => !terms.some((t) => t.toLowerCase() === tag.toLowerCase()));
+  }, [items, terms]);
+
+  const untaggedCount = useMemo(() => items.filter((i) => !i.tags || i.tags.length === 0).length, [items]);
+
+  // Retroactive tagging -- auto-tagging on save only covers NEW items, so
+  // everything already in the vault before this feature existed has zero
+  // tags otherwise. Same suggestion engine as item creation.
+  async function backfillTags() {
+    if (backfilling) return;
+    setBackfilling(true);
+    setBackfillStatus("");
+    try {
+      const allItems = loadItems({ includeAllProfiles: true });
+      let taggedCount = 0;
+      const updated = allItems.map((item) => {
+        if (item.tags && item.tags.length > 0) return item;
+        const tags = suggestAutoTags(item);
+        if (!tags.length) return item;
+        taggedCount += 1;
+        return { ...item, tags };
+      });
+      saveItems(updated);
+      setItems(loadItems());
+      setBackfillStatus(`Tagged ${taggedCount} item${taggedCount === 1 ? "" : "s"}.`);
+      void syncAllItemsToCloud().catch(console.error);
+    } catch (e) {
+      console.error("Backfill tagging failed", e);
+      setBackfillStatus("Something went wrong tagging your items.");
+    } finally {
+      setBackfilling(false);
+    }
+  }
 
   function addTerm(term: string) {
     setTerms((prev) => (prev.some((t) => t.toLowerCase() === term.toLowerCase()) ? prev : [...prev, term]));
@@ -362,6 +411,23 @@ export default function VaultHallsPage() {
                 </div>
               </div>
             )}
+
+            {/* Browse existing tags — pick from what's real instead of guessing spellings */}
+            {!isEmptyVault && popularTags.length > 0 && (
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-[color:var(--muted2)]">Tags:</span>
+                {popularTags.slice(0, 12).map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => addTerm(tag)}
+                    className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold ring-1 transition hover:bg-[color:var(--pill)]"
+                    style={{ color: "var(--muted)", borderColor: "var(--border)" }}
+                  >
+                    #{tag}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -392,6 +458,27 @@ export default function VaultHallsPage() {
                 &ldquo;Spiderman&rdquo; together to catch everything either one turns up. Everything found is
                 selected by default; tap an item to leave it out, then save the rest under whatever name you want.
               </p>
+            </div>
+          )}
+
+          {!isEmptyVault && !hasSearch && untaggedCount > 0 && (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[color:var(--surface)] px-5 py-3 ring-1 ring-[color:var(--border)]">
+              <p className="text-[13px] text-[color:var(--muted)]">
+                <span className="font-semibold text-[color:var(--fg)]">{untaggedCount}</span> item
+                {untaggedCount === 1 ? "" : "s"} in your vault {untaggedCount === 1 ? "has" : "have"} no tags yet —
+                auto-tagging only runs on new items, so anything added before this feature won't show up in tag
+                search until it's tagged.
+              </p>
+              <div className="flex items-center gap-2">
+                {backfillStatus && <span className="text-[12px] text-[color:var(--muted)]">{backfillStatus}</span>}
+                <button
+                  onClick={() => void backfillTags()}
+                  disabled={backfilling}
+                  className="shrink-0 rounded-[8px] bg-[color:var(--theme-gold)] px-4 py-1.5 text-sm font-black text-black hover:opacity-85 transition-opacity disabled:opacity-40"
+                >
+                  {backfilling ? "Tagging…" : "Auto-tag my collection"}
+                </button>
+              </div>
             </div>
           )}
 

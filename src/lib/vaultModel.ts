@@ -297,6 +297,18 @@ function sanitizePriceConfidence(value: unknown): PriceConfidence | undefined {
   return undefined;
 }
 
+/** Generic string-array sanitizer -- drops non-strings/empties, trims, keeps
+ *  original casing (unlike normalizeTags) since callers like itemAttributes
+ *  need to match taxonomy checkbox labels exactly. */
+function normalizeStringArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const out = value
+    .filter((v): v is string => typeof v === "string")
+    .map((v) => v.trim())
+    .filter(Boolean);
+  return out.length ? out : undefined;
+}
+
 /** Lowercase, trim, drop empties/dupes, strip a leading "#" (users may paste
  *  hashtag-style). Order preserved (first-seen wins). */
 export function normalizeTags(value: unknown): string[] | undefined {
@@ -475,6 +487,11 @@ function normalizeOne(input: unknown): VaultItem | null {
   return {
     id: String(raw.id ?? "").trim() || newId(),
     profile_id: normalizeProfileId(raw.profile_id ?? raw.profileId),
+    // Permanent, server-assigned tracking code -- never generated locally,
+    // only ever arrives via a Supabase sync merge. Was missing here, so once
+    // a synced item picked one up, the next local reload silently dropped
+    // it again before the following sync could re-confirm it.
+    itemCode: typeof raw.itemCode === "string" && raw.itemCode.trim() ? raw.itemCode.trim() : undefined,
     universe: raw.universe ?? undefined,
     category: raw.category ?? undefined,
     customCategoryLabel: raw.customCategoryLabel ?? undefined,
@@ -724,6 +741,24 @@ function normalizeOne(input: unknown): VaultItem | null {
     consoleCables: raw.consoleCables === true ? true : undefined,
     consoleBox: raw.consoleBox === true ? true : undefined,
     consoleTested: raw.consoleTested === true ? true : undefined,
+    // Universal Type dropdown + Attributes checkboxes -- these were declared
+    // on the VaultItem type and written correctly on save, but missing here
+    // meant loadRawItems() silently stripped them (and immediately
+    // persisted the stripped copy) the very next time the vault reloaded.
+    // Real, active UI (vault/add's Type/Attributes section) -- not dead code.
+    itemType: typeof raw.itemType === "string" && raw.itemType.trim() ? raw.itemType.trim() : undefined,
+    itemAttributes: normalizeStringArray(raw.itemAttributes),
+    // Video clip (beta) -- same bug: already synced correctly to Supabase
+    // (vaultCloud.ts's video_clip_url/video_clip_duration), but the
+    // LOCAL copy lost it on every reload before any sync could restore it.
+    videoClip:
+      raw.videoClip && typeof raw.videoClip === "object" && typeof raw.videoClip.url === "string"
+        ? {
+            url: raw.videoClip.url,
+            durationSeconds:
+              typeof raw.videoClip.durationSeconds === "number" ? raw.videoClip.durationSeconds : 0,
+          }
+        : undefined,
   };
 }
 
