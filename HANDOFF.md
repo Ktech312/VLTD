@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated 2026-08-06, third pass — see §2B for barcode/PSA/Discogs status, §B5 for the new Halls/tags rebuild)
+# VLTD — Session Handoff (updated, fourth pass — see §2B for barcode/PSA/Discogs status, §B5 for the Halls/tags rebuild, §B6 for the overnight cleanup pass)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -366,10 +366,82 @@ saved, searchable field.
   that `/vault/halls` compiles and server-renders without error. **Not
   tested with a real login at all** — the whole flow (search behavior,
   save-as-Hall, tag editor) needs a real device/account test.
-- **Suggested, not started:** a "browse existing tags" chip row in the
-  search bar (pick from what's already tagged instead of guessing
-  spellings), and retroactive tagging for pre-existing items (they all have
-  zero tags right now — auto-tagging only runs on NEW items going forward).
+- **Since built:** a "browse existing tags" chip row in the search bar
+  (most-used tags across the vault, tap to add as a search term), and an
+  "Auto-tag my collection" button on `/vault/halls` that backfills tags on
+  every item that predates this feature. Both were "suggested, not started"
+  as of the last handoff pass — now done, still needs a real login to test.
+
+### B6. Overnight cleanup pass — a real data-loss bug fix + dead-code/fake-data/emoji/pill sweeps
+EK asked, after the Halls work: "what else can you work on over night" →
+"do 1-4 and any other clean sweeps you can do to clean up any code." Ran
+four sweeps, all verified with `tsc`/`eslint`/`npm run build` after each:
+
+1. **Real data-loss bug, found while reviewing the tags work, now fixed.**
+   `normalizeOne()` in `vaultModel.ts` is a strict allow-list — any
+   `VaultItem` field missing from its return object gets silently dropped
+   the next time the vault reloads, and `loadRawItems()` immediately
+   persists that stripped copy back to storage (so it's not just a display
+   glitch, it's permanent). Confirmed four real fields hitting this by
+   programmatically diffing every type field against what `normalizeOne`
+   actually returns, rather than eyeballing 700+ lines:
+   - `itemType`/`itemAttributes` — the "Type" dropdown + "Attributes"
+     checkboxes on `/vault/add` (`getTypeOptions`/`getCheckboxOptions`,
+     real active UI) saved correctly, then vanished the very next time the
+     vault loaded (navigate away and back, refresh). No sync path exists
+     for these either — once dropped, gone for good, not recoverable from
+     Supabase.
+   - `videoClip` — same local bug, though `vaultCloud.ts`'s sync already
+     handled this one correctly, so a Supabase-connected user's video
+     *could* recover on the next sync (not before, and not for local-only
+     use).
+   - `itemCode` — the permanent, server-assigned tracking code (explicitly
+     documented "never edited by the client") gets set via a cloud-sync
+     merge, then dropped by the very next local normalize pass before
+     another sync could reconfirm it. `mergeById()` calls `normalizeOne()`
+     directly, so this hit the sync-merge path too, not just page reloads.
+   All four fixed by adding them to `normalizeOne`'s return object.
+2. **Dead-code sweep**: 11 more files deleted (early AI-integration stubs,
+   a chained dead pair, a duplicate metrics/theme system, a superseded
+   sell-item helper). Delegated discovery to an Explore agent, verified its
+   findings myself before deleting, `tsc` clean after.
+3. **Fake-data sweep**: found the same bug shape as prior rounds (hardcoded
+   value sitting next to real data) in `watchlist/page.tsx` (fake per-item
+   value-history chart + dead non-clickable time-range tabs),
+   `goals/page.tsx` (fake "Goal Value Impact" chart), `more/page.tsx`
+   (hardcoded "1 year" tenure for every account), and `HomeClient.tsx` (the
+   home dashboard's "Collection Value" chart showed the exact same fixed
+   path to every user regardless of real history). Fixed all four — the
+   home dashboard one now uses real data from `valueHistory.ts` (already
+   built, already used elsewhere, just never wired in here); the other
+   three had no real per-item/per-goal history to chart, so got an honest
+   message instead of a fabricated one, matching this app's own established
+   pattern elsewhere on the same pages.
+   **Found but NOT touched**: `community-board/page.tsx` has the identical
+   fake-mini-chart pattern next to real "Market Pulse"/"Volume" numbers —
+   that file is explicitly Codex's per §0's parallel-editing note, flagging
+   for whoever owns it rather than editing across that boundary.
+4. **Pill sweep**: one real violation — `museum/page.tsx`'s "Exhibit
+   Status" modal had two `w-full` dropdowns for one-word options,
+   inconsistent with the same file's own correctly-sized toolbar filters
+   just above them. Fixed to `w-auto`.
+5. **Emoji sweep**: addressed the specific sites this handoff had
+   previously deferred as needing real visual judgment rather than a
+   mechanical swap — `kickstarter/page.tsx`, `shop.tsx` (category chips +
+   empty state only; the ~34 individual product icons need their own
+   per-item judgment call, left alone rather than guessed), 
+   `v/[profileId]/page.tsx` (replaced a local emoji map with the shared
+   `universeGlyphName()` helper that already existed for this exact
+   purpose), and `HomeClient.tsx` (social-platform icons, an upload
+   button, a decorative sparkle). Added 4 new icons to the shared `Glyph`
+   component (rocket, globe, book, wrench). **Deliberately left alone**:
+   `SeasonalBanner.tsx`'s falling snowflake/ball/leaf/pumpkin particle
+   animation (an intentional decorative effect, not icon substitution) and
+   the user-chosen avatar-preset emoji (explicitly exempted already).
+- **Nothing in this pass has been visually verified in a real browser** —
+  everything compiles/builds/server-renders clean, but several are real,
+  user-visible UI changes (a chart, icons, a dropdown width). Worth a look
+  next time EK is in the app, especially the home dashboard and `/shop`.
 
 ### C. DOCUMENTS (capture builder §5 accordion) — DONE 2026-08-03
 EK's answer: "everything should be private unless shared" — that's a

@@ -1,9 +1,11 @@
-# VLTD — Session Checklist (2026-08-05 night → 2026-08-06)
+# VLTD — Session Checklist (2026-08-05 night → ongoing)
 
 Scannable done/pending list covering everything from the dead-code sweep
-through tonight's barcode/Cards/PSA/Discogs work. For the full narrative
-detail behind any line here, see `HANDOFF.md`; for grading/pricing API
-specifics, see `GRADING_AND_PRICING_APIS.md`.
+through the barcode/Cards/PSA/Discogs work, the Halls rebuild, and the
+latest overnight cleanup pass (data-loss bug fix + dead-code/fake-data/
+emoji/pill sweeps). For the full narrative detail behind any line here, see
+`HANDOFF.md`; for grading/pricing API specifics, see
+`GRADING_AND_PRICING_APIS.md`.
 
 ---
 
@@ -207,14 +209,69 @@ different and bigger — read it back to confirm, then built that instead:
 - ✅ **Tags editor added to the item detail page** (chips + one-tap
   suggestions) for adding/removing tags on any item, including everything
   already in your vault from before this feature existed.
-- ⬜ **Not tested live at all** — needs a real login. Try: search a term you
-  know matches something, confirm results + pre-selection behave as
-  described, save a Hall, add/remove a tag on an item page.
-- ⬜ **Suggested next, not started**: a "browse existing tags" chip row in
-  the Halls search bar (so you're picking from what's already tagged
-  instead of guessing spellings), and bulk-tagging for items added before
-  this feature existed (they all currently have zero tags unless
-  auto-generated retroactively, which hasn't been done).
+- ✅ **"Browse existing tags" chip row** added to the Halls search bar (most-
+  used tags across the vault, tap to add as a search term) and an
+  **"Auto-tag my collection" button** added for retroactively backfilling
+  tags on every item that predates this feature (both were "suggested
+  next, not started" as of the last update — now built).
+- ⬜ **Still not tested live at all** — needs a real login. Try: search a
+  term you know matches something, confirm results + pre-selection behave
+  as described, save a Hall, add/remove a tag on an item page, and try the
+  new "Auto-tag my collection" button.
+
+## Overnight cleanup pass (data-loss bug fix + dead-code/fake-data/emoji/pill sweeps)
+- ✅ **Real data-loss bug fixed**: `normalizeOne()` in `vaultModel.ts` is a
+  strict allow-list — any `VaultItem` field missing from its return object
+  gets silently dropped every time the vault reloads, and `loadRawItems()`
+  immediately persists that stripped copy back to storage. Four real
+  fields were hitting this: `itemType`/`itemAttributes` (the "Type"
+  dropdown + "Attributes" checkboxes on `/vault/add` — saved correctly,
+  then vanished on the very next reload, no sync path existed either so
+  once dropped they were gone for good), `videoClip` (same local bug,
+  though Supabase sync could partially recover it), and `itemCode` (the
+  permanent server-assigned tracking code — got dropped by the very next
+  local normalize pass after a sync merge, not just page reloads). Verified
+  the fix by programmatically diffing every type field against
+  `normalizeOne`'s return object rather than eyeballing it.
+- ✅ **Dead-code sweep**: 11 more confirmed-orphaned files deleted (early
+  AI-integration stubs, a chained dead pair, duplicate/superseded
+  theme/metrics/sell-item helpers). `tsc` clean after deletion.
+- ✅ **Fake-data sweep**: found and fixed 3 more instances of the same bug
+  shape as prior rounds (hardcoded value sitting next to real data) —
+  `watchlist/page.tsx`'s fake per-item "Value History" chart + dead
+  non-clickable time-range tabs, `goals/page.tsx`'s fake "Goal Value
+  Impact" chart, `more/page.tsx`'s hardcoded "1 year" tenure label (now a
+  real `tenureFrom()` computed from the real signup date). Also fixed
+  `HomeClient.tsx`'s home-dashboard "Collection Value" sparkline, which
+  showed the exact same hardcoded "steady climb" path to every user
+  regardless of their real value history — now built from the real
+  `valueHistory.ts` data that already exists and is used elsewhere.
+  **Found but deliberately not touched**: `community-board/page.tsx` has
+  the same fake-mini-chart pattern next to real "Market Pulse"/"Volume"
+  numbers — that file is explicitly Codex's per `HANDOFF.md` §0, flagging
+  for whoever owns it rather than editing.
+- ✅ **Pill sweep**: one real violation found and fixed —
+  `museum/page.tsx`'s "Exhibit Status" modal had two `w-full` dropdowns
+  for one-word options, inconsistent with the exact same file's own
+  correctly-sized toolbar filters just above them.
+- ✅ **Emoji sweep**: addressed the specific sites HANDOFF had deferred as
+  needing real visual judgment — `kickstarter/page.tsx`'s empty-state
+  rocket, `shop.tsx`'s 8 category chips + empty state (left the ~34
+  individual product icons alone, genuine per-item judgment call, not
+  mechanical), `v/[profileId]/page.tsx`'s local emoji map (replaced with
+  the shared `universeGlyphName()` helper that already existed for this),
+  and `HomeClient.tsx`'s social-platform icons/upload button/sparkle.
+  Added 4 new icons to the shared `Glyph` component (rocket, globe, book,
+  wrench) since none of the existing ~40 fit. **Deliberately left alone**:
+  `SeasonalBanner.tsx`'s falling snowflake/ball/leaf/pumpkin particle
+  animation (an intentional decorative effect, not icon substitution —
+  swapping only some of a themed set to monochrome glyphs would look
+  broken) and the user-chosen avatar-preset emoji (explicitly exempted).
+- ⬜ **Not visually verified** — every fix here compiles/builds/server-
+  renders clean, but several are real UI changes (icons, charts, a
+  dropdown width) that were never seen in a browser with real data/login.
+  Worth a look next time you're in the app, especially the home dashboard
+  Collection Value chart and the shop page category icons.
 
 ---
 
@@ -235,3 +292,10 @@ different and bigger — read it back to confirm, then built that instead:
    comics coverage) back here.
 7. Once 4–5 above are confirmed working, the regular Add camera's visual
    match to Quick Add is next in line — not started yet.
+8. Set the "Type" dropdown + "Attributes" checkboxes on a `/vault/add` item,
+   navigate away and back, confirm they now actually stick (this was
+   silently broken before tonight's overnight fix — worth a real check).
+9. Take a look at the overnight cleanup pass in general — Collection Value
+   chart on the home dashboard, shop page category icons, the Halls
+   "Auto-tag my collection" button — none of it has been seen in a real
+   browser yet.
