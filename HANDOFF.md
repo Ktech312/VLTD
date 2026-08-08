@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated, fourth pass — see §2B for barcode/PSA/Discogs status, §B5 for the Halls/tags rebuild, §B6 for the overnight cleanup pass)
+# VLTD — Session Handoff (updated, fifth pass — READ §B7 FIRST: fresh iPhone bug report, light mode contrast + broken Add-to-Home-Screen prompt)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -442,6 +442,54 @@ four sweeps, all verified with `tsc`/`eslint`/`npm run build` after each:
   everything compiles/builds/server-renders clean, but several are real,
   user-visible UI changes (a chart, icons, a dropdown width). Worth a look
   next time EK is in the app, especially the home dashboard and `/shop`.
+
+### B7. Fresh iPhone bug report — light mode contrast + broken "Add to Home Screen" prompt — NOT INVESTIGATED YET
+EK tested live on an iPhone (Safari, at `vltd.vercel.app`, system set to Light
+Mode) right as this chat was about to run out of context — reported directly
+with a screenshot, not yet looked into at all. **Three distinct issues, all
+on the same screen (the home dashboard right after signup, "Your vault is
+ready" hero card + Featured Gallery + Active Galleries sections):**
+
+1. **Text is not visible in Light Mode.** The hero card's heading (curator's
+   name) and body copy ("Add your first item to start a real collection
+   record"), and the "Featured Gallery" section's "No galleries yet" text,
+   all render at very low contrast — reads as pale/washed-out text on a
+   card that's still dark-styled, i.e. the text color didn't switch for
+   light mode even if (or especially if) the card background did. A real
+   theme system exists for this (`ThemeContext.tsx` / `src/lib/themes.ts` —
+   confirmed still-live and imported during tonight's dead-code sweep,
+   which is what makes this a real regression to chase down, not a
+   theme-system-doesn't-exist gap). Buttons ("Add Item", "Go to Vault",
+   "Create Gallery") were readable in the screenshot; the plain text next to
+   them was not. Likely a CSS variable (`--fg`/`--muted`/`--muted2` or
+   similar) resolving to a dark-mode value even when `data-theme="light"`
+   (or the equivalent light-mode signal) is active, or a card variant that
+   forces a dark background without correspondingly forcing dark-appropriate
+   text.
+2. **The "Add to Home Screen" prompt doesn't work.** A banner reading
+   something like "Tap ... Add to Home Screen" appears near the bottom nav
+   (screenshot shows it circled, partially obscured by/overlapping a bug
+   report widget) and tapping it does nothing on iPhone. Need to find the
+   component that renders this prompt (likely a PWA-install-nudge banner)
+   and check what its tap handler actually does — iOS Safari has no native
+   `beforeinstallprompt` event the way Android Chrome does, so if this
+   banner's logic assumes that event exists, it would silently no-op on
+   iPhone specifically. Worth confirming this is iPhone/Safari-specific
+   (vs. a generic dead-button bug) before assuming the fix.
+3. **The top-left VLTD logo is washed out in Light Mode.** Same family of
+   bug as #1 — almost certainly the logo asset (or its container's
+   filter/opacity/blend-mode) isn't theme-aware, or is using a dark-mode-
+   tuned treatment (e.g. a `mix-blend-mode` or low-opacity white stroke)
+   that has poor contrast against a light background.
+
+**Not investigated at all** — no files opened, no root cause found, purely
+transcribing EK's live report + a screenshot before this chat ran out of
+room. **Next session: start here.** Suggested approach: check
+`ThemeContext.tsx`/`src/lib/themes.ts` (confirmed real, still in use) for
+how light/dark values are defined and applied, resize the browser preview
+to mobile + toggle to light mode to reproduce #1/#3 before touching
+anything, and separately grep for whatever renders the "Add to Home
+Screen" banner text to find #2's dead tap handler.
 
 ### C. DOCUMENTS (capture builder §5 accordion) — DONE 2026-08-03
 EK's answer: "everything should be private unless shared" — that's a
