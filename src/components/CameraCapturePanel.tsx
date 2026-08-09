@@ -735,7 +735,7 @@ export default function CameraCapturePanel({
         className={
           isInline
             ? "flex w-full flex-col rounded-[12px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)]"
-            : "flex h-[calc(100dvh-1rem)] w-full max-w-[520px] flex-col overflow-y-auto overscroll-contain rounded-[18px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:h-auto sm:max-h-[calc(100dvh-80px)] sm:absolute sm:top-[68px] sm:left-1/2 sm:-translate-x-1/2 sm:w-[calc(100%-24px)] sm:rounded-[18px]"
+            : "flex h-[calc(100dvh-1rem)] w-full max-w-[520px] flex-col overflow-y-auto overscroll-contain rounded-[18px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:h-[calc(100dvh-80px)] sm:absolute sm:top-[68px] sm:left-1/2 sm:-translate-x-1/2 sm:w-[calc(100%-24px)] sm:rounded-[18px]"
         }
       >
         {capturedFile ? (
@@ -1011,11 +1011,11 @@ export default function CameraCapturePanel({
               ) : <span />}
             </div>
 
-            <div className="mt-2 overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-1.5 ring-1 ring-[color:var(--border)]">
+            <div className={isInline ? "mt-2 overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-1.5 ring-1 ring-[color:var(--border)]" : "mt-2 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-1.5 ring-1 ring-[color:var(--border)]"}>
               <div
                   ref={videoContainerRef}
-                  className="relative flex items-center justify-center overflow-hidden rounded-[12px] bg-[color:var(--surface)]"
-                  style={{ height: "min(68dvh, 640px)", minHeight: "320px" }}
+                  className={isInline ? "relative flex items-center justify-center overflow-hidden rounded-[12px] bg-[color:var(--surface)]" : "relative flex h-full items-center justify-center overflow-hidden rounded-[12px] bg-[color:var(--surface)]"}
+                  style={isInline ? { height: "min(68dvh, 640px)", minHeight: "320px" } : { minHeight: "320px" }}
                 >
                 {cameraError ? (
                   <div className="max-w-lg px-5 text-center text-sm text-red-200">
