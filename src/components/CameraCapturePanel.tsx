@@ -100,6 +100,7 @@ export default function CameraCapturePanel({
   initialBulkMode = false,
   bulkToggle = true,
   bulkTaxonomy = true,
+  capturedCount = 0,
 }: {
   title: string;
   description: string;
@@ -108,6 +109,11 @@ export default function CameraCapturePanel({
   onBulkCapture?: (file: File, category: string, subcategory: string) => void;
   onClose: () => void;
   onUseFileInstead: () => void;
+  /** Photos already attached to the item being built (not this component's own
+   *  state — the parent owns that list). Shown as a small count badge, same
+   *  spot as Quick Add's ghost counter, so multi-photo capture gives the same
+   *  "got it, keep going" feedback here too. */
+  capturedCount?: number;
   /** "modal" (default) is the full-screen overlay; "inline" embeds the camera
    *  directly in the page as a normal block (used by the Add screen). */
   variant?: "modal" | "inline";
@@ -1009,7 +1015,7 @@ export default function CameraCapturePanel({
               <div
                   ref={videoContainerRef}
                   className="relative flex items-center justify-center overflow-hidden rounded-[12px] bg-[color:var(--surface)]"
-                  style={{ height: "min(42dvh, 360px)", minHeight: "200px" }}
+                  style={{ height: "min(68dvh, 640px)", minHeight: "320px" }}
                 >
                 {cameraError ? (
                   <div className="max-w-lg px-5 text-center text-sm text-red-200">
@@ -1091,6 +1097,15 @@ export default function CameraCapturePanel({
                       height: `${detectionBox.height}%`,
                     }}
                   />
+                ) : null}
+
+                {!cameraError && capturedCount > 0 ? (
+                  <div
+                    className="pointer-events-none absolute left-3 top-3 grid h-9 w-9 place-items-center rounded-full text-sm font-black backdrop-blur"
+                    style={{ background: "rgba(0,0,0,0.42)", color: "rgba(255,255,255,0.9)", border: "1px solid rgba(255,255,255,0.25)" }}
+                  >
+                    {capturedCount}
+                  </div>
                 ) : null}
 
                 {!cameraError && detectionState !== "idle" ? (

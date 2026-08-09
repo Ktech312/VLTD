@@ -853,6 +853,7 @@ export default function CapturePage() {
                   universe={fields.universe}
                   onCapture={handleCapture}
                   bulkToggle={false}
+                  capturedCount={capturedImages.length}
                   onClose={() => {}}
                   onUseFileInstead={() => uploadInputRef.current?.click()}
                 />
@@ -1015,6 +1016,7 @@ export default function CapturePage() {
                       onCapture={handleCapture}
                       bulkToggle={false}
                       bulkTaxonomy={false}
+                      capturedCount={capturedImages.length}
                       onClose={() => {}}
                       onUseFileInstead={() => uploadInputRef.current?.click()}
                     />
@@ -1457,6 +1459,7 @@ export default function CapturePage() {
             onCapture={handleCapture}
             bulkToggle={false}
             bulkTaxonomy={false}
+            capturedCount={capturedImages.length}
             onClose={() => setIsCameraPanelOpen(false)}
             onUseFileInstead={() => {
               setIsCameraPanelOpen(false);
