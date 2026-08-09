@@ -788,7 +788,7 @@ export default function CameraCapturePanel({
         )}
 
         {capturedFile && capturedPreviewUrl ? (
-          <div className="mt-1.5 pb-[max(6rem,calc(env(safe-area-inset-bottom)+5.5rem))]">
+          <div className="mt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
             {/* Blur badge — only shown when the shot is soft */}
             {blurAssessment?.isBlurry ? (
               <div className="mb-1.5 flex items-center gap-2 rounded-[10px] bg-red-500/10 px-3 py-1.5 ring-1 ring-red-500/20">
@@ -817,6 +817,7 @@ export default function CameraCapturePanel({
               compact
               compactViewport="tall"
               hideActionButtons
+              hideZoomRow
               // These used to sit in rows below the viewport, adding page height
               // on top of the black letterbox bars already wasting space inside
               // it. Now they render pinned inside those bars instead — same
@@ -877,20 +878,21 @@ export default function CameraCapturePanel({
                   >
                     {isApplyingCrop ? "Saving..." : "Save"}
                   </PillButton>
+                  <button
+                    type="button"
+                    onClick={() => setShowFineTune((value) => !value)}
+                    className="rounded-[8px] px-3 py-2.5 text-sm ring-1 backdrop-blur"
+                    style={{ background: "rgba(0,0,0,0.5)", borderColor: "var(--border)", color: "var(--fg)" }}
+                  >
+                    {showFineTune ? "Hide Fine Tune" : "Fine Tune"}
+                  </button>
                 </>
               }
             />
 
-            <div className="mt-2 rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowFineTune((value) => !value)}
-                  className="rounded-[7px] bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
-                >
-                  {showFineTune ? "Hide Fine Tune" : "Show Fine Tune"}
-                </button>
-                {showFineTune ? (
+            {showFineTune ? (
+              <div className="mt-2 rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]">
+                <div className="flex items-center justify-end">
                   <button
                     type="button"
                     onClick={() => setAdjustments(DEFAULT_CAPTURE_ADJUSTMENTS)}
@@ -898,10 +900,7 @@ export default function CameraCapturePanel({
                   >
                     Reset
                   </button>
-                ) : null}
-              </div>
-
-              {showFineTune ? (
+                </div>
                 <div className="mt-2 grid gap-1.5 sm:grid-cols-3">
                   {[
                     { key: "brightness", label: "Brightness", min: 70, max: 130 },
@@ -935,46 +934,46 @@ export default function CameraCapturePanel({
                     </label>
                   ))}
                 </div>
+              </div>
+            ) : null}
+
+            <div className={isBackgroundRemoved || backgroundError ? "mt-2 rounded-2xl bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)]" : "hidden"}>
+              {backgroundError ? (
+                <div className="rounded-xl bg-red-500/10 px-3 py-2 text-[11px] text-red-200 ring-1 ring-red-500/20">
+                  {backgroundError}
+                </div>
               ) : null}
 
-              <div className={isBackgroundRemoved || backgroundError ? "mt-2 rounded-2xl bg-[color:var(--pill)] p-2 ring-1 ring-[color:var(--border)]" : "hidden"}>
-                {backgroundError ? (
-                  <div className="rounded-xl bg-red-500/10 px-3 py-2 text-[11px] text-red-200 ring-1 ring-red-500/20">
-                    {backgroundError}
-                  </div>
-                ) : null}
-
-                {isBackgroundRemoved ? (
-                  <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-                    <span className="shrink-0 self-center text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">Backdrop</span>
-                    {CAPTURE_BACKGROUNDS.map((background) => (
-                      <button
-                        key={background.id}
-                        type="button"
-                        onClick={() => setSelectedBackgroundId(background.id)}
-                        className="shrink-0 rounded-xl px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] ring-1"
-                        style={{
-                          background: selectedBackgroundId === background.id
-                            ? "var(--theme-gold-subtle, rgba(203,208,213,0.12))"
-                            : "var(--surface)",
-                          borderColor: selectedBackgroundId === background.id
-                            ? "var(--theme-gold-border, rgba(203,208,213,0.38))"
-                            : "var(--border)",
-                          color: selectedBackgroundId === background.id
-                            ? "var(--theme-gold, #C8CDD2)"
-                            : "var(--muted)",
-                        }}
-                      >
-                        <span
-                          className="mb-1 block h-8 w-12 rounded-lg ring-1 ring-white/10"
-                          style={{ background: background.swatch }}
-                        />
-                        {background.label}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
+              {isBackgroundRemoved ? (
+                <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                  <span className="shrink-0 self-center text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">Backdrop</span>
+                  {CAPTURE_BACKGROUNDS.map((background) => (
+                    <button
+                      key={background.id}
+                      type="button"
+                      onClick={() => setSelectedBackgroundId(background.id)}
+                      className="shrink-0 rounded-xl px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] ring-1"
+                      style={{
+                        background: selectedBackgroundId === background.id
+                          ? "var(--theme-gold-subtle, rgba(203,208,213,0.12))"
+                          : "var(--surface)",
+                        borderColor: selectedBackgroundId === background.id
+                          ? "var(--theme-gold-border, rgba(203,208,213,0.38))"
+                          : "var(--border)",
+                        color: selectedBackgroundId === background.id
+                          ? "var(--theme-gold, #C8CDD2)"
+                          : "var(--muted)",
+                      }}
+                    >
+                      <span
+                        className="mb-1 block h-8 w-12 rounded-lg ring-1 ring-white/10"
+                        style={{ background: background.swatch }}
+                      />
+                      {background.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </div>
         ) : (

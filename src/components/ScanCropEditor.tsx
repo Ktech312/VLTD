@@ -119,6 +119,7 @@ export default function ScanCropEditor({
   compactViewport = "default",
   viewportFixed = false,
   hideActionButtons = false,
+  hideZoomRow = false,
   zoomRowRight,
   viewportOverlayTop,
   viewportOverlayBottom,
@@ -140,6 +141,9 @@ export default function ScanCropEditor({
   compactViewport?: "default" | "short" | "tall";
   viewportFixed?: boolean;
   hideActionButtons?: boolean;
+  /** Hide the "Pinch or scroll to zoom" hint / zoom-% row entirely — the
+   *  gesture still works either way, this just drops the row of text. */
+  hideZoomRow?: boolean;
   zoomRowRight?: React.ReactNode;
   /** Rendered as an overlay pinned to the top of the viewport, inside its
    *  letterboxed space above the image — lets a caller use that dead space
@@ -578,12 +582,14 @@ export default function ScanCropEditor({
           people already use and nobody reached for it. Still show the zoom
           level once you've actually zoomed, and keep the optional right-side
           slot (e.g. CameraCapturePanel's background-removal button). */}
-      <div className={compact ? "mt-2 flex items-center justify-between gap-3 px-1" : "mt-3 flex items-center justify-between gap-3"}>
-        <span className="text-[11px] text-[color:var(--muted)]">
-          {zoom > 1.01 ? <span className="font-semibold tabular-nums">{zoomLabel}% zoom</span> : "Pinch or scroll to zoom"}
-        </span>
-        {zoomRowRight ? <div className="shrink-0">{zoomRowRight}</div> : null}
-      </div>
+      {!hideZoomRow ? (
+        <div className={compact ? "mt-2 flex items-center justify-between gap-3 px-1" : "mt-3 flex items-center justify-between gap-3"}>
+          <span className="text-[11px] text-[color:var(--muted)]">
+            {zoom > 1.01 ? <span className="font-semibold tabular-nums">{zoomLabel}% zoom</span> : "Pinch or scroll to zoom"}
+          </span>
+          {zoomRowRight ? <div className="shrink-0">{zoomRowRight}</div> : null}
+        </div>
+      ) : null}
 
       {!hideActionButtons ? (
         <div className={compact ? "mt-2 flex flex-wrap gap-2" : "mt-4 grid gap-2 sm:flex sm:flex-wrap"}>
