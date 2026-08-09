@@ -3,7 +3,6 @@
 import { usePathname } from "next/navigation";
 import TopNav from "@/components/TopNav";
 import BottomNav from "@/components/BottomNav";
-import VaultSyncStatusChip from "@/components/VaultSyncStatusChip";
 import PullToRefresh from "@/components/PullToRefresh";
 
 export default function NavShell({ children }: { children: React.ReactNode }) {
@@ -20,7 +19,6 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
     <>
       <TopNav />
       <PullToRefresh>{children}</PullToRefresh>
-      <VaultSyncStatusChip />
       <BottomNav />
     </>
   );
