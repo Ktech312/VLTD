@@ -493,8 +493,14 @@ export default function CameraCapturePanel({
 
   /** Compute a ScanCropRect that matches the guide overlay position in the live camera view.
    *  Uses the video container's rendered size + the video's native dimensions to
-   *  account for object-cover cropping (the video fills the box; whichever
-   *  dimension overflows is centered and clipped, no letterbox bars).
+   *  account for object-contain letterboxing/pillarboxing.
+   *
+   *  Must stay object-contain, matching the <video>'s object-fit below: a
+   *  capture always grabs the camera's full native frame regardless of how
+   *  it's displayed, so object-cover here would crop the on-screen preview
+   *  tighter than what's actually captured — the preview and the photo you
+   *  get would stop matching (confirmed: this caused exactly that mismatch
+   *  when tried).
    */
   function computeGuideCrop(): ScanCropRect {
     const video = videoRef.current;
@@ -507,23 +513,20 @@ export default function CameraCapturePanel({
     const videoH = video.videoHeight;
     if (!containerW || !containerH || !videoW || !videoH) return DEFAULT_CROP;
 
-    // Determine rendered video size + offset within the container (object-cover:
-    // fill the box, overflow (and center-crop) whichever axis doesn't match).
+    // Determine rendered video size + offset within the container (object-contain)
     const containerAR = containerW / containerH;
     const videoAR = videoW / videoH;
     let renderedW: number, renderedH: number, offsetX: number, offsetY: number;
     if (videoAR > containerAR) {
-      // Video is relatively wider than the box -- match height, overflow width.
-      renderedH = containerH;
-      renderedW = containerH * videoAR;
-      offsetY = 0;
-      offsetX = (containerW - renderedW) / 2;
-    } else {
-      // Video is relatively taller than the box -- match width, overflow height.
       renderedW = containerW;
       renderedH = containerW / videoAR;
       offsetX = 0;
       offsetY = (containerH - renderedH) / 2;
+    } else {
+      renderedH = containerH;
+      renderedW = containerH * videoAR;
+      offsetX = (containerW - renderedW) / 2;
+      offsetY = 0;
     }
     if (renderedW <= 0 || renderedH <= 0) return DEFAULT_CROP;
 
@@ -1053,7 +1056,7 @@ export default function CameraCapturePanel({
                     muted
                     playsInline
                     onCanPlay={() => setCameraReady(true)}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-contain"
                   />
                 )}
 
