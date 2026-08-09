@@ -23,6 +23,7 @@ import "./vault-utility-pass.css";
 import "./vault-directives-pass.css";
 import "./insurance-pass.css";
 import "./theme-override.css";
+import AddressBarHider from "@/components/AddressBarHider";
 import BugReporter from "@/components/BugReporter";
 import PresenceHeartbeat from "@/components/PresenceHeartbeat";
 import NavShell from "@/components/NavShell";
@@ -129,6 +130,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${inter.className} bg-vault-base min-h-screen`}>
         <ThemeBoot />
+        <AddressBarHider />
 
         <ThemeProvider>
           <Providers>
