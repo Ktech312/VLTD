@@ -487,7 +487,8 @@ export default function CameraCapturePanel({
 
   /** Compute a ScanCropRect that matches the guide overlay position in the live camera view.
    *  Uses the video container's rendered size + the video's native dimensions to
-   *  account for object-contain letterboxing/pillarboxing.
+   *  account for object-cover cropping (the video fills the box; whichever
+   *  dimension overflows is centered and clipped, no letterbox bars).
    */
   function computeGuideCrop(): ScanCropRect {
     const video = videoRef.current;
@@ -500,20 +501,23 @@ export default function CameraCapturePanel({
     const videoH = video.videoHeight;
     if (!containerW || !containerH || !videoW || !videoH) return DEFAULT_CROP;
 
-    // Determine rendered video size + offset within the container (object-contain)
+    // Determine rendered video size + offset within the container (object-cover:
+    // fill the box, overflow (and center-crop) whichever axis doesn't match).
     const containerAR = containerW / containerH;
     const videoAR = videoW / videoH;
     let renderedW: number, renderedH: number, offsetX: number, offsetY: number;
     if (videoAR > containerAR) {
+      // Video is relatively wider than the box -- match height, overflow width.
+      renderedH = containerH;
+      renderedW = containerH * videoAR;
+      offsetY = 0;
+      offsetX = (containerW - renderedW) / 2;
+    } else {
+      // Video is relatively taller than the box -- match width, overflow height.
       renderedW = containerW;
       renderedH = containerW / videoAR;
       offsetX = 0;
       offsetY = (containerH - renderedH) / 2;
-    } else {
-      renderedH = containerH;
-      renderedW = containerH * videoAR;
-      offsetX = (containerW - renderedW) / 2;
-      offsetY = 0;
     }
     if (renderedW <= 0 || renderedH <= 0) return DEFAULT_CROP;
 
@@ -723,7 +727,7 @@ export default function CameraCapturePanel({
     <div
       className={
         isInline
-          ? "relative w-full"
+          ? "fixed inset-0 z-[10000] flex flex-col bg-[color:var(--bg)] sm:relative sm:inset-auto sm:z-auto sm:block sm:h-auto sm:w-full sm:bg-transparent"
           : "fixed inset-0 z-[10000] flex items-start justify-center bg-black/75 p-2 backdrop-blur-sm"
       }
       role={isInline ? undefined : "dialog"}
@@ -744,7 +748,15 @@ export default function CameraCapturePanel({
               <PillButton onClick={onClose}>Close</PillButton>
             </div>
           )
-        ) : isInline ? null : (
+        ) : isInline ? (
+          // Inline is a full-screen takeover on mobile now (see the wrapper
+          // classes below), so it needs its own way out there. Desktop keeps
+          // the old headerless look — sm:hidden.
+          <div className="flex items-center justify-between gap-3 sm:hidden">
+            <span className="text-sm font-semibold text-[color:var(--fg)]">{title}</span>
+            <PillButton onClick={onClose}>Close</PillButton>
+          </div>
+        ) : (
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">LIVE CAMERA</div>
@@ -1031,7 +1043,7 @@ export default function CameraCapturePanel({
                     muted
                     playsInline
                     onCanPlay={() => setCameraReady(true)}
-                    className="h-full w-full object-contain"
+                    className="h-full w-full object-cover"
                   />
                 )}
 

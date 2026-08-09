@@ -410,6 +410,10 @@ export default function CapturePage() {
   // longer opens as a modal on load. The modal is only used on demand — e.g.
   // re-scanning a barcode from the review screen.
   const [isCameraPanelOpen, setIsCameraPanelOpen] = useState(false);
+  // The inline camera is the default view before any photo exists (no
+  // toggle needed to open it) -- this lets Close back out of it to the
+  // "add a photo — optional" placeholder instead, without a photo.
+  const [skipCameraStep, setSkipCameraStep] = useState(false);
 
 
   // Load remembered locks/values once on mount, and pre-fill any locked fields.
@@ -854,7 +858,7 @@ export default function CapturePage() {
                   onCapture={handleCapture}
                   bulkToggle={false}
                   capturedCount={capturedImages.length}
-                  onClose={() => {}}
+                  onClose={() => setPhase("review")}
                   onUseFileInstead={() => uploadInputRef.current?.click()}
                 />
               </div>
@@ -937,7 +941,7 @@ export default function CapturePage() {
               <div className="mt-3 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,480px)_1fr] lg:items-start">
                 {/* Left: framed image viewer (concept-19) */}
                 <div className="min-w-0">
-                  {previewUrl ? (
+                  {previewUrl || skipCameraStep ? (
                   <div
                     className="relative overflow-hidden rounded-[16px] border"
                     style={{
@@ -957,7 +961,7 @@ export default function CapturePage() {
                           <div className="text-sm font-semibold text-text-primary">Add a photo — optional</div>
                           <p className="max-w-[240px] text-xs leading-5 text-[color:var(--muted)]">Snap or upload one — then tap <b className="font-semibold text-[color:var(--fg)]">Identify</b> to auto-fill, or just type the details in. No photo required.</p>
                           <div className="flex flex-wrap justify-center gap-2">
-                            <button type="button" onClick={() => setIsCameraPanelOpen(true)} className="inline-flex items-center gap-1.5 rounded-[8px] px-4 py-2 text-xs font-bold text-[#0B0B0B]" style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}>Take photo</button>
+                            <button type="button" onClick={() => setSkipCameraStep(false)} className="inline-flex items-center gap-1.5 rounded-[8px] px-4 py-2 text-xs font-bold text-[#0B0B0B]" style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}>Take photo</button>
                             <button type="button" onClick={() => nativeCameraInputRef.current?.click()} title="Uses your phone's own camera app for the sharpest quality" className="inline-flex items-center gap-1.5 rounded-[8px] border px-4 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.08))]" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}>Take Real Photo</button>
                             <button type="button" onClick={() => uploadInputRef.current?.click()} className="inline-flex items-center gap-1.5 rounded-[8px] border px-4 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.08))]" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}>Upload</button>
                           </div>
@@ -1017,7 +1021,7 @@ export default function CapturePage() {
                       bulkToggle={false}
                       bulkTaxonomy={false}
                       capturedCount={capturedImages.length}
-                      onClose={() => {}}
+                      onClose={() => setSkipCameraStep(true)}
                       onUseFileInstead={() => uploadInputRef.current?.click()}
                     />
                   )}
