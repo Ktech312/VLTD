@@ -817,16 +817,20 @@ export default function CameraCapturePanel({
               compact
               compactViewport="tall"
               hideActionButtons
-              zoomRowRight={
+              // These used to sit in rows below the viewport, adding page height
+              // on top of the black letterbox bars already wasting space inside
+              // it. Now they render pinned inside those bars instead — same
+              // controls, no extra height, no more dead space.
+              viewportOverlayTop={
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setAdjustments(isBrightenActive(adjustments) ? DEFAULT_CAPTURE_ADJUSTMENTS : BRIGHTEN_ADJUSTMENTS)}
                     aria-pressed={isBrightenActive(adjustments)}
                     title="Brighten a dim photo"
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 transition"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 backdrop-blur transition"
                     style={{
-                      background: isBrightenActive(adjustments) ? "var(--theme-gold-subtle, rgba(203,208,213,0.14))" : "var(--pill)",
+                      background: isBrightenActive(adjustments) ? "var(--theme-gold-subtle, rgba(203,208,213,0.14))" : "rgba(0,0,0,0.5)",
                       borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))",
                       color: "var(--theme-gold, #C8CDD2)",
                     }}
@@ -842,9 +846,9 @@ export default function CameraCapturePanel({
                     disabled={isRemovingBackground || !capturedFile}
                     aria-label={isBackgroundRemoved ? "Remove background again" : "Remove background"}
                     title="Remove background"
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 transition disabled:opacity-45"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 backdrop-blur transition disabled:opacity-45"
                     style={{
-                      background: isBackgroundRemoved ? "var(--theme-gold-subtle, rgba(203,208,213,0.14))" : "var(--pill)",
+                      background: isBackgroundRemoved ? "var(--theme-gold-subtle, rgba(203,208,213,0.14))" : "rgba(0,0,0,0.5)",
                       borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))",
                       color: "var(--theme-gold, #C8CDD2)",
                     }}
@@ -861,20 +865,21 @@ export default function CameraCapturePanel({
                   </button>
                 </div>
               }
+              viewportOverlayBottom={
+                <>
+                  <PillButton onClick={handleRetakePhoto} disabled={isApplyingCrop}>
+                    ↩ Retake
+                  </PillButton>
+                  <PillButton
+                    onClick={() => void handleUseCapturedPhoto()}
+                    disabled={isApplyingCrop}
+                    style={{ background: "var(--pill-active-bg)", color: "var(--fg)" }}
+                  >
+                    {isApplyingCrop ? "Saving..." : "Save"}
+                  </PillButton>
+                </>
+              }
             />
-
-            <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
-              <PillButton onClick={handleRetakePhoto} disabled={isApplyingCrop}>
-                ↩ Retake
-              </PillButton>
-              <PillButton
-                onClick={() => void handleUseCapturedPhoto()}
-                disabled={isApplyingCrop}
-                style={{ background: "var(--pill-active-bg)", color: "var(--fg)" }}
-              >
-                {isApplyingCrop ? "Saving..." : "Save"}
-              </PillButton>
-            </div>
 
             <div className="mt-2 rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]">
               <div className="flex items-center gap-2">

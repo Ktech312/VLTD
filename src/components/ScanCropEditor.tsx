@@ -120,6 +120,8 @@ export default function ScanCropEditor({
   viewportFixed = false,
   hideActionButtons = false,
   zoomRowRight,
+  viewportOverlayTop,
+  viewportOverlayBottom,
 }: {
   imageUrl: string;
   crop: ScanCropRect;
@@ -139,6 +141,13 @@ export default function ScanCropEditor({
   viewportFixed?: boolean;
   hideActionButtons?: boolean;
   zoomRowRight?: React.ReactNode;
+  /** Rendered as an overlay pinned to the top of the viewport, inside its
+   *  letterboxed space above the image — lets a caller use that dead space
+   *  for controls instead of a separate row that pushes the whole editor
+   *  taller. Viewport sizing itself is unchanged. */
+  viewportOverlayTop?: React.ReactNode;
+  /** Same idea, pinned to the bottom of the viewport. */
+  viewportOverlayBottom?: React.ReactNode;
 }) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const imageBaseRef = useRef<HTMLDivElement | null>(null);
@@ -545,6 +554,20 @@ export default function ScanCropEditor({
               <button type="button" aria-label="Crop bottom edge" onPointerDown={(event) => startDrag("s", event)} className={`${edgeHandleClass} -bottom-0.5 left-1/2 h-1.5 w-5 -translate-x-1/2 cursor-ns-resize`} />
               <button type="button" aria-label="Crop left edge" onPointerDown={(event) => startDrag("w", event)} className={`${edgeHandleClass} -left-0.5 top-1/2 h-5 w-1.5 -translate-y-1/2 cursor-ew-resize`} />
               <button type="button" aria-label="Crop right edge" onPointerDown={(event) => startDrag("e", event)} className={`${edgeHandleClass} -right-0.5 top-1/2 h-5 w-1.5 -translate-y-1/2 cursor-ew-resize`} />
+            </div>
+          ) : null}
+
+          {/* Overlays sit inside the viewport's own letterboxed space (the
+              black bars above/below a photo that doesn't fill the box) —
+              real controls where dead space used to be, not a taller editor. */}
+          {viewportOverlayTop ? (
+            <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex justify-center p-2">
+              <div className="pointer-events-auto">{viewportOverlayTop}</div>
+            </div>
+          ) : null}
+          {viewportOverlayBottom ? (
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center p-2">
+              <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2">{viewportOverlayBottom}</div>
             </div>
           ) : null}
         </div>
