@@ -858,6 +858,7 @@ export default function CapturePage() {
                   onCapture={handleCapture}
                   bulkToggle={false}
                   capturedCount={capturedImages.length}
+                  lastCapturedUrl={previewUrls[previewUrls.length - 1]}
                   onClose={() => setPhase("review")}
                   onUseFileInstead={() => uploadInputRef.current?.click()}
                 />
@@ -1021,6 +1022,7 @@ export default function CapturePage() {
                       bulkToggle={false}
                       bulkTaxonomy={false}
                       capturedCount={capturedImages.length}
+                      lastCapturedUrl={previewUrls[previewUrls.length - 1]}
                       onClose={() => setSkipCameraStep(true)}
                       onUseFileInstead={() => uploadInputRef.current?.click()}
                     />
@@ -1464,6 +1466,7 @@ export default function CapturePage() {
             bulkToggle={false}
             bulkTaxonomy={false}
             capturedCount={capturedImages.length}
+            lastCapturedUrl={previewUrls[previewUrls.length - 1]}
             onClose={() => setIsCameraPanelOpen(false)}
             onUseFileInstead={() => {
               setIsCameraPanelOpen(false);

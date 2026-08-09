@@ -101,6 +101,7 @@ export default function CameraCapturePanel({
   bulkToggle = true,
   bulkTaxonomy = true,
   capturedCount = 0,
+  lastCapturedUrl,
 }: {
   title: string;
   description: string;
@@ -114,6 +115,11 @@ export default function CameraCapturePanel({
    *  spot as Quick Add's ghost counter, so multi-photo capture gives the same
    *  "got it, keep going" feedback here too. */
   capturedCount?: number;
+  /** Object URL of the most recently captured photo. Rendered as a small
+   *  tappable thumbnail next to the shutter, same spot as Quick Add's "Last"
+   *  thumbnail — tapping it closes back to the page so everything captured
+   *  so far (the full thumbnail rail) is visible again. */
+  lastCapturedUrl?: string;
   /** "modal" (default) is the full-screen overlay; "inline" embeds the camera
    *  directly in the page as a normal block (used by the Add screen). */
   variant?: "modal" | "inline";
@@ -1199,8 +1205,11 @@ export default function CameraCapturePanel({
               </div>
             )}
 
-            {/* Single camera button row */}
-            <div className="mt-3 mb-1 flex items-center justify-center gap-8">
+            {/* Shutter row — same layout as Quick Add: centered shutter, last-shot
+                thumbnail on the left. Tapping the thumbnail closes back to the
+                page so the full thumbnail rail (and everything taken so far)
+                is visible again — nothing captured is ever hidden. */}
+            <div className="relative mt-3 mb-1 flex items-center justify-center">
               <button
                 type="button"
                 onClick={() => void handleCapture()}
@@ -1235,6 +1244,21 @@ export default function CameraCapturePanel({
                   </svg>
                 )}
               </button>
+
+              {lastCapturedUrl ? (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  aria-label="Review captured photos"
+                  className="absolute left-2 flex flex-col items-center gap-0.5 transition active:scale-95"
+                >
+                  <div className="h-12 w-12 overflow-hidden rounded-[10px] ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={lastCapturedUrl} alt="" className="h-full w-full object-cover" />
+                  </div>
+                  <span className="text-[9px] font-semibold text-[color:var(--muted2)]">Review</span>
+                </button>
+              ) : null}
             </div>
 
             {bulkSaving && (
