@@ -735,7 +735,7 @@ export default function CameraCapturePanel({
         className={
           isInline
             ? "flex w-full flex-col rounded-[12px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)]"
-            : "flex h-[calc(100dvh-1rem)] w-full max-w-[520px] flex-col overflow-y-auto overscroll-contain rounded-[18px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:h-[calc(100dvh-80px)] sm:absolute sm:top-[68px] sm:left-1/2 sm:-translate-x-1/2 sm:w-[calc(100%-24px)] sm:rounded-[18px]"
+            : "flex h-[calc(100dvh-1rem)] w-full max-w-[520px] flex-col overflow-y-auto overscroll-contain rounded-[18px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:h-[calc(100dvh-80px)] sm:max-w-[900px] sm:absolute sm:top-[68px] sm:left-1/2 sm:-translate-x-1/2 sm:w-[calc(100%-24px)] sm:rounded-[18px]"
         }
       >
         {capturedFile ? (
