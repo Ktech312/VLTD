@@ -491,6 +491,23 @@ export default function CapturePage() {
     setSelectedPreviewIndex(0);
   }, []);
 
+  // Drag-to-reorder in the thumbnail rail (press and hold, then drag) --
+  // generalized move, not just "promote to cover": any photo can move to
+  // any position. Moving into/out of index 0 changes the cover, so the
+  // stale AI result gets cleared the same way makeCover already does.
+  const reorderImages = useCallback((from: number, to: number) => {
+    if (from === to) return;
+    setCapturedImages((prev) => {
+      if (from < 0 || from >= prev.length || to < 0 || to >= prev.length) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+    if (from === 0 || to === 0) setIdentified(false);
+    setSelectedPreviewIndex(to);
+  }, []);
+
   // Opt-in AI: identify + fill fields on demand from the captured photo.
   const runAiIdentify = useCallback(async (fileArg?: File) => {
     // AI only ever reads the COVER photo (capturedImages[0]); extra angles are never scanned.
@@ -726,6 +743,72 @@ export default function CapturePage() {
   // which only changes when you deliberately make one. Clamped back to the
   // cover whenever the list shrinks past the current selection.
   const [selectedPreviewIndex, setSelectedPreviewIndex] = useState(0);
+
+  // Press-and-hold drag-to-reorder for the thumbnail rail. Pointer events
+  // (not native HTML5 drag-and-drop, which touch devices support poorly) --
+  // a plain tap still just selects the thumbnail; a press that moves past a
+  // small threshold becomes a drag instead.
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const dragStateRef = useRef<{ index: number; startX: number; startY: number; moved: boolean } | null>(null);
+
+  const handleThumbPointerDown = useCallback((event: React.PointerEvent<HTMLButtonElement>, index: number) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    // Pressing the remove (×) button inside a thumbnail shouldn't start a
+    // drag on that thumbnail -- let its own click handler run untouched.
+    if ((event.target as HTMLElement).closest('[aria-label="Remove photo"]')) return;
+    dragStateRef.current = { index, startX: event.clientX, startY: event.clientY, moved: false };
+  }, []);
+
+  useEffect(() => {
+    const DRAG_THRESHOLD_PX = 8;
+
+    function indexUnderPoint(x: number, y: number): number | null {
+      const el = document.elementFromPoint(x, y) as HTMLElement | null;
+      const thumb = el?.closest<HTMLElement>("[data-thumb-index]");
+      const raw = thumb?.dataset.thumbIndex;
+      return raw !== undefined ? Number(raw) : null;
+    }
+
+    function onPointerMove(event: PointerEvent) {
+      const state = dragStateRef.current;
+      if (!state) return;
+      const dx = event.clientX - state.startX;
+      const dy = event.clientY - state.startY;
+      if (!state.moved && Math.hypot(dx, dy) > DRAG_THRESHOLD_PX) {
+        state.moved = true;
+        setDragIndex(state.index);
+      }
+      if (state.moved) {
+        setDragOverIndex(indexUnderPoint(event.clientX, event.clientY));
+      }
+    }
+
+    function onPointerUp(event: PointerEvent) {
+      const state = dragStateRef.current;
+      dragStateRef.current = null;
+      if (!state) return;
+      if (state.moved) {
+        const dropIndex = indexUnderPoint(event.clientX, event.clientY);
+        if (dropIndex !== null) reorderImages(state.index, dropIndex);
+      } else {
+        // A plain tap (never crossed the drag threshold) -- select it.
+        setSelectedPreviewIndex(state.index);
+      }
+      setDragIndex(null);
+      setDragOverIndex(null);
+    }
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+    };
+  }, [reorderImages]);
+
   useEffect(() => {
     if (selectedPreviewIndex >= previewUrls.length) setSelectedPreviewIndex(0);
   }, [previewUrls.length, selectedPreviewIndex]);
@@ -859,23 +942,40 @@ export default function CapturePage() {
                   </div>
 
                   {/* Thumbnail rail — tap any photo to preview it above (its border
-                      glows so it's clear which one you're looking at). Cover only
-                      changes via the deliberate "Make Cover" action near the big
-                      preview, never by just tapping a thumbnail. */}
+                      glows so it's clear which one you're looking at). Press and
+                      hold, then drag, to reorder -- drag a photo onto the first
+                      slot to make it the cover. */}
                   <div className="mt-3 grid grid-cols-4 gap-2">
                     {previewUrls.map((url, i) => {
                       const isSelected = i === selectedPreviewIndex;
+                      const isDragging = i === dragIndex;
+                      const isDropTarget = dragIndex !== null && i === dragOverIndex && i !== dragIndex;
                       return (
                         <button
                           type="button"
                           key={url}
-                          onClick={() => setSelectedPreviewIndex(i)}
+                          data-thumb-index={i}
+                          onPointerDown={(event) => handleThumbPointerDown(event, i)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") setSelectedPreviewIndex(i);
+                          }}
                           aria-label={i === 0 ? "Cover photo" : `Photo ${i + 1}`}
                           aria-pressed={isSelected}
-                          className="relative aspect-square overflow-hidden rounded-[10px] border transition"
+                          className="relative aspect-square touch-none overflow-hidden rounded-[10px] border transition"
                           style={{
-                            borderColor: isSelected ? "var(--theme-gold, #C8CDD2)" : "var(--theme-gold-border, rgba(203,208,213,0.35))",
-                            boxShadow: isSelected ? "0 0 0 2px var(--theme-gold, #C8CDD2), 0 0 14px rgba(203,208,213,0.45)" : "none",
+                            borderColor: isDropTarget
+                              ? "#4ade80"
+                              : isSelected
+                                ? "var(--theme-gold, #C8CDD2)"
+                                : "var(--theme-gold-border, rgba(203,208,213,0.35))",
+                            boxShadow: isDropTarget
+                              ? "0 0 0 2px #4ade80, 0 0 14px rgba(74,222,128,0.45)"
+                              : isSelected
+                                ? "0 0 0 2px var(--theme-gold, #C8CDD2), 0 0 14px rgba(203,208,213,0.45)"
+                                : "none",
+                            opacity: isDragging ? 0.4 : 1,
+                            transform: isDragging ? "scale(1.06)" : undefined,
+                            zIndex: isDragging ? 10 : undefined,
                           }}
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
