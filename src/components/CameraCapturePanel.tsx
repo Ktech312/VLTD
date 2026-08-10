@@ -140,6 +140,13 @@ export default function CameraCapturePanel({
   const preferredDeviceIdRef = useRef("");
   const [cameraError, setCameraError] = useState("");
   const [cameraReady, setCameraReady] = useState(false);
+  // Once known, shapes the video box to match the camera's real aspect ratio
+  // instead of an arbitrary flex-sized rectangle -- object-contain then shows
+  // ~zero letterbox bars because the box already matches the footage, with
+  // none of the preview-vs-capture mismatch risk object-cover has (capture
+  // always grabs the full native frame regardless of display -- see the
+  // computeGuideCrop comment below).
+  const [videoAspectRatio, setVideoAspectRatio] = useState<number | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [permissionState, setPermissionState] = useState<CameraPermissionState>("unknown");
@@ -296,6 +303,7 @@ export default function CameraCapturePanel({
       stopCameraStream();
       setCameraError("");
       setCameraReady(false);
+      setVideoAspectRatio(null);
 
       if (!navigator.mediaDevices?.getUserMedia) {
         setCameraError("Live camera is not available in this browser. Use the file picker instead.");
@@ -1067,12 +1075,19 @@ export default function CameraCapturePanel({
               isInline
                 ? "mt-2 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-1.5 ring-1 ring-[color:var(--border)] sm:h-[min(56dvh,560px)] sm:flex-none"
                 // Edge-to-edge, no card around the video -- matches Quick Add.
-                : "relative flex min-h-0 flex-1 flex-col overflow-hidden bg-black"
+                // items-center/justify-center so the aspect-locked box below
+                // (once the camera's real ratio is known) sits centered
+                // instead of stretched into an arbitrary rectangle.
+                : "relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-black"
             }>
               <div
                   ref={videoContainerRef}
-                  className={isInline ? "relative flex h-full items-center justify-center overflow-hidden rounded-[12px] bg-[color:var(--surface)]" : "relative flex h-full items-center justify-center overflow-hidden bg-black"}
-                  style={{ minHeight: "260px" }}
+                  className={isInline ? "relative flex h-full items-center justify-center overflow-hidden rounded-[12px] bg-[color:var(--surface)]" : "relative flex items-center justify-center overflow-hidden bg-black"}
+                  style={
+                    isInline || !videoAspectRatio
+                      ? { minHeight: "260px", height: "100%", width: "100%" }
+                      : { minHeight: "260px", height: "100%", width: "auto", maxWidth: "100%", aspectRatio: String(videoAspectRatio) }
+                  }
                 >
                 {cameraError ? (
                   <div className="max-w-lg px-5 text-center text-sm text-red-200">
@@ -1087,7 +1102,13 @@ export default function CameraCapturePanel({
                     autoPlay
                     muted
                     playsInline
-                    onCanPlay={() => setCameraReady(true)}
+                    onCanPlay={(event) => {
+                      setCameraReady(true);
+                      const el = event.currentTarget;
+                      if (el.videoWidth && el.videoHeight) {
+                        setVideoAspectRatio(el.videoWidth / el.videoHeight);
+                      }
+                    }}
                     className="h-full w-full object-contain"
                   />
                 )}
