@@ -796,7 +796,7 @@ export default function CapturePage() {
                       background: "radial-gradient(circle at 50% 22%, rgba(203,208,213,0.06), rgba(2,9,12,0.85) 72%)",
                     }}
                   >
-                    <div className="flex aspect-[4/5] w-full items-center justify-center p-4">
+                    <div className={previewUrl ? "flex aspect-[4/5] w-full items-center justify-center p-4" : "flex w-full items-center justify-center p-8"}>
                       {previewUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={displayedPreviewUrl} alt="Captured item" className="max-h-full max-w-full object-contain" />

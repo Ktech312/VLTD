@@ -743,7 +743,9 @@ export default function CameraCapturePanel({
       className={
         isInline
           ? "fixed inset-0 z-[10000] flex flex-col bg-[color:var(--bg)] sm:relative sm:inset-auto sm:z-auto sm:block sm:h-auto sm:w-full sm:bg-transparent"
-          : "fixed inset-0 z-[10000] flex items-start justify-center bg-black/75 p-2 backdrop-blur-sm"
+          // Matches Quick Add's own outer wrapper exactly: fixed, centered,
+          // no padding around the panel.
+          : "fixed inset-0 z-[10000] flex items-start justify-center bg-black/75 backdrop-blur-sm"
       }
       role={isInline ? undefined : "dialog"}
       aria-modal={isInline ? undefined : "true"}
@@ -754,42 +756,25 @@ export default function CameraCapturePanel({
         className={
           isInline
             ? "flex w-full flex-col rounded-[12px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)]"
-            : "flex h-[calc(100dvh-1rem)] w-full max-w-[520px] flex-col overflow-y-auto overscroll-contain rounded-[18px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:h-[calc(100dvh-80px)] sm:max-w-[900px] sm:absolute sm:top-[68px] sm:left-1/2 sm:-translate-x-1/2 sm:w-[calc(100%-24px)] sm:rounded-[18px]"
+            // Matches Quick Add's inner panel: no padding, no rounded corners,
+            // no border — header/video/footer each own their own edge instead
+            // of everything floating inside a padded card.
+            : "flex h-[calc(100dvh-1rem)] w-full max-w-[520px] flex-col overflow-hidden bg-[color:var(--bg)] sm:h-[calc(100dvh-80px)] sm:max-w-[900px]"
         }
       >
-        {capturedFile ? (
-          isInline ? null : (
-            <div className="flex justify-end">
-              <PillButton onClick={onClose}>Close</PillButton>
-            </div>
-          )
-        ) : isInline ? null : (
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">LIVE CAMERA</div>
-              <div className="mt-1 flex items-center gap-1.5">
-                <span className="text-sm font-semibold text-[color:var(--fg)]">{title}</span>
-                {description ? (
-                  <button
-                    type="button"
-                    title={description}
-                    aria-label={description}
-                    className="inline-grid h-4 w-4 shrink-0 place-items-center rounded-full text-[9px] font-black leading-none"
-                    style={{ border: "1px solid var(--border)", color: "var(--muted2)" }}
-                  >
-                    i
-                  </button>
-                ) : null}
-              </div>
-            </div>
-            {!isInline && (
-              <PillButton onClick={onClose}>Close</PillButton>
-            )}
+        {capturedFile && !isInline ? (
+          <div className="flex justify-end p-2">
+            <PillButton onClick={onClose}>Close</PillButton>
           </div>
-        )}
+        ) : null}
+        {capturedFile && isInline ? (
+          <div className="flex justify-end">
+            <PillButton onClick={onClose}>Close</PillButton>
+          </div>
+        ) : null}
 
         {capturedFile && capturedPreviewUrl ? (
-          <div className="mt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+          <div className={isInline ? "mt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]" : "flex-1 overflow-y-auto p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"}>
             {/* Blur badge — only shown when the shot is soft */}
             {blurAssessment?.isBlurry ? (
               <div className="mb-1.5 flex items-center gap-2 rounded-[10px] bg-red-500/10 px-3 py-1.5 ring-1 ring-red-500/20">
@@ -979,11 +964,11 @@ export default function CameraCapturePanel({
           </div>
         ) : (
           <>
-            {/* Header row — everything in one compact row, same idea as Quick
-                Add's single pill row: Upload · Quick Add toggle · camera
-                picker · Close, all h-8/h-9 sized. No separate title bar
-                above this taking a second row. */}
-            <div className="mt-1 flex shrink-0 items-center justify-between gap-1.5">
+            {/* Header row — one row, matching Quick Add's own header exactly:
+                Upload · Quick Add toggle · camera picker · Close, flush
+                against a border-bottom (not floating inside padding). No
+                separate title bar above this taking a second row. */}
+            <div className={isInline ? "mt-1 flex shrink-0 items-center gap-1.5" : "flex shrink-0 items-center gap-1.5 border-b border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2.5"}>
               <button
                 type="button"
                 onClick={onUseFileInstead}
@@ -1036,23 +1021,26 @@ export default function CameraCapturePanel({
                 </select>
               ) : null}
 
-              {isInline ? (
-                <button
-                  type="button"
-                  onClick={onClose}
-                  aria-label="Close"
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
-                  style={{ background: "var(--pill)" }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                </button>
-              ) : null}
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close"
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
+                style={{ background: "var(--pill)" }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+              </button>
             </div>
 
-            <div className={isInline ? "mt-2 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-1.5 ring-1 ring-[color:var(--border)] sm:h-[min(56dvh,560px)] sm:flex-none" : "mt-2 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-1.5 ring-1 ring-[color:var(--border)]"}>
+            <div className={
+              isInline
+                ? "mt-2 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-1.5 ring-1 ring-[color:var(--border)] sm:h-[min(56dvh,560px)] sm:flex-none"
+                // Edge-to-edge, no card around the video -- matches Quick Add.
+                : "relative flex min-h-0 flex-1 flex-col overflow-hidden bg-black"
+            }>
               <div
                   ref={videoContainerRef}
-                  className="relative flex h-full items-center justify-center overflow-hidden rounded-[12px] bg-[color:var(--surface)]"
+                  className={isInline ? "relative flex h-full items-center justify-center overflow-hidden rounded-[12px] bg-[color:var(--surface)]" : "relative flex h-full items-center justify-center overflow-hidden bg-black"}
                   style={{ minHeight: "260px" }}
                 >
                 {cameraError ? (
@@ -1074,18 +1062,50 @@ export default function CameraCapturePanel({
                 )}
 
                 {!cameraError ? (
-                  // Matches Quick Add's plain guide outline -- no label chip or
-                  // hint text cluttering the frame; the Frame/Camera pills above
-                  // already say what's selected.
-                  <div
-                    className="pointer-events-none absolute left-1/2 top-1/2 max-h-[82%] max-w-[82%] -translate-x-1/2 -translate-y-1/2 ring-2 ring-[color:var(--theme-gold)] shadow-[0_0_0_9999px_rgba(0,0,0,0.18)]"
-                    style={{
-                      aspectRatio: frame.aspectRatio,
-                      borderRadius: frame.radius,
-                      height: `calc(100% - ${frame.inset})`,
-                      width: "auto",
-                    }}
-                  />
+                  isInline ? (
+                    <div
+                      className="pointer-events-none absolute left-1/2 top-1/2 max-h-[82%] max-w-[82%] -translate-x-1/2 -translate-y-1/2 ring-2 ring-[color:var(--theme-gold)] shadow-[0_0_0_9999px_rgba(0,0,0,0.18)]"
+                      style={{
+                        aspectRatio: frame.aspectRatio,
+                        borderRadius: frame.radius,
+                        height: `calc(100% - ${frame.inset})`,
+                        width: "auto",
+                      }}
+                    />
+                  ) : (
+                    // Corner-bracket guide -- matches Quick Add's FrameOverlay
+                    // exactly (same color/size/glow), instead of a full ring.
+                    <div
+                      className="pointer-events-none absolute left-1/2 top-1/2 max-h-[82%] max-w-[82%] -translate-x-1/2 -translate-y-1/2"
+                      style={{
+                        aspectRatio: frame.aspectRatio,
+                        height: `calc(100% - ${frame.inset})`,
+                        width: "auto",
+                        filter: "drop-shadow(0 0 2.5px rgba(0,0,0,0.8))",
+                      }}
+                    >
+                      {(["tl", "tr", "bl", "br"] as const).map((corner) => {
+                        const top = corner.includes("t");
+                        const left = corner.includes("l");
+                        return (
+                          <div
+                            key={corner}
+                            className="absolute h-7 w-7"
+                            style={{
+                              [top ? "top" : "bottom"]: 0,
+                              [left ? "left" : "right"]: 0,
+                              borderTop: top ? "3px solid rgba(74,155,255,0.98)" : undefined,
+                              borderBottom: !top ? "3px solid rgba(74,155,255,0.98)" : undefined,
+                              borderLeft: left ? "3px solid rgba(74,155,255,0.98)" : undefined,
+                              borderRight: !left ? "3px solid rgba(74,155,255,0.98)" : undefined,
+                              borderRadius: top && left ? "4px 0 0 0" : top ? "0 4px 0 0" : left ? "0 0 0 4px" : "0 0 4px 0",
+                              boxShadow: "0 0 12px rgba(74,155,255,0.5)",
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  )
                 ) : null}
 
                 {/* Live scan indicator — only while live barcode scanning is enabled. */}
@@ -1149,6 +1169,7 @@ export default function CameraCapturePanel({
               </div>
             </div>
 
+          <div className={isInline ? "" : "shrink-0 border-t border-[color:var(--border)] bg-[color:var(--surface)] px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2"}>
             {/* ── Bulk Mode controls (shown above shutter when bulk on) ── */}
             {bulkMode && (
               <div className="mt-2 rounded-[14px] bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--theme-gold-border,rgba(203,208,213,0.25))]">
@@ -1273,6 +1294,7 @@ export default function CameraCapturePanel({
             {bulkSaving && (
               <div className="mt-2 text-center text-[10px] text-[color:var(--muted)]">Saving…</div>
             )}
+          </div>
           </>
         )}
       </div>
