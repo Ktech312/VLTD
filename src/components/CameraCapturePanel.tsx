@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import ScanCropEditor from "@/components/ScanCropEditor";
+import { DropdownPill } from "@/components/ui/DropdownPill";
 import { Glyph } from "@/components/ui/Glyph";
 import { PillButton } from "@/components/ui/PillButton";
 import type { BarcodeScanResult } from "@/lib/scanners/barcodeScanner";
@@ -999,27 +1000,57 @@ export default function CameraCapturePanel({
                 </button>
               ) : null}
 
-              {videoDevices.length >= 1 ? (
-                <select
-                  value={selectedDeviceId}
-                  onChange={(event) => {
-                    const nextDeviceId = event.target.value;
-                    selectedDeviceIdRef.current = nextDeviceId;
-                    preferredDeviceIdRef.current = nextDeviceId;
-                    if (typeof window !== "undefined") window.localStorage.setItem(CAMERA_PREF_KEY, nextDeviceId);
-                    setSelectedDeviceId(nextDeviceId);
-                    setRetryCount((count) => count + 1);
-                  }}
-                  className="h-8 min-w-0 flex-1 truncate rounded-[10px] bg-[color:var(--pill)] px-2 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
-                  aria-label="Select camera"
-                >
-                  {videoDevices.map((device, index) => (
-                    <option key={device.deviceId || index} value={device.deviceId}>
-                      {device.label || `Camera ${index + 1}`}
-                    </option>
-                  ))}
-                </select>
+              {!isInline ? (
+                <DropdownPill
+                  title="Frame"
+                  value={selectedFrameId}
+                  options={FRAME_PRESETS.map((preset) => ({ value: preset.id, label: preset.label }))}
+                  onSelect={(id) => setSelectedFrameId(id)}
+                />
               ) : null}
+
+              {videoDevices.length >= 1 ? (
+                isInline ? (
+                  <select
+                    value={selectedDeviceId}
+                    onChange={(event) => {
+                      const nextDeviceId = event.target.value;
+                      selectedDeviceIdRef.current = nextDeviceId;
+                      preferredDeviceIdRef.current = nextDeviceId;
+                      if (typeof window !== "undefined") window.localStorage.setItem(CAMERA_PREF_KEY, nextDeviceId);
+                      setSelectedDeviceId(nextDeviceId);
+                      setRetryCount((count) => count + 1);
+                    }}
+                    className="h-8 min-w-0 flex-1 truncate rounded-[10px] bg-[color:var(--pill)] px-2 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+                    aria-label="Select camera"
+                  >
+                    {videoDevices.map((device, index) => (
+                      <option key={device.deviceId || index} value={device.deviceId}>
+                        {device.label || `Camera ${index + 1}`}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  // Literal same dropdown Quick Add uses for its own Camera pill.
+                  <DropdownPill
+                    title="Camera"
+                    value={selectedDeviceId}
+                    options={videoDevices.map((device, index) => ({
+                      value: device.deviceId,
+                      label: device.label || `Camera ${index + 1}`,
+                    }))}
+                    onSelect={(nextDeviceId) => {
+                      selectedDeviceIdRef.current = nextDeviceId;
+                      preferredDeviceIdRef.current = nextDeviceId;
+                      if (typeof window !== "undefined") window.localStorage.setItem(CAMERA_PREF_KEY, nextDeviceId);
+                      setSelectedDeviceId(nextDeviceId);
+                      setRetryCount((count) => count + 1);
+                    }}
+                  />
+                )
+              ) : null}
+
+              {!isInline ? <div className="flex-1" /> : null}
 
               <button
                 type="button"
