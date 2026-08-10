@@ -6,7 +6,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 
 import CameraCapturePanel from "@/components/CameraCapturePanel";
 import ScanCropEditor from "@/components/ScanCropEditor";
-import { PillButton } from "@/components/ui/PillButton";
 import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 import { analyzeImageWithVision, type VisionAnalysisResult } from "@/lib/ai/openaiVision";
 import { resolveVisionTaxonomy } from "@/lib/visionTaxonomy";
@@ -45,10 +44,6 @@ import {
 } from "@/lib/captureAddState";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { getBulkScanStatus, consumeBulkScans } from "@/lib/bulkScanQuota";
-
-/* ── Types ─────────────────────────────────────────────────────── */
-
-type Phase = "idle" | "loading" | "review" | "error";
 
 const UNIVERSES = getUniverses();
 
@@ -371,9 +366,9 @@ export default function CapturePage() {
   const [pendingNativeCrop, setPendingNativeCrop] = useState<ScanCropRect>(DEFAULT_NATIVE_CROP);
   const [isApplyingNativeCrop, setIsApplyingNativeCrop] = useState(false);
 
-  // Builder-first: the form + image panel is always shown. `analyzing` drives the
-  // AI spinner; `phase` stays "review" so the legacy camera-first block never renders.
-  const [phase, setPhase] = useState<Phase>("review");
+  // Builder-first: the form + image panel is always shown; `analyzing` drives
+  // the AI spinner. (The old camera-first "phase" state machine — idle/
+  // loading/error — is gone; it never left "review" in real use.)
   const [analyzing, setAnalyzing] = useState(false);
   // True only after an AI identify has actually run — gates the confidence badge.
   const [identified, setIdentified] = useState(false);
@@ -406,14 +401,10 @@ export default function CapturePage() {
   // All photos for this item. capturedImages[0] is the cover (the only one AI reads);
   // the rest are extra angles/back shots stored with the item.
   const [capturedImages, setCapturedImages] = useState<File[]>([]);
-  // The live camera is embedded inline on the Add screen (below), so it no
-  // longer opens as a modal on load. The modal is only used on demand — e.g.
-  // re-scanning a barcode from the review screen.
+  // The camera is its own self-contained screen (matches Quick Add) — never
+  // embedded live in the page. "Add Image"/"Take photo" opens it; Save closes
+  // it back to this page with the photo attached.
   const [isCameraPanelOpen, setIsCameraPanelOpen] = useState(false);
-  // The inline camera is the default view before any photo exists (no
-  // toggle needed to open it) -- this lets Close back out of it to the
-  // "add a photo — optional" placeholder instead, without a photo.
-  const [skipCameraStep, setSkipCameraStep] = useState(false);
 
 
   // Load remembered locks/values once on mount, and pre-fill any locked fields.
@@ -754,157 +745,13 @@ export default function CapturePage() {
       <div className="mx-auto max-w-[1400px]">
         <section className="relative">
 
-          {/* ── Two-column layout: info + camera (capture states) ── */}
-          {phase !== "review" && (
-          <div
-            className={`relative flex flex-col gap-5 lg:gap-7 ${
-              phase === "idle" || phase === "loading"
-                ? "lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,480px)] lg:items-start"
-                : ""
-            }`}
-          >
-            {/* Left: header + state-specific content */}
-            <div className="order-2 lg:order-none">
-              <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)]">
-                Add Item
-              </div>
-              <h1 className="mt-2 text-2xl font-black leading-tight tracking-[-0.04em] text-text-primary lg:mt-3 lg:text-4xl lg:leading-[0.98] lg:tracking-[-0.055em] lg:text-5xl">
-                Snap it. We&apos;ll do the rest.
-              </h1>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-[color:var(--muted)] lg:mt-3 lg:text-base">
-                Point your camera at the item and snap — VLTD identifies it and fills in the details.
-              </p>
-
-              {/* ── IDLE: bulk path + the express/pro alternatives, tucked ── */}
-              {phase === "idle" && (
-                <>
-                  <Link
-                    href="/vault/bulk"
-                    className="mt-4 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.08))] lg:mt-6"
-                    style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}
-                  >
-                    <span className="text-sm font-black text-[color:var(--theme-gold,#C8CDD2)]">+</span>
-                    Adding a lot? Bulk upload photos
-                  </Link>
-                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[color:var(--muted2)]">
-                    <span className="uppercase tracking-[0.14em]">Rather type it?</span>
-                    <Link href="/vault/quick" className="font-semibold underline-offset-2 hover:text-text-primary hover:underline">
-                      Quick Add
-                    </Link>
-                    <Link href="/vault/add" className="font-semibold underline-offset-2 hover:text-text-primary hover:underline">
-                      Full manual entry
-                    </Link>
-                  </div>
-                </>
-              )}
-
-              {/* ── LOADING state ── */}
-              {phase === "loading" && (
-                <div className="mt-8 flex flex-col gap-3">
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="inline-block h-3 w-3 animate-pulse rounded-full"
-                      style={{
-                        background: "var(--theme-gold, #C8CDD2)",
-                        boxShadow: "0 0 14px rgba(203,208,213,0.6)",
-                      }}
-                    />
-                    <span className="text-base font-black text-text-primary">
-                      Identifying your item…
-                    </span>
-                  </div>
-                  <p className="text-sm text-[color:var(--muted)]">
-                    Running AI vision analysis and barcode scan. This takes a few seconds.
-                  </p>
-                </div>
-              )}
-
-              {/* ── ERROR state ── */}
-              {phase === "error" && (
-                <div className="mt-6 rounded-2xl border border-[color:var(--border)] bg-vault-card p-5">
-                  <p className="text-sm font-black text-[#EF4444]">
-                    Could not identify item automatically.
-                  </p>
-                  <p className="mt-1 text-xs leading-5 text-[color:var(--muted)]">
-                    {errorMsg || "The image may be unclear or the item is unrecognized."}
-                  </p>
-                  <div className="mt-5 flex flex-wrap gap-3">
-                    <PillButton onClick={() => setPhase("idle")}>
-                      ← Try again
-                    </PillButton>
-                    <Link
-                      href="/vault/add"
-                      className="inline-flex min-h-10 items-center justify-center rounded-[8px] px-5 text-sm font-black text-[#0B0B0B]"
-                      style={{
-                        background: "var(--theme-gold-gradient)",
-                        boxShadow: "var(--theme-gold-glow)",
-                      }}
-                    >
-                      Fill in manually
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Right: camera (idle) or analyzing preview (loading) */}
-            {phase === "idle" && (
-              <div className="order-first lg:order-none">
-                <CameraCapturePanel
-                  variant="inline"
-                  title="Add Item"
-                  description="Point at the item and snap. VLTD fills in the rest."
-                  universe={fields.universe}
-                  onCapture={handleCapture}
-                  bulkToggle={false}
-                  capturedCount={capturedImages.length}
-                  lastCapturedUrl={previewUrls[previewUrls.length - 1]}
-                  onClose={() => setPhase("review")}
-                  onUseFileInstead={() => uploadInputRef.current?.click()}
-                />
-              </div>
-            )}
-            {phase === "loading" && (
-              <div className="order-first lg:order-none">
-                <div
-                  className="relative flex min-h-[260px] w-full flex-col items-center justify-center overflow-hidden rounded-[30px] border"
-                  style={{
-                    borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))",
-                    background: "radial-gradient(circle at 50% 30%, rgba(203,208,213,0.08), rgba(5,11,21,0.72) 70%)",
-                  }}
-                >
-                  {capturedImageFile && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={URL.createObjectURL(capturedImageFile)}
-                      alt="Captured"
-                      className="absolute inset-0 h-full w-full object-cover opacity-25"
-                    />
-                  )}
-                  <div className="relative flex flex-col items-center gap-3 px-6 text-center">
-                    <div
-                      className="flex h-14 w-14 items-center justify-center rounded-full"
-                      style={{
-                        background: "rgba(203,208,213,0.12)",
-                        border: "1px solid rgba(203,208,213,0.35)",
-                      }}
-                    >
-                      <span
-                        className="h-5 w-5 rounded-full border-[2.5px] border-transparent border-t-[#C8CDD2] animate-spin"
-                        style={{ borderTopColor: "#C8CDD2", borderRightColor: "rgba(203,208,213,0.3)" }}
-                      />
-                    </div>
-                    <div className="text-base font-black text-text-primary">Analyzing…</div>
-                    <div className="text-xs text-[color:var(--muted)]">Running vision + barcode scan</div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          )}
+          {/* The old idle/loading/error phase machinery lived here — deleted.
+              Confirmed dead: nothing in this file ever calls setPhase("idle"),
+              setPhase("loading"), or setPhase("error") except a button
+              *inside* the (therefore unreachable) error branch itself. phase
+              starts at "review" and simply never left it in real use. */}
 
           {/* ── REVIEW: record-builder (image left, numbered accordion right) ── */}
-          {phase === "review" && (
             <div className="relative">
               {/* Header — concept-19. Subtitle removed (was pure orientation
                   copy, redundant with the camera's own frame-guide hint and
@@ -942,7 +789,6 @@ export default function CapturePage() {
               <div className="mt-3 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,480px)_1fr] lg:items-start">
                 {/* Left: framed image viewer (concept-19) */}
                 <div className="min-w-0">
-                  {previewUrl || skipCameraStep ? (
                   <div
                     className="relative overflow-hidden rounded-[16px] border"
                     style={{
@@ -962,7 +808,7 @@ export default function CapturePage() {
                           <div className="text-sm font-semibold text-text-primary">Add a photo — optional</div>
                           <p className="max-w-[240px] text-xs leading-5 text-[color:var(--muted)]">Snap or upload one — then tap <b className="font-semibold text-[color:var(--fg)]">Identify</b> to auto-fill, or just type the details in. No photo required.</p>
                           <div className="flex flex-wrap justify-center gap-2">
-                            <button type="button" onClick={() => setSkipCameraStep(false)} className="inline-flex items-center gap-1.5 rounded-[8px] px-4 py-2 text-xs font-bold text-[#0B0B0B]" style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}>Take photo</button>
+                            <button type="button" onClick={() => setIsCameraPanelOpen(true)} className="inline-flex items-center gap-1.5 rounded-[8px] px-4 py-2 text-xs font-bold text-[#0B0B0B]" style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}>Take photo</button>
                             <button type="button" onClick={() => nativeCameraInputRef.current?.click()} title="Uses your phone's own camera app for the sharpest quality" className="inline-flex items-center gap-1.5 rounded-[8px] border px-4 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.08))]" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}>Take Real Photo</button>
                             <button type="button" onClick={() => uploadInputRef.current?.click()} className="inline-flex items-center gap-1.5 rounded-[8px] border px-4 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.08))]" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}>Upload</button>
                           </div>
@@ -1011,22 +857,6 @@ export default function CapturePage() {
                       </div>
                     ) : null}
                   </div>
-                  ) : (
-                    // Camera is live right inside the box (no separate modal).
-                    <CameraCapturePanel
-                      variant="inline"
-                      title="Add Item"
-                      description="Point at the item and snap — or switch to Quick Add to capture many and sort later."
-                      universe={fields.universe}
-                      onCapture={handleCapture}
-                      bulkToggle={false}
-                      bulkTaxonomy={false}
-                      capturedCount={capturedImages.length}
-                      lastCapturedUrl={previewUrls[previewUrls.length - 1]}
-                      onClose={() => setSkipCameraStep(true)}
-                      onUseFileInstead={() => uploadInputRef.current?.click()}
-                    />
-                  )}
 
                   {/* Thumbnail rail — tap any photo to preview it above (its border
                       glows so it's clear which one you're looking at). Cover only
@@ -1394,7 +1224,6 @@ export default function CapturePage() {
                 </div>
               </div>
             </div>
-          )}
         </section>
 
         {/* Plain file picker — for choosing an existing photo from your
