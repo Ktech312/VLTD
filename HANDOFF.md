@@ -652,6 +652,67 @@ write that migration blind since it's payment-adjacent data.
 ---
 
 ## 4. Done recently (don't redo)
+- **2026-08-08/09 — Regular Add's camera, rebuilt to actually match Quick
+  Add** (many rounds — EK's patience on this one is worth documenting so
+  the reasoning doesn't get re-litigated from scratch):
+  - **Removed the embedded live camera entirely** from the Add screen. It
+    used to sit permanently inline next to the builder form (in TWO places:
+    a dead "idle" phase nobody could reach, and the default "review" phase
+    view before any photo existed) — deleted both, plus the whole dead
+    idle/loading/error `phase` state machine that one of them lived in
+    (confirmed unreachable: nothing ever set `phase` to anything but
+    `"review"` except a button inside the equally-unreachable error
+    branch). The Add screen now shows a plain static "Add a photo" tile;
+    tapping it opens the camera as its own full-screen popup — the same
+    self-contained screen Quick Add uses, never live-embedded in the page.
+  - **The popup's actual visual structure now matches Quick Add's, not just
+    its behavior**: one header row (was two stacked), no padding/rounded
+    corners on the panel itself (header/video/footer each own their edge
+    instead), video edge-to-edge (was sitting in its own padded card),
+    corner-bracket guide instead of a ring outline, front-facing cameras
+    filtered out of the picker (device labels reliably say "facing
+    front"/"facing back"). Extracted `DropdownPill` out of
+    `ScanCapturePanel.tsx` into `src/components/ui/DropdownPill.tsx` so
+    both screens render the literal same dropdown component, not two
+    versions that can drift apart — added a Frame picker using it (that
+    state already existed in `CameraCapturePanel.tsx`, just had no UI).
+  - **Fixed the letterbox bars two different ways before landing on the
+    right one.** First tried switching the video to `object-cover`
+    (crop-to-fill, like Quick Add) — this broke capture accuracy: a
+    capture always grabs the camera's full native frame regardless of how
+    it's displayed, so the live preview started showing a tighter crop
+    than what actually got saved. Reverted that. Landed on the real fix:
+    once the camera's actual aspect ratio is known
+    (`videoWidth`/`videoHeight` on `canplay`), the video's own *container*
+    is shaped to match it via CSS `aspect-ratio`, instead of sitting in an
+    arbitrary flex-sized rectangle — `object-contain` then shows ~zero
+    bars because the box already matches the footage, with no cropping
+    happening anywhere and therefore no preview/capture mismatch possible.
+  - **Confirmed with EK: the remaining small gap when testing is a desktop-
+    webcam artifact, not a bug** — a landscape webcam (16:9) squeezed into
+    a portrait-shaped popup can't fill it without cropping something,
+    full stop. A real phone's rear camera already outputs video shaped to
+    match how it's held, so this shouldn't show up there. **Explained why
+    Quick Add and Add's camera intentionally use different object-fit
+    (`cover` vs `contain`)** — not inconsistent code, two different real
+    needs: Quick Add never lets you crop afterward (straight into a batch),
+    so cropping the live view costs nothing; Add always has a crop-editing
+    step after the photo, where the live view has to show the whole,
+    uncropped frame for the crop tool to be trustworthy. **Added this
+    explanation as a permanent Guide entry** (`src/app/guide/page.tsx`,
+    "Why Add's camera looks different from Quick Add's") so it's answered
+    for any user who asks, not just tribal knowledge from this thread.
+  - **Added drag-to-reorder to the thumbnail rail** (press, hold, drag any
+    photo onto any slot — dragging onto the first slot makes it the cover).
+    Generalized the old `makeCover` (front-only) into `reorderImages(from,
+    to)`. Pointer events, not native HTML5 drag-and-drop (poor/inconsistent
+    touch support) — a plain tap still selects the thumbnail; a press that
+    moves past an 8px threshold becomes a drag, with a live green
+    drop-target highlight.
+  - Also fixed along the way: the "Add a photo — optional" empty-state tile
+    was forced into a 4:5 aspect-ratio box sized for showing an actual
+    photo, even with nothing to show — now only applies that ratio once a
+    photo exists.
 - **2026-08-08 — bug-report two-way communication.** EK: resolving a bug
   report should tell the reporter, and EK should be able to reply, not just
   flip a status pill. Built in-app only (EK's explicit call — email would

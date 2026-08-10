@@ -182,6 +182,23 @@ const FEATURES: Feature[] = [
     value: "Fresh listings signal active sellers. Stale listings signal negotiation opportunities.",
     category: "marketplace",
   },
+  {
+    id: "camera-live-view-vs-quick-add",
+    number: 12,
+    emoji: "📷",
+    name: "Why Add's camera looks different from Quick Add's",
+    location: "Add Item",
+    locationHref: "/capture",
+    tagline: "Both screens use the same live camera code, but one crops what you see live and the other doesn't — on purpose.",
+    why: "Quick Add's camera fills the frame edge-to-edge with no gaps (it crops the picture to fit). The regular Add camera shows the full, uncropped frame instead, which can leave a small gap above and below the photo depending on the shape of your camera vs. the shape of the screen.",
+    what: [
+      "Quick Add never lets you fine-tune a crop afterward — it goes straight into a batch, so cropping the live view live costs nothing.",
+      "Regular Add always shows you a crop-and-edit step after the photo, where you fine-tune exactly what gets saved. For that to work reliably, what you see live has to be the whole picture, not a pre-cropped guess.",
+      "On a real phone, the rear camera already outputs video shaped to match how you're holding the phone, so this gap is usually minimal to invisible there — it shows up more on a desktop webcam (which is shaped like a wide rectangle) squeezed into a tall phone-shaped preview.",
+    ],
+    value: "Not a bug or a mismatched setting — the regular Add screen trades a small live-preview gap (on some cameras) for a guarantee that what you crop afterward is exactly what you saw, every time.",
+    category: "vault",
+  },
 ];
 
 const CATEGORIES: { key: Feature["category"]; label: string; emoji: string }[] = [
