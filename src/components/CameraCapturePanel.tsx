@@ -221,7 +221,13 @@ export default function CameraCapturePanel({
         const devices = await navigator.mediaDevices.enumerateDevices();
         if (!isActive) return;
 
-        const cameras = devices.filter((device) => device.kind === "videoinput");
+        // Photographing a collectible always wants a rear camera -- a front/
+        // selfie camera is never useful here and just clutters the picker.
+        // Device labels reliably say "facing front"/"facing back" on phones
+        // that expose multiple rear cameras (see EK's screenshot).
+        const cameras = devices
+          .filter((device) => device.kind === "videoinput")
+          .filter((device) => !/front/i.test(device.label));
         setVideoDevices(cameras);
 
         const currentDeviceId = selectedDeviceIdRef.current;
@@ -757,15 +763,7 @@ export default function CameraCapturePanel({
               <PillButton onClick={onClose}>Close</PillButton>
             </div>
           )
-        ) : isInline ? (
-          // Inline is a full-screen takeover on mobile now (see the wrapper
-          // classes below), so it needs its own way out there. Desktop keeps
-          // the old headerless look — sm:hidden.
-          <div className="flex items-center justify-between gap-3 sm:hidden">
-            <span className="text-sm font-semibold text-[color:var(--fg)]">{title}</span>
-            <PillButton onClick={onClose}>Close</PillButton>
-          </div>
-        ) : (
+        ) : isInline ? null : (
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">LIVE CAMERA</div>
@@ -805,6 +803,54 @@ export default function CameraCapturePanel({
                 {captureTiming}
               </div>
             ) : null}
+
+            {/* Brighten / remove-background — kept as their own small row
+                above the crop editor, not overlaid on the photo itself: when
+                a photo nearly fills its box there's no letterbox space left
+                to safely put controls without them sitting on top of (and
+                blocking) the crop handles. */}
+            <div className="mb-1.5 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setAdjustments(isBrightenActive(adjustments) ? DEFAULT_CAPTURE_ADJUSTMENTS : BRIGHTEN_ADJUSTMENTS)}
+                aria-pressed={isBrightenActive(adjustments)}
+                title="Brighten a dim photo"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full ring-1 transition"
+                style={{
+                  background: isBrightenActive(adjustments) ? "var(--theme-gold-subtle, rgba(203,208,213,0.14))" : "var(--pill)",
+                  borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))",
+                  color: "var(--theme-gold, #C8CDD2)",
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleRemoveBackground()}
+                disabled={isRemovingBackground || !capturedFile}
+                aria-label={isBackgroundRemoved ? "Remove background again" : "Remove background"}
+                title="Remove background"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full ring-1 transition disabled:opacity-45"
+                style={{
+                  background: isBackgroundRemoved ? "var(--theme-gold-subtle, rgba(203,208,213,0.14))" : "var(--pill)",
+                  borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))",
+                  color: "var(--theme-gold, #C8CDD2)",
+                }}
+              >
+                {isRemovingBackground ? (
+                  <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                ) : (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21" />
+                    <path d="M22 21H7" />
+                    <path d="m5 11 9 9" />
+                  </svg>
+                )}
+              </button>
+            </div>
             <ScanCropEditor
               imageUrl={capturedPreviewUrl}
               crop={captureCrop}
@@ -821,77 +867,29 @@ export default function CameraCapturePanel({
               compactViewport="tall"
               hideActionButtons
               hideZoomRow
-              // These used to sit in rows below the viewport, adding page height
-              // on top of the black letterbox bars already wasting space inside
-              // it. Now they render pinned inside those bars instead — same
-              // controls, no extra height, no more dead space.
-              viewportOverlayTop={
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setAdjustments(isBrightenActive(adjustments) ? DEFAULT_CAPTURE_ADJUSTMENTS : BRIGHTEN_ADJUSTMENTS)}
-                    aria-pressed={isBrightenActive(adjustments)}
-                    title="Brighten a dim photo"
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 backdrop-blur transition"
-                    style={{
-                      background: isBrightenActive(adjustments) ? "var(--theme-gold-subtle, rgba(203,208,213,0.14))" : "rgba(0,0,0,0.5)",
-                      borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))",
-                      color: "var(--theme-gold, #C8CDD2)",
-                    }}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <circle cx="12" cy="12" r="4" />
-                      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void handleRemoveBackground()}
-                    disabled={isRemovingBackground || !capturedFile}
-                    aria-label={isBackgroundRemoved ? "Remove background again" : "Remove background"}
-                    title="Remove background"
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 backdrop-blur transition disabled:opacity-45"
-                    style={{
-                      background: isBackgroundRemoved ? "var(--theme-gold-subtle, rgba(203,208,213,0.14))" : "rgba(0,0,0,0.5)",
-                      borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))",
-                      color: "var(--theme-gold, #C8CDD2)",
-                    }}
-                  >
-                    {isRemovingBackground ? (
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    ) : (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21" />
-                        <path d="M22 21H7" />
-                        <path d="m5 11 9 9" />
-                      </svg>
-                    )}
-                  </button>
-                </div>
-              }
-              viewportOverlayBottom={
-                <>
-                  <PillButton onClick={handleRetakePhoto} disabled={isApplyingCrop}>
-                    ↩ Retake
-                  </PillButton>
-                  <PillButton
-                    onClick={() => void handleUseCapturedPhoto()}
-                    disabled={isApplyingCrop}
-                    style={{ background: "var(--pill-active-bg)", color: "var(--fg)" }}
-                  >
-                    {isApplyingCrop ? "Saving..." : "Save"}
-                  </PillButton>
-                  <button
-                    type="button"
-                    onClick={() => setShowFineTune((value) => !value)}
-                    className="rounded-[8px] px-3 py-2.5 text-sm ring-1 backdrop-blur"
-                    style={{ background: "rgba(0,0,0,0.5)", borderColor: "var(--border)", color: "var(--fg)" }}
-                  >
-                    {showFineTune ? "Hide Fine Tune" : "Fine Tune"}
-                  </button>
-                </>
-              }
             />
+
+            {/* Retake/Save/Fine Tune — a plain row below the viewport, not
+                overlaid on the photo. Same reasoning as the brighten/remove-
+                background row above: when the crop box's edges sit close to
+                the viewport's own edges (little to no letterbox space), an
+                overlay here would sit on top of — and block — the bottom
+                crop handles. */}
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+              <PillButton onClick={handleRetakePhoto} disabled={isApplyingCrop}>
+                ↩ Retake
+              </PillButton>
+              <PillButton
+                onClick={() => void handleUseCapturedPhoto()}
+                disabled={isApplyingCrop}
+                style={{ background: "var(--pill-active-bg)", color: "var(--fg)" }}
+              >
+                {isApplyingCrop ? "Saving..." : "Save"}
+              </PillButton>
+              <PillButton onClick={() => setShowFineTune((value) => !value)}>
+                {showFineTune ? "Hide Fine Tune" : "Fine Tune"}
+              </PillButton>
+            </div>
 
             {showFineTune ? (
               <div className="mt-2 rounded-[18px] bg-[color:var(--surface)] p-2 ring-1 ring-[color:var(--border)]">
@@ -981,14 +979,17 @@ export default function CameraCapturePanel({
           </div>
         ) : (
           <>
-            {/* Top control row — Upload (left) · Quick Add (center) · camera picker (right, compact) */}
-            <div className="mt-1 flex items-center justify-between gap-2">
+            {/* Header row — everything in one compact row, same idea as Quick
+                Add's single pill row: Upload · Quick Add toggle · camera
+                picker · Close, all h-8/h-9 sized. No separate title bar
+                above this taking a second row. */}
+            <div className="mt-1 flex shrink-0 items-center justify-between gap-1.5">
               <button
                 type="button"
                 onClick={onUseFileInstead}
                 title="Upload from file"
                 aria-label="Upload from file"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
                 style={{ background: "var(--pill)", color: "var(--muted)" }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1002,7 +1003,7 @@ export default function CameraCapturePanel({
                 <button
                   type="button"
                   onClick={() => setBulkMode((v) => !v)}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-[10px] px-3 text-xs font-semibold ring-1 transition"
+                  className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] px-2.5 text-xs font-semibold ring-1 transition"
                   style={bulkMode
                     ? { background: "rgba(203,208,213,0.12)", borderColor: "rgba(203,208,213,0.35)", color: "#C8CDD2" }
                     : { background: "var(--pill)", borderColor: "var(--border)", color: "var(--muted2)" }
@@ -1011,7 +1012,7 @@ export default function CameraCapturePanel({
                   <span className="inline-block h-2 w-2 rounded-full transition-colors" style={{ background: bulkMode ? "#C8CDD2" : "var(--muted2)" }} />
                   Quick Add
                 </button>
-              ) : <span />}
+              ) : null}
 
               {videoDevices.length >= 1 ? (
                 <select
@@ -1024,7 +1025,7 @@ export default function CameraCapturePanel({
                     setSelectedDeviceId(nextDeviceId);
                     setRetryCount((count) => count + 1);
                   }}
-                  className="h-8 max-w-[46%] rounded-[10px] bg-[color:var(--pill)] px-2.5 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+                  className="h-8 min-w-0 flex-1 truncate rounded-[10px] bg-[color:var(--pill)] px-2 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
                   aria-label="Select camera"
                 >
                   {videoDevices.map((device, index) => (
@@ -1033,14 +1034,26 @@ export default function CameraCapturePanel({
                     </option>
                   ))}
                 </select>
-              ) : <span />}
+              ) : null}
+
+              {isInline ? (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  aria-label="Close"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
+                  style={{ background: "var(--pill)" }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                </button>
+              ) : null}
             </div>
 
-            <div className={isInline ? "mt-2 overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-1.5 ring-1 ring-[color:var(--border)]" : "mt-2 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-1.5 ring-1 ring-[color:var(--border)]"}>
+            <div className={isInline ? "mt-2 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-1.5 ring-1 ring-[color:var(--border)] sm:h-[min(56dvh,560px)] sm:flex-none" : "mt-2 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[16px] bg-[color:var(--surface)] p-1.5 ring-1 ring-[color:var(--border)]"}>
               <div
                   ref={videoContainerRef}
-                  className={isInline ? "relative flex items-center justify-center overflow-hidden rounded-[12px] bg-[color:var(--surface)]" : "relative flex h-full items-center justify-center overflow-hidden rounded-[12px] bg-[color:var(--surface)]"}
-                  style={isInline ? { height: "min(68dvh, 640px)", minHeight: "320px" } : { minHeight: "320px" }}
+                  className="relative flex h-full items-center justify-center overflow-hidden rounded-[12px] bg-[color:var(--surface)]"
+                  style={{ minHeight: "260px" }}
                 >
                 {cameraError ? (
                   <div className="max-w-lg px-5 text-center text-sm text-red-200">
@@ -1061,6 +1074,9 @@ export default function CameraCapturePanel({
                 )}
 
                 {!cameraError ? (
+                  // Matches Quick Add's plain guide outline -- no label chip or
+                  // hint text cluttering the frame; the Frame/Camera pills above
+                  // already say what's selected.
                   <div
                     className="pointer-events-none absolute left-1/2 top-1/2 max-h-[82%] max-w-[82%] -translate-x-1/2 -translate-y-1/2 ring-2 ring-[color:var(--theme-gold)] shadow-[0_0_0_9999px_rgba(0,0,0,0.18)]"
                     style={{
@@ -1069,21 +1085,7 @@ export default function CameraCapturePanel({
                       height: `calc(100% - ${frame.inset})`,
                       width: "auto",
                     }}
-                  >
-                    <div
-                      className="absolute left-1/2 top-2 -translate-x-1/2 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] ring-1"
-                      style={{
-                        background: "rgba(0,0,0,0.48)",
-                        borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))",
-                        color: "var(--theme-gold, #C8CDD2)",
-                      }}
-                    >
-                      {selectedFrameId === "auto" ? frame.label : selectedFramePreset?.label}
-                    </div>
-                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-black/45 px-2 py-0.5 text-[10px] font-semibold text-white/70 ring-1 ring-white/10">
-                      Fill the guide, then tap capture
-                    </div>
-                  </div>
+                  />
                 ) : null}
 
                 {/* Live scan indicator — only while live barcode scanning is enabled. */}
