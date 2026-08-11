@@ -228,14 +228,32 @@ problem, the underlying engine itself is the ceiling. Implementation:
   rounds of raising it not helping sharpness and even making capture
   slower; no reason to re-litigate that here.
 
-**None of tonight's zxing-wasm change has been tested on a real device —
-EK was asleep for this part.** Verify: (1) the wasm asset actually serves
-correctly in production (check `https://vltd.vercel.app/zxing_reader.wasm`
-returns the binary, not a 404/HTML error page, and that Scan still works at
-all — if the asset 404s, the JS-fallback safety net should keep it working,
-just at the old accuracy level, so "does it still work" matters more than
-"is it fast" as the first check); (2) does it actually decode the same
-QR/barcode that failed twice tonight; (3) still doesn't heat up the phone.
+**CONFIRMED WORKING 2026-08-11 morning** — EK's first test after waking up:
+the exact same CGC slab that failed twice the night before (whole-frame
+decode, then region-cropped decode, both on the old unmaintained library)
+now decoded clean on the first try — green "QR code read: 3905790037795"
+badge, regular Add's camera. The wasm asset was also independently verified
+serving correctly in production before this test (200, `application/wasm`,
+byte-exact size match) via a direct fetch from a live browser session, so
+both the infrastructure risk (self-hosted binary actually serving on
+Vercel) and the accuracy problem (the engine swap itself) are confirmed
+resolved, not just "should work."
+
+**Not yet tried, worth a quick check next:**
+- The horizontal linear barcode under the QR on that same slab (confirms
+  linear/1D formats decode too, not just QR/matrix).
+- Quick Add's camera (`ScanCapturePanel.tsx`) — only the regular Add camera
+  (`CameraCapturePanel.tsx`) has been tested so far; both go through the
+  same `onDemandBarcodeScan.ts`, so this should work, but hasn't been seen.
+- A genuine retail UPC/EAN on an ordinary product (this test was a slab
+  QR, not a linear retail code).
+- Whether it still runs cool over several repeated bursts — heat was the
+  ORIGINAL complaint that started this whole rebuild; decode accuracy is
+  now confirmed, heat hasn't been re-checked since the engine swap.
+
+PSA lookups are still paused (`ENABLE_PSA_LOOKUP = false`, §B3) — this was
+a CGC slab, so this test didn't touch that path. Still needs EK's explicit
+go-ahead before flipping it back on.
 
 **Update, same day, after two real device tests:** the "Scanning" banner is
 confirmed visible on a real phone (EK sent screenshots showing "Scanning…

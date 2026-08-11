@@ -30,8 +30,19 @@ if wasm ever fails to load (so a wasm problem degrades the feature instead
 of killing it), fixed a real format-name mapping gap that would've quietly
 reopened the PSA auto-fire risk for wasm-decoded codes. See HANDOFF §B for
 full detail.
-⏳ **NONE of the zxing-wasm change is device-tested yet** — EK was asleep.
-Top priority next test: same slab, same conditions, does it decode now.
+✅ **CONFIRMED WORKING** — EK tested the exact same CGC slab that failed
+twice the night before: QR decoded clean (`3905790037795`), green "code
+read" badge, on the first real test of the zxing-wasm swap. The engine
+switch was the real fix, not the region-cropping or banner-visibility
+changes around it (those were real fixes too, just not the accuracy one).
+⬜ **Not yet tried:** the horizontal barcode under the QR on the same slab
+(linear format, not matrix) — worth a scan to confirm both format families
+work, not just QR. Also not yet tried on Quick Add (`ScanCapturePanel`,
+only regular Add's camera was tested) or on any other barcode type (retail
+UPC/EAN on a normal product).
+🔒 PSA lookups still PAUSED (`ENABLE_PSA_LOOKUP = false`) — this was a CGC
+slab, not PSA, so this test didn't exercise that path either way. Still
+needs EK's go-ahead to flip back on.
 🔒 **PSA lookups fully PAUSED** (`ENABLE_PSA_LOOKUP = false` in
 `vault/add/page.tsx`'s `runPSALookupForCode`) — EK's explicit call, so scan
 testing can't burn real PSA quota. Covers the auto graded_card flow, the
