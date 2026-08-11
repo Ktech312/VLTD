@@ -49,7 +49,8 @@ export type GlyphName =
   | "rocket"
   | "globe"
   | "book"
-  | "wrench";
+  | "wrench"
+  | "scan";
 
 const PATHS: Record<GlyphName, ReactNode> = {
   bell: (<><path d="M6 16v-5a6 6 0 0 1 12 0v5" /><path d="M4.5 16h15" /><path d="M10.4 19a1.7 1.7 0 0 0 3.2 0" /></>),
@@ -97,6 +98,9 @@ const PATHS: Record<GlyphName, ReactNode> = {
   globe: (<><circle cx="12" cy="12" r="8.5" /><path d="M3.5 12h17M12 3.5c2.2 2.2 3.4 5.4 3.4 8.5s-1.2 6.3-3.4 8.5c-2.2-2.2-3.4-5.4-3.4-8.5S9.8 5.7 12 3.5z" /></>),
   book: (<><path d="M4 5.5c2.2-1 4.8-1 7.5 0v13c-2.7-1-5.3-1-7.5 0z" /><path d="M19.5 5.5c-2.2-1-4.8-1-7.5 0v13c2.7-1 5.3-1 7.5 0z" /></>),
   wrench: (<><path d="M14.5 3.5a4.5 4.5 0 0 0-5.6 5.6L4 14l3 3 4.9-4.9a4.5 4.5 0 0 0 5.6-5.6l-2.4 2.4-2-2z" /></>),
+  // Viewfinder corner-brackets — the universal "scan" symbol (matches the
+  // camera panels' own frame-corner guide styling, not a generic barcode icon).
+  scan: (<><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16" /><path d="M4 12h16" /></>),
 };
 
 // Map a common emoji to the closest themed glyph (for legacy emoji lookups).

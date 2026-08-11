@@ -1627,7 +1627,7 @@ export default function AddPage() {
     }
   }
 
-  async function handleIdentifyCurrentScan(file: File, barcode?: { digits?: string; rawValue?: string }) {
+  async function handleIdentifyCurrentScan(file: File, barcode?: { digits?: string; rawValue?: string; format?: string }) {
     const currentBarcode =
       barcode ??
       (scanSession.barcodeDigits
@@ -1697,14 +1697,6 @@ export default function AddPage() {
     }
 
     if (currentBarcode?.digits) {
-      // Short numeric barcode (7-10 digits) = likely a graded slab cert number
-      if (looksLikePSACert(currentBarcode.digits)) {
-        const psaMatched = await runPSALookupForCode(
-          currentBarcode.rawValue || currentBarcode.digits
-        );
-        if (psaMatched) return;
-      }
-
       const bookLike = looksLikeBookBarcode(currentBarcode.digits);
 
       if (bookLike) {
@@ -1732,6 +1724,27 @@ export default function AddPage() {
         currentBarcode.rawValue
       );
       if (vinylMatched) return;
+
+      // Last resort: PSA graded-slab cert lookup. Real bug fixed here — this
+      // used to run FIRST on any bare 7-10 digit decode, before any of the
+      // far more common UPC/book/comic/vinyl matches above ever got a
+      // chance. EAN-8 (a completely ordinary retail barcode format) is
+      // exactly 8 digits, so it collided head-on with the "looks like a PSA
+      // cert" heuristic — scanning a normal product could silently burn a
+      // real, metered PSA API call (and overwrite Universe/Category to
+      // Sports Cards) before the correct UPC lookup ever ran. Now it's only
+      // tried after every free/common lookup has already failed, and only
+      // for barcode formats that are actually plausible for a slab's cert
+      // code — a UPC/EAN-format code can never be a PSA cert, so those are
+      // excluded outright rather than guessed at.
+      const retailBarcodeFormats = new Set(["UPC_A", "UPC_E", "EAN_13", "EAN_8"]);
+      const plausiblePSAFormat = !currentBarcode.format || !retailBarcodeFormats.has(currentBarcode.format);
+      if (plausiblePSAFormat && looksLikePSACert(currentBarcode.digits)) {
+        const psaMatched = await runPSALookupForCode(
+          currentBarcode.rawValue || currentBarcode.digits
+        );
+        if (psaMatched) return;
+      }
     }
 
     const ocrMatched = await runOcrAutofillForFile(file, "auto");

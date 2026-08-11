@@ -4,9 +4,11 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 
 import { DropdownPill } from "@/components/ui/DropdownPill";
+import { Glyph } from "@/components/ui/Glyph";
 import ScanReviewSheet, { type StagedItem } from "@/components/ScanReviewSheet";
 import ScanVerifySheet, { type ScanDraft } from "@/components/ScanVerifySheet";
-import { startLiveBarcodeScan, type LiveBarcodeResult } from "@/lib/scanners/liveBarcodeReader";
+import { startOnDemandScan } from "@/lib/scanners/onDemandBarcodeScan";
+import type { LiveBarcodeResult } from "@/lib/scanners/liveBarcodeReader";
 import { newId } from "@/lib/id";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
 import { appendItems, type VaultImage, type VaultItem } from "@/lib/vaultModel";
@@ -57,9 +59,6 @@ const FRAME_LABELS: Record<FrameType, string> = {
 
 // Scan universes derived from taxonomy (BUILT_BOTANY excluded — scan AI not tuned for it).
 const UNIVERSES = UNIVERSE_KEYS.filter((k) => k !== "BUILT_BOTANY");
-// Live barcode/QR scanning is OFF (overheated the phone, never reliable). Revisit
-// with the browser-native BarcodeDetector API instead of a JS decode loop.
-const ENABLE_LIVE_BARCODE = false;
 
 // Remembers the last Universe picked here (mirrors CAMERA_PREF_KEY below). A
 // hardcoded default was a real footgun: leaving it on a stale Universe from a
@@ -162,6 +161,9 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
   const streamRef = useRef<MediaStream | null>(null);
   const stopBarcodeScanRef = useRef<(() => void) | null>(null);
   const [liveBarcode, setLiveBarcode] = useState<LiveBarcodeResult | null>(null);
+  // On-demand scan session — off by default, only runs for a bounded burst
+  // after a tap on the Scan button (see onDemandBarcodeScan.ts for why).
+  const [scanState, setScanState] = useState<"idle" | "scanning" | "timeout">("idle");
 
   const [frameType, setFrameType] = useState<FrameType>("card");
   const [universe, setUniverse] = useState<UniverseKey>(() => readStoredScanUniverse() ?? "TCG");
@@ -230,16 +232,6 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         // Camera labels are only available after permission is granted.
         const list = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "videoinput");
         if (active) setDevices(list);
-
-        // Live barcode/QR scanning is OFF (see ENABLE_LIVE_BARCODE) — the JS
-        // decode loop overheated the phone and never reliably read a code.
-        // Revisit with the browser-native BarcodeDetector API instead.
-        if (ENABLE_LIVE_BARCODE && active && videoRef.current) {
-          stopBarcodeScanRef.current?.();
-          stopBarcodeScanRef.current = startLiveBarcodeScan(videoRef.current, (result) => {
-            setLiveBarcode((prev) => (prev?.rawValue === result.rawValue ? prev : result));
-          });
-        }
       } catch {
         /* camera unavailable — user can still Finish/close */
       }
@@ -285,6 +277,44 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     }
     window.setTimeout(() => setCapturing(false), 160);
   }
+
+  // Barcode/QR scanning is on-demand only (tap the Scan button), never
+  // running the whole time the camera is open — see onDemandBarcodeScan.ts
+  // for why (the old always-on JS loop overheated the phone and never
+  // reliably read a code). Where the browser supports it (Chrome/Android),
+  // the native BarcodeDetector API does the work instead, at near-zero cost.
+  function toggleScan() {
+    if (scanState === "scanning") {
+      stopBarcodeScanRef.current?.();
+      stopBarcodeScanRef.current = null;
+      setScanState("idle");
+      return;
+    }
+    const video = videoRef.current;
+    if (!video) return;
+    setScanState("scanning");
+    stopBarcodeScanRef.current = startOnDemandScan(video, {
+      durationMs: 8000,
+      onResult: (result) => {
+        setLiveBarcode(result);
+        setScanState("idle");
+        stopBarcodeScanRef.current = null;
+        try { navigator.vibrate?.(60); } catch { /* ignore */ }
+      },
+      onTimeout: () => {
+        stopBarcodeScanRef.current = null;
+        setScanState("timeout");
+      },
+    });
+  }
+
+  // "No code found" is transient — clear it back to idle so the button
+  // doesn't get stuck reading a stale message.
+  useEffect(() => {
+    if (scanState !== "timeout") return;
+    const id = setTimeout(() => setScanState("idle"), 2500);
+    return () => clearTimeout(id);
+  }, [scanState]);
 
   async function draftToVaultItem(draft: ScanDraft, index: number): Promise<VaultItem> {
     const source = capturedItems.find((c) => c.id === draft.id);
@@ -597,6 +627,20 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
           />
           <button
             type="button"
+            onClick={toggleScan}
+            title={scanState === "scanning" ? "Cancel scan" : "Scan a barcode or QR code"}
+            aria-label={scanState === "scanning" ? "Cancel scan" : "Scan a barcode or QR code"}
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[7px] ring-1 transition"
+            style={
+              scanState === "scanning"
+                ? { background: "rgba(74,155,255,0.16)", borderColor: "rgba(74,155,255,0.5)", color: "#4A9BFF" }
+                : { background: "var(--pill)", borderColor: "var(--border)", color: "var(--muted)" }
+            }
+          >
+            <Glyph name="scan" size={16} strokeWidth={1.8} />
+          </button>
+          <button
+            type="button"
             onClick={handleFinished}
             className="ml-auto shrink-0 rounded-md px-3.5 py-1.5 text-xs font-bold transition active:scale-95"
             style={{
@@ -631,14 +675,24 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
             {keptCount}
           </div>
 
-          {/* Live scan hint — only while live barcode scanning is enabled. */}
-          {ENABLE_LIVE_BARCODE && !liveBarcode ? (
+          {/* Scan-in-progress indicator — only while a tapped scan burst is
+              actively running (see toggleScan/onDemandBarcodeScan.ts). */}
+          {scanState === "scanning" ? (
+            <div
+              className="pointer-events-none absolute right-3 top-3 flex items-center gap-1.5 rounded-full px-3 py-1.5 backdrop-blur"
+              style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(74,155,255,0.4)" }}
+            >
+              <span className="h-2 w-2 shrink-0 animate-pulse rounded-full" style={{ background: "#4A9BFF" }} />
+              <span className="text-[11px] font-semibold text-white/85">Scanning… point at a QR or barcode</span>
+            </div>
+          ) : null}
+
+          {scanState === "timeout" ? (
             <div
               className="pointer-events-none absolute right-3 top-3 flex items-center gap-1.5 rounded-full px-3 py-1.5 backdrop-blur"
               style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.14)" }}
             >
-              <span className="h-2 w-2 shrink-0 animate-pulse rounded-full" style={{ background: "#4ade80" }} />
-              <span className="text-[11px] font-semibold text-white/85">Point at a QR or barcode</span>
+              <span className="text-[11px] font-semibold text-white/70">No code found — try again</span>
             </div>
           ) : null}
 
