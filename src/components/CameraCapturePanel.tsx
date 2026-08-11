@@ -7,6 +7,7 @@ import { Glyph } from "@/components/ui/Glyph";
 import { PillButton } from "@/components/ui/PillButton";
 import type { BarcodeScanResult } from "@/lib/scanners/barcodeScanner";
 import { startOnDemandScan } from "@/lib/scanners/onDemandBarcodeScan";
+import { warmupZXingWasm } from "@/lib/scanners/zxingWasmSetup";
 import {
   getUniverses,
   getCategories,
@@ -169,6 +170,10 @@ export default function CameraCapturePanel({
   // open (see onDemandBarcodeScan.ts for why).
   const [scanState, setScanState] = useState<"idle" | "scanning" | "timeout">("idle");
   const scanStopRef = useRef<(() => void) | null>(null);
+  // Start fetching/compiling the scan decoder's wasm binary as soon as this
+  // panel mounts, not on the first Scan tap -- so tapping Scan later doesn't
+  // eat a cold-load delay on top of the burst itself.
+  useEffect(() => { warmupZXingWasm(); }, []);
   // On-screen diagnostic (engine + attempt count + elapsed) -- so a real-
   // device report of "nothing happened" can be told apart from "it ran the
   // whole burst and genuinely found nothing," without needing devtools on a
@@ -526,13 +531,11 @@ export default function CameraCapturePanel({
     };
   }, [capturedFile, cameraError]);
 
-  // "No code found" is a transient state -- clear it back to idle after a
-  // couple seconds so the button doesn't get stuck reading a stale message.
-  useEffect(() => {
-    if (scanState !== "timeout") return;
-    const id = setTimeout(() => setScanState("idle"), 2500);
-    return () => clearTimeout(id);
-  }, [scanState]);
+  // "No code found" deliberately stays on screen until the next Scan tap
+  // (which resets it) -- an earlier 2.5s auto-clear made the message
+  // disappear before EK could even read it on a phone, let alone
+  // screenshot it. No timer needed: tapping Scan again already sets
+  // scanState back to "scanning" itself.
 
   const permissionLabel =
     permissionState === "granted"

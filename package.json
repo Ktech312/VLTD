@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postinstall": "node scripts/copy-zxing-wasm.js",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -33,7 +34,8 @@
     "react-easy-crop": "^5.5.7",
     "stripe": "^22.2.2",
     "tesseract.js": "^7.0.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zxing-wasm": "^3.1.2"
   },
   "devDependencies": {
     "@supabase/functions-js": "^2.108.2",

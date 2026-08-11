@@ -8,6 +8,7 @@ import { Glyph } from "@/components/ui/Glyph";
 import ScanReviewSheet, { type StagedItem } from "@/components/ScanReviewSheet";
 import ScanVerifySheet, { type ScanDraft } from "@/components/ScanVerifySheet";
 import { startOnDemandScan } from "@/lib/scanners/onDemandBarcodeScan";
+import { warmupZXingWasm } from "@/lib/scanners/zxingWasmSetup";
 import type { LiveBarcodeResult } from "@/lib/scanners/liveBarcodeReader";
 import { newId } from "@/lib/id";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
@@ -164,6 +165,10 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
   // On-demand scan session — off by default, only runs for a bounded burst
   // after a tap on the Scan button (see onDemandBarcodeScan.ts for why).
   const [scanState, setScanState] = useState<"idle" | "scanning" | "timeout">("idle");
+  // Start fetching/compiling the scan decoder's wasm binary as soon as this
+  // panel mounts, not on the first Scan tap -- so tapping Scan later doesn't
+  // eat a cold-load delay on top of the burst itself.
+  useEffect(() => { warmupZXingWasm(); }, []);
   // On-screen diagnostic (engine + attempt count + elapsed) -- so a real-
   // device report of "nothing happened" can be told apart from "it ran the
   // whole burst and genuinely found nothing," without needing devtools on a
@@ -224,9 +229,13 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     async function start() {
       try {
         streamRef.current?.getTracks().forEach((t) => t.stop());
+        // width ideal:1280 matches CameraCapturePanel.tsx's own already-
+        // settled figure (see that file's comment -- two earlier rounds of
+        // pushing higher didn't measurably help sharpness and made capture
+        // slower) rather than leaving this panel with no constraint at all.
         const constraints: MediaStreamConstraints = selectedDeviceId
-          ? { video: { deviceId: { exact: selectedDeviceId } }, audio: false }
-          : { video: { facingMode: { ideal: "environment" } }, audio: false };
+          ? { video: { deviceId: { exact: selectedDeviceId }, width: { ideal: 1280 } }, audio: false }
+          : { video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 } }, audio: false };
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         if (!active) { stream.getTracks().forEach((t) => t.stop()); return; }
         streamRef.current = stream;
@@ -315,13 +324,11 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     });
   }
 
-  // "No code found" is transient — clear it back to idle so the button
-  // doesn't get stuck reading a stale message.
-  useEffect(() => {
-    if (scanState !== "timeout") return;
-    const id = setTimeout(() => setScanState("idle"), 2500);
-    return () => clearTimeout(id);
-  }, [scanState]);
+  // "No code found" deliberately stays on screen until the next Scan tap
+  // (which resets it) -- an earlier 2.5s auto-clear made the message
+  // disappear before it could even be read on a phone, let alone
+  // screenshotted. No timer needed: tapping Scan again already sets
+  // scanState back to "scanning" itself.
 
   async function draftToVaultItem(draft: ScanDraft, index: number): Promise<VaultItem> {
     const source = capturedItems.find((c) => c.id === draft.id);
