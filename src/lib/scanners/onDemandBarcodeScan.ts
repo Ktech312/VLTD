@@ -1,5 +1,5 @@
-import { startLiveBarcodeScan, type LiveBarcodeResult } from "./liveBarcodeReader";
-import { normalizeFormatName, type BarcodeScanResult } from "./barcodeScanner";
+import type { LiveBarcodeResult } from "./liveBarcodeReader";
+import { normalizeFormatName, scanBarcodeFromVideoFrame, type BarcodeScanResult } from "./barcodeScanner";
 
 /** On-demand (tap-to-scan) barcode/QR reading, replacing the old always-on
  *  live scanner that ran the whole time a camera was open.
@@ -135,6 +135,57 @@ function startNativeScan(
   };
 }
 
+/** Runs the region-cropping decoder (`scanBarcodeFromVideoFrame` --
+ *  barcodeScanner.ts) against a live <video> on a requestAnimationFrame loop.
+ *  Used as the Safari/no-native-detector fallback INSTEAD of ZXing's own
+ *  whole-frame `decodeContinuously`: a real-device test (2026-08-10, a
+ *  graded slab's QR at normal scanning distance) showed 9 genuine decode
+ *  attempts over 6.7s against the raw video frame, on a code that was
+ *  clearly legible on screen, and none of them hit. That's the same
+ *  "code is small relative to the whole frame" problem the OLD hand-rolled
+ *  scanner's region-cropping + upscaling existed to solve in the first
+ *  place (see barcodeScanner.ts's own history) -- decoding the raw frame
+ *  loses exactly the resolution a small code needs. That old approach's
+ *  real problem was never the cropping/upscaling itself, it was that it ran
+ *  continuously for as long as the camera stayed open; bounding it to one
+ *  on-demand burst here keeps the accuracy win without the heat cost. */
+function startRegionScan(
+  video: HTMLVideoElement,
+  onResult: (result: LiveBarcodeResult) => void,
+  minIntervalMs: number,
+  onDiagnostic?: (d: { attempts: number; elapsedMs: number }) => void
+): () => void {
+  let stopped = false;
+  let rafId: number | null = null;
+  let lastCheck = 0;
+  let attempts = 0;
+  const startedAt = typeof performance !== "undefined" ? performance.now() : 0;
+
+  function tick(now: number) {
+    if (stopped) return;
+    if (now - lastCheck < minIntervalMs) {
+      rafId = requestAnimationFrame(tick);
+      return;
+    }
+    lastCheck = now;
+    attempts += 1;
+    const result = scanBarcodeFromVideoFrame(video);
+    onDiagnostic?.({ attempts, elapsedMs: (typeof performance !== "undefined" ? performance.now() : 0) - startedAt });
+    if (result) {
+      onResult(result);
+      return; // caller's onResult is expected to stop() the session
+    }
+    if (!stopped) rafId = requestAnimationFrame(tick);
+  }
+
+  rafId = requestAnimationFrame(tick);
+
+  return () => {
+    stopped = true;
+    if (rafId !== null) cancelAnimationFrame(rafId);
+  };
+}
+
 /** Starts one bounded scan session against an already-playing <video>.
  *  Returns a stop function -- call it on unmount, on finding a result, or
  *  when the caller wants to cancel early. Safe to call more than once. */
@@ -166,18 +217,12 @@ export function startOnDemandScan(
     );
   } else {
     onEngine?.("js-fallback");
-    const startedAt = typeof performance !== "undefined" ? performance.now() : 0;
-    innerStop = startLiveBarcodeScan(video, (result) => finish(() => onResult(result)), {
-      timeBetweenScansMillis: 350,
-      onDiagnostic: onDiagnostic
-        ? (d) =>
-            onDiagnostic({
-              engine: "js-fallback",
-              attempts: d.attempts,
-              elapsedMs: (typeof performance !== "undefined" ? performance.now() : 0) - startedAt,
-            })
-        : undefined,
-    });
+    innerStop = startRegionScan(
+      video,
+      (result) => finish(() => onResult(result)),
+      120,
+      onDiagnostic ? (d) => onDiagnostic({ engine: "js-fallback", attempts: d.attempts, elapsedMs: d.elapsedMs }) : undefined
+    );
   }
 
   return () => finish();
