@@ -1221,6 +1221,19 @@ export default function AddPage() {
   }
 
   async function runPSALookupForCode(certRaw: string) {
+    // Paused 2026-08-10 at EK's explicit request while barcode/QR decode
+    // accuracy is being tested live -- every PSA lookup spends a real,
+    // metered credit (100/day, shared across the whole app), and testing
+    // scan reliability shouldn't risk burning through them. Covers all
+    // three paths that can reach this function: the auto graded_card flow,
+    // the generic auto-Identify fallback, and the manual "Look up" button.
+    // Flip back to true once decode reliability is confirmed.
+    const ENABLE_PSA_LOOKUP = false;
+    if (!ENABLE_PSA_LOOKUP) {
+      setStatus("PSA lookups are paused for now (testing barcode reading) — cert number not looked up.");
+      return false;
+    }
+
     const certNumber = extractPSACertFromUrl(certRaw) ?? certRaw.replace(/\D/g, "").trim();
     if (!certNumber) return false;
 
