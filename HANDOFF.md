@@ -180,6 +180,63 @@ broken version:**
   everyday product scans at all — worth a spot-check if PSA lookups are used
   again for anything.
 
+**Update, same night, after a third real device test + a deeper fix:** EK
+reported the timeout message "disappears too fast" to even screenshot — the
+2.5s auto-clear on the "no code found" message was genuinely too fast for a
+human to read on a phone. Removed the auto-clear entirely in both camera
+panels; the message now just stays up until the next Scan tap (which
+already resets it), no timer needed.
+
+More importantly: **swapped the fallback decoder from `@zxing/library`
+(unmaintained) to `zxing-wasm`** (WebAssembly build of the actively-
+maintained zxing-cpp engine — reported faster AND more accurate on
+real-world images). Two different approaches built on the OLD library both
+failed on the same clearly-legible QR code tonight (whole-frame decode: 9
+tries/6.7s, region-cropped decode: presumably similar) — that's not a tuning
+problem, the underlying engine itself is the ceiling. Implementation:
+- `src/lib/scanners/zxingWasmSetup.ts` — one-time init pointed at a
+  self-hosted `.wasm` binary (`public/zxing_reader.wasm`) instead of the
+  library's default CDN fetch. `scripts/copy-zxing-wasm.js` copies it from
+  `node_modules` on `npm install` (wired via a new `postinstall` script) so
+  a fresh Vercel build always has it; the current copy is also committed
+  directly as a belt-and-suspenders safety net for the very first deploy.
+- `onDemandBarcodeScan.ts`'s fallback engine now tries 4 crops per tick
+  (full frame, center, top band for slab labels, bottom band for retail
+  UPCs) via `readBarcodes()`. **If wasm fails to load for any reason, each
+  tick falls back to the older, already-proven `scanBarcodeFromVideoFrame`
+  JS decoder** instead of the feature going completely dark — worse
+  accuracy, but still working. This matters because none of this could be
+  verified live before pushing (EK was asleep) — the fallback-within-the-
+  fallback is the safety net for that.
+- Added `normalizeWasmFormat()` — real, silent-bug-shaped gotcha caught
+  before shipping: zxing-wasm's format names ("UPCA", "EAN13") don't use
+  the underscored convention the existing `normalizeFormatName()` matches
+  on ("UPC_A", "EAN_13"). Without a dedicated mapper, every wasm-decoded
+  barcode's format would've silently come back "UNKNOWN" — which would have
+  quietly defeated the PSA auto-fire format-exclusion fix from earlier
+  tonight for every code read through this new engine (UPC/EAN formats are
+  specifically excluded from ever reaching a PSA lookup; "UNKNOWN" isn't
+  excluded).
+- Camera panels now call `warmupZXingWasm()` on mount (not on first Scan
+  tap) so the ~1MB wasm binary is already loading by the time someone taps
+  Scan, rather than eating a cold-load delay inside the 8s burst.
+- `ScanCapturePanel.tsx`'s `getUserMedia` had **no resolution constraint at
+  all** (a real gap, unlike `CameraCapturePanel.tsx`) — aligned it to that
+  file's own already-settled `width: {ideal: 1280}` rather than inventing a
+  new number. **Deliberately did NOT bump resolution further in either
+  file** — `CameraCapturePanel.tsx`'s own comments record two earlier
+  rounds of raising it not helping sharpness and even making capture
+  slower; no reason to re-litigate that here.
+
+**None of tonight's zxing-wasm change has been tested on a real device —
+EK was asleep for this part.** Verify: (1) the wasm asset actually serves
+correctly in production (check `https://vltd.vercel.app/zxing_reader.wasm`
+returns the binary, not a 404/HTML error page, and that Scan still works at
+all — if the asset 404s, the JS-fallback safety net should keep it working,
+just at the old accuracy level, so "does it still work" matters more than
+"is it fast" as the first check); (2) does it actually decode the same
+QR/barcode that failed twice tonight; (3) still doesn't heat up the phone.
+
 **Update, same day, after two real device tests:** the "Scanning" banner is
 confirmed visible on a real phone (EK sent screenshots showing "Scanning…
 (11 tries, 5.0s)" and "(7 tries, 3.1s)") — the earlier "I don't see it even

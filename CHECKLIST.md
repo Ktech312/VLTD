@@ -18,8 +18,20 @@ report was a real UI-visibility gap, now fixed, not a session-never-ran bug.
 ZXing's whole-frame decode to the region-cropping+upscaling one — a real
 diagnostic ("js-fallback, 9 tries in 6.7s" against a clearly legible QR)
 showed the whole-frame approach genuinely couldn't resolve a small code.
-⏳ **Still needs confirmation: does it actually decode now**, after the
-region-cropping swap — that result hasn't come back in yet.
+❌ Region-cropping swap wasn't enough either — same underlying (unmaintained)
+decode engine as before, just cropped differently. EK: message disappeared
+before it could be read/screenshotted (auto-clear was 2.5s, way too fast —
+removed entirely, now stays up until the next Scan tap).
+✅ **Bigger fix, done overnight while EK slept: swapped the whole fallback
+engine to `zxing-wasm`** (actively-maintained WASM decoder, not the
+discontinued `@zxing/library` JS port both earlier attempts used). Self-
+hosted the `.wasm` binary, added a same-tick fallback to the old JS decoder
+if wasm ever fails to load (so a wasm problem degrades the feature instead
+of killing it), fixed a real format-name mapping gap that would've quietly
+reopened the PSA auto-fire risk for wasm-decoded codes. See HANDOFF §B for
+full detail.
+⏳ **NONE of the zxing-wasm change is device-tested yet** — EK was asleep.
+Top priority next test: same slab, same conditions, does it decode now.
 🔒 **PSA lookups fully PAUSED** (`ENABLE_PSA_LOOKUP = false` in
 `vault/add/page.tsx`'s `runPSALookupForCode`) — EK's explicit call, so scan
 testing can't burn real PSA quota. Covers the auto graded_card flow, the
