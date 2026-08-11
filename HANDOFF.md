@@ -180,6 +180,33 @@ broken version:**
   everyday product scans at all — worth a spot-check if PSA lookups are used
   again for anything.
 
+**Update, same day, after two real device tests:** the "Scanning" banner is
+confirmed visible on a real phone (EK sent screenshots showing "Scanning…
+(11 tries, 5.0s)" and "(7 tries, 3.1s)") — the earlier "I don't see it even
+flicker" report was a genuine UI-visibility gap, now fixed, not a
+session-never-ran bug. A first real decode attempt on a CGC-slab QR+barcode
+came back "js-fallback, 9 tries in 6.7s" — a real burst, real attempts,
+still no match, on a code that was clearly legible on screen. Diagnosed:
+the fallback engine was decoding the WHOLE video frame at once (ZXing's
+`decodeContinuously`), which loses too much relative resolution on a code
+that's small against the full frame -- the exact problem the OLD hand-rolled
+region-cropping scanner existed to solve. Swapped the fallback to a new
+`startRegionScan()` (still in `onDemandBarcodeScan.ts`) driving the existing
+`scanBarcodeFromVideoFrame()` region-crop+upscale+contrast-variant decoder,
+still bounded to the same on-demand burst so the heat fix holds. **Not yet
+confirmed whether this actually decodes better — that result hasn't come
+back in yet.**
+
+**PSA lookups fully PAUSED, EK's explicit request:** while decode accuracy
+is being tested, no PSA lookup should spend real quota. Added
+`ENABLE_PSA_LOOKUP = false` inside `runPSALookupForCode`
+(`vault/add/page.tsx`) — short-circuits before any network call, covers all
+three paths that reach it (auto graded_card flow, generic auto-Identify
+fallback, manual "Look up" button), shows a clear status message instead of
+silently no-oping. **Flip back to `true` once decode reliability is
+confirmed** — if a future session sees PSA "not working," check this flag
+before assuming something broke.
+
 `BarcodeScanCamera.tsx` (a separate, older always-on scanner used by
 `vault/add/page.tsx`'s `isBarcodeScanOpen` state) was found dead/unreachable
 while auditing this — nothing in the app ever sets that state to `true`, so

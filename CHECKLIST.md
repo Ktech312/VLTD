@@ -11,10 +11,21 @@ FIRST on any 7-10 digit barcode decode, before UPC/book/comic — an ordinary
 EAN-8 product barcode (exactly 8 digits) could silently burn a real PSA
 credit and mis-set Universe to Sports Cards. Reordered PSA to last-resort,
 gated on non-retail formats. `tsc`/`eslint`/`build` clean.
-⬜ **Needs a real device test — not yet done:** tap Scan on an iPhone
-(Safari) and an Android phone (Chrome) and confirm it (a) actually decodes
-a real barcode/QR, (b) doesn't heat up over repeated bursts, (c) the
-8-second timeout message shows if nothing's found.
+✅ Scanning banner confirmed VISIBLE on a real device (EK: two screenshots,
+"Scanning… (11 tries, 5.0s)" / "(7 tries, 3.1s)") — the earlier "no flicker"
+report was a real UI-visibility gap, now fixed, not a session-never-ran bug.
+✅ Swapped the fallback decoder (Safari/no-native-BarcodeDetector) from
+ZXing's whole-frame decode to the region-cropping+upscaling one — a real
+diagnostic ("js-fallback, 9 tries in 6.7s" against a clearly legible QR)
+showed the whole-frame approach genuinely couldn't resolve a small code.
+⏳ **Still needs confirmation: does it actually decode now**, after the
+region-cropping swap — that result hasn't come back in yet.
+🔒 **PSA lookups fully PAUSED** (`ENABLE_PSA_LOOKUP = false` in
+`vault/add/page.tsx`'s `runPSALookupForCode`) — EK's explicit call, so scan
+testing can't burn real PSA quota. Covers the auto graded_card flow, the
+generic auto-Identify fallback, AND the manual "Look up" button. **Flip
+back to `true` once decode reliability is confirmed** — don't forget this
+is off, it's not a bug if a cert lookup silently does nothing right now.
 
 Scannable done/pending list covering everything from the dead-code sweep
 through the barcode/Cards/PSA/Discogs work, the Halls rebuild, and the
