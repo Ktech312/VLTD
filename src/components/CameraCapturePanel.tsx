@@ -169,6 +169,11 @@ export default function CameraCapturePanel({
   // open (see onDemandBarcodeScan.ts for why).
   const [scanState, setScanState] = useState<"idle" | "scanning" | "timeout">("idle");
   const scanStopRef = useRef<(() => void) | null>(null);
+  // On-screen diagnostic (engine + attempt count + elapsed) -- so a real-
+  // device report of "nothing happened" can be told apart from "it ran the
+  // whole burst and genuinely found nothing," without needing devtools on a
+  // phone. Kept after the burst ends so the timeout message can show it.
+  const [scanDiagnostic, setScanDiagnostic] = useState<{ engine: string; attempts: number; elapsedMs: number } | null>(null);
   const [isRemovingBackground, setIsRemovingBackground] = useState(false);
   const [backgroundError, setBackgroundError] = useState("");
   const [isBackgroundRemoved, setIsBackgroundRemoved] = useState(false);
@@ -495,6 +500,7 @@ export default function CameraCapturePanel({
     const video = videoRef.current;
     if (!video || capturedFile || cameraError || !cameraReady) return;
     setScanState("scanning");
+    setScanDiagnostic(null);
     scanStopRef.current = startOnDemandScan(video, {
       durationMs: 8000,
       onResult: (result) => {
@@ -508,6 +514,7 @@ export default function CameraCapturePanel({
         scanStopRef.current = null;
         setScanState("timeout");
       },
+      onDiagnostic: (d) => setScanDiagnostic(d),
     });
   }
 
@@ -1210,24 +1217,33 @@ export default function CameraCapturePanel({
                   )
                 ) : null}
 
-                {/* Scan-in-progress indicator — only while a tapped scan burst is
-                    actively running (see toggleScan/onDemandBarcodeScan.ts). */}
+                {/* Scan-in-progress banner — deliberately big/hard to miss (an
+                    earlier small pill version drew a report of "I don't see
+                    it even flicker"), full-width across the top with a live
+                    attempt counter so it's obvious a burst is actually
+                    running (see toggleScan/onDemandBarcodeScan.ts). */}
                 {!cameraError && scanState === "scanning" ? (
                   <div
-                    className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 flex items-center gap-2 rounded-full px-3 py-1.5 backdrop-blur"
-                    style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(74,155,255,0.4)" }}
+                    className="pointer-events-none absolute inset-x-0 top-[52px] flex items-center justify-center gap-2 px-3 py-2.5"
+                    style={{ background: "rgba(74,155,255,0.92)" }}
                   >
-                    <span className="h-2 w-2 shrink-0 animate-pulse rounded-full" style={{ background: "#4A9BFF" }} />
-                    <span className="text-[11px] font-semibold text-white/85">Scanning… point at a QR or barcode</span>
+                    <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-white" />
+                    <span className="text-[12px] font-bold text-white">
+                      Scanning… point at a QR or barcode
+                      {scanDiagnostic ? ` (${scanDiagnostic.attempts} tries, ${(scanDiagnostic.elapsedMs / 1000).toFixed(1)}s)` : ""}
+                    </span>
                   </div>
                 ) : null}
 
                 {!cameraError && scanState === "timeout" ? (
                   <div
-                    className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 flex items-center gap-2 rounded-full px-3 py-1.5 backdrop-blur"
-                    style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.14)" }}
+                    className="pointer-events-none absolute inset-x-0 top-[52px] flex items-center justify-center gap-2 px-3 py-2.5"
+                    style={{ background: "rgba(0,0,0,0.85)" }}
                   >
-                    <span className="text-[11px] font-semibold text-white/70">No code found — tap Scan to try again</span>
+                    <span className="text-[12px] font-bold text-white/85">
+                      No code found — tap Scan to try again
+                      {scanDiagnostic ? ` (${scanDiagnostic.engine}, ${scanDiagnostic.attempts} tries in ${(scanDiagnostic.elapsedMs / 1000).toFixed(1)}s)` : ""}
+                    </span>
                   </div>
                 ) : null}
 

@@ -32,6 +32,12 @@ import { normalizeFormatName, type BarcodeScanResult } from "./barcodeScanner";
 
 export type OnDemandScanEngine = "native" | "js-fallback";
 
+export type OnDemandScanDiagnostic = {
+  engine: OnDemandScanEngine;
+  attempts: number;
+  elapsedMs: number;
+};
+
 export type OnDemandScanOptions = {
   /** How long a single burst runs before giving up and reporting a timeout.
    *  Short on purpose -- this is a deliberate "point and hold" action, not a
@@ -42,6 +48,11 @@ export type OnDemandScanOptions = {
   /** Fires once, synchronously, so the UI can say which engine is running
    *  (useful for diagnosing a real-device report of "still slow/hot"). */
   onEngine?: (engine: OnDemandScanEngine) => void;
+  /** Fires a few times/sec with a live attempt count + elapsed time, so a
+   *  real-device report of "nothing happened" can be told apart from "it
+   *  ran the whole burst and genuinely found nothing" -- on-screen, not just
+   *  console, since EK doesn't have devtools open on a phone. */
+  onDiagnostic?: (d: OnDemandScanDiagnostic) => void;
 };
 
 const NATIVE_FORMATS = [
@@ -74,11 +85,15 @@ function toBarcodeScanResult(rawValue: string, format: string): BarcodeScanResul
 function startNativeScan(
   video: HTMLVideoElement,
   onResult: (result: LiveBarcodeResult) => void,
-  minIntervalMs: number
+  minIntervalMs: number,
+  onDiagnostic?: (d: { attempts: number; elapsedMs: number; lastError: string }) => void
 ): () => void {
   let stopped = false;
   let rafId: number | null = null;
   let lastCheck = 0;
+  let attempts = 0;
+  let lastError = "";
+  const startedAt = typeof performance !== "undefined" ? performance.now() : 0;
   // BarcodeDetector is a real browser global once feature-detected by the
   // caller; TS's DOM lib doesn't ship types for it yet on every target.
   const DetectorCtor = (window as unknown as { BarcodeDetector: new (opts: { formats: string[] }) => { detect: (source: HTMLVideoElement) => Promise<Array<{ rawValue: string; format: string }>> } }).BarcodeDetector;
@@ -94,6 +109,7 @@ function startNativeScan(
     try {
       const codes = await detector.detect(video);
       if (stopped) return;
+      attempts += 1;
       if (codes && codes.length > 0) {
         const first = codes[0];
         if (first.rawValue) {
@@ -101,10 +117,13 @@ function startNativeScan(
           return; // caller's onResult is expected to stop() the session
         }
       }
-    } catch {
+    } catch (e) {
       // detect() can throw if the video frame isn't ready yet -- ignore and
       // retry next tick rather than tearing down the whole session over it.
+      attempts += 1;
+      lastError = (e as { name?: string })?.name || "err";
     }
+    onDiagnostic?.({ attempts, elapsedMs: (typeof performance !== "undefined" ? performance.now() : 0) - startedAt, lastError });
     if (!stopped) rafId = requestAnimationFrame(tick);
   }
 
@@ -123,7 +142,7 @@ export function startOnDemandScan(
   video: HTMLVideoElement,
   opts: OnDemandScanOptions
 ): () => void {
-  const { durationMs = 8000, onResult, onTimeout, onEngine } = opts;
+  const { durationMs = 8000, onResult, onTimeout, onEngine, onDiagnostic } = opts;
   let stopped = false;
   let innerStop: (() => void) | null = null;
 
@@ -139,11 +158,25 @@ export function startOnDemandScan(
 
   if (isNativeBarcodeDetectorSupported()) {
     onEngine?.("native");
-    innerStop = startNativeScan(video, (result) => finish(() => onResult(result)), 180);
+    innerStop = startNativeScan(
+      video,
+      (result) => finish(() => onResult(result)),
+      180,
+      onDiagnostic ? (d) => onDiagnostic({ engine: "native", attempts: d.attempts, elapsedMs: d.elapsedMs }) : undefined
+    );
   } else {
     onEngine?.("js-fallback");
+    const startedAt = typeof performance !== "undefined" ? performance.now() : 0;
     innerStop = startLiveBarcodeScan(video, (result) => finish(() => onResult(result)), {
       timeBetweenScansMillis: 350,
+      onDiagnostic: onDiagnostic
+        ? (d) =>
+            onDiagnostic({
+              engine: "js-fallback",
+              attempts: d.attempts,
+              elapsedMs: (typeof performance !== "undefined" ? performance.now() : 0) - startedAt,
+            })
+        : undefined,
     });
   }
 
