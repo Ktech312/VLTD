@@ -1,4 +1,20 @@
-# VLTD — Session Checklist (2026-08-05 night → ongoing)
+# VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-10)
+
+## Barcode/QR scanning rebuilt as tap-to-scan (2026-08-10) — see HANDOFF §B
+Was fully OFF since 2026-08-07 (always-on JS loop overheated the phone).
+Rebuilt: tap a Scan button → one bounded ~8s burst → native BarcodeDetector
+on browsers that support it (Android Chrome; NOT Windows Chrome, NOT iOS
+Safari — confirmed live, both lack it), ZXing JS fallback elsewhere, never
+running just because the camera's open. Also fixed a real bug found in the
+same pass: `/vault/add`'s generic Identify path tried a PSA cert lookup
+FIRST on any 7-10 digit barcode decode, before UPC/book/comic — an ordinary
+EAN-8 product barcode (exactly 8 digits) could silently burn a real PSA
+credit and mis-set Universe to Sports Cards. Reordered PSA to last-resort,
+gated on non-retail formats. `tsc`/`eslint`/`build` clean.
+⬜ **Needs a real device test — not yet done:** tap Scan on an iPhone
+(Safari) and an Android phone (Chrome) and confirm it (a) actually decodes
+a real barcode/QR, (b) doesn't heat up over repeated bursts, (c) the
+8-second timeout message shows if nothing's found.
 
 Scannable done/pending list covering everything from the dead-code sweep
 through the barcode/Cards/PSA/Discogs work, the Halls rebuild, and the
@@ -65,7 +81,7 @@ EK tested live on iPhone Safari, Light Mode, reported with a screenshot:
 - ✅ Tagged the pre-merge state as `backup/main-pre-focused-mendel-merge` for
   a one-command rollback if anything in that batch turns out wrong.
 
-## Barcode / QR live detection (this session — two real root causes found)
+## Barcode / QR live detection (history — see the 2026-08-10 section at the top for current status)
 - ✅ **Bug #1 (fixed):** `decodeCanvas()` discarded every successful decode
   whose payload had zero digit characters — QR codes commonly encode
   letters-only text (shortlinks, plain URLs), so those were silently
@@ -82,7 +98,10 @@ EK tested live on iPhone Safari, Light Mode, reported with a screenshot:
   than tuned a fourth time. Also fixed a real, separate bug found along the
   way: `BarcodeFormat` is a numeric enum, so the old format-name check could
   never match anything — `.format` was silently always `"UNKNOWN"` (`1ec2e8a`).
-- ⚠️ **Not yet retested since the mechanism swap — needs a real device test.**
+- ❌ **EK tested this on a real phone: still didn't work, AND overheated the
+  phone.** Turned fully OFF 2026-08-07 (`c0fb750`). Superseded 2026-08-10 by
+  the on-demand rebuild at the top of this file — that's the current status,
+  not this section.
 
 ## TCG Cards auto-fill (this session — new feature, then a real bug fix)
 - ✅ Built real-database card identification for Magic (Scryfall) and
@@ -290,21 +309,25 @@ different and bigger — read it back to confirm, then built that instead:
 ---
 
 ## What actually needs YOUR action right now, in order
-1. Email `collectors-apis@collectors.com` about the "Access to this API is
+1. **Tap the new Scan button (regular Add and Quick Add cameras) on your
+   iPhone AND on an Android phone if you have one.** Point at a real
+   barcode/QR — confirm it decodes, confirm it does NOT heat up even after
+   several bursts, and confirm the "no code found" message shows after ~8s
+   if nothing's in frame. This is the rebuild from 2026-08-10 — genuinely
+   new code, not a re-test of the old broken version.
+2. Email `collectors-apis@collectors.com` about the "Access to this API is
    limited to approved customers" rejection — ask directly whether this
    account has approved API access, and if not, how to get it. A fresh
    token alone didn't fix it.
-2. Check/fix the `DISCOGS_TOKEN` value in Vercel (empty or bad — vinyl
+3. Check/fix the `DISCOGS_TOKEN` value in Vercel (empty or bad — vinyl
    lookup has never worked because of this).
-3. Actually try building a Hall and tagging an item — migration's run,
+4. Actually try building a Hall and tagging an item — migration's run,
    this whole feature has never been tested logged-in.
-4. Test the barcode/QR badge again on a real phone (Quick Add + regular
-   Add) — the scanning mechanism changed significantly tonight.
 5. Test a real Magic or Pokemon card via Identify — confirm Category/
    Subcategory now update and the Rarity field shows up on `/capture`.
 6. Whenever you hear back from CardHedge, bring their answer (especially on
    comics coverage) back here.
-7. Once 4–5 above are confirmed working, the regular Add camera's visual
+7. Once 1 and 5 above are confirmed working, the regular Add camera's visual
    match to Quick Add is next in line — not started yet.
 8. Set the "Type" dropdown + "Attributes" checkboxes on a `/vault/add` item,
    navigate away and back, confirm they now actually stick (this was

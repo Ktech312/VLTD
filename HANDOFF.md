@@ -117,19 +117,75 @@ default of "TCG", so unless manually changed, everything got tagged/AI-hinted as
 TCG — comics scanned as "Magic: The Gathering" etc. Fixed 2026-08-03 (see §4).
 Still want confirmation the fix actually holds up on a real batch of mixed items.
 
-### B. Barcode / QR live detection — TURNED OFF (EK's call, c0fb750). Revisit with native BarcodeDetector, NOT a JS loop.
-**STATUS 2026-08-07: live scanning is DISABLED** via `ENABLE_LIVE_BARCODE = false`
-in both `CameraCapturePanel.tsx` and `ScanCapturePanel.tsx`. After ~8 rounds the
-JS/ZXing decode loop (a) never reliably read a code on EK's device and (b)
-**overheated the phone** — the ZXing retry delay defaulted to 0ms so it pinned
-the CPU, and a resolution bump made it worse. EK's own steer: a normal camera app
-scans without heating up, so the correct path when revisited is the **browser-
-native `BarcodeDetector` API** (hardware-accelerated), not a JavaScript decode
-loop. Do NOT just flip the flag back on — rebuild it on BarcodeDetector, gated to
-where it's supported, ideally as a deliberate tap-to-scan burst (not always-on).
-Meanwhile: AI photo identification works, and the manual "Look up" cert button on
-`/vault/add` covers PSA slabs without needing a scan. The scanner code below is
-kept for reference but is dormant. ~~Original notes:~~
+### B. Barcode / QR live detection — REBUILT 2026-08-10 as tap-to-scan, native detector + JS fallback. Needs a real-device test.
+**STATUS 2026-08-10: rebuilt, not yet device-tested.** Was fully OFF since
+2026-08-07 (`ENABLE_LIVE_BARCODE = false`, both camera panels) after ~8 rounds
+of the JS/ZXing decode loop (a) never reliably reading a code and (b)
+overheating the phone by pinning the CPU continuously for the whole time the
+camera was open. EK's own steer at the time: a normal camera app scans without
+heating up because it hands the work to the OS, not a JS loop.
+
+**What changed:** new `src/lib/scanners/onDemandBarcodeScan.ts`. Two real fixes,
+independent of each other:
+1. **Engine** — tries the browser-native `BarcodeDetector` API first
+   (`window.BarcodeDetector`, feature-detected at runtime). Where it's
+   supported, the OS does the decoding, not JS — near-zero CPU cost. Where
+   it isn't, falls back to the existing ZXing JS loop
+   (`liveBarcodeReader.ts`). **Checked live on the deployed site 2026-08-10:
+   Windows desktop Chrome does NOT have `BarcodeDetector`** (confirmed via
+   `'BarcodeDetector' in window` → `false` in a real Chrome-148 browser) —
+   per current browser-support data, it's Android Chrome and macOS
+   Chrome/Safari only, NOT Windows or iOS. So on EK's iPhone (Safari) and any
+   Windows desktop testing, this always runs the JS fallback, same as
+   before — the engine choice alone was never going to fix Safari.
+2. **On-demand, not always-on** — THIS is what actually fixes the heat/
+   battery complaint on every platform, including Safari where the JS engine
+   still runs. A new "Scan" button (Glyph icon, both `CameraCapturePanel.tsx`
+   and `ScanCapturePanel.tsx`) starts one bounded ~8-second burst per tap;
+   nothing decodes at all until it's tapped, and the burst stops itself on a
+   match or after 8s ("no code found" message). Total JS-loop runtime per
+   session dropped from "however long you spend framing a photo" to one
+   short, deliberate window — that's the real fix, independent of which
+   decoder is running underneath.
+
+**Also fixed in the same pass, found while auditing the pipeline (not
+something EK reported directly, but plausibly the actual explanation for
+"wasn't scanning anything but burning up my credits with PSA"):**
+`vault/add/page.tsx`'s generic Identify path (`handleIdentifyCurrentScan`,
+used whenever `scanType` isn't already pinned to book/comic/graded_card/card)
+tried a PSA cert lookup **FIRST** on any bare 7-10 digit barcode decode,
+before UPC/book/comic/vinyl ever got a chance. EAN-8 — a completely ordinary
+retail barcode format — is exactly 8 digits, so it collided head-on with the
+"looks like a PSA cert" heuristic: scanning a normal product could silently
+burn a real, metered PSA API call (and overwrite Universe/Category to Sports
+Cards) before the correct, free UPC lookup ever ran. Fixed: PSA is now tried
+**last**, only after UPC/book/comic/vinyl have all failed, and only for
+barcode formats that are structurally plausible for a slab's cert code (QR/
+Code128/Code39/DataMatrix/unknown) — UPC/EAN-format codes are excluded
+outright since they can never legitimately be a PSA cert, not just
+deprioritized.
+
+`tsc --noEmit` / `eslint` / `npm run build` all clean. **Not yet tested on a
+real device — please do, this is genuinely new code, not a re-test of the old
+broken version:**
+- Tap Scan on both the regular Add camera and Quick Add, on your iPhone.
+- If you have an Android phone with Chrome, test there too — that's the one
+  platform that should get the fast native path.
+- Point at a real barcode/QR, confirm it decodes and roughly how fast.
+- Do several scan bursts in a row and check the phone doesn't warm up the way
+  it did before — this is the main thing that needs confirming.
+- Confirm the "no code found" message shows if you let a scan run with
+  nothing in frame.
+- Ask EK: PSA credit spend should now be visibly lower / not spent on
+  everyday product scans at all — worth a spot-check if PSA lookups are used
+  again for anything.
+
+`BarcodeScanCamera.tsx` (a separate, older always-on scanner used by
+`vault/add/page.tsx`'s `isBarcodeScanOpen` state) was found dead/unreachable
+while auditing this — nothing in the app ever sets that state to `true`, so
+it can never actually open. Flagged as a spawned task, not touched here
+(deleting it or wiring a real entry point on the new on-demand system is a
+separate, smaller decision for EK). ~~Original notes:~~
 EK tested the previous fix live: **still didn't work, on both Quick Add AND
 regular Add.** That confirmed the digits-gate bug (real, and still worth
 having fixed) wasn't the whole story. Two more real things found:
@@ -652,6 +708,11 @@ write that migration blind since it's payment-adjacent data.
 ---
 
 ## 4. Done recently (don't redo)
+- **2026-08-10 — Barcode/QR scanning rebuilt as tap-to-scan (native detector +
+  JS fallback), PSA auto-fire bug fixed.** Full detail in §2B above — don't
+  re-litigate the engine choice or re-add an always-on effect; the "on-demand,
+  bounded burst" design is deliberate, not a placeholder. Still needs a real
+  device test (§2B's checklist) before this note can move to "confirmed working."
 - **2026-08-08/09 — Regular Add's camera, rebuilt to actually match Quick
   Add** (many rounds — EK's patience on this one is worth documenting so
   the reasoning doesn't get re-litigated from scratch):
@@ -1138,8 +1199,9 @@ write that migration blind since it's payment-adjacent data.
 1. Read this + `MEMORY.md`. Confirm with EK **who owns `/capture` right now**
    (this chat vs the parallel Codex edits) before editing capture files.
 2. Ask EK what they found testing overnight: did the Universe-lock fix (§2A),
-   barcode top-region fix (§2B), and comic-ID prompt fix (§2F) actually hold up
-   on real devices/items? None of those three could be verified without a
+   the tap-to-scan barcode rebuild (§2B, 2026-08-10 — new code, genuinely
+   untested on a device), and comic-ID prompt fix (§2F) actually hold up
+   on real devices/items? None of those could be verified without a
    device/real API call.
 3. Then §2C documents (needs EK's local-only-vs-private-bucket call), or
    whichever §3 decision EK wants to make first.
