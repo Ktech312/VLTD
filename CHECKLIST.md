@@ -63,10 +63,22 @@ photo needed. Wired into all 3 places EK asked about:
   X" / "No match" / "Looking up...") BEFORE hitting Finished — no more
   finding out only after the batch runs. A confident match also skips the
   metered AI scan for that item (already have better data for free).
-⬜ **None of this has been tested on a real device yet** — build/tsc/eslint
-all clean, but the actual lookups (do they return real matches, does the
-Quick Add tag show up correctly, does skipping AI on a matched item work)
-need a real scan of a real comic/vinyl/UPC to confirm.
+❌ **EK tested `/capture` immediately: scan worked, nothing visible happened.**
+Real bug, not a lookup failure — the confirmation banner lived on the PAGE,
+and the camera is a full-screen modal ON TOP of that page. It was firing
+and filling fields correctly the whole time, just on a layer EK couldn't
+see without closing the camera first.
+✅ **Fixed same session** — moved the lookup + its result display INTO
+CameraCapturePanel itself (shows "Looking up…" → "Found: X" / "No match"
+right in the camera view, below the existing green checkmark). Parent
+pages now just receive the already-resolved match instead of each running
+their own lookup (also fixes a duplicate-network-call inefficiency that
+introduced). `/vault/add` gets this automatically too since it shares the
+same camera component.
+⬜ **Still not device-tested since this fix** — please retry scanning a
+real comic/vinyl/UPC on `/capture` and confirm the result now shows up
+inside the camera view itself. Quick Add's review-sheet tags were a
+separate code path (never had this bug) — still worth a check too.
 🔒 **PSA lookups fully PAUSED** (`ENABLE_PSA_LOOKUP = false` in
 `vault/add/page.tsx`'s `runPSALookupForCode`) — EK's explicit call, so scan
 testing can't burn real PSA quota. Covers the auto graded_card flow, the
