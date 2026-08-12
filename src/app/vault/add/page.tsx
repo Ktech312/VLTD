@@ -44,6 +44,7 @@ import { scanTcgCardRegionsFromFile } from "@/lib/scanners/tcgCardParser";
 import { lookupMtgCard, lookupPokemonCard, type CardLookupResult } from "@/lib/cardLookup";
 import { lookupVinylByBarcode, lookupVinylByText } from "@/lib/discogLookup";
 import { lookupPSACert, looksLikePSACert, extractPSACertFromUrl, formatPSAGrade, formatPSASet } from "@/lib/psaLookup";
+import { lookupByBarcodeOnly } from "@/lib/scanners/barcodeLookup";
 import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 import { scanBarcodeFromFile } from "@/lib/scanners/barcodeScanner";
 import {
@@ -1491,6 +1492,90 @@ export default function AddPage() {
       setScanSession((prev) => markScanSessionFailed(prev, message));
       setStatus(message);
       return false;
+    } finally {
+      setIsUpcLookupRunning(false);
+    }
+  }
+
+  /** Fires the instant CameraCapturePanel's Scan button reads a barcode/QR --
+   *  before any photo is taken. Runs the same free barcode-only lookups
+   *  (comic/vinyl/UPC/book) the after-a-photo Identify pipeline already
+   *  uses, just without needing a photo first. Deliberately skips PSA
+   *  (metered/paused) and AI vision (metered, needs a real photo). */
+  async function runLiveBarcodeLookup(barcode: { digits?: string; rawValue?: string }) {
+    const digits = String(barcode.digits ?? "").replace(/\D/g, "").trim();
+    if (!digits) return;
+
+    setIsUpcLookupRunning(true);
+    setScanSession((prev) => markScanSessionScanning(prev));
+
+    try {
+      const match = await lookupByBarcodeOnly(barcode);
+
+      if (!match) {
+        setScanSession((prev) => markScanSessionFailed(prev, "No match found for that barcode."));
+        setStatus("Scanned — no match found for that code yet. Take a photo to try full Identify.");
+        return;
+      }
+
+      const coreFields: ScanSessionReview["fields"] = {
+        title: match.fields.title,
+        subtitle: match.fields.subtitle,
+        number: match.fields.number,
+        universe: match.fields.universe,
+        category: match.fields.category,
+        categoryLabel: match.fields.categoryLabel,
+        subcategoryLabel: match.fields.subcategoryLabel,
+        notes: match.fields.notes,
+      };
+
+      setScanSession((prev) => {
+        const withBarcode = setScanSessionBarcode(prev, barcode.rawValue || digits, digits);
+        return setScanSessionReview(withBarcode, {
+          source: "barcode_lookup",
+          confidence: "high",
+          score: 90,
+          safeToAutofill: true,
+          warnings: [],
+          rawText: `Barcode scan: ${match.summary}`,
+          fields: coreFields,
+        });
+      });
+
+      applyScanFieldsToEmpty(coreFields);
+
+      // Specialty fields with no generic ScanSessionFields slot -- same
+      // direct-setValues pattern runVinylLookupForFile/runComicLookupForFile
+      // already use for these (comicPublisher/vinylLabel etc. aren't part
+      // of the shared ScanSessionFields shape applyScanFieldsToEmpty reads).
+      setValues((prev) => {
+        const next = { ...prev };
+        let changed = false;
+        const set = (k: keyof FormValues, v: string | undefined) => {
+          if (v && !String(prev[k] ?? "").trim()) {
+            (next as Record<string, string>)[k] = v;
+            changed = true;
+          }
+        };
+        if (match.source === "comic") {
+          set("comicPublisher", match.fields.comicPublisher);
+          set("comicCoverDate", match.fields.comicCoverDate);
+        }
+        if (match.source === "vinyl") {
+          set("vinylLabel", match.fields.vinylLabel);
+          set("vinylCountry", match.fields.vinylCountry);
+          set("vinylPressing", match.fields.vinylPressing);
+        }
+        if (changed) setHasDraftChanges(true);
+        return changed ? next : prev;
+      });
+
+      setScanSession((prev) => markScanSessionApplied(prev));
+      setStatus(`Found via barcode: ${match.summary} — filled in what it could.`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Barcode lookup failed.";
+      setScanSession((prev) => markScanSessionFailed(prev, message));
+      setStatus(message);
     } finally {
       setIsUpcLookupRunning(false);
     }
@@ -3558,6 +3643,7 @@ export default function AddPage() {
             }
             universe={values.universe}
             onCapture={handleCapturedPhoto}
+            onLiveBarcodeScan={(result) => void runLiveBarcodeLookup(result)}
             bulkToggle={false}
             onClose={() => setIsCameraPanelOpen(false)}
             onUseFileInstead={() => {

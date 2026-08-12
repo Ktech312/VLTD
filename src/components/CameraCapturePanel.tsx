@@ -94,6 +94,7 @@ export default function CameraCapturePanel({
   onBulkCapture,
   onClose,
   onUseFileInstead,
+  onLiveBarcodeScan,
   variant = "modal",
   initialBulkMode = false,
   bulkToggle = true,
@@ -108,6 +109,12 @@ export default function CameraCapturePanel({
   onBulkCapture?: (file: File, category: string, subcategory: string) => void;
   onClose: () => void;
   onUseFileInstead: () => void;
+  /** Fires the instant a barcode/QR is read by the Scan button -- before any
+   *  photo is taken. Lets the parent kick off a free barcode-only lookup
+   *  (see barcodeLookup.ts) right away instead of waiting for a shutter
+   *  press + full Identify pass. Optional -- callers that don't care about
+   *  live enrichment (e.g. a bulk-photo-only flow) can just omit it. */
+  onLiveBarcodeScan?: (result: BarcodeScanResult) => void;
   /** Photos already attached to the item being built (not this component's own
    *  state — the parent owns that list). Shown as a small count badge, same
    *  spot as Quick Add's ghost counter, so multi-photo capture gives the same
@@ -514,6 +521,7 @@ export default function CameraCapturePanel({
         setScanState("idle");
         scanStopRef.current = null;
         try { navigator.vibrate?.(60); } catch { /* ignore */ }
+        onLiveBarcodeScan?.(result);
       },
       onTimeout: () => {
         scanStopRef.current = null;

@@ -9,7 +9,8 @@ import ScanCropEditor from "@/components/ScanCropEditor";
 import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 import { analyzeImageWithVision, type VisionAnalysisResult } from "@/lib/ai/openaiVision";
 import { resolveVisionTaxonomy } from "@/lib/visionTaxonomy";
-import { scanBarcodeFromFile } from "@/lib/scanners/barcodeScanner";
+import { scanBarcodeFromFile, type BarcodeScanResult } from "@/lib/scanners/barcodeScanner";
+import { lookupByBarcodeOnly, type BarcodeLookupResult } from "@/lib/scanners/barcodeLookup";
 import { scanComicRegionsFromFile, parseComicBarcode, buildComicScanNotes } from "@/lib/comicBarcode";
 import { scanTcgCardRegionsFromFile } from "@/lib/scanners/tcgCardParser";
 import { lookupMtgCard, lookupPokemonCard, type CardLookupResult } from "@/lib/cardLookup";
@@ -373,6 +374,14 @@ export default function CapturePage() {
   // True only after an AI identify has actually run — gates the confidence badge.
   const [identified, setIdentified] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  // Live-scan barcode enrichment -- fires the instant the Scan button reads a
+  // code, before any photo is taken. Free lookups only (comic/vinyl/UPC/book
+  // via barcodeLookup.ts) — no metered AI call, no PSA (paused). This is the
+  // "connect what's already built" fix: the individual lookups already
+  // existed for the after-a-photo Identify pipeline; this just runs the same
+  // free ones immediately on scan too.
+  const [barcodeLookupState, setBarcodeLookupState] = useState<"idle" | "looking" | "found" | "none">("idle");
+  const [barcodeLookupResult, setBarcodeLookupResult] = useState<BarcodeLookupResult | null>(null);
   // AI-scan metering for the single "Identify" button, same quota Quick Add
   // already uses. Only signed-in curators are metered; anonymous/local use
   // isn't charged. The real limit (per-tier) lives server-side.
@@ -506,6 +515,61 @@ export default function CapturePage() {
     });
     if (from === 0 || to === 0) setIdentified(false);
     setSelectedPreviewIndex(to);
+  }, []);
+
+  // Fires the instant the camera's Scan button reads a barcode/QR -- see
+  // CameraCapturePanel's onLiveBarcodeScan. Runs the free barcode-only
+  // lookups (comic/vinyl/UPC/book) immediately, no photo needed. Fills only
+  // BLANK fields (never overwrites anything already typed or already found)
+  // -- a confirmed database match from a scan is treated as more trustworthy
+  // than a later AI vision guess, not less, so this intentionally does NOT
+  // use runAiIdentify's own "vision wins if non-empty" merge rule.
+  const handleLiveBarcodeScan = useCallback(async (result: BarcodeScanResult) => {
+    setBarcodeLookupState("looking");
+    try {
+      const match = await lookupByBarcodeOnly(result);
+      if (!match) {
+        setBarcodeLookupState("none");
+        setBarcodeLookupResult(null);
+        return;
+      }
+      setBarcodeLookupResult(match);
+      setBarcodeLookupState("found");
+      setFields((prev) => {
+        const next = { ...prev };
+        const fillIfBlank = (key: keyof ReviewFields, value: string | undefined) => {
+          if (value && !String(next[key] ?? "").trim()) (next as Record<string, unknown>)[key] = value;
+        };
+        fillIfBlank("title", match.fields.title);
+        fillIfBlank("subtitle", match.fields.subtitle);
+        fillIfBlank("number", match.fields.number);
+        fillIfBlank("category", match.fields.category);
+        fillIfBlank("categoryLabel", match.fields.categoryLabel);
+        fillIfBlank("subcategoryLabel", match.fields.subcategoryLabel);
+        if (!next.universe.trim() && match.fields.universe) next.universe = match.fields.universe;
+        // Comic publisher/cover-date and vinyl label/country/pressing have no
+        // dedicated fields on this simpler builder (unlike /vault/add) --
+        // fold them into the description, same as the comic/card OCR paths
+        // already do below in runAiIdentify.
+        const extraNotes = [
+          match.fields.comicPublisher ? `Publisher: ${match.fields.comicPublisher}` : "",
+          match.fields.comicCoverDate ? `Cover date: ${match.fields.comicCoverDate}` : "",
+          match.fields.vinylLabel ? `Label: ${match.fields.vinylLabel}` : "",
+          match.fields.vinylCountry ? `Country: ${match.fields.vinylCountry}` : "",
+          match.fields.vinylPressing ? `Pressing: ${match.fields.vinylPressing}` : "",
+          match.fields.notes || "",
+        ]
+          .filter(Boolean)
+          .join("\n");
+        if (extraNotes && !next.description.trim()) next.description = extraNotes;
+        return next;
+      });
+    } catch {
+      // Best-effort enrichment -- a failure here shouldn't block scanning or
+      // capturing; the user can still fill everything in by hand.
+      setBarcodeLookupState("none");
+      setBarcodeLookupResult(null);
+    }
   }, []);
 
   // Opt-in AI: identify + fill fields on demand from the captured photo.
@@ -1025,6 +1089,40 @@ export default function CapturePage() {
                       {scanRemaining} AI scan{scanRemaining === 1 ? "" : "s"} left this cycle.
                     </p>
                   ) : null}
+
+                  {/* Live barcode-lookup result -- fires the instant the camera's Scan
+                      button reads a code, no photo needed. Free lookup only (comic/
+                      vinyl/UPC/book); see handleLiveBarcodeScan. */}
+                  {barcodeLookupState !== "idle" ? (
+                    <div
+                      className="mt-2 flex items-start gap-2 rounded-xl border px-2.5 py-2"
+                      style={{
+                        borderColor: barcodeLookupState === "found" ? "rgba(74,222,128,0.4)" : "var(--theme-gold-border, rgba(203,208,213,0.2))",
+                        background: barcodeLookupState === "found" ? "rgba(74,222,128,0.08)" : "transparent",
+                      }}
+                    >
+                      {barcodeLookupResult?.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={barcodeLookupResult.imageUrl}
+                          alt=""
+                          className="h-10 w-8 shrink-0 rounded object-cover ring-1 ring-white/10"
+                        />
+                      ) : null}
+                      <p className="text-[11px] leading-4 text-[color:var(--muted)]">
+                        {barcodeLookupState === "looking" ? (
+                          "Looking up scanned barcode…"
+                        ) : barcodeLookupState === "found" && barcodeLookupResult ? (
+                          <>
+                            <span className="font-semibold text-[#4ade80]">Found via barcode:</span>{" "}
+                            {barcodeLookupResult.summary} — filled in what it could.
+                          </>
+                        ) : (
+                          "No match found for that barcode — fill it in by hand, or take a photo and try Identify."
+                        )}
+                      </p>
+                    </div>
+                  ) : null}
                 </div>
 
                 {/* Right: numbered accordion */}
@@ -1392,6 +1490,7 @@ export default function CapturePage() {
             description="Snap one to add now, or switch to Quick Add to capture many and sort later."
             universe={fields.universe}
             onCapture={handleCapture}
+            onLiveBarcodeScan={handleLiveBarcodeScan}
             bulkToggle={false}
             bulkTaxonomy={false}
             capturedCount={capturedImages.length}

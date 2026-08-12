@@ -9,6 +9,7 @@ import ScanReviewSheet, { type StagedItem } from "@/components/ScanReviewSheet";
 import ScanVerifySheet, { type ScanDraft } from "@/components/ScanVerifySheet";
 import { startOnDemandScan } from "@/lib/scanners/onDemandBarcodeScan";
 import { warmupZXingWasm } from "@/lib/scanners/zxingWasmSetup";
+import { lookupByBarcodeOnly, type BarcodeLookupResult } from "@/lib/scanners/barcodeLookup";
 import type { LiveBarcodeResult } from "@/lib/scanners/liveBarcodeReader";
 import { newId } from "@/lib/id";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
@@ -42,6 +43,12 @@ type CapturedItem = {
   frontBlob: Blob;
   frontObjectUrl: string;
   skipAi?: boolean;
+  /** Free barcode-only lookup (comic/vinyl/UPC/book), attached the instant a
+   *  scan reads a code -- before this shot is even taken. "looking" means
+   *  the lookup for the barcode this item was captured under is still in
+   *  flight; it resolves to "found"/barcodeMatch or "none" shortly after. */
+  barcodeLookupState?: "looking" | "found" | "none";
+  barcodeMatch?: BarcodeLookupResult | null;
 };
 
 const FRAME_ASPECT: Record<FrameType, number> = {
@@ -162,6 +169,11 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
   const streamRef = useRef<MediaStream | null>(null);
   const stopBarcodeScanRef = useRef<(() => void) | null>(null);
   const [liveBarcode, setLiveBarcode] = useState<LiveBarcodeResult | null>(null);
+  // Free barcode-only lookup, kicked off the instant a scan reads a code --
+  // before the shot is even taken. Consumed by the NEXT handleCapture() (the
+  // natural "scan then shoot" order) and cleared either way so a stale
+  // lookup never attaches itself to an unrelated later capture.
+  const pendingBarcodeLookupRef = useRef<Promise<BarcodeLookupResult | null> | null>(null);
   // On-demand scan session — off by default, only runs for a bounded burst
   // after a tap on the Scan button (see onDemandBarcodeScan.ts for why).
   const [scanState, setScanState] = useState<"idle" | "scanning" | "timeout">("idle");
@@ -275,12 +287,19 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     setCapturing(true);
     const blob = await captureFrame(video, canvas);
     if (blob) {
+      const id = newId();
+      // Inherit whatever scan happened just before this shot (the natural
+      // "aim, scan, shoot" order) -- then clear it so a later, unrelated
+      // capture never accidentally inherits a stale result.
+      const pendingLookup = pendingBarcodeLookupRef.current;
+      pendingBarcodeLookupRef.current = null;
       const item: CapturedItem = {
-        id: newId(),
+        id,
         universe,
         categoryLabel,
         frontBlob: blob,
         frontObjectUrl: URL.createObjectURL(blob),
+        barcodeLookupState: pendingLookup ? "looking" : undefined,
       };
       setCapturedItems((prev) => [...prev, item]);
       // Soft ghost-green "got it" flash.
@@ -288,6 +307,16 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       window.setTimeout(() => setFlashVisible(false), 220);
       // Next item starts fresh — don't keep showing this one's code.
       setLiveBarcode(null);
+
+      if (pendingLookup) {
+        void pendingLookup.then((match) => {
+          setCapturedItems((prev) =>
+            prev.map((c) =>
+              c.id === id ? { ...c, barcodeLookupState: match ? "found" : "none", barcodeMatch: match } : c
+            )
+          );
+        });
+      }
     }
     window.setTimeout(() => setCapturing(false), 160);
   }
@@ -315,6 +344,10 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         setScanState("idle");
         stopBarcodeScanRef.current = null;
         try { navigator.vibrate?.(60); } catch { /* ignore */ }
+        // Kick off the free lookup right away -- don't wait for the shutter.
+        // Whichever item gets captured next inherits this result (see
+        // handleCapture); a fresh scan overwrites this ref before that.
+        pendingBarcodeLookupRef.current = lookupByBarcodeOnly(result).catch(() => null);
       },
       onDiagnostic: (d) => setScanDiagnostic(d),
       onTimeout: () => {
@@ -431,6 +464,33 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     };
   }
 
+  // Synthesizes a VisionAnalysisResult-shaped object from a free barcode
+  // lookup so it can flow through the exact same visionToDraftPatch()
+  // taxonomy-matching logic the AI path uses -- one merge path, not two
+  // subtly different ones. confidence 0.9 marks it as a confirmed database
+  // match, not a guess.
+  function barcodeMatchToVision(match: BarcodeLookupResult): VisionAnalysisResult {
+    return {
+      title: match.fields.title || "",
+      subtitle: match.fields.subtitle || "",
+      category: match.fields.category || "",
+      universe: match.fields.universe || "",
+      year: match.fields.comicCoverDate || "",
+      brand: match.fields.comicPublisher || match.fields.vinylLabel || "",
+      grade: "",
+      certNumber: "",
+      condition: "",
+      conditionReason: "",
+      conditionConfidence: 0,
+      description: match.fields.notes || match.summary || "",
+      confidence: 0.9,
+      barcode: "",
+      number: match.fields.number || "",
+      categoryLabel: match.fields.categoryLabel || "",
+      subcategoryLabel: match.fields.subcategoryLabel || "",
+    };
+  }
+
   // Finish/Add commits the batch: build a draft per kept capture, AI-scan them all
   // (metered), then verify. Once this runs the group is locked — no going back to
   // the camera to append; the curator starts a new group instead.
@@ -438,18 +498,28 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     const approvedSet = new Set(approvedIds);
     const initial: ScanDraft[] = capturedItems
       .filter((item) => approvedSet.has(item.id))
-      .map((item) => ({
-        id: item.id,
-        frontObjectUrl: item.frontObjectUrl,
-        title: "",
-        universe: item.universe,
-        categoryLabel: item.categoryLabel || "",
-        subcategoryLabel: "",
-        purchasePrice: "",
-        currentValue: "",
-        scanned: false,
-        confidence: 0,
-      }));
+      .map((item) => {
+        const base: ScanDraft = {
+          id: item.id,
+          frontObjectUrl: item.frontObjectUrl,
+          title: "",
+          universe: item.universe,
+          categoryLabel: item.categoryLabel || "",
+          subcategoryLabel: "",
+          purchasePrice: "",
+          currentValue: "",
+          scanned: false,
+          confidence: 0,
+        };
+        // A confirmed barcode match (comic/vinyl/UPC/book) already answered
+        // what AI vision would have guessed at -- pre-fill from it and skip
+        // the metered AI call for this item entirely (see runAiScan below).
+        // Free, already-fetched, more precise data wins over spending a scan.
+        if (item.barcodeLookupState === "found" && item.barcodeMatch) {
+          return { ...base, ...visionToDraftPatch(barcodeMatchToVision(item.barcodeMatch), item.universe, item.categoryLabel) };
+        }
+        return base;
+      });
 
     if (initial.length === 0) { onClose(); return; }
 
@@ -477,6 +547,13 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       // Curator already knows AI won't get this one — skip the call entirely,
       // no scan spent, leave it blank for manual entry.
       if (source.skipAi) continue;
+
+      // Already confidently identified via a free barcode lookup (comic/
+      // vinyl/UPC/book) when this item was captured -- no need to also
+      // spend a metered AI scan confirming what a real database already
+      // answered. draft.scanned is set by handleFinishReview's barcode
+      // pre-fill above, distinct from source.skipAi (curator's own choice).
+      if (draft.scanned) continue;
 
       // Only stop early when we KNOW the cycle is spent; if the quota hasn't
       // loaded yet (null), let the server's atomic consume decide.
@@ -595,6 +672,8 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     categoryLabel: item.categoryLabel,
     universe: item.universe,
     skipAi: item.skipAi,
+    barcodeLookupState: item.barcodeLookupState,
+    barcodeSummary: item.barcodeMatch?.summary,
   }));
 
   function handlePatchStaged(id: string, patch: { universe?: UniverseKey; categoryLabel?: string; skipAi?: boolean }) {

@@ -20,6 +20,13 @@ export type StagedItem = {
   categoryLabel: string;
   universe: string;
   skipAi?: boolean;
+  /** Free barcode lookup result, live as of the moment this item was
+   *  captured -- see ScanCapturePanel's pendingBarcodeLookupRef. Lets the
+   *  curator see BEFORE hitting Finished which scans actually found
+   *  something, rather than discovering it only after the batch AI-fill
+   *  runs (the exact "will I waste time trying this" gap this closes). */
+  barcodeLookupState?: "looking" | "found" | "none";
+  barcodeSummary?: string;
 };
 
 type Props = {
@@ -120,6 +127,25 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
                         {item.backObjectUrl ? "Front + Back" : "Front only"}
                       </div>
                     </div>
+                    {item.barcodeLookupState ? (
+                      <div
+                        className="mt-0.5 truncate text-[10px] font-semibold"
+                        style={{
+                          color:
+                            item.barcodeLookupState === "found"
+                              ? "#4ade80"
+                              : item.barcodeLookupState === "looking"
+                                ? "var(--muted2)"
+                                : "var(--muted)",
+                        }}
+                      >
+                        {item.barcodeLookupState === "looking"
+                          ? "Looking up barcode…"
+                          : item.barcodeLookupState === "found"
+                            ? `Matched: ${item.barcodeSummary}`
+                            : "No barcode match — AI will identify"}
+                      </div>
+                    ) : null}
                     {!isRemoved ? (
                       <div className="mt-1 grid grid-cols-2 gap-1.5">
                         <select
