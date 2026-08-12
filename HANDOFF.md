@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated, sixth pass — §B7's iPhone bug report is FIXED, see below)
+# VLTD — Session Handoff (updated, seventh pass — §B10/§B11: lookup-API safety guards + live camera zoom, NEEDS YOUR MIGRATION)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -42,7 +42,14 @@ is risky or can't be done, say so plainly.
   ask EK to run it. **Never add a new column to the cloud row map
   (`src/lib/vaultCloud.ts`) without the migration** — unknown columns make the
   `vault_items` upsert throw.
-  **✅ NO MIGRATIONS PENDING.** `supabase/migrations/20260808_bug_report_replies.sql`
+  **⚠ ONE MIGRATION PENDING:** `supabase/migrations/20260811_lookup_api_guards.sql`
+  (generic permanent-cache + daily-budget guard for the upcitemdb/Discogs/
+  Metron lookup APIs, see §B10 — **not yet run**). Fails open until run —
+  nothing breaks either way, it just isn't cached/protected yet.
+  `supabase/migrations/20260811_vault_item_brand.sql` (the Brand/
+  Manufacturer/Publisher field, §B9) — **confirmed run by EK 2026-08-11,
+  cloud-sync wiring now done too.**
+  `supabase/migrations/20260808_bug_report_replies.sql`
   (adds `admin_reply`/`admin_replied_at`/`updated_at` to `bug_reports`, for
   the reporter-notification feature below) — **confirmed run by EK.**
   `supabase/migrations/20260806_vault_item_tags.sql`
@@ -79,6 +86,16 @@ confirm with EK who owns a screen.** EK is aware of this.
 - **`/capture` (normal Add) is THIS chat's now** — EK confirmed 2026-07-31 that
   Codex isn't on it; this chat added multi-photo + crop-zoom there. Still re-read
   before editing in case that changes.
+- **New, as of 2026-08-11 — not this chat's, do not touch:** `src/app/museum/
+  virtual-room/`, `src/app/owner-lab/`, `src/components/owner-lab/`,
+  `src/components/gallery/VirtualGalleryRoom.tsx`, `src/app/museum/page.tsx`
+  (modified), `src/components/NavShell.tsx` (modified),
+  `src/components/ProtectedRoute.tsx` (modified), plus a `marketing/` folder
+  and a `product/` folder at the repo root. EK flagged the `forge/` (3D-printer
+  app) placement under `/museum` as likely misplaced/unintended and is asking
+  about it separately — don't try to fix or move it, that's EK's call once
+  they've looked. `src/app/forge/` and `src/app/vault/forge/` are empty
+  directories (no `page.tsx`), harmless, safe to ignore.
 
 ---
 
@@ -800,9 +817,89 @@ Fonts network fetch failure unrelated to this change — clean on retry, not
 a real problem, just noting it in case a future build hiccups the same way
 for no code-related reason).
 
-**Needs EK's action:** run the migration in Supabase when convenient, then
-say so — the cloud-sync wiring is one follow-up commit away, not started
-yet on purpose.
+**DONE 2026-08-11:** EK ran the migration ("Success. No rows returned"),
+so `vaultCloud.ts`'s row map is now wired both ways (plus the same
+missing-column fallback pattern already used for `tags`/video/etc., kept
+as belt-and-suspenders even though the migration is confirmed). Brand now
+syncs to Supabase for real, not just local-only.
+
+### B10. Safety guards built for every metered QR/barcode lookup API — 2026-08-11, needs one migration run
+EK's ask, after §B8's upcitemdb-quota-risk flag: "Build all the safeties
+that can be used for QR readers." Built the same permanent-cache +
+daily-budget pattern PSA already has (§B3b), generalized this time
+instead of copy-pasted per provider — new
+`supabase/migrations/20260811_lookup_api_guards.sql` (`lookup_api_cache`
++ `lookup_api_usage` tables, provider-keyed) + a shared server helper
+(`src/lib/server/lookupApiGuard.ts`).
+
+**Applied precisely, not uniformly — the three providers don't actually
+have the same failure mode, so they don't get the same guard:**
+- **upcitemdb** — confirmed hard 100/day cap, same shape as PSA's. Gets
+  the FULL guard: permanent cache + daily budget (safe cap 90). This
+  also required moving the call server-side for the first time — it used
+  to `fetch()` upcitemdb directly from the BROWSER
+  (`src/lib/upcLookup.ts`), which meant nothing server-side could ever
+  gate it no matter what guard existed. New `/api/upc-lookup` route now
+  does the actual fetch; `upcLookup.ts` is now a thin client wrapper that
+  calls that route (same exported function signature, so no caller
+  needed to change). ISBN/book codes route through the same endpoint to
+  OpenLibrary/Google Books — cached, but deliberately NOT daily-budget
+  gated, since neither has a confirmed hard cap; inventing one would just
+  block real lookups for no reason.
+- **Discogs** (vinyl) and **Metron** (comics) — both are per-MINUTE rate
+  limits per their own docs (Discogs 60/min authenticated, Metron ~30/min),
+  not daily caps. Gave both the permanent cache (a real, big win — a
+  repeat scan of the same barcode/release/issue never re-hits the API
+  again) but deliberately did NOT invent a fake daily-budget pause for
+  either — that would be dishonest given neither actually has one. Instead
+  added real 429 handling: a clear "rate-limiting right now, wait a few
+  seconds" message instead of the previous generic error.
+- **GCD** (comics) — no guard needed or added; it's self-hosted data in
+  this app's own Supabase (`gcd_comic_search`), not a rate-limited
+  third-party call at all.
+
+`tsc`/`eslint`/`npm run build` all clean (only pre-existing, unrelated
+warnings — the React Compiler try/finally advisories already documented
+elsewhere in this file, and one pre-existing `stopCameraStream` missing-
+dep warning in `CameraCapturePanel.tsx` that predates this change).
+
+**Needs EK's action: run `supabase/migrations/20260811_lookup_api_guards.sql`
+in Supabase.** Until then this fails OPEN, same as PSA's guard would if
+unconfigured — lookups still work exactly as before, they just aren't
+cached or budget-protected yet. Nothing breaks either way; running it
+just turns the protection on.
+
+### B11. Live zoom on the camera preview (before capture) — 2026-08-11, feature-detected, needs a real device to confirm
+EK's question: the zoom EK meant was on the LIVE camera view while
+framing a shot, not the after-capture crop step (`ScanCropEditor.tsx`
+already has real pinch/scroll zoom there, confirmed working — that one
+was never in question). Checked what's actually possible: browsers expose
+an optional `zoom` capability on a camera's `MediaStreamTrack`
+(`track.getCapabilities().zoom` / `track.applyConstraints({zoom})`) —
+but it's NOT part of the base `getUserMedia` spec, it's a capture-
+extensions addition each browser opts into individually, similar in
+spirit to the `BarcodeDetector` feature-detection this app already did
+for native barcode scanning (§B). **Honest expectation: per current
+browser-support data this is Android Chrome (and some other Chromium
+browsers) on supporting hardware — iOS Safari and most desktop
+browsers/webcams expose no `zoom` capability at all, and there's no
+software way to fake real optical/driver zoom from JS.** On your iPhone,
+this most likely will NOT show a zoom control at all — that's a real
+platform limitation, not a bug to chase further.
+
+**Built:** new `src/hooks/useCameraZoom.ts` — feature-detects the
+capability the moment a stream's video track attaches, exposes a small
+vertical slider (bottom-right of the camera frame, only rendered when
+actually supported) AND real two-finger pinch-to-zoom over the whole
+live camera view. Wired into both `CameraCapturePanel.tsx` and
+`ScanCapturePanel.tsx` — one shared hook, not two separate
+implementations, same reasoning as `DropdownPill` being extracted
+earlier this week.
+
+**Not yet confirmed on any real device** — needs testing on an Android
+Chrome phone (where it should actually appear and work) and confirmation
+that it correctly shows nothing on your iPhone rather than a broken/dead
+control.
 
 ### C. DOCUMENTS (capture builder §5 accordion) — DONE 2026-08-03
 EK's answer: "everything should be private unless shared" — that's a
@@ -981,6 +1078,18 @@ write that migration blind since it's payment-adjacent data.
 ---
 
 ## 4. Done recently (don't redo)
+- **2026-08-11 — Lookup-API safety guards (upcitemdb/Discogs/Metron) + live
+  camera zoom.** Full detail in §B10/§B11. Generic permanent-cache +
+  daily-budget guard (same shape as PSA's), applied only where a real
+  daily cap exists (upcitemdb); Discogs/Metron get the cache plus honest
+  429 handling instead of an invented quota. Migration
+  `20260811_lookup_api_guards.sql` — **not yet run**, fails open until
+  then. Also: feature-detected live pinch/slider zoom on the camera
+  preview before capture (`src/hooks/useCameraZoom.ts`), expected to work
+  on Android Chrome only — don't be surprised if it shows nothing on an
+  iPhone, that's the honest platform limit, not a bug. Same pass also
+  finished wiring the Brand field's cloud sync (§B9) now that its
+  migration is confirmed run.
 - **2026-08-10 — Barcode/QR scanning rebuilt as tap-to-scan (native detector +
   JS fallback), PSA auto-fire bug fixed.** Full detail in §2B above — don't
   re-litigate the engine choice or re-add an always-on effect; the "on-demand,
@@ -1479,14 +1588,23 @@ write that migration blind since it's payment-adjacent data.
 
 ## 6. First moves for the new chat
 1. Read this + `MEMORY.md`. Confirm with EK **who owns `/capture` right now**
-   (this chat vs the parallel Codex edits) before editing capture files.
-2. Ask EK what they found testing overnight: did the Universe-lock fix (§2A),
-   the tap-to-scan barcode rebuild (§2B, 2026-08-10 — new code, genuinely
-   untested on a device), and comic-ID prompt fix (§2F) actually hold up
-   on real devices/items? None of those could be verified without a
-   device/real API call.
-3. Then §2C documents (needs EK's local-only-vs-private-bucket call), or
-   whichever §3 decision EK wants to make first.
-4. Verify each **visually** on `vltd.vercel.app` (screenshot; resize for mobile).
+   (this chat vs the parallel Codex edits) before editing capture files. Also
+   re-check the new not-this-chat's file list in §0 (Aug 11) before touching
+   anything under `museum/`, `owner-lab/`, or the repo-root `marketing/`/
+   `product/` folders.
+2. **Run `supabase/migrations/20260811_lookup_api_guards.sql`** if not done
+   yet (§B10) — turns on the cache+budget guard for upcitemdb/Discogs/Metron.
+   Fails open until run, so this isn't urgent, just easy to forget.
+3. Ask EK what they found testing: does the live camera zoom (§B11, brand
+   new, feature-detected — expected to show on Android Chrome, expected to
+   show NOTHING on iPhone) do the right thing on each device they have? Did
+   a real barcode/UPC/vinyl/comic scan actually fill fields (§B8's still-open
+   "found a match" success path)? Does scanning stay cool over repeated
+   bursts since the zxing-wasm swap (§B)?
+4. Then whichever open §3 decision or §2 item EK wants to pick up next —
+   PSA's "approved customer" block (§B3, needs EK emailing PSA directly) and
+   a CGC lookup (confirmed still fully unbuilt) are the two biggest gaps on
+   the grading-lookup side if EK asks what's left there.
+5. Verify each **visually** on `vltd.vercel.app` (screenshot; resize for mobile).
    `tsc`/`eslint`/`build` before every push. Deploys are slow — preview CSS-only
    tweaks via live JS injection to iterate faster.
