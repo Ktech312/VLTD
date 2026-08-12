@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated, seventh pass — §B10/§B11: lookup-API safety guards + live camera zoom, NEEDS YOUR MIGRATION)
+# VLTD — Session Handoff (updated, eighth pass — overnight: lens-switch on zoom (§B11) + Stripe customer-id fix (§2I), NEEDS ONE MIGRATION)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -42,7 +42,11 @@ is risky or can't be done, say so plainly.
   ask EK to run it. **Never add a new column to the cloud row map
   (`src/lib/vaultCloud.ts`) without the migration** — unknown columns make the
   `vault_items` upsert throw.
-  **✅ NO MIGRATIONS PENDING.** `supabase/migrations/20260811_lookup_api_guards.sql`
+  **⚠ ONE MIGRATION PENDING:** `supabase/migrations/20260812_profiles_stripe_customer_id.sql`
+  (adds `profiles.stripe_customer_id`, see §2I — **not yet run**). Fails
+  gracefully until run — billing keeps working exactly as before
+  (local-cache-only customer id), this just isn't cross-device yet.
+  `supabase/migrations/20260811_lookup_api_guards.sql`
   (generic permanent-cache + daily-budget guard for the upcitemdb/Discogs/
   Metron lookup APIs, see §B10) — **confirmed run by EK 2026-08-11.** The
   cache/budget protection is now actually live, not just fail-open.
@@ -480,14 +484,16 @@ their commercial/paid API tier (higher volume) — that's a cost/business
 decision for EK to make with PSA directly, not something the next chat can
 code around. Worth raising proactively if EK hasn't brought it up.
 
-### B4. Regular Add camera should visually match Quick Add's — STILL NEXT, once B/B2 above are confirmed
-EK's own instruction, explicit ordering: **fix barcode/Cards first, THEN**
-make the regular Add camera (`CameraCapturePanel.tsx`) visually match Quick
-Add's look (`ScanCapturePanel.tsx`) — the squared dropdown pills, frame
-corners, flash, ghost counter, thumbnail placement, etc. described in §4's
-Quick Add rebuild notes. Not started — still waiting on B/B2 holding up on a
-real device per EK's explicit ordering (two rounds of "fixed" on B haven't
-held up yet, so don't start B4 on a third unconfirmed round either).
+### B4. Regular Add camera should visually match Quick Add's — DONE 2026-08-08/09 (this heading was stale)
+EK's own instruction, explicit ordering: fix barcode/Cards first, THEN
+make the regular Add camera visually match Quick Add's. **Corrected
+2026-08-11/12: this note said "not started" but the work actually
+shipped 2026-08-08/09** — see the full writeup under §4's "2026-08-08/09
+— Regular Add's camera, rebuilt to actually match Quick Add" entry
+(embedded live camera removed in favor of a full-screen popup matching
+Quick Add's structure, corner-bracket guide, shared `DropdownPill`,
+letterbox-bar fix, drag-to-reorder thumbnails). Leaving this pointer here
+so a future pass doesn't restart already-finished work a second time.
 
 ### B5. Vault Halls — a dead-session draft got replaced with EK's actual spec; new cross-category search + real tags built
 A previous session died mid-work on `src/app/vault/halls/` — found it
@@ -922,6 +928,54 @@ up and works on desktop, scroll wheel doesn't fight page scroll behind
 the camera, pinch works on a phone, and a zoomed-in capture actually
 looks zoomed in the saved photo (not just the live preview).
 
+**Update, same night — lens-switching (EK's follow-up question).** EK
+asked directly: on mobile, does zooming use the phone's multiple rear
+cameras (ultra-wide/main/telephoto), or just one? Honest answer at the
+time: no, nothing did that — hardware zoom only ever adjusted the SAME
+active camera's own driver-level zoom, and digital zoom is a pure crop
+of that same single feed. Neither ever switches physical lenses.
+
+Researched what's actually possible here, since there's no standard Web
+API to ask "which lens is this" (no focal length/FOV capability exposed):
+- Many phones (especially ones with camera-HAL-level multi-camera fusion)
+  already expose their whole lens set as ONE logical back camera —
+  `enumerateDevices()` only ever shows one entry, and the OS silently
+  switches/blends between physical lenses internally as the existing
+  hardware `zoom` capability moves through its range. **Nothing needed
+  building for these phones — they already get real lens-switching for
+  free through the zoom work already shipped.**
+- Some phones DO expose each physical rear lens as a separate device.
+  For those, **built** `src/lib/scanners/cameraLenses.ts` —
+  `classifyBackCameras()`, a best-effort label-text classifier (there's
+  no other signal available) that picks an ultra-wide camera out of the
+  device list. Wired into both camera panels: scrolling/pinching out
+  past the current camera's own zoom floor now switches to that ultra-
+  wide device (reusing each panel's existing camera-restart machinery,
+  not a new stream path); zooming back in switches back to the main
+  camera. A small "Wide" badge replaces the numeric zoom label while on
+  it.
+- Deliberately scoped to ultra-wide only, not telephoto — digital zoom
+  already covers "zoom in further" reasonably within a single lens's own
+  quality ceiling, whereas ultra-wide is the one direction digital zoom
+  fundamentally can't fake (can't invent a wider field of view from a
+  narrower one). Telephoto-lens label detection is also far less
+  standardized across OEMs than ultra-wide's — lower value for the
+  added guesswork.
+- iOS Safari never exposes multiple rear lenses this way at all
+  (consistent with the zoom feature's own platform split) — this is
+  Android-only in practice, and even there, only on phones that don't
+  already fuse their lenses at the OS level.
+
+**Explicitly NOT verified on real hardware** — label-based lens
+classification cannot be confirmed without an actual multi-lens Android
+phone to test against; a mislabeled device would misclassify silently.
+Worth a real test: does a phone with separate ultra-wide/main entries
+actually get detected and switched correctly, does the switch feel
+reasonably smooth (a brief reconnect blip is expected and fine, a long
+freeze or wrong-lens-forever would not be), and does a phone with fused
+lenses correctly show nothing extra (no `ultraWideId` found, silent
+no-op, existing zoom behavior unchanged).
+
 ### C. DOCUMENTS (capture builder §5 accordion) — DONE 2026-08-03
 EK's answer: "everything should be private unless shared" — that's a
 clear enough steer to build, not a decision that needed your dashboard. Built
@@ -1023,14 +1077,26 @@ and already keeps `profiles.tier` in sync**, and `src/lib/subscription.ts`
 elsewhere (scan quotas). Fixed: the billing page now reads the real tier via
 `getOnboardingStatus()` + `getTierSafe()` instead of a hardcoded literal. No
 migration needed, nothing new to configure.
-**One real gap left, not fixed:** the Stripe `customerId` is only cached in
-that device's `localStorage` (`billingClient.ts`), never persisted
-server-side. A real paying user opening billing on a NEW device will now see
-the correct plan (tier is server-synced) but the Payment method/Invoice
-history/Cancel sections stay hidden until they revisit the device they
-checked out from. Needs a `stripe_customer_id` column on `profiles`
-(migration) populated by the webhook + checkout/session routes — didn't
-write that migration blind since it's payment-adjacent data.
+**Gap FIXED 2026-08-12 (overnight, while EK slept):** the Stripe
+`customerId` used to only be cached in that device's `localStorage`
+(`billingClient.ts`), never persisted server-side — a real paying user
+opening billing on a NEW device would see the correct plan (tier is
+server-synced) but the Payment method/Invoice history/Cancel sections
+stayed hidden. Added `profiles.stripe_customer_id`
+(`supabase/migrations/20260812_profiles_stripe_customer_id.sql` —
+**not yet run**) and the webhook now writes it on
+`checkout.session.completed` and `customer.subscription.updated` (same
+events that already sync tier), with a graceful fallback if the
+migration hasn't landed yet so tier sync can't break because of an
+unrelated missing column. `/account/billing` now reads the customer id
+from the profile as the source of truth, falling back to the local
+cache only for an instant no-flash first paint. **Needs EK to run the
+migration** — until then this behaves exactly as before (local-cache-
+only), no regression either way.
+**Not tested against a real Stripe checkout** — the webhook logic was
+verified by reading, not by triggering an actual `checkout.session.completed`
+event; worth confirming the column actually gets populated after a real
+subscribe.
 
 ### F. Bigger / later (needs your device or your decision — not started)
 - **Events saved-list sync — DONE 2026-08-03 (night), needs your migration run.**
@@ -1099,6 +1165,17 @@ write that migration blind since it's payment-adjacent data.
 ---
 
 ## 4. Done recently (don't redo)
+- **2026-08-12 overnight, while EK slept — lens-switch on zoom (§B11) +
+  Stripe customer-id persistence (§2I).** EK asked whether zoom uses a
+  phone's multiple cameras; it didn't, so built best-effort ultra-wide
+  lens detection/switching (`src/lib/scanners/cameraLenses.ts`) wired
+  into both camera panels' existing zoom gesture — Android-only in
+  practice, unverified on real multi-lens hardware. Also fixed the
+  billing gap flagged a few passes back: Stripe customer id now persists
+  to `profiles.stripe_customer_id` via the webhook instead of only living
+  in one device's localStorage — migration not yet run. Also corrected a
+  stale §B4 note that still said the regular-Add-camera visual-match work
+  "hadn't started" when it shipped back on 2026-08-08/09.
 - **2026-08-11 — Lookup-API safety guards (upcitemdb/Discogs/Metron) + live
   camera zoom.** Full detail in §B10/§B11. Generic permanent-cache +
   daily-budget guard (same shape as PSA's), applied only where a real
@@ -1613,15 +1690,18 @@ write that migration blind since it's payment-adjacent data.
    re-check the new not-this-chat's file list in §0 (Aug 11) before touching
    anything under `museum/`, `owner-lab/`, or the repo-root `marketing/`/
    `product/` folders.
-2. Lookup-API guard migration (§B10) is confirmed run — no action needed,
-   just worth a glance at the `lookup_api_cache`/`lookup_api_usage` tables
-   once real scans have happened, to confirm it's actually being hit.
-3. Ask EK what they found testing: does the live camera zoom (§B11, brand
-   new, feature-detected — expected to show on Android Chrome, expected to
-   show NOTHING on iPhone) do the right thing on each device they have? Did
-   a real barcode/UPC/vinyl/comic scan actually fill fields (§B8's still-open
-   "found a match" success path)? Does scanning stay cool over repeated
-   bursts since the zxing-wasm swap (§B)?
+2. **Run `supabase/migrations/20260812_profiles_stripe_customer_id.sql`**
+   (§2I) when convenient — billing keeps working without it, this just
+   turns on cross-device Payment method/Invoices/Cancel visibility.
+   Lookup-API guard migration (§B10) is already confirmed run.
+3. Ask EK what they found testing overnight: does the digital-zoom
+   fallback work on desktop/iOS now (§B11)? Does zooming out actually
+   switch to a real ultra-wide lens on any Android phone that has one
+   (§B11's newest addition, `cameraLenses.ts` — completely unverified on
+   real multi-lens hardware, watch for a misclassified/wrong-lens report)?
+   Did a real barcode/UPC/vinyl/comic scan actually fill fields (§B8's
+   still-open "found a match" success path)? Does scanning stay cool over
+   repeated bursts since the zxing-wasm swap (§B)?
 4. Then whichever open §3 decision or §2 item EK wants to pick up next —
    PSA's "approved customer" block (§B3, needs EK emailing PSA directly) and
    a CGC lookup (confirmed still fully unbuilt) are the two biggest gaps on
