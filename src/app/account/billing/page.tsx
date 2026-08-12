@@ -43,13 +43,14 @@ const PLANS: { key: Plan; name: string; price: string; features: string[] }[] = 
 // tier from Supabase and mirrors it into subscription.ts's local cache, which
 // getTierSafe() reads here.
 //
-// Known gap (not fixed here): the Stripe customerId is only cached in this
-// device's localStorage (billingClient.ts), never persisted server-side. A
-// real paying user opening this page on a new device will see the correct
-// plan (tier is server-synced) but the Payment method/Invoice history/Cancel
-// sections below will stay hidden until they open billing on the device they
-// originally checked out from. Fixing that needs a stripe_customer_id column
-// on profiles (a migration) populated by the webhook + checkout/session routes.
+// profiles.stripe_customer_id (20260812_profiles_stripe_customer_id.sql) is
+// now the source of truth for the customer id too, same webhook. localStorage
+// (billingClient.ts) is read first for an instant, no-flash display on the
+// device that originally checked out, then corrected to the real server value
+// once getOnboardingStatus() resolves -- which is what actually fixes a real
+// paying user opening this page on a NEW device: the Payment method/Invoice
+// history/Cancel sections below now show up there too, not just on the
+// original device.
 
 export default function BillingPage() {
   const [currentPlan, setCurrentPlan] = useState<Plan>(() => planForTier(getTierSafe()));
@@ -62,7 +63,14 @@ export default function BillingPage() {
   useEffect(() => {
     getCurrentUser().then(({ data }) => setEmail(data.user?.email ?? ""));
     setCustomerId(getStoredStripeCustomerId());
-    void getOnboardingStatus().then(() => setCurrentPlan(planForTier(getTierSafe())));
+    void getOnboardingStatus().then(({ activeProfile }) => {
+      setCurrentPlan(planForTier(getTierSafe()));
+      const serverCustomerId = activeProfile?.stripe_customer_id;
+      if (serverCustomerId) {
+        setCustomerId(serverCustomerId);
+        setStoredStripeCustomerId(serverCustomerId);
+      }
+    });
     const unsubscribe = onTierChange((tier) => setCurrentPlan(planForTier(tier)));
 
     const params = new URLSearchParams(window.location.search);

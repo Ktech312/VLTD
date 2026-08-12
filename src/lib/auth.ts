@@ -18,6 +18,7 @@ export type ProfileRow = {
   tier?: string | null;
   tier_expires_at?: string | null;
   tier_source?: string | null;
+  stripe_customer_id?: string | null;
   business_type?: string | null;
   website?: string | null;
   tax_id?: string | null;

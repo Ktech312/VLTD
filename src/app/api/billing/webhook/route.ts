@@ -29,13 +29,36 @@ function serviceClient() {
   return createClient(url, key);
 }
 
-async function applyTier(profileId: string, tier: "FREE" | "MID" | "FULL", expiresAt: string | null) {
+// Stripe's `customer` field on both a Checkout Session and a Subscription is
+// either a bare id string or an expanded object, depending on the API call --
+// this normalizes either shape to just the id.
+function customerIdFrom(
+  customer: string | Stripe.Customer | Stripe.DeletedCustomer | null | undefined
+): string | undefined {
+  if (!customer) return undefined;
+  return typeof customer === "string" ? customer : customer.id;
+}
+
+async function applyTier(
+  profileId: string,
+  tier: "FREE" | "MID" | "FULL",
+  expiresAt: string | null,
+  customerId?: string
+) {
   const sb = serviceClient();
   if (!sb || !profileId) return;
-  await sb
-    .from("profiles")
-    .update({ tier, tier_source: "stripe", tier_expires_at: expiresAt })
-    .eq("id", profileId);
+  const update: Record<string, unknown> = { tier, tier_source: "stripe", tier_expires_at: expiresAt };
+  if (customerId) update.stripe_customer_id = customerId;
+
+  const { error } = await sb.from("profiles").update(update).eq("id", profileId);
+  if (error && customerId && error.message.toLowerCase().includes("stripe_customer_id")) {
+    // 20260812_profiles_stripe_customer_id.sql not run yet -- retry without
+    // it so tier sync (the part that already worked) doesn't start failing
+    // because of an unrelated, not-yet-run migration.
+    delete update.stripe_customer_id;
+    await sb.from("profiles").update(update).eq("id", profileId);
+  }
+
   await sb
     .from("tier_changes")
     .insert({ profile_id: profileId, new_tier: tier, source: "stripe", reason: "stripe webhook" });
@@ -72,7 +95,7 @@ export async function POST(req: NextRequest) {
       if (session.subscription && profileId) {
         const sub = await stripe.subscriptions.retrieve(String(session.subscription));
         const tier = tierForPriceId(sub.items.data[0]?.price?.id);
-        if (tier) await applyTier(profileId, tier, periodEndIso(sub));
+        if (tier) await applyTier(profileId, tier, periodEndIso(sub), customerIdFrom(session.customer));
       }
     } else if (event.type === "customer.subscription.updated") {
       const sub = event.data.object as Stripe.Subscription;
@@ -80,12 +103,17 @@ export async function POST(req: NextRequest) {
       if (profileId) {
         const active = sub.status === "active" || sub.status === "trialing";
         const tier = tierForPriceId(sub.items.data[0]?.price?.id);
-        await applyTier(profileId, active && tier ? tier : "FREE", active ? periodEndIso(sub) : null);
+        await applyTier(
+          profileId,
+          active && tier ? tier : "FREE",
+          active ? periodEndIso(sub) : null,
+          customerIdFrom(sub.customer)
+        );
       }
     } else if (event.type === "customer.subscription.deleted") {
       const sub = event.data.object as Stripe.Subscription;
       const profileId = (sub.metadata?.profile_id || "") as string;
-      if (profileId) await applyTier(profileId, "FREE", null);
+      if (profileId) await applyTier(profileId, "FREE", null, customerIdFrom(sub.customer));
     }
 
     return NextResponse.json({ received: true });
