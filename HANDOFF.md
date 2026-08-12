@@ -726,6 +726,84 @@ this built, it would mirror the PSA cert-lookup work (§B3/§B3b) — a new,
 separate effort, not started, and not something the "connect existing
 lookups" work above touches.
 
+**Third real test, 2026-08-11: a Nintendo Switch game's real retail UPC
+(`0810148574819`) correctly decoded but found no match.** Not a bug in the
+decode or lookup logic — genuinely a coverage gap, and it surfaced a real
+risk worth flagging clearly:
+- **No video-game-specific barcode database is wired in.** `lookupUpcItem`
+  only hits upcitemdb (general retail) + OpenLibrary (ISBNs) — neither
+  specializes in games, and this specific title just wasn't in upcitemdb's
+  free-tier catalog. Real options exist (ScanDex combines barcode+IGDB
+  metadata; GameUPC has a REST API) if EK wants a dedicated games lookup
+  added to the cascade, same pattern as comics (Metron+GCD) and vinyl
+  (Discogs) — not started.
+- **Bigger, more urgent finding: upcitemdb's free tier is capped at 100
+  requests/DAY, shared across the whole app** — the exact same shape of
+  problem PSA had before the quota guard was built (§B3b), and there's
+  currently **no cache, no budget guard, nothing** protecting this one.
+  Before tonight, UPC lookups only fired during a full photo-based Identify
+  (relatively rare per session). Tonight's live-scan feature (§B8) now ALSO
+  fires a UPC lookup on every single scan across `/capture`, `/vault/add`,
+  AND every Quick Add item — meaningfully more call volume through the
+  exact same free tier. **Worth building the same cert-cache + daily-budget
+  pattern used for PSA before this becomes a real outage, not a hypothetical
+  one.** Flagged to EK, not yet built — needs a decision on priority.
+- **Confirmed: no live zoom control while framing a shot.** Checked both
+  camera panels directly — neither has any `zoom`/`MediaStreamTrack`
+  constraint code at all. The AFTER-capture crop/review step
+  (`ScanCropEditor.tsx`) DOES already have real pinch/scroll zoom (the
+  "Pinch or scroll to zoom" hint is genuine, already shipped) — EK's
+  question was about the LIVE camera view before capture, which has none.
+  Browser `getUserMedia`/`MediaStreamTrack.applyConstraints({zoom})` can do
+  this on supporting hardware/browsers, similar to the focus-constraint
+  research from §B — not started, real feature request if EK wants it.
+
+### B9. Real Brand/Manufacturer/Publisher field added (2026-08-11) — was computed, then silently discarded
+Same test that found the video-game UPC gap above also surfaced this: AI
+Identify correctly named the game (Contra Operation Galuga), category, and
+notes — but there was nowhere for "Nintendo" itself to go, and EK pointed
+out the identical gap applies to a comic's publisher (Marvel/DC) or a
+card's manufacturer (Topps). Checked the code before building anything:
+this wasn't a missing-feature gap so much as a missing-FIELD one — AI
+vision's response already includes a `brand` field on every Identify call,
+and the generic UPC lookup already returns one too (upcitemdb genuinely
+has "Nintendo" on file for this exact game) — both were computed and then
+thrown away because nothing existed to hold them.
+
+**Built:**
+- `vaultModel.ts`: new `brand?: string` on `VaultItem`, distinct from the
+  existing `subject` field (who/what an item is ABOUT — a player,
+  character, artist; used for the vinyl "artist" and the Registry
+  leaderboard) — brand is who MADE it. Added to `normalizeOne()`'s
+  allow-list too, so it doesn't repeat the exact "silently dropped on next
+  reload" bug class fixed earlier this week for other fields.
+- New migration `supabase/migrations/20260811_vault_item_brand.sql` for the
+  matching `vault_items.brand` column — **not yet run.** Deliberately did
+  NOT touch `vaultCloud.ts`'s row map yet (an unknown column throws on
+  every synced item's upsert, not just this field) — that's the next step,
+  only after EK confirms the migration ran.
+- `capture/page.tsx`: new "Brand / Manufacturer / Publisher" field in the
+  Identity accordion (same lock/remembered-value support as Item Name),
+  wired into the vision+UPC merge.
+- `barcodeLookup.ts`: comic publisher and vinyl label now also populate
+  this same universal field in addition to their existing specific ones —
+  a live barcode scan fills Brand too, not just notes text.
+
+**Scoped to `/capture` only** (where EK demonstrated the gap) — `/vault/add`
+already has narrower per-universe equivalents (`comicPublisher`,
+`vinylLabel`) that work correctly, just aren't unified under one generic
+name; extending it there too is a smaller, separate fast-follow if EK wants
+consistency across both screens.
+
+`tsc`/`eslint`/`build` all clean (one build attempt hit a transient Google
+Fonts network fetch failure unrelated to this change — clean on retry, not
+a real problem, just noting it in case a future build hiccups the same way
+for no code-related reason).
+
+**Needs EK's action:** run the migration in Supabase when convenient, then
+say so — the cloud-sync wiring is one follow-up commit away, not started
+yet on purpose.
+
 ### C. DOCUMENTS (capture builder §5 accordion) — DONE 2026-08-03
 EK's answer: "everything should be private unless shared" — that's a
 clear enough steer to build, not a decision that needed your dashboard. Built

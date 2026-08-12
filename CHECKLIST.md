@@ -48,6 +48,29 @@ not a bug, if a cert lookup silently does nothing right now.
 was. No CGC API integration exists. If EK wants this built (mirroring the
 PSA cert-lookup work), that's a new, separate effort — not started.
 
+## Third real test (2026-08-11): real UPC scanned, real gap found + a real field added
+Scanned a Nintendo Switch game's actual retail barcode — correctly decoded,
+correctly said "no match" (honest, not a bug: no video-game-specific
+database is wired in, only comics/vinyl/generic-UPC/book). Two real things
+came out of this:
+1. ⚠️ **New risk found, not yet fixed:** upcitemdb's free tier (our generic
+   UPC lookup) is capped at **100 requests/day, shared across the whole
+   app** — same shape of problem PSA had. No cache, no budget guard exists
+   for it at all, and tonight's live-scan feature now fires it far more
+   often than before. **Should get the same cache+budget treatment PSA
+   got, before it becomes a real outage.** See HANDOFF §B8 for detail.
+2. ✅ **Added a real "Brand / Manufacturer / Publisher" field** (`/capture`
+   only) — AI vision and the UPC lookup were already returning this data
+   (confirmed "Nintendo" was right there in the response) and it was being
+   silently thrown away with nowhere to go. New `VaultItem.brand` field +
+   UI field + wiring. **Needs a migration run** —
+   `supabase/migrations/20260811_vault_item_brand.sql` — before it can sync
+   across devices; works locally right now without it.
+3. ⬜ **Live zoom while framing a shot — confirmed it doesn't exist.** The
+   AFTER-capture crop step already has real pinch/scroll zoom (already
+   shipped, just easy to miss); the live camera view itself has none. Real
+   feature request from EK, not started.
+
 Scannable done/pending list covering everything from the dead-code sweep
 through the barcode/Cards/PSA/Discogs work, the Halls rebuild, and the
 latest overnight cleanup pass (data-loss bug fix + dead-code/fake-data/
@@ -341,37 +364,44 @@ different and bigger — read it back to confirm, then built that instead:
 ---
 
 ## What actually needs YOUR action right now, in order
-1. **Scan a comic's barcode, a vinyl record, or a retail product** (not a
-   graded slab — those won't match anything, see above) on `/capture`.
-   Confirm the "Found: [title]" card actually appears inside the camera
-   view with real info, not a placeholder. This is the one path that
-   hasn't been proven yet — the "no match" path already works correctly.
-2. Scan a few different items in a row on **Quick Add** (mix real matches
+1. **Run the new migration** — `supabase/migrations/20260811_vault_item_brand.sql`
+   (adds `vault_items.brand`) — whenever convenient, then let the next
+   session know so the cloud-sync wiring can be finished (deliberately not
+   done yet, see above).
+2. **Scan a comic's barcode or a vinyl record** on `/capture` (a real UPC
+   from a video game box was already tried and correctly said "no match" —
+   that database doesn't cover games, so it doesn't prove the success path).
+   Confirm the "Found: [title]" card actually appears with real info.
+3. Scan a few different items in a row on **Quick Add** (mix real matches
    and misses on purpose) and confirm the review sheet's per-item tags are
    accurate before you tap Finished, then confirm Finished skips the AI
    scan for matched items (watch the "AI scans left" counter).
-3. Do a few Scan bursts in a row on your iPhone and confirm it still stays
+4. Do a few Scan bursts in a row on your iPhone and confirm it still stays
    cool — the original complaint that started all of tonight's scanning
    work hasn't been re-checked since the `zxing-wasm` engine swap.
-4. Email `collectors-apis@collectors.com` about the "Access to this API is
+5. **Decide on priority for 3 new items found tonight** (all in HANDOFF
+   §B8-B9): the UPC-lookup 100/day quota risk (needs the same guard PSA
+   got, before it becomes a real outage), a video-game-specific barcode
+   database (ScanDex/GameUPC), and live zoom on the camera view itself.
+6. Email `collectors-apis@collectors.com` about the "Access to this API is
    limited to approved customers" rejection — ask directly whether this
    account has approved API access, and if not, how to get it. A fresh
    token alone didn't fix it.
-5. Check/fix the `DISCOGS_TOKEN` value in Vercel (empty or bad — vinyl
+7. Check/fix the `DISCOGS_TOKEN` value in Vercel (empty or bad — vinyl
    lookup has never worked because of this).
-6. Actually try building a Hall and tagging an item — migration's run,
+8. Actually try building a Hall and tagging an item — migration's run,
    this whole feature has never been tested logged-in.
-7. Test a real Magic or Pokemon card via Identify — confirm Category/
+9. Test a real Magic or Pokemon card via Identify — confirm Category/
    Subcategory now update and the Rarity field shows up on `/capture`.
-8. Whenever you hear back from CardHedge, bring their answer (especially on
-   comics coverage) back here.
-9. Once 1-3 above are confirmed working, the regular Add camera's visual
-   match to Quick Add is next in line — not started yet.
-10. Set the "Type" dropdown + "Attributes" checkboxes on a `/vault/add`
+10. Whenever you hear back from CardHedge, bring their answer (especially on
+    comics coverage) back here.
+11. Once 2-4 above are confirmed working, the regular Add camera's visual
+    match to Quick Add is next in line — not started yet.
+12. Set the "Type" dropdown + "Attributes" checkboxes on a `/vault/add`
     item, navigate away and back, confirm they now actually stick.
-11. Take a look at the overnight cleanup pass in general — Collection Value
+13. Take a look at the overnight cleanup pass in general — Collection Value
     chart on the home dashboard, shop page category icons, the Halls
     "Auto-tag my collection" button — none of it has been seen in a real
     browser yet.
-12. Decide if CGC cert lookup is worth building (mirroring PSA's work) —
+14. Decide if CGC cert lookup is worth building (mirroring PSA's work) —
     confirmed still completely unaddressed, not started.
