@@ -898,10 +898,29 @@ live camera view. Wired into both `CameraCapturePanel.tsx` and
 implementations, same reasoning as `DropdownPill` being extracted
 earlier this week.
 
-**Not yet confirmed on any real device** — needs testing on an Android
-Chrome phone (where it should actually appear and work) and confirmation
-that it correctly shows nothing on your iPhone rather than a broken/dead
-control.
+**Update 2026-08-11, same night:** EK tested on desktop with a mouse —
+correctly reported no zoom control at all, confirming the prediction
+above (desktop webcams essentially never expose hardware zoom) but that
+turned out to be too big a gap to leave as "expected": with the
+hardware-only first version, the control was invisible everywhere except
+one specific browser/hardware combo. **Added a universal digital
+fallback** so a zoom control now exists on every platform: CSS-scales
+the live preview and — this is the part that actually matters, not just
+a cosmetic zoom-looking effect — crops the captured frame to match at
+the moment of capture (`getCaptureCrop()` in the hook, wired into both
+`captureFrame()` in `ScanCapturePanel.tsx` and `handleCapture()` in
+`CameraCapturePanel.tsx`) so what you see zoomed is actually what gets
+saved, not a zoomed-looking preview that silently captures the full
+unzoomed frame. Driven by scroll wheel on desktop and pinch on touch;
+hardware zoom is still preferred and used automatically on the
+Android-Chrome-class devices that actually expose it — digital only
+kicks in where hardware doesn't exist.
+
+**Still not yet confirmed on a real device** (only the earlier absence
+was tested, not this fix) — worth checking: the slider/scroll now shows
+up and works on desktop, scroll wheel doesn't fight page scroll behind
+the camera, pinch works on a phone, and a zoomed-in capture actually
+looks zoomed in the saved photo (not just the live preview).
 
 ### C. DOCUMENTS (capture builder §5 accordion) — DONE 2026-08-03
 EK's answer: "everything should be private unless shared" — that's a
