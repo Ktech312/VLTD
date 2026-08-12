@@ -8,6 +8,7 @@ import { PillButton } from "@/components/ui/PillButton";
 import type { BarcodeScanResult } from "@/lib/scanners/barcodeScanner";
 import { startOnDemandScan } from "@/lib/scanners/onDemandBarcodeScan";
 import { warmupZXingWasm } from "@/lib/scanners/zxingWasmSetup";
+import { lookupByBarcodeOnly, type BarcodeLookupResult } from "@/lib/scanners/barcodeLookup";
 import {
   getUniverses,
   getCategories,
@@ -109,12 +110,14 @@ export default function CameraCapturePanel({
   onBulkCapture?: (file: File, category: string, subcategory: string) => void;
   onClose: () => void;
   onUseFileInstead: () => void;
-  /** Fires the instant a barcode/QR is read by the Scan button -- before any
-   *  photo is taken. Lets the parent kick off a free barcode-only lookup
-   *  (see barcodeLookup.ts) right away instead of waiting for a shutter
-   *  press + full Identify pass. Optional -- callers that don't care about
-   *  live enrichment (e.g. a bulk-photo-only flow) can just omit it. */
-  onLiveBarcodeScan?: (result: BarcodeScanResult) => void;
+  /** Fires once the free barcode-only lookup (see barcodeLookup.ts) settles
+   *  for a scanned code -- this component runs the lookup itself (and shows
+   *  the result right here in the camera view, since that's where the
+   *  curator is actually looking while scanning) and hands the resolved
+   *  match to the parent so it can merge fields into its own form. `match`
+   *  is null when nothing was found. Optional -- callers that don't care
+   *  about live enrichment (e.g. a bulk-photo-only flow) can just omit it. */
+  onLiveBarcodeScan?: (result: BarcodeScanResult, match: BarcodeLookupResult | null) => void;
   /** Photos already attached to the item being built (not this component's own
    *  state — the parent owns that list). Shown as a small count badge, same
    *  spot as Quick Add's ghost counter, so multi-photo capture gives the same
@@ -177,6 +180,12 @@ export default function CameraCapturePanel({
   // open (see onDemandBarcodeScan.ts for why).
   const [scanState, setScanState] = useState<"idle" | "scanning" | "timeout">("idle");
   const scanStopRef = useRef<(() => void) | null>(null);
+  // Free barcode-only lookup result -- shown right here in the camera view
+  // (not on whatever page is behind this full-screen modal, which the
+  // curator can't see until they close the camera) the instant a scan
+  // resolves. See barcodeLookup.ts / onLiveBarcodeScan.
+  const [barcodeLookupState, setBarcodeLookupState] = useState<"idle" | "looking" | "found" | "none">("idle");
+  const [barcodeLookupResult, setBarcodeLookupResult] = useState<BarcodeLookupResult | null>(null);
   // Start fetching/compiling the scan decoder's wasm binary as soon as this
   // panel mounts, not on the first Scan tap -- so tapping Scan later doesn't
   // eat a cold-load delay on top of the burst itself.
@@ -521,7 +530,16 @@ export default function CameraCapturePanel({
         setScanState("idle");
         scanStopRef.current = null;
         try { navigator.vibrate?.(60); } catch { /* ignore */ }
-        onLiveBarcodeScan?.(result);
+
+        // Free lookup, shown right here (not on the page behind this modal)
+        // -- fires the moment the code's read, no shutter press needed.
+        setBarcodeLookupState("looking");
+        setBarcodeLookupResult(null);
+        void lookupByBarcodeOnly(result).then((match) => {
+          setBarcodeLookupState(match ? "found" : "none");
+          setBarcodeLookupResult(match);
+          onLiveBarcodeScan?.(result, match);
+        });
       },
       onTimeout: () => {
         scanStopRef.current = null;
@@ -758,6 +776,8 @@ export default function CameraCapturePanel({
     setCaptureTiming("");
     liveBarcodeRef.current = null;
     setLiveBarcode(null);
+    setBarcodeLookupState("idle");
+    setBarcodeLookupResult(null);
     scanStopRef.current?.();
     scanStopRef.current = null;
     setScanState("idle");
@@ -1268,6 +1288,36 @@ export default function CameraCapturePanel({
                     <span className="text-[11px] font-semibold text-white">
                       {liveBarcode.format === "QR" ? "QR code" : "Barcode"} read
                       {liveBarcode.digits ? `: ${liveBarcode.digits}` : ""}
+                    </span>
+                  </div>
+                ) : null}
+
+                {/* What the scan actually DID -- shown right here in the camera
+                    view, not on the page behind this full-screen modal (which
+                    isn't visible until the modal closes). Free lookup only;
+                    see barcodeLookup.ts / onLiveBarcodeScan. */}
+                {!cameraError && barcodeLookupState !== "idle" ? (
+                  <div
+                    className="pointer-events-none absolute left-1/2 top-14 flex max-w-[88%] items-start gap-2 -translate-x-1/2 rounded-2xl px-3 py-2 backdrop-blur"
+                    style={{
+                      background: barcodeLookupState === "found" ? "rgba(2,20,10,0.85)" : "rgba(0,0,0,0.72)",
+                      border: barcodeLookupState === "found" ? "1px solid rgba(74,222,128,0.5)" : "1px solid rgba(255,255,255,0.16)",
+                    }}
+                  >
+                    {barcodeLookupResult?.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={barcodeLookupResult.imageUrl} alt="" className="h-11 w-8 shrink-0 rounded object-cover ring-1 ring-white/15" />
+                    ) : null}
+                    <span className="text-[11px] font-semibold leading-4 text-white">
+                      {barcodeLookupState === "looking" ? (
+                        "Looking up this code…"
+                      ) : barcodeLookupState === "found" && barcodeLookupResult ? (
+                        <>
+                          <span style={{ color: "#4ade80" }}>Found:</span> {barcodeLookupResult.summary} — filled in what it could.
+                        </>
+                      ) : (
+                        "No match found for this code — take a photo and Identify, or fill in by hand."
+                      )}
                     </span>
                   </div>
                 ) : null}

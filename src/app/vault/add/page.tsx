@@ -44,7 +44,7 @@ import { scanTcgCardRegionsFromFile } from "@/lib/scanners/tcgCardParser";
 import { lookupMtgCard, lookupPokemonCard, type CardLookupResult } from "@/lib/cardLookup";
 import { lookupVinylByBarcode, lookupVinylByText } from "@/lib/discogLookup";
 import { lookupPSACert, looksLikePSACert, extractPSACertFromUrl, formatPSAGrade, formatPSASet } from "@/lib/psaLookup";
-import { lookupByBarcodeOnly } from "@/lib/scanners/barcodeLookup";
+import type { BarcodeLookupResult } from "@/lib/scanners/barcodeLookup";
 import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 import { scanBarcodeFromFile } from "@/lib/scanners/barcodeScanner";
 import {
@@ -1497,21 +1497,19 @@ export default function AddPage() {
     }
   }
 
-  /** Fires the instant CameraCapturePanel's Scan button reads a barcode/QR --
-   *  before any photo is taken. Runs the same free barcode-only lookups
-   *  (comic/vinyl/UPC/book) the after-a-photo Identify pipeline already
-   *  uses, just without needing a photo first. Deliberately skips PSA
-   *  (metered/paused) and AI vision (metered, needs a real photo). */
-  async function runLiveBarcodeLookup(barcode: { digits?: string; rawValue?: string }) {
+  /** Fires once CameraCapturePanel's own free barcode-only lookup settles --
+   *  it runs the lookup itself now (and shows the result right there in the
+   *  camera view, since a status line on this page isn't visible while the
+   *  camera's full-screen modal covers it). This just applies the already-
+   *  resolved match to the form via the same scanSession machinery the
+   *  after-a-photo lookups use -- no second network call. Deliberately
+   *  skips PSA (metered/paused) and AI vision (metered, needs a real
+   *  photo) -- those aren't part of this free-lookup layer. */
+  function runLiveBarcodeLookup(barcode: { digits?: string; rawValue?: string }, match: BarcodeLookupResult | null) {
     const digits = String(barcode.digits ?? "").replace(/\D/g, "").trim();
     if (!digits) return;
 
-    setIsUpcLookupRunning(true);
-    setScanSession((prev) => markScanSessionScanning(prev));
-
     try {
-      const match = await lookupByBarcodeOnly(barcode);
-
       if (!match) {
         setScanSession((prev) => markScanSessionFailed(prev, "No match found for that barcode."));
         setStatus("Scanned — no match found for that code yet. Take a photo to try full Identify.");
@@ -1576,8 +1574,6 @@ export default function AddPage() {
       const message = error instanceof Error ? error.message : "Barcode lookup failed.";
       setScanSession((prev) => markScanSessionFailed(prev, message));
       setStatus(message);
-    } finally {
-      setIsUpcLookupRunning(false);
     }
   }
 
@@ -3643,7 +3639,7 @@ export default function AddPage() {
             }
             universe={values.universe}
             onCapture={handleCapturedPhoto}
-            onLiveBarcodeScan={(result) => void runLiveBarcodeLookup(result)}
+            onLiveBarcodeScan={(result, match) => runLiveBarcodeLookup(result, match)}
             bulkToggle={false}
             onClose={() => setIsCameraPanelOpen(false)}
             onUseFileInstead={() => {

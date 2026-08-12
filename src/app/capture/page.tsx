@@ -10,7 +10,7 @@ import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 import { analyzeImageWithVision, type VisionAnalysisResult } from "@/lib/ai/openaiVision";
 import { resolveVisionTaxonomy } from "@/lib/visionTaxonomy";
 import { scanBarcodeFromFile, type BarcodeScanResult } from "@/lib/scanners/barcodeScanner";
-import { lookupByBarcodeOnly, type BarcodeLookupResult } from "@/lib/scanners/barcodeLookup";
+import type { BarcodeLookupResult } from "@/lib/scanners/barcodeLookup";
 import { scanComicRegionsFromFile, parseComicBarcode, buildComicScanNotes } from "@/lib/comicBarcode";
 import { scanTcgCardRegionsFromFile } from "@/lib/scanners/tcgCardParser";
 import { lookupMtgCard, lookupPokemonCard, type CardLookupResult } from "@/lib/cardLookup";
@@ -517,25 +517,25 @@ export default function CapturePage() {
     setSelectedPreviewIndex(to);
   }, []);
 
-  // Fires the instant the camera's Scan button reads a barcode/QR -- see
-  // CameraCapturePanel's onLiveBarcodeScan. Runs the free barcode-only
-  // lookups (comic/vinyl/UPC/book) immediately, no photo needed. Fills only
-  // BLANK fields (never overwrites anything already typed or already found)
-  // -- a confirmed database match from a scan is treated as more trustworthy
-  // than a later AI vision guess, not less, so this intentionally does NOT
-  // use runAiIdentify's own "vision wins if non-empty" merge rule.
-  const handleLiveBarcodeScan = useCallback(async (result: BarcodeScanResult) => {
-    setBarcodeLookupState("looking");
-    try {
-      const match = await lookupByBarcodeOnly(result);
-      if (!match) {
-        setBarcodeLookupState("none");
-        setBarcodeLookupResult(null);
-        return;
-      }
-      setBarcodeLookupResult(match);
-      setBarcodeLookupState("found");
-      setFields((prev) => {
+  // Fires once CameraCapturePanel's own free barcode-only lookup settles --
+  // it runs the lookup itself now (and shows the result right there in the
+  // camera view, since that's where the curator is actually looking; a
+  // banner on this page was invisible the whole time the camera modal
+  // covers the screen). This just consumes the already-resolved match to
+  // fill fields -- no second network call. Fills only BLANK fields (never
+  // overwrites anything already typed or already found) -- a confirmed
+  // database match from a scan is treated as more trustworthy than a later
+  // AI vision guess, not less, so this intentionally does NOT use
+  // runAiIdentify's own "vision wins if non-empty" merge rule.
+  const handleLiveBarcodeScan = useCallback((_result: BarcodeScanResult, match: BarcodeLookupResult | null) => {
+    if (!match) {
+      setBarcodeLookupState("none");
+      setBarcodeLookupResult(null);
+      return;
+    }
+    setBarcodeLookupResult(match);
+    setBarcodeLookupState("found");
+    setFields((prev) => {
         const next = { ...prev };
         const fillIfBlank = (key: keyof ReviewFields, value: string | undefined) => {
           if (value && !String(next[key] ?? "").trim()) (next as Record<string, unknown>)[key] = value;
@@ -564,12 +564,6 @@ export default function CapturePage() {
         if (extraNotes && !next.description.trim()) next.description = extraNotes;
         return next;
       });
-    } catch {
-      // Best-effort enrichment -- a failure here shouldn't block scanning or
-      // capturing; the user can still fill everything in by hand.
-      setBarcodeLookupState("none");
-      setBarcodeLookupResult(null);
-    }
   }, []);
 
   // Opt-in AI: identify + fill fields on demand from the captured photo.
