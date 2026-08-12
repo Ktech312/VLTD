@@ -25,6 +25,7 @@ import { matchVisionCategory, matchVisionSubcategory, matchVisionUniverse } from
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { getBulkScanStatus, consumeBulkScans } from "@/lib/bulkScanQuota";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
+import { useCameraZoom } from "@/hooks/useCameraZoom";
 import {
   getCategories,
   getDefaultCategory,
@@ -235,6 +236,12 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     })();
   }, []);
 
+  // Live zoom on the camera view itself (before capture) -- feature-detected,
+  // only real on hardware/browsers that expose it (see the hook's own notes).
+  const cameraZoom = useCameraZoom();
+  const attachZoom = cameraZoom.attach;
+  const resetZoom = cameraZoom.reset;
+
   // Start / restart the camera (rear by default; a chosen deviceId when picked).
   useEffect(() => {
     let active = true;
@@ -255,6 +262,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play().catch(() => undefined);
         }
+        attachZoom(stream.getVideoTracks()[0] ?? null);
         // Camera labels are only available after permission is granted.
         const list = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "videoinput");
         if (active) setDevices(list);
@@ -268,8 +276,9 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       stopBarcodeScanRef.current?.();
       stopBarcodeScanRef.current = null;
       streamRef.current?.getTracks().forEach((t) => t.stop());
+      resetZoom();
     };
-  }, [selectedDeviceId]);
+  }, [selectedDeviceId, attachZoom, resetZoom]);
 
   // Revoke object URLs on unmount.
   const capturedItemsRef = useRef(capturedItems);
@@ -417,6 +426,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     if (videoRef.current) videoRef.current.srcObject = null;
+    cameraZoom.reset();
   }
 
   function handleFinished() {
@@ -756,9 +766,35 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Camera viewport */}
-        <div className="relative w-full flex-1 bg-[color:var(--bg)]" style={{ overflow: "hidden" }}>
+        <div
+          className="relative w-full flex-1 bg-[color:var(--bg)]"
+          style={{ overflow: "hidden", touchAction: cameraZoom.supported ? "none" : undefined }}
+          onTouchStart={cameraZoom.handlePinchStart}
+          onTouchMove={cameraZoom.handlePinchMove}
+          onTouchEnd={cameraZoom.handlePinchEnd}
+        >
           <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />
           <FrameOverlay frameType={frameType} capturing={capturing} />
+
+          {/* Live zoom slider -- only rendered where the hardware/browser
+              actually supports it (see useCameraZoom's notes); pinch also
+              works anywhere on this viewport when supported. */}
+          {cameraZoom.supported ? (
+            <div className="absolute bottom-3 right-3 flex h-32 w-9 flex-col items-center gap-1 rounded-full px-1.5 py-2 backdrop-blur" style={{ background: "rgba(0,0,0,0.42)", border: "1px solid rgba(255,255,255,0.25)" }}>
+              <span className="text-[9px] font-bold text-white/70">{cameraZoom.zoom.toFixed(1)}x</span>
+              <input
+                type="range"
+                min={cameraZoom.min}
+                max={cameraZoom.max}
+                step={cameraZoom.step}
+                value={cameraZoom.zoom}
+                onChange={(e) => cameraZoom.setZoom(Number(e.target.value))}
+                className="h-full w-6 flex-1"
+                style={{ writingMode: "vertical-lr", direction: "rtl", accentColor: "#4A9BFF" }}
+                aria-label="Camera zoom"
+              />
+            </div>
+          ) : null}
 
           {/* Ghost counter — top-left */}
           <div

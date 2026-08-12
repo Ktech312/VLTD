@@ -36,6 +36,7 @@ import {
   type BlurAssessment,
 } from "@/components/capture/captureUtils";
 import { cropImageFile, computeSubjectCrop, type ScanCropRect } from "@/lib/scanners/cropImageFile";
+import { useCameraZoom } from "@/hooks/useCameraZoom";
 
 type CameraPermissionState = "granted" | "prompt" | "denied" | "unknown";
 type DetectionState = "idle" | "loading" | "ready" | "unavailable";
@@ -231,6 +232,10 @@ export default function CameraCapturePanel({
     selectedDeviceIdRef.current = selectedDeviceId;
   }, [selectedDeviceId]);
 
+  const cameraZoom = useCameraZoom();
+  const attachZoom = cameraZoom.attach;
+  const resetZoom = cameraZoom.reset;
+
   function stopCameraStream() {
     const stream = streamRef.current;
     streamRef.current = null;
@@ -238,6 +243,7 @@ export default function CameraCapturePanel({
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    resetZoom();
   }
 
   useEffect(() => {
@@ -390,6 +396,7 @@ export default function CameraCapturePanel({
           videoRef.current.srcObject = stream;
           void videoRef.current.play().catch(() => undefined);
         }
+        attachZoom(stream.getVideoTracks()[0] ?? null);
       } catch (error) {
         if (!isActive) return;
         const message = error instanceof Error ? error.message : "Camera access failed.";
@@ -424,7 +431,7 @@ export default function CameraCapturePanel({
       }
       stopCameraStream();
     };
-  }, [capturedFile, retryCount]);
+  }, [capturedFile, retryCount, attachZoom, resetZoom]);
 
   useEffect(() => {
     if (!ENABLE_OBJECT_DETECTION || capturedFile || cameraError || !cameraReady) {
@@ -1178,11 +1185,15 @@ export default function CameraCapturePanel({
               <div
                   ref={videoContainerRef}
                   className={isInline ? "relative flex h-full items-center justify-center overflow-hidden rounded-[12px] bg-[color:var(--surface)]" : "relative flex items-center justify-center overflow-hidden bg-black"}
-                  style={
-                    isInline || !videoAspectRatio
+                  style={{
+                    ...(isInline || !videoAspectRatio
                       ? { minHeight: "260px", height: "100%", width: "100%" }
-                      : { minHeight: "260px", height: "100%", width: "auto", maxWidth: "100%", aspectRatio: String(videoAspectRatio) }
-                  }
+                      : { minHeight: "260px", height: "100%", width: "auto", maxWidth: "100%", aspectRatio: String(videoAspectRatio) }),
+                    touchAction: cameraZoom.supported ? "none" : undefined,
+                  }}
+                  onTouchStart={cameraZoom.handlePinchStart}
+                  onTouchMove={cameraZoom.handlePinchMove}
+                  onTouchEnd={cameraZoom.handlePinchEnd}
                 >
                 {cameraError ? (
                   <div className="max-w-lg px-5 text-center text-sm text-red-200">
@@ -1207,6 +1218,26 @@ export default function CameraCapturePanel({
                     className="h-full w-full object-contain"
                   />
                 )}
+
+                {/* Live zoom slider -- only rendered where the hardware/
+                    browser actually supports it (see useCameraZoom's
+                    notes); pinch also works anywhere in this frame. */}
+                {!cameraError && cameraZoom.supported ? (
+                  <div className="absolute bottom-3 right-3 flex h-32 w-9 flex-col items-center gap-1 rounded-full px-1.5 py-2 backdrop-blur" style={{ background: "rgba(0,0,0,0.42)", border: "1px solid rgba(255,255,255,0.25)" }}>
+                    <span className="text-[9px] font-bold text-white/70">{cameraZoom.zoom.toFixed(1)}x</span>
+                    <input
+                      type="range"
+                      min={cameraZoom.min}
+                      max={cameraZoom.max}
+                      step={cameraZoom.step}
+                      value={cameraZoom.zoom}
+                      onChange={(e) => cameraZoom.setZoom(Number(e.target.value))}
+                      className="h-full w-6 flex-1"
+                      style={{ writingMode: "vertical-lr", direction: "rtl", accentColor: "#4A9BFF" }}
+                      aria-label="Camera zoom"
+                    />
+                  </div>
+                ) : null}
 
                 {!cameraError ? (
                   isInline ? (

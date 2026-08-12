@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getCachedLookup, putCachedLookup } from "@/lib/server/lookupApiGuard";
 
 const METRON_BASE = "https://metron.cloud/api";
 
@@ -71,6 +72,13 @@ async function fetchMetron(path: string, auth: string, signal?: AbortSignal) {
   });
 
   if (res.status === 404) return null;
+  if (res.status === 429) {
+    // Metron's own docs put its rate limit around 30 requests/minute, not a
+    // daily cap -- there's no fixed "quota exhausted for today" state to
+    // track like PSA/upcitemdb, so this is just a short, honest wait
+    // message rather than a fabricated daily-budget pause.
+    throw new Error("Metron is rate-limiting requests right now — wait a few seconds and try again.");
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(`Metron API ${res.status}: ${text.slice(0, 200)}`);
@@ -99,6 +107,15 @@ export async function GET(req: NextRequest) {
       { error: "Provide ?upc=... or ?series=...&number=..." },
       { status: 400 }
     );
+  }
+
+  // Permanent cache -- a comic issue's series/publisher/cover-date never
+  // changes once published, so a repeat lookup (re-scan, two users with
+  // the same issue, testing) costs zero real Metron calls after the first.
+  const cacheKey = upc ? `upc:${upc}` : `series:${seriesName}|${number}|${publisher}`;
+  const cached = await getCachedLookup<MetronIssueResult>("metron", cacheKey);
+  if (cached) {
+    return NextResponse.json({ result: cached, cached: true });
   }
 
   try {
@@ -153,11 +170,15 @@ export async function GET(req: NextRequest) {
       upc: confirmedUpc,
     };
 
+    await putCachedLookup("metron", cacheKey, result);
     return NextResponse.json({ result });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Comic lookup failed.";
     if (message.includes("abort")) {
       return NextResponse.json({ error: "Metron API timed out." }, { status: 504 });
+    }
+    if (message.includes("rate-limiting")) {
+      return NextResponse.json({ error: message }, { status: 503 });
     }
     return NextResponse.json({ error: message }, { status: 502 });
   }

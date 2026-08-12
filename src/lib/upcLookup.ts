@@ -1,89 +1,22 @@
-import { lookupBookByIsbn, normalizeIsbn, type BookLookupResult } from "@/lib/bookIsbn";
+import type { UpcLookupResult } from "@/app/api/upc-lookup/route";
 
-export type UpcLookupResult = {
-  code: string;
-  title: string;
-  subtitle?: string;
-  brand?: string;
-  categoryLabel?: string;
-  subcategoryLabel?: string;
-  universe?: string;
-  notes?: string;
-  source: "upcitemdb" | "openlibrary";
-};
+export type { UpcLookupResult };
 
-function cleanCode(value?: string) {
-  return String(value ?? "").replace(/\D/g, "").trim();
-}
-
-function looksLikeIsbn(code: string) {
-  return code.length === 10 || code.length === 13;
-}
-
-function notesFromBook(book: BookLookupResult) {
-  return [
-    book.isbn ? `ISBN: ${book.isbn}` : "",
-    book.authors?.length ? `Authors: ${book.authors.join(", ")}` : "",
-    book.publishers?.length ? `Publishers: ${book.publishers.join(", ")}` : "",
-    book.publishDate ? `Published: ${book.publishDate}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
-}
-
+/** Client helper -- the actual upcitemdb/OpenLibrary/Google-Books calls
+ *  moved server-side into /api/upc-lookup (2026-08-11) so the daily-budget
+ *  guard + permanent cache can actually gate them; see that route's own
+ *  notes for why. This function's signature is unchanged so callers
+ *  (barcodeLookup.ts, capture/page.tsx, vault/add/page.tsx) didn't need to. */
 export async function lookupUpcItem(rawCode: string): Promise<UpcLookupResult | null> {
-  const code = cleanCode(rawCode);
+  const code = String(rawCode ?? "").replace(/\D/g, "").trim();
   if (!code) return null;
 
-  const normalizedIsbn = looksLikeIsbn(code) ? normalizeIsbn(code) : "";
-  if (normalizedIsbn) {
-    const book = await lookupBookByIsbn(normalizedIsbn);
-    if (!book) return null;
+  const res = await fetch(`/api/upc-lookup?code=${encodeURIComponent(code)}`, { method: "GET" });
+  const payload = (await res.json().catch(() => ({}))) as { result?: UpcLookupResult | null; error?: string };
 
-    return {
-      code: normalizedIsbn,
-      title: book.title,
-      subtitle: book.subtitle,
-      categoryLabel: "Books",
-      subcategoryLabel: "Book",
-      universe: "POP_CULTURE",
-      notes: notesFromBook(book),
-      source: "openlibrary",
-    };
+  if (!res.ok) {
+    throw new Error(payload.error || `UPC lookup failed (${res.status}).`);
   }
 
-  const response = await fetch(
-    `https://api.upcitemdb.com/prod/trial/lookup?upc=${encodeURIComponent(code)}`,
-    { method: "GET" }
-  );
-
-  if (!response.ok) {
-    throw new Error(`UPC lookup failed: ${response.status}`);
-  }
-
-  const payload = (await response.json()) as {
-    code?: string;
-    total?: number;
-    items?: Array<Record<string, unknown>>;
-  };
-
-  const item = Array.isArray(payload.items) ? payload.items[0] : null;
-  if (!item) return null;
-
-  const title = String(item.title ?? item.description ?? "").trim();
-  if (!title) return null;
-
-  const category = String(item.category ?? "").trim();
-  const brand = String(item.brand ?? "").trim();
-
-  return {
-    code,
-    title,
-    brand: brand || undefined,
-    categoryLabel: category || "Product",
-    subcategoryLabel: brand || undefined,
-    universe: "MISC",
-    notes: String(item.description ?? "").trim() || undefined,
-    source: "upcitemdb",
-  };
+  return payload.result ?? null;
 }

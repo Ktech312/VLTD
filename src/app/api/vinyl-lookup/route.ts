@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getCachedLookup, putCachedLookup } from "@/lib/server/lookupApiGuard";
 
 const DISCOGS_BASE = "https://api.discogs.com";
 
@@ -65,6 +66,12 @@ async function fetchDiscogs(path: string, auth: string, signal?: AbortSignal) {
   });
 
   if (res.status === 404) return null;
+  if (res.status === 429) {
+    // Discogs' documented limit is per-MINUTE (60/min authenticated), not a
+    // daily cap -- same reasoning as Metron below: an honest short-wait
+    // message, not a fabricated daily-budget pause.
+    throw new Error("Discogs is rate-limiting requests right now — wait a few seconds and try again.");
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(`Discogs API ${res.status}: ${text.slice(0, 200)}`);
@@ -91,6 +98,15 @@ export async function GET(req: NextRequest) {
       { error: "Provide ?barcode=... or ?artist=...&album=..." },
       { status: 400 }
     );
+  }
+
+  // Permanent cache -- a specific pressing's artist/label/year/country never
+  // changes once released, so a repeat lookup costs zero real Discogs calls
+  // after the first.
+  const cacheKey = barcode ? `barcode:${barcode}` : `text:${artist}|${album}`;
+  const cached = await getCachedLookup<DiscogsReleaseResult>("discogs", cacheKey);
+  if (cached) {
+    return NextResponse.json({ result: cached, cached: true });
   }
 
   try {
@@ -137,11 +153,15 @@ export async function GET(req: NextRequest) {
       resourceUrl: first.resource_url,
     };
 
+    await putCachedLookup("discogs", cacheKey, result);
     return NextResponse.json({ result });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Vinyl lookup failed.";
     if (message.includes("abort")) {
       return NextResponse.json({ error: "Discogs API timed out." }, { status: 504 });
+    }
+    if (message.includes("rate-limiting")) {
+      return NextResponse.json({ error: message }, { status: 503 });
     }
     return NextResponse.json({ error: message }, { status: 502 });
   }
