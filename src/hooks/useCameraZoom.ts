@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import type { TouchEvent as ReactTouchEvent } from "react";
+import type { TouchEvent as ReactTouchEvent, WheelEvent as ReactWheelEvent } from "react";
 
 /** `zoom` is a real MediaStreamTrack capability/constraint on supporting
  *  hardware, but it isn't in TypeScript's DOM lib (it's a capture-extensions
@@ -13,67 +13,117 @@ type CapabilitiesWithZoom = MediaTrackCapabilities & { zoom?: ZoomCapability };
 type SettingsWithZoom = MediaTrackSettings & { zoom?: number };
 type ConstraintSetWithZoom = MediaTrackConstraintSet & { zoom?: number };
 
-/** Live pinch-to-zoom / slider zoom for a `getUserMedia` video feed, applied
+const DIGITAL_MIN = 1;
+const DIGITAL_MAX = 3;
+const DIGITAL_STEP = 0.1;
+
+export type CameraCaptureCrop = { sx: number; sy: number; sw: number; sh: number };
+
+/** Live pinch/scroll/slider zoom for a `getUserMedia` video feed, applied
  *  BEFORE capture (the after-capture crop step already has its own
  *  pinch-zoom, unrelated to this).
  *
- *  Feature-detected, not assumed: `track.getCapabilities().zoom` only
- *  exists on hardware/browser combinations that actually support optical or
- *  driver-level zoom over the web camera API -- per current browser-support
- *  data this is Android Chrome (and some other Chromium browsers) on
- *  supporting hardware. iOS Safari and most desktop browsers/webcams expose
- *  no `zoom` capability at all, and there is no software way to fake real
- *  optical/driver zoom from JS -- `supported` stays false there, and callers
- *  should render nothing rather than a control that silently does nothing.
+ *  Two layers, best available wins:
+ *  1. HARDWARE zoom (`track.getCapabilities().zoom`) -- real optical/driver
+ *     zoom, when the browser+hardware actually expose it. Per current
+ *     browser-support data this is mainly Android Chrome on supporting
+ *     hardware; effectively never present on a desktop webcam or iOS
+ *     Safari -- confirmed 2026-08-11 when a desktop test showed no zoom
+ *     control at all under the hardware-only first version of this hook.
+ *  2. DIGITAL fallback -- always available everywhere (desktop mouse
+ *     scroll, touch pinch), CSS-scales the live preview and crops the
+ *     captured frame to match at capture time via `getCaptureCrop()`. This
+ *     is a real crop+upscale, same tradeoff as "digital zoom" on any
+ *     camera app (some quality loss vs. optical), but it means SOME zoom
+ *     control exists on every platform instead of only the one browser/
+ *     hardware combo that happens to expose the real capability.
  *
  *  Call `attach(track)` right after a stream's video track is ready
  *  (mirrors how both camera panels already attach `srcObject`), and
- *  `reset()` when the stream stops -- this hook doesn't own the stream
- *  lifecycle, it just reads/drives whatever track it's given. */
+ *  `reset()` when the stream stops. Call `getCaptureCrop(video)` at the
+ *  moment of capture and use the returned rect as the `drawImage` source
+ *  rect -- this is what keeps the captured photo matching what the digital
+ *  zoom preview actually showed, instead of a zoomed-looking preview that
+ *  silently captures the full unzoomed frame. */
 export function useCameraZoom() {
-  const [supported, setSupported] = useState(false);
-  const [zoom, setZoomState] = useState(1);
-  const [min, setMin] = useState(1);
-  const [max, setMax] = useState(1);
-  const [step, setStep] = useState(0.1);
+  const [hardwareSupported, setHardwareSupported] = useState(false);
+  const [hwZoom, setHwZoomState] = useState(1);
+  const [hwMin, setHwMin] = useState(1);
+  const [hwMax, setHwMax] = useState(1);
+  const [hwStep, setHwStep] = useState(0.1);
   const trackRef = useRef<MediaStreamTrack | null>(null);
+
+  const [digitalZoom, setDigitalZoomState] = useState(1);
+
   const pinchStartDistRef = useRef<number | null>(null);
   const pinchStartZoomRef = useRef(1);
 
+  const mode: "hardware" | "digital" = hardwareSupported ? "hardware" : "digital";
+  const zoom = hardwareSupported ? hwZoom : digitalZoom;
+  const min = hardwareSupported ? hwMin : DIGITAL_MIN;
+  const max = hardwareSupported ? hwMax : DIGITAL_MAX;
+  const step = hardwareSupported ? hwStep : DIGITAL_STEP;
+
   const attach = useCallback((track: MediaStreamTrack | null) => {
     trackRef.current = track;
+    setDigitalZoomState(1);
+
     if (!track || typeof track.getCapabilities !== "function") {
-      setSupported(false);
+      setHardwareSupported(false);
       return;
     }
     const caps = track.getCapabilities() as CapabilitiesWithZoom;
     if (!caps.zoom || caps.zoom.max <= caps.zoom.min) {
-      setSupported(false);
+      setHardwareSupported(false);
       return;
     }
-    setSupported(true);
-    setMin(caps.zoom.min);
-    setMax(caps.zoom.max);
-    setStep(caps.zoom.step || 0.1);
+    setHardwareSupported(true);
+    setHwMin(caps.zoom.min);
+    setHwMax(caps.zoom.max);
+    setHwStep(caps.zoom.step || 0.1);
     const settings = track.getSettings() as SettingsWithZoom;
-    setZoomState(settings.zoom ?? caps.zoom.min);
+    setHwZoomState(settings.zoom ?? caps.zoom.min);
   }, []);
 
   const reset = useCallback(() => {
     trackRef.current = null;
-    setSupported(false);
-    setZoomState(1);
+    setHardwareSupported(false);
+    setHwZoomState(1);
+    setDigitalZoomState(1);
   }, []);
 
-  const applyZoom = useCallback(
+  const setZoom = useCallback(
     (value: number) => {
-      const track = trackRef.current;
-      if (!track) return;
-      const clamped = Math.min(max, Math.max(min, value));
-      setZoomState(clamped);
-      track.applyConstraints({ advanced: [{ zoom: clamped } as ConstraintSetWithZoom] }).catch(() => undefined);
+      if (hardwareSupported) {
+        const track = trackRef.current;
+        const clamped = Math.min(hwMax, Math.max(hwMin, value));
+        setHwZoomState(clamped);
+        if (track) {
+          track.applyConstraints({ advanced: [{ zoom: clamped } as ConstraintSetWithZoom] }).catch(() => undefined);
+        }
+      } else {
+        setDigitalZoomState(Math.min(DIGITAL_MAX, Math.max(DIGITAL_MIN, value)));
+      }
     },
-    [min, max]
+    [hardwareSupported, hwMin, hwMax]
+  );
+
+  /** The `drawImage` source rect to use at capture time so a digitally-
+   *  zoomed preview captures what it visually showed. Hardware zoom needs
+   *  no adjustment here -- the video frame itself is already optically
+   *  zoomed by the driver, so the full frame is correct as-is. */
+  const getCaptureCrop = useCallback(
+    (video: HTMLVideoElement): CameraCaptureCrop => {
+      const vw = video.videoWidth || 0;
+      const vh = video.videoHeight || 0;
+      if (mode === "digital" && digitalZoom > 1 && vw && vh) {
+        const sw = vw / digitalZoom;
+        const sh = vh / digitalZoom;
+        return { sx: (vw - sw) / 2, sy: (vh - sh) / 2, sw, sh };
+      }
+      return { sx: 0, sy: 0, sw: vw, sh: vh };
+    },
+    [mode, digitalZoom]
   );
 
   const touchDistance = (touches: ReactTouchEvent["touches"]) => {
@@ -84,38 +134,56 @@ export function useCameraZoom() {
 
   const handlePinchStart = useCallback(
     (e: ReactTouchEvent) => {
-      if (!supported || e.touches.length !== 2) return;
+      if (e.touches.length !== 2) return;
       pinchStartDistRef.current = touchDistance(e.touches);
       pinchStartZoomRef.current = zoom;
     },
-    [supported, zoom]
+    [zoom]
   );
 
   const handlePinchMove = useCallback(
     (e: ReactTouchEvent) => {
-      if (!supported || e.touches.length !== 2 || pinchStartDistRef.current == null) return;
+      if (e.touches.length !== 2 || pinchStartDistRef.current == null) return;
       e.preventDefault();
       const ratio = touchDistance(e.touches) / pinchStartDistRef.current;
-      applyZoom(pinchStartZoomRef.current * ratio);
+      setZoom(pinchStartZoomRef.current * ratio);
     },
-    [supported, applyZoom]
+    [setZoom]
   );
 
   const handlePinchEnd = useCallback(() => {
     pinchStartDistRef.current = null;
   }, []);
 
+  /** Desktop mouse-wheel zoom -- the digital fallback's main input, since
+   *  pinch isn't available with a mouse and hardware zoom essentially never
+   *  exists on a desktop webcam. Also works as a secondary input when
+   *  hardware zoom IS supported (harmless, some external webcams do expose
+   *  driver zoom this way too). */
+  const handleWheel = useCallback(
+    (e: ReactWheelEvent) => {
+      e.preventDefault();
+      const range = max - min || 1;
+      const delta = (-e.deltaY / 300) * range;
+      setZoom(zoom + delta);
+    },
+    [zoom, min, max, setZoom]
+  );
+
   return {
-    supported,
+    mode,
+    hardwareSupported,
     zoom,
     min,
     max,
     step,
-    setZoom: applyZoom,
+    setZoom,
     attach,
     reset,
+    getCaptureCrop,
     handlePinchStart,
     handlePinchMove,
     handlePinchEnd,
+    handleWheel,
   };
 }

@@ -25,7 +25,7 @@ import { matchVisionCategory, matchVisionSubcategory, matchVisionUniverse } from
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { getBulkScanStatus, consumeBulkScans } from "@/lib/bulkScanQuota";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
-import { useCameraZoom } from "@/hooks/useCameraZoom";
+import { useCameraZoom, type CameraCaptureCrop } from "@/hooks/useCameraZoom";
 import {
   getCategories,
   getDefaultCategory,
@@ -108,12 +108,19 @@ function parseValue(input: string): number | undefined {
   return Number.isFinite(n) && n > 0 ? n : undefined;
 }
 
-async function captureFrame(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
+async function captureFrame(video: HTMLVideoElement, canvas: HTMLCanvasElement, crop?: CameraCaptureCrop) {
   const ctx = canvas.getContext("2d");
   if (!ctx || !video.videoWidth || !video.videoHeight) return null;
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
-  ctx.drawImage(video, 0, 0);
+  // A digital-zoom crop draws the cropped region scaled UP to fill the same
+  // canvas size -- this is what makes the captured photo actually match a
+  // zoomed-in preview, instead of silently capturing the full unzoomed frame.
+  if (crop && crop.sw && crop.sh) {
+    ctx.drawImage(video, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, canvas.width, canvas.height);
+  } else {
+    ctx.drawImage(video, 0, 0);
+  }
   return new Promise<Blob | null>((resolve) => {
     canvas.toBlob(resolve, "image/jpeg", 0.88);
   });
@@ -294,7 +301,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     const canvas = captureCanvasRef.current;
     if (!video || !canvas || video.readyState < 2) return;
     setCapturing(true);
-    const blob = await captureFrame(video, canvas);
+    const blob = await captureFrame(video, canvas, cameraZoom.getCaptureCrop(video));
     if (blob) {
       const id = newId();
       // Inherit whatever scan happened just before this shot (the natural
@@ -768,33 +775,44 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         {/* Camera viewport */}
         <div
           className="relative w-full flex-1 bg-[color:var(--bg)]"
-          style={{ overflow: "hidden", touchAction: cameraZoom.supported ? "none" : undefined }}
+          style={{ overflow: "hidden", touchAction: "none" }}
           onTouchStart={cameraZoom.handlePinchStart}
           onTouchMove={cameraZoom.handlePinchMove}
           onTouchEnd={cameraZoom.handlePinchEnd}
+          onWheel={cameraZoom.handleWheel}
         >
-          <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />
+          <video
+            ref={videoRef}
+            playsInline
+            muted
+            className="h-full w-full object-cover"
+            style={
+              cameraZoom.mode === "digital" && cameraZoom.zoom > 1
+                ? { transform: `scale(${cameraZoom.zoom})`, transformOrigin: "center center" }
+                : undefined
+            }
+          />
           <FrameOverlay frameType={frameType} capturing={capturing} />
 
-          {/* Live zoom slider -- only rendered where the hardware/browser
-              actually supports it (see useCameraZoom's notes); pinch also
-              works anywhere on this viewport when supported. */}
-          {cameraZoom.supported ? (
-            <div className="absolute bottom-3 right-3 flex h-32 w-9 flex-col items-center gap-1 rounded-full px-1.5 py-2 backdrop-blur" style={{ background: "rgba(0,0,0,0.42)", border: "1px solid rgba(255,255,255,0.25)" }}>
-              <span className="text-[9px] font-bold text-white/70">{cameraZoom.zoom.toFixed(1)}x</span>
-              <input
-                type="range"
-                min={cameraZoom.min}
-                max={cameraZoom.max}
-                step={cameraZoom.step}
-                value={cameraZoom.zoom}
-                onChange={(e) => cameraZoom.setZoom(Number(e.target.value))}
-                className="h-full w-6 flex-1"
-                style={{ writingMode: "vertical-lr", direction: "rtl", accentColor: "#4A9BFF" }}
-                aria-label="Camera zoom"
-              />
-            </div>
-          ) : null}
+          {/* Live zoom control -- hardware zoom when the browser/hardware
+              actually expose it (mainly Android Chrome), otherwise a
+              digital fallback (CSS-scaled preview, cropped to match at
+              capture time) so a zoom control exists on every platform,
+              including desktop mouse (scroll wheel) and iOS. */}
+          <div className="absolute bottom-3 right-3 flex h-32 w-9 flex-col items-center gap-1 rounded-full px-1.5 py-2 backdrop-blur" style={{ background: "rgba(0,0,0,0.42)", border: "1px solid rgba(255,255,255,0.25)" }}>
+            <span className="text-[9px] font-bold text-white/70">{cameraZoom.zoom.toFixed(1)}x</span>
+            <input
+              type="range"
+              min={cameraZoom.min}
+              max={cameraZoom.max}
+              step={cameraZoom.step}
+              value={cameraZoom.zoom}
+              onChange={(e) => cameraZoom.setZoom(Number(e.target.value))}
+              className="h-full w-6 flex-1"
+              style={{ writingMode: "vertical-lr", direction: "rtl", accentColor: "#4A9BFF" }}
+              aria-label="Camera zoom"
+            />
+          </div>
 
           {/* Ghost counter — top-left */}
           <div

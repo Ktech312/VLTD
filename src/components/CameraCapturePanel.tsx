@@ -687,7 +687,16 @@ export default function CameraCapturePanel({
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Canvas is not available.");
 
-      ctx.drawImage(video, 0, 0, width, height, 0, 0, outputWidth, outputHeight);
+      // A digital-zoom crop draws the cropped region scaled UP to fill the
+      // same output size -- this is what makes the captured photo actually
+      // match a zoomed-in preview, instead of silently capturing the full
+      // unzoomed frame. Hardware zoom needs no adjustment (see the hook).
+      const crop = cameraZoom.getCaptureCrop(video);
+      if (crop.sw && crop.sh) {
+        ctx.drawImage(video, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, outputWidth, outputHeight);
+      } else {
+        ctx.drawImage(video, 0, 0, width, height, 0, 0, outputWidth, outputHeight);
+      }
       const tDraw = performance.now();
       setBlurAssessment(assessCanvasBlur(canvas));
       const tBlur = performance.now();
@@ -1189,11 +1198,12 @@ export default function CameraCapturePanel({
                     ...(isInline || !videoAspectRatio
                       ? { minHeight: "260px", height: "100%", width: "100%" }
                       : { minHeight: "260px", height: "100%", width: "auto", maxWidth: "100%", aspectRatio: String(videoAspectRatio) }),
-                    touchAction: cameraZoom.supported ? "none" : undefined,
+                    touchAction: "none",
                   }}
                   onTouchStart={cameraZoom.handlePinchStart}
                   onTouchMove={cameraZoom.handlePinchMove}
                   onTouchEnd={cameraZoom.handlePinchEnd}
+                  onWheel={cameraZoom.handleWheel}
                 >
                 {cameraError ? (
                   <div className="max-w-lg px-5 text-center text-sm text-red-200">
@@ -1216,13 +1226,21 @@ export default function CameraCapturePanel({
                       }
                     }}
                     className="h-full w-full object-contain"
+                    style={
+                      cameraZoom.mode === "digital" && cameraZoom.zoom > 1
+                        ? { transform: `scale(${cameraZoom.zoom})`, transformOrigin: "center center" }
+                        : undefined
+                    }
                   />
                 )}
 
-                {/* Live zoom slider -- only rendered where the hardware/
-                    browser actually supports it (see useCameraZoom's
-                    notes); pinch also works anywhere in this frame. */}
-                {!cameraError && cameraZoom.supported ? (
+                {/* Live zoom control -- hardware zoom when the browser/
+                    hardware actually expose it (mainly Android Chrome),
+                    otherwise a digital fallback (CSS-scaled preview,
+                    cropped to match at capture time) so a zoom control
+                    exists on every platform, including desktop mouse
+                    (scroll wheel) and iOS. Pinch also works in this frame. */}
+                {!cameraError ? (
                   <div className="absolute bottom-3 right-3 flex h-32 w-9 flex-col items-center gap-1 rounded-full px-1.5 py-2 backdrop-blur" style={{ background: "rgba(0,0,0,0.42)", border: "1px solid rgba(255,255,255,0.25)" }}>
                     <span className="text-[9px] font-bold text-white/70">{cameraZoom.zoom.toFixed(1)}x</span>
                     <input
