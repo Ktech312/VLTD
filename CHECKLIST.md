@@ -1,90 +1,52 @@
-# VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-10)
+# VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-11)
 
-## Barcode/QR scanning rebuilt as tap-to-scan (2026-08-10) — see HANDOFF §B
-Was fully OFF since 2026-08-07 (always-on JS loop overheated the phone).
-Rebuilt: tap a Scan button → one bounded ~8s burst → native BarcodeDetector
-on browsers that support it (Android Chrome; NOT Windows Chrome, NOT iOS
-Safari — confirmed live, both lack it), ZXing JS fallback elsewhere, never
-running just because the camera's open. Also fixed a real bug found in the
-same pass: `/vault/add`'s generic Identify path tried a PSA cert lookup
-FIRST on any 7-10 digit barcode decode, before UPC/book/comic — an ordinary
-EAN-8 product barcode (exactly 8 digits) could silently burn a real PSA
-credit and mis-set Universe to Sports Cards. Reordered PSA to last-resort,
-gated on non-retail formats. `tsc`/`eslint`/`build` clean.
-✅ Scanning banner confirmed VISIBLE on a real device (EK: two screenshots,
-"Scanning… (11 tries, 5.0s)" / "(7 tries, 3.1s)") — the earlier "no flicker"
-report was a real UI-visibility gap, now fixed, not a session-never-ran bug.
-✅ Swapped the fallback decoder (Safari/no-native-BarcodeDetector) from
-ZXing's whole-frame decode to the region-cropping+upscaling one — a real
-diagnostic ("js-fallback, 9 tries in 6.7s" against a clearly legible QR)
-showed the whole-frame approach genuinely couldn't resolve a small code.
-❌ Region-cropping swap wasn't enough either — same underlying (unmaintained)
-decode engine as before, just cropped differently. EK: message disappeared
-before it could be read/screenshotted (auto-clear was 2.5s, way too fast —
-removed entirely, now stays up until the next Scan tap).
-✅ **Bigger fix, done overnight while EK slept: swapped the whole fallback
-engine to `zxing-wasm`** (actively-maintained WASM decoder, not the
-discontinued `@zxing/library` JS port both earlier attempts used). Self-
-hosted the `.wasm` binary, added a same-tick fallback to the old JS decoder
-if wasm ever fails to load (so a wasm problem degrades the feature instead
-of killing it), fixed a real format-name mapping gap that would've quietly
-reopened the PSA auto-fire risk for wasm-decoded codes. See HANDOFF §B for
-full detail.
-✅ **CONFIRMED WORKING** — EK tested the exact same CGC slab that failed
-twice the night before: QR decoded clean (`3905790037795`), green "code
-read" badge, on the first real test of the zxing-wasm swap. The engine
-switch was the real fix, not the region-cropping or banner-visibility
-changes around it (those were real fixes too, just not the accuracy one).
-⬜ **Not yet tried:** the horizontal barcode under the QR on the same slab
-(linear format, not matrix) — worth a scan to confirm both format families
-work, not just QR. Also not yet tried on Quick Add (`ScanCapturePanel`,
-only regular Add's camera was tested) or on any other barcode type (retail
-UPC/EAN on a normal product).
-🔒 PSA lookups still PAUSED (`ENABLE_PSA_LOOKUP = false`) — this was a CGC
-slab, not PSA, so this test didn't exercise that path either way. Still
-needs EK's go-ahead to flip back on.
+## Barcode/QR scanning — WHERE THINGS STAND RIGHT NOW (2026-08-11)
+Full narrative of how this got here is in `HANDOFF.md` §B (a real saga —
+several rounds of "fixed," each one genuinely wrong or incomplete until the
+last). This section is just the current, accurate status:
 
-## Barcode scans now actually DO something (2026-08-11) — connects to real lookups, not device-tested yet
-EK's real question: "what can scanning a barcode do at this point?" — honest
-answer at the time was nothing; it just confirmed the read. All the
-individual lookups (comic/vinyl/UPC/book) already existed, wired only into
-the after-a-photo Identify pipeline. New `src/lib/scanners/barcodeLookup.ts`
-runs those same free lookups the instant a live scan decodes a code, no
-photo needed. Wired into all 3 places EK asked about:
-- **`/capture`**: scan → lookup fires immediately → a real "Found via
-  barcode: X" card (with cover art if available) or an honest "no match"
-  message → fills blank fields only (never overwrites something already
-  typed or already found).
-- **`/vault/add`**: same lookup, wired into that page's own existing
-  scan-review UI/status line instead of a new one.
-- **Quick Add (batch)**: EK's other real question — "scan 10 barcodes then
-  batch it, how will I know it worked." Each scan's lookup now starts
-  immediately and shows a live tag per item in the review sheet ("Matched:
-  X" / "No match" / "Looking up...") BEFORE hitting Finished — no more
-  finding out only after the batch runs. A confident match also skips the
-  metered AI scan for that item (already have better data for free).
-❌ **EK tested `/capture` immediately: scan worked, nothing visible happened.**
-Real bug, not a lookup failure — the confirmation banner lived on the PAGE,
-and the camera is a full-screen modal ON TOP of that page. It was firing
-and filling fields correctly the whole time, just on a layer EK couldn't
-see without closing the camera first.
-✅ **Fixed same session** — moved the lookup + its result display INTO
-CameraCapturePanel itself (shows "Looking up…" → "Found: X" / "No match"
-right in the camera view, below the existing green checkmark). Parent
-pages now just receive the already-resolved match instead of each running
-their own lookup (also fixes a duplicate-network-call inefficiency that
-introduced). `/vault/add` gets this automatically too since it shares the
-same camera component.
-⬜ **Still not device-tested since this fix** — please retry scanning a
-real comic/vinyl/UPC on `/capture` and confirm the result now shows up
-inside the camera view itself. Quick Add's review-sheet tags were a
-separate code path (never had this bug) — still worth a check too.
-🔒 **PSA lookups fully PAUSED** (`ENABLE_PSA_LOOKUP = false` in
+**Scanning mechanism — ✅ CONFIRMED WORKING on a real device.**
+Tap-to-scan (not always-on — the old version overheated the phone and is
+gone for good), native `BarcodeDetector` where the browser has it (Android
+Chrome only — confirmed live that Windows Chrome and iOS Safari don't),
+`zxing-wasm` (actively-maintained decoder) everywhere else. EK's CGC slab —
+which failed on TWO earlier decode approaches the same night — decoded
+clean on the first real test after the `zxing-wasm` swap. Diagnostic
+readout (attempts/elapsed/engine) shown live on screen for any future
+"didn't work" report.
+
+**Scan → real lookup → confirmation, shown live in the camera — ✅ BUILT,
+⬜ NOT YET RE-TESTED after the visibility fix.** Scanning used to just
+confirm "code read" and do nothing else. Now: the instant a code decodes,
+a free lookup (comic via Metron/GCD, vinyl via Discogs, generic UPC/book)
+runs automatically and the result shows **right there in the camera view**
+— "Found: [title]" with cover art if available, or an honest "no match."
+Wired into `/capture`, `/vault/add` (same shared camera component), and
+Quick Add's batch flow (live per-item "Matched"/"No match" tags in the
+review sheet, before Finished is even tapped — a confident match also
+skips spending a metered AI scan on that item).
+- First test found a real bug: the confirmation lived on the PAGE, hidden
+  behind the camera's full-screen modal — fixed by moving it into the
+  camera view itself. **Not re-tested since that fix.**
+- Second test (after the fix) correctly showed "No match found" for a CGC
+  QR — expected, CGC isn't in any of the wired-up databases (no CGC lookup
+  exists at all, same gap as PSA). Now fixed to say something more useful:
+  a QR that matches nothing gets "this looks like a certificate code (CGC/
+  PSA/etc.)" instead of a flat "no match" that reads like a failure.
+- **Still needs a real test with an item that SHOULD match** — a comic
+  book's barcode, a vinyl record, or a retail product — to confirm the
+  "Found: X" success path actually works, not just the "no match" path.
+
+**🔒 PSA lookups fully PAUSED** (`ENABLE_PSA_LOOKUP = false` in
 `vault/add/page.tsx`'s `runPSALookupForCode`) — EK's explicit call, so scan
 testing can't burn real PSA quota. Covers the auto graded_card flow, the
 generic auto-Identify fallback, AND the manual "Look up" button. **Flip
-back to `true` once decode reliability is confirmed** — don't forget this
-is off, it's not a bug if a cert lookup silently does nothing right now.
+back to `true` once decode reliability is confirmed** — this is deliberate,
+not a bug, if a cert lookup silently does nothing right now.
+
+**CGC lookup — confirmed still fully unaddressed**, same as PSA-for-comics
+was. No CGC API integration exists. If EK wants this built (mirroring the
+PSA cert-lookup work), that's a new, separate effort — not started.
 
 Scannable done/pending list covering everything from the dead-code sweep
 through the barcode/Cards/PSA/Discogs work, the Halls rebuild, and the
@@ -379,30 +341,37 @@ different and bigger — read it back to confirm, then built that instead:
 ---
 
 ## What actually needs YOUR action right now, in order
-1. **Tap the new Scan button (regular Add and Quick Add cameras) on your
-   iPhone AND on an Android phone if you have one.** Point at a real
-   barcode/QR — confirm it decodes, confirm it does NOT heat up even after
-   several bursts, and confirm the "no code found" message shows after ~8s
-   if nothing's in frame. This is the rebuild from 2026-08-10 — genuinely
-   new code, not a re-test of the old broken version.
-2. Email `collectors-apis@collectors.com` about the "Access to this API is
+1. **Scan a comic's barcode, a vinyl record, or a retail product** (not a
+   graded slab — those won't match anything, see above) on `/capture`.
+   Confirm the "Found: [title]" card actually appears inside the camera
+   view with real info, not a placeholder. This is the one path that
+   hasn't been proven yet — the "no match" path already works correctly.
+2. Scan a few different items in a row on **Quick Add** (mix real matches
+   and misses on purpose) and confirm the review sheet's per-item tags are
+   accurate before you tap Finished, then confirm Finished skips the AI
+   scan for matched items (watch the "AI scans left" counter).
+3. Do a few Scan bursts in a row on your iPhone and confirm it still stays
+   cool — the original complaint that started all of tonight's scanning
+   work hasn't been re-checked since the `zxing-wasm` engine swap.
+4. Email `collectors-apis@collectors.com` about the "Access to this API is
    limited to approved customers" rejection — ask directly whether this
    account has approved API access, and if not, how to get it. A fresh
    token alone didn't fix it.
-3. Check/fix the `DISCOGS_TOKEN` value in Vercel (empty or bad — vinyl
+5. Check/fix the `DISCOGS_TOKEN` value in Vercel (empty or bad — vinyl
    lookup has never worked because of this).
-4. Actually try building a Hall and tagging an item — migration's run,
+6. Actually try building a Hall and tagging an item — migration's run,
    this whole feature has never been tested logged-in.
-5. Test a real Magic or Pokemon card via Identify — confirm Category/
+7. Test a real Magic or Pokemon card via Identify — confirm Category/
    Subcategory now update and the Rarity field shows up on `/capture`.
-6. Whenever you hear back from CardHedge, bring their answer (especially on
+8. Whenever you hear back from CardHedge, bring their answer (especially on
    comics coverage) back here.
-7. Once 1 and 5 above are confirmed working, the regular Add camera's visual
+9. Once 1-3 above are confirmed working, the regular Add camera's visual
    match to Quick Add is next in line — not started yet.
-8. Set the "Type" dropdown + "Attributes" checkboxes on a `/vault/add` item,
-   navigate away and back, confirm they now actually stick (this was
-   silently broken before tonight's overnight fix — worth a real check).
-9. Take a look at the overnight cleanup pass in general — Collection Value
-   chart on the home dashboard, shop page category icons, the Halls
-   "Auto-tag my collection" button — none of it has been seen in a real
-   browser yet.
+10. Set the "Type" dropdown + "Attributes" checkboxes on a `/vault/add`
+    item, navigate away and back, confirm they now actually stick.
+11. Take a look at the overnight cleanup pass in general — Collection Value
+    chart on the home dashboard, shop page category icons, the Halls
+    "Auto-tag my collection" button — none of it has been seen in a real
+    browser yet.
+12. Decide if CGC cert lookup is worth building (mirroring PSA's work) —
+    confirmed still completely unaddressed, not started.

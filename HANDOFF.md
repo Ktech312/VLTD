@@ -463,74 +463,6 @@ their commercial/paid API tier (higher volume) — that's a cost/business
 decision for EK to make with PSA directly, not something the next chat can
 code around. Worth raising proactively if EK hasn't brought it up.
 
-### B5. Barcode scans connected to real lookups (2026-08-11) — /capture, /vault/add, Quick Add. NOT device-tested yet.
-EK's real question after the scanning rebuild worked: "what can scanning a
-barcode do at this point?" Honest answer at the time: nothing. It confirmed
-the read (green badge) and stopped there — the actual lookups only ran
-later, inside the after-a-photo Identify pipeline, and even then silently
-auto-filled fields with no confirmation screen. EK also asked two concrete
-questions that shaped this: (1) does taking one photo of a comic that also
-has a barcode already combine both signals smartly? -- checked the code,
-answer is genuinely yes, `capture/page.tsx`'s `runAiIdentify` already runs
-vision + barcode + comic-OCR in parallel and merges them (has for a while,
-independent of tonight's scanner work) as long as Universe/Category are
-already set to Pop Culture/Comics. (2) scan 10 barcodes in Quick Add then
-batch it -- how would you know it worked? Checked: it wouldn't, at all --
-`CapturedItem` had no barcode field, the scan result was thrown away the
-instant the checkmark faded. Researched how real batch scanners (Scandit,
-CLZ) solve this: live per-scan feedback, a visible running list/count as
-you go, never a silent wait to the end.
-
-**Built**, per EK's "build all 3, we'll see if it's fast enough":
-- New `src/lib/scanners/barcodeLookup.ts` -- the missing link. Given just
-  the decoded digits (no photo), tries comic (Metron then GCD), vinyl
-  (Discogs), then the generic UPC/book lookup, in that order (narrower/more
-  specific DBs first) since a comic/vinyl hit is always more useful than
-  the generic product-title lookup would return for the same code.
-  Deliberately excludes PSA (metered/paused, needs explicit intent per the
-  earlier auto-fire fix) and AI vision (metered, needs a real photo) --
-  this is the free-lookup layer only.
-- `CameraCapturePanel.tsx` gained a new `onLiveBarcodeScan` prop, fired the
-  instant Scan decodes a code -- separate from `onCapture` (shutter-only).
-  Lets each parent screen react before a photo even exists.
-- **`/capture`**: wired to the new prop. Fills only BLANK fields (a
-  confirmed database match is treated as MORE trustworthy than a later AI
-  vision guess, deliberately not using `runAiIdentify`'s own "vision wins
-  if non-empty" merge rule for this). Shows a real confirmation card --
-  "Found via barcode: X — filled in what it could" with cover art if the
-  source has one, or an honest "no match, fill in by hand" message -- where
-  today there's only a silent fill-or-nothing.
-- **`/vault/add`**: new `runLiveBarcodeLookup()`, wired into the SAME
-  `scanSession`/`applyScanFieldsToEmpty` machinery the after-a-photo
-  lookups already use (plus a direct `setValues` pass for comicPublisher/
-  vinylLabel-style fields that have no slot in the shared `ScanSessionFields`
-  shape, matching the existing `runVinylLookupForFile`/`runComicLookupForFile`
-  pattern exactly) -- so it looks and behaves consistently with the rest of
-  that page's own scan-review UI rather than inventing a new one.
-- **Quick Add (`ScanCapturePanel.tsx` + `ScanReviewSheet.tsx`)** -- the
-  real answer to "will I waste time." The lookup starts the instant a scan
-  succeeds (not on capture), attaches to whichever item gets shot right
-  after (the natural aim-scan-shoot order), and the review sheet now shows
-  a live tag per item -- "Matched: X" / "No barcode match — AI will
-  identify" / "Looking up..." -- **before** Finished is ever tapped. A
-  confident match also pre-fills that item's draft via the same
-  `visionToDraftPatch` taxonomy-matching path AI results use (via a new
-  `barcodeMatchToVision()` synthesizer) and **skips the metered AI scan for
-  that item entirely** -- free, already-fetched, more specific data beats
-  spending a scan to re-confirm the same thing.
-
-`tsc --noEmit` / `eslint` (zero new warnings anywhere) / `npm run build`
-all clean across all three surfaces. **Not yet tested on a real device --
-please try:**
-- `/capture`: scan a real comic/book/vinyl barcode, confirm the "Found via
-  barcode" card appears with real info, not a placeholder.
-- `/vault/add`: same, confirm the existing scan-status area shows it.
-- Quick Add: scan 3-4 different real items in a row (mix of matches and
-  misses on purpose), confirm the review sheet's per-item tags are
-  accurate BEFORE tapping Finished, then confirm Finished actually skips
-  AI for the matched ones (watch the "AI scans left" counter -- it
-  shouldn't drop for matched items).
-
 ### B4. Regular Add camera should visually match Quick Add's — STILL NEXT, once B/B2 above are confirmed
 EK's own instruction, explicit ordering: **fix barcode/Cards first, THEN**
 make the regular Add camera (`CameraCapturePanel.tsx`) visually match Quick
@@ -700,6 +632,99 @@ Mode), reported with a screenshot. All three fixed and pushed:
    missing handler.) Fixed: made the banner body tappable — it now expands
    to show the actual two-step instructions ("Tap the Share icon in
    Safari's toolbar, then Add to Home Screen") instead of silently no-oping.
+
+### B8. Barcode scans connected to real lookups (2026-08-11) — /capture, /vault/add, Quick Add. Partially device-tested; one path unconfirmed.
+EK's real question after the scanning rebuild (§B) worked: "what can
+scanning a barcode do at this point?" Honest answer at the time: nothing.
+It confirmed the read (green badge) and stopped there — the actual lookups
+only ran later, inside the after-a-photo Identify pipeline, and even then
+silently auto-filled fields with no confirmation screen. EK also asked two
+concrete questions that shaped this: (1) does taking one photo of a comic
+that also has a barcode already combine both signals smartly? — checked
+the code, answer is genuinely yes, `capture/page.tsx`'s `runAiIdentify`
+already runs vision + barcode + comic-OCR in parallel and merges them (has
+for a while, independent of §B's scanner work) as long as Universe/
+Category are already set to Pop Culture/Comics. (2) scan 10 barcodes in
+Quick Add then batch it — how would you know it worked? Checked: it
+wouldn't, at all — `CapturedItem` had no barcode field, the scan result was
+thrown away the instant the checkmark faded. Researched how real batch
+scanners (Scandit, CLZ) solve this: live per-scan feedback, a visible
+running list/count as you go, never a silent wait to the end.
+
+**Built**, per EK's "build all 3, we'll see if it's fast enough":
+- New `src/lib/scanners/barcodeLookup.ts` — the missing link. Given just
+  the decoded digits (no photo), tries comic (Metron then GCD), vinyl
+  (Discogs), then the generic UPC/book lookup, in that order (narrower/more
+  specific DBs first) since a comic/vinyl hit is always more useful than
+  the generic product-title lookup would return for the same code.
+  Deliberately excludes PSA (metered/paused per §B3) and AI vision
+  (metered, needs a real photo) — this is the free-lookup layer only.
+- `CameraCapturePanel.tsx` gained a new `onLiveBarcodeScan` prop, fired
+  once the lookup settles for a scanned code.
+- **`/capture` + `/vault/add`**: wired to the new prop, filling only BLANK
+  fields (a confirmed database match is treated as MORE trustworthy than a
+  later AI vision guess, deliberately not using `runAiIdentify`'s own
+  "vision wins if non-empty" merge rule for this). `/vault/add` reuses its
+  existing `scanSession`/`applyScanFieldsToEmpty` machinery (plus a direct
+  `setValues` pass for comicPublisher/vinylLabel-style fields that have no
+  slot in the shared `ScanSessionFields` shape) rather than inventing a new
+  UI.
+- **Quick Add (`ScanCapturePanel.tsx` + `ScanReviewSheet.tsx`)** — the real
+  answer to "will I waste time." The lookup starts the instant a scan
+  succeeds (not on capture), attaches to whichever item gets shot right
+  after, and the review sheet shows a live tag per item — "Matched: X" /
+  "No barcode match — AI will identify" / "Looking up..." — **before**
+  Finished is ever tapped. A confident match pre-fills that item's draft
+  via the same `visionToDraftPatch` taxonomy-matching path AI results use
+  (via a new `barcodeMatchToVision()` synthesizer) and **skips the metered
+  AI scan for that item entirely**.
+
+**Real bug found on first test, fixed same session:** EK scanned
+immediately — code read fine, "nothing visible happened." The confirmation
+card lived on the PAGE; `CameraCapturePanel` is a full-screen modal ON TOP
+of that page, so the card was firing and filling fields correctly the whole
+time on a layer EK literally could not see without closing the camera
+first. **Fixed:** moved the lookup call AND its result display into
+`CameraCapturePanel` itself — it now runs `lookupByBarcodeOnly()` directly
+and shows "Looking up…" / "Found: X" / "No match" right in the camera view,
+below the existing green checkmark badge. `onLiveBarcodeScan` now hands the
+parent the already-resolved match instead of each parent re-running its
+own lookup (fixed a duplicate-network-call inefficiency in the same move).
+
+**Second test, after the visibility fix:** scanned the same CGC slab again
+— correctly showed "No match found," which is the RIGHT answer (CGC isn't
+in any of the wired-up databases; no CGC lookup exists at all, same gap as
+PSA — see below). EK's question: could it say something more useful than a
+flat "no match" that reads like a failure? **Built `guessWhyNoBarcodeMatch()`**
+(`barcodeLookup.ts`): if the raw scanned text contains a known grading
+company's own domain (CGC/PSA/Beckett/SGC all put their verify URL in the
+QR), names the exact service confidently; if it's just a QR with no
+recognizable domain that matched nothing, says it might be "a
+grading-company certificate" — softer, since retail UPC/EAN codes are
+essentially never QR-encoded in practice but this can't name WHICH service
+without the domain signal. A genuinely unrecognized linear barcode still
+gets the honest generic "no match" message.
+
+`tsc --noEmit` / `eslint` (zero new warnings) / `npm run build` all clean
+throughout. **Status as of the last real test:**
+- ✅ Scanning mechanism itself: confirmed working (§B).
+- ✅ "No match" path: confirmed correct and now informative (this section).
+- ⬜ **"Found: X" success path: NOT yet confirmed** — every device test so
+  far has been against a graded slab's cert QR, which structurally can
+  never match (no cert-lookup DB is wired up). **Needs a scan of something
+  that SHOULD match** — a comic's own barcode, a vinyl record, or a plain
+  retail product — to prove the actual lookup-and-fill works, not just that
+  it correctly says no when there's nothing to find.
+- ⬜ Quick Add's live per-item tags: not yet seen on a real device at all.
+- ⬜ Whether scanning still stays cool over repeated bursts: not re-checked
+  since the `zxing-wasm` engine swap (§B) — the original complaint that
+  started this whole thread.
+
+**CGC lookup — confirmed still fully unaddressed.** No CGC API integration
+exists anywhere in the app (same status as before tonight). If EK wants
+this built, it would mirror the PSA cert-lookup work (§B3/§B3b) — a new,
+separate effort, not started, and not something the "connect existing
+lookups" work above touches.
 
 ### C. DOCUMENTS (capture builder §5 accordion) — DONE 2026-08-03
 EK's answer: "everything should be private unless shared" — that's a
@@ -881,8 +906,17 @@ write that migration blind since it's payment-adjacent data.
 - **2026-08-10 — Barcode/QR scanning rebuilt as tap-to-scan (native detector +
   JS fallback), PSA auto-fire bug fixed.** Full detail in §2B above — don't
   re-litigate the engine choice or re-add an always-on effect; the "on-demand,
-  bounded burst" design is deliberate, not a placeholder. Still needs a real
-  device test (§2B's checklist) before this note can move to "confirmed working."
+  bounded burst" design is deliberate, not a placeholder. Confirmed working on
+  a real device the same night, after also swapping the fallback decoder to
+  `zxing-wasm` — see §2B for the full saga.
+- **2026-08-11 — Barcode scans now connect to real lookups** (comic/vinyl/
+  UPC/book) across `/capture`, `/vault/add`, and Quick Add, instead of just
+  confirming a code was read. Full detail in §2B8 — includes a real
+  visibility bug (fixed) and a "no match" message that now names what an
+  unmatched code probably is (CGC/PSA-style certificate) instead of reading
+  like a failure. The actual "found a real match" success path is still
+  unconfirmed on a real device — don't assume it works without checking §2B8's
+  open items first.
 - **2026-08-08/09 — Regular Add's camera, rebuilt to actually match Quick
   Add** (many rounds — EK's patience on this one is worth documenting so
   the reasoning doesn't get re-litigated from scratch):
