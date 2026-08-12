@@ -116,6 +116,7 @@ function rowToItem(input: unknown): VaultItem {
     certNumber: row.cert_number ?? undefined,
     serialNumber: row.serial_number ?? undefined,
     tags: Array.isArray(row.tags) ? row.tags : undefined,
+    brand: row.brand ?? undefined,
     valueSource: row.value_source ?? undefined,
     valueUpdatedAt: row.value_updated_at ?? undefined,
     valueConfidence: row.value_confidence ?? undefined,
@@ -303,6 +304,7 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
     cert_number: item.certNumber ?? null,
     serial_number: item.serialNumber ?? null,
     tags: item.tags ?? [],
+    brand: item.brand ?? null,
     value_source: item.valueSource ?? null,
     value_updated_at: item.valueUpdatedAt ?? null,
     value_confidence: item.valueConfidence ?? null,
@@ -359,9 +361,10 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
       message.toLowerCase().includes("video_clip_url") ||
       message.toLowerCase().includes("video_clip_duration");
     const missingTagsColumn = message.toLowerCase().includes("tags");
+    const missingBrandColumn = message.toLowerCase().includes("brand");
 
     const isRecoverable =
-      missingGalleryColumns || missingSoldColumns || missingVisibilityColumn || missingVideoColumns || missingTagsColumn;
+      missingGalleryColumns || missingSoldColumns || missingVisibilityColumn || missingVideoColumns || missingTagsColumn || missingBrandColumn;
 
     if (!isRecoverable) {
       // Unrecognised error — log and surface it
@@ -400,6 +403,10 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
 
     if (missingTagsColumn) {
       delete fallbackRow.tags;
+    }
+
+    if (missingBrandColumn) {
+      delete fallbackRow.brand;
     }
 
     const { error: fallbackError } = await supabase.from(VAULT_ITEMS_TABLE).upsert(fallbackRow);
