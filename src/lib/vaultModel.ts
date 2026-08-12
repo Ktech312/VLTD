@@ -74,6 +74,13 @@ export type VaultItem = {
    *  and for social-export hashtag suggestions. Stored lowercase, no "#". */
   tags?: string[];
   subject?: string;
+  /** Manufacturer/publisher/label — Nintendo, Marvel, DC, Topps, a record
+   *  label, etc. Distinct from `subject` (who/what the item is ABOUT — a
+   *  player, character, artist) — this is who MADE it. Universal across
+   *  universes on purpose: a video game's box and a comic's indicia both
+   *  have one, and it was previously only captured per-universe
+   *  (comicPublisher/vinylLabel below) or not at all. */
+  brand?: string;
   edition?: string;
   variant?: string;
   printRun?: string;
@@ -550,6 +557,10 @@ function normalizeOne(input: unknown): VaultItem | null {
     subject:
       typeof raw.subject === "string" && raw.subject.trim()
         ? raw.subject.trim()
+        : undefined,
+    brand:
+      typeof raw.brand === "string" && raw.brand.trim()
+        ? raw.brand.trim()
         : undefined,
     edition: raw.edition ?? undefined,
     variant: raw.variant ?? undefined,

@@ -28,6 +28,12 @@ export type BarcodeLookupFields = {
   categoryLabel?: string;
   subcategoryLabel?: string;
   notes?: string;
+  /** Manufacturer/publisher/label, universal across sources -- comic
+   *  publisher, vinyl label, or the generic UPC lookup's own brand field.
+   *  Mirrors comicPublisher/vinylLabel below (kept for callers that want
+   *  the specific per-source name) but gives every caller ONE field to
+   *  read regardless of which database matched. */
+  brand?: string;
   comicPublisher?: string;
   comicCoverDate?: string;
   vinylLabel?: string;
@@ -63,6 +69,7 @@ function buildComicResult(
       category: "COMICS",
       categoryLabel: "Comics",
       subcategoryLabel: "Comic Book",
+      brand: publisher || undefined,
       comicPublisher: publisher || undefined,
       comicCoverDate: coverDate || undefined,
       notes: metron?.description || undefined,
@@ -83,6 +90,7 @@ function buildVinylResult(vinyl: NonNullable<Awaited<ReturnType<typeof lookupVin
       category: "Audio Formats",
       categoryLabel: "Audio Formats",
       subcategoryLabel: vinyl.format ?? "Vinyl Records",
+      brand: vinyl.label ?? undefined,
       vinylLabel: vinyl.label ?? undefined,
       vinylCountry: vinyl.country ?? undefined,
       vinylPressing: vinyl.format ?? undefined,
@@ -102,6 +110,7 @@ function buildProductResult(upc: NonNullable<Awaited<ReturnType<typeof lookupUpc
       category: upc.source === "openlibrary" ? "BOOKS" : "PRODUCTS",
       categoryLabel: upc.categoryLabel,
       subcategoryLabel: upc.subcategoryLabel,
+      brand: upc.brand,
       notes: upc.notes,
     },
   };

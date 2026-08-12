@@ -8,6 +8,7 @@ export type CaptureFieldKey =
   | "title"
   | "subtitle"
   | "number"
+  | "brand"
   | "certCompany"
   | "universe"
   | "categoryLabel"
@@ -23,6 +24,7 @@ export const EMPTY_CAPTURE_VALUES: CaptureFieldValues = {
   title: "",
   subtitle: "",
   number: "",
+  brand: "",
   certCompany: "",
   universe: "",
   categoryLabel: "",
@@ -34,6 +36,7 @@ export const DEFAULT_CAPTURE_LOCKS: CaptureFieldLocks = {
   title: false,
   subtitle: false,
   number: false,
+  brand: false,
   certCompany: false,
   universe: true,
   categoryLabel: true,

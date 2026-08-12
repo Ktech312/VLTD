@@ -53,6 +53,10 @@ type ReviewFields = {
   subtitle: string;
   category: string;
   universe: string;
+  /** Manufacturer/publisher/label — Nintendo, Marvel, DC, Topps, a record
+   *  label, etc. AI vision and the generic UPC lookup already return this;
+   *  it previously had nowhere to go and was silently discarded. */
+  brand: string;
   grade: string;
   certCompany: string;
   certNumber: string;
@@ -73,6 +77,7 @@ const EMPTY_FIELDS: ReviewFields = {
   subtitle: "",
   category: "",
   universe: "",
+  brand: "",
   grade: "",
   certCompany: "",
   certNumber: "",
@@ -254,6 +259,7 @@ function mergeResults(
     subtitle: vision?.subtitle || upc?.subtitle || "",
     category: taxo.categoryLabel || vision?.category || upc?.categoryLabel || "",
     universe: taxo.universe || "",
+    brand: vision?.brand || upc?.brand || "",
     grade: vision?.grade || "",
     certCompany: "",
     certNumber: vision?.certNumber || "",
@@ -546,15 +552,14 @@ export default function CapturePage() {
         fillIfBlank("category", match.fields.category);
         fillIfBlank("categoryLabel", match.fields.categoryLabel);
         fillIfBlank("subcategoryLabel", match.fields.subcategoryLabel);
+        fillIfBlank("brand", match.fields.brand);
         if (!next.universe.trim() && match.fields.universe) next.universe = match.fields.universe;
-        // Comic publisher/cover-date and vinyl label/country/pressing have no
-        // dedicated fields on this simpler builder (unlike /vault/add) --
-        // fold them into the description, same as the comic/card OCR paths
-        // already do below in runAiIdentify.
+        // Cover-date and vinyl country/pressing have no dedicated fields on
+        // this simpler builder (unlike /vault/add) -- fold them into the
+        // description. Publisher/label now go to the real Brand field above
+        // instead of being buried in notes text.
         const extraNotes = [
-          match.fields.comicPublisher ? `Publisher: ${match.fields.comicPublisher}` : "",
           match.fields.comicCoverDate ? `Cover date: ${match.fields.comicCoverDate}` : "",
-          match.fields.vinylLabel ? `Label: ${match.fields.vinylLabel}` : "",
           match.fields.vinylCountry ? `Country: ${match.fields.vinylCountry}` : "",
           match.fields.vinylPressing ? `Pressing: ${match.fields.vinylPressing}` : "",
           match.fields.notes || "",
@@ -735,6 +740,7 @@ export default function CapturePage() {
         subtitle: fields.subtitle || undefined,
         category: fields.category || undefined,
         universe: fields.universe || undefined,
+        brand: fields.brand.trim() || undefined,
         grade: [fields.certCompany, fields.grade].filter(Boolean).join(" ").trim() || undefined,
         certNumber: fields.certNumber || undefined,
         notes: fields.description || undefined,
@@ -1157,6 +1163,16 @@ export default function CapturePage() {
                           value={fields.subtitle}
                           onChange={(e) => setFields((p) => ({ ...p, subtitle: e.target.value }))}
                           placeholder="Optional"
+                        />
+                      </div>
+                      <div>
+                        <LockableLabel label="Brand / Manufacturer / Publisher" locked={locks.brand} onToggleLock={() => toggleFieldLock("brand")} />
+                        <input
+                          className={INPUT_CLS}
+                          style={INPUT_STYLE}
+                          value={fields.brand}
+                          onChange={(e) => setFields((p) => ({ ...p, brand: e.target.value }))}
+                          placeholder="e.g. Nintendo, Marvel, Topps"
                         />
                       </div>
                       <div>
