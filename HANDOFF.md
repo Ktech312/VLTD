@@ -42,10 +42,10 @@ is risky or can't be done, say so plainly.
   ask EK to run it. **Never add a new column to the cloud row map
   (`src/lib/vaultCloud.ts`) without the migration** — unknown columns make the
   `vault_items` upsert throw.
-  **⚠ ONE MIGRATION PENDING:** `supabase/migrations/20260811_lookup_api_guards.sql`
+  **✅ NO MIGRATIONS PENDING.** `supabase/migrations/20260811_lookup_api_guards.sql`
   (generic permanent-cache + daily-budget guard for the upcitemdb/Discogs/
-  Metron lookup APIs, see §B10 — **not yet run**). Fails open until run —
-  nothing breaks either way, it just isn't cached/protected yet.
+  Metron lookup APIs, see §B10) — **confirmed run by EK 2026-08-11.** The
+  cache/budget protection is now actually live, not just fail-open.
   `supabase/migrations/20260811_vault_item_brand.sql` (the Brand/
   Manufacturer/Publisher field, §B9) — **confirmed run by EK 2026-08-11,
   cloud-sync wiring now done too.**
@@ -863,11 +863,13 @@ warnings — the React Compiler try/finally advisories already documented
 elsewhere in this file, and one pre-existing `stopCameraStream` missing-
 dep warning in `CameraCapturePanel.tsx` that predates this change).
 
-**Needs EK's action: run `supabase/migrations/20260811_lookup_api_guards.sql`
-in Supabase.** Until then this fails OPEN, same as PSA's guard would if
-unconfigured — lookups still work exactly as before, they just aren't
-cached or budget-protected yet. Nothing breaks either way; running it
-just turns the protection on.
+**DONE 2026-08-11:** EK ran the migration ("Success. No rows returned").
+The cache + daily-budget guard is now actually live for upcitemdb/
+Discogs/Metron, not just fail-open. Not yet observed in action on a real
+scan (no way to tell from the migration alone whether a cache hit or a
+budget reservation has actually fired) — first real multi-scan session
+is worth a glance at the `lookup_api_cache`/`lookup_api_usage` tables to
+confirm rows are actually accumulating.
 
 ### B11. Live zoom on the camera preview (before capture) — 2026-08-11, feature-detected, needs a real device to confirm
 EK's question: the zoom EK meant was on the LIVE camera view while
@@ -1592,9 +1594,9 @@ write that migration blind since it's payment-adjacent data.
    re-check the new not-this-chat's file list in §0 (Aug 11) before touching
    anything under `museum/`, `owner-lab/`, or the repo-root `marketing/`/
    `product/` folders.
-2. **Run `supabase/migrations/20260811_lookup_api_guards.sql`** if not done
-   yet (§B10) — turns on the cache+budget guard for upcitemdb/Discogs/Metron.
-   Fails open until run, so this isn't urgent, just easy to forget.
+2. Lookup-API guard migration (§B10) is confirmed run — no action needed,
+   just worth a glance at the `lookup_api_cache`/`lookup_api_usage` tables
+   once real scans have happened, to confirm it's actually being hit.
 3. Ask EK what they found testing: does the live camera zoom (§B11, brand
    new, feature-detected — expected to show on Android Chrome, expected to
    show NOTHING on iPhone) do the right thing on each device they have? Did
