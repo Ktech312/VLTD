@@ -42,10 +42,12 @@ is risky or can't be done, say so plainly.
   ask EK to run it. **Never add a new column to the cloud row map
   (`src/lib/vaultCloud.ts`) without the migration** — unknown columns make the
   `vault_items` upsert throw.
-  **⚠ ONE MIGRATION PENDING:** `supabase/migrations/20260812_profiles_stripe_customer_id.sql`
-  (adds `profiles.stripe_customer_id`, see §2I — **not yet run**). Fails
-  gracefully until run — billing keeps working exactly as before
-  (local-cache-only customer id), this just isn't cross-device yet.
+  **✅ NO MIGRATIONS PENDING.** `supabase/migrations/20260812_profiles_stripe_customer_id.sql`
+  (adds `profiles.stripe_customer_id`, see §2I) — **confirmed run by EK
+  2026-08-12.** The webhook can now persist the real customer id;
+  cross-device billing (Payment method/Invoices/Cancel) is live, not just
+  local-cache. Still not tested against a real Stripe checkout — worth a
+  glance at `profiles.stripe_customer_id` after the next real subscribe.
   `supabase/migrations/20260811_lookup_api_guards.sql`
   (generic permanent-cache + daily-budget guard for the upcitemdb/Discogs/
   Metron lookup APIs, see §B10) — **confirmed run by EK 2026-08-11.** The
@@ -1084,15 +1086,12 @@ opening billing on a NEW device would see the correct plan (tier is
 server-synced) but the Payment method/Invoice history/Cancel sections
 stayed hidden. Added `profiles.stripe_customer_id`
 (`supabase/migrations/20260812_profiles_stripe_customer_id.sql` —
-**not yet run**) and the webhook now writes it on
+**confirmed run by EK 2026-08-12**) and the webhook now writes it on
 `checkout.session.completed` and `customer.subscription.updated` (same
-events that already sync tier), with a graceful fallback if the
-migration hasn't landed yet so tier sync can't break because of an
-unrelated missing column. `/account/billing` now reads the customer id
-from the profile as the source of truth, falling back to the local
-cache only for an instant no-flash first paint. **Needs EK to run the
-migration** — until then this behaves exactly as before (local-cache-
-only), no regression either way.
+events that already sync tier), with a graceful fallback that was only
+needed pre-migration. `/account/billing` now reads the customer id from
+the profile as the source of truth, falling back to the local cache only
+for an instant no-flash first paint.
 **Not tested against a real Stripe checkout** — the webhook logic was
 verified by reading, not by triggering an actual `checkout.session.completed`
 event; worth confirming the column actually gets populated after a real
@@ -1690,10 +1689,12 @@ subscribe.
    re-check the new not-this-chat's file list in §0 (Aug 11) before touching
    anything under `museum/`, `owner-lab/`, or the repo-root `marketing/`/
    `product/` folders.
-2. **Run `supabase/migrations/20260812_profiles_stripe_customer_id.sql`**
-   (§2I) when convenient — billing keeps working without it, this just
-   turns on cross-device Payment method/Invoices/Cancel visibility.
-   Lookup-API guard migration (§B10) is already confirmed run.
+2. No migrations pending — the Stripe customer-id migration (§2I) and the
+   lookup-API guard migration (§B10) are both confirmed run. Cross-device
+   billing (Payment method/Invoices/Cancel) is live; worth a glance at
+   `profiles.stripe_customer_id` after the next real Stripe checkout to
+   confirm it's actually populating (webhook logic was verified by
+   reading, not by triggering a real checkout event).
 3. Ask EK what they found testing overnight: does the digital-zoom
    fallback work on desktop/iOS now (§B11)? Does zooming out actually
    switch to a real ultra-wide lens on any Android phone that has one
