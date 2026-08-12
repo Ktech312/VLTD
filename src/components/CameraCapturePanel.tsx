@@ -8,7 +8,7 @@ import { PillButton } from "@/components/ui/PillButton";
 import type { BarcodeScanResult } from "@/lib/scanners/barcodeScanner";
 import { startOnDemandScan } from "@/lib/scanners/onDemandBarcodeScan";
 import { warmupZXingWasm } from "@/lib/scanners/zxingWasmSetup";
-import { lookupByBarcodeOnly, type BarcodeLookupResult } from "@/lib/scanners/barcodeLookup";
+import { lookupByBarcodeOnly, guessWhyNoBarcodeMatch, type BarcodeLookupResult, type UnmatchedBarcodeGuess } from "@/lib/scanners/barcodeLookup";
 import {
   getUniverses,
   getCategories,
@@ -186,6 +186,10 @@ export default function CameraCapturePanel({
   // resolves. See barcodeLookup.ts / onLiveBarcodeScan.
   const [barcodeLookupState, setBarcodeLookupState] = useState<"idle" | "looking" | "found" | "none">("idle");
   const [barcodeLookupResult, setBarcodeLookupResult] = useState<BarcodeLookupResult | null>(null);
+  // When nothing matched, is there still something useful to say about why
+  // (e.g. "this looks like a CGC certificate code") instead of a flat "no
+  // match" that reads like the feature failed? See barcodeLookup.ts.
+  const [barcodeLookupGuess, setBarcodeLookupGuess] = useState<UnmatchedBarcodeGuess | null>(null);
   // Start fetching/compiling the scan decoder's wasm binary as soon as this
   // panel mounts, not on the first Scan tap -- so tapping Scan later doesn't
   // eat a cold-load delay on top of the burst itself.
@@ -535,9 +539,11 @@ export default function CameraCapturePanel({
         // -- fires the moment the code's read, no shutter press needed.
         setBarcodeLookupState("looking");
         setBarcodeLookupResult(null);
+        setBarcodeLookupGuess(null);
         void lookupByBarcodeOnly(result).then((match) => {
           setBarcodeLookupState(match ? "found" : "none");
           setBarcodeLookupResult(match);
+          if (!match) setBarcodeLookupGuess(guessWhyNoBarcodeMatch(result));
           onLiveBarcodeScan?.(result, match);
         });
       },
@@ -778,6 +784,7 @@ export default function CameraCapturePanel({
     setLiveBarcode(null);
     setBarcodeLookupState("idle");
     setBarcodeLookupResult(null);
+    setBarcodeLookupGuess(null);
     scanStopRef.current?.();
     scanStopRef.current = null;
     setScanState("idle");
@@ -1315,6 +1322,10 @@ export default function CameraCapturePanel({
                         <>
                           <span style={{ color: "#4ade80" }}>Found:</span> {barcodeLookupResult.summary} — filled in what it could.
                         </>
+                      ) : barcodeLookupGuess?.confident ? (
+                        <>This looks like a <b>{barcodeLookupGuess.label}</b> certificate code — that lookup isn&apos;t built yet.</>
+                      ) : barcodeLookupGuess ? (
+                        <>This might be {barcodeLookupGuess.label} rather than a retail barcode — that kind of lookup isn&apos;t built for CGC yet, and PSA&apos;s is currently paused.</>
                       ) : (
                         "No match found for this code — take a photo and Identify, or fill in by hand."
                       )}

@@ -114,6 +114,47 @@ function buildProductResult(upc: NonNullable<Awaited<ReturnType<typeof lookupUpc
  *  publisher, artist, label) than the generic UPC/product lookup would
  *  return for the same code -- the generic lookup is the broadest net and
  *  is only used as a fallback when the narrower databases miss. */
+const GRADING_SERVICE_DOMAINS: Array<{ needle: string; name: string }> = [
+  { needle: "cgccards.com", name: "CGC" },
+  { needle: "cgcgrading.com", name: "CGC" },
+  { needle: "cgccomics.com", name: "CGC" },
+  { needle: "cgcvideogames.com", name: "CGC" },
+  { needle: "cgchomevideo.com", name: "CGC" },
+  { needle: "psacard.com", name: "PSA" },
+  { needle: "beckett.com", name: "Beckett/BGS" },
+  { needle: "beckettgrading.com", name: "Beckett/BGS" },
+  { needle: "sgccert.com", name: "SGC" },
+];
+
+export type UnmatchedBarcodeGuess = { confident: boolean; label: string };
+
+/** When nothing matched, is there still something USEFUL to say about why --
+ *  specifically, does this look like a grading-company certificate code
+ *  (CGC/PSA/Beckett/SGC) rather than a product this app just doesn't
+ *  recognize? A flat "no match" reads like the feature failed even when it
+ *  worked correctly (comics/vinyl/UPC/book genuinely don't cover cert
+ *  codes) -- naming what it probably IS instead is honest and more useful,
+ *  as long as it's honest about how sure it is.
+ *
+ *  Two signals, in order of confidence:
+ *  1. The raw scanned text contains a known grading company's own domain
+ *     (their QR literally links to their verify page) -- confident, name
+ *     the exact service.
+ *  2. It's a QR code (not a linear barcode) that matched nothing -- retail
+ *     UPC/EAN codes are essentially never QR-encoded in practice, so a QR
+ *     miss in a collectibles-scanning context is plausibly a cert code,
+ *     just not confidently attributable to one specific grader. */
+export function guessWhyNoBarcodeMatch(barcode: { format?: string; rawValue?: string }): UnmatchedBarcodeGuess | null {
+  const raw = String(barcode.rawValue ?? "").toLowerCase();
+  for (const { needle, name } of GRADING_SERVICE_DOMAINS) {
+    if (raw.includes(needle)) return { confident: true, label: name };
+  }
+  if (barcode.format === "QR") {
+    return { confident: false, label: "a grading-company certificate (like CGC or PSA)" };
+  }
+  return null;
+}
+
 export async function lookupByBarcodeOnly(
   barcode: { digits?: string; rawValue?: string }
 ): Promise<BarcodeLookupResult | null> {
