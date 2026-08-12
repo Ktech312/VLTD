@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ScanCropEditor from "@/components/ScanCropEditor";
 import { DropdownPill } from "@/components/ui/DropdownPill";
 import { Glyph } from "@/components/ui/Glyph";
@@ -37,6 +37,7 @@ import {
 } from "@/components/capture/captureUtils";
 import { cropImageFile, computeSubjectCrop, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 import { useCameraZoom } from "@/hooks/useCameraZoom";
+import { classifyBackCameras } from "@/lib/scanners/cameraLenses";
 
 type CameraPermissionState = "granted" | "prompt" | "denied" | "unknown";
 type DetectionState = "idle" | "loading" | "ready" | "unavailable";
@@ -232,7 +233,29 @@ export default function CameraCapturePanel({
     selectedDeviceIdRef.current = selectedDeviceId;
   }, [selectedDeviceId]);
 
-  const cameraZoom = useCameraZoom();
+  // Best-effort ultra-wide lens detection -- see cameraLenses.ts. `null` on
+  // most phones (no separate ultra-wide device, or the OS already fuses it
+  // into the main camera's own hardware zoom range) -- the switch callbacks
+  // below then simply never trigger.
+  const { mainId, ultraWideId } = useMemo(() => classifyBackCameras(videoDevices), [videoDevices]);
+  const isAtWideLens = Boolean(ultraWideId) && selectedDeviceId === ultraWideId;
+  // Mirrors the Camera picker's own onChange below (ref + state + retry, no
+  // localStorage write -- this is an ephemeral zoom-triggered hop, not the
+  // curator's manually chosen preferred camera).
+  const switchToDevice = useCallback((nextId: string) => {
+    selectedDeviceIdRef.current = nextId;
+    preferredDeviceIdRef.current = nextId;
+    setSelectedDeviceId(nextId);
+    setRetryCount((count) => count + 1);
+  }, []);
+  const switchToWideLens = useCallback(() => {
+    if (ultraWideId) switchToDevice(ultraWideId);
+  }, [ultraWideId, switchToDevice]);
+  const exitWideLens = useCallback(() => {
+    switchToDevice(mainId ?? "");
+  }, [mainId, switchToDevice]);
+
+  const cameraZoom = useCameraZoom({ onZoomPastFloor: switchToWideLens, isAtWideLens, onExitWideLens: exitWideLens });
   const attachZoom = cameraZoom.attach;
   const resetZoom = cameraZoom.reset;
 
@@ -1239,10 +1262,16 @@ export default function CameraCapturePanel({
                     otherwise a digital fallback (CSS-scaled preview,
                     cropped to match at capture time) so a zoom control
                     exists on every platform, including desktop mouse
-                    (scroll wheel) and iOS. Pinch also works in this frame. */}
+                    (scroll wheel) and iOS. Pinch also works in this frame.
+                    Scrolling out past this camera's floor switches to a
+                    real ultra-wide lens when the phone exposes one as a
+                    separate camera (best-effort, see cameraLenses.ts);
+                    scrolling back in switches back. */}
                 {!cameraError ? (
                   <div className="absolute bottom-3 right-3 flex h-32 w-9 flex-col items-center gap-1 rounded-full px-1.5 py-2 backdrop-blur" style={{ background: "rgba(0,0,0,0.42)", border: "1px solid rgba(255,255,255,0.25)" }}>
-                    <span className="text-[9px] font-bold text-white/70">{cameraZoom.zoom.toFixed(1)}x</span>
+                    <span className="text-[8px] font-bold text-white/70">
+                      {isAtWideLens ? "Wide" : `${cameraZoom.zoom.toFixed(1)}x`}
+                    </span>
                     <input
                       type="range"
                       min={cameraZoom.min}

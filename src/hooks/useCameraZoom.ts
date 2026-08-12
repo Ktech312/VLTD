@@ -44,8 +44,25 @@ export type CameraCaptureCrop = { sx: number; sy: number; sw: number; sh: number
  *  moment of capture and use the returned rect as the `drawImage` source
  *  rect -- this is what keeps the captured photo matching what the digital
  *  zoom preview actually showed, instead of a zoomed-looking preview that
- *  silently captures the full unzoomed frame. */
-export function useCameraZoom() {
+ *  silently captures the full unzoomed frame.
+ *
+ *  Optional lens-switching hooks (2026-08-11): on a phone that exposes a
+ *  separate ultra-wide camera as its own device (see
+ *  `src/lib/scanners/cameraLenses.ts` -- NOT all phones do, some fuse
+ *  every lens into one device already, in which case hardware zoom above
+ *  already covers this for free with nothing to wire here), a caller can
+ *  pass `onZoomPastFloor` to hear when the user keeps trying to zoom out
+ *  past this camera's own floor -- the natural moment to switch to a wider
+ *  physical lens instead of just clamping. `isAtWideLens`/`onExitWideLens`
+ *  are the reverse: once switched to the wide lens, any zoom-IN gesture
+ *  should hand back to the main camera rather than trying to zoom further
+ *  on a lens this hook has no more room to zoom into. */
+export function useCameraZoom(options: {
+  onZoomPastFloor?: () => void;
+  isAtWideLens?: boolean;
+  onExitWideLens?: () => void;
+} = {}) {
+  const { onZoomPastFloor, isAtWideLens, onExitWideLens } = options;
   const [hardwareSupported, setHardwareSupported] = useState(false);
   const [hwZoom, setHwZoomState] = useState(1);
   const [hwMin, setHwMin] = useState(1);
@@ -146,9 +163,18 @@ export function useCameraZoom() {
       if (e.touches.length !== 2 || pinchStartDistRef.current == null) return;
       e.preventDefault();
       const ratio = touchDistance(e.touches) / pinchStartDistRef.current;
+
+      if (isAtWideLens && ratio > 1.05) {
+        onExitWideLens?.();
+        return;
+      }
+      if (ratio < 0.95 && zoom <= min + 1e-6) {
+        onZoomPastFloor?.();
+        return;
+      }
       setZoom(pinchStartZoomRef.current * ratio);
     },
-    [setZoom]
+    [setZoom, zoom, min, isAtWideLens, onExitWideLens, onZoomPastFloor]
   );
 
   const handlePinchEnd = useCallback(() => {
@@ -165,9 +191,18 @@ export function useCameraZoom() {
       e.preventDefault();
       const range = max - min || 1;
       const delta = (-e.deltaY / 300) * range;
+
+      if (isAtWideLens && delta > 0) {
+        onExitWideLens?.();
+        return;
+      }
+      if (delta < 0 && zoom <= min + 1e-6) {
+        onZoomPastFloor?.();
+        return;
+      }
       setZoom(zoom + delta);
     },
-    [zoom, min, max, setZoom]
+    [zoom, min, max, setZoom, isAtWideLens, onExitWideLens, onZoomPastFloor]
   );
 
   return {
