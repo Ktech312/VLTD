@@ -43,6 +43,30 @@ UPC/EAN on a normal product).
 🔒 PSA lookups still PAUSED (`ENABLE_PSA_LOOKUP = false`) — this was a CGC
 slab, not PSA, so this test didn't exercise that path either way. Still
 needs EK's go-ahead to flip back on.
+
+## Barcode scans now actually DO something (2026-08-11) — connects to real lookups, not device-tested yet
+EK's real question: "what can scanning a barcode do at this point?" — honest
+answer at the time was nothing; it just confirmed the read. All the
+individual lookups (comic/vinyl/UPC/book) already existed, wired only into
+the after-a-photo Identify pipeline. New `src/lib/scanners/barcodeLookup.ts`
+runs those same free lookups the instant a live scan decodes a code, no
+photo needed. Wired into all 3 places EK asked about:
+- **`/capture`**: scan → lookup fires immediately → a real "Found via
+  barcode: X" card (with cover art if available) or an honest "no match"
+  message → fills blank fields only (never overwrites something already
+  typed or already found).
+- **`/vault/add`**: same lookup, wired into that page's own existing
+  scan-review UI/status line instead of a new one.
+- **Quick Add (batch)**: EK's other real question — "scan 10 barcodes then
+  batch it, how will I know it worked." Each scan's lookup now starts
+  immediately and shows a live tag per item in the review sheet ("Matched:
+  X" / "No match" / "Looking up...") BEFORE hitting Finished — no more
+  finding out only after the batch runs. A confident match also skips the
+  metered AI scan for that item (already have better data for free).
+⬜ **None of this has been tested on a real device yet** — build/tsc/eslint
+all clean, but the actual lookups (do they return real matches, does the
+Quick Add tag show up correctly, does skipping AI on a matched item work)
+need a real scan of a real comic/vinyl/UPC to confirm.
 🔒 **PSA lookups fully PAUSED** (`ENABLE_PSA_LOOKUP = false` in
 `vault/add/page.tsx`'s `runPSALookupForCode`) — EK's explicit call, so scan
 testing can't burn real PSA quota. Covers the auto graded_card flow, the
