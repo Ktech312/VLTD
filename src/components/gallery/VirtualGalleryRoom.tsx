@@ -427,6 +427,19 @@ function getRoomPalette(style: RoomStyle) {
 // walls bare while the back wall did all the work).
 const WALL_CYCLE: Array<"back" | "left" | "right"> = ["back", "left", "back", "right"];
 
+// The physical shelf boards (built further down, same 4 heights) and every item's
+// vertical position both read from this one table — they used to be two separately
+// hand-tuned numbers (4.72 for the boards, 5.42/4.75 for items) that drifted out of
+// sync, so items floated well above their shelf instead of resting on it.
+const SHELF_ROW_Y = [4.72, 3.47, 2.22, 0.97];
+
+function shelfItemY(row: number, scale: number) {
+  const shelfY = SHELF_ROW_Y[row] ?? SHELF_ROW_Y[SHELF_ROW_Y.length - 1];
+  const shelfHalfThickness = 0.05;
+  const cardHalfHeight = (1.54 * scale) / 2;
+  return shelfY + shelfHalfThickness + cardHalfHeight;
+}
+
 function wallGridPosition(
   wall: "back" | "left" | "right",
   slot: number,
@@ -437,7 +450,7 @@ function wallGridPosition(
     const row = Math.floor(slot / 8);
     return {
       x: -7.35 + col * 2.1,
-      y: 5.42 - row * 1.25,
+      y: shelfItemY(row, config.backScale),
       z: config.backZ,
       ry: 0,
       scale: config.backScale,
@@ -449,7 +462,7 @@ function wallGridPosition(
   const depth = Math.floor(slot / 4);
   return {
     x: wall === "left" ? -10.22 : 10.22,
-    y: 4.75 - row * 1.25,
+    y: shelfItemY(row, config.sideScale),
     z: config.sideBaseZ + depth * config.sideZStep,
     ry: wall === "left" ? Math.PI / 2 : -Math.PI / 2,
     scale: config.sideScale,
@@ -488,7 +501,7 @@ function buildPositions(layout: RoomLayout, count: number): RoomItemPosition[] {
       const slot = Math.floor(sideIndex / 2);
       return {
         x: wall === "left" ? -10.22 : 10.22,
-        y: 4.75 - (slot % 4) * 1.25,
+        y: shelfItemY(slot % 4, 0.74),
         z: -8.8 + Math.floor(slot / 4) * 2.2,
         ry: wall === "left" ? Math.PI / 2 : -Math.PI / 2,
         scale: 0.74,
@@ -533,6 +546,12 @@ export default function VirtualGalleryRoom() {
   const [wallpaperError, setWallpaperError] = useState("");
   const [selectedItemId, setSelectedItemId] = useState<string>(DEMO_ITEMS[0]?.id ?? "");
   const [saveState, setSaveState] = useState<"idle" | "saved">("idle");
+  const [isOrganizing, setIsOrganizing] = useState(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const touchFromRef = useRef<number | null>(null);
+  const touchOverRef = useRef<number | null>(null);
+  const touchCloneRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const vaultItems = loadItems();
@@ -765,11 +784,12 @@ export default function VirtualGalleryRoom() {
     rightBaseboard.position.set(10.42, 0.08, -3.05);
     roomGroup.add(rightBaseboard);
 
-    const shelfRows = 4;
-    for (let row = 0; row < shelfRows; row += 1) {
-      const y = 4.72 - row * 1.25;
+    for (let row = 0; row < SHELF_ROW_Y.length; row += 1) {
+      const y = SHELF_ROW_Y[row];
 
-      const backShelf = new THREE.Mesh(new THREE.BoxGeometry(18.2, 0.1, 0.55), trimMaterial);
+      // Widened to 19.9 (from 18.2) so it actually reaches the side shelves at
+      // x=±9.98 instead of leaving a visible ~0.9-unit gap at each back corner.
+      const backShelf = new THREE.Mesh(new THREE.BoxGeometry(19.9, 0.1, 0.55), trimMaterial);
       backShelf.position.set(0, y, -11.48);
       roomGroup.add(backShelf);
 
@@ -1176,6 +1196,23 @@ export default function VirtualGalleryRoom() {
     setSelectedItemId(itemId);
   }
 
+  // Swaps two items' shelf order — buildPositions() assigns wall/shelf slots
+  // purely by position in `selectedIds`, so reordering here is what actually
+  // moves an item to a different shelf spot in the room.
+  function swapSelectedOrder(fromIdx: number, toIdx: number) {
+    const fromId = selectedItems[fromIdx]?.id;
+    const toId = selectedItems[toIdx]?.id;
+    if (!fromId || !toId || fromId === toId) return;
+    setSelectedIds((current) => {
+      const next = [...current];
+      const a = next.indexOf(fromId);
+      const b = next.indexOf(toId);
+      if (a === -1 || b === -1) return current;
+      [next[a], next[b]] = [next[b], next[a]];
+      return next;
+    });
+  }
+
   function saveDraft() {
     const draft: RoomDraft = {
       galleryId,
@@ -1328,50 +1365,205 @@ export default function VirtualGalleryRoom() {
             </div>
           </ControlPanel>
 
-          <ControlPanel title="Items" icon={<PackagePlus size={15} />}>
-            <div className="max-h-[360px] overflow-y-auto pr-1">
-              <div className="grid gap-2">
-                {items.map((item) => {
-                  const selected = selectedSet.has(item.id);
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => toggleItem(item.id)}
-                      className={[
-                        "grid grid-cols-[42px_minmax(0,1fr)_24px] items-center gap-2 rounded-[6px] p-2 text-left ring-1 transition",
-                        selected
-                          ? "bg-[rgba(79,211,238,0.10)] ring-[rgba(79,211,238,0.45)]"
-                          : "bg-[color:var(--input)] ring-[color:var(--border)]",
-                      ].join(" ")}
-                    >
-                      <span className="h-[54px] overflow-hidden rounded-[5px] bg-black/20">
-                        {itemImage(item) ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={itemImage(item)} alt="" className="h-full w-full object-cover" draggable={false} />
-                        ) : null}
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block truncate text-sm font-bold">{item.title}</span>
-                        <span className="mt-0.5 block truncate text-xs text-[color:var(--muted)]">
-                          {itemSubtitle(item) || item.universe || item.category || "Collection piece"}
-                        </span>
-                      </span>
-                      <span
+          <ControlPanel
+            title={isOrganizing ? "Arrange Shelf Order" : "Items"}
+            icon={<PackagePlus size={15} />}
+            action={
+              selectedItems.length > 1 ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOrganizing((current) => !current);
+                    setDragIndex(null);
+                    setDragOverIndex(null);
+                  }}
+                  aria-pressed={isOrganizing}
+                  className={[
+                    "inline-flex min-h-[26px] items-center justify-center rounded-full px-2.5 text-[11px] font-black transition",
+                    isOrganizing
+                      ? "bg-[#4FD3EE] text-[#06171d]"
+                      : "bg-[color:var(--input)] text-[color:var(--muted2)] ring-1 ring-[color:var(--border)]",
+                  ].join(" ")}
+                >
+                  {isOrganizing ? "Done" : "Organize"}
+                </button>
+              ) : null
+            }
+          >
+            <style>{`
+              @keyframes vltd-room-wiggle {
+                0%   { transform: rotate(-1.3deg); }
+                50%  { transform: rotate(1.3deg); }
+                100% { transform: rotate(-1.3deg); }
+              }
+              .vltd-room-wiggle { animation: vltd-room-wiggle 0.32s ease-in-out infinite; }
+              .vltd-room-wiggle-over { animation: none !important; transform: scale(1.05) !important; box-shadow: 0 0 0 2px rgba(79,211,238,0.85), 0 0 14px rgba(79,211,238,0.4) !important; }
+            `}</style>
+            {isOrganizing ? (
+              <>
+                <p className="text-xs leading-5 text-[color:var(--muted)]">
+                  Drag a piece onto another to swap shelf position. Position 1 fills first.
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {selectedItems.map((item, idx) => {
+                    const isBeingDragged = dragIndex === idx;
+                    const isDragOver = dragOverIndex === idx && dragIndex !== idx;
+                    return (
+                      <div
+                        key={item.id}
+                        data-arrange-idx={idx}
+                        draggable
+                        style={{ touchAction: "none" }}
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData("text/plain", String(idx));
+                          e.dataTransfer.effectAllowed = "move";
+                          setDragIndex(idx);
+                          const imgEl = e.currentTarget.querySelector("img");
+                          if (imgEl) e.dataTransfer.setDragImage(imgEl, imgEl.clientWidth / 2, imgEl.clientHeight / 2);
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          if (dragIndex !== null && dragIndex !== idx) setDragOverIndex(idx);
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const fromIdx = dragIndex ?? parseInt(e.dataTransfer.getData("text/plain"), 10);
+                          if (!Number.isNaN(fromIdx) && fromIdx !== idx) swapSelectedOrder(fromIdx, idx);
+                          setDragIndex(null);
+                          setDragOverIndex(null);
+                        }}
+                        onDragEnd={() => {
+                          setDragIndex(null);
+                          setDragOverIndex(null);
+                        }}
+                        onTouchStart={(e) => {
+                          e.stopPropagation();
+                          touchFromRef.current = idx;
+                          touchOverRef.current = null;
+                          setDragIndex(idx);
+                          const imgEl = e.currentTarget.querySelector("img");
+                          if (imgEl) {
+                            const clone = imgEl.cloneNode(true) as HTMLImageElement;
+                            Object.assign(clone.style, {
+                              position: "fixed",
+                              width: "64px",
+                              height: "64px",
+                              objectFit: "cover",
+                              borderRadius: "6px",
+                              opacity: "0.88",
+                              pointerEvents: "none",
+                              zIndex: "9999",
+                              transform: "scale(1.1)",
+                              boxShadow: "0 0 0 2px rgba(79,211,238,0.8), 0 8px 24px rgba(0,0,0,0.5)",
+                            });
+                            const touch = e.touches[0];
+                            clone.style.left = `${touch.clientX - 32}px`;
+                            clone.style.top = `${touch.clientY - 32}px`;
+                            document.body.appendChild(clone);
+                            touchCloneRef.current = clone;
+                          }
+                        }}
+                        onTouchMove={(e) => {
+                          if (touchFromRef.current === null) return;
+                          const touch = e.touches[0];
+                          if (touchCloneRef.current) {
+                            touchCloneRef.current.style.left = `${touch.clientX - 32}px`;
+                            touchCloneRef.current.style.top = `${touch.clientY - 32}px`;
+                          }
+                          const clone = touchCloneRef.current;
+                          if (clone) clone.style.visibility = "hidden";
+                          let el: Element | null = document.elementFromPoint(touch.clientX, touch.clientY);
+                          if (clone) clone.style.visibility = "";
+                          let toIdx: number | null = null;
+                          while (el && toIdx === null) {
+                            const attr = el.getAttribute("data-arrange-idx");
+                            if (attr !== null) toIdx = parseInt(attr, 10);
+                            el = el.parentElement;
+                          }
+                          if (toIdx !== null && toIdx !== touchFromRef.current) {
+                            touchOverRef.current = toIdx;
+                            setDragOverIndex(toIdx);
+                          }
+                        }}
+                        onTouchEnd={() => {
+                          const fromIdx = touchFromRef.current;
+                          const toIdx = touchOverRef.current;
+                          touchFromRef.current = null;
+                          touchOverRef.current = null;
+                          touchCloneRef.current?.remove();
+                          touchCloneRef.current = null;
+                          if (fromIdx !== null && toIdx !== null && fromIdx !== toIdx) {
+                            swapSelectedOrder(fromIdx, toIdx);
+                          }
+                          setDragIndex(null);
+                          setDragOverIndex(null);
+                        }}
                         className={[
-                          "grid h-6 w-6 place-items-center rounded-[5px] text-xs font-black ring-1",
-                          selected
-                            ? "bg-[#4FD3EE] text-[#06171d] ring-cyan-200/40"
-                            : "bg-black/10 text-[color:var(--muted2)] ring-[color:var(--border)]",
+                          "relative min-w-0 cursor-grab select-none overflow-hidden rounded-[6px] bg-[color:var(--input)] ring-1 ring-[color:var(--border)] transition active:cursor-grabbing",
+                          isDragOver ? "vltd-room-wiggle-over" : "vltd-room-wiggle",
+                          isBeingDragged ? "opacity-35" : "opacity-100",
                         ].join(" ")}
                       >
-                        {selected ? "ON" : "+"}
-                      </span>
-                    </button>
-                  );
-                })}
+                        <span className="absolute left-1 top-1 z-10 grid h-5 w-5 place-items-center rounded-[4px] bg-black/60 text-[10px] font-black text-white ring-1 ring-white/20">
+                          {idx + 1}
+                        </span>
+                        <span className="block aspect-square overflow-hidden bg-black/20">
+                          {itemImage(item) ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={itemImage(item)} alt="" className="h-full w-full object-cover" draggable={false} />
+                          ) : null}
+                        </span>
+                        <span className="block truncate px-1.5 py-1 text-[10px] font-bold">{item.title}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <div className="max-h-[360px] overflow-y-auto pr-1">
+                <div className="grid gap-2">
+                  {items.map((item) => {
+                    const selected = selectedSet.has(item.id);
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => toggleItem(item.id)}
+                        className={[
+                          "grid grid-cols-[42px_minmax(0,1fr)_24px] items-center gap-2 rounded-[6px] p-2 text-left ring-1 transition",
+                          selected
+                            ? "bg-[rgba(79,211,238,0.10)] ring-[rgba(79,211,238,0.45)]"
+                            : "bg-[color:var(--input)] ring-[color:var(--border)]",
+                        ].join(" ")}
+                      >
+                        <span className="h-[54px] overflow-hidden rounded-[5px] bg-black/20">
+                          {itemImage(item) ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={itemImage(item)} alt="" className="h-full w-full object-cover" draggable={false} />
+                          ) : null}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-bold">{item.title}</span>
+                          <span className="mt-0.5 block truncate text-xs text-[color:var(--muted)]">
+                            {itemSubtitle(item) || item.universe || item.category || "Collection piece"}
+                          </span>
+                        </span>
+                        <span
+                          className={[
+                            "grid h-6 w-6 place-items-center rounded-[5px] text-xs font-black ring-1",
+                            selected
+                              ? "bg-[#4FD3EE] text-[#06171d] ring-cyan-200/40"
+                              : "bg-black/10 text-[color:var(--muted2)] ring-[color:var(--border)]",
+                          ].join(" ")}
+                        >
+                          {selected ? "ON" : "+"}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
           </ControlPanel>
 
           <button
@@ -1456,17 +1648,22 @@ export default function VirtualGalleryRoom() {
 function ControlPanel({
   title,
   icon,
+  action,
   children,
 }: {
   title: string;
   icon: ReactNode;
+  action?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <section className="rounded-[8px] border bg-[color:var(--theme-card)] p-3 shadow-[var(--shadow-soft)]" style={{ borderColor: "var(--theme-border)" }}>
-      <div className="mb-3 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--muted2)]">
-        {icon}
-        {title}
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--muted2)]">
+          {icon}
+          {title}
+        </div>
+        {action}
       </div>
       <div className="grid gap-2">{children}</div>
     </section>
