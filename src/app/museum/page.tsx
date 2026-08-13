@@ -453,6 +453,7 @@ export default function MuseumPage() {
             {EXHIBITION_SORTS.map((s) => (<option key={s.key} value={s.key}>{s.label}</option>))}
           </select>
           {/* Desktop Create — with the toolbar */}
+          <Link href="/museum/virtual-room" className="inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-[8px] px-3 text-xs font-black transition ring-1" style={{ background: "rgba(203,208,213,0.08)", color: "var(--fg)", borderColor: "var(--theme-border)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.08)" }}>3D Room</Link>
           <Link href="/museum/new" className="hidden min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-[8px] px-4 text-xs font-black transition sm:inline-flex" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>+ Create Exhibition</Link>
         </div>
       </div>

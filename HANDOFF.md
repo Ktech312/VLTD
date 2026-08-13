@@ -103,6 +103,47 @@ confirm with EK who owns a screen.** EK is aware of this.
   they've looked. `src/app/forge/` and `src/app/vault/forge/` are empty
   directories (no `page.tsx`), harmless, safe to ignore.
 
+**New, as of 2026-08-12 - Virtual Gallery Builder / future VLTD Museum campus**
+- Prototype route: `/museum/virtual-room`
+  (`src/app/museum/virtual-room/page.tsx` +
+  `src/components/gallery/VirtualGalleryRoom.tsx`). This is a future add-on
+  concept, not a polished shipped feature.
+- Product intent from EK: users build virtual galleries/rooms from their own
+  vault items. Longer term this can become a searchable/public "museum campus"
+  or convention floor organized by universe/category, e.g. Comics, TCG,
+  Sports, Automobile, Music, MTG, Pokemon, etc. Users may eventually pay for
+  larger room sizes, premium templates, public convention booths, or featured
+  room placement.
+- Current implementation:
+  - `Room / Map` switch in the Gallery Builder sidebar.
+  - 3D room mode with wall shelves, hardwood floor, taller-ceiling hallway
+    feel, uploaded wallpaper texture support, movement controls, click-to-focus
+    item viewing, and center-room glass cabinet/plinth placeholders.
+  - Map mode groups real vault items by `universe`/`category` and shows a rough
+    museum-campus floorplan with Store, Elevator, Entrance, rotunda, Main
+    Gallery, Gallery A/C/D/E/F/G, Garden Gallery, and a side list of universe
+    rooms. Clicking a populated room opens that universe in the 3D room.
+- EK feedback on the current visual state: "looking better but needs clean up."
+  Screenshot showed the map is conceptually closer, but the cards/panels
+  overlap and crowd each other, typography is too large in small room blocks,
+  several room tiles are washed-out/too bright against the dark VLTD theme, and
+  the overview needs a cleaner real floorplan composition.
+- Important behavior requirement: clicking an item in 3D should move the camera
+  directly in front of that exact item, head-on, at a natural eye height. Earlier
+  attempts selected the item but put the viewer under/beside the shelf; keep
+  this in the cleanup checklist until visually confirmed.
+- Design inspiration EK supplied: museum floorplan maps, building cutaway,
+  classic museum facade, warm gallery room with seating, blue-wall gallery with
+  track lights, glass cabinet museum halls, open 3D exhibition floor models, and
+  a Sims/theme-park-style overhead campus map. The direction should feel like a
+  collector convention/museum, not just a flat dashboard.
+- Do not overbuild the full Sims editor first. Recommended product path:
+  1) clean 2D overview + clickable universe rooms,
+  2) polished 3D room templates with wall shelves and center display cabinets,
+  3) public/searchable rooms by universe,
+  4) paid room sizes/templates/convention placement,
+  5) later freeform room editing if usage justifies it.
+
 ---
 
 ## 1. Where things stand (screens)

@@ -1,0 +1,1817 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  BadgeDollarSign,
+  Boxes,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  CircleDollarSign,
+  DoorOpen,
+  ExternalLink,
+  Eye,
+  GalleryHorizontalEnd,
+  Grid3X3,
+  Landmark,
+  Layers3,
+  Map as MapIcon,
+  MonitorUp,
+  PackagePlus,
+  Paintbrush,
+  RotateCcw,
+  RotateCw,
+  Save,
+  Sparkles,
+} from "lucide-react";
+import * as THREE from "three";
+
+import {
+  getGallerySections,
+  loadGalleries,
+  type Gallery,
+} from "@/lib/galleryModel";
+import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
+
+type RoomStyle = "vault" | "whitebox" | "arcade";
+type RoomLayout = "storefront" | "salon" | "spotlight";
+type ViewMode = "room" | "overview";
+type RoomDraft = {
+  galleryId: string;
+  selectedIds: string[];
+  roomStyle: RoomStyle;
+  roomLayout: RoomLayout;
+  viewMode?: ViewMode;
+  showValues: boolean;
+  wallTextureUrl?: string;
+};
+type RoomItemPosition = {
+  x: number;
+  y: number;
+  z: number;
+  ry: number;
+  scale: number;
+  wall: "back" | "left" | "right" | "center";
+};
+type MuseumUniverseRoom = {
+  id: string;
+  title: string;
+  items: VaultItem[];
+  value: number;
+  tier: "Starter" | "Gallery" | "Hall";
+  wing: "North" | "South" | "Main" | "Garden";
+};
+
+const DRAFT_KEY = "vltd_virtual_gallery_room_draft_v1";
+const MAX_ROOM_ITEMS = 32;
+
+const DEMO_ITEMS: VaultItem[] = [
+  {
+    id: "demo-comic",
+    title: "Signed Variant Comic",
+    subtitle: "Foil cover, limited run",
+    universe: "Comics",
+    category: "Comic Books",
+    currentValue: 420,
+    imageFrontUrl: "/collectibles/comic-slab.png",
+  },
+  {
+    id: "demo-card",
+    title: "Rookie Parallel",
+    subtitle: "Graded 10",
+    universe: "Sports",
+    category: "Trading Cards",
+    currentValue: 1850,
+    imageFrontUrl: "/collectibles/sports-slab.png",
+  },
+  {
+    id: "demo-record",
+    title: "First Press Vinyl",
+    subtitle: "Near mint sleeve",
+    universe: "Music",
+    category: "Vinyl",
+    currentValue: 260,
+    imageFrontUrl: "/collectibles/vinyl-record.png",
+  },
+  {
+    id: "demo-figure",
+    title: "Designer Figure",
+    subtitle: "Artist proof",
+    universe: "Pop Culture",
+    category: "Figures",
+    currentValue: 700,
+    imageFrontUrl: "/collectibles/vinyl-figure.png",
+  },
+  {
+    id: "demo-poster",
+    title: "Theater One Sheet",
+    subtitle: "Linen backed",
+    universe: "Film",
+    category: "Poster",
+    currentValue: 540,
+    imageFrontUrl: "/collectibles/movie-poster.png",
+  },
+  {
+    id: "demo-guitar",
+    title: "Tour Guitar",
+    subtitle: "Stage-played",
+    universe: "Music",
+    category: "Instruments",
+    currentValue: 3200,
+    imageFrontUrl: "/collectibles/guitar.png",
+  },
+];
+
+function formatMoney(value?: number) {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return "";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function formatCompactNumber(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
+function itemSubtitle(item: VaultItem) {
+  return [item.subtitle, item.number, item.grade].filter(Boolean).join(" - ");
+}
+
+function itemImage(item: VaultItem) {
+  return getPrimaryImageUrl(item) || item.imageFrontUrl || item.imageBackUrl || "";
+}
+
+function safeDraft(value: unknown): Partial<RoomDraft> {
+  if (!value || typeof value !== "object") return {};
+  return value as Partial<RoomDraft>;
+}
+
+function itemUniverse(item: VaultItem) {
+  return String(item.universe || item.category || "Collection").trim() || "Collection";
+}
+
+function buildUniverseRooms(items: VaultItem[]): MuseumUniverseRoom[] {
+  const groups = new Map<string, VaultItem[]>();
+  items.forEach((item) => {
+    const key = itemUniverse(item);
+    groups.set(key, [...(groups.get(key) ?? []), item]);
+  });
+
+  return Array.from(groups.entries())
+    .map(([title, roomItems]) => {
+      const value = roomItems.reduce((sum, item) => sum + Number(item.currentValue ?? 0), 0);
+      return {
+        id: title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "collection",
+        title,
+        items: roomItems,
+        value,
+        tier: roomItems.length >= 18 ? "Hall" : roomItems.length >= 8 ? "Gallery" : "Starter",
+        wing: title.length % 4 === 0 ? "North" : title.length % 4 === 1 ? "South" : title.length % 4 === 2 ? "Main" : "Garden",
+      } satisfies MuseumUniverseRoom;
+    })
+    .sort((a, b) => b.items.length - a.items.length || b.value - a.value || a.title.localeCompare(b.title));
+}
+
+function drawItemTexture(
+  item: VaultItem,
+  showValues: boolean,
+  image?: HTMLImageElement | null
+) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 704;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return new THREE.CanvasTexture(canvas);
+
+  const grd = ctx.createLinearGradient(0, 0, 512, 704);
+  grd.addColorStop(0, "#272b32");
+  grd.addColorStop(0.52, "#0f1319");
+  grd.addColorStop(1, "#080a0d");
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, 512, 704);
+
+  ctx.strokeStyle = "rgba(237,239,241,0.72)";
+  ctx.lineWidth = 7;
+  ctx.strokeRect(18, 18, 476, 668);
+  ctx.strokeStyle = "rgba(79,211,238,0.5)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(34, 34, 444, 636);
+
+  if (image?.complete && image.naturalWidth > 0) {
+    const imageBox = { x: 56, y: 58, w: 400, h: 440 };
+    const scale = Math.min(imageBox.w / image.naturalWidth, imageBox.h / image.naturalHeight);
+    const w = image.naturalWidth * scale;
+    const h = image.naturalHeight * scale;
+    ctx.drawImage(
+      image,
+      imageBox.x + (imageBox.w - w) / 2,
+      imageBox.y + (imageBox.h - h) / 2,
+      w,
+      h
+    );
+  } else {
+    ctx.fillStyle = "rgba(79,211,238,0.12)";
+    ctx.fillRect(56, 58, 400, 440);
+    ctx.fillStyle = "rgba(237,239,241,0.75)";
+    ctx.font = "700 46px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("VLTD", 256, 290);
+  }
+
+  const title = item.title.length > 34 ? `${item.title.slice(0, 31)}...` : item.title;
+  const subtitle = itemSubtitle(item) || String(item.category || item.universe || "Collection piece");
+  const value = formatMoney(item.currentValue);
+
+  ctx.fillStyle = "rgba(2,5,9,0.92)";
+  ctx.fillRect(36, 520, 440, 134);
+  ctx.fillStyle = "#ECEDEF";
+  ctx.font = "800 30px Arial";
+  ctx.textAlign = "left";
+  ctx.fillText(title, 58, 568);
+  ctx.fillStyle = "rgba(236,237,239,0.62)";
+  ctx.font = "500 20px Arial";
+  ctx.fillText(subtitle.slice(0, 42), 58, 606);
+  if (showValues && value) {
+    ctx.fillStyle = "#4FD3EE";
+    ctx.font = "800 24px Arial";
+    ctx.fillText(value, 58, 640);
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+  return texture;
+}
+
+function drawDoorSignTexture(label: string) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 640;
+  canvas.height = 160;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return new THREE.CanvasTexture(canvas);
+
+  ctx.fillStyle = "rgba(9,11,15,0.94)";
+  ctx.fillRect(0, 0, 640, 160);
+  ctx.strokeStyle = "rgba(79,211,238,0.6)";
+  ctx.lineWidth = 5;
+  ctx.strokeRect(7, 7, 626, 146);
+
+  ctx.fillStyle = "#ECEDEF";
+  ctx.font = "800 54px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const text = (label.length > 20 ? `${label.slice(0, 18)}...` : label).toUpperCase();
+  ctx.fillText(text, 320, 84);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+  return texture;
+}
+
+function createHardwoodTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 512;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return new THREE.CanvasTexture(canvas);
+
+  ctx.fillStyle = "#6f4a2f";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let y = 0; y < canvas.height; y += 64) {
+    const grd = ctx.createLinearGradient(0, y, 0, y + 64);
+    grd.addColorStop(0, "#8a5d39");
+    grd.addColorStop(0.48, "#5d3823");
+    grd.addColorStop(1, "#9a6840");
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, y, canvas.width, 64);
+
+    ctx.strokeStyle = "rgba(24,12,6,0.42)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, y + 63);
+    ctx.lineTo(canvas.width, y + 63);
+    ctx.stroke();
+  }
+
+  for (let y = 0; y < canvas.height; y += 64) {
+    const offset = (y / 64) % 2 === 0 ? 0 : 128;
+    for (let x = -offset; x < canvas.width; x += 192) {
+      ctx.strokeStyle = "rgba(28,14,6,0.34)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x, y + 4);
+      ctx.lineTo(x, y + 60);
+      ctx.stroke();
+    }
+  }
+
+  for (let i = 0; i < 140; i += 1) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const length = 26 + Math.random() * 80;
+    ctx.strokeStyle = `rgba(255,220,165,${0.06 + Math.random() * 0.08})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.bezierCurveTo(x + length * 0.32, y - 8, x + length * 0.68, y + 8, x + length, y);
+    ctx.stroke();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(3.5, 5.5);
+  texture.anisotropy = 8;
+  return texture;
+}
+
+function createImageTexture(url: string, repeatX = 1, repeatY = 1) {
+  return new Promise<THREE.Texture>((resolve, reject) => {
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      url,
+      (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(repeatX, repeatY);
+        texture.anisotropy = 8;
+        resolve(texture);
+      },
+      undefined,
+      reject
+    );
+  });
+}
+
+function fileToRoomWallpaper(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      const maxSide = 1600;
+      const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Could not prepare wallpaper image."));
+        return;
+      }
+
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(objectUrl);
+      resolve(canvas.toDataURL("image/jpeg", 0.86));
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Could not load wallpaper image."));
+    };
+
+    image.src = objectUrl;
+  });
+}
+
+function getRoomPalette(style: RoomStyle) {
+  if (style === "whitebox") {
+    return {
+      wall: 0xdfe3e8,
+      floor: 0xbfc6cf,
+      trim: 0x8a929b,
+      glow: 0x4fd3ee,
+      textTone: "text-slate-950",
+      shell: "bg-[linear-gradient(180deg,#eef1f4,#d8dde3)] text-slate-950",
+    };
+  }
+
+  if (style === "arcade") {
+    return {
+      wall: 0x161024,
+      floor: 0x080914,
+      trim: 0xf0a23a,
+      glow: 0x4fd3ee,
+      textTone: "text-white",
+      shell: "bg-[radial-gradient(circle_at_50%_0%,rgba(240,162,58,0.16),transparent_32%),linear-gradient(180deg,#171122,#070913)] text-white",
+    };
+  }
+
+  return {
+    wall: 0x171a20,
+    floor: 0x090b0f,
+    trim: 0xc8cdd2,
+    glow: 0x4fd3ee,
+    textTone: "text-white",
+    shell: "bg-[radial-gradient(circle_at_50%_0%,rgba(79,211,238,0.13),transparent_34%),linear-gradient(180deg,#1f2329,#080b10)] text-white",
+  };
+}
+
+// Back wall gets 2 of every 4 items, left/right get 1 each — the back wall stays the
+// visual anchor, but both side walls start filling from item #1 instead of only once
+// the back wall's 32-slot grid is already full (which left a small collection's side
+// walls bare while the back wall did all the work).
+const WALL_CYCLE: Array<"back" | "left" | "right"> = ["back", "left", "back", "right"];
+
+function wallGridPosition(
+  wall: "back" | "left" | "right",
+  slot: number,
+  config: { backZ: number; backScale: number; sideBaseZ: number; sideZStep: number; sideScale: number }
+): RoomItemPosition {
+  if (wall === "back") {
+    const col = slot % 8;
+    const row = Math.floor(slot / 8);
+    return {
+      x: -7.35 + col * 2.1,
+      y: 5.42 - row * 1.25,
+      z: config.backZ,
+      ry: 0,
+      scale: config.backScale,
+      wall: "back",
+    };
+  }
+
+  const row = slot % 4;
+  const depth = Math.floor(slot / 4);
+  return {
+    x: wall === "left" ? -10.22 : 10.22,
+    y: 4.75 - row * 1.25,
+    z: config.sideBaseZ + depth * config.sideZStep,
+    ry: wall === "left" ? Math.PI / 2 : -Math.PI / 2,
+    scale: config.sideScale,
+    wall,
+  };
+}
+
+function distributeAcrossWalls(
+  count: number,
+  config: { backZ: number; backScale: number; sideBaseZ: number; sideZStep: number; sideScale: number }
+): RoomItemPosition[] {
+  const wallSlot: Record<"back" | "left" | "right", number> = { back: 0, left: 0, right: 0 };
+  return Array.from({ length: count }, (_, index) => {
+    const wall = WALL_CYCLE[index % WALL_CYCLE.length];
+    const slot = wallSlot[wall]++;
+    return wallGridPosition(wall, slot, config);
+  });
+}
+
+function buildPositions(layout: RoomLayout, count: number): RoomItemPosition[] {
+  if (layout === "spotlight") {
+    return Array.from({ length: count }, (_, index) => {
+      if (index === 0) {
+        return {
+          x: 0,
+          y: 3.25,
+          z: -9.7,
+          ry: 0,
+          scale: 1.44,
+          wall: "center",
+        };
+      }
+
+      const sideIndex = index - 1;
+      const wall = sideIndex % 2 === 0 ? "left" : "right";
+      const slot = Math.floor(sideIndex / 2);
+      return {
+        x: wall === "left" ? -10.22 : 10.22,
+        y: 4.75 - (slot % 4) * 1.25,
+        z: -8.8 + Math.floor(slot / 4) * 2.2,
+        ry: wall === "left" ? Math.PI / 2 : -Math.PI / 2,
+        scale: 0.74,
+        wall,
+      };
+    });
+  }
+
+  if (layout === "salon") {
+    return distributeAcrossWalls(count, {
+      backZ: -11.82,
+      backScale: 0.58,
+      sideBaseZ: -9.4,
+      sideZStep: 2.35,
+      sideScale: 0.68,
+    });
+  }
+
+  return distributeAcrossWalls(count, {
+    backZ: -11.78,
+    backScale: 0.58,
+    sideBaseZ: -9.25,
+    sideZStep: 2.35,
+    sideScale: 0.66,
+  });
+}
+
+export default function VirtualGalleryRoom() {
+  const mountRef = useRef<HTMLDivElement | null>(null);
+  const roomGroupRef = useRef<THREE.Group | null>(null);
+  const meshesRef = useRef<THREE.Mesh[]>([]);
+  const doorwayMeshesRef = useRef<THREE.Mesh[]>([]);
+  const [items, setItems] = useState<VaultItem[]>(DEMO_ITEMS);
+  const [galleries, setGalleries] = useState<Gallery[]>([]);
+  const [galleryId, setGalleryId] = useState("scratch");
+  const [selectedIds, setSelectedIds] = useState<string[]>(DEMO_ITEMS.map((item) => item.id));
+  const [roomStyle, setRoomStyle] = useState<RoomStyle>("vault");
+  const [roomLayout, setRoomLayout] = useState<RoomLayout>("storefront");
+  const [viewMode, setViewMode] = useState<ViewMode>("room");
+  const [showValues, setShowValues] = useState(true);
+  const [wallTextureUrl, setWallTextureUrl] = useState("");
+  const [wallpaperError, setWallpaperError] = useState("");
+  const [selectedItemId, setSelectedItemId] = useState<string>(DEMO_ITEMS[0]?.id ?? "");
+  const [saveState, setSaveState] = useState<"idle" | "saved">("idle");
+
+  useEffect(() => {
+    const vaultItems = loadItems();
+    const galleryList = loadGalleries();
+
+    setGalleries(galleryList);
+    if (vaultItems.length > 0) {
+      setItems(vaultItems);
+      setSelectedIds(vaultItems.slice(0, 12).map((item) => item.id));
+      setSelectedItemId(vaultItems[0]?.id ?? "");
+    }
+
+    try {
+      const draft = safeDraft(JSON.parse(window.localStorage.getItem(DRAFT_KEY) || "{}"));
+      if (draft.galleryId) setGalleryId(draft.galleryId);
+      if (Array.isArray(draft.selectedIds) && draft.selectedIds.length > 0) {
+        setSelectedIds(draft.selectedIds.filter((id): id is string => typeof id === "string"));
+        setSelectedItemId(String(draft.selectedIds[0] ?? ""));
+      }
+      if (draft.roomStyle === "vault" || draft.roomStyle === "whitebox" || draft.roomStyle === "arcade") {
+        setRoomStyle(draft.roomStyle);
+      }
+      if (draft.roomLayout === "storefront" || draft.roomLayout === "salon" || draft.roomLayout === "spotlight") {
+        setRoomLayout(draft.roomLayout);
+      }
+      if (draft.viewMode === "room" || draft.viewMode === "overview") setViewMode(draft.viewMode);
+      if (typeof draft.showValues === "boolean") setShowValues(draft.showValues);
+      if (typeof draft.wallTextureUrl === "string") setWallTextureUrl(draft.wallTextureUrl);
+    } catch {
+      // Ignore malformed local drafts.
+    }
+  }, []);
+
+  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const selectedItems = useMemo(() => {
+    const byId = new Map(items.map((item) => [item.id, item]));
+    return selectedIds.map((id) => byId.get(id)).filter(Boolean).slice(0, MAX_ROOM_ITEMS) as VaultItem[];
+  }, [items, selectedIds]);
+  const selectedItem = useMemo(
+    () => selectedItems.find((item) => item.id === selectedItemId) ?? selectedItems[0],
+    [selectedItemId, selectedItems]
+  );
+  const selectedValue = useMemo(
+    () => selectedItems.reduce((sum, item) => sum + Number(item.currentValue ?? 0), 0),
+    [selectedItems]
+  );
+  const universeRooms = useMemo(() => buildUniverseRooms(items), [items]);
+  // A fixed-shape key for the 3D effect's dependency array — `universeRooms`
+  // itself is a variable-length array (it grows/shrinks as vault items load),
+  // which the React Compiler's effect diffing can't safely track as a single
+  // dependency slot. A string always has stable arity.
+  const universeRoomsKey = useMemo(
+    () => universeRooms.map((room) => `${room.id}:${room.items.length}`).join("|"),
+    [universeRooms]
+  );
+  const palette = getRoomPalette(roomStyle);
+
+  function openUniverseRoom(room: MuseumUniverseRoom) {
+    const ids = room.items.slice(0, MAX_ROOM_ITEMS).map((item) => item.id);
+    if (ids.length === 0) return;
+    setGalleryId("scratch");
+    setSelectedIds(ids);
+    setSelectedItemId(ids[0] ?? "");
+    setRoomLayout(ids.length > 16 ? "salon" : "storefront");
+    setViewMode("room");
+  }
+
+  // The Main Gallery isn't a real universe room yet — it's the museum's still-
+  // unbuilt central hall. Entering it clears the selection instead of picking
+  // a "biggest room" stand-in, so the room renders as a large, deliberately
+  // empty hall (see the empty-room overlay below) until exhibitions exist.
+  function openMainHall() {
+    setGalleryId("scratch");
+    setSelectedIds([]);
+    setSelectedItemId("");
+    setRoomLayout("storefront");
+    setViewMode("room");
+  }
+
+  useEffect(() => {
+    if (viewMode !== "room") return;
+    const mount = mountRef.current;
+    if (!mount) return;
+    const container = mount;
+
+    container.innerHTML = "";
+    meshesRef.current = [];
+    doorwayMeshesRef.current = [];
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    container.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(roomStyle === "whitebox" ? 0xd5dbe1 : 0x05070b);
+    scene.fog = new THREE.Fog(scene.background, 16, 32);
+
+    const camera = new THREE.PerspectiveCamera(47, 1, 0.1, 80);
+    camera.position.set(0, 3.6, -2.2);
+
+    const roomGroup = new THREE.Group();
+    scene.add(roomGroup);
+    roomGroupRef.current = roomGroup;
+
+    const hemi = new THREE.HemisphereLight(0xffffff, palette.floor, roomStyle === "whitebox" ? 1.7 : 1.15);
+    scene.add(hemi);
+    const key = new THREE.SpotLight(palette.glow, 7.2, 26, Math.PI / 5, 0.55, 1.4);
+    key.position.set(0, 7.4, 1.5);
+    scene.add(key);
+    const warm = new THREE.PointLight(palette.trim, roomStyle === "arcade" ? 3.5 : 1.8, 14);
+    warm.position.set(-4.5, 2.4, 1.8);
+    scene.add(warm);
+
+    const wallMaterial = new THREE.MeshStandardMaterial({
+      color: palette.wall,
+      roughness: 0.72,
+      metalness: roomStyle === "vault" ? 0.18 : 0.02,
+    });
+    if (wallTextureUrl) {
+      void createImageTexture(wallTextureUrl, 2.4, 1).then((texture) => {
+        wallMaterial.map = texture;
+        wallMaterial.color.set(0xffffff);
+        wallMaterial.needsUpdate = true;
+      });
+    }
+    const floorMaterial = new THREE.MeshStandardMaterial({
+      map: createHardwoodTexture(),
+      color: 0xffffff,
+      roughness: 0.46,
+      metalness: 0.04,
+    });
+    const trimMaterial = new THREE.MeshStandardMaterial({
+      color: palette.trim,
+      roughness: 0.34,
+      metalness: 0.72,
+    });
+
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(21, 26), floorMaterial);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.set(0, -0.05, -3.2);
+    roomGroup.add(floor);
+
+    const baseboardMaterial = new THREE.MeshStandardMaterial({
+      color: roomStyle === "whitebox" ? 0x707981 : 0x252a30,
+      roughness: 0.5,
+      metalness: 0.18,
+    });
+
+    const backWall = new THREE.Mesh(new THREE.PlaneGeometry(21, 9.2), wallMaterial);
+    backWall.position.set(0, 4.55, -12);
+    roomGroup.add(backWall);
+
+    const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(26, 9.2), wallMaterial);
+    leftWall.position.set(-10.5, 4.55, -3.2);
+    leftWall.rotation.y = Math.PI / 2;
+    roomGroup.add(leftWall);
+
+    const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(26, 9.2), wallMaterial);
+    rightWall.position.set(10.5, 4.55, -3.2);
+    rightWall.rotation.y = -Math.PI / 2;
+    roomGroup.add(rightWall);
+
+    const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(21, 26), wallMaterial);
+    ceiling.position.set(0, 9.15, -3.2);
+    ceiling.rotation.x = Math.PI / 2;
+    roomGroup.add(ceiling);
+
+    const doorSideMaterial = new THREE.MeshStandardMaterial({
+      color: roomStyle === "whitebox" ? 0xcbd2d8 : 0x111419,
+      roughness: 0.68,
+      metalness: roomStyle === "vault" ? 0.12 : 0.02,
+    });
+    if (wallTextureUrl) {
+      void createImageTexture(wallTextureUrl, 1.4, 1).then((texture) => {
+        doorSideMaterial.map = texture;
+        doorSideMaterial.color.set(0xffffff);
+        doorSideMaterial.needsUpdate = true;
+      });
+    }
+    const rearWallLeft = new THREE.Mesh(new THREE.PlaneGeometry(8.75, 9.2), doorSideMaterial);
+    rearWallLeft.position.set(-6.13, 4.55, 5.8);
+    rearWallLeft.rotation.y = Math.PI;
+    roomGroup.add(rearWallLeft);
+
+    const rearWallRight = new THREE.Mesh(new THREE.PlaneGeometry(8.75, 9.2), doorSideMaterial);
+    rearWallRight.position.set(6.13, 4.55, 5.8);
+    rearWallRight.rotation.y = Math.PI;
+    roomGroup.add(rearWallRight);
+
+    const rearWallTop = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 4.25), doorSideMaterial);
+    rearWallTop.position.set(0, 7.08, 5.8);
+    rearWallTop.rotation.y = Math.PI;
+    roomGroup.add(rearWallTop);
+
+    const doorFrameMaterial = new THREE.MeshStandardMaterial({
+      color: palette.trim,
+      roughness: 0.34,
+      metalness: 0.76,
+    });
+    const doorLeft = new THREE.Mesh(new THREE.BoxGeometry(0.16, 4.95, 0.18), doorFrameMaterial);
+    doorLeft.position.set(-1.85, 2.45, 5.64);
+    roomGroup.add(doorLeft);
+
+    const doorRight = new THREE.Mesh(new THREE.BoxGeometry(0.16, 4.95, 0.18), doorFrameMaterial);
+    doorRight.position.set(1.85, 2.45, 5.64);
+    roomGroup.add(doorRight);
+
+    const doorHeader = new THREE.Mesh(new THREE.BoxGeometry(3.85, 0.18, 0.18), doorFrameMaterial);
+    doorHeader.position.set(0, 4.92, 5.64);
+    roomGroup.add(doorHeader);
+
+    const doorwayShadow = new THREE.Mesh(
+      new THREE.PlaneGeometry(3.5, 4.7),
+      new THREE.MeshBasicMaterial({ color: 0x020305 })
+    );
+    doorwayShadow.position.set(0, 2.32, 5.92);
+    doorwayShadow.rotation.y = Math.PI;
+    roomGroup.add(doorwayShadow);
+
+    const backBaseboard = new THREE.Mesh(new THREE.BoxGeometry(20.7, 0.18, 0.12), baseboardMaterial);
+    backBaseboard.position.set(0, 0.08, -11.9);
+    roomGroup.add(backBaseboard);
+
+    const leftBaseboard = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.18, 23.4), baseboardMaterial);
+    leftBaseboard.position.set(-10.42, 0.08, -3.05);
+    roomGroup.add(leftBaseboard);
+
+    const rightBaseboard = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.18, 23.4), baseboardMaterial);
+    rightBaseboard.position.set(10.42, 0.08, -3.05);
+    roomGroup.add(rightBaseboard);
+
+    const shelfRows = 4;
+    for (let row = 0; row < shelfRows; row += 1) {
+      const y = 4.72 - row * 1.25;
+
+      const backShelf = new THREE.Mesh(new THREE.BoxGeometry(18.2, 0.1, 0.55), trimMaterial);
+      backShelf.position.set(0, y, -11.48);
+      roomGroup.add(backShelf);
+
+      const leftShelf = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.1, 23.2), trimMaterial);
+      leftShelf.position.set(-9.98, y, -3.15);
+      roomGroup.add(leftShelf);
+
+      const rightShelf = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.1, 23.2), trimMaterial);
+      rightShelf.position.set(9.98, y, -3.15);
+      roomGroup.add(rightShelf);
+    }
+
+    const cabinetMaterial = new THREE.MeshStandardMaterial({
+      color: roomStyle === "whitebox" ? 0xe8edf1 : 0x2b3037,
+      roughness: 0.38,
+      metalness: 0.18,
+    });
+    const glassMaterial = new THREE.MeshStandardMaterial({
+      color: 0xbceeff,
+      transparent: true,
+      opacity: 0.18,
+      roughness: 0.08,
+      metalness: 0.08,
+    });
+    const cabinetSpots = [
+      [-3.4, -3.5],
+      [0, -4.55],
+      [3.4, -3.5],
+      [-2.1, 0.45],
+      [2.1, 0.45],
+    ] as const;
+    cabinetSpots.forEach(([x, z], index) => {
+      const base = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.72, 1.12), cabinetMaterial);
+      base.position.set(x, 0.31, z);
+      roomGroup.add(base);
+
+      const glass = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.15, 1), glassMaterial);
+      glass.position.set(x, 1.25, z);
+      roomGroup.add(glass);
+
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.08, 1.18), trimMaterial);
+      cap.position.set(x, 1.85, z);
+      roomGroup.add(cap);
+
+      const glow = new THREE.PointLight(palette.glow, 0.55, 4);
+      glow.position.set(x, 2.2, z + (index % 2 === 0 ? 0.25 : -0.25));
+      roomGroup.add(glow);
+    });
+
+    // Doorways: a "go back one level" archway is always present at the entrance
+    // wall, and the Grand Hall additionally gets one freestanding archway per
+    // populated universe room, each with a sign naming where it leads — so the
+    // museum is actually navigated room-to-room instead of only via the flat map.
+    const inHub = selectedItems.length === 0;
+
+    function buildDoorwaySign(x: number, y: number, z: number, label: string, faceBack: boolean) {
+      const signTexture = drawDoorSignTexture(label);
+      const sign = new THREE.Mesh(
+        new THREE.PlaneGeometry(2.3, 0.58),
+        new THREE.MeshStandardMaterial({
+          map: signTexture,
+          emissive: 0x0c0f13,
+          emissiveIntensity: 0.35,
+          roughness: 0.5,
+        })
+      );
+      sign.position.set(x, y, z);
+      if (faceBack) sign.rotation.y = Math.PI;
+      roomGroup.add(sign);
+    }
+
+    buildDoorwaySign(0, 5.55, 5.9, inHub ? "Campus Map" : "Main Gallery", true);
+    const backDoorway = new THREE.Mesh(
+      new THREE.PlaneGeometry(3.5, 4.9),
+      new THREE.MeshBasicMaterial({ visible: false })
+    );
+    backDoorway.position.set(0, 2.6, 5.55);
+    backDoorway.userData.doorwayTarget = inHub ? "__overview__" : "__hub__";
+    roomGroup.add(backDoorway);
+    doorwayMeshesRef.current.push(backDoorway);
+
+    if (inHub) {
+      const wingRooms = universeRooms.filter((room) => room.items.length > 0).slice(0, 6);
+      const doorHeight = 3.3;
+      const doorWidth = 2.05;
+      const archZ = -8.4;
+      wingRooms.forEach((room, index) => {
+        const x = wingRooms.length === 1 ? 0 : -7 + (index * 14) / (wingRooms.length - 1);
+
+        const left = new THREE.Mesh(new THREE.BoxGeometry(0.16, doorHeight, 0.18), doorFrameMaterial);
+        left.position.set(x - doorWidth / 2, doorHeight / 2, archZ);
+        roomGroup.add(left);
+
+        const right = new THREE.Mesh(new THREE.BoxGeometry(0.16, doorHeight, 0.18), doorFrameMaterial);
+        right.position.set(x + doorWidth / 2, doorHeight / 2, archZ);
+        roomGroup.add(right);
+
+        const header = new THREE.Mesh(new THREE.BoxGeometry(doorWidth + 0.16, 0.18, 0.18), doorFrameMaterial);
+        header.position.set(x, doorHeight, archZ);
+        roomGroup.add(header);
+
+        const archGlow = new THREE.PointLight(palette.glow, 0.4, 3.4);
+        archGlow.position.set(x, doorHeight - 0.4, archZ + 0.3);
+        roomGroup.add(archGlow);
+
+        buildDoorwaySign(x, doorHeight + 0.5, archZ, room.title, false);
+
+        const hitTarget = new THREE.Mesh(
+          new THREE.PlaneGeometry(doorWidth, doorHeight + 1),
+          new THREE.MeshBasicMaterial({ visible: false })
+        );
+        hitTarget.position.set(x, (doorHeight + 1) / 2, archZ);
+        hitTarget.userData.doorwayTarget = room.id;
+        roomGroup.add(hitTarget);
+        doorwayMeshesRef.current.push(hitTarget);
+      });
+    }
+
+    const positions = buildPositions(roomLayout, selectedItems.length);
+    selectedItems.forEach((item, index) => {
+      const pos = positions[index];
+      if (!pos) return;
+
+      const texture = drawItemTexture(item, showValues);
+      const material = new THREE.MeshStandardMaterial({
+        map: texture,
+        roughness: 0.44,
+        metalness: 0.08,
+        emissive: new THREE.Color(0x05070a),
+        emissiveIntensity: 0.08,
+      });
+      const card = new THREE.Mesh(new THREE.PlaneGeometry(1.12 * pos.scale, 1.54 * pos.scale), material);
+      card.position.set(pos.x, pos.y, pos.z);
+      card.rotation.y = pos.ry;
+      card.userData.itemId = item.id;
+      roomGroup.add(card);
+      meshesRef.current.push(card);
+
+      const normal = new THREE.Vector3(Math.sin(pos.ry), 0, Math.cos(pos.ry));
+      const frame = new THREE.Mesh(
+        new THREE.BoxGeometry(1.25 * pos.scale, 1.67 * pos.scale, 0.06),
+        trimMaterial
+      );
+      frame.position.set(
+        pos.x - normal.x * 0.045,
+        pos.y,
+        pos.z - normal.z * 0.045
+      );
+      frame.rotation.y = pos.ry;
+      roomGroup.add(frame);
+
+      const url = itemImage(item);
+      if (url) {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          const next = drawItemTexture(item, showValues, img);
+          material.map = next;
+          material.needsUpdate = true;
+        };
+        img.onerror = () => {
+          material.needsUpdate = true;
+        };
+        img.src = url;
+      }
+    });
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    let width = 0;
+    let height = 0;
+    let raf = 0;
+    let yaw = 0;
+    let pitch = 0;
+    let targetYaw = yaw;
+    let targetPitch = pitch;
+    const eyeHeight = 3.6;
+    const NAV_PITCH_LIMIT = 0.32;
+    const FOCUS_PITCH_LIMIT = 0.5;
+    const cameraBody = new THREE.Vector3(0, eyeHeight, -2.2);
+    const targetCameraBody = cameraBody.clone();
+    let isDragging = false;
+    let didDrag = false;
+    let startX = 0;
+    let startY = 0;
+
+    function clampPosition(position: THREE.Vector3) {
+      position.x = Math.max(-8.85, Math.min(8.85, position.x));
+      position.y = eyeHeight;
+      position.z = Math.max(-10.35, Math.min(4.72, position.z));
+      return position;
+    }
+
+    function clampView(pitchLimit = NAV_PITCH_LIMIT) {
+      targetPitch = Math.max(-pitchLimit, Math.min(pitchLimit, targetPitch));
+      clampPosition(targetCameraBody);
+    }
+
+    function facingDirection() {
+      return new THREE.Vector3(Math.sin(targetYaw), 0, -Math.cos(targetYaw)).normalize();
+    }
+
+    function strafeDirection() {
+      return new THREE.Vector3(Math.cos(targetYaw), 0, Math.sin(targetYaw)).normalize();
+    }
+
+    function moveCamera(command: string, amount = 0.54) {
+      if (command === "forward") {
+        targetCameraBody.add(facingDirection().multiplyScalar(amount));
+      } else if (command === "back") {
+        targetCameraBody.add(facingDirection().multiplyScalar(-amount));
+      } else if (command === "left") {
+        targetCameraBody.add(strafeDirection().multiplyScalar(-amount));
+      } else if (command === "right") {
+        targetCameraBody.add(strafeDirection().multiplyScalar(amount));
+      } else if (command === "turn-left") {
+        targetYaw += 0.22;
+      } else if (command === "turn-right") {
+        targetYaw -= 0.22;
+      }
+      clampView();
+    }
+
+    function resize() {
+      width = Math.max(1, container.clientWidth);
+      height = Math.max(1, container.clientHeight);
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+    }
+
+    function render() {
+      yaw += (targetYaw - yaw) * 0.12;
+      pitch += (targetPitch - pitch) * 0.12;
+      cameraBody.lerp(targetCameraBody, 0.15);
+
+      const lookDirection = new THREE.Vector3(
+        Math.sin(yaw),
+        Math.sin(pitch),
+        -Math.cos(yaw)
+      ).normalize();
+      camera.position.copy(cameraBody);
+      camera.lookAt(cameraBody.clone().add(lookDirection.multiplyScalar(6)));
+      renderer.render(scene, camera);
+      raf = window.requestAnimationFrame(render);
+    }
+
+    function onPointerDown(event: PointerEvent) {
+      isDragging = true;
+      didDrag = false;
+      startX = event.clientX;
+      startY = event.clientY;
+    }
+
+    function onPointerMove(event: PointerEvent) {
+      if (!isDragging) return;
+      const dx = event.clientX - startX;
+      const dy = event.clientY - startY;
+      if (Math.abs(dx) + Math.abs(dy) > 4) didDrag = true;
+      targetYaw -= dx * 0.0035;
+      targetPitch += dy * 0.0016;
+      clampView();
+      startX = event.clientX;
+      startY = event.clientY;
+    }
+
+    function onPointerUp(event: PointerEvent) {
+      if (!didDrag) {
+        const rect = renderer.domElement.getBoundingClientRect();
+        pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(pointer, camera);
+        const hit = raycaster.intersectObjects(
+          [...meshesRef.current, ...doorwayMeshesRef.current],
+          false
+        )[0];
+        if (hit?.object.userData.doorwayTarget) {
+          const target = String(hit.object.userData.doorwayTarget);
+          if (target === "__overview__") {
+            setViewMode("overview");
+          } else if (target === "__hub__") {
+            openMainHall();
+          } else {
+            const targetRoom = universeRooms.find((room) => room.id === target);
+            if (targetRoom) openUniverseRoom(targetRoom);
+          }
+        } else if (hit?.object.userData.itemId) {
+          const itemId = String(hit.object.userData.itemId);
+          const worldPosition = hit.object.getWorldPosition(new THREE.Vector3());
+          const worldQuaternion = hit.object.getWorldQuaternion(new THREE.Quaternion());
+          const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(worldQuaternion).normalize();
+          normal.y = 0;
+          normal.normalize();
+
+          // Stand far enough back that looking at a high/low shelf item stays within
+          // FOCUS_PITCH_LIMIT — a fixed 2.35 stand-off made tall/low shelves require a
+          // steeper tilt than the (much smaller) pitch clamp ever allowed, so the camera
+          // ended up parked beside the item instead of looking at it head-on.
+          const deltaY = worldPosition.y - eyeHeight;
+          const standDistance = Math.min(4.2, Math.max(2.35, Math.abs(deltaY) / Math.tan(FOCUS_PITCH_LIMIT)));
+          const focusCamera = worldPosition.clone().add(normal.clone().multiplyScalar(standDistance));
+          focusCamera.y = eyeHeight;
+
+          setSelectedItemId(itemId);
+          targetCameraBody.copy(focusCamera);
+          targetYaw = Math.atan2(-normal.x, normal.z);
+          targetPitch = Math.atan2(deltaY, standDistance);
+          clampView(FOCUS_PITCH_LIMIT);
+        }
+      }
+      isDragging = false;
+    }
+
+    function onWheel(event: WheelEvent) {
+      event.preventDefault();
+      moveCamera(event.deltaY > 0 ? "back" : "forward", 0.42);
+    }
+
+    function onMoveCommand(event: Event) {
+      const command = (event as CustomEvent<{ command?: string; amount?: number }>).detail?.command;
+      if (!command) return;
+      moveCamera(command, (event as CustomEvent<{ amount?: number }>).detail?.amount ?? 0.54);
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      if (target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.tagName === "SELECT") return;
+
+      if (event.key === "ArrowUp" || event.key.toLowerCase() === "w") {
+        event.preventDefault();
+        moveCamera("forward");
+      } else if (event.key === "ArrowDown" || event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        moveCamera("back");
+      } else if (event.key.toLowerCase() === "a") {
+        event.preventDefault();
+        moveCamera("left");
+      } else if (event.key.toLowerCase() === "d") {
+        event.preventDefault();
+        moveCamera("right");
+      } else if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        moveCamera("turn-left");
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        moveCamera("turn-right");
+      }
+    }
+
+    const observer = new ResizeObserver(resize);
+    observer.observe(container);
+    renderer.domElement.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("vltd-room-move", onMoveCommand);
+    renderer.domElement.addEventListener("wheel", onWheel, { passive: false });
+    resize();
+    render();
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      observer.disconnect();
+      renderer.domElement.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("vltd-room-move", onMoveCommand);
+      renderer.domElement.removeEventListener("wheel", onWheel);
+      scene.traverse((object) => {
+        if (object instanceof THREE.Mesh) {
+          object.geometry.dispose();
+          const materials = Array.isArray(object.material) ? object.material : [object.material];
+          materials.forEach((material) => {
+            if ("map" in material && material.map) material.map.dispose();
+            material.dispose();
+          });
+        }
+      });
+      renderer.dispose();
+      container.innerHTML = "";
+    };
+  }, [palette.floor, palette.glow, palette.trim, palette.wall, roomLayout, roomStyle, selectedItems, showValues, universeRoomsKey, viewMode, wallTextureUrl]);
+
+  function applyGallery(nextGalleryId: string) {
+    setGalleryId(nextGalleryId);
+    if (nextGalleryId === "scratch") return;
+    const gallery = galleries.find((entry) => entry.id === nextGalleryId);
+    if (!gallery) return;
+    const sectionIds = getGallerySections(gallery).flatMap((section) => section.itemIds);
+    const ids = sectionIds.length > 0 ? sectionIds : gallery.itemIds;
+    const validIds = ids.filter((id) => items.some((item) => item.id === id));
+    if (validIds.length > 0) {
+      setSelectedIds(validIds.slice(0, MAX_ROOM_ITEMS));
+      setSelectedItemId(validIds[0] ?? "");
+    }
+  }
+
+  function toggleItem(itemId: string) {
+    setSelectedIds((current) => {
+      if (current.includes(itemId)) return current.filter((id) => id !== itemId);
+      return [...current, itemId].slice(0, MAX_ROOM_ITEMS);
+    });
+    setSelectedItemId(itemId);
+  }
+
+  function saveDraft() {
+    const draft: RoomDraft = {
+      galleryId,
+      selectedIds,
+      roomStyle,
+      roomLayout,
+      viewMode,
+      showValues,
+      wallTextureUrl,
+    };
+    window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    setSaveState("saved");
+    window.setTimeout(() => setSaveState("idle"), 1500);
+  }
+
+  function sendMoveCommand(command: string, amount?: number) {
+    window.dispatchEvent(
+      new CustomEvent("vltd-room-move", {
+        detail: { command, amount },
+      })
+    );
+  }
+
+  function handleWallpaperUpload(file?: File | null) {
+    if (!file) return;
+    setWallpaperError("");
+    void fileToRoomWallpaper(file)
+      .then(setWallTextureUrl)
+      .catch((error) => {
+        setWallpaperError(error instanceof Error ? error.message : "Could not load wallpaper image.");
+      });
+  }
+
+  return (
+    <main className="text-[color:var(--fg)]">
+      <div className="mx-auto grid max-w-[1500px] gap-4 px-4 py-3 sm:px-6 sm:py-4 xl:grid-cols-[360px_minmax(0,1fr)]">
+        <aside className="grid gap-3 xl:sticky xl:top-4 xl:self-start">
+          <div className="rounded-[8px] border bg-[color:var(--theme-card)] p-4 shadow-[var(--shadow-soft)]" style={{ borderColor: "var(--theme-border)" }}>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-[color:var(--muted2)]">
+                  <Layers3 size={14} />
+                  Virtual Room
+                </div>
+                <h1 className="mt-2 text-3xl font-black uppercase leading-[0.92] tracking-normal">
+                  Gallery Builder
+                </h1>
+              </div>
+              <Link
+                href="/museum"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-[6px] bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]"
+                aria-label="Back to exhibitions"
+                title="Back to exhibitions"
+              >
+                <GalleryHorizontalEnd size={17} />
+              </Link>
+            </div>
+
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <Metric icon={<Boxes size={15} />} label="Items" value={String(selectedItems.length)} />
+              <Metric icon={<BadgeDollarSign size={15} />} label="Value" value={formatMoney(selectedValue) || "$0"} />
+              <Metric icon={<Eye size={15} />} label="Mode" value="3D" />
+            </div>
+          </div>
+
+          <ControlPanel title="Source" icon={<Grid3X3 size={15} />}>
+            <select
+              value={galleryId}
+              onChange={(event) => applyGallery(event.target.value)}
+              className="h-10 w-full rounded-[6px] bg-[color:var(--input)] px-3 text-sm ring-1 ring-[color:var(--border)]"
+            >
+              <option value="scratch">Scratch room</option>
+              {galleries.map((gallery) => (
+                <option key={gallery.id} value={gallery.id}>
+                  {gallery.title}
+                </option>
+              ))}
+            </select>
+          </ControlPanel>
+
+          <ControlPanel title="Room" icon={<MonitorUp size={15} />}>
+            <Segmented
+              value={viewMode}
+              options={[
+                ["room", "Room"],
+                ["overview", "Map"],
+              ]}
+              onChange={(value) => setViewMode(value as ViewMode)}
+            />
+            <Segmented
+              value={roomLayout}
+              options={[
+                ["storefront", "Store"],
+                ["salon", "Salon"],
+                ["spotlight", "Hero"],
+              ]}
+              onChange={(value) => setRoomLayout(value as RoomLayout)}
+            />
+            <Segmented
+              value={roomStyle}
+              options={[
+                ["vault", "Vault"],
+                ["whitebox", "White"],
+                ["arcade", "Arcade"],
+              ]}
+              onChange={(value) => setRoomStyle(value as RoomStyle)}
+            />
+            <label className="flex items-center justify-between gap-3 rounded-[6px] bg-[color:var(--input)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]">
+              <span>Values</span>
+              <input
+                type="checkbox"
+                checked={showValues}
+                onChange={(event) => setShowValues(event.target.checked)}
+                className="h-4 w-4 accent-cyan-400"
+              />
+            </label>
+            <div className="rounded-[6px] bg-[color:var(--input)] p-2 ring-1 ring-[color:var(--border)]">
+              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-[5px] bg-black/10 px-3 py-2 text-sm font-semibold transition hover:bg-black/18">
+                <span className="inline-flex items-center gap-2">
+                  <Paintbrush size={15} />
+                  Wallpaper
+                </span>
+                <span className="text-xs text-[color:var(--muted)]">
+                  {wallTextureUrl ? "Change" : "Upload"}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => {
+                    handleWallpaperUpload(event.target.files?.[0]);
+                    event.target.value = "";
+                  }}
+                />
+              </label>
+              {wallTextureUrl ? (
+                <button
+                  type="button"
+                  onClick={() => setWallTextureUrl("")}
+                  className="mt-2 w-full rounded-[5px] bg-black/10 px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
+                >
+                  Remove Wallpaper
+                </button>
+              ) : null}
+              {wallpaperError ? (
+                <div className="mt-2 text-xs font-semibold text-red-300">
+                  {wallpaperError}
+                </div>
+              ) : null}
+            </div>
+          </ControlPanel>
+
+          <ControlPanel title="Items" icon={<PackagePlus size={15} />}>
+            <div className="max-h-[360px] overflow-y-auto pr-1">
+              <div className="grid gap-2">
+                {items.map((item) => {
+                  const selected = selectedSet.has(item.id);
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => toggleItem(item.id)}
+                      className={[
+                        "grid grid-cols-[42px_minmax(0,1fr)_24px] items-center gap-2 rounded-[6px] p-2 text-left ring-1 transition",
+                        selected
+                          ? "bg-[rgba(79,211,238,0.10)] ring-[rgba(79,211,238,0.45)]"
+                          : "bg-[color:var(--input)] ring-[color:var(--border)]",
+                      ].join(" ")}
+                    >
+                      <span className="h-[54px] overflow-hidden rounded-[5px] bg-black/20">
+                        {itemImage(item) ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={itemImage(item)} alt="" className="h-full w-full object-cover" draggable={false} />
+                        ) : null}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-bold">{item.title}</span>
+                        <span className="mt-0.5 block truncate text-xs text-[color:var(--muted)]">
+                          {itemSubtitle(item) || item.universe || item.category || "Collection piece"}
+                        </span>
+                      </span>
+                      <span
+                        className={[
+                          "grid h-6 w-6 place-items-center rounded-[5px] text-xs font-black ring-1",
+                          selected
+                            ? "bg-[#4FD3EE] text-[#06171d] ring-cyan-200/40"
+                            : "bg-black/10 text-[color:var(--muted2)] ring-[color:var(--border)]",
+                        ].join(" ")}
+                      >
+                        {selected ? "ON" : "+"}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </ControlPanel>
+
+          <button
+            type="button"
+            onClick={saveDraft}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[6px] bg-[linear-gradient(180deg,#79E7FB,#2CB1D1)] px-4 text-sm font-black text-[#06171d] shadow-[0_0_18px_rgba(79,211,238,0.22)]"
+          >
+            <Save size={16} />
+            {saveState === "saved" ? "Saved" : "Save Room Draft"}
+          </button>
+        </aside>
+
+        <section className={["min-h-[calc(100svh-116px)] overflow-hidden rounded-[8px] border shadow-[0_30px_90px_rgba(0,0,0,0.34)]", palette.shell].join(" ")} style={{ borderColor: "var(--theme-border)" }}>
+          <div className="grid min-h-[calc(100svh-116px)] grid-rows-[minmax(420px,1fr)_auto]">
+            <div className="relative min-h-[420px]">
+              {viewMode === "room" ? (
+                <div ref={mountRef} className="absolute inset-0" />
+              ) : (
+                <MuseumCampusOverview rooms={universeRooms} onOpenRoom={openUniverseRoom} onOpenMainHall={openMainHall} />
+              )}
+              <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-2 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur">
+                {viewMode === "room" ? <Sparkles size={14} /> : <MapIcon size={14} />}
+                {viewMode === "room" ? "VLTD Room" : "Universe Map"}
+              </div>
+              {viewMode === "room" && selectedItems.length === 0 ? (
+                <div className="pointer-events-none absolute inset-0 grid place-items-center px-6 text-center">
+                  <div className="rounded-[10px] bg-black/38 px-6 py-5 ring-1 ring-white/12 backdrop-blur">
+                    <div className="text-[11px] font-black uppercase tracking-[0.2em] text-cyan-100/60">
+                      Grand Hall
+                    </div>
+                    <div className="mt-2 text-xl font-black tracking-normal text-white sm:text-2xl">
+                      Exhibitions coming soon
+                    </div>
+                    <p className="mx-auto mt-2 max-w-[360px] text-sm leading-6 text-white/60">
+                      This hall is reserved for future exhibitions. Pick items in the
+                      Items panel to start filling it.
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+              {viewMode === "room" ? <FloorMoveControls onMove={sendMoveCommand} /> : null}
+            </div>
+
+            <div className="border-t bg-black/32 p-4 backdrop-blur" style={{ borderColor: "rgba(255,255,255,0.10)" }}>
+              {selectedItem ? (
+                <div className="grid gap-3 md:grid-cols-[88px_minmax(0,1fr)_auto] md:items-center">
+                  <div className="h-[110px] overflow-hidden rounded-[6px] bg-black/20 ring-1 ring-white/10">
+                    {itemImage(selectedItem) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={itemImage(selectedItem)} alt={selectedItem.title} className="h-full w-full object-cover" draggable={false} />
+                    ) : null}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-black uppercase tracking-[0.18em] text-white/45">
+                      Selected Piece
+                    </div>
+                    <h2 className="mt-1 truncate text-2xl font-black tracking-normal text-white">
+                      {selectedItem.title}
+                    </h2>
+                    <p className="mt-1 line-clamp-2 text-sm leading-6 text-white/68">
+                      {itemSubtitle(selectedItem) || selectedItem.notes || selectedItem.universe || "Collection piece"}
+                    </p>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2 md:min-w-[220px]">
+                    <Metric icon={<BadgeDollarSign size={15} />} label="Value" value={formatMoney(selectedItem.currentValue) || "$0"} inverse />
+                    <Metric icon={<Boxes size={15} />} label="Universe" value={String(selectedItem.universe || selectedItem.category || "Item")} inverse />
+                  </div>
+                </div>
+              ) : (
+                <div className="py-6 text-center text-sm text-white/60">
+                  {viewMode === "room" ? "Waiting for exhibitions — add items to fill this hall." : "Add items to build the room."}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+function ControlPanel({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-[8px] border bg-[color:var(--theme-card)] p-3 shadow-[var(--shadow-soft)]" style={{ borderColor: "var(--theme-border)" }}>
+      <div className="mb-3 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--muted2)]">
+        {icon}
+        {title}
+      </div>
+      <div className="grid gap-2">{children}</div>
+    </section>
+  );
+}
+
+function Segmented({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: [string, string][];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div
+      className="grid rounded-[6px] bg-[color:var(--input)] p-1 ring-1 ring-[color:var(--border)]"
+      style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
+    >
+      {options.map(([optionValue, label]) => (
+        <button
+          key={optionValue}
+          type="button"
+          onClick={() => onChange(optionValue)}
+          className={[
+            "min-h-8 rounded-[5px] px-2 text-xs font-black transition",
+            optionValue === value
+              ? "bg-[rgba(79,211,238,0.18)] text-[#67E8F9] shadow-[0_0_12px_rgba(79,211,238,0.16)]"
+              : "text-[color:var(--muted)]",
+          ].join(" ")}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const CAMPUS_GRID_AREAS =
+  '"rotN main main main dgal dgal" ' +
+  '"rotS main main main egal egal" ' +
+  '"galA main main main garden garden" ' +
+  '"galA galC galF galG garden garden"';
+
+function MuseumCampusOverview({
+  rooms,
+  onOpenRoom,
+  onOpenMainHall,
+}: {
+  rooms: MuseumUniverseRoom[];
+  onOpenRoom: (room: MuseumUniverseRoom) => void;
+  onOpenMainHall: () => void;
+}) {
+  const featuredRooms = rooms.slice(0, 9);
+  const totalItems = rooms.reduce((sum, room) => sum + room.items.length, 0);
+  const totalValue = rooms.reduce((sum, room) => sum + room.value, 0);
+  const paddedRooms = [
+    ...featuredRooms,
+    ...Array.from({ length: Math.max(0, 9 - featuredRooms.length) }, (_, index) => ({
+      id: `future-${index}`,
+      title: ["Automobile", "Cards", "Comics", "Music", "Art", "Cinema", "Games", "Vault", "Exotics"][index] ?? "Future",
+      items: [],
+      value: 0,
+      tier: index > 4 ? "Hall" : "Starter",
+      wing: index % 4 === 0 ? "North" : index % 4 === 1 ? "South" : index % 4 === 2 ? "Main" : "Garden",
+    } satisfies MuseumUniverseRoom)),
+  ];
+
+  return (
+    <div className="absolute inset-0 overflow-auto bg-[radial-gradient(circle_at_50%_0%,rgba(79,211,238,0.10),transparent_30%),linear-gradient(180deg,#12151a,#07090d)] p-4 pt-16 text-white">
+      <div className="mx-auto grid min-h-full max-w-[1180px] gap-4 xl:grid-cols-[minmax(0,1fr)_250px]">
+        <div className="relative min-h-[520px] overflow-hidden rounded-[8px] border border-white/10 bg-[#0b0e12] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]">
+          <div className="h-full overflow-x-auto overflow-y-hidden p-3 sm:p-4">
+            <div className="min-w-[640px]">
+              <div className="mb-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                <span className="inline-flex w-fit items-center rounded-[6px] border border-amber-200/20 bg-amber-300/8 px-2.5 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-amber-100/72">
+                  Store
+                </span>
+                <span className="text-center text-[10px] font-black uppercase tracking-[0.22em] text-white/28">
+                  VLTD Museum Campus
+                </span>
+                <span className="ml-auto inline-flex w-fit items-center rounded-[6px] border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-white/40">
+                  Elevator
+                </span>
+              </div>
+
+              <div
+                className="grid gap-2.5 sm:gap-3"
+                style={{
+                  gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
+                  gridTemplateRows: "repeat(4, minmax(80px, 1fr))",
+                  gridTemplateAreas: CAMPUS_GRID_AREAS,
+                }}
+              >
+                <CampusRoomButton room={paddedRooms[0]} onOpenRoom={onOpenRoom} label="North Rotunda" area="rotN" size="sm" />
+                <CampusRoomButton room={paddedRooms[1]} onOpenRoom={onOpenRoom} label="South Rotunda" area="rotS" size="sm" />
+                <CampusRoomButton room={paddedRooms[2]} onOpenRoom={onOpenRoom} label="Gallery A" area="galA" size="md" />
+                <CampusRoomButton room={paddedRooms[3]} onOpenRoom={onOpenRoom} label="Gallery C" area="galC" size="sm" />
+                <CampusRoomButton room={paddedRooms[4]} onOpenRoom={onOpenRoom} label="Gallery F" area="galF" size="sm" />
+                <CampusRoomButton room={paddedRooms[5]} onOpenRoom={onOpenRoom} label="Gallery D" area="dgal" size="sm" />
+                <CampusRoomButton room={paddedRooms[6]} onOpenRoom={onOpenRoom} label="Gallery E" area="egal" size="sm" />
+                <CampusRoomButton room={paddedRooms[8]} onOpenRoom={onOpenRoom} label="Gallery G" area="galG" size="sm" />
+                <CampusRoomButton room={paddedRooms[7]} onOpenRoom={onOpenRoom} label="Garden Gallery" area="garden" size="lg" />
+
+                <button
+                  type="button"
+                  style={{ gridArea: "main" }}
+                  onClick={onOpenMainHall}
+                  className="grid min-w-0 place-items-center rounded-[10px] border border-cyan-200/22 bg-[linear-gradient(180deg,rgba(79,211,238,0.12),rgba(255,255,255,0.03))] p-4 text-center shadow-[0_0_30px_rgba(79,211,238,0.08)] transition hover:border-cyan-200/42 hover:bg-cyan-300/10"
+                >
+                  <span className="flex flex-col items-center justify-center">
+                    <span className="grid h-11 w-11 place-items-center rounded-[8px] bg-black/28 ring-1 ring-white/12">
+                      <Landmark size={24} />
+                    </span>
+                    <span className="mt-3 block text-[10px] font-black uppercase tracking-[0.18em] text-cyan-100/60">
+                      Main Gallery
+                    </span>
+                    <span className="mt-1.5 block text-2xl sm:text-3xl font-black tracking-normal">VLTD Museum</span>
+                    <span className="mt-1.5 block text-xs sm:text-sm font-semibold text-white/55">
+                      Grand hall - exhibitions coming soon
+                    </span>
+                  </span>
+                </button>
+              </div>
+
+              <div className="mt-3 flex items-center justify-center gap-2 rounded-[6px] border border-white/10 bg-black/30 px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.16em] text-white/55">
+                <DoorOpen size={16} />
+                Entrance
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid content-start gap-3">
+          <div className="rounded-[8px] border border-white/10 bg-black/24 p-4">
+            <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.16em] text-white/42">
+              <MapIcon size={15} />
+              Floorplan
+            </div>
+            <h2 className="mt-2 text-xl font-black tracking-normal">Universe Rooms</h2>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <Metric icon={<Boxes size={15} />} label="Vault Pieces" value={String(totalItems)} inverse />
+              <Metric icon={<BadgeDollarSign size={15} />} label="Vault Value" value={totalValue > 0 ? `$${formatCompactNumber(totalValue)}` : "$0"} inverse />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 rounded-[8px] border border-white/10 bg-black/24 p-2">
+            <button type="button" className="rounded-[6px] bg-cyan-300/14 px-2 py-2 text-xs font-black text-cyan-100 ring-1 ring-cyan-200/22">Overview</button>
+            <button type="button" className="rounded-[6px] bg-white/6 px-2 py-2 text-xs font-black text-white/54 ring-1 ring-white/8">Rooms</button>
+            <button type="button" className="rounded-[6px] bg-white/6 px-2 py-2 text-xs font-black text-white/54 ring-1 ring-white/8">Public</button>
+          </div>
+
+          {rooms.slice(0, 6).map((room) => (
+            <button
+              key={room.id}
+              type="button"
+              onClick={() => onOpenRoom(room)}
+              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[8px] border border-white/10 bg-white/5 px-3 py-2.5 text-left transition hover:border-cyan-200/36 hover:bg-cyan-300/10"
+            >
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-black">{room.title}</span>
+                <span className="mt-0.5 block text-xs font-semibold text-white/48">
+                  {room.items.length} items - {room.tier} - {room.wing}
+                </span>
+              </span>
+              <ExternalLink size={16} className="text-white/46" />
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const CAMPUS_ROOM_SIZING = {
+  sm: {
+    icon: 13,
+    box: "h-6 w-6 rounded-[5px]",
+    label: "text-[8px]",
+    title: "text-xs",
+    pad: "p-2",
+    pillGap: "mt-1.5 gap-1",
+    pill: "rounded-[4px] px-1.5 py-0.5 text-[8px]",
+  },
+  md: {
+    icon: 15,
+    box: "h-7 w-7 rounded-[6px]",
+    label: "text-[9px]",
+    title: "text-sm",
+    pad: "p-2.5",
+    pillGap: "mt-2 gap-1.5",
+    pill: "rounded-[5px] px-1.5 py-1 text-[9px]",
+  },
+  lg: {
+    icon: 18,
+    box: "h-8 w-8 rounded-[7px]",
+    label: "text-[10px]",
+    title: "text-base",
+    pad: "p-3",
+    pillGap: "mt-2.5 gap-2",
+    pill: "rounded-[5px] px-2 py-1 text-[10px]",
+  },
+} as const;
+
+function CampusRoomButton({
+  room,
+  onOpenRoom,
+  label,
+  area,
+  size = "sm",
+}: {
+  room: MuseumUniverseRoom;
+  onOpenRoom: (room: MuseumUniverseRoom) => void;
+  label: string;
+  area: string;
+  size?: keyof typeof CAMPUS_ROOM_SIZING;
+}) {
+  const disabled = room.items.length === 0;
+  const sizing = CAMPUS_ROOM_SIZING[size];
+
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => !disabled && onOpenRoom(room)}
+      style={{ gridArea: area }}
+      className={[
+        "min-w-0 overflow-hidden rounded-[8px] border text-left transition",
+        sizing.pad,
+        disabled
+          ? "border-white/6 bg-black/20 text-white/25"
+          : "border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.015))] text-white hover:border-cyan-200/40 hover:bg-cyan-300/10",
+      ].join(" ")}
+    >
+      <span className="flex h-full flex-col justify-between">
+        <span className="min-w-0">
+          <span className={["inline-flex items-center justify-center bg-black/24 ring-1 ring-white/10", sizing.box].join(" ")}>
+            {room.tier === "Hall" ? <CircleDollarSign size={sizing.icon} /> : <Landmark size={sizing.icon} />}
+          </span>
+          <span className={["mt-1.5 block truncate font-black uppercase tracking-[0.1em] text-white/34", sizing.label].join(" ")}>
+            {label}
+          </span>
+          <span className={["mt-0.5 block truncate font-black tracking-normal", sizing.title].join(" ")}>{room.title}</span>
+        </span>
+        <span className={["flex flex-wrap font-black", sizing.pillGap].join(" ")}>
+          <span className={["bg-black/22 ring-1 ring-white/8", sizing.pill].join(" ")}>{room.items.length} pcs</span>
+          <span className={["bg-black/22 ring-1 ring-white/8", sizing.pill].join(" ")}>{room.tier}</span>
+        </span>
+      </span>
+    </button>
+  );
+}
+
+function FloorMoveControls({
+  onMove,
+}: {
+  onMove: (command: string, amount?: number) => void;
+}) {
+  return (
+    <div className="absolute bottom-5 left-1/2 z-20 grid -translate-x-1/2 gap-1.5 rounded-[8px] bg-black/34 p-2 ring-1 ring-white/12 backdrop-blur-md">
+      <div className="grid grid-cols-5 gap-1.5">
+        <span />
+        <button
+          type="button"
+          onClick={() => onMove("turn-left")}
+          className="grid h-9 w-9 place-items-center rounded-[6px] bg-white/8 text-white/78 ring-1 ring-white/12 transition hover:bg-white/14"
+          aria-label="Turn left"
+          title="Turn left"
+        >
+          <RotateCcw size={17} />
+        </button>
+        <button
+          type="button"
+          onClick={() => onMove("forward")}
+          className="grid h-9 w-9 place-items-center rounded-[6px] bg-cyan-300/18 text-cyan-100 ring-1 ring-cyan-200/24 transition hover:bg-cyan-300/26"
+          aria-label="Move forward"
+          title="Move forward"
+        >
+          <ChevronUp size={20} />
+        </button>
+        <button
+          type="button"
+          onClick={() => onMove("turn-right")}
+          className="grid h-9 w-9 place-items-center rounded-[6px] bg-white/8 text-white/78 ring-1 ring-white/12 transition hover:bg-white/14"
+          aria-label="Turn right"
+          title="Turn right"
+        >
+          <RotateCw size={17} />
+        </button>
+        <span />
+      </div>
+      <div className="grid grid-cols-5 gap-1.5">
+        <button
+          type="button"
+          onClick={() => onMove("left")}
+          className="grid h-9 w-9 place-items-center rounded-[6px] bg-white/8 text-white/78 ring-1 ring-white/12 transition hover:bg-white/14"
+          aria-label="Move left"
+          title="Move left"
+        >
+          <ChevronLeft size={20} />
+        </button>
+        <span />
+        <button
+          type="button"
+          onClick={() => onMove("back")}
+          className="grid h-9 w-9 place-items-center rounded-[6px] bg-white/8 text-white/78 ring-1 ring-white/12 transition hover:bg-white/14"
+          aria-label="Move back"
+          title="Move back"
+        >
+          <ChevronDown size={20} />
+        </button>
+        <span />
+        <button
+          type="button"
+          onClick={() => onMove("right")}
+          className="grid h-9 w-9 place-items-center rounded-[6px] bg-white/8 text-white/78 ring-1 ring-white/12 transition hover:bg-white/14"
+          aria-label="Move right"
+          title="Move right"
+        >
+          <ChevronRight size={20} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Metric({
+  icon,
+  label,
+  value,
+  inverse = false,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  inverse?: boolean;
+}) {
+  return (
+    <div className={["rounded-[6px] p-3 ring-1", inverse ? "bg-white/7 ring-white/12" : "bg-[color:var(--input)] ring-[color:var(--border)]"].join(" ")}>
+      <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-[color:var(--muted2)]">
+        {icon}
+        {label}
+      </div>
+      <div className="mt-1 truncate text-sm font-black">{value}</div>
+    </div>
+  );
+}

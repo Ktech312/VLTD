@@ -361,6 +361,127 @@ different and bigger — read it back to confirm, then built that instead:
   Worth a look next time you're in the app, especially the home dashboard
   Collection Value chart and the shop page category icons.
 
+## Virtual Gallery Builder / Museum Campus prototype (2026-08-12)
+- âœ… Prototype route exists at `/museum/virtual-room`.
+- âœ… `Room / Map` switch exists in the Gallery Builder sidebar.
+- âœ… 3D room mode currently has wall shelves, hardwood floor, taller hallway
+  feel, wallpaper upload, movement controls, click-to-focus item viewing, and
+  center-room glass cabinet/plinth placeholders.
+- âœ… Map mode groups real vault items by `universe`/`category` and shows a
+  rough museum-campus layout with Store, Elevator, Entrance, rotunda, Main
+  Gallery, Gallery A/C/D/E/F/G, Garden Gallery, and a side list of universe
+  rooms. Clicking a populated room opens that universe in the 3D room.
+- ✅ **Map cleanup (2026-08-12, this pass):** the overview was rebuilt on a real
+  CSS grid (`grid-template-areas`) instead of hand-placed absolute `%`
+  positions. The old layout had a verified, real bug — Gallery D and Gallery E
+  physically overlapped the Main Gallery button by a ~24px band (confirmed by
+  measuring `getBoundingClientRect()` on the live page before the fix); a grid
+  can't produce that class of bug since each named area is a distinct
+  rectangle of cells. Re-measured after the fix: all 10 floorplan tiles (9
+  rooms + Main Gallery) have zero overlaps and real gutter gaps between them.
+  Also toned down the populated-room tiles (were a flat bright
+  `bg-white/[0.06]`, now a subtler dark gradient that only brightens on
+  hover/cyan-accent) and scaled typography/padding per tile size (`sm`/`md`/
+  `lg`) so small single-cell rooms (Rotunda, Gallery C/D/E/F/G) don't overflow
+  the way the old fixed `text-base` + `p-3` did in a ~90px-tall cell. Deleted
+  the dead, never-rendered `LegacyMuseumOverview`/`OverviewRoomButton` found
+  while in this file. **Not yet seen by EK** — verified via DOM measurement
+  (no screenshot tool available this pass), not a live visual check.
+- ✅ **Click-to-focus fix (2026-08-12, this pass):** found the real cause —
+  the pitch (up/down tilt) needed to look at a shelf item was clamped to
+  ±0.12 rad (~7°), but a real shelf row sits up to 1.8–1.9 units above/below
+  eye height at the ~2.35-unit standing distance the code used, which needs
+  up to ~29° of tilt. The camera was landing in the right x/z spot but almost
+  never actually tilting far enough to look at the item, so it read as
+  "parked under/beside the shelf." Fixed by computing a real standing
+  distance from how far the item is above/below eye height (so tall/low
+  shelves are viewed from a bit further back, not a bigger neck-craning
+  angle) and using the true `atan2` angle instead of a hand-tuned linear
+  clamp. Verified with a standalone calculation against the app's real shelf
+  row heights (5.42/4.17/2.92/1.67) — all four now resolve to a sane camera
+  tilt (13–29°) instead of the old flat ~7° cap. **Not yet confirmed by
+  clicking a real item in a real browser session** — the math is verified,
+  the interactive click itself wasn't (no visual tool available this pass).
+- ✅ **Side walls no longer bare on small collections (2026-08-12, this
+  pass):** old packing put every item on the back wall first (up to 32) and
+  only spilled onto the side walls once the back wall's grid was already
+  full — so a normal-sized room (under ~32 items) rendered with two fully
+  bare side walls no matter what. Switched to a back/left/back/right
+  round-robin (back still gets 2 of every 4 items, staying the visual
+  anchor) so both side walls populate from item #1. A 12-item room (the
+  default selection size) now puts real items on all three walls instead of
+  just one.
+- ✅ **Main Gallery is now an intentional empty hall, not a mislabeled
+  shortcut (2026-08-12, this pass):** it previously just opened whichever
+  universe room happened to have the most items — misleading, since the tile
+  reads like "the whole museum," not "your biggest room." EK confirmed the
+  combined-museum concept was never actually decided, so for now clicking
+  Main Gallery opens the 3D room with the selection cleared (0 items) and a
+  "Grand Hall — Exhibitions coming soon" overlay in the room plus a matching
+  line in the bottom info bar, instead of quietly substituting a random real
+  room. Verified live: Items shows 0, Value shows $0, and both messages
+  render correctly. Deciding what actually fills this hall (a real
+  cross-universe combined view, a curated welcome room, etc.) is still open.
+- ✅ **Rooms now have real doorways with room-name signs (2026-08-12, this
+  pass, EK's ask):** every 3D room now has an archway back to wherever it
+  connects to, with a canvas-texture sign above it naming the destination —
+  not just the flat 2D map tiles from before.
+  - **Grand Hall → wings:** while in the empty Grand Hall, one freestanding
+    archway per populated universe (up to 6) appears ahead, each signed with
+    that room's real title (e.g. "POP CULTURE"), and stepping through/
+    clicking it calls the same `openUniverseRoom()` the map already used.
+  - **Wing → Grand Hall (or → Campus Map from the Hall itself):** the
+    existing rear entrance archway now always carries a sign too — "Main
+    Gallery" from inside any wing, "Campus Map" from inside the Hall itself
+    (so the one archway consistently means "go back a level" everywhere).
+  - Implementation: doorways are click targets (invisible hit-planes, same
+    raycaster pattern items already use) carrying a `doorwayTarget` — a room
+    id, or a `__hub__`/`__overview__` sentinel — resolved in the existing
+    click handler.
+  - **Verified for real, not just by math this time:** used a temporary debug
+    hook to get the browser's actual camera/projection math, computed exact
+    on-screen pixel coordinates for a wing doorway, and dispatched a real
+    click there — confirmed navigating from the Grand Hall into "Pop
+    Culture" (Items 0→1, Value $0→$700, matching that universe's real vault
+    item). Debug hook removed before finishing.
+  - **Real finding from that debugging session, worth flagging for future
+    sessions:** the dev browser tool used to test this page doesn't actually
+    composite frames in this environment (screenshots fail with "the Browser
+    pane is not displayed"), and it turns out Chrome pauses
+    `requestAnimationFrame` for a non-composited page — confirmed via
+    `renderer.info.render.frame` staying frozen at `1` no matter how long we
+    waited. That's WHY the WASD/on-screen move buttons appeared totally
+    unresponsive in this session (`targetCameraBody` was updating fine, it
+    just never got copied into `camera.position` since the render loop
+    wasn't ticking) — a test-environment limitation, not an app bug. It also
+    means the earlier click-to-focus math fix (§ above) still hasn't been
+    visually confirmed by an actual animated camera move in a browser, only
+    by the standalone number check — that'll need a normal, visible browser
+    tab (or EK's own device) to see it actually pan/tilt.
+  - Doorway spread is wide (world x −7..+7) relative to how close the
+    archways sit to the spawn point, so the outer 1–2 wing doorways sit
+    outside the initial camera framing and need a turn to see — reads as
+    reasonable "look around a rotunda" behavior, not verified visually, flag
+    it if it feels too wide once actually seen.
+- â¬œ **Still needs 3D room cleanup:** make center cabinets usable for items
+  that sit on plinths/cases instead of wall shelves (cabinets are still
+  purely decorative, no items ever render on them) — not attempted this pass,
+  it's a real new feature (flat-lying card orientation + its own focus-camera
+  math), not a bug fix, and needs to be built with real visual iteration.
+  Nudged the default camera start position slightly toward the room's center
+  and widened the general look-around tilt limit (±9° → ±18°) so the tall
+  ceiling reads better while walking around — unverified visually, low risk.
+- â¬œ **Needs product-shape pass:** keep the practical path explicit:
+  1) clean 2D overview + clickable universe rooms,
+  2) polished 3D room templates with shelves/cabinets,
+  3) searchable/public rooms by universe,
+  4) paid room sizes/templates/convention placement,
+  5) later freeform Sims-like editing only if users prove they want it.
+- â¬œ **Needs data/design decisions later:** decide how room size limits map to
+  item counts, which universes get default room styles, how public/searchable
+  rooms are moderated, and whether uploaded wallpaper images are local-only or
+  synced/uploaded.
+
 ---
 
 ## What actually needs YOUR action right now, in order

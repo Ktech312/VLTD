@@ -8,10 +8,11 @@ import PullToRefresh from "@/components/PullToRefresh";
 export default function NavShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isStudio = pathname?.startsWith("/studio");
+  const isOwnerLab = pathname?.startsWith("/owner-lab");
   // The public marketing home renders its own nav — don't stack the app shell nav on it.
   const isPublicHome = pathname === "/";
 
-  if (isStudio || isPublicHome) {
+  if (isStudio || isOwnerLab || isPublicHome) {
     return <>{children}</>;
   }
 
