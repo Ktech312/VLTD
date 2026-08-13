@@ -27,6 +27,8 @@ import { getBulkScanStatus, consumeBulkScans } from "@/lib/bulkScanQuota";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { useCameraZoom, type CameraCaptureCrop } from "@/hooks/useCameraZoom";
 import { classifyBackCameras } from "@/lib/scanners/cameraLenses";
+import { getPreferredCameraId, setPreferredCameraId } from "@/lib/scanners/cameraPreference";
+import { useIsTouchPrimary } from "@/hooks/useIsTouchPrimary";
 import {
   getCategories,
   getDefaultCategory,
@@ -200,7 +202,11 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
   const [universe, setUniverse] = useState<UniverseKey>(() => readStoredScanUniverse() ?? "TCG");
   const [categoryLabel, setCategoryLabel] = useState(() => getCategories(readStoredScanUniverse() ?? "TCG")[0] ?? "Pokemon");
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
+  // Seeded from the shared cross-screen preference (cameraPreference.ts) --
+  // this screen never persisted its own camera pick before; now it both
+  // reads and writes the same key CameraCapturePanel.tsx uses, so a choice
+  // made on one screen carries to the other.
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>(() => getPreferredCameraId());
   const [flashVisible, setFlashVisible] = useState(false);
   const [capturing, setCapturing] = useState(false);
   const [capturedItems, setCapturedItems] = useState<CapturedItem[]>([]);
@@ -262,6 +268,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
   // Also drives the ultra-wide lens switch above when a separate ultra-wide
   // device was actually found on this phone.
   const cameraZoom = useCameraZoom({ onZoomPastFloor: switchToWideLens, isAtWideLens, onExitWideLens: exitWideLens });
+  const isTouchPrimary = useIsTouchPrimary();
   const attachZoom = cameraZoom.attach;
   const resetZoom = cameraZoom.reset;
 
@@ -275,8 +282,16 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         // settled figure (see that file's comment -- two earlier rounds of
         // pushing higher didn't measurably help sharpness and made capture
         // slower) rather than leaving this panel with no constraint at all.
+        // deviceId is `ideal`, not `exact` -- same fix CameraCapturePanel.tsx
+        // already needed for the same reason: an `exact` constraint on a
+        // remembered deviceId that's since gone stale (different device,
+        // browser profile, or camera unplugged) fails outright with no
+        // fallback here, instead of just falling back to any camera. This
+        // screen now seeds selectedDeviceId from the shared cross-screen
+        // preference (cameraPreference.ts) at mount, making a stale id a
+        // real, not just theoretical, possibility.
         const constraints: MediaStreamConstraints = selectedDeviceId
-          ? { video: { deviceId: { exact: selectedDeviceId }, width: { ideal: 1280 } }, audio: false }
+          ? { video: { deviceId: { ideal: selectedDeviceId }, width: { ideal: 1280 } }, audio: false }
           : { video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 } }, audio: false };
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         if (!active) { stream.getTracks().forEach((t) => t.stop()); return; }
@@ -745,11 +760,16 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
             options={(Object.keys(FRAME_LABELS) as FrameType[]).map((k) => ({ value: k, label: FRAME_LABELS[k] }))}
             onSelect={(v) => setFrameType(v as FrameType)}
           />
+          {/* Compact icon-only on touch devices, now that zoom auto-switches
+              lenses on many phones (cameraLenses.ts) -- this becomes a
+              fallback/override there, not the primary way to pick a camera.
+              Always full-labeled on desktop. */}
           <DropdownPill
             title="Camera"
+            compactIcon={isTouchPrimary ? "camera" : undefined}
             value={selectedDeviceId}
             options={cameraOptions}
-            onSelect={(v) => setSelectedDeviceId(v)}
+            onSelect={(v) => { setSelectedDeviceId(v); setPreferredCameraId(v); }}
           />
           <button
             type="button"
