@@ -102,6 +102,21 @@ confirm with EK who owns a screen.** EK is aware of this.
   about it separately — don't try to fix or move it, that's EK's call once
   they've looked. `src/app/forge/` and `src/app/vault/forge/` are empty
   directories (no `page.tsx`), harmless, safe to ignore.
+- **⚠ CHECK YOUR BRANCH BEFORE PUSHING.** 2026-08-12/13: the parallel
+  session's 3D-museum work happened on a branch called
+  `claude/museum-map-doorways` (not `main`) — and at some point mid-session
+  this repo's checked-out branch silently changed from `main` to that one
+  (not something this chat did on purpose; the parallel tool shares the same
+  working directory). A commit made after that point landed on
+  `claude/museum-map-doorways` instead of `main` and did NOT auto-deploy,
+  since Vercel only watches `main`. Caught it because the push output said
+  `claude/museum-map-doorways -> claude/museum-map-doorways` instead of the
+  usual `main -> main` — recovered by cherry-picking just that one commit
+  onto `main` (not merging the whole branch — those 3D-museum commits
+  aren't this chat's to judge ready or push live) and switching back.
+  **Run `git branch --show-current` before trusting that a push landed
+  where you think it did** — don't assume you're still on `main` just
+  because you were a few messages ago.
 
 ---
 
