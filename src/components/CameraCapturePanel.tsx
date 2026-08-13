@@ -38,6 +38,8 @@ import {
 import { cropImageFile, computeSubjectCrop, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 import { useCameraZoom } from "@/hooks/useCameraZoom";
 import { classifyBackCameras } from "@/lib/scanners/cameraLenses";
+import { getPreferredCameraId, setPreferredCameraId } from "@/lib/scanners/cameraPreference";
+import { useIsTouchPrimary } from "@/hooks/useIsTouchPrimary";
 
 type CameraPermissionState = "granted" | "prompt" | "denied" | "unknown";
 type DetectionState = "idle" | "loading" | "ready" | "unavailable";
@@ -45,7 +47,6 @@ type DetectionBox = { x: number; y: number; width: number; height: number };
 
 const DEFAULT_CROP: ScanCropRect = { left: 0, top: 0, right: 0, bottom: 0 };
 const BULK_UNIVERSES = getUniverses();
-const CAMERA_PREF_KEY = "vltd_camera_device_id";
 // Some phones stream well past 3000px on the long edge. The filter/crop/
 // upload pipeline doesn't need more than this for a sharp vault photo, and
 // capping it keeps captures fast on high-res devices.
@@ -258,6 +259,7 @@ export default function CameraCapturePanel({
   const cameraZoom = useCameraZoom({ onZoomPastFloor: switchToWideLens, isAtWideLens, onExitWideLens: exitWideLens });
   const attachZoom = cameraZoom.attach;
   const resetZoom = cameraZoom.reset;
+  const isTouchPrimary = useIsTouchPrimary();
 
   function stopCameraStream() {
     const stream = streamRef.current;
@@ -274,12 +276,10 @@ export default function CameraCapturePanel({
     let permissionStatus: PermissionStatus | null = null;
 
     // Restore the last camera the user picked so it stops resetting every shot.
-    if (typeof window !== "undefined") {
-      const savedId = window.localStorage.getItem(CAMERA_PREF_KEY);
-      if (savedId) {
-        preferredDeviceIdRef.current = savedId;
-        selectedDeviceIdRef.current = savedId;
-      }
+    const savedPreferredId = getPreferredCameraId();
+    if (savedPreferredId) {
+      preferredDeviceIdRef.current = savedPreferredId;
+      selectedDeviceIdRef.current = savedPreferredId;
     }
 
     async function refreshVideoDevices() {
@@ -304,7 +304,7 @@ export default function CameraCapturePanel({
         }
 
         // Prefer the saved camera; fall back to the first available.
-        const savedId = typeof window !== "undefined" ? window.localStorage.getItem(CAMERA_PREF_KEY) : null;
+        const savedId = getPreferredCameraId();
         const nextId = savedId && cameras.some((c) => c.deviceId === savedId)
           ? savedId
           : cameras[0]?.deviceId ?? "";
@@ -1159,7 +1159,7 @@ export default function CameraCapturePanel({
                       const nextDeviceId = event.target.value;
                       selectedDeviceIdRef.current = nextDeviceId;
                       preferredDeviceIdRef.current = nextDeviceId;
-                      if (typeof window !== "undefined") window.localStorage.setItem(CAMERA_PREF_KEY, nextDeviceId);
+                      setPreferredCameraId(nextDeviceId);
                       setSelectedDeviceId(nextDeviceId);
                       setRetryCount((count) => count + 1);
                     }}
@@ -1174,8 +1174,15 @@ export default function CameraCapturePanel({
                   </select>
                 ) : (
                   // Literal same dropdown Quick Add uses for its own Camera pill.
+                  // Compact icon-only on touch devices, now that zoom auto-
+                  // switches lenses on many phones (cameraLenses.ts) -- this
+                  // becomes a fallback/override there, not the primary way
+                  // to pick a camera. Always full-labeled on desktop, where
+                  // it's still the only way to choose between multiple
+                  // attached webcams (unrelated to phone lens fusion).
                   <DropdownPill
                     title="Camera"
+                    compactIcon={isTouchPrimary ? "camera" : undefined}
                     value={selectedDeviceId}
                     options={videoDevices.map((device, index) => ({
                       value: device.deviceId,
@@ -1184,7 +1191,7 @@ export default function CameraCapturePanel({
                     onSelect={(nextDeviceId) => {
                       selectedDeviceIdRef.current = nextDeviceId;
                       preferredDeviceIdRef.current = nextDeviceId;
-                      if (typeof window !== "undefined") window.localStorage.setItem(CAMERA_PREF_KEY, nextDeviceId);
+                      setPreferredCameraId(nextDeviceId);
                       setSelectedDeviceId(nextDeviceId);
                       setRetryCount((count) => count + 1);
                     }}
