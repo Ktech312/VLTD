@@ -65,7 +65,24 @@ type MuseumUniverseRoom = {
 };
 
 const DRAFT_KEY = "vltd_virtual_gallery_room_draft_v1";
+const WALLPAPER_KEY = "vltd_virtual_gallery_wallpaper_v1";
 const MAX_ROOM_ITEMS = 32;
+
+// `selectedIds` is always exactly MAX_ROOM_ITEMS long, one entry per physical
+// shelf slot — "" means that slot is empty. This is what makes an item's shelf
+// position independently assignable (drag it onto any slot, occupied or not)
+// instead of just reorderable relative to its neighbors.
+function makeEmptySlots(): string[] {
+  return Array.from({ length: MAX_ROOM_ITEMS }, () => "");
+}
+
+function fillSlots(ids: string[]): string[] {
+  const slots = makeEmptySlots();
+  ids.slice(0, MAX_ROOM_ITEMS).forEach((id, index) => {
+    slots[index] = id;
+  });
+  return slots;
+}
 
 const DEMO_ITEMS: VaultItem[] = [
   {
@@ -537,7 +554,7 @@ export default function VirtualGalleryRoom() {
   const [items, setItems] = useState<VaultItem[]>(DEMO_ITEMS);
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [galleryId, setGalleryId] = useState("scratch");
-  const [selectedIds, setSelectedIds] = useState<string[]>(DEMO_ITEMS.map((item) => item.id));
+  const [selectedIds, setSelectedIds] = useState<string[]>(() => fillSlots(DEMO_ITEMS.map((item) => item.id)));
   const [roomStyle, setRoomStyle] = useState<RoomStyle>("vault");
   const [roomLayout, setRoomLayout] = useState<RoomLayout>("storefront");
   const [viewMode, setViewMode] = useState<ViewMode>("room");
@@ -545,7 +562,7 @@ export default function VirtualGalleryRoom() {
   const [wallTextureUrl, setWallTextureUrl] = useState("");
   const [wallpaperError, setWallpaperError] = useState("");
   const [selectedItemId, setSelectedItemId] = useState<string>(DEMO_ITEMS[0]?.id ?? "");
-  const [saveState, setSaveState] = useState<"idle" | "saved">("idle");
+  const [saveState, setSaveState] = useState<"idle" | "saved" | "error">("idle");
   const [isOrganizing, setIsOrganizing] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -560,7 +577,7 @@ export default function VirtualGalleryRoom() {
     setGalleries(galleryList);
     if (vaultItems.length > 0) {
       setItems(vaultItems);
-      setSelectedIds(vaultItems.slice(0, 12).map((item) => item.id));
+      setSelectedIds(fillSlots(vaultItems.slice(0, 12).map((item) => item.id)));
       setSelectedItemId(vaultItems[0]?.id ?? "");
     }
 
@@ -568,8 +585,9 @@ export default function VirtualGalleryRoom() {
       const draft = safeDraft(JSON.parse(window.localStorage.getItem(DRAFT_KEY) || "{}"));
       if (draft.galleryId) setGalleryId(draft.galleryId);
       if (Array.isArray(draft.selectedIds) && draft.selectedIds.length > 0) {
-        setSelectedIds(draft.selectedIds.filter((id): id is string => typeof id === "string"));
-        setSelectedItemId(String(draft.selectedIds[0] ?? ""));
+        const ids = draft.selectedIds.filter((id): id is string => typeof id === "string");
+        setSelectedIds(fillSlots(ids));
+        setSelectedItemId(String(ids.find(Boolean) ?? ""));
       }
       if (draft.roomStyle === "vault" || draft.roomStyle === "whitebox" || draft.roomStyle === "arcade") {
         setRoomStyle(draft.roomStyle);
@@ -579,17 +597,29 @@ export default function VirtualGalleryRoom() {
       }
       if (draft.viewMode === "room" || draft.viewMode === "overview") setViewMode(draft.viewMode);
       if (typeof draft.showValues === "boolean") setShowValues(draft.showValues);
-      if (typeof draft.wallTextureUrl === "string") setWallTextureUrl(draft.wallTextureUrl);
+      // Wallpaper is saved under its own key (see saveDraft) since it's the one
+      // field big enough to blow past localStorage's quota — read that first,
+      // falling back to an old-format draft that had it embedded inline.
+      const savedWallpaper = window.localStorage.getItem(WALLPAPER_KEY);
+      if (savedWallpaper) {
+        setWallTextureUrl(savedWallpaper);
+      } else if (typeof draft.wallTextureUrl === "string" && draft.wallTextureUrl) {
+        setWallTextureUrl(draft.wallTextureUrl);
+      }
     } catch {
       // Ignore malformed local drafts.
     }
   }, []);
 
-  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
-  const selectedItems = useMemo(() => {
+  const selectedSet = useMemo(() => new Set(selectedIds.filter(Boolean)), [selectedIds]);
+  const slotItems = useMemo(() => {
     const byId = new Map(items.map((item) => [item.id, item]));
-    return selectedIds.map((id) => byId.get(id)).filter(Boolean).slice(0, MAX_ROOM_ITEMS) as VaultItem[];
+    return selectedIds.map((id) => (id ? (byId.get(id) ?? null) : null));
   }, [items, selectedIds]);
+  const selectedItems = useMemo(
+    () => slotItems.filter((item): item is VaultItem => Boolean(item)),
+    [slotItems]
+  );
   const selectedItem = useMemo(
     () => selectedItems.find((item) => item.id === selectedItemId) ?? selectedItems[0],
     [selectedItemId, selectedItems]
@@ -607,13 +637,43 @@ export default function VirtualGalleryRoom() {
     () => universeRooms.map((room) => `${room.id}:${room.items.length}`).join("|"),
     [universeRooms]
   );
+  // The full MAX_ROOM_ITEMS-slot position table for the current layout — always
+  // computed at full capacity (not `selectedItems.length`) so slot index i always
+  // means the same physical spot, whether or not it's currently occupied. Shared
+  // by the 3D scene build and the Arrange panel, so both agree on where slot i is.
+  const slotPositions = useMemo(() => buildPositions(roomLayout, MAX_ROOM_ITEMS), [roomLayout]);
+  // Groups slot indices by which physical wall they're on, in shelf-reading
+  // order (top row first, left-to-right/front-to-back within a row) — this is
+  // what lets the Arrange panel show real "Back Wall" / "Left Wall" / "Right
+  // Wall" sections instead of one flat, spatially-meaningless list.
+  const slotGroups = useMemo(() => {
+    const order: Array<{ wall: RoomItemPosition["wall"]; label: string }> = [
+      { wall: "center", label: "Featured" },
+      { wall: "back", label: "Back Wall" },
+      { wall: "left", label: "Left Wall" },
+      { wall: "right", label: "Right Wall" },
+    ];
+    return order
+      .map(({ wall, label }) => {
+        const indices = slotPositions
+          .map((pos, index) => ({ pos, index }))
+          .filter((entry) => entry.pos.wall === wall)
+          .sort((a, b) => {
+            if (a.pos.y !== b.pos.y) return b.pos.y - a.pos.y;
+            return wall === "left" || wall === "right" ? a.pos.z - b.pos.z : a.pos.x - b.pos.x;
+          })
+          .map((entry) => entry.index);
+        return { wall, label, indices };
+      })
+      .filter((group) => group.indices.length > 0);
+  }, [slotPositions]);
   const palette = getRoomPalette(roomStyle);
 
   function openUniverseRoom(room: MuseumUniverseRoom) {
     const ids = room.items.slice(0, MAX_ROOM_ITEMS).map((item) => item.id);
     if (ids.length === 0) return;
     setGalleryId("scratch");
-    setSelectedIds(ids);
+    setSelectedIds(fillSlots(ids));
     setSelectedItemId(ids[0] ?? "");
     setRoomLayout(ids.length > 16 ? "salon" : "storefront");
     setViewMode("room");
@@ -625,7 +685,7 @@ export default function VirtualGalleryRoom() {
   // empty hall (see the empty-room overlay below) until exhibitions exist.
   function openMainHall() {
     setGalleryId("scratch");
-    setSelectedIds([]);
+    setSelectedIds(makeEmptySlots());
     setSelectedItemId("");
     setRoomLayout("storefront");
     setViewMode("room");
@@ -908,8 +968,12 @@ export default function VirtualGalleryRoom() {
       });
     }
 
-    const positions = buildPositions(roomLayout, selectedItems.length);
-    selectedItems.forEach((item, index) => {
+    // Always the full fixed-slot table (not selectedItems.length) so slot index i
+    // is the same physical spot regardless of how many items are actually placed —
+    // that's what makes an item's shelf position independently assignable.
+    const positions = slotPositions;
+    slotItems.forEach((item, index) => {
+      if (!item) return;
       const pos = positions[index];
       if (!pos) return;
 
@@ -1172,7 +1236,7 @@ export default function VirtualGalleryRoom() {
       renderer.dispose();
       container.innerHTML = "";
     };
-  }, [palette.floor, palette.glow, palette.trim, palette.wall, roomLayout, roomStyle, selectedItems, showValues, universeRoomsKey, viewMode, wallTextureUrl]);
+  }, [palette.floor, palette.glow, palette.trim, palette.wall, roomLayout, roomStyle, showValues, slotItems, slotPositions, universeRoomsKey, viewMode, wallTextureUrl]);
 
   function applyGallery(nextGalleryId: string) {
     setGalleryId(nextGalleryId);
@@ -1183,37 +1247,46 @@ export default function VirtualGalleryRoom() {
     const ids = sectionIds.length > 0 ? sectionIds : gallery.itemIds;
     const validIds = ids.filter((id) => items.some((item) => item.id === id));
     if (validIds.length > 0) {
-      setSelectedIds(validIds.slice(0, MAX_ROOM_ITEMS));
+      setSelectedIds(fillSlots(validIds));
       setSelectedItemId(validIds[0] ?? "");
     }
   }
 
   function toggleItem(itemId: string) {
     setSelectedIds((current) => {
-      if (current.includes(itemId)) return current.filter((id) => id !== itemId);
-      return [...current, itemId].slice(0, MAX_ROOM_ITEMS);
+      const existingIdx = current.indexOf(itemId);
+      if (existingIdx !== -1) {
+        const next = [...current];
+        next[existingIdx] = "";
+        return next;
+      }
+      const emptyIdx = current.indexOf("");
+      if (emptyIdx === -1) return current;
+      const next = [...current];
+      next[emptyIdx] = itemId;
+      return next;
     });
     setSelectedItemId(itemId);
   }
 
-  // Swaps two items' shelf order — buildPositions() assigns wall/shelf slots
-  // purely by position in `selectedIds`, so reordering here is what actually
-  // moves an item to a different shelf spot in the room.
-  function swapSelectedOrder(fromIdx: number, toIdx: number) {
-    const fromId = selectedItems[fromIdx]?.id;
-    const toId = selectedItems[toIdx]?.id;
-    if (!fromId || !toId || fromId === toId) return;
+  // Swaps whatever occupies two shelf slots (an item, or nothing) — since
+  // `positions[i]` is a fixed physical spot regardless of what's in it, this is
+  // what makes a slot independently assignable: swap onto an empty slot to move
+  // an item there, or onto an occupied one to trade places.
+  function swapSlots(fromIdx: number, toIdx: number) {
+    if (fromIdx === toIdx) return;
     setSelectedIds((current) => {
       const next = [...current];
-      const a = next.indexOf(fromId);
-      const b = next.indexOf(toId);
-      if (a === -1 || b === -1) return current;
-      [next[a], next[b]] = [next[b], next[a]];
+      [next[fromIdx], next[toIdx]] = [next[toIdx], next[fromIdx]];
       return next;
     });
   }
 
   function saveDraft() {
+    // Wallpaper is saved separately from the rest of the draft (see below) —
+    // it used to be embedded inline here, and a large base64 image could push
+    // the whole blob past localStorage's quota. That failure was never caught,
+    // so it silently dropped the ENTIRE draft, not just the wallpaper.
     const draft: RoomDraft = {
       galleryId,
       selectedIds,
@@ -1221,11 +1294,25 @@ export default function VirtualGalleryRoom() {
       roomLayout,
       viewMode,
       showValues,
-      wallTextureUrl,
     };
-    window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-    setSaveState("saved");
-    window.setTimeout(() => setSaveState("idle"), 1500);
+    let ok = true;
+    try {
+      window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    } catch {
+      ok = false;
+    }
+    try {
+      if (wallTextureUrl) {
+        window.localStorage.setItem(WALLPAPER_KEY, wallTextureUrl);
+      } else {
+        window.localStorage.removeItem(WALLPAPER_KEY);
+      }
+    } catch {
+      ok = false;
+      setWallpaperError("Wallpaper is too large to save — try a smaller image.");
+    }
+    setSaveState(ok ? "saved" : "error");
+    window.setTimeout(() => setSaveState("idle"), 1800);
   }
 
   function sendMoveCommand(command: string, amount?: number) {
@@ -1390,133 +1477,162 @@ export default function VirtualGalleryRoom() {
               ) : null
             }
           >
-            <style>{`
-              @keyframes vltd-room-wiggle {
-                0%   { transform: rotate(-1.3deg); }
-                50%  { transform: rotate(1.3deg); }
-                100% { transform: rotate(-1.3deg); }
-              }
-              .vltd-room-wiggle { animation: vltd-room-wiggle 0.32s ease-in-out infinite; }
-              .vltd-room-wiggle-over { animation: none !important; transform: scale(1.05) !important; box-shadow: 0 0 0 2px rgba(79,211,238,0.85), 0 0 14px rgba(79,211,238,0.4) !important; }
-            `}</style>
             {isOrganizing ? (
               <>
                 <p className="text-xs leading-5 text-[color:var(--muted)]">
-                  Drag a piece onto another to swap shelf position. Position 1 fills first.
+                  Sections below match the room&apos;s actual walls. Drag a piece onto any
+                  square — filled or empty — to put it on that exact shelf.
                 </p>
-                <div className="grid grid-cols-3 gap-2">
-                  {selectedItems.map((item, idx) => {
-                    const isBeingDragged = dragIndex === idx;
-                    const isDragOver = dragOverIndex === idx && dragIndex !== idx;
-                    return (
-                      <div
-                        key={item.id}
-                        data-arrange-idx={idx}
-                        draggable
-                        style={{ touchAction: "none" }}
-                        onDragStart={(e) => {
-                          e.dataTransfer.setData("text/plain", String(idx));
-                          e.dataTransfer.effectAllowed = "move";
-                          setDragIndex(idx);
-                          const imgEl = e.currentTarget.querySelector("img");
-                          if (imgEl) e.dataTransfer.setDragImage(imgEl, imgEl.clientWidth / 2, imgEl.clientHeight / 2);
-                        }}
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          if (dragIndex !== null && dragIndex !== idx) setDragOverIndex(idx);
-                        }}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          const fromIdx = dragIndex ?? parseInt(e.dataTransfer.getData("text/plain"), 10);
-                          if (!Number.isNaN(fromIdx) && fromIdx !== idx) swapSelectedOrder(fromIdx, idx);
-                          setDragIndex(null);
-                          setDragOverIndex(null);
-                        }}
-                        onDragEnd={() => {
-                          setDragIndex(null);
-                          setDragOverIndex(null);
-                        }}
-                        onTouchStart={(e) => {
-                          e.stopPropagation();
-                          touchFromRef.current = idx;
-                          touchOverRef.current = null;
-                          setDragIndex(idx);
-                          const imgEl = e.currentTarget.querySelector("img");
-                          if (imgEl) {
-                            const clone = imgEl.cloneNode(true) as HTMLImageElement;
-                            Object.assign(clone.style, {
-                              position: "fixed",
-                              width: "64px",
-                              height: "64px",
-                              objectFit: "cover",
-                              borderRadius: "6px",
-                              opacity: "0.88",
-                              pointerEvents: "none",
-                              zIndex: "9999",
-                              transform: "scale(1.1)",
-                              boxShadow: "0 0 0 2px rgba(79,211,238,0.8), 0 8px 24px rgba(0,0,0,0.5)",
-                            });
-                            const touch = e.touches[0];
-                            clone.style.left = `${touch.clientX - 32}px`;
-                            clone.style.top = `${touch.clientY - 32}px`;
-                            document.body.appendChild(clone);
-                            touchCloneRef.current = clone;
-                          }
-                        }}
-                        onTouchMove={(e) => {
-                          if (touchFromRef.current === null) return;
-                          const touch = e.touches[0];
-                          if (touchCloneRef.current) {
-                            touchCloneRef.current.style.left = `${touch.clientX - 32}px`;
-                            touchCloneRef.current.style.top = `${touch.clientY - 32}px`;
-                          }
-                          const clone = touchCloneRef.current;
-                          if (clone) clone.style.visibility = "hidden";
-                          let el: Element | null = document.elementFromPoint(touch.clientX, touch.clientY);
-                          if (clone) clone.style.visibility = "";
-                          let toIdx: number | null = null;
-                          while (el && toIdx === null) {
-                            const attr = el.getAttribute("data-arrange-idx");
-                            if (attr !== null) toIdx = parseInt(attr, 10);
-                            el = el.parentElement;
-                          }
-                          if (toIdx !== null && toIdx !== touchFromRef.current) {
-                            touchOverRef.current = toIdx;
-                            setDragOverIndex(toIdx);
-                          }
-                        }}
-                        onTouchEnd={() => {
-                          const fromIdx = touchFromRef.current;
-                          const toIdx = touchOverRef.current;
-                          touchFromRef.current = null;
-                          touchOverRef.current = null;
-                          touchCloneRef.current?.remove();
-                          touchCloneRef.current = null;
-                          if (fromIdx !== null && toIdx !== null && fromIdx !== toIdx) {
-                            swapSelectedOrder(fromIdx, toIdx);
-                          }
-                          setDragIndex(null);
-                          setDragOverIndex(null);
-                        }}
-                        className={[
-                          "relative min-w-0 cursor-grab select-none overflow-hidden rounded-[6px] bg-[color:var(--input)] ring-1 ring-[color:var(--border)] transition active:cursor-grabbing",
-                          isDragOver ? "vltd-room-wiggle-over" : "vltd-room-wiggle",
-                          isBeingDragged ? "opacity-35" : "opacity-100",
-                        ].join(" ")}
-                      >
-                        <span className="absolute left-1 top-1 z-10 grid h-5 w-5 place-items-center rounded-[4px] bg-black/60 text-[10px] font-black text-white ring-1 ring-white/20">
-                          {idx + 1}
+                <div className="grid max-h-[520px] gap-4 overflow-y-auto pr-1">
+                  {slotGroups.map((group) => (
+                    <div key={group.wall}>
+                      <div className="mb-1.5 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted2)]">
+                        <span>{group.label}</span>
+                        <span className="text-[color:var(--muted)]">
+                          {group.indices.filter((i) => slotItems[i]).length}/{group.indices.length}
                         </span>
-                        <span className="block aspect-square overflow-hidden bg-black/20">
-                          {itemImage(item) ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={itemImage(item)} alt="" className="h-full w-full object-cover" draggable={false} />
-                          ) : null}
-                        </span>
-                        <span className="block truncate px-1.5 py-1 text-[10px] font-bold">{item.title}</span>
                       </div>
-                    );
-                  })}
+                      <div
+                        className={
+                          group.wall === "back"
+                            ? "grid grid-cols-8 gap-1"
+                            : group.wall === "center"
+                              ? "grid grid-cols-3 gap-1.5"
+                              : "grid grid-cols-4 gap-1.5"
+                        }
+                      >
+                        {group.indices.map((idx) => {
+                          const item = slotItems[idx];
+                          const isBeingDragged = dragIndex === idx;
+                          const isDragOver = dragOverIndex === idx && dragIndex !== idx;
+                          const showLabel = group.wall !== "back";
+                          return (
+                            <div
+                              key={idx}
+                              data-arrange-idx={idx}
+                              draggable={Boolean(item)}
+                              title={item?.title}
+                              style={{ touchAction: "none" }}
+                              onDragStart={(e) => {
+                                if (!item) return;
+                                e.dataTransfer.setData("text/plain", String(idx));
+                                e.dataTransfer.effectAllowed = "move";
+                                setDragIndex(idx);
+                                const imgEl = e.currentTarget.querySelector("img");
+                                if (imgEl) e.dataTransfer.setDragImage(imgEl, imgEl.clientWidth / 2, imgEl.clientHeight / 2);
+                              }}
+                              onDragOver={(e) => {
+                                if (dragIndex === null) return;
+                                e.preventDefault();
+                                if (dragIndex !== idx) setDragOverIndex(idx);
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                const fromIdx = dragIndex ?? parseInt(e.dataTransfer.getData("text/plain"), 10);
+                                if (!Number.isNaN(fromIdx) && fromIdx !== idx) swapSlots(fromIdx, idx);
+                                setDragIndex(null);
+                                setDragOverIndex(null);
+                              }}
+                              onDragEnd={() => {
+                                setDragIndex(null);
+                                setDragOverIndex(null);
+                              }}
+                              onTouchStart={
+                                item
+                                  ? (e) => {
+                                      e.stopPropagation();
+                                      touchFromRef.current = idx;
+                                      touchOverRef.current = null;
+                                      setDragIndex(idx);
+                                      const imgEl = e.currentTarget.querySelector("img");
+                                      if (imgEl) {
+                                        const clone = imgEl.cloneNode(true) as HTMLImageElement;
+                                        Object.assign(clone.style, {
+                                          position: "fixed",
+                                          width: "56px",
+                                          height: "56px",
+                                          objectFit: "cover",
+                                          borderRadius: "6px",
+                                          opacity: "0.88",
+                                          pointerEvents: "none",
+                                          zIndex: "9999",
+                                          transform: "scale(1.1)",
+                                          boxShadow: "0 0 0 2px rgba(79,211,238,0.8), 0 8px 24px rgba(0,0,0,0.5)",
+                                        });
+                                        const touch = e.touches[0];
+                                        clone.style.left = `${touch.clientX - 28}px`;
+                                        clone.style.top = `${touch.clientY - 28}px`;
+                                        document.body.appendChild(clone);
+                                        touchCloneRef.current = clone;
+                                      }
+                                    }
+                                  : undefined
+                              }
+                              onTouchMove={
+                                item
+                                  ? (e) => {
+                                      if (touchFromRef.current === null) return;
+                                      const touch = e.touches[0];
+                                      if (touchCloneRef.current) {
+                                        touchCloneRef.current.style.left = `${touch.clientX - 28}px`;
+                                        touchCloneRef.current.style.top = `${touch.clientY - 28}px`;
+                                      }
+                                      const clone = touchCloneRef.current;
+                                      if (clone) clone.style.visibility = "hidden";
+                                      let el: Element | null = document.elementFromPoint(touch.clientX, touch.clientY);
+                                      if (clone) clone.style.visibility = "";
+                                      let toIdx: number | null = null;
+                                      while (el && toIdx === null) {
+                                        const attr = el.getAttribute("data-arrange-idx");
+                                        if (attr !== null) toIdx = parseInt(attr, 10);
+                                        el = el.parentElement;
+                                      }
+                                      if (toIdx !== null && toIdx !== touchFromRef.current) {
+                                        touchOverRef.current = toIdx;
+                                        setDragOverIndex(toIdx);
+                                      }
+                                    }
+                                  : undefined
+                              }
+                              onTouchEnd={
+                                item
+                                  ? () => {
+                                      const fromIdx = touchFromRef.current;
+                                      const toIdx = touchOverRef.current;
+                                      touchFromRef.current = null;
+                                      touchOverRef.current = null;
+                                      touchCloneRef.current?.remove();
+                                      touchCloneRef.current = null;
+                                      if (fromIdx !== null && toIdx !== null && fromIdx !== toIdx) {
+                                        swapSlots(fromIdx, toIdx);
+                                      }
+                                      setDragIndex(null);
+                                      setDragOverIndex(null);
+                                    }
+                                  : undefined
+                              }
+                              className={[
+                                "relative min-w-0 select-none overflow-hidden rounded-[5px] transition",
+                                item ? "cursor-grab bg-[color:var(--input)] ring-1 ring-[color:var(--border)] active:cursor-grabbing" : "bg-black/10 ring-1 ring-dashed ring-[color:var(--border)]",
+                                isDragOver ? "z-10 scale-110 bg-[rgba(79,211,238,0.22)] ring-2 ring-[#4FD3EE]" : "",
+                                isBeingDragged ? "opacity-30" : "opacity-100",
+                              ].join(" ")}
+                            >
+                              <span className="block aspect-square overflow-hidden bg-black/20">
+                                {item && itemImage(item) ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={itemImage(item)} alt="" className="h-full w-full object-cover" draggable={false} />
+                                ) : null}
+                              </span>
+                              {showLabel && item ? (
+                                <span className="block truncate px-1 py-0.5 text-[9px] font-bold">{item.title}</span>
+                              ) : null}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </>
             ) : (
@@ -1569,10 +1685,15 @@ export default function VirtualGalleryRoom() {
           <button
             type="button"
             onClick={saveDraft}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[6px] bg-[linear-gradient(180deg,#79E7FB,#2CB1D1)] px-4 text-sm font-black text-[#06171d] shadow-[0_0_18px_rgba(79,211,238,0.22)]"
+            className={[
+              "inline-flex min-h-11 items-center justify-center gap-2 rounded-[6px] px-4 text-sm font-black shadow-[0_0_18px_rgba(79,211,238,0.22)]",
+              saveState === "error"
+                ? "bg-red-400 text-[#2a0505]"
+                : "bg-[linear-gradient(180deg,#79E7FB,#2CB1D1)] text-[#06171d]",
+            ].join(" ")}
           >
             <Save size={16} />
-            {saveState === "saved" ? "Saved" : "Save Room Draft"}
+            {saveState === "saved" ? "Saved" : saveState === "error" ? "Save Failed" : "Save Room Draft"}
           </button>
         </aside>
 
