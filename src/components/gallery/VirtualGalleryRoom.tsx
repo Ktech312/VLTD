@@ -1032,7 +1032,6 @@ export default function VirtualGalleryRoom() {
     let targetPitch = pitch;
     const eyeHeight = 3.6;
     const NAV_PITCH_LIMIT = 0.32;
-    const FOCUS_PITCH_LIMIT = 0.5;
     const cameraBody = new THREE.Vector3(0, eyeHeight, -2.2);
     const targetCameraBody = cameraBody.clone();
     let isDragging = false;
@@ -1040,9 +1039,12 @@ export default function VirtualGalleryRoom() {
     let startX = 0;
     let startY = 0;
 
+    // Height is NOT force-reset to eye level here anymore — a focus-click needs to
+    // park the camera at the item's own height (see onPointerUp) for a level,
+    // face-on shot. moveCamera() below restores eye height on foot so walking
+    // around doesn't leave you stuck crouched/floating from an earlier focus.
     function clampPosition(position: THREE.Vector3) {
       position.x = Math.max(-8.85, Math.min(8.85, position.x));
-      position.y = eyeHeight;
       position.z = Math.max(-10.35, Math.min(4.72, position.z));
       return position;
     }
@@ -1063,12 +1065,16 @@ export default function VirtualGalleryRoom() {
     function moveCamera(command: string, amount = 0.54) {
       if (command === "forward") {
         targetCameraBody.add(facingDirection().multiplyScalar(amount));
+        targetCameraBody.y = eyeHeight;
       } else if (command === "back") {
         targetCameraBody.add(facingDirection().multiplyScalar(-amount));
+        targetCameraBody.y = eyeHeight;
       } else if (command === "left") {
         targetCameraBody.add(strafeDirection().multiplyScalar(-amount));
+        targetCameraBody.y = eyeHeight;
       } else if (command === "right") {
         targetCameraBody.add(strafeDirection().multiplyScalar(amount));
+        targetCameraBody.y = eyeHeight;
       } else if (command === "turn-left") {
         targetYaw += 0.22;
       } else if (command === "turn-right") {
@@ -1148,20 +1154,20 @@ export default function VirtualGalleryRoom() {
           normal.y = 0;
           normal.normalize();
 
-          // Stand far enough back that looking at a high/low shelf item stays within
-          // FOCUS_PITCH_LIMIT — a fixed 2.35 stand-off made tall/low shelves require a
-          // steeper tilt than the (much smaller) pitch clamp ever allowed, so the camera
-          // ended up parked beside the item instead of looking at it head-on.
-          const deltaY = worldPosition.y - eyeHeight;
-          const standDistance = Math.min(4.2, Math.max(2.35, Math.abs(deltaY) / Math.tan(FOCUS_PITCH_LIMIT)));
+          // Level, face-on framing: park the camera at the ITEM's own height (not a
+          // fixed eye height) so the shot is dead level — tilting a fixed-height
+          // camera up/down to compensate reads as "looking up/down at" the item
+          // instead of standing in front of it. moveCamera() restores normal eye
+          // height as soon as you walk, so this doesn't strand you crouched/floating.
+          const standDistance = 2.6;
           const focusCamera = worldPosition.clone().add(normal.clone().multiplyScalar(standDistance));
-          focusCamera.y = eyeHeight;
+          focusCamera.y = Math.max(1.3, Math.min(6.6, worldPosition.y));
 
           setSelectedItemId(itemId);
           targetCameraBody.copy(focusCamera);
           targetYaw = Math.atan2(-normal.x, normal.z);
-          targetPitch = Math.atan2(deltaY, standDistance);
-          clampView(FOCUS_PITCH_LIMIT);
+          targetPitch = 0;
+          clampView();
         }
       }
       isDragging = false;
