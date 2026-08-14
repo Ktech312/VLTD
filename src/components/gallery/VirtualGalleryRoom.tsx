@@ -53,7 +53,9 @@ type RoomItemPosition = {
   z: number;
   ry: number;
   scale: number;
-  wall: "back" | "left" | "right" | "center";
+  wall: "back" | "left" | "right" | "center" | "cabinet";
+  /** Lying flat in a display case (rotated onto the horizontal plane) instead of wall-mounted upright. */
+  flat?: boolean;
 };
 type MuseumUniverseRoom = {
   id: string;
@@ -68,17 +70,29 @@ const DRAFT_KEY = "vltd_virtual_gallery_room_draft_v1";
 const WALLPAPER_KEY = "vltd_virtual_gallery_wallpaper_v1";
 const MAX_ROOM_ITEMS = 32;
 
-// `selectedIds` is always exactly MAX_ROOM_ITEMS long, one entry per physical
-// shelf slot — "" means that slot is empty. This is what makes an item's shelf
-// position independently assignable (drag it onto any slot, occupied or not)
-// instead of just reorderable relative to its neighbors.
+// The 5 center display cases (built further down as decorative glass cabinets)
+// are also real, numbered, assignable slots — appended after the 32 wall slots.
+const CABINET_SPOTS: Array<[number, number]> = [
+  [-3.4, -3.5],
+  [0, -4.55],
+  [3.4, -3.5],
+  [-2.1, 0.45],
+  [2.1, 0.45],
+];
+const CABINET_SLOT_COUNT = CABINET_SPOTS.length;
+const TOTAL_SLOT_COUNT = MAX_ROOM_ITEMS + CABINET_SLOT_COUNT;
+
+// `selectedIds` is always exactly TOTAL_SLOT_COUNT long, one entry per physical
+// slot (wall shelf or display case) — "" means that slot is empty. This is what
+// makes an item's position independently assignable (drag it onto any slot,
+// occupied or not) instead of just reorderable relative to its neighbors.
 function makeEmptySlots(): string[] {
-  return Array.from({ length: MAX_ROOM_ITEMS }, () => "");
+  return Array.from({ length: TOTAL_SLOT_COUNT }, () => "");
 }
 
 function fillSlots(ids: string[]): string[] {
   const slots = makeEmptySlots();
-  ids.slice(0, MAX_ROOM_ITEMS).forEach((id, index) => {
+  ids.slice(0, TOTAL_SLOT_COUNT).forEach((id, index) => {
     slots[index] = id;
   });
   return slots;
@@ -499,7 +513,7 @@ function distributeAcrossWalls(
   });
 }
 
-function buildPositions(layout: RoomLayout, count: number): RoomItemPosition[] {
+function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition[] {
   if (layout === "spotlight") {
     return Array.from({ length: count }, (_, index) => {
       if (index === 0) {
@@ -546,11 +560,34 @@ function buildPositions(layout: RoomLayout, count: number): RoomItemPosition[] {
   });
 }
 
+// Full fixed-capacity slot table for a layout: MAX_ROOM_ITEMS wall slots plus
+// the CABINET_SLOT_COUNT display-case slots, always in this order — slot index
+// is a stable identity regardless of layout or how many items are placed.
+function buildPositions(layout: RoomLayout): RoomItemPosition[] {
+  const wallPositions = buildWallPositions(layout, MAX_ROOM_ITEMS);
+  const cabinetPositions: RoomItemPosition[] = CABINET_SPOTS.map(([x, z]) => ({
+    x,
+    y: 1.98,
+    z,
+    ry: -Math.PI / 2,
+    scale: 0.5,
+    wall: "cabinet",
+    flat: true,
+  }));
+  return [...wallPositions, ...cabinetPositions];
+}
+
 export default function VirtualGalleryRoom() {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const roomGroupRef = useRef<THREE.Group | null>(null);
   const meshesRef = useRef<THREE.Mesh[]>([]);
   const doorwayMeshesRef = useRef<THREE.Mesh[]>([]);
+  // Rearranging items (or flipping Values/Style/Wallpaper) rebuilds the whole
+  // Three.js scene — without this, that rebuild silently reset the camera to the
+  // default spawn every time, which is why one drag in Arrange used to throw you
+  // back to the entrance. Persists across rebuilds; only entering a genuinely
+  // different room (openUniverseRoom/openMainHall) clears it back to a fresh spawn.
+  const cameraStateRef = useRef<{ x: number; y: number; z: number; yaw: number; pitch: number } | null>(null);
   const [items, setItems] = useState<VaultItem[]>(DEMO_ITEMS);
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [galleryId, setGalleryId] = useState("scratch");
@@ -564,6 +601,7 @@ export default function VirtualGalleryRoom() {
   const [selectedItemId, setSelectedItemId] = useState<string>(DEMO_ITEMS[0]?.id ?? "");
   const [saveState, setSaveState] = useState<"idle" | "saved" | "error">("idle");
   const [isOrganizing, setIsOrganizing] = useState(false);
+  const [roomPanelOpen, setRoomPanelOpen] = useState(true);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const touchFromRef = useRef<number | null>(null);
@@ -641,7 +679,7 @@ export default function VirtualGalleryRoom() {
   // computed at full capacity (not `selectedItems.length`) so slot index i always
   // means the same physical spot, whether or not it's currently occupied. Shared
   // by the 3D scene build and the Arrange panel, so both agree on where slot i is.
-  const slotPositions = useMemo(() => buildPositions(roomLayout, MAX_ROOM_ITEMS), [roomLayout]);
+  const slotPositions = useMemo(() => buildPositions(roomLayout), [roomLayout]);
   // Groups slot indices by which physical wall they're on, in shelf-reading
   // order (top row first, left-to-right/front-to-back within a row) — this is
   // what lets the Arrange panel show real "Back Wall" / "Left Wall" / "Right
@@ -652,6 +690,7 @@ export default function VirtualGalleryRoom() {
       { wall: "back", label: "Back Wall" },
       { wall: "left", label: "Left Wall" },
       { wall: "right", label: "Right Wall" },
+      { wall: "cabinet", label: "Display Cases" },
     ];
     return order
       .map(({ wall, label }) => {
@@ -670,8 +709,9 @@ export default function VirtualGalleryRoom() {
   const palette = getRoomPalette(roomStyle);
 
   function openUniverseRoom(room: MuseumUniverseRoom) {
-    const ids = room.items.slice(0, MAX_ROOM_ITEMS).map((item) => item.id);
+    const ids = room.items.slice(0, TOTAL_SLOT_COUNT).map((item) => item.id);
     if (ids.length === 0) return;
+    cameraStateRef.current = null; // entering a different room — start at a fresh spawn, not wherever the last room's camera happened to be
     setGalleryId("scratch");
     setSelectedIds(fillSlots(ids));
     setSelectedItemId(ids[0] ?? "");
@@ -684,6 +724,7 @@ export default function VirtualGalleryRoom() {
   // a "biggest room" stand-in, so the room renders as a large, deliberately
   // empty hall (see the empty-room overlay below) until exhibitions exist.
   function openMainHall() {
+    cameraStateRef.current = null;
     setGalleryId("scratch");
     setSelectedIds(makeEmptySlots());
     setSelectedItemId("");
@@ -874,14 +915,7 @@ export default function VirtualGalleryRoom() {
       roughness: 0.08,
       metalness: 0.08,
     });
-    const cabinetSpots = [
-      [-3.4, -3.5],
-      [0, -4.55],
-      [3.4, -3.5],
-      [-2.1, 0.45],
-      [2.1, 0.45],
-    ] as const;
-    cabinetSpots.forEach(([x, z], index) => {
+    CABINET_SPOTS.forEach(([x, z], index) => {
       const base = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.72, 1.12), cabinetMaterial);
       base.position.set(x, 0.31, z);
       roomGroup.add(base);
@@ -987,23 +1021,33 @@ export default function VirtualGalleryRoom() {
       });
       const card = new THREE.Mesh(new THREE.PlaneGeometry(1.12 * pos.scale, 1.54 * pos.scale), material);
       card.position.set(pos.x, pos.y, pos.z);
-      card.rotation.y = pos.ry;
       card.userData.itemId = item.id;
-      roomGroup.add(card);
-      meshesRef.current.push(card);
+      card.userData.flat = pos.flat === true;
 
-      const normal = new THREE.Vector3(Math.sin(pos.ry), 0, Math.cos(pos.ry));
-      const frame = new THREE.Mesh(
-        new THREE.BoxGeometry(1.25 * pos.scale, 1.67 * pos.scale, 0.06),
-        trimMaterial
-      );
-      frame.position.set(
-        pos.x - normal.x * 0.045,
-        pos.y,
-        pos.z - normal.z * 0.045
-      );
-      frame.rotation.y = pos.ry;
-      roomGroup.add(frame);
+      if (pos.flat) {
+        // Lying flat in a display case, face up — no wall-mount frame.
+        card.rotation.x = -Math.PI / 2;
+        card.rotation.z = pos.ry;
+        roomGroup.add(card);
+        meshesRef.current.push(card);
+      } else {
+        card.rotation.y = pos.ry;
+        roomGroup.add(card);
+        meshesRef.current.push(card);
+
+        const normal = new THREE.Vector3(Math.sin(pos.ry), 0, Math.cos(pos.ry));
+        const frame = new THREE.Mesh(
+          new THREE.BoxGeometry(1.25 * pos.scale, 1.67 * pos.scale, 0.06),
+          trimMaterial
+        );
+        frame.position.set(
+          pos.x - normal.x * 0.045,
+          pos.y,
+          pos.z - normal.z * 0.045
+        );
+        frame.rotation.y = pos.ry;
+        roomGroup.add(frame);
+      }
 
       const url = itemImage(item);
       if (url) {
@@ -1026,13 +1070,14 @@ export default function VirtualGalleryRoom() {
     let width = 0;
     let height = 0;
     let raf = 0;
-    let yaw = 0;
-    let pitch = 0;
+    const eyeHeight = 3.6;
+    const savedCamera = cameraStateRef.current;
+    let yaw = savedCamera?.yaw ?? 0;
+    let pitch = savedCamera?.pitch ?? 0;
     let targetYaw = yaw;
     let targetPitch = pitch;
-    const eyeHeight = 3.6;
     const NAV_PITCH_LIMIT = 0.32;
-    const cameraBody = new THREE.Vector3(0, eyeHeight, -2.2);
+    const cameraBody = new THREE.Vector3(savedCamera?.x ?? 0, savedCamera?.y ?? eyeHeight, savedCamera?.z ?? -2.2);
     const targetCameraBody = cameraBody.clone();
     let isDragging = false;
     let didDrag = false;
@@ -1149,25 +1194,41 @@ export default function VirtualGalleryRoom() {
         } else if (hit?.object.userData.itemId) {
           const itemId = String(hit.object.userData.itemId);
           const worldPosition = hit.object.getWorldPosition(new THREE.Vector3());
-          const worldQuaternion = hit.object.getWorldQuaternion(new THREE.Quaternion());
-          const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(worldQuaternion).normalize();
-          normal.y = 0;
-          normal.normalize();
 
-          // Level, face-on framing: park the camera at the ITEM's own height (not a
-          // fixed eye height) so the shot is dead level — tilting a fixed-height
-          // camera up/down to compensate reads as "looking up/down at" the item
-          // instead of standing in front of it. moveCamera() restores normal eye
-          // height as soon as you walk, so this doesn't strand you crouched/floating.
-          const standDistance = 2.6;
-          const focusCamera = worldPosition.clone().add(normal.clone().multiplyScalar(standDistance));
-          focusCamera.y = Math.max(1.3, Math.min(6.6, worldPosition.y));
+          if (hit.object.userData.flat) {
+            // A display-case item lies flat with no wall to be "level" against —
+            // the natural way to view it is standing back a bit and looking down
+            // into the case, so this deliberately keeps some downward tilt instead
+            // of forcing pitch to 0 the way a wall-mounted item does.
+            const standBack = 2.3;
+            const standUp = 1.3;
+            const focusCamera = new THREE.Vector3(worldPosition.x, worldPosition.y + standUp, worldPosition.z + standBack);
+            setSelectedItemId(itemId);
+            targetCameraBody.copy(focusCamera);
+            targetYaw = 0;
+            targetPitch = Math.atan2(-standUp, standBack);
+            clampView();
+          } else {
+            const worldQuaternion = hit.object.getWorldQuaternion(new THREE.Quaternion());
+            const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(worldQuaternion).normalize();
+            normal.y = 0;
+            normal.normalize();
 
-          setSelectedItemId(itemId);
-          targetCameraBody.copy(focusCamera);
-          targetYaw = Math.atan2(-normal.x, normal.z);
-          targetPitch = 0;
-          clampView();
+            // Level, face-on framing: park the camera at the ITEM's own height (not
+            // a fixed eye height) so the shot is dead level — tilting a fixed-height
+            // camera up/down to compensate reads as "looking up/down at" the item
+            // instead of standing in front of it. moveCamera() restores normal eye
+            // height as soon as you walk, so this doesn't strand you crouched/floating.
+            const standDistance = 2.6;
+            const focusCamera = worldPosition.clone().add(normal.clone().multiplyScalar(standDistance));
+            focusCamera.y = Math.max(1.3, Math.min(6.6, worldPosition.y));
+
+            setSelectedItemId(itemId);
+            targetCameraBody.copy(focusCamera);
+            targetYaw = Math.atan2(-normal.x, normal.z);
+            targetPitch = 0;
+            clampView();
+          }
         }
       }
       isDragging = false;
@@ -1221,6 +1282,7 @@ export default function VirtualGalleryRoom() {
     render();
 
     return () => {
+      cameraStateRef.current = { x: cameraBody.x, y: cameraBody.y, z: cameraBody.z, yaw, pitch };
       window.cancelAnimationFrame(raf);
       observer.disconnect();
       renderer.domElement.removeEventListener("pointerdown", onPointerDown);
@@ -1386,76 +1448,93 @@ export default function VirtualGalleryRoom() {
             </select>
           </ControlPanel>
 
-          <ControlPanel title="Room" icon={<MonitorUp size={15} />}>
-            <Segmented
-              value={viewMode}
-              options={[
-                ["room", "Room"],
-                ["overview", "Map"],
-              ]}
-              onChange={(value) => setViewMode(value as ViewMode)}
-            />
-            <Segmented
-              value={roomLayout}
-              options={[
-                ["storefront", "Store"],
-                ["salon", "Salon"],
-                ["spotlight", "Hero"],
-              ]}
-              onChange={(value) => setRoomLayout(value as RoomLayout)}
-            />
-            <Segmented
-              value={roomStyle}
-              options={[
-                ["vault", "Vault"],
-                ["whitebox", "White"],
-                ["arcade", "Arcade"],
-              ]}
-              onChange={(value) => setRoomStyle(value as RoomStyle)}
-            />
-            <label className="flex items-center justify-between gap-3 rounded-[6px] bg-[color:var(--input)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]">
-              <span>Values</span>
-              <input
-                type="checkbox"
-                checked={showValues}
-                onChange={(event) => setShowValues(event.target.checked)}
-                className="h-4 w-4 accent-cyan-400"
-              />
-            </label>
-            <div className="rounded-[6px] bg-[color:var(--input)] p-2 ring-1 ring-[color:var(--border)]">
-              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-[5px] bg-black/10 px-3 py-2 text-sm font-semibold transition hover:bg-black/18">
-                <span className="inline-flex items-center gap-2">
-                  <Paintbrush size={15} />
-                  Wallpaper
-                </span>
-                <span className="text-xs text-[color:var(--muted)]">
-                  {wallTextureUrl ? "Change" : "Upload"}
-                </span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(event) => {
-                    handleWallpaperUpload(event.target.files?.[0]);
-                    event.target.value = "";
-                  }}
+          <ControlPanel
+            title="Room"
+            icon={<MonitorUp size={15} />}
+            action={
+              <button
+                type="button"
+                onClick={() => setRoomPanelOpen((current) => !current)}
+                aria-label={roomPanelOpen ? "Collapse room settings" : "Expand room settings"}
+                className="grid h-6 w-6 place-items-center rounded-[5px] bg-[color:var(--input)] text-[color:var(--muted2)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
+              >
+                {roomPanelOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+            }
+          >
+            {roomPanelOpen ? (
+              <>
+                <Segmented
+                  value={viewMode}
+                  options={[
+                    ["room", "Room"],
+                    ["overview", "Map"],
+                  ]}
+                  onChange={(value) => setViewMode(value as ViewMode)}
                 />
-              </label>
-              {wallTextureUrl ? (
-                <button
-                  type="button"
-                  onClick={() => setWallTextureUrl("")}
-                  className="mt-2 w-full rounded-[5px] bg-black/10 px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
-                >
-                  Remove Wallpaper
-                </button>
-              ) : null}
-              {wallpaperError ? (
-                <div className="mt-2 text-xs font-semibold text-red-300">
-                  {wallpaperError}
+                <Segmented
+                  value={roomLayout}
+                  options={[
+                    ["storefront", "Store"],
+                    ["salon", "Salon"],
+                    ["spotlight", "Hero"],
+                  ]}
+                  onChange={(value) => setRoomLayout(value as RoomLayout)}
+                />
+                <Segmented
+                  value={roomStyle}
+                  options={[
+                    ["vault", "Vault"],
+                    ["whitebox", "White"],
+                    ["arcade", "Arcade"],
+                  ]}
+                  onChange={(value) => setRoomStyle(value as RoomStyle)}
+                />
+                <label className="flex items-center justify-between gap-3 rounded-[6px] bg-[color:var(--input)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]">
+                  <span>Values</span>
+                  <input
+                    type="checkbox"
+                    checked={showValues}
+                    onChange={(event) => setShowValues(event.target.checked)}
+                    className="h-4 w-4 accent-cyan-400"
+                  />
+                </label>
+                <div className="rounded-[6px] bg-[color:var(--input)] p-2 ring-1 ring-[color:var(--border)]">
+                  <label className="flex cursor-pointer items-center justify-between gap-3 rounded-[5px] bg-black/10 px-3 py-2 text-sm font-semibold transition hover:bg-black/18">
+                    <span className="inline-flex items-center gap-2">
+                      <Paintbrush size={15} />
+                      Wallpaper
+                    </span>
+                    <span className="text-xs text-[color:var(--muted)]">
+                      {wallTextureUrl ? "Change" : "Upload"}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(event) => {
+                        handleWallpaperUpload(event.target.files?.[0]);
+                        event.target.value = "";
+                      }}
+                    />
+                  </label>
+                  {wallTextureUrl ? (
+                    <button
+                      type="button"
+                      onClick={() => setWallTextureUrl("")}
+                      className="mt-2 w-full rounded-[5px] bg-black/10 px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
+                    >
+                      Remove Wallpaper
+                    </button>
+                  ) : null}
+                  {wallpaperError ? (
+                    <div className="mt-2 text-xs font-semibold text-red-300">
+                      {wallpaperError}
+                    </div>
+                  ) : null}
                 </div>
-              ) : null}
-            </div>
+              </>
+            ) : null}
           </ControlPanel>
 
           <ControlPanel
@@ -1466,7 +1545,11 @@ export default function VirtualGalleryRoom() {
                 <button
                   type="button"
                   onClick={() => {
-                    setIsOrganizing((current) => !current);
+                    setIsOrganizing((current) => {
+                      const next = !current;
+                      setRoomPanelOpen(!next);
+                      return next;
+                    });
                     setDragIndex(null);
                     setDragOverIndex(null);
                   }}
@@ -1504,7 +1587,9 @@ export default function VirtualGalleryRoom() {
                             ? "grid grid-cols-8 gap-1"
                             : group.wall === "center"
                               ? "grid grid-cols-3 gap-1.5"
-                              : "grid grid-cols-4 gap-1.5"
+                              : group.wall === "cabinet"
+                                ? "grid grid-cols-5 gap-1.5"
+                                : "grid grid-cols-4 gap-1.5"
                         }
                       >
                         {group.indices.map((idx) => {
@@ -1624,6 +1709,9 @@ export default function VirtualGalleryRoom() {
                                 isBeingDragged ? "opacity-30" : "opacity-100",
                               ].join(" ")}
                             >
+                              <span className="absolute left-0.5 top-0.5 z-[1] grid h-3.5 min-w-[14px] place-items-center rounded-[3px] bg-black/70 px-0.5 text-[8px] font-black leading-none text-white/85">
+                                {idx + 1}
+                              </span>
                               <span className="block aspect-square overflow-hidden bg-black/20">
                                 {item && itemImage(item) ? (
                                   // eslint-disable-next-line @next/next/no-img-element
