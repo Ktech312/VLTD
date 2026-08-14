@@ -89,3 +89,34 @@ sections/headlines depending on who's reading:
 > "AI-verified certificates of authenticity for every piece in your collection."
 
 Same product. Two completely different conversations.
+
+---
+
+## Trust & Accuracy Messaging (the "AI isn't perfect, and that's fine" line)
+
+Core line, saved 2026-08-07:
+
+> **AI is never 100% — that's why the Verify screen stays as your safety net to
+> fix any miss.**
+
+**Why this works:** it gets ahead of the objection every AI-skeptical
+collector already has ("what if it gets it wrong?") instead of overclaiming
+accuracy and getting caught out later. Admitting the limit *and* showing the
+catch is more trustworthy than a "flawless AI" promise no product can keep —
+especially for collectors who've been burned by bad auto-fill elsewhere.
+
+**Use for:** collector-audience copy (per the language rules above — this is a
+collector-safe AI mention, not an artist-safe rewrite). Good for FAQ/trust
+sections, onboarding copy near the scanner, "how it works" pages, or objection-
+handling in sales/support conversations.
+
+**Variants:**
+- "AI gets you 90% of the way there in seconds — you always get the final say."
+- "Every AI-filled item passes through your Verify screen before it's saved.
+  Nothing goes into your vault without your OK."
+- "We'd rather show you a fast guess and let you fix it than pretend AI is
+  never wrong."
+
+**Artist-safe version** (per the word-swap rule above — no "AI"):
+> "The system gets you most of the way there in seconds — you always confirm
+> before anything is saved to your record."
