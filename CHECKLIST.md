@@ -53,12 +53,15 @@ Scanned a Nintendo Switch game's actual retail barcode — correctly decoded,
 correctly said "no match" (honest, not a bug: no video-game-specific
 database is wired in, only comics/vinyl/generic-UPC/book). Two real things
 came out of this:
-1. ⚠️ **New risk found, not yet fixed:** upcitemdb's free tier (our generic
-   UPC lookup) is capped at **100 requests/day, shared across the whole
-   app** — same shape of problem PSA had. No cache, no budget guard exists
-   for it at all, and tonight's live-scan feature now fires it far more
-   often than before. **Should get the same cache+budget treatment PSA
-   got, before it becomes a real outage.** See HANDOFF §B8 for detail.
+1. ✅ **FIXED same night (§B10):** upcitemdb (100/day, same shape as PSA)
+   now has the full permanent-cache + 90/day-budget guard, generalized
+   into a shared `lookupApiGuard.ts` (not copy-pasted per provider).
+   Discogs/Metron get the cache + real 429 handling (no fake daily cap —
+   neither actually has one). Migration `20260811_lookup_api_guards.sql`
+   **confirmed run by EK** ("Success. No rows returned") — guard is live,
+   not just fail-open. Not yet observed firing on a real multi-scan
+   session (worth a glance at `lookup_api_cache`/`lookup_api_usage` next
+   time you're in Supabase, just to see rows accumulating).
 2. ✅ **Added a real "Brand / Manufacturer / Publisher" field** (`/capture`
    only) — AI vision and the UPC lookup were already returning this data
    (confirmed "Nintendo" was right there in the response) and it was being
@@ -66,10 +69,19 @@ came out of this:
    UI field + wiring. **Needs a migration run** —
    `supabase/migrations/20260811_vault_item_brand.sql` — before it can sync
    across devices; works locally right now without it.
-3. ⬜ **Live zoom while framing a shot — confirmed it doesn't exist.** The
-   AFTER-capture crop step already has real pinch/scroll zoom (already
-   shipped, just easy to miss); the live camera view itself has none. Real
-   feature request from EK, not started.
+3. ✅ **BUILT same night (§B11):** live zoom on the camera preview itself
+   (before capture) — `useCameraZoom.ts`, one shared hook for both
+   cameras. Hardware zoom where the browser exposes it (mostly Android
+   Chrome), plus a universal digital fallback (CSS-scaled preview +
+   matching crop at the actual moment of capture, not just a zoomed-
+   looking preview) everywhere else, driven by scroll wheel/pinch.
+   EK tested desktop with a mouse: no hardware zoom (expected, real
+   platform limitation) — the digital fallback was added in response.
+   Also researched multi-lens switching (ultra-wide/telephoto) — see
+   HANDOFF §B11 for the honest answer on what's/isn't possible there.
+   ⬜ **Not yet confirmed on a real phone** — check the slider/pinch
+   shows up, scroll doesn't fight page scroll, and a zoomed capture is
+   actually zoomed in the saved photo.
 
 Scannable done/pending list covering everything from the dead-code sweep
 through the barcode/Cards/PSA/Discogs work, the Halls rebuild, and the
@@ -123,11 +135,11 @@ EK tested live on iPhone Safari, Light Mode, reported with a screenshot:
 - ✅ 4 more `rounded-full` pill-sweep stragglers fixed (`6973b56`).
 - ✅ EK confirmed Quick Add's camera (`ScanCapturePanel.tsx`) looks
   noticeably better than the regular Add camera (`CameraCapturePanel.tsx`).
-- ⬜ **Not started**: making the regular Add camera visually match Quick
-  Add's look (squared pills, frame corners, flash, ghost counter, thumbnail
-  placement). EK's explicit ordering: barcode + Cards had to be confirmed
-  working FIRST. Given barcode is still unconfirmed (see below), still
-  correctly not started.
+- ✅ **DONE 2026-08-08/09 (HANDOFF §B4 — this checklist line was stale
+  until now).** Regular Add's camera rebuilt to actually match Quick
+  Add's: full-screen popup replacing the embedded live camera, corner-
+  bracket guide, shared `DropdownPill`, letterbox-bar fix, drag-to-
+  reorder thumbnails. Nothing left to do here.
 
 ## Deploying last night's backlog (this session)
 - ✅ 18 commits that were sitting unmerged on `claude/focused-mendel-94fdc9`
@@ -364,10 +376,9 @@ different and bigger — read it back to confirm, then built that instead:
 ---
 
 ## What actually needs YOUR action right now, in order
-1. **Run the new migration** — `supabase/migrations/20260811_vault_item_brand.sql`
-   (adds `vault_items.brand`) — whenever convenient, then let the next
-   session know so the cloud-sync wiring can be finished (deliberately not
-   done yet, see above).
+1. ✅ **DONE — both migrations confirmed run.** `20260811_vault_item_brand.sql`
+   (brand field, §B9) and `20260811_lookup_api_guards.sql` (UPC/Discogs/
+   Metron cache+budget guard, §B10) are both live. Nothing to run here.
 2. **Scan a comic's barcode or a vinyl record** on `/capture` (a real UPC
    from a video game box was already tried and correctly said "no match" —
    that database doesn't cover games, so it doesn't prove the success path).
@@ -379,10 +390,12 @@ different and bigger — read it back to confirm, then built that instead:
 4. Do a few Scan bursts in a row on your iPhone and confirm it still stays
    cool — the original complaint that started all of tonight's scanning
    work hasn't been re-checked since the `zxing-wasm` engine swap.
-5. **Decide on priority for 3 new items found tonight** (all in HANDOFF
-   §B8-B9): the UPC-lookup 100/day quota risk (needs the same guard PSA
-   got, before it becomes a real outage), a video-game-specific barcode
-   database (ScanDex/GameUPC), and live zoom on the camera view itself.
+5. **1 of 3 items from that night is still a real decision; the other 2
+   are done.** UPC-lookup quota risk → fixed (§B10, item 1 above). Live
+   zoom → built (§B11, needs your device to confirm — folded into item 4).
+   Still open, your call: a video-game-specific barcode database
+   (ScanDex/GameUPC) — not started, worth it only if game-item scanning
+   matters to you.
 6. Email `collectors-apis@collectors.com` about the "Access to this API is
    limited to approved customers" rejection — ask directly whether this
    account has approved API access, and if not, how to get it. A fresh
@@ -395,8 +408,8 @@ different and bigger — read it back to confirm, then built that instead:
    Subcategory now update and the Rarity field shows up on `/capture`.
 10. Whenever you hear back from CardHedge, bring their answer (especially on
     comics coverage) back here.
-11. Once 2-4 above are confirmed working, the regular Add camera's visual
-    match to Quick Add is next in line — not started yet.
+11. ✅ **DONE — this line was stale.** The regular Add camera's visual
+    match to Quick Add shipped 2026-08-08/09 (§B4). Nothing left here.
 12. Set the "Type" dropdown + "Attributes" checkboxes on a `/vault/add`
     item, navigate away and back, confirm they now actually stick.
 13. Take a look at the overnight cleanup pass in general — Collection Value
