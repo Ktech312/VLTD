@@ -493,13 +493,15 @@ function fileToRoomWallpaper(file: File) {
 
 function getRoomPalette(style: RoomStyle) {
   if (style === "whitebox") {
+    // "White" — a bright classical gallery: warm cream walls with painted
+    // molding, honey wood floor, big airy daylight feel.
     return {
-      wall: 0xdfe3e8,
-      floor: 0xbfc6cf,
-      trim: 0x8a929b,
-      glow: 0x4fd3ee,
+      wall: 0xf1ede2,
+      floor: 0xb98a55,
+      trim: 0xe9e3d2,
+      glow: 0xfff1d6,
       textTone: "text-slate-950",
-      shell: "bg-[linear-gradient(180deg,#eef1f4,#d8dde3)] text-slate-950",
+      shell: "bg-[linear-gradient(180deg,#f7f4ec,#e4ddc9)] text-slate-950",
     };
   }
 
@@ -514,16 +516,15 @@ function getRoomPalette(style: RoomStyle) {
     };
   }
 
-  // Default ("Vault") — a real classic-gallery look: sage-gray walls, warm
-  // honey herringbone floor, painted light trim, warm gallery-spotlight glow
-  // instead of the old near-black room with a cyan accent.
+  // Default ("Vault") — a real bank-vault feel: deep navy walls, a heavy
+  // riveted steel door at the entrance, warm wood plank floor.
   return {
-    wall: 0x8c9d95,
-    floor: 0x9c7748,
-    trim: 0xd9d3c2,
-    glow: 0xffefd1,
-    textTone: "text-slate-900",
-    shell: "bg-[linear-gradient(180deg,#aabcb2,#7e9088)] text-slate-900",
+    wall: 0x16273f,
+    floor: 0x8a6238,
+    trim: 0x9aa3ab,
+    glow: 0xdfe8f0,
+    textTone: "text-white",
+    shell: "bg-[radial-gradient(circle_at_50%_0%,rgba(159,184,214,0.14),transparent_34%),linear-gradient(180deg,#1c2c44,#0a1220)] text-white",
   };
 }
 
@@ -824,8 +825,14 @@ export default function VirtualGalleryRoom() {
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     container.appendChild(renderer.domElement);
 
+    // The Grand Hall (empty, no items placed) always gets its own dark,
+    // dramatically-spotlit look, independent of whichever room style is
+    // selected — a fixed "front door" impression rather than something users
+    // reskin like a normal room.
+    const inHub = selectedItems.length === 0;
+
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(roomStyle === "whitebox" ? 0xd5dbe1 : 0x05070b);
+    scene.background = new THREE.Color(inHub ? 0x04060a : roomStyle === "whitebox" ? 0xd5dbe1 : 0x05070b);
     scene.fog = new THREE.Fog(scene.background, 16, 32);
 
     const camera = new THREE.PerspectiveCamera(47, 1, 0.1, 80);
@@ -835,9 +842,9 @@ export default function VirtualGalleryRoom() {
     scene.add(roomGroup);
     roomGroupRef.current = roomGroup;
 
-    const hemi = new THREE.HemisphereLight(0xffffff, palette.floor, roomStyle === "whitebox" ? 1.7 : 1.15);
+    const hemi = new THREE.HemisphereLight(0xffffff, palette.floor, inHub ? 0.8 : roomStyle === "whitebox" ? 1.7 : 1.15);
     scene.add(hemi);
-    const key = new THREE.SpotLight(palette.glow, 7.2, 26, Math.PI / 5, 0.55, 1.4);
+    const key = new THREE.SpotLight(palette.glow, inHub ? 9.5 : 7.2, 26, Math.PI / 5, 0.55, 1.4);
     key.position.set(0, 7.4, 1.5);
     scene.add(key);
     const warm = new THREE.PointLight(palette.trim, roomStyle === "arcade" ? 3.5 : 1.8, 14);
@@ -846,9 +853,10 @@ export default function VirtualGalleryRoom() {
 
     // Flat matte plaster/paint finish for the gallery walls — the old vault
     // style had a noticeable metallic sheen (0.18) that read wrong once the
-    // wall color moved from near-black to a painted sage.
+    // wall color moved from near-black to a painted sage. The Grand Hall
+    // overrides to near-black navy regardless of style (see inHub above).
     const wallMaterial = new THREE.MeshStandardMaterial({
-      color: palette.wall,
+      color: inHub ? 0x0c1118 : palette.wall,
       roughness: 0.72,
       metalness: 0.02,
     });
@@ -859,19 +867,21 @@ export default function VirtualGalleryRoom() {
         wallMaterial.needsUpdate = true;
       });
     }
+    // Herringbone parquet for the bright classical gallery ("White"); the vault
+    // and arcade styles keep plain wood plank / dark flooring.
     const floorMaterial = new THREE.MeshStandardMaterial({
-      map: roomStyle === "vault" ? createHerringboneTexture() : createHardwoodTexture(),
+      map: roomStyle === "whitebox" ? createHerringboneTexture() : createHardwoodTexture(),
       color: 0xffffff,
       roughness: 0.46,
       metalness: 0.04,
     });
-    // Matte painted wood/plaster trim for the gallery look — the old 0.72
-    // metalness read as brushed chrome, wrong for a door casing or shelf rail.
-    // Arcade keeps its polished-chrome finish.
+    // Trim finish varies by style: Vault gets a real brushed-steel feel (it's
+    // meant to evoke a bank vault door), White stays matte painted wood/
+    // plaster, Arcade keeps its polished-chrome look.
     const trimMaterial = new THREE.MeshStandardMaterial({
       color: palette.trim,
-      roughness: roomStyle === "arcade" ? 0.34 : 0.65,
-      metalness: roomStyle === "arcade" ? 0.72 : 0.08,
+      roughness: roomStyle === "arcade" ? 0.34 : roomStyle === "vault" ? 0.42 : 0.65,
+      metalness: roomStyle === "arcade" ? 0.72 : roomStyle === "vault" ? 0.55 : 0.08,
     });
 
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(21, 26), floorMaterial);
@@ -880,9 +890,9 @@ export default function VirtualGalleryRoom() {
     roomGroup.add(floor);
 
     const baseboardMaterial = new THREE.MeshStandardMaterial({
-      color: roomStyle === "whitebox" ? 0x707981 : roomStyle === "vault" ? 0x5c6b62 : 0x252a30,
+      color: roomStyle === "whitebox" ? 0xcfc6ac : roomStyle === "vault" ? 0x4a545c : 0x252a30,
       roughness: 0.5,
-      metalness: roomStyle === "vault" ? 0.05 : 0.18,
+      metalness: roomStyle === "vault" ? 0.35 : 0.18,
     });
 
     const backWall = new THREE.Mesh(new THREE.PlaneGeometry(21, 9.2), wallMaterial);
@@ -903,7 +913,7 @@ export default function VirtualGalleryRoom() {
     // — an uploaded wallpaper stretched across the ceiling too before, which
     // looked wrong (that's wall decor, not a ceiling finish).
     const ceilingMaterial = new THREE.MeshStandardMaterial({
-      color: roomStyle === "whitebox" ? 0xeef1f3 : roomStyle === "arcade" ? 0x14101f : 0xe4dfd0,
+      color: inHub ? 0x141a22 : roomStyle === "whitebox" ? 0xf5f1e6 : roomStyle === "arcade" ? 0x14101f : 0xd8dce0,
       roughness: 0.85,
       metalness: 0.02,
     });
@@ -913,9 +923,9 @@ export default function VirtualGalleryRoom() {
     roomGroup.add(ceiling);
 
     const doorSideMaterial = new THREE.MeshStandardMaterial({
-      color: roomStyle === "whitebox" ? 0xcbd2d8 : roomStyle === "vault" ? 0x76877f : 0x111419,
+      color: inHub ? 0x0a0e14 : roomStyle === "whitebox" ? 0xe0d9c4 : roomStyle === "vault" ? 0x0f1c2e : 0x111419,
       roughness: 0.68,
-      metalness: roomStyle === "vault" ? 0.04 : 0.02,
+      metalness: roomStyle === "vault" ? 0.05 : 0.02,
     });
     if (wallTextureUrl) {
       void createImageTexture(wallTextureUrl, 1.4, 1).then((texture) => {
@@ -954,6 +964,57 @@ export default function VirtualGalleryRoom() {
     const doorHeader = new THREE.Mesh(new THREE.BoxGeometry(3.85, 0.18, 0.18), trimMaterial);
     doorHeader.position.set(0, 4.92, 5.64);
     roomGroup.add(doorHeader);
+
+    // Vault style only: a heavy riveted steel door, swung open beside the
+    // entrance — purely decorative (not part of meshesRef/doorwayMeshesRef),
+    // so it can't affect the doorway's click/raycast behavior.
+    if (roomStyle === "vault") {
+      const vaultDoorMaterial = new THREE.MeshStandardMaterial({
+        color: 0x8b939a,
+        roughness: 0.3,
+        metalness: 0.88,
+      });
+      const doorRadius = 1.35;
+      const doorThickness = 0.28;
+      const vaultDoorGroup = new THREE.Group();
+
+      const doorDisc = new THREE.Mesh(
+        new THREE.CylinderGeometry(doorRadius, doorRadius, doorThickness, 32),
+        vaultDoorMaterial
+      );
+      doorDisc.rotation.z = Math.PI / 2;
+      vaultDoorGroup.add(doorDisc);
+
+      const hub = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.32, 0.32, doorThickness + 0.05, 20),
+        trimMaterial
+      );
+      hub.rotation.z = Math.PI / 2;
+      vaultDoorGroup.add(hub);
+
+      for (let i = 0; i < 10; i += 1) {
+        const angle = (i / 10) * Math.PI * 2;
+        const spoke = new THREE.Mesh(new THREE.BoxGeometry(doorThickness + 0.06, 0.09, 0.09), trimMaterial);
+        spoke.position.set(0, Math.cos(angle) * doorRadius * 0.8, Math.sin(angle) * doorRadius * 0.8);
+        spoke.rotation.x = angle;
+        vaultDoorGroup.add(spoke);
+      }
+
+      for (let i = 0; i < 16; i += 1) {
+        const angle = (i / 16) * Math.PI * 2;
+        const rivet = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.045, 0.045, doorThickness + 0.08, 8),
+          trimMaterial
+        );
+        rivet.rotation.z = Math.PI / 2;
+        rivet.position.set(0, Math.cos(angle) * doorRadius * 0.94, Math.sin(angle) * doorRadius * 0.94);
+        vaultDoorGroup.add(rivet);
+      }
+
+      vaultDoorGroup.position.set(3.05, 2.2, 5.5);
+      vaultDoorGroup.rotation.y = Math.PI / 2.6;
+      roomGroup.add(vaultDoorGroup);
+    }
 
     const backBaseboard = new THREE.Mesh(new THREE.BoxGeometry(20.7, 0.18, 0.12), baseboardMaterial);
     backBaseboard.position.set(0, 0.08, -11.9);
@@ -1019,8 +1080,6 @@ export default function VirtualGalleryRoom() {
     // wall, and the Grand Hall additionally gets one freestanding archway per
     // populated universe room, each with a sign naming where it leads — so the
     // museum is actually navigated room-to-room instead of only via the flat map.
-    const inHub = selectedItems.length === 0;
-
     function buildDoorwaySign(x: number, y: number, z: number, label: string, faceBack: boolean) {
       const signTexture = drawDoorSignTexture(label);
       const sign = new THREE.Mesh(
