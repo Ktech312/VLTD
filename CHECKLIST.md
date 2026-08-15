@@ -1,4 +1,4 @@
-# VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-11)
+# VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-13)
 
 ## Barcode/QR scanning — WHERE THINGS STAND RIGHT NOW (2026-08-11)
 Full narrative of how this got here is in `HANDOFF.md` §B (a real saga —
@@ -66,9 +66,8 @@ came out of this:
    only) — AI vision and the UPC lookup were already returning this data
    (confirmed "Nintendo" was right there in the response) and it was being
    silently thrown away with nowhere to go. New `VaultItem.brand` field +
-   UI field + wiring. **Needs a migration run** —
-   `supabase/migrations/20260811_vault_item_brand.sql` — before it can sync
-   across devices; works locally right now without it.
+   UI field + wiring. Migration `20260811_vault_item_brand.sql`
+   **confirmed run by EK** — cloud-sync wiring done too, not just local.
 3. ✅ **BUILT same night (§B11):** live zoom on the camera preview itself
    (before capture) — `useCameraZoom.ts`, one shared hook for both
    cameras. Hardware zoom where the browser exposes it (mostly Android
@@ -77,11 +76,79 @@ came out of this:
    looking preview) everywhere else, driven by scroll wheel/pinch.
    EK tested desktop with a mouse: no hardware zoom (expected, real
    platform limitation) — the digital fallback was added in response.
-   Also researched multi-lens switching (ultra-wide/telephoto) — see
-   HANDOFF §B11 for the honest answer on what's/isn't possible there.
    ⬜ **Not yet confirmed on a real phone** — check the slider/pinch
    shows up, scroll doesn't fight page scroll, and a zoomed capture is
    actually zoomed in the saved photo.
+4. ✅ **Follow-up, same session — lens-switching on zoom.** EK asked
+   directly: does zoom use a phone's multiple rear cameras? It didn't.
+   Built `src/lib/scanners/cameraLenses.ts` — best-effort label-text
+   classifier that finds a phone's separate ultra-wide camera (when one
+   exists as its own device; many phones already fuse all their lenses
+   into one at the OS level, where this correctly no-ops since hardware
+   zoom already benefits automatically). Scrolling/pinching out past the
+   floor switches to it; zooming back in switches back. Android-only in
+   practice (iOS never exposes multiple rear lenses this way).
+   ⬜ **Completely unverified on real multi-lens hardware** — no device
+   available to test against; a misclassified lens would fail silently.
+
+## Camera picker compromise + shared camera preference (same session, EK's follow-up)
+EK, after the lens-switch shipped: "since it will always pick that camera
+cluster on the phones, do we even need to be able to switch camera lens?"
+Agreed compromise, not a straight removal — the picker is still the only
+way to choose between multiple desktop webcams, the only way to reach a
+telephoto lens (auto-switch only covers ultra-wide), and a manual
+fallback if the ultra-wide auto-detection guesses wrong.
+- ✅ `DropdownPill` gained a `compactIcon` option — same menu, renders as
+  a small icon button instead of a labeled "Camera ▾" pill.
+- ✅ New `useIsTouchPrimary` hook (`matchMedia("(pointer: coarse)")`) —
+  both camera panels now show the compact icon on touch devices, the full
+  labeled pill on desktop.
+- ✅ EK's forward-looking note acted on now, not deferred: extracted the
+  camera preference into a shared `src/lib/scanners/cameraPreference.ts`
+  (same localStorage key the regular Add camera already used) so a future
+  Settings-page camera picker (EK's idea — a dedicated test spot to set a
+  default) has one place to read/write instead of two screens each
+  keeping their own copy.
+- ✅ **Real gap found and fixed along the way:** Quick Add never persisted
+  its own camera pick at all before this — now it does, shared with the
+  regular Add camera.
+- ✅ **Real bug found and fixed along the way:** unifying Quick Add onto
+  the shared (possibly stale) preference would have made a pre-existing
+  bug worse — a hard `exact` deviceId constraint with no fallback, same
+  class already fixed in the regular Add camera. Switched to `ideal`.
+- ⬜ **Not yet seen on a real device** — confirm the compact icon shows/
+  behaves correctly on a touch device and the full pill still shows on
+  desktop.
+
+## Stripe customer id now persists server-side (same session)
+Real gap flagged a few passes back: `profiles.tier` was already kept in
+sync on every device by the webhook, but the Stripe customer id itself
+only ever lived in the browser that completed Checkout — a paying user on
+a new device saw the right plan but the Payment method/Invoice history/
+Cancel sections stayed hidden.
+- ✅ Added `profiles.stripe_customer_id`
+  (`supabase/migrations/20260812_profiles_stripe_customer_id.sql`,
+  **confirmed run by EK**). Webhook now writes it on
+  `checkout.session.completed` and `customer.subscription.updated`.
+- ✅ `/account/billing` reads it from the profile as the source of truth,
+  falling back to the local cache only for an instant first paint.
+- ⬜ **Not tested against a real Stripe checkout** — worth a glance at
+  `profiles.stripe_customer_id` after the next real subscribe.
+
+## ⚠ Infra note: two agent sessions share this working directory — uncommitted edits are NOT safe
+Found the hard way, 2026-08-13: the parallel 3D-museum session's tool
+checked out `claude/museum-map-doorways` in this SAME shared working
+directory multiple times mid-session — not just once (a "check your
+branch" issue), but at least once WHILE this chat had an uncommitted edit
+to this very file sitting in the working tree, which the checkout
+silently discarded. Recovered by re-applying the edit and committing
+immediately rather than leaving it uncommitted. **Lesson: commit (and
+ideally push) promptly after any edit in this repo, don't leave edits
+sitting uncommitted for multiple tool calls** — `git status`/working-tree
+state can change out from under you between one Bash call and the next,
+not just between chat turns. Also still run `git branch --show-current`
+before trusting a push landed where expected (HANDOFF.md §0 has the
+original version of that note).
 
 Scannable done/pending list covering everything from the dead-code sweep
 through the barcode/Cards/PSA/Discogs work, the Halls rebuild, and the
@@ -417,4 +484,14 @@ different and bigger — read it back to confirm, then built that instead:
     "Auto-tag my collection" button — none of it has been seen in a real
     browser yet.
 14. Decide if CGC cert lookup is worth building (mirroring PSA's work) —
-    confirmed still completely unaddressed, not started.
+    confirmed still completely unaddressed as of a 2026-08-12 re-check too
+    (CGC's real API is dealer-only; CardHedge is the live lead, still
+    gated on #10 above).
+15. **New, same session — none of this has been seen on a real device yet:**
+    - Does the ultra-wide lens-switch actually trigger on an Android phone
+      that has a separate ultra-wide camera (if you have one to test)?
+    - Does the compact camera icon (touch devices) show/behave right, and
+      does the full labeled pill still show on desktop?
+    - After a real Stripe checkout, does `profiles.stripe_customer_id`
+      actually get populated? (Also check/fix `DISCOGS_TOKEN`, item 7 —
+      still genuinely unresolved, not touched by any of this session's work.)
