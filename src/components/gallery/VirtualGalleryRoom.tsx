@@ -679,6 +679,7 @@ export default function VirtualGalleryRoom() {
   const [isOrganizing, setIsOrganizing] = useState(false);
   const [roomPanelOpen, setRoomPanelOpen] = useState(true);
   const [hallNoticeDismissed, setHallNoticeDismissed] = useState(false);
+  const [roomSwitcherOpen, setRoomSwitcherOpen] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const touchFromRef = useRef<number | null>(null);
@@ -964,6 +965,29 @@ export default function VirtualGalleryRoom() {
     const doorHeader = new THREE.Mesh(new THREE.BoxGeometry(3.85, 0.18, 0.18), trimMaterial);
     doorHeader.position.set(0, 4.92, 5.64);
     roomGroup.add(doorHeader);
+
+    // A shallow, dim vestibule just beyond the entrance — without this, the
+    // now-open doorway just showed flat scene.background through the gap,
+    // which reads as a blank cutout/broken texture rather than a real
+    // passage. This is only enough depth to avoid that, not a real room.
+    const beyondMaterial = new THREE.MeshStandardMaterial({
+      color: inHub ? 0x0a0e14 : roomStyle === "whitebox" ? 0xcfc6ac : roomStyle === "vault" ? 0x0a1420 : 0x0d0a16,
+      roughness: 0.9,
+      metalness: 0.02,
+    });
+    const beyondWall = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 4.8), beyondMaterial);
+    beyondWall.position.set(0, 2.5, 8.6);
+    beyondWall.rotation.y = Math.PI;
+    roomGroup.add(beyondWall);
+
+    const beyondFloor = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 3), floorMaterial);
+    beyondFloor.rotation.x = -Math.PI / 2;
+    beyondFloor.position.set(0, -0.04, 7.2);
+    roomGroup.add(beyondFloor);
+
+    const beyondLight = new THREE.PointLight(palette.glow, 0.5, 6);
+    beyondLight.position.set(0, 3, 7.5);
+    roomGroup.add(beyondLight);
 
     // Vault style only: a heavy riveted steel door, swung open beside the
     // entrance — purely decorative (not part of meshesRef/doorwayMeshesRef),
@@ -2012,6 +2036,41 @@ export default function VirtualGalleryRoom() {
                     <MapIcon size={14} />
                     Exit
                   </button>
+                ) : null}
+                {viewMode === "room" && universeRooms.some((room) => room.items.length > 0) ? (
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setRoomSwitcherOpen((current) => !current)}
+                      aria-expanded={roomSwitcherOpen}
+                      className="flex items-center gap-1.5 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur transition hover:bg-black/60"
+                      title="Jump to another room"
+                    >
+                      <DoorOpen size={14} />
+                      Rooms
+                      <ChevronDown size={13} />
+                    </button>
+                    {roomSwitcherOpen ? (
+                      <div className="absolute left-0 top-[calc(100%+6px)] z-20 grid max-h-[280px] w-52 gap-1 overflow-y-auto rounded-[8px] bg-black/85 p-1.5 ring-1 ring-white/15 backdrop-blur">
+                        {universeRooms
+                          .filter((room) => room.items.length > 0)
+                          .map((room) => (
+                            <button
+                              key={room.id}
+                              type="button"
+                              onClick={() => {
+                                openUniverseRoom(room);
+                                setRoomSwitcherOpen(false);
+                              }}
+                              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-[5px] px-2.5 py-2 text-left text-xs font-bold text-white/85 transition hover:bg-white/10 hover:text-white"
+                            >
+                              <span className="truncate">{room.title}</span>
+                              <span className="text-[10px] font-black text-white/45">{room.items.length} pcs</span>
+                            </button>
+                          ))}
+                      </div>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
               {viewMode === "room" && selectedItems.length === 0 && !hallNoticeDismissed ? (
