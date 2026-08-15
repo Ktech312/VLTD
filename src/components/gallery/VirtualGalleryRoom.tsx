@@ -308,6 +308,32 @@ function drawDoorSignTexture(label: string) {
   return texture;
 }
 
+function drawSlotBadgeTexture(n: number) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return new THREE.CanvasTexture(canvas);
+
+  ctx.fillStyle = "rgba(10,14,18,0.88)";
+  ctx.beginPath();
+  ctx.arc(64, 64, 56, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(79,211,238,0.95)";
+  ctx.lineWidth = 6;
+  ctx.stroke();
+
+  ctx.fillStyle = "#ECEDEF";
+  ctx.font = "800 52px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(String(n), 64, 68);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
 function createHardwoodTexture() {
   const canvas = document.createElement("canvas");
   canvas.width = 512;
@@ -363,6 +389,52 @@ function createHardwoodTexture() {
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
   texture.repeat.set(3.5, 5.5);
+  texture.anisotropy = 8;
+  return texture;
+}
+
+function createHerringboneTexture() {
+  const size = 512;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return new THREE.CanvasTexture(canvas);
+
+  ctx.fillStyle = "#6d4c2e";
+  ctx.fillRect(0, 0, size, size);
+
+  const cell = 48;
+  const tones = ["#8a6238", "#93692f", "#7d5730", "#96703c", "#875f34"];
+  let toneIndex = 0;
+
+  for (let row = 0; row * cell < size; row += 1) {
+    for (let col = 0; col * cell < size; col += 1) {
+      const x = col * cell;
+      const y = row * cell;
+      const flip = (row + col) % 2 === 0;
+      toneIndex = (toneIndex + 1) % tones.length;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x, y, cell, cell);
+      ctx.clip();
+      ctx.translate(x + cell / 2, y + cell / 2);
+      ctx.rotate(flip ? Math.PI / 4 : -Math.PI / 4);
+      ctx.fillStyle = tones[toneIndex];
+      ctx.fillRect(-cell * 0.9, -cell * 0.24, cell * 1.8, cell * 0.48);
+      ctx.strokeStyle = "rgba(24,12,6,0.4)";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-cell * 0.9, -cell * 0.24, cell * 1.8, cell * 0.48);
+      ctx.restore();
+    }
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(4, 5);
   texture.anisotropy = 8;
   return texture;
 }
@@ -442,13 +514,16 @@ function getRoomPalette(style: RoomStyle) {
     };
   }
 
+  // Default ("Vault") — a real classic-gallery look: sage-gray walls, warm
+  // honey herringbone floor, painted light trim, warm gallery-spotlight glow
+  // instead of the old near-black room with a cyan accent.
   return {
-    wall: 0x171a20,
-    floor: 0x090b0f,
-    trim: 0xc8cdd2,
-    glow: 0x4fd3ee,
-    textTone: "text-white",
-    shell: "bg-[radial-gradient(circle_at_50%_0%,rgba(79,211,238,0.13),transparent_34%),linear-gradient(180deg,#1f2329,#080b10)] text-white",
+    wall: 0x8c9d95,
+    floor: 0x9c7748,
+    trim: 0xd9d3c2,
+    glow: 0xffefd1,
+    textTone: "text-slate-900",
+    shell: "bg-[linear-gradient(180deg,#aabcb2,#7e9088)] text-slate-900",
   };
 }
 
@@ -602,6 +677,7 @@ export default function VirtualGalleryRoom() {
   const [saveState, setSaveState] = useState<"idle" | "saved" | "error">("idle");
   const [isOrganizing, setIsOrganizing] = useState(false);
   const [roomPanelOpen, setRoomPanelOpen] = useState(true);
+  const [hallNoticeDismissed, setHallNoticeDismissed] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const touchFromRef = useRef<number | null>(null);
@@ -730,6 +806,7 @@ export default function VirtualGalleryRoom() {
     setSelectedItemId("");
     setRoomLayout("storefront");
     setViewMode("room");
+    setHallNoticeDismissed(false);
   }
 
   useEffect(() => {
@@ -767,10 +844,13 @@ export default function VirtualGalleryRoom() {
     warm.position.set(-4.5, 2.4, 1.8);
     scene.add(warm);
 
+    // Flat matte plaster/paint finish for the gallery walls — the old vault
+    // style had a noticeable metallic sheen (0.18) that read wrong once the
+    // wall color moved from near-black to a painted sage.
     const wallMaterial = new THREE.MeshStandardMaterial({
       color: palette.wall,
       roughness: 0.72,
-      metalness: roomStyle === "vault" ? 0.18 : 0.02,
+      metalness: 0.02,
     });
     if (wallTextureUrl) {
       void createImageTexture(wallTextureUrl, 2.4, 1).then((texture) => {
@@ -780,15 +860,18 @@ export default function VirtualGalleryRoom() {
       });
     }
     const floorMaterial = new THREE.MeshStandardMaterial({
-      map: createHardwoodTexture(),
+      map: roomStyle === "vault" ? createHerringboneTexture() : createHardwoodTexture(),
       color: 0xffffff,
       roughness: 0.46,
       metalness: 0.04,
     });
+    // Matte painted wood/plaster trim for the gallery look — the old 0.72
+    // metalness read as brushed chrome, wrong for a door casing or shelf rail.
+    // Arcade keeps its polished-chrome finish.
     const trimMaterial = new THREE.MeshStandardMaterial({
       color: palette.trim,
-      roughness: 0.34,
-      metalness: 0.72,
+      roughness: roomStyle === "arcade" ? 0.34 : 0.65,
+      metalness: roomStyle === "arcade" ? 0.72 : 0.08,
     });
 
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(21, 26), floorMaterial);
@@ -797,9 +880,9 @@ export default function VirtualGalleryRoom() {
     roomGroup.add(floor);
 
     const baseboardMaterial = new THREE.MeshStandardMaterial({
-      color: roomStyle === "whitebox" ? 0x707981 : 0x252a30,
+      color: roomStyle === "whitebox" ? 0x707981 : roomStyle === "vault" ? 0x5c6b62 : 0x252a30,
       roughness: 0.5,
-      metalness: 0.18,
+      metalness: roomStyle === "vault" ? 0.05 : 0.18,
     });
 
     const backWall = new THREE.Mesh(new THREE.PlaneGeometry(21, 9.2), wallMaterial);
@@ -816,15 +899,23 @@ export default function VirtualGalleryRoom() {
     rightWall.rotation.y = -Math.PI / 2;
     roomGroup.add(rightWall);
 
-    const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(21, 26), wallMaterial);
+    // The ceiling gets its own plain material, deliberately never wallTextureUrl
+    // — an uploaded wallpaper stretched across the ceiling too before, which
+    // looked wrong (that's wall decor, not a ceiling finish).
+    const ceilingMaterial = new THREE.MeshStandardMaterial({
+      color: roomStyle === "whitebox" ? 0xeef1f3 : roomStyle === "arcade" ? 0x14101f : 0xe4dfd0,
+      roughness: 0.85,
+      metalness: 0.02,
+    });
+    const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(21, 26), ceilingMaterial);
     ceiling.position.set(0, 9.15, -3.2);
     ceiling.rotation.x = Math.PI / 2;
     roomGroup.add(ceiling);
 
     const doorSideMaterial = new THREE.MeshStandardMaterial({
-      color: roomStyle === "whitebox" ? 0xcbd2d8 : 0x111419,
+      color: roomStyle === "whitebox" ? 0xcbd2d8 : roomStyle === "vault" ? 0x76877f : 0x111419,
       roughness: 0.68,
-      metalness: roomStyle === "vault" ? 0.12 : 0.02,
+      metalness: roomStyle === "vault" ? 0.04 : 0.02,
     });
     if (wallTextureUrl) {
       void createImageTexture(wallTextureUrl, 1.4, 1).then((texture) => {
@@ -848,30 +939,21 @@ export default function VirtualGalleryRoom() {
     rearWallTop.rotation.y = Math.PI;
     roomGroup.add(rearWallTop);
 
-    const doorFrameMaterial = new THREE.MeshStandardMaterial({
-      color: palette.trim,
-      roughness: 0.34,
-      metalness: 0.76,
-    });
-    const doorLeft = new THREE.Mesh(new THREE.BoxGeometry(0.16, 4.95, 0.18), doorFrameMaterial);
+    // Plain painted architrave (reuses trimMaterial — same matte finish as the
+    // shelf rails) and deliberately NO fill plane across the opening — a solid
+    // dark rectangle here read as a closed door, and real museum doorways are
+    // open passages you can see straight through, not blocked-off walls.
+    const doorLeft = new THREE.Mesh(new THREE.BoxGeometry(0.16, 4.95, 0.18), trimMaterial);
     doorLeft.position.set(-1.85, 2.45, 5.64);
     roomGroup.add(doorLeft);
 
-    const doorRight = new THREE.Mesh(new THREE.BoxGeometry(0.16, 4.95, 0.18), doorFrameMaterial);
+    const doorRight = new THREE.Mesh(new THREE.BoxGeometry(0.16, 4.95, 0.18), trimMaterial);
     doorRight.position.set(1.85, 2.45, 5.64);
     roomGroup.add(doorRight);
 
-    const doorHeader = new THREE.Mesh(new THREE.BoxGeometry(3.85, 0.18, 0.18), doorFrameMaterial);
+    const doorHeader = new THREE.Mesh(new THREE.BoxGeometry(3.85, 0.18, 0.18), trimMaterial);
     doorHeader.position.set(0, 4.92, 5.64);
     roomGroup.add(doorHeader);
-
-    const doorwayShadow = new THREE.Mesh(
-      new THREE.PlaneGeometry(3.5, 4.7),
-      new THREE.MeshBasicMaterial({ color: 0x020305 })
-    );
-    doorwayShadow.position.set(0, 2.32, 5.92);
-    doorwayShadow.rotation.y = Math.PI;
-    roomGroup.add(doorwayShadow);
 
     const backBaseboard = new THREE.Mesh(new THREE.BoxGeometry(20.7, 0.18, 0.12), baseboardMaterial);
     backBaseboard.position.set(0, 0.08, -11.9);
@@ -956,9 +1038,16 @@ export default function VirtualGalleryRoom() {
     }
 
     buildDoorwaySign(0, 5.55, 5.9, inHub ? "Campus Map" : "Main Gallery", true);
+    // Two real bugs here, both silently killed every doorway click: (1)
+    // `visible: false` makes the raycaster skip the mesh entirely, not just hide
+    // it — fixed with transparent+opacity:0 instead. (2) this plane is never
+    // rotated, so it keeps PlaneGeometry's default +Z-facing normal — the room
+    // interior approaches it from -Z, hitting its BACK face, which a default
+    // FrontSide material silently ignores for raycasting. DoubleSide fixes that
+    // regardless of which way the plane happens to face.
     const backDoorway = new THREE.Mesh(
       new THREE.PlaneGeometry(3.5, 4.9),
-      new THREE.MeshBasicMaterial({ visible: false })
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide })
     );
     backDoorway.position.set(0, 2.6, 5.55);
     backDoorway.userData.doorwayTarget = inHub ? "__overview__" : "__hub__";
@@ -973,15 +1062,15 @@ export default function VirtualGalleryRoom() {
       wingRooms.forEach((room, index) => {
         const x = wingRooms.length === 1 ? 0 : -7 + (index * 14) / (wingRooms.length - 1);
 
-        const left = new THREE.Mesh(new THREE.BoxGeometry(0.16, doorHeight, 0.18), doorFrameMaterial);
+        const left = new THREE.Mesh(new THREE.BoxGeometry(0.16, doorHeight, 0.18), trimMaterial);
         left.position.set(x - doorWidth / 2, doorHeight / 2, archZ);
         roomGroup.add(left);
 
-        const right = new THREE.Mesh(new THREE.BoxGeometry(0.16, doorHeight, 0.18), doorFrameMaterial);
+        const right = new THREE.Mesh(new THREE.BoxGeometry(0.16, doorHeight, 0.18), trimMaterial);
         right.position.set(x + doorWidth / 2, doorHeight / 2, archZ);
         roomGroup.add(right);
 
-        const header = new THREE.Mesh(new THREE.BoxGeometry(doorWidth + 0.16, 0.18, 0.18), doorFrameMaterial);
+        const header = new THREE.Mesh(new THREE.BoxGeometry(doorWidth + 0.16, 0.18, 0.18), trimMaterial);
         header.position.set(x, doorHeight, archZ);
         roomGroup.add(header);
 
@@ -993,7 +1082,7 @@ export default function VirtualGalleryRoom() {
 
         const hitTarget = new THREE.Mesh(
           new THREE.PlaneGeometry(doorWidth, doorHeight + 1),
-          new THREE.MeshBasicMaterial({ visible: false })
+          new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide })
         );
         hitTarget.position.set(x, (doorHeight + 1) / 2, archZ);
         hitTarget.userData.doorwayTarget = room.id;
@@ -1064,6 +1153,56 @@ export default function VirtualGalleryRoom() {
         img.src = url;
       }
     });
+
+    // Organize mode: a numbered badge floating in front of every slot (matching
+    // the Arrange panel's numbering exactly, same slotPositions table) plus a
+    // dashed outline on empty ones — so you can see in the actual room, not just
+    // the flat sidebar list, exactly which physical spot a number refers to.
+    if (isOrganizing) {
+      positions.forEach((pos, index) => {
+        const occupied = Boolean(slotItems[index]);
+        const badgeTexture = drawSlotBadgeTexture(index + 1);
+        const badge = new THREE.Mesh(
+          new THREE.PlaneGeometry(0.4, 0.4),
+          new THREE.MeshBasicMaterial({
+            map: badgeTexture,
+            transparent: true,
+            depthTest: false,
+          })
+        );
+        badge.renderOrder = 999;
+
+        if (pos.flat) {
+          badge.position.set(pos.x, pos.y + 0.05, pos.z);
+          badge.rotation.x = -Math.PI / 2;
+        } else {
+          const nx = Math.sin(pos.ry);
+          const nz = Math.cos(pos.ry);
+          const halfHeight = (1.54 * pos.scale) / 2;
+          badge.position.set(pos.x + nx * 0.4, pos.y + halfHeight + 0.28, pos.z + nz * 0.4);
+          badge.rotation.y = pos.ry;
+        }
+        roomGroup.add(badge);
+
+        if (!occupied) {
+          const ghostWidth = pos.flat ? 1.12 * pos.scale : 1.12 * pos.scale;
+          const ghostHeight = pos.flat ? 1.12 * pos.scale : 1.54 * pos.scale;
+          const ghostEdges = new THREE.EdgesGeometry(new THREE.PlaneGeometry(ghostWidth, ghostHeight));
+          const ghostLine = new THREE.LineSegments(
+            ghostEdges,
+            new THREE.LineBasicMaterial({ color: 0x4fd3ee, transparent: true, opacity: 0.6 })
+          );
+          ghostLine.position.set(pos.x, pos.y, pos.z);
+          if (pos.flat) {
+            ghostLine.rotation.x = -Math.PI / 2;
+            ghostLine.rotation.z = pos.ry;
+          } else {
+            ghostLine.rotation.y = pos.ry;
+          }
+          roomGroup.add(ghostLine);
+        }
+      });
+    }
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
@@ -1163,7 +1302,7 @@ export default function VirtualGalleryRoom() {
       if (!isDragging) return;
       const dx = event.clientX - startX;
       const dy = event.clientY - startY;
-      if (Math.abs(dx) + Math.abs(dy) > 4) didDrag = true;
+      if (Math.abs(dx) + Math.abs(dy) > 6) didDrag = true;
       targetYaw -= dx * 0.0035;
       targetPitch += dy * 0.0016;
       clampView();
@@ -1304,7 +1443,7 @@ export default function VirtualGalleryRoom() {
       renderer.dispose();
       container.innerHTML = "";
     };
-  }, [palette.floor, palette.glow, palette.trim, palette.wall, roomLayout, roomStyle, showValues, slotItems, slotPositions, universeRoomsKey, viewMode, wallTextureUrl]);
+  }, [isOrganizing, palette.floor, palette.glow, palette.trim, palette.wall, roomLayout, roomStyle, showValues, slotItems, slotPositions, universeRoomsKey, viewMode, wallTextureUrl]);
 
   function applyGallery(nextGalleryId: string) {
     setGalleryId(nextGalleryId);
@@ -1799,13 +1938,34 @@ export default function VirtualGalleryRoom() {
               ) : (
                 <MuseumCampusOverview rooms={universeRooms} onOpenRoom={openUniverseRoom} onOpenMainHall={openMainHall} />
               )}
-              <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-2 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur">
-                {viewMode === "room" ? <Sparkles size={14} /> : <MapIcon size={14} />}
-                {viewMode === "room" ? "VLTD Room" : "Universe Map"}
+              <div className="absolute left-3 top-3 flex items-center gap-2">
+                <div className="pointer-events-none flex items-center gap-2 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur">
+                  {viewMode === "room" ? <Sparkles size={14} /> : <MapIcon size={14} />}
+                  {viewMode === "room" ? "VLTD Room" : "Universe Map"}
+                </div>
+                {viewMode === "room" ? (
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("overview")}
+                    className="flex items-center gap-1.5 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur transition hover:bg-black/60"
+                    title="Exit to the campus map"
+                  >
+                    <MapIcon size={14} />
+                    Exit
+                  </button>
+                ) : null}
               </div>
-              {viewMode === "room" && selectedItems.length === 0 ? (
-                <div className="pointer-events-none absolute inset-0 grid place-items-center px-6 text-center">
-                  <div className="rounded-[10px] bg-black/38 px-6 py-5 ring-1 ring-white/12 backdrop-blur">
+              {viewMode === "room" && selectedItems.length === 0 && !hallNoticeDismissed ? (
+                <div className="absolute inset-0 grid place-items-center px-6 text-center">
+                  <div className="pointer-events-auto relative rounded-[10px] bg-black/38 px-6 py-5 ring-1 ring-white/12 backdrop-blur">
+                    <button
+                      type="button"
+                      onClick={() => setHallNoticeDismissed(true)}
+                      aria-label="Dismiss"
+                      className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-[5px] bg-white/10 text-white/70 ring-1 ring-white/15 transition hover:bg-white/20 hover:text-white"
+                    >
+                      ✕
+                    </button>
                     <div className="text-[11px] font-black uppercase tracking-[0.2em] text-cyan-100/60">
                       Grand Hall
                     </div>
