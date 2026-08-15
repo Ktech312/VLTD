@@ -526,3 +526,37 @@ different and bigger — read it back to confirm, then built that instead:
     browser yet.
 14. Decide if CGC cert lookup is worth building (mirroring PSA's work) —
     confirmed still completely unaddressed, not started.
+
+---
+
+## 3D Museum (Virtual Gallery Builder) — 2026-08-14/15 status
+
+Branch `claude/museum-map-doorways`, **not merged to `main`.** Full narrative
+of everything built/fixed and exactly how each thing was verified is in
+`HANDOFF.md` under "Big update, 2026-08-14/15" — read that before touching
+`VirtualGalleryRoom.tsx`. Short version:
+
+- ✅ Map overlap, side-wall population, click-to-focus (level not tilted),
+  Main Gallery as a real empty hall, doorways (found + fixed a genuine
+  `material.visible = false` raycaster bug — that's why clicks silently did
+  nothing), shelf/item alignment, full explicit-slot drag-and-drop
+  arrangement (37 numbered slots incl. 5 display cases), camera position
+  persisting across an Organize drag, wallpaper save bug, always-visible
+  Exit button + Rooms quick-switcher dropdown, dismissible Grand Hall card,
+  collapsible Room settings panel, entrance vestibule (was showing a flat
+  blank rectangle after the doorway was opened up). All verified live via
+  DOM/raycaster checks — see HANDOFF.md for the specific method each time.
+- ⬜ **NOT done — the actual next task:** EK sent 3 real reference photos
+  (dark spotlit hall for the Grand Hall, an actual bank-vault-door photo for
+  "Vault", a bright classical gallery for "White") and rejected the resulting
+  color/lighting pass twice — most recently, verbatim: "all of these colors
+  are washed out, i don't see any of the inspiration and real colors i sent
+  you." This was done blind — no screenshot tool worked all session — and
+  guessing hex values without seeing them render clearly isn't working.
+  **Do not attempt a third blind color pass.** Get screenshots working first
+  (or some other way to see the actual render), then redo the material work
+  in `getRoomPalette()` and the inline wall/floor/trim materials.
+- Use the isolated worktree at `C:\Users\EK\VLTD-museum-doorways` (port
+  3010 dev server) — the shared `C:\Users\EK\VLTD` checkout got switched to
+  `main` mid-work three times this session by another active session,
+  silently breaking the museum page each time.

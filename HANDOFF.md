@@ -92,16 +92,16 @@ confirm with EK who owns a screen.** EK is aware of this.
 - **`/capture` (normal Add) is THIS chat's now** — EK confirmed 2026-07-31 that
   Codex isn't on it; this chat added multi-photo + crop-zoom there. Still re-read
   before editing in case that changes.
-- **New, as of 2026-08-11 — not this chat's, do not touch:** `src/app/museum/
-  virtual-room/`, `src/app/owner-lab/`, `src/components/owner-lab/`,
-  `src/components/gallery/VirtualGalleryRoom.tsx`, `src/app/museum/page.tsx`
-  (modified), `src/components/NavShell.tsx` (modified),
-  `src/components/ProtectedRoute.tsx` (modified), plus a `marketing/` folder
-  and a `product/` folder at the repo root. EK flagged the `forge/` (3D-printer
-  app) placement under `/museum` as likely misplaced/unintended and is asking
-  about it separately — don't try to fix or move it, that's EK's call once
-  they've looked. `src/app/forge/` and `src/app/vault/forge/` are empty
-  directories (no `page.tsx`), harmless, safe to ignore.
+- **As of 2026-08-14/15 — `src/app/museum/virtual-room/` and
+  `src/components/gallery/VirtualGalleryRoom.tsx` are THIS chat's now.** EK
+  explicitly handed the 3D museum work over ("take over and fix it") — see the
+  big dated section below for the full status. `src/app/owner-lab/`,
+  `src/components/owner-lab/`, and `src/app/museum/page.tsx`'s non-museum-room
+  parts are still not this chat's. EK flagged the `forge/` (3D-printer app)
+  placement under `/museum` as likely misplaced/unintended and is asking about
+  it separately — don't try to fix or move it, that's EK's call once they've
+  looked. `src/app/forge/` and `src/app/vault/forge/` are empty directories
+  (no `page.tsx`), harmless, safe to ignore.
 
 **New, as of 2026-08-12 - Virtual Gallery Builder / future VLTD Museum campus**
 - Prototype route: `/museum/virtual-room`
@@ -143,6 +143,146 @@ confirm with EK who owns a screen.** EK is aware of this.
   3) public/searchable rooms by universe,
   4) paid room sizes/templates/convention placement,
   5) later freeform room editing if usage justifies it.
+
+**Big update, 2026-08-14/15 — a full session on this feature. Read this
+before touching `VirtualGalleryRoom.tsx` again.**
+
+**⚠ Branch state — READ FIRST:** all of this work lives on branch
+`claude/museum-map-doorways`, pushed to GitHub, **NOT merged to `main`.**
+Reason it's not merged yet: EK is still actively iterating (see the open
+color/lighting problem below) and didn't want unfinished work auto-deployed
+to the live site. If you're a fresh chat picking this up, check out that
+branch — `main` does not have any of this.
+
+**⚠ Also: a dedicated git worktree exists specifically because the shared
+`C:\Users\EK\VLTD` checkout kept getting switched to `main` by another active
+session mid-work, three separate times, silently breaking the museum page
+each time (Turbopack resolves `/museum/virtual-room` to the wrong route when
+the file's simply missing from whatever branch is checked out).** To avoid a
+fourth time: there is now a **separate, isolated worktree** at
+`C:\Users\EK\VLTD-museum-doorways`, permanently checked out to
+`claude/museum-map-doorways`, with its own `node_modules` and its own dev
+server on **port 3010** (not 3000). Do your museum work there, not in the
+shared `C:\Users\EK\VLTD` folder. `git worktree list` from either directory
+shows all active worktrees.
+
+**What got built/fixed this session (all verified live, not just by
+reading code — see each commit message on the branch for exactly how each
+one was tested):**
+- Map floorplan rebuilt on a real CSS grid — the old absolute-% version had
+  real overlapping tiles (Gallery D/E overlapped Main Gallery).
+- Side walls now populate proportionally from item #1 (was back-wall-first,
+  leaving small rooms with two bare side walls).
+- Click-to-focus fixed **twice**: first pass over-corrected into tilting the
+  camera up/down to center tall/short items (read as "looking up at" the
+  item — EK caught this from a screenshot); second pass fixed it properly by
+  matching the camera's own height to the item's height for a true level,
+  face-on shot instead of tilting.
+- Main Gallery is a real intentional empty "Grand Hall" (not secretly
+  opening your biggest room like the first version did).
+- Doorways connect rooms with signs — **found and fixed a genuine raycaster
+  bug** here: the invisible hit-target planes used `material.visible = false`,
+  which makes Three.js skip them for raycasting entirely (not just hide
+  them), *and* they were never rotated so they showed their back face to a
+  default `FrontSide`-only material. Both fixed (transparent+opacity:0,
+  `side: THREE.DoubleSide`). This was the actual reason doorway clicks did
+  nothing — verified with a direct `raycaster.intersectObject` call before/
+  after (0 hits → hits) before touching anything else.
+- Shelf/item vertical alignment unified into one `SHELF_ROW_Y` table (was two
+  independently hand-tuned numbers that had drifted apart — items floated
+  above their shelf).
+- **Full explicit-slot arrangement system** (matches how the exhibition
+  builder's shelf slots already work): `selectedIds` is always exactly
+  `TOTAL_SLOT_COUNT` (37 = 32 wall slots + 5 display-case slots) long, one
+  entry per physical slot, `""` = empty. An "Organize" toggle turns the Items
+  panel into a real drag-and-drop grid grouped by wall (Back/Left/Right/
+  Display Cases), every slot numbered 1-37 (matches numbered badges that also
+  render floating in the actual 3D room during Organize, not just the
+  sidebar), drag any piece onto any square — filled or empty — to place it
+  exactly there.
+- Display cases are real assignable slots now — items render lying flat in
+  them instead of wall-mounted, with a different "look down into the case"
+  focus shot than wall items get.
+- Camera position/framing now persists across an Organize drag (was
+  silently resetting to the default spawn on every single item move, which
+  is why one drag used to throw you back to the entrance) — entering a
+  genuinely different room still correctly resets it.
+- Wallpaper save bug fixed — was embedded in the same small JSON blob as
+  everything else, so a large image could quietly blow the whole save past
+  localStorage's quota and silently drop the ENTIRE draft, not just the
+  wallpaper. Now saved under its own key with its own error handling.
+  Ceiling no longer inherits the wallpaper texture (it was sharing the
+  wall's material).
+- Always-visible "Exit" button (top-left) → jumps straight to the campus
+  map regardless of which room you're in — added after EK got stuck in the
+  Grand Hall with no obvious way out (the only exit was a doorway behind the
+  spawn point, easy to not realize is there).
+- "Rooms" dropdown (also top-left) → lists every populated universe room by
+  name + item count, click one to jump straight there. Added because
+  precisely clicking a small 3D archway with a real mouse is inherently
+  fiddly — this is a reliable, DOM-click alternative, not a replacement for
+  the archways (which do work, verified directly).
+- X button to dismiss the Grand Hall's "coming soon" card.
+- Room settings panel (Store/Salon/Hero, Vault/White/Arcade, Values,
+  Wallpaper) auto-collapses when Organize is on, freeing vertical space so
+  the 3D view doesn't get scrolled out of reach — manual collapse toggle too.
+- A shallow dim "vestibule" beyond the entrance doorway, because removing
+  the old solid black door-fill (so the opening wouldn't read as "closed")
+  left it showing flat `scene.background` through the gap with nothing
+  beyond — which read as a broken/blank texture, not an open passage.
+
+**⚠ UNRESOLVED — the actual current blocker, EK's words: "all of these
+colors are washed out, i don't see any of the inspiration and real colors i
+sent you."** This is the real next task, not the stuff above.
+
+Context: EK sent 5 real reference photos partway through this session —
+(1) a dark, moodily-spotlit museum hall with pedestal sculptures for the
+Grand Hall's own look, (2)-(4) an actual bank-vault-door photo (a real
+"Weapons Vault" museum exhibit — thick riveted circular door swung open,
+navy walls, plain wood floor) as the reference for the "Vault" room style,
+and (5) a bright white classical gallery (the Susquehanna Art Museum —
+cream walls with painted panel molding, warm wood/parquet floor, tall
+windows) as the reference for the "White" room style. EK's explicit call:
+Vault becomes this bank-vault look, White becomes this bright-gallery look,
+Grand Hall gets its own dark look independent of whichever style is picked.
+
+**What was actually built, and why EK's right that it doesn't match:** this
+whole pass was done by picking hex colors and Three.js material params
+(roughness/metalness) purely by reasoning about the reference photos in
+text — **no screenshot tool was available this session** (the Browser
+pane's screenshot action failed with "pane is not displayed" every time it
+was tried, all session, on both the shared checkout and this worktree).
+Every visual claim in this file's commit messages before this note was
+verified via things that don't need pixels — `raycaster.intersectObject`
+hit counts, DOM text/state checks, console-error absence, scene-graph
+introspection (mesh counts/colors read back via a temporary
+`window.__vltdDebug` hook, then removed). That's solid for confirming
+*mechanics* work (doorways navigate, drag-and-drop places items, camera
+math is exactly right) but it is **not sufficient for tuning how a
+lit 3D scene actually looks** — lighting, fog, material response, and
+color all interact in ways a hex value alone doesn't predict. Two rounds of
+"pick a hex color close to the photo" have now visibly not worked (EK's
+first review: "needs refinement" on a beige/washed White pass; second
+review: openly rejected, still washed out, still doesn't match).
+
+**Do not do a third blind color pass.** The next chat working on this
+needs an actual way to see the rendered result — screenshots working (try
+the Browser pane fresh; it may just have needed to be manually opened on
+EK's end), or EK screen-sharing/pasting a fresh screenshot after each
+material change, or some other way of closing the loop. Guessing a fourth
+set of hex values without seeing them render is very unlikely to land
+better than the first two attempts did.
+
+**Where the color logic currently lives, for whoever picks this up:**
+`getRoomPalette()` (wall/floor/trim/glow per style) and the inline
+`wallMaterial`/`floorMaterial`/`trimMaterial`/`baseboardMaterial`/
+`doorSideMaterial`/`ceilingMaterial` construction inside the big
+`useEffect` in `VirtualGalleryRoom.tsx` (search for `roomStyle ===
+"vault"` / `"whitebox"` / `"arcade"` — every material branches on it).
+The Grand Hall's own dark override is the `inHub` boolean, computed once
+near the top of that same effect and reused throughout (there was a real
+duplicate-`const inHub` bug from an earlier pass in this file's history —
+already fixed, don't reintroduce a second declaration).
 
 ---
 
