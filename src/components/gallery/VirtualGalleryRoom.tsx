@@ -998,15 +998,17 @@ export default function VirtualGalleryRoom() {
         doorSideMaterial.needsUpdate = true;
       });
     }
-    // Vault style: the entrance wall itself gets a round cutout (not a
-    // rectangular one) so the round vault door actually belongs to the
-    // passage players walk through, instead of being a separate decoration
-    // bolted next to an unrelated square hole. doorCenterY/doorRadius here
-    // are the same numbers the hinged door assembly below uses — the wall's
-    // hole and the door that fills it have to agree on both.
-    const vaultDoorCenterY = 2.45;
-    const vaultDoorRadius = 1.35;
-    const vaultHoleRadius = vaultDoorRadius + 0.15;
+    // Vault style: the entrance wall gets a floor-to-ceiling ARCH cutout
+    // (straight sides + a rounded top, reaching the floor — a real walkable
+    // passage) instead of a full circle floating mid-wall. EK's reference
+    // photo (a real museum "Weapons Vault" exhibit) is unambiguous: the
+    // opening itself is arched, not round — the round part is only the
+    // door, which stands fully swung clear beside it. archHalfWidth/
+    // archStraightHeight define that arch; the door assembly below reuses
+    // them so the frame and the opening agree on size.
+    const archHalfWidth = 1.7;
+    const archStraightHeight = 3.25;
+    const vaultDoorRadius = 1.5;
 
     if (roomStyle === "vault") {
       const rearWallShape = new THREE.Shape();
@@ -1016,13 +1018,56 @@ export default function VirtualGalleryRoom() {
       rearWallShape.lineTo(-10.5, 9.15);
       rearWallShape.lineTo(-10.5, -0.05);
       const holePath = new THREE.Path();
-      holePath.absarc(0, vaultDoorCenterY, vaultHoleRadius, 0, Math.PI * 2, false);
+      holePath.moveTo(-archHalfWidth, 0);
+      holePath.lineTo(-archHalfWidth, archStraightHeight);
+      holePath.absarc(0, archStraightHeight, archHalfWidth, Math.PI, 0, true);
+      holePath.lineTo(archHalfWidth, 0);
+      holePath.lineTo(-archHalfWidth, 0);
       rearWallShape.holes.push(holePath);
 
       const rearWall = new THREE.Mesh(new THREE.ShapeGeometry(rearWallShape, 48), doorSideMaterial);
       rearWall.position.set(0, 0, 5.8);
       rearWall.rotation.y = Math.PI;
       roomGroup.add(rearWall);
+
+      // Riveted steel architrave tracing the arch — two posts up the
+      // straight sides, a half-ring over the curved top.
+      const archPostHeight = archStraightHeight;
+      const archPostLeft = new THREE.Mesh(
+        new THREE.BoxGeometry(0.16, archPostHeight, 0.18),
+        doorFrameMaterial
+      );
+      archPostLeft.position.set(-archHalfWidth - 0.08, archPostHeight / 2, 5.7);
+      roomGroup.add(archPostLeft);
+
+      const archPostRight = new THREE.Mesh(
+        new THREE.BoxGeometry(0.16, archPostHeight, 0.18),
+        doorFrameMaterial
+      );
+      archPostRight.position.set(archHalfWidth + 0.08, archPostHeight / 2, 5.7);
+      roomGroup.add(archPostRight);
+
+      const archTop = new THREE.Mesh(
+        new THREE.TorusGeometry(archHalfWidth + 0.08, 0.11, 12, 32, Math.PI),
+        doorFrameMaterial
+      );
+      archTop.position.set(0, archStraightHeight, 5.7);
+      roomGroup.add(archTop);
+
+      // A heavier riveted hinge column at the right post — this is what the
+      // open door below visually reads as attached to.
+      const hingeColumn = new THREE.Mesh(
+        new THREE.BoxGeometry(0.4, archPostHeight + 0.6, 0.4),
+        doorFrameMaterial
+      );
+      hingeColumn.position.set(archHalfWidth + 0.3, (archPostHeight + 0.6) / 2, 5.72);
+      roomGroup.add(hingeColumn);
+      for (let i = 0; i < 6; i += 1) {
+        const rivet = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.42, 8), trimMaterial);
+        rivet.rotation.x = Math.PI / 2;
+        rivet.position.set(archHalfWidth + 0.3, 0.4 + i * 0.55, 5.94);
+        roomGroup.add(rivet);
+      }
     } else {
       const rearWallLeft = new THREE.Mesh(new THREE.PlaneGeometry(8.75, 9.2), doorSideMaterial);
       rearWallLeft.position.set(-6.13, 4.55, 5.8);
@@ -1080,20 +1125,27 @@ export default function VirtualGalleryRoom() {
     beyondLight.position.set(0, 3, 7.5);
     roomGroup.add(beyondLight);
 
-    // Vault style only: a heavy riveted steel door, set into the round hole
-    // cut in the entrance wall above, swung open on a hinge — the actual
-    // reference photos EK sent all show the door open and to one side, not
-    // covering the opening. Not part of meshesRef/doorwayMeshesRef, so it
-    // can't affect the doorway's click/raycast behavior (backDoorway, the
-    // plain invisible hit-target plane a bit further down, is unchanged and
-    // still covers this same opening).
+    // Vault style only: a heavy riveted steel door, fully swung open and
+    // standing clear beside the arch — grounded near the floor, its full
+    // riveted face visible, exactly like EK's reference photo (a real
+    // "Weapons Vault" museum exhibit: the door stands to the right of the
+    // opening, attached to a thick hinge column, face mostly toward the
+    // viewer, nowhere near overlapping the passage). Not part of
+    // meshesRef/doorwayMeshesRef, so it can't affect the doorway's
+    // click/raycast behavior (backDoorway, the plain invisible hit-target
+    // plane a bit further down, is unchanged and still covers this arch).
     //
-    // The previous version gave up on this — it built a correct-looking
-    // disc but mounted it flush on the SIDE wall next to the (rectangular)
-    // doorway instead of the doorway itself, because hinging a round door
-    // onto a square hole never looked right. Now that the wall opening
-    // above is round too (same vaultDoorCenterY/vaultHoleRadius), the door
-    // can actually hinge open from the opening it belongs to.
+    // Two earlier passes both tried to make this door literally hinge/pivot
+    // in place — first onto a rectangular opening (never matched, a round
+    // door swinging out of a square hole isn't a real design), then a
+    // second time with real hinge-rotation math onto a round hole, but the
+    // rotation only opened ~110° and the math showed the disc still
+    // clipping the opening at that angle. Reference photos show the door
+    // simply standing well clear, next to the frame, not mid-swing — so
+    // this version places it directly at its open resting position instead
+    // of computing a rotation, and the placement below is chosen so the
+    // disc's footprint (center + radius) never reaches the arch's x<=1.7
+    // opening at all.
     if (roomStyle === "vault") {
       const vaultDoorMaterial = new THREE.MeshStandardMaterial({
         color: 0x8b939a,
@@ -1101,29 +1153,27 @@ export default function VirtualGalleryRoom() {
         metalness: 0.88,
       });
       const doorThickness = 0.28;
-      const doorFace = new THREE.Group();
+      const doorGroup = new THREE.Group();
 
-      // Built face-on to Z (the door's closed orientation), then parented
-      // under a hinge pivot below so opening it is just one rotation.
       const doorDisc = new THREE.Mesh(
         new THREE.CylinderGeometry(vaultDoorRadius, vaultDoorRadius, doorThickness, 32),
         vaultDoorMaterial
       );
       doorDisc.rotation.x = Math.PI / 2;
-      doorFace.add(doorDisc);
+      doorGroup.add(doorDisc);
 
       const hub = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.32, 0.32, doorThickness + 0.05, 20),
+        new THREE.CylinderGeometry(0.34, 0.34, doorThickness + 0.05, 20),
         trimMaterial
       );
       hub.rotation.x = Math.PI / 2;
-      doorFace.add(hub);
+      doorGroup.add(hub);
 
       for (let i = 0; i < 10; i += 1) {
         const angle = (i / 10) * Math.PI * 2;
         const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.09, doorThickness + 0.06), trimMaterial);
         spoke.position.set(Math.cos(angle) * vaultDoorRadius * 0.8, Math.sin(angle) * vaultDoorRadius * 0.8, 0);
-        doorFace.add(spoke);
+        doorGroup.add(spoke);
       }
 
       for (let i = 0; i < 16; i += 1) {
@@ -1138,29 +1188,16 @@ export default function VirtualGalleryRoom() {
           Math.sin(angle) * vaultDoorRadius * 0.94,
           0
         );
-        doorFace.add(rivet);
+        doorGroup.add(rivet);
       }
 
-      // The door's own edge (its right side, in its closed position) sits
-      // at the hinge — offsetting the face by -radius on the pivot's local
-      // X means rotation.y=0 puts the disc dead center in the wall opening
-      // (closed), and rotating the pivot swings it open around that edge.
-      doorFace.position.set(-vaultDoorRadius, 0, 0);
-      const doorPivot = new THREE.Group();
-      doorPivot.add(doorFace);
-      doorPivot.position.set(vaultDoorRadius, vaultDoorCenterY, 5.72);
-      doorPivot.rotation.y = 1.95;
-      roomGroup.add(doorPivot);
-
-      // A brass ring frames the round opening in the wall itself — stays
-      // put (not part of the pivot) since the frame doesn't swing, only
-      // the door does.
-      const doorRingFrame = new THREE.Mesh(
-        new THREE.TorusGeometry(vaultHoleRadius, 0.11, 12, 40),
-        doorFrameMaterial
-      );
-      doorRingFrame.position.set(0, vaultDoorCenterY, 5.76);
-      roomGroup.add(doorRingFrame);
+      // Grounded (bottom edge ~0.15 above the floor), standing just past
+      // the hinge column, well inside the room (not the vestibule) on the
+      // same side as the camera — matching the reference. A slight turn
+      // (not a full 90°) keeps the riveted face visible rather than edge-on.
+      doorGroup.position.set(archHalfWidth + 0.3 + vaultDoorRadius + 0.35, vaultDoorRadius + 0.15, 5.2);
+      doorGroup.rotation.y = 0.3;
+      roomGroup.add(doorGroup);
     }
 
     const backBaseboard = new THREE.Mesh(new THREE.BoxGeometry(20.7, 0.18, 0.12), baseboardMaterial);
