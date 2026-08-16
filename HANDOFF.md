@@ -300,18 +300,41 @@ above).
    touched the wall. Frame depth now stretches to actually meet (and
    embed slightly into) the wall; free-standing "center"/spotlight items
    keep the old small offset since they aren't wall-mounted.
-2. **Gapped shelf corners.** The back shelf (half-width 9.95) and the side
-   shelves (outer face at ±10.255) never reached each other or the true
-   wall corner (±10.5, -12) — confirmed via `scene.traverse` reading back
-   every shelf board's actual `BoxGeometry` bounds. Added a corner cap
-   block at all 4 shelf rows, both back corners, sized to fully bridge the
-   gap.
-Both verified by re-querying mesh positions after the fix (frame back
-face now lands exactly at wall + 0.05 embed, corner blocks now overlap
-both adjoining shelf boards) — not by eyeballing a screenshot, since none
-was available this pass either. If EK reports either issue is still
-visible after this deploys, it means the fix didn't address what was
-actually seen and needs a fresh look, not a retry of the same math.
+2. **Gapped shelf corners (first pass, later superseded).** Original fix
+   added small corner-cap boxes to bridge the sliver at each back corner.
+   EK then sent a wider screenshot showing the real problem was bigger:
+   **every shelf board — back and both sides — was 0.55 thick centered
+   0.245 units clear of the real wall along its ENTIRE length**, not just
+   at the corners; wall texture was visible above/behind the board the
+   whole way down. Corner caps only patched a few inches of that. Fixed
+   properly in a follow-up commit: board depth/width increased to 0.845
+   (front face held in place, back face extended to embed 0.05 into the
+   actual wall) for all 4 rows, all 3 walls — which also closes the corner
+   gap on its own, so the standalone corner-cap boxes were removed as
+   redundant.
+Both verified by re-querying mesh positions after each fix (frame back
+face and every shelf board's back face land exactly at wall + 0.05
+embed) — not by eyeballing a screenshot, since none was available this
+pass either. **Lesson for next time:** a screenshot that looks like "the
+corner is wrong" may actually mean "the whole edge is wrong and the
+corner is just where it's most visible" — check the full run, not only
+the spot circled.
+
+**Also fixed, same session — vault door didn't match its opening
+(asked about 4 times before this):** the entrance passage was always
+rectangular even in Vault style, with the round riveted door bolted
+onto the SIDE wall as pure decoration — a previous pass's comment
+explicitly says it gave up trying to hinge a round door into a square
+hole. Root cause was the wall opening itself, not the door. For
+`roomStyle === "vault"` the entrance wall is now a single `ShapeGeometry`
+panel with an actual circular hole cut in it (`THREE.Shape` + a
+`THREE.Path` hole via `.absarc`), and the door is mounted on a hinge
+pivot at the opening's edge, rotated open (`doorPivot.rotation.y`) so it
+swings clear into the vestibule — matching the reference photos (door
+open, to one side, not covering the hole). Verified via scene-graph
+introspection: hole radius 1.5 centered on the passage, door disc's
+world position after rotation lands 1.35 units (its own radius) clear
+of the opening. Non-vault styles are untouched, still rectangular.
 
 ---
 
