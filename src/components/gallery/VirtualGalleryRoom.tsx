@@ -334,53 +334,73 @@ function drawSlotBadgeTexture(n: number) {
   return texture;
 }
 
+// A seeded PRNG (not Math.random) so the plank layout is stable across
+// re-renders instead of reshuffling on every effect re-run.
+function mulberry32(seed: number) {
+  let a = seed;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 function createHardwoodTexture() {
   const canvas = document.createElement("canvas");
-  canvas.width = 512;
-  canvas.height = 512;
+  canvas.width = 768;
+  canvas.height = 768;
   const ctx = canvas.getContext("2d");
   if (!ctx) return new THREE.CanvasTexture(canvas);
 
-  ctx.fillStyle = "#6f4a2f";
+  const rand = mulberry32(20260815);
+  const plankHeight = 64;
+  // A deep walnut palette (was a flatter, more saturated rust-orange that
+  // read as plastic under render) — every plank below picks its own base
+  // tone from this set rather than every row sharing one identical
+  // gradient, which is what made the old floor look like a single tiled
+  // sprite instead of individual boards.
+  const tones = ["#4a3120", "#573823", "#3f2a1b", "#5c3d26", "#48301f", "#63432b"];
+
+  ctx.fillStyle = "#3f2a1b";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  for (let y = 0; y < canvas.height; y += 64) {
-    const grd = ctx.createLinearGradient(0, y, 0, y + 64);
-    grd.addColorStop(0, "#8a5d39");
-    grd.addColorStop(0.48, "#5d3823");
-    grd.addColorStop(1, "#9a6840");
-    ctx.fillStyle = grd;
-    ctx.fillRect(0, y, canvas.width, 64);
+  for (let y = 0; y < canvas.height; y += plankHeight) {
+    let x = -Math.floor(rand() * 140);
+    while (x < canvas.width) {
+      const plankLength = 130 + rand() * 130;
+      const base = tones[Math.floor(rand() * tones.length)];
+      const grd = ctx.createLinearGradient(0, y, 0, y + plankHeight);
+      grd.addColorStop(0, shadeHex(base, 0.16));
+      grd.addColorStop(0.5, base);
+      grd.addColorStop(1, shadeHex(base, -0.12));
+      ctx.fillStyle = grd;
+      ctx.fillRect(x, y, plankLength, plankHeight);
 
-    ctx.strokeStyle = "rgba(24,12,6,0.42)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(0, y + 63);
-    ctx.lineTo(canvas.width, y + 63);
-    ctx.stroke();
-  }
+      // End-seam and long-edge lines around this specific board.
+      ctx.strokeStyle = "rgba(18,9,4,0.55)";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(x, y + 0.75, plankLength, plankHeight - 1.5);
 
-  for (let y = 0; y < canvas.height; y += 64) {
-    const offset = (y / 64) % 2 === 0 ? 0 : 128;
-    for (let x = -offset; x < canvas.width; x += 192) {
-      ctx.strokeStyle = "rgba(28,14,6,0.34)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(x, y + 4);
-      ctx.lineTo(x, y + 60);
-      ctx.stroke();
+      // A little brightness jitter per board so neighbors read as distinct
+      // pieces of wood, not one repeating swatch.
+      ctx.fillStyle = `rgba(255,235,205,${rand() * 0.05})`;
+      ctx.fillRect(x, y, plankLength, plankHeight);
+
+      x += plankLength;
     }
   }
 
-  for (let i = 0; i < 140; i += 1) {
-    const x = Math.random() * canvas.width;
-    const y = Math.random() * canvas.height;
-    const length = 26 + Math.random() * 80;
-    ctx.strokeStyle = `rgba(255,220,165,${0.06 + Math.random() * 0.08})`;
+  for (let i = 0; i < 220; i += 1) {
+    const x = rand() * canvas.width;
+    const y = rand() * canvas.height;
+    const length = 20 + rand() * 70;
+    ctx.strokeStyle = `rgba(255,220,165,${0.04 + rand() * 0.07})`;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(x, y);
-    ctx.bezierCurveTo(x + length * 0.32, y - 8, x + length * 0.68, y + 8, x + length, y);
+    ctx.bezierCurveTo(x + length * 0.32, y - 6, x + length * 0.68, y + 6, x + length, y);
     ctx.stroke();
   }
 
@@ -388,9 +408,24 @@ function createHardwoodTexture() {
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(3.5, 5.5);
+  texture.repeat.set(3, 4.4);
   texture.anisotropy = 8;
   return texture;
+}
+
+// Lightens (positive amt) or darkens (negative amt) a hex color by a
+// fraction of the distance to white/black — used to build each plank's own
+// gradient from its randomly-picked base tone instead of one shared gradient.
+function shadeHex(hex: string, amt: number) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  const mix = (channel: number) => {
+    const target = amt >= 0 ? 255 : 0;
+    return Math.round(channel + (target - channel) * Math.abs(amt));
+  };
+  return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
 }
 
 function createHerringboneTexture() {
@@ -516,15 +551,18 @@ function getRoomPalette(style: RoomStyle) {
     };
   }
 
-  // Default ("Vault") — a real bank-vault feel: deep navy walls, a heavy
-  // riveted steel door at the entrance, warm wood plank floor.
+  // Default ("Vault") — a real bank-vault feel: navy walls you can actually
+  // read as navy (the old 0x16273f rendered as near-black under normal
+  // lighting — a color that's technically blue but reads as black isn't
+  // "moody," it's just invisible), a heavy riveted steel door with a brass
+  // surround at the entrance, dark walnut plank floor.
   return {
-    wall: 0x16273f,
+    wall: 0x24405f,
     floor: 0x8a6238,
-    trim: 0x9aa3ab,
+    trim: 0xa8b0b8,
     glow: 0xdfe8f0,
     textTone: "text-white",
-    shell: "bg-[radial-gradient(circle_at_50%_0%,rgba(159,184,214,0.14),transparent_34%),linear-gradient(180deg,#1c2c44,#0a1220)] text-white",
+    shell: "bg-[radial-gradient(circle_at_50%_0%,rgba(159,184,214,0.14),transparent_34%),linear-gradient(180deg,#24405f,#0a1220)] text-white",
   };
 }
 
@@ -884,6 +922,13 @@ export default function VirtualGalleryRoom() {
       roughness: roomStyle === "arcade" ? 0.34 : roomStyle === "vault" ? 0.42 : 0.65,
       metalness: roomStyle === "arcade" ? 0.72 : roomStyle === "vault" ? 0.55 : 0.08,
     });
+    // Vault reference photos consistently pair the steel door itself with a
+    // brass/gold frame and surround, not plain brushed steel — used only for
+    // the doorway frame and hinge post below, not the wall shelves.
+    const doorFrameMaterial =
+      roomStyle === "vault"
+        ? new THREE.MeshStandardMaterial({ color: 0xb08d3e, roughness: 0.32, metalness: 0.78 })
+        : trimMaterial;
 
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(21, 26), floorMaterial);
     floor.rotation.x = -Math.PI / 2;
@@ -924,7 +969,10 @@ export default function VirtualGalleryRoom() {
     roomGroup.add(ceiling);
 
     const doorSideMaterial = new THREE.MeshStandardMaterial({
-      color: inHub ? 0x0a0e14 : roomStyle === "whitebox" ? 0xe0d9c4 : roomStyle === "vault" ? 0x0f1c2e : 0x111419,
+      // Was noticeably darker than the main wall for vault (0x0f1c2e vs the
+      // wall's 0x24405f) — same wall, different color right at the doorway
+      // read as a mismatched patch instead of one continuous room.
+      color: inHub ? 0x0a0e14 : roomStyle === "whitebox" ? 0xe0d9c4 : roomStyle === "vault" ? 0x24405f : 0x111419,
       roughness: 0.68,
       metalness: roomStyle === "vault" ? 0.05 : 0.02,
     });
@@ -954,15 +1002,15 @@ export default function VirtualGalleryRoom() {
     // shelf rails) and deliberately NO fill plane across the opening — a solid
     // dark rectangle here read as a closed door, and real museum doorways are
     // open passages you can see straight through, not blocked-off walls.
-    const doorLeft = new THREE.Mesh(new THREE.BoxGeometry(0.16, 4.95, 0.18), trimMaterial);
+    const doorLeft = new THREE.Mesh(new THREE.BoxGeometry(0.16, 4.95, 0.18), doorFrameMaterial);
     doorLeft.position.set(-1.85, 2.45, 5.64);
     roomGroup.add(doorLeft);
 
-    const doorRight = new THREE.Mesh(new THREE.BoxGeometry(0.16, 4.95, 0.18), trimMaterial);
+    const doorRight = new THREE.Mesh(new THREE.BoxGeometry(0.16, 4.95, 0.18), doorFrameMaterial);
     doorRight.position.set(1.85, 2.45, 5.64);
     roomGroup.add(doorRight);
 
-    const doorHeader = new THREE.Mesh(new THREE.BoxGeometry(3.85, 0.18, 0.18), trimMaterial);
+    const doorHeader = new THREE.Mesh(new THREE.BoxGeometry(3.85, 0.18, 0.18), doorFrameMaterial);
     doorHeader.position.set(0, 4.92, 5.64);
     roomGroup.add(doorHeader);
 
@@ -989,9 +1037,20 @@ export default function VirtualGalleryRoom() {
     beyondLight.position.set(0, 3, 7.5);
     roomGroup.add(beyondLight);
 
-    // Vault style only: a heavy riveted steel door, swung open beside the
-    // entrance — purely decorative (not part of meshesRef/doorwayMeshesRef),
-    // so it can't affect the doorway's click/raycast behavior.
+    // Vault style only: a heavy riveted steel door, hinged at the doorway's
+    // right-hand post and swung open into the room — purely decorative (not
+    // part of meshesRef/doorwayMeshesRef), so it can't affect the doorway's
+    // click/raycast behavior.
+    //
+    // Previous version positioned the disc's own CENTER at an arbitrary point
+    // and spun it in place — nothing tied it to the actual door frame, so it
+    // read as a wheel floating disconnected in the room instead of a door
+    // attached to the opening. This version builds the disc/hub/spokes/rivets
+    // exactly as before (unchanged local geometry, face normal along local X)
+    // but as children of a pivot placed AT the frame post and resting on the
+    // floor; the assembly is offset from that pivot by one door-radius, so
+    // rotating the pivot on Y sweeps the door through a real hinge arc — the
+    // door always stays physically attached to the post, at any open angle.
     if (roomStyle === "vault") {
       const vaultDoorMaterial = new THREE.MeshStandardMaterial({
         color: 0x8b939a,
@@ -1000,28 +1059,28 @@ export default function VirtualGalleryRoom() {
       });
       const doorRadius = 1.35;
       const doorThickness = 0.28;
-      const vaultDoorGroup = new THREE.Group();
+      const vaultDoorAssembly = new THREE.Group();
 
       const doorDisc = new THREE.Mesh(
         new THREE.CylinderGeometry(doorRadius, doorRadius, doorThickness, 32),
         vaultDoorMaterial
       );
       doorDisc.rotation.z = Math.PI / 2;
-      vaultDoorGroup.add(doorDisc);
+      vaultDoorAssembly.add(doorDisc);
 
       const hub = new THREE.Mesh(
         new THREE.CylinderGeometry(0.32, 0.32, doorThickness + 0.05, 20),
         trimMaterial
       );
       hub.rotation.z = Math.PI / 2;
-      vaultDoorGroup.add(hub);
+      vaultDoorAssembly.add(hub);
 
       for (let i = 0; i < 10; i += 1) {
         const angle = (i / 10) * Math.PI * 2;
         const spoke = new THREE.Mesh(new THREE.BoxGeometry(doorThickness + 0.06, 0.09, 0.09), trimMaterial);
         spoke.position.set(0, Math.cos(angle) * doorRadius * 0.8, Math.sin(angle) * doorRadius * 0.8);
         spoke.rotation.x = angle;
-        vaultDoorGroup.add(spoke);
+        vaultDoorAssembly.add(spoke);
       }
 
       for (let i = 0; i < 16; i += 1) {
@@ -1032,12 +1091,28 @@ export default function VirtualGalleryRoom() {
         );
         rivet.rotation.z = Math.PI / 2;
         rivet.position.set(0, Math.cos(angle) * doorRadius * 0.94, Math.sin(angle) * doorRadius * 0.94);
-        vaultDoorGroup.add(rivet);
+        vaultDoorAssembly.add(rivet);
       }
 
-      vaultDoorGroup.position.set(3.05, 2.2, 5.5);
-      vaultDoorGroup.rotation.y = Math.PI / 2.6;
-      roomGroup.add(vaultDoorGroup);
+      // The disc's face normal is local X, so the hinge edge — where it
+      // meets the post — is the point on its rim closest to the pivot along
+      // Y/Z; offsetting the whole assembly by one radius along Z keeps that
+      // rim edge at the pivot origin regardless of swing angle.
+      vaultDoorAssembly.position.set(0, 0, -doorRadius);
+      const vaultDoorPivot = new THREE.Group();
+      vaultDoorPivot.add(vaultDoorAssembly);
+      vaultDoorPivot.position.set(1.85, doorRadius, 5.64);
+      vaultDoorPivot.rotation.y = -1.15;
+      roomGroup.add(vaultDoorPivot);
+
+      // A short hinge-post cap so the pivot point itself reads as bolted to
+      // the frame instead of the door just touching it edge-on.
+      const hingePost = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.09, 0.09, doorRadius * 2 + 0.1, 12),
+        doorFrameMaterial
+      );
+      hingePost.position.set(1.85, doorRadius, 5.64);
+      roomGroup.add(hingePost);
     }
 
     const backBaseboard = new THREE.Mesh(new THREE.BoxGeometry(20.7, 0.18, 0.12), baseboardMaterial);
@@ -1051,6 +1126,17 @@ export default function VirtualGalleryRoom() {
     const rightBaseboard = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.18, 23.4), baseboardMaterial);
     rightBaseboard.position.set(10.42, 0.08, -3.05);
     roomGroup.add(rightBaseboard);
+
+    // The entrance wall (either side of the doorway) had no baseboard at
+    // all, so the door-frame posts appeared to just stop bare at the floor
+    // instead of meeting the same trim line as the rest of the room.
+    const frontBaseboardLeft = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.18, 0.12), baseboardMaterial);
+    frontBaseboardLeft.position.set(-6.13, 0.08, 5.7);
+    roomGroup.add(frontBaseboardLeft);
+
+    const frontBaseboardRight = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.18, 0.12), baseboardMaterial);
+    frontBaseboardRight.position.set(6.13, 0.08, 5.7);
+    roomGroup.add(frontBaseboardRight);
 
     for (let row = 0; row < SHELF_ROW_Y.length; row += 1) {
       const y = SHELF_ROW_Y[row];
@@ -1317,9 +1403,16 @@ export default function VirtualGalleryRoom() {
     // park the camera at the item's own height (see onPointerUp) for a level,
     // face-on shot. moveCamera() below restores eye height on foot so walking
     // around doesn't leave you stuck crouched/floating from an earlier focus.
+    // Walking or scroll-zooming has no collision detection at all — this
+    // clamp is the only thing keeping the camera out of the walls, and it
+    // used to allow getting within ~1.1 units of the shelf-mounted side/back
+    // walls. At that range, looking straight at a wall fills the entire
+    // frame with flat shelf trim and no floor/ceiling around it — which
+    // reads exactly like being "stuck behind a shelf," not just close to
+    // one. Pulled back to a ~3-unit margin so the wall never fills the view.
     function clampPosition(position: THREE.Vector3) {
-      position.x = Math.max(-8.85, Math.min(8.85, position.x));
-      position.z = Math.max(-10.35, Math.min(4.72, position.z));
+      position.x = Math.max(-7.5, Math.min(7.5, position.x));
+      position.z = Math.max(-9, Math.min(4.72, position.z));
       return position;
     }
 
