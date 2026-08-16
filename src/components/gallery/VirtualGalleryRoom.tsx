@@ -1169,6 +1169,17 @@ export default function VirtualGalleryRoom() {
       const rightShelf = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.1, 23.2), trimMaterial);
       rightShelf.position.set(9.98, y, -3.15);
       roomGroup.add(rightShelf);
+
+      // The back shelf (half-width 9.95) and the side shelves (outer face at ±10.255)
+      // don't actually reach each other or the true wall corner (±10.5, -12) — a small
+      // uncovered sliver right at the corner read as an unmitered gap. Cap it.
+      const leftCorner = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.8), trimMaterial);
+      leftCorner.position.set(-10.15, y, -11.65);
+      roomGroup.add(leftCorner);
+
+      const rightCorner = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.8), trimMaterial);
+      rightCorner.position.set(10.15, y, -11.65);
+      roomGroup.add(rightCorner);
     }
 
     const cabinetMaterial = new THREE.MeshStandardMaterial({
@@ -1309,14 +1320,32 @@ export default function VirtualGalleryRoom() {
         meshesRef.current.push(card);
 
         const normal = new THREE.Vector3(Math.sin(pos.ry), 0, Math.cos(pos.ry));
+
+        // Real wall planes: back z=-12, left x=-10.5, right x=10.5. The frame used to
+        // be a fixed thin box floating ~0.045 behind the card, which left a visible
+        // air gap (0.15-0.2 units) between the frame and the actual wall — reading as
+        // the item hovering in front of the wall instead of mounted on it. Stretch the
+        // frame's depth back to actually touch the wall. Free-standing "center" items
+        // (spotlight layout) keep the old small offset since they aren't wall-mounted.
+        let frameDepth = 0.06;
+        let centerOffset = 0.045;
+        if (pos.wall === "back" || pos.wall === "left" || pos.wall === "right") {
+          const wallGap =
+            pos.wall === "back" ? pos.z + 12 : pos.wall === "left" ? pos.x + 10.5 : 10.5 - pos.x;
+          const frontOffset = 0.015;
+          const backOverlap = 0.05;
+          frameDepth = Math.max(0.06, wallGap - frontOffset + backOverlap);
+          centerOffset = frontOffset + frameDepth / 2;
+        }
+
         const frame = new THREE.Mesh(
-          new THREE.BoxGeometry(1.25 * pos.scale, 1.67 * pos.scale, 0.06),
+          new THREE.BoxGeometry(1.25 * pos.scale, 1.67 * pos.scale, frameDepth),
           trimMaterial
         );
         frame.position.set(
-          pos.x - normal.x * 0.045,
+          pos.x - normal.x * centerOffset,
           pos.y,
-          pos.z - normal.z * 0.045
+          pos.z - normal.z * centerOffset
         );
         frame.rotation.y = pos.ry;
         roomGroup.add(frame);
@@ -1617,6 +1646,7 @@ export default function VirtualGalleryRoom() {
     renderer.domElement.addEventListener("wheel", onWheel, { passive: false });
     resize();
     render();
+
 
     return () => {
       cameraStateRef.current = { x: cameraBody.x, y: cameraBody.y, z: cameraBody.z, yaw, pitch };
