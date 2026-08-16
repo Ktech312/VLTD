@@ -284,6 +284,35 @@ near the top of that same effect and reused throughout (there was a real
 duplicate-`const inHub` bug from an earlier pass in this file's history —
 already fixed, don't reintroduce a second declaration).
 
+**Update — 2026-08-16, commit `4b71b77`:** fixed the two concrete geometry
+bugs EK flagged with red-circle screenshots ("why is this image floating
+and not on wall and why the shelves not just lined up") — separate from
+the color issue above, and root-caused precisely rather than guessed, by
+reading back real mesh coordinates through the same `window.__vltdDebug`
+scene-introspection hook (added, used, then removed again per the pattern
+above).
+1. **Items floating off the wall.** The wall-mount frame trim was a fixed
+   thin box offset a constant 0.045 behind the card, regardless of the
+   actual wall's distance. Confirmed against the real wall planes (back
+   wall z=-12, left x=-10.5, right x=10.5) that this left a real 0.15-0.2
+   unit air gap between the frame and the wall for every wall-mounted item
+   — it wasn't a lighting/angle illusion, the frame genuinely never
+   touched the wall. Frame depth now stretches to actually meet (and
+   embed slightly into) the wall; free-standing "center"/spotlight items
+   keep the old small offset since they aren't wall-mounted.
+2. **Gapped shelf corners.** The back shelf (half-width 9.95) and the side
+   shelves (outer face at ±10.255) never reached each other or the true
+   wall corner (±10.5, -12) — confirmed via `scene.traverse` reading back
+   every shelf board's actual `BoxGeometry` bounds. Added a corner cap
+   block at all 4 shelf rows, both back corners, sized to fully bridge the
+   gap.
+Both verified by re-querying mesh positions after the fix (frame back
+face now lands exactly at wall + 0.05 embed, corner blocks now overlap
+both adjoining shelf boards) — not by eyeballing a screenshot, since none
+was available this pass either. If EK reports either issue is still
+visible after this deploys, it means the fix didn't address what was
+actually seen and needs a fresh look, not a retry of the same math.
+
 ---
 
 ## 1. Where things stand (screens)
