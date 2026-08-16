@@ -881,7 +881,22 @@ export default function VirtualGalleryRoom() {
     scene.add(roomGroup);
     roomGroupRef.current = roomGroup;
 
-    const hemi = new THREE.HemisphereLight(0xffffff, palette.floor, inHub ? 0.8 : roomStyle === "whitebox" ? 1.7 : 1.15);
+    // The ground-color argument was the actual floor hex (a saturated
+    // brown for every style) — for a vertical wall, whose normal is roughly
+    // horizontal, a hemisphere light blends close to 50/50 between sky and
+    // ground color, so it pulled EVERY wall toward brown/tan regardless of
+    // the wall's own color. That's what was actually crushing/washing out
+    // the wall colors, not the hex values themselves — confirmed by
+    // sampling actual rendered pixels: the intended navy 0x24405f rendered
+    // as 0x0d1a28 (a third of the brightness), and the intended cream
+    // 0xf1ede2 rendered as 0x9f9181 (pulled warm/tan). A neutral, low-
+    // saturation ground color still gives the hemisphere gradient without
+    // overriding every surface's own color.
+    const hemi = new THREE.HemisphereLight(
+      0xffffff,
+      0x3a3a3a,
+      inHub ? 2.6 : roomStyle === "whitebox" ? 4.8 : 3.9
+    );
     scene.add(hemi);
     const key = new THREE.SpotLight(palette.glow, inHub ? 9.5 : 7.2, 26, Math.PI / 5, 0.55, 1.4);
     key.position.set(0, 7.4, 1.5);
