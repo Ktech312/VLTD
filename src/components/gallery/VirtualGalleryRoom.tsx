@@ -1037,20 +1037,24 @@ export default function VirtualGalleryRoom() {
     beyondLight.position.set(0, 3, 7.5);
     roomGroup.add(beyondLight);
 
-    // Vault style only: a heavy riveted steel door, hinged at the doorway's
-    // right-hand post and swung open into the room — purely decorative (not
-    // part of meshesRef/doorwayMeshesRef), so it can't affect the doorway's
+    // Vault style only: a heavy riveted steel door, flush-mounted in its own
+    // round opening on the entrance side wall — purely decorative (not part
+    // of meshesRef/doorwayMeshesRef), so it can't affect the doorway's
     // click/raycast behavior.
     //
-    // Previous version positioned the disc's own CENTER at an arbitrary point
-    // and spun it in place — nothing tied it to the actual door frame, so it
-    // read as a wheel floating disconnected in the room instead of a door
-    // attached to the opening. This version builds the disc/hub/spokes/rivets
-    // exactly as before (unchanged local geometry, face normal along local X)
-    // but as children of a pivot placed AT the frame post and resting on the
-    // floor; the assembly is offset from that pivot by one door-radius, so
-    // rotating the pivot on Y sweeps the door through a real hinge arc — the
-    // door always stays physically attached to the post, at any open angle.
+    // Every real reference photo EK sent shows the round vault door built
+    // into a matching ROUND opening — either its own circular frame, or (in
+    // the numismatics photo) standing as a fully separate feature next to an
+    // unrelated rectangular case. Two earlier passes both tried to hinge
+    // this disc onto the room's actual rectangular doorway (first spinning
+    // it in place at an arbitrary point, then properly hinged to the frame
+    // post) — structurally correct as a hinge, but a round door swinging out
+    // of a square opening was never going to match the reference, because
+    // that's not a real design, it's round-peg-in-square-hole. This version
+    // drops the doorway relationship entirely: the disc is mounted flush
+    // against the wall panel beside the entrance, inside its own brass ring
+    // frame, reading as "this wall has a vault door" independent of the
+    // square passage players actually walk through.
     if (roomStyle === "vault") {
       const vaultDoorMaterial = new THREE.MeshStandardMaterial({
         color: 0x8b939a,
@@ -1061,25 +1065,26 @@ export default function VirtualGalleryRoom() {
       const doorThickness = 0.28;
       const vaultDoorAssembly = new THREE.Group();
 
+      // Mounted flush on the wall (which faces -Z), so every piece below is
+      // built face-on to Z instead of the swinging version's face-on-to-X.
       const doorDisc = new THREE.Mesh(
         new THREE.CylinderGeometry(doorRadius, doorRadius, doorThickness, 32),
         vaultDoorMaterial
       );
-      doorDisc.rotation.z = Math.PI / 2;
+      doorDisc.rotation.x = Math.PI / 2;
       vaultDoorAssembly.add(doorDisc);
 
       const hub = new THREE.Mesh(
         new THREE.CylinderGeometry(0.32, 0.32, doorThickness + 0.05, 20),
         trimMaterial
       );
-      hub.rotation.z = Math.PI / 2;
+      hub.rotation.x = Math.PI / 2;
       vaultDoorAssembly.add(hub);
 
       for (let i = 0; i < 10; i += 1) {
         const angle = (i / 10) * Math.PI * 2;
-        const spoke = new THREE.Mesh(new THREE.BoxGeometry(doorThickness + 0.06, 0.09, 0.09), trimMaterial);
-        spoke.position.set(0, Math.cos(angle) * doorRadius * 0.8, Math.sin(angle) * doorRadius * 0.8);
-        spoke.rotation.x = angle;
+        const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.09, doorThickness + 0.06), trimMaterial);
+        spoke.position.set(Math.cos(angle) * doorRadius * 0.8, Math.sin(angle) * doorRadius * 0.8, 0);
         vaultDoorAssembly.add(spoke);
       }
 
@@ -1089,30 +1094,25 @@ export default function VirtualGalleryRoom() {
           new THREE.CylinderGeometry(0.045, 0.045, doorThickness + 0.08, 8),
           trimMaterial
         );
-        rivet.rotation.z = Math.PI / 2;
-        rivet.position.set(0, Math.cos(angle) * doorRadius * 0.94, Math.sin(angle) * doorRadius * 0.94);
+        rivet.rotation.x = Math.PI / 2;
+        rivet.position.set(Math.cos(angle) * doorRadius * 0.94, Math.sin(angle) * doorRadius * 0.94, 0);
         vaultDoorAssembly.add(rivet);
       }
 
-      // The disc's face normal is local X, so the hinge edge — where it
-      // meets the post — is the point on its rim closest to the pivot along
-      // Y/Z; offsetting the whole assembly by one radius along Z keeps that
-      // rim edge at the pivot origin regardless of swing angle.
-      vaultDoorAssembly.position.set(0, 0, -doorRadius);
-      const vaultDoorPivot = new THREE.Group();
-      vaultDoorPivot.add(vaultDoorAssembly);
-      vaultDoorPivot.position.set(1.85, doorRadius, 5.64);
-      vaultDoorPivot.rotation.y = -1.15;
-      roomGroup.add(vaultDoorPivot);
-
-      // A short hinge-post cap so the pivot point itself reads as bolted to
-      // the frame instead of the door just touching it edge-on.
-      const hingePost = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.09, 0.09, doorRadius * 2 + 0.1, 12),
+      // A brass ring frames the round opening the door sits in — without
+      // this it's just a disc pinned to a flat wall, not a door "set into"
+      // an opening the way every reference photo shows it.
+      const doorRingFrame = new THREE.Mesh(
+        new THREE.TorusGeometry(doorRadius + 0.16, 0.11, 12, 40),
         doorFrameMaterial
       );
-      hingePost.position.set(1.85, doorRadius, 5.64);
-      roomGroup.add(hingePost);
+      vaultDoorAssembly.add(doorRingFrame);
+
+      // Centered on the entrance side wall (rearWallRight spans x 1.75..10.5
+      // at z=5.8, facing -Z into the room), well clear of the actual square
+      // doorway at x=-1.85..1.85 — the two no longer share any geometry.
+      vaultDoorAssembly.position.set(6.1, 2.7, 5.74);
+      roomGroup.add(vaultDoorAssembly);
     }
 
     const backBaseboard = new THREE.Mesh(new THREE.BoxGeometry(20.7, 0.18, 0.12), baseboardMaterial);
