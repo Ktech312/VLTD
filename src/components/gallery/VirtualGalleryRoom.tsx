@@ -821,7 +821,7 @@ export default function VirtualGalleryRoom() {
     meshesRef.current = [];
     doorwayMeshesRef.current = [];
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     container.appendChild(renderer.domElement);
@@ -1294,8 +1294,15 @@ export default function VirtualGalleryRoom() {
     let raf = 0;
     const eyeHeight = 3.6;
     const savedCamera = cameraStateRef.current;
-    let yaw = savedCamera?.yaw ?? 0;
-    let pitch = savedCamera?.pitch ?? 0;
+    // A fresh spawn (no saved camera) looks straight down -Z at yaw 0, which
+    // points dead-on at the back shelf wall — it fills the frame edge-to-edge
+    // with flat, unforeshortened shelf rows and leaves almost no floor/ceiling/
+    // side-wall visible, reading as "staring at a wall" instead of "entering a
+    // room." Angling the default view ~25° toward a corner (and tilting down
+    // slightly) shows the back wall AND a side wall together with real depth,
+    // the way a person glancing across a room on arrival actually would.
+    let yaw = savedCamera?.yaw ?? -0.45;
+    let pitch = savedCamera?.pitch ?? -0.08;
     let targetYaw = yaw;
     let targetPitch = pitch;
     const NAV_PITCH_LIMIT = 0.32;
