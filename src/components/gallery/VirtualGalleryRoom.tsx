@@ -705,6 +705,11 @@ export default function VirtualGalleryRoom() {
   const [items, setItems] = useState<VaultItem[]>(DEMO_ITEMS);
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [galleryId, setGalleryId] = useState("scratch");
+  // Feedback for the Source dropdown — switching exhibitions used to fail
+  // silently (nothing visibly changed) whenever an exhibition's saved item
+  // ids didn't match anything in the loaded vault, which read as "this
+  // control doesn't do anything." Now every switch reports what happened.
+  const [sourceStatus, setSourceStatus] = useState<{ ok: boolean; message: string } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>(() => fillSlots(DEMO_ITEMS.map((item) => item.id)));
   const [roomStyle, setRoomStyle] = useState<RoomStyle>("vault");
   const [roomLayout, setRoomLayout] = useState<RoomLayout>("storefront");
@@ -1743,16 +1748,38 @@ export default function VirtualGalleryRoom() {
 
   function applyGallery(nextGalleryId: string) {
     setGalleryId(nextGalleryId);
-    if (nextGalleryId === "scratch") return;
+    if (nextGalleryId === "scratch") {
+      setSourceStatus(null);
+      return;
+    }
     const gallery = galleries.find((entry) => entry.id === nextGalleryId);
-    if (!gallery) return;
+    if (!gallery) {
+      setSourceStatus({ ok: false, message: "Couldn't find that exhibition." });
+      return;
+    }
     const sectionIds = getGallerySections(gallery).flatMap((section) => section.itemIds);
     const ids = sectionIds.length > 0 ? sectionIds : gallery.itemIds;
     const validIds = ids.filter((id) => items.some((item) => item.id === id));
     if (validIds.length > 0) {
       setSelectedIds(fillSlots(validIds));
       setSelectedItemId(validIds[0] ?? "");
+      setSourceStatus(
+        validIds.length < ids.length
+          ? { ok: true, message: `Loaded ${validIds.length} of ${ids.length} items (some no longer match your vault).` }
+          : { ok: true, message: `Loaded ${validIds.length} item${validIds.length === 1 ? "" : "s"}.` }
+      );
+      return;
     }
+    // Nothing matched — this used to leave the room exactly as it was with
+    // no explanation. Now it says so, instead of looking like the dropdown
+    // did nothing.
+    setSourceStatus({
+      ok: false,
+      message:
+        ids.length === 0
+          ? "This exhibition has no items saved to it yet."
+          : `None of this exhibition's ${ids.length} item${ids.length === 1 ? "" : "s"} matched your vault — room unchanged.`,
+    });
   }
 
   function toggleItem(itemId: string) {
@@ -1838,33 +1865,35 @@ export default function VirtualGalleryRoom() {
 
   return (
     <main className="text-[color:var(--fg)]">
-      <div className="mx-auto grid max-w-[1500px] gap-4 px-4 py-3 sm:px-6 sm:py-4 xl:grid-cols-[360px_minmax(0,1fr)]">
-        <aside className="grid gap-3 xl:sticky xl:top-4 xl:self-start">
-          <div className="rounded-[8px] border bg-[color:var(--theme-card)] p-4 shadow-[var(--shadow-soft)]" style={{ borderColor: "var(--theme-border)" }}>
+      <div className="mx-auto grid max-w-[1500px] gap-4 px-4 py-3 sm:px-6 sm:py-4">
+        {/* Top bar: identity + Source + Room settings, side by side, full width —
+            keeps the 3D room from being squeezed next to a tall stacked sidebar. */}
+        <div className="grid gap-3 lg:grid-cols-[minmax(240px,300px)_minmax(200px,260px)_minmax(0,1fr)]">
+          <div className="rounded-[8px] border bg-[color:var(--theme-card)] p-3 shadow-[var(--shadow-soft)]" style={{ borderColor: "var(--theme-border)" }}>
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-[color:var(--muted2)]">
-                  <Layers3 size={14} />
+                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-[color:var(--muted2)]">
+                  <Layers3 size={12} />
                   Virtual Room
                 </div>
-                <h1 className="mt-2 text-3xl font-black uppercase leading-[0.92] tracking-normal">
+                <h1 className="mt-1 text-xl font-black uppercase leading-[0.92] tracking-normal">
                   Gallery Builder
                 </h1>
               </div>
               <Link
                 href="/museum"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-[6px] bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]"
                 aria-label="Back to exhibitions"
                 title="Back to exhibitions"
               >
-                <GalleryHorizontalEnd size={17} />
+                <GalleryHorizontalEnd size={15} />
               </Link>
             </div>
 
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              <Metric icon={<Boxes size={15} />} label="Items" value={String(selectedItems.length)} />
-              <Metric icon={<BadgeDollarSign size={15} />} label="Value" value={formatMoney(selectedValue) || "$0"} />
-              <Metric icon={<Eye size={15} />} label="Mode" value="3D" />
+            <div className="mt-2 grid grid-cols-3 gap-1.5">
+              <Metric icon={<Boxes size={13} />} label="Items" value={String(selectedItems.length)} />
+              <Metric icon={<BadgeDollarSign size={13} />} label="Value" value={formatMoney(selectedValue) || "$0"} />
+              <Metric icon={<Eye size={13} />} label="Mode" value="3D" />
             </div>
           </div>
 
@@ -1872,7 +1901,7 @@ export default function VirtualGalleryRoom() {
             <select
               value={galleryId}
               onChange={(event) => applyGallery(event.target.value)}
-              className="h-10 w-full rounded-[6px] bg-[color:var(--input)] px-3 text-sm ring-1 ring-[color:var(--border)]"
+              className="h-8 w-full rounded-[6px] bg-[color:var(--input)] px-2.5 text-xs ring-1 ring-[color:var(--border)]"
             >
               <option value="scratch">Scratch room</option>
               {galleries.map((gallery) => (
@@ -1881,6 +1910,16 @@ export default function VirtualGalleryRoom() {
                 </option>
               ))}
             </select>
+            {sourceStatus ? (
+              <div
+                className={[
+                  "text-xs font-semibold leading-4",
+                  sourceStatus.ok ? "text-[color:var(--muted)]" : "text-amber-300",
+                ].join(" ")}
+              >
+                {sourceStatus.message}
+              </div>
+            ) : null}
           </ControlPanel>
 
           <ControlPanel
@@ -1898,80 +1937,83 @@ export default function VirtualGalleryRoom() {
             }
           >
             {roomPanelOpen ? (
-              <>
-                <Segmented
-                  value={viewMode}
-                  options={[
-                    ["room", "Room"],
-                    ["overview", "Map"],
-                  ]}
-                  onChange={(value) => setViewMode(value as ViewMode)}
-                />
-                <Segmented
-                  value={roomLayout}
-                  options={[
-                    ["storefront", "Store"],
-                    ["salon", "Salon"],
-                    ["spotlight", "Hero"],
-                  ]}
-                  onChange={(value) => setRoomLayout(value as RoomLayout)}
-                />
-                <Segmented
-                  value={roomStyle}
-                  options={[
-                    ["vault", "Vault"],
-                    ["whitebox", "White"],
-                    ["arcade", "Arcade"],
-                  ]}
-                  onChange={(value) => setRoomStyle(value as RoomStyle)}
-                />
-                <label className="flex items-center justify-between gap-3 rounded-[6px] bg-[color:var(--input)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]">
-                  <span>Values</span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <div className="w-[92px] min-w-[92px]">
+                  <Segmented
+                    value={viewMode}
+                    options={[
+                      ["room", "Room"],
+                      ["overview", "Map"],
+                    ]}
+                    onChange={(value) => setViewMode(value as ViewMode)}
+                  />
+                </div>
+                <div className="w-[136px] min-w-[136px]">
+                  <Segmented
+                    value={roomLayout}
+                    options={[
+                      ["storefront", "Store"],
+                      ["salon", "Salon"],
+                      ["spotlight", "Hero"],
+                    ]}
+                    onChange={(value) => setRoomLayout(value as RoomLayout)}
+                  />
+                </div>
+                <div className="w-[136px] min-w-[136px]">
+                  <Segmented
+                    value={roomStyle}
+                    options={[
+                      ["vault", "Vault"],
+                      ["whitebox", "White"],
+                      ["arcade", "Arcade"],
+                    ]}
+                    onChange={(value) => setRoomStyle(value as RoomStyle)}
+                  />
+                </div>
+                <label className="flex h-6 items-center gap-1.5 rounded-[5px] bg-[color:var(--input)] px-2 text-[11px] font-bold ring-1 ring-[color:var(--border)]">
                   <input
                     type="checkbox"
                     checked={showValues}
                     onChange={(event) => setShowValues(event.target.checked)}
-                    className="h-4 w-4 accent-cyan-400"
+                    className="h-3 w-3 accent-cyan-400"
+                  />
+                  Values
+                </label>
+                <label className="flex h-6 cursor-pointer items-center gap-1.5 rounded-[5px] bg-[color:var(--input)] px-2 text-[11px] font-bold ring-1 ring-[color:var(--border)] transition hover:bg-black/10">
+                  <Paintbrush size={12} />
+                  {wallTextureUrl ? "Wallpaper" : "Wallpaper"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => {
+                      handleWallpaperUpload(event.target.files?.[0]);
+                      event.target.value = "";
+                    }}
                   />
                 </label>
-                <div className="rounded-[6px] bg-[color:var(--input)] p-2 ring-1 ring-[color:var(--border)]">
-                  <label className="flex cursor-pointer items-center justify-between gap-3 rounded-[5px] bg-black/10 px-3 py-2 text-sm font-semibold transition hover:bg-black/18">
-                    <span className="inline-flex items-center gap-2">
-                      <Paintbrush size={15} />
-                      Wallpaper
-                    </span>
-                    <span className="text-xs text-[color:var(--muted)]">
-                      {wallTextureUrl ? "Change" : "Upload"}
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(event) => {
-                        handleWallpaperUpload(event.target.files?.[0]);
-                        event.target.value = "";
-                      }}
-                    />
-                  </label>
-                  {wallTextureUrl ? (
-                    <button
-                      type="button"
-                      onClick={() => setWallTextureUrl("")}
-                      className="mt-2 w-full rounded-[5px] bg-black/10 px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
-                    >
-                      Remove Wallpaper
-                    </button>
-                  ) : null}
-                  {wallpaperError ? (
-                    <div className="mt-2 text-xs font-semibold text-red-300">
-                      {wallpaperError}
-                    </div>
-                  ) : null}
-                </div>
-              </>
+                {wallTextureUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => setWallTextureUrl("")}
+                    className="flex h-6 items-center rounded-[5px] bg-[color:var(--input)] px-2 text-[11px] font-bold text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
+                  >
+                    Remove
+                  </button>
+                ) : null}
+                {wallpaperError ? (
+                  <div className="basis-full text-[11px] font-semibold text-red-300">{wallpaperError}</div>
+                ) : null}
+              </div>
             ) : null}
           </ControlPanel>
+        </div>
 
+        {/* Below the top bar: Items sidebar (narrower) + the 3D room, which now
+            gets the majority of the width instead of sitting beside a tall
+            stacked sidebar for the room's full height. */}
+        <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)]">
+        <aside className="grid gap-3 xl:sticky xl:top-4 xl:self-start">
           <ControlPanel
             title={isOrganizing ? "Arrange Shelf Order" : "Items"}
             icon={<PackagePlus size={15} />}
@@ -2346,6 +2388,7 @@ export default function VirtualGalleryRoom() {
             </div>
           </div>
         </section>
+        </div>
       </div>
     </main>
   );
@@ -2363,15 +2406,15 @@ function ControlPanel({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-[8px] border bg-[color:var(--theme-card)] p-3 shadow-[var(--shadow-soft)]" style={{ borderColor: "var(--theme-border)" }}>
-      <div className="mb-3 flex items-center justify-between gap-2">
+    <section className="rounded-[8px] border bg-[color:var(--theme-card)] p-2.5 shadow-[var(--shadow-soft)]" style={{ borderColor: "var(--theme-border)" }}>
+      <div className="mb-1.5 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--muted2)]">
           {icon}
           {title}
         </div>
         {action}
       </div>
-      <div className="grid gap-2">{children}</div>
+      <div className="grid gap-1.5">{children}</div>
     </section>
   );
 }
@@ -2387,7 +2430,7 @@ function Segmented({
 }) {
   return (
     <div
-      className="grid rounded-[6px] bg-[color:var(--input)] p-1 ring-1 ring-[color:var(--border)]"
+      className="grid h-6 rounded-[5px] bg-[color:var(--input)] p-0.5 ring-1 ring-[color:var(--border)]"
       style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
     >
       {options.map(([optionValue, label]) => (
@@ -2396,7 +2439,7 @@ function Segmented({
           type="button"
           onClick={() => onChange(optionValue)}
           className={[
-            "min-h-8 rounded-[5px] px-2 text-xs font-black transition",
+            "rounded-[4px] px-1 text-[10px] font-black leading-none transition",
             optionValue === value
               ? "bg-[rgba(79,211,238,0.18)] text-[#67E8F9] shadow-[0_0_12px_rgba(79,211,238,0.16)]"
               : "text-[color:var(--muted)]",
@@ -2709,12 +2752,12 @@ function Metric({
   inverse?: boolean;
 }) {
   return (
-    <div className={["rounded-[6px] p-3 ring-1", inverse ? "bg-white/7 ring-white/12" : "bg-[color:var(--input)] ring-[color:var(--border)]"].join(" ")}>
-      <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-[color:var(--muted2)]">
+    <div className={["rounded-[6px] p-2 ring-1", inverse ? "bg-white/7 ring-white/12" : "bg-[color:var(--input)] ring-[color:var(--border)]"].join(" ")}>
+      <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.12em] text-[color:var(--muted2)]">
         {icon}
         {label}
       </div>
-      <div className="mt-1 truncate text-sm font-black">{value}</div>
+      <div className="mt-0.5 truncate text-xs font-black">{value}</div>
     </div>
   );
 }
