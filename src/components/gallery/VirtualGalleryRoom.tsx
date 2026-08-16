@@ -1867,9 +1867,12 @@ export default function VirtualGalleryRoom() {
     <main className="text-[color:var(--fg)]">
       <div className="mx-auto grid max-w-[1500px] gap-4 px-4 py-3 sm:px-6 sm:py-4">
         {/* Top bar: identity + Source + Room settings, side by side, full width —
-            keeps the 3D room from being squeezed next to a tall stacked sidebar. */}
-        <div className="grid gap-3 lg:grid-cols-[minmax(240px,300px)_minmax(200px,260px)_minmax(0,1fr)]">
-          <div className="rounded-[8px] border bg-[color:var(--theme-card)] p-3 shadow-[var(--shadow-soft)]" style={{ borderColor: "var(--theme-border)" }}>
+            keeps the 3D room from being squeezed next to a tall stacked sidebar.
+            flex, not grid-with-1fr: the Room card sizes to its own pill row
+            instead of stretching to fill the leftover row width, which just
+            left a huge empty gap next to a small cluster of pills. */}
+        <div className="flex flex-wrap items-start gap-3">
+          <div className="w-[300px] shrink-0 rounded-[8px] border bg-[color:var(--theme-card)] p-3 shadow-[var(--shadow-soft)]" style={{ borderColor: "var(--theme-border)" }}>
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-[color:var(--muted2)]">
@@ -1897,30 +1900,32 @@ export default function VirtualGalleryRoom() {
             </div>
           </div>
 
-          <ControlPanel title="Source" icon={<Grid3X3 size={15} />}>
-            <select
-              value={galleryId}
-              onChange={(event) => applyGallery(event.target.value)}
-              className="h-8 w-full rounded-[6px] bg-[color:var(--input)] px-2.5 text-xs ring-1 ring-[color:var(--border)]"
-            >
-              <option value="scratch">Scratch room</option>
-              {galleries.map((gallery) => (
-                <option key={gallery.id} value={gallery.id}>
-                  {gallery.title}
-                </option>
-              ))}
-            </select>
-            {sourceStatus ? (
-              <div
-                className={[
-                  "text-xs font-semibold leading-4",
-                  sourceStatus.ok ? "text-[color:var(--muted)]" : "text-amber-300",
-                ].join(" ")}
+          <div className="w-[260px] shrink-0">
+            <ControlPanel title="Source" icon={<Grid3X3 size={15} />}>
+              <select
+                value={galleryId}
+                onChange={(event) => applyGallery(event.target.value)}
+                className="h-8 w-full rounded-[6px] bg-[color:var(--input)] px-2.5 text-xs ring-1 ring-[color:var(--border)]"
               >
-                {sourceStatus.message}
-              </div>
-            ) : null}
-          </ControlPanel>
+                <option value="scratch">Scratch room</option>
+                {galleries.map((gallery) => (
+                  <option key={gallery.id} value={gallery.id}>
+                    {gallery.title}
+                  </option>
+                ))}
+              </select>
+              {sourceStatus ? (
+                <div
+                  className={[
+                    "text-xs font-semibold leading-4",
+                    sourceStatus.ok ? "text-[color:var(--muted)]" : "text-amber-300",
+                  ].join(" ")}
+                >
+                  {sourceStatus.message}
+                </div>
+              ) : null}
+            </ControlPanel>
+          </div>
 
           <ControlPanel
             title="Room"
