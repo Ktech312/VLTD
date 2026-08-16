@@ -1189,30 +1189,27 @@ export default function VirtualGalleryRoom() {
     for (let row = 0; row < SHELF_ROW_Y.length; row += 1) {
       const y = SHELF_ROW_Y[row];
 
+      // The board's front edge (the face items actually sit near) stays put;
+      // only the back edge moves. Original boards were 0.55 thick centered
+      // 0.245 units clear of the real wall (back z=-12, sides x=±10.5) — that
+      // wasn't just a corner gap, the ENTIRE run of every shelf floated off
+      // its wall the whole time, visible as open air/wall-texture showing
+      // above and behind the board. Depth 0.845 (0.55 + 0.245 gap + 0.05
+      // embed) puts the back face flush against, and slightly into, the wall.
+
       // Widened to 19.9 (from 18.2) so it actually reaches the side shelves at
       // x=±9.98 instead of leaving a visible ~0.9-unit gap at each back corner.
-      const backShelf = new THREE.Mesh(new THREE.BoxGeometry(19.9, 0.1, 0.55), trimMaterial);
-      backShelf.position.set(0, y, -11.48);
+      const backShelf = new THREE.Mesh(new THREE.BoxGeometry(19.9, 0.1, 0.845), trimMaterial);
+      backShelf.position.set(0, y, -11.6275);
       roomGroup.add(backShelf);
 
-      const leftShelf = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.1, 23.2), trimMaterial);
-      leftShelf.position.set(-9.98, y, -3.15);
+      const leftShelf = new THREE.Mesh(new THREE.BoxGeometry(0.845, 0.1, 23.2), trimMaterial);
+      leftShelf.position.set(-10.1275, y, -3.15);
       roomGroup.add(leftShelf);
 
-      const rightShelf = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.1, 23.2), trimMaterial);
-      rightShelf.position.set(9.98, y, -3.15);
+      const rightShelf = new THREE.Mesh(new THREE.BoxGeometry(0.845, 0.1, 23.2), trimMaterial);
+      rightShelf.position.set(10.1275, y, -3.15);
       roomGroup.add(rightShelf);
-
-      // The back shelf (half-width 9.95) and the side shelves (outer face at ±10.255)
-      // don't actually reach each other or the true wall corner (±10.5, -12) — a small
-      // uncovered sliver right at the corner read as an unmitered gap. Cap it.
-      const leftCorner = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.8), trimMaterial);
-      leftCorner.position.set(-10.15, y, -11.65);
-      roomGroup.add(leftCorner);
-
-      const rightCorner = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.8), trimMaterial);
-      rightCorner.position.set(10.15, y, -11.65);
-      roomGroup.add(rightCorner);
     }
 
     const cabinetMaterial = new THREE.MeshStandardMaterial({
