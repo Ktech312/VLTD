@@ -321,20 +321,44 @@ corner is just where it's most visible" — check the full run, not only
 the spot circled.
 
 **Also fixed, same session — vault door didn't match its opening
-(asked about 4 times before this):** the entrance passage was always
-rectangular even in Vault style, with the round riveted door bolted
-onto the SIDE wall as pure decoration — a previous pass's comment
-explicitly says it gave up trying to hinge a round door into a square
-hole. Root cause was the wall opening itself, not the door. For
-`roomStyle === "vault"` the entrance wall is now a single `ShapeGeometry`
-panel with an actual circular hole cut in it (`THREE.Shape` + a
-`THREE.Path` hole via `.absarc`), and the door is mounted on a hinge
-pivot at the opening's edge, rotated open (`doorPivot.rotation.y`) so it
-swings clear into the vestibule — matching the reference photos (door
-open, to one side, not covering the hole). Verified via scene-graph
-introspection: hole radius 1.5 centered on the passage, door disc's
-world position after rotation lands 1.35 units (its own radius) clear
-of the opening. Non-vault styles are untouched, still rectangular.
+(asked about 4 times before this, and the first attempt below still
+missed):** the entrance passage was always rectangular even in Vault
+style, with the round riveted door bolted onto the SIDE wall as pure
+decoration — a previous pass's comment explicitly says it gave up
+trying to hinge a round door into a square hole.
+
+*First attempt this session:* cut a full CIRCLE hole in the wall
+(`THREE.Shape` + `THREE.Path.absarc`, full 360°) and hinge-rotated the
+door open via a pivot group. Looked correct on paper (verified the
+disc's world position algebraically), but EK sent the actual reference
+photo side by side with a screenshot and the gap was real, not a
+nitpick: the reference opening is a floor-to-ceiling **arch** (straight
+sides, rounded top), not a circle, and the door in the photo stands
+**fully clear** off to the side on a heavy hinge column with its whole
+face visible — not mid-swing. Redoing the pivot math after the fact
+showed the "112° open" rotation still left the disc's footprint
+overlapping the hole by ~0.17 units, which is exactly the half-covered
+look EK's screenshot showed.
+
+*Second attempt, matches the reference:* wall opening rebuilt as an
+actual arch shape (`moveTo`/`lineTo`/`absarc` tracing straight sides up
+to y=3.25 then a semicircular top, `archHalfWidth` 1.7) with a riveted
+architrave (two posts + a half-torus top + a thicker hinge column)
+around it. The door is no longer hinge-rotated in place — it's placed
+directly at its open resting position, grounded near the floor beside
+the hinge column, with only a slight turn (not a full swing) so the
+riveted face stays visible. Placement math guarantees the door's
+center-minus-radius never reaches the arch's opening at all (a real
+margin, not a near-miss). Verified via raycasting straight through the
+wall mesh at five points (arch center, floor level, near the edge, and
+two points that should still be solid wall) — confirmed the hole is
+genuinely open where it should be and solid everywhere else, not just
+visually close. Non-vault styles are untouched, still rectangular.
+
+**Lesson for next time:** when a fix is verified only by math/geometry
+reads (no screenshot tool), "the numbers check out" is not the same as
+"it matches the reference" — get the actual reference photo next to the
+result before calling it done, the way EK's side-by-side did here.
 
 ---
 
