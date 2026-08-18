@@ -309,6 +309,7 @@ export default function GalleryPage() {
   const [copied, setCopied] = useState(false);
   const [accessInfoOpen, setAccessInfoOpen] = useState(false);
   const [adultInfoOpen, setAdultInfoOpen] = useState(false);
+  const [aliasInfoOpen, setAliasInfoOpen] = useState(false);
   const [inviteLabel, setInviteLabel] = useState("");
   const [inviteCopiedToken, setInviteCopiedToken] = useState<string>("");
   const [openPermissionsToken, setOpenPermissionsToken] = useState<string | null>(null);
@@ -1052,6 +1053,80 @@ export default function GalleryPage() {
                     >
                       Registered Users
                     </button>
+                  </div>
+
+                  <div className="relative mt-3 border-t border-[color:var(--border)] pt-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="relative inline-flex min-h-[34px] w-fit items-center gap-2 rounded-full bg-[color:var(--surface)] px-3 py-1.5 ring-1 ring-[color:var(--border)] xl:min-h-[28px] xl:px-2.5 xl:py-1">
+                        <span className="flex items-center gap-1.5">
+                          <span className="block text-xs font-semibold">Use an alias</span>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              setAliasInfoOpen((current) => !current);
+                            }}
+                            className="vltd-selectable inline-flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--pill)] text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                            aria-label="Alias help"
+                            aria-expanded={aliasInfoOpen}
+                          >
+                            i
+                          </button>
+                        </span>
+                        <input
+                          type="checkbox"
+                          aria-label="Show a made-up curator identity instead of your real name"
+                          checked={draft.aliasEnabled === true}
+                          onChange={(event) =>
+                            patchDraft((current) => ({
+                              ...current,
+                              aliasEnabled: event.target.checked,
+                            }))
+                          }
+                          className="h-4 w-4 accent-cyan-400"
+                        />
+                        {aliasInfoOpen ? (
+                          <span className="absolute left-0 bottom-full z-20 mb-2 w-[min(360px,calc(100vw-48px))] rounded-xl bg-[color:var(--surface)] px-3 py-2 text-[11px] leading-4 text-[color:var(--muted)] ring-1 ring-[color:var(--border)] shadow-[0_18px_44px_rgba(0,0,0,0.38)]">
+                            Hides your real name and avatar on THIS exhibition's public page — visitors
+                            see the name/avatar you choose below instead. You still see every comment
+                            and fully manage this exhibition as yourself; only the public display changes.
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    {draft.aliasEnabled ? (
+                      <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                        <input
+                          value={draft.aliasName ?? ""}
+                          onChange={(event) =>
+                            patchDraft((current) => ({
+                              ...current,
+                              aliasName: event.target.value.slice(0, 60),
+                            }))
+                          }
+                          placeholder="Alias name (e.g. Ghost Vault Curator)"
+                          className="h-9 min-w-0 flex-1 rounded-[8px] bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                          style={{ maxWidth: 280 }}
+                        />
+                        <input
+                          value={draft.aliasAvatar ?? ""}
+                          onChange={(event) =>
+                            patchDraft((current) => ({
+                              ...current,
+                              aliasAvatar: event.target.value.slice(0, 4),
+                            }))
+                          }
+                          placeholder="🗝️"
+                          aria-label="Alias avatar emoji"
+                          className="h-9 w-16 rounded-[8px] bg-[color:var(--pill)] px-2 text-center text-base ring-1 ring-[color:var(--border)] focus:outline-none"
+                        />
+                        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-[8px] bg-[color:var(--surface)] text-base ring-1 ring-[color:var(--border)]">
+                          {draft.aliasAvatar || "🗝️"}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[color:var(--border)] pt-2 md:flex-nowrap">

@@ -148,6 +148,13 @@ export type Gallery = {
   analytics?: GalleryAnalytics;
   adultOnly?: boolean;
 
+  /** Show a made-up curator identity on this exhibition's public page instead
+   *  of your real name/avatar. Purely a display swap — ownership, comment
+   *  moderation, and everything else stay tied to the real profile_id above. */
+  aliasEnabled?: boolean;
+  aliasName?: string;
+  aliasAvatar?: string;
+
   templateId?: GalleryTemplateId;
   sections?: GallerySection[];
 
@@ -327,6 +334,18 @@ function normalizeGlassShelfOverlay(value: unknown) {
 
 function normalizeAdultOnly(value: unknown) {
   return value === true || value === "true" || value === "1";
+}
+
+function normalizeAliasEnabled(value: unknown) {
+  return value === true || value === "true" || value === "1";
+}
+
+function normalizeAliasName(value: unknown) {
+  return safeString(value).slice(0, 60);
+}
+
+function normalizeAliasAvatar(value: unknown) {
+  return safeString(value).slice(0, 8);
 }
 
 function normalizeShelfOverlayStyle(
@@ -747,6 +766,9 @@ function normalizeGallery(raw: any): Gallery | null {
     share: normalizeShare(raw.share),
     analytics: normalizeAnalytics(raw.analytics),
     adultOnly: normalizeAdultOnly(raw.adultOnly ?? raw.adult_only ?? raw.isAdultOnly ?? raw.is_adult_only ?? raw.layout?.adultOnly ?? raw.exhibitionLayout?.adultOnly),
+    aliasEnabled: normalizeAliasEnabled(raw.aliasEnabled ?? raw.alias_enabled),
+    aliasName: normalizeAliasName(raw.aliasName ?? raw.alias_name),
+    aliasAvatar: normalizeAliasAvatar(raw.aliasAvatar ?? raw.alias_avatar),
     templateId: normalizeTemplateId(raw.templateId),
     sections,
     themePack: normalizeThemePack(raw.themePack),
@@ -820,6 +842,9 @@ export function normalizeSupabaseGallery(raw: any): Gallery | null {
       raw.exhibition_layout?.adultOnly ??
       raw.adult_only ??
       false,
+    aliasEnabled: raw.alias_enabled ?? false,
+    aliasName: raw.alias_name ?? "",
+    aliasAvatar: raw.alias_avatar ?? "",
     templateId:
       raw.layout?.templateId ??
       raw.exhibition_layout?.templateId ??
@@ -913,6 +938,9 @@ function serializeGalleryForSupabase(gallery: Gallery) {
       publicItemSnapshots,
     },
     public_token: gallery.share?.publicToken || null,
+    alias_enabled: normalizeAliasEnabled(gallery.aliasEnabled),
+    alias_name: normalizeAliasName(gallery.aliasName) || null,
+    alias_avatar: normalizeAliasAvatar(gallery.aliasAvatar) || null,
     analytics_views: gallery.analytics?.views ?? 0,
     analytics_last_viewed_at: gallery.analytics?.lastViewedAt
       ? new Date(gallery.analytics.lastViewedAt).toISOString()
@@ -1498,6 +1526,18 @@ export function saveGalleriesForActiveProfile(galleries: Gallery[]) {
   }));
 
   saveGalleries([...existing, ...nextForProfile]);
+}
+
+/** The identity to show publicly for this exhibition's curator — the alias if
+ *  one's set and turned on, otherwise null (caller falls back to the real
+ *  public profile). Never touches ownership/moderation, only display. */
+export function getGalleryAliasIdentity(
+  gallery: Gallery | null | undefined
+): { name: string; avatar: string } | null {
+  if (!gallery?.aliasEnabled) return null;
+  const name = normalizeAliasName(gallery.aliasName);
+  if (!name) return null;
+  return { name, avatar: normalizeAliasAvatar(gallery.aliasAvatar) || "🗝️" };
 }
 
 export function getGalleryById(id: string) {

@@ -7,11 +7,12 @@ import type { DragEvent } from "react";
 import FavoriteButton from "@/components/FavoriteButton";
 import GalleryShelfScene from "@/components/gallery/GalleryShelfScene";
 import { PillButton } from "@/components/ui/PillButton";
-import { getGallerySections } from "@/lib/galleryModel";
+import { getGallerySections, getGalleryAliasIdentity } from "@/lib/galleryModel";
 import { fetchPublicProfile } from "@/lib/publicProfile";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import type { GuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
 import CollectorBioModal from "@/components/gallery/CollectorBioModal";
+import AliasCuratorModal from "@/components/gallery/AliasCuratorModal";
 import ExhibitionInfoModal from "@/components/gallery/ExhibitionInfoModal";
 import { VibeButton } from "@/components/social/VibeButton";
 import { getAppreciationCounts, getAppreciatedSet } from "@/lib/appreciations";
@@ -325,7 +326,13 @@ function getShelfSlotLayout(model: GuestGalleryViewModel) {
   )?.slotLayout;
 }
 
-type OwnerProfile = { displayName: string; profileId: string; avatar: string; avatarUrl?: string };
+type OwnerProfile = {
+  displayName: string;
+  profileId: string;
+  avatar: string;
+  avatarUrl?: string;
+  isAlias?: boolean;
+};
 
 export default function GuestGalleryRenderer({
   model,
@@ -387,6 +394,22 @@ export default function GuestGalleryRenderer({
   useEffect(() => {
     const profileId = model.gallery?.profile_id;
     if (!profileId || embedded) return;
+
+    // Aliased exhibition: show the made-up identity and skip fetching the
+    // real public profile entirely — nothing about the real account needs
+    // to reach this page at all.
+    const alias = getGalleryAliasIdentity(model.gallery);
+    if (alias) {
+      setOwner({
+        displayName: alias.name,
+        profileId,
+        avatarUrl: undefined,
+        avatar: alias.avatar,
+        isAlias: true,
+      });
+      return;
+    }
+
     void fetchPublicProfile(profileId).then((profile) => {
       if (profile) {
         setOwner({
@@ -405,7 +428,7 @@ export default function GuestGalleryRenderer({
         });
       }
     });
-  }, [model.gallery?.profile_id, embedded]);
+  }, [model.gallery, embedded]);
 
   // ── Drag delegation handlers (defined here, outside JSX, to avoid TSX parser ambiguity) ──
   const gridDragStart: CardDragHandler | null = onReorder
@@ -709,7 +732,17 @@ export default function GuestGalleryRenderer({
       ) : null}
 
       {bioOpen && owner ? (
-        <CollectorBioModal profileId={owner.profileId} onClose={() => setBioOpen(false)} />
+        owner.isAlias ? (
+          <AliasCuratorModal
+            aliasName={owner.displayName}
+            aliasAvatar={owner.avatar}
+            itemCount={model.galleryItems.length}
+            createdAt={model.gallery?.createdAt}
+            onClose={() => setBioOpen(false)}
+          />
+        ) : (
+          <CollectorBioModal profileId={owner.profileId} onClose={() => setBioOpen(false)} />
+        )
       ) : null}
 
       {infoOpen && model.gallery ? (

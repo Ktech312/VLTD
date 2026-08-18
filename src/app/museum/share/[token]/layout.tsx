@@ -12,6 +12,8 @@ type GalleryRow = {
   description: string | null;
   layout: { itemIds?: string[] } | null;
   profile_id: string;
+  alias_enabled: boolean | null;
+  alias_name: string | null;
 };
 type ProfileRow = { display_name: string | null };
 
@@ -21,13 +23,20 @@ async function fetchGalleryMeta(token: string) {
   const h = { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` };
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/galleries?public_token=eq.${encodeURIComponent(token)}&select=title,description,layout,profile_id&limit=1`,
+      `${SUPABASE_URL}/rest/v1/galleries?public_token=eq.${encodeURIComponent(token)}&select=title,description,layout,profile_id,alias_enabled,alias_name&limit=1`,
       { headers: h, next: { revalidate: 120 } }
     );
     const rows: GalleryRow[] = await res.json().catch(() => []);
     const g = rows[0];
     if (!g) return fallback;
     const itemCount = Array.isArray(g.layout?.itemIds) ? g.layout!.itemIds.length : null;
+
+    // Aliased exhibition: use the made-up name, never fetch the real profile.
+    const aliasName = g.alias_enabled ? (g.alias_name ?? "").trim() : "";
+    if (aliasName) {
+      return { title: g.title, description: g.description ?? "", itemCount, collector: aliasName };
+    }
+
     let collector = "";
     try {
       const pRes = await fetch(

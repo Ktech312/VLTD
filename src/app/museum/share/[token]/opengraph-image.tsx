@@ -17,6 +17,8 @@ type GalleryRow = {
   cover_image: string | null;
   layout: { itemIds?: string[] } | null;
   profile_id: string;
+  alias_enabled: boolean | null;
+  alias_name: string | null;
 };
 type ProfileRow = { display_name: string | null };
 type ItemRow = { title: string };
@@ -31,7 +33,7 @@ async function fetchData(token: string) {
   const h = { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` };
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/galleries?public_token=eq.${encodeURIComponent(token)}&select=title,description,cover_image,layout,profile_id&limit=1`,
+      `${SUPABASE_URL}/rest/v1/galleries?public_token=eq.${encodeURIComponent(token)}&select=title,description,cover_image,layout,profile_id,alias_enabled,alias_name&limit=1`,
       { headers: h, cache: "no-store" }
     );
     const rows: GalleryRow[] = await res.json().catch(() => []);
@@ -42,20 +44,28 @@ async function fetchData(token: string) {
     const itemCount = itemIds.length || null;
     const sampleIds = itemIds.slice(0, 8);
 
-    // Fetch profile and items in parallel
+    // Aliased exhibition: use the made-up name, never fetch the real profile.
+    const aliasName = g.alias_enabled ? (g.alias_name ?? "").trim() : "";
+
+    // Fetch profile (skipped when aliased) and items in parallel
     // vault_items RLS: anon key can read rows where is_public = true
     const [profileRes, itemsRes] = await Promise.all([
-      fetch(`${SUPABASE_URL}/rest/v1/public_profiles?profile_id=eq.${g.profile_id}&select=display_name&limit=1`, { headers: h, cache: "no-store" }),
+      aliasName
+        ? Promise.resolve(null)
+        : fetch(`${SUPABASE_URL}/rest/v1/public_profiles?profile_id=eq.${g.profile_id}&select=display_name&limit=1`, { headers: h, cache: "no-store" }),
       sampleIds.length > 0
         ? fetch(`${SUPABASE_URL}/rest/v1/vault_items?id=in.(${sampleIds.join(",")})&select=title&limit=8`, { headers: h, cache: "no-store" })
         : Promise.resolve(null),
     ]);
 
-    const profiles: ProfileRow[] = await profileRes.json().catch(() => []);
-    const rawName = profiles[0]?.display_name ?? "";
-    // Filter out obvious placeholder names set during onboarding
-    const PLACEHOLDERS = new Set(["collector", "user", "vltd user", "vltd collector", ""]);
-    const collector = PLACEHOLDERS.has(rawName.trim().toLowerCase()) ? "" : rawName.trim();
+    let collector = aliasName;
+    if (!aliasName) {
+      const profiles: ProfileRow[] = profileRes ? await profileRes.json().catch(() => []) : [];
+      const rawName = profiles[0]?.display_name ?? "";
+      // Filter out obvious placeholder names set during onboarding
+      const PLACEHOLDERS = new Set(["collector", "user", "vltd user", "vltd collector", ""]);
+      collector = PLACEHOLDERS.has(rawName.trim().toLowerCase()) ? "" : rawName.trim();
+    }
 
     let items: string[] = [];
     if (itemsRes) {

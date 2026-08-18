@@ -20,6 +20,8 @@ type GalleryRow = {
   cover_image: string | null;
   layout: { itemIds?: string[] } | null;
   profile_id: string;
+  alias_enabled: boolean | null;
+  alias_name: string | null;
 };
 
 type ProfileRow = {
@@ -28,7 +30,7 @@ type ProfileRow = {
 };
 
 async function fetchGallery(galleryId: string): Promise<{ gallery: GalleryRow; profile: ProfileRow | null }> {
-  const url = `${SUPABASE_URL}/rest/v1/galleries?id=eq.${galleryId}&visibility=eq.PUBLIC&state=eq.ACTIVE&select=id,title,description,cover_image,layout,profile_id&limit=1`;
+  const url = `${SUPABASE_URL}/rest/v1/galleries?id=eq.${galleryId}&visibility=eq.PUBLIC&state=eq.ACTIVE&select=id,title,description,cover_image,layout,profile_id,alias_enabled,alias_name&limit=1`;
   const res = await fetch(url, {
     headers: {
       apikey: SUPABASE_ANON,
@@ -38,7 +40,13 @@ async function fetchGallery(galleryId: string): Promise<{ gallery: GalleryRow; p
   const rows: GalleryRow[] = await res.json().catch(() => []);
   const gallery = rows[0] ?? null;
 
-  if (!gallery) return { gallery: { id: galleryId, title: "VLTD Gallery", description: null, cover_image: null, layout: null, profile_id: "" }, profile: null };
+  if (!gallery) return { gallery: { id: galleryId, title: "VLTD Gallery", description: null, cover_image: null, layout: null, profile_id: "", alias_enabled: null, alias_name: null }, profile: null };
+
+  // Aliased exhibition: use the made-up name, never fetch the real profile.
+  const aliasName = gallery.alias_enabled ? (gallery.alias_name ?? "").trim() : "";
+  if (aliasName) {
+    return { gallery, profile: { display_name: aliasName, avatar_url: null } };
+  }
 
   // Fetch collector profile
   const profileUrl = `${SUPABASE_URL}/rest/v1/public_profiles?profile_id=eq.${gallery.profile_id}&select=display_name,avatar_url&limit=1`;
