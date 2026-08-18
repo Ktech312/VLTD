@@ -4,6 +4,30 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { resolveAvatarSrc } from "@/lib/avatarResolve";
+import { listLoungePosts, addLoungePost, hideLoungePost, type LoungePost, type LoungePostKind } from "@/lib/loungePosts";
+
+const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
+function getActiveProfileId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return String(window.localStorage.getItem(ACTIVE_PROFILE_KEY) ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
+function timeAgoShort(timestamp: number) {
+  if (!timestamp) return "";
+  const diffMs = Date.now() - timestamp;
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
 /* =========================================================================
    VLT LOUNGE — the collector clubhouse.
@@ -146,6 +170,50 @@ export default function VltLoungePage() {
   const [signals, setSignals] = useState<Signals | null>(null);
   const [drops, setDrops] = useState<DropRow[] | null>(null);
   const [room, setRoom] = useState<RoomRow | null | undefined>(undefined); // undefined = loading
+  const [posts, setPosts] = useState<LoungePost[] | null>(null);
+  const [viewerProfileId, setViewerProfileId] = useState("");
+  const [composerKind, setComposerKind] = useState<LoungePostKind | null>(null);
+  const [composerBody, setComposerBody] = useState("");
+  const [posting, setPosting] = useState(false);
+
+  useEffect(() => {
+    setViewerProfileId(getActiveProfileId());
+  }, []);
+
+  function openComposer(kind: LoungePostKind) {
+    setComposerBody("");
+    setComposerKind(kind);
+  }
+
+  async function handlePost() {
+    const trimmed = composerBody.trim();
+    if (!trimmed || !viewerProfileId || !composerKind || posting) return;
+    setPosting(true);
+    try {
+      const created = await addLoungePost(viewerProfileId, composerKind, trimmed);
+      if (created) {
+        setPosts((prev) => [created, ...(prev ?? [])]);
+        setComposerKind(null);
+        setComposerBody("");
+      }
+    } finally {
+      setPosting(false);
+    }
+  }
+
+  async function handleHidePost(postId: string) {
+    setPosts((prev) => (prev ?? []).filter((p) => p.id !== postId));
+    await hideLoungePost(postId);
+  }
+
+  // Real Lounge posts — the backend behind "Ask the Lounge" / "Post Update".
+  useEffect(() => {
+    let alive = true;
+    void listLoungePosts().then((rows) => {
+      if (alive) setPosts(rows);
+    });
+    return () => { alive = false; };
+  }, []);
 
   // Real leaderboard / universe / member data from Supabase (item-count based).
   useEffect(() => {
@@ -265,10 +333,10 @@ export default function VltLoungePage() {
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2.5">
-          <button type="button" className="inline-flex items-center gap-2 rounded-[6px] px-4 py-2.5 text-sm font-bold" style={{ ...CARD, color: "var(--fg)" }}>
+          <button type="button" onClick={() => openComposer("question")} className="inline-flex items-center gap-2 rounded-[6px] px-4 py-2.5 text-sm font-bold" style={{ ...CARD, color: "var(--fg)" }}>
             <span aria-hidden style={{ color: CYAN }}>?</span> Ask the Lounge
           </button>
-          <button type="button" className="vltd-primary-button inline-flex items-center gap-2 rounded-[6px] px-4 py-2.5 text-sm font-black">
+          <button type="button" onClick={() => openComposer("update")} className="vltd-primary-button inline-flex items-center gap-2 rounded-[6px] px-4 py-2.5 text-sm font-black">
             Post Update
           </button>
         </div>
@@ -292,9 +360,55 @@ export default function VltLoungePage() {
                 );
               })}
             </div>
-            <div className="px-4 py-6 text-center text-[12px]" style={{ color: "var(--muted2)" }}>
-              No live activity yet. Discussions are coming to the Lounge soon.
-            </div>
+            {(() => {
+              // "Item Chatter" has no source yet (no item-linked post type built) —
+              // stays honestly empty rather than showing unrelated posts under it.
+              const visible =
+                tab === "Item Chatter"
+                  ? []
+                  : tab === "Discussions"
+                    ? (posts ?? []).filter((p) => p.kind === "update")
+                    : tab === "Collector Q&A"
+                      ? (posts ?? []).filter((p) => p.kind === "question")
+                      : (posts ?? []);
+              if (posts === null) {
+                return <div className="px-4 py-6 text-center text-[12px]" style={{ color: "var(--muted2)" }}>Loading…</div>;
+              }
+              if (visible.length === 0) {
+                return (
+                  <div className="px-4 py-6 text-center text-[12px]" style={{ color: "var(--muted2)" }}>
+                    {tab === "Item Chatter" ? "Item-linked chatter isn't built yet." : "No posts yet. Be the first."}
+                  </div>
+                );
+              }
+              return (
+                <div className="max-h-[360px] divide-y overflow-y-auto" style={{ borderColor: "var(--border)" }}>
+                  {visible.slice(0, 12).map((post) => {
+                    const canModerate = viewerProfileId && post.profileId === viewerProfileId;
+                    return (
+                      <div key={post.id} className="flex gap-2.5 px-4 py-3">
+                        <Avatar name={post.authorName} size={28} src={post.authorAvatarSrc} />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="text-[12px] font-bold">{post.authorName}</span>
+                            <span className="shrink-0 rounded-[3px] px-1 text-[9px] font-black uppercase" style={{ background: post.kind === "question" ? "rgba(79,211,238,0.14)" : "rgba(84,201,138,0.14)", color: post.kind === "question" ? CYAN : GREEN }}>
+                              {post.kind === "question" ? "Q&A" : "Update"}
+                            </span>
+                            <span className="ml-auto shrink-0 text-[10px]" style={{ color: "var(--muted2)" }}>{timeAgoShort(post.createdAt)}</span>
+                          </div>
+                          <div className="mt-0.5 text-[12px] leading-5" style={{ color: "var(--fg)" }}>{post.body}</div>
+                          {canModerate ? (
+                            <button type="button" onClick={() => void handleHidePost(post.id)} className="mt-1 text-[10px] font-bold" style={{ color: "var(--muted2)" }}>
+                              Remove
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </section>
 
           <section className="rounded-[8px]" style={CARD}>
@@ -331,9 +445,7 @@ export default function VltLoungePage() {
                   </p>
                   {room && room.linkUrl ? (
                     <a href={room.linkUrl} target="_blank" rel="noopener noreferrer" className="vltd-primary-button mt-4 inline-flex rounded-[6px] px-4 py-2 text-[12px] font-black">{room.linkLabel}</a>
-                  ) : (
-                    <button type="button" className="vltd-primary-button mt-4 inline-flex rounded-[6px] px-4 py-2 text-[12px] font-black">View Room</button>
-                  )}
+                  ) : null}
                 </div>
               </Tile>
             </div>
@@ -401,7 +513,11 @@ export default function VltLoungePage() {
           <section className="rounded-[8px]" style={CARD}>
             <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
               <span className="flex items-center gap-1.5"><Label>Collector Signals</Label><Info /></span>
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold" style={{ color: GREEN }}><span className="h-1.5 w-1.5 rounded-full" style={{ background: GREEN }} />Live</span>
+              {signals ? (
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold" style={{ color: GREEN }}><span className="h-1.5 w-1.5 rounded-full" style={{ background: GREEN }} />Live</span>
+              ) : (
+                <span className="text-[11px] font-bold" style={{ color: "var(--muted2)" }}>No data yet</span>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-px" style={{ background: "var(--border)" }}>
               {[
@@ -467,6 +583,49 @@ export default function VltLoungePage() {
           </section>
         </div>
       </div>
+
+      {composerKind ? (
+        <div
+          className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+          onClick={() => setComposerKind(null)}
+        >
+          <div
+            className="w-full max-w-[440px] rounded-[10px] p-5"
+            style={CARD}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-[15px] font-black">{composerKind === "question" ? "Ask the Lounge" : "Post an Update"}</h2>
+              <button type="button" onClick={() => setComposerKind(null)} aria-label="Close" className="grid h-7 w-7 place-items-center rounded-full" style={{ background: "var(--pill)", color: "var(--muted)" }}>✕</button>
+            </div>
+            {viewerProfileId ? (
+              <>
+                <textarea
+                  value={composerBody}
+                  onChange={(e) => setComposerBody(e.target.value.slice(0, 2000))}
+                  placeholder={composerKind === "question" ? "What do you want to ask the Lounge?" : "What's the update?"}
+                  autoFocus
+                  className="mt-3 h-28 w-full resize-none rounded-[7px] bg-[color:var(--pill)] px-3 py-2.5 text-[13px] ring-1 ring-[color:var(--border)] focus:outline-none"
+                  style={{ color: "var(--fg)" }}
+                />
+                <div className="mt-3 flex items-center justify-between">
+                  <span className="text-[10px]" style={{ color: "var(--muted2)" }}>{composerBody.length} / 2000</span>
+                  <button
+                    type="button"
+                    onClick={() => void handlePost()}
+                    disabled={!composerBody.trim() || posting}
+                    className="vltd-primary-button inline-flex items-center rounded-[6px] px-4 py-2 text-[12px] font-black disabled:opacity-50"
+                  >
+                    {posting ? "Posting…" : "Post to Lounge"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p className="mt-3 text-[12px]" style={{ color: "var(--muted)" }}>Sign in to post to the Lounge.</p>
+            )}
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
