@@ -9,7 +9,7 @@ export default function MessagesPage() {
   return (
     <>
       <PageHeader title="Messages" description="Direct messages with other collectors." contentClassName="max-w-[900px]" />
-      <main className="mx-auto w-full max-w-[900px] px-4 pb-16 pt-6 sm:px-6">
+      <main className="mx-auto w-full max-w-[900px] px-4 pb-16 sm:px-6">
       <div
         className="flex flex-col items-center justify-center gap-3 rounded-[8px] px-6 py-20 text-center"
         style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)" }}
