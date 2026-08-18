@@ -33,7 +33,7 @@ export function PageHeader({
         style={{ background: "var(--theme-nav-bg, rgba(16, 18, 21, 0.95))" }}
       >
         <div
-          className={`mx-auto flex w-full flex-col gap-4 px-4 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8 ${contentClassName}`}
+          className={`mx-auto flex w-full flex-col gap-4 px-4 sm:px-6 lg:flex-row lg:min-h-[42px] lg:items-end lg:justify-between lg:px-8 ${contentClassName}`}
         >
           <div className="flex flex-wrap items-end gap-x-5 gap-y-1">
             <h1 className={titleClassName}>{title}</h1>
