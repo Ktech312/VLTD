@@ -392,7 +392,7 @@ export default function DiscoverPage() {
         title="Discover"
         description={<span style={{ color: "var(--theme-text-muted,#61656B)" }}>Explore public collections, notable items, and collector rooms.</span>}
         contentClassName="max-w-[1480px]"
-        titleClassName="font-serif text-[30px] leading-none tracking-[-0.03em] sm:text-[38px] text-[color:var(--theme-text-primary,#ECEDEF)]"
+        titleClassName="font-serif text-[28px] leading-[1.2] tracking-[-0.03em] sm:text-[34px] text-[color:var(--theme-text-primary,#ECEDEF)]"
       />
       <main className="text-[color:var(--fg)]">
       <div className="mx-auto grid max-w-[1480px] gap-6 px-4 pb-6 sm:px-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)_430px]">
