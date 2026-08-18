@@ -1,4 +1,44 @@
-# VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-13)
+# VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-18)
+
+## Fake/non-functional UI audit + overnight fixes (2026-08-18)
+EK asked for a full sweep after noticing Messages/Inbox was still fake and
+wasn't proactively flagged. Full sweep run; findings + fixes:
+
+- ✅ **FIXED — real billing bypass.** `/user` page let any signed-in user
+  click "Full" and instantly self-grant the paid tier for free (wrote
+  straight to the same `localStorage["vltd_tier"]` key `getTierSafe()`
+  reads app-wide, zero server check). Removed the picker; replaced with a
+  read-only tier display + a real link to `/account/billing` (Stripe).
+  **⚠ Not fully closed**: enforcement is still 100% client-side/localStorage
+  — a devtools-savvy user could still override it directly. Real fix needs
+  every tier-gated check moved to read the server-confirmed `profiles.tier`
+  instead of the local cache. Not attempted blind — flag for a dedicated pass.
+- ✅ **FIXED**: TopNav's message-bell badge always showed a hardcoded "3" —
+  removed (no real DM system exists yet to count against).
+- ✅ **FIXED**: More page's "Recent Activity" panel was a hardcoded array
+  ("Backup completed successfully" etc., same for every user). Now pulls
+  from the same real `activityEvents` data source `/activity` already uses;
+  shows an honest "No recent activity yet" when empty.
+- ✅ **FIXED**: More page's "System Status" panel claimed live uptime
+  monitoring with zero real backend behind it. No real monitoring exists to
+  source honestly — removed rather than fake it differently.
+- ⬜ **NOT touched, on purpose**: `community-board/page.tsx` (VLT Lounge) has
+  the identical fake-data pattern — dead "Ask the Lounge"/"Post Update"/"View
+  Room" buttons (no onClick at all) and an always-on fake "Live" dot on
+  Collector Signals regardless of whether real data came back. Left alone
+  because §0's standing parallel-editing note flags this file as Codex's
+  (confirmed still current — a past session found this same issue there and
+  also deliberately left it alone). Needs EK to either hand this to Codex or
+  explicitly say it's OK for this chat to touch it.
+- ⬜ Also found, not yet fixed: a second, tooltip-only "Scan (coming soon)"
+  button inside Vault's Add-to-Museum modal (same known limitation as the
+  main Vault Scan button, just a second copy, lower priority).
+- ✅ Confirmed NOT a bug: the "Level N" badge is real, computed from actual
+  item + exhibit counts. One real gap: `TopNav.tsx` calls
+  `loadMyCollectorLevel()` with no argument, so followers currently
+  contribute 0 to the score even though the formula supports it.
+- ✅ Confirmed clean: demo/seed data is correctly gated to logged-out
+  visitors only everywhere it was checked — no signed-in user sees fake data.
 
 ## Barcode/QR scanning — WHERE THINGS STAND RIGHT NOW (2026-08-11)
 Full narrative of how this got here is in `HANDOFF.md` §B (a real saga —
