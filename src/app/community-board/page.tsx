@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { resolveAvatarSrc } from "@/lib/avatarResolve";
 import { listLoungePosts, addLoungePost, hideLoungePost, type LoungePost, type LoungePostKind } from "@/lib/loungePosts";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 function getActiveProfileId(): string {
@@ -323,25 +324,26 @@ export default function VltLoungePage() {
   }, []);
 
   return (
-    <main className="mx-auto w-full max-w-[1440px] px-4 pb-16 pt-6 sm:px-6 lg:px-8">
-      {/* Header */}
-      <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="flex flex-wrap items-end gap-x-5 gap-y-1">
-          <h1 className="text-[38px] font-extrabold uppercase leading-[0.9] tracking-[-0.03em] sm:text-[46px]">VLT Lounge</h1>
-          <p className="pb-1 text-sm leading-tight" style={{ color: "var(--muted)" }}>
+    <>
+      <PageHeader
+        title="VLT Lounge"
+        description={
+          <>
             The collector clubhouse.<br className="hidden sm:block" /> Trusted talk. Real knowledge.
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2.5">
-          <button type="button" onClick={() => openComposer("question")} className="inline-flex items-center gap-2 rounded-[6px] px-4 py-2.5 text-sm font-bold" style={{ ...CARD, color: "var(--fg)" }}>
-            <span aria-hidden style={{ color: CYAN }}>?</span> Ask the Lounge
-          </button>
-          <button type="button" onClick={() => openComposer("update")} className="vltd-primary-button inline-flex items-center gap-2 rounded-[6px] px-4 py-2.5 text-sm font-black">
-            Post Update
-          </button>
-        </div>
-      </header>
-
+          </>
+        }
+        actions={
+          <>
+            <button type="button" onClick={() => openComposer("question")} className="inline-flex items-center gap-2 rounded-[6px] px-4 py-2.5 text-sm font-bold" style={{ ...CARD, color: "var(--fg)" }}>
+              <span aria-hidden style={{ color: CYAN }}>?</span> Ask the Lounge
+            </button>
+            <button type="button" onClick={() => openComposer("update")} className="vltd-primary-button inline-flex items-center gap-2 rounded-[6px] px-4 py-2.5 text-sm font-black">
+              Post Update
+            </button>
+          </>
+        }
+      />
+      <main className="mx-auto w-full max-w-[1440px] px-4 pb-16 pt-6 sm:px-6 lg:px-8">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)_minmax(0,340px)]">
         {/* ── LEFT: Lounge Live + Hot Threads ── */}
         <div className="flex flex-col gap-4">
@@ -626,6 +628,7 @@ export default function VltLoungePage() {
           </div>
         </div>
       ) : null}
-    </main>
+      </main>
+    </>
   );
 }

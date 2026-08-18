@@ -22,6 +22,7 @@ import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import { activeItems } from "@/lib/vaultStats";
 import { loadGoals, syncGoalsFromSupabase, type CollectionGoal } from "@/lib/collectionGoals";
 import { getCollectionValuationScore } from "@/lib/collectionValuationScore";
+import { PageHeader } from "@/components/layout/PageHeader";
 import PortfolioIntelligencePanel from "@/components/PortfolioIntelligencePanel";
 import CollectionValuationScoreCard from "@/components/CollectionValuationScoreCard";
 import GoalsProgressWidget from "@/components/GoalsProgressWidget";
@@ -704,12 +705,14 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
 
   if (items.length === 0) {
     return (
-      <main className="min-h-screen text-[color:var(--fg)]">
+      <>
+        <PageHeader
+          title="Insights"
+          description="Performance, trends, and opportunities in your collection."
+          contentClassName="max-w-[1480px]"
+        />
+        <main className="min-h-screen text-[color:var(--fg)]">
         <div className="mx-auto max-w-[1480px] px-4 py-8 sm:px-8">
-          <div className="max-w-3xl">
-            <h1 className="font-serif text-[42px] leading-none text-[color:var(--fg)] sm:text-[54px]">Insights</h1>
-            <p className="mt-2 text-sm sm:text-base" style={{ color: MUTED }}>Performance, trends, and opportunities in your collection.</p>
-          </div>
           <Panel className="mt-6 p-8 text-center">
             <div className="mx-auto grid h-16 w-16 place-items-center rounded-full" style={{ border: "1px solid rgba(203,208,213,0.45)", color: GOLD }}>
               <Glyph name="chart" size={34} />
@@ -724,21 +727,19 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
             </div>
           </Panel>
         </div>
-      </main>
+        </main>
+      </>
     );
   }
 
   return (
-    <main className="min-h-screen pb-[calc(var(--bottomnav-h,86px)+20px)] text-[color:var(--fg)] md:pb-10">
-      <div className="mx-auto max-w-[1480px] px-4 py-6 sm:px-8">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h1 className="font-serif text-[42px] leading-none text-[color:var(--fg)] sm:text-[54px]">Insights</h1>
-            <p className="mt-2 max-w-2xl text-sm sm:text-base" style={{ color: MUTED }}>
-              Know what your vault is worth and why.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
+    <>
+      <PageHeader
+        title="Insights"
+        description="Know what your vault is worth and why."
+        contentClassName="max-w-[1480px]"
+        actions={
+          <>
             <HeaderAction>
               <Glyph name="search" size={15} />
               Filters
@@ -746,9 +747,11 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
             <HeaderAction onClick={() => exportItemsCsv(items)} primary>
               Export Report
             </HeaderAction>
-          </div>
-        </div>
-
+          </>
+        }
+      />
+      <main className="min-h-screen pb-[calc(var(--bottomnav-h,86px)+20px)] text-[color:var(--fg)] md:pb-10">
+      <div className="mx-auto max-w-[1480px] px-4 py-6 sm:px-8">
         <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             label="Total Vault Value"
@@ -1020,6 +1023,7 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
           <SubjectRankingsWidget items={items} />
         </div>
       </div>
-    </main>
+      </main>
+    </>
   );
 }

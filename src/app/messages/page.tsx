@@ -1,16 +1,15 @@
 "use client";
 
+import { PageHeader } from "@/components/layout/PageHeader";
+
 /* Messages / Inbox — stub for the visual pass. Direct messaging is wired in a
    later backend pass; for now this is the destination the bell's inbox alert
    points to. */
 export default function MessagesPage() {
   return (
-    <main className="mx-auto w-full max-w-[900px] px-4 pb-16 pt-6 sm:px-6">
-      <header className="mb-6">
-        <h1 className="text-[34px] font-extrabold uppercase leading-[0.9] tracking-[-0.03em] sm:text-[42px]">Messages</h1>
-        <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>Direct messages with other collectors.</p>
-      </header>
-
+    <>
+      <PageHeader title="Messages" description="Direct messages with other collectors." contentClassName="max-w-[900px]" />
+      <main className="mx-auto w-full max-w-[900px] px-4 pb-16 pt-6 sm:px-6">
       <div
         className="flex flex-col items-center justify-center gap-3 rounded-[8px] px-6 py-20 text-center"
         style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)" }}
@@ -29,6 +28,7 @@ export default function MessagesPage() {
           Direct messaging is on the way. When it launches, new messages will alert you on the notification bell.
         </p>
       </div>
-    </main>
+      </main>
+    </>
   );
 }
