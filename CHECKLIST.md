@@ -22,14 +22,22 @@ wasn't proactively flagged. Full sweep run; findings + fixes:
 - ✅ **FIXED**: More page's "System Status" panel claimed live uptime
   monitoring with zero real backend behind it. No real monitoring exists to
   source honestly — removed rather than fake it differently.
-- ⬜ **NOT touched, on purpose**: `community-board/page.tsx` (VLT Lounge) has
-  the identical fake-data pattern — dead "Ask the Lounge"/"Post Update"/"View
-  Room" buttons (no onClick at all) and an always-on fake "Live" dot on
-  Collector Signals regardless of whether real data came back. Left alone
-  because §0's standing parallel-editing note flags this file as Codex's
-  (confirmed still current — a past session found this same issue there and
-  also deliberately left it alone). Needs EK to either hand this to Codex or
-  explicitly say it's OK for this chat to touch it.
+- ✅ **FIXED, same night, after EK corrected the ownership call.** EK: the
+  standing "Codex owns community-board/page.tsx" note only ever covered the
+  VISUAL redesign — functional bugs on that page are this chat's to fix, same
+  as anywhere else. Built the real backend: new `lounge_posts` table
+  (migration `20260818_lounge_posts.sql`, mirrors `comments.sql`'s pattern —
+  public read, insert-as-your-own-profile, `hide_lounge_post()` for author-
+  only moderation) + `src/lib/loungePosts.ts`. "Ask the Lounge" / "Post
+  Update" now open a real composer and save real posts; "Lounge Live" shows
+  them for real (filtered by the existing Discussions/Collector Q&A tabs,
+  "Item Chatter" stays honestly empty — no item-linked post type built
+  tonight). Also fixed the dead "View Room" fallback button (only ever
+  showed when there was genuinely no link — removed rather than left dead)
+  and the always-on fake "Live" dot on Collector Signals (now only shows
+  when real signal data actually came back).
+  **⚠ Needs migration run**: `20260818_lounge_posts.sql`, before posting
+  works live.
 - ⬜ Also found, not yet fixed: a second, tooltip-only "Scan (coming soon)"
   button inside Vault's Add-to-Museum modal (same known limitation as the
   main Vault Scan button, just a second copy, lower priority).

@@ -87,8 +87,15 @@ is risky or can't be done, say so plainly.
 
 **⚠ PARALLEL EDITING.** Another tool (Codex) edits some files outside the chat.
 Confirmed edited by it: `src/app/community-board/page.tsx` (rewritten into a "VLT
-LOUNGE clubhouse" — leave it alone). **Re-read any file before editing it, and
-confirm with EK who owns a screen.** EK is aware of this.
+LOUNGE clubhouse"). **Re-read any file before editing it, and confirm with EK
+who owns a screen.** EK is aware of this.
+- **`community-board/page.tsx` split ownership, clarified 2026-08-18 by EK
+  directly: Codex owns the VISUAL/design pass only. Functional bugs on this
+  page are — and always were — this chat's to fix.** An earlier pass wrongly
+  treated the whole file as off-limits and skipped real functional fixes
+  (dead buttons, fake "Live" indicator) because of this file's design-
+  ownership note — that was too broad a reading. Don't repeat that: fix real
+  bugs here same as anywhere else; only hold off on restyling/redesigning it.
 - **`/capture` (normal Add) is THIS chat's now** — EK confirmed 2026-07-31 that
   Codex isn't on it; this chat added multi-photo + crop-zoom there. Still re-read
   before editing in case that changes.
