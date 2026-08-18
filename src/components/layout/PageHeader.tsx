@@ -10,16 +10,21 @@ import type { ReactNode } from "react";
  * added vertical padding) — the pt-6/pb-6 spacing lives on the transparent
  * outer wrapper so it never gets painted into the strip.
  */
+const LOUNGE_TITLE_CLASS =
+  "text-[38px] font-extrabold uppercase leading-[0.9] tracking-[-0.03em] sm:text-[46px]";
+
 export function PageHeader({
   title,
   description,
   actions,
   contentClassName = "max-w-[1440px]",
+  titleClassName = LOUNGE_TITLE_CLASS,
 }: {
   title: ReactNode;
   description?: ReactNode;
   actions?: ReactNode;
   contentClassName?: string;
+  titleClassName?: string;
 }) {
   return (
     <div className="pt-6 pb-6">
@@ -31,9 +36,7 @@ export function PageHeader({
           className={`mx-auto flex w-full flex-col gap-4 px-4 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8 ${contentClassName}`}
         >
           <div className="flex flex-wrap items-end gap-x-5 gap-y-1">
-            <h1 className="text-[38px] font-extrabold uppercase leading-[0.9] tracking-[-0.03em] sm:text-[46px]">
-              {title}
-            </h1>
+            <h1 className={titleClassName}>{title}</h1>
             {description ? (
               <p className="pb-1 text-sm leading-tight" style={{ color: "var(--muted)" }}>
                 {description}
