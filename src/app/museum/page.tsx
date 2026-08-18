@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { type ChangeEvent, type PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PillButton } from "@/components/ui/PillButton";
@@ -433,17 +434,9 @@ export default function MuseumPage() {
 
   const headerBlock = (
     <>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h1 className="text-[42px] font-extrabold uppercase leading-[0.9] tracking-[-0.03em] sm:text-[52px]">Exhibitions</h1>
-              <p className="mt-2 text-sm text-[color:var(--muted)]">Curate public rooms from your private vault.</p>
-            </div>
-            {/* Mobile Create — next to the title (kept on-screen); desktop version lives in the toolbar */}
-            <Link href="/museum/new" className="inline-flex shrink-0 items-center justify-center gap-1 rounded-[8px] px-3 py-1.5 text-xs font-black transition sm:hidden" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>+ Create</Link>
-          </div>
-        </div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-end">
+        {/* Mobile Create — kept on-screen; desktop version lives in the toolbar */}
+        <Link href="/museum/new" className="inline-flex shrink-0 items-center justify-center gap-1 self-end rounded-[8px] px-3 py-1.5 text-xs font-black transition sm:hidden" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>+ Create</Link>
         <div className="flex items-center gap-2">
           {/* Mobile-only filter dropdown, grouped inline with sort */}
           <select value={filter} onChange={(e) => setFilter(e.target.value as ExhibitionFilter)} className="h-9 w-auto shrink-0 rounded-[8px] border px-2.5 text-xs font-semibold outline-none sm:hidden" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.08)" }}>
@@ -466,8 +459,14 @@ export default function MuseumPage() {
   );
 
   return (
-    <main className="text-[color:var(--fg)]">
-      <div className="mx-auto max-w-[1500px] px-4 py-3 sm:px-6 sm:py-4">
+    <>
+      <PageHeader
+        title="Exhibitions"
+        description="Curate public rooms from your private vault."
+        contentClassName="max-w-[1500px]"
+      />
+      <main className="text-[color:var(--fg)]">
+      <div className="mx-auto max-w-[1500px] px-4 pb-3 sm:px-6 sm:pb-4">
         <input
           ref={coverInputRef}
           type="file"
@@ -1033,6 +1032,7 @@ export default function MuseumPage() {
           </div>
         </div>
       ) : null}
-    </main>
+      </main>
+    </>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { useEffect, useMemo, useState } from "react";
 
 import ItemIntelligencePanel from "@/components/ItemIntelligencePanel";
@@ -1435,43 +1436,38 @@ export default function VaultPage() {
   }
 
   return (
-    <main className="text-[color:var(--fg)]">
-      <div className="mx-auto max-w-[1500px] px-3 py-4 sm:px-5 sm:py-5">
+    <>
+      <PageHeader
+        title="Vault"
+        description="Every item you own, documented and searchable."
+        contentClassName="max-w-[1500px]"
+        actions={
+          <>
+            <VaultExportButton />
+            <Link href="/vault/halls" className="inline-flex items-center justify-center gap-1.5 rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]"><Glyph name="building" size={14} />Halls</Link>
+            <Link href="/vault/for-sale" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">For Sale</Link>
+            <Link href="/vault/import" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Import</Link>
+            <Link href="/vault/sold" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Sold</Link>
+            {/* Quick Add sits next to Add Item — the two "add" actions grouped together */}
+            <Link href="/vault/quick" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill-active-bg)] px-3 py-1 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]">Quick Add</Link>
+            {/* Add Item — the single primary add on the page */}
+            <Link href="/capture" className="vltd-action-module shrink-0">
+              <span className="vltd-action-module__plate !py-1.5">Add Item</span>
+              <span className="vltd-action-module__block"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+            </Link>
+          </>
+        }
+      />
+      <main className="text-[color:var(--fg)]">
+      <div className="mx-auto max-w-[1500px] px-3 pb-4 sm:px-5 sm:pb-5">
         <section className="mb-5">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div className="min-w-0">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h1 className="text-[2.7rem] font-extrabold uppercase leading-[0.9] tracking-[-0.03em] sm:text-[3.3rem]">
-                    Vault
-                  </h1>
-                  <p className="mt-2 text-sm text-[color:var(--muted)]">Every item you own, documented and searchable.</p>
-                </div>
-              </div>
-              {items.length > 0 ? (
-                <div className="mt-3 hidden flex-wrap gap-2 text-xs text-[color:var(--muted)] sm:flex">
-                  <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">{privateCount} private</span>
-                  <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">{publicCount} public</span>
-                  <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">Public links only show items you unlock</span>
-                </div>
-              ) : null}
+          {items.length > 0 ? (
+            <div className="mb-3 hidden flex-wrap gap-2 text-xs text-[color:var(--muted)] sm:flex">
+              <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">{privateCount} private</span>
+              <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">{publicCount} public</span>
+              <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">Public links only show items you unlock</span>
             </div>
-            {/* Actions — below the title on mobile, right-aligned on the title row on desktop */}
-            <div className="flex flex-wrap items-center gap-2 lg:shrink-0 lg:justify-end">
-              <VaultExportButton />
-              <Link href="/vault/halls" className="inline-flex items-center justify-center gap-1.5 rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]"><Glyph name="building" size={14} />Halls</Link>
-              <Link href="/vault/for-sale" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">For Sale</Link>
-              <Link href="/vault/import" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Import</Link>
-              <Link href="/vault/sold" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Sold</Link>
-              {/* Quick Add sits next to Add Item — the two "add" actions grouped together */}
-              <Link href="/vault/quick" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill-active-bg)] px-3 py-1 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]">Quick Add</Link>
-              {/* Add Item — the single primary add on the page */}
-              <Link href="/capture" className="vltd-action-module shrink-0">
-                <span className="vltd-action-module__plate !py-1.5">Add Item</span>
-                <span className="vltd-action-module__block"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
-              </Link>
-            </div>
-          </div>
+          ) : null}
 
           <div className="mt-5 flex gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible">
             <div className="relative shrink-0">
@@ -1891,6 +1887,7 @@ export default function VaultPage() {
           </section>
         )}
       </div>
-    </main>
+      </main>
+    </>
   );
 }

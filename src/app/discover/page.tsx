@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import DiscoverSwipe from "@/components/DiscoverSwipe";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Glyph } from "@/components/ui/Glyph";
 import { getCurrentUser, getOnboardingStatus } from "@/lib/auth";
 import { buildUserPreferences, sortByPersonalization } from "@/lib/personalization";
@@ -386,14 +387,16 @@ export default function DiscoverPage() {
   }
 
   return (
-    <main className="text-[color:var(--fg)]">
-      <div className="mx-auto grid max-w-[1480px] gap-6 px-4 py-6 sm:px-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)_430px]">
+    <>
+      <PageHeader
+        title="Discover"
+        description={<span style={{ color: "var(--theme-text-muted,#61656B)" }}>Explore public collections, notable items, and collector rooms.</span>}
+        contentClassName="max-w-[1480px]"
+        titleClassName="font-serif text-[30px] leading-none tracking-[-0.03em] sm:text-[38px] text-[color:var(--theme-text-primary,#ECEDEF)]"
+      />
+      <main className="text-[color:var(--fg)]">
+      <div className="mx-auto grid max-w-[1480px] gap-6 px-4 pb-6 sm:px-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)_430px]">
         <div className="min-w-0">
-          <div>
-            <h1 className="font-serif text-[44px] leading-none tracking-[-0.03em]" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>Discover</h1>
-            <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Explore public collections, notable items, and collector rooms.</p>
-          </div>
-
           <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_200px_200px]">
             <label className="flex h-10 items-center gap-2 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-3" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
               <Glyph name="search" size={15} className="opacity-60" />
@@ -614,6 +617,7 @@ export default function DiscoverPage() {
         )}
       </div>
       <DiscoverSwipe open={swipeOpen} onClose={() => setSwipeOpen(false)} />
-    </main>
+      </main>
+    </>
   );
 }

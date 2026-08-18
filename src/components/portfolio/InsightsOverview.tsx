@@ -710,7 +710,7 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
           title="Insights"
           description="Performance, trends, and opportunities in your collection."
           contentClassName="max-w-[1480px]"
-          titleClassName="font-serif text-[42px] leading-none text-[color:var(--fg)] sm:text-[54px]"
+          titleClassName="font-serif text-[30px] leading-none text-[color:var(--fg)] sm:text-[38px]"
         />
         <main className="min-h-screen text-[color:var(--fg)]">
         <div className="mx-auto max-w-[1480px] px-4 pb-8 sm:px-8">
@@ -739,7 +739,7 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
         title="Insights"
         description="Know what your vault is worth and why."
         contentClassName="max-w-[1480px]"
-        titleClassName="font-serif text-[42px] leading-none text-[color:var(--fg)] sm:text-[54px]"
+        titleClassName="font-serif text-[30px] leading-none text-[color:var(--fg)] sm:text-[38px]"
         actions={
           <>
             <HeaderAction>
