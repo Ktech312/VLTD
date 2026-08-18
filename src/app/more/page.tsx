@@ -11,6 +11,7 @@ import { isOwnerEmail } from "@/lib/ownerAccess";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
 import { getFollowerCount } from "@/lib/follows";
 import { readHistory, sliceHistory } from "@/lib/valueHistory";
+import { loadActivityEvents, syncActivityEventsFromSupabase, type ActivityEventRecord } from "@/lib/activityEvents";
 
 const gold = "#C8CDD2";
 const goldBright = "#C8CDD2";
@@ -93,6 +94,19 @@ function monthYear(value: unknown) {
   const date = value ? new Date(String(value)) : null;
   if (!date || Number.isNaN(date.getTime())) return "Apr 2024";
   return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+}
+
+function formatActivityTime(timestamp: number): string {
+  if (!timestamp) return "";
+  const diffMs = Date.now() - timestamp;
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 /** Real elapsed time since signup, replacing what used to be a hardcoded
@@ -391,6 +405,7 @@ export default function MorePage() {
   });
   const [canUseOwnerTools, setCanUseOwnerTools] = useState(false);
   const [followerCount, setFollowerCount] = useState<number | null>(null);
+  const [activityEvents, setActivityEvents] = useState<ActivityEventRecord[]>(() => loadActivityEvents());
 
   useEffect(() => {
     let active = true;
@@ -415,6 +430,9 @@ export default function MorePage() {
           setGalleries(profileGalleries.length > 0 ? profileGalleries : loadGalleries({ includeAllProfiles: true }));
           void getFollowerCount(profileId).then((count) => {
             if (active) setFollowerCount(count);
+          });
+          void syncActivityEventsFromSupabase().then((events) => {
+            if (active) setActivityEvents(events);
           });
           return;
         }
@@ -461,12 +479,12 @@ export default function MorePage() {
     { icon: "camera", title: "Scan & Capture", desc: "Open the full capture flow for camera and scan work.", href: "/capture", cta: "Start Scan", accent: true },
   ];
 
-  const activity = [
-    { text: `You added ${Math.min(3, Math.max(items.length, 1))} items to the ${profile.displayName}`, time: "2 min ago" },
-    { text: "You created a new exhibition", time: "1 hour ago" },
-    { text: "Backup completed successfully", time: "Today, 9:41 AM" },
-    { text: "You exported an inventory report", time: "Yesterday, 2:18 PM" },
-  ];
+  // Real recent activity — same source the full /activity page reads from.
+  // No fake fallback rows: an empty list means nothing has happened yet.
+  const activity = activityEvents.slice(0, 4).map((event) => ({
+    text: event.title + (event.subtitle ? ` — ${event.subtitle}` : ""),
+    time: formatActivityTime(event.timestamp),
+  }));
 
   return (
     <main className="min-h-screen px-4 pb-[calc(var(--bottomnav-h,0px)+32px)] pt-6 text-[color:var(--fg)] sm:px-6 lg:px-8" style={{ background: `radial-gradient(circle at 16% 12%, rgba(79,211,238,.10), transparent 34%), ${bg}` }}>
@@ -527,12 +545,16 @@ export default function MorePage() {
                     <section className="rounded-[8px] border" style={{ borderColor: border, background: panel }}>
                       <h3 className="border-b px-5 py-3 text-[15px] font-semibold" style={{ borderColor: borderSoft, color: cream }}>Recent Activity</h3>
                       <div className="divide-y" style={{ borderColor: borderSoft }}>
-                        {activity.map((row) => (
-                          <button key={row.text} type="button" onClick={() => setActivePanel("activity")} className="flex w-full items-center justify-between gap-4 px-5 py-3 text-left text-[12px]">
-                            <span style={{ color: cream }}>- {row.text}</span>
-                            <span className="shrink-0" style={{ color: muted }}>{row.time}</span>
-                          </button>
-                        ))}
+                        {activity.length > 0 ? (
+                          activity.map((row) => (
+                            <button key={row.text} type="button" onClick={() => setActivePanel("activity")} className="flex w-full items-center justify-between gap-4 px-5 py-3 text-left text-[12px]">
+                              <span style={{ color: cream }}>- {row.text}</span>
+                              <span className="shrink-0" style={{ color: muted }}>{row.time}</span>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-5 py-4 text-[12px]" style={{ color: muted }}>No recent activity yet.</div>
+                        )}
                       </div>
                     </section>
 
@@ -547,20 +569,8 @@ export default function MorePage() {
                 </div>
 
                 <aside className="space-y-4">
-                  <section className="rounded-[8px] border p-4" style={{ borderColor: border, background: panel }}>
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-[15px] font-semibold" style={{ color: cream }}>System Status</h3>
-                      <Icon name="status" size={24} />
-                    </div>
-                    <p className="mt-2 text-[12px]" style={{ color: green }}>All Systems Operational</p>
-                    {["Vault & Storage", "Web Services", "Background Sync"].map((label) => (
-                      <div key={label} className="mt-4 flex justify-between border-t pt-3 text-[12px]" style={{ borderColor: borderSoft }}>
-                        <span style={{ color: cream }}>{label}</span>
-                        <span style={{ color: green }}>Operational</span>
-                      </div>
-                    ))}
-                    <button type="button" onClick={() => setActivePanel("activity")} className="mt-4 inline-flex text-[12px] font-semibold" style={{ color: goldBright }}>View status details</button>
-                  </section>
+                  {/* "System Status" panel removed — it claimed live uptime monitoring
+                      ("All Systems Operational") that never actually checked anything. */}
 
                   <section className="rounded-[8px] border p-4" style={{ borderColor: border, background: panel }}>
                     <h3 className="text-[15px] font-semibold" style={{ color: cream }}>More Tools</h3>

@@ -591,19 +591,12 @@ export default function UserSettingsPage() {
                 </span>
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                <PillButton variant={tier === "FREE" ? "active" : "default"} onClick={() => setTier("FREE")}>
-                  Free
-                </PillButton>
-
-                <PillButton variant={tier === "MID" ? "active" : "default"} onClick={() => setTier("MID")}>
-                  Mid
-                </PillButton>
-
-                <PillButton variant={tier === "FULL" ? "active" : "default"} onClick={() => setTier("FULL")}>
-                  Full
-                </PillButton>
-              </div>
+              <Link
+                href="/account/billing"
+                className="inline-flex w-fit items-center justify-center rounded-[8px] bg-[color:var(--pill-active-bg)] px-4 py-2 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] transition hover:opacity-90"
+              >
+                Manage billing / upgrade
+              </Link>
 
               <div className="grid gap-3 md:grid-cols-3">
                 <div className="vltd-panel-soft rounded-2xl bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">

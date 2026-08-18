@@ -594,7 +594,7 @@ function TopNavInner() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H8l-4 3V6a1 1 0 0 1 1-1z" />
               </svg>
-              <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-[16px] place-items-center rounded-full px-1 text-[9px] font-black" style={{ background: "#4FD3EE", color: "#06171d" }}>3</span>
+              {/* No unread badge — there's no real DM system yet to count against. */}
             </Link>
 
             {/* Alerts bell — visible on mobile + desktop, glows green on new activity */}
