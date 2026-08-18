@@ -100,6 +100,11 @@ who owns a screen.** EK is aware of this.
   (dead buttons, fake "Live" indicator) because of this file's design-
   ownership note — that was too broad a reading. Don't repeat that: fix real
   bugs here same as anywhere else; only hold off on restyling/redesigning it.
+  **Exception, also EK-directed 2026-08-18:** the header block specifically
+  (title/description/strip) now uses the shared `PageHeader` component — see
+  the "Full-bleed PageHeader rollout" item below. That's a layout-mechanism
+  change EK explicitly asked for, not a restyle of Codex's clubhouse content
+  below it.
 - **`/capture` (normal Add) is THIS chat's now** — EK confirmed 2026-07-31 that
   Codex isn't on it; this chat added multi-photo + crop-zoom there. Still re-read
   before editing in case that changes.
@@ -159,6 +164,45 @@ who owns a screen.** EK is aware of this.
 ---
 
 ## 2. What's LEFT to do (prioritized)
+
+### NEW — Full-bleed PageHeader rollout — Lounge/Messages/Insights done, more pages pending
+EK spotted a dark "pinstripe" strip behind the title on Lounge and Messages but
+not on Exhibitions/Insights, and asked to make it deliberate: a real, full-bleed
+(edge-to-edge of the browser viewport) header strip, applied everywhere, with
+every page's Title + Description matching Lounge's exact typography.
+
+**Root cause found:** `src/app/theme-override.css` (~line 42-48) has
+`[data-vltd-theme] body header { background: var(--theme-nav-bg) !important; }`
+— a global rule meant for the top nav that also matches ANY literal `<header>`
+tag anywhere in the page. Lounge/Messages used a `<header>` element (got the
+strip by accident); Exhibitions/Insights used a `<div>` (didn't).
+
+**Built:** `src/components/layout/PageHeader.tsx` — a reusable component that
+renders a genuinely full-bleed strip (background `var(--theme-nav-bg)`, border
+`var(--theme-nav-border)`) using the CSS breakout pattern, with Lounge's exact
+title (`text-[38px] font-extrabold uppercase leading-[0.9] tracking-[-0.03em]
+sm:text-[46px]`) and description (`text-sm leading-tight`, `var(--muted)`)
+sizing baked in. Takes `title`, `description`, `actions`, `contentClassName`
+(to match each page's own content max-width).
+
+**Applied 2026-08-18:** VLT Lounge (`community-board/page.tsx` — also fixed its
+own header to be truly edge-to-edge, it wasn't before), Messages
+(`messages/page.tsx`), Insights (`InsightsOverview.tsx`, both the empty-state
+and full-state header — dropped the old `font-serif` title style to match
+Lounge). Verified locally: strip spans the full viewport width, no horizontal
+scroll, on both Lounge and Messages (Insights needs a login session to check
+live but uses the identical component + passed `tsc`/build).
+
+**Not yet done — pick up here:**
+- Vault, Discover, Events, and other main-nav pages still have their own
+  hand-coded headers with different title sizes (Vault: 43.2/52.8px vs
+  Lounge's 38/46px) — need the same `PageHeader` swap.
+- **`src/app/museum/page.tsx` (Exhibitions) intentionally skipped** — still
+  under the standing 2026-08-11 "not this chat's, do not touch" flag (see the
+  "⚠ PARALLEL EDITING" bullets above, ~line 106). EK should confirm that flag
+  is still current before this file gets the same treatment.
+- Once the exhibitions/museum ownership question is resolved, sweep any
+  remaining pages that hand-roll a page title instead of using `PageHeader`.
 
 ### A. Quick Add scanner — needs device re-test after real bugs got fixed
 EK tested live and found a real bug: the scanner's Universe dropdown hardcoded a
