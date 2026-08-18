@@ -108,10 +108,14 @@ who owns a screen.** EK is aware of this.
 - **`/capture` (normal Add) is THIS chat's now** — EK confirmed 2026-07-31 that
   Codex isn't on it; this chat added multi-photo + crop-zoom there. Still re-read
   before editing in case that changes.
-- **New, as of 2026-08-11 — not this chat's, do not touch:** `src/app/museum/
+- **As of 2026-08-11 — not this chat's, do not touch:** `src/app/museum/
   virtual-room/`, `src/app/owner-lab/`, `src/components/owner-lab/`,
-  `src/components/gallery/VirtualGalleryRoom.tsx`, `src/app/museum/page.tsx`
-  (modified), `src/components/NavShell.tsx` (modified),
+  `src/components/gallery/VirtualGalleryRoom.tsx`,
+  ~~`src/app/museum/page.tsx` (modified)~~ **UPDATE 2026-08-18: EK confirmed
+  the 3D-museum work is now local-only on the other chat's machine —
+  `museum/page.tsx` is this chat's again.** (See the PageHeader rollout entry
+  in §2 — its title/header was already converted.)
+  `src/components/NavShell.tsx` (modified),
   `src/components/ProtectedRoute.tsx` (modified), plus a `marketing/` folder
   and a `product/` folder at the repo root. EK flagged the `forge/` (3D-printer
   app) placement under `/museum` as likely misplaced/unintended and is asking
@@ -165,11 +169,10 @@ who owns a screen.** EK is aware of this.
 
 ## 2. What's LEFT to do (prioritized)
 
-### NEW — Full-bleed PageHeader rollout — Lounge/Messages/Insights done, more pages pending
+### DONE (2026-08-18) — Full-bleed PageHeader rollout: Lounge, Messages, Insights, Vault, Discover, Exhibitions
 EK spotted a dark "pinstripe" strip behind the title on Lounge and Messages but
 not on Exhibitions/Insights, and asked to make it deliberate: a real, full-bleed
-(edge-to-edge of the browser viewport) header strip, applied everywhere, with
-every page's Title + Description matching Lounge's exact typography.
+(edge-to-edge of the browser viewport) header strip, applied everywhere.
 
 **Root cause found:** `src/app/theme-override.css` (~line 42-48) has
 `[data-vltd-theme] body header { background: var(--theme-nav-bg) !important; }`
@@ -178,31 +181,49 @@ tag anywhere in the page. Lounge/Messages used a `<header>` element (got the
 strip by accident); Exhibitions/Insights used a `<div>` (didn't).
 
 **Built:** `src/components/layout/PageHeader.tsx` — a reusable component that
-renders a genuinely full-bleed strip (background `var(--theme-nav-bg)`, border
-`var(--theme-nav-border)`) using the CSS breakout pattern, with Lounge's exact
-title (`text-[38px] font-extrabold uppercase leading-[0.9] tracking-[-0.03em]
-sm:text-[46px]`) and description (`text-sm leading-tight`, `var(--muted)`)
-sizing baked in. Takes `title`, `description`, `actions`, `contentClassName`
-(to match each page's own content max-width).
+renders a genuinely full-bleed strip (background `var(--theme-nav-bg)`) using
+the CSS breakout pattern. The colored band itself has NO internal padding —
+`pt-6`/`pb-6` live on a transparent OUTER wrapper so the vertical rhythm never
+gets painted into the strip (learned this the hard way: an earlier version put
+padding inside the colored div and left the page's own `pt-6` in place too, so
+it stacked and made the whole header look bigger than it should — EK caught it
+immediately). Accepts `title`, `description`, `actions`, `contentClassName`
+(per-page max-width), and `titleClassName` (defaults to Lounge's exact
+`text-[38px] font-extrabold uppercase leading-[0.9] tracking-[-0.03em]
+sm:text-[46px]` — override per page, see below).
 
-**Applied 2026-08-18:** VLT Lounge (`community-board/page.tsx` — also fixed its
-own header to be truly edge-to-edge, it wasn't before), Messages
-(`messages/page.tsx`), Insights (`InsightsOverview.tsx`, both the empty-state
-and full-state header — dropped the old `font-serif` title style to match
-Lounge). Verified locally: strip spans the full viewport width, no horizontal
-scroll, on both Lounge and Messages (Insights needs a login session to check
-live but uses the identical component + passed `tsc`/build).
+**Policy that actually landed (revised mid-rollout after EK feedback):** do
+NOT force every title into Lounge's bold-uppercase style. Keep each page's own
+font family/weight/case, and only shrink the SIZE if needed so the title's
+rendered box fits the same ~42px band Lounge uses. The math is exact, not
+eyeballed: for `line-height: N` (unitless), rendered line-box height = N ×
+font-size. Lounge already proves it: `leading-[0.9]` × `46px` = 41.4px, which
+is why its 42px-tall strip is so tight. Apply the same formula per page:
+- **Vault, Exhibitions** — same extrabold-uppercase family as Lounge, so they
+  just use `PageHeader`'s DEFAULT `titleClassName` (38/46px, no override).
+- **Discover** — `font-serif`, shrunk from 44px to `text-[30px] leading-none
+  sm:text-[38px]` (30/38px, `leading-none` = line-height 1, so box height ≈
+  the font-size directly).
+- **Insights** — IMPORTANT, read before touching: EK's very strong feedback
+  was "stop iterating, put it back exactly how it was." `InsightsOverview.tsx`
+  was reverted BYTE-FOR-BYTE to its pre-rollout code (`git diff` against
+  `8d72ac6~1` was empty), then re-wrapped in `PageHeader` with
+  `titleClassName="font-serif text-[30px] leading-none text-[color:var(--fg)]
+  sm:text-[38px]"` — same shrunk size as Discover, matching serif family kept.
+  **Do not silently re-experiment with Insights' title style again** — if it
+  still looks off, ask EK for the exact target rather than guessing a new size.
+- **Events** — has no standalone page-title block at all (goes straight into a
+  featured-event hero section) — intentionally left untouched, nothing to
+  convert.
 
-**Not yet done — pick up here:**
-- Vault, Discover, Events, and other main-nav pages still have their own
-  hand-coded headers with different title sizes (Vault: 43.2/52.8px vs
-  Lounge's 38/46px) — need the same `PageHeader` swap.
-- **`src/app/museum/page.tsx` (Exhibitions) intentionally skipped** — still
-  under the standing 2026-08-11 "not this chat's, do not touch" flag (see the
-  "⚠ PARALLEL EDITING" bullets above, ~line 106). EK should confirm that flag
-  is still current before this file gets the same treatment.
-- Once the exhibitions/museum ownership question is resolved, sweep any
-  remaining pages that hand-roll a page title instead of using `PageHeader`.
+**Ownership note:** EK confirmed 2026-08-18 the 3D-museum work is now
+local-only on the other chat's machine, so `src/app/museum/page.tsx` is no
+longer under the "not this chat's" flag — it's this chat's now (see the old
+flag at ~line 106, now superseded by this line).
+
+**Left to sweep, if EK wants it:** any other page that hand-rolls its own page
+title instead of using `PageHeader` (e.g. `/watchlist`, `/saved`, `/sales`, the
+admin pages) — not audited yet.
 
 ### A. Quick Add scanner — needs device re-test after real bugs got fixed
 EK tested live and found a real bug: the scanner's Universe dropdown hardcoded a
