@@ -1,5 +1,18 @@
 # VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-18)
 
+## Per-exhibition curator Alias (2026-08-18) — ✅ DONE, migration confirmed run
+EK's ask: share an Exhibition without revealing your real identity, while
+still seeing every comment and fully managing it as yourself. Built a real
+`aliasEnabled`/`aliasName`/`aliasAvatar` per-Gallery toggle (migration
+`20260818_gallery_alias.sql`, **confirmed run by EK**) — owner settings on
+`/museum/[galleryId]`, public byline swap in `GuestGalleryRenderer.tsx`. Real
+privacy leak found and closed while building it: tapping the curator name
+used to open the full real-identity bio popup (real name, bio, follower
+count, link to your actual full vault) even on an aliased exhibition — new
+`AliasCuratorModal` shows only the alias name/avatar + this exhibition's own
+item count, nothing that traces back to the real account. Comments/
+moderation/ownership stay tied to the real `profile_id`, untouched by this.
+
 ## Fake/non-functional UI audit + overnight fixes (2026-08-18)
 EK asked for a full sweep after noticing Messages/Inbox was still fake and
 wasn't proactively flagged. Full sweep run; findings + fixes:
@@ -36,8 +49,8 @@ wasn't proactively flagged. Full sweep run; findings + fixes:
   showed when there was genuinely no link — removed rather than left dead)
   and the always-on fake "Live" dot on Collector Signals (now only shows
   when real signal data actually came back).
-  **⚠ Needs migration run**: `20260818_lounge_posts.sql`, before posting
-  works live.
+  **✅ Migration confirmed run by EK** (`20260818_lounge_posts.sql`) — posting
+  is fully live, not just fail-open.
 - ⬜ Also found, not yet fixed: a second, tooltip-only "Scan (coming soon)"
   button inside Vault's Add-to-Museum modal (same known limitation as the
   main Vault Scan button, just a second copy, lower priority).
