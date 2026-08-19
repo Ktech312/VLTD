@@ -441,33 +441,30 @@ export default function ActivityPage() {
         title="Activity"
         description={<span style={{ color: "var(--theme-text-muted,#61656B)" }}>Everything that changed in your vault.</span>}
         contentClassName="max-w-[1420px]"
+        actions={availableFilters.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => {
+              setFilter(tab.key);
+              setVisibleCount(20);
+            }}
+            className="inline-flex h-9 items-center gap-2 rounded-[7px] border px-4 text-sm font-bold"
+            style={{
+              background: filter === tab.key ? "linear-gradient(135deg,#8C9298,#C8CDD2)" : "var(--theme-card,rgba(15,25,45,0.86))",
+              borderColor: filter === tab.key ? "rgba(203,208,213,0.6)" : "rgba(203,208,213,0.24)",
+              color: filter === tab.key ? "#0B0B0B" : "var(--theme-gold,#C8CDD2)",
+            }}
+          >
+            <Glyph name={tab.icon} size={16} />
+            {tab.label}
+          </button>
+        ))}
       />
       <main className="min-h-screen px-4 pb-7 text-[color:var(--theme-text-primary,#ECEDEF)] sm:px-6 lg:px-8" style={{ background: "var(--bg)" }}>
       <div className="mx-auto grid max-w-[1420px] gap-5 xl:grid-cols-[minmax(0,1fr)_410px]">
         <section className="min-w-0">
-          <div className="mt-2 flex flex-wrap gap-2">
-            {availableFilters.map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => {
-                  setFilter(tab.key);
-                  setVisibleCount(20);
-                }}
-                className="inline-flex h-10 items-center gap-2 rounded-[7px] border px-4 text-sm font-bold"
-                style={{
-                  background: filter === tab.key ? "linear-gradient(135deg,#8C9298,#C8CDD2)" : "var(--theme-card,rgba(15,25,45,0.86))",
-                  borderColor: filter === tab.key ? "rgba(203,208,213,0.6)" : "rgba(203,208,213,0.24)",
-                  color: filter === tab.key ? "#0B0B0B" : "var(--theme-gold,#C8CDD2)",
-                }}
-              >
-                <Glyph name={tab.icon} size={16} />
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-7 space-y-4">
+          <div className="mt-2 space-y-4">
             {isLoading ? (
               <div className="rounded-[8px] border border-[rgba(203,208,213,0.22)] p-6" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))", color: "var(--theme-text-muted,#61656B)" }}>
                 Loading activity...
