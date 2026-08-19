@@ -93,7 +93,12 @@ export function AccountTabs() {
               className={[
                 "relative -mb-px flex h-11 w-[112px] shrink-0 items-center justify-center px-4 text-sm font-bold transition",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--frame-ring)]",
-                selected ? "z-20" : "z-10 hover:bg-[color:var(--pill-hover)]",
+                // NOT "hover:bg-[...pill-hover)]" — theme-override.css has a
+                // [class*="pill"] substring-match rule that force-applies
+                // !important border-radius/border-color to anything with
+                // "pill" anywhere in its className, which was silently
+                // clobbering these tabs' corners and border color.
+                selected ? "z-20" : "z-10 hover:brightness-125",
               ].join(" ")}
               style={{
                 // Active tab is a flat, exact match for the panel below it
