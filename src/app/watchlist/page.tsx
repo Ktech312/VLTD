@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { useEffect, useMemo, useState } from "react";
 import { Glyph } from "@/components/ui/Glyph";
 import {
@@ -366,19 +367,16 @@ export default function WatchlistPage() {
   }
 
   return (
-    <main className="px-4 py-6 sm:px-6 lg:px-8">
+    <>
+      <PageHeader
+        title="Watchlist"
+        description={<span style={{ color: "var(--theme-text-muted,#61656B)" }}>Track items, exhibitions, and price targets before they enter your vault.</span>}
+        contentClassName="max-w-[1480px]"
+      />
+      <main className="px-4 pb-6 sm:px-6 lg:px-8">
       <div className="mx-auto grid max-w-[1480px] gap-6 xl:grid-cols-[minmax(0,1fr)_430px]">
         <section className="min-w-0">
-          <div>
-            <h1 className="font-serif text-[44px] leading-none tracking-[-0.03em]" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
-              Watchlist
-            </h1>
-            <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>
-              Track items, exhibitions, and price targets before they enter your vault.
-            </p>
-          </div>
-
-          <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_140px_160px_150px]">
+          <div className="mt-2 grid gap-3 lg:grid-cols-[minmax(0,1fr)_140px_160px_150px]">
             <label className="flex h-10 items-center gap-2 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-3" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
               <Glyph name="search" size={15} className="opacity-60" />
               <input
@@ -708,6 +706,7 @@ export default function WatchlistPage() {
           </aside>
         )}
       </div>
-    </main>
+      </main>
+    </>
   );
 }

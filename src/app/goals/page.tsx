@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { useEffect, useMemo, useState } from "react";
 import AddGoalSheet from "@/components/AddGoalSheet";
 import {
@@ -308,25 +309,26 @@ export default function GoalsPage() {
   }
 
   return (
-    <main style={{ background: "var(--bg)" }}>
-      <div className="mx-auto grid max-w-[1480px] gap-6 px-4 py-6 sm:px-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)_420px]">
+    <>
+      <PageHeader
+        title="Goals"
+        description={<span style={{ color: "var(--theme-text-muted,#61656B)" }}>Turn a collection into a plan.</span>}
+        contentClassName="max-w-[1480px]"
+        actions={
+          <button
+            type="button"
+            onClick={() => setShowAdd(true)}
+            className="rounded-[7px] px-5 py-2.5 text-sm font-black transition hover:brightness-110"
+            style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}
+          >
+            + Create Goal
+          </button>
+        }
+      />
+      <main style={{ background: "var(--bg)" }}>
+      <div className="mx-auto grid max-w-[1480px] gap-6 px-4 pb-6 sm:px-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)_420px]">
         <section className="min-w-0">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <h1 className="font-serif text-[44px] leading-none tracking-[-0.03em]" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>Goals</h1>
-              <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Turn a collection into a plan.</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowAdd(true)}
-              className="rounded-[7px] px-5 py-3 text-sm font-black transition hover:brightness-110"
-              style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}
-            >
-              + Create Goal
-            </button>
-          </div>
-
-          <div className="mt-5 flex flex-wrap gap-3">
+          <div className="mt-2 flex flex-wrap gap-3">
             {[
               ["all", "All Goals", "target"],
               ["completion", "Completion", "check"],
@@ -554,6 +556,7 @@ export default function GoalsPage() {
           }}
         />
       )}
-    </main>
+      </main>
+    </>
   );
 }

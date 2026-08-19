@@ -1,15 +1,14 @@
 "use client";
 
+import { PageHeader } from "@/components/layout/PageHeader";
+
 /* Clubs — parked as a "Coming soon" feature (EK: revisit after the Lounge intel
    sections are built; decide Discord / social / in-app direction then). */
 export default function ClubsPage() {
   return (
-    <main className="mx-auto w-full max-w-[900px] px-4 pb-16 pt-6 sm:px-6">
-      <header className="mb-6">
-        <h1 className="text-[34px] font-extrabold uppercase leading-[0.9] tracking-[-0.03em] sm:text-[42px]">Clubs</h1>
-        <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>Collector clubs and community spaces.</p>
-      </header>
-
+    <>
+      <PageHeader title="Clubs" description="Collector clubs and community spaces." contentClassName="max-w-[900px]" />
+      <main className="mx-auto w-full max-w-[900px] px-4 pb-16 sm:px-6">
       <div
         className="flex flex-col items-center justify-center gap-3 rounded-[8px] px-6 py-20 text-center"
         style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)" }}
@@ -30,6 +29,7 @@ export default function ClubsPage() {
           A home for collector clubs — Discord, social spaces, and in-app rooms. We&apos;ll finalize the direction after the Lounge is fully built out.
         </p>
       </div>
-    </main>
+      </main>
+    </>
   );
 }
