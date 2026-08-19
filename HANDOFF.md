@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated, eighth pass — overnight: lens-switch on zoom (§B11) + Stripe customer-id fix (§2I), NEEDS ONE MIGRATION)
+# VLTD — Session Handoff (updated, ninth pass — overnight: pill sizing standardized, server-side tier limits, ScanDex game-barcode lookup, real direct messaging built, NEEDS TWO MIGRATIONS)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -168,6 +168,77 @@ who owns a screen.** EK is aware of this.
 ---
 
 ## 2. What's LEFT to do (prioritized)
+
+### DONE (2026-08-19, overnight, EK asleep) — pill sizing, server-side tier limits, ScanDex, real direct messaging
+EK asked for a full, accurate backend punch list before bed, caught that
+"items 3/4 need money" kept getting repeated pointlessly, and directed:
+finish item 1 (tier bypass) and item 5 (game barcode DB), then build real
+Messages/Alerts. All four done overnight, committed and pushed in stages.
+
+**1. Pill sizing standardized** — every action button inside a page's
+pinstripe strip (Vault's Halls/For Sale/Import/Sold/Quick Add/Export,
+Insights' Filters/Export Report, Exhibitions' filter/sort/Create, Activity's
+All/Scans/Sales) now uses Lounge's own exact recipe (`px-4 py-2.5 text-sm
+font-bold`, `rounded-[6px]`) — that recipe was already proven to fit the
+42px strip exactly (see the PageHeader section below), so converging
+everyone to it fixed the inconsistency at once instead of guessing per-page.
+
+**2. Billing tier bypass — closed server-side, not just client-side.**
+`vaultModel.ts appendItems()` and `museum/new/page.tsx` only ever checked
+the CLIENT's local tier (`getTierSafe()`, a localStorage read) before
+enforcing the 50-item / 4-exhibition free-tier caps — anyone could set
+`localStorage["vltd_tier"]` to "FULL" in devtools and bypass both. This had
+been flagged before and NOT actually fixed despite EK believing it was —
+that's why it was still #1 on the list. New migration
+(`20260819_server_side_tier_limits.sql`) adds `BEFORE INSERT` triggers on
+`vault_items` and `galleries` that check the real `profiles.tier` column
+server-side and reject (or, for gallery visibility, coerce to PUBLIC) —
+the client's claim no longer matters. Only gates new inserts, doesn't touch
+existing rows. **Needs this migration run manually.**
+
+**3. Video-game barcode lookup (ScanDex).** Researched the real APIs before
+writing code — GameUPC (the other option HANDOFF previously named) turned
+out to be board-game/BoardGameGeek-focused, not video games, so it
+wouldn't have solved the actual gap (a Nintendo Switch UPC that
+upcitemdb's general catalog didn't have) — skipped it, don't revisit unless
+EK specifically wants BGG/board-game mapping for a different reason.
+ScanDex (barcode → IGDB metadata) is the real fit; pulled their actual API
+contract from public docs (base `https://scandex.gamery.app/api/v2`,
+`GET /lookup?value=<code>`, `Authorization` header). Wired into
+`/api/upc-lookup` as a fallback when upcitemdb comes up empty — same
+permanent-cache pattern as Discogs/Metron (no invented daily quota; ScanDex
+doesn't have a confirmed hard cap, it's "free during launch period").
+**Needs `SCANDEX_API_TOKEN` in Vercel** — EK has to create a developer
+account at scandex.gamery.app to get one; no-ops silently until then, same
+as `DISCOGS_TOKEN`.
+
+**4. Real direct messaging + wired into the existing alerts system.**
+Replaced the "Inbox coming soon" `/messages` placeholder — both it and
+TopNav's chat icon had explicit code comments saying this was stubbed and
+"wired later." New migration (`20260819_direct_messages.sql`):
+`conversations` + `direct_messages` tables, RLS scoped to participants only,
+`get_or_create_conversation()` RPC, `mark_conversation_read()` (recipient
+only, mirrors the `hide_lounge_post` narrow-RPC pattern rather than a broad
+UPDATE policy). New `src/lib/directMessages.ts` client lib. UI: real
+two-pane inbox at `/messages`, a new `MessageButton` next to `FollowButton`
+on public profiles (there was previously no way to actually start a
+conversation), and a real unread badge on TopNav's chat icon (polled every
+30s). The Alerts bell already had a REAL working feed (follows +
+exhibition comments + bug reports, not fake) — its own code comment said
+"messages can be folded in next," so this fold-in was already anticipated;
+added a `"dm"` alert kind, one alert per conversation with unread messages
+(not per message). Also relabeled the old `"message"` alert kind from
+"Message" → "Comment" on `/notifications` since it's actually exhibition
+comments — that label was genuinely ambiguous once real DMs exist too.
+**Needs `20260819_direct_messages.sql` run manually.**
+
+**Not done, explicitly deferred (EK: "at the bottom of the list" until
+there's money):**
+- PSA/collectors-apis account approval — still waiting on a reply from
+  `collectors-apis@collectors.com`.
+- CGC cert lookup — gated on the above; CardHedge was the live lead.
+Don't keep re-listing these as if they're actionable — they're not, until
+EK says otherwise.
 
 ### DONE (2026-08-18) — Full-bleed PageHeader rollout: Lounge, Messages, Insights, Vault, Discover, Exhibitions
 EK spotted a dark "pinstripe" strip behind the title on Lounge and Messages but
@@ -1804,9 +1875,17 @@ subscribe.
    re-check the new not-this-chat's file list in §0 (Aug 11) before touching
    anything under `museum/`, `owner-lab/`, or the repo-root `marketing/`/
    `product/` folders.
-2. No migrations pending — the Stripe customer-id migration (§2I), the
-   lookup-API guard migration (§B10), the gallery-alias migration, and the
-   lounge-posts migration are all confirmed run. Cross-device billing
+2. **Two migrations pending as of 2026-08-19 overnight** — check with EK
+   whether they've been run yet: `20260819_server_side_tier_limits.sql`
+   (server-side billing enforcement) and `20260819_direct_messages.sql`
+   (real DMs). Both fail gracefully if not run (no crash, just the old
+   client-only behavior / no-op respectively), so don't assume broken if a
+   symptom looks like "the tier bypass is still open" or "messages don't
+   send" — check migration status first. Also confirm `SCANDEX_API_TOKEN`
+   hasn't been set yet either (EK needs to create a dev account at
+   scandex.gamery.app first — this one's on EK, not a migration).
+   Everything before that (Stripe customer-id, lookup-API guard,
+   gallery-alias, lounge-posts) is confirmed run. Cross-device billing
    (Payment method/Invoices/Cancel) is live; worth a glance at
    `profiles.stripe_customer_id` after the next real Stripe checkout to
    confirm it's actually populating (webhook logic was verified by
