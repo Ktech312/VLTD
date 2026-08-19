@@ -19,6 +19,7 @@ import {
 } from "@/lib/auth";
 import { getMyAdminRole, type AdminRole } from "@/lib/adminAuth";
 import { loadMyCollectorLevel, type CollectorLevelInfo } from "@/lib/collectorLevel";
+import { getTotalUnreadCount } from "@/lib/directMessages";
 import { subscribeVaultUpdate } from "@/lib/vaultEvents";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
@@ -301,6 +302,7 @@ function TopNavInner() {
   const [activeProfileId, setActiveProfileId] = useState("");
   const [adminRole, setAdminRole] = useState<AdminRole>(null);
   const [levelInfo, setLevelInfo] = useState<CollectorLevelInfo | null>(null);
+  const [unreadDmCount, setUnreadDmCount] = useState(0);
 
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
@@ -325,6 +327,25 @@ function TopNavInner() {
     const refresh = () => setLevelInfo(loadMyCollectorLevel());
     refresh();
     return subscribeVaultUpdate(refresh);
+  }, [activeProfileId]);
+
+  // Real unread DM count for the chat-icon badge — polled, not fake.
+  useEffect(() => {
+    if (!activeProfileId) {
+      setUnreadDmCount(0);
+      return;
+    }
+    let cancelled = false;
+    async function refresh() {
+      const count = await getTotalUnreadCount(activeProfileId);
+      if (!cancelled) setUnreadDmCount(count);
+    }
+    void refresh();
+    const interval = setInterval(refresh, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [activeProfileId]);
 
   // ⌘K / Ctrl+K opens the command palette (profile switching lives in the
@@ -583,18 +604,24 @@ function TopNavInner() {
               </div>
             </form>
 
-            {/* Messages / inbox — DM alert surfaced in the top-right notices cluster.
-                Links to the stubbed Messages page; real DM system wired later. */}
+            {/* Messages / inbox — real unread DM count. */}
             <Link
               href="/messages"
-              aria-label="Messages"
+              aria-label={unreadDmCount > 0 ? `Messages — ${unreadDmCount} unread` : "Messages"}
               className="relative grid h-9 w-9 place-items-center rounded-full transition hover:opacity-90"
               style={{ color: "var(--muted)" }}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H8l-4 3V6a1 1 0 0 1 1-1z" />
               </svg>
-              {/* No unread badge — there's no real DM system yet to count against. */}
+              {unreadDmCount > 0 ? (
+                <span
+                  className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full px-1 text-[9px] font-black"
+                  style={{ background: "#4FD3EE", color: "#06171d" }}
+                >
+                  {unreadDmCount > 9 ? "9+" : unreadDmCount}
+                </span>
+              ) : null}
             </Link>
 
             {/* Alerts bell — visible on mobile + desktop, glows green on new activity */}

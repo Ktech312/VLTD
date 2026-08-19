@@ -9,11 +9,16 @@ import { Glyph, type GlyphName } from "@/components/ui/Glyph";
 const LAST_SEEN_KEY = "vltd_alerts_last_seen";
 
 function kindGlyph(kind: AlertItem["kind"]): GlyphName {
-  return kind === "bug" ? "bug" : kind === "message" ? "message" : "exhibition";
+  if (kind === "bug") return "bug";
+  if (kind === "message" || kind === "dm") return "message";
+  return "exhibition";
 }
 
 function kindLabel(kind: AlertItem["kind"]) {
-  return kind === "bug" ? "Bug" : kind === "message" ? "Message" : "Follow";
+  if (kind === "bug") return "Bug";
+  if (kind === "dm") return "Direct message";
+  if (kind === "message") return "Comment";
+  return "Follow";
 }
 
 export default function NotificationsPage() {

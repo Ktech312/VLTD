@@ -16,6 +16,7 @@ import {
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import { getFollowerCount, isFollowing } from "@/lib/follows";
 import { FollowButton } from "@/components/social/FollowButton";
+import { MessageButton } from "@/components/social/MessageButton";
 import OnlineDot from "@/components/OnlineDot";
 import { fetchLastSeen } from "@/lib/presence";
 
@@ -471,11 +472,14 @@ export default function PublicVaultPage({
           </div>
 
           {viewerProfileId !== profileId && (
-            <FollowButton
-              viewerProfileId={viewerProfileId}
-              targetProfileId={profileId}
-              initialFollowing={viewerFollowing}
-            />
+            <div className="flex items-center gap-2">
+              <FollowButton
+                viewerProfileId={viewerProfileId}
+                targetProfileId={profileId}
+                initialFollowing={viewerFollowing}
+              />
+              <MessageButton viewerProfileId={viewerProfileId} targetProfileId={profileId} />
+            </div>
           )}
 
           {/* Stats bar */}

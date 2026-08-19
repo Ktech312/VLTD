@@ -2,6 +2,7 @@
 
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { listRecentCommentsForExhibitions } from "@/lib/comments";
+import { listConversations } from "@/lib/directMessages";
 
 export type FeedNotification = {
   id: string;
@@ -111,7 +112,7 @@ export async function fetchFollowingFeed(
 
 /* ── Unified alerts feed: follows + messages + bugs ──────────────── */
 
-export type AlertKind = "follow" | "message" | "bug";
+export type AlertKind = "follow" | "message" | "bug" | "dm";
 
 export type AlertItem = {
   id: string;
@@ -234,6 +235,28 @@ export async function fetchAlerts(currentProfileId: string): Promise<AlertItem[]
             createdAt: new Date(b.admin_replied_at || b.updated_at || b.created_at).getTime(),
           });
         }
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+
+  // 5. Direct messages — real unread conversations, one alert per
+  // conversation with unread messages (not per message, to avoid flooding
+  // the feed if someone sends several in a row).
+  try {
+    if (currentProfileId) {
+      const conversations = await listConversations(currentProfileId);
+      for (const c of conversations) {
+        if (c.unreadCount === 0) continue;
+        out.push({
+          id: `dm-${c.id}`,
+          kind: "dm",
+          title: c.unreadCount === 1 ? "New message" : `${c.unreadCount} new messages`,
+          subtitle: `${c.otherName}${c.lastMessagePreview ? ` — "${c.lastMessagePreview.slice(0, 60)}${c.lastMessagePreview.length > 60 ? "…" : ""}"` : ""}`,
+          href: "/messages",
+          createdAt: c.lastMessageAt,
+        });
       }
     }
   } catch {
