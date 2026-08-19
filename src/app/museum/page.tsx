@@ -434,22 +434,7 @@ export default function MuseumPage() {
 
   const headerBlock = (
     <>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-end">
-        {/* Mobile Create — kept on-screen; desktop version lives in the toolbar */}
-        <Link href="/museum/new" className="inline-flex shrink-0 items-center justify-center gap-1 self-end rounded-[8px] px-3 py-1.5 text-xs font-black transition sm:hidden" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>+ Create</Link>
-        <div className="flex items-center gap-2">
-          {/* Mobile-only filter dropdown, grouped inline with sort */}
-          <select value={filter} onChange={(e) => setFilter(e.target.value as ExhibitionFilter)} className="h-9 w-auto shrink-0 rounded-[8px] border px-2.5 text-xs font-semibold outline-none sm:hidden" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.08)" }}>
-            {EXHIBITION_FILTERS.map((f) => (<option key={f.key} value={f.key}>{f.label}</option>))}
-          </select>
-          <select value={sortMode} onChange={(e) => setSortMode(e.target.value as ExhibitionSort)} className="h-9 w-auto shrink-0 rounded-[8px] border px-2.5 text-xs font-semibold outline-none sm:px-3" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.08)" }}>
-            {EXHIBITION_SORTS.map((s) => (<option key={s.key} value={s.key}>{s.label}</option>))}
-          </select>
-          {/* Desktop Create — with the toolbar */}
-          <Link href="/museum/new" className="hidden min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-[8px] px-4 text-xs font-black transition sm:inline-flex" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>+ Create Exhibition</Link>
-        </div>
-      </div>
-      {/* Desktop filter pills (mobile uses the inline dropdown above) */}
+      {/* Desktop filter pills (mobile uses the inline dropdown in the toolbar) */}
       <div className="mt-4 hidden flex-wrap gap-2 sm:flex">
         {EXHIBITION_FILTERS.map((f) => (
           <button key={f.key} type="button" onClick={() => setFilter(f.key)} className={`inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 transition ${filter === f.key ? "bg-[rgba(79,211,238,0.10)] text-[#5FDCF3] ring-[rgba(79,211,238,0.5)] shadow-[0_0_14px_rgba(79,211,238,0.22)]" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]"}`}>{f.label}</button>
@@ -464,6 +449,20 @@ export default function MuseumPage() {
         title="Exhibitions"
         description="Curate public rooms from your private vault."
         contentClassName="max-w-[1500px]"
+        actions={
+          galleries.length > 0 ? (
+            <>
+              {/* Mobile-only filter dropdown, grouped inline with sort */}
+              <select value={filter} onChange={(e) => setFilter(e.target.value as ExhibitionFilter)} className="h-9 w-auto shrink-0 rounded-[8px] border px-2.5 text-xs font-semibold outline-none sm:hidden" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.08)" }}>
+                {EXHIBITION_FILTERS.map((f) => (<option key={f.key} value={f.key}>{f.label}</option>))}
+              </select>
+              <select value={sortMode} onChange={(e) => setSortMode(e.target.value as ExhibitionSort)} className="h-9 w-auto shrink-0 rounded-[8px] border px-2.5 text-xs font-semibold outline-none sm:px-3" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.08)" }}>
+                {EXHIBITION_SORTS.map((s) => (<option key={s.key} value={s.key}>{s.label}</option>))}
+              </select>
+              <Link href="/museum/new" className="inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-[8px] px-4 text-xs font-black transition" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>+ Create Exhibition</Link>
+            </>
+          ) : undefined
+        }
       />
       <main className="text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1500px] px-4 pb-3 sm:px-6 sm:pb-4">
