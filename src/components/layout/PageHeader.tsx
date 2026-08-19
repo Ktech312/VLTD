@@ -4,21 +4,22 @@ import type { ReactNode } from "react";
 
 /**
  * Full-bleed page header strip — spans the entire browser viewport edge to
- * edge, independent of the page's own max-width content column. Title and
- * description sizing match VLT Lounge (the reference page for this pattern).
- * The colored band itself stays as thin as the original Lounge header (no
- * added vertical padding) — the pt-6/pb-6 spacing lives on the transparent
- * outer wrapper so it never gets painted into the strip.
+ * edge, independent of the page's own max-width content column. Title style
+ * matches Insights (the confirmed reference for this pattern) on every page.
+ * The colored band itself stays a fixed 42px tall regardless of title size —
+ * the pt-6/pb-6 spacing lives on the transparent outer wrapper so it never
+ * gets painted into the strip, and leading-[1.2] (not leading-none) leaves
+ * real room for descenders on mixed-case titles.
  */
-const LOUNGE_TITLE_CLASS =
-  "text-[38px] font-extrabold uppercase leading-[0.9] tracking-[-0.03em] sm:text-[46px]";
+const DEFAULT_TITLE_CLASS =
+  "font-serif text-[28px] leading-[1.2] sm:text-[34px] text-[color:var(--fg)]";
 
 export function PageHeader({
   title,
   description,
   actions,
   contentClassName = "max-w-[1440px]",
-  titleClassName = LOUNGE_TITLE_CLASS,
+  titleClassName = DEFAULT_TITLE_CLASS,
 }: {
   title: ReactNode;
   description?: ReactNode;
