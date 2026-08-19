@@ -1444,12 +1444,12 @@ export default function VaultPage() {
         actions={
           <>
             <VaultExportButton />
-            <Link href="/vault/halls" className="inline-flex items-center justify-center gap-1.5 rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]"><Glyph name="building" size={14} />Halls</Link>
-            <Link href="/vault/for-sale" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">For Sale</Link>
-            <Link href="/vault/import" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Import</Link>
-            <Link href="/vault/sold" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-sm font-semibold ring-1 ring-[color:var(--border)]">Sold</Link>
+            <Link href="/vault/halls" className="inline-flex items-center justify-center gap-1.5 rounded-[6px] bg-[color:var(--pill)] px-4 py-2.5 text-sm font-bold ring-1 ring-[color:var(--border)]"><Glyph name="building" size={14} />Halls</Link>
+            <Link href="/vault/for-sale" className="inline-flex items-center justify-center rounded-[6px] bg-[color:var(--pill)] px-4 py-2.5 text-sm font-bold ring-1 ring-[color:var(--border)]">For Sale</Link>
+            <Link href="/vault/import" className="inline-flex items-center justify-center rounded-[6px] bg-[color:var(--pill)] px-4 py-2.5 text-sm font-bold ring-1 ring-[color:var(--border)]">Import</Link>
+            <Link href="/vault/sold" className="inline-flex items-center justify-center rounded-[6px] bg-[color:var(--pill)] px-4 py-2.5 text-sm font-bold ring-1 ring-[color:var(--border)]">Sold</Link>
             {/* Quick Add sits next to Add Item — the two "add" actions grouped together */}
-            <Link href="/vault/quick" className="inline-flex items-center justify-center rounded-[7px] bg-[color:var(--pill-active-bg)] px-3 py-1 text-sm font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]">Quick Add</Link>
+            <Link href="/vault/quick" className="inline-flex items-center justify-center rounded-[6px] bg-[color:var(--pill-active-bg)] px-4 py-2.5 text-sm font-bold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]">Quick Add</Link>
             {/* Add Item — the single primary add on the page */}
             <Link href="/capture" className="vltd-action-module shrink-0">
               <span className="vltd-action-module__plate !py-1.5">Add Item</span>

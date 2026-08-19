@@ -36,8 +36,68 @@ export type UpcLookupResult = {
   subcategoryLabel?: string;
   universe?: string;
   notes?: string;
-  source: "upcitemdb" | "openlibrary";
+  source: "upcitemdb" | "openlibrary" | "scandex";
 };
+
+// ScanDex: video-game barcode -> IGDB metadata (https://scandex.gamery.app).
+// Real API contract confirmed 2026-08-19 via their public docs — base URL,
+// /lookup?value=<code> GET, Authorization header, response shape below.
+// upcitemdb's general retail catalog doesn't specialize in games (the
+// Nintendo Switch UPC gap that started this), so this is tried as a
+// fallback specifically for that miss, not a replacement for upcitemdb.
+// No confirmed hard daily cap ("Free During Launch Period" per their docs)
+// so this gets the permanent cache like Discogs/Metron, not an invented
+// daily-budget gate.
+const SCANDEX_BASE = "https://scandex.gamery.app/api/v2";
+
+type ScanDexResponse = {
+  id: number;
+  source?: string;
+  status?: string;
+  igdb_metadata: { id: number; name?: string; platform?: { id: number; name?: string } } | null;
+  title?: string;
+  platform?: string;
+};
+
+async function lookupScanDex(code: string): Promise<UpcLookupResult | null> {
+  const token = process.env.SCANDEX_API_TOKEN ?? "";
+  if (!token) return null; // Not configured yet — no key obtained. Silent no-op, same as every other optional provider here.
+
+  const cacheKey = code;
+  const cached = await getCachedLookup<UpcLookupResult>("scandex", cacheKey);
+  if (cached) return cached;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(`${SCANDEX_BASE}/lookup?value=${encodeURIComponent(code)}`, {
+      headers: { Authorization: token, Accept: "application/json" },
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+
+    if (res.status === 404) return null; // "This barcode does not exist yet."
+    if (!res.ok) return null; // Fail quiet — this is a best-effort fallback, not the primary lookup.
+
+    const data = (await res.json()) as ScanDexResponse;
+    const name = data.igdb_metadata?.name || data.title;
+    if (!name || data.status === "unmatched") return null;
+
+    const result: UpcLookupResult = {
+      code,
+      title: name,
+      categoryLabel: "Video Games",
+      subcategoryLabel: data.igdb_metadata?.platform?.name || data.platform || undefined,
+      universe: "GAMES",
+      source: "scandex",
+    };
+    await putCachedLookup("scandex", cacheKey, result);
+    return result;
+  } catch {
+    clearTimeout(timeout);
+    return null; // Timeout or network error — same fail-quiet fallback behavior.
+  }
+}
 
 function cleanCode(value?: string) {
   return String(value ?? "").replace(/\D/g, "").trim();
@@ -137,10 +197,19 @@ export async function GET(req: NextRequest) {
     };
 
     const item = Array.isArray(payload.items) ? payload.items[0] : null;
-    if (!item) return NextResponse.json({ result: null });
+    if (!item) {
+      // Games are exactly the coverage gap that started this — try ScanDex
+      // before giving up. No-ops instantly (null) if SCANDEX_API_TOKEN isn't
+      // set, so this costs nothing when the provider isn't configured yet.
+      const scandex = await lookupScanDex(code);
+      return NextResponse.json({ result: scandex });
+    }
 
     const title = String(item.title ?? item.description ?? "").trim();
-    if (!title) return NextResponse.json({ result: null });
+    if (!title) {
+      const scandex = await lookupScanDex(code);
+      return NextResponse.json({ result: scandex });
+    }
 
     const category = String(item.category ?? "").trim();
     const brand = String(item.brand ?? "").trim();
