@@ -64,12 +64,41 @@ export function sessionLength(sessionStartedAt?: string | null, lastSeenAt?: str
   const start = new Date(sessionStartedAt).getTime();
   const end = lastSeenAt ? new Date(lastSeenAt).getTime() : Date.now();
   if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return "—";
-  const mins = Math.floor((end - start) / 60000);
+  return formatDuration(Math.floor((end - start) / 1000));
+}
+
+/** Compact duration from a raw second count — "12m", "3h 5m", "2d". */
+export function formatDuration(totalSeconds: number): string {
+  if (!Number.isFinite(totalSeconds) || totalSeconds <= 0) return "—";
+  const mins = Math.floor(totalSeconds / 60);
   if (mins < 1) return "<1m";
   if (mins < 60) return `${mins}m`;
   const h = Math.floor(mins / 60);
   const remM = mins % 60;
   if (h < 24) return remM ? `${h}h ${remM}m` : `${h}h`;
   const d = Math.floor(h / 24);
-  return `${d}d`;
+  const remH = h % 24;
+  return remH ? `${d}d ${remH}h` : `${d}d`;
+}
+
+/** "Aug 11, 2026, 11:55 PM" — exact date + time for a last-seen timestamp. */
+export function exactDateTime(value?: string | null): string {
+  if (!value) return "Never";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "Never";
+  return d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+/** Average session length from running totals — "14m", "1h 12m", or "—" with no sessions yet. */
+export function averageSessionLength(totalSecondsOnline?: number | null, sessionCount?: number | null): string {
+  const total = totalSecondsOnline ?? 0;
+  const count = sessionCount ?? 0;
+  if (count <= 0) return "—";
+  return formatDuration(Math.floor(total / count));
 }

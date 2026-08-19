@@ -23,7 +23,7 @@ import { SEED_CHARACTERS_PART4 } from "@/lib/seedCharacters_part4";
 import type { SeedCharacter, SeedItem, SeedGallery } from "@/lib/seedCharacters";
 import { getSeedAvatarUrl } from "@/lib/seedAvatar";
 import OnlineDot from "@/components/OnlineDot";
-import { isOnline, timeAgo, sessionLength } from "@/lib/presence";
+import { isOnline, sessionLength, exactDateTime, averageSessionLength, formatDuration } from "@/lib/presence";
 import { useSaveFeedback } from "@/lib/useSaveFeedback";
 import {
   getMyAdminRole,
@@ -42,6 +42,11 @@ const ALL_CHARACTERS: SeedCharacter[] = [
   ...SEED_CHARACTERS_PART3,
   ...SEED_CHARACTERS_PART4,
 ];
+
+// Seed characters are backed by real `profiles` rows (fixed 00000000-...
+// UUIDs, see seedCharacters.ts) so they show up in the Account Rights list
+// alongside real users. This set lets that list tell them apart.
+const SEED_PROFILE_IDS = new Set(ALL_CHARACTERS.map((c) => c.profileId));
 
 // ── Live item data from Supabase ───────────────────────────────
 // dbId = actual Supabase UUID (seed TS files use string IDs that don't match DB UUIDs)
@@ -177,6 +182,8 @@ type TierProfile = {
   created_at: string | null;
   last_seen_at?: string | null;
   session_started_at?: string | null;
+  total_seconds_online?: number | null;
+  session_count?: number | null;
 };
 
 const RIGHTS_TIERS: Tier[] = ["FREE", "MID", "FULL"];
@@ -186,6 +193,74 @@ const TIER_STYLE: Record<Tier, { bg: string; border: string; fg: string }> = {
   FULL: { bg: "rgba(203,208,213,0.16)", border: "rgba(203,208,213,0.55)", fg: "#C8CDD2" },
 };
 
+function ProfileRow({
+  p,
+  savingId,
+  onApplyTier,
+}: {
+  p: TierProfile;
+  savingId: string;
+  onApplyTier: (p: TierProfile, tier: Tier) => void;
+}) {
+  const current: Tier = p.tier === "MID" || p.tier === "FULL" ? p.tier : "FREE";
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-white/[0.04] px-4 py-3 ring-1 ring-white/10">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="truncate text-sm font-semibold text-white">{p.display_name || p.username}</span>
+          <span className="shrink-0 rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-white/40 ring-1 ring-white/10">
+            {p.profile_type ?? "personal"}
+          </span>
+        </div>
+        <div className="mt-0.5 truncate text-[11px] text-white/30">@{p.username} · {p.id}</div>
+        <div className="mt-1 flex items-center gap-2 text-[10px] text-white/40">
+          <OnlineDot lastSeenAt={p.last_seen_at} label size={8} />
+          {isOnline(p.last_seen_at) && p.session_started_at ? (
+            <span>· on for {sessionLength(p.session_started_at, p.last_seen_at)}</span>
+          ) : null}
+        </div>
+        {p.last_seen_at ? (
+          <div className="mt-0.5 flex flex-wrap gap-x-3 text-[10px] text-white/30">
+            <span>Last active {exactDateTime(p.last_seen_at)}</span>
+            <span>Avg {averageSessionLength(p.total_seconds_online, p.session_count)}/session</span>
+            <span>Clocked {formatDuration(p.total_seconds_online ?? 0)}</span>
+          </div>
+        ) : null}
+        {current !== "FREE" ? (
+          <div className="mt-0.5 text-[10px] text-white/40">
+            {p.tier_expires_at
+              ? `Expires ${new Date(p.tier_expires_at).toLocaleDateString()}`
+              : "Lifetime"}
+            {p.tier_source ? ` · via ${p.tier_source}` : ""}
+          </div>
+        ) : null}
+      </div>
+      <div className="flex shrink-0 items-center gap-1.5">
+        {RIGHTS_TIERS.map((tier) => {
+          const active = current === tier;
+          const s = TIER_STYLE[tier];
+          return (
+            <button
+              key={tier}
+              type="button"
+              disabled={savingId === p.id}
+              onClick={() => onApplyTier(p, tier)}
+              className="rounded-full px-3 py-1.5 text-xs font-bold transition disabled:opacity-50"
+              style={
+                active
+                  ? { background: s.bg, border: `1px solid ${s.border}`, color: s.fg }
+                  : { background: "transparent", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.5)" }
+              }
+            >
+              {tier}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function AccountRightsPanel() {
   const [profiles, setProfiles] = useState<TierProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -193,23 +268,35 @@ function AccountRightsPanel() {
   const [status, setStatus] = useState("");
   const [savingId, setSavingId] = useState("");
   const [needsMigration, setNeedsMigration] = useState(false);
+  const [showFake, setShowFake] = useState(false);
 
   const load = useCallback(async () => {
     const sb = getSupabaseBrowserClient();
     if (!sb) { setStatus("Supabase is not configured."); setLoading(false); return; }
     setLoading(true);
     const BASE_COLS = "id,user_id,username,display_name,profile_type,tier,tier_expires_at,tier_source,created_at";
+    const PRESENCE_COLS = "last_seen_at,session_started_at";
+    const TOTALS_COLS = "total_seconds_online,session_count";
     let data: TierProfile[] | null = null;
     let error: { message: string } | null = null;
     {
       const res = await sb
         .from("profiles")
-        .select(`${BASE_COLS},last_seen_at,session_started_at`)
+        .select(`${BASE_COLS},${PRESENCE_COLS},${TOTALS_COLS}`)
         .order("created_at", { ascending: true });
       data = (res.data ?? null) as TierProfile[] | null;
       error = res.error;
     }
-    // Presence columns may not be migrated yet — fall back gracefully.
+    // Cumulative-totals columns may not be migrated yet — fall back gracefully.
+    if (error && /total_seconds_online|session_count/i.test(error.message)) {
+      const res = await sb
+        .from("profiles")
+        .select(`${BASE_COLS},${PRESENCE_COLS}`)
+        .order("created_at", { ascending: true });
+      data = (res.data ?? null) as TierProfile[] | null;
+      error = res.error;
+    }
+    // Presence columns may not be migrated yet either — fall back gracefully.
     if (error && /last_seen_at|session_started_at/i.test(error.message)) {
       const res = await sb.from("profiles").select(BASE_COLS).order("created_at", { ascending: true });
       data = (res.data ?? null) as TierProfile[] | null;
@@ -262,6 +349,13 @@ function AccountRightsPanel() {
     );
   }, [profiles, query]);
 
+  const realFiltered = useMemo(() => filtered.filter((p) => !SEED_PROFILE_IDS.has(p.id)), [filtered]);
+  const fakeFiltered = useMemo(() => filtered.filter((p) => SEED_PROFILE_IDS.has(p.id)), [filtered]);
+  const realOnlineCount = useMemo(
+    () => profiles.filter((p) => !SEED_PROFILE_IDS.has(p.id) && isOnline(p.last_seen_at)).length,
+    [profiles]
+  );
+
   return (
     <div className="flex h-full flex-col p-5">
       <div className="shrink-0">
@@ -269,7 +363,7 @@ function AccountRightsPanel() {
           <h2 className="text-lg font-semibold">Account Rights</h2>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-0.5 text-[11px] font-semibold text-white/60 ring-1 ring-white/10">
             <span className="inline-block h-2 w-2 rounded-full" style={{ background: "#4ade80", boxShadow: "0 0 8px rgba(74,222,128,0.7)" }} />
-            {profiles.filter((p) => isOnline(p.last_seen_at)).length} online now
+            {realOnlineCount} online now
           </span>
         </div>
         <p className="mt-1 text-xs text-white/40">
@@ -309,63 +403,45 @@ function AccountRightsPanel() {
         ) : filtered.length === 0 ? (
           <div className="text-xs text-white/30">No accounts found.</div>
         ) : (
-          <div className="grid gap-2">
-            {filtered.map((p) => {
-              const current: Tier = p.tier === "MID" || p.tier === "FULL" ? p.tier : "FREE";
-              return (
-                <div
-                  key={p.id}
-                  className="flex flex-wrap items-center gap-3 rounded-2xl bg-white/[0.04] px-4 py-3 ring-1 ring-white/10"
+          <>
+            <div className="grid gap-2">
+              {realFiltered.map((p) => (
+                <ProfileRow key={p.id} p={p} savingId={savingId} onApplyTier={(pr, t) => void applyTier(pr, t)} />
+              ))}
+              {realFiltered.length === 0 ? (
+                <div className="text-xs text-white/30">No real accounts match.</div>
+              ) : null}
+            </div>
+
+            {fakeFiltered.length > 0 ? (
+              <div className="mt-3 border-t border-white/8 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowFake((v) => !v)}
+                  className="flex w-full items-center justify-between rounded-xl px-1 py-1.5 text-left transition hover:bg-white/[0.03]"
                 >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="truncate text-sm font-semibold text-white">{p.display_name || p.username}</span>
-                      <span className="shrink-0 rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-white/40 ring-1 ring-white/10">
-                        {p.profile_type ?? "personal"}
-                      </span>
-                    </div>
-                    <div className="mt-0.5 truncate text-[11px] text-white/30">@{p.username} · {p.id}</div>
-                    <div className="mt-1 flex items-center gap-2 text-[10px] text-white/40">
-                      <OnlineDot lastSeenAt={p.last_seen_at} label size={8} />
-                      {isOnline(p.last_seen_at) && p.session_started_at ? (
-                        <span>· on for {sessionLength(p.session_started_at, p.last_seen_at)}</span>
-                      ) : null}
-                    </div>
-                    {current !== "FREE" ? (
-                      <div className="mt-0.5 text-[10px] text-white/40">
-                        {p.tier_expires_at
-                          ? `Expires ${new Date(p.tier_expires_at).toLocaleDateString()}`
-                          : "Lifetime"}
-                        {p.tier_source ? ` · via ${p.tier_source}` : ""}
-                      </div>
-                    ) : null}
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-white/40">
+                    Seed / test accounts ({fakeFiltered.length})
+                  </span>
+                  <svg
+                    width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                    strokeLinecap="round" strokeLinejoin="round"
+                    className={`text-white/30 transition-transform ${showFake ? "rotate-180" : ""}`}
+                    aria-hidden="true"
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+                {showFake ? (
+                  <div className="mt-2 grid gap-2">
+                    {fakeFiltered.map((p) => (
+                      <ProfileRow key={p.id} p={p} savingId={savingId} onApplyTier={(pr, t) => void applyTier(pr, t)} />
+                    ))}
                   </div>
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    {RIGHTS_TIERS.map((tier) => {
-                      const active = current === tier;
-                      const s = TIER_STYLE[tier];
-                      return (
-                        <button
-                          key={tier}
-                          type="button"
-                          disabled={savingId === p.id}
-                          onClick={() => void applyTier(p, tier)}
-                          className="rounded-full px-3 py-1.5 text-xs font-bold transition disabled:opacity-50"
-                          style={
-                            active
-                              ? { background: s.bg, border: `1px solid ${s.border}`, color: s.fg }
-                              : { background: "transparent", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.5)" }
-                          }
-                        >
-                          {tier}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                ) : null}
+              </div>
+            ) : null}
+          </>
         )}
       </div>
     </div>
