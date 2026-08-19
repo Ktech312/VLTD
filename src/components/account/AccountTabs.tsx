@@ -112,7 +112,12 @@ export function AccountTabs() {
                 background: selected
                   ? "var(--theme-elevated, rgba(20,32,55,0.9))"
                   : "color-mix(in srgb, var(--theme-elevated, rgba(20,32,55,0.9)) 55%, black 45%)",
-                border: "1px solid var(--border)",
+                // Active tab's border matches the panel's own border color
+                // (var(--theme-gold-border), not var(--border)) — otherwise
+                // the two different colors meet right at the seam between
+                // tab and panel and read as a visible line, breaking the
+                // "one connected shape" look.
+                border: `1px solid ${selected ? "var(--theme-gold-border, rgba(203,208,213,0.25))" : "var(--border)"}`,
                 borderLeftWidth: first ? 1 : 0,
                 borderBottomColor: selected ? "transparent" : "var(--border)",
                 borderRadius: `${first ? 10 : 0}px ${last ? 10 : 0}px 0 0`,
