@@ -219,13 +219,11 @@ function ProfileRow({
             <span>· on for {sessionLength(p.session_started_at, p.last_seen_at)}</span>
           ) : null}
         </div>
-        {p.last_seen_at ? (
-          <div className="mt-0.5 flex flex-wrap gap-x-3 text-[10px] text-white/30">
-            <span>Last active {exactDateTime(p.last_seen_at)}</span>
-            <span>Avg {averageSessionLength(p.total_seconds_online, p.session_count)}/session</span>
-            <span>Clocked {formatDuration(p.total_seconds_online ?? 0)}</span>
-          </div>
-        ) : null}
+        <div className="mt-0.5 flex flex-wrap gap-x-3 text-[10px] text-white/30">
+          <span>Last active {exactDateTime(p.last_seen_at)}</span>
+          <span>Avg {averageSessionLength(p.total_seconds_online, p.session_count)}/session</span>
+          <span>Clocked {formatDuration(p.total_seconds_online ?? 0)}</span>
+        </div>
         {current !== "FREE" ? (
           <div className="mt-0.5 text-[10px] text-white/40">
             {p.tier_expires_at

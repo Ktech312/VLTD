@@ -97,7 +97,7 @@ export function AccountTabs() {
               ].join(" ")}
               style={{
                 background: selected
-                  ? "linear-gradient(180deg, var(--pill-active-bg), color-mix(in srgb, var(--surface) 96%, black 4%))"
+                  ? "linear-gradient(180deg, var(--theme-elevated, rgba(20,32,55,0.9)), color-mix(in srgb, var(--theme-elevated, rgba(20,32,55,0.9)) 96%, black 4%))"
                   : "linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--surface) 92%, black 8%))",
                 border: "1px solid var(--border)",
                 borderLeftWidth: first ? 1 : 0,
