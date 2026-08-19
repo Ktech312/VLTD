@@ -70,7 +70,13 @@ export function AccountTabs() {
 
   return (
     <nav
-      className="overflow-x-auto"
+      // overflow-x-auto alone implicitly forces overflow-y to "auto" too
+      // (a CSS spec quirk: neither axis can stay "visible" once the other
+      // isn't) — combined with the tabs' -mb-px trick, the row's rendered
+      // height can exceed this box by a sub-pixel amount, popping an
+      // unwanted vertical scrollbar (the stray gray line EK circled, right
+      // at the nav's edge). This should only ever scroll horizontally.
+      className="overflow-x-auto overflow-y-hidden"
       aria-label="Account sections"
       style={{ opacity: isResolving ? 0 : 1, transition: "opacity 120ms ease" }}
     >
