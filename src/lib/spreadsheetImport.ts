@@ -668,6 +668,7 @@ export function appendImportedItems(items: ParsedImportItem[]) {
   const prepared = items.map((item) => ({
     ...toVaultItem(item),
     profile_id: item.profile_id || activeProfileId || undefined,
+    addedVia: "import" as const,
   }));
 
   appendItems(prepared);

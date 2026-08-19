@@ -318,6 +318,7 @@ export default function BulkUploadPage() {
           currentValue: d.currentValue ? Number(d.currentValue) : undefined,
           status: "COLLECTION",
           createdAt: Date.now(),
+          addedVia: d.scanned ? "scan" : "manual",
           ...imagePatch,
         });
       }

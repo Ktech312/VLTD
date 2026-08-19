@@ -124,6 +124,10 @@ function rowToItem(input: unknown): VaultItem {
     soldPrice: row.sold_price ?? undefined,
     soldAt: row.sold_at ?? undefined,
     createdAt: row.created_at ?? Date.now(),
+    addedVia:
+      row.added_via === "scan" || row.added_via === "manual" || row.added_via === "import" || row.added_via === "wishlist"
+        ? row.added_via
+        : undefined,
     isNew: typeof row.is_new === "boolean" ? row.is_new : true,
     isPublic: typeof row.is_public === "boolean" ? row.is_public : false,
     askingPrice: typeof row.asking_price === "number" ? row.asking_price : undefined,
@@ -314,6 +318,7 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
     category_label: item.categoryLabel ?? null,
     subcategory_label: item.subcategoryLabel ?? null,
     created_at: item.createdAt ?? Date.now(),
+    added_via: item.addedVia ?? null,
     is_new: item.isNew ?? true,
     is_public: item.isPublic ?? false,
     asking_price: item.askingPrice ?? null,
@@ -362,9 +367,10 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
       message.toLowerCase().includes("video_clip_duration");
     const missingTagsColumn = message.toLowerCase().includes("tags");
     const missingBrandColumn = message.toLowerCase().includes("brand");
+    const missingAddedViaColumn = message.toLowerCase().includes("added_via");
 
     const isRecoverable =
-      missingGalleryColumns || missingSoldColumns || missingVisibilityColumn || missingVideoColumns || missingTagsColumn || missingBrandColumn;
+      missingGalleryColumns || missingSoldColumns || missingVisibilityColumn || missingVideoColumns || missingTagsColumn || missingBrandColumn || missingAddedViaColumn;
 
     if (!isRecoverable) {
       // Unrecognised error — log and surface it
@@ -407,6 +413,10 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
 
     if (missingBrandColumn) {
       delete fallbackRow.brand;
+    }
+
+    if (missingAddedViaColumn) {
+      delete fallbackRow.added_via;
     }
 
     const { error: fallbackError } = await supabase.from(VAULT_ITEMS_TABLE).upsert(fallbackRow);

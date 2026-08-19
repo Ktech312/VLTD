@@ -103,6 +103,12 @@ export type VaultItem = {
   soldPrice?: number;
   soldAt?: number;
   createdAt?: number;
+  /** How this item actually entered the vault — real provenance, not a
+   *  guess. "scan" only when an AI photo-identify actually ran and its
+   *  result was kept; "manual" for hand-typed entry (including via a scan
+   *  flow the user didn't use); "import" for CSV/spreadsheet; "wishlist"
+   *  for a wishlist→vault conversion. undefined = predates this field. */
+  addedVia?: "scan" | "manual" | "import" | "wishlist";
   isNew?: boolean;
   isPublic?: boolean;
   // TCG-specific
@@ -517,6 +523,10 @@ function normalizeOne(input: unknown): VaultItem | null {
     conditionSource:
       raw.conditionSource === "ai" || raw.conditionSource === "manual"
         ? raw.conditionSource
+        : undefined,
+    addedVia:
+      raw.addedVia === "scan" || raw.addedVia === "manual" || raw.addedVia === "import" || raw.addedVia === "wishlist"
+        ? raw.addedVia
         : undefined,
     purchasePrice: clampNum(raw.purchasePrice, 0),
     purchaseTax: clampNum(raw.purchaseTax, 0),

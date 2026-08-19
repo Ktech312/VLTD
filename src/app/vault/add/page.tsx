@@ -329,6 +329,10 @@ export default function AddPage() {
 
   const [scanSession, setScanSession] = useState<ScanSessionState>(createScanSession());
   const [scanFile, setScanFile] = useState<File | null>(null);
+  // Tracks whether the Auto Identify scan actually ran for this item, so
+  // the Activity feed can honestly say "scanned" vs. "added manually"
+  // instead of assuming every item here was scanned.
+  const [usedAutoIdentify, setUsedAutoIdentify] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isCropEditorOpen, setIsCropEditorOpen] = useState(false);
   const [cropEditorTarget, setCropEditorTarget] = useState<"scan" | "media">("scan");
@@ -1722,6 +1726,7 @@ export default function AddPage() {
   }
 
   async function handleIdentifyCurrentScan(file: File, barcode?: { digits?: string; rawValue?: string; format?: string }) {
+    setUsedAutoIdentify(true);
     const currentBarcode =
       barcode ??
       (scanSession.barcodeDigits
@@ -2097,6 +2102,7 @@ export default function AddPage() {
           normalizedValues.conditionSource === "ai" || normalizedValues.conditionSource === "manual"
             ? normalizedValues.conditionSource
             : undefined,
+        addedVia: usedAutoIdentify ? "scan" : "manual",
         purchasePrice,
         currentValue,
         universe: normalizedValues.universe.trim() || "MISC",

@@ -754,6 +754,7 @@ export default function CapturePage() {
         purchasePrice: fields.purchasePrice ? Number(fields.purchasePrice) : undefined,
         status: "COLLECTION" as const,
         createdAt: Date.now(),
+        addedVia: identified ? "scan" : "manual",
         ...imagePatch,
       };
       // Auto-tag with a few real, searchable tags so this item shows up in

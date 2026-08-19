@@ -455,6 +455,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       isNew: true,
       isPublic: false,
       conditionSource: draft.scanned ? "ai" : undefined,
+      addedVia: draft.scanned ? "scan" : "manual",
     };
   }
 

@@ -168,6 +168,7 @@ function ReviewInner() {
       status: "COLLECTION" as const,
       createdAt: Date.now(),
       conditionSource: "ai" as const,
+      addedVia: "scan" as const,
     };
 
     saveItem(vaultItem);

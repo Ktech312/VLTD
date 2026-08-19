@@ -96,6 +96,7 @@ function appendImportedItems(items: VaultItem[]) {
   const prepared = items.map((item) => ({
     ...item,
     profile_id: item.profile_id || activeProfileId || undefined,
+    addedVia: "import" as const,
   }));
   writeRawVault([...existing, ...prepared]);
 }

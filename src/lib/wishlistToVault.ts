@@ -56,6 +56,7 @@ export async function convertWishlistToVault(item: WishlistItem): Promise<VaultI
     status: "COLLECTION",
     createdAt: now,
     isNew: true,
+    addedVia: "wishlist",
   };
 
   appendItems([vaultItem]);

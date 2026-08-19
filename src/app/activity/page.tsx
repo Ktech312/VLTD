@@ -45,7 +45,7 @@ type ActivityEvent = {
 
 const FILTERS: Array<{ key: ActivityKind | "all"; label: string; icon: GlyphName }> = [
   { key: "all", label: "All", icon: "box" },
-  { key: "added", label: "Scans", icon: "eye" },
+  { key: "added", label: "Added", icon: "eye" },
   { key: "valued", label: "Value Changes", icon: "chart" },
   { key: "exhibition", label: "Exhibitions", icon: "building" },
   { key: "sold", label: "Sales", icon: "tag" },
@@ -110,6 +110,25 @@ function saleKey(sale: SaleRecord | LegacySaleRecord) {
   return [sale.id, sale.itemId, sale.soldAt, sale.title, sale.salePrice].join(":");
 }
 
+// Honest label per real origin — never assumes "scanned" for items that
+// were typed in by hand, imported, or moved over from a wishlist.
+// undefined means the item predates this tracking; say so plainly rather
+// than guessing.
+function addedSubtitle(item: VaultItem): string {
+  switch (item.addedVia) {
+    case "scan":
+      return "Item scanned";
+    case "manual":
+      return "Added manually";
+    case "import":
+      return "Imported";
+    case "wishlist":
+      return "Moved from wishlist";
+    default:
+      return "Added to inventory";
+  }
+}
+
 function buildItemEvents(items: VaultItem[]): ActivityEvent[] {
   return items
     .filter((item) => itemTimestamp(item) > 0)
@@ -117,7 +136,7 @@ function buildItemEvents(items: VaultItem[]): ActivityEvent[] {
       id: `added-${item.id}`,
       kind: "added",
       title: item.title || "Untitled item",
-      subtitle: "Item scanned",
+      subtitle: addedSubtitle(item),
       detail: "Added to inventory",
       timestamp: itemTimestamp(item),
       href: `/vault/item/${item.id}`,
