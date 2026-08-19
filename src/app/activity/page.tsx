@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { useEffect, useMemo, useState } from "react";
 
 import { Glyph, type GlyphName } from "@/components/ui/Glyph";
@@ -435,17 +436,16 @@ export default function ActivityPage() {
   }, []);
 
   return (
-    <main className="min-h-screen px-4 py-7 text-[color:var(--theme-text-primary,#ECEDEF)] sm:px-6 lg:px-8" style={{ background: "var(--bg)" }}>
+    <>
+      <PageHeader
+        title="Activity"
+        description={<span style={{ color: "var(--theme-text-muted,#61656B)" }}>Everything that changed in your vault.</span>}
+        contentClassName="max-w-[1420px]"
+      />
+      <main className="min-h-screen px-4 pb-7 text-[color:var(--theme-text-primary,#ECEDEF)] sm:px-6 lg:px-8" style={{ background: "var(--bg)" }}>
       <div className="mx-auto grid max-w-[1420px] gap-5 xl:grid-cols-[minmax(0,1fr)_410px]">
         <section className="min-w-0">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <h1 className="font-serif text-[48px] font-black leading-none tracking-[-0.02em]">Activity</h1>
-              <p className="mt-2 text-base" style={{ color: "var(--theme-text-muted,#61656B)" }}>Everything that changed in your vault.</p>
-            </div>
-          </div>
-
-          <div className="mt-7 flex flex-wrap gap-2">
+          <div className="mt-2 flex flex-wrap gap-2">
             {availableFilters.map((tab) => (
               <button
                 key={tab.key}
@@ -621,6 +621,7 @@ export default function ActivityPage() {
           )}
         </aside>
       </div>
-    </main>
+      </main>
+    </>
   );
 }

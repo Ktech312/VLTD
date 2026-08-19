@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { Glyph } from "@/components/ui/Glyph";
+import { PageHeader } from "@/components/layout/PageHeader";
 import CoverArt from "@/components/learn/CoverArt";
 import NewsletterSignup from "@/components/learn/NewsletterSignup";
 import {
@@ -83,18 +84,17 @@ export default function LearnClient() {
   const featured = FEATURED_ARTICLE;
 
   return (
-    <main className="text-[color:var(--fg)]">
-      <div className="mx-auto max-w-[1480px] px-4 py-7 sm:px-6 lg:px-8">
+    <>
+      <PageHeader
+        title="Learn"
+        description="Collector knowledge, insurance guidance, and market education."
+        contentClassName="max-w-[1480px]"
+      />
+      <main className="text-[color:var(--fg)]">
+      <div className="mx-auto max-w-[1480px] px-4 pb-7 sm:px-6 lg:px-8">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-          {/* ── Main column (header lives here so the sidebar rises to the top) ── */}
+          {/* ── Main column ── */}
           <div className="min-w-0">
-            <div className="mb-5">
-              <h1 className="font-serif text-[44px] leading-none tracking-[-0.03em] text-text-primary">Learn</h1>
-              <p className="mt-1 text-sm text-[color:var(--muted)]">
-                Collector knowledge, insurance guidance, and market education.
-              </p>
-            </div>
-
             {/* Featured */}
             <Link
               href={`/learn/${featured.slug}`}
@@ -202,7 +202,8 @@ export default function LearnClient() {
           </aside>
         </div>
       </div>
-    </main>
+      </main>
+    </>
   );
 }
 
