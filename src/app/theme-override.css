@@ -47,6 +47,16 @@
   border-color: var(--theme-nav-border, rgba(203,208,213,0.15)) !important;
 }
 
+/* Account settings tab strip is not the top nav — it's a plain tab list that
+   happens to use <nav>, and this rule was accidentally painting it with the
+   nav's dark background (EK: "remove the black partial pinstripe from
+   here"). Higher specificity than the rule above so it wins regardless of
+   load order. */
+[data-vltd-theme] body nav[aria-label="Account sections"] {
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
 /* ── INPUTS ── */
 [data-vltd-theme] body input:not([type="checkbox"]):not([type="radio"]),
 [data-vltd-theme] body textarea,
