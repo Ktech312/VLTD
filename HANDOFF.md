@@ -182,39 +182,63 @@ strip by accident); Exhibitions/Insights used a `<div>` (didn't).
 
 **Built:** `src/components/layout/PageHeader.tsx` — a reusable component that
 renders a genuinely full-bleed strip (background `var(--theme-nav-bg)`) using
-the CSS breakout pattern. The colored band itself has NO internal padding —
-`pt-6`/`pb-6` live on a transparent OUTER wrapper so the vertical rhythm never
-gets painted into the strip (learned this the hard way: an earlier version put
-padding inside the colored div and left the page's own `pt-6` in place too, so
-it stacked and made the whole header look bigger than it should — EK caught it
-immediately). Accepts `title`, `description`, `actions`, `contentClassName`
-(per-page max-width), and `titleClassName` (defaults to Lounge's exact
-`text-[38px] font-extrabold uppercase leading-[0.9] tracking-[-0.03em]
-sm:text-[46px]` — override per page, see below).
+the CSS breakout pattern. The colored band is a FIXED `lg:min-h-[42px]`,
+independent of title size — `pt-6`/`pb-6` live on a transparent OUTER wrapper
+so the vertical rhythm never gets painted into the strip (an earlier version
+put padding inside the colored div and left the page's own `pt-6` in place
+too, so it stacked and made the header look bigger than it should — EK caught
+it immediately). Row uses `lg:items-center` (not `items-end` — was making
+action buttons look off-center on rows with mixed content heights), and the
+actions container has `flex-wrap` so a 3+ item toolbar (like Exhibitions')
+doesn't overflow on narrow screens without breaking the fixed strip height at
+`lg:`. Accepts `title`, `description`, `actions`, `contentClassName` (per-page
+max-width), and `titleClassName` (optional per-page override — as of
+2026-08-18 NOTHING overrides it; see below).
 
-**Policy that actually landed (revised mid-rollout after EK feedback):** do
-NOT force every title into Lounge's bold-uppercase style. Keep each page's own
-font family/weight/case, and only shrink the SIZE if needed so the title's
-rendered box fits the same ~42px band Lounge uses. The math is exact, not
-eyeballed: for `line-height: N` (unitless), rendered line-box height = N ×
-font-size. Lounge already proves it: `leading-[0.9]` × `46px` = 41.4px, which
-is why its 42px-tall strip is so tight. Apply the same formula per page:
-- **Vault, Exhibitions** — same extrabold-uppercase family as Lounge, so they
-  just use `PageHeader`'s DEFAULT `titleClassName` (38/46px, no override).
-- **Discover** — `font-serif`, shrunk from 44px to `text-[30px] leading-none
-  sm:text-[38px]` (30/38px, `leading-none` = line-height 1, so box height ≈
-  the font-size directly).
-- **Insights** — IMPORTANT, read before touching: EK's very strong feedback
-  was "stop iterating, put it back exactly how it was." `InsightsOverview.tsx`
-  was reverted BYTE-FOR-BYTE to its pre-rollout code (`git diff` against
-  `8d72ac6~1` was empty), then re-wrapped in `PageHeader` with
-  `titleClassName="font-serif text-[30px] leading-none text-[color:var(--fg)]
-  sm:text-[38px]"` — same shrunk size as Discover, matching serif family kept.
-  **Do not silently re-experiment with Insights' title style again** — if it
-  still looks off, ask EK for the exact target rather than guessing a new size.
-- **Events** — has no standalone page-title block at all (goes straight into a
-  featured-event hero section) — intentionally left untouched, nothing to
-  convert.
+**FINAL policy, confirmed explicitly by EK 2026-08-18 — one title style, no
+exceptions:** every page's title uses `PageHeader`'s single default
+`titleClassName`: `font-serif text-[28px] leading-[1.2] sm:text-[34px]
+text-[color:var(--fg)]` (28/34px, regular weight, mixed-case, `leading-[1.2]`
+not `leading-none` — see the descender note below). This went through two
+wrong turns before landing here, both worth knowing if this ever needs
+revisiting:
+1. First pass forced every page into Lounge's bold-uppercase style
+   (`text-[38px] font-extrabold uppercase leading-[0.9] sm:text-[46px]`). EK
+   rejected this for Insights specifically ("too bold... too much in your
+   face") and had it reverted to Insights' own original `font-serif` style.
+2. Second pass then let EACH page keep its own font family, only shrinking
+   size to fit the 42px band (Vault/Exhibitions kept Lounge's uppercase style,
+   Insights/Discover got a shrunk serif style). EK rejected THIS too — "the
+   text font and size doesn't match, you didn't make them all match" — and
+   when asked directly, chose **Insights' style as the universal standard**,
+   not Lounge's.
+So: `titleClassName` is only for a future exception EK explicitly asks for.
+Do not silently diverge a page's title style again — if a title looks off on
+some page, that's a global `PageHeader` default change (affecting every
+page), not a per-page override, unless EK says otherwise.
+
+**Descender note:** the original `leading-[0.9]`/`leading-none` attempts only
+worked visually on Lounge's title because "VLT LOUNGE" is uppercase (no
+descenders exist after the CSS transform). Mixed-case titles like "Insights"
+have a real lowercase "g" descender, and `leading-none` (line-height:1)
+reserves zero room for it, so it rendered poking out below the strip — EK
+caught this with a screenshot too. Measured the actual fix via canvas
+`fontBoundingBoxAscent`/`Descent` metrics rather than guessing: at 34px,
+Inter's natural line-height is ~41px, so `leading-[1.2]` (34×1.2=40.8px)
+reserves a real ~7px ink cushion. Don't reintroduce `leading-none` on any
+mixed-case title.
+
+**Events** has no standalone page-title block at all (goes straight into a
+featured-event hero section) — intentionally left untouched, nothing to
+convert.
+
+**Toolbar-in-strip pattern:** every page's top-level actions (Lounge's
+Ask/Post, Vault's action row, Insights' Filters/Export, Exhibitions'
+filter/sort/Create) live in `PageHeader`'s `actions` slot now, not below the
+strip. Secondary/tab-style navigation (Lounge's Live-feed tabs, Exhibitions'
+filter-pill row) stays below the strip in the page's own content area — that
+distinction (primary actions in the strip, secondary nav below it) is the
+line to use when adding this pattern to a new page.
 
 **Ownership note:** EK confirmed 2026-08-18 the 3D-museum work is now
 local-only on the other chat's machine, so `src/app/museum/page.tsx` is no
