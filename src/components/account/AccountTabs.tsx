@@ -96,9 +96,17 @@ export function AccountTabs() {
                 selected ? "z-20" : "z-10 hover:bg-[color:var(--pill-hover)]",
               ].join(" ")}
               style={{
+                // Active tab is a flat, exact match for the panel below it
+                // (same var+fallback the panel itself uses in account/page.tsx)
+                // — no gradient, so there's no seam where they meet. Inactive
+                // tabs are forced to a real, theme-agnostic 45% darker mix of
+                // that same color: --surface and --theme-elevated are only
+                // ~9 RGB units apart in this theme, too close to read as
+                // "different," so matching by variable name alone doesn't
+                // work — this forces a large, guaranteed-visible gap instead.
                 background: selected
-                  ? "linear-gradient(180deg, var(--theme-elevated, rgba(20,32,55,0.9)), color-mix(in srgb, var(--theme-elevated, rgba(20,32,55,0.9)) 96%, black 4%))"
-                  : "linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--surface) 92%, black 8%))",
+                  ? "var(--theme-elevated, rgba(20,32,55,0.9))"
+                  : "color-mix(in srgb, var(--theme-elevated, rgba(20,32,55,0.9)) 55%, black 45%)",
                 border: "1px solid var(--border)",
                 borderLeftWidth: first ? 1 : 0,
                 borderBottomColor: selected ? "transparent" : "var(--border)",
