@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated, ninth pass — overnight: pill sizing standardized, server-side tier limits, ScanDex game-barcode lookup, real direct messaging built, NEEDS TWO MIGRATIONS)
+# VLTD — Session Handoff (updated, ninth pass — overnight: pill sizing standardized, server-side tier limits, ScanDex game-barcode lookup + a real 13-digit-ISBN-misrouting bug fixed, real direct messaging built — ALL CONFIRMED LIVE, no migrations pending)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -194,7 +194,7 @@ that's why it was still #1 on the list. New migration
 `vault_items` and `galleries` that check the real `profiles.tier` column
 server-side and reject (or, for gallery visibility, coerce to PUBLIC) —
 the client's claim no longer matters. Only gates new inserts, doesn't touch
-existing rows. **Needs this migration run manually.**
+existing rows. **Migration confirmed run by EK 2026-08-20 — live.**
 
 **3. Video-game barcode lookup (ScanDex).** Researched the real APIs before
 writing code — GameUPC (the other option HANDOFF previously named) turned
@@ -251,7 +251,7 @@ added a `"dm"` alert kind, one alert per conversation with unread messages
 (not per message). Also relabeled the old `"message"` alert kind from
 "Message" → "Comment" on `/notifications` since it's actually exhibition
 comments — that label was genuinely ambiguous once real DMs exist too.
-**Needs `20260819_direct_messages.sql` run manually.**
+**Migration confirmed run by EK 2026-08-20 — live.**
 
 **Not done, explicitly deferred (EK: "at the bottom of the list" until
 there's money):**
@@ -1896,15 +1896,11 @@ subscribe.
    re-check the new not-this-chat's file list in §0 (Aug 11) before touching
    anything under `museum/`, `owner-lab/`, or the repo-root `marketing/`/
    `product/` folders.
-2. **Two migrations pending as of 2026-08-19 overnight** — check with EK
-   whether they've been run yet: `20260819_server_side_tier_limits.sql`
+2. **No migrations pending** — `20260819_server_side_tier_limits.sql`
    (server-side billing enforcement) and `20260819_direct_messages.sql`
-   (real DMs). Both fail gracefully if not run (no crash, just the old
-   client-only behavior / no-op respectively), so don't assume broken if a
-   symptom looks like "the tier bypass is still open" or "messages don't
-   send" — check migration status first. `SCANDEX_API_TOKEN` is DONE —
-   set, deployed, and confirmed working live 2026-08-20 (see §2 item 3's
-   update) — don't re-flag this one.
+   (real DMs) were both confirmed run by EK 2026-08-20. `SCANDEX_API_TOKEN`
+   is also DONE — set, deployed, and confirmed working live 2026-08-20 (see
+   §2 item 3's update) — don't re-flag any of these three.
    Everything before that (Stripe customer-id, lookup-API guard,
    gallery-alias, lounge-posts) is confirmed run. Cross-device billing
    (Payment method/Invoices/Cancel) is live; worth a glance at
