@@ -78,9 +78,9 @@ const MAX_ROOM_ITEMS = 32;
 // "blue" has no entry — it's the hand-coded shell shown permanently, with
 // no GLB to load at all. See the RoomStyle type above for what that means.
 const ROOM_MODEL_URLS: Partial<Record<RoomStyle, string>> = {
-  vault: "/models/gallery-rooms/vault-room.glb?v=glass-alpha-fix-1",
-  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=glass-alpha-fix-1",
-  arcade: "/models/gallery-rooms/arcade-room.glb?v=glass-alpha-fix-1",
+  vault: "/models/gallery-rooms/vault-room.glb?v=corner-post-1",
+  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=corner-post-1",
+  arcade: "/models/gallery-rooms/arcade-room.glb?v=corner-post-1",
 };
 
 // The 5 center display cases (built further down as decorative glass cabinets)
@@ -994,10 +994,29 @@ export default function VirtualGalleryRoom() {
       inHub ? 2.6 : roomStyle === "whitebox" ? 2.4 : 3.9
     );
     scene.add(hemi);
-    const key = new THREE.SpotLight(palette.glow, inHub ? 9.5 : 7.2, 26, Math.PI / 5, 0.55, 1.4);
+    // Both of these were left at vault's intensity for whitebox too (only
+    // hemi/exposure above got a whitebox-specific cut last round) — and
+    // both use palette.glow/palette.trim, which for whitebox are
+    // themselves near-white (0xfff1d6, 0xe9e3d2). A bright near-white
+    // light on top of already-light materials is what was still washing
+    // out the contrast I baked into the GLB — Blender's renderer doesn't
+    // share this lighting rig at all, so a clean Blender render never
+    // would have caught this; it's a Three.js-side problem specifically.
+    const key = new THREE.SpotLight(
+      palette.glow,
+      inHub ? 9.5 : roomStyle === "whitebox" ? 3.2 : 7.2,
+      26,
+      Math.PI / 5,
+      0.55,
+      1.4
+    );
     key.position.set(0, 7.4, 1.5);
     scene.add(key);
-    const warm = new THREE.PointLight(palette.trim, roomStyle === "arcade" ? 3.5 : 1.8, 14);
+    const warm = new THREE.PointLight(
+      palette.trim,
+      roomStyle === "arcade" ? 3.5 : roomStyle === "whitebox" ? 0.7 : 1.8,
+      14
+    );
     warm.position.set(-4.5, 2.4, 1.8);
     scene.add(warm);
 

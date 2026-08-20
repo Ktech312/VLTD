@@ -185,6 +185,17 @@ def add_wall_panels(style, mats):
         cube(f"left_shelf_{i}", (-10.12, y, -3.15), (0.72, 0.12, 23.2), trim, 0.035)
         cube(f"right_shelf_{i}", (10.12, y, -3.15), (0.72, 0.12, 23.2), trim, 0.035)
 
+    # EK circled this repeatedly across two rounds — first the rail width,
+    # then baseboard, now shelves too — always at the same two back
+    # corners. Chasing exact width/depth matches between separate back/side
+    # pieces is fragile: get any one of them a hair off and there's a new
+    # visible seam. A single solid corner post spanning the full room
+    # height, generously sized to overlap every row of shelf/rail/baseboard
+    # on both walls at once, makes the corner unconditionally flush instead
+    # of depending on multiple pieces lining up exactly.
+    for x in [-10.36, 10.36]:
+        cube(f"back_corner_post_{x}", (x, 4.6, -11.87), (1.3, 9.15, 1.3), trim, 0.03)
+
 
 def add_floor_planks(mats):
     tones = mats["floor_tones"]
