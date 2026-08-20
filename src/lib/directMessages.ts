@@ -12,6 +12,13 @@ export type Conversation = {
   lastMessageAt: number;
   lastMessagePreview: string;
   unreadCount: number;
+  starred: boolean;
+};
+
+export type CollectorResult = {
+  profileId: string;
+  name: string;
+  avatarSrc: string | null;
 };
 
 export type DirectMessage = {
@@ -45,6 +52,12 @@ type MessageRow = {
   body: string;
   created_at: string;
   read_at: string | null;
+};
+
+type PrefsRow = {
+  conversation_id: string;
+  starred: boolean;
+  hidden: boolean;
 };
 
 function mapMessage(row: MessageRow): DirectMessage {
@@ -90,13 +103,18 @@ export async function listConversations(profileId: string): Promise<Conversation
   const otherIds = [...new Set(rows.map((c) => (c.profile_a_id === profileId ? c.profile_b_id : c.profile_a_id)))];
   const convIds = rows.map((c) => c.id);
 
-  const [profilesRes, messagesRes] = await Promise.all([
+  const [profilesRes, messagesRes, prefsRes] = await Promise.all([
     supabase.from("profiles").select("id, display_name, username, avatar_url, avatar_emoji").in("id", otherIds),
     supabase
       .from("direct_messages")
       .select("id, conversation_id, sender_profile_id, body, created_at, read_at")
       .in("conversation_id", convIds)
       .order("created_at", { ascending: false }),
+    supabase
+      .from("conversation_prefs")
+      .select("conversation_id, starred, hidden")
+      .eq("profile_id", profileId)
+      .in("conversation_id", convIds),
   ]);
 
   const profileById = new Map<string, ProfileRow>(
@@ -112,25 +130,105 @@ export async function listConversations(profileId: string): Promise<Conversation
     }
   }
 
-  return rows.map((c) => {
-    const otherId = c.profile_a_id === profileId ? c.profile_b_id : c.profile_a_id;
-    const p = profileById.get(otherId);
-    const displayName = p?.display_name || p?.username || "Collector";
-    const latest = latestByConv.get(c.id);
+  const prefsByConv = new Map<string, PrefsRow>(
+    ((prefsRes.data ?? []) as PrefsRow[]).map((p) => [p.conversation_id, p])
+  );
+
+  const result = rows
+    .filter((c) => !prefsByConv.get(c.id)?.hidden)
+    .map((c) => {
+      const otherId = c.profile_a_id === profileId ? c.profile_b_id : c.profile_a_id;
+      const p = profileById.get(otherId);
+      const displayName = p?.display_name || p?.username || "Collector";
+      const latest = latestByConv.get(c.id);
+      return {
+        id: c.id,
+        otherProfileId: otherId,
+        otherName: displayName,
+        otherUsername: p?.username ?? "",
+        otherAvatarSrc: resolveAvatarSrc({
+          avatarUrl: p?.avatar_url ?? null,
+          avatarEmoji: p?.avatar_emoji ?? null,
+          profileId: otherId,
+          displayName,
+        }),
+        lastMessageAt: c.last_message_at ? new Date(c.last_message_at).getTime() : 0,
+        lastMessagePreview: latest?.body ?? "",
+        unreadCount: unreadByConv.get(c.id) ?? 0,
+        starred: prefsByConv.get(c.id)?.starred ?? false,
+      };
+    });
+
+  // Starred conversations float to the top; within each group, most
+  // recent activity first (the query above already sorted by that, so a
+  // stable sort here just regroups without disturbing recency order).
+  return result.sort((a, b) => Number(b.starred) - Number(a.starred));
+}
+
+/** Star or unstar a conversation for the current viewer only — the other
+ *  participant's own view is unaffected. */
+export async function setConversationStarred(
+  profileId: string,
+  conversationId: string,
+  starred: boolean
+): Promise<boolean> {
+  if (!profileId || !conversationId) return false;
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return false;
+  const { error } = await supabase
+    .from("conversation_prefs")
+    .upsert(
+      { profile_id: profileId, conversation_id: conversationId, starred, updated_at: new Date().toISOString() },
+      { onConflict: "profile_id,conversation_id" }
+    );
+  return !error;
+}
+
+/** Removes a conversation from the current viewer's inbox only — not a
+ *  delete. It resurfaces automatically the next time either side sends a
+ *  new message (server-side, see the touch_conversation_on_message
+ *  trigger), same as archiving in most inboxes. */
+export async function hideConversation(profileId: string, conversationId: string): Promise<boolean> {
+  if (!profileId || !conversationId) return false;
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return false;
+  const { error } = await supabase
+    .from("conversation_prefs")
+    .upsert(
+      { profile_id: profileId, conversation_id: conversationId, hidden: true, updated_at: new Date().toISOString() },
+      { onConflict: "profile_id,conversation_id" }
+    );
+  return !error;
+}
+
+/** Real collector search by display name, for starting a new conversation
+ *  from the inbox instead of only from someone's profile page. */
+export async function searchCollectors(query: string, excludeProfileId: string): Promise<CollectorResult[]> {
+  const trimmed = query.trim();
+  if (trimmed.length < 2) return [];
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("public_profiles")
+    .select("profile_id, display_name, avatar_url, avatar_emoji")
+    .ilike("display_name", `%${trimmed}%`)
+    .neq("profile_id", excludeProfileId)
+    .limit(10);
+
+  if (error || !Array.isArray(data)) return [];
+  return data.map((p) => {
+    const displayName = String(p.display_name || "Collector");
+    const profileId = String(p.profile_id);
     return {
-      id: c.id,
-      otherProfileId: otherId,
-      otherName: displayName,
-      otherUsername: p?.username ?? "",
-      otherAvatarSrc: resolveAvatarSrc({
-        avatarUrl: p?.avatar_url ?? null,
-        avatarEmoji: p?.avatar_emoji ?? null,
-        profileId: otherId,
+      profileId,
+      name: displayName,
+      avatarSrc: resolveAvatarSrc({
+        avatarUrl: (p.avatar_url as string) ?? null,
+        avatarEmoji: (p.avatar_emoji as string) ?? null,
+        profileId,
         displayName,
       }),
-      lastMessageAt: c.last_message_at ? new Date(c.last_message_at).getTime() : 0,
-      lastMessagePreview: latest?.body ?? "",
-      unreadCount: unreadByConv.get(c.id) ?? 0,
     };
   });
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { getCurrentUser, getStoredActiveProfileId } from "@/lib/auth";
 import {
@@ -8,8 +8,13 @@ import {
   listMessages,
   sendMessage,
   markConversationRead,
+  getOrCreateConversation,
+  setConversationStarred,
+  hideConversation,
+  searchCollectors,
   type Conversation,
   type DirectMessage,
+  type CollectorResult,
 } from "@/lib/directMessages";
 
 const CYAN = "#4FD3EE";
@@ -42,6 +47,14 @@ function Avatar({ src, name, size = 40 }: { src: string | null; name: string; si
   );
 }
 
+function StarIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill={filled ? CYAN : "none"} stroke={filled ? CYAN : "currentColor"} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2.5l2.9 6.6 7.1.7-5.4 4.8 1.6 7-6.2-3.7-6.2 3.7 1.6-7L2 9.8l7.1-.7z" />
+    </svg>
+  );
+}
+
 export default function MessagesPage() {
   const [viewerProfileId, setViewerProfileId] = useState<string>("");
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
@@ -52,6 +65,10 @@ export default function MessagesPage() {
   const [loadingThread, setLoadingThread] = useState(false);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [composing, setComposing] = useState(false);
+  const [composeQuery, setComposeQuery] = useState("");
+  const [composeResults, setComposeResults] = useState<CollectorResult[]>([]);
+  const [composeSearching, setComposeSearching] = useState(false);
   const threadEndRef = useRef<HTMLDivElement>(null);
 
   async function refreshConversations(profileId: string) {
@@ -75,6 +92,23 @@ export default function MessagesPage() {
       else setLoadingList(false);
     })();
   }, []);
+
+  // Debounced collector search inside the compose panel.
+  useEffect(() => {
+    if (!composing) return;
+    const query = composeQuery.trim();
+    if (query.length < 2) {
+      setComposeResults([]);
+      return;
+    }
+    setComposeSearching(true);
+    const timer = setTimeout(async () => {
+      const results = await searchCollectors(query, viewerProfileId);
+      setComposeResults(results);
+      setComposeSearching(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [composeQuery, composing, viewerProfileId]);
 
   async function openConversation(id: string) {
     setActiveId(id);
@@ -101,11 +135,52 @@ export default function MessagesPage() {
     setSending(false);
   }
 
+  async function handleStartConversation(otherProfileId: string) {
+    const conversationId = await getOrCreateConversation(otherProfileId);
+    setComposing(false);
+    setComposeQuery("");
+    setComposeResults([]);
+    if (conversationId) {
+      if (viewerProfileId) await refreshConversations(viewerProfileId);
+      await openConversation(conversationId);
+    }
+  }
+
+  async function handleToggleStar(e: MouseEvent, c: Conversation) {
+    e.stopPropagation();
+    if (!viewerProfileId) return;
+    setConversations((prev) => prev.map((x) => (x.id === c.id ? { ...x, starred: !x.starred } : x)).sort((a, b) => Number(b.starred) - Number(a.starred)));
+    await setConversationStarred(viewerProfileId, c.id, !c.starred);
+  }
+
+  async function handleHide(e: MouseEvent, c: Conversation) {
+    e.stopPropagation();
+    if (!viewerProfileId) return;
+    setConversations((prev) => prev.filter((x) => x.id !== c.id));
+    if (activeId === c.id) setActiveId(null);
+    await hideConversation(viewerProfileId, c.id);
+  }
+
   const active = conversations.find((c) => c.id === activeId) ?? null;
 
   return (
     <>
-      <PageHeader title="Messages" description="Direct messages with other collectors." contentClassName="max-w-[1100px]" />
+      <PageHeader
+        title="Messages"
+        description="Direct messages with other collectors."
+        contentClassName="max-w-[1100px]"
+        actions={
+          signedIn ? (
+            <button
+              type="button"
+              onClick={() => setComposing(true)}
+              className="vltd-primary-button inline-flex items-center gap-2 rounded-[6px] px-4 py-2.5 text-sm font-black"
+            >
+              + New Message
+            </button>
+          ) : undefined
+        }
+      />
       <main className="mx-auto w-full max-w-[1100px] px-4 pb-16 sm:px-6">
         {signedIn === false ? (
           <div className="rounded-[8px] px-6 py-20 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
@@ -133,16 +208,18 @@ export default function MessagesPage() {
                     </span>
                     <p className="text-sm font-bold">No conversations yet</p>
                     <p className="max-w-[220px] text-xs" style={{ color: "var(--muted)" }}>
-                      Message another collector from their profile to start one.
+                      Tap "New Message" above, or message another collector from their profile.
                     </p>
                   </div>
                 ) : (
                   conversations.map((c) => (
-                    <button
+                    <div
                       key={c.id}
-                      type="button"
+                      role="button"
+                      tabIndex={0}
                       onClick={() => void openConversation(c.id)}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-[color:var(--table-row-hover)]"
+                      onKeyDown={(e) => e.key === "Enter" && void openConversation(c.id)}
+                      className="group flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition hover:bg-[color:var(--table-row-hover)]"
                       style={{
                         borderBottom: "1px solid var(--border)",
                         background: c.id === activeId ? "var(--pill)" : "transparent",
@@ -166,7 +243,27 @@ export default function MessagesPage() {
                           ) : null}
                         </div>
                       </div>
-                    </button>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={(e) => void handleToggleStar(e, c)}
+                          aria-label={c.starred ? "Unstar" : "Star"}
+                          className="grid h-7 w-7 place-items-center rounded-full opacity-0 transition group-hover:opacity-100"
+                          style={{ opacity: c.starred ? 1 : undefined, color: "var(--muted)" }}
+                        >
+                          <StarIcon filled={c.starred} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => void handleHide(e, c)}
+                          aria-label="Remove from inbox"
+                          className="grid h-7 w-7 place-items-center rounded-full opacity-0 transition hover:bg-[color:var(--pill)] group-hover:opacity-100"
+                          style={{ color: "var(--muted)" }}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                        </button>
+                      </div>
+                    </div>
                   ))
                 )}
               </div>
@@ -253,6 +350,54 @@ export default function MessagesPage() {
           </div>
         )}
       </main>
+
+      {/* Compose / start-a-new-conversation panel */}
+      {composing ? (
+        <div
+          className="fixed inset-0 z-[1000] flex items-start justify-center bg-black/60 px-4 pt-24 backdrop-blur-sm"
+          onClick={() => setComposing(false)}
+        >
+          <div
+            className="w-full max-w-[440px] rounded-[10px] p-5"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-[15px] font-black">New Message</h2>
+              <button type="button" onClick={() => setComposing(false)} aria-label="Close" className="grid h-7 w-7 place-items-center rounded-full" style={{ background: "var(--pill)", color: "var(--muted)" }}>✕</button>
+            </div>
+            <input
+              autoFocus
+              value={composeQuery}
+              onChange={(e) => setComposeQuery(e.target.value)}
+              placeholder="Search collectors by name…"
+              className="mt-3 h-10 w-full rounded-[7px] bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              style={{ color: "var(--fg)" }}
+            />
+            <div className="mt-3 max-h-[280px] overflow-y-auto">
+              {composeSearching ? (
+                <div className="py-6 text-center text-xs" style={{ color: "var(--muted)" }}>Searching…</div>
+              ) : composeQuery.trim().length < 2 ? (
+                <div className="py-6 text-center text-xs" style={{ color: "var(--muted)" }}>Type at least 2 characters.</div>
+              ) : composeResults.length === 0 ? (
+                <div className="py-6 text-center text-xs" style={{ color: "var(--muted)" }}>No collectors found.</div>
+              ) : (
+                composeResults.map((r) => (
+                  <button
+                    key={r.profileId}
+                    type="button"
+                    onClick={() => void handleStartConversation(r.profileId)}
+                    className="flex w-full items-center gap-3 rounded-[7px] px-2 py-2 text-left transition hover:bg-[color:var(--pill)]"
+                  >
+                    <Avatar src={r.avatarSrc} name={r.name} size={32} />
+                    <span className="text-sm font-bold">{r.name}</span>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }
