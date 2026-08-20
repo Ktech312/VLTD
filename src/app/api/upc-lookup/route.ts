@@ -59,15 +59,13 @@ type ScanDexResponse = {
   platform?: string;
 };
 
-type ScanDexDebug = { attempted: boolean; status?: number; body?: string; error?: string };
-
-async function lookupScanDex(code: string): Promise<{ result: UpcLookupResult | null; debug: ScanDexDebug }> {
+async function lookupScanDex(code: string): Promise<UpcLookupResult | null> {
   const token = process.env.SCANDEX_API_TOKEN ?? "";
-  if (!token) return { result: null, debug: { attempted: false } }; // Not configured yet.
+  if (!token) return null; // Not configured yet — no key obtained. Silent no-op, same as every other optional provider here.
 
   const cacheKey = code;
   const cached = await getCachedLookup<UpcLookupResult>("scandex", cacheKey);
-  if (cached) return { result: cached, debug: { attempted: true, status: 200, body: "(from cache)" } };
+  if (cached) return cached;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
@@ -78,20 +76,12 @@ async function lookupScanDex(code: string): Promise<{ result: UpcLookupResult | 
     });
     clearTimeout(timeout);
 
-    if (res.status === 404) {
-      return { result: null, debug: { attempted: true, status: 404, body: "not in ScanDex's database" } };
-    }
-    if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      console.error("[ScanDex] lookup failed", { status: res.status, body: body.slice(0, 300) });
-      return { result: null, debug: { attempted: true, status: res.status, body: body.slice(0, 300) } };
-    }
+    if (res.status === 404) return null; // "This barcode does not exist yet."
+    if (!res.ok) return null; // Fail quiet — this is a best-effort fallback, not the primary lookup.
 
     const data = (await res.json()) as ScanDexResponse;
     const name = data.igdb_metadata?.name || data.title;
-    if (!name || data.status === "unmatched") {
-      return { result: null, debug: { attempted: true, status: res.status, body: JSON.stringify(data).slice(0, 300) } };
-    }
+    if (!name || data.status === "unmatched") return null;
 
     const result: UpcLookupResult = {
       code,
@@ -102,10 +92,10 @@ async function lookupScanDex(code: string): Promise<{ result: UpcLookupResult | 
       source: "scandex",
     };
     await putCachedLookup("scandex", cacheKey, result);
-    return { result, debug: { attempted: true, status: res.status, body: name } };
-  } catch (err) {
+    return result;
+  } catch {
     clearTimeout(timeout);
-    return { result: null, debug: { attempted: true, error: err instanceof Error ? err.message : String(err) } };
+    return null; // Timeout or network error — same fail-quiet fallback behavior.
   }
 }
 
@@ -120,7 +110,6 @@ function looksLikeIsbn(code: string) {
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const code = cleanCode(searchParams.get("code") ?? "");
-  const debug = searchParams.get("debug") === "1"; // TEMP (2026-08-19) — see lookupScanDex.
 
   if (!code) {
     return NextResponse.json({ error: "Provide ?code=<upc-or-isbn>" }, { status: 400 });
@@ -213,13 +202,13 @@ export async function GET(req: NextRequest) {
       // before giving up. No-ops instantly (null) if SCANDEX_API_TOKEN isn't
       // set, so this costs nothing when the provider isn't configured yet.
       const scandex = await lookupScanDex(code);
-      return NextResponse.json({ result: scandex.result, ...(debug ? { scandexDebug: scandex.debug } : {}) });
+      return NextResponse.json({ result: scandex });
     }
 
     const title = String(item.title ?? item.description ?? "").trim();
     if (!title) {
       const scandex = await lookupScanDex(code);
-      return NextResponse.json({ result: scandex.result, ...(debug ? { scandexDebug: scandex.debug } : {}) });
+      return NextResponse.json({ result: scandex });
     }
 
     const category = String(item.category ?? "").trim();
