@@ -37,7 +37,11 @@ import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel"
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
-type RoomStyle = "vault" | "whitebox" | "arcade";
+// "blue" is the original hand-coded room (navy walls, brass door frame,
+// walnut floor) that used to BE the Vault look before the GLB pipeline —
+// it never loads a .glb, it's the fallback shell shown permanently. See
+// HANDOFF.md "Room styles" for the full vault/whitebox/arcade/blue map.
+type RoomStyle = "vault" | "whitebox" | "arcade" | "blue";
 type RoomLayout = "storefront" | "salon" | "spotlight";
 type ViewMode = "room" | "overview";
 type RoomDraft = {
@@ -71,7 +75,9 @@ type MuseumUniverseRoom = {
 const DRAFT_KEY = "vltd_virtual_gallery_room_draft_v1";
 const WALLPAPER_KEY = "vltd_virtual_gallery_wallpaper_v1";
 const MAX_ROOM_ITEMS = 32;
-const ROOM_MODEL_URLS: Record<RoomStyle, string> = {
+// "blue" has no entry — it's the hand-coded shell shown permanently, with
+// no GLB to load at all. See the RoomStyle type above for what that means.
+const ROOM_MODEL_URLS: Partial<Record<RoomStyle, string>> = {
   vault: "/models/gallery-rooms/vault-room.glb?v=modeled-steel-wall-2",
   whitebox: "/models/gallery-rooms/whitebox-room.glb?v=axis-fixed-1",
   arcade: "/models/gallery-rooms/arcade-room.glb?v=axis-fixed-1",
@@ -534,6 +540,9 @@ function fileToRoomWallpaper(file: File) {
 }
 
 function getRoomPalette(style: RoomStyle) {
+  // "Blue" reuses the Vault hand-coded palette exactly — it's the same
+  // room, the only difference is Blue never swaps to the GLB overlay.
+  if (style === "blue") return getRoomPalette("vault");
   if (style === "whitebox") {
     // "White" — a bright classical gallery: warm cream walls with painted
     // molding, honey wood floor, big airy daylight feel.
@@ -791,7 +800,12 @@ export default function VirtualGalleryRoom() {
         setSelectedIds(fillSlots(ids));
         setSelectedItemId(String(ids.find(Boolean) ?? ""));
       }
-      if (draft.roomStyle === "vault" || draft.roomStyle === "whitebox" || draft.roomStyle === "arcade") {
+      if (
+        draft.roomStyle === "vault" ||
+        draft.roomStyle === "whitebox" ||
+        draft.roomStyle === "arcade" ||
+        draft.roomStyle === "blue"
+      ) {
         setRoomStyle(draft.roomStyle);
       }
       if (draft.roomLayout === "storefront" || draft.roomLayout === "salon" || draft.roomLayout === "spotlight") {
@@ -912,7 +926,13 @@ export default function VirtualGalleryRoom() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = roomStyle === "whitebox" ? 1.08 : roomStyle === "vault" ? 0.92 : 0.98;
+    // whitebox was at 1.08 — tuned for the old hand-coded shell, not the
+    // GLB's baked materials (already 0.72-0.9 base brightness). Combined
+    // with the hemisphere boost below and ACES tone mapping, that pushed
+    // already-light cream/white surfaces toward blown-out white — white has
+    // far less headroom before clipping than vault's dark navy did, so the
+    // same exposure that reads fine on vault reads as washed out on white.
+    renderer.toneMappingExposure = roomStyle === "whitebox" ? 0.92 : (roomStyle === "vault" || roomStyle === "blue") ? 0.92 : 0.98;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
@@ -958,10 +978,15 @@ export default function VirtualGalleryRoom() {
     // 0xf1ede2 rendered as 0x9f9181 (pulled warm/tan). A neutral, low-
     // saturation ground color still gives the hemisphere gradient without
     // overriding every surface's own color.
+    // whitebox was 4.8 here too — same story as the exposure value above:
+    // tuned for the old shell, overexposing the GLB's already-bright cream
+    // materials. Dropped to line up with the same intensity vault/blue use,
+    // since the GLB's own baked brightness needs far less help than the
+    // hand-coded shell did.
     const hemi = new THREE.HemisphereLight(
       0xffffff,
       0x3a3a3a,
-      inHub ? 2.6 : roomStyle === "whitebox" ? 4.8 : 3.9
+      inHub ? 2.6 : roomStyle === "whitebox" ? 2.4 : 3.9
     );
     scene.add(hemi);
     const key = new THREE.SpotLight(palette.glow, inHub ? 9.5 : 7.2, 26, Math.PI / 5, 0.55, 1.4);
@@ -971,10 +996,11 @@ export default function VirtualGalleryRoom() {
     warm.position.set(-4.5, 2.4, 1.8);
     scene.add(warm);
 
-    if (!inHub) {
+    const modelUrl = ROOM_MODEL_URLS[roomStyle];
+    if (!inHub && modelUrl) {
       const loader = new GLTFLoader();
       loader.load(
-        ROOM_MODEL_URLS[roomStyle],
+        modelUrl,
         (gltf) => {
           if (disposed) return;
           const model = gltf.scene;
@@ -1069,14 +1095,14 @@ export default function VirtualGalleryRoom() {
     // plaster, Arcade keeps its polished-chrome look.
     const trimMaterial = new THREE.MeshStandardMaterial({
       color: palette.trim,
-      roughness: roomStyle === "arcade" ? 0.34 : roomStyle === "vault" ? 0.42 : 0.65,
-      metalness: roomStyle === "arcade" ? 0.72 : roomStyle === "vault" ? 0.55 : 0.08,
+      roughness: roomStyle === "arcade" ? 0.34 : (roomStyle === "vault" || roomStyle === "blue") ? 0.42 : 0.65,
+      metalness: roomStyle === "arcade" ? 0.72 : (roomStyle === "vault" || roomStyle === "blue") ? 0.55 : 0.08,
     });
     // Vault reference photos consistently pair the steel door itself with a
     // brass/gold frame and surround, not plain brushed steel — used only for
     // the doorway frame and hinge post below, not the wall shelves.
     const doorFrameMaterial =
-      roomStyle === "vault"
+      (roomStyle === "vault" || roomStyle === "blue")
         ? new THREE.MeshStandardMaterial({ color: 0xb08d3e, roughness: 0.32, metalness: 0.78 })
         : trimMaterial;
 
@@ -1086,9 +1112,9 @@ export default function VirtualGalleryRoom() {
     addShell(floor);
 
     const baseboardMaterial = new THREE.MeshStandardMaterial({
-      color: roomStyle === "whitebox" ? 0xcfc6ac : roomStyle === "vault" ? 0x4a545c : 0x252a30,
+      color: roomStyle === "whitebox" ? 0xcfc6ac : (roomStyle === "vault" || roomStyle === "blue") ? 0x4a545c : 0x252a30,
       roughness: 0.5,
-      metalness: roomStyle === "vault" ? 0.35 : 0.18,
+      metalness: (roomStyle === "vault" || roomStyle === "blue") ? 0.35 : 0.18,
     });
 
     const backWall = new THREE.Mesh(new THREE.PlaneGeometry(21, 9.2), wallMaterial);
@@ -1122,9 +1148,9 @@ export default function VirtualGalleryRoom() {
       // Was noticeably darker than the main wall for vault (0x0f1c2e vs the
       // wall's 0x24405f) — same wall, different color right at the doorway
       // read as a mismatched patch instead of one continuous room.
-      color: inHub ? 0x0a0e14 : roomStyle === "whitebox" ? 0xe0d9c4 : roomStyle === "vault" ? 0x24405f : 0x111419,
+      color: inHub ? 0x0a0e14 : roomStyle === "whitebox" ? 0xe0d9c4 : (roomStyle === "vault" || roomStyle === "blue") ? 0x24405f : 0x111419,
       roughness: 0.68,
-      metalness: roomStyle === "vault" ? 0.05 : 0.02,
+      metalness: (roomStyle === "vault" || roomStyle === "blue") ? 0.05 : 0.02,
     });
     if (wallTextureUrl) {
       void createImageTexture(wallTextureUrl, 1.4, 1).then((texture) => {
@@ -1145,7 +1171,7 @@ export default function VirtualGalleryRoom() {
     const archStraightHeight = 3.25;
     const vaultDoorRadius = 1.5;
 
-    if (roomStyle === "vault") {
+    if ((roomStyle === "vault" || roomStyle === "blue")) {
       const rearWallShape = new THREE.Shape();
       rearWallShape.moveTo(-10.5, -0.05);
       rearWallShape.lineTo(10.5, -0.05);
@@ -1242,7 +1268,7 @@ export default function VirtualGalleryRoom() {
     // which reads as a blank cutout/broken texture rather than a real
     // passage. This is only enough depth to avoid that, not a real room.
     const beyondMaterial = new THREE.MeshStandardMaterial({
-      color: inHub ? 0x0a0e14 : roomStyle === "whitebox" ? 0xcfc6ac : roomStyle === "vault" ? 0x0a1420 : 0x0d0a16,
+      color: inHub ? 0x0a0e14 : roomStyle === "whitebox" ? 0xcfc6ac : (roomStyle === "vault" || roomStyle === "blue") ? 0x0a1420 : 0x0d0a16,
       roughness: 0.9,
       metalness: 0.02,
     });
@@ -1281,7 +1307,7 @@ export default function VirtualGalleryRoom() {
     // of computing a rotation, and the placement below is chosen so the
     // disc's footprint (center + radius) never reaches the arch's x<=1.7
     // opening at all.
-    if (roomStyle === "vault") {
+    if ((roomStyle === "vault" || roomStyle === "blue")) {
       const vaultDoorMaterial = new THREE.MeshStandardMaterial({
         color: 0x8b939a,
         roughness: 0.3,
@@ -1443,11 +1469,11 @@ export default function VirtualGalleryRoom() {
 
     buildDoorwaySign(
       0,
-      roomStyle === "vault" && !inHub ? 5.85 : 5.55,
+      (roomStyle === "vault" || roomStyle === "blue") && !inHub ? 5.85 : 5.55,
       5.9,
       inHub ? "Campus Map" : "Main Gallery",
       true,
-      roomStyle === "vault" && !inHub ? { width: 1.65, height: 0.42 } : undefined
+      (roomStyle === "vault" || roomStyle === "blue") && !inHub ? { width: 1.65, height: 0.42 } : undefined
     );
     // Two real bugs here, both silently killed every doorway click: (1)
     // `visible: false` makes the raycaster skip the mesh entirely, not just hide
@@ -2117,17 +2143,16 @@ export default function VirtualGalleryRoom() {
                     onChange={(value) => setRoomLayout(value as RoomLayout)}
                   />
                 </div>
-                <div className="w-[136px] min-w-[136px]">
-                  <Segmented
-                    value={roomStyle}
-                    options={[
-                      ["vault", "Vault"],
-                      ["whitebox", "White"],
-                      ["arcade", "Arcade"],
-                    ]}
-                    onChange={(value) => setRoomStyle(value as RoomStyle)}
-                  />
-                </div>
+                <select
+                  value={roomStyle}
+                  onChange={(event) => setRoomStyle(event.target.value as RoomStyle)}
+                  className="h-6 w-auto rounded-[5px] bg-[color:var(--input)] px-2 text-[10px] font-black leading-none ring-1 ring-[color:var(--border)]"
+                >
+                  <option value="vault">Vault</option>
+                  <option value="whitebox">White</option>
+                  <option value="arcade">Arcade</option>
+                  <option value="blue">Blue</option>
+                </select>
                 <label className="flex h-6 items-center gap-1.5 rounded-[5px] bg-[color:var(--input)] px-2 text-[11px] font-bold ring-1 ring-[color:var(--border)]">
                   <input
                     type="checkbox"

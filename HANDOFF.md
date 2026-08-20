@@ -144,8 +144,112 @@ confirm with EK who owns a screen.** EK is aware of this.
   4) paid room sizes/templates/convention placement,
   5) later freeform room editing if usage justifies it.
 
-**Big update, 2026-08-14/15 — a full session on this feature. Read this
-before touching `VirtualGalleryRoom.tsx` again.**
+---
+
+## ⚠ CURRENT ARCHITECTURE (2026-08-20+) — read this before the "Big update
+2026-08-14/15" section below, which describes an approach that's been
+**replaced**. Kept for history, not current.
+
+**The room is no longer hand-coded Three.js geometry. It's baked GLB models.**
+EK's explicit call, after seeing both side by side: the old hand-coded
+Three.js room (procedurally-built walls/shelves/floor, all colored via JS
+material properties) read as "fake, 1980s-video-game." A separate AI
+session (not this chat) built a parallel pipeline that bakes each room in
+Blender and loads the result as a `.glb` — that's the one EK wants. Do not
+revert to hand-coding geometry as "the fix" for a look problem; the fix
+lives in either the Blender/generator script or the material-override code
+that recolors the loaded GLB.
+
+**Terms, so a fresh chat doesn't have to reverse-engineer them:**
+- **"Shell" / "fallback shell"** — the OLD hand-coded room, still fully
+  present in `VirtualGalleryRoom.tsx` (walls, floor planks, shelves,
+  baseboards, the vault door). It's built on every mount, added to a
+  `fallbackShell` THREE.Group, and tracked mesh-by-mesh in a `shellObjects[]`
+  array via an `addShell()` helper. **It is not dead code** — see "blue"
+  below.
+- **"GLB model" / "baked model"** — the real room, generated in Blender by
+  `scripts/generate-gallery-room-models.py` (run *inside* Blender via `bpy`,
+  not a standalone Python script — `blender --background --python
+  scripts/generate-gallery-room-models.py -- vault whitebox arcade`), output
+  to `public/models/gallery-rooms/{style}-room.glb`. Loaded client-side via
+  `GLTFLoader` inside the big mount effect.
+- **The swap:** on mount, the shell renders immediately (it's cheap, no
+  network fetch). The GLTFLoader fetch+parse for the matching `.glb` takes
+  roughly a second; when it resolves, every `shellObjects[]` mesh gets
+  `.visible = false` and the loaded GLB model is added on top. **This is why
+  refreshing the room shows the shell for about a second before the GLB
+  "takes over."** If the GLB fetch errors, `fallbackShell.visible = true` is
+  the safety net (shell stays up instead of an empty room).
+- **`RoomStyle`** = `"vault" | "whitebox" | "arcade" | "blue"`. First three
+  each have a `.glb` and get the swap above. **`"blue"` is new (2026-08-20)
+  — it has no GLB entry in `ROOM_MODEL_URLS` (that constant is now
+  `Partial<Record<RoomStyle, string>>`), so the loader gate (`if (!inHub &&
+  modelUrl)`) skips it entirely and the shell just stays up permanently.**
+  Every shell-coloring conditional that used to check only
+  `roomStyle === "vault"` now checks `(roomStyle === "vault" || roomStyle
+  === "blue")` — "blue" is deliberately just "vault, but shell-only,
+  forever" — same navy/brass/walnut palette, same hand-coded vault door.
+  Selectable from the Room-style `<select>` in the toolbar (was a 3-way
+  `Segmented` pill row; changed to a native dropdown to fit a 4th option —
+  EK asked for "a drop down with the white room").
+
+**Why "blue" exists at all:** EK's exact words — the shell (the thing that
+flashes for ~1 second before being covered) *is* the version they like;
+the GLB that replaces it is what read as washed out / "filters on top of
+old work." Rather than argue about which one is "correct," both are now
+live, selectable options. Don't collapse them back into one without being
+asked.
+
+**⚠ DO NOT TOUCH VAULT'S LOOK WITHOUT BEING EXPLICITLY ASKED.** This was
+learned the hard way this session: a real, defensible fix (swapping
+Three.js's stock `RoomEnvironment` PMREM source, which has its own blue
+demo-accent panel, for a neutral one) got built, pushed, and then reverted
+in full at EK's direction — not because the reasoning was wrong, but
+because EK never asked for vault to be touched at all, and changing it
+without asking cost real trust. **Current vault code is confirmed good by
+EK as of 2026-08-20 — leave `roomStyle === "vault"` branches alone unless
+EK specifically asks for a vault change.** `RoomEnvironment` (the stock,
+colorful demo PMREM scene from `three/examples/jsm/environments/
+RoomEnvironment.js`) is back in place, unmodified, global to every style.
+
+**White room — fixed, NOT visually verified (see tooling note below):**
+Unlike vault, the `whitebox` GLB never had a color-override block at all
+(the `if (roomStyle === "vault") { ...material.color.setHex(...)... }`
+block only branches for vault — whitebox materials render exactly as
+Blender baked them, which on inspection are reasonable warm creams/tans,
+not the problem). The actual cause: `renderer.toneMappingExposure` (was
+`1.08` for whitebox) and the `HemisphereLight` intensity (was `4.8` for
+whitebox) were both tuned in an earlier pass for the *old shell's* material
+response, not the GLB's already-bright baked materials (base values ~0.72–
+0.9). Stacked with `ACESFilmicToneMapping`, that overexposed the room —
+white has far less headroom before clipping to blown-out than vault's dark
+navy did, which is why the same tuning read fine on vault and "too white"
+on whitebox. Dropped whitebox's exposure to `0.92` (matches vault) and
+hemisphere intensity to `2.4` (was `4.8`) — **reasoned from the numbers,
+not confirmed by eye. Ask EK to check it.**
+
+**Arcade — reviewed, not touched.** Its GLB's baked material colors (deep
+purple-black walls, bronze trim, cyan glass) are coherent and look
+intentional for the aesthetic; no evidence of a whitebox-style bug. Nobody
+has reported it broken. Left alone.
+
+**⚠ Browser screenshot tooling was unreliable/frozen for a long stretch of
+this session** — repeated live mutations (material color, camera movement,
+tone mapping) produced byte-identical captures across many fresh tabs and
+long waits, meaning verification wasn't trustworthy. If you hit the same
+thing: don't trust a capture that doesn't change after an obvious action
+(camera turn, color swap) — closing every tab and starting a genuinely new
+`preview_start` sometimes clears it, but not reliably. When in doubt, ask
+EK to look at their own browser rather than trust a stuck automation tab.
+
+---
+
+**Big update, 2026-08-14/15 — a full session on this feature. SUPERSEDED —
+describes the hand-coded-geometry approach before the GLB pipeline
+existed. Read the section above first. Kept below for historical context
+only (the vault-door/shelf-alignment bug-hunting is still accurate
+*about the shell*, since the shell is still live code, just not the
+primary room anymore).**
 
 **⚠ Branch state — READ FIRST:** all of this work lives on branch
 `claude/museum-map-doorways`, pushed to GitHub, **NOT merged to `main`.**
