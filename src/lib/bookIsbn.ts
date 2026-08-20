@@ -39,6 +39,18 @@ function isValidIsbn10(isbn: string) {
 function isValidIsbn13(isbn: string) {
   if (!/^[0-9]{13}$/.test(isbn)) return false;
 
+  // The EAN-13 check-digit formula below is shared by the ENTIRE EAN-13/GS1
+  // standard, not just books — every well-formed product barcode (UPC,
+  // grocery, video games, anything) passes it, since it's just "is this a
+  // valid EAN-13," not "is this an ISBN." An ISBN-13 is specifically an
+  // EAN-13 in the reserved Bookland range (978/979 prefix) — without this
+  // check, virtually any real 13-digit product code was misidentified as a
+  // book and routed to OpenLibrary/Google Books instead of the actual
+  // product lookup (upcitemdb, ScanDex, etc.), which never got a chance to
+  // run. Confirmed 2026-08-20 via a real Nintendo Switch UPC that should
+  // have gone through ScanDex but was silently swallowed by this gap.
+  if (!/^97[89]/.test(isbn)) return false;
+
   let sum = 0;
   for (let i = 0; i < 12; i += 1) {
     const digit = Number(isbn[i]);

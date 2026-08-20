@@ -213,13 +213,13 @@ export async function GET(req: NextRequest) {
       // before giving up. No-ops instantly (null) if SCANDEX_API_TOKEN isn't
       // set, so this costs nothing when the provider isn't configured yet.
       const scandex = await lookupScanDex(code);
-      return NextResponse.json({ result: scandex.result, _diagVersion: "v3", _debugParam: debug, scandexDebug: scandex.debug });
+      return NextResponse.json({ result: scandex.result, ...(debug ? { scandexDebug: scandex.debug } : {}) });
     }
 
     const title = String(item.title ?? item.description ?? "").trim();
     if (!title) {
       const scandex = await lookupScanDex(code);
-      return NextResponse.json({ result: scandex.result, _diagVersion: "v3", _debugParam: debug, scandexDebug: scandex.debug });
+      return NextResponse.json({ result: scandex.result, ...(debug ? { scandexDebug: scandex.debug } : {}) });
     }
 
     const category = String(item.category ?? "").trim();
