@@ -34,6 +34,7 @@ import {
   type Gallery,
 } from "@/lib/galleryModel";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 type RoomStyle = "vault" | "whitebox" | "arcade";
@@ -338,37 +339,6 @@ function drawSlotBadgeTexture(n: number) {
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
-}
-
-// A plain neutral-gray studio box used only as a PMREM source so metallic
-// GLB materials (walls, trim, rivets — several run 0.7-0.9 metalness) get
-// believable soft reflections instead of flat black. Three.js's stock
-// RoomEnvironment does the same job but is a colorful demo scene (it has
-// its own pink/blue accent panels to show off reflections) — with high
-// metalness on nearly every vault surface, that blue panel was reflecting
-// uniformly across the whole wall, which is what read as "always covered in
-// blue." A neutral box gives the same soft-lit-room reflection quality
-// without imposing any color mood of its own.
-function createNeutralEnvironmentScene() {
-  const scene = new THREE.Scene();
-  const geometry = new THREE.BoxGeometry(1, 1, 1).toNonIndexed();
-  const material = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
-  const colors: number[] = [];
-  const color = new THREE.Color();
-  const grays = [0xf3f1ec, 0xd8d5cd, 0xbdbab2, 0xe6e3db, 0xc9c6be, 0xaaa7a0];
-  const positions = geometry.attributes.position;
-  for (let i = 0; i < positions.count; i += 3) {
-    color.setHex(grays[Math.floor(i / 6) % grays.length]);
-    for (let v = 0; v < 3; v += 1) colors.push(color.r, color.g, color.b);
-  }
-  geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
-  material.vertexColors = true;
-  const box = new THREE.Mesh(geometry, material);
-  box.scale.setScalar(50);
-  scene.add(box);
-  const light = new THREE.PointLight(0xffffff, 45, 0, 2);
-  scene.add(light);
-  return scene;
 }
 
 // A seeded PRNG (not Math.random) so the plank layout is stable across
@@ -974,7 +944,7 @@ export default function VirtualGalleryRoom() {
     }
 
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
-    const environment = pmremGenerator.fromScene(createNeutralEnvironmentScene(), 0.04).texture;
+    const environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
     scene.environment = environment;
 
     // The ground-color argument was the actual floor hex (a saturated
