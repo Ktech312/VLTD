@@ -72,12 +72,16 @@ function mapMessage(row: MessageRow): DirectMessage {
 }
 
 /** Finds or creates the 1:1 conversation with another profile. Returns the
- *  conversation id, or null if not signed in / targeting yourself. */
-export async function getOrCreateConversation(otherProfileId: string): Promise<string | null> {
-  if (!otherProfileId) return null;
+ *  conversation id, or null if not signed in / targeting yourself.
+ *  callerProfileId must be the viewer's own active profile id -- accounts
+ *  can own more than one profiles row (personal/business), so the RPC can't
+ *  safely guess which one you're acting as; it verifies ownership itself. */
+export async function getOrCreateConversation(callerProfileId: string, otherProfileId: string): Promise<string | null> {
+  if (!callerProfileId || !otherProfileId) return null;
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return null;
   const { data, error } = await supabase.rpc("get_or_create_conversation", {
+    p_caller_profile_id: callerProfileId,
     p_other_profile_id: otherProfileId,
   });
   if (error || !data) return null;
@@ -266,11 +270,14 @@ export async function sendMessage(
   return mapMessage(data as MessageRow);
 }
 
-export async function markConversationRead(conversationId: string): Promise<void> {
-  if (!conversationId) return;
+export async function markConversationRead(callerProfileId: string, conversationId: string): Promise<void> {
+  if (!callerProfileId || !conversationId) return;
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return;
-  await supabase.rpc("mark_conversation_read", { p_conversation_id: conversationId });
+  await supabase.rpc("mark_conversation_read", {
+    p_caller_profile_id: callerProfileId,
+    p_conversation_id: conversationId,
+  });
 }
 
 /** Total unread DMs across every conversation — for the nav badge. */

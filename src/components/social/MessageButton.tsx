@@ -22,7 +22,7 @@ export function MessageButton({
   async function handleClick() {
     if (!viewerProfileId || busy) return;
     setBusy(true);
-    const conversationId = await getOrCreateConversation(targetProfileId);
+    const conversationId = await getOrCreateConversation(viewerProfileId, targetProfileId);
     setBusy(false);
     if (conversationId) router.push("/messages");
   }

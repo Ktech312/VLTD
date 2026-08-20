@@ -116,7 +116,7 @@ export default function MessagesPage() {
     const thread = await listMessages(id);
     setMessages(thread);
     setLoadingThread(false);
-    await markConversationRead(id);
+    if (viewerProfileId) await markConversationRead(viewerProfileId, id);
     if (viewerProfileId) void refreshConversations(viewerProfileId);
     setTimeout(() => threadEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   }
@@ -136,7 +136,8 @@ export default function MessagesPage() {
   }
 
   async function handleStartConversation(otherProfileId: string) {
-    const conversationId = await getOrCreateConversation(otherProfileId);
+    if (!viewerProfileId) return;
+    const conversationId = await getOrCreateConversation(viewerProfileId, otherProfileId);
     setComposing(false);
     setComposeQuery("");
     setComposeResults([]);
