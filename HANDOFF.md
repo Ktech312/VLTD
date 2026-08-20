@@ -212,6 +212,27 @@ doesn't have a confirmed hard cap, it's "free during launch period").
 account at scandex.gamery.app to get one; no-ops silently until then, same
 as `DISCOGS_TOKEN`.
 
+**UPDATE 2026-08-20 — DONE, confirmed working, and a real bug found +
+fixed along the way.** EK added `SCANDEX_API_TOKEN` and redeployed, but the
+original test UPC still returned nothing. Traced it all the way through
+(ruled out every caching layer, middleware, routing) and finally found it
+in Vercel's Runtime Logs "External APIs" panel: the request was calling
+`openlibrary.org` / `googleapis.com/books`, not upcitemdb at all. Root
+cause, in `src/lib/bookIsbn.ts`'s `isValidIsbn13()`: it validated the
+EAN-13 check-digit formula but never checked the actual Bookland prefix
+(978/979) that makes an EAN-13 an ISBN specifically. That checksum
+algorithm is shared by the ENTIRE EAN-13/GS1 standard, not just books, so
+virtually any well-formed 13-digit product barcode also passes a valid
+EAN-13 checksum — meaning almost every real UPC/EAN (not just games) was
+being silently misidentified as a book and routed away from the actual
+product lookup this whole time. **This was a real, pre-existing bug well
+beyond ScanDex** — fixed by adding the missing `/^97[89]/` prefix check.
+Verified live against two real UPCs: the original Nintendo Switch gap
+(`0810148574819`) now correctly returns "Contra: Operation Galuga", and
+ScanDex's own doc example (`0711719577966`) returns "Horizon Forbidden
+West: Complete Edition". Nothing left to do here — token's in, bug's
+fixed, confirmed working end to end.
+
 **4. Real direct messaging + wired into the existing alerts system.**
 Replaced the "Inbox coming soon" `/messages` placeholder — both it and
 TopNav's chat icon had explicit code comments saying this was stubbed and
@@ -1881,9 +1902,9 @@ subscribe.
    (real DMs). Both fail gracefully if not run (no crash, just the old
    client-only behavior / no-op respectively), so don't assume broken if a
    symptom looks like "the tier bypass is still open" or "messages don't
-   send" — check migration status first. Also confirm `SCANDEX_API_TOKEN`
-   hasn't been set yet either (EK needs to create a dev account at
-   scandex.gamery.app first — this one's on EK, not a migration).
+   send" — check migration status first. `SCANDEX_API_TOKEN` is DONE —
+   set, deployed, and confirmed working live 2026-08-20 (see §2 item 3's
+   update) — don't re-flag this one.
    Everything before that (Stripe customer-id, lookup-API guard,
    gallery-alias, lounge-posts) is confirmed run. Cross-device billing
    (Payment method/Invoices/Cancel) is live; worth a glance at
