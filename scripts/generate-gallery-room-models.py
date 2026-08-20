@@ -152,8 +152,13 @@ def add_wall_panels(style, mats):
 
     for x in [-7.0, -3.5, 0.0, 3.5, 7.0]:
         cube(f"back_panel_stile_{x}", (x, 4.55, -11.88), (0.06, 7.1, 0.1), panel, 0.012)
+    # Was width 20.0 (half-width 10.0), 0.36 short of the side walls' own
+    # panel posts at x=+-10.36 — the horizontal back-wall trim line stopped
+    # short of the corner instead of meeting the vertical side-wall trim,
+    # a visible gap at every corner on every style except Blue (which has
+    # no GLB at all). Widened to reach exactly where the side posts are.
     for y in [1.2, 4.2, 7.2]:
-        cube(f"back_panel_rail_{y}", (0, y, -11.87), (20.0, 0.06, 0.1), panel, 0.012)
+        cube(f"back_panel_rail_{y}", (0, y, -11.87), (20.72, 0.06, 0.1), panel, 0.012)
     for side, x in [("left", -10.36), ("right", 10.36)]:
         for z in [-9.0, -4.8, -0.6, 3.6]:
             cube(f"{side}_panel_stile_{z}", (x, 4.55, z), (0.1, 7.0, 0.06), panel, 0.012)

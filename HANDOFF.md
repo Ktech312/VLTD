@@ -233,6 +233,35 @@ purple-black walls, bronze trim, cyan glass) are coherent and look
 intentional for the aesthetic; no evidence of a whitebox-style bug. Nobody
 has reported it broken. Left alone.
 
+**Corner-trim gap — real geometry bug, fixed and regenerated.** EK
+screenshotted it directly on Arcade/White/Vault: the back wall's horizontal
+decorative trim line stopped visibly short of the corner instead of
+meeting the side walls' vertical trim. Root cause in
+`scripts/generate-gallery-room-models.py`'s `add_wall_panels()`:
+`back_panel_rail` was built at width `20.0` (half-width 10.0) while the
+side walls' own panel posts sit at x=±10.36 — a 0.36-unit gap on every
+style, every corner, since `add_wall_panels()` is shared code (this is why
+it showed up on Arcade *and* White *and* Vault, but not Blue — Blue has no
+GLB). Fixed to `20.72`, matching exactly where the side posts are —
+verified against the regenerated GLB's actual mesh bounds (not eyeballed):
+`back_panel_rail` now spans x ∈ [-10.36, 10.36] precisely. Regenerated all
+three GLBs via `blender --background --python
+scripts/generate-gallery-room-models.py -- vault whitebox arcade` and
+bumped `ROOM_MODEL_URLS` cache-busting query params to `corner-trim-fix-1`
+so browsers actually fetch the new files instead of a cached old GLB.
+**Blender is installed** at `C:\Program Files\Blender Foundation\Blender
+5.2\blender.exe` — needed for any future GLB regeneration.
+
+EK also circled item-frame spacing looking uneven on Arcade/White vs. the
+clean grid on Blue — **not independently investigated or fixed.** Item
+placement (`wallGridPosition`/`distributeAcrossWalls` in
+`VirtualGalleryRoom.tsx`) is 100% shared JS code across every style, so if
+it looks right on Blue it's mathematically identical on Arcade/White — the
+apparent unevenness in those screenshots may just be the corner-gap issue
+distracting the eye, or a genuine per-style depth/perspective artifact.
+Worth a fresh look with working screenshots before assuming it's fixed by
+the corner-trim change alone.
+
 **⚠ Browser screenshot tooling was unreliable/frozen for a long stretch of
 this session** — repeated live mutations (material color, camera movement,
 tone mapping) produced byte-identical captures across many fresh tabs and

@@ -78,9 +78,9 @@ const MAX_ROOM_ITEMS = 32;
 // "blue" has no entry — it's the hand-coded shell shown permanently, with
 // no GLB to load at all. See the RoomStyle type above for what that means.
 const ROOM_MODEL_URLS: Partial<Record<RoomStyle, string>> = {
-  vault: "/models/gallery-rooms/vault-room.glb?v=modeled-steel-wall-2",
-  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=axis-fixed-1",
-  arcade: "/models/gallery-rooms/arcade-room.glb?v=axis-fixed-1",
+  vault: "/models/gallery-rooms/vault-room.glb?v=corner-trim-fix-1",
+  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=corner-trim-fix-1",
+  arcade: "/models/gallery-rooms/arcade-room.glb?v=corner-trim-fix-1",
 };
 
 // The 5 center display cases (built further down as decorative glass cabinets)
