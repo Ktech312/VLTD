@@ -34,6 +34,7 @@ import {
   type Gallery,
 } from "@/lib/galleryModel";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 type RoomStyle = "vault" | "whitebox" | "arcade";
 type RoomLayout = "storefront" | "salon" | "spotlight";
@@ -53,7 +54,7 @@ type RoomItemPosition = {
   z: number;
   ry: number;
   scale: number;
-  wall: "back" | "left" | "right" | "center" | "cabinet";
+  wall: "back" | "left" | "right" | "front" | "center" | "cabinet";
   /** Lying flat in a display case (rotated onto the horizontal plane) instead of wall-mounted upright. */
   flat?: boolean;
 };
@@ -69,6 +70,11 @@ type MuseumUniverseRoom = {
 const DRAFT_KEY = "vltd_virtual_gallery_room_draft_v1";
 const WALLPAPER_KEY = "vltd_virtual_gallery_wallpaper_v1";
 const MAX_ROOM_ITEMS = 32;
+const ROOM_MODEL_URLS: Record<RoomStyle, string> = {
+  vault: "/models/gallery-rooms/vault-room.glb?v=modeled-steel-wall-2",
+  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=axis-fixed-1",
+  arcade: "/models/gallery-rooms/arcade-room.glb?v=axis-fixed-1",
+};
 
 // The 5 center display cases (built further down as decorative glass cabinets)
 // are also real, numbered, assignable slots — appended after the 32 wall slots.
@@ -332,6 +338,37 @@ function drawSlotBadgeTexture(n: number) {
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
+}
+
+// A plain neutral-gray studio box used only as a PMREM source so metallic
+// GLB materials (walls, trim, rivets — several run 0.7-0.9 metalness) get
+// believable soft reflections instead of flat black. Three.js's stock
+// RoomEnvironment does the same job but is a colorful demo scene (it has
+// its own pink/blue accent panels to show off reflections) — with high
+// metalness on nearly every vault surface, that blue panel was reflecting
+// uniformly across the whole wall, which is what read as "always covered in
+// blue." A neutral box gives the same soft-lit-room reflection quality
+// without imposing any color mood of its own.
+function createNeutralEnvironmentScene() {
+  const scene = new THREE.Scene();
+  const geometry = new THREE.BoxGeometry(1, 1, 1).toNonIndexed();
+  const material = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
+  const colors: number[] = [];
+  const color = new THREE.Color();
+  const grays = [0xf3f1ec, 0xd8d5cd, 0xbdbab2, 0xe6e3db, 0xc9c6be, 0xaaa7a0];
+  const positions = geometry.attributes.position;
+  for (let i = 0; i < positions.count; i += 3) {
+    color.setHex(grays[Math.floor(i / 6) % grays.length]);
+    for (let v = 0; v < 3; v += 1) colors.push(color.r, color.g, color.b);
+  }
+  geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+  material.vertexColors = true;
+  const box = new THREE.Mesh(geometry, material);
+  box.scale.setScalar(50);
+  scene.add(box);
+  const light = new THREE.PointLight(0xffffff, 45, 0, 2);
+  scene.add(light);
+  return scene;
 }
 
 // A seeded PRNG (not Math.random) so the plank layout is stable across
@@ -674,11 +711,47 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
   });
 }
 
+function frontWallPosition(slot: number): RoomItemPosition {
+  const positions = [
+    { x: -6.6, y: 4.65 },
+    { x: -4.65, y: 4.65 },
+    { x: 4.65, y: 4.65 },
+    { x: 6.6, y: 4.65 },
+    { x: -6.6, y: 2.35 },
+    { x: -4.65, y: 2.35 },
+    { x: 4.65, y: 2.35 },
+    { x: 6.6, y: 2.35 },
+  ];
+  const pos = positions[slot % positions.length];
+  return {
+    x: pos.x,
+    y: pos.y,
+    z: 5.54,
+    ry: Math.PI,
+    scale: 0.6,
+    wall: "front",
+  };
+}
+
+function buildVaultWallPositions(layout: RoomLayout, count: number): RoomItemPosition[] {
+  if (layout === "spotlight") {
+    return buildWallPositions(layout, count);
+  }
+
+  const frontSlotCount = Math.min(8, count);
+  const mainWallCount = Math.max(0, count - frontSlotCount);
+  return [
+    ...buildWallPositions(layout, mainWallCount),
+    ...Array.from({ length: frontSlotCount }, (_, index) => frontWallPosition(index)),
+  ];
+}
+
 // Full fixed-capacity slot table for a layout: MAX_ROOM_ITEMS wall slots plus
 // the CABINET_SLOT_COUNT display-case slots, always in this order — slot index
 // is a stable identity regardless of layout or how many items are placed.
-function buildPositions(layout: RoomLayout): RoomItemPosition[] {
-  const wallPositions = buildWallPositions(layout, MAX_ROOM_ITEMS);
+function buildPositions(layout: RoomLayout, style: RoomStyle): RoomItemPosition[] {
+  const wallPositions =
+    style === "vault" ? buildVaultWallPositions(layout, MAX_ROOM_ITEMS) : buildWallPositions(layout, MAX_ROOM_ITEMS);
   const cabinetPositions: RoomItemPosition[] = CABINET_SPOTS.map(([x, z]) => ({
     x,
     y: 1.98,
@@ -800,7 +873,7 @@ export default function VirtualGalleryRoom() {
   // computed at full capacity (not `selectedItems.length`) so slot index i always
   // means the same physical spot, whether or not it's currently occupied. Shared
   // by the 3D scene build and the Arrange panel, so both agree on where slot i is.
-  const slotPositions = useMemo(() => buildPositions(roomLayout), [roomLayout]);
+  const slotPositions = useMemo(() => buildPositions(roomLayout, roomStyle), [roomLayout, roomStyle]);
   // Groups slot indices by which physical wall they're on, in shelf-reading
   // order (top row first, left-to-right/front-to-back within a row) — this is
   // what lets the Arrange panel show real "Back Wall" / "Left Wall" / "Right
@@ -811,6 +884,7 @@ export default function VirtualGalleryRoom() {
       { wall: "back", label: "Back Wall" },
       { wall: "left", label: "Left Wall" },
       { wall: "right", label: "Right Wall" },
+      { wall: "front", label: "Door Wall" },
       { wall: "cabinet", label: "Display Cases" },
     ];
     return order
@@ -867,6 +941,10 @@ export default function VirtualGalleryRoom() {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = roomStyle === "whitebox" ? 1.08 : roomStyle === "vault" ? 0.92 : 0.98;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
 
     // The Grand Hall (empty, no items placed) always gets its own dark,
@@ -878,6 +956,7 @@ export default function VirtualGalleryRoom() {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(inHub ? 0x04060a : roomStyle === "whitebox" ? 0xd5dbe1 : 0x05070b);
     scene.fog = new THREE.Fog(scene.background, 16, 32);
+    let disposed = false;
 
     const camera = new THREE.PerspectiveCamera(47, 1, 0.1, 80);
     camera.position.set(0, 3.6, -2.2);
@@ -885,6 +964,18 @@ export default function VirtualGalleryRoom() {
     const roomGroup = new THREE.Group();
     scene.add(roomGroup);
     roomGroupRef.current = roomGroup;
+
+    const fallbackShell = new THREE.Group();
+    roomGroup.add(fallbackShell);
+    const shellObjects: THREE.Object3D[] = [];
+    function addShell(object: THREE.Object3D) {
+      shellObjects.push(object);
+      fallbackShell.add(object);
+    }
+
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    const environment = pmremGenerator.fromScene(createNeutralEnvironmentScene(), 0.04).texture;
+    scene.environment = environment;
 
     // The ground-color argument was the actual floor hex (a saturated
     // brown for every style) — for a vertical wall, whose normal is roughly
@@ -909,6 +1000,75 @@ export default function VirtualGalleryRoom() {
     const warm = new THREE.PointLight(palette.trim, roomStyle === "arcade" ? 3.5 : 1.8, 14);
     warm.position.set(-4.5, 2.4, 1.8);
     scene.add(warm);
+
+    if (!inHub) {
+      const loader = new GLTFLoader();
+      loader.load(
+        ROOM_MODEL_URLS[roomStyle],
+        (gltf) => {
+          if (disposed) return;
+          const model = gltf.scene;
+          model.traverse((object) => {
+            if (object instanceof THREE.Mesh) {
+              object.castShadow = true;
+              object.receiveShadow = true;
+              const materials = Array.isArray(object.material) ? object.material : [object.material];
+              materials.forEach((material) => {
+                if (material instanceof THREE.MeshStandardMaterial || material instanceof THREE.MeshPhysicalMaterial) {
+                  const name = material.name.toLowerCase();
+                  if (roomStyle === "vault") {
+                    if (name.includes("floor")) {
+                      material.color.setHex(0x24170f);
+                      material.roughness = 0.62;
+                      material.metalness = 0.02;
+                    } else if (name.includes("wall")) {
+                      material.color.setHex(0x777d7e);
+                      material.roughness = 0.38;
+                      material.metalness = 0.78;
+                    } else if (name.includes("seam")) {
+                      material.color.setHex(0x202729);
+                      material.roughness = 0.58;
+                      material.metalness = 0.72;
+                    } else if (name.includes("vestibule")) {
+                      material.color.setHex(0x303636);
+                      material.roughness = 0.58;
+                      material.metalness = 0.55;
+                    } else if (name.includes("ceiling")) {
+                      material.color.setHex(0x171a1b);
+                      material.roughness = 0.82;
+                      material.metalness = 0.18;
+                    } else if (name.includes("rivet")) {
+                      material.color.setHex(0xb8c1c2);
+                      material.roughness = 0.3;
+                      material.metalness = 0.9;
+                    } else if (name.includes("steel") || name.includes("trim")) {
+                      material.color.setHex(0x9ca3a4);
+                      material.roughness = 0.32;
+                      material.metalness = 0.88;
+                    } else if (name.includes("case")) {
+                      material.color.setHex(0x15191d);
+                      material.roughness = 0.5;
+                      material.metalness = 0.22;
+                    }
+                  }
+                  material.envMapIntensity = roomStyle === "whitebox" ? 0.45 : 0.72;
+                  material.needsUpdate = true;
+                }
+              });
+            }
+          });
+          roomGroup.add(model);
+          shellObjects.forEach((object) => {
+            object.visible = false;
+          });
+        },
+        undefined,
+        () => {
+          if (disposed) return;
+          fallbackShell.visible = true;
+        }
+      );
+    }
 
     // Flat matte plaster/paint finish for the gallery walls — the old vault
     // style had a noticeable metallic sheen (0.18) that read wrong once the
@@ -953,7 +1113,7 @@ export default function VirtualGalleryRoom() {
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(21, 26), floorMaterial);
     floor.rotation.x = -Math.PI / 2;
     floor.position.set(0, -0.05, -3.2);
-    roomGroup.add(floor);
+    addShell(floor);
 
     const baseboardMaterial = new THREE.MeshStandardMaterial({
       color: roomStyle === "whitebox" ? 0xcfc6ac : roomStyle === "vault" ? 0x4a545c : 0x252a30,
@@ -963,17 +1123,17 @@ export default function VirtualGalleryRoom() {
 
     const backWall = new THREE.Mesh(new THREE.PlaneGeometry(21, 9.2), wallMaterial);
     backWall.position.set(0, 4.55, -12);
-    roomGroup.add(backWall);
+    addShell(backWall);
 
     const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(26, 9.2), wallMaterial);
     leftWall.position.set(-10.5, 4.55, -3.2);
     leftWall.rotation.y = Math.PI / 2;
-    roomGroup.add(leftWall);
+    addShell(leftWall);
 
     const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(26, 9.2), wallMaterial);
     rightWall.position.set(10.5, 4.55, -3.2);
     rightWall.rotation.y = -Math.PI / 2;
-    roomGroup.add(rightWall);
+    addShell(rightWall);
 
     // The ceiling gets its own plain material, deliberately never wallTextureUrl
     // — an uploaded wallpaper stretched across the ceiling too before, which
@@ -986,7 +1146,7 @@ export default function VirtualGalleryRoom() {
     const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(21, 26), ceilingMaterial);
     ceiling.position.set(0, 9.15, -3.2);
     ceiling.rotation.x = Math.PI / 2;
-    roomGroup.add(ceiling);
+    addShell(ceiling);
 
     const doorSideMaterial = new THREE.MeshStandardMaterial({
       // Was noticeably darker than the main wall for vault (0x0f1c2e vs the
@@ -1033,7 +1193,7 @@ export default function VirtualGalleryRoom() {
       const rearWall = new THREE.Mesh(new THREE.ShapeGeometry(rearWallShape, 48), doorSideMaterial);
       rearWall.position.set(0, 0, 5.8);
       rearWall.rotation.y = Math.PI;
-      roomGroup.add(rearWall);
+      addShell(rearWall);
 
       // Riveted steel architrave tracing the arch — two posts up the
       // straight sides, a half-ring over the curved top.
@@ -1043,21 +1203,21 @@ export default function VirtualGalleryRoom() {
         doorFrameMaterial
       );
       archPostLeft.position.set(-archHalfWidth - 0.08, archPostHeight / 2, 5.7);
-      roomGroup.add(archPostLeft);
+      addShell(archPostLeft);
 
       const archPostRight = new THREE.Mesh(
         new THREE.BoxGeometry(0.16, archPostHeight, 0.18),
         doorFrameMaterial
       );
       archPostRight.position.set(archHalfWidth + 0.08, archPostHeight / 2, 5.7);
-      roomGroup.add(archPostRight);
+      addShell(archPostRight);
 
       const archTop = new THREE.Mesh(
         new THREE.TorusGeometry(archHalfWidth + 0.08, 0.11, 12, 32, Math.PI),
         doorFrameMaterial
       );
       archTop.position.set(0, archStraightHeight, 5.7);
-      roomGroup.add(archTop);
+      addShell(archTop);
 
       // A heavier riveted hinge column at the right post — this is what the
       // open door below visually reads as attached to.
@@ -1066,28 +1226,28 @@ export default function VirtualGalleryRoom() {
         doorFrameMaterial
       );
       hingeColumn.position.set(archHalfWidth + 0.3, (archPostHeight + 0.6) / 2, 5.72);
-      roomGroup.add(hingeColumn);
+      addShell(hingeColumn);
       for (let i = 0; i < 6; i += 1) {
         const rivet = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.42, 8), trimMaterial);
         rivet.rotation.x = Math.PI / 2;
         rivet.position.set(archHalfWidth + 0.3, 0.4 + i * 0.55, 5.94);
-        roomGroup.add(rivet);
+        addShell(rivet);
       }
     } else {
       const rearWallLeft = new THREE.Mesh(new THREE.PlaneGeometry(8.75, 9.2), doorSideMaterial);
       rearWallLeft.position.set(-6.13, 4.55, 5.8);
       rearWallLeft.rotation.y = Math.PI;
-      roomGroup.add(rearWallLeft);
+      addShell(rearWallLeft);
 
       const rearWallRight = new THREE.Mesh(new THREE.PlaneGeometry(8.75, 9.2), doorSideMaterial);
       rearWallRight.position.set(6.13, 4.55, 5.8);
       rearWallRight.rotation.y = Math.PI;
-      roomGroup.add(rearWallRight);
+      addShell(rearWallRight);
 
       const rearWallTop = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 4.25), doorSideMaterial);
       rearWallTop.position.set(0, 7.08, 5.8);
       rearWallTop.rotation.y = Math.PI;
-      roomGroup.add(rearWallTop);
+      addShell(rearWallTop);
 
       // Plain painted architrave (reuses trimMaterial — same matte finish as
       // the shelf rails) and deliberately NO fill plane across the opening —
@@ -1096,15 +1256,15 @@ export default function VirtualGalleryRoom() {
       // blocked-off walls.
       const doorLeft = new THREE.Mesh(new THREE.BoxGeometry(0.16, 4.95, 0.18), doorFrameMaterial);
       doorLeft.position.set(-1.85, 2.45, 5.64);
-      roomGroup.add(doorLeft);
+      addShell(doorLeft);
 
       const doorRight = new THREE.Mesh(new THREE.BoxGeometry(0.16, 4.95, 0.18), doorFrameMaterial);
       doorRight.position.set(1.85, 2.45, 5.64);
-      roomGroup.add(doorRight);
+      addShell(doorRight);
 
       const doorHeader = new THREE.Mesh(new THREE.BoxGeometry(3.85, 0.18, 0.18), doorFrameMaterial);
       doorHeader.position.set(0, 4.92, 5.64);
-      roomGroup.add(doorHeader);
+      addShell(doorHeader);
     }
 
     // A shallow, dim vestibule just beyond the entrance — without this, the
@@ -1119,12 +1279,12 @@ export default function VirtualGalleryRoom() {
     const beyondWall = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 4.8), beyondMaterial);
     beyondWall.position.set(0, 2.5, 8.6);
     beyondWall.rotation.y = Math.PI;
-    roomGroup.add(beyondWall);
+    addShell(beyondWall);
 
     const beyondFloor = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 3), floorMaterial);
     beyondFloor.rotation.x = -Math.PI / 2;
     beyondFloor.position.set(0, -0.04, 7.2);
-    roomGroup.add(beyondFloor);
+    addShell(beyondFloor);
 
     const beyondLight = new THREE.PointLight(palette.glow, 0.5, 6);
     beyondLight.position.set(0, 3, 7.5);
@@ -1202,31 +1362,31 @@ export default function VirtualGalleryRoom() {
       // (not a full 90°) keeps the riveted face visible rather than edge-on.
       doorGroup.position.set(archHalfWidth + 0.3 + vaultDoorRadius + 0.35, vaultDoorRadius + 0.15, 5.2);
       doorGroup.rotation.y = 0.3;
-      roomGroup.add(doorGroup);
+      addShell(doorGroup);
     }
 
     const backBaseboard = new THREE.Mesh(new THREE.BoxGeometry(20.7, 0.18, 0.12), baseboardMaterial);
     backBaseboard.position.set(0, 0.08, -11.9);
-    roomGroup.add(backBaseboard);
+    addShell(backBaseboard);
 
     const leftBaseboard = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.18, 23.4), baseboardMaterial);
     leftBaseboard.position.set(-10.42, 0.08, -3.05);
-    roomGroup.add(leftBaseboard);
+    addShell(leftBaseboard);
 
     const rightBaseboard = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.18, 23.4), baseboardMaterial);
     rightBaseboard.position.set(10.42, 0.08, -3.05);
-    roomGroup.add(rightBaseboard);
+    addShell(rightBaseboard);
 
     // The entrance wall (either side of the doorway) had no baseboard at
     // all, so the door-frame posts appeared to just stop bare at the floor
     // instead of meeting the same trim line as the rest of the room.
     const frontBaseboardLeft = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.18, 0.12), baseboardMaterial);
     frontBaseboardLeft.position.set(-6.13, 0.08, 5.7);
-    roomGroup.add(frontBaseboardLeft);
+    addShell(frontBaseboardLeft);
 
     const frontBaseboardRight = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.18, 0.12), baseboardMaterial);
     frontBaseboardRight.position.set(6.13, 0.08, 5.7);
-    roomGroup.add(frontBaseboardRight);
+    addShell(frontBaseboardRight);
 
     for (let row = 0; row < SHELF_ROW_Y.length; row += 1) {
       const y = SHELF_ROW_Y[row];
@@ -1243,15 +1403,15 @@ export default function VirtualGalleryRoom() {
       // x=±9.98 instead of leaving a visible ~0.9-unit gap at each back corner.
       const backShelf = new THREE.Mesh(new THREE.BoxGeometry(19.9, 0.1, 0.845), trimMaterial);
       backShelf.position.set(0, y, -11.6275);
-      roomGroup.add(backShelf);
+      addShell(backShelf);
 
       const leftShelf = new THREE.Mesh(new THREE.BoxGeometry(0.845, 0.1, 23.2), trimMaterial);
       leftShelf.position.set(-10.1275, y, -3.15);
-      roomGroup.add(leftShelf);
+      addShell(leftShelf);
 
       const rightShelf = new THREE.Mesh(new THREE.BoxGeometry(0.845, 0.1, 23.2), trimMaterial);
       rightShelf.position.set(10.1275, y, -3.15);
-      roomGroup.add(rightShelf);
+      addShell(rightShelf);
     }
 
     const cabinetMaterial = new THREE.MeshStandardMaterial({
@@ -1269,15 +1429,15 @@ export default function VirtualGalleryRoom() {
     CABINET_SPOTS.forEach(([x, z], index) => {
       const base = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.72, 1.12), cabinetMaterial);
       base.position.set(x, 0.31, z);
-      roomGroup.add(base);
+      addShell(base);
 
       const glass = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.15, 1), glassMaterial);
       glass.position.set(x, 1.25, z);
-      roomGroup.add(glass);
+      addShell(glass);
 
       const cap = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.08, 1.18), trimMaterial);
       cap.position.set(x, 1.85, z);
-      roomGroup.add(cap);
+      addShell(cap);
 
       const glow = new THREE.PointLight(palette.glow, 0.55, 4);
       glow.position.set(x, 2.2, z + (index % 2 === 0 ? 0.25 : -0.25));
@@ -1288,10 +1448,17 @@ export default function VirtualGalleryRoom() {
     // wall, and the Grand Hall additionally gets one freestanding archway per
     // populated universe room, each with a sign naming where it leads — so the
     // museum is actually navigated room-to-room instead of only via the flat map.
-    function buildDoorwaySign(x: number, y: number, z: number, label: string, faceBack: boolean) {
+    function buildDoorwaySign(
+      x: number,
+      y: number,
+      z: number,
+      label: string,
+      faceBack: boolean,
+      size: { width: number; height: number } = { width: 2.3, height: 0.58 }
+    ) {
       const signTexture = drawDoorSignTexture(label);
       const sign = new THREE.Mesh(
-        new THREE.PlaneGeometry(2.3, 0.58),
+        new THREE.PlaneGeometry(size.width, size.height),
         new THREE.MeshStandardMaterial({
           map: signTexture,
           emissive: 0x0c0f13,
@@ -1304,7 +1471,14 @@ export default function VirtualGalleryRoom() {
       roomGroup.add(sign);
     }
 
-    buildDoorwaySign(0, 5.55, 5.9, inHub ? "Campus Map" : "Main Gallery", true);
+    buildDoorwaySign(
+      0,
+      roomStyle === "vault" && !inHub ? 5.85 : 5.55,
+      5.9,
+      inHub ? "Campus Map" : "Main Gallery",
+      true,
+      roomStyle === "vault" && !inHub ? { width: 1.65, height: 0.42 } : undefined
+    );
     // Two real bugs here, both silently killed every doorway click: (1)
     // `visible: false` makes the raycaster skip the mesh entirely, not just hide
     // it — fixed with transparent+opacity:0 instead. (2) this plane is never
@@ -1393,7 +1567,7 @@ export default function VirtualGalleryRoom() {
 
         const normal = new THREE.Vector3(Math.sin(pos.ry), 0, Math.cos(pos.ry));
 
-        // Real wall planes: back z=-12, left x=-10.5, right x=10.5. The frame used to
+        // Real wall planes: back z=-12, front z=5.8, left x=-10.5, right x=10.5. The frame used to
         // be a fixed thin box floating ~0.045 behind the card, which left a visible
         // air gap (0.15-0.2 units) between the frame and the actual wall — reading as
         // the item hovering in front of the wall instead of mounted on it. Stretch the
@@ -1401,9 +1575,15 @@ export default function VirtualGalleryRoom() {
         // (spotlight layout) keep the old small offset since they aren't wall-mounted.
         let frameDepth = 0.06;
         let centerOffset = 0.045;
-        if (pos.wall === "back" || pos.wall === "left" || pos.wall === "right") {
+        if (pos.wall === "back" || pos.wall === "front" || pos.wall === "left" || pos.wall === "right") {
           const wallGap =
-            pos.wall === "back" ? pos.z + 12 : pos.wall === "left" ? pos.x + 10.5 : 10.5 - pos.x;
+            pos.wall === "back"
+              ? pos.z + 12
+              : pos.wall === "front"
+                ? 5.8 - pos.z
+                : pos.wall === "left"
+                  ? pos.x + 10.5
+                  : 10.5 - pos.x;
           const frontOffset = 0.015;
           const backOverlap = 0.05;
           frameDepth = Math.max(0.06, wallGap - frontOffset + backOverlap);
@@ -1722,6 +1902,7 @@ export default function VirtualGalleryRoom() {
 
 
     return () => {
+      disposed = true;
       cameraStateRef.current = { x: cameraBody.x, y: cameraBody.y, z: cameraBody.z, yaw, pitch };
       window.cancelAnimationFrame(raf);
       observer.disconnect();
@@ -1741,6 +1922,8 @@ export default function VirtualGalleryRoom() {
           });
         }
       });
+      environment.dispose();
+      pmremGenerator.dispose();
       renderer.dispose();
       container.innerHTML = "";
     };

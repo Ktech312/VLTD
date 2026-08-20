@@ -1,0 +1,370 @@
+import math
+import os
+import sys
+
+import bpy
+
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+OUT_DIR = os.path.join(ROOT, "public", "models", "gallery-rooms")
+
+
+def clear_scene():
+    bpy.ops.object.select_all(action="SELECT")
+    bpy.ops.object.delete()
+
+
+def make_mat(name, color, roughness=0.65, metallic=0.0):
+    mat = bpy.data.materials.new(name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes.get("Principled BSDF")
+    if bsdf:
+        bsdf.inputs["Base Color"].default_value = color
+        bsdf.inputs["Roughness"].default_value = roughness
+        bsdf.inputs["Metallic"].default_value = metallic
+    return mat
+
+
+def app_loc(loc):
+    # App/Three uses X right, Y up, Z depth. Blender authors X right, Z up,
+    # Y depth; glTF export then maps Blender Z back to glTF Y. Build in app
+    # coordinates everywhere else and convert only at object creation.
+    x, y, z = loc
+    return (x, -z, y)
+
+
+def app_scale(scale):
+    sx, sy, sz = scale
+    return (sx, sz, sy)
+
+
+def cylinder_axis_from_three_rotation(rot):
+    if abs((rot[0] % (math.pi * 2)) - (math.pi / 2)) < 0.001:
+        return "z"
+    if abs((rot[1] % (math.pi * 2)) - (math.pi / 2)) < 0.001:
+        return "x"
+    return "y"
+
+
+def blender_cylinder_rotation(axis):
+    if axis == "x":
+        return (0, math.pi / 2, 0)
+    if axis == "z":
+        return (math.pi / 2, 0, 0)
+    return (0, 0, 0)
+
+
+def cube(name, loc, scale, mat, bevel=0.0):
+    bpy.ops.mesh.primitive_cube_add(size=1, location=app_loc(loc))
+    obj = bpy.context.object
+    obj.name = name
+    obj.dimensions = app_scale(scale)
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    if mat:
+        obj.data.materials.append(mat)
+    if bevel > 0:
+        mod = obj.modifiers.new("soft_bevel", "BEVEL")
+        mod.width = bevel
+        mod.segments = 3
+        mod.affect = "EDGES"
+        obj.modifiers.new("weighted_normals", "WEIGHTED_NORMAL")
+    return obj
+
+
+def cyl(name, loc, radius, depth, mat, vertices=96, rot=(0, 0, 0), bevel=False):
+    axis = cylinder_axis_from_three_rotation(rot)
+    bpy.ops.mesh.primitive_cylinder_add(
+        vertices=vertices,
+        radius=radius,
+        depth=depth,
+        location=app_loc(loc),
+        rotation=blender_cylinder_rotation(axis),
+    )
+    obj = bpy.context.object
+    obj.name = name
+    if mat:
+        obj.data.materials.append(mat)
+    if bevel:
+        mod = obj.modifiers.new("soft_bevel", "BEVEL")
+        mod.width = 0.025
+        mod.segments = 3
+        obj.modifiers.new("weighted_normals", "WEIGHTED_NORMAL")
+    return obj
+
+
+def torus(name, loc, major, minor, mat, rot=(0, 0, 0)):
+    bpy.ops.mesh.primitive_torus_add(
+        major_segments=96,
+        minor_segments=12,
+        location=app_loc(loc),
+        major_radius=major,
+        minor_radius=minor,
+        rotation=(math.pi / 2, 0, 0),
+    )
+    obj = bpy.context.object
+    obj.name = name
+    if mat:
+        obj.data.materials.append(mat)
+    return obj
+
+
+def arch_curve(name, center, radius, mat, bevel_depth=0.08, start=math.pi, end=0.0, steps=40):
+    curve = bpy.data.curves.new(name, "CURVE")
+    curve.dimensions = "3D"
+    curve.resolution_u = 12
+    curve.bevel_depth = bevel_depth
+    curve.bevel_resolution = 5
+    spline = curve.splines.new("POLY")
+    spline.points.add(steps)
+    cx, cy, cz = center
+    for index in range(steps + 1):
+        angle = start + (end - start) * (index / steps)
+        x = cx + math.cos(angle) * radius
+        y = cy + math.sin(angle) * radius
+        z = cz
+        bx, by, bz = app_loc((x, y, z))
+        spline.points[index].co = (bx, by, bz, 1)
+    obj = bpy.data.objects.new(name, curve)
+    bpy.context.collection.objects.link(obj)
+    if mat:
+        obj.data.materials.append(mat)
+    return obj
+
+
+def add_wall_panels(style, mats):
+    wall = mats["wall"]
+    trim = mats["trim"]
+    floor = mats["floor"]
+    ceiling = mats["ceiling"]
+
+    cube("floor_slab", (0, -0.08, -3.2), (21.0, 0.16, 26.0), floor, 0.015)
+    cube("back_wall", (0, 4.55, -12.08), (21.0, 9.2, 0.18), wall, 0.012)
+    cube("left_wall", (-10.58, 4.55, -3.2), (0.18, 9.2, 26.0), wall, 0.012)
+    cube("right_wall", (10.58, 4.55, -3.2), (0.18, 9.2, 26.0), wall, 0.012)
+    cube("ceiling", (0, 9.18, -3.2), (21.0, 0.16, 26.0), ceiling, 0.01)
+
+    # Architectural trim and recessed wall panels create real depth instead of flat planes.
+    panel = mats.get("panel_seam", trim)
+    for z in [-11.95, 5.72]:
+        cube(f"baseboard_back_{z}", (0, 0.22, z), (20.7, 0.26, 0.14), trim, 0.025)
+    cube("baseboard_left", (-10.36, 0.22, -3.05), (0.14, 0.26, 23.4), trim, 0.025)
+    cube("baseboard_right", (10.36, 0.22, -3.05), (0.14, 0.26, 23.4), trim, 0.025)
+
+    for x in [-7.0, -3.5, 0.0, 3.5, 7.0]:
+        cube(f"back_panel_stile_{x}", (x, 4.55, -11.88), (0.06, 7.1, 0.1), panel, 0.012)
+    for y in [1.2, 4.2, 7.2]:
+        cube(f"back_panel_rail_{y}", (0, y, -11.87), (20.0, 0.06, 0.1), panel, 0.012)
+    for side, x in [("left", -10.36), ("right", 10.36)]:
+        for z in [-9.0, -4.8, -0.6, 3.6]:
+            cube(f"{side}_panel_stile_{z}", (x, 4.55, z), (0.1, 7.0, 0.06), panel, 0.012)
+        for y in [1.2, 4.2, 7.2]:
+            cube(f"{side}_panel_rail_{y}", (x, y, -3.2), (0.1, 0.06, 24.0), panel, 0.012)
+
+    # Shelf boards are part of the authored room model, not procedural app geometry.
+    shelf_y = [4.72, 3.47, 2.22, 0.97]
+    for i, y in enumerate(shelf_y):
+        cube(f"back_shelf_{i}", (0, y, -11.62), (19.9, 0.12, 0.72), trim, 0.035)
+        cube(f"left_shelf_{i}", (-10.12, y, -3.15), (0.72, 0.12, 23.2), trim, 0.035)
+        cube(f"right_shelf_{i}", (10.12, y, -3.15), (0.72, 0.12, 23.2), trim, 0.035)
+
+
+def add_floor_planks(mats):
+    tones = mats["floor_tones"]
+    z_start = -15.6
+    row = 0
+    z = z_start
+    while z < 9.0:
+        x = -10.25 + (0.75 if row % 2 else 0)
+        col = 0
+        while x < 10.5:
+            length = 1.45 + ((col + row) % 4) * 0.22
+            mat = tones[(col + row) % len(tones)]
+            cube(f"floor_plank_{row}_{col}", (x + length / 2, 0.01, z), (length - 0.025, 0.035, 0.34), mat, 0.006)
+            x += length
+            col += 1
+        z += 0.34
+        row += 1
+
+
+def add_cases(mats):
+    case_mat = mats["case"]
+    glass = mats["glass"]
+    trim = mats["trim"]
+    spots = [(-3.4, -3.5), (0, -4.55), (3.4, -3.5), (-2.1, 0.45), (2.1, 0.45)]
+    for i, (x, z) in enumerate(spots):
+        cube(f"display_case_base_{i}", (x, 0.31, z), (1.42, 0.72, 1.12), case_mat, 0.045)
+        cube(f"display_case_glass_{i}", (x, 1.25, z), (1.3, 1.15, 1.0), glass, 0.025)
+        cube(f"display_case_cap_{i}", (x, 1.85, z), (1.48, 0.08, 1.18), trim, 0.02)
+
+
+def add_standard_door(mats):
+    trim = mats["trim"]
+    wall = mats["door_wall"]
+    cube("front_wall_left", (-6.13, 4.55, 5.8), (8.75, 9.2, 0.18), wall, 0.012)
+    cube("front_wall_right", (6.13, 4.55, 5.8), (8.75, 9.2, 0.18), wall, 0.012)
+    cube("front_wall_top", (0, 7.08, 5.8), (3.5, 4.25, 0.18), wall, 0.012)
+    cube("door_left", (-1.85, 2.45, 5.62), (0.18, 4.95, 0.22), trim, 0.025)
+    cube("door_right", (1.85, 2.45, 5.62), (0.18, 4.95, 0.22), trim, 0.025)
+    cube("door_header", (0, 4.92, 5.62), (3.85, 0.18, 0.22), trim, 0.025)
+    cube("vestibule_wall", (0, 2.5, 8.6), (3.6, 4.8, 0.16), mats["vestibule"], 0.012)
+
+
+def add_vault_door(mats):
+    steel = mats["steel"]
+    dark = mats["dark_steel"]
+    brass = mats["brass"]
+    wall = mats["wall"]
+    black = mats["black"]
+
+    # Room-side vault entrance only. The heavy round vault door belongs outside
+    # this room, so this model intentionally contains no interior round door.
+    cube("vault_front_wall_left", (-6.5, 4.55, 5.8), (8.0, 9.2, 0.18), wall, 0.012)
+    cube("vault_front_wall_right", (6.5, 4.55, 5.8), (8.0, 9.2, 0.18), wall, 0.012)
+    cube("vault_front_wall_top", (0, 7.0, 5.8), (4.98, 4.3, 0.18), wall, 0.012)
+    # Continue the same panel system used on the other walls so the entrance
+    # reads as part of the room instead of a separate decorative insert.
+    for x in [-10.36, -7.0, -3.5, 3.5, 7.0, 10.36]:
+        cube(f"vault_front_panel_stile_{x}", (x, 4.45, 5.62), (0.055, 6.95, 0.1), mats["panel_seam"], 0.01)
+    for y in [1.2, 4.2, 7.2]:
+        cube(f"vault_front_panel_rail_left_{y}", (-6.48, y, 5.62), (7.75, 0.055, 0.1), mats["panel_seam"], 0.01)
+        cube(f"vault_front_panel_rail_right_{y}", (6.48, y, 5.62), (7.75, 0.055, 0.1), mats["panel_seam"], 0.01)
+    cube("vault_plate_left", (-2.16, 2.48, 5.48), (0.52, 4.9, 0.22), steel, 0.035)
+    cube("vault_plate_right", (2.16, 2.48, 5.48), (0.52, 4.9, 0.22), steel, 0.035)
+    cube("vault_plate_top", (0, 5.02, 5.48), (4.32, 0.3, 0.22), steel, 0.035)
+    arch_curve("vault_arch_outer_trim", (0, 3.18, 5.19), 2.0, steel, 0.08)
+    arch_curve("vault_arch_inner_trim", (0, 3.18, 5.06), 1.66, dark, 0.055)
+    cube("vault_left_post", (-1.74, 1.58, 5.2), (0.22, 3.18, 0.24), steel, 0.028)
+    cube("vault_right_post", (1.74, 1.58, 5.2), (0.22, 3.18, 0.24), steel, 0.028)
+    cube("vault_inner_left_reveal", (-1.48, 1.62, 4.95), (0.28, 3.25, 0.55), dark, 0.02)
+    cube("vault_inner_right_reveal", (1.48, 1.62, 4.95), (0.28, 3.25, 0.55), dark, 0.02)
+    cube("vault_rear_left_reveal", (-1.25, 1.7, 5.65), (0.18, 3.4, 1.0), dark, 0.018)
+    cube("vault_rear_right_reveal", (1.25, 1.7, 5.65), (0.18, 3.4, 1.0), dark, 0.018)
+    cube("vault_threshold", (0, 0.06, 5.2), (3.65, 0.12, 0.36), dark, 0.018)
+    cube("vault_vestibule_floor", (0, 0.04, 6.35), (3.0, 0.08, 2.25), mats["floor"], 0.012)
+    cube("vault_vestibule_wall", (0, 2.6, 8.75), (3.5, 5.2, 0.16), mats["vestibule"], 0.012)
+
+    for i in range(24):
+        angle = math.pi * i / 23.0
+        x = math.cos(angle) * 1.98
+        y = 3.25 + math.sin(angle) * 1.98
+        if y >= 3.18:
+            cyl(f"vault_arch_rivet_{i}", (x, y, 5.15), 0.045, 0.06, brass, 16, (math.pi / 2, 0, 0), True)
+    for side, x in [("left", -2.58), ("right", 2.58)]:
+        for i in range(8):
+            cyl(f"vault_side_rivet_{side}_{i}", (x, 0.62 + i * 0.54, 5.15), 0.045, 0.06, brass, 16, (math.pi / 2, 0, 0), True)
+
+
+def style_mats(style):
+    if style == "vault":
+        floor_tones = [make_mat(f"vault_floor_{i}", c, 0.52, 0.0) for i, c in enumerate([
+            (0.25, 0.16, 0.10, 1), (0.34, 0.22, 0.13, 1), (0.19, 0.12, 0.08, 1), (0.38, 0.25, 0.15, 1)
+        ])]
+        return {
+            "wall": make_mat("brushed steel vault wall", (0.46, 0.48, 0.48, 1), 0.38, 0.78),
+            "door_wall": make_mat("brushed steel vault entry wall", (0.46, 0.48, 0.48, 1), 0.38, 0.78),
+            "panel_seam": make_mat("dark recessed steel seams", (0.13, 0.145, 0.15, 1), 0.56, 0.72),
+            "vestibule": make_mat("shadowed steel vestibule", (0.18, 0.2, 0.2, 1), 0.58, 0.55),
+            "ceiling": make_mat("dark charcoal ceiling", (0.045, 0.048, 0.05, 1), 0.88, 0.0),
+            "trim": make_mat("brushed gunmetal shelf trim", (0.54, 0.58, 0.59, 1), 0.34, 0.82),
+            "floor": floor_tones[0],
+            "floor_tones": floor_tones,
+            "case": make_mat("charcoal case", (0.11, 0.13, 0.15, 1), 0.42, 0.18),
+            "glass": make_mat("soft gallery glass", (0.55, 0.85, 1.0, 0.24), 0.04, 0.0),
+            "steel": make_mat("brushed vault steel", (0.62, 0.64, 0.62, 1), 0.28, 0.92),
+            "dark_steel": make_mat("dark brushed inset steel", (0.24, 0.26, 0.26, 1), 0.42, 0.86),
+            "brass": make_mat("brushed steel rivets", (0.72, 0.76, 0.76, 1), 0.3, 0.9),
+            "black": make_mat("black iron bars", (0.01, 0.011, 0.012, 1), 0.62, 0.65),
+        }
+    if style == "whitebox":
+        floor_tones = [make_mat(f"white_floor_{i}", c, 0.5, 0.0) for i, c in enumerate([
+            (0.64, 0.48, 0.31, 1), (0.72, 0.55, 0.35, 1), (0.56, 0.41, 0.27, 1), (0.76, 0.61, 0.42, 1)
+        ])]
+        return {
+            "wall": make_mat("warm plaster gallery wall", (0.86, 0.82, 0.72, 1), 0.86, 0.0),
+            "door_wall": make_mat("cream entry wall", (0.82, 0.78, 0.68, 1), 0.85, 0.0),
+            "vestibule": make_mat("soft cream vestibule", (0.74, 0.68, 0.56, 1), 0.84, 0.0),
+            "ceiling": make_mat("cream ceiling", (0.9, 0.87, 0.78, 1), 0.86, 0.0),
+            "trim": make_mat("painted cream trim", (0.78, 0.73, 0.62, 1), 0.64, 0.0),
+            "floor": floor_tones[0],
+            "floor_tones": floor_tones,
+            "case": make_mat("light stone case", (0.72, 0.74, 0.72, 1), 0.46, 0.08),
+            "glass": make_mat("clear museum glass", (0.76, 0.92, 1.0, 0.22), 0.03, 0.0),
+        }
+    floor_tones = [make_mat(f"arcade_floor_{i}", c, 0.42, 0.08) for i, c in enumerate([
+        (0.05, 0.045, 0.075, 1), (0.08, 0.05, 0.12, 1), (0.03, 0.035, 0.06, 1), (0.11, 0.06, 0.13, 1)
+    ])]
+    return {
+        "wall": make_mat("deep arcade wall", (0.035, 0.025, 0.06, 1), 0.74, 0.0),
+        "door_wall": make_mat("arcade entry wall", (0.025, 0.02, 0.04, 1), 0.72, 0.0),
+        "vestibule": make_mat("arcade vestibule", (0.02, 0.018, 0.04, 1), 0.78, 0.0),
+        "ceiling": make_mat("arcade ceiling", (0.025, 0.018, 0.04, 1), 0.8, 0.0),
+        "trim": make_mat("arcade bronze trim", (0.8, 0.42, 0.14, 1), 0.36, 0.68),
+        "floor": floor_tones[0],
+        "floor_tones": floor_tones,
+        "case": make_mat("dark arcade case", (0.09, 0.09, 0.13, 1), 0.38, 0.24),
+        "glass": make_mat("cyan arcade glass", (0.25, 0.85, 1.0, 0.24), 0.02, 0.0),
+    }
+
+
+def add_lights(style):
+    if style == "whitebox":
+        color = (1.0, 0.89, 0.72)
+        energy = 520
+    elif style == "arcade":
+        color = (0.3, 0.82, 1.0)
+        energy = 420
+    else:
+        color = (1.0, 0.78, 0.48)
+        energy = 480
+    for i, x in enumerate([-6.0, -2.0, 2.0, 6.0]):
+        bpy.ops.object.light_add(type="AREA", location=(x, 8.65, -7.8 + (i % 2) * 6.0))
+        light = bpy.context.object
+        light.name = f"{style}_softbox_{i}"
+        light.data.energy = energy
+        light.data.size = 3.2
+        light.data.color = color
+    bpy.ops.object.light_add(type="AREA", location=(0, 7.6, 3.8))
+    light = bpy.context.object
+    light.name = f"{style}_entry_wash"
+    light.data.energy = energy * 0.75
+    light.data.size = 3.8
+    light.data.color = color
+
+
+def build_room(style):
+    clear_scene()
+    mats = style_mats(style)
+    add_wall_panels(style, mats)
+    add_floor_planks(mats)
+    add_cases(mats)
+    if style == "vault":
+        add_vault_door(mats)
+    else:
+        add_standard_door(mats)
+    add_lights(style)
+
+    bpy.context.scene.unit_settings.system = "METRIC"
+    bpy.context.scene.render.engine = "CYCLES"
+    bpy.context.scene.cycles.samples = 64
+    bpy.context.scene.view_settings.view_transform = "Filmic"
+    bpy.context.scene.view_settings.look = "Medium High Contrast"
+    bpy.context.scene.view_settings.exposure = 0
+    bpy.context.scene.view_settings.gamma = 1
+
+    os.makedirs(OUT_DIR, exist_ok=True)
+    out_path = os.path.join(OUT_DIR, f"{style}-room.glb")
+    bpy.ops.export_scene.gltf(
+        filepath=out_path,
+        export_format="GLB",
+        export_apply=True,
+        export_lights=True,
+        export_materials="EXPORT",
+        export_cameras=False,
+    )
+    print(out_path)
+
+
+if __name__ == "__main__":
+    styles = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else ["vault", "whitebox", "arcade"]
+    for style in styles:
+        build_room(style)
