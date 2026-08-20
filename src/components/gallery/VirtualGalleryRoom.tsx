@@ -78,9 +78,9 @@ const MAX_ROOM_ITEMS = 32;
 // "blue" has no entry — it's the hand-coded shell shown permanently, with
 // no GLB to load at all. See the RoomStyle type above for what that means.
 const ROOM_MODEL_URLS: Partial<Record<RoomStyle, string>> = {
-  vault: "/models/gallery-rooms/vault-room.glb?v=corner-trim-fix-1",
-  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=corner-trim-fix-1",
-  arcade: "/models/gallery-rooms/arcade-room.glb?v=corner-trim-fix-1",
+  vault: "/models/gallery-rooms/vault-room.glb?v=glass-alpha-fix-1",
+  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=glass-alpha-fix-1",
+  arcade: "/models/gallery-rooms/arcade-room.glb?v=glass-alpha-fix-1",
 };
 
 // The 5 center display cases (built further down as decorative glass cabinets)
@@ -733,7 +733,12 @@ function buildPositions(layout: RoomLayout, style: RoomStyle): RoomItemPosition[
     style === "vault" ? buildVaultWallPositions(layout, MAX_ROOM_ITEMS) : buildWallPositions(layout, MAX_ROOM_ITEMS);
   const cabinetPositions: RoomItemPosition[] = CABINET_SPOTS.map(([x, z]) => ({
     x,
-    y: 1.98,
+    // Was 1.98 — the case's own glass cap sits at y=1.85 (base at 0.31,
+    // glass spanning roughly 0.67 to 1.83), so the item was resting ON TOP
+    // of the closed case, above the glass, not inside it at all — that's
+    // what read as "a flat piece of paper just sitting there" instead of a
+    // real display. 0.85 sits it just above the base, inside the glass.
+    y: 0.85,
     z,
     ry: -Math.PI / 2,
     scale: 0.5,
@@ -1544,6 +1549,11 @@ export default function VirtualGalleryRoom() {
         metalness: 0.08,
         emissive: new THREE.Color(0x05070a),
         emissiveIntensity: 0.08,
+        // Flat display-case items need both faces — a plane only renders
+        // its front by default, so viewed from the "wrong" side (easy to
+        // do walking around a case) it was invisible, adding to the
+        // "doesn't look right from other angles" complaint.
+        side: pos.flat ? THREE.DoubleSide : THREE.FrontSide,
       });
       const card = new THREE.Mesh(new THREE.PlaneGeometry(1.12 * pos.scale, 1.54 * pos.scale), material);
       card.position.set(pos.x, pos.y, pos.z);

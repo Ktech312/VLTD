@@ -59,3 +59,4 @@ data/*.sqlite
 
 # Claude Code local settings (keep launch.json shared)
 .claude/settings.local.json
+__pycache__/

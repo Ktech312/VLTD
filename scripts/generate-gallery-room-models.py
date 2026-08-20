@@ -22,6 +22,19 @@ def make_mat(name, color, roughness=0.65, metallic=0.0):
         bsdf.inputs["Base Color"].default_value = color
         bsdf.inputs["Roughness"].default_value = roughness
         bsdf.inputs["Metallic"].default_value = metallic
+        # The 4th component of `color` is alpha, but Base Color's own alpha
+        # channel isn't what the glTF exporter reads for transparency — it
+        # reads the Principled BSDF's separate "Alpha" socket, which this
+        # never touched, so every "glass" material (alpha 0.22-0.24 in the
+        # style dicts below) was exporting fully opaque (alpha 1) regardless.
+        # That's why display-case glass read as solid/whited-out instead of
+        # clear, worst in the White room where an opaque near-white panel is
+        # indistinguishable from the wall behind it.
+        alpha = color[3] if len(color) > 3 else 1.0
+        bsdf.inputs["Alpha"].default_value = alpha
+        if alpha < 1.0:
+            mat.blend_method = "BLEND"
+            mat.show_transparent_back = False
     return mat
 
 
@@ -287,9 +300,27 @@ def style_mats(style):
         return {
             "wall": make_mat("warm plaster gallery wall", (0.86, 0.82, 0.72, 1), 0.86, 0.0),
             "door_wall": make_mat("cream entry wall", (0.82, 0.78, 0.68, 1), 0.85, 0.0),
-            "vestibule": make_mat("soft cream vestibule", (0.74, 0.68, 0.56, 1), 0.84, 0.0),
+            # Was (0.74, 0.68, 0.56) — barely different from the wall (0.86,
+            # 0.82, 0.72), so the space glimpsed through the open doorway
+            # just blended into the room instead of reading as its own space
+            # beyond it. Every other style already has a much darker
+            # vestibule than its wall (vault: 0.46 wall -> 0.18 vestibule);
+            # White had almost no contrast at all.
+            "vestibule": make_mat("shadowed cream vestibule", (0.34, 0.29, 0.24, 1), 0.82, 0.0),
             "ceiling": make_mat("cream ceiling", (0.9, 0.87, 0.78, 1), 0.86, 0.0),
-            "trim": make_mat("painted cream trim", (0.78, 0.73, 0.62, 1), 0.64, 0.0),
+            # Was (0.78, 0.73, 0.62) — 0.08 off the wall's (0.86, 0.82,
+            # 0.72), essentially invisible once lit. EK's ask: "big
+            # difference needed." This is shelves, baseboards, and case
+            # caps — everything that needs to read as distinct trim, not
+            # more wall.
+            "trim": make_mat("carved walnut trim", (0.42, 0.36, 0.28, 1), 0.55, 0.0),
+            # Was missing entirely — add_wall_panels() falls back to `trim`
+            # for panel_seam when a style doesn't define one, so the
+            # architrave/molding division lines were the same near-wall
+            # tone too. A distinct, darker value gives the corner moldings
+            # EK asked for ("corners need to be highlighted slightly
+            # darker") instead of everything blending into one flat white.
+            "panel_seam": make_mat("recessed molding shadow", (0.28, 0.24, 0.19, 1), 0.7, 0.0),
             "floor": floor_tones[0],
             "floor_tones": floor_tones,
             "case": make_mat("light stone case", (0.72, 0.74, 0.72, 1), 0.46, 0.08),
