@@ -26,6 +26,7 @@ import "./theme-override.css";
 import AddressBarHider from "@/components/AddressBarHider";
 import BugReporter from "@/components/BugReporter";
 import PresenceHeartbeat from "@/components/PresenceHeartbeat";
+import PublicProfileSync from "@/components/PublicProfileSync";
 import NavShell from "@/components/NavShell";
 import Providers from "@/components/Providers";
 import PWAInstallBanner from "@/components/PWAInstallBanner";
@@ -141,6 +142,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <PWAInstallBanner />
               <BugReporter />
               <PresenceHeartbeat />
+              <PublicProfileSync />
             </SeasonalThemeProvider>
           </Providers>
         </ThemeProvider>
