@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated, tenth pass — Messages got compose/star/hide + a real multi-profile bug fix — ALL CONFIRMED LIVE, no migrations pending)
+# VLTD — Session Handoff (updated, eleventh pass — real accounts invisible to search fixed (4 migrations) — ALL CONFIRMED LIVE, no migrations pending)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -178,6 +178,57 @@ who owns a screen.** EK is aware of this.
 ---
 
 ## 2. What's LEFT to do (prioritized)
+
+### DONE (2026-08-21) — Real accounts invisible to collector search (4 migrations, live-verified)
+EK: "Search is not working for me, are real users in here? ... I have more
+than one person signed up here but I don't see any real people." Real bug,
+found and fixed live with EK's help testing back and forth — worth reading
+in full since it's a good example of a bug with two separate causes layered
+on top of each other.
+
+**Cause 1 — sync only ran from two pages.** `syncPublicProfile()`
+(`src/lib/publicProfile.ts`) is the only thing that writes a profile into
+`public_profiles` — the table Messages' `searchCollectors()` queries. It was
+only ever called from the home dashboard and `/account`. Any real account
+that only ever visited a deep-linked page (EK confirmed "FreckArgent" added
+real vault items via a direct link) never triggered it, so it stayed
+invisible to search forever, with "Last active Never" in Account Rights
+(unrelated presence-tracking system, red herring). **Fixed for good**: new
+`PublicProfileSync.tsx` component, mounted in the root layout next to
+`PresenceHeartbeat`, syncs the active profile on every authenticated page
+load (and on profile switch) — not just those two routes, so this can't
+recur for future accounts.
+
+**Cause 2 — stale placeholder names on old rows.** A handful of accounts
+(FreckArgent, Debi, cat_uh_tonick) already HAD a `public_profiles` row from
+an early sync, before they'd set a real display name — stuck on whichever
+placeholder branch fired at the time ("collector" or the older "User").
+They later set a real name on their own account, but nothing ever re-synced
+`public_profiles` since Cause 1 was still unfixed at the time. This meant
+the one-time backfill (which only inserts rows for profiles with NO
+existing row) correctly skipped them, leaving them stuck. Needed a second
+migration to actively refresh any row still stuck on a placeholder using
+the real name already sitting in `profiles.display_name`.
+
+**Four migrations, all confirmed run and live-verified working:**
+`20260820_backfill_public_profiles.sql` (one-time insert for profiles with
+no row), `20260820_refresh_stale_public_profile_names.sql` (refresh rows
+stuck on "collector" — subsumed by the next one), `20260820_refresh_stale_public_profile_names_v2.sql`
+(widened to also catch "User" — **this is the one to trust**), and the
+`PublicProfileSync.tsx` component (no migration, just a code change) fixing
+the root cause going forward. All 11 of EK's real accounts (EK's
+Collection, Kellogg Collection, FreckArgent, Dre, Debi, Baig, JerK,
+cat_uh_tonick, aureum, Jared032, Ema) confirmed searchable and messageable
+by EK directly, live.
+
+**Also surfaced, not a bug — worth knowing:** VLTD has a pre-existing seed
+character system (`/admin/characters`, 22 fictional collector personas like
+"Cornelius Vanderbilt", backed by real `profiles` rows so they're
+searchable/messageable too) built to make the app look populated before
+there are enough real users. EK's early search tests were mostly hitting
+these, which read as "fake people" until the real-account bug above was
+separately diagnosed and fixed. This is intentional, pre-existing, and not
+something to remove without EK asking.
 
 ### DONE (2026-08-19, overnight, EK asleep) — pill sizing, server-side tier limits, ScanDex, real direct messaging
 EK asked for a full, accurate backend punch list before bed, caught that
