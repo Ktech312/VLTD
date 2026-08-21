@@ -16,6 +16,7 @@ import {
   type DirectMessage,
   type CollectorResult,
 } from "@/lib/directMessages";
+import { isPushSupported, getPushSubscriptionState, subscribeToPush, type PushState } from "@/lib/pushNotifications";
 
 const CYAN = "#4FD3EE";
 
@@ -69,6 +70,9 @@ export default function MessagesPage() {
   const [composeQuery, setComposeQuery] = useState("");
   const [composeResults, setComposeResults] = useState<CollectorResult[]>([]);
   const [composeSearching, setComposeSearching] = useState(false);
+  const [pushState, setPushState] = useState<PushState>("unsupported");
+  const [pushBusy, setPushBusy] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
   const threadEndRef = useRef<HTMLDivElement>(null);
 
   async function refreshConversations(profileId: string) {
@@ -92,6 +96,25 @@ export default function MessagesPage() {
       else setLoadingList(false);
     })();
   }, []);
+
+  useEffect(() => {
+    if (!isPushSupported()) {
+      setPushState("unsupported");
+      return;
+    }
+    void getPushSubscriptionState().then(setPushState);
+  }, []);
+
+  async function handleEnablePush() {
+    if (pushBusy || !viewerProfileId) return;
+    setPushBusy(true);
+    try {
+      const ok = await subscribeToPush(viewerProfileId);
+      setPushState(ok ? "subscribed" : await getPushSubscriptionState());
+    } finally {
+      setPushBusy(false);
+    }
+  }
 
   // Debounced collector search inside the compose panel.
   useEffect(() => {
@@ -183,6 +206,35 @@ export default function MessagesPage() {
         }
       />
       <main className="mx-auto w-full max-w-[1100px] px-4 pb-16 sm:px-6">
+        {signedIn && pushState === "unsubscribed" && !bannerDismissed ? (
+          <div
+            className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[8px] px-4 py-3"
+            style={{ background: "rgba(79,211,238,0.08)", border: "1px solid rgba(79,211,238,0.3)" }}
+          >
+            <p className="text-sm" style={{ color: "var(--fg)" }}>
+              Turn on message alerts so you don't miss a reply — even with VLTD closed. To turn off later, use Account Settings.
+            </p>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void handleEnablePush()}
+                disabled={pushBusy}
+                className="vltd-primary-button rounded-[6px] px-3 py-1.5 text-xs font-black disabled:opacity-50"
+              >
+                {pushBusy ? "Turning on…" : "Turn On"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setBannerDismissed(true)}
+                aria-label="Dismiss"
+                className="grid h-7 w-7 place-items-center rounded-full"
+                style={{ background: "var(--pill)", color: "var(--muted)" }}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        ) : null}
         {signedIn === false ? (
           <div className="rounded-[8px] px-6 py-20 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
             <p className="text-sm" style={{ color: "var(--muted)" }}>Sign in to see your messages.</p>

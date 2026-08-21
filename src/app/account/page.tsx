@@ -764,7 +764,7 @@ export default function AccountPage() {
               title="Going incognito is a paid feature"
               aria-pressed={isPublic}
               className="relative mt-0.5 h-6 w-11 shrink-0 cursor-not-allowed rounded-full transition-colors opacity-50"
-              style={{ background: isPublic ? "var(--theme-gold-gradient, #C8CDD2)" : "rgba(255,255,255,0.12)" }}
+              style={{ background: isPublic ? "#22C55E" : "rgba(255,255,255,0.12)" }}
             >
               <span
                 className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
@@ -797,7 +797,7 @@ export default function AccountPage() {
               aria-pressed={pushState === "subscribed"}
               title={pushState === "denied" ? "Blocked in browser settings" : undefined}
               className="relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-              style={{ background: pushState === "subscribed" ? "var(--theme-gold-gradient, #C8CDD2)" : "rgba(255,255,255,0.12)" }}
+              style={{ background: pushState === "subscribed" ? "#22C55E" : "rgba(255,255,255,0.12)" }}
             >
               <span
                 className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
@@ -959,7 +959,7 @@ export default function AccountPage() {
               onClick={() => setShowAllUniverses((v) => !v)}
               aria-pressed={showAllUniverses}
               className="relative h-6 w-11 shrink-0 rounded-full transition-colors"
-              style={{ background: showAllUniverses ? "var(--theme-gold-gradient, #C8CDD2)" : "rgba(255,255,255,0.12)" }}
+              style={{ background: showAllUniverses ? "#22C55E" : "rgba(255,255,255,0.12)" }}
             >
               <span
                 className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
