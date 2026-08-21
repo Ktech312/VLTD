@@ -285,3 +285,53 @@ export async function getTotalUnreadCount(profileId: string): Promise<number> {
   const conversations = await listConversations(profileId);
   return conversations.reduce((sum, c) => sum + c.unreadCount, 0);
 }
+
+/** Live-updates an open thread: fires for every new message in this
+ *  conversation, from either side, without needing to leave and reopen
+ *  the page. Returns an unsubscribe function. */
+export function subscribeToConversationMessages(
+  conversationId: string,
+  onMessage: (message: DirectMessage) => void
+): () => void {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase || !conversationId) return () => {};
+
+  const channel = supabase
+    .channel(`dm_thread:${conversationId}`)
+    .on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "direct_messages", filter: `conversation_id=eq.${conversationId}` },
+      (payload) => onMessage(mapMessage(payload.new as MessageRow))
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}
+
+/** Live-updates the inbox list (new conversations, new last-message
+ *  previews, ordering) for the given viewer profile. Returns an
+ *  unsubscribe function. */
+export function subscribeToMyConversations(profileId: string, onChange: () => void): () => void {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase || !profileId) return () => {};
+
+  const channel = supabase
+    .channel(`dm_inbox:${profileId}`)
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "conversations", filter: `profile_a_id=eq.${profileId}` },
+      onChange
+    )
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "conversations", filter: `profile_b_id=eq.${profileId}` },
+      onChange
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}

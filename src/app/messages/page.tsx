@@ -12,6 +12,8 @@ import {
   setConversationStarred,
   hideConversation,
   searchCollectors,
+  subscribeToConversationMessages,
+  subscribeToMyConversations,
   type Conversation,
   type DirectMessage,
   type CollectorResult,
@@ -132,6 +134,31 @@ export default function MessagesPage() {
     }, 300);
     return () => clearTimeout(timer);
   }, [composeQuery, composing, viewerProfileId]);
+
+  // Live-updates the inbox (new conversations, previews, ordering) without
+  // needing to leave and come back to this page.
+  useEffect(() => {
+    if (!viewerProfileId) return;
+    const unsubscribe = subscribeToMyConversations(viewerProfileId, () => {
+      void refreshConversations(viewerProfileId);
+    });
+    return unsubscribe;
+  }, [viewerProfileId]);
+
+  // Live-updates the open thread the instant a new message lands, from
+  // either side, instead of requiring a reload.
+  useEffect(() => {
+    if (!activeId || !viewerProfileId) return;
+    const unsubscribe = subscribeToConversationMessages(activeId, (message) => {
+      setMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]));
+      setTimeout(() => threadEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+      if (message.senderProfileId !== viewerProfileId) {
+        void markConversationRead(viewerProfileId, activeId);
+      }
+      void refreshConversations(viewerProfileId);
+    });
+    return unsubscribe;
+  }, [activeId, viewerProfileId]);
 
   async function openConversation(id: string) {
     setActiveId(id);
