@@ -17,6 +17,7 @@ import { loadWatchlist, removeFromWatchlist, type WatchlistItem } from "@/lib/wa
 import { UNIVERSE_KEYS, UNIVERSE_LABEL, isUniverseKey } from "@/lib/taxonomy";
 import { getProfileSafe, setProfileSafe, broadcastProfileChange } from "@/lib/userProfile";
 import { showToast } from "@/lib/toast";
+import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribeFromPush, type PushState } from "@/lib/pushNotifications";
 
 /** Normalize a stored focus value — treats the literal string "null" as empty. */
 function normalizeFocus(value: unknown): string {
@@ -108,6 +109,9 @@ export default function AccountPage() {
   const [marketingOptIn, setMarketingOptIn] = useState(true);
   const [identitySaving, setIdentitySaving] = useState(false);
   const [identitySuccess, setIdentitySuccess] = useState("");
+  // Push notifications
+  const [pushState, setPushState] = useState<PushState>("unsupported");
+  const [pushBusy, setPushBusy] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -169,6 +173,30 @@ export default function AccountPage() {
     }
     void load();
   }, [router]);
+
+  useEffect(() => {
+    if (!isPushSupported()) {
+      setPushState("unsupported");
+      return;
+    }
+    void getPushSubscriptionState().then(setPushState);
+  }, []);
+
+  async function handleTogglePush() {
+    if (pushBusy || !profileId) return;
+    setPushBusy(true);
+    try {
+      if (pushState === "subscribed") {
+        const ok = await unsubscribeFromPush();
+        if (ok) setPushState("unsubscribed");
+      } else {
+        const ok = await subscribeToPush(profileId);
+        setPushState(ok ? "subscribed" : await getPushSubscriptionState());
+      }
+    } finally {
+      setPushBusy(false);
+    }
+  }
 
   async function handleSyncNow() {
     setIsSyncing(true);
@@ -741,6 +769,39 @@ export default function AccountPage() {
               <span
                 className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
                 style={{ transform: isPublic ? "translateX(20px)" : "translateX(0)" }}
+              />
+            </button>
+          </div>
+        </section>
+
+        {/* Notifications */}
+        <section className="mt-6 rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
+          <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-4">
+            Notifications
+          </div>
+          <div className="flex items-start justify-between gap-4 rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
+            <div className="flex-1">
+              <div className="text-sm font-black text-text-primary">New message alerts</div>
+              <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">
+                {pushState === "unsupported"
+                  ? "Not available in this browser. On iPhone, add VLTD to your Home Screen first (Share → Add to Home Screen), then come back here."
+                  : pushState === "denied"
+                    ? "Blocked — notifications for this site were denied. Enable them in your browser's site settings to turn this on."
+                    : "Get notified the moment someone sends you a message, even with VLTD closed."}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => void handleTogglePush()}
+              disabled={pushBusy || pushState === "unsupported" || pushState === "denied"}
+              aria-pressed={pushState === "subscribed"}
+              title={pushState === "denied" ? "Blocked in browser settings" : undefined}
+              className="relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ background: pushState === "subscribed" ? "var(--theme-gold-gradient, #C8CDD2)" : "rgba(255,255,255,0.12)" }}
+            >
+              <span
+                className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
+                style={{ transform: pushState === "subscribed" ? "translateX(20px)" : "translateX(0)" }}
               />
             </button>
           </div>

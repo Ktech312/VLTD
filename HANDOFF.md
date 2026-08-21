@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated, twelfth pass — search-visibility fix confirmed live; Web Push for DMs scoped in §2, build starting now)
+# VLTD — Session Handoff (updated, fourteenth pass — Web Push secret leak found by outside researcher + fixed, EK needs to rotate 3 Vercel env vars + run 1 SQL command, see §2)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -179,58 +179,46 @@ who owns a screen.** EK is aware of this.
 
 ## 2. What's LEFT to do (prioritized)
 
-### NEXT UP — Web Push notifications for DMs (scoped 2026-08-21, not started)
-EK asked: can someone get alerted about a new message/alert even with the
-app fully closed, if they've installed VLTD to their home screen (the
-"quick link icon")? Yes — this is **Web Push**, and it's genuinely free (no
-paid service; uses each browser vendor's own push infrastructure — Chrome/
-Android via FCM, Safari/iOS via Apple's push service, both free; the
-`web-push` npm library is open source). Works on Android/desktop Chrome
-today even without installing; on iOS it requires iOS 16.4+ AND the user
-having actually done "Add to Home Screen" first — matches exactly what EK
-described. EK confirmed: build it, document the plan here first before
-writing code.
+### BUILT, ACTIVE, ONE SECURITY INCIDENT ALREADY HANDLED — Web Push notifications for DMs (2026-08-21)
+EK asked: can someone get alerted about a new message even with the app
+fully closed, if they've installed VLTD to their home screen (the "quick
+link icon")? Yes — **Web Push**, genuinely free, works on Android/desktop
+Chrome always, iOS needs 16.4+ AND "Add to Home Screen" done first. Scoped
+in this file first, then built: `supabase/migrations/20260821_push_notifications.sql`
+(`push_subscriptions` table + RLS + a `pg_net`-based trigger firing the
+instant a DM is inserted), `public/sw.js` (VLTD's first service worker),
+`src/lib/pushNotifications.ts` (subscribe/unsubscribe), `src/app/api/push/send-internal`
+(the actual send via `web-push`), and a real "New message alerts" toggle in
+Account Settings. **v1 is DMs only** — alerts (follows/comments) are a
+trivial fast-follow on the same pipeline later.
 
-**Scope for v1: new Direct Messages only.** Not alerts (follows/comments/
-bug replies) yet — same pipeline will make those a fast follow later, just
-another trigger calling the same send endpoint. Keeping v1 to DMs keeps the
-first pass small and testable, and DMs are what actually prompted this ask.
+**⚠️ SECURITY INCIDENT, already fixed in code — read this if touching push
+notifications again.** The first migration hardcoded `PUSH_INTERNAL_SECRET`
+in plain text directly in the trigger function's SQL — which got committed
+to this PUBLIC GitHub repo. An outside security researcher found it via the
+public repo, verified the leaked token still authenticated against
+production (read-only — a POST with a nonexistent profile id, so no real
+user was ever notified), and reported it responsibly. Same mistake also put
+all 4 Web Push secrets (VAPID keypair included) in a table in THIS file,
+also committed publicly — that table has been removed from this doc.
 
-**Pieces needed (none exist yet — confirmed via grep, no service worker,
-no Push API usage anywhere in the codebase):**
-1. **VAPID keys** — a public/private keypair that authenticates VLTD's
-   server to push services. Generated once (no external account, no cost),
-   not user-specific. I generate these; EK just pastes them into Vercel.
-2. **New migration** — `push_subscriptions` table (`profile_id`,
-   `endpoint`, `p256dh`, `auth`, timestamps), RLS scoped to own profile.
-   One row per device/browser a person has enabled notifications on.
-3. **Service worker** (`public/sw.js`, new file) — handles the `push`
-   event (shows the OS-level notification) and `notificationclick` (opens/
-   focuses the app to the right conversation). Currently VLTD has a
-   manifest (installable) but no service worker at all.
-4. **Opt-in UI** — a "Enable notifications" toggle, most likely in Account
-   Settings (not a nagging popup). Registers the service worker, requests
-   browser permission, subscribes, saves the subscription to Supabase.
-5. **Send endpoint** — `POST /api/push/send` (internal-only, protected by
-   a shared-secret header, not user-facing) — looks up a profile's saved
-   subscriptions and sends via `web-push`, using the VAPID keys. Cleans up
-   subscriptions the push service reports as dead (410/404).
-6. **The real-time trigger** — this is the one genuine unknown. Plan: a
-   Postgres trigger on `direct_messages` INSERT using the `pg_net`
-   extension (`net.http_post`) to call the send endpoint the instant a
-   message lands, same shape as the existing `touch_conversation_on_message`
-   trigger. **Risk**: `pg_net` needs to actually be enabled on EK's Supabase
-   project — unconfirmed until the migration is run. If it's not available,
-   fallback is Supabase's dashboard-configured "Database Webhooks" (a few
-   manual clicks in the Supabase dashboard, not a migration) — same end
-   result, just configured differently. Will find out when the migration
-   runs and adjust if needed.
+**Root cause / the actual lesson**: giving EK a secret value directly in
+chat for one-time setup is fine (chat isn't a public repo). Writing that
+same value into ANY file that gets committed — a migration, this handoff
+doc, anything — is never fine on a public repo, full stop, no matter how
+"internal" the file feels. Fixed architecturally too, not just patched:
+`supabase/migrations/20260821_push_secret_to_vault.sql` moved the secret
+out of SQL entirely into Supabase Vault (encrypted at rest, referenced by
+name, never written to a file again) — this is now the correct pattern for
+any future secret a Postgres trigger needs to send.
 
-**What EK will need to do once it's built** (same shape as every other
-external-service feature this session, e.g. SCANDEX_API_TOKEN): run the new
-migration, and set new Vercel env vars for the VAPID keypair + a shared
-secret for the send endpoint (I'll give the exact values and steps when
-it's ready — nothing to generate or sign up for on EK's end).
+**Everything was rotated** — new VAPID keypair, new internal secret — and
+the new values were given to EK only in chat, never committed anywhere.
+**Not yet decided**: whether to purge the old (now-rotated, no longer
+valid, but still historically visible) secrets from git history — flagged
+to EK as optional since this repo has multiple concurrent Claude/Codex
+sessions and a history-rewriting force-push could disrupt them; safe to
+skip since rotation alone closes the actual hole.
 
 ### DONE (2026-08-21) — Real accounts invisible to collector search (4 migrations, live-verified)
 EK: "Search is not working for me, are real users in here? ... I have more

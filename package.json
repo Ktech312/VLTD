@@ -34,6 +34,7 @@
     "react-easy-crop": "^5.5.7",
     "stripe": "^22.2.2",
     "tesseract.js": "^7.0.0",
+    "web-push": "^3.6.7",
     "xlsx": "^0.18.5",
     "zxing-wasm": "^3.1.2"
   },
@@ -43,6 +44,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "autoprefixer": "^10.4.27",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
