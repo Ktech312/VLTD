@@ -834,6 +834,28 @@ function TopNavInner() {
               </div>
             </div>
           </div>
+          {signedIn && levelInfo && (
+            <div className="px-4 py-3.5" style={{ borderBottom: "1px solid rgba(203,208,213,0.10)" }}>
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-sm font-black" style={{ color: "#4FD3EE" }}>
+                  {levelInfo.title} · Level {levelInfo.level}
+                </span>
+                <span className="shrink-0 text-[11px]" style={{ color: "var(--muted2, #61656B)" }}>
+                  {levelInfo.points} pts
+                </span>
+              </div>
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full" style={{ background: "rgba(203,208,213,0.12)" }}>
+                <div
+                  className="h-full rounded-full"
+                  style={{ width: `${Math.round(levelInfo.progress * 100)}%`, background: "#4FD3EE" }}
+                />
+              </div>
+              <div className="mt-1.5 text-[11px]" style={{ color: "var(--muted2, #61656B)" }}>
+                {Math.max(0, levelInfo.nextLevelAt - levelInfo.points)} pts to Level {levelInfo.level + 1} — earned from
+                items you add (+10), exhibitions you build (+40), and followers (+5 each).
+              </div>
+            </div>
+          )}
           <div className="px-2 py-2">
             {signedIn ? (
               <>
