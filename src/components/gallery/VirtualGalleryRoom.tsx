@@ -645,39 +645,44 @@ function distributeAcrossWalls(
 
 function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition[] {
   if (layout === "spotlight") {
-    return Array.from({ length: count }, (_, index) => {
-      if (index === 0) {
-        return {
-          x: 0,
-          y: 3.25,
-          z: -9.7,
-          ry: 0,
-          scale: 1.44,
-          wall: "center",
-        };
-      }
-
-      const sideIndex = index - 1;
-      const wall = sideIndex % 2 === 0 ? "left" : "right";
-      const slot = Math.floor(sideIndex / 2);
-      return {
-        x: wall === "left" ? -10.22 : 10.22,
-        y: shelfItemY(slot % 4, 0.74),
-        z: -8.8 + Math.floor(slot / 4) * 2.2,
-        ry: wall === "left" ? Math.PI / 2 : -Math.PI / 2,
-        scale: 0.74,
-        wall,
-      };
+    // EK's redesign: one big feature piece per wall (back/left/right),
+    // not one feature for the whole room with everything else sidelined —
+    // that read as "one picture and not much else." Each wall gets its
+    // own hero at a dedicated elevated height (above the regular shelf
+    // rows, so it never competes with them), then whatever's left over
+    // fills the normal shelf grid across all three walls underneath, same
+    // density as storefront.
+    const allHeroSlots: RoomItemPosition[] = [
+      { x: 0, y: 3.85, z: -9.55, ry: 0, scale: 1.7, wall: "back" },
+      { x: -9.95, y: 3.85, z: -3.2, ry: Math.PI / 2, scale: 1.7, wall: "left" },
+      { x: 9.95, y: 3.85, z: -3.2, ry: -Math.PI / 2, scale: 1.7, wall: "right" },
+    ];
+    const heroSlots = allHeroSlots.slice(0, count);
+    const remaining = Math.max(0, count - heroSlots.length);
+    const supporting = distributeAcrossWalls(remaining, {
+      backZ: -11.78,
+      backScale: 0.58,
+      sideBaseZ: -9.25,
+      sideZStep: 2.1,
+      sideScale: 0.6,
     });
+    return [...heroSlots, ...supporting];
   }
 
   if (layout === "salon") {
+    // Was nearly identical to storefront below (backZ/sideBaseZ off by
+    // ~0.1-0.15, scale off by 0.02) — invisible in practice, which is
+    // why Store and Salon looked like the same layout. A real salon hang
+    // is densely packed, smaller pieces, floor-to-ceiling — so this now
+    // uses a meaningfully smaller scale and a much tighter side-wall step
+    // (1.55 vs storefront's 2.35) so more pieces visibly fit per wall
+    // length instead of just being slightly smaller in the same spacing.
     return distributeAcrossWalls(count, {
       backZ: -11.82,
-      backScale: 0.58,
-      sideBaseZ: -9.4,
-      sideZStep: 2.35,
-      sideScale: 0.68,
+      backScale: 0.42,
+      sideBaseZ: -9.6,
+      sideZStep: 1.55,
+      sideScale: 0.48,
     });
   }
 
@@ -1026,6 +1031,33 @@ export default function VirtualGalleryRoom() {
     );
     warm.position.set(-4.5, 2.4, 1.8);
     scene.add(warm);
+
+    // "Hero" layout now has one feature piece per wall (buildWallPositions)
+    // — each needs its own light, or only the back one would read as
+    // spotlit and the side ones would just be big pictures under regular
+    // room lighting again. Positions mirror the three hero slots exactly,
+    // each light pulled up and slightly toward room-center from its target
+    // so the beam rakes across the piece instead of hitting it dead-on.
+    if (!inHub && roomLayout === "spotlight") {
+      const heroTargets: Array<[number, number, number]> = [
+        [0, 3.85, -9.55],
+        [-9.95, 3.85, -3.2],
+        [9.95, 3.85, -3.2],
+      ];
+      const heroLightPositions: Array<[number, number, number]> = [
+        [0, 6.6, -8.15],
+        [-8.1, 6.6, -3.2],
+        [8.1, 6.6, -3.2],
+      ];
+      heroTargets.forEach(([tx, ty, tz], index) => {
+        const [lx, ly, lz] = heroLightPositions[index];
+        const heroSpot = new THREE.SpotLight(0xffffff, 12, 10, Math.PI / 9, 0.4, 1.2);
+        heroSpot.position.set(lx, ly, lz);
+        heroSpot.target.position.set(tx, ty, tz);
+        scene.add(heroSpot);
+        scene.add(heroSpot.target);
+      });
+    }
 
     const modelUrl = ROOM_MODEL_URLS[roomStyle];
     if (!inHub && modelUrl) {
