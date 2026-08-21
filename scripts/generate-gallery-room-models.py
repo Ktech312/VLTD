@@ -305,8 +305,13 @@ def style_mats(style):
             "black": make_mat("black iron bars", (0.01, 0.011, 0.012, 1), 0.62, 0.65),
         }
     if style == "whitebox":
+        # Darkened further — the first round of darkening was correct on
+        # paper (confirmed via the exported material data) but still read
+        # as pale in the live app after lighting, per EK's direct
+        # screenshot. Rather than keep chasing this through light values
+        # alone, gave the floor more margin too.
         floor_tones = [make_mat(f"white_floor_{i}", c, 0.5, 0.0) for i, c in enumerate([
-            (0.64, 0.48, 0.31, 1), (0.72, 0.55, 0.35, 1), (0.56, 0.41, 0.27, 1), (0.76, 0.61, 0.42, 1)
+            (0.50, 0.36, 0.22, 1), (0.58, 0.42, 0.25, 1), (0.42, 0.29, 0.18, 1), (0.62, 0.47, 0.30, 1)
         ])]
         return {
             "wall": make_mat("warm plaster gallery wall", (0.86, 0.82, 0.72, 1), 0.86, 0.0),
@@ -324,7 +329,11 @@ def style_mats(style):
             # difference needed." This is shelves, baseboards, and case
             # caps — everything that needs to read as distinct trim, not
             # more wall.
-            "trim": make_mat("carved walnut trim", (0.42, 0.36, 0.28, 1), 0.55, 0.0),
+            # Darkened again — 0.42 base was still reading pale in the live
+            # app after lighting (confirmed by EK's screenshot, not
+            # assumed). Going further this round instead of another small
+            # nudge.
+            "trim": make_mat("carved walnut trim", (0.30, 0.25, 0.19, 1), 0.55, 0.0),
             # Was missing entirely — add_wall_panels() falls back to `trim`
             # for panel_seam when a style doesn't define one, so the
             # architrave/molding division lines were the same near-wall

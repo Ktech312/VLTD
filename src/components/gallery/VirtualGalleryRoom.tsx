@@ -78,9 +78,9 @@ const MAX_ROOM_ITEMS = 32;
 // "blue" has no entry — it's the hand-coded shell shown permanently, with
 // no GLB to load at all. See the RoomStyle type above for what that means.
 const ROOM_MODEL_URLS: Partial<Record<RoomStyle, string>> = {
-  vault: "/models/gallery-rooms/vault-room.glb?v=corner-post-1",
-  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=corner-post-1",
-  arcade: "/models/gallery-rooms/arcade-room.glb?v=corner-post-1",
+  vault: "/models/gallery-rooms/vault-room.glb?v=white-darker-2",
+  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=white-darker-2",
+  arcade: "/models/gallery-rooms/arcade-room.glb?v=white-darker-2",
 };
 
 // The 5 center display cases (built further down as decorative glass cabinets)
@@ -937,7 +937,11 @@ export default function VirtualGalleryRoom() {
     // already-light cream/white surfaces toward blown-out white — white has
     // far less headroom before clipping than vault's dark navy did, so the
     // same exposure that reads fine on vault reads as washed out on white.
-    renderer.toneMappingExposure = roomStyle === "whitebox" ? 0.92 : (roomStyle === "vault" || roomStyle === "blue") ? 0.92 : 0.98;
+    // Cut again — 0.92 (matching vault) still read pale live per EK's
+    // screenshot, even with the material darkening above. Going lower than
+    // vault's own value this time instead of just matching it, since
+    // white's base materials start lighter to begin with.
+    renderer.toneMappingExposure = roomStyle === "whitebox" ? 0.68 : (roomStyle === "vault" || roomStyle === "blue") ? 0.92 : 0.98;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
@@ -988,10 +992,13 @@ export default function VirtualGalleryRoom() {
     // materials. Dropped to line up with the same intensity vault/blue use,
     // since the GLB's own baked brightness needs far less help than the
     // hand-coded shell did.
+    // Cut again — 2.4 still read pale live. Going lower than the "matches
+    // vault" instinct this round since that instinct already proved
+    // insufficient once.
     const hemi = new THREE.HemisphereLight(
       0xffffff,
       0x3a3a3a,
-      inHub ? 2.6 : roomStyle === "whitebox" ? 2.4 : 3.9
+      inHub ? 2.6 : roomStyle === "whitebox" ? 1.5 : 3.9
     );
     scene.add(hemi);
     // Both of these were left at vault's intensity for whitebox too (only
@@ -1004,7 +1011,7 @@ export default function VirtualGalleryRoom() {
     // would have caught this; it's a Three.js-side problem specifically.
     const key = new THREE.SpotLight(
       palette.glow,
-      inHub ? 9.5 : roomStyle === "whitebox" ? 3.2 : 7.2,
+      inHub ? 9.5 : roomStyle === "whitebox" ? 1.7 : 7.2,
       26,
       Math.PI / 5,
       0.55,
@@ -1014,7 +1021,7 @@ export default function VirtualGalleryRoom() {
     scene.add(key);
     const warm = new THREE.PointLight(
       palette.trim,
-      roomStyle === "arcade" ? 3.5 : roomStyle === "whitebox" ? 0.7 : 1.8,
+      roomStyle === "arcade" ? 3.5 : roomStyle === "whitebox" ? 0.35 : 1.8,
       14
     );
     warm.position.set(-4.5, 2.4, 1.8);
