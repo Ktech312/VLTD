@@ -146,6 +146,93 @@ confirm with EK who owns a screen.** EK is aware of this.
 
 ---
 
+## ⚠ SESSION STATE as of 2026-08-20, latest pass — read this block first,
+it supersedes specific numbers further down this section that are now
+stale (kept below for the reasoning trail, not as current values).
+
+**Confirmed good by EK, don't re-touch without being asked:**
+- Vault — look and materials confirmed good. Do not change `roomStyle
+  === "vault"` branches (or "blue", which mirrors vault) without an
+  explicit ask.
+- White room lighting/contrast — EK confirmed "overall looks good" after
+  two rounds of darkening trim/floor + cutting exposure/hemi/spot/point
+  light values specifically for whitebox. Current values: trim base
+  `(0.30, 0.25, 0.19)`, floor tones darkened to match, `toneMappingExposure
+  = 0.68`, hemisphere `1.5`, key spotlight `1.7`, warm point light `0.35`
+  (all whitebox-specific, in `VirtualGalleryRoom.tsx`'s big mount effect
+  and `style_mats()` in the generator script). EK's one remaining ask:
+  shelf/floor color should still lean closer to the Blender reference
+  render (warmer/richer walnut-brown) — not urgent, room is no longer
+  "washed out."
+- Corner-trim gap — fixed via a solid corner post (not fragile width-
+  matching), verified with a direct Blender render. Confirmed via EK's own
+  screenshot to no longer show as a black gap/hole.
+- Glass transparency (was "whited out," worst in White) — real bug, not
+  lighting: `make_mat()` in the generator script wasn't setting the
+  Principled BSDF's Alpha socket, so every "glass" material exported fully
+  opaque regardless of the alpha specified in Python. Fixed, confirmed by
+  reading the exported material JSON, confirmed live by EK's screenshot
+  showing genuinely transparent case glass.
+- Display-case items were floating 0.13 units ABOVE the case's own glass
+  cap (resting on top of the closed case, not inside it) — fixed, moved to
+  y=0.85, also made double-sided.
+
+**In progress right now — Store/Salon/Hero layout, EK's direct ask:**
+EK: "I don't really see much of a difference between Store, Salon and
+Hero... the names don't make sense," then after a first attempt: "for
+hero... now its a huge box, which looks really bad" and "Salon and store
+still look the same to me... [smaller items] make them way too hard to
+see." Two real bugs found and being fixed:
+1. **Hero's "huge box" bug**: the wall-mounted item frame mesh
+   (`VirtualGalleryRoom.tsx`, the `frame` BoxGeometry right after the card
+   `PlaneGeometry`) stretches its own depth to reach the actual wall,
+   assuming items sit close to it (`frameDepth = wallGap - frontOffset +
+   backOverlap`). The first Hero redesign positioned the 3 feature items
+   0.55–2.45 units off their walls for "presence" — with that much gap,
+   frameDepth blew up to as much as ~2.5 units, producing an actual box,
+   and because that box's depth spans back to the wall, it occupies the
+   same space as the shelf boards mounted there (EK's earlier "rails
+   crossing the picture" observation on the back-wall hero was the same
+   root cause). **Fix in progress:** hero items moved back to flush
+   wall-mount positions (z=-11.78 back, x=±10.22 sides, matching how
+   normal items sit) and repositioned to y=5.96 — dedicated headroom
+   between the top shelf row (y=4.72) and the top wall rail (y=7.2), so
+   nothing crosses the frame at all. Scale dropped from 1.7 to 1.2 to fit
+   that gap. **NOT YET DONE:** the three hero spotlights (added in the
+   previous pass, aimed at the OLD y=3.85 / z=-9.55/-3.2 / x=∓9.95
+   positions) still need their target coordinates updated to match — until
+   that's fixed the lights point at empty space, not the relocated items.
+2. **Salon/Store contrast**: original attempt only shrank Salon's scale
+   (0.48) with tighter spacing (1.55 step) — with few actual items in a
+   real collection, tighter spacing along the wall barely shows (not
+   enough items to fill even one row), so shrinking was the only visible
+   change, and it just made items hard to see rather than reading as
+   "densely packed." Rebalanced: Salon's scale brought back up to 0.58
+   (still smaller than Store, but legible) with the tight 1.5 step kept;
+   Store pushed the OTHER direction — bigger (0.78 side scale, up from
+   0.66) and much more spread out (3.0 step, up from 2.35) — so the
+   contrast comes from both ends instead of Salon alone trying to look
+   different. This part is done and should be visually distinct now.
+
+**Plan / next steps for whoever picks this up (or continues right now):**
+1. Fix the hero spotlight target coordinates (see above — mechanical,
+   just needs the same y=5.96/z=-11.78/x=±10.22 values the item positions
+   already use).
+2. `npx tsc --noEmit`, `npx eslint`, `npm run build` — all clean before
+   committing (has been the pattern all session, keep it up).
+3. Commit + push to `claude/museum-map-doorways`. No GLB regeneration
+   needed for this round — it's pure `VirtualGalleryRoom.tsx` item-
+   placement/lighting logic, not baked geometry.
+4. Ask EK to check Hero (all 3 walls, confirm no box/crossing-rails) and
+   Salon vs. Store (confirm they now read as visibly different) live —
+   this session's browser screenshot tool has been unreliable for direct
+   verification (see tooling note further down); EK's own screenshots are
+   the working feedback loop right now.
+5. Still open, not yet addressed: EK's ask that White's shelf/floor color
+   lean closer to the Blender reference render's warmer walnut tone.
+
+---
+
 ## ⚠ CURRENT ARCHITECTURE (2026-08-20+) — read this before the "Big update
 2026-08-14/15" section below, which describes an approach that's been
 **replaced**. Kept for history, not current.
