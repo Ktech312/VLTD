@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated, eleventh pass — real accounts invisible to search fixed (4 migrations) — ALL CONFIRMED LIVE, no migrations pending)
+# VLTD — Session Handoff (updated, twelfth pass — search-visibility fix confirmed live; Web Push for DMs scoped in §2, build starting now)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -178,6 +178,59 @@ who owns a screen.** EK is aware of this.
 ---
 
 ## 2. What's LEFT to do (prioritized)
+
+### NEXT UP — Web Push notifications for DMs (scoped 2026-08-21, not started)
+EK asked: can someone get alerted about a new message/alert even with the
+app fully closed, if they've installed VLTD to their home screen (the
+"quick link icon")? Yes — this is **Web Push**, and it's genuinely free (no
+paid service; uses each browser vendor's own push infrastructure — Chrome/
+Android via FCM, Safari/iOS via Apple's push service, both free; the
+`web-push` npm library is open source). Works on Android/desktop Chrome
+today even without installing; on iOS it requires iOS 16.4+ AND the user
+having actually done "Add to Home Screen" first — matches exactly what EK
+described. EK confirmed: build it, document the plan here first before
+writing code.
+
+**Scope for v1: new Direct Messages only.** Not alerts (follows/comments/
+bug replies) yet — same pipeline will make those a fast follow later, just
+another trigger calling the same send endpoint. Keeping v1 to DMs keeps the
+first pass small and testable, and DMs are what actually prompted this ask.
+
+**Pieces needed (none exist yet — confirmed via grep, no service worker,
+no Push API usage anywhere in the codebase):**
+1. **VAPID keys** — a public/private keypair that authenticates VLTD's
+   server to push services. Generated once (no external account, no cost),
+   not user-specific. I generate these; EK just pastes them into Vercel.
+2. **New migration** — `push_subscriptions` table (`profile_id`,
+   `endpoint`, `p256dh`, `auth`, timestamps), RLS scoped to own profile.
+   One row per device/browser a person has enabled notifications on.
+3. **Service worker** (`public/sw.js`, new file) — handles the `push`
+   event (shows the OS-level notification) and `notificationclick` (opens/
+   focuses the app to the right conversation). Currently VLTD has a
+   manifest (installable) but no service worker at all.
+4. **Opt-in UI** — a "Enable notifications" toggle, most likely in Account
+   Settings (not a nagging popup). Registers the service worker, requests
+   browser permission, subscribes, saves the subscription to Supabase.
+5. **Send endpoint** — `POST /api/push/send` (internal-only, protected by
+   a shared-secret header, not user-facing) — looks up a profile's saved
+   subscriptions and sends via `web-push`, using the VAPID keys. Cleans up
+   subscriptions the push service reports as dead (410/404).
+6. **The real-time trigger** — this is the one genuine unknown. Plan: a
+   Postgres trigger on `direct_messages` INSERT using the `pg_net`
+   extension (`net.http_post`) to call the send endpoint the instant a
+   message lands, same shape as the existing `touch_conversation_on_message`
+   trigger. **Risk**: `pg_net` needs to actually be enabled on EK's Supabase
+   project — unconfirmed until the migration is run. If it's not available,
+   fallback is Supabase's dashboard-configured "Database Webhooks" (a few
+   manual clicks in the Supabase dashboard, not a migration) — same end
+   result, just configured differently. Will find out when the migration
+   runs and adjust if needed.
+
+**What EK will need to do once it's built** (same shape as every other
+external-service feature this session, e.g. SCANDEX_API_TOKEN): run the new
+migration, and set new Vercel env vars for the VAPID keypair + a shared
+secret for the send endpoint (I'll give the exact values and steps when
+it's ready — nothing to generate or sign up for on EK's end).
 
 ### DONE (2026-08-21) — Real accounts invisible to collector search (4 migrations, live-verified)
 EK: "Search is not working for me, are real users in here? ... I have more
