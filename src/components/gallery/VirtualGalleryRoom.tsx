@@ -647,15 +647,24 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
   if (layout === "spotlight") {
     // EK's redesign: one big feature piece per wall (back/left/right),
     // not one feature for the whole room with everything else sidelined —
-    // that read as "one picture and not much else." Each wall gets its
-    // own hero at a dedicated elevated height (above the regular shelf
-    // rows, so it never competes with them), then whatever's left over
-    // fills the normal shelf grid across all three walls underneath, same
-    // density as storefront.
+    // that read as "one picture and not much else." First pass positioned
+    // these pulled 0.55-2.45 units off the wall for presence — but the
+    // frame mesh below stretches its own depth to reach the actual wall,
+    // assuming items sit close to it (see the frameDepth comment further
+    // down). Pulled that far off the wall, it stretched into a genuinely
+    // deep box (EK: "now it's a huge box"), and because that box's depth
+    // spans all the way back to the wall, it occupies the same space as
+    // the shelf boards mounted there — which is what read as shelf rails
+    // crossing in front of the picture. Fix: keep the hero flush with the
+    // wall like a normal item (small, normal frame depth), and instead of
+    // relying on scale/depth for presence, give it dedicated headroom
+    // between the top shelf row (y=4.72) and the top wall rail (y=7.2) —
+    // a real gap with nothing else in it, so nothing crosses the frame at
+    // all, and it reads as "built into the wall" the way EK asked for.
     const allHeroSlots: RoomItemPosition[] = [
-      { x: 0, y: 3.85, z: -9.55, ry: 0, scale: 1.7, wall: "back" },
-      { x: -9.95, y: 3.85, z: -3.2, ry: Math.PI / 2, scale: 1.7, wall: "left" },
-      { x: 9.95, y: 3.85, z: -3.2, ry: -Math.PI / 2, scale: 1.7, wall: "right" },
+      { x: 0, y: 5.96, z: -11.78, ry: 0, scale: 1.2, wall: "back" },
+      { x: -10.22, y: 5.96, z: -3.2, ry: Math.PI / 2, scale: 1.2, wall: "left" },
+      { x: 10.22, y: 5.96, z: -3.2, ry: -Math.PI / 2, scale: 1.2, wall: "right" },
     ];
     const heroSlots = allHeroSlots.slice(0, count);
     const remaining = Math.max(0, count - heroSlots.length);
@@ -670,28 +679,36 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
   }
 
   if (layout === "salon") {
-    // Was nearly identical to storefront below (backZ/sideBaseZ off by
-    // ~0.1-0.15, scale off by 0.02) — invisible in practice, which is
-    // why Store and Salon looked like the same layout. A real salon hang
-    // is densely packed, smaller pieces, floor-to-ceiling — so this now
-    // uses a meaningfully smaller scale and a much tighter side-wall step
-    // (1.55 vs storefront's 2.35) so more pieces visibly fit per wall
-    // length instead of just being slightly smaller in the same spacing.
+    // First darkening pass (0.48 scale, 1.55 step) still read as "the same
+    // as Store" per EK — because with only a handful of items in a real
+    // collection, tighter spacing along the wall barely shows (there
+    // aren't enough items to even fill one row), so shrinking Salon was
+    // the only thing that actually changed, and it just made pieces
+    // harder to see rather than reading as "densely packed." Rather than
+    // shrink Salon further, pushed Store to be more generously spaced/
+    // sized instead (see below) so the contrast comes from both ends —
+    // and brought Salon's scale back up to something still legible while
+    // keeping the tight step, since "dense but readable" is the actual
+    // salon-hang look, not "tiny."
     return distributeAcrossWalls(count, {
       backZ: -11.82,
-      backScale: 0.42,
+      backScale: 0.52,
       sideBaseZ: -9.6,
-      sideZStep: 1.55,
-      sideScale: 0.48,
+      sideZStep: 1.5,
+      sideScale: 0.58,
     });
   }
 
+  // Store: pushed wider/bigger than before (was backScale 0.58, sideZStep
+  // 2.35, sideScale 0.66) for real contrast against Salon's tight density
+  // — a boutique, generously-spaced feel with fewer, larger pieces per
+  // wall length, instead of two layouts occupying the same middle ground.
   return distributeAcrossWalls(count, {
     backZ: -11.78,
-    backScale: 0.58,
+    backScale: 0.7,
     sideBaseZ: -9.25,
-    sideZStep: 2.35,
-    sideScale: 0.66,
+    sideZStep: 3.0,
+    sideScale: 0.78,
   });
 }
 
@@ -1039,15 +1056,20 @@ export default function VirtualGalleryRoom() {
     // each light pulled up and slightly toward room-center from its target
     // so the beam rakes across the piece instead of hitting it dead-on.
     if (!inHub && roomLayout === "spotlight") {
+      // Targets match the hero item positions exactly (buildWallPositions
+      // above: y=5.96, back z=-11.78, side x=+-10.22 — flush wall-mount,
+      // not pulled forward). Light positions pulled up and into the room
+      // from each target so the beam rakes across the piece from above/
+      // in front, the way a real gallery spotlight would.
       const heroTargets: Array<[number, number, number]> = [
-        [0, 3.85, -9.55],
-        [-9.95, 3.85, -3.2],
-        [9.95, 3.85, -3.2],
+        [0, 5.96, -11.78],
+        [-10.22, 5.96, -3.2],
+        [10.22, 5.96, -3.2],
       ];
       const heroLightPositions: Array<[number, number, number]> = [
-        [0, 6.6, -8.15],
-        [-8.1, 6.6, -3.2],
-        [8.1, 6.6, -3.2],
+        [0, 7.4, -9.0],
+        [-7.4, 7.4, -3.2],
+        [7.4, 7.4, -3.2],
       ];
       heroTargets.forEach(([tx, ty, tz], index) => {
         const [lx, ly, lz] = heroLightPositions[index];
