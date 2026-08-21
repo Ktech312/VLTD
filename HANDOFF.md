@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated, tenth pass — Messages got compose/star/hide + a real multi-profile bug fix — TWO MIGRATIONS PENDING, see §2)
+# VLTD — Session Handoff (updated, tenth pass — Messages got compose/star/hide + a real multi-profile bug fix — ALL CONFIRMED LIVE, no migrations pending)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -42,16 +42,16 @@ is risky or can't be done, say so plainly.
   ask EK to run it. **Never add a new column to the cloud row map
   (`src/lib/vaultCloud.ts`) without the migration** — unknown columns make the
   `vault_items` upsert throw.
-  **⚠️ TWO MIGRATIONS PENDING — run these before testing Messages further:**
-  `supabase/migrations/20260820_conversation_prefs.sql` (star/hide table + RLS,
-  and re-creates `touch_conversation_on_message()` to un-hide on new activity)
-  and `supabase/migrations/20260820_fix_dm_active_profile_scope.sql` (fixes a
-  real bug found live-testing compose: `get_or_create_conversation` and
-  `mark_conversation_read` now take the caller's profile id as an explicit
-  parameter instead of guessing it server-side — see §2's Messages entry for
-  the full story). **Until both run, starting a NEW conversation from the
-  compose panel will hard-fail** (the deployed client now calls the RPCs with
-  the new 2-argument signature, which won't exist in the database yet).
+  **✅ NO MIGRATIONS PENDING.** `supabase/migrations/20260820_conversation_prefs.sql`
+  (star/hide table + RLS, and re-creates `touch_conversation_on_message()` to
+  un-hide on new activity) and `supabase/migrations/20260820_fix_dm_active_profile_scope.sql`
+  (fixes the multi-profile conversation-vanishing bug, see §2's Messages
+  entry) — **both confirmed run by EK 2026-08-20, and re-verified live**:
+  compose search, starting a new conversation (now actually persists —
+  confirmed surviving a hard reload), sending, starring (persists), and
+  hiding (persists) all tested working via the connected Chrome session.
+  The resurface-on-hide-when-new-message-arrives trigger is unverified live
+  (needs a second account to send the reply) but was reviewed and is simple.
   `supabase/migrations/20260812_profiles_stripe_customer_id.sql`
   (adds `profiles.stripe_customer_id`, see §2I) — **confirmed run by EK
   2026-08-12.** The webhook can now persist the real customer id;
@@ -304,12 +304,12 @@ already used) and verify it belongs to `auth.uid()` server-side instead of
 guessing. Updated `directMessages.ts` and both call sites (`messages/page.tsx`,
 `MessageButton.tsx`) to pass it through.
 
-**⚠️ Both migrations above are still pending — EK needs to run them.** Until
-then, the deployed client calls `get_or_create_conversation`/
-`mark_conversation_read` with the new 2-argument signature, which won't
-exist in the database yet — clicking a search result in "+ New Message"
-will hard-fail (loud, not silent — better than the original bug, but
-compose is non-functional until EK runs both SQL files).
+**Both migrations confirmed run by EK 2026-08-20 and re-verified live** via
+the connected Chrome session: compose search returns real collectors,
+starting a conversation now actually persists (confirmed surviving a hard
+reload — this is the exact case that was broken before the fix), sending a
+message works and updates the list preview, starring fills cyan and
+persists across reload, hiding removes the row and persists across reload.
 
 ### DONE (2026-08-18) — Full-bleed PageHeader rollout: Lounge, Messages, Insights, Vault, Discover, Exhibitions
 EK spotted a dark "pinstripe" strip behind the title on Lounge and Messages but
@@ -1946,15 +1946,14 @@ subscribe.
    re-check the new not-this-chat's file list in §0 (Aug 11) before touching
    anything under `museum/`, `owner-lab/`, or the repo-root `marketing/`/
    `product/` folders.
-2. **⚠️ TWO MIGRATIONS PENDING** — `20260820_conversation_prefs.sql` (star/
-   hide) and `20260820_fix_dm_active_profile_scope.sql` (fixes the
-   multi-profile conversation-vanishing bug) both need EK to run them before
-   Messages' compose/star/hide is functional — see §2's 2026-08-20 Messages
-   entry for the full story. `20260819_server_side_tier_limits.sql`
+2. **No migrations pending** — `20260820_conversation_prefs.sql` (star/hide)
+   and `20260820_fix_dm_active_profile_scope.sql` (fixes the multi-profile
+   conversation-vanishing bug) were both confirmed run by EK 2026-08-20 and
+   re-verified live — see §2's 2026-08-20 Messages entry. `20260819_server_side_tier_limits.sql`
    (server-side billing enforcement) and `20260819_direct_messages.sql`
    (real DMs) were both confirmed run by EK 2026-08-20. `SCANDEX_API_TOKEN`
    is also DONE — set, deployed, and confirmed working live 2026-08-20 (see
-   §2 item 3's update) — don't re-flag any of these three.
+   §2 item 3's update) — don't re-flag any of these.
    Everything before that (Stripe customer-id, lookup-API guard,
    gallery-alias, lounge-posts) is confirmed run. Cross-device billing
    (Payment method/Invoices/Cancel) is live; worth a glance at
