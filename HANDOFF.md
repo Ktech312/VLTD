@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated, fourteenth pass — Web Push secret leak found by outside researcher + fixed, EK needs to rotate 3 Vercel env vars + run 1 SQL command, see §2)
+# VLTD — Session Handoff (updated, fifteenth pass — Web Push CONFIRMED WORKING live on phone + desktop, security incident closed, Messages now live-updates — ALL CONFIRMED LIVE, no migrations pending)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -179,46 +179,72 @@ who owns a screen.** EK is aware of this.
 
 ## 2. What's LEFT to do (prioritized)
 
-### BUILT, ACTIVE, ONE SECURITY INCIDENT ALREADY HANDLED — Web Push notifications for DMs (2026-08-21)
+### DONE, CONFIRMED WORKING LIVE (phone + desktop) — Web Push notifications for DMs (2026-08-21)
 EK asked: can someone get alerted about a new message even with the app
-fully closed, if they've installed VLTD to their home screen (the "quick
-link icon")? Yes — **Web Push**, genuinely free, works on Android/desktop
-Chrome always, iOS needs 16.4+ AND "Add to Home Screen" done first. Scoped
-in this file first, then built: `supabase/migrations/20260821_push_notifications.sql`
-(`push_subscriptions` table + RLS + a `pg_net`-based trigger firing the
-instant a DM is inserted), `public/sw.js` (VLTD's first service worker),
-`src/lib/pushNotifications.ts` (subscribe/unsubscribe), `src/app/api/push/send-internal`
-(the actual send via `web-push`), and a real "New message alerts" toggle in
-Account Settings. **v1 is DMs only** — alerts (follows/comments) are a
-trivial fast-follow on the same pipeline later.
+fully closed, if they've installed VLTD to their home screen? Yes — **Web
+Push**, genuinely free. Built: `push_subscriptions` table + RLS, a
+`pg_net`-based trigger on `direct_messages` firing the instant a message
+lands, `public/sw.js` (VLTD's first service worker), `src/lib/pushNotifications.ts`
+(subscribe/unsubscribe), `src/app/api/push/send-internal` (the actual send
+via `web-push`), and a "New message alerts" toggle in Account Settings —
+**plus a banner right on `/messages` itself** (added after EK correctly
+pointed out nobody would ever find the toggle buried in settings). **v1 is
+DMs only** — alerts (follows/comments) are a trivial fast-follow on the
+same pipeline later.
 
-**⚠️ SECURITY INCIDENT, already fixed in code — read this if touching push
-notifications again.** The first migration hardcoded `PUSH_INTERNAL_SECRET`
-in plain text directly in the trigger function's SQL — which got committed
-to this PUBLIC GitHub repo. An outside security researcher found it via the
-public repo, verified the leaked token still authenticated against
-production (read-only — a POST with a nonexistent profile id, so no real
-user was ever notified), and reported it responsibly. Same mistake also put
-all 4 Web Push secrets (VAPID keypair included) in a table in THIS file,
-also committed publicly — that table has been removed from this doc.
+**⚠️ SECURITY INCIDENT, fully closed — read this if touching push again.**
+The first migration hardcoded `PUSH_INTERNAL_SECRET` in plain text in the
+trigger function, committed to this PUBLIC repo. An outside security
+researcher (responsible disclosure, verified via a harmless read-only test)
+and GitGuardian's automated scanner both caught it independently. Same
+mistake put the full Web Push secret set (VAPID keypair included) in a
+table in this file, also committed publicly.
 
-**Root cause / the actual lesson**: giving EK a secret value directly in
-chat for one-time setup is fine (chat isn't a public repo). Writing that
-same value into ANY file that gets committed — a migration, this handoff
-doc, anything — is never fine on a public repo, full stop, no matter how
-"internal" the file feels. Fixed architecturally too, not just patched:
-`supabase/migrations/20260821_push_secret_to_vault.sql` moved the secret
-out of SQL entirely into Supabase Vault (encrypted at rest, referenced by
-name, never written to a file again) — this is now the correct pattern for
-any future secret a Postgres trigger needs to send.
+**The lesson**: giving EK a secret value directly in chat for one-time
+setup is fine (chat isn't a public repo). Writing that same value into ANY
+committed file — migration, this doc, anything — is never fine on a public
+repo, no matter how "internal" it feels. **Fully remediated**: everything
+rotated (new VAPID keypair, new internal secret, values given only in
+chat, never committed again); the secret was moved out of SQL entirely
+into Supabase Vault (`supabase/migrations/20260821_push_secret_to_vault.sql`
+— encrypted at rest, referenced by name, the correct pattern for any
+future trigger secret); and **the two tainted commits were removed from git
+history** (squashed + force-pushed at EK's explicit request, confirmed no
+other sessions were using the repo at the time) — `main`'s history no
+longer contains either leaked secret anywhere.
 
-**Everything was rotated** — new VAPID keypair, new internal secret — and
-the new values were given to EK only in chat, never committed anywhere.
-**Not yet decided**: whether to purge the old (now-rotated, no longer
-valid, but still historically visible) secrets from git history — flagged
-to EK as optional since this repo has multiple concurrent Claude/Codex
-sessions and a history-rewriting force-push could disrupt them; safe to
-skip since rotation alone closes the actual hole.
+**Live-verified working, after an extensive real-device debugging session**
+(worth reading if push ever seems broken again): the full pipeline —
+subscribe → DB trigger → `pg_net` → send-internal → `web-push` → Google's
+push service → OS notification — was confirmed delivering real
+notifications to both EK's iPhone (lock screen banner) and Windows desktop
+(Notification Center). Two real gotchas hit along the way, worth knowing:
+1. **Claude-in-Chrome runs a separate browser/profile from EK's everyday
+   Chrome** — subscribing "through Claude" doesn't subscribe the browser EK
+   actually uses. Any future live push testing must be done by EK clicking
+   the toggle themselves, in their own browser.
+2. Chrome's background push connection can go **stale mid-session** under
+   heavy testing (many reloads/profile-switches/devtools-interactions in a
+   short window) — pushes get accepted server-side (`{"sent":1}`) and
+   queued by Google, but silently don't arrive until Chrome fully restarts,
+   at which point queued ones land all at once. Not a code bug; if push
+   seems to stop working mid-testing-session, a full Chrome restart is the
+   first thing to try before assuming something broke.
+3. DevTools' Application → Service Workers → "Push" test button simulates
+   a push locally, bypassing real encryption/delivery entirely — useful to
+   confirm the service worker code itself is fine, but a "yes" there
+   doesn't prove real end-to-end delivery works.
+
+**Also fixed same day, found via this same testing**: account settings
+toggles now turn **green** when on instead of gold-vs-grey ("two shades and
+i don't know what is what" — EK); and `/messages` didn't live-update a new
+message without leaving and reloading the page — fixed via Postgres
+realtime on `direct_messages`/`conversations`
+(`supabase/migrations/20260821_dm_realtime.sql`, same pattern as the
+existing auction-bids realtime), confirmed run.
+
+(The seed-character system came up again during this testing — see the
+search-visibility entry below for the full context, not repeating it here.)
 
 ### DONE (2026-08-21) — Real accounts invisible to collector search (4 migrations, live-verified)
 EK: "Search is not working for me, are real users in here? ... I have more
