@@ -116,6 +116,8 @@ function rowToItem(input: unknown): VaultItem {
     certNumber: row.cert_number ?? undefined,
     serialNumber: row.serial_number ?? undefined,
     tags: Array.isArray(row.tags) ? row.tags : undefined,
+    itemType: row.item_type ?? undefined,
+    itemAttributes: Array.isArray(row.item_attributes) ? row.item_attributes : undefined,
     brand: row.brand ?? undefined,
     valueSource: row.value_source ?? undefined,
     valueUpdatedAt: row.value_updated_at ?? undefined,
@@ -308,6 +310,8 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
     cert_number: item.certNumber ?? null,
     serial_number: item.serialNumber ?? null,
     tags: item.tags ?? [],
+    item_type: item.itemType ?? null,
+    item_attributes: item.itemAttributes ?? [],
     brand: item.brand ?? null,
     value_source: item.valueSource ?? null,
     value_updated_at: item.valueUpdatedAt ?? null,
@@ -368,9 +372,11 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
     const missingTagsColumn = message.toLowerCase().includes("tags");
     const missingBrandColumn = message.toLowerCase().includes("brand");
     const missingAddedViaColumn = message.toLowerCase().includes("added_via");
+    const missingItemTypeColumn = message.toLowerCase().includes("item_type");
+    const missingItemAttributesColumn = message.toLowerCase().includes("item_attributes");
 
     const isRecoverable =
-      missingGalleryColumns || missingSoldColumns || missingVisibilityColumn || missingVideoColumns || missingTagsColumn || missingBrandColumn || missingAddedViaColumn;
+      missingGalleryColumns || missingSoldColumns || missingVisibilityColumn || missingVideoColumns || missingTagsColumn || missingBrandColumn || missingAddedViaColumn || missingItemTypeColumn || missingItemAttributesColumn;
 
     if (!isRecoverable) {
       // Unrecognised error — log and surface it
@@ -413,6 +419,14 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
 
     if (missingBrandColumn) {
       delete fallbackRow.brand;
+    }
+
+    if (missingItemTypeColumn) {
+      delete fallbackRow.item_type;
+    }
+
+    if (missingItemAttributesColumn) {
+      delete fallbackRow.item_attributes;
     }
 
     if (missingAddedViaColumn) {
