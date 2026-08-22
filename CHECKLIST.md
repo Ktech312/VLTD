@@ -15,14 +15,17 @@ explicitly requested). None of these four re-tested live yet.
 ⬜ **Private Photos as a paid feature** — EK's direction (free stays
 public, paid gets real privacy) — needs its own architecture plan, not
 started.
-✅ **`/clubs` — all 3 phases built + migrations confirmed run by EK
-2026-08-22 + given a real spot in the Lounge.** Discord works as soon as a
-club owner pastes a webhook URL into Settings — no further setup needed.
-Reddit still needs real developer-app credentials from EK in Vercel
-(`REDDIT_CLIENT_ID`/`SECRET`, `REDDIT_BOT_USERNAME`/`PASSWORD`,
-`CLUBS_INTERNAL_SECRET`) before it can post anything — genuinely
-unverified until those exist. Not yet tested live end-to-end (create a
-club, post, moderate, confirm Discord posting once a webhook's added).
+✅ **`/clubs` — all 3 original phases built + migrations confirmed run by
+EK 2026-08-22 + given a real spot in the Lounge.** Discord works as soon
+as a club owner pastes a webhook URL into Settings — no further setup
+needed. Reddit turned out to need Reddit's new manually-approved developer
+process (not self-serve anymore, EK hit this directly trying to register
+an app) — real credentials still needed in Vercel before it can post
+anything, not guaranteed to be approved at all.
+✅ **Telegram + Slack added same day** — EK: "do any free ones we can."
+Both genuinely free, zero approval process, same "credential is the
+URL/token" shape as Discord. One more migration to run — see chat.
+Nothing tested live end-to-end yet on any of the 4 platforms.
 
 ## Per-exhibition curator Alias (2026-08-18) — ✅ DONE, migration confirmed run
 EK's ask: share an Exhibition without revealing your real identity, while
