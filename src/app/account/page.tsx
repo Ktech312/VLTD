@@ -38,34 +38,6 @@ function computeAge(dobStr: string) {
   return age;
 }
 
-async function fileToCompressedDataUrl(file: File, opts?: { maxSize?: number; quality?: number }) {
-  const maxSize = opts?.maxSize ?? 256;
-  const quality = opts?.quality ?? 0.85;
-  const blobUrl = URL.createObjectURL(file);
-  try {
-    const img = new Image();
-    img.src = blobUrl;
-    await new Promise<void>((res, rej) => {
-      img.onload = () => res();
-      img.onerror = () => rej(new Error("Failed to load image"));
-    });
-    const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
-    const tw = Math.max(1, Math.round(img.width * scale));
-    const th = Math.max(1, Math.round(img.height * scale));
-    const canvas = document.createElement("canvas");
-    canvas.width = tw;
-    canvas.height = th;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("Canvas not supported");
-    ctx.drawImage(img, 0, 0, tw, th);
-    let data = canvas.toDataURL("image/webp", quality);
-    if (!data.startsWith("data:image/webp")) data = canvas.toDataURL("image/jpeg", quality);
-    return data;
-  } finally {
-    URL.revokeObjectURL(blobUrl);
-  }
-}
-
 export default function AccountPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -99,10 +71,11 @@ export default function AccountPage() {
   const [showAllUniverses, setShowAllUniverses] = useState(false);
   const [universeFocusSaving, setUniverseFocusSaving] = useState(false);
   const [universeFocusSuccess, setUniverseFocusSuccess] = useState("");
-  // Avatar (emoji is real/synced; image upload is local-only, no backend yet)
+  // Avatar (emoji and uploaded image are both real/synced via profiles.avatar_emoji/avatar_url)
   const [avatarMode, setAvatarMode] = useState<"EMOJI" | "IMAGE">("EMOJI");
   const [avatarEmoji, setAvatarEmoji] = useState("🗝️");
-  const [avatarImageDataUrl, setAvatarImageDataUrl] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [avatarUploading, setAvatarUploading] = useState(false);
   // Age verification (self-declared, not government ID) + marketing opt-in
   const [dob, setDob] = useState("");
   const [ageVerified, setAgeVerified] = useState(false);
@@ -154,12 +127,15 @@ export default function AccountPage() {
         setFocusedUniverses(seeded);
         setShowAllUniverses(!Array.isArray(fu) || (fu as string[]).length === 0);
 
-        // Avatar image/mode has no backend yet -- local cache only.
+        // Avatar emoji + uploaded image are both real (profiles table) --
+        // whichever one is actually set wins; "mode" here just remembers
+        // which tab to show, not a separate source of truth. avatar_url
+        // used to be local-only (a data: URL cached in this browser only);
+        // it's real now, so it's loaded from the profile like everything
+        // else, not a local cache.
         const localProfile = getProfileSafe();
-        setAvatarMode(localProfile.avatarMode);
-        setAvatarImageDataUrl(localProfile.avatarImageDataUrl);
-        // Avatar emoji + DOB/age/marketing ARE real (profiles table) -- the
-        // real value wins over whatever the local cache had.
+        setAvatarUrl(status.activeProfile.avatar_url ?? "");
+        setAvatarMode(status.activeProfile.avatar_url ? "IMAGE" : localProfile.avatarMode);
         setAvatarEmoji(status.activeProfile.avatar_emoji || localProfile.avatarEmoji || "🗝️");
         setDob(status.activeProfile.date_of_birth ?? "");
         setAgeVerified(Boolean(status.activeProfile.age_verified));
@@ -326,12 +302,18 @@ export default function AccountPage() {
     setIdentitySuccess("");
     try {
       const nextAgeVerified = ageVerified && canVerifyAge;
-      // Avatar image/mode has no backend yet -- keep it in the local cache
-      // alongside whatever real values are already there.
-      setProfileSafe({ ...getProfileSafe(), avatarMode, avatarImageDataUrl, avatarEmoji });
+      // Only "mode" (which tab was open) is worth caching locally now --
+      // the emoji and the uploaded image URL are both real, synced via
+      // profiles.avatar_emoji/avatar_url below.
+      setProfileSafe({ ...getProfileSafe(), avatarMode });
       broadcastProfileChange();
       await updateProfile(profileId, {
         avatar_emoji: avatarEmoji,
+        // Explicit null when on the Emoji tab -- clears a previously
+        // uploaded image so the emoji actually takes over everywhere else
+        // in the app (resolveAvatarSrc prefers avatar_url over avatar_emoji
+        // whenever avatar_url is set at all).
+        avatar_url: avatarMode === "IMAGE" ? avatarUrl || null : null,
         date_of_birth: dob || null,
         age_verified: nextAgeVerified,
         marketing_opt_in: marketingOptIn,
@@ -621,17 +603,19 @@ export default function AccountPage() {
               </div>
             ) : (
               <div className="mt-4 flex items-center gap-3">
-                {avatarImageDataUrl ? (
+                {avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={avatarImageDataUrl} alt="Avatar preview" className="h-12 w-12 rounded-2xl object-cover ring-1 ring-[color:var(--border)]" />
+                  <img src={avatarUrl} alt="Avatar preview" className="h-12 w-12 rounded-2xl object-cover ring-1 ring-[color:var(--border)]" />
                 ) : (
                   <div className="grid h-12 w-12 place-items-center rounded-2xl text-sm ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
                     {(displayName || "U").slice(0, 1).toUpperCase()}
                   </div>
                 )}
-                <PillButton onClick={() => avatarUploadRef.current?.click()}>Choose Image</PillButton>
-                {avatarImageDataUrl ? (
-                  <PillButton onClick={() => setAvatarImageDataUrl("")} className="bg-red-500/10 text-red-200 ring-red-400/20 hover:bg-red-500/15">
+                <PillButton onClick={() => avatarUploadRef.current?.click()} disabled={avatarUploading}>
+                  {avatarUploading ? "Uploading…" : "Choose Image"}
+                </PillButton>
+                {avatarUrl ? (
+                  <PillButton onClick={() => setAvatarUrl("")} className="bg-red-500/10 text-red-200 ring-red-400/20 hover:bg-red-500/15">
                     Remove
                   </PillButton>
                 ) : null}
@@ -642,13 +626,26 @@ export default function AccountPage() {
                   accept="image/*"
                   onChange={async (e) => {
                     const f = e.target.files?.[0];
-                    if (!f) return;
+                    if (!f || !profileId) return;
+                    setAvatarUploading(true);
                     try {
-                      const dataUrl = await fileToCompressedDataUrl(f, { maxSize: 256, quality: 0.85 });
-                      setAvatarImageDataUrl(dataUrl);
+                      // Same real, cloud-synced upload the home page's own
+                      // avatar picker already uses (avatars bucket, public
+                      // URL saved to profiles.avatar_url) -- this page's
+                      // upload used to be a separate, local-only path that
+                      // never actually persisted anywhere but this device.
+                      const supabase = getSupabaseBrowserClient();
+                      if (!supabase) throw new Error("Supabase not ready");
+                      const ext = f.name.split(".").pop() ?? "jpg";
+                      const path = `${profileId}/avatar.${ext}`;
+                      const { error } = await supabase.storage.from("avatars").upload(path, f, { upsert: true });
+                      if (error) throw error;
+                      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+                      setAvatarUrl(`${data.publicUrl}?t=${Date.now()}`);
                     } catch (err) {
-                      showToast(err instanceof Error ? err.message : "Failed to process image.");
+                      showToast(err instanceof Error ? err.message : "Failed to upload image.");
                     } finally {
+                      setAvatarUploading(false);
                       if (avatarUploadRef.current) avatarUploadRef.current.value = "";
                     }
                   }}
@@ -656,7 +653,7 @@ export default function AccountPage() {
               </div>
             )}
             <div className="mt-3 text-xs" style={{ color: "var(--muted)" }}>
-              {avatarMode === "IMAGE" ? "Image uploads are stored on this device only for now — they don't sync across devices yet." : "Shown across the app."}
+              Shown across the app, on every device.
             </div>
           </div>
         </section>

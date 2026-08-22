@@ -501,6 +501,12 @@ export async function updateProfile(profileId: string, patch: Partial<ProfileRow
     if (field in patch) payload[field] = typeof patch[field] === "string" ? (patch[field] as string).trim() || null : null;
   }
   if (typeof patch.avatar_emoji === "string") payload.avatar_emoji = patch.avatar_emoji.trim() || null;
+  // "in patch" (not a truthiness check) so callers can explicitly clear a
+  // real uploaded avatar back to null (e.g. switching back to the emoji
+  // picker) -- a truthy-string check like avatar_emoji's above would make
+  // clearing impossible, since an empty string and "not passed at all"
+  // would look identical.
+  if ("avatar_url" in patch) payload.avatar_url = patch.avatar_url?.trim() || null;
   if ("date_of_birth" in patch) payload.date_of_birth = patch.date_of_birth || null;
   if (typeof patch.age_verified === "boolean") payload.age_verified = patch.age_verified;
   if (typeof patch.marketing_opt_in === "boolean") payload.marketing_opt_in = patch.marketing_opt_in;
