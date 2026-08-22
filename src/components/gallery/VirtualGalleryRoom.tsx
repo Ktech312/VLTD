@@ -75,7 +75,7 @@ const MAX_ROOM_ITEMS = 32;
 // no GLB to load at all. See the RoomStyle type above for what that means.
 const ROOM_MODEL_URLS: Partial<Record<RoomStyle, string>> = {
   vault: "/models/gallery-rooms/vault-room.glb?v=shelf-headroom-2026-08-22",
-  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=shelf-headroom-2026-08-22",
+  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=walnut-warm-2026-08-22",
   arcade: "/models/gallery-rooms/arcade-room.glb?v=shelf-headroom-2026-08-22",
 };
 

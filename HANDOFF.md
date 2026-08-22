@@ -146,6 +146,31 @@ confirm with EK who owns a screen.** EK is aware of this.
 
 ---
 
+## ✅ 2026-08-22 — White room shelf/floor warmed to walnut-brown, the
+one item left on the list from the §SESSION STATE block below. EK: "it
+could have been done 2 days ago." `style_mats()` in
+`scripts/generate-gallery-room-models.py` (whitebox branch) had the trim
+and floor_tones colors shifted warmer/redder (more R, less B — a hue
+shift, not a flat darken) instead of the grayish-tan they were: trim
+`(0.30,0.25,0.19)` -> `(0.34,0.21,0.12)`, floor_tones `(0.50,0.36,0.22)/
+(0.58,0.42,0.25)/(0.42,0.29,0.18)/(0.62,0.47,0.30)` ->
+`(0.52,0.33,0.17)/(0.60,0.38,0.20)/(0.38,0.22,0.11)/(0.64,0.42,0.22)`.
+Deliberately kept luminance close to the old values (a hue shift, not a
+brightness change) so the exposure/hemisphere/spot light values EK
+already confirmed good for "no longer washed out" don't get undone by
+this pass. Regenerated only `whitebox-room.glb` via `blender
+--background --python scripts/generate-gallery-room-models.py --
+whitebox` (vault/arcade untouched, no ask to change those). Bumped only
+whitebox's `ROOM_MODEL_URLS` cache-bust to `walnut-warm-2026-08-22`
+(vault/arcade left on `shelf-headroom-2026-08-22`, unchanged).
+**Verified**: parsed the exported GLB's material JSON directly — baked
+`baseColorFactor` values match the intended numbers exactly — and loaded
+whitebox live in a real browser tab (switched the room-style select to
+`whitebox` via a real DOM event), zero console errors. `tsc --noEmit` /
+`npm run build` clean.
+
+---
+
 ## ✅ 2026-08-23, second overnight pass — 2 more real bugs EK caught in
 the morning-after screenshots, both fixed and LIVE-VERIFIED. Read this
 block first, then the one below it for the original 3-task pass.
@@ -652,14 +677,15 @@ stale (kept below for the reasoning trail, not as current values).
   explicit ask.
 - White room lighting/contrast — EK confirmed "overall looks good" after
   two rounds of darkening trim/floor + cutting exposure/hemi/spot/point
-  light values specifically for whitebox. Current values: trim base
-  `(0.30, 0.25, 0.19)`, floor tones darkened to match, `toneMappingExposure
-  = 0.68`, hemisphere `1.5`, key spotlight `1.7`, warm point light `0.35`
-  (all whitebox-specific, in `VirtualGalleryRoom.tsx`'s big mount effect
-  and `style_mats()` in the generator script). EK's one remaining ask:
-  shelf/floor color should still lean closer to the Blender reference
-  render (warmer/richer walnut-brown) — not urgent, room is no longer
-  "washed out."
+  light values specifically for whitebox. `toneMappingExposure = 0.68`,
+  hemisphere `1.5`, key spotlight `1.7`, warm point light `0.35` (all
+  whitebox-specific, in `VirtualGalleryRoom.tsx`'s big mount effect) —
+  untouched, don't re-touch without being asked. **Shelf/floor color
+  warmed to walnut-brown 2026-08-22** (see the dated section right after
+  the rules block above) — trim base now `(0.34, 0.21, 0.12)`, floor
+  tones now `(0.52,0.33,0.17)/(0.60,0.38,0.20)/(0.38,0.22,0.11)/
+  (0.64,0.42,0.22)`, GLB regenerated and live-verified. This was EK's
+  last open ask on White — nothing else queued for this room.
 - Corner-trim gap — fixed via a solid corner post (not fragile width-
   matching), verified with a direct Blender render. Confirmed via EK's own
   screenshot to no longer show as a black gap/hole.
@@ -724,8 +750,9 @@ see." Two real bugs found and being fixed:
    this session's browser screenshot tool has been unreliable for direct
    verification (see tooling note further down); EK's own screenshots are
    the working feedback loop right now.
-5. Still open, not yet addressed: EK's ask that White's shelf/floor color
-   lean closer to the Blender reference render's warmer walnut tone.
+5. ~~Still open: EK's ask that White's shelf/floor color lean closer to
+   the Blender reference render's warmer walnut tone.~~ **Done
+   2026-08-22** — see the dated section right after the rules block.
 
 ---
 
