@@ -1,4 +1,24 @@
-# VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-18)
+# VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-22)
+
+## 4 items fixed from the 2026-08-21 placeholder audit (2026-08-22)
+✅ Vault page's dead "Scan" button — now real, wired to the same camera/
+scan system used everywhere else.
+✅ Fake Lounge Market Pulse/Volume charts — removed (no real trend data
+exists server-side to plot honestly).
+✅ `/account`'s avatar upload — was a second, disconnected, local-only
+path; now uses the same real cloud upload the home page's avatar picker
+already had.
+✅ **Documents (certs/receipts) — real cloud sync, migration confirmed run
+by EK 2026-08-22.** Private bucket (the one bucket in this app that isn't
+public, by design), real Share-link action (7-day signed URL, only when
+explicitly requested). None of these four re-tested live yet.
+⬜ **Private Photos as a paid feature** — EK's direction (free stays
+public, paid gets real privacy) — needs its own architecture plan, not
+started.
+⬜ **`/clubs`** — EK wants the full version: real discussion boards +
+moderation + Discord/Reddit sync. Proposed build order in HANDOFF §2 (Aug
+22 entry) — waiting on go-ahead to start phase 1 (native clubs, no
+external dependencies).
 
 ## Per-exhibition curator Alias (2026-08-18) — ✅ DONE, migration confirmed run
 EK's ask: share an Exhibition without revealing your real identity, while

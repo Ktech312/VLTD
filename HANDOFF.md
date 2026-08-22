@@ -42,7 +42,13 @@ is risky or can't be done, say so plainly.
   ask EK to run it. **Never add a new column to the cloud row map
   (`src/lib/vaultCloud.ts`) without the migration** — unknown columns make the
   `vault_items` upsert throw.
-  **✅ NO MIGRATIONS PENDING.** `supabase/migrations/20260820_conversation_prefs.sql`
+  **✅ NO MIGRATIONS PENDING.** `supabase/migrations/20260822_vault_documents.sql`
+  (private `vault-documents` storage bucket + `vault_documents` metadata
+  table, see §2's placeholder-audit follow-up work) — **confirmed run by EK
+  2026-08-22.** Documents (certs/receipts) now really sync to the cloud in
+  a private bucket, with a real time-limited Share link -- was fully
+  local-only before this.
+  `supabase/migrations/20260820_conversation_prefs.sql`
   (star/hide table + RLS, and re-creates `touch_conversation_on_message()` to
   un-hide on new activity) and `supabase/migrations/20260820_fix_dm_active_profile_scope.sql`
   (fixes the multi-profile conversation-vanishing bug, see §2's Messages
@@ -243,6 +249,67 @@ assuming built means working.
 (quick), then fix the misleading Vault "Scan" button (wire it or remove
 it), then decide on the fake Lounge charts (remove or make real). PSA
 stays blocked on their approval — nothing to build there yet.
+
+### DONE (2026-08-22) — Four items from the audit above, actually fixed
+EK picked these four to start with:
+1. **Vault page's dead "Scan" button** (`VaultInner.tsx`'s "Add to Museum"
+   modal) — wired to the same `CameraCapturePanel` used everywhere else.
+   That modal only has Front/Back photos + a bare Title field (no
+   category/value — it's the lightweight quick-add path, not the full
+   Quick Add scanner), so Scan here captures into whichever photo slot is
+   empty and fills Title if a barcode resolves to a real lookup match.
+2. **Fake Lounge charts** — removed `Spark`/`Bars` (hardcoded shapes that
+   never changed) from Market Pulse/Volume. No real day-by-day trend data
+   exists server-side to plot honestly (`get_collector_signals` returns one
+   snapshot, not a series) — matches the other two stats in the same row
+   (Active Listings, Sales), which already show just the real number.
+3. **`/account`'s avatar upload was a second, disconnected, local-only
+   path** — the home page's own avatar picker already uploads for real
+   (the `avatars` bucket → `profiles.avatar_url`); `/account` had its own
+   separate compress-to-a-data-URL-and-cache-locally code that never
+   touched Supabase. Pointed `/account` at the same real upload. Also added
+   `avatar_url` to `updateProfile()`'s allow-list (`auth.ts`) using an
+   `"avatar_url" in patch` check rather than a truthy-string one, so
+   switching back to the Emoji tab can explicitly clear a previously-
+   uploaded image to null (otherwise it'd keep showing everywhere, since
+   `resolveAvatarSrc` prefers `avatar_url` over `avatar_emoji` whenever
+   `avatar_url` is set at all).
+4. **Documents (certs/receipts) now really sync to the cloud** — real
+   product conversation with EK first: every OTHER bucket in this app
+   (vault-images, avatars, vault-videos) is deliberately PUBLIC ("helps
+   build the site out quicker," and EK wants private-photos to become a
+   PAID feature later — noted, not built yet, needs its own plan since
+   flipping existing public buckets private risks breaking live sharing
+   features). Documents are different: private by default, ALWAYS, for
+   everyone — but still need to be shareable on purpose. Built: a new
+   PRIVATE `vault-documents` bucket (the one bucket in this app that isn't
+   public) + a `vault_documents` metadata table, both owner-scoped RLS.
+   `vaultDocuments.ts` rewritten from IndexedDB/localStorage to real
+   Supabase Storage — viewing your own doc uses a short-lived (10 min)
+   signed URL, and a new `shareDocument()` generates a longer-lived (7
+   day) signed link ONLY when the owner explicitly taps Share. Migration
+   `20260822_vault_documents.sql` — **confirmed run by EK 2026-08-22.**
+   Old local-only documents from before this change were not migrated
+   (the feature never actually synced across sessions anyway, so there
+   was nothing real to carry over).
+
+None of these four re-tested live yet — same caution as everything else in
+this file, "compiles clean" isn't "confirmed working."
+
+**Still open from the same conversation, not started:**
+- **Private Photos as a paid feature** — EK's direction: free accounts
+  keep public photos (status quo, not a bug); paid accounts should be able
+  to make photos genuinely private. Real architecture decision needed
+  before building (all-images-through-signed-URLs vs. a second private
+  bucket that existing photos migrate into on upgrade) — flagged, not
+  scoped yet.
+- **`/clubs`** — EK wants the full version: real clubs/discussion boards
+  with real moderation, PLUS syncing with Discord and Reddit (not just
+  link-out). Proposed build order: (1) real native clubs + discussion +
+  moderation, no external dependencies; (2) Discord — post club activity
+  to a webhook EK sets up in their own server; (3) Reddit — cross-post via
+  a Reddit developer app EK registers. Waiting on EK's go-ahead to start
+  #1 — not started.
 
 ### DONE, CONFIRMED WORKING LIVE (phone + desktop) — Web Push notifications for DMs (2026-08-21)
 EK asked: can someone get alerted about a new message even with the app
