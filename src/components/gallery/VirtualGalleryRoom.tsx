@@ -20,6 +20,7 @@ import {
   PackagePlus,
   Paintbrush,
   Save,
+  Share2,
   Sparkles,
 } from "lucide-react";
 import * as THREE from "three";
@@ -75,7 +76,7 @@ const MAX_ROOM_ITEMS = 32;
 // no GLB to load at all. See the RoomStyle type above for what that means.
 const ROOM_MODEL_URLS: Partial<Record<RoomStyle, string>> = {
   vault: "/models/gallery-rooms/vault-room.glb?v=shelf-headroom-2026-08-22",
-  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=walnut-warm-2026-08-22",
+  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=off-white-not-tan-2026-08-22",
   arcade: "/models/gallery-rooms/arcade-room.glb?v=shelf-headroom-2026-08-22",
 };
 
@@ -867,6 +868,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   // non-empty default made that hint show on page load with nothing
   // actually picked up.
   const [selectedItemId, setSelectedItemId] = useState<string>("");
+  const [heldItemShareState, setHeldItemShareState] = useState<"idle" | "copied">("idle");
   const [saveState, setSaveState] = useState<"idle" | "saved" | "error">("idle");
   const [isOrganizing, setIsOrganizing] = useState(false);
   const [roomPanelOpen, setRoomPanelOpen] = useState(true);
@@ -937,6 +939,41 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     () => selectedItems.reduce((sum, item) => sum + Number(item.currentValue ?? 0), 0),
     [selectedItems]
   );
+  // The item currently lifted off the shelf into the inspect view — real
+  // VaultItem data for the info panel below, looked up by the id the 3D
+  // effect sets on pickup (heldItem itself lives inside that effect's own
+  // closure, not React state, so this is how the render side gets at it).
+  const heldVaultItem = useMemo(
+    () => (selectedItemId ? items.find((item) => item.id === selectedItemId) ?? null : null),
+    [items, selectedItemId]
+  );
+  const heldVaultItemBasics = useMemo(
+    () =>
+      heldVaultItem
+        ? [heldVaultItem.year, heldVaultItem.grade || heldVaultItem.condition, heldVaultItem.categoryLabel || heldVaultItem.category].filter(Boolean)
+        : [],
+    [heldVaultItem]
+  );
+  async function shareHeldItem(item: VaultItem) {
+    const url = `${window.location.origin}/vault/item/${item.id}`;
+    const shareData = { title: item.title, text: item.notes || item.title, url };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch {
+        // user cancelled the native share sheet — not an error, just stop
+        return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setHeldItemShareState("copied");
+      window.setTimeout(() => setHeldItemShareState("idle"), 1800);
+    } catch {
+      // clipboard blocked (no permission/insecure context) — nothing more to fall back to here
+    }
+  }
   const universeRooms = useMemo(() => buildUniverseRooms(items), [items]);
   // A fixed-shape key for the 3D effect's dependency array — `universeRooms`
   // itself is a variable-length array (it grows/shrinks as vault items load),
@@ -2153,7 +2190,9 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     let inspectTargetPitch = 0;
     let heldDragYaw = 0;
     let showingBack = false;
-    const INSPECT_SCALE = 1.7;
+    // EK's ask (2026-08-22, later pass): "shrink it slightly ... its just
+    // slight larger" — was 1.7, sitting a bit too big in the frame.
+    const INSPECT_SCALE = 1.5;
 
     function pickUpItem(itemId: string) {
       const entry = itemMeshIndex.get(itemId);
@@ -2293,19 +2332,26 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       return position;
     }
 
-    // EK's ask (2026-08-23): click-to-walk into a corner clamped to the
-    // same margin as everything above (~2.7-2.8 units) — fine for a
-    // single wall, but a corner is TWO walls that close at once, and the
-    // narrow 47deg FOV fills up with both surfaces, hiding floor and
-    // ceiling ("I should still see top to bottom, not just the middle
-    // and part of the bottom"). Walking there via WASD is rare/deliberate
-    // enough that the tighter general clamp is fine; click-to-walk routes
-    // you straight into a corner far more easily, so it gets its own,
-    // roomier minimum — doesn't touch clampPosition above, which every
-    // other camera move still uses unchanged.
+    // EK's ask (2026-08-23), then EK again (2026-08-22 later pass): a
+    // ~4-unit margin still wasn't enough — screenshots showed a corner
+    // click landing nose-to-wall, no floor or ceiling visible at all
+    // ("I need to be much further back... I need to see floor to
+    // ceiling. Never any closer, that is what zoom is for"). The math:
+    // camera is PerspectiveCamera(47deg) (vertical FOV) at eyeHeight=3.6,
+    // ceiling at y=9.15 — looking level at a flat wall from distance D,
+    // the visible vertical span is 2*D*tan(23.5deg) ≈ 0.87*D, centered on
+    // eye height. Seeing the full floor(0)-to-ceiling(9.15) span needs
+    // D >= max(3.6, 9.15-3.6) / 0.435 ≈ 12.8 — most of the room. Rather
+    // than chase that exactly (it would make click-to-walk barely move
+    // you from a corner click), pulled the destination in hard so it
+    // always lands comfortably away from EVERY wall, corner or not — a
+    // generous, room-interior stop, not a minimally-legal one. Zoom
+    // (scroll wheel -> moveCamera, still governed by the looser
+    // clampPosition above) is how you actually get close, same as EK
+    // asked.
     function clampWalkDestination(position: THREE.Vector3) {
-      position.x = Math.max(-6.2, Math.min(6.2, position.x));
-      position.z = Math.max(-7.8, Math.min(4.2, position.z));
+      position.x = Math.max(-3.5, Math.min(3.5, position.x));
+      position.z = Math.max(-4.6, Math.min(1.8, position.z));
       return position;
     }
 
@@ -2407,13 +2453,16 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
 
     function onPointerMove(event: PointerEvent) {
       if (heldItem) {
-        // Passive parallax while just moving the mouse (no drag) — feeds
-        // the spring in updateHeldItem, same as their cursor-chase.
-        if (!isDragging) {
-          inspectTargetYaw = (event.clientX / window.innerWidth) * 2 - 1;
-          inspectTargetPitch = -((event.clientY / window.innerHeight) * 2 - 1);
-          return;
-        }
+        // EK's ask (2026-08-22, later pass): "only allow it to spin when
+        // being held down or when clicked" — bingebrowse's own passive
+        // cursor-chase parallax (spinning on every mouse move, no button
+        // held) read as uncontrolled spinning here instead of a subtle
+        // tilt, so it's removed outright. The spring in updateHeldItem
+        // still exists (settles inspectYaw/Pitch back toward their
+        // initial 0 target from pickUpItem), it's just never re-driven by
+        // bare mouse movement anymore — only an actual drag (below) moves
+        // the item now, via heldDragYaw, same as it always did.
+        if (!isDragging) return;
         // An actual drag free-rotates the held item (not spring-bound) —
         // this is what reveals the back past the edge-on point.
         const dx = event.clientX - startX;
@@ -2837,15 +2886,53 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
               </div>
             </div>
           ) : null}
-          {viewMode === "room" && selectedItemId ? (
-            // Item pickup has zero other visual feedback right now — the
-            // old bottom "Selected Piece" bar was removed earlier this
-            // session and nothing replaced it (still open, see HANDOFF).
-            // This is the minimum needed for the interaction itself to be
-            // discoverable, not a full detail panel.
-            <div className="pointer-events-none absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-black/55 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-white/85 ring-1 ring-white/15 backdrop-blur">
-              Drag to rotate · Click to put back
-            </div>
+          {viewMode === "room" && selectedItemId && heldVaultItem ? (
+            // EK's ask (2026-08-22, later pass), styled after a reference
+            // screenshot: a side tag, a bottom title/info/share bar, and a
+            // left description panel — all real per-item VaultItem fields
+            // (heldVaultItem, looked up by id above), never invented text.
+            <>
+              {heldVaultItem.universe || heldVaultItem.categoryLabel || heldVaultItem.category ? (
+                <div className="pointer-events-none absolute left-5 top-5 rounded-[6px] bg-cyan-400/90 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-black shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
+                  {heldVaultItem.universe || heldVaultItem.categoryLabel || heldVaultItem.category}
+                </div>
+              ) : null}
+              {heldVaultItem.notes ? (
+                <div className="pointer-events-none absolute left-5 top-1/2 max-w-[260px] -translate-y-1/2 rounded-[10px] bg-black/55 p-4 text-xs leading-5 text-white/80 ring-1 ring-white/15 backdrop-blur">
+                  <div className="mb-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
+                    Description
+                  </div>
+                  {heldVaultItem.notes}
+                </div>
+              ) : null}
+              <div className="pointer-events-none absolute bottom-[4.6rem] left-1/2 -translate-x-1/2 rounded-full bg-black/40 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/70 ring-1 ring-white/10 backdrop-blur">
+                Hold + drag to turn it around · Click to put it back
+              </div>
+              <div className="pointer-events-auto absolute bottom-5 left-1/2 flex max-w-[92%] -translate-x-1/2 items-center gap-3 rounded-[10px] bg-black/60 px-4 py-2.5 ring-1 ring-white/15 backdrop-blur">
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-black text-white">{heldVaultItem.title}</div>
+                  {heldVaultItemBasics.length > 0 ? (
+                    <div className="mt-0.5 truncate text-[10px] font-bold uppercase tracking-[0.1em] text-white/55">
+                      {heldVaultItemBasics.join(" · ")}
+                    </div>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void shareHeldItem(heldVaultItem)}
+                  className="grid h-7 w-7 shrink-0 place-items-center rounded-[6px] bg-white/10 text-white/80 ring-1 ring-white/15 transition hover:bg-white/20 hover:text-white"
+                  title="Share this item"
+                  aria-label="Share this item"
+                >
+                  <Share2 size={14} />
+                </button>
+                {heldItemShareState === "copied" ? (
+                  <span className="absolute -top-8 right-0 rounded-[6px] bg-black/80 px-2 py-1 text-[10px] font-bold text-white/90 ring-1 ring-white/15">
+                    Link copied
+                  </span>
+                ) : null}
+              </div>
+            </>
           ) : null}
         </div>
       </div>

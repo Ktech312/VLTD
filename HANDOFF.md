@@ -146,6 +146,80 @@ confirm with EK who owns a screen.** EK is aware of this.
 
 ---
 
+## ✅ 2026-08-22, later same day — 4 more real bugs/asks EK caught live
+off actual screenshots, all fixed and code/build-verified (see each
+item for how). Read this block first — it supersedes the walnut-brown
+color numbers in the block directly below (EK looked at the live result
+and asked for a different direction, same day).
+
+1. **Click-to-walk still landed too close to a wall/corner.** The
+   previous "roomier minimum" pass (see `clampWalkDestination`'s own
+   history, further below) only pulled the destination back to a ~4-unit
+   margin — EK's screenshots showed that's nowhere near enough; landing
+   nose-to-wall with zero floor/ceiling visible. EK: "much further
+   back... I need to see floor to ceiling... never any closer, that is
+   what zoom is for." Worked out the actual geometry: camera is
+   `PerspectiveCamera(47deg)` (vertical FOV) at `eyeHeight=3.6`, ceiling
+   at `y=9.15` — seeing literal floor-to-ceiling looking level at a flat
+   wall needs `D >= (9.15-3.6)/tan(23.5deg) ≈ 12.8` units, which is most
+   of the room. Rather than chase that exactly (it would barely let you
+   approach a corner at all), pulled `clampWalkDestination` in hard to a
+   generous room-interior stop — `x: [-3.5, 3.5]`, `z: [-4.6, 1.8]` (was
+   `x: [-6.2, 6.2]`, `z: [-7.8, 4.2]`) — in
+   `src/components/gallery/VirtualGalleryRoom.tsx`. Zoom (scroll wheel,
+   still governed by the separate, looser `clampPosition`) is how you
+   actually get close now, matching what EK asked for.
+2. **Item-inspect spun on every mouse move, not just while dragging.**
+   The bingebrowse-sourced "passive parallax" (cursor position feeding a
+   spring-damper tilt even with the mouse button up) read as
+   uncontrolled spinning, not a subtle tilt. EK: "only allow it to spin
+   when being held down or when clicked." Removed that branch from
+   `onPointerMove` entirely — the spring still exists and settles the
+   item after pickup, it just never gets re-driven by bare mouse
+   movement anymore. An actual drag (button held) still free-rotates the
+   item exactly as before, via `heldDragYaw`.
+3. **Held item sized slightly too large.** `INSPECT_SCALE` was `1.7`,
+   dropped to `1.5` per EK's "shrink it slightly... its just slight
+   larger."
+4. **Item-inspect had zero info panel — built one from a reference
+   screenshot EK provided.** Previously just a one-line "Drag to rotate"
+   hint with no other feedback. Added, all from real per-item
+   `VaultItem` fields (never invented text): a small colored corner tag
+   (universe/category), a bottom bar with the item's real title + real
+   basics (year / grade-or-condition / category) + a working Share
+   button (`navigator.share` where available, clipboard-copy fallback,
+   linking to the item's real `/vault/item/[id]` page), and a left-side
+   "Description" panel that only renders when the item actually has
+   `notes` (no fake filler when it doesn't). New `heldVaultItem` /
+   `heldVaultItemBasics` memos look the held item up from the component's
+   real `items` state by `selectedItemId` — the 3D effect's own
+   `heldItem` lives in a closure React can't read directly.
+   **Known pre-existing gap, not introduced here:** display-case ("flat")
+   item clicks also set `selectedItemId` (a separate, older code path,
+   camera-focus only, no real pickup), so this same panel — including
+   the "hold + drag / click to put back" hint — shows for those too even
+   though they don't actually support drag-rotate or click-to-release.
+   The original one-line hint had the identical ambiguity before this
+   pass; flagging it here rather than scope-creeping a fix into this
+   round.
+
+**Verified**: `tsc --noEmit` / `eslint` (0 errors) / `npm run build` all
+clean. Live-tested against a real production build in a browser tab:
+switched to White, dispatched real `PointerEvent`s to click-to-walk a
+corner and to pick up a wall item — zero console errors through dozens
+of interactions. Confirmed the new panel renders with genuine data by
+reading the live DOM: side tag "COMICS", title "Signed Variant Comic",
+basics "COMIC BOOKS", hint text exactly as written, and — correctly —
+no Description block for that item since its `notes` field is empty.
+**Not independently re-verified by pixel screenshot this pass** — the
+Browser pane wasn't displayed on EK's side during this session, so
+`computer{action:"screenshot"}` couldn't composite a frame; verification
+above is DOM/console-based instead. Worth EK's own visual glance next
+time to confirm the walk distance and inspect panel actually look right,
+not just that they don't crash.
+
+---
+
 ## ✅ 2026-08-22 — White room shelf/floor warmed to walnut-brown, the
 one item left on the list from the §SESSION STATE block below. EK: "it
 could have been done 2 days ago." `style_mats()` in
@@ -168,6 +242,11 @@ whitebox's `ROOM_MODEL_URLS` cache-bust to `walnut-warm-2026-08-22`
 whitebox live in a real browser tab (switched the room-style select to
 `whitebox` via a real DOM event), zero console errors. `tsc --noEmit` /
 `npm run build` clean.
+
+**⚠ Superseded same day** — EK looked at this live and called it too
+tan; see the block above (dated the same day, listed first) for the
+off-white/greige correction. Trim/floor are now `(0.62,0.60,0.55)` /
+`(0.60,0.58,0.53)`-family, not the walnut numbers just above.
 
 ---
 

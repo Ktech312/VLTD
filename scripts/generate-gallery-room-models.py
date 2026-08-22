@@ -317,13 +317,16 @@ def style_mats(style):
         # as pale in the live app after lighting, per EK's direct
         # screenshot. Rather than keep chasing this through light values
         # alone, gave the floor more margin too.
-        # Warmed toward the Blender reference render's richer walnut-brown —
-        # EK's one remaining ask on White after the "washed out" fix. Shifted
-        # hue (more R, less B, i.e. redder/less tan) rather than just
-        # darkening everything, so the exposure/light-value fix that already
-        # solved "washed out" doesn't get undone by this pass.
+        # First pass warmed this toward walnut-brown and overshot — EK,
+        # looking at the live result: "the other areas are more Tan now
+        # ... make them more off white and not tan." Walls are untouched
+        # (EK: "leave the walls"); trim/floor pulled back to a light,
+        # LOW-SATURATION off-white/greige (R/G/B close together) instead
+        # of a saturated brown — still a shade darker than the wall for
+        # the contrast EK asked for earlier ("big difference needed"),
+        # just not a wood-tone difference.
         floor_tones = [make_mat(f"white_floor_{i}", c, 0.5, 0.0) for i, c in enumerate([
-            (0.52, 0.33, 0.17, 1), (0.60, 0.38, 0.20, 1), (0.38, 0.22, 0.11, 1), (0.64, 0.42, 0.22, 1)
+            (0.60, 0.58, 0.53, 1), (0.66, 0.64, 0.59, 1), (0.52, 0.50, 0.46, 1), (0.70, 0.68, 0.62, 1)
         ])]
         return {
             "wall": make_mat("warm plaster gallery wall", (0.86, 0.82, 0.72, 1), 0.86, 0.0),
@@ -345,7 +348,7 @@ def style_mats(style):
             # app after lighting (confirmed by EK's screenshot, not
             # assumed). Going further this round instead of another small
             # nudge.
-            "trim": make_mat("carved walnut trim", (0.34, 0.21, 0.12, 1), 0.55, 0.0),
+            "trim": make_mat("off-white carved trim", (0.62, 0.60, 0.55, 1), 0.55, 0.0),
             # Was missing entirely — add_wall_panels() falls back to `trim`
             # for panel_seam when a style doesn't define one, so the
             # architrave/molding division lines were the same near-wall
