@@ -19,6 +19,7 @@ import {
 } from "@/lib/auth";
 import { getMyAdminRole, type AdminRole } from "@/lib/adminAuth";
 import { loadMyCollectorLevel, type CollectorLevelInfo } from "@/lib/collectorLevel";
+import { getFollowerCount } from "@/lib/follows";
 import { getTotalUnreadCount } from "@/lib/directMessages";
 import { subscribeVaultUpdate } from "@/lib/vaultEvents";
 
@@ -321,12 +322,29 @@ function TopNavInner() {
 
   useEffect(() => { setInput(sp.get("q") ?? ""); }, [sp]);
 
-  // Collector level — recompute from the curator's items + exhibits on mount,
-  // on profile switch, and whenever the vault changes.
+  // Collector level — recompute from the curator's items + exhibits + real
+  // follower count on mount, on profile switch, and whenever the vault
+  // changes. (Followers used to be silently 0 here -- loadMyCollectorLevel()
+  // was called with no argument even though the formula supports them.)
   useEffect(() => {
-    const refresh = () => setLevelInfo(loadMyCollectorLevel());
-    refresh();
-    return subscribeVaultUpdate(refresh);
+    let cancelled = false;
+    async function refresh() {
+      let followers = 0;
+      if (activeProfileId) {
+        try {
+          followers = await getFollowerCount(activeProfileId);
+        } catch {
+          /* noop -- level still computes from items/exhibits alone */
+        }
+      }
+      if (!cancelled) setLevelInfo(loadMyCollectorLevel(followers));
+    }
+    void refresh();
+    const unsubscribe = subscribeVaultUpdate(() => void refresh());
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, [activeProfileId]);
 
   // Real unread DM count for the chat-icon badge — polled, not fake.
