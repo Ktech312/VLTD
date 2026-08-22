@@ -15,12 +15,14 @@ explicitly requested). None of these four re-tested live yet.
 ⬜ **Private Photos as a paid feature** — EK's direction (free stays
 public, paid gets real privacy) — needs its own architecture plan, not
 started.
-✅ **`/clubs` — all 3 phases built (native clubs+moderation, Discord,
-Reddit scaffolding).** 3 migrations to run (see chat for full SQL + the
-one-time Vault secret command). Discord works as soon as a club owner
-pastes a webhook URL into Settings — no further setup needed. Reddit needs
-real developer-app credentials from EK in Vercel first; genuinely
-unverified until those exist. Not yet linked from nav or tested live.
+✅ **`/clubs` — all 3 phases built + migrations confirmed run by EK
+2026-08-22 + given a real spot in the Lounge.** Discord works as soon as a
+club owner pastes a webhook URL into Settings — no further setup needed.
+Reddit still needs real developer-app credentials from EK in Vercel
+(`REDDIT_CLIENT_ID`/`SECRET`, `REDDIT_BOT_USERNAME`/`PASSWORD`,
+`CLUBS_INTERNAL_SECRET`) before it can post anything — genuinely
+unverified until those exist. Not yet tested live end-to-end (create a
+club, post, moderate, confirm Discord posting once a webhook's added).
 
 ## Per-exhibition curator Alias (2026-08-18) — ✅ DONE, migration confirmed run
 EK's ask: share an Exhibition without revealing your real identity, while
