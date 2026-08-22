@@ -233,6 +233,101 @@ see." Two real bugs found and being fixed:
 
 ---
 
+## 📋 REFERENCE PLAN — interaction/navigation upgrade (2026-08-20)
+
+**Not started. Documented here first per EK's explicit ask, before any
+building.** EK pointed to `https://bingebrowse.net` (a live, unrelated
+product — "your streaming services as a 3D video store") as a reference
+for how the room should *feel to move through and interact with* —
+**explicitly not** a request to copy its theme/walls/colors ("I'm not
+saying to change our format and walls, but this flows and moves better").
+I actually walked through the live site (Browser pane) to capture this
+accurately rather than go on a description alone.
+
+### What EK wants carried over (interaction patterns, not visuals)
+
+**1. Click-to-walk floor navigation ("the stepping squares").** Clicking a
+distant shelf section highlights a destination zone on the floor (a
+translucent purple outline of the walkable area) with a tooltip ("Click to
+walk to CULT CLASSICS BAY"); clicking it smoothly walks the camera there
+and lines it up facing the shelf. This is a genuinely new feature for us —
+we currently only have manual drag-look + directional move buttons, no
+point-and-click destination navigation at all.
+
+**2. Item pickup/inspect, not just a camera nudge.** This is the big one —
+EK: "do you see how the item pick up and rotates, has a nice description."
+Clicking an item on the shelf does NOT just move the camera to face it in
+place. It:
+- Lifts the item off the shelf and floats it centered on screen, at a
+  slight 3D angle showing real depth (cover + spine visible).
+- Responds to mouse movement with a subtle tilt (parallax).
+- **Drag rotates it fully around** — shown UI hint: "hold + drag to turn
+  it around" — this is how you see the BACK of the item, not a separate
+  toggle/button.
+- Click again (hint: "click to put it back") returns it to the shelf.
+- While lifted, side panels appear: left = synopsis/description +
+  metadata table (year, runtime, age guide, country, genre, a flavor
+  "rental number"); right = action buttons (stream/watch-trailer links,
+  add-to-list); bottom = title card (platform icon, title, byline, year,
+  rating, share icon). Left/right arrows let you browse to the next/prev
+  item on the same shelf without backing out to the wall view first.
+
+**3. Item density / room scale.** BingeBrowse packs a large catalog edge-
+to-edge on the shelves and the room reads as human-scaled (ceiling height,
+aisle width, shelf depth all feel walkable/real) — EK: "the size of the
+room, the height, it all feels real." A personal vault will always have
+far fewer items than a video store's full catalog, so exact packing
+density isn't a fair 1:1 target, but "items read as legible and well-
+proportioned, room feels like a real space" carries over regardless of
+count.
+
+### How this maps onto what we already have
+
+- **We already have click-to-focus** (`onPointerUp`'s raycast handling,
+  `VirtualGalleryRoom.tsx`) — clicking an item moves the camera to face it
+  level-on. That's the foundation for #2 above, but it stops at "camera
+  moves," it doesn't lift/rotate the item or show a rich panel.
+- **We already have a detail panel** — `selectedItem` renders a "Selected
+  Piece" card (image, title, value, universe) — but it's a sidebar element
+  in the regular page layout, not an overlay tied to the 3D view. Moving
+  this into an in-scene overlay near the lifted item is a much smaller
+  lift than building the panel from scratch.
+- **Front/back images and description already exist on the data model** —
+  confirmed in `src/lib/vaultModel.ts`: `imageFrontUrl`, `imageBackUrl`,
+  `subtitle`, `notes` are all real fields on `VaultItem` today. EK's own
+  point: "this might not work for every item, but it should with front and
+  back images and the description is already there for them to fill out"
+  — i.e., items with both images get the full rotate-to-see-back
+  treatment; items with only a front image can still lift/tilt, just
+  without a meaningful "back" to rotate to.
+- **Click-to-walk floor navigation is genuinely new** — no existing
+  equivalent, would need its own build (raycasting the floor plane,
+  computing a walkable-zone highlight, animating the camera to the
+  clicked destination).
+
+### Adjacent idea EK floated, capture only — not scoped
+
+"Could also work for a virtual comic and card store, browse, pick packs,
+buy next week comics or book, toys etc." — a bigger product direction
+(an actual storefront/commerce experience built on this same 3D
+interaction model, not just a personal vault viewer). Noted for whoever
+picks up product direction later; no design or scope work done on this
+yet, purely captured as a "the interaction model could extend beyond just
+viewing your own vault" idea.
+
+### Suggested phasing (not yet agreed with EK — propose, don't assume)
+
+1. Move the existing "Selected Piece" info out of the sidebar into an
+   in-3D overlay tied to the clicked item (small, reuses data already
+   flowing today).
+2. Add the lift-off-shelf + tilt-with-mouse + drag-to-rotate interaction
+   for the item mesh itself (front image today; back image on rotation
+   past 90° for items that have `imageBackUrl`).
+3. Click-to-walk floor navigation — the largest, most separable piece;
+   could ship independently of #1/#2.
+
+---
+
 ## ⚠ CURRENT ARCHITECTURE (2026-08-20+) — read this before the "Big update
 2026-08-14/15" section below, which describes an approach that's been
 **replaced**. Kept for history, not current.
