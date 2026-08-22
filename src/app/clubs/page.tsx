@@ -1,34 +1,112 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { PillButton } from "@/components/ui/PillButton";
+import { getStoredActiveProfileId } from "@/lib/auth";
+import { listClubs, createClub, type Club } from "@/lib/clubs";
 
-/* Clubs — parked as a "Coming soon" feature (EK: revisit after the Lounge intel
-   sections are built; decide Discord / social / in-app direction then). */
 export default function ClubsPage() {
+  const router = useRouter();
+  const [clubs, setClubs] = useState<Club[] | null>(null);
+  const [profileId, setProfileId] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    setProfileId(getStoredActiveProfileId());
+    void listClubs().then(setClubs);
+  }, []);
+
+  async function handleCreate() {
+    if (!name.trim() || !profileId) return;
+    setCreating(true);
+    setError("");
+    try {
+      const club = await createClub(name, description);
+      if (!club) {
+        setError("Couldn't create the club — try again.");
+        return;
+      }
+      router.push(`/clubs/${club.id}`);
+    } finally {
+      setCreating(false);
+    }
+  }
+
   return (
     <>
-      <PageHeader title="Clubs" description="Collector clubs and community spaces." contentClassName="max-w-[900px]" />
+      <PageHeader title="Clubs" description="Real collector clubs and discussion boards." contentClassName="max-w-[900px]" />
       <main className="mx-auto w-full max-w-[900px] px-4 pb-16 sm:px-6">
-      <div
-        className="flex flex-col items-center justify-center gap-3 rounded-[8px] px-6 py-20 text-center"
-        style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)" }}
-      >
-        <span
-          className="grid h-14 w-14 place-items-center rounded-[10px]"
-          style={{ border: "1px solid rgba(79,211,238,0.4)", color: "#4FD3EE", background: "rgba(79,211,238,0.08)" }}
-        >
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="9" cy="8" r="3" />
-            <circle cx="17" cy="10" r="2.4" />
-            <path d="M3 20c.7-3.4 3-5.2 6-5.2s5.3 1.8 6 5.2M15.5 20c.4-2 1.7-3.2 3.4-3.2 1.4 0 2.5.8 3.1 2.2" />
-          </svg>
-        </span>
-        <span className="rounded-[4px] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em]" style={{ background: "rgba(79,211,238,0.1)", color: "#4FD3EE", border: "1px solid rgba(79,211,238,0.35)" }}>Coming soon</span>
-        <h2 className="text-lg font-black">Clubs are on the way</h2>
-        <p className="max-w-sm text-sm" style={{ color: "var(--muted)" }}>
-          A home for collector clubs — Discord, social spaces, and in-app rooms. We&apos;ll finalize the direction after the Lounge is fully built out.
-        </p>
-      </div>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm text-[color:var(--muted)]">
+            Join a club to post; anyone can browse and read.
+          </p>
+          {profileId ? (
+            <PillButton onClick={() => setShowCreate((v) => !v)}>{showCreate ? "Cancel" : "Create a Club"}</PillButton>
+          ) : null}
+        </div>
+
+        {showCreate ? (
+          <div className="mt-4 rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+            <label className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">Name</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={60}
+              placeholder="e.g. Vintage Vinyl Collectors"
+              className="mt-1 h-11 w-full rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+            />
+            <label className="mt-3 block text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
+              Description
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={500}
+              placeholder="What's this club about?"
+              className="mt-1 w-full rounded-xl bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              style={{ minHeight: 72 }}
+            />
+            {error ? <p className="mt-2 text-xs text-red-400">{error}</p> : null}
+            <div className="mt-3 flex justify-end">
+              <PillButton onClick={() => void handleCreate()} disabled={creating || !name.trim()} variant="active">
+                {creating ? "Creating…" : "Create"}
+              </PillButton>
+            </div>
+          </div>
+        ) : null}
+
+        <div className="mt-5 flex flex-col gap-2">
+          {clubs === null ? (
+            <p className="text-sm text-[color:var(--muted2)]">Loading…</p>
+          ) : clubs.length === 0 ? (
+            <p className="text-sm text-[color:var(--muted2)]">No clubs yet — be the first to create one.</p>
+          ) : (
+            clubs.map((club) => (
+              <Link
+                key={club.id}
+                href={`/clubs/${club.id}`}
+                className="flex items-center justify-between gap-3 rounded-[14px] bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+              >
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-bold">{club.name}</div>
+                  {club.description ? (
+                    <div className="mt-0.5 truncate text-xs text-[color:var(--muted)]">{club.description}</div>
+                  ) : null}
+                </div>
+                <div className="shrink-0 text-xs text-[color:var(--muted2)]">
+                  {club.memberCount} member{club.memberCount === 1 ? "" : "s"}
+                </div>
+              </Link>
+            ))
+          )}
+        </div>
       </main>
     </>
   );
