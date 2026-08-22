@@ -52,6 +52,9 @@ export type ClubReport = {
 export type ClubIntegrations = {
   discordWebhookUrl: string;
   redditSubreddit: string;
+  telegramBotToken: string;
+  telegramChatId: string;
+  slackWebhookUrl: string;
 };
 
 function authorFields(row: Record<string, unknown>, profileId: string) {
@@ -342,17 +345,28 @@ export async function resolveClubReport(reportId: string): Promise<boolean> {
 /** Owner-only settings — Discord webhook / Reddit subreddit for the
  *  cross-posting follow-ups. RLS restricts this table to the club's owner,
  *  so a non-owner reading this just gets nulls back, not an error. */
+const EMPTY_INTEGRATIONS: ClubIntegrations = {
+  discordWebhookUrl: "",
+  redditSubreddit: "",
+  telegramBotToken: "",
+  telegramChatId: "",
+  slackWebhookUrl: "",
+};
+
 export async function getClubIntegrations(clubId: string): Promise<ClubIntegrations> {
   const supabase = getSupabaseBrowserClient();
-  if (!supabase) return { discordWebhookUrl: "", redditSubreddit: "" };
+  if (!supabase) return { ...EMPTY_INTEGRATIONS };
   const { data } = await supabase
     .from("club_integrations")
-    .select("discord_webhook_url, reddit_subreddit")
+    .select("discord_webhook_url, reddit_subreddit, telegram_bot_token, telegram_chat_id, slack_webhook_url")
     .eq("club_id", clubId)
     .maybeSingle();
   return {
     discordWebhookUrl: (data?.discord_webhook_url as string) || "",
     redditSubreddit: (data?.reddit_subreddit as string) || "",
+    telegramBotToken: (data?.telegram_bot_token as string) || "",
+    telegramChatId: (data?.telegram_chat_id as string) || "",
+    slackWebhookUrl: (data?.slack_webhook_url as string) || "",
   };
 }
 
@@ -363,6 +377,9 @@ export async function saveClubIntegrations(clubId: string, integrations: ClubInt
     club_id: clubId,
     discord_webhook_url: integrations.discordWebhookUrl.trim() || null,
     reddit_subreddit: integrations.redditSubreddit.trim() || null,
+    telegram_bot_token: integrations.telegramBotToken.trim() || null,
+    telegram_chat_id: integrations.telegramChatId.trim() || null,
+    slack_webhook_url: integrations.slackWebhookUrl.trim() || null,
     updated_at: new Date().toISOString(),
   });
   return !error;

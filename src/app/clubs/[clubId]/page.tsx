@@ -57,6 +57,9 @@ export default function ClubDetailPage() {
 
   const [discordWebhookUrl, setDiscordWebhookUrl] = useState("");
   const [redditSubreddit, setRedditSubreddit] = useState("");
+  const [telegramBotToken, setTelegramBotToken] = useState("");
+  const [telegramChatId, setTelegramChatId] = useState("");
+  const [slackWebhookUrl, setSlackWebhookUrl] = useState("");
   const [savingIntegrations, setSavingIntegrations] = useState(false);
 
   const isStaff = myRole === "owner" || myRole === "moderator";
@@ -82,6 +85,9 @@ export default function ClubDetailPage() {
     if (tab === "settings" && clubId && isOwner) void getClubIntegrations(clubId).then((i) => {
       setDiscordWebhookUrl(i.discordWebhookUrl);
       setRedditSubreddit(i.redditSubreddit);
+      setTelegramBotToken(i.telegramBotToken);
+      setTelegramChatId(i.telegramChatId);
+      setSlackWebhookUrl(i.slackWebhookUrl);
     });
   }, [tab, clubId, isStaff, isOwner]);
 
@@ -159,7 +165,13 @@ export default function ClubDetailPage() {
     if (!clubId) return;
     setSavingIntegrations(true);
     try {
-      const ok = await saveClubIntegrations(clubId, { discordWebhookUrl, redditSubreddit });
+      const ok = await saveClubIntegrations(clubId, {
+        discordWebhookUrl,
+        redditSubreddit,
+        telegramBotToken,
+        telegramChatId,
+        slackWebhookUrl,
+      });
       setMessage(ok ? "Saved." : "Couldn't save.");
     } finally {
       setSavingIntegrations(false);
@@ -323,9 +335,11 @@ export default function ClubDetailPage() {
         {tab === "settings" && isOwner ? (
           <div className="mt-4 rounded-[14px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
             <p className="text-xs text-[color:var(--muted)]">
-              Optional — post club activity to a Discord channel, or cross-post to a subreddit.
+              Optional — automatically post new club discussion to other places. All fields are independent; fill in
+              whichever ones apply.
             </p>
-            <label className="mt-3 block text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
+
+            <label className="mt-4 block text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
               Discord webhook URL
             </label>
             <input
@@ -337,7 +351,46 @@ export default function ClubDetailPage() {
             <p className="mt-1 text-[11px] text-[color:var(--muted2)]">
               In your Discord server: Server Settings → Integrations → Webhooks → New Webhook → Copy URL.
             </p>
-            <label className="mt-3 block text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
+
+            <label className="mt-4 block text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
+              Telegram bot token
+            </label>
+            <input
+              value={telegramBotToken}
+              onChange={(e) => setTelegramBotToken(e.target.value)}
+              placeholder="123456789:ABCdefGhIJKl…"
+              className="mt-1 h-11 w-full rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+            />
+            <label className="mt-2 block text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
+              Telegram chat/channel ID
+            </label>
+            <input
+              value={telegramChatId}
+              onChange={(e) => setTelegramChatId(e.target.value)}
+              placeholder="e.g. -1001234567890 or @yourchannel"
+              className="mt-1 h-11 w-full rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+            />
+            <p className="mt-1 text-[11px] text-[color:var(--muted2)]">
+              In Telegram: message @BotFather → /newbot → copy the token. Add that bot to your channel/group as an
+              admin, then send any message there and check{" "}
+              <span className="font-mono">https://api.telegram.org/bot&lt;token&gt;/getUpdates</span> in a browser to
+              find the chat id.
+            </p>
+
+            <label className="mt-4 block text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
+              Slack webhook URL
+            </label>
+            <input
+              value={slackWebhookUrl}
+              onChange={(e) => setSlackWebhookUrl(e.target.value)}
+              placeholder="https://hooks.slack.com/services/…"
+              className="mt-1 h-11 w-full rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+            />
+            <p className="mt-1 text-[11px] text-[color:var(--muted2)]">
+              In Slack: Settings → Incoming Webhooks → Add New Webhook → pick a channel → Copy URL.
+            </p>
+
+            <label className="mt-4 block text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
               Reddit subreddit
             </label>
             <input
@@ -347,9 +400,11 @@ export default function ClubDetailPage() {
               className="mt-1 h-11 w-full rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
             />
             <p className="mt-1 text-[11px] text-[color:var(--muted2)]">
-              Cross-posting isn&apos;t live yet — this needs a Reddit developer app before it can actually post.
+              Cross-posting isn&apos;t live yet — Reddit now requires a manually-approved developer application before
+              this can actually post.
             </p>
-            <div className="mt-3 flex justify-end">
+
+            <div className="mt-4 flex justify-end">
               <PillButton onClick={() => void handleSaveIntegrations()} disabled={savingIntegrations} variant="active">
                 {savingIntegrations ? "Saving…" : "Save"}
               </PillButton>
