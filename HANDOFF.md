@@ -1604,6 +1604,39 @@ subscribe.
 ---
 
 ## 4. Done recently (don't redo)
+- **2026-08-22 — picked up work after the 3D-museum session's chat ended;
+  EK: "dig in anywhere and complete any task you can."** Checked the
+  3D-museum branch (`claude/museum-map-doorways`) status first — confirmed
+  it's still unmerged, not this branch's to touch, most recent real fix
+  there (Hero "huge box" + Salon/Store contrast) already landed clean.
+  Then swept `main` for genuinely completable (not device-blocked) items
+  from the placeholder audit + older open notes:
+  - **Fixed: Collector Level badge always scored followers as 0.**
+    `computeCollectorLevel()` already supports a followers term, but
+    `TopNav.tsx` called `loadMyCollectorLevel()` with no argument. Now
+    fetches the real count via the existing `getFollowerCount()` (same
+    helper `/more` uses) before computing the level.
+  - **Fixed: Type dropdown + Attributes checkboxes on `/vault/add` never
+    survived cloud sync.** `itemType`/`itemAttributes` are real `VaultItem`
+    fields, correctly saved locally, but `vaultCloud.ts`'s Supabase row map
+    never included them in either direction — dropped silently on every
+    cloud round-trip. Added to both directions + the standard missing-
+    column fallback (matches the existing tags/brand pattern) so saves
+    keep working even before the migration runs. New migration:
+    `20260822_vault_item_type_attributes.sql` (adds `item_type text`,
+    `item_attributes text[]`) — **not yet run, ask EK.**
+  - Confirmed already fixed by a concurrent session mid-sweep (no
+    duplicate work needed): the dead "Scan" button in Vault's Add-to-
+    Museum modal, and the fake Lounge Market Pulse/Volume sparkline charts.
+  - Reviewed but found no bug (code reads correctly, just genuinely
+    unverified live): Halls' "Auto-tag my collection" button — traced the
+    full handler (`suggestAutoTags` → `saveItems` → `syncAllItemsToCloud`),
+    all real, all correctly wired.
+  - Left alone, correctly: PSA/Discogs lookups (blocked externally/on an
+    EK env-var check), CGC lookup (no viable free API, real gap not a
+    bug), Documents/avatar local-only storage (honestly disclosed,
+    already EK's explicit call), `/clubs` (honestly labeled "Coming soon,"
+    not misleading).
 - **2026-08-12 overnight, while EK slept — lens-switch on zoom (§B11) +
   Stripe customer-id persistence (§2I).** EK asked whether zoom uses a
   phone's multiple cameras; it didn't, so built best-effort ultra-wide
