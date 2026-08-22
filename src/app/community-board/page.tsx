@@ -139,25 +139,6 @@ function Tile({ hue = 220, className = "", children }: { hue?: number; className
   );
 }
 
-function Spark({ color = GREEN }: { color?: string }) {
-  return (
-    <svg viewBox="0 0 60 20" className="h-5 w-16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M1 15 L10 12 L18 14 L26 8 L34 10 L42 5 L50 7 L59 2" />
-    </svg>
-  );
-}
-
-function Bars({ color = CYAN }: { color?: string }) {
-  const h = [7, 11, 6, 13, 9, 15, 12];
-  return (
-    <svg viewBox="0 0 60 20" className="h-5 w-16">
-      {h.map((v, i) => (
-        <rect key={i} x={i * 8.4} y={20 - v} width="5.4" height={v} rx="1" fill={color} opacity={0.55 + i * 0.06} />
-      ))}
-    </svg>
-  );
-}
-
 function fmt(n: number) {
   return n.toLocaleString("en-US");
 }
@@ -523,8 +504,8 @@ export default function VltLoungePage() {
             </div>
             <div className="grid grid-cols-2 gap-px" style={{ background: "var(--border)" }}>
               {[
-                { label: "Market Pulse (7D)", value: signals ? `${signals.pulse >= 0 ? "+" : ""}${signals.pulse}%` : "—", tone: signals && signals.pulse < 0 ? "#E05252" : GREEN, chart: <Spark color={signals && signals.pulse < 0 ? "#E05252" : GREEN} /> },
-                { label: "Volume (7D)", value: signals ? money(signals.volume) : "—", tone: CYAN, chart: <Bars /> },
+                { label: "Market Pulse (7D)", value: signals ? `${signals.pulse >= 0 ? "+" : ""}${signals.pulse}%` : "—", tone: signals && signals.pulse < 0 ? "#E05252" : GREEN, chart: null },
+                { label: "Volume (7D)", value: signals ? money(signals.volume) : "—", tone: CYAN, chart: null },
                 { label: "Active Listings", value: signals ? fmt(signals.listings) : "—", tone: "var(--fg)", chart: null },
                 { label: "Sales (7D)", value: signals ? fmt(signals.sales) : "—", tone: CYAN, chart: null },
               ].map((s) => (

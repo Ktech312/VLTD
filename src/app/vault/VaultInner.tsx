@@ -20,7 +20,8 @@ import {
 
 import { PillButton } from "@/components/ui/PillButton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { showToast } from "@/lib/toast";
+import CameraCapturePanel from "@/components/CameraCapturePanel";
+import type { BarcodeLookupResult } from "@/lib/scanners/barcodeLookup";
 
 type FrameStyle = "gallery" | "shadowbox" | "slab" | "minimal" | "vault";
 
@@ -742,6 +743,7 @@ export default function VaultInner() {
 
   const [frontUrl, setFrontUrl] = useState<string | undefined>(undefined);
   const [backUrl, setBackUrl] = useState<string | undefined>(undefined);
+  const [isScanCameraOpen, setIsScanCameraOpen] = useState(false);
 
   const [useGenericFront, setUseGenericFront] = useState(false);
   const [useGenericBack, setUseGenericBack] = useState(false);
@@ -1184,7 +1186,31 @@ export default function VaultInner() {
   }
 
   function onScan() {
-    showToast("Barcode scan coming soon...");
+    setIsScanCameraOpen(true);
+  }
+
+  // Opens from the "Add to Museum" modal's Scan button -- this modal only
+  // has Front/Back photos + a bare Title field (no category/value/etc., see
+  // the "premium capture flow, use Quick Add" tip below), so Scan here does
+  // the two things that actually apply: captures a photo into whichever
+  // slot is still empty (same as the existing file-picker PhotoTiles, just
+  // via the live camera), and if a barcode happens to resolve to a real
+  // lookup match, fills the Title field -- the one text field that exists.
+  async function handleScanCapture(file: File) {
+    if (!frontUrl && !useGenericFront) {
+      await onPickFront(file);
+    } else if (!backUrl && !useGenericBack) {
+      await onPickBack(file);
+    } else {
+      await onPickFront(file);
+    }
+    setIsScanCameraOpen(false);
+  }
+
+  function handleScanLiveBarcode(match: BarcodeLookupResult | null) {
+    if (match?.fields.title && !newTitle.trim()) {
+      setNewTitle(match.fields.title);
+    }
   }
 
   const isTrulyEmpty = items.length === 0;
@@ -1618,7 +1644,7 @@ export default function VaultInner() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div title="Scan (coming soon)">
+                  <div title="Scan a photo or barcode">
                     <PillButton onClick={onScan}>Scan</PillButton>
                   </div>
                   <div title="Close">
@@ -1756,6 +1782,18 @@ export default function VaultInner() {
           </div>
         </div>
       )}
+
+      {isScanCameraOpen ? (
+        <CameraCapturePanel
+          title="Scan"
+          description="Capture a photo, or point at a barcode to try filling in the title."
+          onCapture={(file) => void handleScanCapture(file)}
+          onLiveBarcodeScan={(_result, match) => handleScanLiveBarcode(match)}
+          bulkToggle={false}
+          onClose={() => setIsScanCameraOpen(false)}
+          onUseFileInstead={() => setIsScanCameraOpen(false)}
+        />
+      ) : null}
     </main>
   );
 }
