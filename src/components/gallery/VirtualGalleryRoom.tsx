@@ -6,8 +6,6 @@ import {
   BadgeDollarSign,
   Boxes,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   ChevronUp,
   CircleDollarSign,
   DoorOpen,
@@ -21,8 +19,6 @@ import {
   MonitorUp,
   PackagePlus,
   Paintbrush,
-  RotateCcw,
-  RotateCw,
   Save,
   Sparkles,
 } from "lucide-react";
@@ -78,9 +74,9 @@ const MAX_ROOM_ITEMS = 32;
 // "blue" has no entry — it's the hand-coded shell shown permanently, with
 // no GLB to load at all. See the RoomStyle type above for what that means.
 const ROOM_MODEL_URLS: Partial<Record<RoomStyle, string>> = {
-  vault: "/models/gallery-rooms/vault-room.glb?v=white-darker-2",
-  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=white-darker-2",
-  arcade: "/models/gallery-rooms/arcade-room.glb?v=white-darker-2",
+  vault: "/models/gallery-rooms/vault-room.glb?v=shelf-headroom-2026-08-22",
+  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=shelf-headroom-2026-08-22",
+  arcade: "/models/gallery-rooms/arcade-room.glb?v=shelf-headroom-2026-08-22",
 };
 
 // The 5 center display cases (built further down as decorative glass cabinets)
@@ -223,11 +219,19 @@ function buildUniverseRooms(items: VaultItem[]): MuseumUniverseRoom[] {
     .sort((a, b) => b.items.length - a.items.length || b.value - a.value || a.title.localeCompare(b.title));
 }
 
-function drawItemTexture(
-  item: VaultItem,
-  showValues: boolean,
-  image?: HTMLImageElement | null
-) {
+function drawItemTexture(image?: HTMLImageElement | null) {
+  // EK, 2026-08-21, direct screenshot comparison against bingebrowse.net's
+  // held-item view: theirs is the poster/cover art edge-to-edge, ZERO text
+  // baked into the object itself — title/synopsis/price all live in panels
+  // OUTSIDE the object. Ours used to reserve a 400x440 image box inside a
+  // 512x704 canvas (the photo was only ~48% of the object's own area) plus
+  // a permanent 134px dark footer for title/subtitle/price — that footer,
+  // not the overall card scale, was the dominant reason our images read
+  // smaller even after the scale-floor fix. The photo now fills the canvas
+  // nearly edge-to-edge (a thin border only, no reserved text band); title/
+  // value/universe are NOT redrawn onto the object — that data already
+  // renders in the "Selected Piece" panel on click, so nothing is lost,
+  // only de-duplicated off the picture itself.
   const canvas = document.createElement("canvas");
   canvas.width = 512;
   canvas.height = 704;
@@ -244,13 +248,17 @@ function drawItemTexture(
 
   ctx.strokeStyle = "rgba(237,239,241,0.72)";
   ctx.lineWidth = 7;
-  ctx.strokeRect(18, 18, 476, 668);
-  ctx.strokeStyle = "rgba(79,211,238,0.5)";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(34, 34, 444, 636);
+  ctx.strokeRect(10, 10, 492, 684);
 
+  const imageBox = { x: 22, y: 22, w: 468, h: 660 };
   if (image?.complete && image.naturalWidth > 0) {
-    const imageBox = { x: 56, y: 58, w: 400, h: 440 };
+    // Fit-inside, not cover-crop: a card/comic/slab photo's own border IS
+    // real content (the graded slab's label, the case corners) — cropping
+    // to fill cuts it off. BingeBrowse can crop-to-fill because movie
+    // poster art is drawn full-bleed with nothing at the edges to lose;
+    // our photos aren't. The image box is still ~86% of the object's own
+    // area (was ~49%), so this is still a big legibility win, just without
+    // chopping anything off.
     const scale = Math.min(imageBox.w / image.naturalWidth, imageBox.h / image.naturalHeight);
     const w = image.naturalWidth * scale;
     const h = image.naturalHeight * scale;
@@ -263,30 +271,11 @@ function drawItemTexture(
     );
   } else {
     ctx.fillStyle = "rgba(79,211,238,0.12)";
-    ctx.fillRect(56, 58, 400, 440);
+    ctx.fillRect(imageBox.x, imageBox.y, imageBox.w, imageBox.h);
     ctx.fillStyle = "rgba(237,239,241,0.75)";
     ctx.font = "700 46px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("VLTD", 256, 290);
-  }
-
-  const title = item.title.length > 34 ? `${item.title.slice(0, 31)}...` : item.title;
-  const subtitle = itemSubtitle(item) || String(item.category || item.universe || "Collection piece");
-  const value = formatMoney(item.currentValue);
-
-  ctx.fillStyle = "rgba(2,5,9,0.92)";
-  ctx.fillRect(36, 520, 440, 134);
-  ctx.fillStyle = "#ECEDEF";
-  ctx.font = "800 30px Arial";
-  ctx.textAlign = "left";
-  ctx.fillText(title, 58, 568);
-  ctx.fillStyle = "rgba(236,237,239,0.62)";
-  ctx.font = "500 20px Arial";
-  ctx.fillText(subtitle.slice(0, 42), 58, 606);
-  if (showValues && value) {
-    ctx.fillStyle = "#4FD3EE";
-    ctx.font = "800 24px Arial";
-    ctx.fillText(value, 58, 640);
+    ctx.fillText("VLTD", 256, 352);
   }
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -592,7 +581,41 @@ const WALL_CYCLE: Array<"back" | "left" | "right"> = ["back", "left", "back", "r
 // vertical position both read from this one table — they used to be two separately
 // hand-tuned numbers (4.72 for the boards, 5.42/4.75 for items) that drifted out of
 // sync, so items floated well above their shelf instead of resting on it.
-const SHELF_ROW_Y = [4.72, 3.47, 2.22, 0.97];
+//
+// EK's ask (2026-08-21), corrected TWICE same day:
+// 1st pass shifted all 4 rows down to sit near a "fixed" eyeHeight of 1.7
+// — wrong on two counts: the eyeHeight change itself was based on a bad
+// unit assumption and got reverted (see eyeHeight's own comment), and
+// shifting the whole band down put a row right near the floor, which EK
+// had explicitly said not to do ("I don't want a row on the floor like
+// [bingebrowse.net] do[es]").
+// 2nd pass cut to 3 rows and re-centered around the (still-wrong) 1.7 —
+// same mistake, different shape.
+// Corrected: back to the ORIGINAL 4-row heights — [4.72, 3.47, 2.22,
+// 0.97] — with the genuinely-too-low bottom row (0.97) simply dropped,
+// not the whole band reshuffled. The top 3 rows were never the problem;
+// only the bottom one was. With eyeHeight reverted to 3.6, these 3 rows
+// land close to evenly split around eye level (top row ~1.8 above eye,
+// bottom row ~0.7 below) — no new number invented, just the one bad row
+// removed.
+//
+// EK's ask (2026-08-21), a 4th correction: the 1.25 spacing above was
+// exactly the item card's own height at MIN_ITEM_SCALE=0.78 (1.2 units)
+// plus the board's half-thickness (0.05) — zero headroom, so an item's
+// own top edge sat flush against the shelf board mounted above it,
+// visibly clipping into it. EK: "do not change the size of the items"
+// — so the fix is spacing, not scale. Top row (4.72) is untouched — it
+// only needs clearance to the wall rail well above it. Middle and bottom
+// rows moved down to open a real ~0.25-unit gap above every item:
+// 1.5 spacing instead of 1.25 (3.47 -> 3.22, 2.22 -> 1.72).
+//
+// ⚠ These values are duplicated in scripts/generate-gallery-room-models.py
+// (`shelf_y`, in add_wall_panels()) for the baked GLB's own shelf-board
+// mesh positions — vault/whitebox/arcade need that regenerated to match, or
+// items float off the physical shelf again (same bug as the display-case
+// fix earlier this session). Kept in sync as part of this change — see
+// HANDOFF for the exact regen command if it needs re-running.
+const SHELF_ROW_Y = [4.72, 3.22, 1.72];
 
 function shelfItemY(row: number, scale: number) {
   const shelfY = SHELF_ROW_Y[row] ?? SHELF_ROW_Y[SHELF_ROW_Y.length - 1];
@@ -608,7 +631,13 @@ function wallGridPosition(
 ): RoomItemPosition {
   if (wall === "back") {
     const col = slot % 8;
-    const row = Math.floor(slot / 8);
+    // Was `Math.floor(slot / 8)` with an implicit assumption of exactly 4
+    // rows — silently correct only because the array happened to have 4
+    // entries. Deriving the row count from SHELF_ROW_Y.length instead
+    // means changing the row count again later can't silently desync this
+    // from the array the way the hardcoded "4" below already had to be
+    // caught and fixed just now.
+    const row = Math.floor(slot / 8) % SHELF_ROW_Y.length;
     return {
       x: -7.35 + col * 2.1,
       y: shelfItemY(row, config.backScale),
@@ -619,8 +648,8 @@ function wallGridPosition(
     };
   }
 
-  const row = slot % 4;
-  const depth = Math.floor(slot / 4);
+  const row = slot % SHELF_ROW_Y.length;
+  const depth = Math.floor(slot / SHELF_ROW_Y.length);
   return {
     x: wall === "left" ? -10.22 : 10.22,
     y: shelfItemY(row, config.sideScale),
@@ -643,6 +672,17 @@ function distributeAcrossWalls(
   });
 }
 
+// EK's ask (2026-08-21): checked bingebrowse.net's own source (their
+// rental-case mesh is a real 0.235 x ~0.165 world-unit DVD case, viewed at
+// a close ~1.2-1.4 unit aisle distance with a 58-75deg camera) against ours
+// (47deg FOV) and found our items were legible in the *focused* click-in
+// view but not at normal walking-past distance — Salon's old 0.52/0.58
+// scale read as illegible exactly where EK flagged it. This is the floor:
+// no wall item (Store or Salon) renders smaller than this scale, ever.
+// Hero's dedicated feature slots (1.2, below) are explicitly allowed to
+// exceed it — EK: "hero images we can do larger."
+const MIN_ITEM_SCALE = 0.78;
+
 function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition[] {
   if (layout === "spotlight") {
     // EK's redesign: one big feature piece per wall (back/left/right),
@@ -656,24 +696,37 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
     // spans all the way back to the wall, it occupies the same space as
     // the shelf boards mounted there — which is what read as shelf rails
     // crossing in front of the picture. Fix: keep the hero flush with the
-    // wall like a normal item (small, normal frame depth), and instead of
-    // relying on scale/depth for presence, give it dedicated headroom
-    // between the top shelf row (y=4.72) and the top wall rail (y=7.2) —
-    // a real gap with nothing else in it, so nothing crosses the frame at
-    // all, and it reads as "built into the wall" the way EK asked for.
+    // wall like a normal item (small, normal frame depth).
+    //
+    // EK's ask (2026-08-22/23), a real fix not a guess: was y=5.96, jammed
+    // into the gap between the top shelf row and the wall rail — the math
+    // says that gap (~1.23 units) is smaller than Hero's own frame height
+    // at scale 1.2 (~2.0 units), so no Y value up there could ever fully
+    // clear both boundaries; 5.96 was always going to read as "crammed in
+    // above the shelf," not "centered." Moved to the SAME height as
+    // shelfItemY's middle row (row 1) instead — reuses a position that's
+    // already proven to have real clearance (regular items sit there on
+    // every other layout without incident), and lands much closer to eye
+    // level (deviation from eyeHeight=3.6 drops from +2.36 to +0.594).
+    // Vertically it now spans slightly past where row-0/row-2 items would
+    // sit at this same x — that's fine, x=0/±10.22 sit BETWEEN the regular
+    // grid's own column positions (columns are at -7.35+col*2.1, i.e.
+    // -7.35..7.35 in steps of 2.1 — 0 and ±10.22 are never one of them),
+    // so nothing is ever placed there for Hero to actually collide with.
+    const HERO_Y = shelfItemY(1, 1.2); // the middle shelf row's own height, at hero scale — see comment above
     const allHeroSlots: RoomItemPosition[] = [
-      { x: 0, y: 5.96, z: -11.78, ry: 0, scale: 1.2, wall: "back" },
-      { x: -10.22, y: 5.96, z: -3.2, ry: Math.PI / 2, scale: 1.2, wall: "left" },
-      { x: 10.22, y: 5.96, z: -3.2, ry: -Math.PI / 2, scale: 1.2, wall: "right" },
+      { x: 0, y: HERO_Y, z: -11.78, ry: 0, scale: 1.2, wall: "back" },
+      { x: -10.22, y: HERO_Y, z: -3.2, ry: Math.PI / 2, scale: 1.2, wall: "left" },
+      { x: 10.22, y: HERO_Y, z: -3.2, ry: -Math.PI / 2, scale: 1.2, wall: "right" },
     ];
     const heroSlots = allHeroSlots.slice(0, count);
     const remaining = Math.max(0, count - heroSlots.length);
     const supporting = distributeAcrossWalls(remaining, {
       backZ: -11.78,
-      backScale: 0.58,
+      backScale: MIN_ITEM_SCALE,
       sideBaseZ: -9.25,
       sideZStep: 2.1,
-      sideScale: 0.6,
+      sideScale: MIN_ITEM_SCALE,
     });
     return [...heroSlots, ...supporting];
   }
@@ -684,18 +737,17 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
     // collection, tighter spacing along the wall barely shows (there
     // aren't enough items to even fill one row), so shrinking Salon was
     // the only thing that actually changed, and it just made pieces
-    // harder to see rather than reading as "densely packed." Rather than
-    // shrink Salon further, pushed Store to be more generously spaced/
-    // sized instead (see below) so the contrast comes from both ends —
-    // and brought Salon's scale back up to something still legible while
-    // keeping the tight step, since "dense but readable" is the actual
-    // salon-hang look, not "tiny."
+    // harder to see rather than reading as "densely packed." A follow-up
+    // pass brought scale back up but was still below MIN_ITEM_SCALE and
+    // EK called it out again as illegible — Salon's item SIZE is now
+    // locked to the same floor as Store; only the tight step (spacing)
+    // differentiates the two, not size.
     return distributeAcrossWalls(count, {
       backZ: -11.82,
-      backScale: 0.52,
+      backScale: MIN_ITEM_SCALE,
       sideBaseZ: -9.6,
       sideZStep: 1.5,
-      sideScale: 0.58,
+      sideScale: MIN_ITEM_SCALE,
     });
   }
 
@@ -705,10 +757,10 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
   // wall length, instead of two layouts occupying the same middle ground.
   return distributeAcrossWalls(count, {
     backZ: -11.78,
-    backScale: 0.7,
+    backScale: MIN_ITEM_SCALE,
     sideBaseZ: -9.25,
     sideZStep: 3.0,
-    sideScale: 0.78,
+    sideScale: MIN_ITEM_SCALE,
   });
 }
 
@@ -729,7 +781,10 @@ function frontWallPosition(slot: number): RoomItemPosition {
     y: pos.y,
     z: 5.54,
     ry: Math.PI,
-    scale: 0.6,
+    // Was 0.6, a leftover below MIN_ITEM_SCALE that patching the 3 main
+    // wall configs missed — this front-wall row is a normal wall mount
+    // like every other item, so it gets the same floor, no exception.
+    scale: MIN_ITEM_SCALE,
     wall: "front",
   };
 }
@@ -763,14 +818,23 @@ function buildPositions(layout: RoomLayout, style: RoomStyle): RoomItemPosition[
     y: 0.85,
     z,
     ry: -Math.PI / 2,
-    scale: 0.5,
+    // Can't use MIN_ITEM_SCALE (0.78) here — this is a real physical
+    // constraint, not a stylistic choice like the wall items were. The
+    // case's own glass interior is baked at 1.3 x 1.0 world units
+    // (add_cases() in generate-gallery-room-models.py); at 0.78 the card's
+    // long edge (1.54 * 0.78 = 1.20) would clip straight through the glass
+    // wall (1.0 clearance). 0.58 is the largest scale that still clears
+    // the glass with a small margin (1.54 * 0.58 = 0.89 < 1.0). Reaching
+    // true parity with wall items would mean enlarging the baked case
+    // glass itself (a GLB regen) — flagged to EK, not done here.
+    scale: 0.58,
     wall: "cabinet",
     flat: true,
   }));
   return [...wallPositions, ...cabinetPositions];
 }
 
-export default function VirtualGalleryRoom() {
+export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean } = {}) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const roomGroupRef = useRef<THREE.Group | null>(null);
   const meshesRef = useRef<THREE.Mesh[]>([]);
@@ -796,7 +860,13 @@ export default function VirtualGalleryRoom() {
   const [showValues, setShowValues] = useState(true);
   const [wallTextureUrl, setWallTextureUrl] = useState("");
   const [wallpaperError, setWallpaperError] = useState("");
-  const [selectedItemId, setSelectedItemId] = useState<string>(DEMO_ITEMS[0]?.id ?? "");
+  // EK's ask (2026-08-22/23): defaulted to the first demo item's id,
+  // a leftover from when this fed the old "Selected Piece" sidebar panel
+  // (removed 2026-08-21). Now it solely gates the "drag to rotate" hint
+  // for a genuinely held item (see pickUpItem/putBackItem), so a
+  // non-empty default made that hint show on page load with nothing
+  // actually picked up.
+  const [selectedItemId, setSelectedItemId] = useState<string>("");
   const [saveState, setSaveState] = useState<"idle" | "saved" | "error">("idle");
   const [isOrganizing, setIsOrganizing] = useState(false);
   const [roomPanelOpen, setRoomPanelOpen] = useState(true);
@@ -862,10 +932,6 @@ export default function VirtualGalleryRoom() {
   const selectedItems = useMemo(
     () => slotItems.filter((item): item is VaultItem => Boolean(item)),
     [slotItems]
-  );
-  const selectedItem = useMemo(
-    () => selectedItems.find((item) => item.id === selectedItemId) ?? selectedItems[0],
-    [selectedItemId, selectedItems]
   );
   const selectedValue = useMemo(
     () => selectedItems.reduce((sum, item) => sum + Number(item.currentValue ?? 0), 0),
@@ -948,6 +1014,24 @@ export default function VirtualGalleryRoom() {
     container.innerHTML = "";
     meshesRef.current = [];
     doorwayMeshesRef.current = [];
+
+    // Item pickup/inspect (EK's ask, 2026-08-22/23) — populated per
+    // wall-mounted item below, read from onPointerUp's item-click branch
+    // and from the render-loop pickup animation. Keyed by itemId so the
+    // click handler (which only has the clicked mesh) can look up the
+    // full VaultItem (for imageBackUrl) and the card's original shelf
+    // transform (to animate it back).
+    const itemMeshIndex = new Map<
+      string,
+      {
+        mesh: THREE.Mesh;
+        item: VaultItem;
+        shelfPos: THREE.Vector3;
+        shelfRotY: number;
+        frontTexture: THREE.Texture | null;
+        backTexture: THREE.Texture | null;
+      }
+    >();
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -1057,14 +1141,15 @@ export default function VirtualGalleryRoom() {
     // so the beam rakes across the piece instead of hitting it dead-on.
     if (!inHub && roomLayout === "spotlight") {
       // Targets match the hero item positions exactly (buildWallPositions
-      // above: y=5.96, back z=-11.78, side x=+-10.22 — flush wall-mount,
-      // not pulled forward). Light positions pulled up and into the room
-      // from each target so the beam rakes across the piece from above/
-      // in front, the way a real gallery spotlight would.
+      // above: y=shelfItemY(1,1.2), back z=-11.78, side x=+-10.22 — flush
+      // wall-mount, not pulled forward). Light positions pulled up and
+      // into the room from each target so the beam rakes across the piece
+      // from above/in front, the way a real gallery spotlight would.
+      const heroTargetY = shelfItemY(1, 1.2);
       const heroTargets: Array<[number, number, number]> = [
-        [0, 5.96, -11.78],
-        [-10.22, 5.96, -3.2],
-        [10.22, 5.96, -3.2],
+        [0, heroTargetY, -11.78],
+        [-10.22, heroTargetY, -3.2],
+        [10.22, heroTargetY, -3.2],
       ];
       const heroLightPositions: Array<[number, number, number]> = [
         [0, 7.4, -9.0],
@@ -1142,6 +1227,54 @@ export default function VirtualGalleryRoom() {
           shellObjects.forEach((object) => {
             object.visible = false;
           });
+
+          // EK's ask (2026-08-23): same "custom shelf for the Hero frame"
+          // fix as the shell (addBackRowBoard/addSideRowBoard above) —
+          // Vault/White/Arcade's top shelf board is BAKED into this GLB
+          // as one continuous mesh, so it can't be conditionally built
+          // notched at bake time (the same .glb serves every layout).
+          // Instead: find the baked top-row board by its exported name,
+          // hide it, and add the same notched pair as the shell does —
+          // reusing THIS mesh's own material so the replacement matches
+          // whatever this room style baked (steel/wood/whatever), not a
+          // guessed color.
+          const heroWallNotch: Array<["back" | "left" | "right", boolean]> = [
+            ["back", heroNotch.back],
+            ["left", heroNotch.left],
+            ["right", heroNotch.right],
+          ];
+          heroWallNotch.forEach(([wall, notch]) => {
+            if (!notch) return;
+            const boardName = `${wall}_shelf_0`;
+            const baked = model.getObjectByName(boardName);
+            if (!(baked instanceof THREE.Mesh)) return;
+            baked.visible = false;
+            const material = Array.isArray(baked.material) ? baked.material[0] : baked.material;
+            const y = SHELF_ROW_Y[0];
+            if (wall === "back") {
+              const half = 9.95;
+              const segWidth = half - HERO_NOTCH_HALF;
+              const segA = new THREE.Mesh(new THREE.BoxGeometry(segWidth, 0.1, 0.845), material);
+              segA.position.set(-(HERO_NOTCH_HALF + segWidth / 2), y, -11.6275);
+              roomGroup.add(segA);
+              const segB = new THREE.Mesh(new THREE.BoxGeometry(segWidth, 0.1, 0.845), material);
+              segB.position.set(HERO_NOTCH_HALF + segWidth / 2, y, -11.6275);
+              roomGroup.add(segB);
+            } else {
+              const x = wall === "left" ? -10.1275 : 10.1275;
+              const heroZ = -3.2;
+              const zStart = -3.15 - 11.6;
+              const zEnd = -3.15 + 11.6;
+              const segALen = heroZ - HERO_NOTCH_HALF - zStart;
+              const segBLen = zEnd - (heroZ + HERO_NOTCH_HALF);
+              const segA = new THREE.Mesh(new THREE.BoxGeometry(0.845, 0.1, segALen), material);
+              segA.position.set(x, y, zStart + segALen / 2);
+              roomGroup.add(segA);
+              const segB = new THREE.Mesh(new THREE.BoxGeometry(0.845, 0.1, segBLen), material);
+              segB.position.set(x, y, zEnd - segBLen / 2);
+              roomGroup.add(segB);
+            }
+          });
         },
         undefined,
         () => {
@@ -1182,6 +1315,18 @@ export default function VirtualGalleryRoom() {
       color: palette.trim,
       roughness: roomStyle === "arcade" ? 0.34 : (roomStyle === "vault" || roomStyle === "blue") ? 0.42 : 0.65,
       metalness: roomStyle === "arcade" ? 0.72 : (roomStyle === "vault" || roomStyle === "blue") ? 0.55 : 0.08,
+    });
+    // EK's ask (2026-08-22): item frames used to share trimMaterial with
+    // the wall trim AND the shelf boards — literally the same color as
+    // everything around them, which is exactly why a real geometry bug
+    // (the frame sinking into the shelf, fixed below) went unnoticed for
+    // a while: "everything is blending too much." A fixed, distinct
+    // matte off-white matting color reads as a picture frame against any
+    // room style's own trim color, instead of disappearing into it.
+    const frameMaterial = new THREE.MeshStandardMaterial({
+      color: 0xf2eee3,
+      roughness: 0.55,
+      metalness: 0.02,
     });
     // Vault reference photos consistently pair the steel door itself with a
     // brass/gold frame and surround, not plain brushed steel — used only for
@@ -1469,8 +1614,79 @@ export default function VirtualGalleryRoom() {
     frontBaseboardRight.position.set(6.13, 0.08, 5.7);
     addShell(frontBaseboardRight);
 
+    // EK's ask (2026-08-23): "the shelf design has to be custom for the
+    // Hero Frame. do not make the frame bigger, do not move the frame or
+    // change the size at all. The top shelve have to be redone from
+    // scratch to stop just before the hero image." Root cause: the top
+    // shelf board is one continuous run across the whole wall, built
+    // completely independently of item placement — nothing ever checked
+    // whether Hero's (deliberately taller) frame, now sitting at the
+    // middle row's height, physically reaches up into where the top
+    // row's board runs. It does, so the board visibly cut straight
+    // through the top of the frame. Fix: when Hero layout is active, the
+    // TOP row only (row 0 — the one Hero's frame actually reaches into)
+    // is built as two segments with a real gap where Hero's frame is,
+    // instead of one continuous board — Hero's own size/position is
+    // completely untouched. Only the walls that actually have a
+    // populated Hero slot get notched (back always; left once there are
+    // >=2 items; right once there are >=3 — mirrors allHeroSlots' own
+    // back/left/right fill order), so Store/Salon and under-filled Hero
+    // walls keep the plain unbroken board.
+    const heroNotch =
+      roomLayout === "spotlight"
+        ? {
+            back: selectedItems.length >= 1,
+            left: selectedItems.length >= 2,
+            right: selectedItems.length >= 3,
+          }
+        : { back: false, left: false, right: false };
+    // Half-width of the gap needed to clear Hero's own frame (1.12*1.2 +
+    // 2*0.065*1.2 = 1.5 wide, half 0.75) plus a small margin — reused
+    // as-is for the side walls too, since Hero's frame width becomes the
+    // along-wall (Z) extent there once rotated onto that wall.
+    const HERO_NOTCH_HALF = 0.9;
+
+    function addBackRowBoard(y: number, notch: boolean) {
+      if (!notch) {
+        const backShelf = new THREE.Mesh(new THREE.BoxGeometry(19.9, 0.1, 0.845), trimMaterial);
+        backShelf.position.set(0, y, -11.6275);
+        addShell(backShelf);
+        return;
+      }
+      const half = 9.95;
+      const segWidth = half - HERO_NOTCH_HALF;
+      const segA = new THREE.Mesh(new THREE.BoxGeometry(segWidth, 0.1, 0.845), trimMaterial);
+      segA.position.set(-(HERO_NOTCH_HALF + segWidth / 2), y, -11.6275);
+      addShell(segA);
+      const segB = new THREE.Mesh(new THREE.BoxGeometry(segWidth, 0.1, 0.845), trimMaterial);
+      segB.position.set(HERO_NOTCH_HALF + segWidth / 2, y, -11.6275);
+      addShell(segB);
+    }
+
+    function addSideRowBoard(side: "left" | "right", y: number, notch: boolean) {
+      const x = side === "left" ? -10.1275 : 10.1275;
+      if (!notch) {
+        const shelf = new THREE.Mesh(new THREE.BoxGeometry(0.845, 0.1, 23.2), trimMaterial);
+        shelf.position.set(x, y, -3.15);
+        addShell(shelf);
+        return;
+      }
+      const heroZ = -3.2; // matches the hero item's own z on this wall
+      const zStart = -3.15 - 11.6;
+      const zEnd = -3.15 + 11.6;
+      const segALen = heroZ - HERO_NOTCH_HALF - zStart;
+      const segBLen = zEnd - (heroZ + HERO_NOTCH_HALF);
+      const segA = new THREE.Mesh(new THREE.BoxGeometry(0.845, 0.1, segALen), trimMaterial);
+      segA.position.set(x, y, zStart + segALen / 2);
+      addShell(segA);
+      const segB = new THREE.Mesh(new THREE.BoxGeometry(0.845, 0.1, segBLen), trimMaterial);
+      segB.position.set(x, y, zEnd - segBLen / 2);
+      addShell(segB);
+    }
+
     for (let row = 0; row < SHELF_ROW_Y.length; row += 1) {
       const y = SHELF_ROW_Y[row];
+      const isTopRow = row === 0;
 
       // The board's front edge (the face items actually sit near) stays put;
       // only the back edge moves. Original boards were 0.55 thick centered
@@ -1482,17 +1698,9 @@ export default function VirtualGalleryRoom() {
 
       // Widened to 19.9 (from 18.2) so it actually reaches the side shelves at
       // x=±9.98 instead of leaving a visible ~0.9-unit gap at each back corner.
-      const backShelf = new THREE.Mesh(new THREE.BoxGeometry(19.9, 0.1, 0.845), trimMaterial);
-      backShelf.position.set(0, y, -11.6275);
-      addShell(backShelf);
-
-      const leftShelf = new THREE.Mesh(new THREE.BoxGeometry(0.845, 0.1, 23.2), trimMaterial);
-      leftShelf.position.set(-10.1275, y, -3.15);
-      addShell(leftShelf);
-
-      const rightShelf = new THREE.Mesh(new THREE.BoxGeometry(0.845, 0.1, 23.2), trimMaterial);
-      rightShelf.position.set(10.1275, y, -3.15);
-      addShell(rightShelf);
+      addBackRowBoard(y, isTopRow && heroNotch.back);
+      addSideRowBoard("left", y, isTopRow && heroNotch.left);
+      addSideRowBoard("right", y, isTopRow && heroNotch.right);
     }
 
     const cabinetMaterial = new THREE.MeshStandardMaterial({
@@ -1622,18 +1830,20 @@ export default function VirtualGalleryRoom() {
       const pos = positions[index];
       if (!pos) return;
 
-      const texture = drawItemTexture(item, showValues);
+      const texture = drawItemTexture();
       const material = new THREE.MeshStandardMaterial({
         map: texture,
         roughness: 0.44,
         metalness: 0.08,
         emissive: new THREE.Color(0x05070a),
         emissiveIntensity: 0.08,
-        // Flat display-case items need both faces — a plane only renders
-        // its front by default, so viewed from the "wrong" side (easy to
-        // do walking around a case) it was invisible, adding to the
-        // "doesn't look right from other angles" complaint.
-        side: pos.flat ? THREE.DoubleSide : THREE.FrontSide,
+        // Flat display-case items need both faces for the same reason as
+        // display cases always did (viewed from the "wrong" side while
+        // walking past). Wall-mounted items now ALSO need both faces —
+        // pickup/inspect (2026-08-22/23) rotates them a full turn to
+        // reveal the back, and a FrontSide-only plane would just vanish
+        // once rotated past 90° instead of showing anything.
+        side: THREE.DoubleSide,
       });
       const card = new THREE.Mesh(new THREE.PlaneGeometry(1.12 * pos.scale, 1.54 * pos.scale), material);
       card.position.set(pos.x, pos.y, pos.z);
@@ -1676,17 +1886,43 @@ export default function VirtualGalleryRoom() {
           centerOffset = frontOffset + frameDepth / 2;
         }
 
+        // EK's ask (2026-08-22): the frame used to be centered on the same
+        // Y as the card, symmetric matting extending equally above AND
+        // below it — but the card only has a fixed 0.05-unit clearance
+        // above the shelf board it rests on (shelfHalfThickness, doesn't
+        // scale with item size), while the frame's matting DOES scale
+        // with item size. At normal item scale that overhang already
+        // exceeds the clearance, so the frame's bottom edge sank into the
+        // shelf board itself — EK caught it live: "the bottom of the
+        // frame is in the shelf." Matting now only extends above and to
+        // the sides; the bottom of the frame is flush with the bottom of
+        // the card (like a framed piece resting directly on the shelf
+        // ledge), so it can't dip into the board regardless of scale.
+        const mattingTop = 0.065 * pos.scale;
+        const mattingSide = 0.065 * pos.scale;
         const frame = new THREE.Mesh(
-          new THREE.BoxGeometry(1.25 * pos.scale, 1.67 * pos.scale, frameDepth),
-          trimMaterial
+          new THREE.BoxGeometry(1.12 * pos.scale + mattingSide * 2, 1.54 * pos.scale + mattingTop, frameDepth),
+          frameMaterial
         );
         frame.position.set(
           pos.x - normal.x * centerOffset,
-          pos.y,
+          pos.y + mattingTop / 2,
           pos.z - normal.z * centerOffset
         );
         frame.rotation.y = pos.ry;
         roomGroup.add(frame);
+
+        // Only wall-mounted items get pickup/inspect — display-case items
+        // (flat, lying in glass) keep the existing camera-focus-only click,
+        // a deliberate scope cut, not an oversight.
+        itemMeshIndex.set(item.id, {
+          mesh: card,
+          item,
+          shelfPos: card.position.clone(),
+          shelfRotY: pos.ry,
+          frontTexture: null,
+          backTexture: null,
+        });
       }
 
       const url = itemImage(item);
@@ -1694,9 +1930,11 @@ export default function VirtualGalleryRoom() {
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.onload = () => {
-          const next = drawItemTexture(item, showValues, img);
+          const next = drawItemTexture(img);
           material.map = next;
           material.needsUpdate = true;
+          const entry = itemMeshIndex.get(item.id);
+          if (entry) entry.frontTexture = next;
         };
         img.onerror = () => {
           material.needsUpdate = true;
@@ -1757,9 +1995,25 @@ export default function VirtualGalleryRoom() {
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
+    const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    const clock = new THREE.Clock();
     let width = 0;
     let height = 0;
     let raf = 0;
+    // EK's ask (2026-08-21), REVERTED same day after EK reported the room
+    // felt toddler-scale ("I feel like a 5 year old"). The 3.6 -> 1.7 drop
+    // was based on assuming this room's units are 1:1 meters — never
+    // actually checked against anything real in the room. Cross-checked it
+    // against the one real-world anchor that DOES exist in the baked
+    // geometry: the entrance door frame is 4.95 units tall
+    // (add_standard_door() in generate-gallery-room-models.py). A real
+    // grand-entrance door runs roughly 7-9 feet, which puts 1 unit at
+    // roughly 0.43-0.55m, not 1m. Redone with that scale, the ORIGINAL 3.6
+    // works out to ~5'1"-5'7" (a normal adult) and the "fix" of 1.7 works
+    // out to ~2'4"-3'0" (a toddler) — the opposite of what was intended.
+    // Back to the original value; SHELF_ROW_Y's fix (dropping the one row
+    // that genuinely was too low, see its own comment) stands on its own
+    // and didn't need this number to be right.
     const eyeHeight = 3.6;
     const savedCamera = cameraStateRef.current;
     // A fresh spawn (no saved camera) looks straight down -Z at yaw 0, which
@@ -1781,6 +2035,247 @@ export default function VirtualGalleryRoom() {
     let startX = 0;
     let startY = 0;
 
+    // EK's ask (2026-08-22/23): "you never changed the walking pattern
+    // like the other app." Researched bingebrowse.net's own click-to-walk
+    // directly from their bundle — it's not one continuous ease toward a
+    // destination (which is all the plain targetCameraBody/targetYaw lerp
+    // below does); it's a three-phase move, their own comment: "face the
+    // destination, travel with a steady view, stop, then turn to the
+    // exact film." Phase 1 turns in place to face the destination (position
+    // frozen). Phase 2 walks in a straight line at that fixed facing (no
+    // reorienting mid-walk). Phase 3 turns from the travel-facing to the
+    // precise final aim (position frozen again). Each phase individually
+    // smoothstepped, not one curve stretched over the whole journey.
+    // Exact timing/rate constants are theirs, pulled from the live bundle,
+    // not invented: turn rate ~2.2 rad/sec (clamped 0.18-1.25s per turn),
+    // travel speed ~4.8 units/sec (clamped 0.34-1.65s) — travel is ~3.8x
+    // the WASD walk speed (moveCamera's own 0.54-per-tap movement reads as
+    // real-time walking; click-to-walk reads as deliberate fast travel).
+    // Only click-to-walk uses this — WASD and mouse-look keep the existing
+    // continuous lerp, matching the reference (their WASD has no tween at
+    // all, see updateMovement).
+    type WalkTween = {
+      fromYaw: number; toYaw: number; travelYaw: number;
+      fromPitch: number; toPitch: number; travelPitch: number;
+      fromPos: THREE.Vector3; toPos: THREE.Vector3;
+      t: number; journeyDuration: number; firstTurnEnd: number; moveEnd: number;
+    };
+    let walkTween: WalkTween | null = null;
+
+    function angleDelta(from: number, to: number) {
+      let d = (to - from) % (Math.PI * 2);
+      if (d > Math.PI) d -= Math.PI * 2;
+      if (d < -Math.PI) d += Math.PI * 2;
+      return d;
+    }
+
+    function smoothstep(q: number) {
+      return q * q * (3 - 2 * q);
+    }
+
+    function startWalkTween(destination: THREE.Vector3) {
+      // EK's ask (2026-08-23): the reference's own 3rd phase (turn to the
+      // PRECISE final aim on arrival — their "then turn to the exact
+      // film") was carried over too literally. Ours forced that final
+      // turn to face whichever wall was nearest the destination, which
+      // read as "it spins you to a position it thinks you want" — an
+      // unrequested reorientation you didn't ask for, right as you arrive
+      // right up close to that wall. Dropped entirely: the walk now ends
+      // facing the same direction you were already walking in (phase 2's
+      // travel-facing), no extra re-aim. Two phases, not three.
+      const fromPos = cameraBody.clone();
+      const travelDistance = fromPos.distanceTo(destination);
+      const dx = destination.x - fromPos.x;
+      const dz = destination.z - fromPos.z;
+      const wantTravelYaw = Math.atan2(dx, -dz);
+      const travelYaw = travelDistance > 0.01 ? yaw + angleDelta(yaw, wantTravelYaw) : yaw;
+      const travelPitch = pitch;
+
+      const firstTurnDuration = THREE.MathUtils.clamp(
+        Math.max(Math.abs(travelYaw - yaw), Math.abs(travelPitch - pitch) * 1.4) / 2.2,
+        0.18,
+        1.25
+      );
+      const moveDuration = THREE.MathUtils.clamp(travelDistance / 4.8, 0.34, 1.65);
+      const journeyDuration = firstTurnDuration + moveDuration;
+
+      walkTween = {
+        fromYaw: yaw,
+        toYaw: travelYaw,
+        travelYaw,
+        fromPitch: pitch,
+        toPitch: travelPitch,
+        travelPitch,
+        fromPos,
+        toPos: destination.clone(),
+        t: 0,
+        journeyDuration,
+        firstTurnEnd: firstTurnDuration / journeyDuration,
+        moveEnd: 1,
+      };
+      // Keep the plain lerp targets in sync with the destination so that if
+      // WASD/mouse-look interrupts the tween (see moveCamera/onPointerDown),
+      // the existing continuous system picks up from exactly where the
+      // tween left off instead of snapping.
+      targetCameraBody.copy(destination);
+      targetYaw = travelYaw;
+      targetPitch = travelPitch;
+    }
+
+    // Item pickup/inspect (EK's ask, 2026-08-22/23) — researched directly
+    // from bingebrowse.net's own bundle rather than guessed. Two pieces,
+    // both theirs: (1) a two-phase pull animation (0.6s, easeOutCubic,
+    // split at eased-progress 0.45 — pull straight off the shelf to a
+    // waypoint first, THEN travel/rotate/grow into the held position —
+    // see updateInspectAnim in their source), and (2) a spring-damper
+    // chasing the cursor for the held item's idle tilt (their own
+    // comment: "the held case is a spring chasing a cursor-driven
+    // target"), exact constants INSPECT_STIFF=100/INSPECT_DAMP=19 from
+    // their source, not tuned by feel. Scoped to wall-mounted items only
+    // — display-case items keep the existing camera-focus click.
+    type HeldItem = {
+      id: string;
+      mesh: THREE.Mesh;
+      item: VaultItem;
+      shelfPos: THREE.Vector3;
+      shelfRotY: number;
+      waypoint: THREE.Vector3;
+      focal: THREE.Vector3;
+      frozenYaw: number;
+    };
+    let heldItem: HeldItem | null = null;
+    let pullAnim: { dir: "in" | "out"; t: number } | null = null;
+    let inspectYaw = 0;
+    let inspectPitch = 0;
+    let inspectVelYaw = 0;
+    let inspectVelPitch = 0;
+    let inspectTargetYaw = 0;
+    let inspectTargetPitch = 0;
+    let heldDragYaw = 0;
+    let showingBack = false;
+    const INSPECT_SCALE = 1.7;
+
+    function pickUpItem(itemId: string) {
+      const entry = itemMeshIndex.get(itemId);
+      if (!entry) return;
+      const wallNormal = new THREE.Vector3(Math.sin(entry.shelfRotY), 0, Math.cos(entry.shelfRotY));
+      const waypoint = entry.shelfPos.clone().addScaledVector(wallNormal, 0.9);
+      const frozenYaw = yaw;
+      const facing = new THREE.Vector3(Math.sin(frozenYaw), 0, -Math.cos(frozenYaw));
+      const focal = cameraBody.clone().addScaledVector(facing, 2.2);
+      focal.y = cameraBody.y;
+      heldItem = { id: itemId, mesh: entry.mesh, item: entry.item, shelfPos: entry.shelfPos.clone(), shelfRotY: entry.shelfRotY, waypoint, focal, frozenYaw };
+      inspectYaw = 0;
+      inspectPitch = 0;
+      inspectVelYaw = 0;
+      inspectVelPitch = 0;
+      inspectTargetYaw = 0;
+      inspectTargetPitch = 0;
+      heldDragYaw = 0;
+      showingBack = false;
+      pullAnim = { dir: "in", t: 0 };
+      setSelectedItemId(itemId);
+
+      // Kick off the back-image load now (if there is one) so it's ready
+      // well before a drag could rotate far enough to need it.
+      if (entry.item.imageBackUrl && !entry.backTexture) {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          entry.backTexture = drawItemTexture(img);
+        };
+        img.src = entry.item.imageBackUrl;
+      }
+    }
+
+    function putBackItem() {
+      if (!heldItem || pullAnim?.dir === "out") return;
+      pullAnim = { dir: "out", t: 0 };
+    }
+
+    function updateHeldItem(dt: number) {
+      if (!heldItem) return;
+      const mesh = heldItem.mesh;
+
+      if (pullAnim) {
+        pullAnim.t = Math.min(1, pullAnim.t + dt / 0.6);
+        const raw = pullAnim.dir === "in" ? pullAnim.t : 1 - pullAnim.t;
+        const e = 1 - Math.pow(1 - raw, 3); // easeOutCubic
+        if (e < 0.45) {
+          const k = e / 0.45;
+          mesh.position.lerpVectors(heldItem.shelfPos, heldItem.waypoint, k);
+          mesh.rotation.y = heldItem.shelfRotY;
+          mesh.rotation.x = 0;
+          mesh.scale.setScalar(1);
+        } else {
+          const k = (e - 0.45) / 0.55;
+          mesh.position.lerpVectors(heldItem.waypoint, heldItem.focal, k);
+          // Rotation.y=t turns local +Z to world (sin t, 0, cos t) — for
+          // that to point back at the camera (world -facing(frozenYaw)),
+          // t = -frozenYaw. Was frozenYaw+PI, which is wrong by a
+          // frozenYaw-dependent amount and could land the card edge-on
+          // to the camera (functionally invisible) depending on which
+          // way the camera happened to be facing at pickup.
+          mesh.rotation.y = THREE.MathUtils.lerp(heldItem.shelfRotY, -heldItem.frozenYaw, k);
+          mesh.rotation.x = 0;
+          mesh.scale.setScalar(THREE.MathUtils.lerp(1, INSPECT_SCALE, k));
+        }
+        if (pullAnim.t >= 1) {
+          if (pullAnim.dir === "in") {
+            pullAnim = null;
+          } else {
+            mesh.position.copy(heldItem.shelfPos);
+            mesh.rotation.y = heldItem.shelfRotY;
+            mesh.rotation.x = 0;
+            mesh.scale.setScalar(1);
+            const entry = itemMeshIndex.get(heldItem.id);
+            if (entry?.frontTexture) {
+              const mat = mesh.material as THREE.MeshStandardMaterial;
+              mat.map = entry.frontTexture;
+              mat.needsUpdate = true;
+            }
+            pullAnim = null;
+            heldItem = null;
+            setSelectedItemId("");
+          }
+        }
+        return;
+      }
+
+      // Settled — their exact spring constants (near-critically damped:
+      // "follows fast, barely overshoots"), chasing a cursor-driven target.
+      const INSPECT_STIFF = 100;
+      const INSPECT_DAMP = 19;
+      const INSPECT_RANGE_YAW = 0.95;
+      const INSPECT_RANGE_PITCH = 0.4;
+      const damp = Math.exp(-INSPECT_DAMP * dt);
+      inspectVelYaw = (inspectVelYaw + (inspectTargetYaw - inspectYaw) * INSPECT_STIFF * dt) * damp;
+      inspectYaw += inspectVelYaw * dt;
+      inspectVelPitch = (inspectVelPitch + (inspectTargetPitch - inspectPitch) * INSPECT_STIFF * dt) * damp;
+      inspectPitch += inspectVelPitch * dt;
+
+      mesh.position.copy(heldItem.focal);
+      mesh.rotation.y = -heldItem.frozenYaw + inspectYaw * INSPECT_RANGE_YAW + heldDragYaw;
+      mesh.rotation.x = inspectPitch * INSPECT_RANGE_PITCH;
+      mesh.scale.setScalar(INSPECT_SCALE);
+
+      // Front/back swap once dragged past edge-on — only for items that
+      // actually have a back image; others just keep showing the front
+      // as they turn (EK's own earlier framing: "might not work for
+      // every item").
+      const entry = itemMeshIndex.get(heldItem.id);
+      if (entry?.backTexture) {
+        const normalizedYaw = ((heldDragYaw % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+        const wantBack = normalizedYaw > Math.PI / 2 && normalizedYaw < Math.PI * 1.5;
+        if (wantBack !== showingBack) {
+          showingBack = wantBack;
+          const mat = mesh.material as THREE.MeshStandardMaterial;
+          mat.map = wantBack ? entry.backTexture : entry.frontTexture ?? entry.backTexture;
+          mat.needsUpdate = true;
+        }
+      }
+    }
+
     // Height is NOT force-reset to eye level here anymore — a focus-click needs to
     // park the camera at the item's own height (see onPointerUp) for a level,
     // face-on shot. moveCamera() below restores eye height on foot so walking
@@ -1798,6 +2293,22 @@ export default function VirtualGalleryRoom() {
       return position;
     }
 
+    // EK's ask (2026-08-23): click-to-walk into a corner clamped to the
+    // same margin as everything above (~2.7-2.8 units) — fine for a
+    // single wall, but a corner is TWO walls that close at once, and the
+    // narrow 47deg FOV fills up with both surfaces, hiding floor and
+    // ceiling ("I should still see top to bottom, not just the middle
+    // and part of the bottom"). Walking there via WASD is rare/deliberate
+    // enough that the tighter general clamp is fine; click-to-walk routes
+    // you straight into a corner far more easily, so it gets its own,
+    // roomier minimum — doesn't touch clampPosition above, which every
+    // other camera move still uses unchanged.
+    function clampWalkDestination(position: THREE.Vector3) {
+      position.x = Math.max(-6.2, Math.min(6.2, position.x));
+      position.z = Math.max(-7.8, Math.min(4.2, position.z));
+      return position;
+    }
+
     function clampView(pitchLimit = NAV_PITCH_LIMIT) {
       targetPitch = Math.max(-pitchLimit, Math.min(pitchLimit, targetPitch));
       clampPosition(targetCameraBody);
@@ -1812,6 +2323,8 @@ export default function VirtualGalleryRoom() {
     }
 
     function moveCamera(command: string, amount = 0.54) {
+      if (heldItem) return; // camera stays put while inspecting an item
+      walkTween = null;
       if (command === "forward") {
         targetCameraBody.add(facingDirection().multiplyScalar(amount));
         targetCameraBody.y = eyeHeight;
@@ -1841,9 +2354,38 @@ export default function VirtualGalleryRoom() {
     }
 
     function render() {
-      yaw += (targetYaw - yaw) * 0.12;
-      pitch += (targetPitch - pitch) * 0.12;
-      cameraBody.lerp(targetCameraBody, 0.15);
+      const dt = Math.min(clock.getDelta(), 0.05);
+      updateHeldItem(dt);
+      if (walkTween) {
+        walkTween.t = Math.min(1, walkTween.t + dt / walkTween.journeyDuration);
+        const { t, firstTurnEnd, moveEnd } = walkTween;
+        if (t < firstTurnEnd) {
+          const k = smoothstep(firstTurnEnd > 0 ? t / firstTurnEnd : 1);
+          yaw = THREE.MathUtils.lerp(walkTween.fromYaw, walkTween.travelYaw, k);
+          pitch = THREE.MathUtils.lerp(walkTween.fromPitch, walkTween.travelPitch, k);
+          cameraBody.copy(walkTween.fromPos);
+        } else if (t < moveEnd) {
+          const k = smoothstep((t - firstTurnEnd) / (moveEnd - firstTurnEnd));
+          yaw = walkTween.travelYaw;
+          pitch = walkTween.travelPitch;
+          cameraBody.lerpVectors(walkTween.fromPos, walkTween.toPos, k);
+        } else {
+          const k = smoothstep(moveEnd < 1 ? (t - moveEnd) / (1 - moveEnd) : 1);
+          yaw = THREE.MathUtils.lerp(walkTween.travelYaw, walkTween.toYaw, k);
+          pitch = THREE.MathUtils.lerp(walkTween.travelPitch, walkTween.toPitch, k);
+          cameraBody.copy(walkTween.toPos);
+        }
+        if (walkTween.t >= 1) {
+          yaw = walkTween.toYaw;
+          pitch = walkTween.toPitch;
+          cameraBody.copy(walkTween.toPos);
+          walkTween = null;
+        }
+      } else {
+        yaw += (targetYaw - yaw) * 0.12;
+        pitch += (targetPitch - pitch) * 0.12;
+        cameraBody.lerp(targetCameraBody, 0.15);
+      }
 
       const lookDirection = new THREE.Vector3(
         Math.sin(yaw),
@@ -1864,10 +2406,30 @@ export default function VirtualGalleryRoom() {
     }
 
     function onPointerMove(event: PointerEvent) {
+      if (heldItem) {
+        // Passive parallax while just moving the mouse (no drag) — feeds
+        // the spring in updateHeldItem, same as their cursor-chase.
+        if (!isDragging) {
+          inspectTargetYaw = (event.clientX / window.innerWidth) * 2 - 1;
+          inspectTargetPitch = -((event.clientY / window.innerHeight) * 2 - 1);
+          return;
+        }
+        // An actual drag free-rotates the held item (not spring-bound) —
+        // this is what reveals the back past the edge-on point.
+        const dx = event.clientX - startX;
+        if (Math.abs(dx) > 6) didDrag = true;
+        heldDragYaw -= dx * 0.008;
+        startX = event.clientX;
+        startY = event.clientY;
+        return;
+      }
       if (!isDragging) return;
       const dx = event.clientX - startX;
       const dy = event.clientY - startY;
-      if (Math.abs(dx) + Math.abs(dy) > 6) didDrag = true;
+      if (Math.abs(dx) + Math.abs(dy) > 6) {
+        didDrag = true;
+        walkTween = null; // a real manual look-drag interrupts an in-progress auto-walk
+      }
       targetYaw -= dx * 0.0035;
       targetPitch += dy * 0.0016;
       clampView();
@@ -1876,6 +2438,15 @@ export default function VirtualGalleryRoom() {
     }
 
     function onPointerUp(event: PointerEvent) {
+      if (heldItem) {
+        // Holding something? ANY click puts it back — a click that
+        // dragged the item to rotate it (didDrag=true) is just the end
+        // of that rotation, not a release; only a clean tap releases.
+        // Consumed here, doesn't fall through to raycasting/walking below.
+        if (!didDrag) putBackItem();
+        isDragging = false;
+        return;
+      }
       if (!didDrag) {
         const rect = renderer.domElement.getBoundingClientRect();
         pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -1885,6 +2456,7 @@ export default function VirtualGalleryRoom() {
           [...meshesRef.current, ...doorwayMeshesRef.current],
           false
         )[0];
+        walkTween = null; // any click/tap takes over camera control from an in-progress auto-walk
         if (hit?.object.userData.doorwayTarget) {
           const target = String(hit.object.userData.doorwayTarget);
           if (target === "__overview__") {
@@ -1913,25 +2485,34 @@ export default function VirtualGalleryRoom() {
             targetPitch = Math.atan2(-standUp, standBack);
             clampView();
           } else {
-            const worldQuaternion = hit.object.getWorldQuaternion(new THREE.Quaternion());
-            const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(worldQuaternion).normalize();
-            normal.y = 0;
-            normal.normalize();
-
-            // Level, face-on framing: park the camera at the ITEM's own height (not
-            // a fixed eye height) so the shot is dead level — tilting a fixed-height
-            // camera up/down to compensate reads as "looking up/down at" the item
-            // instead of standing in front of it. moveCamera() restores normal eye
-            // height as soon as you walk, so this doesn't strand you crouched/floating.
-            const standDistance = 2.6;
-            const focusCamera = worldPosition.clone().add(normal.clone().multiplyScalar(standDistance));
-            focusCamera.y = Math.max(1.3, Math.min(6.6, worldPosition.y));
-
-            setSelectedItemId(itemId);
-            targetCameraBody.copy(focusCamera);
-            targetYaw = Math.atan2(-normal.x, normal.z);
-            targetPitch = 0;
-            clampView();
+            // EK's ask (2026-08-22/23): wall-mounted items now lift off
+            // the shelf into a held/inspect view instead of just moving
+            // the camera to face them in place — see pickUpItem/
+            // updateHeldItem above. Display-case items above keep the
+            // old camera-focus behavior (scoped out, not forgotten).
+            pickUpItem(itemId);
+          }
+        } else {
+          // Click-to-walk floor navigation (EK's ask, matching bingebrowse.net's
+          // "click a shelf area to move" — their own hint text confirms it's a
+          // single click, not a hover-then-confirm, so this reuses the same
+          // didDrag gate every other click here already uses to tell a tap from
+          // a look-drag). No item/doorway was hit, so try the floor: intersect
+          // the click ray against the y=0 plane and clamp it into the walkable
+          // bounds — clampWalkDestination, not clampPosition, so a corner click
+          // can't wedge you within ~2.7 units of two walls at once (see that
+          // function's own comment). The journey is the two-phase walkTween
+          // above (turn to face the destination, then walk) — EK's ask,
+          // 2026-08-23: the walk used to ALSO force a final turn to face
+          // whichever wall was nearest the destination, which read as "it
+          // spins you to a position it thinks you want" right as you land up
+          // close to that wall. Removed — the walk just ends facing the
+          // direction you were walking.
+          const floorHit = new THREE.Vector3();
+          if (raycaster.ray.intersectPlane(floorPlane, floorHit)) {
+            clampWalkDestination(floorHit);
+            floorHit.y = eyeHeight;
+            startWalkTween(floorHit);
           }
         }
       }
@@ -1943,15 +2524,15 @@ export default function VirtualGalleryRoom() {
       moveCamera(event.deltaY > 0 ? "back" : "forward", 0.42);
     }
 
-    function onMoveCommand(event: Event) {
-      const command = (event as CustomEvent<{ command?: string; amount?: number }>).detail?.command;
-      if (!command) return;
-      moveCamera(command, (event as CustomEvent<{ amount?: number }>).detail?.amount ?? 0.54);
-    }
-
     function onKeyDown(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
       if (target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.tagName === "SELECT") return;
+
+      if (event.key === "Escape" && heldItem) {
+        event.preventDefault();
+        putBackItem();
+        return;
+      }
 
       if (event.key === "ArrowUp" || event.key.toLowerCase() === "w") {
         event.preventDefault();
@@ -1980,7 +2561,6 @@ export default function VirtualGalleryRoom() {
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("vltd-room-move", onMoveCommand);
     renderer.domElement.addEventListener("wheel", onWheel, { passive: false });
     resize();
     render();
@@ -1996,7 +2576,6 @@ export default function VirtualGalleryRoom() {
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("vltd-room-move", onMoveCommand);
       renderer.domElement.removeEventListener("wheel", onWheel);
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh) {
@@ -2114,14 +2693,6 @@ export default function VirtualGalleryRoom() {
     window.setTimeout(() => setSaveState("idle"), 1800);
   }
 
-  function sendMoveCommand(command: string, amount?: number) {
-    window.dispatchEvent(
-      new CustomEvent("vltd-room-move", {
-        detail: { command, amount },
-      })
-    );
-  }
-
   function handleWallpaperUpload(file?: File | null) {
     if (!file) return;
     setWallpaperError("");
@@ -2130,6 +2701,163 @@ export default function VirtualGalleryRoom() {
       .catch((error) => {
         setWallpaperError(error instanceof Error ? error.message : "Could not load wallpaper image.");
       });
+  }
+
+  // Guest view (EK's ask, 2026-08-21): the builder chrome above — Source
+  // dropdown, Room settings, Items sidebar, Save Draft — is for the owner
+  // arranging the room, not a visitor looking at it. A guest gets just the
+  // 3D view, full-bleed below the site header, no bottom move/rotate pad
+  // (click-to-walk + drag-look are the only navigation, matching the
+  // reference site's own guest-facing experience). Same underlying scene/
+  // state — only the surrounding chrome differs.
+  // EK's ask (2026-08-21): the builder view forced a scroll — the room
+  // was sized to "100% of screen height minus 116px" for the toolbar
+  // above it, but that 116px was just a guess. The toolbar's real height
+  // varies (Hero's expanded pill row, the new Guest button wrapping to a
+  // second line, etc.), so whenever it grows past 116px the page becomes
+  // taller than one screen and forces a small scroll to see the bottom.
+  // A fixed min-height instead of a viewport-minus-guess calc can't ever
+  // force that overflow, whatever the toolbar's actual height turns out
+  // to be.
+  const roomView = (
+    <section
+      className={[
+        guest ? "h-full overflow-hidden" : "min-h-[600px] overflow-hidden rounded-[8px] border shadow-[0_30px_90px_rgba(0,0,0,0.34)]",
+        palette.shell,
+      ].join(" ")}
+      style={guest ? undefined : { borderColor: "var(--theme-border)" }}
+    >
+      <div className={guest ? "h-full" : "min-h-[600px]"}>
+        <div className={guest ? "relative h-full" : "relative min-h-[600px]"}>
+          {viewMode === "room" ? (
+            <div ref={mountRef} className="absolute inset-0" />
+          ) : (
+            <MuseumCampusOverview rooms={universeRooms} onOpenRoom={openUniverseRoom} onOpenMainHall={openMainHall} />
+          )}
+          <div className="absolute left-3 top-3 flex items-center gap-2">
+            <div className="pointer-events-none flex items-center gap-2 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur">
+              {viewMode === "room" ? <Sparkles size={14} /> : <MapIcon size={14} />}
+              {viewMode === "room" ? "VLTD Room" : "Universe Map"}
+            </div>
+            {guest ? (
+              // Guest view had no way back to the builder at all — Exit
+              // only reaches the campus map, and the map has no link back
+              // to the setup page either, so a guest visitor was stuck in
+              // a room<->map loop with no escape. EK caught this live.
+              <Link
+                href="/museum/virtual-room"
+                className="flex items-center gap-1.5 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur transition hover:bg-black/60"
+                title="Back to the room builder"
+              >
+                <PackagePlus size={14} />
+                Builder
+              </Link>
+            ) : null}
+            {viewMode === "room" ? (
+              <button
+                type="button"
+                onClick={() => setViewMode("overview")}
+                className="flex items-center gap-1.5 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur transition hover:bg-black/60"
+                title="Exit to the campus map"
+              >
+                <MapIcon size={14} />
+                Exit
+              </button>
+            ) : (
+              // Was missing entirely — landing in the map with no way back
+              // into the room, worst in guest view where there's no
+              // sidebar/Rooms dropdown to fall back on. EK flagged it live.
+              <button
+                type="button"
+                onClick={() => setViewMode("room")}
+                className="flex items-center gap-1.5 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur transition hover:bg-black/60"
+                title="Back to the room"
+              >
+                <Sparkles size={14} />
+                Back to Room
+              </button>
+            )}
+            {viewMode === "room" && universeRooms.some((room) => room.items.length > 0) ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setRoomSwitcherOpen((current) => !current)}
+                  aria-expanded={roomSwitcherOpen}
+                  className="flex items-center gap-1.5 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur transition hover:bg-black/60"
+                  title="Jump to another room"
+                >
+                  <DoorOpen size={14} />
+                  Rooms
+                  <ChevronDown size={13} />
+                </button>
+                {roomSwitcherOpen ? (
+                  <div className="absolute left-0 top-[calc(100%+6px)] z-20 grid max-h-[280px] w-52 gap-1 overflow-y-auto rounded-[8px] bg-black/85 p-1.5 ring-1 ring-white/15 backdrop-blur">
+                    {universeRooms
+                      .filter((room) => room.items.length > 0)
+                      .map((room) => (
+                        <button
+                          key={room.id}
+                          type="button"
+                          onClick={() => {
+                            openUniverseRoom(room);
+                            setRoomSwitcherOpen(false);
+                          }}
+                          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-[5px] px-2.5 py-2 text-left text-xs font-bold text-white/85 transition hover:bg-white/10 hover:text-white"
+                        >
+                          <span className="truncate">{room.title}</span>
+                          <span className="text-[10px] font-black text-white/45">{room.items.length} pcs</span>
+                        </button>
+                      ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+          {viewMode === "room" && selectedItems.length === 0 && !hallNoticeDismissed ? (
+            <div className="absolute inset-0 grid place-items-center px-6 text-center">
+              <div className="pointer-events-auto relative rounded-[10px] bg-black/38 px-6 py-5 ring-1 ring-white/12 backdrop-blur">
+                <button
+                  type="button"
+                  onClick={() => setHallNoticeDismissed(true)}
+                  aria-label="Dismiss"
+                  className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-[5px] bg-white/10 text-white/70 ring-1 ring-white/15 transition hover:bg-white/20 hover:text-white"
+                >
+                  ✕
+                </button>
+                <div className="text-[11px] font-black uppercase tracking-[0.2em] text-cyan-100/60">
+                  Grand Hall
+                </div>
+                <div className="mt-2 text-xl font-black tracking-normal text-white sm:text-2xl">
+                  Exhibitions coming soon
+                </div>
+                <p className="mx-auto mt-2 max-w-[360px] text-sm leading-6 text-white/60">
+                  This hall is reserved for future exhibitions. Pick items in the
+                  Items panel to start filling it.
+                </p>
+              </div>
+            </div>
+          ) : null}
+          {viewMode === "room" && selectedItemId ? (
+            // Item pickup has zero other visual feedback right now — the
+            // old bottom "Selected Piece" bar was removed earlier this
+            // session and nothing replaced it (still open, see HANDOFF).
+            // This is the minimum needed for the interaction itself to be
+            // discoverable, not a full detail panel.
+            <div className="pointer-events-none absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-black/55 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-white/85 ring-1 ring-white/15 backdrop-blur">
+              Drag to rotate · Click to put back
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
+
+  if (guest) {
+    return (
+      <div className="fixed inset-x-0 bottom-0 text-[color:var(--fg)]" style={{ top: "var(--topnav-h)" }}>
+        {roomView}
+      </div>
+    );
   }
 
   return (
@@ -2152,14 +2880,24 @@ export default function VirtualGalleryRoom() {
                   Gallery Builder
                 </h1>
               </div>
-              <Link
-                href="/museum"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]"
-                aria-label="Back to exhibitions"
-                title="Back to exhibitions"
-              >
-                <GalleryHorizontalEnd size={15} />
-              </Link>
+              <div className="flex shrink-0 items-center gap-1.5">
+                <Link
+                  href="/museum/virtual-room/guest"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-[6px] bg-[color:var(--pill)] px-2.5 text-xs font-black ring-1 ring-[color:var(--border)]"
+                  title="View as a guest would — full screen, no builder controls"
+                >
+                  <Eye size={14} />
+                  Guest
+                </Link>
+                <Link
+                  href="/museum"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]"
+                  aria-label="Back to exhibitions"
+                  title="Back to exhibitions"
+                >
+                  <GalleryHorizontalEnd size={15} />
+                </Link>
+              </div>
             </div>
 
             <div className="mt-2 grid grid-cols-3 gap-1.5">
@@ -2541,126 +3279,7 @@ export default function VirtualGalleryRoom() {
           </button>
         </aside>
 
-        <section className={["min-h-[calc(100svh-116px)] overflow-hidden rounded-[8px] border shadow-[0_30px_90px_rgba(0,0,0,0.34)]", palette.shell].join(" ")} style={{ borderColor: "var(--theme-border)" }}>
-          <div className="grid min-h-[calc(100svh-116px)] grid-rows-[minmax(420px,1fr)_auto]">
-            <div className="relative min-h-[420px]">
-              {viewMode === "room" ? (
-                <div ref={mountRef} className="absolute inset-0" />
-              ) : (
-                <MuseumCampusOverview rooms={universeRooms} onOpenRoom={openUniverseRoom} onOpenMainHall={openMainHall} />
-              )}
-              <div className="absolute left-3 top-3 flex items-center gap-2">
-                <div className="pointer-events-none flex items-center gap-2 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur">
-                  {viewMode === "room" ? <Sparkles size={14} /> : <MapIcon size={14} />}
-                  {viewMode === "room" ? "VLTD Room" : "Universe Map"}
-                </div>
-                {viewMode === "room" ? (
-                  <button
-                    type="button"
-                    onClick={() => setViewMode("overview")}
-                    className="flex items-center gap-1.5 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur transition hover:bg-black/60"
-                    title="Exit to the campus map"
-                  >
-                    <MapIcon size={14} />
-                    Exit
-                  </button>
-                ) : null}
-                {viewMode === "room" && universeRooms.some((room) => room.items.length > 0) ? (
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setRoomSwitcherOpen((current) => !current)}
-                      aria-expanded={roomSwitcherOpen}
-                      className="flex items-center gap-1.5 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur transition hover:bg-black/60"
-                      title="Jump to another room"
-                    >
-                      <DoorOpen size={14} />
-                      Rooms
-                      <ChevronDown size={13} />
-                    </button>
-                    {roomSwitcherOpen ? (
-                      <div className="absolute left-0 top-[calc(100%+6px)] z-20 grid max-h-[280px] w-52 gap-1 overflow-y-auto rounded-[8px] bg-black/85 p-1.5 ring-1 ring-white/15 backdrop-blur">
-                        {universeRooms
-                          .filter((room) => room.items.length > 0)
-                          .map((room) => (
-                            <button
-                              key={room.id}
-                              type="button"
-                              onClick={() => {
-                                openUniverseRoom(room);
-                                setRoomSwitcherOpen(false);
-                              }}
-                              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-[5px] px-2.5 py-2 text-left text-xs font-bold text-white/85 transition hover:bg-white/10 hover:text-white"
-                            >
-                              <span className="truncate">{room.title}</span>
-                              <span className="text-[10px] font-black text-white/45">{room.items.length} pcs</span>
-                            </button>
-                          ))}
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-              {viewMode === "room" && selectedItems.length === 0 && !hallNoticeDismissed ? (
-                <div className="absolute inset-0 grid place-items-center px-6 text-center">
-                  <div className="pointer-events-auto relative rounded-[10px] bg-black/38 px-6 py-5 ring-1 ring-white/12 backdrop-blur">
-                    <button
-                      type="button"
-                      onClick={() => setHallNoticeDismissed(true)}
-                      aria-label="Dismiss"
-                      className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-[5px] bg-white/10 text-white/70 ring-1 ring-white/15 transition hover:bg-white/20 hover:text-white"
-                    >
-                      ✕
-                    </button>
-                    <div className="text-[11px] font-black uppercase tracking-[0.2em] text-cyan-100/60">
-                      Grand Hall
-                    </div>
-                    <div className="mt-2 text-xl font-black tracking-normal text-white sm:text-2xl">
-                      Exhibitions coming soon
-                    </div>
-                    <p className="mx-auto mt-2 max-w-[360px] text-sm leading-6 text-white/60">
-                      This hall is reserved for future exhibitions. Pick items in the
-                      Items panel to start filling it.
-                    </p>
-                  </div>
-                </div>
-              ) : null}
-              {viewMode === "room" ? <FloorMoveControls onMove={sendMoveCommand} /> : null}
-            </div>
-
-            <div className="border-t bg-black/32 p-4 backdrop-blur" style={{ borderColor: "rgba(255,255,255,0.10)" }}>
-              {selectedItem ? (
-                <div className="grid gap-3 md:grid-cols-[88px_minmax(0,1fr)_auto] md:items-center">
-                  <div className="h-[110px] overflow-hidden rounded-[6px] bg-black/20 ring-1 ring-white/10">
-                    {itemImage(selectedItem) ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={itemImage(selectedItem)} alt={selectedItem.title} className="h-full w-full object-cover" draggable={false} />
-                    ) : null}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[11px] font-black uppercase tracking-[0.18em] text-white/45">
-                      Selected Piece
-                    </div>
-                    <h2 className="mt-1 truncate text-2xl font-black tracking-normal text-white">
-                      {selectedItem.title}
-                    </h2>
-                    <p className="mt-1 line-clamp-2 text-sm leading-6 text-white/68">
-                      {itemSubtitle(selectedItem) || selectedItem.notes || selectedItem.universe || "Collection piece"}
-                    </p>
-                  </div>
-                  <div className="grid gap-2 sm:grid-cols-2 md:min-w-[220px]">
-                    <Metric icon={<BadgeDollarSign size={15} />} label="Value" value={formatMoney(selectedItem.currentValue) || "$0"} inverse />
-                    <Metric icon={<Boxes size={15} />} label="Universe" value={String(selectedItem.universe || selectedItem.category || "Item")} inverse />
-                  </div>
-                </div>
-              ) : (
-                <div className="py-6 text-center text-sm text-white/60">
-                  {viewMode === "room" ? "Waiting for exhibitions — add items to fill this hall." : "Add items to build the room."}
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
+        {roomView}
         </div>
       </div>
     </main>
@@ -2937,79 +3556,6 @@ function CampusRoomButton({
         </span>
       </span>
     </button>
-  );
-}
-
-function FloorMoveControls({
-  onMove,
-}: {
-  onMove: (command: string, amount?: number) => void;
-}) {
-  return (
-    <div className="absolute bottom-5 left-1/2 z-20 grid -translate-x-1/2 gap-1.5 rounded-[8px] bg-black/34 p-2 ring-1 ring-white/12 backdrop-blur-md">
-      <div className="grid grid-cols-5 gap-1.5">
-        <span />
-        <button
-          type="button"
-          onClick={() => onMove("turn-left")}
-          className="grid h-9 w-9 place-items-center rounded-[6px] bg-white/8 text-white/78 ring-1 ring-white/12 transition hover:bg-white/14"
-          aria-label="Turn left"
-          title="Turn left"
-        >
-          <RotateCcw size={17} />
-        </button>
-        <button
-          type="button"
-          onClick={() => onMove("forward")}
-          className="grid h-9 w-9 place-items-center rounded-[6px] bg-cyan-300/18 text-cyan-100 ring-1 ring-cyan-200/24 transition hover:bg-cyan-300/26"
-          aria-label="Move forward"
-          title="Move forward"
-        >
-          <ChevronUp size={20} />
-        </button>
-        <button
-          type="button"
-          onClick={() => onMove("turn-right")}
-          className="grid h-9 w-9 place-items-center rounded-[6px] bg-white/8 text-white/78 ring-1 ring-white/12 transition hover:bg-white/14"
-          aria-label="Turn right"
-          title="Turn right"
-        >
-          <RotateCw size={17} />
-        </button>
-        <span />
-      </div>
-      <div className="grid grid-cols-5 gap-1.5">
-        <button
-          type="button"
-          onClick={() => onMove("left")}
-          className="grid h-9 w-9 place-items-center rounded-[6px] bg-white/8 text-white/78 ring-1 ring-white/12 transition hover:bg-white/14"
-          aria-label="Move left"
-          title="Move left"
-        >
-          <ChevronLeft size={20} />
-        </button>
-        <span />
-        <button
-          type="button"
-          onClick={() => onMove("back")}
-          className="grid h-9 w-9 place-items-center rounded-[6px] bg-white/8 text-white/78 ring-1 ring-white/12 transition hover:bg-white/14"
-          aria-label="Move back"
-          title="Move back"
-        >
-          <ChevronDown size={20} />
-        </button>
-        <span />
-        <button
-          type="button"
-          onClick={() => onMove("right")}
-          className="grid h-9 w-9 place-items-center rounded-[6px] bg-white/8 text-white/78 ring-1 ring-white/12 transition hover:bg-white/14"
-          aria-label="Move right"
-          title="Move right"
-        >
-          <ChevronRight size={20} />
-        </button>
-      </div>
-    </div>
   );
 }
 

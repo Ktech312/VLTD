@@ -179,7 +179,14 @@ def add_wall_panels(style, mats):
             cube(f"{side}_panel_rail_{y}", (x, y, -3.2), (0.1, 0.06, 24.0), panel, 0.012)
 
     # Shelf boards are part of the authored room model, not procedural app geometry.
-    shelf_y = [4.72, 3.47, 2.22, 0.97]
+    # EK's ask (2026-08-21), corrected a 4th time — must exactly match
+    # SHELF_ROW_Y in VirtualGalleryRoom.tsx. Final: top row unchanged,
+    # middle/bottom rows dropped 0.25 each to open real headroom above
+    # each item (the item's own top edge was flush against the board
+    # above it at the old 1.25 spacing) — item SIZE untouched, only the
+    # shelf spacing changed. See that constant's comment for the full
+    # reasoning. Drifting these two out of sync floats items off the shelf.
+    shelf_y = [4.72, 3.22, 1.72]
     for i, y in enumerate(shelf_y):
         cube(f"back_shelf_{i}", (0, y, -11.62), (19.9, 0.12, 0.72), trim, 0.035)
         cube(f"left_shelf_{i}", (-10.12, y, -3.15), (0.72, 0.12, 23.2), trim, 0.035)

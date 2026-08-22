@@ -146,6 +146,502 @@ confirm with EK who owns a screen.** EK is aware of this.
 
 ---
 
+## ✅ 2026-08-23, second overnight pass — 2 more real bugs EK caught in
+the morning-after screenshots, both fixed and LIVE-VERIFIED. Read this
+block first, then the one below it for the original 3-task pass.
+
+**1. Hero's frame was overlapping the shelf board above it.** EK: "the
+shelf design has to be custom for the Hero Frame. do not make the frame
+bigger, do not move the frame or change the size at all. The top shelf
+have to be redone from scratch to stop just before the hero image." Root
+cause: moving Hero to the middle row's height (previous fix) never
+checked collision against the physical TOP-ROW SHELF BOARD — items are
+column-discrete (Hero's x sits between regular columns, so no item-vs-
+item collision), but shelf boards are one continuous run across the
+WHOLE wall regardless of column, so Hero's taller frame reached straight
+up into the top board's own space. Fixed with a real notch, not a
+position/size change to Hero at all: `addBackRowBoard`/`addSideRowBoard`
+(shell/"Blue" style) and a post-GLTFLoad `getObjectByName("<wall>_shelf_
+0")` hide-and-replace (Vault/White/Arcade, since the notch can't be baked
+into a GLB shared by every layout) now build the top row as TWO segments
+with a `HERO_NOTCH_HALF=0.9` gap centered on Hero's own position, only
+when `roomLayout === "spotlight"` AND that specific wall actually has a
+populated Hero slot (`selectedItems.length >= 1/2/3` for back/left/
+right — mirrors `allHeroSlots`' own fill order). Store/Salon and any
+under-filled Hero wall keep the original unbroken board. GLB replacement
+segments reuse the FOUND mesh's own material so they match whatever that
+room style baked, not a guessed color. **Live-verified**: switched to
+Hero on Vault, zoomed on the feature piece — clean gap on both sides now,
+board no longer visibly crosses the frame.
+
+**2. Click-to-walk forced a final turn that shoved you into the wall.**
+EK: "it spins you to the position it thinks you want and puts you up
+close to the wall... it should not reposition the camera at the end."
+The walk itself (turn-to-face-destination, then walk) was fine per EK
+("the walk through work well") — the problem was a 3rd phase I'd added
+that then forced a FURTHER turn to face whichever wall was nearest the
+clicked point, landing you staring straight into it right as you arrived
+close to it. Removed that 3rd phase entirely — `startWalkTween` no longer
+takes a `finalYaw` param, `journeyDuration` is just `firstTurnDuration +
+moveDuration`, and the walk now settles facing the same direction you
+were already walking in. **Live-verified**: clicked to a floor spot,
+camera walked there and stopped at the travel-facing angle — no snap to
+stare at a wall.
+
+`tsc`/`eslint`/`npm run build` all clean after both fixes.
+
+---
+
+## ✅ 2026-08-22/23 OVERNIGHT — all 3 researched tasks IMPLEMENTED and
+LIVE-VERIFIED while EK slept ("do all 3 tasks... cross our fingers you
+get us 80% of the way there"). Read this block first for current status.
+
+**1. Three-phase click-to-walk** — replaced the old plain continuous lerp
+with `walkTween` (declared near the top of the big mount effect, right
+after `cameraBody`): turn-to-face-destination, walk-in-a-straight-line,
+turn-to-final-aim, each phase individually smoothstepped, exact
+timing/rate constants from bingebrowse.net's own source (see the 🔬
+research section further below for the full formula). `startWalkTween()`
+builds the tween; `render()` drives yaw/pitch/cameraBody from it each
+frame when one is active, falling back to the original continuous lerp
+otherwise (WASD/mouse-look untouched — matches the reference, which has
+no tween on those either). Any click, WASD press, or real mouse-drag
+cancels an in-progress walk. **Live-verified**: clicked the floor,
+watched the camera turn-then-travel smoothly over ~1-2 seconds instead of
+snapping.
+
+**2. Item pickup/inspect** — wall-mounted items (display-case items
+intentionally excluded, scope cut) now lift off the shelf into a held/
+inspect view instead of just moving the camera. `itemMeshIndex` (Map,
+built alongside the item meshes) tracks each item's shelf transform +
+front/back textures. `pickUpItem`/`putBackItem`/`updateHeldItem` do the
+two-phase pull animation (0.6s, easeOutCubic, split at eased-progress
+0.45 — exact shape from their `updateInspectAnim`), then a spring-damper
+idle parallax (`INSPECT_STIFF=100`/`INSPECT_DAMP=19`, their exact
+constants) driven by plain mouse movement, plus free drag-to-rotate
+(`heldDragYaw`) that swaps to `imageBackUrl` past the edge-on point if
+one exists. Camera movement (WASD/wheel-zoom/click-to-walk) is disabled
+while holding; Escape or any click releases. A minimal "Drag to rotate ·
+Click to put back" hint (gated on `selectedItemId`, reused from the
+existing pickup/release wiring) is the only feedback UI — no synopsis/
+metadata side panels, no next/prev browsing between held items, no touch/
+pinch support, all explicitly out of scope for this pass.
+**Bug found and fixed during live verification, not before**: the first
+version had the item's "face the camera" rotation formula wrong
+(`frozenYaw + Math.PI` instead of the correct `-frozenYaw`, worked out
+from how Three.js's rotation.y actually transforms a plane's local
+normal) — depending on which way the camera happened to be facing at
+pickup, this could land the lifted item edge-on to the camera, reading as
+the item vanishing when clicked. Live-verified end to end after the fix:
+picked an item off the shelf (visibly grew, centered, frame left empty on
+the wall), dragged it to rotate (visibly turned), clicked to release
+(animated back onto the shelf, texture and position restored exactly).
+**Not done, flag if asked:** display-case items, front/back swap wasn't
+exercised live (no test item had `imageBackUrl` set), multi-item
+carousel browsing.
+
+**3. Hero repositioning** — was `y=5.96`, wedged into the gap between the
+top shelf row and the wall rail; the math showed that gap (~1.23 units)
+is smaller than Hero's own frame height at scale 1.2 (~2.0 units), so no
+number up there could ever fully clear both boundaries. Moved to
+`shelfItemY(1, 1.2)` — the middle shelf row's own height — which is
+already collision-safe (regular items sit there without issue on every
+layout) and lands much closer to eye level (deviation from `eyeHeight=
+3.6` dropped from +2.36 to +0.594). Hero's x positions (0, ±10.22) sit
+between the regular grid's own column positions, so there's no actual
+horizontal collision despite the vertical range now overlapping where
+row-0/row-2 items would be. Spotlight target Y updated to match.
+**Live-verified**: switched to Hero layout, the feature piece now sits
+visibly at mid-wall height instead of crammed near the ceiling.
+
+`tsc`/`eslint`/`npm run build` all clean after every change above,
+verified fresh each time (not just after the first pass — re-verified
+after the rotation-formula fix too).
+
+---
+
+## ⚠⚠⚠⚠ 2026-08-22 — four more real bugs EK caught live, all fixed and
+LIVE-VERIFIED (screenshotted via claude-in-chrome against a fresh
+production build):
+
+1. **Item headroom** — `SHELF_ROW_Y` had exactly zero clearance between an
+   item's own top edge and the shelf board mounted above it (1.25 spacing
+   = item height (1.2) + board half-thickness (0.05), no margin at all).
+   EK: "the middle shelf doesn't give enough space on top of the items to
+   fit." Fixed WITHOUT changing item size, per EK's explicit instruction —
+   top row (4.72) untouched, middle/bottom dropped 0.25 each: `[4.72,
+   3.22, 1.72]` (was `[4.72, 3.47, 2.22]`). Same GLB-regen-and-verify
+   process as every SHELF_ROW_Y change — `shelf_y` in the generator script
+   updated to match, GLBs regenerated, baked values confirmed via the
+   byte-parse technique. Cache-bust now `shelf-headroom-2026-08-22`.
+2. **Builder page forced a scroll** — `roomView`'s non-guest section was
+   sized `min-h-[calc(100svh-116px)]`, guessing the toolbar above it was
+   116px tall. When the toolbar grows (Hero's expanded pills, the Guest
+   button added 2026-08-21), the guess falls short and the whole page
+   exceeds one screen. Changed to a fixed `min-h-[600px]` — can't ever
+   force that overflow, whatever the toolbar's real height is.
+3. **Item frame sinking into the shelf, plus frame/shelf color blending**
+   — two related bugs EK caught together ("I would have been able to tell
+   earlier" if the colors weren't the same). (a) The frame mesh reused
+   `trimMaterial` — literally the same color as the shelf boards and wall
+   trim, which is why the geometry bug below went unnoticed. Gave frames
+   their own dedicated `frameMaterial` (off-white matte matting,
+   `0xf2eee3`) that reads as a picture frame against any room style.
+   (b) The frame's matting used to extend symmetrically above AND below
+   the card — but the card's clearance above its shelf board is a fixed
+   0.05 units that doesn't scale with item size, while the frame's
+   overhang does, so at normal item scale the frame's bottom edge sank
+   into the board. Matting now only extends on top and the sides; the
+   frame's bottom is flush with the card's own bottom edge, so it
+   physically cannot dip into the shelf regardless of scale. Pure JS
+   change (frames aren't baked into the GLB) — no regen needed.
+4. **Guest view was a dead-end loop** — Exit only went guest-room -> map,
+   and the map had no link back to the actual builder/setup page at
+   `/museum/virtual-room` — a guest visitor (or EK checking guest view)
+   could only bounce between room and map forever. Added a "Builder" link
+   in the guest-mode top-left overlay, shown only when `guest` is true.
+5. **PWA install banner kept reappearing after a real install** —
+   `PWAInstallBanner.tsx`'s `install()` was *clearing* the dismiss-cooldown
+   key on success instead of recording a permanent "installed" flag, so
+   there was nothing stopping the banner from showing again (e.g. next
+   time `beforeinstallprompt` fires, or on a load that isn't in standalone
+   display mode even on an installed device). Added `INSTALLED_KEY`,
+   checked first before anything else; also listens for the browser's own
+   `appinstalled` event so it catches installs that didn't go through this
+   banner's own button.
+
+`tsc`/`eslint`/`npm run build` all clean after every fix above.
+
+---
+
+## 🔬 IMPLEMENTATION-READY RESEARCH, 2026-08-22 — read before starting the
+walking-pattern or item-inspect work. EK: "I don't want to sit around
+tomorrow for 6 hours waiting for you to do these things" — this is that
+research, done in full, so the next session can start writing code
+immediately instead of re-investigating. Everything below is pulled
+directly from bingebrowse.net's own bundle (fetched + grepped live, not
+guessed) — exact constants, exact formulas, not approximations.
+
+### A. The walking pattern (EK's biggest open complaint: "you never
+change the walking pattern like the other app")
+
+**WASD/arrow-key movement** (`updateMovement(dt)`):
+- Direct velocity, no acceleration curve — position += direction * speed
+  * dt, every frame. Starts and stops instantly; the "smoothness" comes
+  from elsewhere (below), not from easing the walk itself.
+- `speed = 1.25` units/sec normally, `0.85` units/sec while Shift is
+  held.
+- **Shift is a crouch, not a sprint** — it also eases the camera's eye
+  height down to `1.02` (from `EYE=1.30`) via `y += (target - y) *
+  min(1, dt*8)` — an exponential ease, ~1/8s time constant. We have
+  nothing like this at all; worth considering as a cheap, high-value
+  addition (a "duck down to see a low shelf" moment), separate from the
+  main walking-pattern fix.
+- Position is clamped to the room bounds every frame (same pattern our
+  `clampPosition` already uses).
+
+**Click-to-walk ("the stepping squares," our biggest gap from this)** —
+this is the real answer to EK's complaint. It is NOT a single continuous
+lerp toward a destination (which is what our current click-to-walk does,
+in `onPointerUp`'s floor-plane branch). It's a deliberate **three-phase
+tween**, comment verbatim: *"Search journeys move like a person: face the
+destination, travel with a steady view, stop, then turn to the exact
+film. Each phase is speed-bounded, so crossing the store cannot become a
+faster animation."*
+
+Phase 1 — **turn in place** to face the direction of travel (position
+frozen, only yaw/pitch animate).
+Phase 2 — **move** in a straight line at that fixed facing (position
+lerps, yaw/pitch frozen at the travel angle — you don't reorient while
+walking).
+Phase 3 — **turn** from the travel-facing to the precise final aim at the
+destination (position frozen again).
+
+Exact formulas (`THREE.MathUtils.clamp`, `angleDelta` = shortest-path
+angle difference):
+```
+travelDistance = camera.position.distanceTo(destination)
+travelYaw = yaw + angleDelta(yaw, angleToward(destination))
+firstTurnDuration = clamp(max(|travelYaw - yaw|, |travelPitch - pitch| * 1.4) / 2.2, 0.18, 1.25)  // seconds
+moveDuration       = clamp(travelDistance / 4.8, 0.34, 1.65)                                      // seconds
+finalTurnDuration  = clamp(max(|finalYaw - travelYaw|, |wantPitch - travelPitch| * 1.4) / 2.2, 0.18, 1.25)
+journeyDuration = firstTurnDuration + moveDuration + finalTurnDuration
+```
+Note the travel speed baked into `moveDuration` (~4.8 units/sec) is
+**~3.8x faster than the WASD walk speed (1.25 units/sec)** — click-to-walk
+reads as a deliberate "fast travel," not a real-time walk pace. Turn rate
+is ~2.2 rad/sec for both turn phases, each individually clamped to
+0.18-1.25s so neither a tiny nudge nor a huge cross-room turn feels wrong.
+
+Per-frame tween application (each phase gets its own **smoothstep**
+easing, `k = q*q*(3-2*q)` where `q` is that phase's own 0-1 progress —
+NOT one easing curve stretched across the whole journey):
+```
+tween.t += dt * (1 / journeyDuration)     // advances 0→1 across the WHOLE journey
+firstTurnEnd = firstTurnDuration / journeyDuration
+moveEnd      = (firstTurnDuration + moveDuration) / journeyDuration
+if t < firstTurnEnd:      q = t / firstTurnEnd;                    lerp(yaw/pitch, fromYaw/Pitch → travelYaw/Pitch, smoothstep(q)); position = fromPos (frozen)
+elif t < moveEnd:         q = (t - firstTurnEnd) / (moveEnd - firstTurnEnd); yaw/pitch = travelYaw/Pitch (frozen); position = lerp(fromPos → toPos, smoothstep(q))
+else:                     q = (t - moveEnd) / (1 - moveEnd);       lerp(yaw/pitch, travelYaw/Pitch → toYaw/Pitch, smoothstep(q)); position = toPos (frozen)
+```
+A simpler variant (no distinct phases — used for e.g. `aimAtBook`, just
+turning to face something without walking) uses a single easeOutCubic:
+`k = 1 - (1-t)^3`, applied directly to yaw/pitch/position over the same
+kind of duration-clamped tween.
+
+**Where this plugs into our file:** our `onPointerUp` floor-click branch
+(`VirtualGalleryRoom.tsx`, search `floorHit` / `clampPosition(floorHit)`)
+currently just sets `targetCameraBody`/`targetYaw` once and lets the
+existing per-frame lerp (`cameraBody.lerp(targetCameraBody, 0.15)` /
+`yaw += (targetYaw-yaw)*0.12` in `render()`) ease toward it continuously
+— that's the "single continuous lerp" this whole section says to
+replace. Implementing the above means: on a floor click, instead of just
+setting targets, construct a `tween` object (or equivalent local state)
+with the three phase boundaries and durations computed as above, and
+drive `render()`'s camera update from that tween's `t` instead of the
+constant-rate lerp, for click-to-walk specifically (WASD/mouse-look can
+keep using the existing continuous lerp — this replacement is scoped to
+destination travel only, matching the reference exactly).
+
+### B. Item pickup/inspect animation (Phase 2 of the interaction plan)
+
+**The pull animation** (`updateInspectAnim(dt)`): total duration **0.6
+seconds**, `easeOutCubic` (`e = 1 - (1-t)^3`), advancing via `t += dt /
+0.6`. Two phases split at `e = 0.45` (not a time split — an EASED-PROGRESS
+split, so the transition itself is smooth even though the two phases
+have different motion):
+- **e 0 → 0.45** ("pulling off the shelf"): item mesh lerps from its
+  shelf position to an intermediate **waypoint** (a point pulled straight
+  out from the shelf, before it starts heading toward center-screen).
+  Orientation and scale stay locked at shelf values during this phase —
+  the item doesn't grow or turn yet, it just slides straight out.
+- **e 0.45 → 1.0** ("settling into view"): item lerps from the waypoint
+  to its final held position (screen-center-ish focal point), rotates
+  from its shelf orientation to the camera-facing orientation
+  (`slerpQuaternions`), and grows from shelf-size to the final on-screen
+  inspect size, all simultaneously over this second sub-range.
+- On arrival (t=1): for their thin DVD-case items, the case additionally
+  "squashes" in depth to reveal the flat cover face (their spine-to-cover
+  flip). Our items are already flat cards, so this specific step doesn't
+  map over — the two-phase pull-then-settle STRUCTURE is the reusable
+  part, not this depth-squash detail.
+
+**Held-item parallax while inspecting** (mouse-follow tilt, EK's earlier
+"nice description" / "pick up and rotates" observation): a genuine
+**spring-damper simulation** chasing the cursor, not a direct 1:1 mapping
+or a simple lerp — comment: *"the held case is a spring chasing a
+cursor-driven target, with a velocity kick on fast flicks so the case
+swings with the cursor's acceleration (the 'wow' of the inspect view)."*
+Exact constants: `INSPECT_STIFF = 100, INSPECT_DAMP = 19` (their own
+comment: "near-critically damped: follows fast, barely overshoots"),
+`INSPECT_RANGE_YAW = 0.95` radians (max yaw the parallax responds within
+— it doesn't chase the cursor infinitely, it's range-limited). Formula,
+run every frame while an item is held:
+```
+damp = exp(-INSPECT_DAMP * dt)
+velocity = (velocity + (targetAngle - currentAngle) * INSPECT_STIFF * dt) * damp
+currentAngle += velocity * dt
+```
+This is a standard semi-implicit spring-damper — same shape for both yaw
+and pitch, each with their own velocity/target/current triplet. This is
+almost certainly want gives their "pick up and rotates" its expensive,
+tactile feel — worth implementing exactly, not approximating with a
+plain lerp, since a lerp reads noticeably stiffer/cheaper than a real
+spring for this kind of cursor-follow interaction.
+
+**Where this plugs into our file:** this is entirely new state/behavior
+— nothing in `VirtualGalleryRoom.tsx` currently lifts an item off the
+shelf at all (`onPointerUp`'s item-hit branch only moves the CAMERA to
+face the item in place, per the existing "Selected Piece" click-to-focus
+flow — see the file's own `standDistance`/`focusCamera` logic in that
+branch). Building this means: on item click, instead of (or in addition
+to) moving the camera, animate the ITEM mesh itself using the two-phase
+pull above, then on `pointermove` while an item is "held," drive its
+tilt via the spring formula above, and on drag (reusing the existing
+`isDragging`/`didDrag` tracking from `onPointerDown`/`onPointerMove`)
+rotate it fully to reveal `imageBackUrl` past a rotation threshold — this
+last part (front/back swap point) was already scoped in the original
+2026-08-20 interaction plan further below and doesn't need re-deriving.
+
+### C. Hero positioning (EK's older, still-open "not centered/eye-level"
+complaint) — no external research needed here, this is a room-geometry
+constraint, not a behavior to reverse-engineer:
+
+Hero's 3 feature slots sit at `y=5.96` (`buildWallPositions`, the
+`allHeroSlots` array) specifically because that's the only gap that
+existed between the (old) top shelf row and the wall rail above it — see
+that array's own comment for the full "huge box" bug history. Since then,
+`SHELF_ROW_Y`'s top row is still `4.72` (unchanged through every
+correction today) and items on it now have real headroom (fix #1 above),
+so the geometry hasn't shifted enough to free up a lower gap for Hero on
+its own. Bringing Hero down toward actual eye level (rather than
+"whatever gap happens to exist above the shelf grid") likely means either
+(a) giving Hero its own dedicated wall real estate that ISN'T sandwiched
+between the shelf grid and the rail — e.g. reserving the CENTER of the
+back wall at eye height and routing normal shelf items around it instead
+of stacking Hero above them, or (b) accepting Hero sits above the grid as
+now but pulling it down as close to the top shelf row's clearance as
+geometry allows and no further. This needs an actual layout decision from
+EK (which tradeoff), not just a number — flag it back rather than picking
+one silently, same principle as every other fix today.
+
+---
+
+## ⚠⚠⚠ CORRECTION, 2026-08-21 LATE — the eye-height fix below (item #3)
+was WRONG and has been REVERTED. Read this before touching eyeHeight or
+SHELF_ROW_Y again.
+
+EK reported the "live-verified" fix still felt broken — "I feel like a 5
+year old kid." Root cause: the entire `3.6 → 1.7` eyeHeight change was
+based on assuming this room's units are 1:1 meters, which was NEVER
+actually verified against anything in the room. Cross-checked against the
+one real-world anchor that exists in the baked geometry — the entrance
+door frame, 4.95 units tall (`add_standard_door()` in the generator
+script). A real grand-entrance door runs ~7-9 feet, putting 1 unit at
+roughly **0.43-0.55m, not 1m**. Redone with that scale: the ORIGINAL 3.6
+works out to ~5'1"-5'7" (normal adult), and the "fix" of 1.7 works out to
+~2'4"-3'0" (a toddler) — the opposite of the intended effect.
+
+**Current, correct state:**
+- `eyeHeight` reverted to `3.6` (its original value).
+- `SHELF_ROW_Y` reverted to `[4.72, 3.47, 2.22]` — the ORIGINAL top 3 rows
+  from the pre-session `[4.72, 3.47, 2.22, 0.97]` table, with ONLY the
+  genuinely-too-low bottom row (`0.97`) dropped. Two earlier attempts
+  wrongly reshuffled the whole band around the bad 1.7 number instead of
+  just removing the one bad row — both reverted.
+- `scripts/generate-gallery-room-models.py`'s `shelf_y` matches
+  (`[4.72, 3.47, 2.22]`), GLBs regenerated a third time and re-verified
+  byte-level (see technique below) — final baked values confirmed
+  `[0, 4.72, -11.62]`, `[0, 3.47, -11.62]`, `[0, 2.22, -11.62]` in all
+  three files. `ROOM_MODEL_URLS` cache-bust bumped to
+  `eyeheight-revert-2026-08-21c`.
+- `tsc`/`eslint`/`npm run build` all clean after the revert.
+
+**What's NOT confirmed:** whether this actually resolves EK's complaint.
+The door-height math is solid, but EK hasn't seen this specific version
+yet as of this note — don't claim it's fixed until they confirm. If it's
+STILL wrong after this, the eyeHeight number probably isn't the real
+issue at all (see EK's own words below).
+
+**The bigger, still-completely-untouched issue:** EK, verbatim: "You
+never change the walking pattern like the other app... literally nothing
+good has happened." This is telling us the core disappointment isn't
+shelf/eye-height numbers — it's that the actual MOVEMENT FEEL (pacing,
+camera behavior while walking, acceleration/deceleration, possibly camera
+bob or FOV behavior while moving) still doesn't resemble
+bingebrowse.net's, and nothing this session has touched that. Do NOT
+attempt another numeric guess at this — it needs the same kind of direct
+source-code investigation that worked for the image-size and room-scale
+questions (fetch their bundle, grep for the actual movement/update
+function, read the real acceleration/easing values) before changing
+anything. This is the most likely next real ask.
+
+---
+
+## ⚠⚠ SESSION STATE as of 2026-08-21 (evening pass) — SUPERSEDED BY THE
+CORRECTION ABOVE for eyeHeight/SHELF_ROW_Y specifically — kept for
+everything else in this block, which is still accurate and still done.
+
+**Everything below is DONE and LIVE-VERIFIED** — not just `tsc`/`eslint`/
+`build` clean, but actually seen rendering real data. EK's own dev-server
+login had blocked browser verification all session; broke through it by
+using the `claude-in-chrome` MCP (EK's real, already-authenticated Chrome,
+not the sandboxed Browser pane) against a real `npm run build` + `npm run
+start` production server — sidesteps both the login wall AND a Turbopack
+dev-route flake that was intermittently 404/500-ing `/museum/virtual-room`
+(unrelated to this session's edits — a known flaky pattern, see tooling
+note further down). Screenshotted the actual room with EK's own 12-item
+"Scratch room" data, walked it with click-to-walk, and opened the actual
+`/museum/virtual-room/guest` route.
+
+**1. Item texture rework** (`drawItemTexture`): photo fills ~86% of the
+object's own canvas (was ~49%), fit-inside not cropped (a crop chopped
+real content off graded-slab photos — EK caught this live, reverted same
+round), zero baked-in title/price text (already in the old "Selected
+Piece" panel, since removed — see #4).
+
+**2. `MIN_ITEM_SCALE = 0.78` floor**: every non-hero item placement —
+Store, Salon, Hero's supporting items, Vault's front-wall row. Display-
+case items alone stay smaller (0.58, physically capped by the case's
+baked glass size, 1.3×1.0 units — bigger clips through the glass).
+
+**3. Eye height + shelf rows — the "giant in the room" fix, corrected
+twice, now right.** EK: "you made the human inside the room much larger,
+that's why items feel small and it feels cramped at once" — confirmed
+correct. `eyeHeight`: `3.6` (~11'10" if 1 unit ≈ 1m) → `1.7` (~5'7", a
+real adult eye height — explicitly NOT bingebrowse.net's own deliberately
+-lowered `1.30`/~4'3" "chest-height browse" — EK does not want that
+cramped-store feel, wants correct human perspective in the SAME grand
+room, not a smaller one). `SHELF_ROW_Y`: first pass kept 4 rows shifted
+down to `[3.95, 2.7, 1.45, 0.2]` — wrong, the bottom row (item-Y ~0.85)
+was exactly the near-floor row EK explicitly said not to copy from the
+reference ("I don't want a row on the floor like they do"). **Corrected
+to 3 rows: `[2.95, 1.7, 0.45]`** — bottom row (item-Y ~1.1) sits at a real
+hip-height shelf, clearly off the floor; whole band centers much closer
+to the 1.7 eye height with one fewer row to fit. `wallGridPosition`'s row/
+depth math was hardcoded to assume exactly 4 rows (`% 4`, `/ 4`) — changed
+to derive from `SHELF_ROW_Y.length` so a future row-count change can't
+silently desync again the way this one almost did.
+- **Duplicated in `scripts/generate-gallery-room-models.py`** (`shelf_y`,
+  in `add_wall_panels()`) for the baked GLB shelf-board mesh in vault/
+  whitebox/arcade — kept in sync, regenerated TWICE (once for each shelf-
+  row correction) via `"C:\Program Files\Blender Foundation\Blender
+  5.2\blender.exe" --background --python
+  scripts/generate-gallery-room-models.py -- vault whitebox arcade`, run
+  from the worktree root. **Verified directly both times** — parsed each
+  `.glb`'s JSON chunk (byte offset 12 = JSON length) and read
+  `back_shelf_0..2` translations back out: final values are
+  `[0, 2.95, -11.62]`, `[0, 1.70, -11.62]`, `[0, 0.45, -11.62]` in all
+  three files, matching the JS exactly. `ROOM_MODEL_URLS` cache-bust
+  bumped to `3row-2026-08-21b`. Blue unaffected (shell-only, no GLB,
+  reads the JS constant directly).
+- **Live-confirmed:** walked the actual room via click-to-walk — ceiling,
+  all 3 shelf rows, and floor all sit comfortably in one natural camera
+  frame with no extreme up/down tilt and nothing hugging the floor. Real
+  photo items rendered correctly on the shelves.
+
+**4. Removed the bottom move/rotate control pad (`FloorMoveControls`) and
+the "Selected Piece" info bar** — EK: "I said remove both of these a long
+time ago and they are still here" (a request from earlier in the session
+that got missed). Deleted both entirely, not just from guest view — the
+whole component, its `sendMoveCommand`/`onMoveCommand`/`"vltd-room-move"`
+event-dispatch plumbing (now unreferenced by anything), the now-dead
+`selectedItem` derived value, and the now-unused `RotateCcw`/`RotateCw`/
+`ChevronLeft`/`ChevronRight` icon imports. Click-to-walk + drag-look are
+now the only navigation, matching the reference site.
+
+**5. Guest view**: `<VirtualGalleryRoom guest />` prop, route at
+`/museum/virtual-room/guest`, full-bleed below the header (no builder
+sidebar/toolbar), reachable via a "Guest" button in the builder's Virtual
+Room card. `NavShell.tsx` bypasses `BottomNav`/`PullToRefresh` for that
+route. **Bug found and fixed same round:** landing in map/overview mode
+had NO way back into the room at all (the "Exit" button only existed
+going room→map, nothing went map→room) — worst in guest view where
+there's no sidebar/Rooms-dropdown fallback. Added a "Back to Room" button
+in the same top-left overlay slot when `viewMode === "overview"`.
+Live-confirmed: guest route loads full-bleed, Exit→map→Back to Room→room
+round-trip all work.
+
+**Still open, unrelated to this pass, don't conflate:** Hero's 3 dedicated
+feature slots sit at `y=5.96`, clearing the new top shelf row but still
+well above the 1.7 eye height — EK's earlier "hero is way up high, not
+centered" complaint is unresolved, flagged in its own comment in
+`buildWallPositions`. Also: even at 3 rows, the top row still needs a
+mild upward glance (~1.9 above eye level) — better than 4 rows' ~2.9, not
+literally zero; a real tradeoff of legibility-sized items in this room,
+named to EK, not hidden.
+
+**Tooling note:** `/museum/virtual-room` intermittently 404'd or 500'd on
+the Turbopack DEV server this round, unrelated to any code change —
+symptoms matched a known flaky pattern already noted below (route
+manifest not picking up a new file/subfolder cleanly). Deleting `.next`
+and restarting sometimes fixed it, sometimes didn't; **the reliable fix
+was `npm run build && npm run start`** — a real production server, immune
+to dev-route flakiness, which is what actually got used for the live
+verification above.
+
+---
+
 ## ⚠ SESSION STATE as of 2026-08-20, latest pass — read this block first,
 it supersedes specific numbers further down this section that are now
 stale (kept below for the reasoning trail, not as current values).
@@ -325,6 +821,271 @@ viewing your own vault" idea.
    past 90° for items that have `imageBackUrl`).
 3. Click-to-walk floor navigation — the largest, most separable piece;
    could ship independently of #1/#2.
+
+### Room scale — the actual root cause of "images look small" (2026-08-21)
+
+EK called this out directly after the item-size patches weren't enough:
+"I mention the ceiling height and size of the room, again nothing." Went
+back into the bundle and pulled it — this is a bigger finding than the
+item-texture fix, and explains why no amount of item scaling alone would
+fully fix legibility.
+
+**BingeBrowse's real room (source-confirmed constants):**
+- `RX = 3.65` (half-width) / `RZ = 4.65` (half-depth) → floor is **7.3m ×
+  9.3m total** — small, a real single retail-shop footprint.
+- `STORE_H = 3.05` — explicitly commented "low commercial ceiling."
+- `EYE = 1.30` — comment: "chest/rack-height browse: covers meet the eye
+  instead of being surveyed from above." **Deliberately lower than a real
+  adult's eye height** so shelf art sits right at eye level, not above it.
+- Movement clamp: `CLAMP = { xmin: -RX+0.42, xmax: RX-0.42, zmin:
+  -RZ+0.46, zmax: RZ-0.32 }` → the camera can get within **~0.42-0.46m**
+  of any wall. Genuinely nose-to-shelf close.
+- `GONDOLA_ROW_PITCH = 2.30` — aisle spacing between gondola rows.
+
+**Ours, for comparison:** `eyeHeight = 3.6` (our own code) — more than
+**2.7x** their deliberately-lowered eye height, and taller than a real
+adult even without the "lowered for legibility" trick. Room footprint
+(back wall z=-11.78, side walls x=±10.22) is roughly **20m × 17m** —
+call it 2-3x theirs in every linear dimension. `clampPosition` keeps the
+camera at least **~2.7-2.8 units** from any wall — about **6x** their
+minimum approach distance. Camera FOV is fixed at 47°, no dynamic
+narrowing like their 75°→58° "settled" zoom.
+
+**Why this matters more than item scale:** all three gaps (bigger room,
+taller eye height, farther minimum approach) compound multiplicatively —
+each one alone shrinks everything on the walls, and there are three of
+them stacked. The `MIN_ITEM_SCALE` fix (below) raises the item's own
+world-size, but it's fighting a room/camera setup that's fundamentally
+built at 2-3x the scale of the reference the legibility target came from.
+
+**This is a real creative-direction fork, not a bug fix — flagged, not
+decided:** our room was deliberately built "grand hall / museum" scale
+earlier this session (tall ceilings, wide floor) as EK's own explicit
+direction away from a cramped video-game feel. Shrinking the room and
+eye height to BingeBrowse's intimate proportions would directly fix
+legibility but is a real aesthetic reversal of that earlier call, and
+touches baked GLB geometry (regen required, and the room's baked
+geometry includes shared code paths — see "don't touch vault" above).
+**Needs EK's explicit direction before any room/eye-height/clamp change
+is made** — not something to patch unilaterally after the vault incident.
+A non-destructive middle path exists and is worth naming: keep the room
+grand, but let the camera clamp get much closer to a wall specifically
+while an item is in focus/inspect (mirroring their FOV-narrowing trick)
+without touching the baked room geometry at all.
+
+### Click-to-walk floor navigation — BUILT (2026-08-21)
+
+No longer just documented — implemented in `onPointerUp`'s `else` branch
+(fires when a click hits neither an item nor a doorway): raycasts the
+click against a `y=0` floor plane, clamps the hit point through the same
+`clampPosition` every other camera move already respects, sets
+`targetCameraBody.x/z` and a `targetYaw` that faces whichever wall
+(back/left/right) the destination is nearest to, and lets the existing
+per-frame lerp in `render()` carry the camera there — no new animation
+system, matches BingeBrowse's own confirmed UX exactly: their hint text
+reads "Click a shelf area to move · Click a nearby film to inspect it" —
+a single click, not a hover-then-confirm, which is why this reuses the
+same `didDrag` gate every other click here already used to tell a tap
+from a look-drag, instead of a separate two-step confirm state.
+**Not yet visually verified live** — `/museum/virtual-room` is behind
+EK's login; verified via `tsc`/`eslint`/`build` only.
+
+### Item pop-up / lift-and-rotate inspect — still NOT built
+
+This is Phase 2 from the plan below (lift off shelf, tilt-with-mouse,
+drag-to-rotate to reveal `imageBackUrl`, side info panels). Genuinely
+not started — don't imply otherwise. The click-to-walk fallback above
+occupies the `else` branch of the SAME `onPointerUp` handler where this
+would eventually also need to branch in (item click → lift, not just
+camera-refocus, once built).
+
+### Confirmed tech stack (2026-08-20, verified live via Browser pane)
+
+**BingeBrowse runs on vanilla Three.js — same core library we already
+use.** Verified directly, not assumed:
+- Top-level `bingebrowse.net` page has no canvas/WebGL of its own — the 3D
+  store is embedded via `<iframe id="store-frame" src="https://
+  bingebrowse.net/closet/index-bingebrowse.html?embed=1&roomv=br9&cc=US&
+  sr=US">`. Had to navigate directly into that iframe URL to inspect it.
+- Inside the iframe: two canvases — `ov-logo3d` (394×246, a small 3D logo
+  render) and an unnamed 365×910 canvas (the main room view). The main
+  canvas's context is `canvas.getContext('webgl2')`, confirmed via
+  `gl.getParameter(gl.VERSION)` → `"WebGL 2.0 (OpenGL ES 3.0 Chromium)"`.
+- Fetched the main bundle (`main-bingebrowse.deploy-b82c57b6bb23.js`,
+  ~775K chars) as text and grepped it directly: contains the literal
+  strings `"THREE.WebGLRenderer"` and `"PerspectiveCamera"`. **No
+  `@react-three`/`r3f` markers anywhere** — this rules out React Three
+  Fiber; it's Three.js used directly (imperative API), the same pattern
+  `VirtualGalleryRoom.tsx` already uses, not a declarative React wrapper.
+- Nothing is exposed on `window` (`THREE`, `BABYLON`, `PIXI` all
+  `undefined` at the top level) — expected for a production Vercel bundle,
+  tree-shaken/scoped inside the bundle closure, not evidence of a
+  different engine.
+- Script bundle naming (`<name>.deploy-<hash>.js?dpl=dpl_<id>`) matches
+  Vercel's deployment-artifact convention — separate bundles per concern:
+  `main-bingebrowse...js` (app/render logic), several
+  `catalog-vhs-2005*.js` files (catalog/content data, loaded separately
+  from render code), `streaming-commerce.js`, `streaming-trailers.js`,
+  `blockbuster-trailers.js`, `filters.js`, `lists.js`, `palette-lab.js`.
+  Read as: the 3D shelf-browsing UI and the "what's on the shelf" data are
+  intentionally decoupled bundles, not one monolith.
+
+**What this means for us:** nothing about what EK saw on BingeBrowse
+requires a new library, a framework swap, or a rewrite. Item pickup/
+rotation, floor raycasting for click-to-walk, and HTML/CSS overlay panels
+on top of a WebGL canvas are all things vanilla Three.js does natively —
+`VirtualGalleryRoom.tsx` already has a raycaster, a render loop, and
+DOM-overlay panels rendered alongside the canvas (see below). This is an
+extension of the existing file's patterns, not new infrastructure.
+
+### Implementation-ready detail per phase (file/line references, 2026-08-20)
+
+All line numbers below are from `VirtualGalleryRoom.tsx` as of this
+session — re-grep the anchor strings if they've drifted (`function
+onPointerUp`, `function moveCamera`, `Selected Piece`, etc.) since exact
+line numbers shift as the file is edited.
+
+**Existing scene-loop primitives to hook into (don't rebuild these):**
+- `const raycaster = new THREE.Raycaster();` and `const pointer = new
+  THREE.Vector2();` (~line 1758) — already set up once per mount effect,
+  reused inside `onPointerUp`.
+- `let yaw`, `pitch`, `targetYaw`, `targetPitch` (~1772-1775) — smoothed
+  camera look direction. `cameraBody`/`targetCameraBody` (~1777-1778) —
+  smoothed camera position, lerped each frame in `render()` (~1843,
+  `cameraBody.lerp(targetCameraBody, 0.15)`, `yaw +=
+  (targetYaw-yaw)*0.12`). Any camera-move animation (walk-to-point,
+  focus-on-item) works by setting `targetCameraBody`/`targetYaw`/
+  `targetPitch` and letting the existing per-frame lerp ease into it —
+  don't hand-roll a separate tween system, this one's already there and
+  already smooth.
+- `function clampPosition(position)` (~1795) — hard bounds `x: [-7.5,
+  7.5]`, `z: [-9, 4.72]`. Any new destination (click-to-walk target,
+  item-focus position) MUST go through this or the equivalent room-bounds
+  logic, or the camera can walk into/through a wall.
+- `function moveCamera(command, amount)` (~1814) — forward/back/left/
+  right/turn-left/turn-right, all relative to `facingDirection()`/
+  `strafeDirection()` (~1806-1812, yaw-based unit vectors). Reference
+  implementation for "move camera smoothly toward a computed target."
+- `function onPointerUp(event)` (~1878) — **this is where click-to-focus
+  already lives and where all 3 phases attach.** Current flow: build
+  `pointer` from click coords → `raycaster.setFromCamera(pointer, camera)`
+  → `raycaster.intersectObjects([...meshesRef.current,
+  ...doorwayMeshesRef.current], false)[0]` → branches on
+  `hit.object.userData.doorwayTarget` (room navigation) vs.
+  `hit.object.userData.itemId` (item focus, ~1898-1929). The item-focus
+  branch already computes a `standDistance`/`focusCamera` position and
+  sets `targetCameraBody`/`targetYaw`/`targetPitch` — this is the exact
+  spot phase 2's "lift and rotate" replaces/extends, and the pattern
+  (raycast → branch on `userData` → drive camera state) is exactly what
+  phase 3's floor click-to-walk reuses against a new floor-plane target
+  instead of a mesh.
+- `meshesRef.current` — the flat array of all clickable item meshes,
+  already carries `userData.itemId` and `userData.flat` (display-case vs.
+  wall-mounted) per mesh. Item meshes are built in the big mount effect
+  (search `new THREE.PlaneGeometry(1.12 * pos.scale` for the item `card`
+  mesh, and the `frame` BoxGeometry immediately after it for the
+  wall-mount trim). Any new mesh-side interaction (lift animation, rotate
+  handle) operates on these same objects — no new mesh registry needed.
+
+**Phase 1 — in-3D overlay panel (smallest, do first):**
+- Current "Selected Piece" panel: search `Selected Piece` in
+  `VirtualGalleryRoom.tsx` (~2632-2653) — a `selectedItem ?
+  (<div>...</div>) : (...)` block rendered in the sidebar's normal
+  document flow, using `itemImage(selectedItem)`, `selectedItem.title`,
+  `itemSubtitle(selectedItem) || selectedItem.notes ||
+  selectedItem.universe`, `formatMoney(selectedItem.currentValue)`,
+  `selectedItem.universe || selectedItem.category`. `selectedItem` itself
+  is derived state (~866-869): `selectedItems.find(item => item.id ===
+  selectedItemId) ?? selectedItems[0]`, and `selectedItemId` is set by
+  `onPointerUp`'s `setSelectedItemId(itemId)` call — this wiring already
+  exists end to end, only the JSX's *position* needs to change.
+- To move it into an overlay: keep the exact same JSX/data, just render it
+  as a CSS-positioned `<div>` (`position: absolute`, layered over the
+  `<canvas>` inside the same relatively-positioned container the canvas
+  mounts into — find where `renderer.domElement` gets appended to
+  `container` in the mount effect) instead of inside the sidebar's normal
+  flow. Gate its visibility on `selectedItemId` being non-empty AND
+  `viewMode === "room"` (don't show it in "overview"/map mode). This is
+  pure JSX/CSS relocation, zero new state.
+
+**Phase 2 — lift/tilt/drag-rotate the item mesh:**
+- Trigger point: `onPointerUp`'s `hit.object.userData.itemId` branch
+  (~1898). Currently this only moves the CAMERA to face the item
+  (`focusCamera`/`targetCameraBody`, ~1926-1929). To "lift" the item
+  instead (or in addition), animate the item's own mesh — read its
+  current `mesh.position`/`mesh.rotation` at click time, tween toward a
+  fixed "presentation slot" in front of the camera (e.g. a point computed
+  each frame as `camera.position + facingDirection() * 2.2`, offset
+  slightly down from screen center) using the same lerp-toward-target
+  pattern already used for `cameraBody`/`targetCameraBody` — add a
+  `liftedItemMesh` ref + `liftTargetPosition`/`liftTargetRotation`
+  Vector3/Euler that get lerped in `render()` alongside the existing
+  camera lerp.
+- Mouse-parallax tilt: in the existing `onPointerMove` handler
+  (~1866-1876, currently only drives `targetYaw`/`targetPitch` for
+  camera-look-drag), when an item is lifted, ALSO nudge the lifted mesh's
+  `rotation.x`/`rotation.y` by a small fraction of pointer offset from
+  screen center — same input, a second small effect, gated on `if
+  (liftedItemMesh)`.
+- Drag-to-rotate for front/back: reuse `isDragging`/`didDrag`/`startX`/
+  `startY` (already tracked, ~1779-1782, ~1859-1876) — when an item is
+  lifted, a drag updates the lifted mesh's `rotation.y` directly
+  (proportional to `dx`) instead of `targetYaw` (camera look). At
+  `rotation.y` crossing `Math.PI/2` (90°, the point where the plane's
+  edge-on to the camera and the back would start becoming visible), swap
+  the `card` mesh's material `map` texture from `itemImage(item)`
+  (front — already exists) to a back-image accessor using
+  `item.imageBackUrl` from `src/lib/vaultModel.ts`'s `VaultItem` type
+  (confirmed present: `imageFrontUrl?: string` line 64,
+  `imageBackUrl?: string` line 65). For items without `imageBackUrl`,
+  either clamp rotation short of 90° or show the front texture on both
+  sides (EK's own framing: "this might not work for every item... it
+  should with front and back images").
+- Click again to "put it back": same `onPointerUp` handler — if
+  `liftedItemMesh` is already set and the click doesn't hit a NEW item,
+  clear it (`liftedItemMesh = null`) and let the mesh lerp back to its
+  original shelf `position`/`rotation` (store those on lift so there's a
+  return target).
+- Left/right arrow to browse same-wall items without backing out: needs a
+  "what wall/slot is the current item on, what's next" lookup — the
+  slot/wall data already exists per item (`pos.wall`, see
+  `wallGridPosition`/`distributeAcrossWalls`), so this is a matter of
+  finding the current item's index within its wall's slot list and
+  re-triggering the same lift flow on the neighbor, not new geometry.
+
+**Phase 3 — click-to-walk floor navigation (largest, most separable):**
+- Needs a floor plane mesh to raycast against distinctly from item/
+  doorway meshes — either reuse the existing floor mesh (search
+  `add_floor_planks`-equivalent in the room-building code / the shell's
+  floor mesh) tagged with its own `userData` marker, or add a thin
+  invisible raycast-only plane at y≈0 sized to the room's walkable bounds
+  (same `[-7.5,7.5] x [-9,4.72]` bounds as `clampPosition`, ~1795-1799 —
+  reuse those exact numbers so the walkable-zone highlight can't ever
+  suggest walking somewhere `clampPosition` would then reject).
+- In `onPointerUp` (~1878), add a raycast branch against this floor plane
+  (alongside the existing item/doorway raycast) — on hit, don't move the
+  camera immediately; first show a destination-highlight decal (a flat
+  translucent circle/ring mesh, or a CSS-overlay ring projected via
+  `camera.project()` from the 3D hit point to screen space) at the hit
+  point, matching BingeBrowse's "highlight then click again" two-step
+  (hover/first-click = preview, confirm = walk) rather than instant
+  teleport, since instant teleport on every incidental floor click would
+  make normal look-around dragging accidentally trigger walks — needs a
+  deliberate confirm step, not just any floor click.
+- The actual walk: same pattern as `moveCamera` — set
+  `targetCameraBody` to the clamped destination point (keep
+  `y = eyeHeight`, the existing constant ~1763) and let the existing
+  per-frame lerp (~1846) carry the camera there smoothly; no new
+  animation system needed. Optionally also set `targetYaw` to face the
+  nearest wall/shelf at arrival (compute yaw from destination → nearest
+  wall's inward normal), matching BingeBrowse's "lines you up" behavior
+  EK called out specifically.
+- Distinguishing a floor click (walk) from a drag-to-look (camera pan)
+  from an item click (focus/lift): the existing `didDrag` flag
+  (~1780, ~1870) already solves "was this a click or a drag" — floor-walk
+  should only fire on `!didDrag` clicks that hit the floor plane and miss
+  every item/doorway mesh first (raycast items/doorways first, as today,
+  then floor as a fallback branch).
 
 ---
 
